@@ -3,7 +3,7 @@
   "repo": "diegonmarcos/lib-chronos",
   "url": "https://github.com/diegonmarcos/lib-chronos.git",
   "ref": "main",
-  "commit": "274d3f8f4653d1316121a1865af7eac1020c1014",
+  "commit": "0cb1c9638fe671cc40211336bc53f4ec27ee57db",
   "source_dir": "Chronos",
   "assets_dir": "app/src/main/assets/chronos",
   "serve_path": "/chronos/",
@@ -96,6 +96,34 @@
           "url": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-v4compatibility.ttf"
         }
       ]
+    },
+    {
+      "match": "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js",
+      "name": "three.js r128 (the owner's Earthsphere and Milkwaysphere pages)",
+      "license": "MIT",
+      "rewrite": "vendor/three/r128/three.min.js",
+      "files": [
+        {
+          "path": "vendor/three/r128/three.min.js",
+          "url": "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+        },
+        {
+          "path": "vendor/three/r128/LICENSE",
+          "url": "https://cdn.jsdelivr.net/npm/three@0.128.0/LICENSE"
+        }
+      ]
+    },
+    {
+      "match": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js",
+      "name": "three.js 0.128.0 OrbitControls (examples/js)",
+      "license": "MIT",
+      "rewrite": "vendor/three/0.128.0/OrbitControls.js",
+      "files": [
+        {
+          "path": "vendor/three/0.128.0/OrbitControls.js",
+          "url": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"
+        }
+      ]
     }
   ],
   "fonts": {
@@ -140,6 +168,9 @@
     "vendor/fonts/files/inter-latin-700-normal.woff2": "6f56409fd3d64bb85f7d070bce20749db2d66b6d63cec586cc22d1c761be2491",
     "vendor/fonts/files/jetbrains-mono-latin-400-normal.woff2": "14425ba9c695763c1547f48a206b7aa60350a33ae23de09f0407877f3fcd89eb",
     "vendor/fonts/files/jetbrains-mono-latin-600-normal.woff2": "400c6bfda18d5d14acad1c15d6dcb9f8e13c015e7286317e0b9a482539bef147",
-    "vendor/tailwindcss/3.4.17/tailwind.js": "176e894661aa9cdc9a5cba6c720044cbbf7b8bd80d1c9a142a7c24b1b6c50d15"
+    "vendor/tailwindcss/3.4.17/tailwind.js": "176e894661aa9cdc9a5cba6c720044cbbf7b8bd80d1c9a142a7c24b1b6c50d15",
+    "vendor/three/0.128.0/OrbitControls.js": "02bb4ade710f3e607329e37a21f098bc3ac70eb6e33daf8a65e79f4db785e7b2",
+    "vendor/three/r128/LICENSE": "7dddf7c5b8fd10ee654db8857d75d104b5557889aa5a91fc4ca545ea7c07062f",
+    "vendor/three/r128/three.min.js": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
   }
 }

@@ -291,13 +291,13 @@
                   },
                   {
                     "id": "chronos.lib.1",
-                    "label": "Earthsphere - Cycles - Chronos",
+                    "label": "Earthsphere Cycles Simulator",
                     "icon": "public",
                     "asset": "Chronos/1.Earthsphere-Cycles/index.html"
                   },
                   {
                     "id": "chronos.lib.2",
-                    "label": "Milky Way Logarithmic Map - Toggleable Dust",
+                    "label": "Milky Way Orbits & Local Group 3D",
                     "icon": "language",
                     "asset": "Chronos/2.Milkwaysphere-Orbits/index.html"
                   },

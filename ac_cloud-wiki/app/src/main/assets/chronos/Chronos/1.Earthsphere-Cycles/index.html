@@ -1,289 +1,994 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Earthsphere - Cycles - Chronos</title>
-<style>
-*{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:#0f172a;color:#f8fafc;font-family:"Inter",system-ui,sans-serif;font-size:14px}
-a{color:#7dd3fc}
-.back-btn{position:fixed;right:12px;bottom:12px;z-index:50;padding:6px 12px;border-radius:10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.85);text-decoration:none;font-size:12px;font-weight:500;backdrop-filter:blur(8px)}
-header{padding:16px 20px;border-bottom:1px solid #ffffff12}
-h1{margin:0;font-size:1.15rem;font-weight:700;color:#60a5fa;letter-spacing:.03em}
-header p{margin:4px 0 0;color:#94a3b8;font-size:.8rem}
-.ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px 18px;padding:14px 20px;background:#1e293bf2;border-bottom:1px solid #ffffff12}
-.ctl label{display:block;font-size:.72rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
-.ctl label b{color:#e2e8f0;font-family:monospace;text-transform:none;letter-spacing:0}
-input[type=range]{width:100%;height:3px;border-radius:2px;background:#334155;appearance:none;outline:none}
-input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:14px;border-radius:50%;background:#3b82f6;cursor:pointer}
-input[type=range]::-moz-range-thumb{width:14px;height:14px;border:0;border-radius:50%;background:#3b82f6;cursor:pointer}
-input[type=date]{background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:3px 6px;font:inherit}
-button{background:#334155;color:#e2e8f0;border:1px solid #475569;border-radius:6px;padding:4px 12px;font:inherit;cursor:pointer}
-button.on{background:#2563eb;border-color:#3b82f6}
-main{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;padding:16px 20px 70px}
-.panel{background:#1e293bf2;border:1px solid #ffffff0d;border-radius:12px;padding:12px 14px}
-.panel.wide{grid-column:1/-1}
-.panel h2{margin:0 0 2px;font-size:.9rem;font-weight:600;color:#c4b5fd}
-.panel .eq{font-family:monospace;font-size:.7rem;color:#64748b;margin:0 0 8px;line-height:1.4}
-canvas{width:100%;display:block;border-radius:8px;background:#0b1220}
-.kv{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:8px;font-size:.78rem;color:#94a3b8}
-.kv span b{color:#7dd3fc;font-family:monospace;font-weight:500}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earthsphere Cycles Simulator</title>
+    
+    <!-- Tailwind CSS for UI Styling -->
+    <script src="/chronos/vendor/tailwindcss/3.4.17/tailwind.js"></script>
+    
+    <!-- Three.js Library -->
+    <script src="/chronos/vendor/three/r128/three.min.js"></script>
+    <!-- OrbitControls for camera interaction -->
+    <script src="/chronos/vendor/three/0.128.0/OrbitControls.js"></script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #050505; color: white; font-family: 'Inter', sans-serif; }
+        #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        
+        /* Custom Scrollbar for Sidebar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
+        ::-webkit-scrollbar-thumb { background: rgba(71, 85, 105, 0.8); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 1); }
+
+        /* Custom Range Slider */
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; margin: 8px 0; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; background: #60a5fa; cursor: pointer; margin-top: -5px; box-shadow: 0 0 8px rgba(96, 165, 250, 0.6); transition: transform 0.1s; }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: rgba(255, 255, 255, 0.2); border-radius: 2px; }
+        input[type=range]:focus { outline: none; }
+        
+        .slider-geo::-webkit-slider-thumb { background: #f87171; box-shadow: 0 0 8px rgba(248, 113, 113, 0.6); }
+        .slider-bio::-webkit-slider-thumb { background: #4ade80; box-shadow: 0 0 8px rgba(74, 222, 128, 0.6); }
+
+        /* Page Layout & Transitions */
+        .content-page { display: none; opacity: 0; transition: opacity 0.3s ease; }
+        .content-page.active { display: block; opacity: 1; }
+        
+        .menu-link { transition: all 0.2s; border-left: 4px solid transparent; }
+        .menu-link:hover { background: rgba(51, 65, 85, 0.5); }
+        .menu-link.active { border-left-color: #3b82f6; background: rgba(51, 65, 85, 0.8); font-weight: bold; }
+
+        canvas.output-graph { width: 100%; height: 130px; background: rgba(15, 23, 42, 0.6); border-radius: 8px; border: 1px solid rgba(71, 85, 105, 0.5); margin-top: 8px; }
+        
+        /* Sidebar Collapse Classes */
+        .sidebar-collapsed { margin-left: -16rem; }
+        @media (min-width: 768px) { .sidebar-collapsed { margin-left: -18rem; } }
+    </style>
 </head>
-<body>
-<header><h1>Earthsphere - Cycles</h1><p>Day/night terminator, seasons, Moon and tides, and the Milankovitch orbital cycles. Self-contained, no external libraries.</p></header>
+<body class="antialiased flex h-screen w-screen overflow-hidden">
 
-<section class="ctl">
- <div><label>Date (UTC) <b id="vDate"></b></label><input type="date" id="date"></div>
- <div><label>Day of year <b id="vDoy"></b></label><input type="range" id="doy" min="1" max="366" step="1"></div>
- <div><label>Time of day UTC <b id="vHr"></b></label><input type="range" id="hr" min="0" max="24" step="0.05"></div>
- <div><label>Latitude <b id="vLat"></b></label><input type="range" id="lat" min="-90" max="90" step="1" value="45"></div>
- <div><label>Orbital epoch (kyr from present) <b id="vEp"></b></label><input type="range" id="ep" min="-1000" max="200" step="1" value="0"></div>
- <div><label>Animation</label><button id="play">Play days</button> <button id="now">Today</button></div>
-</section>
+    <!-- 3D Canvas Background -->
+    <div id="canvas-container"></div>
 
-<main>
- <div class="panel wide">
-  <h2>Day / night terminator</h2>
-  <p class="eq">cos z = sin&phi; sin&delta; + cos&phi; cos&delta; cos H &nbsp; | &nbsp; sin&delta; = sin&epsilon; sin&lambda; &nbsp; | &nbsp; H = local hour angle (UTC + longitude + equation of time). Dark = Sun below horizon; amber = subsolar point, grey = sub-lunar point.</p>
-  <canvas id="map" height="260"></canvas>
-  <div class="kv" id="mapKv"></div>
- </div>
+    <!-- Left Sidebar Menu -->
+    <div id="sidebar" class="w-64 md:w-72 h-full bg-slate-900/90 border-r border-slate-700 shadow-2xl z-50 flex flex-col flex-shrink-0 backdrop-blur-xl transition-all duration-300 relative">
+        
+        <!-- Collapse Button -->
+        <button id="collapse-btn" class="absolute top-4 -right-10 w-10 h-10 bg-slate-800 border border-l-0 border-slate-700 rounded-r-md flex items-center justify-center text-white hover:bg-slate-700 cursor-pointer shadow-lg z-50 transition-colors">
+            ◀
+        </button>
 
- <div class="panel">
-  <h2>Seasons: orbit and axial tilt</h2>
-  <p class="eq">Orbit drawn with exaggerated eccentricity. r = a(1-e&sup2;)/(1+e cos&nu;), &nu; = &lambda; - &varpi;. Tilt &epsilon; from the epoch slider.</p>
-  <canvas id="orbit" height="260"></canvas>
-  <div class="kv" id="orbKv"></div>
- </div>
+        <div class="p-5 border-b border-slate-700/80">
+            <h1 class="text-xl font-bold tracking-tight text-white drop-shadow-md leading-tight">Earthsphere<br>Cycles</h1>
+            <p class="text-xs text-slate-400 mt-1">Earth System Dynamics Simulator</p>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto py-4 space-y-2 px-2">
+            <!-- A. INPUTS -->
+            <div class="mb-2">
+                <button class="w-full text-left px-3 py-2 font-bold text-slate-200 bg-slate-800 rounded flex justify-between items-center hover:bg-slate-700 transition" onclick="toggleMenu('inputs-menu', this)">
+                    <span>A. INPUTS</span>
+                    <span class="transform transition-transform text-xs rotate-0">▼</span>
+                </button>
+                <div id="inputs-menu" class="flex flex-col space-y-1 mt-1 pl-2">
+                    <button class="menu-link active w-full text-left px-3 py-2 text-sm text-blue-100 rounded" data-target="in-astro" data-type="input">
+                        1. Astronomical Cycles
+                    </button>
+                    <button class="menu-link w-full text-left px-3 py-2 text-sm text-red-100 rounded" data-target="in-geo" data-type="input">
+                        2. Geological Cycles
+                    </button>
+                    <button class="menu-link w-full text-left px-3 py-2 text-sm text-green-100 rounded" data-target="in-bio" data-type="input">
+                        3. Deep Biogeochemical
+                    </button>
+                    <button class="menu-link w-full text-left px-3 py-2 text-sm text-purple-100 rounded" data-target="in-atmos" data-type="input">
+                        4. Atmos & Oceanic
+                    </button>
+                </div>
+            </div>
 
- <div class="panel">
-  <h2>Insolation by latitude (daily mean, top of atmosphere)</h2>
-  <p class="eq">Q = (S0/&pi;)(1+e cos&nu;)&sup2;/(1-e&sup2;)&sup2; [h0 sin&phi; sin&delta; + cos&phi; cos&delta; sin h0], cos h0 = -tan&phi; tan&delta;, S0 = 1361 W/m&sup2;</p>
-  <canvas id="insLat" height="260"></canvas>
-  <div class="kv" id="insKv"></div>
- </div>
+            <!-- B. OUTPUTS -->
+            <div>
+                <button class="w-full text-left px-3 py-2 font-bold text-slate-200 bg-slate-800 rounded flex justify-between items-center hover:bg-slate-700 transition" onclick="toggleMenu('outputs-menu', this)">
+                    <span>B. OUTPUTS</span>
+                    <span class="transform transition-transform text-xs rotate-0">▼</span>
+                </button>
+                <div id="outputs-menu" class="flex flex-col space-y-1 mt-1 pl-2">
+                    
+                    <!-- 1. Atmosphere -->
+                    <div class="mb-1">
+                        <button class="w-full text-left px-3 py-1 text-sm text-slate-300 bg-slate-800 rounded flex justify-between items-center hover:bg-slate-700 transition" onclick="toggleMenu('out-sub-atmos', this)">
+                            <span>1. Atmosphere</span><span class="transform transition-transform text-xs rotate-0">▼</span>
+                        </button>
+                        <div id="out-sub-atmos" class="flex flex-col space-y-1 mt-1 pl-3 border-l border-slate-600 ml-2">
+                            <button class="menu-link w-full text-left px-2 py-1 text-xs text-amber-100 rounded" data-target="out-atmos-temp">1.0 Temperatures</button>
+                            <button class="menu-link w-full text-left px-2 py-1 text-xs text-amber-100 rounded" data-target="out-atmos-pres">1.1 Pressure</button>
+                            <button class="menu-link w-full text-left px-2 py-1 text-xs text-amber-100 rounded" data-target="out-atmos-wind">1.2 Wind</button>
+                            <button class="menu-link w-full text-left px-2 py-1 text-xs text-amber-100 rounded" data-target="out-atmos-precip">1.3 Precipitation</button>
+                            <button class="menu-link w-full text-left px-2 py-1 text-xs text-amber-100 rounded" data-target="out-atmos-ozone">1.4 Ozone Levels</button>
+                        </div>
+                    </div>
 
- <div class="panel">
-  <h2>Insolation through the year at chosen latitude</h2>
-  <p class="eq">Same formula, evaluated for every day of the year; solar declination shown dashed (scaled). Vertical line = selected date.</p>
-  <canvas id="insYear" height="220"></canvas>
- </div>
+                    <!-- 2. Oceansphere -->
+                    <div class="mb-1">
+                        <button class="w-full text-left px-3 py-1 text-sm text-slate-300 bg-slate-800 rounded flex justify-between items-center hover:bg-slate-700 transition" onclick="toggleMenu('out-sub-ocean', this)">
+                            <span>2. Oceansphere</span><span class="transform transition-transform text-xs -rotate-90">▼</span>
+                        </button>
+                        <div id="out-sub-ocean" class="hidden flex flex-col space-y-1 mt-1 pl-3 border-l border-slate-600 ml-2">
+                            <button class="menu-link w-full text-left px-2 py-1 text-xs text-blue-100 rounded" data-target="out-ocean-tides">2.0 Tides</button>
+                            <button class="menu-link w-full text-left px-2 py-1 text-xs text-blue-100 rounded" data-target="out-ocean-temp">2.1 Ocean Temp</button>
+                            <button class="menu-link w-full text-left px-2 py-1 text-xs text-blue-100 rounded" data-target="out-ocean-co2">2.2 Ocean CO2</button>
+                        </div>
+                    </div>
 
- <div class="panel">
-  <h2>Moon phase and tides</h2>
-  <p class="eq">Synodic month 29.530589 d, reference new Moon 2000-01-06 18:14 UTC. Illuminated fraction = (1 - cos &alpha;)/2. Tide range &prop; &radic;(1 + k&sup2; + 2k cos 2&alpha;), k = 0.46 (solar/lunar tidal force).</p>
-  <canvas id="moon" height="200"></canvas>
-  <div class="kv" id="moonKv"></div>
-  <canvas id="tide" height="180" style="margin-top:8px"></canvas>
- </div>
+                    <!-- 4. Seismicsphere -->
+                    <div class="mb-1">
+                        <button class="w-full text-left px-3 py-1 text-sm text-slate-300 bg-slate-800 rounded flex justify-between items-center hover:bg-slate-700 transition" onclick="toggleMenu('out-sub-seismic', this)">
+                            <span>4. Seismicsphere</span><span class="transform transition-transform text-xs -rotate-90">▼</span>
+                        </button>
+                        <div id="out-sub-seismic" class="hidden flex flex-col space-y-1 mt-1 pl-3 border-l border-slate-600 ml-2">
+                            <button class="menu-link w-full text-left px-2 py-1 text-xs text-red-100 rounded" data-target="out-seismic-lava">4.0 Earth Lava Cycle</button>
+                            <button class="menu-link w-full text-left px-2 py-1 text-xs text-red-100 rounded" data-target="out-seismic-mag">4.1 Magnetic Field</button>
+                            <button class="menu-link w-full text-left px-2 py-1 text-xs text-red-100 rounded" data-target="out-seismic-rays">4.2 Ozone vs Magnetic Rays</button>
+                        </div>
+                    </div>
 
- <div class="panel wide">
-  <h2>Milankovitch cycles</h2>
-  <p class="eq">Sum-of-sinusoid approximation of the Berger (1978) solutions, for illustration: e = 0.0275 + 0.0095 cos(2&pi;t/100 kyr + p1) + 0.0075 cos(2&pi;t/413 kyr + p2) (eccentricity, ~100 and ~413 kyr); &epsilon; = 23.4&deg; + 0.9&deg; cos(2&pi;(t+10.7)/41 kyr) (obliquity ~41 kyr); climatic precession e sin&varpi;, &varpi; advancing 360&deg; per ~21 kyr (axial precession alone 25.77 kyr). The last curve is the 21 June daily insolation at 65&deg;N, computed with the insolation formula above. t = kyr from present (negative = past). Marker follows the epoch slider.</p>
-  <canvas id="mil" height="520"></canvas>
-  <div class="kv" id="milKv"></div>
- </div>
-</main>
-<a class="back-btn" href="../" title="Back to Chronos">&larr; Back to Chronos</a>
+                    <!-- 5. Carbon Flux -->
+                    <div class="mb-1">
+                        <button class="w-full text-left px-3 py-1 text-sm text-slate-300 bg-slate-800 rounded flex justify-between items-center hover:bg-slate-700 transition" onclick="toggleMenu('out-sub-carbon', this)">
+                            <span>5. Carbon Flux</span><span class="transform transition-transform text-xs -rotate-90">▼</span>
+                        </button>
+                        <div id="out-sub-carbon" class="hidden flex flex-col space-y-1 mt-1 pl-3 border-l border-slate-600 ml-2">
+                            <button class="menu-link w-full text-left px-2 py-1 text-xs text-green-100 rounded" data-target="out-carbon-flux">5.0 Global Fluxes</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 6. Orbits 3D Views -->
+                    <button class="menu-link w-full text-left px-3 py-2 text-sm text-sky-200 rounded" data-target="out-orbits" data-view="orbit">
+                        6. Orbits (3D)
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </div>
 
-<script>
-(function(){
-"use strict";
-var D2R=Math.PI/180, S0=1361, DAY=86400000, J2000=Date.UTC(2000,0,1,12);
-var $=function(i){return document.getElementById(i)};
-var st={t:Date.now(),lat:45,ep:0,playing:false};
+    <!-- Main Content Area -->
+    <div class="flex-1 relative z-30 p-6 pointer-events-none h-full overflow-y-auto custom-scrollbar flex flex-col gap-6 items-start">
+        
+        <!-- CONTENT CONTAINER (One Page at a Time) -->
+        <div id="content-container" class="w-full max-w-2xl pointer-events-auto">
+            
+            <!-- IN 1: Astronomical -->
+            <div id="in-astro" class="content-page active bg-slate-800/90 p-6 rounded-xl border border-slate-600 shadow-xl backdrop-blur-md">
+                <h2 class="text-lg font-bold text-blue-300 mb-4 border-b border-slate-600 pb-2">Inputs: Astronomical Cycles</h2>
+                <div class="space-y-5">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span class="text-slate-300">Eccentricity (100k yr)</span><span id="ecc-val" class="text-blue-200 font-mono">0.02</span></div>
+                        <input type="range" id="eccentricity" min="0" max="0.8" step="0.01" value="0.02" class="slider-blue">
+                        <p class="text-[10px] text-slate-400 mt-1">Stretches orbit shape, altering distance to sun.</p>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span class="text-slate-300">Obliquity (41k yr)</span><span id="obl-val" class="text-blue-200 font-mono">23.5°</span></div>
+                        <input type="range" id="obliquity" min="0" max="45" step="0.5" value="23.5" class="slider-blue">
+                        <p class="text-[10px] text-slate-400 mt-1">Axial tilt. Higher tilt = extreme seasons.</p>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span class="text-slate-300">Precession (26k yr)</span><span id="prec-val" class="text-blue-200 font-mono">0°</span></div>
+                        <input type="range" id="precession" min="0" max="360" step="1" value="0" class="slider-blue">
+                        <p class="text-[10px] text-slate-400 mt-1">Axial wobble. Shifts when seasons occur in orbit.</p>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span class="text-slate-300">Solar Luminosity</span><span id="lum-val" class="text-blue-200 font-mono">100%</span></div>
+                        <input type="range" id="luminosity" min="70" max="100" step="1" value="100" class="slider-blue">
+                        <p class="text-[10px] text-slate-400 mt-1">Sun's energy output (lower in deep time).</p>
+                    </div>
+                </div>
+            </div>
 
-/* ---------- astronomy ---------- */
-function clamp(x,a,b){return Math.max(a,Math.min(b,x))}
-function norm(a){a%=360;return a<0?a+360:a}
-/* Milankovitch approximation, t in kyr */
-function ecc(t){return 0.0275+0.0095*Math.cos(2*Math.PI*t/100+0.9)+0.0075*Math.cos(2*Math.PI*t/413+2.2)}
-function obl(t){return 23.4+0.9*Math.cos(2*Math.PI*(t+10.7)/41)}
-function varpi(t){return norm(283+360*t/21)}  /* longitude of perihelion, deg */
-/* calibrate so epoch 0 reproduces modern values */
-var e0=ecc(0), o0=obl(0);
-function eccE(t){return 0.0167+(ecc(t)-e0)}
-function oblE(t){return 23.44+(obl(t)-o0)}
-function sun(ms){
- var n=(ms-J2000)/DAY, L=norm(280.460+0.9856474*n), g=norm(357.528+0.9856003*n)*D2R;
- var lam=norm(L+1.915*Math.sin(g)+0.020*Math.sin(2*g));
- return {lam:lam,L:L,n:n};
-}
-function decl(lam,eps){return Math.asin(Math.sin(eps*D2R)*Math.sin(lam*D2R))/D2R}
-function eot(s,eps){ /* minutes */
- var a=Math.atan2(Math.cos(eps*D2R)*Math.sin(s.lam*D2R),Math.cos(s.lam*D2R))/D2R;
- var d=norm(s.L-a+180)-180; return 4*d;
-}
-function distF(lam,e,vp){var nu=(lam-vp)*D2R;var f=(1+e*Math.cos(nu))/(1-e*e);return f*f}
-function Q(latDeg,dec,fac){ /* daily mean W/m2 */
- var p=latDeg*D2R,d=dec*D2R,c=-Math.tan(p)*Math.tan(d),h0;
- if(c>=1)return 0; h0=c<=-1?Math.PI:Math.acos(c);
- return S0/Math.PI*fac*(h0*Math.sin(p)*Math.sin(d)+Math.cos(p)*Math.cos(d)*Math.sin(h0));
-}
-function dayLen(latDeg,dec){var c=-Math.tan(latDeg*D2R)*Math.tan(dec*D2R);if(c>=1)return 0;if(c<=-1)return 24;return 2*Math.acos(c)/D2R/15}
-var SYN=29.530589, NEWMOON=Date.UTC(2000,0,6,18,14);
-function moonAlpha(ms){return norm(360*(((ms-NEWMOON)/DAY)/SYN))} /* elongation, deg: 0 new, 180 full */
-function tideRange(alpha){var k=0.46;return Math.sqrt(1+k*k+2*k*Math.cos(2*alpha*D2R))/(1+k)}
+            <!-- IN 2: Geological -->
+            <div id="in-geo" class="content-page bg-slate-800/90 p-6 rounded-xl border border-slate-600 shadow-xl backdrop-blur-md">
+                <h2 class="text-lg font-bold text-red-300 mb-4 border-b border-slate-600 pb-2">Inputs: Geological Cycles</h2>
+                <div class="space-y-5">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span class="text-slate-300">Tectonic Volcanism</span><span id="volc-val" class="text-red-200 font-mono">Moderate</span></div>
+                        <input type="range" id="volcanism" min="0" max="100" step="1" value="50" class="slider-geo">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span class="text-slate-300">Wilson Supercontinent</span><span id="wilson-val" class="text-red-200 font-mono">Fragmented</span></div>
+                        <input type="range" id="wilson" min="0" max="100" step="1" value="80" class="slider-geo">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span class="text-slate-300">Continental Area Fraction</span><span id="cont-val" class="text-red-200 font-mono">30%</span></div>
+                        <input type="range" id="continental" min="10" max="50" step="1" value="30" class="slider-geo">
+                        <p class="text-[10px] text-slate-400 mt-1">Drives extreme weather & silicate weathering rates.</p>
+                    </div>
+                </div>
+            </div>
 
-/* ---------- canvas helpers ---------- */
-function prep(c){
- var dpr=window.devicePixelRatio||1,w=c.clientWidth,h=parseInt(c.getAttribute("height"),10);
- if(c._w!==w){c.width=w*dpr;c.height=h*dpr;c._w=w}
- var x=c.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);return {x:x,w:w,h:h};
-}
-function chart(c,o){ /* o: series[{y:[],color,dash,label}], xs[], xlab, ylab, mark, ymin,ymax */
- var g=prep(c),x=g.x,L=46,R=10,T=10,B=26,w=g.w-L-R,h=g.h-T-B;
- var ys=[].concat.apply([],o.series.map(function(s){return s.y}));
- var mn=o.ymin!=null?o.ymin:Math.min.apply(null,ys),mx=o.ymax!=null?o.ymax:Math.max.apply(null,ys);
- if(mx===mn){mx+=1;mn-=1}
- var x0=o.xs[0],x1=o.xs[o.xs.length-1];
- function X(v){return L+(v-x0)/(x1-x0)*w}function Y(v){return T+h-(v-mn)/(mx-mn)*h}
- x.font="10px sans-serif";x.fillStyle="#64748b";x.strokeStyle="#1f2a40";x.lineWidth=1;
- for(var i=0;i<=4;i++){var v=mn+(mx-mn)*i/4,yy=Y(v);x.beginPath();x.moveTo(L,yy);x.lineTo(L+w,yy);x.stroke();x.textAlign="right";x.fillText(o.fmt?o.fmt(v):v.toFixed(1),L-4,yy+3)}
- for(i=0;i<=5;i++){var xv=x0+(x1-x0)*i/5;x.textAlign="center";x.fillText((o.xfmt||function(a){return a.toFixed(0)})(xv),X(xv),T+h+13)}
- x.textAlign="left";x.fillStyle="#94a3b8";if(o.ylab)x.fillText(o.ylab,L+4,T+10);if(o.xlab){x.textAlign="right";x.fillText(o.xlab,L+w,T+h-4)}
- o.series.forEach(function(s){
-  x.strokeStyle=s.color;x.lineWidth=1.6;x.setLineDash(s.dash||[]);x.beginPath();
-  s.y.forEach(function(v,k){var px=X(o.xs[k]),py=Y(v);k?x.lineTo(px,py):x.moveTo(px,py)});x.stroke();x.setLineDash([]);
- });
- if(o.mark!=null&&o.mark>=x0&&o.mark<=x1){x.strokeStyle="#f59e0b";x.lineWidth=1;x.beginPath();x.moveTo(X(o.mark),T);x.lineTo(X(o.mark),T+h);x.stroke()}
- if(o.legend){var lx=L+8,ly=T+h-6;o.legend.forEach(function(l){x.fillStyle=l[1];x.fillRect(lx,ly-7,10,3);x.fillStyle="#94a3b8";x.textAlign="left";x.fillText(l[0],lx+14,ly-3);lx+=14+x.measureText(l[0]).width+14})}
-}
-function kv(id,arr){$(id).innerHTML=arr.map(function(a){return "<span>"+a[0]+" <b>"+a[1]+"</b></span>"}).join("")}
+            <!-- IN 3: Biogeochemical -->
+            <div id="in-bio" class="content-page bg-slate-800/90 p-6 rounded-xl border border-slate-600 shadow-xl backdrop-blur-md">
+                <h2 class="text-lg font-bold text-green-300 mb-4 border-b border-slate-600 pb-2">Inputs: Deep Biogeochemical</h2>
+                <div class="space-y-5">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span class="text-slate-300">Silicate Weathering</span><span id="weather-val" class="text-green-200 font-mono">Normal</span></div>
+                        <input type="range" id="weathering" min="0" max="100" step="1" value="50" class="slider-bio">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span class="text-slate-300">Ocean Carbon Sink</span><span id="sink-val" class="text-green-200 font-mono">Stable</span></div>
+                        <input type="range" id="carbon-sink" min="0" max="100" step="1" value="50" class="slider-bio">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span class="text-slate-300">Biosphere/Vegetation</span><span id="veg-val" class="text-green-200 font-mono">Moderate</span></div>
+                        <input type="range" id="vegetation" min="0" max="100" step="1" value="50" class="slider-bio">
+                        <p class="text-[10px] text-slate-400 mt-1">Plant carbon uptake & surface albedo change.</p>
+                    </div>
+                </div>
+            </div>
 
-/* ---------- panels ---------- */
-function drawMap(S,dec,eq,mAlpha){
- var c=$("map"),g=prep(c),x=g.x,w=g.w,h=g.h,gw=180,gh=90;
- var cv=drawMap.cv||(drawMap.cv=document.createElement("canvas"));cv.width=gw;cv.height=gh;
- var cx=cv.getContext("2d"),img=cx.createImageData(gw,gh);
- var d=new Date(st.t),utc=d.getUTCHours()+d.getUTCMinutes()/60+d.getUTCSeconds()/3600;
- var sublon=-15*(utc-12)-eq/4; /* degrees east */
- var sd=Math.sin(dec*D2R),cd=Math.cos(dec*D2R);
- for(var j=0;j<gh;j++){var phi=(90-(j+.5)*180/gh)*D2R;
-  for(var i=0;i<gw;i++){var lon=-180+(i+.5)*360/gw,H=(lon-sublon)*D2R;
-   var cz=Math.sin(phi)*sd+Math.cos(phi)*cd*Math.cos(H);
-   var day=clamp((cz+0.1)/0.1,0,1); /* soft twilight around horizon */
-   var k=(j*gw+i)*4,land=0;
-   var t=clamp(cz*3,0,1);
-   img.data[k]=15+day*(40+t*70);img.data[k+1]=23+day*(70+t*80);img.data[k+2]=42+day*(90+t*60);img.data[k+3]=255}}
- cx.putImageData(img,0,0);x.imageSmoothingEnabled=true;x.drawImage(cv,0,0,w,h);
- x.strokeStyle="#ffffff22";x.lineWidth=1;x.fillStyle="#94a3b8";x.font="10px sans-serif";x.textAlign="left";
- for(var la=-60;la<=60;la+=30){var yy=(90-la)/180*h;x.beginPath();x.moveTo(0,yy);x.lineTo(w,yy);x.stroke();x.fillText(la+"°",3,yy-2)}
- for(var lo=-150;lo<=150;lo+=30){var xx=(lo+180)/360*w;x.beginPath();x.moveTo(xx,0);x.lineTo(xx,h);x.stroke();x.fillText(lo+"°",xx+2,h-3)}
- x.strokeStyle="#f59e0b55";var ex=(90-0)/180*h;
- x.beginPath();x.moveTo(0,ex);x.lineTo(w,ex);x.stroke();
- var tr=(90-23.44)/180*h,tr2=(90+23.44)/180*h;x.setLineDash([4,4]);
- [tr,tr2].forEach(function(yv){x.beginPath();x.moveTo(0,yv);x.lineTo(w,yv);x.stroke()});x.setLineDash([]);
- function dot(lon,lat,col,r){var px=(norm(lon+180)/360)*w,py=(90-lat)/180*h;x.fillStyle=col;x.beginPath();x.arc(px,py,r,0,7);x.fill();x.strokeStyle="#000a";x.stroke()}
- /* sub-lunar point: Moon declination ~ +-5.1 deg modulated over the sidereal month; longitude from lunar hour angle */
- var mlon=sublon-mAlpha;dot(mlon,decMoon(S),"#cbd5e1",5);
- dot(sublon,dec,"#f59e0b",7);
- var lat=st.lat,dl=dayLen(lat,dec);
- kv("mapKv",[["Solar declination",dec.toFixed(2)+"°"],["Subsolar point",dec.toFixed(1)+"°, "+((sublon+540)%360-180).toFixed(1)+"°E"],["Equation of time",eq.toFixed(1)+" min"],["Day length at "+lat+"°",dl.toFixed(1)+" h"],["Solar longitude λ",S.lam.toFixed(1)+"°"]]);
-}
-function decMoon(S){return 5.14*Math.sin(norm(S.n*13.2293+120)*D2R)} /* approx lunar declination (inclination 5.14 deg) */
-function drawOrbit(S,e,eps,vp){
- var g=prep($("orbit")),x=g.x,w=g.w,h=g.h,a=Math.min(w,h)*0.36,ev=Math.min(0.6,e*8); /* eccentricity exaggerated for display */
- var p=a*(1-ev*ev);
- function pos(lam){ /* Earth heliocentric longitude = Sun geocentric longitude + 180; screen angle = -longitude */
-  var r=p/(1+ev*Math.cos((lam-vp)*D2R)),an=-(lam+180)*D2R;return [r*Math.cos(an),r*Math.sin(an),r]}
- x.save();x.translate(w/2,h/2);
- x.strokeStyle="#334155";x.lineWidth=1.2;x.beginPath();
- for(var l=0;l<=360;l+=3){var q=pos(l);l?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1])}x.closePath();x.stroke();
- x.fillStyle="#fbbf24";x.beginPath();x.arc(0,0,9,0,7);x.fill();
- x.font="10px sans-serif";x.textAlign="center";
- [["Mar equinox",0],["Jun solstice",90],["Sep equinox",180],["Dec solstice",270]].forEach(function(m){
-  var q=pos(m[1]);x.fillStyle="#64748b";x.beginPath();x.arc(q[0],q[1],3,0,7);x.fill();x.fillText(m[0],q[0]*1.0,q[1]+(q[1]<0?-8:14))});
- var q=pos(S.lam);x.fillStyle="#38bdf8";x.beginPath();x.arc(q[0],q[1],8,0,7);x.fill();
- /* axis keeps a fixed direction in space, leaning toward the Sun's June-solstice direction (screen up here) */
- var L=26,tx=Math.sin(eps*D2R)*L,ty=-Math.cos(eps*D2R)*L;
- /* tilt expressed in the orbital plane view: lean component only */
- x.strokeStyle="#f9a8d4";x.lineWidth=2;x.beginPath();x.moveTo(q[0]+tx*0,q[1]+Math.sin(eps*D2R)*L);x.lineTo(q[0],q[1]-Math.sin(eps*D2R)*L);x.stroke();
- x.fillStyle="#f9a8d4";x.textAlign="left";x.fillText("N pole, tilt "+eps.toFixed(1)+"\u00b0",q[0]+10,q[1]-Math.sin(eps*D2R)*L);
- x.restore();
- var season=S.lam<90?"NH spring":S.lam<180?"NH summer":S.lam<270?"NH autumn":"NH winter";
- kv("orbKv",[["Axial tilt \u03b5",eps.toFixed(2)+"\u00b0"],["Eccentricity e",e.toFixed(4)],["Perihelion \u03d6",vp.toFixed(0)+"\u00b0"],["Distance",(Math.sqrt(1-e*e)/Math.sqrt(distF(S.lam,e,vp))*Math.sqrt(1-e*e)).toFixed(4)+" AU"],["Season",season]]);
-}
-function drawInsLat(dec,eps,e,vp,S){
- var xs=[],y=[],fac=distF(S.lam,e,vp);for(var p=-90;p<=90;p+=2){xs.push(p);y.push(Q(p,dec,fac))}
- chart($("insLat"),{xs:xs,series:[{y:y,color:"#38bdf8"}],xlab:"latitude (deg)",ylab:"W/m²",mark:st.lat,ymin:0,fmt:function(v){return v.toFixed(0)},legend:[["daily mean insolation","#38bdf8"]]});
- kv("insKv",[["At "+st.lat+"°",Q(st.lat,dec,fac).toFixed(0)+" W/m²"],["Polar night above",dec>0?(-(90-dec)).toFixed(1)+"° S":((90+dec).toFixed(1))+"° N"],["Midnight sun above",dec>0?(90-dec).toFixed(1)+"° N":(90+dec).toFixed(1)+"° S"]]);
-}
-function drawInsYear(eps,e,vp){
- var year=new Date(st.t).getUTCFullYear(),jan=Date.UTC(year,0,1),xs=[],y=[],dd=[],len=Math.round((Date.UTC(year+1,0,1)-jan)/DAY);
- for(var d=0;d<len;d+=2){var S=sun(jan+d*DAY+12*3600000),dc=decl(S.lam,eps);xs.push(d+1);y.push(Q(st.lat,dc,distF(S.lam,e,vp)));dd.push(dc)}
- var my=Math.max.apply(null,y)||1;
- chart($("insYear"),{xs:xs,series:[{y:y,color:"#38bdf8"},{y:dd.map(function(v){return (v+eps)/(2*eps)*my}),color:"#f59e0b",dash:[4,3]}],ylab:"W/m² (lat "+st.lat+"°)",xlab:"day of year",mark:doyOf(st.t),ymin:0,fmt:function(v){return v.toFixed(0)},legend:[["insolation","#38bdf8"],["declination (scaled)","#f59e0b"]]});
-}
-function drawMoon(){
- var g=prep($("moon")),x=g.x,w=g.w,h=g.h,al=moonAlpha(st.t),ill=(1-Math.cos(al*D2R))/2,R=Math.min(h/2-8,70),cx=w/2,cy=h/2;
- x.fillStyle="#1e293b";x.beginPath();x.arc(cx,cy,R,0,7);x.fill();
- /* lit part: waxing (alpha 0-180) lit on the right; terminator is a half-ellipse of x-radius |cos alpha| R */
- var k=Math.cos(al*D2R),sg=al<=180?1:-1,u;
- x.fillStyle="#e2e8f0";x.beginPath();
- for(u=-90;u<=90;u+=6)x.lineTo(cx+sg*R*Math.cos(u*D2R),cy+R*Math.sin(u*D2R));
- for(u=90;u>=-90;u-=6)x.lineTo(cx+sg*k*R*Math.cos(u*D2R),cy+R*Math.sin(u*D2R));
- x.closePath();x.fill();
- x.strokeStyle="#475569";x.beginPath();x.arc(cx,cy,R,0,7);x.stroke();
- var names=["New Moon","Waxing crescent","First quarter","Waxing gibbous","Full Moon","Waning gibbous","Last quarter","Waning crescent"],nm=names[Math.floor(((al+22.5)%360)/45)];
- var tr=tideRange(al),spring=(Math.abs(Math.cos(al*D2R))>0.9);
- kv("moonKv",[["Phase",nm],["Elongation α",al.toFixed(0)+"°"],["Illuminated",(ill*100).toFixed(0)+"%"],["Lunar age",(al/360*SYN).toFixed(1)+" d"],["Tide",spring?"spring (high range)":(Math.abs(Math.cos(al*D2R))<0.3?"neap (low range)":"intermediate")],["Relative range",(tr*100).toFixed(0)+"%"]]);
- var xs=[],y=[],y2=[],t0=st.t-15*DAY;
- for(var i=0;i<=120;i++){var tt=t0+i*0.25*DAY;xs.push(i*0.25-15);y.push(tideRange(moonAlpha(tt))*100)}
- chart($("tide"),{xs:xs,series:[{y:y,color:"#34d399"}],ylab:"relative tidal range %",xlab:"days from selected date",mark:0,ymin:40,ymax:105,fmt:function(v){return v.toFixed(0)},legend:[["spring at new / full Moon, neap at quarters","#34d399"]]});
-}
-function drawMil(){
- var c=$("mil"),n=401,xs=[],E=[],O=[],P=[],I=[];
- for(var i=0;i<n;i++){var t=-1000+i*1200/(n-1);xs.push(t)}
- /* three stacked charts drawn into one canvas */
- var g=prep(c),x=g.x,w=g.w,H=g.h/4;
- var defs=[
-  {name:"Eccentricity e (~100 / 413 kyr)",f:eccE,col:"#f472b6",fmt:function(v){return v.toFixed(3)}},
-  {name:"Obliquity ε (deg, ~41 kyr)",f:oblE,col:"#a78bfa",fmt:function(v){return v.toFixed(1)}},
-  {name:"Climatic precession e sinϖ (~21 kyr; axis 25.77 kyr)",f:function(t){return eccE(t)*Math.sin(varpi(t)*D2R)},col:"#34d399",fmt:function(v){return v.toFixed(3)}},
-  {name:"21 June insolation 65°N (W/m²)",f:function(t){var e=eccE(t),ep=oblE(t),vp=varpi(t);return Q(65,ep,distF(90,e,vp))},col:"#38bdf8",fmt:function(v){return v.toFixed(0)}}
- ];
- var L=50,R=10,Rw=w-L-R;
- defs.forEach(function(d,k){
-  var y=xs.map(d.f),mn=Math.min.apply(null,y),mx=Math.max.apply(null,y),T=k*H+14,B=H-30,
-  X=function(v){return L+(v+1000)/1200*Rw},Y=function(v){return T+B-(v-mn)/(mx-mn||1)*B};
-  x.fillStyle="#c4b5fd";x.font="11px sans-serif";x.textAlign="left";x.fillText(d.name,L,k*H+10);
-  x.strokeStyle="#1f2a40";x.fillStyle="#64748b";x.lineWidth=1;x.font="10px sans-serif";
-  [0,.5,1].forEach(function(q){var v=mn+(mx-mn)*q,yy=Y(v);x.beginPath();x.moveTo(L,yy);x.lineTo(L+Rw,yy);x.stroke();x.textAlign="right";x.fillText(d.fmt(v),L-4,yy+3)});
-  if(k===3){for(var q=-1000;q<=200;q+=200){x.textAlign="center";x.fillText(q+" kyr",X(q),k*H+H-2)}}
-  x.strokeStyle=d.col;x.lineWidth=1.5;x.beginPath();y.forEach(function(v,i){i?x.lineTo(X(xs[i]),Y(v)):x.moveTo(X(xs[i]),Y(v))});x.stroke();
-  x.strokeStyle="#f59e0b";x.beginPath();x.moveTo(X(st.ep),T);x.lineTo(X(st.ep),T+B);x.stroke();
-  x.fillStyle="#f59e0b";x.beginPath();x.arc(X(st.ep),Y(d.f(st.ep)),4,0,7);x.fill();
-  x.strokeStyle="#475569";x.setLineDash([2,3]);x.beginPath();x.moveTo(X(0),T);x.lineTo(X(0),T+B);x.stroke();x.setLineDash([]);
- });
- var e=eccE(st.ep),ep=oblE(st.ep),vp=varpi(st.ep);
- kv("milKv",[["Epoch",st.ep+" kyr"],["Eccentricity",e.toFixed(4)],["Obliquity",ep.toFixed(2)+"°"],["Perihelion longitude",vp.toFixed(0)+"°"],["Precession index",(e*Math.sin(vp*D2R)).toFixed(4)],["65°N June insolation",Q(65,ep,distF(90,e,vp)).toFixed(0)+" W/m²"],["Dashed line","present"]]);
-}
-function doyOf(ms){var d=new Date(ms),y=d.getUTCFullYear();return Math.floor((Date.UTC(y,d.getUTCMonth(),d.getUTCDate())-Date.UTC(y,0,1))/DAY)+1}
+            <!-- IN 4: Atmospheric & Oceanic -->
+            <div id="in-atmos" class="content-page bg-slate-800/90 p-6 rounded-xl border border-slate-600 shadow-xl backdrop-blur-md">
+                <h2 class="text-lg font-bold text-purple-300 mb-4 border-b border-slate-600 pb-2">Inputs: Atmospheric & Oceanic</h2>
+                <div class="space-y-5">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span class="text-slate-300">Base GHG (CO2)</span><span id="ghg-val" class="text-purple-200 font-mono">280 ppm</span></div>
+                        <input type="range" id="ghg" min="100" max="1000" step="10" value="280" class="slider-blue" style="accent-color: #a855f7;">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span class="text-slate-300">Ocean Circulation</span><span id="ocean-val" class="text-purple-200 font-mono">Active</span></div>
+                        <input type="range" id="ocean" min="0" max="100" step="1" value="80" class="slider-blue" style="accent-color: #a855f7;">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1"><span class="text-slate-300">Aerosols & Cloud Cover</span><span id="aero-val" class="text-purple-200 font-mono">Low</span></div>
+                        <input type="range" id="aerosols" min="0" max="100" step="1" value="10" class="slider-blue" style="accent-color: #a855f7;">
+                        <p class="text-[10px] text-slate-400 mt-1">Reflects incoming sunlight, causing cooling.</p>
+                    </div>
+                </div>
+            </div>
 
-/* ---------- control + render ---------- */
-function render(){
- var d=new Date(st.t),iso=d.toISOString().slice(0,10),utc=d.getUTCHours()+d.getUTCMinutes()/60;
- $("date").value=iso;$("vDate").textContent=iso+" "+("0"+d.getUTCHours()).slice(-2)+":"+("0"+d.getUTCMinutes()).slice(-2);
- $("doy").value=doyOf(st.t);$("vDoy").textContent=doyOf(st.t);$("hr").value=utc;$("vHr").textContent=utc.toFixed(1)+" h";
- $("lat").value=st.lat;$("vLat").textContent=st.lat+"°";$("ep").value=st.ep;$("vEp").textContent=st.ep+" kyr";
- var e=eccE(st.ep),eps=oblE(st.ep),vp=varpi(st.ep),S=sun(st.t),dec=decl(S.lam,eps),eq=eot(S,eps),al=moonAlpha(st.t);
- drawMap(S,dec,eq,al);drawOrbit(S,e,eps,vp);drawInsLat(dec,eps,e,vp,S);drawInsYear(eps,e,vp);drawMoon();drawMil();
-}
-$("date").oninput=function(){var v=this.value.split("-");if(v.length===3){var o=st.t%DAY;st.t=Date.UTC(+v[0],v[1]-1,+v[2])+(o<0?o+DAY:o);render()}};
-$("doy").oninput=function(){var d=new Date(st.t),y=d.getUTCFullYear(),o=((st.t%DAY)+DAY)%DAY;st.t=Date.UTC(y,0,+this.value)+o;render()};
-$("hr").oninput=function(){var d=new Date(st.t);st.t=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())+this.value*3600000;render()};
-$("lat").oninput=function(){st.lat=+this.value;render()};
-$("ep").oninput=function(){st.ep=+this.value;render()};
-$("now").onclick=function(){st.t=Date.now();render()};
-var tm=null;
-$("play").onclick=function(){st.playing=!st.playing;this.classList.toggle("on",st.playing);this.textContent=st.playing?"Pause":"Play days";
- if(st.playing){tm=setInterval(function(){st.t+=DAY*0.5;render()},60)}else clearInterval(tm)};
-window.addEventListener("resize",render);
-render();
-})();
-</script>
+            <!-- OUT 1.0: Temperatures -->
+            <div id="out-atmos-temp" class="content-page bg-slate-900/90 p-6 rounded-xl border border-slate-700 shadow-xl backdrop-blur-md">
+                <h2 class="text-lg font-bold text-amber-400 mb-2 border-b border-slate-700 pb-2">1.0 Atmosphere: Temperatures</h2>
+                <h3 class="text-sm font-semibold text-slate-200 mt-3">🌡️ T_{global} Cycle (North vs South)</h3>
+                <canvas id="tempChart" class="output-graph" style="height: 160px;"></canvas>
+                <h3 class="text-sm font-semibold text-slate-200 mt-3">☀️ Insolation Forcing</h3>
+                <canvas id="insolationChart" class="output-graph" style="height: 160px;"></canvas>
+            </div>
+
+            <!-- OUT 1.1: Pressure -->
+            <div id="out-atmos-pres" class="content-page bg-slate-900/90 p-6 rounded-xl border border-slate-700 shadow-xl backdrop-blur-md">
+                <h2 class="text-lg font-bold text-amber-400 mb-2 border-b border-slate-700 pb-2">1.1 Atmosphere: Pressure</h2>
+                <h3 class="text-sm font-semibold text-slate-200 mt-4">🎈 Global Barometric Pressure Fields</h3>
+                <canvas id="presChart" class="output-graph" style="height: 200px;"></canvas>
+            </div>
+
+            <!-- OUT 1.2: Wind -->
+            <div id="out-atmos-wind" class="content-page bg-slate-900/90 p-6 rounded-xl border border-slate-700 shadow-xl backdrop-blur-md">
+                <h2 class="text-lg font-bold text-amber-400 mb-2 border-b border-slate-700 pb-2">1.2 Atmosphere: Wind</h2>
+                <h3 class="text-sm font-semibold text-slate-200 mt-4">💨 Global Wind Cells & Velocity</h3>
+                <canvas id="windChart" class="output-graph" style="height: 260px;"></canvas>
+            </div>
+
+            <!-- OUT 1.3: Precipitation -->
+            <div id="out-atmos-precip" class="content-page bg-slate-900/90 p-6 rounded-xl border border-slate-700 shadow-xl backdrop-blur-md">
+                <h2 class="text-lg font-bold text-amber-400 mb-2 border-b border-slate-700 pb-2">1.3 Atmosphere: Precipitation</h2>
+                <h3 class="text-sm font-semibold text-slate-200 mt-4">🌧️ Zonal Rainfall Rates (mm/day)</h3>
+                <canvas id="precipChart" class="output-graph" style="height: 200px;"></canvas>
+            </div>
+
+            <!-- OUT 1.4: Ozone Levels -->
+            <div id="out-atmos-ozone" class="content-page bg-slate-900/90 p-6 rounded-xl border border-slate-700 shadow-xl backdrop-blur-md">
+                <h2 class="text-lg font-bold text-amber-400 mb-2 border-b border-slate-700 pb-2">1.4 Atmosphere: Ozone Levels</h2>
+                <h3 class="text-sm font-semibold text-slate-200 mt-4">🛡️ Stratospheric O3 Concentration</h3>
+                <canvas id="ozoneChart" class="output-graph" style="height: 200px;"></canvas>
+            </div>
+
+            <!-- OUT 2.0: Tides -->
+            <div id="out-ocean-tides" class="content-page bg-slate-900/90 p-6 rounded-xl border border-slate-700 shadow-xl backdrop-blur-md">
+                <h2 class="text-lg font-bold text-blue-400 mb-2 border-b border-slate-700 pb-2">2.0 Oceansphere: Tides</h2>
+                <h3 class="text-sm font-semibold text-slate-200 mt-4">🌊 Lunar/Solar Spring & Neap Tides</h3>
+                <canvas id="tidesChart" class="output-graph" style="height: 200px;"></canvas>
+            </div>
+
+            <!-- OUT 2.1: Ocean Temp -->
+            <div id="out-ocean-temp" class="content-page bg-slate-900/90 p-6 rounded-xl border border-slate-700 shadow-xl backdrop-blur-md">
+                <h2 class="text-lg font-bold text-blue-400 mb-2 border-b border-slate-700 pb-2">2.1 Oceansphere: Ocean Temp</h2>
+                <h3 class="text-sm font-semibold text-slate-200 mt-4">🌡️ Thermohaline Depth Profile</h3>
+                <canvas id="oceanTempChart" class="output-graph" style="height: 200px;"></canvas>
+            </div>
+
+            <!-- OUT 2.2: Ocean CO2 -->
+            <div id="out-ocean-co2" class="content-page bg-slate-900/90 p-6 rounded-xl border border-slate-700 shadow-xl backdrop-blur-md">
+                <h2 class="text-lg font-bold text-blue-400 mb-2 border-b border-slate-700 pb-2">2.2 Oceansphere: Ocean CO2 Levels</h2>
+                <h3 class="text-sm font-semibold text-slate-200 mt-4">🫧 Dissolved Inorganic Carbon & pH</h3>
+                <canvas id="oceanCo2Chart" class="output-graph" style="height: 200px;"></canvas>
+            </div>
+
+            <!-- OUT 4.0: Earth Lava Cycle -->
+            <div id="out-seismic-lava" class="content-page bg-slate-900/90 p-6 rounded-xl border border-slate-700 shadow-xl backdrop-blur-md">
+                <h2 class="text-lg font-bold text-red-400 mb-2 border-b border-slate-700 pb-2">4.0 Seismicsphere: Lava Cycle</h2>
+                <h3 class="text-sm font-semibold text-slate-200 mt-4">🌋 Mantle Plume & Magma Flux</h3>
+                <canvas id="lavaChart" class="output-graph" style="height: 200px;"></canvas>
+            </div>
+
+            <!-- OUT 4.1: Magnetic Field -->
+            <div id="out-seismic-mag" class="content-page bg-slate-900/90 p-6 rounded-xl border border-slate-700 shadow-xl backdrop-blur-md">
+                <h2 class="text-lg font-bold text-red-400 mb-2 border-b border-slate-700 pb-2">4.1 Seismicsphere: Magnetic Field</h2>
+                <h3 class="text-sm font-semibold text-slate-200 mt-4">🧲 Geodynamo Strength (Gauss)</h3>
+                <canvas id="magChart" class="output-graph" style="height: 200px;"></canvas>
+            </div>
+
+            <!-- OUT 4.2: Ozone vs Magnetic Rays -->
+            <div id="out-seismic-rays" class="content-page bg-slate-900/90 p-6 rounded-xl border border-slate-700 shadow-xl backdrop-blur-md">
+                <h2 class="text-lg font-bold text-red-400 mb-2 border-b border-slate-700 pb-2">4.2 Seismicsphere: Shielding</h2>
+                <h3 class="text-sm font-semibold text-slate-200 mt-4">🛰️ Cosmic Ray Penetration vs Shields</h3>
+                <canvas id="raysChart" class="output-graph" style="height: 200px;"></canvas>
+            </div>
+
+            <!-- OUT 5.0: Carbon Flux -->
+            <div id="out-carbon-flux" class="content-page bg-slate-900/90 p-6 rounded-xl border border-slate-700 shadow-xl backdrop-blur-md">
+                <h2 class="text-lg font-bold text-green-400 mb-2 border-b border-slate-700 pb-2">5.0 Carbon Flux</h2>
+                <h3 class="text-sm font-semibold text-slate-200 mt-4">🔄 Global CO2 Flux Exchange (Land/Ocean/Air)</h3>
+                <canvas id="carbonChart" class="output-graph" style="height: 200px;"></canvas>
+            </div>
+
+            <!-- OUT 6: Orbits -->
+            <div id="out-orbits" class="content-page bg-slate-900/90 p-6 rounded-xl border border-slate-700 shadow-xl backdrop-blur-md">
+                <h2 class="text-lg font-bold text-sky-400 mb-2 border-b border-slate-700 pb-2">6. Orbits 3D Views</h2>
+                <p class="text-sm text-slate-300 mb-4">Select a 3D orbital perspective to visualize the Milankovitch cycles and planetary interactions:</p>
+                
+                <div class="flex flex-col space-y-3">
+                    <button class="bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2 px-4 border border-slate-600 rounded shadow text-left flex items-center justify-between" onclick="set3DView('orbit')">
+                        <span>🌍 Earth-Sun Cycle</span>
+                        <span class="text-xs text-sky-400">View 3D ↗</span>
+                    </button>
+                    <button class="bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2 px-4 border border-slate-600 rounded shadow text-left flex items-center justify-between" onclick="set3DView('axis')">
+                        <span>🧭 Earth Axis (Obliquity & Precession)</span>
+                        <span class="text-xs text-sky-400">View 3D ↗</span>
+                    </button>
+                    <button class="bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2 px-4 border border-slate-600 rounded shadow text-left flex items-center justify-between" onclick="set3DView('moon')">
+                        <span>🌕 Earth-Moon System</span>
+                        <span class="text-xs text-sky-400">View 3D ↗</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // --- Accordion Logic ---
+        function toggleMenu(menuId, btn) {
+            const menu = document.getElementById(menuId);
+            const arrow = btn.querySelector('span:last-child');
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                arrow.classList.remove('-rotate-90');
+            } else {
+                menu.classList.add('hidden');
+                arrow.classList.add('-rotate-90');
+            }
+        }
+
+        // --- 1. UI Navigation & Modes ---
+        const menuLinks = document.querySelectorAll('.menu-link');
+
+        // Sidebar Collapse Logic
+        const sidebar = document.getElementById('sidebar');
+        const collapseBtn = document.getElementById('collapse-btn');
+        let sidebarCollapsed = false;
+        
+        collapseBtn.addEventListener('click', () => {
+            sidebarCollapsed = !sidebarCollapsed;
+            if (sidebarCollapsed) {
+                sidebar.classList.add('sidebar-collapsed');
+                collapseBtn.textContent = '▶';
+            } else {
+                sidebar.classList.remove('sidebar-collapsed');
+                collapseBtn.textContent = '◀';
+            }
+            setTimeout(() => { resizeCanvases(); calculateOutputs(); }, 300);
+        });
+
+        // Page Navigation
+        menuLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const targetId = e.currentTarget.getAttribute('data-target');
+                
+                // Update Links
+                menuLinks.forEach(l => l.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+                
+                // Show ONLY selected page
+                const allPages = document.querySelectorAll('.content-page');
+                allPages.forEach(p => p.classList.remove('active'));
+                const targetPage = document.getElementById(targetId);
+                if (targetPage) targetPage.classList.add('active');
+                
+                // Trigger 3D Mode changes if defined
+                if (e.currentTarget.hasAttribute('data-view')) {
+                    current3DView = e.currentTarget.getAttribute('data-view');
+                    apply3DViewMode();
+                }
+                
+                // Refresh canvas rendering sizes
+                setTimeout(() => {
+                    resizeCanvases();
+                    calculateOutputs();
+                }, 50);
+            });
+        });
+
+        // 3D View State
+        let current3DView = 'orbit'; // orbit, axis, moon
+
+        function set3DView(viewMode) {
+            current3DView = viewMode;
+            apply3DViewMode();
+        }
+
+        // --- 2. Simulation State & Inputs ---
+        const inputs = {
+            ecc: document.getElementById('eccentricity'),
+            obl: document.getElementById('obliquity'),
+            prec: document.getElementById('precession'),
+            lum: document.getElementById('luminosity'),
+            volc: document.getElementById('volcanism'),
+            wils: document.getElementById('wilson'),
+            cont: document.getElementById('continental'),
+            weath: document.getElementById('weathering'),
+            sink: document.getElementById('carbon-sink'),
+            veg: document.getElementById('vegetation'),
+            ghg: document.getElementById('ghg'),
+            ocean: document.getElementById('ocean'),
+            aero: document.getElementById('aerosols')
+        };
+
+        const labels = {
+            ecc: document.getElementById('ecc-val'),
+            obl: document.getElementById('obl-val'),
+            prec: document.getElementById('prec-val'),
+            lum: document.getElementById('lum-val'),
+            volc: document.getElementById('volc-val'),
+            wils: document.getElementById('wilson-val'),
+            cont: document.getElementById('cont-val'),
+            weath: document.getElementById('weather-val'),
+            sink: document.getElementById('sink-val'),
+            veg: document.getElementById('veg-val'),
+            ghg: document.getElementById('ghg-val'),
+            ocean: document.getElementById('ocean-val'),
+            aero: document.getElementById('aero-val')
+        };
+
+        // Canvas Contexts
+        const ctxInsolation = document.getElementById('insolationChart').getContext('2d');
+        const ctxTemp = document.getElementById('tempChart').getContext('2d');
+        const ctxWind = document.getElementById('windChart').getContext('2d');
+        const ctxTides = document.getElementById('tidesChart').getContext('2d');
+        const ctxCarbon = document.getElementById('carbonChart').getContext('2d');
+        const ctxPres = document.getElementById('presChart').getContext('2d');
+        const ctxPrecip = document.getElementById('precipChart').getContext('2d');
+        const ctxOzone = document.getElementById('ozoneChart').getContext('2d');
+        const ctxOceanTemp = document.getElementById('oceanTempChart').getContext('2d');
+        const ctxOceanCo2 = document.getElementById('oceanCo2Chart').getContext('2d');
+        const ctxLava = document.getElementById('lavaChart').getContext('2d');
+        const ctxMag = document.getElementById('magChart').getContext('2d');
+        const ctxRays = document.getElementById('raysChart').getContext('2d');
+
+        function resizeCanvases() {
+            const canvases = document.querySelectorAll('canvas.output-graph');
+            canvases.forEach(c => {
+                if (c && c.clientWidth > 0) {
+                    c.width = c.clientWidth * window.devicePixelRatio;
+                    c.height = c.clientHeight * window.devicePixelRatio;
+                }
+            });
+        }
+        window.addEventListener('resize', () => {
+            resizeCanvases();
+            calculateOutputs();
+        });
+
+        let simState = { ecc: 0.02, obl: 23.5, prec: 0, globalTempOffset: 0, tempGradient: 50 };
+
+        function calculateOutputs() {
+            const vEcc = parseFloat(inputs.ecc.value);
+            const vObl = parseFloat(inputs.obl.value);
+            const vPrec = parseFloat(inputs.prec.value);
+            const vLum = parseFloat(inputs.lum.value);
+            const vVolc = parseFloat(inputs.volc.value);
+            const vWils = parseFloat(inputs.wils.value);
+            const vCont = parseFloat(inputs.cont.value);
+            const vWeath = parseFloat(inputs.weath.value);
+            const vSink = parseFloat(inputs.sink.value);
+            const vVeg = parseFloat(inputs.veg.value);
+            const vGhg = parseFloat(inputs.ghg.value);
+            const vOcean = parseFloat(inputs.ocean.value);
+            const vAero = parseFloat(inputs.aero.value);
+
+            // Update Labels
+            labels.ecc.textContent = vEcc.toFixed(2);
+            labels.obl.textContent = vObl.toFixed(1) + '°';
+            labels.prec.textContent = vPrec.toFixed(0) + '°';
+            labels.lum.textContent = vLum.toFixed(0) + '%';
+            labels.volc.textContent = vVolc < 30 ? 'Low' : (vVolc > 70 ? 'High' : 'Moderate');
+            labels.wils.textContent = vWils < 30 ? 'Pangaea' : (vWils > 70 ? 'Fragmented' : 'Splitting');
+            labels.cont.textContent = vCont.toFixed(0) + '%';
+            labels.weath.textContent = vWeath < 30 ? 'Slow' : (vWeath > 70 ? 'Rapid' : 'Normal');
+            labels.sink.textContent = vSink < 30 ? 'Weak' : (vSink > 70 ? 'Strong' : 'Stable');
+            labels.veg.textContent = vVeg < 30 ? 'Sparse' : (vVeg > 70 ? 'Lush' : 'Moderate');
+            labels.ghg.textContent = vGhg + ' ppm';
+            labels.ocean.textContent = vOcean < 30 ? 'Stagnant' : (vOcean > 70 ? 'Vigorous' : 'Active');
+            labels.aero.textContent = vAero < 30 ? 'Low' : (vAero > 70 ? 'High' : 'Moderate');
+
+            // --- Biophysical Climate Calculations ---
+            let baseTemp = 15;
+            baseTemp += (Math.log2(vGhg / 280)) * 3;
+            baseTemp += (vLum - 100) * 0.8;
+            baseTemp -= vAero * 0.15;
+            baseTemp += (vVolc - 50) * 0.08;
+            baseTemp -= (vWeath - 50) * 0.08;
+            baseTemp -= (vSink - 50) * 0.06;
+            baseTemp -= (vVeg - 50) * 0.04;
+            
+            simState.ecc = vEcc;
+            simState.obl = vObl;
+            simState.prec = vPrec;
+            simState.globalTempOffset = baseTemp - 15;
+            simState.tempGradient = 50 + (50 - vOcean) * 0.5 + (vObl - 23.5) * 2 + (vCont - 30) * 0.5;
+
+            if (window.updateOrbitPath) window.updateOrbitPath();
+
+            // Draw 2D Graphics
+            drawInsolationGraph(vEcc, vObl, vPrec);
+            drawTempGraph(vObl, simState.globalTempOffset);
+            drawWindGraph(simState.tempGradient, vOcean);
+            drawTidesGraph(vOcean, vEcc);
+            drawCarbonGraph(vVolc, vWeath, vSink, vGhg, vVeg);
+            
+            drawGenericLineChart(ctxPres, 'Pressure (hPa)', '#a78bfa', vOcean, 1013, 20, 2);
+            drawGenericLineChart(ctxPrecip, 'Precip (mm/day)', '#60a5fa', vOcean + vWeath, 4, 3, 4);
+            drawGenericLineChart(ctxOzone, 'Ozone (DU)', '#34d399', vAero, 300, 50, 1);
+            drawGenericLineChart(ctxOceanTemp, 'Depth Temp (°C)', '#38bdf8', vOcean + (vGhg/10), 12, 10, 0.5);
+            drawGenericLineChart(ctxOceanCo2, 'Ocean pH', '#f472b6', vGhg, 8.1, 0.2, 0.2);
+            drawGenericLineChart(ctxLava, 'Magma Flux', '#f87171', vVolc, 50, 40, 5);
+            drawGenericLineChart(ctxMag, 'Magnetic Strength', '#fbbf24', vVolc, 0.5, 0.2, 0.1);
+            drawGenericLineChart(ctxRays, 'Cosmic Rays', '#c084fc', (100-vVolc) + vAero, 50, 30, 3);
+        }
+
+        // Generic Drawing Function for 2D Sub-Panels
+        function drawGenericLineChart(ctx, label, color, inputVar, base, amplitude, noiseFactor) {
+            const canvas = ctx.canvas;
+            const w = canvas.width; const h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+            
+            ctx.fillStyle = '#94a3b8'; ctx.font = '10px monospace';
+            ctx.fillText(label, 5, 10);
+            ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
+
+            ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2;
+            const points = w;
+            for(let i=0; i<=points; i++) {
+                let x = (i/points) * w;
+                let noise = Math.sin(i*0.05 * noiseFactor) * (inputVar/20) + Math.cos(i*0.01) * 5;
+                let y = (h/2) - Math.sin((i/points)*Math.PI*2) * (amplitude + inputVar/5) - noise;
+                y = Math.max(20, Math.min(h-10, y));
+                if(i===0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
+        // 2D Canvas Drawing Logic
+        function drawCarbonGraph(volc, weath, sink, ghg, veg) {
+            const canvas = document.getElementById('carbonChart');
+            const w = canvas.width; const h = canvas.height;
+            ctxCarbon.clearRect(0, 0, w, h);
+            
+            ctxCarbon.fillStyle = '#94a3b8'; ctxCarbon.font = '10px monospace';
+            ctxCarbon.fillText('pCO2', 5, 10);
+            ctxCarbon.fillText('Time (Myrs)', w/2 - 20, h - 5);
+            ctxCarbon.beginPath(); ctxCarbon.strokeStyle = 'rgba(255,255,255,0.2)';
+            ctxCarbon.moveTo(0, h-20); ctxCarbon.lineTo(w, h-20); ctxCarbon.stroke();
+
+            const fluxBase = (volc - weath - (sink - 50)*0.5 - (veg - 50)*0.3) * 0.05;
+            
+            ctxCarbon.beginPath(); ctxCarbon.strokeStyle = '#10b981'; ctxCarbon.lineWidth = 2;
+            const points = w;
+            for(let i=0; i<=points; i++) {
+                let x = (i/points) * w;
+                let noise = Math.sin(i*0.05) * 10 + Math.cos(i*0.01) * 20;
+                let y = (h/2) - (fluxBase * (x/w) * 50) - noise - ((ghg-280)/20);
+                y = Math.max(20, Math.min(h-20, y));
+
+                if(i===0) ctxCarbon.moveTo(x, y); else ctxCarbon.lineTo(x, y);
+            }
+            ctxCarbon.stroke();
+        }
+
+        function drawInsolationGraph(ecc, obl, prec) {
+            const canvas = document.getElementById('insolationChart');
+            const w = canvas.width; const h = canvas.height;
+            ctxInsolation.clearRect(0, 0, w, h);
+            
+            ctxInsolation.fillStyle = '#94a3b8';
+            ctxInsolation.font = '10px monospace';
+            ctxInsolation.textAlign = 'center';
+            for(let i=1; i<=12; i++) {
+                let x = (i/12) * w - (w/24);
+                ctxInsolation.fillText(i, x, h - 5);
+            }
+            ctxInsolation.textAlign = 'left';
+            ctxInsolation.fillText('W/m²', 5, 10);
+            ctxInsolation.fillText('Max', 5, 25);
+            ctxInsolation.fillText('Min', 5, h - 20);
+
+            ctxInsolation.beginPath(); ctxInsolation.strokeStyle = 'rgba(255,255,255,0.2)'; ctxInsolation.lineWidth = 2;
+            ctxInsolation.moveTo(0, h/2); ctxInsolation.lineTo(w, h/2); ctxInsolation.stroke();
+
+            const points = 100;
+            const phaseShift = (prec / 360) * Math.PI * 2;
+            const oblAmplitude = (obl / 45) * (h/2.5);
+            
+            // North Hemisphere (Red)
+            ctxInsolation.beginPath(); ctxInsolation.strokeStyle = '#ef4444'; ctxInsolation.lineWidth = 3;
+            for(let i=0; i<=points; i++) {
+                let x = (i/points) * w;
+                let angle = (i/points) * Math.PI * 2;
+                let distMod = 1 + ecc * Math.cos(angle - phaseShift);
+                let y = h/2 - (Math.sin(angle) * oblAmplitude * distMod);
+                if(i===0) ctxInsolation.moveTo(x, y); else ctxInsolation.lineTo(x, y);
+            }
+            ctxInsolation.stroke();
+
+            // South Hemisphere (Blue)
+            ctxInsolation.beginPath(); ctxInsolation.strokeStyle = '#3b82f6'; ctxInsolation.lineWidth = 3;
+            for(let i=0; i<=points; i++) {
+                let x = (i/points) * w;
+                let angle = (i/points) * Math.PI * 2;
+                let distMod = 1 + ecc * Math.cos(angle - phaseShift);
+                let y = h/2 - (Math.sin(angle + Math.PI) * oblAmplitude * distMod); 
+                if(i===0) ctxInsolation.moveTo(x, y); else ctxInsolation.lineTo(x, y);
+            }
+            ctxInsolation.stroke();
+        }
+
+        function drawTempGraph(obl, tempOffset) {
+            const canvas = document.getElementById('tempChart');
+            const w = canvas.width; const h = canvas.height;
+            ctxTemp.clearRect(0, 0, w, h);
+            
+            ctxTemp.fillStyle = '#94a3b8';
+            ctxTemp.font = '10px monospace';
+            ctxTemp.textAlign = 'center';
+            for(let i=1; i<=12; i++) {
+                let x = (i/12) * w - (w/24);
+                ctxTemp.fillText(i, x, h - 5);
+            }
+            ctxTemp.textAlign = 'left';
+            ctxTemp.fillText('°C', 5, 10);
+            ctxTemp.fillText('+Max', 5, 25);
+            ctxTemp.fillText('-Min', 5, h - 20);
+
+            const baseY = h/2 - (tempOffset * 5); 
+
+            ctxTemp.beginPath(); ctxTemp.strokeStyle = 'rgba(255,255,255,0.1)'; ctxTemp.setLineDash([5, 5]);
+            ctxTemp.moveTo(0, h/2); ctxTemp.lineTo(w, h/2); ctxTemp.stroke(); ctxTemp.setLineDash([]);
+
+            const points = 100;
+            const oblAmplitude = (obl / 45) * (h/3);
+            const lag = Math.PI / 4;
+            
+            // North Temp
+            ctxTemp.beginPath(); ctxTemp.strokeStyle = '#fca5a5'; ctxTemp.lineWidth = 3;
+            for(let i=0; i<=points; i++) {
+                let x = (i/points) * w;
+                let y = baseY - Math.sin((i/points)*Math.PI*2 - lag) * oblAmplitude;
+                if(i===0) ctxTemp.moveTo(x, y); else ctxTemp.lineTo(x, y);
+            }
+            ctxTemp.stroke();
+
+            // South Temp
+            ctxTemp.beginPath(); ctxTemp.strokeStyle = '#93c5fd'; ctxTemp.lineWidth = 3;
+            for(let i=0; i<=points; i++) {
+                let x = (i/points) * w;
+                let y = baseY - Math.sin((i/points)*Math.PI*2 - lag + Math.PI) * (oblAmplitude * 0.8);
+                if(i===0) ctxTemp.moveTo(x, y); else ctxTemp.lineTo(x, y);
+            }
+            ctxTemp.stroke();
+        }
+
+        function drawWindGraph(gradient, oceanActivity) {
+            const canvas = document.getElementById('windChart');
+            const w = canvas.width; const h = canvas.height;
+            ctxWind.clearRect(0, 0, w, h);
+            
+            const cx = w/2; const cy = h/2;
+            const r = Math.min(w, h) * 0.45;
+
+            ctxWind.fillStyle = '#94a3b8';
+            ctxWind.font = '10px monospace';
+            ctxWind.textAlign = 'right';
+            const lats = [
+                { label: '90°N', y: cy - r },
+                { label: '60°N', y: cy - r*0.866 },
+                { label: '30°N', y: cy - r*0.5 },
+                { label: '0°', y: cy },
+                { label: '30°S', y: cy + r*0.5 },
+                { label: '60°S', y: cy + r*0.866 },
+                { label: '90°S', y: cy + r }
+            ];
+            lats.forEach(lat => {
+                ctxWind.fillText(lat.label, cx - r - 10, lat.y + 4);
+            });
+
+            ctxWind.beginPath(); ctxWind.arc(cx, cy, r, 0, Math.PI*2);
+            ctxWind.fillStyle = 'rgba(15, 23, 42, 0.8)'; ctxWind.fill();
+            ctxWind.strokeStyle = '#3b82f6'; ctxWind.lineWidth = 2; ctxWind.stroke();
+
+            ctxWind.beginPath(); ctxWind.moveTo(cx - r, cy); ctxWind.lineTo(cx + r, cy);
+            ctxWind.strokeStyle = 'rgba(255,255,255,0.2)'; ctxWind.stroke();
+
+            const cellCount = 3;
+            const intensity = Math.max(0.1, gradient / 100);
+            ctxWind.lineWidth = 1 + (intensity * 3);
+            
+            for(let hem = -1; hem <= 1; hem += 2) {
+                for(let i=0; i<cellCount; i++) {
+                    let latStart = (i / cellCount) * (Math.PI/2);
+                    let latEnd = ((i+1) / cellCount) * (Math.PI/2);
+                    let y1 = cy + Math.sin(latStart) * r * hem;
+                    let y2 = cy + Math.sin(latEnd) * r * hem;
+                    let midY = (y1 + y2) / 2;
+                    let width = Math.cos((latStart + latEnd)/2) * r;
+
+                    ctxWind.beginPath();
+                    if (i % 2 === 0) {
+                        ctxWind.strokeStyle = `rgba(59, 130, 246, ${0.3 + intensity*0.7})`;
+                        ctxWind.moveTo(cx - width*0.5, midY - 10*hem);
+                        ctxWind.quadraticCurveTo(cx, midY + 20*hem, cx + width*0.5, midY - 10*hem);
+                    } else {
+                        ctxWind.strokeStyle = `rgba(248, 113, 113, ${0.3 + intensity*0.7})`;
+                        ctxWind.moveTo(cx - width*0.5, midY + 10*hem);
+                        ctxWind.quadraticCurveTo(cx, midY - 20*hem, cx + width*0.5, midY + 10*hem);
+                    }
+                    ctxWind.stroke();
+                }
+            }
+        }
+        
+        function drawTidesGraph(oceanActivity, ecc) {
+            const canvas = document.getElementById('tidesChart');
+            const w = canvas.width; const h = canvas.height;
+            ctxTides.clearRect(0, 0, w, h);
+            
+            ctxTides.fillStyle = '#94a3b8';
+            ctxTides.font = '10px monospace';
+            ctxTides.textAlign = 'center';
+            for(let i=1; i<=4; i++) {
+                let x = (i/4) * w - (w/8);
+                ctxTides.fillText("Week " + i, x, h - 5);
+            }
+            ctxTides.textAlign = 'left';
+            ctxTides.fillText('Meters', 5, 10);
+            ctxTides.fillText('+High', 5, 25);
+            ctxTides.fillText('-Low', 5, h - 20);
+
+            ctxTides.beginPath(); ctxTides.strokeStyle = 'rgba(255,255,255,0.1)'; ctxTides.setLineDash([5, 5]);
+            ctxTides.moveTo(0, h/2); ctxTides.lineTo(w, h/2); ctxTides.stroke(); ctxTides.setLineDash([]);
+
+            const points = w;
+            const baseTide = (h/4.5);
+            const oceanMod = 0.5 + (oceanActivity / 100); 
+            const eccMod = 1 + (ecc * 0.5); 
+            
+            ctxTides.beginPath();
+            ctxTides.fillStyle = 'rgba(56, 189, 248, 0.1)';
+            for(let i=0; i<=points; i++) {
+                let x = (i/points) * w;
+                let envelope = 1 + 0.4 * Math.cos((i/points) * Math.PI * 4);
+                let yMax = (h/2) - (envelope * baseTide * oceanMod * eccMod);
+                if(i===0) ctxTides.moveTo(x, yMax); else ctxTides.lineTo(x, yMax);
+            }
+            for(let i=points; i>=0; i--) {
+                let x = (i/points) * w;
+                let envelope = 1 + 0.4 * Math.cos((i/points) * Math.PI * 4); 
+                let yMin = (h/2) + (envelope * baseTide * oceanMod * eccMod);
+                ctxTides.lineTo(x, yMin);
+            }
+            ctxTides.fill();
+
+            ctxTides.beginPath(); 
+            ctxTides.strokeStyle = '#38bdf8'; 
+            ctxTides.lineWidth = 1;
+            for(let i=0; i<=points; i++) {
+                let x = (i/points) * w;
+                let envelope = 1 + 0.4 * Math.cos((i/points) * Math.PI * 4); 
+                let daily = Math.sin((i/points) * Math.PI * 56);
+                let y = (h/2) - (daily * envelope * baseTide * oceanMod * eccMod);
+                if(i===0) ctxTides.moveTo(x, y); else ctxTides.lineTo(x, y);
+            }
+            ctxTides.stroke();
+        }
+
+        Object.values(inputs).forEach(input => input.addEventListener('input', calculateOutputs));
+        
+        // --- 4. Three.js Scene Setup (Earth System Multi-View) ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; controls.dampingFactor = 0.05;
+
+        // Lighting
+        scene.add(new THREE.AmbientLight(0x222233));
+        const sunLight = new THREE.PointLight(0xffffff, 2, 200);
+        scene.add(sunLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        directionalLight.position.set(50, 0, 0);
+        scene.add(directionalLight);
+
+        // Background Starfield
+        const starsGeo = new THREE.BufferGeometry();
+        const starsMat = new THREE.PointsMaterial({color: 0xffffff, size: 0.1, transparent: true, opacity: 0.6});
+        const starsVerts = [];
+        for(let i=0; i<1500; i++) {
+            starsVerts.push(
+                THREE.MathUtils.randFloatSpread(400),
+                THREE.MathUtils.randFloatSpread(400),
+                THREE.MathUtils.randFloatSpread(400)
+            );
+        }
+        starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(starsVerts, 3));
+        scene.add(new THREE.Points(starsGeo, starsMat));
+
+        // Earth System Groups
+        const sunGroup = new THREE.Group(); scene.add(sunGroup);
+        const orbitGroup = new THREE.Group(); scene.add(orbitGroup);
+        const precessionGroup = new THREE.Group(); orbitGroup.add(precessionGroup);
+        const tiltGroup = new THREE.Group(); precessionGroup.add(tiltGroup);
+
+        // Sun Visuals
+        const sunGeo = new THREE.SphereGeometry(3, 32, 32);
+        const sunMat = new THREE.MeshBasicMaterial({ color: 0xffcc00 });
+        sunGroup.add(new THREE.Mesh(sunGeo, sunMat));
+        const glowGeo = new THREE.SphereGeometry(4, 32, 32);
+        const glowMat = new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending });
+        const sunGlow = new THREE.Mesh(glowGeo, glowMat);
+        sunGroup.add(sunGlow);
+
+        // Earth
+        const earthGeo = new THREE.SphereGeometry(1.5, 32, 32);
+        const earthMat = new THREE.MeshPhongMaterial({ color: 0x1166ff, emissive: 0x001133, shininess: 25 });
+        const earthMesh = new THREE.Mesh(earthGeo, earthMat);
+        tiltGroup.add(earthMesh);
+
+        const landGeo = new THREE.IcosahedronGeometry(1.52, 3);
+        const landMat = new THREE.MeshPhongMaterial({ color: 0x22cc44, wireframe: true, transparent: true, opacity: 0.4 });
+        earthMesh.add(new THREE.Mesh(landGeo, landMat));
+
+        // Earth Axis Line
+        const axisGroup = new THREE.Group(); tiltGroup.add(axisGroup);
+        const axisMat = new THREE.LineBasicMaterial({ color: 0xff3366, linewidth: 3 });
+        const axisPoints = [new THREE.Vector3(0, -4, 0), new THREE.Vector3(0, 4, 0)];
+        axisGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(axisPoints), axisMat));
+
+        // Earth-Moon
+        const moonGroup = new THREE.Group(); orbitGroup.add(moonGroup);
+        const moonGeo = new THREE.SphereGeometry(0.4, 16, 16);
+        const moonMat = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, emissive: 0x222222 });
+        const moonMesh = new THREE.Mesh(moonGeo, moonMat);
+        moonMesh.position.set(4, 0, 0);
+        moonGroup.add(moonMesh);
+
+        // Earth Orbit Path Line
+        let orbitPathMesh;
+        const orbitMat = new THREE.LineBasicMaterial({ color: 0x60a5fa, transparent: true, opacity: 0.6 });
+        const semiMajorAxis = 25;
+
+        window.updateOrbitPath = function() {
+            if (orbitPathMesh) scene.remove(orbitPathMesh);
+            tiltGroup.rotation.z = THREE.MathUtils.degToRad(simState.obl);
+            precessionGroup.rotation.y = THREE.MathUtils.degToRad(simState.prec);
+
+            const points = [];
+            for (let i = 0; i <= 100; i++) {
+                const theta = (i / 100) * Math.PI * 2;
+                const r = (semiMajorAxis * (1 - Math.pow(simState.ecc, 2))) / (1 + simState.ecc * Math.cos(theta));
+                points.push(new THREE.Vector3(r * Math.cos(theta), 0, r * Math.sin(theta)));
+            }
+            orbitPathMesh = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(points), orbitMat);
+            scene.add(orbitPathMesh);
+        };
+
+        function apply3DViewMode() {
+            sunGroup.visible = false;
+            orbitGroup.visible = false;
+            if (orbitPathMesh) orbitPathMesh.visible = false;
+            axisGroup.visible = false;
+            moonGroup.visible = false;
+
+            directionalLight.intensity = 0;
+            sunLight.intensity = 2;
+
+            if (current3DView === 'orbit') {
+                sunGroup.visible = true;
+                orbitGroup.visible = true;
+                if (orbitPathMesh) orbitPathMesh.visible = true;
+                camera.position.set(0, 30, 45);
+                controls.target.set(0, 0, 0); 
+            } else if (current3DView === 'axis') {
+                orbitGroup.visible = true;
+                axisGroup.visible = true;
+                directionalLight.intensity = 1.5;
+                sunLight.intensity = 0;
+                camera.position.set(0, 2, 8);
+                controls.target.set(0, 0, 0);
+            } else if (current3DView === 'moon') {
+                orbitGroup.visible = true;
+                moonGroup.visible = true;
+                directionalLight.intensity = 1.5;
+                sunLight.intensity = 0;
+                camera.position.set(0, 4, 12);
+                controls.target.set(0, 0, 0);
+            }
+        }
+
+        let orbitAngle = 0;
+        let moonAngle = 0;
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            orbitAngle += 0.002;
+            if (orbitAngle > Math.PI * 2) orbitAngle -= Math.PI * 2;
+            const r = (semiMajorAxis * (1 - Math.pow(simState.ecc, 2))) / (1 + simState.ecc * Math.cos(orbitAngle));
+            
+            if (current3DView === 'orbit') {
+                orbitGroup.position.set(r * Math.cos(orbitAngle), 0, r * Math.sin(orbitAngle));
+            } else {
+                orbitGroup.position.set(0, 0, 0);
+            }
+
+            earthMesh.rotation.y += 0.01;
+            
+            moonAngle += 0.02;
+            moonMesh.position.set(4 * Math.cos(moonAngle), 0, 4 * Math.sin(moonAngle));
+
+            if (sunGroup.visible) {
+                sunGlow.scale.setScalar(1 + Math.sin(Date.now() * 0.002) * 0.05);
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Initialize simulation
+        resizeCanvases();
+        calculateOutputs();
+        apply3DViewMode();
+        animate();
+        
+        setTimeout(() => {
+            resizeCanvases();
+            calculateOutputs();
+        }, 150);
+
+    </script>
 </body>
 </html>
