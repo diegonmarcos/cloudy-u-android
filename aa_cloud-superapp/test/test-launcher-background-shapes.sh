@@ -47,7 +47,7 @@ by = {p['id']: p for p in pages}
 ctrl = [by[i]['label'] for i in by['controls']['tabs']]
 ui = by['panels-ui']
 print('OK' if by['controls']['tabs'] == ['presets','panels'] and ctrl == ['Presets','Panels']
-      and by['panels']['tabs'] == ['panels-all','panels-battery','panels-tools']
+      and by['panels']['tabs'] == ['panels-all','panels-battery','panels-security','panels-tools']
       and not ui.get('hidden') and ui.get('group') == 'Launcher' else 'controls=%r panels=%r UI_hidden=%r' % (by['controls']['tabs'], by['panels']['tabs'], ui.get('hidden')))
 PY
 )" "controls strip is Presets | Panels; panels is All | Battery Hungers | Tools; UI is its own Launcher tile"

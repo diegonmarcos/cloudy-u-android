@@ -110,6 +110,7 @@ class LauncherConfigFragment : KitComposeFragment() {
         val showUi = all || scope == SCOPE_UI
         val showBattery = all || scope == SCOPE_BATTERY
         val showTools = all || scope == SCOPE_TOOLS
+        val showSecurity = all || scope == SCOPE_SECURITY
 
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
             val settingsPrefs = remember { LauncherSettingsPrefs(ctx) }
@@ -172,6 +173,14 @@ class LauncherConfigFragment : KitComposeFragment() {
                 com.diegonmarcos.superapp.launcher.BatteryUsageBody()
                 // #1506 Battery Hunger: drainers since the last charge + the Background policy (on demand, needs the ADB shell).
                 com.diegonmarcos.superapp.bgpolicy.BatteryHungerPanel(requireActivity())
+            }
+
+            // ── #1833 Security: developer options, debugging, the shell channel, accessibility services, VPN, location ──
+            // The same tile grid as Tools (ControlFragment: lights, tap/hold, re-read after every write), drawing the groups
+            // build.json::ui.control_panel puts on tab "security".
+            if (showSecurity) {
+                GapDp(16)
+                ControlsGridHost(R.id.security_grid_host, com.diegonmarcos.superapp.configs.DeviceControls.TAB_SECURITY)
             }
 
             // ── Tools: the device switch board, Connectivity, Notifications, Others, default launcher ──
@@ -380,8 +389,7 @@ class LauncherConfigFragment : KitComposeFragment() {
 
     /** The Control grid, hosted as a child fragment so its ticker, lights and tap/hold are untouched. */
     @Composable
-    private fun ControlsGridHost() {
-        val hostId = R.id.controls_grid_host
+    private fun ControlsGridHost(hostId: Int = R.id.controls_grid_host, tab: String = com.diegonmarcos.superapp.configs.DeviceControls.TAB_TOOLS) {
         val committed = remember { BooleanArray(1) }
         AndroidView(
             modifier = Modifier.fillMaxWidth(),
@@ -393,7 +401,9 @@ class LauncherConfigFragment : KitComposeFragment() {
                         if (isAdded && childFragmentManager.findFragmentById(hostId) == null) {
                             childFragmentManager.beginTransaction()
                                 .replace(hostId,
-                                    com.diegonmarcos.superapp.configs.ControlFragment.newInstance(embedded = true))
+                                    if (tab == com.diegonmarcos.superapp.configs.DeviceControls.TAB_TOOLS)
+                                        com.diegonmarcos.superapp.configs.ControlFragment.newInstance(embedded = true)
+                                    else com.diegonmarcos.superapp.configs.ControlFragment.newInstance(embedded = true, tab = tab))
                                 .commitAllowingStateLoss()
                         }
                     }
@@ -705,7 +715,7 @@ class LauncherConfigFragment : KitComposeFragment() {
     }
 
     companion object {
-        /** [scope] "all" (or "") / "ui" / "battery" / "tools" draws one Panels tab; All is UI + Battery Hungers + Tools. */
+        /** [scope] "all" (or "") / "ui" / "battery" / "security" / "tools" draws one Panels tab; All is UI + Battery Hungers + Security + Tools. */
         fun newInstance(scope: String = "") = LauncherConfigFragment().apply {
             arguments = android.os.Bundle().apply { putString(ARG_SCOPE, scope) }
         }
@@ -715,6 +725,7 @@ class LauncherConfigFragment : KitComposeFragment() {
         const val SCOPE_UI = "ui"
         const val SCOPE_BATTERY = "battery"
         const val SCOPE_TOOLS = "tools"
+        const val SCOPE_SECURITY = "security"
 
         // The same two numbers Configs ▸ Panel ▸ Control uses for its badges, so
         // the two grids read as one screen. #338 is why they are stated once:

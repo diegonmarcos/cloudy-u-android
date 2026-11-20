@@ -250,6 +250,17 @@
     <string name="control_group_network_sub">Everything that moves bytes — this handset\'s radios and the fleet\'s tunnels, in one place.</string>
     <string name="control_group_tools">Tools</string>
     <string name="control_group_tools_sub">The machinery this app and the fleet are driven through.</string>
+    <string name="control_title_security">Security</string>
+    <string name="control_group_security_home">Security controls</string>
+    <string name="control_group_security_home_sub">Home of the Security tab\'s controls; drawn through the groups below.</string>
+    <string name="control_group_security_debug">Developer &amp; debugging</string>
+    <string name="control_group_security_debug_sub">Developer options, Wireless and USB debugging, and the ADB shell channel this app\'s privileged plane uses.</string>
+    <string name="control_group_security_access_apps">Accessibility apps</string>
+    <string name="control_group_security_access_apps_sub">The fleet apps that run an accessibility service. A fleet service not listed here (a library\'s) shows under Other and is removed from there.</string>
+    <string name="control_group_security_access_features">Features using accessibility</string>
+    <string name="control_group_security_access_features_sub">Each feature that needs an accessibility service or an overlay, switched on its own.</string>
+    <string name="control_group_security_net">VPN &amp; location</string>
+    <string name="control_group_security_net_sub">Whether any VPN is up and whether location is on.</string>
     <string name="control_group_ui">UI</string>
     <string name="control_group_ui_sub">How this launcher looks and feels under the thumb.</string>
     <string name="control_group_battery">Battery Hungers</string>

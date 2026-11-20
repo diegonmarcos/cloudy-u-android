@@ -1,0 +1,270 @@
+{
+  "_doc": "#1833 frozen baseline (build.json at the commit before the Security tab): the Panels tabs and every Tools-tab control-panel group with every field of every control. test-panels-security-1833.sh holds the current declaration to it (rule 16: a field may be added, none removed or changed).",
+  "panels_tabs": [
+    "panels-all",
+    "panels-battery",
+    "panels-tools"
+  ],
+  "groups": [
+    {
+      "id": "device",
+      "label": "Device",
+      "label_res": "control_group_device",
+      "subtitle": "The handset's own hardware and attention.",
+      "subtitle_res": "control_group_device_sub",
+      "controls": [
+        {
+          "id": "torch",
+          "icon": "ic_nav_torch",
+          "label": "Torch",
+          "battery_hungry": true,
+          "subtitle": "The flash unit, straight through CameraManager — no permission needed."
+        },
+        {
+          "id": "dnd",
+          "icon": "ic_nav_dnd",
+          "label": "Do Not Disturb",
+          "subtitle": "Silences everything but priority senders."
+        },
+        {
+          "id": "power_saving",
+          "icon": "ic_nav_powersave",
+          "label": "Power saving",
+          "perms_surface": true,
+          "subtitle": "The phone's own power-saving mode (PowerManager.isPowerSaveMode). Set through WRITE_SECURE_SETTINGS, else the ADB channel. The SuperApp's low-power mode follows it.",
+          "_doc": "#1687 ONE declaration, two surfaces: this tile (Launcher Quick actions, the control panel) and the Power saving card on Configs > Perms (perms_surface). adb = the exact shell lines Run on ADB / Copy command use, per direction (#1688 same mechanism as the permission rows). low_power_mode = what the SuperApp does while the system is in power saving: pause_animation stops the launcher 3D/4D auto-rotate, poll_multiplier stretches the periodic loops listed in slows. Prefs: low_power_prefs:follow_system (fleet-config.json).",
+          "adb": {
+            "enable": [
+              "settings put global low_power 1"
+            ],
+            "disable": [
+              "settings put global low_power 0"
+            ]
+          },
+          "low_power_mode": {
+            "pause_animation": true,
+            "poll_multiplier": 4,
+            "slows": [
+              "3D/4D auto-rotate (paused)",
+              "network badge",
+              "floating nav poll",
+              "resources panel",
+              "notify badges",
+              "energy sampler",
+              "status dropdowns"
+            ]
+          }
+        },
+        {
+          "id": "super_power_saving",
+          "icon": "ic_nav_powersave",
+          "label": "Super power saving",
+          "perms_surface": true,
+          "subtitle": "Power saving + SuperApp low-power mode, and releases this app's own Device admin and Notification access (only those on, restored on exit) so Maximum power saving stops listing it as essential. Accessibility untouched.",
+          "_doc": "#1689 ONE declaration: this tile (Quick actions, next to Power saving) and the Super power saving card on Configs > Perms. Steps and their exact adb lines (own components only, broker rule superpower-self): dpm remove-active-admin / set-active-admin for LockScreenAdminReceiver, cmd notification disallow_listener / allow_listener for PhoneNotificationListenerService. Remembered in super_power_prefs (fleet-config.json). services = every SuperApp foreground service the mode stops (only those running; remembered; restored on exit). adb_last ones carry the ADB owner channel and are stopped LAST, after the mode's own ADB steps. keep = left running by default (the VPN; stopping it asks a confirm). Any other running foreground service of this app found at entry is stopped too and listed as undeclared.",
+          "services": [
+            {
+              "class": "com.diegonmarcos.superapp.floatingnav.FloatingNavService",
+              "label": "Floating nav"
+            },
+            {
+              "class": "com.diegonmarcos.superapp.floatingnav.ScreensaverService",
+              "label": "Screensaver"
+            },
+            {
+              "class": "com.diegonmarcos.superapp.notificationcenter.KdeStatusService",
+              "label": "KDE status"
+            },
+            {
+              "class": "com.diegonmarcos.superapp.notificationcenter.NetworkBadgeService",
+              "label": "Network badge"
+            },
+            {
+              "class": "com.diegonmarcos.clocktools.ClockService",
+              "label": "Clock / stopwatch"
+            },
+            {
+              "class": "com.diegonmarcos.superapp.light.LightService",
+              "label": "Light"
+            },
+            {
+              "class": "com.diegonmarcos.superapp.browser.download.DlService",
+              "label": "Downloads"
+            },
+            {
+              "class": "com.diegonmarcos.superapp.updater.BatchForegroundService",
+              "label": "Fleet updates (keep-alive)"
+            },
+            {
+              "class": "com.diegonmarcos.superapp.adbdebug.AdbPairingService",
+              "label": "ADB pairing",
+              "adb_last": true
+            },
+            {
+              "class": "com.diegonmarcos.superapp.adbdebug.WdKeeperService",
+              "label": "Wireless debugging keeper",
+              "adb_last": true
+            },
+            {
+              "class": "com.diegonmarcos.superapp.adbdebug.HostShellService",
+              "label": "ADB host shell",
+              "adb_last": true
+            },
+            {
+              "class": "com.diegonmarcos.superapp.firewall.FirewallVpnService",
+              "label": "Firewall VPN",
+              "keep": true
+            },
+            {
+              "class": "com.diegonmarcos.superapp.firewall.FirestackTunnelService",
+              "label": "Firestack VPN",
+              "keep": true
+            }
+          ]
+        },
+        {
+          "id": "rotation_lock",
+          "icon": "ic_nav_lock",
+          "label": "Rotation lock",
+          "subtitle": "Freezes the screen in its current orientation."
+        }
+      ]
+    },
+    {
+      "id": "network",
+      "label": "Network",
+      "label_res": "control_group_network",
+      "subtitle": "Everything that moves bytes — this handset's radios and the fleet's tunnels, in one place.",
+      "subtitle_res": "control_group_network_sub",
+      "controls": [
+        {
+          "id": "wifi",
+          "icon": "ic_ctl_wifi",
+          "label": "Wi-Fi",
+          "subtitle": "Android forbids an app to flip the Wi-Fi radio."
+        },
+        {
+          "id": "mobile_data",
+          "icon": "ic_ctl_mobile_data",
+          "label": "Mobile data",
+          "battery_hungry": true,
+          "subtitle": "Carrier data is a system-only switch."
+        },
+        {
+          "id": "bluetooth",
+          "icon": "ic_route_bluetooth",
+          "label": "Bluetooth",
+          "battery_hungry": true,
+          "subtitle": "The adapter's own enable/disable is a no-op for a normal app."
+        },
+        {
+          "id": "airplane_mode",
+          "icon": "ic_ctl_airplane",
+          "label": "Airplane mode",
+          "subtitle": "Writable as a setting, but the broadcast that moves the radios is not ours to send — writing it alone changes the icon and nothing else."
+        },
+        {
+          "id": "mesh",
+          "icon": "ic_wg",
+          "label": "WireGuard mesh",
+          "battery_hungry": true,
+          "subtitle": "The 10.0.0.x tunnel. Needs the engine APK and VPN consent."
+        },
+        {
+          "id": "firewall",
+          "icon": "ic_ctl_firewall",
+          "label": "Per-app firewall",
+          "battery_hungry": true,
+          "subtitle": "The local no-root VpnService that blocks per-app egress."
+        }
+      ]
+    },
+    {
+      "id": "tools",
+      "label": "Tools",
+      "label_res": "control_group_tools",
+      "subtitle": "The machinery this app and the fleet are driven through.",
+      "subtitle_res": "control_group_tools_sub",
+      "controls": [
+        {
+          "id": "wireless_debugging",
+          "icon": "ic_terminal",
+          "label": "Wireless debugging",
+          "battery_hungry": true,
+          "subtitle": "The adbd this app's own privileged plane talks to. Turning it off ends silent installs and self-grants until it is back on."
+        },
+        {
+          "id": "wireless_debugging_keepalive",
+          "icon": "ic_refresh",
+          "label": "Keep Wireless debugging on",
+          "default_on": false,
+          "subtitle": "Turns Wireless debugging back on whenever Android drops it (Wi-Fi change, reboot) and reconnects the shell channel. Off (the default) leaves it exactly as you set it and the app never connects the channel by itself."
+        },
+        {
+          "id": "app_api",
+          "icon": "ic_code",
+          "label": "App API",
+          "subtitle": "DevControlServer — the loopback HTTP surface the MCP and every script drive this app through."
+        },
+        {
+          "id": "auto_update",
+          "icon": "ic_refresh",
+          "label": "Fleet auto-update",
+          "battery_hungry": true,
+          "subtitle": "Periodic GHCR check and silent install for every constellation app."
+        }
+      ]
+    },
+    {
+      "id": "ui",
+      "label": "UI",
+      "label_res": "control_group_ui",
+      "subtitle": "How this launcher looks and feels under the thumb.",
+      "subtitle_res": "control_group_ui_sub",
+      "controls": [
+        {
+          "id": "floating_nav",
+          "icon": "ic_nav",
+          "label": "Floating menu",
+          "battery_hungry": true,
+          "subtitle": "The draggable overlay button, on top of any app."
+        },
+        {
+          "id": "admin_mode",
+          "icon": "ic_p_c3_stack",
+          "label": "Admin mode",
+          "subtitle": "Swaps the Home grid, drawer and bottom-nav to their Admin variants."
+        },
+        {
+          "id": "all_anim",
+          "icon": "ic_sparkles",
+          "label": "All animations",
+          "battery_hungry": true,
+          "subtitle": "Master motion gate — off stops every animated surface at once."
+        },
+        {
+          "id": "haptics",
+          "icon": "ic_ctl_vibration",
+          "label": "Vibration on tap",
+          "subtitle": "Haptic feedback on every tap."
+        },
+        {
+          "id": "auto_brightness",
+          "icon": "ic_ctl_brightness",
+          "label": "Auto brightness",
+          "subtitle": "Android's adaptive-brightness mode."
+        }
+      ]
+    },
+    {
+      "id": "battery",
+      "label": "Battery Hungers",
+      "label_res": "control_group_battery",
+      "subtitle": "The same controls again, gathered so everything draining the battery can be switched off from one row.",
+      "subtitle_res": "control_group_battery_sub",
+      "derive": "battery_hungry",
+      "details": "energy_usage",
+      "details_res": "control_group_battery_details"
+    }
+  ]
+}

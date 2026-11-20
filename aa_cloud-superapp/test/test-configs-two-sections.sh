@@ -231,9 +231,9 @@ import json
 print(len(next(s for s in json.load(open('$BJ'))['ui']['sections']
                if s['id'] == 'config')['pages']))
 ")
-[ "$COUNT" = 69 ] \
-  && ok "69 config pages declared (#1755 added launcher-hub, launcher-sep-0, apps-sep-1 and profile-app) (#1745 added the configs-sep-a separator after Account) (#1737: the #1719 Network page is retired; added the NG Firewall hub, OS Perms, Proxy and three Network separators) (#1623 added the hidden tools-sep-1 | separator for the Tools group; #1596 focus page; #1610's c3-watchdog + sync-clipboard/saving-mode/focus-mode; previous ids unchanged) — the set T5 walks is the whole set" \
-  || bad "$COUNT config pages, expected 69 — a page was added or DELETED, and T5 cannot report a page that is gone"
+[ "$COUNT" = 70 ] \
+  && ok "70 config pages declared (#1833 added the hidden panels-security tab) (#1755 added launcher-hub, launcher-sep-0, apps-sep-1 and profile-app) (#1745 added the configs-sep-a separator after Account) (#1737: the #1719 Network page is retired; added the NG Firewall hub, OS Perms, Proxy and three Network separators) (#1623 added the hidden tools-sep-1 | separator for the Tools group; #1596 focus page; #1610's c3-watchdog + sync-clipboard/saving-mode/focus-mode; previous ids unchanged) — the set T5 walks is the whole set" \
+  || bad "$COUNT config pages, expected 70 — a page was added or DELETED, and T5 cannot report a page that is gone"
 
 echo "== T6: ACTIONS — the single shared row (#1610) =="
 # #1610 downgraded the ticket's two per-subpage Actions columns to ONE shared row
@@ -289,7 +289,7 @@ grep -qF 'shownSub = null' "$GRID" \
 echo "== T8: each of Launcher's four pages opens on its OWN, not via a tab owner =="
 # They were tabs until #649. A tile that still resolves to an owner page would
 # land the owner on a tab strip that no longer exists.
-for pid in presets panels-all panels-ui panels-battery panels-tools onehand notify; do
+for pid in presets panels-all panels-ui panels-battery panels-security panels-tools onehand notify; do
   case "$pid" in
     notify) grep -qF '"mirror_page": "communication/my-rss"' "$BJ" \
               && ok "notify renders through its declared mirror_page, no factory branch needed" \
@@ -315,7 +315,9 @@ BEFORE = {'network', 'bluetooth-analyze', 'bluetooth-locate', 'presets', 'contro
           'profile', 'wg', 'kde', 'ai', 'perms', 'store', 'about',
           'websearch', 'localsearch', 'textenhance', 'library', 'tokens',
           'store-cloud', 'store-phone',
-          'panels', 'panels-all', 'panels-ui', 'panels-battery', 'panels-tools',  # added on purpose: Configs ▸ Setup ▸ Launcher ▸ Controls ▸ Panels (UI | Tools), hidden tabs of the merged Controls
+          'panels', 'panels-all', 'panels-ui', 'panels-battery', 'panels-tools',
+          'panels-security',  # added on purpose (#1833): Panels ▸ Security, a hidden tab after Battery Hungers
+          # (previous line) added on purpose: Configs ▸ Setup ▸ Launcher ▸ Controls ▸ Panels (UI | Tools), hidden tabs of the merged Controls
           'update', 'kde_connect', 'animations',
           'webserver',  # added on purpose: Configs ▸ Network ▸ Webserver (opens the Cloud C3 Webserver app, else localhost in Cloud Browser)
           'apps-mesh', 'ipc', 'apps-mesh-members', 'identity',  # were Apps Mesh and its tabs; now removed_pages (Cloud Store > Access)

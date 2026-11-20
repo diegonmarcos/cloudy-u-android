@@ -81,3 +81,6 @@ All modifications to this tree — renames, package identity moves, UI work done
 by the fleet — are recorded in the cloud-u-android monorepo history under this
 directory. Keep `VENDORED.md`, `LICENSE.md` and the upstream notices in step
 with the tree whenever it changes.
+- #1833 (2026-11-20): the `GitSyncAccessibilityService` declaration was removed from
+  `android/app/src/main/AndroidManifest.xml`; no fleet library registers an accessibility
+  service. The class is kept so `AccessibilityServiceHelper` still compiles.

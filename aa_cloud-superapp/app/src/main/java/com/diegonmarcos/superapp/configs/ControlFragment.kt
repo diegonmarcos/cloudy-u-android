@@ -230,6 +230,9 @@ class ControlFragment : KitComposeFragment() {
     private val io = Executors.newSingleThreadExecutor { r -> Thread(r, "control-panel") }
     private val ioDispatcher = io.asCoroutineDispatcher()
 
+    /** #1833 the Panels tab this grid draws: Tools (every group before #1833) or Security. */
+    private val tab: String get() = arguments?.getString(ARG_TAB) ?: DeviceControls.TAB_TOOLS
+
     override fun palette() = LauncherPalette.kit(requireContext())
 
     override fun onDestroy() {
@@ -261,7 +264,7 @@ class ControlFragment : KitComposeFragment() {
         // vertical drag.
         val scroll = if (embedded) Modifier else Modifier.verticalScroll(rememberScrollState())
         Column(Modifier.fillMaxWidth().then(scroll).padding(16.dp)) {
-            Text(stringResource(R.string.control_title), color = p.textPrimary, fontSize = 15.sp,
+            Text(if (tab == DeviceControls.TAB_SECURITY) stringResource(R.string.control_title_security) else stringResource(R.string.control_title), color = p.textPrimary, fontSize = 15.sp,
                 modifier = Modifier.padding(bottom = 4.dp).testTag(TAG_TITLE))
             // The paragraph is a resource, but the four words it quotes are asked of StatusLight at render time — so a
             // page that stopped drawing one of them could not go on describing it.
@@ -270,7 +273,7 @@ class ControlFragment : KitComposeFragment() {
                 StatusLight.text(ctx, StatusLight.State.UNKNOWN), StatusLight.text(ctx, StatusLight.State.UNVERIFIABLE),
                 REFRESH_MS / 1000), color = p.textSecondary, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
             var drawn = 0
-            for (group in DeviceControls.groups) {
+            for (group in DeviceControls.groupsOn(tab)) {
                 GroupHeading(groupText(ctx, group.labelRes, group.label), groupText(ctx, group.subtitleRes, group.subtitle))
                 DetailsLink(group)
                 // Chunked into rows of `columns`; the last row is padded with weightless spacers so four tiles and two
@@ -376,7 +379,7 @@ class ControlFragment : KitComposeFragment() {
      */
     private fun refresh(scope: CoroutineScope) {
         val ctx = context ?: return
-        for (id in DeviceControls.groups.flatMap { g -> g.rows.map { it.id } }.distinct()) {
+        for (id in DeviceControls.groupsOn(tab).flatMap { g -> g.rows.map { it.id } }.distinct()) {
             val control = DeviceControls.byId[id] ?: continue
             scope.launch(ioDispatcher) {
                 val state = runCatching { control.read(ctx) }.getOrNull()
@@ -504,12 +507,13 @@ class ControlFragment : KitComposeFragment() {
         private const val TOUCH_TARGET_DP = 48
 
         private const val ARG_EMBEDDED = "embedded"
+        private const val ARG_TAB = "tab"
 
         const val TAG_TITLE = "control:title"
         fun tileTag(id: String) = "control:tile:$id"
 
         /** [embedded]: drawn inside another page's scroll view instead of wearing its own. */
-        fun newInstance(embedded: Boolean = false): ControlFragment =
-            ControlFragment().apply { arguments = Bundle().apply { putBoolean(ARG_EMBEDDED, embedded) } }
+        fun newInstance(embedded: Boolean = false, tab: String = DeviceControls.TAB_TOOLS): ControlFragment =
+            ControlFragment().apply { arguments = Bundle().apply { putBoolean(ARG_EMBEDDED, embedded); putString(ARG_TAB, tab) } }
     }
 }

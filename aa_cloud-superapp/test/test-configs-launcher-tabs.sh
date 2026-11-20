@@ -58,11 +58,11 @@ for r in (launcher, tools, cfg):
     first = ids.index(r[0])
     if ids[first:first + len(r)] != r: print('not CONSECUTIVE: %r' % (ids[first:first + len(r)],)); sys.exit()
 by = {p['id']: p for p in pages}
-if by['controls'].get('tabs') != ['presets', 'panels'] or by['panels'].get('tabs') != ['panels-all', 'panels-battery', 'panels-tools']:
+if by['controls'].get('tabs') != ['presets', 'panels'] or by['panels'].get('tabs') != ['panels-all', 'panels-battery', 'panels-security', 'panels-tools']:
     print('Controls is not Presets | Panels(All | Battery Hungers | Tools) [#1623 UI promoted out]: %r / %r' % (by['controls'].get('tabs'), by['panels'].get('tabs'))); sys.exit()
 if by['panels-ui'].get('hidden') or by['panels-ui'].get('group') != 'Launcher':
     print('UI (panels-ui) is not a visible Launcher tile: %r' % (by.get('panels-ui'),)); sys.exit()
-loose = [i for i in ('presets', 'panels', 'panels-all', 'panels-battery', 'panels-tools') if i not in by or not by[i].get('hidden')]
+loose = [i for i in ('presets', 'panels', 'panels-all', 'panels-battery', 'panels-security', 'panels-tools') if i not in by or not by[i].get('hidden')]
 if loose:
     print('tab page(s) missing or drawing a tile of their own: %r' % (loose,)); sys.exit()
 print('OK')

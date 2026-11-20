@@ -523,7 +523,142 @@ object DeviceControls {
             },
             open = { ctx -> perms(ctx, "Control panel: system settings", "write_settings") },
         ),
+
+        // ─────────────── #1833 Security (Quick actions ▸ Panels ▸ Security) ───────────────
+        // Capability in SecurityControls; every read is the device's own setting or a live round trip, every Verdict a re-read.
+
+        "developer_options" to Control(
+            // Settings.Global.development_settings_enabled.
+            observed = true,
+            read = { ctx -> SecurityControls.devOptionsOn(ctx) },
+            set = { ctx, on ->
+                val w = SecurityControls.setGlobal(ctx, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, on) { SecurityControls.devOptionsOn(it) }
+                Verdict(w.ok && SecurityControls.devOptionsOn(ctx) == on, w.detail)
+            },
+            blocked = { ctx -> if (SecurityControls.canWrite(ctx)) "" else SecurityControls.NO_CHANNEL },
+            open = { ctx -> open(ctx, Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS) },
+        ),
+
+        "usb_debugging" to Control(
+            // Settings.Global.adb_enabled. Off also ends Wireless debugging and the shell channel riding it.
+            observed = true,
+            read = { ctx -> SecurityControls.usbDebuggingOn(ctx) },
+            set = { ctx, on ->
+                val w = SecurityControls.setGlobal(ctx, Settings.Global.ADB_ENABLED, on) { SecurityControls.usbDebuggingOn(it) }
+                Verdict(w.ok && SecurityControls.usbDebuggingOn(ctx) == on, w.detail)
+            },
+            blocked = { ctx -> if (SecurityControls.canWrite(ctx)) "" else SecurityControls.NO_CHANNEL },
+            open = { ctx -> open(ctx, Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS) },
+        ),
+
+        "adb_shell" to Control(
+            // A real shell round trip through the broker (`id -u` == 2000), never a flag.
+            observed = true,
+            read = { ctx -> SecurityControls.shellUp(ctx) },
+            set = { ctx, on ->
+                val w = SecurityControls.setShell(ctx, on)
+                Verdict(w.ok && SecurityControls.shellUp(ctx) == on, w.detail)
+            },
+            open = { ctx -> runCatching { com.diegonmarcos.superapp.shellclient.ShellClient.openArmPage(ctx) } },
+        ),
+
+        "access_keyboard" to Control(
+            // Settings.Secure.enabled_accessibility_services holds its component (SecurityControls.A11Y).
+            observed = true,
+            read = { ctx -> SecurityControls.a11yOn(ctx, "access_keyboard") },
+            set = { ctx, on -> a11ySet(ctx, "access_keyboard", on) },
+            blocked = { ctx -> a11yBlocked(ctx, "access_keyboard") },
+            open = { ctx -> open(ctx, Settings.ACTION_ACCESSIBILITY_SETTINGS) },
+        ),
+        "access_superapp" to Control(
+            // Settings.Secure.enabled_accessibility_services holds its component (SecurityControls.A11Y).
+            observed = true,
+            read = { ctx -> SecurityControls.a11yOn(ctx, "access_superapp") },
+            set = { ctx, on -> a11ySet(ctx, "access_superapp", on) },
+            blocked = { ctx -> a11yBlocked(ctx, "access_superapp") },
+            open = { ctx -> open(ctx, Settings.ACTION_ACCESSIBILITY_SETTINGS) },
+        ),
+        "access_vault" to Control(
+            // Settings.Secure.enabled_accessibility_services holds its component (SecurityControls.A11Y).
+            observed = true,
+            read = { ctx -> SecurityControls.a11yOn(ctx, "access_vault") },
+            set = { ctx, on -> a11ySet(ctx, "access_vault", on) },
+            blocked = { ctx -> a11yBlocked(ctx, "access_vault") },
+            open = { ctx -> open(ctx, Settings.ACTION_ACCESSIBILITY_SETTINGS) },
+        ),
+
+        "access_others" to Control(
+            // On = an accessibility service of a fleet package that is not Keyboard, SuperApp or Vault is enabled
+            // (a library's, for one). Off takes every such service out of the enabled list; there is nothing to turn on.
+            observed = true,
+            read = { ctx -> SecurityControls.extrasOn(ctx) },
+            set = { ctx, on ->
+                if (on) Verdict(SecurityControls.extrasOn(ctx), "Nothing to turn on: this row only removes extra fleet services.")
+                else {
+                    val w = SecurityControls.clearExtras(ctx)
+                    Verdict(w.ok && !SecurityControls.extrasOn(ctx), w.detail)
+                }
+            },
+            blocked = { ctx -> if (SecurityControls.canWrite(ctx)) "" else SecurityControls.NO_CHANNEL },
+            open = { ctx -> open(ctx, Settings.ACTION_ACCESSIBILITY_SETTINGS) },
+        ),
+
+        "edge_menus" to Control(
+            // The overlay service's own strips on screen, not OneHandPrefs: the service can be killed under the pref.
+            observed = true,
+            read = { com.diegonmarcos.superapp.onehand.OneHandOverlayService.instance?.let { it.handleCount > 0 } ?: false },
+            set = { ctx, on ->
+                if (on) com.diegonmarcos.superapp.onehand.OneHandController.enable(ctx)
+                else com.diegonmarcos.superapp.onehand.OneHandController.disable(ctx)
+                val live = { (com.diegonmarcos.superapp.onehand.OneHandOverlayService.instance?.handleCount ?: 0) > 0 }
+                val settled = awaitTrue(SERVICE_SETTLE_MS) { live() == on }
+                Verdict(settled, "Edge menus are " + fmt(live()))
+            },
+            blocked = { ctx ->
+                if (Settings.canDrawOverlays(ctx)) "" else "\"Display over other apps\" is not granted to this app yet."
+            },
+            open = { ctx -> perms(ctx, "Control panel: overlay", "overlay") },
+        ),
+
+        "vpn" to Control(
+            // Any network carrying the VPN transport, whoever owns it. The switch drives this app's own tunnel (the
+            // same backend as the Mesh tile); another app's VPN is ended in that app or in Settings ▸ VPN.
+            observed = true,
+            read = { ctx -> SecurityControls.vpnUp(ctx) },
+            set = { ctx, on ->
+                val r = DeviceControls.byId.getValue("mesh").set!!(ctx, on)
+                val now = SecurityControls.vpnUp(ctx)
+                Verdict(now == on, r.detail + "; any VPN up: " + fmt(now))
+            },
+            blocked = { ctx -> DeviceControls.byId.getValue("mesh").blocked(ctx) },
+            open = { ctx -> open(ctx, Settings.ACTION_VPN_SETTINGS) },
+        ),
+
+        "location" to Control(
+            // LocationManager.isLocationEnabled.
+            observed = true,
+            read = { ctx -> SecurityControls.locationOn(ctx) },
+            set = { ctx, on ->
+                val w = SecurityControls.setLocation(ctx, on)
+                Verdict(w.ok && SecurityControls.locationOn(ctx) == on, w.detail)
+            },
+            blocked = { ctx -> if (com.diegonmarcos.superapp.system.AdbReadiness.usableNow(ctx)) "" else
+                "Needs a live shell channel (cmd location); use the tile's hold for Location settings." },
+            open = { ctx -> open(ctx, Settings.ACTION_LOCATION_SOURCE_SETTINGS) },
+        ),
     )
+
+    /** #1833 a fleet accessibility service written in or out of the enabled list; the verdict is the re-read. */
+    private fun a11ySet(ctx: Context, id: String, on: Boolean): Verdict {
+        val w = SecurityControls.setA11y(ctx, id, on)
+        return Verdict(w.ok && SecurityControls.a11yOn(ctx, id) == on, w.detail)
+    }
+
+    private fun a11yBlocked(ctx: Context, id: String): String = when {
+        !SecurityControls.a11yInstalled(ctx, id) -> "Not installed on this device."
+        !SecurityControls.canWrite(ctx) -> SecurityControls.NO_CHANNEL
+        else -> ""
+    }
 
     /** One of the launcher_settings toggles, by its declared id. */
     private fun launcherToggle(id: String) = Control(
@@ -729,7 +864,15 @@ object DeviceControls {
          */
         val details: String = "",
         val detailsRes: String = "",
+        /** #1833 the Panels tab this group is drawn on: "tools" (the default, every group before #1833) or "security". */
+        val tab: String = TAB_TOOLS,
     )
+
+    const val TAB_TOOLS = "tools"
+    const val TAB_SECURITY = "security"
+
+    /** The groups drawn on Panels tab [tab], in declared order. */
+    fun groupsOn(tab: String): List<Group> = groups.filter { it.tab == tab }
 
     /**
      * `build.json::ui.control_panel`, baked into BuildConfig at build time.
@@ -783,7 +926,9 @@ object DeviceControls {
             if (rows.isNotEmpty()) byIndex[i] = group(g, rows, derived = true)
         }
 
-        byIndex.filterNotNull()
+        // #1833 a group declared `"draw": false` is a HOME only: it gives its controls their one functional home (the rule
+        // the declaration guard holds) and is drawn nowhere; the derived views that follow it draw its rows, in their order.
+        byIndex.withIndex().filter { (i, g) -> g != null && arr!!.getJSONObject(i).optBoolean("draw", true) }.map { it.value!! }
     }
 
     private fun group(g: JSONObject, rows: List<Row>, derived: Boolean) = Group(
@@ -796,6 +941,7 @@ object DeviceControls {
         derived = derived,
         details = g.optString("details"),
         detailsRes = g.optString("details_res"),
+        tab = g.optString("tab", TAB_TOOLS),
     )
 
     /** A boolean the declaration carries on control [id] — e.g. a switch's

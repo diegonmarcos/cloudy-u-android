@@ -1131,7 +1131,7 @@ details_fail=""
 decl="$(python3 - "$BJ" <<'PY2'
 import json, sys
 groups = json.load(open(sys.argv[1]))['ui']['control_panel']['groups']
-d = [g for g in groups if g.get('derive')]
+d = [g for g in groups if g.get('derive') and g.get('tab', 'tools') == 'tools']  # #1833 the Security tab's derived views hand off nothing
 if len(d) != 1: print('expected exactly one derived group, got %d' % len(d)); raise SystemExit
 g = d[0]
 if not g.get('details'):     print('the derived group declares no `details` surface')

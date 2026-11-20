@@ -189,6 +189,17 @@
     <string name="control_group_network_sub">Todo lo que mueve datos — las antenas de este teléfono y los túneles de la flota, en un mismo sitio.</string>
     <string name="control_group_tools">Herramientas</string>
     <string name="control_group_tools_sub">La maquinaria con la que se gobiernan esta aplicación y la flota.</string>
+    <string name="control_title_security">Seguridad</string>
+    <string name="control_group_security_home">Controles de seguridad</string>
+    <string name="control_group_security_home_sub">Hogar de los controles de la pestaña Seguridad; se muestran en los grupos de abajo.</string>
+    <string name="control_group_security_debug">Desarrollo y depuración</string>
+    <string name="control_group_security_debug_sub">Opciones de desarrollador, depuración inalámbrica y USB, y el canal de shell ADB que usa el plano privilegiado de esta aplicación.</string>
+    <string name="control_group_security_access_apps">Apps de accesibilidad</string>
+    <string name="control_group_security_access_apps_sub">Las apps de la flota que ejecutan un servicio de accesibilidad. Un servicio de la flota que no está aquí (el de una librería) aparece en Otros y se quita desde ahí.</string>
+    <string name="control_group_security_access_features">Funciones que usan accesibilidad</string>
+    <string name="control_group_security_access_features_sub">Cada función que necesita un servicio de accesibilidad o una superposición, activada por separado.</string>
+    <string name="control_group_security_net">VPN y ubicación</string>
+    <string name="control_group_security_net_sub">Si hay alguna VPN activa y si la ubicación está activada.</string>
     <string name="control_group_ui">Interfaz</string>
     <string name="control_group_ui_sub">Cómo se ve y cómo responde este lanzador bajo el pulgar.</string>
     <string name="control_group_battery">Devoradores de batería</string>

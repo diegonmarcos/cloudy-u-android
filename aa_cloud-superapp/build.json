@@ -5752,6 +5752,7 @@
               "panels",
               "panels-all",
               "panels-battery",
+              "panels-security",
               "panels-tools",
               "focus"
             ]
@@ -6423,6 +6424,7 @@
             "tabs": [
               "panels-all",
               "panels-battery",
+              "panels-security",
               "panels-tools"
             ],
             "hidden": true,
@@ -6443,6 +6445,15 @@
             "id": "panels-battery",
             "label": "Battery Hungers",
             "icon": "ic_settings",
+            "hidden": true,
+            "group": "Launcher",
+            "subgroup": ""
+          },
+          {
+            "_doc": "#1833 Panels ▸ Security, right after Battery Hungers — the device switch board's Security groups (ui.control_panel groups with tab security: Developer & debugging, Accessibility apps, Features using accessibility, VPN & location), drawn by the same ControlFragment grid as Tools (live lights, tap to switch, hold for the system screen, every write re-read). LauncherConfigFragment scope security.",
+            "id": "panels-security",
+            "label": "Security",
+            "icon": "ic_lock",
             "hidden": true,
             "group": "Launcher",
             "subgroup": ""
@@ -11024,6 +11035,90 @@
       "columns": 4,
       "groups": [
         {
+          "_doc": "#1833 THE HOME of the Security tab's own controls, drawn nowhere (draw false): the declaration guard gives every control exactly one functional home, and the Security tab draws these rows through the derived groups below, in this order, next to the tiles it shares with Tools (Wireless debugging, Floating menu) by flag. Capability: configs/SecurityControls.kt via DeviceControls.byId.",
+          "id": "security_home",
+          "label": "Security controls",
+          "label_res": "control_group_security_home",
+          "subtitle": "Home of the Security tab's controls; drawn through the groups below.",
+          "subtitle_res": "control_group_security_home_sub",
+          "tab": "security",
+          "draw": false,
+          "controls": [
+            {
+              "id": "developer_options",
+              "icon": "ic_code",
+              "label": "Developer options",
+              "security_debug": true,
+              "subtitle": "Settings.Global development_settings_enabled. Off hides Developer options and with them Wireless debugging."
+            },
+            {
+              "id": "adb_shell",
+              "icon": "ic_terminal",
+              "label": "ADB shell",
+              "security_debug": true,
+              "subtitle": "The privileged shell channel, asked with a real round trip. A tap connects it; it closes when Wireless or USB debugging goes off."
+            },
+            {
+              "id": "usb_debugging",
+              "icon": "ic_terminal",
+              "label": "USB debugging",
+              "security_debug": true,
+              "subtitle": "Settings.Global adb_enabled. Off also ends Wireless debugging and the shell channel riding it."
+            },
+            {
+              "id": "access_keyboard",
+              "icon": "ic_keyboard",
+              "label": "Grabber (Cloud Keyboard)",
+              "access_app": true,
+              "access_feature": true,
+              "subtitle": "Cloud Keyboard's accessibility service: the Grabber reads the selected text of any app through it."
+            },
+            {
+              "id": "access_superapp",
+              "icon": "ic_nav_lock",
+              "label": "Cloud SuperApp",
+              "access_app": true,
+              "subtitle": "SuperApp's accessibility service: the lock-screen action (lock the phone from the launcher)."
+            },
+            {
+              "id": "access_vault",
+              "icon": "ic_vault",
+              "label": "Autofill (Cloud Vault)",
+              "access_app": true,
+              "access_feature": true,
+              "subtitle": "Cloud Vault's accessibility service: autofill in apps that do not support the Android autofill framework."
+            },
+            {
+              "id": "access_others",
+              "icon": "ic_lock",
+              "label": "Other fleet services",
+              "access_app": true,
+              "subtitle": "Any other fleet package's accessibility service (a library's) that is enabled. Lit = one is on; a tap removes them all."
+            },
+            {
+              "id": "edge_menus",
+              "icon": "ic_onehand",
+              "label": "Edge menu",
+              "access_feature": true,
+              "subtitle": "The One-Hand edge pads, read from the overlay's own strips on screen, not the stored switch."
+            },
+            {
+              "id": "vpn",
+              "icon": "ic_ctl_firewall",
+              "label": "VPN",
+              "security_net": true,
+              "subtitle": "Lit when any VPN is up on the device. The switch drives this app's own tunnel (the Mesh engine); another app's VPN is ended in that app."
+            },
+            {
+              "id": "location",
+              "icon": "ic_map_pin",
+              "label": "Location",
+              "security_net": true,
+              "subtitle": "LocationManager location on/off; switched with cmd location over the shell channel."
+            }
+          ]
+        },
+        {
           "id": "device",
           "label": "Device",
           "label_res": "control_group_device",
@@ -11152,6 +11247,7 @@
               "icon": "ic_terminal",
               "label": "Wireless debugging",
               "battery_hungry": true,
+              "security_debug": true,
               "subtitle": "The adbd this app's own privileged plane talks to. Turning it off ends silent installs and self-grants until it is back on."
             },
             {
@@ -11188,6 +11284,7 @@
               "icon": "ic_nav",
               "label": "Floating menu",
               "battery_hungry": true,
+              "access_feature": true,
               "subtitle": "The draggable overlay button, on top of any app."
             },
             {
@@ -11227,6 +11324,42 @@
           "_doc_details": "THE TILES ANSWER 'WHAT IS DRAINING IT THAT I CAN SWITCH OFF'. They do NOT answer 'WHICH APPS ARE EATING MY BATTERY', which is a different question and the one the owner also asked. This group's tiles are a JUDGEMENT recorded per control (see battery_hungry above) — editorial, not measured — and nothing here is a per-app number. The measured answer already exists in this app and was simply unreachable from this page: libs:battery's EnergyUsageDialog, until now openable only from the developer Control page. `details` names the surface a group can hand off to; ControlFragment maps the name to the dialog exactly as Sections.iconResFor maps an icon name to a drawable, and a name it does not know draws no affordance rather than crashing. This is a LINK, not a second copy of the data — a per-app list re-implemented here is the drift that the one-id-one-Control rule above exists to prevent.",
           "details": "energy_usage",
           "details_res": "control_group_battery_details"
+        },
+        {
+          "id": "security_debug",
+          "label": "Developer & debugging",
+          "label_res": "control_group_security_debug",
+          "subtitle": "Developer options, Wireless and USB debugging, and the ADB shell channel this app's privileged plane uses.",
+          "subtitle_res": "control_group_security_debug_sub",
+          "tab": "security",
+          "derive": "security_debug"
+        },
+        {
+          "id": "security_access_apps",
+          "label": "Accessibility apps",
+          "label_res": "control_group_security_access_apps",
+          "subtitle": "The fleet apps that run an accessibility service. A fleet service not listed here (a library's) shows under Other and is removed from there.",
+          "subtitle_res": "control_group_security_access_apps_sub",
+          "tab": "security",
+          "derive": "access_app"
+        },
+        {
+          "id": "security_access_features",
+          "label": "Features using accessibility",
+          "label_res": "control_group_security_access_features",
+          "subtitle": "Each feature that needs an accessibility service or an overlay, switched on its own.",
+          "subtitle_res": "control_group_security_access_features_sub",
+          "tab": "security",
+          "derive": "access_feature"
+        },
+        {
+          "id": "security_net",
+          "label": "VPN & location",
+          "label_res": "control_group_security_net",
+          "subtitle": "Whether any VPN is up and whether location is on.",
+          "subtitle_res": "control_group_security_net_sub",
+          "tab": "security",
+          "derive": "security_net"
         }
       ]
     },
