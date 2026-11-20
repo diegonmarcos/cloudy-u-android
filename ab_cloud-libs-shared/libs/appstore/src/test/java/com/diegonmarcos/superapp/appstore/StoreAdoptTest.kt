@@ -185,4 +185,14 @@ class StoreAdoptTest {
         val noStart = StoreAdopt.afterReinstall("p.q", why, "the release (versionCode 1) is older", null)
         assertEquals(State.FAILED, noStart.state); assertTrue(noStart.reason.contains("did not start"))
     }
+
+    /** The check needs no ADB: with the shell down a package Cloud Store already owns counts as adopted; only the others wait. */
+    @Test fun withTheShellDownTheCheckStillReadsTheInstaller() {
+        val owned = StoreAdopt.withoutShell("p.q", StoreAdopt.STORE, "ADB shell: down")
+        assertEquals(State.ALREADY, owned.state)
+        val other = StoreAdopt.withoutShell("p.r", "com.android.shell", "ADB shell: down")
+        assertEquals(State.ADB_DOWN, other.state)
+        assertEquals("ADB shell: down", other.reason)
+        assertEquals(State.ADB_DOWN, StoreAdopt.withoutShell("p.s", null, "x").state)
+    }
 }

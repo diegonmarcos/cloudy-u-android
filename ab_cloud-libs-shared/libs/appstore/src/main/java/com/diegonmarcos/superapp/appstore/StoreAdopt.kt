@@ -108,6 +108,15 @@ internal object StoreAdopt {
     /** The failure lines of the last Adopt all run, kept for the Cloud page. */
     @Volatile var lastReport: List<String> = emptyList()
 
+    /**
+     * Pure: a package's result when the ADB shell is down. The CHECK needs no shell: any app reads another package's installer of
+     * record through PackageManager (getInstallSourceInfo), so a package Cloud Store already owns is ALREADY, not a failure; only
+     * the WRITE (`pm set-installer`, shell uid 2000) waits for the shell.
+     */
+    fun withoutShell(pkg: String, installer: String?, why: String): Result =
+        if (installer == STORE) Result(pkg, State.ALREADY, "Cloud Store is already the installer of record (read without ADB)", installer)
+        else Result(pkg, State.ADB_DOWN, why, installer)
+
     /** Pure: the final result from a set output and the installer read back afterwards. */
     fun resolve(pkg: String, before: String?, setOut: String?, after: String?): Result {
         if (before == STORE) return Result(pkg, State.ALREADY, "Cloud Store is already the installer of record", before)
@@ -226,7 +235,7 @@ internal object StoreAdopt {
         val status = runCatching { StoreShell.status(ctx) }.getOrNull()
         if (status == null || !status.armed) {
             val why = status?.line() ?: "ADB shell state unknown"
-            return@runCatching installed.map { Result(it, State.ADB_DOWN, why, SilentReadiness.installerOf(ctx, it)).also { r -> last[it] = r } }
+            return@runCatching installed.map { withoutShell(it, SilentReadiness.installerOf(ctx, it), why).also { r -> last[it] = r } }
         }
         val before = parseInstallers(StoreShell.exec(ctx, READ_BACK).orEmpty()).ifEmpty { null }
         fun inst(p: String) = before?.get(p) ?: SilentReadiness.installerOf(ctx, p)
