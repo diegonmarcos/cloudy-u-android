@@ -636,6 +636,94 @@
           "segment_label": "Banxico"
         },
         {
+          "id": "japan",
+          "title": "Japan government bond curve (Ministry of Finance JGB interest rates)",
+          "source": "mof_japan",
+          "view": "curve",
+          "derive": "points",
+          "fetch": {
+            "provider": "mof_jgb_csv",
+            "path": "/jgbcme.csv",
+            "labels": {
+              "1Y": "1Y",
+              "2Y": "2Y",
+              "3Y": "3Y",
+              "4Y": "4Y",
+              "5Y": "5Y",
+              "6Y": "6Y",
+              "7Y": "7Y",
+              "8Y": "8Y",
+              "9Y": "9Y",
+              "10Y": "10Y",
+              "15Y": "15Y",
+              "20Y": "20Y",
+              "25Y": "25Y",
+              "30Y": "30Y",
+              "40Y": "40Y",
+              "JPN.M.IRSTCI.PA._Z._Z._Z": "O/N (OECD, monthly)",
+              "JPN.M.IR3TIB.PA._Z._Z._Z": "3M (OECD, monthly)",
+              "JPN.M.IRLT.PA._Z._Z._Z": "10Y (OECD, monthly)"
+            },
+            "years": {
+              "1Y": 1,
+              "2Y": 2,
+              "3Y": 3,
+              "4Y": 4,
+              "5Y": 5,
+              "6Y": 6,
+              "7Y": 7,
+              "8Y": 8,
+              "9Y": 9,
+              "10Y": 10,
+              "15Y": 15,
+              "20Y": 20,
+              "25Y": 25,
+              "30Y": 30,
+              "40Y": 40,
+              "JPN.M.IRSTCI.PA._Z._Z._Z": 0.002778,
+              "JPN.M.IR3TIB.PA._Z._Z._Z": 0.25,
+              "JPN.M.IRLT.PA._Z._Z._Z": 10
+            },
+            "_doc_fallback": "#1832 one of the 'other sovereign curves' the placeholder below names, read key-free from the publisher: the month's file first, the history file when the month has no row yet, the OECD monthly rates on DBnomics last (their codes are labelled here because a fallback is drawn with the panel's labels and years)",
+            "primary": {
+              "source": "cloud_fincept",
+              "api": "/v1/rates/sovereign-curves",
+              "params": {
+                "countries": "JP",
+                "tenors": "2,5,10,30"
+              },
+              "parse": "finterm_v1"
+            },
+            "fallbacks": [
+              {
+                "source": "mof_japan",
+                "provider": "mof_jgb_csv",
+                "path": "/historical/jgbcme_all.csv"
+              },
+              {
+                "source": "dbnomics",
+                "provider": "dbnomics_series",
+                "path": "/series",
+                "params": {
+                  "series_ids": "OECD/DSD_KEI@DF_KEI/JPN.M.IRSTCI.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/JPN.M.IR3TIB.PA._Z._Z._Z,OECD/DSD_KEI@DF_KEI/JPN.M.IRLT.PA._Z._Z._Z",
+                  "observations": "1",
+                  "metadata": "0"
+                }
+              }
+            ]
+          },
+          "columns": [
+            "Tenor",
+            "Yield %",
+            "Chg bp",
+            "Date"
+          ],
+          "x_title": "maturity (years)",
+          "unit": "%",
+          "change_unit": "bp",
+          "segment_label": "MoF"
+        },
+        {
           "id": "sovereigns",
           "title": "Other sovereign curves (spot, zero)",
           "source": "premium_fi",

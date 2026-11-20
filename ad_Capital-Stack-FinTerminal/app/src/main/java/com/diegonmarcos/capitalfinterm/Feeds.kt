@@ -75,6 +75,7 @@ object Feeds {
             "sarb_rates" -> sarb(body)
             "banxico_sie" -> banxico(body, o.each)
             "dbnomics_series" -> dbnomicsLatest(body)
+            "mof_jgb_csv" -> mofJgb(body)
             else -> Got()
         }
     }.getOrDefault(Got())
@@ -170,6 +171,26 @@ object Feeds {
         val last = obs.lastOrNull() ?: return Got()
         val key = each.ifEmpty { Catalog.str(o, "serie") }
         return Got(points = listOf(Pt(key, key, 0.0, last.second, obs.getOrNull(obs.size - 2)?.second, last.first)))
+    }
+
+    /**
+     * #1832 Ministry of Finance Japan JGB interest rates (jgbcme.csv, and the history file of the same shape): the header "Date,1Y,2Y,...,40Y", then one
+     * row per day "yyyy/m/d,v,v,..."; the last day's yield per tenor, the day before as the previous value ("-" = no figure, left out).
+     */
+    fun mofJgb(body: String): Got {
+        val lines = body.lines().map { it.trim() }
+        val head = lines.firstOrNull { it.startsWith("Date,") }?.split(',')?.drop(1)?.map { it.trim() } ?: return Got()
+        val rows = lines.mapNotNull { l ->
+            val m = Regex("^(\\d{4})/(\\d{1,2})/(\\d{1,2}),").find(l) ?: return@mapNotNull null
+            val (y, mo, d) = m.destructured
+            String.format(Locale.ROOT, "%s-%02d-%02d", y, mo.toInt(), d.toInt()) to l.split(',').drop(1).map { it.trim() }
+        }.sortedBy { it.first }
+        val last = rows.lastOrNull() ?: return Got()
+        val prev = rows.getOrNull(rows.size - 2)?.second
+        return Got(points = head.mapIndexedNotNull { i, t ->
+            val v = last.second.getOrNull(i)?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: return@mapIndexedNotNull null
+            Pt(t, t, i.toDouble(), v, prev?.getOrNull(i)?.toDoubleOrNull(), last.first)
+        })
     }
 
     /** #1832 a DBnomics series answer (the OECD fallback of a curve): one point per series code, its last value and the one before. */

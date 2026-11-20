@@ -23,7 +23,7 @@ class DashboardsUiTest {
     @Test fun keyRowsComeLastAndASegmentIsDrawnInsideItsCard() {
         val yc = d("yield_curves")
         // #1832 the EM curves (India, Brazil, Indonesia, South Africa, Mexico) draw after the euro area, the key row still last
-        assertEquals(listOf("ust", "euro", "india", "brazil", "indonesia", "south_africa", "mexico", "sovereigns"), Dashboards.drawOrder(yc).map { it.id })
+        assertEquals(listOf("ust", "euro", "india", "brazil", "indonesia", "south_africa", "mexico", "japan", "sovereigns"), Dashboards.drawOrder(yc).map { it.id })
         assertEquals(listOf("ust", "ust_official"), Dashboards.segments(yc, yc.panels.first { it.id == "ust" }).map { it.id })
         val fx = d("fx")
         val order = Dashboards.drawOrder(fx)

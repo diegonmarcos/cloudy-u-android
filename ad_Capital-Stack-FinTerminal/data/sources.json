@@ -814,6 +814,37 @@
       }
     },
     {
+      "id": "mof_japan",
+      "name": "Ministry of Finance Japan JGB interest rates",
+      "category": "FI-Macro",
+      "coverage": "Japan's government bond curve: the Ministry of Finance's daily JGB interest rates (constant maturity, 1Y to 40Y), the current month's file and the history since 1974",
+      "endpoint": "https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate",
+      "docs": "https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/index.htm",
+      "auth": {
+        "type": "none",
+        "note": "Public CSV files, no key."
+      },
+      "connector": "mof_jgb_csv",
+      "feeds": [
+        {
+          "tab": "cb",
+          "entries": [
+            "Yield Curves"
+          ]
+        }
+      ],
+      "priority": 10,
+      "cors": false,
+      "licence": "Ministry of Finance Japan, attribution",
+      "attribution": "JGB interest rates: Ministry of Finance Japan",
+      "schedule": {
+        "ttl_s": 3600
+      },
+      "rate_limit": {
+        "per_min": 6
+      }
+    },
+    {
       "id": "oecd",
       "name": "OECD Data Explorer (SDMX)",
       "category": "FI-Macro",

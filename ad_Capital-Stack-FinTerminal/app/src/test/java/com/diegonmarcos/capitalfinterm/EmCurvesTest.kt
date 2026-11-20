@@ -58,7 +58,7 @@ class EmCurvesTest {
             assertTrue(id, src("dbnomics").feeds("cb", "Yield Curves"))
         }
         // the existing curves and the premium placeholder are still there, the EM curves come after the euro area
-        assertEquals(listOf("ust", "ust_official", "euro", "india", "brazil", "indonesia", "south_africa", "mexico", "sovereigns"), dash.panels.map { it.id })
+        assertEquals(listOf("ust", "ust_official", "euro", "india", "brazil", "indonesia", "south_africa", "mexico", "japan", "sovereigns"), dash.panels.map { it.id })
     }
 
     @Test fun indiaIsTheCcilGovernmentCurveWithoutTheStateLoans() {
@@ -132,7 +132,7 @@ class EmCurvesTest {
         val dbn = src("dbnomics")
         val files = mapOf("india" to "IND", "brazil" to "BRA", "indonesia" to "IDN", "south_africa" to "ZAF", "mexico" to "MEX")
         for ((id, a3) in files) {
-            val http = Fake { url -> if (url.startsWith(dbn.endpoint + "/series?series_ids=") && url.contains(a3 + ".M.IRLT")) fx("dbnomics-oecd-kei-$a3.json") else null }
+            val http = Fake { url -> if (url.startsWith(dbn.endpoint + "/series?") && url.contains("series_ids=") && url.contains(a3 + ".M.IRLT")) fx("dbnomics-oecd-kei-$a3.json") else null }
             val d = load(id, http)
             assertEquals(id, dbn.name, d.servedBy)
             assertTrue(id, d.rows.any { it[0] == "10Y (OECD, monthly)" })
@@ -143,8 +143,25 @@ class EmCurvesTest {
         assertEquals(listOf("10Y (OECD, monthly)", "9.45", "+57.0", "2026-05"), mx.rows.last())
     }
 
+    /** #1832 the placeholder "Other sovereign curves" area: Japan's curve is read key-free from the Ministry of Finance (the BoE's ships as a zipped workbook and ChinaBond's needs a POST session, so those two stay on the container's route of the CB Homepage). */
+    @Test fun japanIsTheMinistryOfFinanceCurveWithTheHistoryFileWhenTheMonthHasNoRow() {
+        val mof = src("mof_japan")
+        val now = load("japan", Fake { if (it == mof.endpoint + "/jgbcme.csv") fx("mof-jgbcme.csv") else null })
+        assertEquals(listOf("1Y", "2Y", "3Y", "4Y", "5Y", "6Y", "7Y", "8Y", "9Y", "10Y", "15Y", "20Y", "25Y", "30Y", "40Y"), now.rows.map { it[0] })
+        assertEquals(listOf("10Y", "2.82", FinFormat.DASH, "2026-11-02"), now.rows.first { it[0] == "10Y" })
+        assertEquals(40.0, now.chart.last().x, 0.0)
+        assertEquals("", now.servedBy)
+        // the month's file does not answer: the history file of the same shape, its last two days
+        val hist = load("japan", Fake { if (it == mof.endpoint + "/historical/jgbcme_all.csv") fx("mof-jgbcme-all-tail.csv") else null })
+        assertEquals(listOf("10Y", "2.82", "-5.9", "2026-10-30"), hist.rows.first { it[0] == "10Y" })
+        // neither: the OECD rates
+        val oecd = load("japan", Fake { if (it.startsWith(src("dbnomics").endpoint)) fx("dbnomics-oecd-kei-JPN.json") else null })
+        assertEquals(src("dbnomics").name, oecd.servedBy)
+        assertTrue(Feeds.mofJgb("Date,1Y\n2026/11/2,-\n").isEmpty)
+    }
+
     @Test fun nothingAnsweringIsAnErrorNotAnEmptyCurve() {
-        for (id in listOf("india", "brazil", "indonesia", "south_africa", "mexico")) {
+        for (id in listOf("india", "brazil", "indonesia", "south_africa", "mexico", "japan")) {
             val r = runCatching { load(id, Fake { null }) }
             assertTrue(id, r.exceptionOrNull() is IOException)
         }
