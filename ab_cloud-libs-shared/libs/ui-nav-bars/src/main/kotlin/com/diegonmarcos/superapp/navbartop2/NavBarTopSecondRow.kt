@@ -36,6 +36,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalDensity
@@ -207,6 +209,14 @@ public fun NavBarTopSecondRow(
     val strip = RoundedCornerShape(SecondRowSpec.STRIP_RADIUS)
     val tab = RoundedCornerShape(SecondRowSpec.TAB_RADIUS)
     val scroll = rememberScrollState()
+    // #1831 the selected tab is brought on screen: a crowded row scrolled, and a tab picked elsewhere (a deep link, a page reached inside
+    // another view) could sit off the edge with nothing on screen marked (Cloud Wiki's Chronos simulators at the end of its era tabs)
+    val tabX = remember { androidx.compose.runtime.mutableStateMapOf<String, Int>() }
+    val lead = with(LocalDensity.current) { SecondRowSpec.SIDE.roundToPx() * 3 }
+    LaunchedEffect(selectedId, tabX[selectedId]) {
+        val x = selectedId?.let { tabX[it] } ?: return@LaunchedEffect
+        if (x < scroll.value || x > scroll.value + scroll.viewportSize - lead) scroll.animateScrollTo((x - lead).coerceAtLeast(0))
+    }
     val tabHeight by animateDpAsState(if (compact) SecondRowSpec.COMPACT_TAB_HEIGHT else SecondRowSpec.TAB_HEIGHT, label = "secondrow_tab_height")
     ChromeBarVisibility(hidden = hidden) {
     BoxWithConstraints(modifier.semantics { testTagsAsResourceId = true }.fillMaxWidth().padding(top = top, bottom = SecondRowSpec.BOTTOM_INSET, start = SecondRowSpec.SIDE, end = SecondRowSpec.SIDE)) {
@@ -226,6 +236,7 @@ public fun NavBarTopSecondRow(
         shown.forEachIndexed { i, page ->
             // #1630 a declared group boundary: a "|" character (not a tab) just before this page.
             if (i > 0 && page.separatorBefore) Text("|", Modifier.testTag("secondrow_sep_" + page.id), color = palette.inkDim)
+            androidx.compose.foundation.layout.Box(Modifier.onGloballyPositioned { c -> tabX[page.id] = c.positionInParent().x.toInt() }) {
             SecondRowTab(
                 page, i, shown.size, page.id == selectedId,
                 // #1159 at rest EVERY tab shows its name; scrolled down only the selected one does, and the tab is shorter.
@@ -233,6 +244,7 @@ public fun NavBarTopSecondRow(
                 palette = palette, tabHeight = tabHeight, tab = tab, iconFor = iconFor,
                 onClick = { if (page.id == selectedId) onReselect(page) else onSelect(page) },
             )
+            }
         }
     }
     }

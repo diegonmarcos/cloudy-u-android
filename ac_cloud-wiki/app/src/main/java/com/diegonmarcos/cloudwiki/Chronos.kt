@@ -85,8 +85,12 @@ object Chronos {
  * copy's) are not side-menu children any more (the collapsed rail drew them as siblings of the topics, "Hum" twice): they are the
  * Chronos topic's own top tabs ([chronosTabs]), after its era pages. The declaration's other pages and groups are untouched.
  */
-fun withChronos(section: com.diegonmarcos.superapp.bottomnav.NavSection, @Suppress("UNUSED_PARAMETER") tree: ChronosTree): com.diegonmarcos.superapp.bottomnav.NavSection =
-    section.copy(pages = section.pages.map { if (it.id == Chronos.PARENT) it.copy(pages = emptyList()) else it })
+fun withChronos(section: com.diegonmarcos.superapp.bottomnav.NavSection, @Suppress("UNUSED_PARAMETER") tree: ChronosTree): com.diegonmarcos.superapp.bottomnav.NavSection {
+    val strip = { p: com.diegonmarcos.superapp.bottomnav.NavPage -> if (p.id == Chronos.PARENT) p.copy(pages = emptyList()) else p }
+    // the side menu draws the GROUPS, and a group holds its own copies of the pages: both lists are stripped (the emulator shot of
+    // run 44708344811 still showed the simulators under Chronos when only section.pages was)
+    return section.copy(pages = section.pages.map(strip), groups = section.groups.map { g -> g.copy(pages = g.pages.map(strip)) })
+}
 
 /**
  * #1831 the Chronos topic's top tabs after its dataset pages: the simulators of [tree] (the repo's root page "All cycles" and its

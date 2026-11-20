@@ -171,11 +171,13 @@ fun ChronosSimPage(tree: ChronosTree, page: ChronosPage, onOpen: (String) -> Uni
             onRefresh = { scope.launch { ChronosRepo.refresh(ctx) } },
             onMode = { ChronosRepo.setMode(ctx, it) },
         )
-        val kids = page.children.mapNotNull { tree.page(it) }
+        // a section shows its sub-pages; #1831 a sub-page shows its siblings with itself selected (Quantum Gravity Cycle had no row)
+        val parent = page.parent?.let { tree.page(it) }
+        val kids = page.children.mapNotNull { tree.page(it) }.ifEmpty { parent?.children?.mapNotNull { tree.page(it) }.orEmpty() }
         if (kids.isNotEmpty()) {
             NavBarTopSecondRow(
                 pages = kids.map { NavPage(it.id, it.label, it.icon) },
-                selectedId = null,
+                selectedId = page.id.takeIf { id -> kids.any { it.id == id } },
                 onSelect = { open(it.id) },
                 modifier = Modifier.testTag(Tags.CHRONOS_TABS),
                 underTopChrome = false,

@@ -95,6 +95,17 @@ class NavBarTopSecondRowTest {
         for (g in gaps) assertEquals("gaps $gaps", gaps[0], g, 1.5f)
     }
 
+    /** #1831 a selected tab beyond the screen edge is scrolled into view (Cloud Wiki's simulator tabs sit after the era pages). */
+    @Test fun `the selected tab is brought on screen in a crowded row`() {
+        show(14, selected = "p13")
+        compose.waitForIdle()
+        compose.mainClock.advanceTimeBy(2_000)
+        compose.waitForIdle()
+        val strip = compose.onNodeWithTag(SecondRowTags.STRIP).fetchSemanticsNode().boundsInRoot
+        val t = compose.onNodeWithTag(SecondRowTags.tab("p13")).fetchSemanticsNode().boundsInRoot
+        assertTrue("p13 $t is inside the strip $strip", t.left >= strip.left - 1f && t.right <= strip.right + 1f)
+    }
+
     @Test fun `selecting calls back with the page`() {
         var picked: String? = null
         show(3, onSelect = { picked = it.id })

@@ -69,10 +69,11 @@ class ChronosRepoTest {
 
     /** #1831 Chronos is ONE side-menu entry; its simulators (from the clone) are its tabs, after a separator; Quantum's pages are its second row. */
     @Test fun chronosIsOneMenuEntryAndItsSimulatorsAreItsTabs() {
-        val section = NavSection("wiki", "Wiki", "menu", pages = listOf(
-            NavPage("math", "Math", "functions"),
-            NavPage(Chronos.PARENT, "Chronos", "timeline", pages = listOf(NavPage("old", "Old", "x"))),
-        ))
+        val chronos = NavPage(Chronos.PARENT, "Chronos", "timeline", pages = listOf(NavPage("old", "Old", "x")))
+        val math = NavPage("math", "Math", "functions")
+        // the side menu draws the groups, which carry their own copies of the pages
+        val section = NavSection("wiki", "Wiki", "menu", pages = listOf(math, chronos),
+            groups = listOf(com.diegonmarcos.superapp.bottomnav.NavGroup("hum", "Humanities", listOf(math, chronos))))
         val tree = ChronosTree(listOf(
             ChronosPage("chronos.lib", "All cycles", "timeline", "Chronos/index.html", null, emptyList()),
             ChronosPage("chronos.lib.3", "Quantum Cycles", "hub", "Chronos/3.Q/index.html", null, listOf("chronos.lib.3.1")),
@@ -82,6 +83,8 @@ class ChronosRepoTest {
         val out = withChronos(section, tree)
         assertEquals(listOf("math", Chronos.PARENT), out.pages.map { it.id })
         assertTrue("no simulator in the side menu", out.pages.first { it.id == Chronos.PARENT }.pages.isEmpty())
+        assertTrue("nor in the side menu's groups", out.groups.single().pages.first { it.id == Chronos.PARENT }.pages.isEmpty())
+        assertEquals(listOf("math", Chronos.PARENT), out.groups.single().pages.map { it.id })
         val tabs = chronosTabs(tree)
         assertEquals(listOf("chronos.lib", "chronos.lib.3", "chronos.lib.9"), tabs.map { it.id })
         assertEquals(listOf(true, false, false), tabs.map { it.separatorBefore })
