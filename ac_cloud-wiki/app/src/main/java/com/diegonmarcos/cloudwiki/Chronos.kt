@@ -85,8 +85,10 @@ object Chronos {
  * the declaration's other pages and groups are untouched; only the Chronos page's nested pages follow the repo.
  */
 fun withChronos(section: com.diegonmarcos.superapp.bottomnav.NavSection, tree: ChronosTree): com.diegonmarcos.superapp.bottomnav.NavSection {
-    val root = tree.root ?: return section
+    if (tree.root == null) return section
     fun nav(p: ChronosPage): com.diegonmarcos.superapp.bottomnav.NavPage =
         com.diegonmarcos.superapp.bottomnav.NavPage(p.id, p.label, p.icon, pages = p.children.mapNotNull { tree.page(it) }.map(::nav))
-    return section.copy(pages = section.pages.map { if (it.id == Chronos.PARENT) it.copy(pages = listOf(nav(root))) else it })
+    // #1831 flat under the Chronos topic: every top-level page of the tree (the root first), deeper pages nested under their section
+    val top = tree.pages.filter { it.parent == null }.map(::nav)
+    return section.copy(pages = section.pages.map { if (it.id == Chronos.PARENT) it.copy(pages = top) else it })
 }

@@ -299,55 +299,53 @@
             "pages": [
               {
                 "id": "chronos.lib",
-                "label": "Chronos - Cycles Across Scales",
+                "label": "All cycles",
                 "icon": "timeline",
-                "asset": "Chronos/index.html",
+                "asset": "Chronos/index.html"
+              },
+              {
+                "id": "chronos.lib.0",
+                "label": "Humansphere - Circadian",
+                "icon": "bedtime",
+                "asset": "Chronos/0.Humansphere-Circadian/index.html"
+              },
+              {
+                "id": "chronos.lib.1",
+                "label": "Earthsphere - Cycles",
+                "icon": "public",
+                "asset": "Chronos/1.Earthsphere-Cycles/index.html"
+              },
+              {
+                "id": "chronos.lib.2",
+                "label": "Milkwaysphere - Orbits",
+                "icon": "language",
+                "asset": "Chronos/2.Milkwaysphere-Orbits/index.html"
+              },
+              {
+                "id": "chronos.lib.3",
+                "label": "Quantum Cycles",
+                "icon": "hub",
+                "asset": "Chronos/3.Quantum-Cycles/index.html",
                 "pages": [
                   {
-                    "id": "chronos.lib.0",
-                    "label": "Advanced Circadian Dynamics & Endocrine Simulator",
-                    "icon": "bedtime",
-                    "asset": "Chronos/0.Humansphere-Circadian/index.html"
+                    "id": "chronos.lib.3.0",
+                    "label": "Quantum Decoherence Cycle",
+                    "icon": "schedule",
+                    "asset": "Chronos/3.Quantum-Cycles/3.0.Quantum-Decoherence-Cycle/index.html"
                   },
                   {
-                    "id": "chronos.lib.1",
-                    "label": "Earthsphere Cycles Simulator",
-                    "icon": "public",
-                    "asset": "Chronos/1.Earthsphere-Cycles/index.html"
-                  },
-                  {
-                    "id": "chronos.lib.2",
-                    "label": "Milky Way Orbits & Local Group 3D",
-                    "icon": "language",
-                    "asset": "Chronos/2.Milkwaysphere-Orbits/index.html"
-                  },
-                  {
-                    "id": "chronos.lib.3",
-                    "label": "Quantum Cycles - Chronos",
-                    "icon": "hub",
-                    "asset": "Chronos/3.Quantum-Cycles/index.html",
-                    "pages": [
-                      {
-                        "id": "chronos.lib.3.0",
-                        "label": "Decoherence Cycle - ( Cells repair & Memory) - Quantum Mechanics",
-                        "icon": "schedule",
-                        "asset": "Chronos/3.Quantum-Cycles/3.0.Quantum-Decoherence-Cycle/index.html"
-                      },
-                      {
-                        "id": "chronos.lib.3.1",
-                        "label": "Black Hole Cycle (Birth & Death) - Quantum Gravity",
-                        "icon": "rocket_launch",
-                        "asset": "Chronos/3.Quantum-Cycles/3.1.Quantum-Gravity-Cycle/index.html"
-                      }
-                    ]
-                  },
-                  {
-                    "id": "chronos.lib.4",
-                    "label": "Celestial Alignments | 3-Tier System",
-                    "icon": "auto_awesome",
-                    "asset": "Chronos/4.Astronomy-Astrological-sphere/index.html"
+                    "id": "chronos.lib.3.1",
+                    "label": "Quantum Gravity Cycle",
+                    "icon": "rocket_launch",
+                    "asset": "Chronos/3.Quantum-Cycles/3.1.Quantum-Gravity-Cycle/index.html"
                   }
                 ]
+              },
+              {
+                "id": "chronos.lib.4",
+                "label": "Astronomy - Astrological Sphere",
+                "icon": "auto_awesome",
+                "asset": "Chronos/4.Astronomy-Astrological-sphere/index.html"
               }
             ]
           },

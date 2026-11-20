@@ -19,20 +19,22 @@ class ChronosTest {
         assertEquals("chronos.lib", tree.root?.id)
         assertEquals(listOf("chronos.lib", "chronos.lib.0", "chronos.lib.1", "chronos.lib.2", "chronos.lib.3", "chronos.lib.3.0", "chronos.lib.3.1", "chronos.lib.4"),
             tree.pages.map { it.id })
-        assertEquals(listOf("chronos.lib.0", "chronos.lib.1", "chronos.lib.2", "chronos.lib.3", "chronos.lib.4"), tree.page("chronos.lib")?.children)
+        // #1831 FLAT under the Chronos topic: the root page and the five sections are siblings; only Quantum Cycles nests its two pages
+        assertEquals(listOf("chronos.lib", "chronos.lib.0", "chronos.lib.1", "chronos.lib.2", "chronos.lib.3", "chronos.lib.4"),
+            tree.pages.filter { it.parent == null }.map { it.id })
+        assertEquals(emptyList<String>(), tree.page("chronos.lib")?.children)
         assertEquals(listOf("chronos.lib.3.0", "chronos.lib.3.1"), tree.page("chronos.lib.3")?.children)
-        assertEquals(listOf("chronos.lib", "chronos.lib.3", "chronos.lib.3.1"), tree.path("chronos.lib.3.1").map { it.id })
+        assertEquals(listOf("chronos.lib.3", "chronos.lib.3.1"), tree.path("chronos.lib.3.1").map { it.id })
         assertTrue(tree.path("math").isEmpty())
     }
 
-    @Test fun theLabelsAreThePagesOwnTitles() {
-        assertEquals("Chronos - Cycles Across Scales", tree.root?.label)
-        for (p in tree.pages) {
-            val html = File("src/main/assets/chronos/" + p.asset).readText()
-            val title = Regex("<title[^>]*>(.*?)</title>", RegexOption.DOT_MATCHES_ALL).find(html)?.groupValues?.get(1)
-                ?.replace("&amp;", "&")?.replace(Regex("\\s+"), " ")?.trim()
-            assertEquals("the label of ${p.id} is its page's <title>", title, p.label)
-        }
+    /** #1831 the menu names are the repo's own: each page as its hub card names it (as the repo's README lists them). */
+    @Test fun theLabelsAreTheReposOwnNames() {
+        assertEquals(
+            listOf("All cycles", "Humansphere - Circadian", "Earthsphere - Cycles", "Milkwaysphere - Orbits", "Quantum Cycles",
+                "Quantum Decoherence Cycle", "Quantum Gravity Cycle", "Astronomy - Astrological Sphere"),
+            tree.pages.map { it.label },
+        )
     }
 
     @Test fun everyDeclaredAssetIsInTheApkAndEveryAssetPageIsDeclared() {

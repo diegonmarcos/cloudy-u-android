@@ -112,9 +112,9 @@ mutant() {   # mutant <name> <shell edit run in the copy (cwd = copy of the app)
 KT=app/src/main/java/com/diegonmarcos/cloudwiki
 A=app/src/main/assets/chronos
 DROP="import json;p='build.json';d=json.load(open(p));c=[x for x in [s for s in d['ui']['sections'] if s['id']=='wiki'][0]['pages'] if x['id']=='chronos'][0]"
-mutant "a page is not declared"     "python3 -c \"$DROP;c['pages'][0]['pages'].pop();json.dump(d,open(p,'w'),indent=2)\""                   "C1 build.json::ui chronos pages"
+mutant "a page is not declared"     "python3 -c \"$DROP;c['pages'].pop();json.dump(d,open(p,'w'),indent=2)\""                   "C1 build.json::ui chronos pages"
 mutant "a label is retyped"         "python3 -c \"$DROP;c['pages'][0]['label']='Chronos';json.dump(d,open(p,'w'),indent=2)\""                "C1 build.json::ui chronos pages carry other labels"
-mutant "the hierarchy is flattened" "python3 -c \"$DROP;r=c['pages'][0];q=r['pages'][3];r['pages']+=q.pop('pages');json.dump(d,open(p,'w'),indent=2)\"" "C1 build.json::ui chronos pages"
+mutant "the hierarchy is flattened" "python3 -c \"$DROP;q=[x for x in c['pages'] if x.get('pages')][0];c['pages']+=q.pop('pages');json.dump(d,open(p,'w'),indent=2)\"" "C1 build.json::ui chronos pages"
 mutant "a page is a placeholder"    "printf '<title>x</title><p>Simulator pending upload.</p>' > $A/Chronos/1.Earthsphere-Cycles/index.html"  "is a placeholder"
 mutant "a page appears by hand"     "mkdir -p $A/Chronos/5.Extra && printf '<title>Extra</title>' > $A/Chronos/5.Extra/index.html"           "C1 build.json::ui chronos pages"
 mutant "an asset goes missing"      "rm $A/Chronos/2.Milkwaysphere-Orbits/index.html"                                                       "C1"

@@ -18,7 +18,9 @@
       "3.Quantum-Cycles/3.1.Quantum-Gravity-Cycle": "rocket_launch",
       "4.Astronomy-Astrological-sphere": "auto_awesome"
     },
-    "default_icon": "description"
+    "default_icon": "description",
+    "root_label": "All cycles",
+    "title_suffix": " - Chronos"
   },
   "rewrites": [
     {

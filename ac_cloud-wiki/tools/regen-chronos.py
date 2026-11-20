@@ -105,15 +105,54 @@ def seg_id(name):
     return m.group(1) if m else re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
 
 
+CARD = re.compile(r"""<a\b[^>]*\bhref\s*=\s*["']([^"'#?]+)["'][^>]*>(.*?)</a>""", re.S | re.I)
+H2 = re.compile(r"<h2[^>]*>(.*?)</h2>", re.S | re.I)
+
+
+def card_names(root):
+    """#1831 the name each page has on the hub page that links to it (a card's <h2>): {rel dir: name}. The repo's own names."""
+    names = {}
+    for d, dirs, fs in os.walk(root):
+        dirs[:] = sorted(x for x in dirs if not x.startswith("."))
+        if "index.html" not in fs:
+            continue
+        with open(os.path.join(d, "index.html"), encoding="utf-8") as f:
+            text = f.read()
+        for href, inner in CARD.findall(text):
+            h = H2.search(inner)
+            if not h or "//" in href:
+                continue
+            target = os.path.normpath(os.path.join(os.path.relpath(d, root), href)).replace(os.sep, "/")
+            if target.startswith(".."):
+                continue
+            name = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", h.group(1)))).strip()
+            if name and target != ".":
+                names.setdefault(target, name)
+    return names
+
+
+def page_label(rel, text, names, nav, where):
+    """#1831 a page's menu name: its hub card's name, else its <title> without the site suffix; the root is nav.root_label."""
+    if not rel:
+        return nav["root_label"]
+    if rel in names:
+        return names[rel]
+    t = title_of(text, where)
+    suffix = nav.get("title_suffix", "")
+    return t[: -len(suffix)].strip() if suffix and t.endswith(suffix) else t
+
+
 def tree(root, pin):
-    """The nested page declaration of the index.html files under root (a source_dir), in the repo's own hierarchy."""
+    """The page declaration of the index.html files under root (a source_dir): #1831 FLAT under the Chronos topic: the repo's root page
+    first, then its sections in order, each with its own sub-pages nested (the repo's hierarchy below the first level)."""
     nav = pin["nav"]
+    names = card_names(root)
 
     def node(rel):
         d = os.path.join(root, rel)
         page = os.path.join(d, "index.html")
         with open(page, encoding="utf-8") as f:
-            label = title_of(f.read(), os.path.join(pin["source_dir"], rel, "index.html"))
+            label = page_label(rel, f.read(), names, nav, os.path.join(pin["source_dir"], rel, "index.html"))
         nid = nav["id_prefix"] + ("." + seg_id(os.path.basename(rel)) if rel else "")
         o = {"id": nid, "label": label, "icon": nav["icons"].get(rel, nav["default_icon"]),
              "asset": "/".join(x for x in (pin["source_dir"], rel, "index.html") if x)}
@@ -132,7 +171,8 @@ def tree(root, pin):
 
     if not os.path.isfile(os.path.join(root, "index.html")):
         die("%s/index.html is missing" % pin["source_dir"])
-    out = [node("")]
+    top = node("")
+    out = [top] + top.pop("pages", [])
     ids = [p["id"] for p in flat(out)]
     if len(ids) != len(set(ids)):
         die("two Chronos pages derive the same id: %s" % sorted({i for i in ids if ids.count(i) > 1}))
@@ -257,7 +297,8 @@ def generate(pin, commit, repin=False):
                 "serve source_dir from the clone; replace each `rewrites` URL in a page by its served path; refresh per `modes`.",
         "repo": pin["repo"], "url": pin["url"], "ref": pin["ref"], "baked_commit": commit,
         "source_dir": pin["source_dir"], "serve_path": pin["serve_path"],
-        "nav": {"id_prefix": nav["id_prefix"], "icons": nav["icons"], "default_icon": nav["default_icon"]},
+        "nav": {"id_prefix": nav["id_prefix"], "icons": nav["icons"], "default_icon": nav["default_icon"],
+                "root_label": nav["root_label"], "title_suffix": nav.get("title_suffix", "")},
         "rewrites": [{"match": k, "served": rewrites[k]} for k in sorted(rewrites)],
         "refresh": pin["runtime"]["refresh"],
     }

@@ -34,6 +34,9 @@ object ChronosRepo {
         val ref: String,
         val sourceDir: String,
         val idPrefix: String,
+        /** #1831 the repo's root page's menu name, and the site suffix dropped from a <title> used as a name. */
+        val rootLabel: String = "",
+        val titleSuffix: String = "",
         val icons: Map<String, String>,
         val defaultIcon: String,
         /** CDN URL -> the served path of its vendored copy, applied to every page of the clone. */
@@ -173,23 +176,61 @@ object ChronosRepo {
 
     // ── the page tree of a clone: the same derivation as tools/regen-chronos.py tree() ────────────────────────────
 
+    /**
+     * #1831 the same tree as tools/regen-chronos.py tree(): names from the hub cards ([cardNames]), else the <title> without the site
+     * suffix, the root named [Runtime.rootLabel]; FLAT under Chronos: the root first (no children), then the first-level sections in
+     * repo order (no parent), deeper pages nested under their section.
+     */
     fun scan(sourceDir: File, r: Runtime): ChronosTree {
         val out = ArrayList<ChronosPage>()
+        val names = cardNames(sourceDir)
         fun node(rel: String, parent: String?): String {
             val d = if (rel.isEmpty()) sourceDir else File(sourceDir, rel)
-            val label = titleOf(File(d, "index.html").readText()) ?: rel.substringAfterLast('/').ifEmpty { r.sourceDir }
+            val text = File(d, "index.html").readText()
+            val label = when {
+                rel.isEmpty() -> r.rootLabel.ifEmpty { titleOf(text) ?: r.sourceDir }
+                names[rel] != null -> names.getValue(rel)
+                else -> (titleOf(text) ?: rel.substringAfterLast('/')).let { t ->
+                    if (r.titleSuffix.isNotEmpty() && t.endsWith(r.titleSuffix)) t.dropLast(r.titleSuffix.length).trim() else t
+                }
+            }
             val id = r.idPrefix + if (rel.isEmpty()) "" else "." + segId(rel.substringAfterLast('/'))
             val slot = out.size
             out += ChronosPage(id, label, r.icons[rel] ?: r.defaultIcon, listOf(r.sourceDir, rel, "index.html").filter { it.isNotEmpty() }.joinToString("/"), parent, emptyList())
             val kids = (d.listFiles() ?: emptyArray())
                 .filter { it.isDirectory && !it.name.startsWith(".") && File(it, "index.html").isFile }
                 .sortedWith { a, b -> natural(a.name, b.name) }
-                .map { node(listOf(rel, it.name).filter { s -> s.isNotEmpty() }.joinToString("/"), id) }
-            out[slot] = out[slot].copy(children = kids)
+                // the root's sections are top-level pages of the Chronos topic: no parent, and the root lists no children
+                .map { node(listOf(rel, it.name).filter { s -> s.isNotEmpty() }.joinToString("/"), if (rel.isEmpty()) null else id) }
+            out[slot] = out[slot].copy(children = if (rel.isEmpty()) emptyList() else kids)
             return id
         }
         node("", null)
         return ChronosTree(out)
+    }
+
+    /** #1831 {dir relative to [sourceDir]: the <h2> of the card that links to it on a hub page}: the repo's own page names. */
+    fun cardNames(sourceDir: File): Map<String, String> {
+        val out = LinkedHashMap<String, String>()
+        val card = Regex("""<a\b[^>]*\bhref\s*=\s*["']([^"'#?]+)["'][^>]*>(.*?)</a>""", setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE))
+        val h2 = Regex("<h2[^>]*>(.*?)</h2>", setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE))
+        val base = sourceDir.canonicalFile
+        sourceDir.walkTopDown().onEnter { !it.name.startsWith(".") || it == sourceDir }
+            .filter { it.isFile && it.name == "index.html" }
+            .sortedWith(compareBy({ it.path.count { c -> c == File.separatorChar } }, { it.path })) // top-down, as os.walk
+            .forEach { page ->
+                card.findAll(page.readText()).forEach { m ->
+                    val href = m.groupValues[1]
+                    val name = h2.find(m.groupValues[2])?.groupValues?.get(1)?.replace(Regex("<[^>]+>"), "")?.let(::unescape)
+                        ?.replace(Regex("\\s+"), " ")?.trim()
+                    if (name.isNullOrEmpty() || href.contains("//")) return@forEach
+                    val target = File(page.parentFile, href).canonicalFile
+                    if (!target.path.startsWith(base.path) || target == base) return@forEach
+                    val rel = target.relativeTo(base).path.replace(File.separatorChar, '/')
+                    out.putIfAbsent(rel, name)
+                }
+            }
+        return out
     }
 
     fun segId(name: String): String =
@@ -242,6 +283,7 @@ object ChronosRepo {
             (0 until a.length()).map { a.getJSONObject(it).let { m -> Mode(m.getString("id"), m.getString("label"), m.getInt("max_age_minutes")) } }
         }
         return Runtime(o.getString("repo"), o.getString("url"), o.getString("ref"), o.getString("source_dir"), nav.getString("id_prefix"),
+            nav.optString("root_label"), nav.optString("title_suffix"),
             icons, nav.getString("default_icon"), rw, modes, refresh.getString("default"))
     }
 }
