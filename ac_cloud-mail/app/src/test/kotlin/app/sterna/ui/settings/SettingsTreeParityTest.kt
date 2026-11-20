@@ -193,7 +193,7 @@ class SettingsTreeParityTest {
         assertTrue("the fleet card (its own palette) is no longer drawn here", "NavModeConfigCard(" !in tree.lines().filterNot { it.trim().startsWith("*") || it.trim().startsWith("//") }.joinToString("\n"))
         assertTrue(nav.contains("SettingChoiceRow("))
         assertTrue("all three modes", nav.contains("options = SecondRowMode.entries"))
-        assertTrue("the declared one is marked", nav.contains("if (m == declared) \" ($default)\""))
+        assertTrue("the declared one is marked", nav.contains("if (m == declared) \" (\$default)\""))
         assertTrue("choosing the default clears the override", nav.contains("store.setMode(section.id, if (m == declared) null else m)"))
         assertTrue("the same sections the card offered", nav.contains("it.allPages().size > 1 || it.id in NAV_DYNAMIC_SECTIONS"))
         assertEquals(setOf("mail"), NAV_DYNAMIC_SECTIONS)
