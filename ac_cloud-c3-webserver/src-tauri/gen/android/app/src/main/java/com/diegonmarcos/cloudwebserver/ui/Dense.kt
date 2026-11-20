@@ -102,6 +102,36 @@ fun DCols(cells: List<String>, widths: List<Int?>, up: Boolean? = null, head: Bo
     }
 }
 
+/** #1834 a status light that may be unknown: null is drawn muted (the line colour), never as up or down. */
+@Composable
+fun DLight(up: Boolean?) {
+    Box(Modifier.size(KitDensity.dot - 2.dp).background(when (up) { true -> Tone.Up; false -> Tone.Down; null -> Tone.Line }, CircleShape))
+}
+
+/** #1834 a Summary row: three lights on the left (on/off, keep-alive, healthy), the service name, then its one-line state. */
+@Composable
+fun DLights(name: String, l: Lights, v: String, tag: String = "", onClick: (() -> Unit)? = null) {
+    Row(
+        Modifier.fillMaxWidth().let { if (onClick != null) it.clickable(role = Role.Button, onClick = onClick) else it }.let { if (tag.isNotEmpty()) it.testTag(tag) else it }
+            .padding(horizontal = KitDensity.rowPadH, vertical = Dense.ROW_V),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        DLight(l.on); Spacer(Modifier.width(3.dp)); DLight(l.keepAlive); Spacer(Modifier.width(3.dp)); DLight(l.healthy); Spacer(Modifier.width(6.dp))
+        Text(name, style = capStyle, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, maxLines = 1, modifier = Modifier.width(Dense.KEY_COL - 24.dp))
+        Text(v, style = bodyStyle, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+        if (onClick != null) Text("›", style = bodyStyle, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp))
+    }
+}
+
+/** #1834 an action with its live status message beside it. */
+@Composable
+fun DActMsg(label: String, tag: String, msg: String, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = KitDensity.rowPadH, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+        DAct(label, tag, onClick)
+        Text(msg, style = capStyle, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f).testTag(tag + "_msg"))
+    }
+}
+
 @Composable
 fun DDot(up: Boolean) {
     Box(Modifier.size(KitDensity.dot - 2.dp).background(if (up) Tone.Up else Tone.Down, CircleShape))

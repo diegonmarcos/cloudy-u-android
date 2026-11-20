@@ -78,7 +78,7 @@ object AdbHomeModel {
 
 /** Home's ADB shell status table: re-read when Home refreshes ([tick]) or when the channel log / auto-start run changes; never throws. */
 @Composable
-fun AdbHomeStatus(tick: Int, open: (String, String?) -> Unit) {
+fun AdbHomeStatus(tick: Int, open: (String, String?) -> Unit, extra: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit = {}) {
     val ctx: Context = LocalContext.current
     var facts by remember { mutableStateOf<ChannelFacts?>(null) }
     var failed by remember { mutableStateOf("") }
@@ -103,5 +103,6 @@ fun AdbHomeStatus(tick: Int, open: (String, String?) -> Unit) {
     DenseCard("ADB shell", "c3_home_adb") {
         rows.forEach { r -> DRow(r.label, r.value, up = r.up, tag = "c3_home_adb_${r.id}") { open(Decl.SECTION_ADB_SHELL, r.page) } }
         DNote("Tap a row to open its ADB Shell page (Server / Status / Perms).")
+        extra()
     }
 }

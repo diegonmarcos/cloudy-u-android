@@ -75,7 +75,18 @@ object AdbOwnerSide {
 
     /** #1723 the ADB shell status table on Home (AdbHomeStatus.kt); every row opens its ADB Shell sub page. */
     @Composable
-    fun HomeStatus(tick: Int, open: (String, String?) -> Unit) = AdbHomeStatus(tick, open)
+    fun HomeStatus(tick: Int, open: (String, String?) -> Unit, extra: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit = {}) = AdbHomeStatus(tick, open, extra)
+
+    /** #1834 Home's Summary and ADB table read the REAL state: the keep-alive switch and an echo round trip. Blocking: call off the main thread. */
+    fun readLive(ctx: Context): com.diegonmarcos.cloudwebserver.ui.AdbLive = com.diegonmarcos.cloudwebserver.ui.AdbLive(
+        true, runCatching { com.diegonmarcos.superapp.adbdebug.ChannelAutoArm.enabled(ctx) }.getOrNull(),
+        runCatching { com.diegonmarcos.superapp.adbdebug.ChannelReader.read(ctx).serverRunning }.getOrNull(),
+    )
+    /** The ADB keep-alive switch (ChannelAutoArm: the one the lib page draws and every implicit start asks, #1834). */
+    fun setKeepAlive(ctx: Context, on: Boolean) = com.diegonmarcos.superapp.adbdebug.ChannelAutoArm.set(ctx, on)
+    /** The lib's own Start / Stop server actions (explicit, so they may offer pairing). Blocking. */
+    fun startServer(ctx: Context): String = com.diegonmarcos.superapp.adbdebug.ChannelOps.startServer(ctx, false)
+    fun stopServer(ctx: Context): String = com.diegonmarcos.superapp.adbdebug.ChannelOps.stopServer(ctx)
 
     /** The owner page body for one declared sub page (ids = build.json::ui, Decl.PAGE_ADB_*). An unknown id falls back to Status. */
     @Composable

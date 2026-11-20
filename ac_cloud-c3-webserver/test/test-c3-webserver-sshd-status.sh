@@ -28,7 +28,7 @@ for needle in ('"verdict"', 'fun sshRow(', 'fun sshChecks(', 'fun sshExpanded(')
     if needle not in kt: e.append('S5 SshdStatus.kt lacks ' + needle)
 for needle in ('c3_door_restart', 'c3_door_recheck', 'c3_door_copy_ssh', 'sshRow(d)'):
     if needle not in page: e.append('S5 SshdPage.kt lacks ' + needle)
-if 'sshState(x)' not in home: e.append('S5 the Home strip must read the verdict')
+if 'sshState(x)' not in home + open(app + '/src-tauri/gen/android/app/src/main/java/com/diegonmarcos/cloudwebserver/ui/StatusPage.kt').read(): e.append('S5 the Home strip must read the verdict')
 print('\n'.join(e)); sys.exit(1 if e else 0)
 PY
   node - "$1" <<'JS' || return 1

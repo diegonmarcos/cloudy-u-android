@@ -20,9 +20,16 @@ object AdbOwnerSide {
 
     /** #1723 Home's ADB shell status table: this build links no ADB channel, so one tappable row names the owner and opens the ADB Shell. */
     @Composable
-    fun HomeStatus(tick: Int, open: (String, String?) -> Unit) {
+    fun HomeStatus(tick: Int, open: (String, String?) -> Unit, extra: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit = {}) {
         DenseCard("ADB shell", "c3_home_adb") {
             DRow("Owner", why, tag = "c3_home_adb_owner") { open(Decl.SECTION_ADB_SHELL, Decl.PAGE_ADB_STATUS) }
+            extra()
         }
     }
+
+    /** #1834 no ADB channel here: nothing to read, nothing to switch. */
+    fun readLive(ctx: Context): com.diegonmarcos.cloudwebserver.ui.AdbLive = com.diegonmarcos.cloudwebserver.ui.AdbLive(false, null, null)
+    fun setKeepAlive(ctx: Context, on: Boolean) {}
+    fun startServer(ctx: Context): String = why
+    fun stopServer(ctx: Context): String = why
 }

@@ -286,7 +286,7 @@ m_socket()       { ed "$1/$KDIR/Core.kt" 'private const val LIB' 'private val s 
     private const val LIB'; }
 m_core_bind()    { ed "$1/core/src/lib.rs" 'pub fn admin_port() -> u16 {' 'pub fn open() { let _ = std::net::TcpListener::bind("0.0.0.0:1"); }
 pub fn admin_port() -> u16 {'; }
-m_route_drop()   { sed -i 's/Api\.SSHD/"\/x"/g' "$1/$KDIR/ui/SshdPage.kt" "$1/$KDIR/ui/HomePage.kt" && ! grep -rq 'Api\.SSHD' "$1/$KDIR"; }
+m_route_drop()   { sed -i 's/Api\.SSHD/"\/x"/g' "$1/$KDIR/ui/SshdPage.kt" "$1/$KDIR/ui/HomePage.kt" "$1/$KDIR/ui/StatusPage.kt" && ! grep -rq 'Api\.SSHD' "$1/$KDIR"; }
 m_fleet_inline() { ed "$1/$KDIR/ui/Shell.kt" 'page != null && isFleetConfigsPage(page) -> FleetConfigsPageBody(' 'page != null && isFleetConfigsPage(page) -> NotThere(' && ed "$1/$KDIR/ui/Shell.kt" 'else -> FleetConfigsPageBody(' 'else -> NotThere('; }
 m_bottom_drift() { jed "$1/build.json" 'd["ui"]["bottom_nav"]=["pages","api","home","adb_shell","sshd"]'; }
 m_subs_drift()   { jed "$1/build.json" 'd["ui"]["sections"][0]["pages"][2]["label"]="Sites"'; }
@@ -295,7 +295,7 @@ m_device_drop()  { jed "$1/build.json" 'c=[s for s in d["ui"]["sections"] if s["
 m_no_tail()      { ed "$1/$KDIR/ui/Shell.kt" 'FleetConfigsExtensions.withTail(s.pages)' 's.pages'; }
 m_no_rescan()    { ed "$1/$KDIR/ui/PagesPage.kt" '.put("op", "rescan")' '.put("op", "noop")'; }
 m_no_mesh_only() { ed "$1/$KDIR/ui/SshdPage.kt" '.put("mesh_only", it)' '.put("mesh", it)'; }
-m_no_confirm()   { ed "$1/$KDIR/ui/HomePage.kt" 'Text("Turn the Server OFF?")' 'Text("Off?")'; }
+m_no_confirm()   { sed -i 's/Text("Turn the Server OFF?")/Text("Off?")/g' "$1/$KDIR/ui/HomePage.kt" && ! grep -q 'Text("Turn the Server OFF?")' "$1/$KDIR/ui/HomePage.kt"; }
 m_no_embed()     { ed "$1/$KDIR/ui/Links.kt" 'fun embedUrl(' 'fun embedLink(' && ed "$1/$KDIR/ui/Links.kt" 'Links.embedUrl(url)' 'Links.embedLink(url)'; }
 m_status_drop()  { ed "$1/$KDIR/ui/PagesPage.kt" '"no_access" to' '"noaccess" to'; }
 m_decl_ghost()   { ed "$1/$KDIR/Decl.kt" 'const val PAGE_LINKS = "links"' 'const val PAGE_LINKS = "links"
