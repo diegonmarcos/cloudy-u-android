@@ -102,6 +102,10 @@ class ModelCatalogueShellTest {
     private fun openCatalogue() {
         compose.goTo(state, "chat")
         waitFor(Tags.MODEL)
+        // The bar first draws libs:ai's default (Agent, Model) and is rebuilt when the served composer dataset and the task list arrive off-thread;
+        // a click before that lands on a chip that is replaced under it. Wait for the settled bar (it carries Task), then click.
+        waitFor(AiTags.ctl("task"))
+        compose.waitUntil(60_000) { state.chat.tasks.isNotEmpty() }
         compose.onNodeWithTag(Tags.MODEL).performClick()
         waitFor(AiTags.CATALOGUE_PAGE)
         waitFor(AiTags.catTab(tabs.order.first()))
