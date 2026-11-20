@@ -55,7 +55,9 @@ Lnktree family, declared in `1_cicd/src/data/app-families.json`; the Cloud famil
   from the SARB Web API (T-bill tenders, R2030, R209 and the daily average bond-yield bands) and Mexico from Banxico's SIE chart service (the auction
   yields of Cetes 28D-2Y and Bonos M 3Y-30Y; the SIE REST API needs a token and is not used). None of them needs a key; the container's sovereign-curves
   route is asked first and the OECD monthly rates on DBnomics (call money, 3M, 10Y) are the fallback. Tests: `EmCurvesTest` on the publishers' own
-  answers (`app/src/test/resources/cb/em`).
+  answers (`app/src/test/resources/cb/em`). Of the "Other sovereign curves" the placeholder panel names, Japan is read the same way from the
+  Ministry of Finance JGB interest rates CSV (1Y-40Y); the placeholder stays for a premium feed of your own, and the UK and China curves stay on the
+  container's sovereign-curves route (the CB Homepage), the BoE's being a zipped workbook and ChinaBond's a POST session.
 
 * Periods, boxes and overview (#1786): every EQ and FI page shows 1D, 1W, 1M, YTD and 12M, then the annualised averages over 1, 12, 24 and 36
   months as CAGR, (end / start)^(1 / years) - 1 with years = months / 12 (`Cagr.kt`, `data/portfolios.json::periods`); a window the history does not
