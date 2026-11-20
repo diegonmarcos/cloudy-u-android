@@ -46,6 +46,8 @@ if r.returncode != 0 and not any(l.startswith("FAIL ") for l in r.stdout.splitli
 # C1b: no baked Chronos page is a placeholder
 for dp, _, fs in os.walk(os.path.join(app, "app/src/main/assets/chronos/Chronos")):
     for f in fs:
+        # #1830 the ONE page allowed to wait: Humansphere, until the owner uploads its simulator (the generated one was removed)
+        if "0.Humansphere-Circadian" in dp: continue
         if f.endswith(".html") and "Simulator pending upload" in read(os.path.join(dp, f)):
             bad.append("C1 %s is a placeholder (Simulator pending upload)" % os.path.relpath(os.path.join(dp, f), app))
 
