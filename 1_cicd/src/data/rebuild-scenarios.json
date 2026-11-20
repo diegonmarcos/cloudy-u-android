@@ -388,8 +388,9 @@
     {
       "id": "#881 contract: libs/decisions-link (16 apps compile it: the Jev call sites of #882/#883, and #1799 Cloud Canvas's Draw Enhancer image call)",
       "_doc": "A contract ships no APK of its own and the publish gate hashes an engine's own directory only (#870), so a client edit republishes nothing until an app compiles it; a wire change ships the engine through its CONTRACT bump in the engine's own manifest.",
+      "_doc_1801": "#1801 15 -> 17 apps (ship 16 -> 18): the decisions engine became the fleet's AI-key owner, so every app that used to hold an AI key now compiles the contract to relay through it (the AI-key holders of waves 1-3: Account, Browser, Search, Calc, the keyboard and the rest). Measured on run 44738458317: account, browser, c3, calc, canvas, contacts, drive, keyboard, mail, me, nav, news, search, store, superapp, tasks, wallet.",
       "files": ["ab_cloud-libs-shared/libs/decisions-link/src/main/java/com/diegonmarcos/superapp/decisions/link/DecisionsLink.kt"],
-      "expect": { "apps": 15, "libs": 0, "rootfs": 0, "ship": 16, "refresh": 0 }
+      "expect": { "apps": 17, "libs": 0, "rootfs": 0, "ship": 18, "refresh": 0 }
     },
     {
       "id": "#871 engine lib: libs/ops-engine (the Dagu calls that left the SuperApp and C3)",
