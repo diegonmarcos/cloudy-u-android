@@ -148,7 +148,8 @@ class EmCurvesTest {
         val mof = src("mof_japan")
         val now = load("japan", Fake { if (it == mof.endpoint + "/jgbcme.csv") fx("mof-jgbcme.csv") else null })
         assertEquals(listOf("1Y", "2Y", "3Y", "4Y", "5Y", "6Y", "7Y", "8Y", "9Y", "10Y", "15Y", "20Y", "25Y", "30Y", "40Y"), now.rows.map { it[0] })
-        assertEquals(listOf("10Y", "2.82", FinFormat.DASH, "2026-11-02"), now.rows.first { it[0] == "10Y" })
+        // the month's last two days (18 and 19 Nov): the yield and its change in bp
+        assertEquals(listOf("10Y", "2.87", "-4.6", "2026-11-19"), now.rows.first { it[0] == "10Y" })
         assertEquals(40.0, now.chart.last().x, 0.0)
         assertEquals("", now.servedBy)
         // the month's file does not answer: the history file of the same shape, its last two days
