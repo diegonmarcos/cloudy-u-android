@@ -172,5 +172,33 @@
     "vendor/three/0.128.0/OrbitControls.js": "02bb4ade710f3e607329e37a21f098bc3ac70eb6e33daf8a65e79f4db785e7b2",
     "vendor/three/r128/LICENSE": "7dddf7c5b8fd10ee654db8857d75d104b5557889aa5a91fc4ca545ea7c07062f",
     "vendor/three/r128/three.min.js": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+  },
+  "runtime": {
+    "_doc": "#1830 the app clones the repo at run time, read-only, and refreshes it per one of these modes (the user picks one on the Chronos page; `default` until then). max_age_minutes: how old the clone may get before the app refreshes it when Chronos is opened or the app starts; -1 = only when the user taps Refresh.",
+    "refresh": {
+      "default": "on_open",
+      "modes": [
+        {
+          "id": "manual",
+          "label": "Manual (Refresh button only)",
+          "max_age_minutes": -1
+        },
+        {
+          "id": "on_open",
+          "label": "Every time Chronos opens",
+          "max_age_minutes": 0
+        },
+        {
+          "id": "every_6h",
+          "label": "Every 6 hours",
+          "max_age_minutes": 360
+        },
+        {
+          "id": "daily",
+          "label": "Once a day",
+          "max_age_minutes": 1440
+        }
+      ]
+    }
   }
 }

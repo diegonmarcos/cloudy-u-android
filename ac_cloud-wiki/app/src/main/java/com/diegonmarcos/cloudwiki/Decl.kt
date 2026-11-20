@@ -16,8 +16,12 @@ object Decl {
     /**
      * #1789 the Chronos pages (diegonmarcos/lib-chronos at the pin, tools/chronos-pin.json): the nested pages build.json::ui declares under
      * wiki > chronos with their `asset`, read from the same baked ui.sections (NavDecl keeps no `asset`).
+     * #1830 the app's own runtime clone of lib-chronos ([ChronosRepo]) wins as soon as it is in place.
      */
-    val chronos: ChronosTree by lazy {
+    val chronos: ChronosTree get() = ChronosRepo.state.value.tree ?: baked
+
+    /** #1830 the tree of the copy baked into the APK at the pin: what Chronos shows until the app's own clone of the repo lands. */
+    val baked: ChronosTree by lazy {
         Chronos.parse(runCatching { String(Base64.decode(BuildConfig.UI_SECTIONS_B64, Base64.DEFAULT), Charsets.UTF_8) }.getOrDefault("[]"))
     }
 

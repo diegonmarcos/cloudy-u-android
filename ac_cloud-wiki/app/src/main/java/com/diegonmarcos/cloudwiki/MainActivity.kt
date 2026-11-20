@@ -31,6 +31,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FleetChrome.apply(this)
+        // #1830 what the app's own clone of lib-chronos left (commit, time, page tree), before the first frame
+        runCatching { ChronosRepo.start(applicationContext) }
         val start = WikiStart.from(intent)
         setContent { AppTheme { WikiShell(start) } }
     }

@@ -11,7 +11,8 @@
 #   W3  the shell draws the shared bars (first-row scaffold, side-menu layout, theme-background) and NO bottom nav host; the topic page draws the subpage tabs
 #       with NavBarTopSecondRow; the graph page draws libs:graph-view's GraphView; the app links libs:graph-view and libs:fleet-data-client
 #   W4  the pages are read at runtime (FleetData.observe), no asset holds them, no sp literal, no numeric fontSize, no colour literal in the app's Kotlin
-#   W5  no network: no INTERNET permission, no URL in Kotlin, and Configs open the fleet's General | Perms | About
+#   W5  network only for the Chronos clone (#1830): INTERNET is declared for it and ChronosRepo is the one place that clones (libs:git-core);
+#       no URL in Kotlin, no hand-made connection, and Configs open the fleet's General | Perms | About
 # then plants a mutation per rule in a scratch copy and requires RED for each.
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -77,7 +78,9 @@ for f in ("civil", "mechanical", "electrical", "chemical", "software", "aerospac
 if "wiki" not in fm.get("apps", {}).get(pkg, []): bad.append("W2 manifest.json::apps does not serve the wiki dataset to %s" % pkg)
 for dpth, dn, fn in os.walk(os.path.join(app, "app/src")):
     for f in fn:
-        if f.endswith(".json"): bad.append("W4 %s is a JSON asset: the pages are a runtime dataset" % f)
+        # #1830 assets/chronos/runtime.json is the generated Chronos clone config (tools/regen-chronos.py), not wiki pages
+        if f.endswith(".json") and not (f == "runtime.json" and dpth.replace(os.sep, "/").endswith("assets/chronos")):
+            bad.append("W4 %s is a JSON asset: the pages are a runtime dataset" % f)
 
 # W3
 for sym in ("NavBarTopFirstRowScaffold(", "NavSectionLayout(", "themeBackground("):
@@ -103,7 +106,9 @@ for dpth, dn, fn in os.walk(os.path.join(app, "app/src/main")):
         if re.search(r"HttpURLConnection|OkHttp|openConnection", t): bad.append("W5 %s opens a connection" % f)
 
 # W5
-if "android.permission.INTERNET" in manifest: bad.append("W5 the manifest asks for INTERNET")
+if "android.permission.INTERNET" not in manifest: bad.append("W5 the manifest does not declare INTERNET, which the Chronos runtime clone needs (#1830)")
+_cloners = [f for dp, _, fn in os.walk(os.path.join(app, "app/src/main")) for f in fn if f.endswith(".kt") and "JGitEngine.clone(" in code(os.path.join(dp, f))]
+if _cloners != ["ChronosRepo.kt"]: bad.append("W5 the runtime clone is not ChronosRepo's alone: %s" % _cloners)
 if "FleetConfigsEntries.open(" not in shell or "FleetConfigsPage.General" not in shell: bad.append("W5 the gear does not open the fleet's Configs (General | Perms | About)")
 
 for b in bad: print("FAIL " + b)
@@ -150,7 +155,7 @@ mutant "an sp literal creeps in"     "echo 'val x = 12.sp' >> $KT/ui/WikiPages.k
 mutant "a font size number"          "echo 'val y = Foo(fontSize = 13)' >> $KT/ui/WikiPages.kt"                    "W4 WikiPages.kt sets a numeric fontSize"
 mutant "a colour literal"            "echo 'val c = Color(0xFF112233)' >> $KT/ui/WikiPages.kt"                     "W4 WikiPages.kt spells a colour literal"
 mutant "a URL in Kotlin"             "echo 'val u = \"https://wiki.example/\"' >> $KT/Wiki.kt"                     "W5 Wiki.kt spells a URL"
-mutant "network permission added"    "sed -i 's|<queries>|<uses-permission android:name=\"android.permission.INTERNET\" /><queries>|' app/src/main/AndroidManifest.xml" "W5 the manifest asks for INTERNET"
+mutant "network permission removed"  "sed -i '/android.permission.INTERNET/d' app/src/main/AndroidManifest.xml" "W5 the manifest does not declare INTERNET"
 mutant "gear no longer opens Configs" "sed -i 's/FleetConfigsEntries.open(/Foo(/' $KT/ui/WikiShell.kt"             "W5 the gear does not open the fleet's Configs"
 
 [ "$FAILS" -eq 0 ] && echo "ALL GREEN" || { echo "$FAILS FAILED"; exit 1; }

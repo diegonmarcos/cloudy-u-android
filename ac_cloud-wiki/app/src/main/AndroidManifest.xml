@@ -2,7 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- No network permission: the data is mock data bundled with the app. Cloud Account is opened by a package-pinned intent. -->
+    <!-- #1830 INTERNET for ONE thing: Chronos clones diegonmarcos/lib-chronos at run time (read-only, libs:git-core). The wiki pages
+         are the runtime dataset Cloud Store serves; the Chronos web view still answers every off-origin request 403.
+         Cloud Account is opened by a package-pinned intent. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <queries>
         <package android:name="com.diegonmarcos.cloudaccount" />
     </queries>

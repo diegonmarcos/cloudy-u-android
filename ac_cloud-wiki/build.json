@@ -20,7 +20,21 @@
     "version_name": "0.1.0-dev",
     "abi_filters": [
       "arm64-v8a"
-    ]
+    ],
+    "packaging_excludes": [
+      "META-INF/NOTICE",
+      "META-INF/NOTICE.txt",
+      "META-INF/NOTICE.md",
+      "META-INF/LICENSE",
+      "META-INF/LICENSE.txt",
+      "META-INF/LICENSE.md",
+      "META-INF/DEPENDENCIES",
+      "META-INF/AL2.0",
+      "META-INF/LGPL2.1",
+      "META-INF/INDEX.LIST",
+      "META-INF/versions/*/OSGI-INF/MANIFEST.MF"
+    ],
+    "_doc_packaging_excludes": "#1830 libs:git-core brings JGit, jsch and their notices; two jars carrying the same META-INF file fail mergeJavaResource. The same list as ac_cloud-drive/build.json (which links the same engine)."
   },
   "build": {
     "type": "gradle",
@@ -122,7 +136,8 @@
         "libs:theme-background",
         "libs:ui-kit",
         "libs:graph-view",
-        "libs:web-core"
+        "libs:web-core",
+        "libs:git-core"
       ]
     },
     "libs:core": {
@@ -198,6 +213,11 @@
     "libs:web-core": {
       "_doc": "#1789 THE embedded web view (CloudWeb.create(ctx, WebProfile.APP_PAGE), render-process recovery, WebViewAssetLoader) for the Chronos pages baked from diegonmarcos/lib-chronos, shared BY REFERENCE.",
       "dir": "../ab_cloud-libs-shared/libs/web-core",
+      "type": "library"
+    },
+    "libs:git-core": {
+      "_doc": "#1830 THE in-process git engine (JGit): Chronos clones diegonmarcos/lib-chronos at run time, shallow and read-only (ChronosRepo), and never commits. Shared by reference, as Cloud Drive links it.",
+      "dir": "../ab_cloud-libs-shared/libs/git-core",
       "type": "library"
     }
   },

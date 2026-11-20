@@ -10,4 +10,9 @@
     <string name="graph_legend">%1$d pages, %2$d links, %3$d shared-tag edges</string>
     <string name="tag_filter">Filtered by</string>
     <string name="related">Related</string>
+    <!-- #1830 the Chronos source bar: the app's own read-only clone of lib-chronos -->
+    <string name="chronos_source_clone">%1$s · %2$s @ %3$s · refreshed %4$s</string>
+    <string name="chronos_source_baked">%1$s · the copy built into the app (no clone yet)</string>
+    <string name="chronos_refresh">Refresh</string>
+    <string name="chronos_refresh_failed">Refresh failed: %1$s</string>
 </resources>

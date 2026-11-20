@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,7 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import com.diegonmarcos.cloudwiki.ChronosRepo
 import com.diegonmarcos.cloudwiki.Decl
+import com.diegonmarcos.cloudwiki.withChronos
 import com.diegonmarcos.cloudwiki.R
 import com.diegonmarcos.cloudwiki.WikiStart
 import com.diegonmarcos.cloudwiki.WikiStore
@@ -46,6 +49,10 @@ object Tags {
     const val CHRONOS = "wiki_chronos"
     const val CHRONOS_TABS = "wiki_chronos_tabs"
     const val CHRONOS_WEB = "wiki_chronos_web"
+    /** #1830 the source bar: the clone's commit and time, the refresh mode, Refresh. */
+    const val CHRONOS_SOURCE = "wiki_chronos_source"
+    const val CHRONOS_MODE = "wiki_chronos_mode"
+    const val CHRONOS_REFRESH = "wiki_chronos_refresh"
     fun chip(tag: String): String = "wiki_chip:$tag"
     fun result(id: String): String = "wiki_result:$id"
 }
@@ -62,7 +69,11 @@ object Tags {
 fun WikiShell(start: WikiStart = WikiStart()) {
     val ctx = LocalContext.current
     val data by remember { WikiStore.observe(ctx.applicationContext) }.collectAsState(initial = null)
-    val wiki = Decl.nav.section(Decl.SECTION_WIKI) ?: return
+    // #1830 the app's own clone of lib-chronos: read what is there, refresh when the mode says so; the side menu follows it
+    val repo by ChronosRepo.state.collectAsState()
+    LaunchedEffect(Unit) { ChronosRepo.refreshIfDue(ctx.applicationContext, opening = false) }
+    val declared = Decl.nav.section(Decl.SECTION_WIKI) ?: return
+    val wiki = remember(repo.tree) { withChronos(declared, Decl.chronos) }
     var page by rememberSaveable { mutableStateOf(start.page ?: start.tab?.substringBefore('.')) }
     val nav = remember { WikiNav().also { n -> start.tab?.let { t -> n.tabs[t.substringBefore('.')] = t }; n.tags.addAll(start.tags) } }
     val pageId = page?.takeIf { p -> wiki.allPages().any { it.id == p } } ?: wiki.pages.first().id

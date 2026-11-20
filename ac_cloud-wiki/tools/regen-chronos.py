@@ -181,8 +181,10 @@ def vendored(rel, url, sums, repin):
     return data
 
 
-def rewrite(text, pin, files, sums, repin, where):
+def rewrite(text, pin, files, sums, repin, where, rewrites=None):
+    """#1830 [rewrites] collects every URL -> served path replaced here, for the app's runtime copy (runtime.json)."""
     base = pin["serve_path"]
+    rw = rewrites if rewrites is not None else {}
     for v in pin["vendor"]:
         for q in ('"', "'"):
             if q + v["match"] + q in text:
@@ -190,8 +192,11 @@ def rewrite(text, pin, files, sums, repin, where):
                     if f["path"] not in files:
                         files[f["path"]] = vendored(f["path"], f["url"], sums, repin)
                 text = text.replace(q + v["match"] + q, q + base + v["rewrite"] + q)
+                rw[v["match"]] = base + v["rewrite"]
     for m in sorted(set(re.findall(r"""["'](%s[^"']*)["']""" % re.escape(pin["fonts"]["match_prefix"]), text))):
-        text = text.replace(m, base + font_css(m, pin, files, sums, repin))
+        served = base + font_css(m, pin, files, sums, repin)
+        text = text.replace(m, served)
+        rw[m] = served
     if LOADS.search(text) or CSS_URL.search(text):
         bad = (LOADS.search(text) or CSS_URL.search(text)).group(0)
         die("%s still loads from the network after the rewrite (%s...): add the URL to tools/chronos-pin.json vendor" % (where, bad[:120]))
@@ -208,6 +213,7 @@ def generate(pin, commit, repin=False):
         if not os.path.isdir(src):
             die("%s@%s has no %s/" % (pin["repo"], commit[:8], pin["source_dir"]))
         files = {}
+        rewrites = {}
         for d, dirs, fs in os.walk(src):
             dirs[:] = sorted(x for x in dirs if not x.startswith("."))
             for f in sorted(fs):
@@ -218,7 +224,7 @@ def generate(pin, commit, repin=False):
                 with open(p, "rb") as fh:
                     data = fh.read()
                 if f.endswith((".html", ".htm", ".css")):
-                    data = rewrite(data.decode("utf-8"), pin, files, sums, repin, rel).encode("utf-8")
+                    data = rewrite(data.decode("utf-8"), pin, files, sums, repin, rel, rewrites).encode("utf-8")
                 files[rel] = data
         pages = tree(src, pin)
     finally:
@@ -242,6 +248,20 @@ def generate(pin, commit, repin=False):
     if fonts_used:
         lines.append("- Google Fonts css2 answered from @fontsource, %s: %s" % (pin["fonts"]["license"], ", ".join(os.path.basename(p) for p in fonts_used)))
     files["GENERATED.md"] = ("\n".join(lines) + "\n").encode()
+    # #1830 the app clones the repo at RUN TIME (read-only) and serves the clone; this is what it needs to do that the same way
+    # this tool does: where the repo is, how page ids are derived, which CDN URLs are answered from vendor/, and the refresh modes.
+    # The baked pages above stay as the first-run / offline fallback until the first clone lands.
+    nav = pin["nav"]
+    runtime = {
+        "_doc": HEADER + " #1830 read by the app (ChronosRepo): clone url@ref shallow into its own storage, never commit; "
+                "serve source_dir from the clone; replace each `rewrites` URL in a page by its served path; refresh per `modes`.",
+        "repo": pin["repo"], "url": pin["url"], "ref": pin["ref"], "baked_commit": commit,
+        "source_dir": pin["source_dir"], "serve_path": pin["serve_path"],
+        "nav": {"id_prefix": nav["id_prefix"], "icons": nav["icons"], "default_icon": nav["default_icon"]},
+        "rewrites": [{"match": k, "served": rewrites[k]} for k in sorted(rewrites)],
+        "refresh": pin["runtime"]["refresh"],
+    }
+    files["runtime.json"] = (json.dumps(runtime, indent=2, ensure_ascii=False) + "\n").encode()
     return files, pages, dict(sorted(sums.items()))
 
 
