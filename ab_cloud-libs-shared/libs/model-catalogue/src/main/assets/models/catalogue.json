@@ -203,18 +203,18 @@
       },
       {
        "provider": "Cohere",
-       "id": "cohere/north-mini-code:free",
-       "name": "North Mini Code",
-       "params": "MoE 30B / 3B",
+       "id": "cohere/command-r7b-12-2024",
+       "name": "Command R7B (12-2024)",
+       "params": "Dense 7B",
        "params_est": false,
-       "license": "Open weights",
+       "license": "CC-BY-NC-4.0",
        "license_est": true,
        "snapshot": {
         "unit": "tokens",
-        "in": 0.0,
-        "out": 0.0,
-        "floor_in": 0.0,
-        "floor_out": 0.0
+        "in": 0.0375,
+        "out": 0.15,
+        "floor_in": 0.0375,
+        "floor_out": 0.15
        }
       }
      ]

@@ -78,7 +78,10 @@ def main(argv):
         cls = spec.get("class")
         if cls == "engine" and users.get(m):
             bad.append(f"L2 {m}: an engine compiled into {', '.join(users[m])} — apps bind engines over IPC")
-        if cls in ("contract", "engine") and renders(root, m):
+        # #1801 an engine may draw ITS OWN screen (e.g. the AI-key owner's key entry, which cannot live in an app because the keys
+        # never leave the engine's process) only when the declaration says why; a contract never draws.
+        own_ui = cls == "engine" and len(spec.get("own_ui", "")) >= 20
+        if cls in ("contract", "engine") and renders(root, m) and not own_ui:
             bad.append(f"L2 {m}: classified {cls} but renders UI — a {cls} draws nothing")
         if cls == "gui" and not renders(root, m):
             bad.append(f"L2 {m}: classified gui but renders nothing (no View/Fragment/Compose import, no layout) — it is logic")

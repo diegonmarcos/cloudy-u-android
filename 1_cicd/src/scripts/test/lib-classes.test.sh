@@ -65,6 +65,8 @@ mutate "a lib 13 apps compile is called an engine" "$DATA" "$(J "d['libs']['upda
     "L2 updater: an engine compiled into"
 mutate "a View library is called a contract"    "$DATA" "$(J "d['libs']['bottomnav'].update({'class':'contract','budget_lines':9999})")" \
     "L2 bottomnav: classified contract but renders UI"
+mutate "an engine's own screen loses its reason" "$DATA" "$(J "del d['libs']['decisions-engine']['own_ui']")" \
+    "L2 decisions-engine: classified engine but renders UI"
 mutate "logic is called gui to leave the backlog" "$DATA" "$(J "d['libs']['webserver']['class']='gui'")" \
     "L2 webserver: classified gui but renders nothing"
 mutate "the mesh outgrows its budget"           "$DATA" "$(J "d['libs']['devtools']['budget_lines']=10")" \

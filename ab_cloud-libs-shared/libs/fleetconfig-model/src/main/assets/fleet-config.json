@@ -4761,6 +4761,7 @@
         "lib-fleetconfigs-agents",
         "lib-fleetconfigs-logcat",
         "lib-fleetconfigs-xray",
+        "lib-git-core",
         "lib-graph-view",
         "lib-perms",
         "lib-theme-background",
