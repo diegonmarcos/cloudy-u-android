@@ -105,6 +105,20 @@ print('; '.join(probs) or 'OK')
 PY
 )" "each Security control is observed, has a read, a set judged by a re-read, and a system screen"
 
+echo "== P4b: VPN is OUR mesh tunnel, and its hold opens OUR page =="
+check "$(python3 - "$KT/configs/DeviceControls.kt" <<'PY'
+import re, sys
+src = open(sys.argv[1]).read()
+b = src[src.index('"vpn" to Control('):src.index('"location" to Control(')]
+probs = []
+if 'byId.getValue("mesh").read(ctx)' not in b: probs.append("vpn does not read the mesh tunnel (WireGuard backend)")
+if 'vpnUp' in b: probs.append("vpn reads 'any VPN transport', which Always-on VPN keeps up while the tunnel is down")
+if 'ACTION_VPN_SETTINGS' in b: probs.append("vpn hold opens Android's VPN settings instead of the Cloud Mesh page")
+if 'byId.getValue("mesh").open' not in b: probs.append("vpn hold does not open the Cloud Mesh page")
+print('; '.join(probs) or 'OK')
+PY
+)" "the VPN light is the mesh tunnel's state; hold opens the Cloud Mesh page"
+
 echo "== P5: routed and drawn =="
 p5=""
 grep -qF 'pageId == "panels-security" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_SECURITY)' "$KT/launcher/SectionPages.kt" || p5="$p5 no-route"

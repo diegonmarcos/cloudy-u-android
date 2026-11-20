@@ -621,17 +621,15 @@ object DeviceControls {
         ),
 
         "vpn" to Control(
-            // Any network carrying the VPN transport, whoever owns it. The switch drives this app's own tunnel (the
-            // same backend as the Mesh tile); another app's VPN is ended in that app or in Settings ▸ VPN.
+            // #1833 OUR mesh tunnel, asked of the WireGuard backend: the same read as the Mesh tile. Not "any network with the VPN
+            // transport": with Always-on VPN Android keeps the engine's VPN network registered while the tunnel is down, which lit
+            // this tile green on a phone whose mesh was down. Another app's VPN is not this tile's business.
             observed = true,
-            read = { ctx -> SecurityControls.vpnUp(ctx) },
-            set = { ctx, on ->
-                val r = DeviceControls.byId.getValue("mesh").set!!(ctx, on)
-                val now = SecurityControls.vpnUp(ctx)
-                Verdict(now == on, r.detail + "; any VPN up: " + fmt(now))
-            },
+            read = { ctx -> DeviceControls.byId.getValue("mesh").read(ctx) },
+            set = { ctx, on -> DeviceControls.byId.getValue("mesh").set!!(ctx, on) },
             blocked = { ctx -> DeviceControls.byId.getValue("mesh").blocked(ctx) },
-            open = { ctx -> open(ctx, Settings.ACTION_VPN_SETTINGS) },
+            // tap-and-hold opens OUR VPN page (Cloud Mesh), not Android's VPN settings
+            open = { ctx -> DeviceControls.byId.getValue("mesh").open?.invoke(ctx) },
         ),
 
         "location" to Control(

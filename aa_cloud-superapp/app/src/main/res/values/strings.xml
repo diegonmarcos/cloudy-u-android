@@ -260,7 +260,7 @@
     <string name="control_group_security_access_features">Features using accessibility</string>
     <string name="control_group_security_access_features_sub">Each feature that needs an accessibility service or an overlay, switched on its own.</string>
     <string name="control_group_security_net">VPN &amp; location</string>
-    <string name="control_group_security_net_sub">Whether any VPN is up and whether location is on.</string>
+    <string name="control_group_security_net_sub">Whether the Cloud Mesh tunnel is up and whether location is on.</string>
     <string name="control_group_ui">UI</string>
     <string name="control_group_ui_sub">How this launcher looks and feels under the thumb.</string>
     <string name="control_group_battery">Battery Hungers</string>

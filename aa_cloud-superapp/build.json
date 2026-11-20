@@ -11107,7 +11107,7 @@
               "icon": "ic_ctl_firewall",
               "label": "VPN",
               "security_net": true,
-              "subtitle": "Lit when any VPN is up on the device. The switch drives this app's own tunnel (the Mesh engine); another app's VPN is ended in that app."
+              "subtitle": "The Cloud Mesh tunnel, read from the WireGuard engine (lit only while it is UP). Tap switches it; hold opens the Cloud Mesh page."
             },
             {
               "id": "location",
@@ -11356,7 +11356,7 @@
           "id": "security_net",
           "label": "VPN & location",
           "label_res": "control_group_security_net",
-          "subtitle": "Whether any VPN is up and whether location is on.",
+          "subtitle": "Whether the Cloud Mesh tunnel is up and whether location is on.",
           "subtitle_res": "control_group_security_net_sub",
           "tab": "security",
           "derive": "security_net"
