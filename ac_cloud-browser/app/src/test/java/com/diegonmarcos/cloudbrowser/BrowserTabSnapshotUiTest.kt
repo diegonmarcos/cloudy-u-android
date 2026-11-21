@@ -116,7 +116,7 @@ class BrowserTabSnapshotUiTest {
     @Test
     fun `a snapshot that lands from disk after the first draw replaces the plate`() {
         val dir = tmp.newFolder("t")
-        TabThumbnails(dir, TabThumbConfig(), direct, direct).put("c", Bitmap.createBitmap(90, 160, Bitmap.Config.RGB_565))
+        TabThumbnails(dir, TabThumbConfig(), direct, direct).put("c", Bitmap.createBitmap(90, 160, Bitmap.Config.RGB_565).also { it.eraseColor(0xFFFF8800.toInt()) })   // #1841 a real page colour: an all-black picture is dropped on read
         val fresh = TabThumbnails(dir, TabThumbConfig(), direct, direct)   // empty memory, file on disk
         show(fresh, cards(tab("c")))
         compose.waitForIdle()
