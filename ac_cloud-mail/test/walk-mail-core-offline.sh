@@ -110,6 +110,7 @@ go_folder "Archive" 6; dump 06-offline-archive; shot 06-offline-archive
 $UI has "$OUT/06-offline-archive.xml" "Archived: Tax documents 2025" || fail "the offline Archive does not show its seeded message"
 dbdump offline-before-receipts
 go_folder "Receipts" 6; dump 07-offline-receipts; shot 07-offline-receipts
+sleep 20; dump 07b-offline-receipts-later; shot 07b-offline-receipts-later; dbdump offline-after-receipts
 # #1837 membership table: the label lists its own message AND the one that is also in the Inbox (filed under the Inbox)
 $UI has "$OUT/07-offline-receipts.xml" "Label only: Warranty card" "Receipt 1001 from Shop" \
   || fail "the offline Receipts label must list its own message AND the Inbox message that is also in the label"

@@ -1753,6 +1753,7 @@ class MailRepository(
     ): Flow<PagingData<InboxRow>> {
         val scopes = listOf(credentials.id to mailboxId)
         return extraScopes().flatMapLatest { extra ->
+            RustMailEngine.log("list $mailboxId: membership term=${scopes.any { it in extra }} (folders with extra members: ${extra.size}), conversation=$conversationView")
             if (conversationView) {
                 Pager(
                     config = pagingConfig(),
