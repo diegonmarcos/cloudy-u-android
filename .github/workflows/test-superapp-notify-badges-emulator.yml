@@ -70,6 +70,10 @@ jobs:
               want = sys.argv[3].lower(); n = int(sys.argv[4]) if len(sys.argv) > 4 else 0
               hits = sorted((a for a in nodes(sys.argv[2]) if a.get("text", "").strip().lower() == want), key=lambda a: a["_b"][1])
               print(centre(hits[n]) if len(hits) > n else "")
+          elif cmd == "starts":      # ui.py starts dump.xml "Prefix"     -> first node (top to bottom) whose text starts with Prefix
+              want = sys.argv[3].lower()
+              hits = sorted((a for a in nodes(sys.argv[2]) if a.get("text", "").strip().lower().startswith(want)), key=lambda a: a["_b"][1])
+              print(centre(hits[0]) if hits else "")
           elif cmd == "below":       # ui.py below dump.xml "Anchor" "Label"  -> first Label node below the Anchor node
               anchor = [a for a in nodes(sys.argv[2]) if a.get("text", "").strip() == sys.argv[3]]
               if not anchor: print(""); sys.exit()
@@ -125,8 +129,9 @@ jobs:
           # idle timer) covers the page between steps; take it down with its own button before reading or tapping.
           uncover() { for _ in 1 2 3; do adb shell uiautomator dump /sdcard/u0.xml >/dev/null 2>&1; adb pull /sdcard/u0.xml u0.xml >/dev/null 2>&1
             u=$(python3 ui.py text u0.xml Unlock)
-            # the first-start "Install unknown apps" ask covers the page after a restart: Skip it
-            [ -z "$u" ] && grep -q 'text="Install unknown apps"' u0.xml && u=$(python3 ui.py text u0.xml Skip)
+            # the first-start "Install unknown apps" ask covers the page after a restart: Skip it (FirstRunPerms labels
+            # the button "Skip", or "Skip (don't ask again)" on its last ask, so match the prefix)
+            [ -z "$u" ] && grep -q 'text="Install unknown apps"' u0.xml && u=$(python3 ui.py starts u0.xml Skip)
             [ -z "$u" ] && return 0; adb shell input tap $u; sleep 2; done; }
           dump() { awake; uncover; sleep 1; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml "out/$1.xml" >/dev/null 2>&1; }
           shade() { awake; uncover; adb shell cmd statusbar expand-notifications; sleep 3; adb exec-out screencap -p > "out/shade-$1.png"; adb shell cmd statusbar collapse; sleep 1; }
