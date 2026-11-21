@@ -145,7 +145,8 @@
           android:name=".FleetTokenOwnerProvider"
           android:authorities="${applicationId}.fleettoken"
           android:exported="true"
-          android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA" />
+          android:readPermission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"
+          android:writePermission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA" />
 
         <provider
           android:name="androidx.core.content.FileProvider"
