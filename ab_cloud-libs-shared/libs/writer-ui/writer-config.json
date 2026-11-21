@@ -157,7 +157,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "z-ai/glm-5.3-flash",
-        "pricing_as_of": "2026-11-20",
+        "pricing_as_of": "2026-11-21",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -202,8 +202,8 @@
               "roleplay",
               "translation"
             ],
-            "prompt": 0.09,
-            "completion": 0.3,
+            "prompt": 0.0675,
+            "completion": 0.225,
             "note": "Sparse 26B (4B active): translation, academia and legal at a small-model price."
           },
           {
@@ -216,7 +216,7 @@
             ],
             "trained_for": [],
             "prompt": 0.08,
-            "completion": 0.16,
+            "completion": 0.45,
             "note": "Ranked for marketing/SEO only; light and predictable on short rewrites."
           },
           {
@@ -291,14 +291,14 @@
               "academia",
               "finance",
               "health",
+              "legal",
               "marketing",
               "marketing/seo",
               "programming",
               "roleplay",
               "science",
               "technology",
-              "translation",
-              "trivia"
+              "translation"
             ],
             "prompt": 0.0443,
             "completion": 0.3,
@@ -313,7 +313,6 @@
               "fp8"
             ],
             "trained_for": [
-              "academia",
               "legal",
               "marketing/seo",
               "programming",
