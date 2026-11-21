@@ -279,6 +279,7 @@
     "st_g_targeted": "fitted (variance-targeted)",
     "st_g_realised": "Realised vol (% a year)",
     "st_g_dropped": "Bad prints dropped (returns)",
+    "st_g_common": "Bad prints dropped from every model's returns (all series, aligned): {v}",
     "st_g_defaults": "defaults (short history)",
     "st_implied": "Implied",
     "st_pick": "Volatility framework",

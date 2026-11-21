@@ -23,6 +23,8 @@ data class MarkzStatsResult(
     val ids: List<String>, val days: Int, val lastDay: String, val returns: List<List<Double>>, val vols: List<MarkzVols>, val corr: List<List<Double>>,
     /** The benchmark's annualised price return over every common day read (the default E(Rm)), percent. */
     val benchmarkAnnual: Double,
+    /** Returns dropped as bad prints (in any series) before every estimator: one cleaned return series for all of them. */
+    val dropped: Int = 0,
 )
 
 /**
@@ -150,7 +152,10 @@ object MarkzStats {
     fun compute(decl: MarkzStatsDecl, ids: List<String>, closes: List<List<Pair<LocalDate, Double>>>, implied: List<Double?>): MarkzStatsResult? {
         val (days, cl) = aligned(closes)
         if (days.size < 3) return null
-        val win = cl.map { c -> returns(c).takeLast(decl.windowDays) }
+        // one cleaned series for every model: a return that is a bad print in any series is dropped from all of them (the series stay aligned)
+        val masks = cl.map { GarchFitter.badMask(it) }
+        val drop = BooleanArray(days.size - 1) { i -> masks.any { it[i] } }
+        val win = cl.map { c -> returns(c).filterIndexed { i, _ -> !drop[i] }.takeLast(decl.windowDays) }
         val vols = win.mapIndexed { i, r ->
             // GARCH: the parameters fitted to the asset's own whole history (cached by data hash); the declared defaults on the window when it is too short
             val fit = GarchFitter.fit(closes[i], decl.alpha, decl.beta)
@@ -158,6 +163,6 @@ object MarkzStats {
             MarkzVols(histVol(r, decl.annualDays), ewmaVol(r, decl.lambda, decl.annualDays), g, implied.getOrNull(i), fit)
         }
         val corr = win.indices.map { i -> win.indices.map { j -> if (i == j) 1.0 else corr(win[i], win[j]) } }
-        return MarkzStatsResult(ids, minOf(days.size - 1, decl.windowDays), days.last().toString(), win, vols, corr, annualised(cl.last(), decl.annualDays))
+        return MarkzStatsResult(ids, minOf(days.size - 1 - drop.count { it }, decl.windowDays), days.last().toString(), win, vols, corr, annualised(cl.last(), decl.annualDays), drop.count { it })
     }
 }

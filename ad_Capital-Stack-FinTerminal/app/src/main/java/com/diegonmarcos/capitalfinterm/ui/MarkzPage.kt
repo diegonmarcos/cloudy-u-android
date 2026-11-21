@@ -603,6 +603,7 @@ private fun VolatilityBody(d: MarkzDecl, r: MarkzStatsResult, names: List<String
     ModelTabs(d)
     FinPanel("", d.word("st_pick")) {
         Grid(MarkzScreen.volColumns(d), r.vols.mapIndexed { i, v -> MarkzScreen.volRow(names[i], v) }, "volatility")
+        Text(d.word("st_g_common", "v" to r.dropped.toString()), Modifier.padding(horizontal = 8.dp, vertical = 2.dp), color = LocalFinPalette.current.text3, style = FinType.caption)
         Text(d.word("st_g_title"), Modifier.padding(horizontal = 8.dp, vertical = 4.dp), color = LocalFinPalette.current.text2, style = FinType.caption)
         Grid(MarkzScreen.garchColumns(d, names), MarkzScreen.garchRows(d, r.vols, d.stats.annualDays), "garch")
         val p = LocalFinPalette.current

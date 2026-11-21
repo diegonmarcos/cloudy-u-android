@@ -157,4 +157,22 @@ class GarchFitTest {
         val rnd = java.util.Random(3); val r = List(2000) { rnd.nextGaussian() * 0.01 }
         assertEquals(15.87, MarkzStats.histVol(r, 252), 1.0)
     }
+
+    @Test fun everyVolModelSeesTheCleanedReturns() {
+        val a = sim(400, 2e-6, 0.08, 0.90, 51); val m = sim(400, 2e-6, 0.08, 0.90, 52)
+        // a one-day wrong print (+40% then back) in the asset only
+        val dirty = a.mapIndexed { i, (d, c) -> d to (if (i == 380) c * 1.4 else c) }
+        val clean = MarkzStats.compute(decl, listOf("a", "m"), listOf(a, m), listOf(null, null))!!
+        val r = MarkzStats.compute(decl, listOf("a", "m"), listOf(dirty, m), listOf(null, null))!!
+        assertEquals(2, r.dropped); assertEquals(0, clean.dropped)
+        // the print is gone from the SD, the EWMA, the GARCH and the correlation (the two legs are removed from every series, so they stay aligned)
+        assertEquals(clean.vols[0].hist, r.vols[0].hist, clean.vols[0].hist * 0.05)
+        assertEquals(clean.vols[0].ewma, r.vols[0].ewma, clean.vols[0].ewma * 0.05)
+        assertEquals(clean.vols[0].garch, r.vols[0].garch, clean.vols[0].garch * 0.05)
+        assertEquals(clean.corr[0][1], r.corr[0][1], 0.05)
+        assertTrue(r.returns.all { w -> w.all { Math.abs(it) < 0.25 } })
+        // the raw series (no cleaning) would have a far larger SD
+        val raw = MarkzStats.returns(dirty.map { it.second }).takeLast(252)
+        assertTrue(MarkzStats.histVol(raw, 252) > 2 * r.vols[0].hist)
+    }
 }
