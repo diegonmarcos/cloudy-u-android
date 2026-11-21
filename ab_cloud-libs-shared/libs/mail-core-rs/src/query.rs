@@ -222,10 +222,9 @@ pub fn changes_since(c: &Connection, a: &ChangesArgs) -> Result<Value, String> {
     };
     let emails: Vec<Value> = rows.iter().filter_map(|(_, _, j)| serde_json::from_str(j).ok()).collect();
     let mut primary = serde_json::Map::new();
-    for (_, id, _) in &rows {
-        if let Some(p) = primary_mailbox(c, &a.account, id)? {
-            primary.insert(id.clone(), Value::String(p));
-        }
+    let fed: Vec<&str> = rows.iter().map(|(_, id, _)| id.as_str()).collect();
+    for (id, p) in primary_of(c, &a.account, &fed)? {
+        primary.insert(id, Value::String(p));
     }
     let removed: Vec<String> = if a.since_id.is_empty() && a.since_seq > 0 {
         let mut t = c
@@ -242,8 +241,10 @@ pub fn changes_since(c: &Connection, a: &ChangesArgs) -> Result<Value, String> {
     };
     // A membership that ended is not always a message that left: one still in another mailbox is re-filed there (`moved`).
     let mut moved: Vec<Value> = vec![];
+    let ended: Vec<&str> = removed.iter().map(String::as_str).collect();
+    let still = primary_of(c, &a.account, &ended)?;
     for id in &removed {
-        if let Some(p) = primary_mailbox(c, &a.account, id)? {
+        if let Some(p) = still.get(id).cloned() {
             let j: Option<String> = c
                 .query_row("SELECT json FROM messages WHERE account = ?1 AND id = ?2", params![a.account, id], |r| r.get(0))
                 .optional()
@@ -310,6 +311,27 @@ pub fn primary_mailbox(c: &Connection, account: &str, email_id: &str) -> Result<
         .collect::<Result<Vec<_>, _>>()
         .map_err(err)?;
     Ok(pick_primary(&m))
+}
+
+/// message id -> primary mailbox, for the given messages only (ONE statement, however many ids: the projection feed asks for a page).
+pub fn primary_of(c: &Connection, account: &str, ids: &[&str]) -> Result<std::collections::HashMap<String, String>, String> {
+    if ids.is_empty() {
+        return Ok(Default::default());
+    }
+    let list = serde_json::to_string(ids).map_err(err)?;
+    let mut st = c
+        .prepare_cached(
+            "SELECT b.email_id, b.mailbox_id, x.role FROM membership b LEFT JOIN mailboxes x ON x.account = b.account AND x.id = b.mailbox_id
+             WHERE b.account = ?1 AND b.email_id IN (SELECT value FROM json_each(?2))",
+        )
+        .map_err(err)?;
+    let mut by: std::collections::HashMap<String, Vec<(String, Option<String>)>> = std::collections::HashMap::new();
+    let rows = st.query_map(params![account, list], |r| Ok((g_s(r, 0)?, g_s(r, 1)?, g_os(r, 2)?))).map_err(err)?;
+    for row in rows {
+        let (e, m, role) = row.map_err(err)?;
+        by.entry(e).or_default().push((m, role));
+    }
+    Ok(by.into_iter().filter_map(|(e, m)| pick_primary(&m).map(|p| (e, p))).collect())
 }
 
 /// message id -> primary mailbox, for the whole account.
