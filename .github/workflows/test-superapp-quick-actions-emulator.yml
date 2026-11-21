@@ -145,16 +145,19 @@ jobs:
           # (unit tests cover them); the accessibility entry the mode must remove and put back is the app's own service.
           adb shell pm grant "$PKG" android.permission.WRITE_SECURE_SETTINGS || true
           SVC="$PKG/com.diegonmarcos.superapp.system.LockScreenAccessibilityService"
-          adb shell settings put secure enabled_accessibility_services "$SVC"; adb shell settings put secure accessibility_enabled 1
           adb shell am force-stop "$PKG"
           echo '<?xml version="1.0" encoding="utf-8" standalone="yes" ?><map><string name="skip">usb_debugging,developer_options,wireless_debugging,adb_shell</string></map>' > bm.xml
           adb push bm.xml /data/local/tmp/banking_mode.xml
           adb shell "run-as $PKG sh -c 'mkdir -p shared_prefs && cp /data/local/tmp/banking_mode.xml shared_prefs/banking_mode.xml'" || echo "run-as failed"
           adb shell am start -W -n "$ACT" >/dev/null; sleep 15
+          skipdlg() { adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb pull /sdcard/u.xml out/dlg.xml >/dev/null 2>&1
+            if grep -q 'text="Install unknown apps"' out/dlg.xml; then sp=$(python3 ui.py text out/dlg.xml Skip); [ -n "$sp" ] && adb shell input tap $sp && sleep 3; fi; }
+          skipdlg
+          adb shell settings put secure enabled_accessibility_services "$SVC"; adb shell settings put secure accessibility_enabled 1
           a11y() { adb shell settings get secure enabled_accessibility_services | tr -d '\r'; }
           shoot() { adb exec-out screencap -p > "out/$1.png"; adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb pull /sdcard/u.xml "out/$1.xml" >/dev/null 2>&1; }
           sec() { page panels-security; sleep 8; shoot "$1"; }
-          tapmode() { page presets
+          tapmode() { page presets; skipdlg
             for _ in 1 2 3 4 5 6 7 8; do
               adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb pull /sdcard/u.xml out/pm.xml >/dev/null 2>&1
               pos=$(python3 - <<'PY'
