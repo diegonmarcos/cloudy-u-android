@@ -173,13 +173,13 @@ fun WebyPage(decl: SitesDecl, fixed: List<WebyFolder>? = null, down: Set<String>
     var view by remember { mutableStateOf(WEBY_QUICK) }
     val glyphs = remember { WebyGlyphs.parse(decl.cloudy.optJSONObject("webapps")?.optJSONObject("icons")) }
     val browserMarks = remember(view) { if (fixed == null && view == WEBY_ALL) runCatching { com.diegonmarcos.superapp.browser.BrowserBookmarks(ctx).all() }.getOrDefault(emptyList()).map { Triple(it.url, it.title, it.folder) } else emptyList() }
-    val shown: List<WebyFolder> = when {
+    val pageFolders: List<WebyFolder> = when {
         fixed != null -> fixed
         view == WEBY_ALL -> WebyBookmarks.all(folders, browserMarks, catalogue)
         else -> folders
     }
     fun editable(path: String) = fixed == null && view == WEBY_QUICK && !WebyCatalogue.isCatalogue(path)
-    val sections = WebyOps.flatten(shown)
+    val sections = WebyOps.flatten(pageFolders)
 
     LazyVerticalGrid(
         GridCells.Fixed(WebyLayout.COLUMNS), Modifier.fillMaxSize().testTag("weby:grid"),
@@ -195,8 +195,8 @@ fun WebyPage(decl: SitesDecl, fixed: List<WebyFolder>? = null, down: Set<String>
                 KitStoreQuick(t("add_folder"), KitStoreRow.AMBER_FILL, Modifier.testTag("weby:add_folder"), onClick = { dialog = WebyDialog.AddFolder })
             }
         }
-        if (shown.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) { KitStoreRowLine { KitStoreCaption(t("empty"), color = p.textSecondary) } }
-        for (f in shown) {
+        if (pageFolders.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) { KitStoreRowLine { KitStoreCaption(t("empty"), color = p.textSecondary) } }
+        for (f in pageFolders) {
             val path = f.title
             val derived = !editable(path)
             item(key = "h:$path", span = { GridItemSpan(maxLineSpan) }) {
