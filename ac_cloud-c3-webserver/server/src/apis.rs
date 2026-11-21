@@ -190,13 +190,20 @@ pub fn device_mesh_page(m: &Mesh, apps: &[App]) -> Value {
 }
 
 pub fn mesh_page(d: &Value, m: &Mesh, apps: &[App]) -> Value {
-    let base = format!("http://{}:{}", m.live_bind(), m.port);
-    let mut head = vec![row(
-        &format!("{}{}", base, m.route),
-        vec!["GET".into(), "Bearer".into(), "mesh only".into()],
-        vec![format!("the apps that export logs; peers from {} only; every path needs the fleet bearer", m.cidr_text())],
-        vec![],
-    )];
+    // #1845 one row per mesh address the listener holds (the phone has one per mesh); the rest of the page uses the first
+    let addrs = m.shown_binds();
+    let base = format!("http://{}:{}", addrs[0], m.port);
+    let mut head: Vec<Value> = addrs
+        .iter()
+        .map(|a| {
+            row(
+                &format!("http://{}:{}{}", a, m.port, m.route),
+                vec!["GET".into(), "Bearer".into(), "mesh only".into()],
+                vec![format!("the apps that export logs; peers from {} only; every path needs the fleet bearer", m.cidr_text())],
+                vec![],
+            )
+        })
+        .collect();
     head.push(row(&format!("{}{}/public | mesh", base, m.endpoints_route), vec!["GET".into(), "Bearer".into()], vec!["these Public and Mesh Endpoints pages as JSON (for cloudy-c3-mcp)".to_string()], vec![]));
     head.push(row(&format!("{}{}/<app>?n=&errors=&crashes=&method=", base, m.route), vec!["GET".into(), "Bearer".into()], vec![format!("calls <package>.{} of that app: {}", m.suffix, m.methods.join(" | "))], vec![]));
     let logs: Vec<Value> = apps.iter().map(|a| row(&a.name, vec![a.id.clone()], vec![format!("{}.{}", a.package, m.suffix)], vec![(format!("{}{}/{}", base, m.route, a.id), format!("{}{}/{}", base, m.route, a.id))])).collect();

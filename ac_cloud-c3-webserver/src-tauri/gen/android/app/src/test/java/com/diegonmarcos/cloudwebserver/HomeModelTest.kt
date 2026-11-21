@@ -112,6 +112,12 @@ class HomeModelTest {
         assertEquals("Pages ON · API OFF · SSHD ON", HomeModel.servicesMsg(pws(true, true, false, true)))
     }
 
+    @Test fun `#1845 the mesh listener shows one port entry per bound mesh address`() {
+        val ports = """{"name":"mesh","port":8004,"proto":"tcp","addr":"10.0.0.10"},{"name":"mesh","port":8004,"proto":"tcp","addr":"10.1.0.12"}"""
+        assertEquals("tcp 10.0.0.10:8004, tcp 10.1.0.12:8004", HomeModel.portsOf(pws(true, true, true, true, ports), "mesh"))
+        assertEquals("", HomeModel.portsOf(pws(true, true, true, true), "mesh"))   // nothing bound: nothing claimed
+    }
+
     private fun pwk(server: Boolean, ka: Boolean, pages: Boolean = true) = JSONObject("""{"server":$server,"running":$server,"keep_alive":$ka,"svc":{"pages":{"enabled":$pages}}}""")
     private val up = Lights(true, true, true)
 

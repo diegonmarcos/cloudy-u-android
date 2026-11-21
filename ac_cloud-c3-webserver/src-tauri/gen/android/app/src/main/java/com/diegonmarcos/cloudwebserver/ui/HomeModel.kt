@@ -104,7 +104,7 @@ object HomeModel {
 
     /** #1836 the ports the server reports as bound, by listener name (status `ports[].name`). */
     fun portsOf(pw: JSONObject?, vararg names: String): String =
-        pw?.optJSONArray("ports").objs().filter { it.optString("name") in names }.joinToString(", ") { "${it.optString("proto")} ${it.opt("port")}" }
+        pw?.optJSONArray("ports").objs().filter { it.optString("name") in names }.joinToString(", ") { "${it.optString("proto")} ${it.optString("addr").let { a -> if (a.isEmpty()) "" else "$a:" }}${it.opt("port")}" }
 
     /** #1836 the JSON a service's switch posts: OFF clears only its own flag (the others and the Server keep going); ON sets it and also turns the Server ON, which then binds only the enabled services. */
     fun svcSet(key: String, on: Boolean): JSONObject = JSONObject().put("svc_$key", on).also { if (on) it.put("server", true) }

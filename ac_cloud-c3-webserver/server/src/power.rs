@@ -348,8 +348,11 @@ pub fn status_json() -> Value {
     if crate::content_running() {
         ports.push(json!({"name": "diagnostics", "port": sv.diag_port, "proto": "tcp"}));
         ports.push(json!({"name": "dns", "port": sv.dns.port, "proto": "udp"}));
+        // #1845 one entry per mesh address the listener really holds (none while the tunnel is down), never a declared port that is not bound
         if let Some(p) = apis::build()["mesh"]["port"].as_u64().or_else(|| apis::build()["runtime"]["mesh"]["port"].as_u64()) {
-            ports.push(json!({"name": "mesh", "port": p, "proto": "tcp"}));
+            for a in crate::meshlogs::bound_addrs() {
+                ports.push(json!({"name": "mesh", "port": p, "proto": "tcp", "addr": a.to_string()}));
+            }
         }
         ports.extend(crate::repos::host().ports().into_iter().map(|p| json!({"name": "site", "port": p, "proto": "tcp"})));
     }
