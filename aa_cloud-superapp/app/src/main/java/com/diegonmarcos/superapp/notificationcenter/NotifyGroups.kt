@@ -141,7 +141,8 @@ object NotifyGroups {
                 SUMMARY_CHANNEL, "Notification groups", NotificationManager.IMPORTANCE_LOW,
             ).apply { setShowBadge(false) })
         runCatching {
-            NotifyGate.post(nm, g.id, SUMMARY_ID, NotificationCompat.Builder(ctx, SUMMARY_CHANNEL)
+            NotifyGate.postKept(nm, g.id, SUMMARY_ID, // #1844 a swiped summary comes back, so the children never lose their group
+                 NotificationCompat.Builder(ctx, SUMMARY_CHANNEL)
                 .setSmallIcon(R.drawable.ic_stat_notify)
                 .setColor(0xFF0A0A0A.toInt())
                 .setContentTitle(g.label)

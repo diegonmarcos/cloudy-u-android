@@ -69,6 +69,14 @@ object NotifyGate {
         return post(nm, null, id, n, force = !inShade(nm, null, id))
     }
 
+    /**
+     * #1844 a card that must always be in the shade (the Mesh badge, a group summary): goes out when its content changed OR
+     * when it is not posted (swiped, cleared). Without this a re-post after a swipe of an UNCHANGED card (the VPN down:
+     * nothing ever changes) was dropped by the dedupe and the badge stayed gone.
+     */
+    fun postKept(nm: NotificationManager, tag: String?, id: Int, n: Notification): Boolean =
+        post(nm, tag, id, n, force = !inShade(nm, tag, id))
+
     /** Is (tag, id) posted right now? An unanswerable shade counts as "not there", so the card is posted rather than lost. */
     internal fun inShade(nm: NotificationManager, tag: String?, id: Int): Boolean =
         runCatching { nm.activeNotifications.any { it.id == id && it.tag == tag } }.getOrDefault(false)

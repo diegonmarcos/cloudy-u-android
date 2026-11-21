@@ -229,6 +229,22 @@ jobs:
             adb shell am start -W -n "$ACT" >/dev/null; sleep 10
             tall my-rss "all-$st-tall"
           done
+          # 5. #1844 the Mesh badge with the VPN down (the emulator has none): in the shade; swiped away it is posted again; its group
+          # keeps a summary (the shade shot is the groups collapsed, then expanded by tapping the group's row).
+          adb shell am force-stop "$PKG"; adb shell am start -W -n "$ACT" >/dev/null; sleep 20; awake
+          mesh_in() { case " $1 " in *" network_mesh "*) return 0;; esac; return 1; }
+          p5=$(until_shade mesh-down mesh_in); mesh_in "$p5" && check ok "5 VPN down: the Mesh badge is in the shade ($p5)" || check no "5 VPN down: no Mesh badge ($p5)"
+          adb shell dumpsys notification --noredact | grep -c 'groupKey=.*nc\.network' > out/group-count.txt || true
+          [ "$(cat out/group-count.txt)" -ge 2 ] && check ok "5 the Mesh badge sits in its group with a summary ($(cat out/group-count.txt) entries)" || check no "5 Mesh group entries: $(cat out/group-count.txt)"
+          shade 5-mesh-down-groups
+          awake; uncover; adb shell cmd statusbar expand-notifications; sleep 3; adb shell uiautomator dump /sdcard/sh.xml >/dev/null 2>&1; adb pull /sdcard/sh.xml out/shade-mesh.xml >/dev/null 2>&1
+          mp=$(python3 ui.py text out/shade-mesh.xml 'Mesh')
+          if [ -n "$mp" ]; then set -- $mp; adb shell input swipe $(( $1 )) $2 1050 $2 120; sleep 3; fi
+          adb shell cmd statusbar collapse; sleep 1
+          p6=$(until_shade mesh-swiped mesh_in); mesh_in "$p6" && check ok "5 swiped away, the Mesh badge is posted again ($p6)" || check no "5 swiped away, the Mesh badge stayed gone ($p6)"
+          shade 6-mesh-after-swipe
+          adb shell am kill "$PKG"; sleep 3; adb shell am start -W -n "$ACT" >/dev/null; sleep 15
+          p7=$(until_shade mesh-restart mesh_in); mesh_in "$p7" && check ok "5 after a process kill and restart the Mesh badge is back ($p7)" || check no "5 Mesh badge missing after restart ($p7)"
           timeout 60 adb logcat -d > out/logcat.txt || true
           cat out/verdict.txt
           [ "$fails" -eq 0 ]

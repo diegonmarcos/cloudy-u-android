@@ -161,7 +161,7 @@ class NetworkBadgeService : Service() {
         val snap = gather()
         scheduleTick(snap.connected)
         runCatching {
-            NotifyGate.post(getSystemService(NOTIFICATION_SERVICE) as NotificationManager, null, NOTIF_ID, build(snap))
+            NotifyGate.postKept(getSystemService(NOTIFICATION_SERVICE) as NotificationManager, null, NOTIF_ID, build(snap)) // #1844 back after a swipe, VPN up or down
         }
     }
 

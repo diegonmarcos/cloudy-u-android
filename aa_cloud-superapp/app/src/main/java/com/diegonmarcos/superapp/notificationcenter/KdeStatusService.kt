@@ -50,7 +50,7 @@ class KdeStatusService : Service() {
     private fun repost(force: Boolean = false) {
         runCatching {
             NotifyGate.post(getSystemService(NOTIFICATION_SERVICE) as NotificationManager, null, NOTIF_ID,
-                KdeStatusNotifier.build(this), force)
+                KdeStatusNotifier.build(this), force || !NotifyGate.inShade(getSystemService(NOTIFICATION_SERVICE) as NotificationManager, null, NOTIF_ID))
         }
     }
 
