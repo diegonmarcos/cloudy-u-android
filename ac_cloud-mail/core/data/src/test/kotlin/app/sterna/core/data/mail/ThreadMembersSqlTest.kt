@@ -61,7 +61,7 @@ class ThreadMembersSqlTest {
                     i + 1,
                     when (name) {
                         "accountId" -> accountId
-                        "mailboxIds" -> mailboxes[mailbox++]
+                        "mailboxIds" -> mailboxes[mailbox++ % mailboxes.size] // the list occurs twice since #1837 (own folder OR membership)
                         "threadKey" -> threadKey
                         else -> error("Unexpected parameter ':$name' in EmailDao.cachedThreadEmails")
                     },

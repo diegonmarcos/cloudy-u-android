@@ -92,7 +92,7 @@ class ConversationScopeTest {
                     i + 1,
                     when (name) {
                         "accountId" -> accountId
-                        "mailboxIds" -> folders[next++]
+                        "mailboxIds" -> folders[next++ % folders.size] // the list occurs twice since #1837 (own folder OR membership)
                         "threadKey" -> threadKey
                         else -> error("unexpected parameter :$name in cachedThreadEmails")
                     },
