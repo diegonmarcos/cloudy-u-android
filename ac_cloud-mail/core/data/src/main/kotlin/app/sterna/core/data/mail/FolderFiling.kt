@@ -33,4 +33,12 @@ internal object FolderFiling {
         val gone = removed.filter { it in inRoom && it !in keptIds && !isProtected(it) }
         return Plan(rows, gone)
     }
+
+    /**
+     * The mailbox the Kotlin window sync files each fetched message of [mailboxId] under: the core's [primary] when it knows the
+     * message (so the window sync and the core's projection write the SAME row, never re-filing a message that is in the Inbox and
+     * a label back and forth while a folder is not yet complete), else [mailboxId], the sync's own rule.
+     */
+    fun windowFiling(mailboxId: String, emails: List<Email>, primary: Map<String, String>): List<Pair<Email, String>> =
+        emails.map { it to (primary[it.id] ?: mailboxId) }
 }

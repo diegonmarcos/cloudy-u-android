@@ -186,6 +186,19 @@ class RustMailEngine(
         }
     }
 
+    /** The mailbox the store files each of [ids] under ([FolderFiling]); a message the store does not know is absent. Empty on any failure. */
+    suspend fun primaries(localAccountId: String, ids: List<String>): Map<String, String> = withContext(Dispatchers.IO) {
+        if (ids.isEmpty()) return@withContext emptyMap()
+        runCatching {
+            val q = buildJsonObject {
+                put("op", "primaries"); put("account", localAccountId)
+                put("ids", kotlinx.serialization.json.JsonArray(ids.map { kotlinx.serialization.json.JsonPrimitive(it) }))
+            }
+            JSON.parseToJsonElement(MailCore.query(dbPath, q.toString()).getOrThrow()).jsonObject["primary"]?.jsonObject.orEmpty()
+                .mapValues { it.value.jsonPrimitive.content }
+        }.getOrDefault(emptyMap())
+    }
+
     /** The store's per-mailbox counts of an account (local, unread, the server's totals, complete, gaps found). */
     suspend fun counts(localAccountId: String): Map<String, CoreMailboxCount> = withContext(Dispatchers.IO) {
         val o = JSON.parseToJsonElement(

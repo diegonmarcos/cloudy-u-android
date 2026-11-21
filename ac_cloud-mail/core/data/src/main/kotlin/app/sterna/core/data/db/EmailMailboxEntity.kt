@@ -8,8 +8,9 @@ import androidx.room.Index
  * feed. `emails` keeps ONE row per message under its primary mailbox (the rule in mail-core-rs `folder_rank`), so a message in
  * the Inbox and a label is one row; this table is what lets the label's list (and unread count) include it too, as Gmail does.
  * Only the core's projection writes it, replacing a message's whole set at once; a message that `EmailDao.upsertAll` files under a DIFFERENT mailbox
- * (a local move) loses its set, and the next projection brings it back. Rows of messages that left `emails` are
- * harmless: every read starts from an `emails` row.
+ * (a local move) loses its set, and the next projection brings it back. No row outlives its message for long: a
+ * delete of `emails` through the projection or of a whole account deletes the memberships with it ([EmailDao.applyProjection],
+ * [EmailDao.deleteForAccount], [EmailDao.deleteAll]), and [EmailDao.deleteOrphanMemberships] sweeps what the other delete paths left.
  */
 @Entity(
     tableName = "email_mailboxes",

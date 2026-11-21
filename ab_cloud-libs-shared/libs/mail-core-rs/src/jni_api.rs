@@ -93,6 +93,13 @@ pub fn do_query(db: &str, q: &str) -> Result<String, String> {
             with_store(db, false, |st| query::changes_since(&st.conn, &a))?
         }
         "counts" => with_store(db, false, |st| query::counts(&st.conn, s(&q, "account")?))?,
+        "primaries" => {
+            let ids: Vec<String> = q.get("ids").and_then(Value::as_array).map(|a| a.iter().filter_map(|v| v.as_str().map(String::from)).collect()).unwrap_or_default();
+            with_store(db, false, |st| {
+                let refs: Vec<&str> = ids.iter().map(String::as_str).collect();
+                query::primary_of(&st.conn, s(&q, "account")?, &refs).map(|m| json!({ "primary": m }))
+            })?
+        }
         "members" => with_store(db, false, |st| query::member_ids(&st.conn, s(&q, "account")?, s(&q, "mailbox")?))?,
         "search" => {
             let limit = q.get("limit").and_then(Value::as_u64).unwrap_or(100) as usize;

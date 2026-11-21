@@ -2,6 +2,7 @@
 """uiautomator dump helpers for the #1837 offline emulator proof (workflow test-mail-core-offline-emulator.yml). Stdlib only.
 
   mail-offline-ui.py has  DUMP.xml TEXT...       exit 1 naming every TEXT no node shows (text or content-desc, substring match)
+  mail-offline-ui.py lacks DUMP.xml TEXT...      exit 1 naming every TEXT that a node DOES show (the opposite of has)
   mail-offline-ui.py tap  DUMP.xml TEXT [exact]  print "x y", the centre of the first node whose text / content-desc starts with TEXT
   mail-offline-ui.py texts DUMP.xml              every visible text, one per line (non-ASCII kept: the XML is parsed, not grepped)
   mail-offline-ui.py selftest
@@ -43,6 +44,8 @@ def main(argv):
                 '<node text="" content-desc="Archive" bounds="[10,10][30,30]"/></hierarchy>')
             assert main(["x", "has", p, "España: reunión", "Archive"]) == 0
             assert main(["x", "has", p, "Nope"]) == 1
+            assert main(["x", "lacks", p, "Nope"]) == 0
+            assert main(["x", "lacks", p, "Archive"]) == 1
         print("mail-offline-ui selftest ok")
         return 0
     if cmd == "has":
@@ -51,6 +54,12 @@ def main(argv):
         for w in missing:
             print("missing: %s" % w)
         return 1 if missing else 0
+    if cmd == "lacks":
+        seen = [v for n in nodes(argv[2]) for v in values(n)]
+        shown = [w for w in argv[3:] if any(w in v for v in seen)]
+        for w in shown:
+            print("shown: %s" % w)
+        return 1 if shown else 0
     if cmd == "tap":
         want, exact = argv[3], len(argv) > 4 and argv[4] == "exact"
         for n in nodes(argv[2]):

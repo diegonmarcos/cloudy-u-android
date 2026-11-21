@@ -617,6 +617,10 @@ fn a_message_in_the_inbox_and_a_label_is_filed_once_and_a_move_refiles_it() {
         query::changes_since(c, &ChangesArgs { account: ACC.into(), mailbox: m.into(), since_seq: since, since_id: String::new(), limit: 500 }).unwrap()
     };
     assert_eq!(feed("lbl", 0)["primary"]["e00008"], "inbox");
+    // #1837: the app's window sync asks the same filing for the messages it fetched ("primaries" op = primary_of).
+    let asked = query::primary_of(c, ACC, &["e00008", "nope"]).unwrap();
+    assert_eq!(asked.get("e00008").map(String::as_str), Some("inbox"));
+    assert!(!asked.contains_key("nope"), "a message the store does not know is left to the app's own rule");
     assert_eq!(feed("inbox", 0)["primary"]["e00008"], "inbox");
     // Per mailbox, the ids filed there: the label holds only what is filed nowhere else, and the filings partition the store.
     let lbl = query::member_ids(c, ACC, "lbl").unwrap();

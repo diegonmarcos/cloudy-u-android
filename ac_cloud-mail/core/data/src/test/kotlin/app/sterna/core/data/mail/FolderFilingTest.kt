@@ -40,4 +40,16 @@ class FolderFilingTest {
         val p = FolderFiling.plan("inbox", listOf(e("m1")), listOf(e("m2")), emptyList(), mapOf("m1" to "inbox", "m2" to "trash"), emptySet(), { true })
         assertTrue(p.rows.isEmpty())
     }
+
+    @Test fun `the window sync files a message by the core's primary, so it does not flip-flop with the projection`() {
+        val primary = mapOf("m1" to "inbox")
+        val fromLabelWindow = FolderFiling.windowFiling("lbl", listOf(e("m1"), e("m2")), primary)
+        assertEquals(listOf("m1" to "inbox", "m2" to "lbl"), fromLabelWindow.map { it.first.id to it.second })
+        val projected = FolderFiling.plan("lbl", listOf(e("m1")), emptyList(), emptyList(), primary, emptySet(), none).rows.single().second
+        assertEquals("the same row the core projection writes", projected, fromLabelWindow.first().second)
+    }
+
+    @Test fun `with no core primary the window sync keeps its own rule`() {
+        assertEquals("lbl", FolderFiling.windowFiling("lbl", listOf(e("m1")), emptyMap()).single().second)
+    }
 }

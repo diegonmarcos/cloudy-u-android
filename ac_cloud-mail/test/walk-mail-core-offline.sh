@@ -114,6 +114,12 @@ sleep 20; dump 07b-offline-receipts-later; shot 07b-offline-receipts-later; dbdu
 # #1837 membership table: the label lists its own message AND the one that is also in the Inbox (filed under the Inbox)
 $UI has "$OUT/07-offline-receipts.xml" "Label only: Warranty card" "Receipt 1001 from Shop" \
   || fail "the offline Receipts label must list its own message AND the Inbox message that is also in the label"
+# #1837: offline, the list ends quietly (no "Couldn't load more" / Retry footer), and the top bar's path names the open folder
+adb shell input swipe 540 1800 540 400 300; sleep 3; dump 07c-offline-receipts-bottom; shot 07c-offline-receipts-bottom
+for d in 07-offline-receipts 07b-offline-receipts-later 07c-offline-receipts-bottom; do
+  $UI lacks "$OUT/$d.xml" "load more" "Retry" || fail "offline Receipts ($d) shows the load-more error footer"
+done
+$UI has "$OUT/07-offline-receipts.xml" "Receipts" || fail "the top bar's breadcrumb does not name the open Receipts label (07)"
 go_folder "Inbox" 5
 if tapt "España: reunión"; then
   sleep 6

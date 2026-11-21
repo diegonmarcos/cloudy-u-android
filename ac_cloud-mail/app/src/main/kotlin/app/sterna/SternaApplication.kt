@@ -155,6 +155,12 @@ class AppContainer(context: Context) {
         }
         // A linked sub-account pruned on reconcile (#31) drops its notification baselines too,
         // exactly like a sign-out — the data layer cannot reach them.
+        // #1837: the list's append ends quietly, never as an error, while the phone has no network ([offlineAppendEnds]).
+        mailRepository.isOnline = {
+            val cm = appContext.getSystemService(android.net.ConnectivityManager::class.java)
+            val caps = cm?.getNetworkCapabilities(cm.activeNetwork)
+            caps?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+        }
         mailRepository.onAccountPruned = { app.sterna.push.NewMailNotifier.clear(appContext, it) }
         // A folder the server renumbered (#99): every id in it is new, so its baseline describes
         // messages that no longer exist. Cleared here, the next pass seeds it silently.

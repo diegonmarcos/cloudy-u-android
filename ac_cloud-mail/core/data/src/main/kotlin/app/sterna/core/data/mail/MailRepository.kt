@@ -1004,6 +1004,9 @@ class MailRepository(
      * baselines. Set by the app layer at startup.
      */
     var onAccountPruned: ((String) -> Unit)? = null
+
+    /** Whether the phone has a network now; set by the app layer. Only the list's append asks (see [offlineAppendEnds]). */
+    var isOnline: () -> Boolean = { true }
     private class Context(
         val credentials: AccountCredentials,
         val session: JmapSession,
@@ -1189,6 +1192,7 @@ class MailRepository(
                 isProtected = { isRecentlyMutated(localAccountId, it) },
                 beforeWrite = { checkAccountStillConfigured(localAccountId, accountStore.accounts().map { it.id }) },
             )
+            runCatching { emailDao.deleteOrphanMemberships(localAccountId) } // #1837: no membership outlives its message
             if (p.upserted.isNotEmpty()) onSyncChunkLanded(localAccountId, mailboxId)
             CoreMailboxPass(MailboxSync(fetchedIds = p.upserted, departedIds = p.removed), p.complete)
         } catch (c: CancellationException) {
@@ -1197,6 +1201,12 @@ class MailRepository(
             android.util.Log.w("MailCore", "inbox $localAccountId/$mailboxId: core pass failed, Kotlin sync this pass: ${t.message}")
             null
         }
+    }
+
+    /** The rows a window sync writes for [emails] of [mailboxId]: filed by the core's rule when it knows the message ([FolderFiling.windowFiling]). */
+    private suspend fun windowEntities(localAccountId: String, mailboxId: String, emails: List<Email>): List<EmailEntity> {
+        val primary = mailCore?.takeIf { it.unavailableReason() == null }?.primaries(localAccountId, emails.map { it.id }).orEmpty()
+        return FolderFiling.windowFiling(mailboxId, emails, primary).map { (e, filedUnder) -> e.toEntity(localAccountId, filedUnder) }
     }
 
     /**
@@ -1326,7 +1336,7 @@ class MailRepository(
                 // in the fetch leaves the cache exactly as it was, and no crash can leave the delete without its rows.
                 val fetched = if (toFetch.isNotEmpty()) client.getEmailsByIds(session, accountId, toFetch, auth) else emptyList()
                 checkAccountStillConfigured(localAccountId, accountStore.accounts().map { it.id })
-                emailDao.applyDelta(localAccountId, toDelete, fetched.map { it.toEntity(localAccountId, mailboxId) })
+                emailDao.applyDelta(localAccountId, toDelete, windowEntities(localAccountId, mailboxId, fetched))
                 putSyncState(key, SyncState(queryChanges.newQueryState!!, changes.newState!!))
                 // Ghost sweep: a destroy can reach us through NEITHER delta (Stalwart omits a
                 // delegated account's), or be eaten by the recently-mutated spare while the cursors
@@ -1374,7 +1384,7 @@ class MailRepository(
             walk = { onPage -> client.queryEmailsWindow(session, accountId, mailboxId, full.windowTarget, full.pageSize, auth, onPage, ageCutoff) },
             writePage = { fresh ->
                 checkAccountStillConfigured(localAccountId, accountStore.accounts().map { it.id })
-                emailDao.upsertAll(fresh.map { it.toEntity(localAccountId, mailboxId) })
+                emailDao.upsertAll(windowEntities(localAccountId, mailboxId, fresh))
                 onSyncChunkLanded(localAccountId, mailboxId)
             },
             keepIds = { reconcilableWindowIds(it) },
@@ -1438,7 +1448,7 @@ class MailRepository(
             },
             writePage = { fresh ->
                 checkAccountStillConfigured(localAccountId, accountStore.accounts().map { it.id })
-                emailDao.upsertAll(fresh.map { it.toEntity(localAccountId, mailboxId) })
+                emailDao.upsertAll(windowEntities(localAccountId, mailboxId, fresh))
                 onSyncChunkLanded(localAccountId, mailboxId)
             },
         )
@@ -1858,7 +1868,12 @@ class MailRepository(
                     val reachedEnd = added == 0 || (total != null && cached >= total)
                     MediatorResult.Success(endOfPaginationReached = reachedEnd)
                 } catch (t: Throwable) {
-                    MediatorResult.Error(t)
+                    // Offline with the folder on the phone: end the list quietly, not "Couldn't load more".
+                    if (offlineAppendEnds(isOnline(), t, runCatching { emailDao.countForMailbox(credentials.id, mailboxId) > 0 }.getOrDefault(false))) {
+                        MediatorResult.Success(endOfPaginationReached = true)
+                    } else {
+                        MediatorResult.Error(t)
+                    }
                 }
             }
         }

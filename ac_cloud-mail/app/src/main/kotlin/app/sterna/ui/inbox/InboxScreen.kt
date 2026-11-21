@@ -119,6 +119,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import com.diegonmarcos.superapp.bottomnav.NavPage
+import com.diegonmarcos.superapp.navbartop1.BreadcrumbLeaf
 import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -827,6 +828,11 @@ fun InboxScreen(
     // folder must keep the position the user left. So the reset fires on a genuine folder change,
     // tracked via a saved key, not on every re-entry of this screen.
     var lastFolderKey by rememberSaveable { mutableStateOf<String?>(null) }
+    // #1837: the top bar's path ends with the open folder's name (see [breadcrumbFolder]).
+    run {
+        val crumbRole = ui.mailboxes.firstOrNull { it.id == ui.selectedMailboxId }?.role
+        BreadcrumbLeaf(breadcrumbFolder(crumbRole, ui.unified, ui.unreadView, ui.selectedMailboxId != null, mailboxDisplayName(crumbRole, ui.mailboxName)))
+    }
     LaunchedEffect(ui.selectedMailboxId, ui.unified) {
         val key = "${ui.unified}:${ui.selectedMailboxId}"
         if (lastFolderKey != null && lastFolderKey != key) listState.scrollToItem(0)
