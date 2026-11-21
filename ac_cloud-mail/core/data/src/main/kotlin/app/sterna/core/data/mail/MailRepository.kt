@@ -582,16 +582,29 @@ internal fun folderScopeSql(scopeCount: Int, table: String, memberPairs: Set<Int
     if (scopeCount == 0) "0" else List(scopeCount) { i ->
         if (i !in memberPairs) {
             "($table.accountId = ? AND $table.mailboxId = ?)"
-        } else {
-            "($table.accountId = ? AND ($table.mailboxId = ? OR $table.id IN " +
+        } else when (MEMBER_FORM) {
+            1 -> "($table.accountId = ? AND ($table.mailboxId = ? OR EXISTS (SELECT 1 FROM email_mailboxes x " +
+                "WHERE x.accountId = $table.accountId AND x.emailId = $table.id AND x.mailboxId = ?)))"
+            2 -> "(($table.accountId = ? AND $table.id IN (SELECT emailId FROM email_mailboxes WHERE accountId = ? AND mailboxId = ?)) " +
+                "OR ($table.accountId = ? AND $table.mailboxId = ?))"
+            3 -> "($table.accountId = ? AND $table.id IN (SELECT emailId FROM email_mailboxes WHERE accountId = ? AND mailboxId = ?))"
+            else -> "($table.accountId = ? AND ($table.mailboxId = ? OR $table.id IN " +
                 "(SELECT emailId FROM email_mailboxes WHERE accountId = ? AND mailboxId = ?)))"
         }
     }.joinToString(" OR ")
 
-/** The binds of ONE [folderScopeSql] clause over [scopes]: (account, mailbox) per pair, twice for a pair in [memberPairs]. */
+/** DIAGNOSTIC (#1837, removed once the device form is chosen): which form of the membership term [folderScopeSql] writes. */
+@Volatile internal var MEMBER_FORM: Int = 0
+
+/** The binds of ONE [folderScopeSql] clause over [scopes]: (account, mailbox) per pair, more for a pair in [memberPairs]. */
 internal fun scopeArgs(scopes: List<Pair<String, String>>, memberPairs: Set<Int> = emptySet()): List<String> =
-    scopes.flatMapIndexed { i, (account, mailbox) ->
-        if (i in memberPairs) listOf(account, mailbox, account, mailbox) else listOf(account, mailbox)
+    scopes.flatMapIndexed { i, (a, m) ->
+        if (i !in memberPairs) listOf(a, m) else when (MEMBER_FORM) {
+            1 -> listOf(a, m, m)
+            2 -> listOf(a, a, m, a, m)
+            3 -> listOf(a, a, m)
+            else -> listOf(a, m, a, m)
+        }
     }
 
 /** The indexes in [scopes] of the pairs [memberScopes] names: what [folderScopeSql] takes as `memberPairs`. */
@@ -1756,6 +1769,15 @@ class MailRepository(
                 // evidence for the offline proof: how many rows the flat membership query finds right now
                 val rows = runCatching { emailDao.keysForSelection(selectionIdsQuery(scopes, false, ListShape.NONE, extra)).size }
                 RustMailEngine.log("list $mailboxId: flat membership query finds $rows rows")
+                for (form in 0..3) {
+                    val saved = MEMBER_FORM
+                    val q = try {
+                        MEMBER_FORM = form
+                        conversationQuery(scopes, SortOrder.DATE_DESC, false, credentials.id, sentMailboxes, shape, extra)
+                    } finally { MEMBER_FORM = saved }
+                    val n = runCatching { emailDao.conversationRows(q).size }
+                    RustMailEngine.log("list $mailboxId: conversation form $form finds $n rows")
+                }
             }
             if (conversationView) {
                 Pager(
