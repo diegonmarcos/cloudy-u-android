@@ -29,7 +29,7 @@ def check(root, ok):
     ok('addRequestHeader("Cookie"' in dl and 'addRequestHeader("User-Agent"' in dl, "a download carries the page's cookies and agent")
     ok('browserSettings.string("download_dir")' in frag, "downloads land in the download_dir setting")
     ok("ShortcutManagerCompat.requestPinShortcut" in frag, "add to home pins a launcher shortcut")
-    ok("addToHome(url, wv?.title.orEmpty(), wv?.favicon)" in frag and "IconCompat.createWithBitmap" in frag
+    ok("addToHome(url, name, st.icon)" in frag and "showAddToHome(url, wv?.title.orEmpty(), wv?.favicon)" in frag and "IconCompat.createWithBitmap" in frag
        and "IconCompat.createWithResource(ctx, ctx.applicationInfo.icon)" in frag,
        "#1604 the pinned shortcut uses the page's real title + favicon, falling back to the app icon")
     ok("BrowserBookmarkOps.add(all()" in bm and "BrowserBookmarkOps.moveFolder(all()" in bm and "BrowserBookmarkOps.deleteFolder(all()" in bm,

@@ -1,0 +1,101 @@
+# ╔═══════════════════════════════════════════════════════════════════════╗
+# ║ Test -> Cloud Browser lifecycle (emulator, real WebView) (#1841 #1840) ║
+# ║ three tabs, switch to another app and back (page area must not be      ║
+# ║ black), kill the WebView renderer and prove recovery, restart keeps    ║
+# ║ the tabs, Page-Tools opens, Add to Home Screen pins a shortcut on the  ║
+# ║ Cloud SuperApp home. Evidence artifact: `browser-lifecycle-evidence`.  ║
+# ║ Script: ac_cloud-browser/test/emulator-browser-lifecycle.sh.           ║
+# ╚═══════════════════════════════════════════════════════════════════════╝
+name: "Test -> Cloud Browser lifecycle (emulator)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      browser_run_id:
+        description: "Ship Cloud Browser run id whose APK artifact to test (empty = release asset)"
+        required: false
+        default: ""
+      superapp_run_id:
+        description: "Ship Cloud SuperApp run id whose APK artifact is the launcher (empty = release asset)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch the Cloud Browser and Cloud SuperApp APKs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          B_RUN: ${{ inputs.browser_run_id }}
+          S_RUN: ${{ inputs.superapp_run_id }}
+        run: |
+          set -eu
+          fetch() {   # $1 run id, $2 artifact prefix, $3 release asset, $4 out file
+            mkdir -p "apk-$4"
+            if [ -n "$1" ]; then
+              gh api "repos/$REPO/actions/runs/$1/artifacts" --paginate --jq ".artifacts[] | select(.name|startswith(\"$2\")) | .name" |
+              while read -r name; do gh run download "$1" -R "$REPO" -n "$name" -D "apk-$4/$name"; done
+            else
+              gh release download latest -R "$REPO" -p "$3" -D "apk-$4" || true
+            fi
+            pick=""
+            for want in x86_64 universal arm64 ''; do
+              pick=$(find "apk-$4" -name '*.apk' | sort | grep -i -- "$want" | head -1 || true)
+              [ -n "$pick" ] && break
+            done
+            [ -n "$pick" ] && cp "$pick" "$4.apk" || echo "no APK for $4"
+          }
+          fetch "$B_RUN" Cloud-Browser- Cloud-Browser.apk browser
+          fetch "$S_RUN" Cloud-SuperApp- Cloud-SuperApp.apk superapp
+          [ -f browser.apk ] || { echo "::error::no Cloud Browser APK"; exit 1; }
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # google_apis (not playstore): `adb root` is available, which kills the sandboxed renderer process
+      - name: Boot emulator + run the lifecycle walk (attempt 1)
+        id: try1
+        continue-on-error: true
+        timeout-minutes: 20
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-browser/test/emulator-browser-lifecycle.sh browser.apk out "$([ -f superapp.apk ] && echo superapp.apk)"
+
+      - name: Boot emulator + run the lifecycle walk (attempt 2)
+        if: steps.try1.outcome != 'success'
+        timeout-minutes: 20
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-browser/test/emulator-browser-lifecycle.sh browser.apk out "$([ -f superapp.apk ] && echo superapp.apk)"
+
+      - name: Upload evidence (screenshots, ui dumps, app logs)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-lifecycle-evidence
+          path: out/
+          if-no-files-found: warn

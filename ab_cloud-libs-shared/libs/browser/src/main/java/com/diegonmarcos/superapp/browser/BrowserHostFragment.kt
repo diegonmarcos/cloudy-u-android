@@ -344,19 +344,18 @@ class BrowserHostFragment : Fragment() {
         val openUrl = arguments?.getString(ARG_OPEN_URL)
         // #886 a fragment that outlives its view (rotation) comes back on the tab it was showing.
         val kept = (mode as? Mode.DETAIL)?.let { prefs.byId(it.id) }
-        // #1841 after an unclean end the last page is NOT reopened by itself: the grid shows, with "Restore previous tabs" offered
+        // #1841 what the browser shows at start is the core's decision (Rust omnibox::start_decision, Kotlin twin without it): after an
+        // unclean end the last page is NOT reopened by itself: the grid shows, with "Restore previous tabs" offered
         val lastTab = prefs.activeTab()
-        if (uncleanStart && lastTab != null && openUrl.isNullOrBlank() && kept == null) restoreOffer = lastTab
-        val restore = lastTab?.takeIf { browserSettings.bool("restore_tabs_on_start") == true && !uncleanStart }
-        if (!openUrl.isNullOrBlank() && !openUrlHandled) {
-            openUrlHandled = true
-            openUrlInTab(openUrl)
-        } else if (kept != null) {
-            showDetail(kept)
-        } else if (restore != null) {
-            showDetail(restore)
-        } else {
-            showGrid()
+        val (startAction, offer) = BrowserCore.startDecision(uncleanStart, lastTab != null, browserSettings.bool("restore_tabs_on_start") == true,
+            !openUrl.isNullOrBlank() && !openUrlHandled, kept != null)
+        BrowserLog.i(BrowserLog.LIFE, "start-decision", "action" to startAction, "offer" to offer, "unclean" to uncleanStart)
+        if (offer && openUrl.isNullOrBlank()) restoreOffer = lastTab
+        when (startAction) {
+            "open_url" -> { openUrlHandled = true; openUrlInTab(openUrl.orEmpty()) }
+            "kept" -> showDetail(kept!!)
+            "restore" -> showDetail(lastTab!!)
+            else -> showGrid()
         }
         return root
     }
@@ -1066,7 +1065,7 @@ class BrowserHostFragment : Fragment() {
                 override fun shouldInterceptRequest(view: WebView?, request: android.webkit.WebResourceRequest?): android.webkit.WebResourceResponse? {
                     val r = request ?: return null
                     val page = pageHostNow
-                    val block = page.isNotEmpty() && trackers.shouldBlock(r.url.host.orEmpty().lowercase(), page, r.isForMainFrame) && trackersBlocked(page)
+                    val block = page.isNotEmpty() && trackers.shouldBlockUrl(r.url.toString(), r.url.host.orEmpty().lowercase(), page, r.isForMainFrame) && trackersBlocked(page)
                     // #1141 the Network panel's log (bounded, in memory; a private tab logs nothing).
                     if (!tab.isPrivate) DevTools.net.add(NetLog.entry(System.currentTimeMillis(), r.method, r.url.toString(), r.isForMainFrame, r.requestHeaders?.get("Accept"), block))
                     if (block) return android.webkit.WebResourceResponse("text/plain", "utf-8", java.io.ByteArrayInputStream(ByteArray(0)))
@@ -1531,6 +1530,19 @@ class BrowserHostFragment : Fragment() {
             .setIcon(icon)
             .build()
         return androidx.core.content.pm.ShortcutManagerCompat.requestPinShortcut(ctx, info, null)
+    }
+
+    private fun showAddToHome(url: String, title: String, favicon: android.graphics.Bitmap?) {
+        val ctx = requireContext()
+        val st = AddToHomeState(url, BrowserAddToHome.cleanName(null, title, url), favicon?.takeIf { !it.isRecycled && it.width > 0 }, BrowserAddToHome.launcherLabel(ctx),
+            BrowserAddToHome.superAppInstalled(ctx))
+        overlay(bottom = true) { close ->
+            BrowserAddToHomeSheet(st, onClose = close, onAdd = {
+                st.busy = true
+                val name = BrowserAddToHome.cleanName(st.name, title, url)
+                BrowserAddToHome.add(ctx, url, name, st.icon, systemPin = { addToHome(url, name, st.icon) }) { r -> st.busy = false; st.result = r }
+            })
+        }
     }
 
     // ── misc ─────────────────────────────────────────────────────────
@@ -2761,8 +2773,9 @@ class BrowserHostFragment : Fragment() {
                 done(ok().put("id", d.id).put("file", d.file).put("toast", "Downloading ${d.file}"))
             }
             "add_to_home" -> {
-                val asked = addToHome(url, wv?.title.orEmpty(), wv?.favicon)
-                done(ok().put("requested", asked).put("toast", if (asked) "" else "This launcher cannot pin shortcuts"))
+                // #1840 the redesigned sheet: icon preview, editable name, the target launcher, and a clear result (system pin, else Cloud SuperApp's home over the IPC)
+                showAddToHome(url, wv?.title.orEmpty(), wv?.favicon)
+                done(ok().put("requested", true))
             }
             "settings" -> { showSettings(); done(ok()) }
             "default_browser" -> {

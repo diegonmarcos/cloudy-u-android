@@ -192,3 +192,111 @@ fn budget_the_store_call_boundary_answers_under_500_ms_per_1000() {
         }
     });
 }
+
+// ── the widened core (#1841): omnibox, start decision, reader, rows, download states, filter lists ───────────────────────
+
+use crate::omnibox;
+use crate::reader;
+use crate::store::download_next;
+
+#[test]
+fn the_omnibox_decides_url_or_search_like_the_kotlin_rules() {
+    let tpl = "https://q.example/?q={q}";
+    for (typed, want) in [
+        ("qwant.com", "https://qwant.com"),
+        ("localhost:8000", "http://localhost:8000"),
+        ("192.168.1.5/x", "http://192.168.1.5/x"),
+        ("172.20.0.1", "http://172.20.0.1"),
+        ("172.40.0.1", "https://q.example/?q=172.40.0.1"),
+        ("nas.local", "http://nas.local"),
+        ("http://a.b/c d", "http://a.b/c d"),
+        ("2.5", "https://q.example/?q=2.5"),
+        ("rust lang", "https://q.example/?q=rust+lang"),
+        ("a.b.co.uk/p", "https://a.b.co.uk/p"),
+        ("caf\u{e9} & co", "https://q.example/?q=caf%C3%A9+%26+co"),
+        ("  ", ""),
+        ("hello", "https://q.example/?q=hello"),
+        ("x.1a", "https://q.example/?q=x.1a"),
+    ] {
+        assert_eq!(omnibox::resolve(typed, tpl), want, "{typed}");
+    }
+    assert!(omnibox::is_url_like("a.io") && !omnibox::is_url_like("a b.io"));
+}
+
+#[test]
+fn the_start_decision_never_reopens_the_last_page_after_an_unclean_end() {
+    // (unclean, has_last, restore_setting, open_url, kept)
+    assert_eq!(omnibox::start_decision(false, true, true, false, false), ("restore", false));
+    assert_eq!(omnibox::start_decision(true, true, true, false, false), ("grid", true));
+    assert_eq!(omnibox::start_decision(true, false, true, false, false), ("grid", false));
+    assert_eq!(omnibox::start_decision(false, true, false, false, false), ("grid", false));
+    assert_eq!(omnibox::start_decision(true, true, true, true, false), ("open_url", false));
+    assert_eq!(omnibox::start_decision(true, true, true, false, true), ("kept", false));
+}
+
+#[test]
+fn the_reader_keeps_the_article_and_drops_the_chrome() {
+    let html = "<html><head><title>My &amp; Story</title><style>p{color:red}</style></head><body><nav><p>Menu menu menu menu menu menu</p></nav>\
+        <h1>Headline</h1><p>The first paragraph is long enough to keep, with an &lt;entity&gt;.</p><script>var x = 'a long script string that must go';</script>\
+        <p>short</p><ul><li>A list item that is also long enough to be kept here</li></ul><footer><p>Footer footer footer footer footer footer</p></footer></body></html>";
+    let (title, paras) = reader::extract(html);
+    assert_eq!(title, "My & Story");
+    assert_eq!(paras, vec!["Headline", "The first paragraph is long enough to keep, with an <entity>.", "A list item that is also long enough to be kept here"]);
+}
+
+#[test]
+fn rows_keep_history_bookmarks_settings_and_downloads_in_one_table() {
+    let s = SessionStore::open(":memory:").unwrap();
+    s.row_put("setting", "desktop_mode", "true", 1).unwrap();
+    s.row_put("perm", "a.example|camera", "deny", 2).unwrap();
+    s.row_put("bookmark", "https://a.example/", "{\"t\":\"A\"}", 3).unwrap();
+    assert_eq!(s.row_get("setting", "desktop_mode").unwrap(), Some(("true".to_string(), 1)));
+    assert_eq!(s.row_get("setting", "nope").unwrap(), None);
+    assert_eq!(s.row_count("perm").unwrap(), 1);
+    assert!(s.row_put("", "k", "v", 0).is_err());
+    assert!(s.row_delete("bookmark", "https://a.example/").unwrap());
+    assert_eq!(s.row_clear("setting").unwrap(), 1);
+    for i in 0..30 {
+        s.history_visit(&format!("https://h.example/{i}"), "t", 100 + i, 10).unwrap();
+    }
+    s.history_visit("https://h.example/5", "again", 500, 10).unwrap();
+    let rows = s.row_list("history", 100).unwrap();
+    assert_eq!(rows.len(), 10, "capped to the newest 10");
+    assert_eq!(rows[0].0, "https://h.example/5", "a revisit moves to the top and is not duplicated");
+}
+
+#[test]
+fn the_download_states_follow_the_machine() {
+    assert_eq!(download_next("queued", "start").unwrap(), "running");
+    assert_eq!(download_next("running", "pause").unwrap(), "paused");
+    assert_eq!(download_next("paused", "resume").unwrap(), "running");
+    assert_eq!(download_next("running", "finish").unwrap(), "done");
+    assert_eq!(download_next("failed", "retry").unwrap(), "queued");
+    assert!(download_next("done", "start").is_err());
+    assert!(download_next("queued", "finish").is_err());
+}
+
+#[test]
+fn filter_lists_merge_and_path_rules_block_with_exceptions() {
+    let merged = crate::filter::merge(&["! a\n||t.example^\n\n/ads/banner\n".to_string(), "||t.example^\n@@/ads/banner/ok\n# c\n||x.net^$third-party".to_string()]);
+    assert_eq!(merged, "||t.example^\n/ads/banner\n@@/ads/banner/ok\n||x.net^$third-party");
+    let f = FilterSet::parse(&merged);
+    assert!(f.is_tracker("x.net"), "options are ignored");
+    assert!(f.should_block_url("https://cdn.site.example/ads/banner/1.png", "cdn.site.example", "news.example", false));
+    assert!(!f.should_block_url("https://cdn.site.example/ads/banner/ok/1.png", "cdn.site.example", "news.example", false));
+    assert!(!f.should_block_url("https://cdn.site.example/ads/banner/1.png", "cdn.site.example", "news.example", true));
+    assert!(f.should_block_url("https://a.t.example/x", "a.t.example", "news.example", false));
+}
+
+#[test]
+fn budget_10k_omnibox_decisions_and_a_100kb_reader_page_under_500_ms() {
+    budget("10k omnibox resolves", Duration::from_millis(500), || {
+        for i in 0..10_000 {
+            let _ = omnibox::resolve(&format!("site{i}.example/path"), "https://q.example/?q={q}");
+            let _ = omnibox::resolve(&format!("some words {i}"), "https://q.example/?q={q}");
+        }
+    });
+    let page: String = (0..800).map(|i| format!("<div><p>Paragraph number {i} with enough words to be kept by the reader.</p></div>")).collect();
+    let (_, p) = budget("reader over ~100 KB", Duration::from_millis(500), || reader::extract(&page));
+    assert_eq!(p.len(), 800);
+}

@@ -181,6 +181,8 @@ internal fun GroupedTilesPage(sectionId: String, click: (String) -> Unit) {
                 }
             }
         }
+        // ── #1840 the shortcuts pinned on this home (from any app's Add to Home Screen, or Cloud Browser's IPC), removable ──
+        if (sectionId == "cloud") item(key = "g:pinned") { com.diegonmarcos.superapp.launcher.pins.PinnedStrip { GroupTitle(it) } }
         // ── Actions, after the declared groups ──
         if (sectionId == "cloud") {
             val actions = GroupedTilesFragment.starActions()

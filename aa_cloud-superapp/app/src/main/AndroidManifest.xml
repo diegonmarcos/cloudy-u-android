@@ -366,6 +366,31 @@
             </intent-filter>
         </activity>
 
+        <!-- #1840 PINNED SHORTCUTS. ShortcutManager.requestPinShortcut (Cloud Browser's Add to Home Screen, Chrome, any app) is routed to the
+             DEFAULT home app's activity answering CONFIRM_PIN_SHORTCUT; this is it: no screen of its own, it keeps the shortcut on the home
+             (launcher/pins) and accepts the request. Without it the requesting app is told the launcher cannot pin shortcuts. -->
+        <activity
+            android:name=".launcher.pins.PinShortcutActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.content.pm.action.CONFIRM_PIN_SHORTCUT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <!-- #1840 THE DECLARED IPC add-to-SuperApp-home: Cloud Browser's fallback when a launcher refuses pins. Signature permission
+             (CONSTELLATION_DATA): only a fleet-signed app can send it. An ordered broadcast; the result code says added or refused. -->
+        <receiver
+            android:name=".launcher.pins.AddHomeShortcutReceiver"
+            android:exported="true"
+            android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA">
+            <intent-filter>
+                <action android:name="com.diegonmarcos.superapp.action.ADD_HOME_SHORTCUT" />
+            </intent-filter>
+        </receiver>
+
         <!-- LAUNCHER — the app door. Its OWN taskAffinity is the whole point:
              a distinct affinity puts this instance in its own task, which is
              what earns it an Overview card, and Overview is where the user

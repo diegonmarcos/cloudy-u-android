@@ -45,6 +45,8 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
         <package android:name="com.diegonmarcos.cloudbrowser" />
+        <!-- #1840 Cloud SuperApp: the add-to-home IPC fallback addresses its receiver by component. -->
+        <package android:name="com.diegonmarcos.superapp" />
         <!-- #802 I10 Cloud Vault (the vault add-on's requires_fleet, resolved by app/build.gradle). -->
         <package android:name="${vaultPackage}" />
         <!-- Cloud C3 WebServer: the browser starts its keep-alive service when a private name's server is down. -->

@@ -1425,6 +1425,21 @@
      "name": "FleetDiagnosticsProvider",
      "authority": "<pkg>.fleetdiag",
      "callers": []
+    },
+    {
+     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+     "level": "signature",
+     "source": "aa_cloud-superapp/app/src/main/AndroidManifest.xml",
+     "component": ".launcher.pins.AddHomeShortcutReceiver",
+     "id": "receiver:.launcher.pins.AddHomeShortcutReceiver",
+     "kind": "receiver",
+     "name": "AddHomeShortcutReceiver",
+     "actions": [
+      "<pkg>.action.ADD_HOME_SHORTCUT"
+     ],
+     "callers": [
+      "browser"
+     ]
     }
    ]
   },

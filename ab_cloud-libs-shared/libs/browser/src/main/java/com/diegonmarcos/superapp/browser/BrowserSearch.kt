@@ -91,8 +91,8 @@ object BrowserSearch {
      * and would satisfy that grep against a Google default.
      */
     fun resolve(input: String, engine: BrowserSearchEngine): String {
-        val s = input.trim()
-        if (s.isEmpty()) return ""
-        return if (isUrlLike(s)) normalizeUrl(s) else searchUrl(s, engine)
+        // #1841 the decision is the browser core's (Rust omnibox::resolve; its Kotlin twin when the library is not loaded); the pure
+        // helpers above stay as the readable rules and the parity tests' reference
+        return com.diegonmarcos.cloudlib.browsercore.BrowserCore.resolve(input, engine.template)
     }
 }

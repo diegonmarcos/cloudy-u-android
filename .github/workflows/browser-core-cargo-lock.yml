@@ -1,0 +1,103 @@
+name: "Maintenance -> browser-core-rs Cargo.lock (generated in CI, licence entries added, committed by the bot)"
+
+# #1841: libs/browser-core-rs has no Cargo.lock yet, and no cargo runs outside CI, so the lock is generated HERE (cargo generate-lockfile
+# resolves the exact pins of Cargo.toml: the pins are caret ranges), then:
+#   - licenses/curated.json: the lock joins cargo_lockfiles and every registry crate it resolves gets its declared SPDX expression in
+#     cargo_licences (read with `cargo metadata`, the legacy "A/B" spelling written "A OR B"), as the drive core's lock was done (#1729);
+#   - licenses/inventory.json: refreshed OFFLINE (no registry lookup), keeping every existing entry exactly as committed and adding only
+#     the new cargo:<crate> ones, so the diff is the crates and nothing else;
+#   - the licence guard (python3 1_cicd/src/scripts/cloud-android-licence-inventory.py check .) must pass before anything is pushed.
+# Committed to main with the generated-files bot pattern (generated-up-to-date.yml): one explicit path list, [skip ci], a bounded
+# push retry on a moving main. A no-op when the lock is already committed and complete. Dispatch only.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: browser-core-cargo-lock
+  cancel-in-progress: false
+
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Generate the lock and the licence entries
+        run: |
+          set -euo pipefail
+          crate=ab_cloud-libs-shared/libs/browser-core-rs
+          cp licenses/inventory.json "$RUNNER_TEMP/inventory.before.json"
+          [ -f "$crate/Cargo.lock" ] || (cd "$crate" && cargo generate-lockfile)
+          (cd "$crate" && cargo metadata --format-version 1 --locked > "$RUNNER_TEMP/meta.json")
+          python3 -I - "$crate/Cargo.lock" "$RUNNER_TEMP/meta.json" <<'PY'
+          import json, sys
+          lock, meta = sys.argv[1], sys.argv[2]
+          p = "licenses/curated.json"
+          cur = json.load(open(p, encoding="utf-8"))
+          if lock not in cur["cargo_lockfiles"]:
+              cur["cargo_lockfiles"].append(lock)
+          for pk in json.load(open(meta))["packages"]:
+              if not pk.get("source"):
+                  continue                                  # the workspace's own crate is own code
+              lic = (pk.get("license") or "").replace("/", " OR ").strip()
+              if not lic:
+                  sys.exit("crate %s declares no licence (license_file only): decide it by hand in curated.json" % pk["name"])
+              old = cur["cargo_licences"].get(pk["name"])
+              if old and old["licence"] != lic:
+                  print("note: %s keeps its curated licence %r (cargo metadata says %r)" % (pk["name"], old["licence"], lic))
+                  continue
+              cur["cargo_licences"][pk["name"]] = {"licence": lic}
+          cur["cargo_licences"] = dict(sorted(cur["cargo_licences"].items()))
+          with open(p, "w", encoding="utf-8") as h:
+              json.dump(cur, h, indent=1, ensure_ascii=False)
+              h.write("\n")
+          PY
+          # the inventory discovers lock files with `git ls-files`: an untracked lock is invisible to it (and to `check`)
+          git add -N -- "$crate/Cargo.lock"
+          python3 1_cicd/src/scripts/cloud-android-licence-inventory.py refresh . --offline
+          python3 -I - "$RUNNER_TEMP/inventory.before.json" <<'PY'
+          import json, sys
+          old = json.load(open(sys.argv[1], encoding="utf-8"))
+          p = "licenses/inventory.json"
+          new = json.load(open(p, encoding="utf-8"))
+          # keep every existing entry as committed; only the crates the new lock adds are taken from the offline refresh
+          new["entries"] = {k: (old["entries"][k] if k in old["entries"] else v) for k, v in new["entries"].items()}
+          with open(p, "w", encoding="utf-8") as h:
+              json.dump(new, h, indent=1, sort_keys=False, ensure_ascii=False)
+              h.write("\n")
+          PY
+          python3 1_cicd/src/scripts/cloud-android-licence-inventory.py check .
+          git --no-pager diff --stat
+
+      - name: Commit and push (the generated-files bot pattern)
+        run: |
+          set -euo pipefail
+          paths="ab_cloud-libs-shared/libs/browser-core-rs/Cargo.lock licenses/curated.json licenses/inventory.json"
+          if git diff --quiet -- $paths && [ -z "$(git status --porcelain -- $paths)" ]; then echo "already committed and complete"; exit 0; fi
+          git add -- $paths
+          git -c user.name="github-actions[bot]" -c user.email="noreply@anthropic.com" \
+            commit -m "ci(generated): browser-core-rs Cargo.lock and its licence inventory entries via run ${GITHUB_RUN_ID} [skip ci]"
+          pushed=0
+          for try in 1 2 3 4 5; do
+            if git push origin HEAD:main; then pushed=1; break; fi
+            echo "push $try lost the race; re-applying on the new main"
+            sleep $((try * 5))
+            git diff --name-only HEAD~1 HEAD > "$RUNNER_TEMP/derived.list"
+            tar cf "$RUNNER_TEMP/derived.tar" -T "$RUNNER_TEMP/derived.list"
+            git fetch --depth=1 origin main
+            git reset -q --hard origin/main
+            tar xf "$RUNNER_TEMP/derived.tar"
+            git add -- $paths
+            git -c user.name="github-actions[bot]" -c user.email="noreply@anthropic.com" \
+              commit -q -m "ci(generated): browser-core-rs Cargo.lock and its licence inventory entries via run ${GITHUB_RUN_ID} [skip ci]"
+          done
+          [ "$pushed" = 1 ] || { echo "::error::could not push after 5 tries"; exit 1; }

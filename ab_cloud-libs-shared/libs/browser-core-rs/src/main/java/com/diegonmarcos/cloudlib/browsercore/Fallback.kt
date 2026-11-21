@@ -134,13 +134,21 @@ internal object KtSearch {
 internal class KtFilter(rules: String) {
     private val block = HashSet<String>()
     private val allow = HashSet<String>()
+    private val paths = ArrayList<String>()
+    private val pathAllow = ArrayList<String>()
 
     init {
         for (raw in rules.lines()) {
             val line = raw.trim()
             if (line.isEmpty() || line.startsWith("!") || line.startsWith("#")) continue
             val exception = line.startsWith("@@")
-            val host = line.removePrefix("@@").trim().removePrefix("||").trimEnd('^').trim().trimEnd('.').lowercase()
+            val body = line.removePrefix("@@").substringBefore('$')
+            if (body.startsWith("/")) {
+                val seg = body.removePrefix("/")
+                if (seg.isNotEmpty()) (if (exception) pathAllow else paths).add("/" + seg.lowercase())
+                continue
+            }
+            val host = body.trim().removePrefix("||").trimEnd('^').trim().trimEnd('.').lowercase()
             if (!host.contains('.')) continue
             if (exception) allow.add(host) else block.add(host)
         }
@@ -159,5 +167,13 @@ internal class KtFilter(rules: String) {
     fun shouldBlock(requestHost: String, pageHost: String, mainFrame: Boolean): Boolean {
         if (mainFrame || requestHost.isEmpty() || !isTracker(requestHost)) return false
         return !isTracker(pageHost)
+    }
+
+    fun shouldBlockUrl(url: String, requestHost: String, pageHost: String, mainFrame: Boolean): Boolean {
+        if (mainFrame) return false
+        if (shouldBlock(requestHost, pageHost, false)) return true
+        if (paths.isEmpty()) return false
+        val u = url.lowercase()
+        return paths.any { u.contains(it) } && pathAllow.none { u.contains(it) }
     }
 }

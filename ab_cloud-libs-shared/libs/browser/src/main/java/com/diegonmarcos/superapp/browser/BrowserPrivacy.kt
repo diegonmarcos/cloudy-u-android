@@ -160,6 +160,9 @@ class BrowserTrackers(hosts: Collection<String>) {
 
     /** Answer this request empty? [pageHost] is the page it was made from. The page IS the tracker's own site (hotjar.com opened on purpose): its own requests are not blocked. */
     fun shouldBlock(requestHost: String, pageHost: String, mainFrame: Boolean): Boolean = filter.shouldBlock(requestHost, pageHost, mainFrame)
+
+    /** [shouldBlock] plus the declared `/segment` path rules (an adblock-style list line), by the request's whole url. */
+    fun shouldBlockUrl(url: String, requestHost: String, pageHost: String, mainFrame: Boolean): Boolean = filter.shouldBlockUrl(url, requestHost, pageHost, mainFrame)
 }
 
 /**

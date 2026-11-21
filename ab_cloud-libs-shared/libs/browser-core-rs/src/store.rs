@@ -35,7 +35,15 @@ impl SessionStore {
                 state_file TEXT NOT NULL DEFAULT '',
                 updated_at INTEGER NOT NULL DEFAULT 0
             );
-            CREATE INDEX IF NOT EXISTS tab_snapshot_updated ON tab_snapshot(updated_at DESC);",
+            CREATE INDEX IF NOT EXISTS tab_snapshot_updated ON tab_snapshot(updated_at DESC);
+            CREATE TABLE IF NOT EXISTS rows(
+                ns  TEXT NOT NULL,
+                k   TEXT NOT NULL,
+                v   TEXT NOT NULL,
+                ts  INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY(ns, k)
+            ) WITHOUT ROWID;
+            CREATE INDEX IF NOT EXISTS rows_ts ON rows(ns, ts DESC);",
         )
         .map_err(e)?;
         Ok(SessionStore { conn })
@@ -129,4 +137,68 @@ impl SessionStore {
     pub fn count(&self) -> Result<i64, String> {
         self.conn.query_row("SELECT COUNT(*) FROM tab_snapshot", [], |r| r.get(0)).map_err(e)
     }
+
+    // ── rows: the one table of the browser's stores (history, bookmark, setting, perm, download) ─────────────────────────
+
+    pub fn row_put(&self, ns: &str, key: &str, val: &str, ts: i64) -> Result<(), String> {
+        if ns.is_empty() || key.is_empty() {
+            return Err("row needs a namespace and a key".into());
+        }
+        self.conn
+            .execute("INSERT INTO rows(ns,k,v,ts) VALUES(?1,?2,?3,?4) ON CONFLICT(ns,k) DO UPDATE SET v=?3, ts=?4", params![ns, key, val, ts])
+            .map_err(e)?;
+        Ok(())
+    }
+
+    pub fn row_get(&self, ns: &str, key: &str) -> Result<Option<(String, i64)>, String> {
+        self.conn.query_row("SELECT v,ts FROM rows WHERE ns=?1 AND k=?2", params![ns, key], |r| Ok((r.get(0)?, r.get(1)?))).optional().map_err(e)
+    }
+
+    /// Newest first: `(key, value, ts)`.
+    pub fn row_list(&self, ns: &str, limit: i64) -> Result<Vec<(String, String, i64)>, String> {
+        let mut st = self.conn.prepare("SELECT k,v,ts FROM rows WHERE ns=?1 ORDER BY ts DESC, k LIMIT ?2").map_err(e)?;
+        let rows = st.query_map(params![ns, limit.max(0)], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?))).map_err(e)?;
+        rows.collect::<Result<Vec<_>, _>>().map_err(e)
+    }
+
+    pub fn row_delete(&self, ns: &str, key: &str) -> Result<bool, String> {
+        Ok(self.conn.execute("DELETE FROM rows WHERE ns=?1 AND k=?2", params![ns, key]).map_err(e)? > 0)
+    }
+
+    pub fn row_clear(&self, ns: &str) -> Result<usize, String> {
+        self.conn.execute("DELETE FROM rows WHERE ns=?1", params![ns]).map_err(e)
+    }
+
+    pub fn row_count(&self, ns: &str) -> Result<i64, String> {
+        self.conn.query_row("SELECT COUNT(*) FROM rows WHERE ns=?1", params![ns], |r| r.get(0)).map_err(e)
+    }
+
+    /// History rule: a visit upserts its url (title and time refreshed), and the namespace is capped to `cap` newest rows.
+    pub fn history_visit(&self, url: &str, title: &str, ts: i64, cap: i64) -> Result<(), String> {
+        let v = json!({ "url": url, "title": title, "ts": ts }).to_string();
+        self.row_put("history", url, &v, ts)?;
+        self.conn
+            .execute(
+                "DELETE FROM rows WHERE ns='history' AND k NOT IN (SELECT k FROM rows WHERE ns='history' ORDER BY ts DESC, k LIMIT ?1)",
+                params![cap.max(1)],
+            )
+            .map_err(e)?;
+        Ok(())
+    }
+}
+
+/// The download state machine: queued -> running -> (paused <-> running) -> done | failed | cancelled; failed and cancelled may be
+/// retried (-> queued). Anything else is refused (the state stays).
+pub fn download_next(state: &str, event: &str) -> Result<&'static str, String> {
+    let to = match (state, event) {
+        ("queued", "start") => "running",
+        ("running", "pause") => "paused",
+        ("paused", "resume") => "running",
+        ("running", "finish") => "done",
+        ("running", "fail") | ("queued", "fail") | ("paused", "fail") => "failed",
+        ("queued", "cancel") | ("running", "cancel") | ("paused", "cancel") => "cancelled",
+        ("failed", "retry") | ("cancelled", "retry") => "queued",
+        _ => return Err(format!("a {state} download cannot {event}")),
+    };
+    Ok(to)
 }

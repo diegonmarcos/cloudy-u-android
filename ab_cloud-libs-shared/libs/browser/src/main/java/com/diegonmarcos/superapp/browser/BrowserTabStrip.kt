@@ -64,7 +64,7 @@ fun BrowserTabStrip(
     groupColor: Int,
     onSelect: (BrowserTab) -> Unit,
     onNew: () -> Unit,
-    /** #1401 Browsing Tools: the icon at the far right of the tab row, after the tabs (null = none). */
+    /** #1401 Page-Tools: the icon at the far right of the tab row, after the tabs (null = none). */
     onTools: (() -> Unit)? = null,
 ) {
     val p = LocalKitPalette.current
@@ -109,7 +109,7 @@ fun BrowserTabStrip(
  * #1401 the Page-Tools icon of the tab row (far right, after the tabs). It replaced the page-level ⋮: the app bar's
  * ⋮ opens the app's Configs, like every fleet app. Drawn alone at the row's end when the tab strip is switched off.
  * #1840 the size of the first row's icons ([TAB_ROW_ICON_TARGET_DP] target, [TAB_ROW_ICON_GLYPH_DP] glyph), and a grey,
- * theme-tinted wrench vector instead of the colourful 🛠 emoji (an emoji ignores the theme; a vector takes the palette's secondary ink).
+ * theme-tinted wrench vector instead of the former colourful emoji glyph (an emoji ignores the theme; a vector takes the palette's secondary ink).
  */
 @Composable
 fun BrowserTabRowToolsIcon(onTap: () -> Unit) {
