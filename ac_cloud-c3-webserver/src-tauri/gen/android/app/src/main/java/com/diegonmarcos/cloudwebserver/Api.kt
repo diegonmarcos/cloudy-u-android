@@ -42,7 +42,7 @@ object Api {
     const val CONFIGS_OPEN = "/__app__/api/configs-open"
     const val OPEN = "/__app__/api/open"
 
-    fun base(port: Int = Core.port): String = "http://127.0.0.1:$port"
+    fun base(): String = "http://127.0.0.1:${Core.port}"
 
     fun url(path: String): String = base() + path
 
@@ -60,7 +60,7 @@ object Api {
      */
     suspend fun getDiag(path: String, serving: JSONObject?): Reply = withContext(Dispatchers.IO) {
         val port = diagPort(serving) ?: return@withContext Reply.Err("no diag endpoint in $SERVING yet")
-        call("GET", path, null, base(port))
+        call("GET", path, null, base().substringBeforeLast(':') + ":$port")
     }
 
     /** The diagnostics listener's port from the [SERVING] answer: its endpoint whose role is `diag`; null until it is known. */
