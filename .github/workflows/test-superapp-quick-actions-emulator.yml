@@ -187,9 +187,14 @@ jobs:
           skipdlg
           adb shell settings put secure enabled_accessibility_services "$SVC"; adb shell settings put secure accessibility_enabled 1
           a11y() { adb shell settings get secure enabled_accessibility_services | tr -d '\r'; }
-          shoot() { adb exec-out screencap -p > "out/$1.png"; adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb pull /sdcard/u.xml "out/$1.xml" >/dev/null 2>&1; }
+          shoot() { adb exec-out screencap -p > "out/$1.png"; dumpto "out/$1.xml"; }
           sec() { page panels-security; sleep 8; shoot "$1"; }
-          dumpto() { for _ in 1 2 3; do r=$(adb shell uiautomator dump /sdcard/u.xml 2>&1 | tr -d '\r'); case "$r" in *dumped*) break;; esac; sleep 1; done; adb pull /sdcard/u.xml "$1" >/dev/null 2>&1; }
+          # The page body is missing from a uiautomator dump (tab row + bottom nav only, though the screenshot shows it) while the app's own accessibility
+          # entry is enabled: the walk enables it for the Banking round trip. So every dump takes the entry down for the second it needs and puts the same
+          # value back, except while the mode itself is writing that entry (wait_mode polls the setting first for those).
+          dumpto() { q=""; case "$(a11y)" in *LockScreen*) q=$(a11y); adb shell settings delete secure enabled_accessibility_services >/dev/null; sleep 3;; esac
+            for _ in 1 2 3; do r=$(adb shell uiautomator dump /sdcard/u.xml 2>&1 | tr -d '\r'); case "$r" in *dumped*) break;; esac; sleep 1; done; adb pull /sdcard/u.xml "$1" >/dev/null 2>&1
+            [ -n "$q" ] && { adb shell settings put secure enabled_accessibility_services "$q"; adb shell settings put secure accessibility_enabled 1; }; true; }
           # a slow drag from the right third (a quick flick at the middle was taken by the home swipe gestures / edge pads); the two gestures alternate
           swipe_down() { if [ $(( $1 % 2 )) -eq 0 ]; then adb shell input swipe 760 1900 760 800 1200; else adb shell input draganddrop 760 1900 760 800 900; fi; sleep 2; }
           swipe_up() { adb shell input swipe 760 800 760 1900 400; sleep 1; }
@@ -254,7 +259,9 @@ jobs:
             adb shell am start -W -n "$ACT" >/dev/null; sleep 15; skipdlg
             adb shell settings put secure enabled_accessibility_services "$SVC"; adb shell settings put secure accessibility_enabled 1; sleep 3; }
           # wait_mode on|off: poll the tile's own label ("... on, tap to turn off") until the mode run has finished
-          wait_mode() { for _ in 1 2 3 4 5 6 7 8; do sleep 5; awake; skipdlg; dumpto out/wm.xml; t=$(python3 -I ui.py textof out/wm.xml "Banking Apps Mode")
+          # wait_mode on|off [a11y]: with a11y the mode is also writing the accessibility entry, so wait for that write (<= 60 s) before any dump touches it
+          wait_mode() { if [ "$2" = a11y ]; then for _ in $(seq 1 30); do case "$(a11y)" in *LockScreen*) [ "$1" = off ] && break;; *) [ "$1" = on ] && break;; esac; sleep 2; done; fi
+            for _ in 1 2 3 4 5 6 7 8; do sleep 5; awake; skipdlg; dumpto out/wm.xml; t=$(python3 -I ui.py textof out/wm.xml "Banking Apps Mode")
               case "$t" in "") ;; *"turn off"*) [ "$1" = on ] && return 0;; *) [ "$1" = off ] && return 0;; esac; done; return 1; }
           # report NAME: expand the applied steps ("All N steps"), then read the whole page, top to end, into out/NAME-all.xml
           report() { scrollfind "$1-f" match '^All [0-9]+ steps$' && { adb shell input tap $pos; sleep 2; }
@@ -274,7 +281,7 @@ jobs:
           if tapmode; then
             cp out/pm-tile.png out/banking-A1-tile.png; check ok "A1 the Banking Apps Mode tile was reached on Preset > Mode by scrolling"
           else check no "A1 the Banking Apps Mode tile was not reached"; fi
-          wait_mode on && check ok "A the tile reads 'on, tap to turn off'" || check no "A the mode did not report itself on"
+          wait_mode on a11y && check ok "A the tile reads 'on, tap to turn off'" || check no "A the mode did not report itself on"
           adb_alive && check ok "A the walk's own adb survived the ON" || check no "A the adb link died on ON"
           dev1=$(g development_settings_enabled); adb1=$(g adb_enabled); wifi1=$(g adb_wifi_enabled); a1=$(a11y)
           echo "A on: development_settings_enabled=$dev1 adb_enabled=$adb1 adb_wifi_enabled=$wifi1 a11y=$a1"
@@ -291,7 +298,7 @@ jobs:
           want_item banking-A-on "accessibility services off" "accessibility" "done"
           echo "SKIP A2 USB debugging flip (adb_enabled=0): on an emulator it ends adbd and this walk's own adb; the report row (left alone, skip list) and adb_enabled=$adb0 unchanged are asserted instead" | tee -a out/verdict.txt
           if tapmode; then check ok "A the tile is found again for the OFF"; else check no "A the tile is not found for the OFF"; fi
-          wait_mode off && check ok "A the tile no longer reads on" || check no "A the mode did not report itself off"
+          wait_mode off a11y && check ok "A the tile no longer reads on" || check no "A the mode did not report itself off"
           adb_alive && check ok "A the walk's own adb survived the OFF" || check no "A the adb link died on OFF"
           dev2=$(g development_settings_enabled); adb2=$(g adb_enabled); wifi2=$(g adb_wifi_enabled); a2=$(a11y)
           echo "A off: development_settings_enabled=$dev2 adb_enabled=$adb2 adb_wifi_enabled=$wifi2 a11y=$a2"
