@@ -53,7 +53,7 @@ fun WebserverShell() {
     fun open(sectionId: String, pageId: String? = null) { section = sectionId; page = pageId }
     // #1682 P4 every fleet link that opens "the ADB Shell page" lands here (ShellArmActivity -> MainActivity extra): the ADB Shell section
     val wanted = LaunchTarget.section
-    androidx.compose.runtime.LaunchedEffect(wanted) { if (wanted != null && nav.section(wanted) != null) { open(wanted, LaunchTarget.page); LaunchTarget.page = null; LaunchTarget.section = null } }
+    androidx.compose.runtime.LaunchedEffect(wanted) { if (wanted != null && nav.section(wanted) != null) { open(wanted); LaunchTarget.page?.let { page = it; LaunchTarget.page = null }; LaunchTarget.section = null } }
 
     Box(Modifier.fillMaxSize().themeBackground(dark = true).windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))) {
         NavBarTopFirstRowScaffold(

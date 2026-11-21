@@ -78,7 +78,7 @@ for label in ("Docs", "Logcat", "Trace", "Crashes", "Bundle", "Download logs", "
     need(re.search(r'row\("%s"' % re.escape(label), frag[b:c]), "P1 SuperApp About lost the Curl shortcut %r" % label)
 need("read-only mirror, managed in Cloud C3 Webserver" in frag[a:b] and 'button("Open in Cloud C3 Webserver")' in frag[a:b], "P1 the About Token row is not the read-only mirror with its webserver link")
 need('row("Token",    prefs.token)' not in frag, "P1 the About Token row still shows the full token")
-need("page:config/fleet-token" in rd(kdir + "/MainActivity.kt"), "P1 the webserver does not open the Fleet token page from the About link")
+need("c3_open_fleet_token" in rd(kdir + "/MainActivity.kt") and "c3_open_fleet_token" in frag, "P1 the webserver does not open the Fleet token page from the About link")
 
 # V1 vault delivery (declared by name; Cloud Account's App credentials is the vault-to-phone path; foreground only)
 ft = bj.get("fleet_token", {})

@@ -1292,7 +1292,7 @@ class DevControlFragment : KitComposeFragment() {
             button("Open in Cloud C3 Webserver") {
                 runCatching {
                     startActivity(requireContext().packageManager.getLaunchIntentForPackage(com.diegonmarcos.superapp.devtools.FleetToken.OWNER_PKG)!!
-                        .putExtra("shortcut_action", "page:config/fleet-token"))
+                        .putExtra("c3_open_fleet_token", true))
                 }
             }
 

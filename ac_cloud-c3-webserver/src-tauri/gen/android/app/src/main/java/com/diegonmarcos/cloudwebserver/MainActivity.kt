@@ -78,6 +78,6 @@ object LaunchTarget {
     fun from(i: Intent?) {
         if (i?.getStringExtra("shortcut_action") == "page:config/adb-shell") section = Decl.SECTION_ADB_SHELL
         // #1835 the SuperApp's About mirror links here
-        if (i?.getStringExtra("shortcut_action") == "page:config/fleet-token") { section = Decl.SECTION_CONFIGS; page = Decl.PAGE_FLEET_TOKEN }
+        if (i?.getBooleanExtra("c3_open_fleet_token", false) == true) { section = Decl.SECTION_CONFIGS; page = Decl.PAGE_FLEET_TOKEN }
     }
 }
