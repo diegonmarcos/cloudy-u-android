@@ -159,7 +159,7 @@ check(has("BrowserHostFragment", "BrowserSearch.resolve(q, engine())"),
 # engine list (values_from), drawn by the generic settings page.
 check(has("BrowserSettingsCatalogue", 'o.optString("values_from") == "search_engines"', "engineIds"),
       "7: the engine is a setting, and its list comes from the app's config")
-check(has("BrowserSearch", "if (isUrlLike(s)) normalizeUrl(s) else searchUrl(s, engine)"),
+check(has("BrowserSearch", "BrowserCore.resolve(input, engine.template)") and has("BrowserSearch", "fun isUrlLike(raw: String)") and has("BrowserSearch", "fun normalizeUrl(raw: String)") and has("BrowserSearch", "fun searchUrl(query: String, engine: BrowserSearchEngine)"),
       "7: a URL navigates, anything else searches")
 
 print()

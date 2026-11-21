@@ -121,7 +121,7 @@ object BrowserAddToHome {
                 else if (installed) sendToSuperApp(ctx, url, name, icon, done)
                 else done(Result(Outcome.FAILED, say(Outcome.FAILED, "$launcher refused the shortcut", name)))
             Route.SUPERAPP_IPC -> sendToSuperApp(ctx, url, name, icon, done)
-            Route.NONE -> done(Result(Outcome.FAILED, say(Outcome.FAILED, "$launcher cannot pin shortcuts and Cloud SuperApp is not installed", name)))
+            Route.NONE -> done(Result(Outcome.FAILED, say(Outcome.FAILED, "$launcher cannot pin shortcuts and Cloud SuperApp is absent", name)))
         }
     }
 }

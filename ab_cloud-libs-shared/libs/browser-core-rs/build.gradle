@@ -79,6 +79,7 @@ abis.findAll { abi, spec -> abi in wantedAbis }.each { abi, spec ->
         inputs.files(fileTree(projectDir) { include 'Cargo.toml', 'Cargo.lock', 'src/**/*.rs' })
         outputs.dir(new File(jniOut, abi))
         onlyIf {
+          try {
             if (!hasCargo || ndkHome == null || !targetOk) {
                 def why = !hasCargo ? 'cargo is not installed' : (ndkHome == null ? 'no Android NDK (ANDROID_NDK_HOME)' : "the rust target ${triple} is not installed")
                 if (required) throw new GradleException("BROWSER_CORE_RS_REQUIRED=1 but ${why}: libbrowser_core.so cannot be built")
@@ -86,6 +87,13 @@ abis.findAll { abi, spec -> abi in wantedAbis }.each { abi, spec ->
                 return false
             }
             return true
+          } catch (GradleException e) {
+            throw e
+          } catch (Throwable t) {
+            // a predicate that cannot be evaluated must not fail the app's build: the Kotlin fallback runs (unless the CI requires the core)
+            if (required) throw new GradleException("BROWSER_CORE_RS_REQUIRED=1 but the native core predicate failed: ${t}")
+            return false
+          }
         }
         def bin = "${ndkHome}/toolchains/llvm/prebuilt/linux-x86_64/bin"
         def envTriple = triple.toUpperCase().replace('-', '_')
