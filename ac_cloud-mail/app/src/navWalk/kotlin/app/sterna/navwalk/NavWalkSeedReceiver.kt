@@ -43,6 +43,15 @@ class NavWalkSeedReceiver : BroadcastReceiver() {
         }
         val store = (context.applicationContext as Application).container.accountStore
         if (store.hasAccount()) { Log.i(TAG, "seeded: an account is already present"); return }
+        // #1837: `--es jmap http://10.0.2.2:8099` points the account at the CI runner's fake JMAP server (test/fake-jmap-server.py,
+        // reached from the emulator at 10.0.2.2, cleartext allowed for it by the test variant's network security config) and seeds
+        // NOTHING else: the app's own sync (the Rust mail core) must fetch every folder and message, which the offline proof then reads.
+        val jmapServer = intent.getStringExtra("jmap")
+        if (jmapServer != null) {
+            store.add(server = jmapServer, username = "walk@fake-jmap.test", password = "navwalk-placeholder", accountName = "Fake JMAP")
+            Log.i(TAG, "seeded: a JMAP account pointing at $jmapServer (no rows seeded, the sync fills them)")
+            return
+        }
         val id = store.add(
             server = "https://mail.navwalk.invalid",
             username = "walk@navwalk.invalid",

@@ -1,0 +1,109 @@
+name: "Test -> Cloud Mail core offline (emulator: fake JMAP server synced through the Rust core, network cut, Inbox + second folder + opened Latin-1 message from the phone's store)"
+
+# #1837 phase 3 proof. The Cloud Mail test variant (-PtestApp, with libmail_core.so for x86_64) is pointed at a tiny fake JMAP server
+# that runs on this runner (ac_cloud-mail/test/fake-jmap-server.py, stdlib only; the emulator reaches it at 10.0.2.2; the test variant's
+# network security config allows cleartext to that address only). The app syncs it ONLINE (every folder, the Latin-1 "España" message, an
+# HTML newsletter), then the network is cut (the server is killed by pid, the emulator goes to airplane mode), the app is relaunched, and
+# the Inbox, a second folder and an opened message are screenshotted and asserted through uiautomator dumps. Only seeded, fake data.
+# Evidence: the artifact mail-core-offline-evidence (screenshots, dumps, logs). Dispatch only; nothing is published.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  mail-core-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      # The Rust core is REQUIRED here: without it the proof would silently run on the Kotlin sync and prove nothing about #1837.
+      MAIL_CORE_RS_REQUIRED: "1"
+      MAIL_CORE_ABIS: "x86_64"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: The testers of the fake server and of the dump helper
+        run: |
+          set -eu
+          python3 -I ac_cloud-mail/test/fake-jmap-server.py --selftest
+          python3 -I ac_cloud-mail/test/mail-offline-ui.py selftest
+          bash -n ac_cloud-mail/test/walk-mail-core-offline.sh
+
+      - name: Resolve the native core toolchain (build.json::native_core.toolchain)
+        id: native
+        working-directory: ac_cloud-mail
+        run: |
+          set -eu
+          targets="$(jq -r '.native_core.toolchain.rust_targets | join(",")' build.json)"
+          ndk="$(jq -r '.native_core.toolchain.ndk' build.json)"
+          [ -n "$targets" ] && [ "$ndk" != "null" ] || { echo "::error::build.json::native_core.toolchain is incomplete"; exit 1; }
+          { echo "targets=$targets"; echo "ndk=$ndk"; } >> "$GITHUB_OUTPUT"
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ steps.native.outputs.targets }}
+
+      - name: "Test -> the Rust mail core (cargo test: the filing rule, the feed, the fake JMAP scenarios)"
+        working-directory: ab_cloud-libs-shared/libs/mail-core-rs
+        run: cargo test
+
+      - name: Point the build at the NDK
+        run: |
+          set -eu
+          ndk="${{ steps.native.outputs.ndk }}"
+          if [ ! -d "$ANDROID_HOME/ndk/$ndk" ]; then
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$ndk" >/dev/null
+          fi
+          [ -x "$ANDROID_HOME/ndk/$ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/clang" ] || { echo "::error::NDK $ndk is not installed"; exit 1; }
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ndk" >> "$GITHUB_ENV"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Build the test variant (with the x86_64 Rust core)
+        run: |
+          set -eu
+          cd ac_cloud-mail
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:assembleDebug -PtestApp
+          apk=$(find app/build/outputs/apk/debug -name '*.apk' | sort | head -1)
+          [ -n "$apk" ] || { echo "::error::no APK built"; exit 1; }
+          cp "$apk" "$GITHUB_WORKSPACE/app-under-test.apk"
+          unzip -l "$GITHUB_WORKSPACE/app-under-test.apk" | grep -E 'lib/x86_64/libmail_core\.so' || { echo "::error::the APK carries no libmail_core.so"; exit 1; }
+          AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          echo "PKG=$("$AAPT" dump packagename "$GITHUB_WORKSPACE/app-under-test.apk")" >> "$GITHUB_ENV"
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot emulator + the offline scene
+        timeout-minutes: 40
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-mail/test/walk-mail-core-offline.sh
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mail-core-offline-evidence
+          path: walk-out-core
+          if-no-files-found: warn

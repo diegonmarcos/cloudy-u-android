@@ -586,3 +586,64 @@ fn budget_message_open_from_the_store_under_100_ms() {
     st.conn.execute("DELETE FROM reader_docs", []).unwrap();
     budget("open with a re-parse of a 100 KB message", Duration::from_millis(1500), || query::reader(&st.conn, ACC, "m1").unwrap());
 }
+
+// ── #1837 phase 3: every mailbox projected, one filing per message ──────────────────────────────────────────────────────
+
+fn mb(id: &str, role: Option<&str>) -> (String, Option<String>) {
+    (id.to_string(), role.map(str::to_string))
+}
+
+#[test]
+fn the_filing_rule_is_a_pure_function_of_the_memberships() {
+    // Trash and Junk beat everything, then Drafts, Inbox, Sent, a label, then the view-only roles.
+    assert_eq!(query::pick_primary(&[mb("inbox", Some("inbox")), mb("lbl", None)]), Some("inbox".into()));
+    assert_eq!(query::pick_primary(&[mb("lbl", None), mb("inbox", Some("inbox"))]), Some("inbox".into()), "order of the members is irrelevant");
+    assert_eq!(query::pick_primary(&[mb("inbox", Some("inbox")), mb("trash", Some("trash"))]), Some("trash".into()));
+    assert_eq!(query::pick_primary(&[mb("lbl", None), mb("archive", Some("archive"))]), Some("lbl".into()));
+    assert_eq!(query::pick_primary(&[mb("b", None), mb("a", None)]), Some("a".into()), "a tie takes the smaller id");
+    assert_eq!(query::pick_primary(&[mb("sent", Some("sent")), mb("inbox", Some("inbox"))]), Some("inbox".into()));
+    assert_eq!(query::pick_primary(&[]), None);
+}
+
+#[test]
+fn a_message_in_the_inbox_and_a_label_is_filed_once_and_a_move_refiles_it() {
+    let f = seeded(300);
+    let st = Store::open(":memory:").unwrap();
+    sync(&st, &f, &cfg()).unwrap();
+    let c = &st.conn;
+    // e00008 is in the Inbox AND the label: filed under the Inbox, from either mailbox's feed.
+    assert_eq!(query::primary_mailbox(c, ACC, "e00008").unwrap(), Some("inbox".into()));
+    let feed = |m: &str, since: i64| {
+        query::changes_since(c, &ChangesArgs { account: ACC.into(), mailbox: m.into(), since_seq: since, since_id: String::new(), limit: 500 }).unwrap()
+    };
+    assert_eq!(feed("lbl", 0)["primary"]["e00008"], "inbox");
+    assert_eq!(feed("inbox", 0)["primary"]["e00008"], "inbox");
+    // Per mailbox, the ids filed there: the label holds only what is filed nowhere else, and the filings partition the store.
+    let lbl = query::member_ids(c, ACC, "lbl").unwrap();
+    assert_eq!(lbl["ids"].as_array().unwrap().len(), 30);
+    assert_eq!(lbl["primaryIds"].as_array().unwrap().len(), 0);
+    let counts = query::counts(c, ACC).unwrap();
+    let filed: i64 = counts.as_object().unwrap().values().map(|v| v["primaryLocal"].as_i64().unwrap()).sum();
+    assert_eq!(filed as usize, f.inner.borrow().emails.len(), "every message is filed under exactly one mailbox");
+    assert_eq!(counts["lbl"]["primaryLocal"], 0);
+    assert_eq!(counts["inbox"]["local"].as_i64().unwrap() - counts["inbox"]["primaryLocal"].as_i64().unwrap(), 0);
+
+    // Out of the Inbox into Trash while the label stays: the Inbox feed removes it, `moved` re-files it (Trash wins the label).
+    let before = store::current_seq(c).unwrap();
+    f.with(|s| s.move_email("e00008", "inbox", "trash"));
+    sync(&st, &f, &cfg()).unwrap();
+    let inbox = feed("inbox", before);
+    assert!(inbox["removed"].as_array().unwrap().contains(&json!("e00008")));
+    let moved = inbox["moved"].as_array().unwrap();
+    assert_eq!(moved.len(), 1);
+    assert_eq!(moved[0]["id"], "e00008");
+    assert_eq!(inbox["primary"]["e00008"], "trash");
+    // A message that left the server is removed and NOT moved.
+    f.with(|s| s.destroy_email("e00001"));
+    let before = store::current_seq(c).unwrap();
+    sync(&st, &f, &cfg()).unwrap();
+    let gone = feed("inbox", before);
+    assert!(gone["removed"].as_array().unwrap().contains(&json!("e00001")));
+    assert!(gone["moved"].as_array().unwrap().iter().all(|m| m["id"] != "e00001"));
+    assert!(gone["primary"].get("e00001").is_none());
+}

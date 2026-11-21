@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  TEST VARIANT ONLY (-PtestApp registers src/testApp/res on the debug and release source sets, see app/build.gradle.kts; build-type
+  resources win over src/main, so this REPLACES the production file in that variant and in no other). Same trust anchors as
+  src/main/res/xml/network_security_config.xml, plus cleartext to the Android emulator's host loopback (10.0.2.2) only (the fleet-mesh block is left out: the test variant never talks to the fleet): the
+  #1837 offline proof (workflow test-mail-core-offline-emulator.yml) serves a fake JMAP server there. The production file, and with it
+  the fleet-mesh cleartext block generated into it, is untouched; no public host is ever cleartext.
+-->
+<network-security-config>
+    <base-config>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>

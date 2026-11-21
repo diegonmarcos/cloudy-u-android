@@ -182,6 +182,7 @@ class RustMailEngine(
             val m = v.jsonObject
             CoreMailboxCount(
                 local = m["local"]!!.jsonPrimitive.int,
+                primaryLocal = m["primaryLocal"]?.jsonPrimitive?.int ?: m["local"]!!.jsonPrimitive.int,
                 unread = m["unread"]!!.jsonPrimitive.int,
                 serverTotal = m["serverTotal"]!!.jsonPrimitive.int,
                 complete = m["complete"]!!.jsonPrimitive.boolean,
@@ -221,19 +222,19 @@ class RustMailEngine(
         val removed = ArrayList<String>()
         var rounds = 0
         var (seq, id) = cursors.load(localAccountId, mailboxId) ?: (0L to "")
+        var complete = false
         while (true) {
             rounds++
             val start = seq
             while (true) {
                 val page = feed(localAccountId, mailboxId, seq, id)
                 val inRoom = emailDao.idsForMailbox(localAccountId, mailboxId).toHashSet()
-                val rows = page.emails.filterNot { isProtected(it.id) }
-                val gone = page.removed.filter { it in inRoom && !isProtected(it) }
-                if (rows.isNotEmpty() || gone.isNotEmpty()) {
+                val plan = FolderFiling.plan(mailboxId, page.emails, page.moved, page.removed, page.primary, inRoom, isProtected)
+                if (plan.rows.isNotEmpty() || plan.gone.isNotEmpty()) {
                     beforeWrite()
-                    emailDao.applyDelta(localAccountId, gone, rows.map { it.toEntity(localAccountId, mailboxId) })
-                    rows.forEach { if (it.id !in inRoom) upserted += it.id }
-                    removed += gone
+                    emailDao.applyDelta(localAccountId, plan.gone, plan.rows.map { (e, filedUnder) -> e.toEntity(localAccountId, filedUnder) })
+                    plan.rows.forEach { (e, filedUnder) -> if (filedUnder == mailboxId && e.id !in inRoom) upserted += e.id }
+                    removed += plan.gone
                 }
                 seq = page.nextSeq
                 id = page.nextId
@@ -241,36 +242,41 @@ class RustMailEngine(
             }
             cursors.save(localAccountId, mailboxId, seq, id)
             val count = counts(localAccountId)[mailboxId]
+            complete = count?.complete == true
             val roomIds = emailDao.idsForMailbox(localAccountId, mailboxId).toHashSet()
-            if (count == null || count.local == roomIds.size) break
-            val storeIds = members(localAccountId, mailboxId)
+            // The rows this mailbox owns are those the filing rule gives it (a message also in the Inbox is the Inbox's), not all its members.
+            if (count == null || count.primaryLocal == roomIds.size) break
+            val (inStore, filedHere) = members(localAccountId, mailboxId)
             if (count.complete) {
-                val extra = roomIds.filter { it !in storeIds && !isProtected(it) }
+                val extra = roomIds.filter { it !in inStore && !isProtected(it) }
                 if (extra.isNotEmpty()) {
                     beforeWrite()
                     emailDao.applyDelta(localAccountId, extra, emptyList())
                     removed += extra
                 }
             }
-            val missing = storeIds.any { it !in roomIds }
+            // Missing = rows the store files here that the app lacks; misfiled = rows the app holds here that the rule files elsewhere.
+            val missing = filedHere.any { it !in roomIds } || roomIds.any { it in inStore && it !in filedHere }
             // Re-feed from the start once when the app lacks rows the store has; never loop on a row another path re-files.
             if (!missing || rounds > 1 || start == 0L) break
             seq = 0L
             id = ""
         }
-        Projection(upserted, removed).also {
+        Projection(upserted, removed, complete).also {
             if (it.upserted.isNotEmpty() || it.removed.isNotEmpty()) {
                 log("projected $localAccountId/$mailboxId: +${it.upserted.size} -${it.removed.size}")
             }
         }
     }
 
-    private suspend fun members(localAccountId: String, mailboxId: String): Set<String> {
+    /** Every member id of the mailbox, and the ones of them the filing rule ([FolderFiling]) files under it. */
+    private suspend fun members(localAccountId: String, mailboxId: String): Pair<Set<String>, Set<String>> {
         val o = JSON.parseToJsonElement(
             MailCore.query(dbPath, buildJsonObject { put("op", "members"); put("account", localAccountId); put("mailbox", mailboxId) }.toString())
                 .getOrThrow(),
         ).jsonObject
-        return o["ids"]?.jsonArray?.map { it.jsonPrimitive.content }?.toHashSet().orEmpty()
+        fun ids(k: String) = o[k]?.jsonArray?.map { it.jsonPrimitive.content }?.toHashSet().orEmpty()
+        return ids("ids") to ids("primaryIds")
     }
 
     private fun feed(localAccountId: String, mailboxId: String, seq: Long, id: String): FeedPage {
@@ -281,6 +287,8 @@ class RustMailEngine(
         val o = JSON.parseToJsonElement(MailCore.query(dbPath, q.toString()).getOrThrow()).jsonObject
         return FeedPage(
             emails = o["emails"]!!.jsonArray.map { JSON.decodeFromJsonElement<Email>(it) },
+            moved = o["moved"]?.jsonArray.orEmpty().map { JSON.decodeFromJsonElement<Email>(it) },
+            primary = o["primary"]?.jsonObject.orEmpty().mapValues { it.value.jsonPrimitive.content },
             removed = o["removed"]!!.jsonArray.map { it.jsonPrimitive.content },
             nextSeq = o["nextSeq"]!!.jsonPrimitive.long,
             nextId = o["nextId"]!!.jsonPrimitive.content,
@@ -288,9 +296,18 @@ class RustMailEngine(
         )
     }
 
-    private class FeedPage(val emails: List<Email>, val removed: List<String>, val nextSeq: Long, val nextId: String, val more: Boolean)
+    private class FeedPage(
+        val emails: List<Email>,
+        val moved: List<Email>,
+        val primary: Map<String, String>,
+        val removed: List<String>,
+        val nextSeq: Long,
+        val nextId: String,
+        val more: Boolean,
+    )
 
-    class Projection(val upserted: List<String>, val removed: List<String>)
+    /** [complete]: the store has walked this whole mailbox, so what is projected is the whole folder (false = a partial first sync). */
+    class Projection(val upserted: List<String>, val removed: List<String>, val complete: Boolean = true)
 
     /** Where each mailbox's projection cursor (store seq, last id) is kept. */
     interface ProjectionCursors {
@@ -373,7 +390,7 @@ class RustMailEngine(
 }
 
 /** One mailbox's line of the store's counts. */
-data class CoreMailboxCount(val local: Int, val unread: Int, val serverTotal: Int, val complete: Boolean, val gapsFound: Int)
+data class CoreMailboxCount(val local: Int, val primaryLocal: Int, val unread: Int, val serverTotal: Int, val complete: Boolean, val gapsFound: Int)
 
 /** What one core sync pass did (the core's JSON report, the fields the app logs and shows). */
 data class CoreSyncReport(

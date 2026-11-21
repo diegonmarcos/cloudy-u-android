@@ -149,17 +149,23 @@ pub fn counts(c: &Connection, account: &str) -> Result<Value, String> {
              WHERE x.account = ?1",
         )
         .map_err(err)?;
+    let mut filed: std::collections::HashMap<String, i64> = std::collections::HashMap::new();
+    for p in primary_map(c, account)?.into_values() {
+        *filed.entry(p).or_insert(0) += 1;
+    }
     let mut out = serde_json::Map::new();
     let rows = st
         .query_map(params![account], |r| {
+            let id = g_s(r, 0)?;
             Ok((
-                g_s(r, 0)?,
+                id.clone(),
                 json!({
                     "name": g_os(r, 1)?,
                     "role": g_os(r, 2)?,
                     "serverTotal": g_i(r, 3)?,
                     "serverUnread": g_i(r, 4)?,
                     "local": g_i(r, 5)?,
+                    "primaryLocal": filed.get(&id).copied().unwrap_or(0),
                     "unread": g_i(r, 6)?,
                     "complete": g_i(r, 7)? != 0,
                     "gapsFound": g_i(r, 8)?,
@@ -193,7 +199,9 @@ fn d_changes_limit() -> usize {
 }
 
 /// The projection feed: `{"emails": [<Email object>...], "removed": [ids], "nextSeq": s, "nextId": id, "more": bool,
-/// "total": members, "seq": store seq}`. `removed` is answered on the first page of a round (empty [since_id]) only.
+/// "total": members, "seq": store seq, "primary": {id: mailbox}, "moved": [<Email object>...]}`. `primary` is the one mailbox the
+/// app files each fed message under ([primary_mailbox]); `moved` are the messages of `removed` that are still in another mailbox.
+/// `removed` is answered on the first page of a round (empty [since_id]) only.
 pub fn changes_since(c: &Connection, a: &ChangesArgs) -> Result<Value, String> {
     let mut st = c
         .prepare_cached(
@@ -213,6 +221,12 @@ pub fn changes_since(c: &Connection, a: &ChangesArgs) -> Result<Value, String> {
         _ => (crate::store::current_seq(c)?, String::new()),
     };
     let emails: Vec<Value> = rows.iter().filter_map(|(_, _, j)| serde_json::from_str(j).ok()).collect();
+    let mut primary = serde_json::Map::new();
+    for (_, id, _) in &rows {
+        if let Some(p) = primary_mailbox(c, &a.account, id)? {
+            primary.insert(id.clone(), Value::String(p));
+        }
+    }
     let removed: Vec<String> = if a.since_id.is_empty() && a.since_seq > 0 {
         let mut t = c
             .prepare_cached("SELECT email_id FROM tombstones WHERE account = ?1 AND mailbox_id = ?2 AND seq > ?3")
@@ -226,9 +240,25 @@ pub fn changes_since(c: &Connection, a: &ChangesArgs) -> Result<Value, String> {
     } else {
         vec![]
     };
+    // A membership that ended is not always a message that left: one still in another mailbox is re-filed there (`moved`).
+    let mut moved: Vec<Value> = vec![];
+    for id in &removed {
+        if let Some(p) = primary_mailbox(c, &a.account, id)? {
+            let j: Option<String> = c
+                .query_row("SELECT json FROM messages WHERE account = ?1 AND id = ?2", params![a.account, id], |r| r.get(0))
+                .optional()
+                .map_err(err)?;
+            if let Some(v) = j.and_then(|t| serde_json::from_str::<Value>(&t).ok()) {
+                primary.insert(id.clone(), Value::String(p));
+                moved.push(v);
+            }
+        }
+    }
     let total = crate::store::local_count(c, &a.account, &a.mailbox)?;
     Ok(json!({
         "emails": emails,
+        "moved": moved,
+        "primary": primary,
         "removed": removed,
         "nextSeq": next_seq,
         "nextId": next_id,
@@ -239,7 +269,64 @@ pub fn changes_since(c: &Connection, a: &ChangesArgs) -> Result<Value, String> {
 
 /// Every member id of a mailbox in the server's order, for an exact reconcile on the app side.
 pub fn member_ids(c: &Connection, account: &str, mailbox: &str) -> Result<Value, String> {
-    Ok(json!({ "ids": crate::store::member_ids(c, account, mailbox)? }))
+    let ids = crate::store::member_ids(c, account, mailbox)?;
+    let primary = primary_map(c, account)?;
+    let filed: Vec<&String> = ids.iter().filter(|i| primary.get(*i).map(String::as_str) == Some(mailbox)).collect();
+    Ok(json!({ "ids": ids, "primaryIds": filed }))
+}
+
+/// The app keeps ONE list row per message (Room: key account + id), so a message in the Inbox and a label is filed under one
+/// mailbox only. The rule is a pure function of the message's memberships (never of which mailbox was synced last), so two
+/// passes cannot file it back and forth: the most specific state wins (Trash, Junk, Drafts), then Inbox, Sent, a label (no
+/// role), then the roles that are only a view (Archive, All, Important, Flagged); a tie takes the smaller mailbox id.
+pub fn folder_rank(role: Option<&str>) -> u8 {
+    match role {
+        Some("trash") => 0,
+        Some("junk") => 1,
+        Some("drafts") => 2,
+        Some("inbox") => 3,
+        Some("sent") => 4,
+        None | Some("") => 5,
+        Some(_) => 6,
+    }
+}
+
+/// The mailbox [folder_rank] files the message under, from the (mailbox, role) pairs it is a member of. None = no membership.
+pub fn pick_primary(members: &[(String, Option<String>)]) -> Option<String> {
+    members.iter().min_by(|a, b| (folder_rank(a.1.as_deref()), &a.0).cmp(&(folder_rank(b.1.as_deref()), &b.0))).map(|m| m.0.clone())
+}
+
+/// The primary mailbox of one message of the store (None when it is in no mailbox).
+pub fn primary_mailbox(c: &Connection, account: &str, email_id: &str) -> Result<Option<String>, String> {
+    let mut st = c
+        .prepare_cached(
+            "SELECT b.mailbox_id, x.role FROM membership b LEFT JOIN mailboxes x ON x.account = b.account AND x.id = b.mailbox_id
+             WHERE b.account = ?1 AND b.email_id = ?2",
+        )
+        .map_err(err)?;
+    let m = st
+        .query_map(params![account, email_id], |r| Ok((g_s(r, 0)?, g_os(r, 1)?)))
+        .map_err(err)?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(err)?;
+    Ok(pick_primary(&m))
+}
+
+/// message id -> primary mailbox, for the whole account.
+pub fn primary_map(c: &Connection, account: &str) -> Result<std::collections::HashMap<String, String>, String> {
+    let mut st = c
+        .prepare_cached(
+            "SELECT b.email_id, b.mailbox_id, x.role FROM membership b LEFT JOIN mailboxes x ON x.account = b.account AND x.id = b.mailbox_id
+             WHERE b.account = ?1",
+        )
+        .map_err(err)?;
+    let mut by: std::collections::HashMap<String, Vec<(String, Option<String>)>> = std::collections::HashMap::new();
+    let rows = st.query_map(params![account], |r| Ok((g_s(r, 0)?, g_s(r, 1)?, g_os(r, 2)?))).map_err(err)?;
+    for row in rows {
+        let (e, m, role) = row.map_err(err)?;
+        by.entry(e).or_default().push((m, role));
+    }
+    Ok(by.into_iter().filter_map(|(e, m)| pick_primary(&m).map(|p| (e, p))).collect())
 }
 
 /// FTS5 search of [account] (subject, sender, preview), newest first.

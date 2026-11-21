@@ -1093,9 +1093,14 @@ class MailRepository(
         localAccountId: String,
     ): MailboxSync {
         val isInbox = client.inboxGuardOf(accountId)?.inboxId == mailboxId
-        if (!isInbox) return syncMailboxWindow(session, accountId, auth, mailboxId, sizing, localAccountId, inboxServerIds = emptySet())
-        // #1837: the Inbox comes from the Rust core's store when the core runs; the Kotlin backlog below is its fallback.
-        coreInbox(session, accountId, auth, mailboxId, localAccountId, RustMailEngine.INTERACTIVE_BUDGET_MS)?.let { return it }
+        // #1837: every folder comes from the Rust core's store when the core runs; the Kotlin sync below is its fallback. A folder
+        // the core has not walked whole yet (first sync in progress, budget) is ALSO window-synced, as before, so it never opens thin.
+        val pass = coreInbox(session, accountId, auth, mailboxId, localAccountId, RustMailEngine.INTERACTIVE_BUDGET_MS)
+        if (pass != null && (isInbox || pass.complete)) return pass.sync
+        if (!isInbox) {
+            val window = syncMailboxWindow(session, accountId, auth, mailboxId, sizing, localAccountId, inboxServerIds = emptySet())
+            return if (pass == null) window else MailboxSync(window.fetchedIds + pass.sync.fetchedIds, window.departedIds + pass.sync.departedIds)
+        }
         // Null = the server's list could not be read: the window sync then deletes nothing this pass.
         val serverIds: List<String>? = if (!inboxSnapshots.claim(localAccountId, mailboxId)) null else try {
             walkAllIds(pageSize = session.getBatchSize().coerceAtLeast(JMAP_BACKLOG_CHUNK)) { position, limit ->
@@ -1125,6 +1130,9 @@ class MailRepository(
         return window.copy(fetchedIds = window.fetchedIds + fetched.map { it.id })
     }
 
+    /** One core pass of a mailbox: what landed and left, and whether the store has walked the whole mailbox ([RustMailEngine.Projection.complete]). */
+    private class CoreMailboxPass(val sync: MailboxSync, val complete: Boolean)
+
     /**
      * #1837 phase 1: one pass of the Rust mail core for a JMAP account (its whole mirror: every mailbox, Email/changes,
      * gap detection, body prefetch, bounded by [budgetMs]), then the Inbox's list rows brought to the core's store
@@ -1138,20 +1146,21 @@ class MailRepository(
         mailboxId: String,
         localAccountId: String,
         budgetMs: Long?,
-    ): MailboxSync? {
+    ): CoreMailboxPass? {
         val core = mailCore ?: return null
         if (core.unavailableReason() != null) return null
         // Outside the try: a signed-out account's refusal must reach the caller, never become "fall back to Kotlin".
         checkAccountStillConfigured(localAccountId, accountStore.accounts().map { it.id })
         return try {
             core.sync(client, session, accountId, auth, localAccountId, budgetMs)
+            // Any mailbox (not only the Inbox): the filing rule ([FolderFiling]) keeps a message in two mailboxes in one place.
             val p = core.projectMailbox(
                 localAccountId, mailboxId, emailDao,
                 isProtected = { isRecentlyMutated(localAccountId, it) },
                 beforeWrite = { checkAccountStillConfigured(localAccountId, accountStore.accounts().map { it.id }) },
             )
             if (p.upserted.isNotEmpty()) onSyncChunkLanded(localAccountId, mailboxId)
-            MailboxSync(fetchedIds = p.upserted, departedIds = p.removed)
+            CoreMailboxPass(MailboxSync(fetchedIds = p.upserted, departedIds = p.removed), p.complete)
         } catch (c: CancellationException) {
             throw c
         } catch (t: Throwable) {
@@ -1207,15 +1216,23 @@ class MailRepository(
         val auth = jmapAuth(credentials)
         val session = client.fetchSession(Jmap.sessionUrlFor(credentials.server), auth)
         val accountId = jmapAccountIdFor(credentials, session)
-        val inbox = client.getMailboxes(session, accountId, auth).firstOrNull { it.role == "inbox" } ?: return null
+        val mailboxes = client.getMailboxes(session, accountId, auth)
+        val inbox = mailboxes.firstOrNull { it.role == "inbox" } ?: return null
         val report = core.sync(client, session, accountId, auth, credentials.id, budgetMs)
-        val p = core.projectMailbox(
-            credentials.id, inbox.id, emailDao,
-            isProtected = { isRecentlyMutated(credentials.id, it) },
-            beforeWrite = { checkAccountStillConfigured(credentials.id, accountStore.accounts().map { it.id }) },
-        )
-        if (p.upserted.isNotEmpty()) onSyncChunkLanded(credentials.id, inbox.id)
-        return "${report.summary} inbox +${p.upserted.size} -${p.removed.size}"
+        // Every folder's list rows are brought to the store (Inbox first), each within the same never-blank rules.
+        var added = 0
+        var removed = 0
+        for (box in listOf(inbox) + mailboxes.filter { it.id != inbox.id }) {
+            val p = core.projectMailbox(
+                credentials.id, box.id, emailDao,
+                isProtected = { isRecentlyMutated(credentials.id, it) },
+                beforeWrite = { checkAccountStillConfigured(credentials.id, accountStore.accounts().map { it.id }) },
+            )
+            if (p.upserted.isNotEmpty()) onSyncChunkLanded(credentials.id, box.id)
+            added += p.upserted.size
+            removed += p.removed.size
+        }
+        return "${report.summary} folders=${mailboxes.size} +$added -$removed"
     }
 
     /** Both paths report what they fetched: an id fetched and not reported is deleted by the
