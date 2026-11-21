@@ -100,7 +100,7 @@ class BrowserConfigsLayoutTest {
     fun `Tabs is a destination of the island and a section that opens the tab switcher`() {
         val ui = root.getJSONObject("ui")
         val nav = (0 until ui.getJSONArray("bottom_nav").length()).map { ui.getJSONArray("bottom_nav").getString(it) }
-        assertEquals(listOf("weby", "cloudy", "browser", "tabs", "domains"), nav)
+        assertEquals(listOf("domains", "tabs", "browser", "cloudy", "weby"), nav)
         val secs = ui.getJSONArray("sections")
         val ids = (0 until secs.length()).map { secs.getJSONObject(it).getString("id") }
         assertTrue(ids.containsAll(nav))
