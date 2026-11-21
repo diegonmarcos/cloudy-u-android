@@ -111,7 +111,7 @@ class DeltaEvictsOnlyItsOwnFolderTest {
             // #1752 pin change: the delete is no longer a statement of its own; it travels with the fetched rows into
             // EmailDao.applyDelta (one transaction, fetch first). The property pinned is unchanged: it receives
             // `toDelete`, never `toRemove`.
-            listOf("emailDao.applyDelta(localAccountId, toDelete, fetched.map { it.toEntity(localAccountId, mailboxId) })"),
+            listOf("emailDao.applyDelta(localAccountId, toDelete, windowEntities(localAccountId, mailboxId, fetched))"),
             codeLinesNaming(body, "emailDao.applyDelta("),
         )
         assertEquals(

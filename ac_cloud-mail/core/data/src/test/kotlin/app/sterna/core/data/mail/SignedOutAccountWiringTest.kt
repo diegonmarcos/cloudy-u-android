@@ -54,7 +54,7 @@ class SignedOutAccountWiringTest {
             listOf(
                 "writePage = { fresh ->",
                 "$guard(localAccountId, accountStore.accounts().map { it.id })",
-                "emailDao.upsertAll(fresh.map { it.toEntity(localAccountId, mailboxId) })",
+                "emailDao.upsertAll(windowEntities(localAccountId, mailboxId, fresh))",
                 // #1763: AFTER the guarded write, a landed chunk asks for its bodies (inbox only, throttled).
                 "onSyncChunkLanded(localAccountId, mailboxId)",
                 "},",
@@ -113,7 +113,7 @@ class SignedOutAccountWiringTest {
                 // transaction that also carries the delete. Order unchanged: fetch, guard, write.
                 "val fetched = if (toFetch.isNotEmpty()) client.getEmailsByIds(session, accountId, toFetch, auth) else emptyList()",
                 "$guard(localAccountId, accountStore.accounts().map { it.id })",
-                "emailDao.applyDelta(localAccountId, toDelete, fetched.map { it.toEntity(localAccountId, mailboxId) })",
+                "emailDao.applyDelta(localAccountId, toDelete, windowEntities(localAccountId, mailboxId, fetched))",
             ),
             block("syncMailboxWindow", "val fetched = if (toFetch.isNotEmpty()) client.getEmailsByIds(session, accountId, toFetch, auth) else emptyList()", 3),
         )

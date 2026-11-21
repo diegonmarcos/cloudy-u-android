@@ -55,23 +55,14 @@ class MembershipOrphanSqlTest {
         assertEquals(listOf("a:m2:lbl", "b:gone:inbox", "b:m3:inbox"), memberships())
     }
 
-    @Test fun `an account's memberships go with the account and no other account's`() {
-        assertEquals(4, run("deleteMembershipsForAccount", "a"))
-        assertEquals(listOf("b:gone:inbox", "b:m3:inbox"), memberships())
+    @Test fun `the global sweep takes the memberships of a removed account and of deleted rows, and keeps live ones`() {
+        db.createStatement().use { it.executeUpdate("DELETE FROM emails WHERE accountId = 'a'") }
+        assertEquals(5, run("deleteAllOrphanMemberships"))
+        assertEquals(listOf("b:m3:inbox"), memberships())
     }
 
-    @Test fun `deleteAll empties the memberships`() {
-        run("deleteAllMemberships")
-        assertEquals(emptyList<String>(), memberships())
-    }
-
-    @Test fun `the account and delete-all transactions chain the rows and the memberships`() {
-        fun body(f: String) = DaoQuerySource.daoFunctionBody("EmailDao", f).lines().map { it.trim() }.filter { it.isNotEmpty() }
-        assertEquals(listOf("{", "deleteRowsForAccount(accountId)", "deleteMembershipsForAccount(accountId)", "}"), body("deleteForAccount"))
-        assertEquals(listOf("{", "deleteAllRows()", "deleteAllMemberships()", "}"), body("deleteAll"))
-        assertTrue(DaoQuerySource.isTransactional("EmailDao", "deleteForAccount"))
-        assertTrue(DaoQuerySource.isTransactional("EmailDao", "deleteAll"))
+    @Test fun `the sweeps are wired after the projection page and after the core pass`() {
         assertTrue("the projection no longer sweeps orphans", "deleteOrphanMemberships(accountId)" in DaoQuerySource.daoFunctionBody("EmailDao", "applyProjection"))
-        assertTrue("the core pass no longer sweeps orphans", "deleteOrphanMemberships" in DaoQuerySource.mailFunctionBody("MailRepository", "coreInbox"))
+        assertTrue("the core pass no longer sweeps orphans", "deleteAllOrphanMemberships" in DaoQuerySource.mailFunctionBody("MailRepository", "coreInbox"))
     }
 }

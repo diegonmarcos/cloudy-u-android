@@ -300,13 +300,20 @@ interface EmailDao {
 
     /**
      * #1837: the memberships ([EmailMailboxEntity]) of messages that no longer have a row in `emails` (a delete path that does not
-     * know the table: user delete, window eviction, a prune). Swept after every core projection, which is also where they are written.
+     * know the table: user delete, window eviction, a prune). Swept after every core projection (which is also where they are written): per account with each page, over every account after each core pass.
      */
     @Query(
         "DELETE FROM email_mailboxes WHERE accountId = :accountId " +
             "AND emailId NOT IN (SELECT id FROM emails WHERE accountId = :accountId)",
     )
     suspend fun deleteOrphanMemberships(accountId: String)
+
+    /** [deleteOrphanMemberships] over every account: what a removed account, a cache clear or a prune left behind (those delete paths do not know this table). */
+    @Query(
+        "DELETE FROM email_mailboxes WHERE NOT EXISTS " +
+            "(SELECT 1 FROM emails e WHERE e.accountId = email_mailboxes.accountId AND e.id = email_mailboxes.emailId)",
+    )
+    suspend fun deleteAllOrphanMemberships()
 
     /**
      * Like [deleteNotIn] but never touches [spareIds] — ids just mutated locally, protected until
@@ -523,30 +530,11 @@ interface EmailDao {
     @Query("SELECT COUNT(*) FROM emails WHERE accountId = :accountId")
     suspend fun countForAccount(accountId: String): Int
 
-    @Transaction
-    suspend fun deleteAll() {
-        deleteAllRows()
-        deleteAllMemberships()
-    }
-
     @Query("DELETE FROM emails")
-    suspend fun deleteAllRows()
-
-    @Query("DELETE FROM email_mailboxes")
-    suspend fun deleteAllMemberships()
-
-    /** An account's rows AND its memberships (#1837: no orphan `email_mailboxes` row outlives the account). */
-    @Transaction
-    suspend fun deleteForAccount(accountId: String) {
-        deleteRowsForAccount(accountId)
-        deleteMembershipsForAccount(accountId)
-    }
+    suspend fun deleteAll()
 
     @Query("DELETE FROM emails WHERE accountId = :accountId")
-    suspend fun deleteRowsForAccount(accountId: String)
-
-    @Query("DELETE FROM email_mailboxes WHERE accountId = :accountId")
-    suspend fun deleteMembershipsForAccount(accountId: String)
+    suspend fun deleteForAccount(accountId: String)
 
     /**
      * Age (and id) of every cached row in one account's mailbox — the input the retention prune

@@ -84,7 +84,7 @@ class FullQueryStreamingWiringTest {
         assertLine("MailRepository", "syncMailboxWindow", "writePage = { fresh ->")
         assertLine(
             "MailRepository", "syncMailboxWindow",
-            "emailDao.upsertAll(fresh.map { it.toEntity(localAccountId, mailboxId) })",
+            "emailDao.upsertAll(windowEntities(localAccountId, mailboxId, fresh))",
         )
         assertLine("MailRepository", "syncMailboxWindow", "keepIds = { reconcilableWindowIds(it) },")
         assertLine("MailRepository", "syncMailboxWindow", "spareIds = { recentlyMutatedIds(localAccountId) },")

@@ -282,9 +282,9 @@ has "$CORE/src/jni_api.rs" '"primaries" =>' "the core answers the filing of a li
 has "$CORE/src/tests.rs" 'the app.s window sync asks the same filing' "the Rust test of the primaries op exists"
 has "$APP/core/data/src/test/kotlin/app/sterna/core/data/mail/FolderFilingTest.kt" 'the window sync files a message by the core' "the window filing test exists"
 has "$DB/EmailDao.kt" 'suspend fun deleteOrphanMemberships(accountId: String)' "orphan memberships are swept"
-has "$DB/EmailDao.kt" 'deleteMembershipsForAccount(accountId)' "an account's memberships go with the account"
-has "$DB/EmailDao.kt" 'deleteAllMemberships()' "delete-all takes the memberships"
-has "$APP/core/data/src/test/kotlin/app/sterna/core/data/mail/MembershipOrphanSqlTest.kt" 'an account.s memberships go with the account' "the orphan membership test exists"
+has "$DB/EmailDao.kt" 'suspend fun deleteAllOrphanMemberships()' "the memberships of a removed account, a cleared cache or a pruned row are swept over every account"
+has "$R" 'emailDao.deleteAllOrphanMemberships()' "the core pass sweeps orphan memberships"
+has "$APP/core/data/src/test/kotlin/app/sterna/core/data/mail/MembershipOrphanSqlTest.kt" 'the global sweep takes the memberships of a removed account' "the orphan membership test exists"
 has "$APP/test/walk-mail-core-offline.sh" 'offline Receipts ($d) shows the load-more error footer' "the proof asserts no load-more error offline"
 has "$APP/test/walk-mail-core-offline.sh" 'does not name the open Receipts label' "the proof asserts the breadcrumb names the label"
 if python3 -I "$APP/test/mail-offline-ui.py" selftest >/dev/null 2>&1; then ok "the dump helper (with lacks) passes its selftest"; else bad "the dump helper selftest fails"; fi

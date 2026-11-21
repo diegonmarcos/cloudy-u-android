@@ -1192,7 +1192,7 @@ class MailRepository(
                 isProtected = { isRecentlyMutated(localAccountId, it) },
                 beforeWrite = { checkAccountStillConfigured(localAccountId, accountStore.accounts().map { it.id }) },
             )
-            runCatching { emailDao.deleteOrphanMemberships(localAccountId) } // #1837: no membership outlives its message
+            runCatching { emailDao.deleteAllOrphanMemberships() } // #1837: no membership outlives its message
             if (p.upserted.isNotEmpty()) onSyncChunkLanded(localAccountId, mailboxId)
             CoreMailboxPass(MailboxSync(fetchedIds = p.upserted, departedIds = p.removed), p.complete)
         } catch (c: CancellationException) {
