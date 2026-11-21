@@ -1855,7 +1855,8 @@
  },
  "cargo_lockfiles": [
   "ab_cloud-libs-shared/libs/drive-core-rs/Cargo.lock",
-  "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+  "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock",
+  "ab_cloud-libs-shared/libs/browser-core-rs/Cargo.lock"
  ],
  "cargo_licences": {
   "ahash": {
