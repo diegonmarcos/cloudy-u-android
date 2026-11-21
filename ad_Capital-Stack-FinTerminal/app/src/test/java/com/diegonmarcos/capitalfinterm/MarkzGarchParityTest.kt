@@ -50,7 +50,7 @@ class MarkzGarchParityTest {
     @Test fun theFitTableShowsEveryRequestedFigure() {
         val f = GarchFitter.fit((0..700).map { java.time.LocalDate.of(2020, 1, 1).plusDays(it.toLong()) to 100.0 * Math.exp(0.01 * Math.sin(it * 1.7) * (1 + it % 7)) }, 0.05, 0.90)
         val rows = MarkzScreen.garchRows(d, listOf(MarkzVols(1.0, 1.0, 1.0, null, f), MarkzVols(1.0, 1.0, 1.0, null, null)), 252)
-        val labels = listOf("st_g_omega", "st_g_alpha", "st_g_beta", "st_g_persist", "st_g_half", "st_g_lrvol", "st_g_ll", "st_g_n", "st_g_range", "st_g_source").map { d.word(it) }
+        val labels = listOf("st_g_omega", "st_g_alpha", "st_g_beta", "st_g_persist", "st_g_half", "st_g_lrvol", "st_g_ll", "st_g_n", "st_g_range", "st_g_source", "st_g_realised", "st_g_dropped").map { d.word(it) }
         assertEquals(labels, rows.map { it[0] })
         assertTrue(labels.all { it.isNotEmpty() })
         assertEquals("n/a", rows[0][2])                       // an asset without a fit shows n/a, not a made-up figure
