@@ -116,7 +116,7 @@ fun DLights(name: String, l: Lights, v: String, tag: String = "", onClick: (() -
             .padding(horizontal = KitDensity.rowPadH, vertical = Dense.ROW_V),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        DLight(l.on); Spacer(Modifier.width(3.dp)); DLight(l.keepAlive); Spacer(Modifier.width(3.dp)); DLight(l.healthy); Spacer(Modifier.width(6.dp))
+        DLight(if (l.disabled) null else l.on); Spacer(Modifier.width(3.dp)); DLight(l.keepAlive); Spacer(Modifier.width(3.dp)); DLight(if (l.disabled) null else l.healthy); Spacer(Modifier.width(6.dp))
         Text(name, style = capStyle, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, maxLines = 1, modifier = Modifier.width(Dense.KEY_COL - 24.dp))
         Text(v, style = bodyStyle, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
         if (onClick != null) Text("›", style = bodyStyle, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp))

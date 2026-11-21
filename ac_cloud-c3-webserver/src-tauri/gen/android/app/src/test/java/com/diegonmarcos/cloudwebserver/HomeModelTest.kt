@@ -3,6 +3,7 @@ package com.diegonmarcos.cloudwebserver
 import com.diegonmarcos.cloudwebserver.ui.AdbLive
 import com.diegonmarcos.cloudwebserver.ui.HomeModel
 import com.diegonmarcos.cloudwebserver.ui.Lights
+import com.diegonmarcos.cloudwebserver.ui.SummaryState
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -70,15 +71,15 @@ class HomeModelTest {
     @Test fun `stopping API leaves the Pages and SSHD lights on, and the other way round`() {
         val served = served(true); val door = JSONObject("""{"doors":[${door("green", true)}]}""")
         val apiOff = pws(true, true, false, true)
-        assertEquals(false, HomeModel.api(apiOff, JSONObject("""{"ok":true}""")).on)
-        assertEquals(false, HomeModel.api(apiOff, JSONObject("""{"ok":true}""")).healthy)
+        assertNull(HomeModel.api(apiOff, JSONObject("""{"ok":true}""")).on)
+        assertEquals(true, HomeModel.api(apiOff, JSONObject("""{"ok":true}""")).disabled)
         assertEquals(true, HomeModel.pages(apiOff, served).on)
         assertEquals(true, HomeModel.sshd(door, apiOff).on)
         val pagesOff = pws(true, false, true, true)
-        assertEquals(false, HomeModel.pages(pagesOff, served).on)
-        assertEquals(false, HomeModel.pages(pagesOff, served).healthy)
+        assertNull(HomeModel.pages(pagesOff, served).on)
+        assertEquals(true, HomeModel.pages(pagesOff, served).disabled)
         assertEquals(true, HomeModel.api(pagesOff, JSONObject("""{"ok":true}""")).healthy)
-        assertEquals(false, HomeModel.sshd(door, pws(true, true, true, false)).on)
+        assertEquals(true, HomeModel.sshd(door, pws(true, true, true, false)).disabled)
     }
 
     @Test fun `a service switch posts only its own flag, and Start also turns the server on`() {
@@ -105,9 +106,33 @@ class HomeModelTest {
         val l = HomeModel.server(pws(true, true, true, true, ports))
         assertEquals(true, l.on); assertEquals(true, l.keepAlive); assertEquals(true, l.healthy)
         assertEquals(false, HomeModel.server(pws(true, true, true, true, """{"name":"admin","port":8002,"proto":"tcp"}""")).healthy)
-        assertEquals(false, HomeModel.server(pws(false, true, true, true)).on)
+        assertEquals(false, HomeModel.server(pws(false, true, true, true)).on)   // Keep alive ON + Server OFF is a fault, not a choice
         assertNull(HomeModel.server(null).on)
         assertEquals("tcp 8002, tcp 8003", HomeModel.portsOf(pws(true, true, true, true, ports), "admin", "diagnostics"))
         assertEquals("Pages ON · API OFF · SSHD ON", HomeModel.servicesMsg(pws(true, true, false, true)))
+    }
+
+    private fun pwk(server: Boolean, ka: Boolean, pages: Boolean = true) = JSONObject("""{"server":$server,"running":$server,"keep_alive":$ka,"svc":{"pages":{"enabled":$pages}}}""")
+    private val up = Lights(true, true, true)
+
+    @Test fun `a disabled service is neutral and does not raise ATTENTION, an enabled unhealthy one does`() {
+        val p = pwk(true, true, pages = false)
+        val pages = HomeModel.pages(p, served(true))
+        assertTrue(pages.disabled)
+        assertEquals(SummaryState.ALL_UP, HomeModel.summary(p, listOf(pages, up, up), null))
+        assertEquals(SummaryState.ALL_DISABLED, HomeModel.summary(p, listOf(pages, pages, pages), null))
+        assertEquals(SummaryState.ATTENTION, HomeModel.summary(p, listOf(pages, Lights(true, true, false), up), null))
+        assertEquals(SummaryState.ATTENTION, HomeModel.summary(pwk(true, true), listOf(up, up, up), false))
+        assertEquals(SummaryState.ALL_UP, HomeModel.summary(pwk(true, true), listOf(up, up, up), true))
+    }
+
+    @Test fun `server off by choice is a neutral Stopped, but a fault while Keep alive wants it up`() {
+        val choice = pwk(false, false)
+        assertEquals(SummaryState.STOPPED, HomeModel.summary(choice, listOf(HomeModel.pages(choice, served(false)), HomeModel.api(choice, null), HomeModel.sshd(null, choice)), null))
+        assertTrue(HomeModel.server(choice).disabled); assertTrue(HomeModel.api(choice, null).disabled)
+        val fault = pwk(false, true)
+        assertEquals(SummaryState.ATTENTION, HomeModel.summary(fault, listOf(HomeModel.pages(fault, served(false))), null))
+        assertTrue(!HomeModel.server(fault).disabled); assertTrue(!HomeModel.api(fault, null).disabled)
+        assertEquals(SummaryState.UNKNOWN, HomeModel.summary(null, emptyList(), null))
     }
 }

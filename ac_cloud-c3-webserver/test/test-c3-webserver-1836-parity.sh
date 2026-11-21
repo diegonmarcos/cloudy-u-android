@@ -47,6 +47,11 @@ def check(home, status, model, power, lib, app, mesh, door, ktest):
         if lit not in st: bad.append("V1 Server table lacks %s" % lit)
     if 'DLights("Server"' not in fn(status, "SummaryTable"): bad.append("V2 no Server row in the Summary")
     if "ServerTable(data)" not in home or home.find("AdbTable(data") > home.find("ServerTable(data"): bad.append("V3 the Server table is not drawn last")
+    for lit in ['Badge("STOPPED")', 'Badge("ALL DISABLED")', 'Badge("ATTENTION"', 'Badge("ALL UP"', '"Disabled']:
+        if lit not in fn(status, "SummaryTable"): bad.append("N1 Summary lacks the neutral/fault state %s" % lit)
+    if "!it.disabled && it.healthy != true" not in model: bad.append("N2 a disabled service counts toward ATTENTION")
+    if "if (pw.optBoolean(\"keep_alive\")) SummaryState.ATTENTION else SummaryState.STOPPED" not in model: bad.append("N3 Server off by choice is not neutral / with Keep alive is not a fault")
+    if "neutral stopped" not in ktest.lower() and "neutral Stopped" not in ktest: bad.append("N4 Kotlin neutral-state test missing")
     for lit in ["pub enum Service", "pub fn service_on(", "pub fn set_service(", 'doc["svc"]', "pub fn restart("]:
         if lit not in power: bad.append("R1 power.rs lacks %s" % lit)
     if "power::Service::Pages" not in lib or "power::Service::Api" not in lib or "pub fn sync_services(" not in lib: bad.append("R2 lib.rs does not gate Pages and API / sync")
@@ -79,6 +84,8 @@ muts = [
   ("Server table without Restart", rep(1, '"c3_server_restart"', '"c3_server_rx"')),
   ("no Server summary row", rep(1, 'DLights("Server"', 'DLights("Srv"')),
   ("Server table not last", (srvlast,) + files[1:]),
+  ("disabled counts toward ATTENTION", rep(2, '!it.disabled && it.healthy != true', 'it.healthy != true')),
+  ("neutral Stopped test removed", rep(8, 'neutral Stopped', 'x')),
   ("Rust flag not persisted", rep(3, 'doc["svc"]', 'doc["svcx"]')),
   ("Rust drive not gated per service", rep(4, 'power::Service::Pages', 'power::Service::Xx')),
   ("Rust mesh not gated", rep(6, 'Service::Api', 'Service::Pages')),

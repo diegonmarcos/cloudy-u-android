@@ -80,13 +80,16 @@ fun SummaryTable(h: HomeData) {
     val adbUp = h.adb?.takeIf { it.has("server_up") && !it.isNull("server_up") }?.optBoolean("server_up")
     val pages = HomeModel.pages(pw, h.served); val api = HomeModel.api(pw, h.health); val ssh = HomeModel.sshd(h.sshd, pw); val srv = HomeModel.server(pw); val adb = HomeModel.adb(h.adb, h.live)
     val rows = h.served.objs("rows"); val doors = h.sshd.objs("doors")
-    val allUp = srv.healthy == true && pages.healthy == true && api.healthy == true && ssh.healthy == true && adbUp != false
-    DenseCard("Summary", "c3_status_summary", badges = { Badge(if (pw == null) "?" else if (!serverOn) "OFF" else if (pw.optBoolean("running").not()) "STARTING" else if (allUp) "ALL UP" else "ATTENTION", if (allUp && serverOn) Tone.Up else Tone.Down) },
+    val state = HomeModel.summary(pw, listOf(pages, api, ssh), adbUp)
+    DenseCard("Summary", "c3_status_summary", badges = { when (state) {
+            SummaryState.UNKNOWN -> Badge("?"); SummaryState.STOPPED -> Badge("STOPPED"); SummaryState.ALL_DISABLED -> Badge("ALL DISABLED")
+            SummaryState.STARTING -> Badge("STARTING", Tone.Down); SummaryState.ALL_UP -> Badge("ALL UP", Tone.Up); SummaryState.ATTENTION -> Badge("ATTENTION", Tone.Bad)
+        } },
         trailing = { DLink("Device ›", "c3_home_goto_device") { h.open(Decl.SECTION_CONFIGS, Decl.PAGE_DEVICE) } }) {
-        DLights("Server", srv, if (pw == null) "not answering" else if (!serverOn) "OFF (admin page stays up)" else "pid ${pw.str("pid")} · up ${fmtUp(pw.longOrNull("uptime_s"))} · ${HomeModel.servicesMsg(pw)}", "c3_sum_server") { h.open(Decl.SECTION_CONFIGS, Decl.PAGE_SERVER) }
-        DLights("Pages", pages, "${rows.count { it.optBoolean("serving") }} of ${rows.size} serving (connect probe per port)" + (if (HomeModel.svcFlag(pw, "pages")) "" else " · service OFF"), "c3_sum_pages") { h.open(Decl.SECTION_PAGES, Decl.PAGE_ALL) }
-        DLights("API", api, if (h.health == null) "not answering" else if (h.health.optBoolean("ok")) "health ok (:8003 answered)" else "health not ok", "c3_sum_api") { h.open(Decl.SECTION_API, Decl.PAGE_TOPOLOGY) }
-        DLights("SSHD", ssh, "${doors.count { sshState(it) == SshState.GREEN }} of ${doors.size} doors up (bind state)", "c3_sum_sshd") { h.open(Decl.SECTION_SSHD, null) }
+        DLights("Server", srv, if (pw == null) "not answering" else if (!serverOn) (if (srv.disabled) "Stopped (admin page stays up)" else "OFF, Keep alive wants it up (fault)") else "pid ${pw.str("pid")} · up ${fmtUp(pw.longOrNull("uptime_s"))} · ${HomeModel.servicesMsg(pw)}", "c3_sum_server") { h.open(Decl.SECTION_CONFIGS, Decl.PAGE_SERVER) }
+        DLights("Pages", pages, "${rows.count { it.optBoolean("serving") }} of ${rows.size} serving (connect probe per port)" + (if (pages.disabled) " · Disabled" else ""), "c3_sum_pages") { h.open(Decl.SECTION_PAGES, Decl.PAGE_ALL) }
+        DLights("API", api, if (api.disabled) "Disabled" else if (h.health == null) "not answering" else if (h.health.optBoolean("ok")) "health ok (:8003 answered)" else "health not ok", "c3_sum_api") { h.open(Decl.SECTION_API, Decl.PAGE_TOPOLOGY) }
+        DLights("SSHD", ssh, (if (ssh.disabled) "Disabled · " else "") + "${doors.count { sshState(it) == SshState.GREEN }} of ${doors.size} doors up (bind state)", "c3_sum_sshd") { h.open(Decl.SECTION_SSHD, null) }
         DLights("ADB Shell", adb, when (adbUp) { true -> "server answering"; false -> "server not answering"; null -> "no probe (owner side or SuperApp missing)" } +
             (h.live.roundTrip?.let { if (it) " · echo round trip ok" else " · no echo" } ?: ""), "c3_sum_adb") { h.open(Decl.SECTION_ADB_SHELL, Decl.PAGE_ADB_STATUS) }
         DNote(HomeModel.LEGEND)

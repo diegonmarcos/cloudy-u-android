@@ -6,7 +6,10 @@ import org.json.JSONObject
 data class AdbLive(val owner: Boolean, val keepAlive: Boolean?, val roundTrip: Boolean?)
 
 /** #1834 the three status lights of a Summary row: on/off, keep-alive on/off, healthy (a real probe answered). null = unknown, drawn muted. */
-data class Lights(val on: Boolean?, val keepAlive: Boolean?, val healthy: Boolean?)
+data class Lights(val on: Boolean?, val keepAlive: Boolean?, val healthy: Boolean?, val disabled: Boolean = false)
+
+/** #1836 the Summary badge: STOPPED / DISABLED are neutral choices of the owner, only ATTENTION is a fault. */
+enum class SummaryState { UNKNOWN, STOPPED, STARTING, ALL_DISABLED, ALL_UP, ATTENTION }
 
 /**
  * #1834 pure model of Home's Summary: every light reads the real state of the service (its process or port answering, its own keep-alive
@@ -24,12 +27,29 @@ object HomeModel {
     /** #1836 does the service answer: Server (master) ON and its own flag ON. null = status not read. */
     fun svcOn(pw: JSONObject?, key: String): Boolean? = if (pw == null) null else pw.optBoolean("server") && svcFlag(pw, key)
 
+    /** #1836 a service the owner switched off, or the Server stopped by choice (Keep alive OFF), is a neutral state, not a fault. */
+    fun neutral(pw: JSONObject?, key: String): Boolean = pw != null && (!svcFlag(pw, key) || (!pw.optBoolean("server") && !pw.optBoolean("keep_alive")))
+
+    private fun off(pw: JSONObject?) = Lights(null, bool(pw, "keep_alive"), null, true)
+
+    /** #1836 the Summary badge: ATTENTION only when an ENABLED service is unhealthy, or the Server is down while Keep alive wants it up. */
+    fun summary(pw: JSONObject?, services: List<Lights>, adbUp: Boolean?): SummaryState = when {
+        pw == null -> SummaryState.UNKNOWN
+        !pw.optBoolean("server") -> if (pw.optBoolean("keep_alive")) SummaryState.ATTENTION else SummaryState.STOPPED
+        !pw.optBoolean("running") -> SummaryState.STARTING
+        services.all { it.disabled } && adbUp != false -> SummaryState.ALL_DISABLED
+        services.any { !it.disabled && it.healthy != true } || adbUp == false -> SummaryState.ATTENTION
+        else -> SummaryState.ALL_UP
+    }
+
     fun pages(pw: JSONObject?, served: JSONObject?): Lights {
+        if (neutral(pw, "pages")) return off(pw)
         val rows = served.objs("rows"); val flag = svcFlag(pw, "pages")
         return Lights(if (served == null) null else flag && rows.any { it.optBoolean("serving") }, bool(pw, "keep_alive"), if (served == null) null else flag && rows.isNotEmpty() && rows.all { it.optBoolean("serving") })
     }
 
     fun api(pw: JSONObject?, health: JSONObject?): Lights {
+        if (neutral(pw, "api")) return off(pw)
         val flag = svcFlag(pw, "api")
         return Lights(if (pw == null) null else pw.optBoolean("server") && pw.optBoolean("running") && flag, bool(pw, "keep_alive"), if (!flag) false else health?.let { it.optBoolean("ok") } ?: if (pw == null) null else false)
     }
@@ -38,6 +58,7 @@ object HomeModel {
     fun server(pw: JSONObject?): Lights {
         if (pw == null) return Lights(null, null, null)
         val names = pw.optJSONArray("ports").objs().map { it.optString("name") }
+        if (!pw.optBoolean("server") && !pw.optBoolean("keep_alive")) return off(pw)
         val on = pw.optBoolean("server") && pw.optBoolean("running")
         return Lights(on, bool(pw, "keep_alive"), on && "admin" in names && "diagnostics" in names)
     }
@@ -49,6 +70,7 @@ object HomeModel {
     }
 
     fun sshd(sshd: JSONObject?, pw: JSONObject? = null): Lights {
+        if (neutral(pw, "sshd")) return off(pw)
         val doors = sshd.objs("doors"); val flag = svcFlag(pw, "sshd")
         return Lights(if (sshd == null) null else flag && doors.any { doorOn(it) }, bool(sshd, "keep_alive"), if (sshd == null) null else flag && doors.isNotEmpty() && doors.all { sshState(it) == SshState.GREEN })
     }
@@ -63,6 +85,7 @@ object HomeModel {
      */
     fun statusRows(enabled: Boolean?, serverOn: Boolean?, l: Lights, ports: String, probe: String): List<SRow> {
         val state = when {
+            l.disabled -> if (enabled == false) "Disabled (service OFF, the Server stays up for the others)" else "Stopped (Server OFF by choice)"
             l.on == null -> "unknown (status not read)"
             l.on -> if (l.healthy == true) "up" else "on, probe not healthy"
             enabled == false -> "stopped (service disabled, Server stays up for the others)"
