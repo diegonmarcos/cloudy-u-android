@@ -1,0 +1,23 @@
+{
+  "_doc": "#1832 frozen baseline of the volatility sub-page fields as they were before the per-asset GARCH fit: the table header words (key and text), the row for a fixed MarkzVols, and every st_* word of the screen. Rule 16: none may go.",
+  "vol_columns": [["st_asset", "Asset"], ["st_hist", "Historical SD"], ["st_ewma", "EWMA"], ["st_garch", "GARCH(1,1)"], ["st_implied", "Implied"]],
+  "vol_row": {"name": "Equities", "hist": 20.0, "ewma": 21.5, "garch": 22.25, "implied": 25.0, "cells": ["Equities", "20.00", "21.50", "22.25", "25.00"]},
+  "vol_row_no_implied": {"name": "Bills", "hist": 1.0, "ewma": 1.0, "garch": 1.0, "cells": ["Bills", "1.00", "1.00", "1.00", "n/a"]},
+  "words": {
+    "st_loading": "Reading the daily closes from the quote source…",
+    "st_failed": "The quote source did not answer for: {v}",
+    "st_source": "Daily closes: {src}, {n} trading days to {d}",
+    "st_asset": "Asset",
+    "st_hist": "Historical SD",
+    "st_ewma": "EWMA",
+    "st_garch": "GARCH(1,1)",
+    "st_implied": "Implied",
+    "st_pick": "Volatility framework",
+    "st_na": "n/a",
+    "st_beta": "β",
+    "st_cov": "Cov(Rᵢ, Rₘ)",
+    "st_var_m": "σₘ²",
+    "st_vol": "σ (selected)"
+  },
+  "vol_models": ["hist", "ewma", "garch", "implied"]
+}

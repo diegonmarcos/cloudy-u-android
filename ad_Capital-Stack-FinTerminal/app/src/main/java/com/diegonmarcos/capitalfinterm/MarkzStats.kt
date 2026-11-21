@@ -14,7 +14,7 @@ data class MarkzPort(val w: List<Double>, val er: Double, val vol: Double, val s
 data class MarkzOpt(val mvp: MarkzPort, val maxSharpe: MarkzPort, val frontier: List<MarkzPort>, val match: MarkzPort?, val lo: Double, val hi: Double)
 
 /** #1832 the volatilities of one series under each estimator (percent a year; implied = null when no volatility index is declared or it did not answer). */
-data class MarkzVols(val hist: Double, val ewma: Double, val garch: Double, val implied: Double?) {
+data class MarkzVols(val hist: Double, val ewma: Double, val garch: Double, val implied: Double?, val fit: GarchFit? = null) {
     fun of(model: String): Double? = when (model) { "ewma" -> ewma; "garch" -> garch; "implied" -> implied; else -> hist }
 }
 
@@ -152,7 +152,10 @@ object MarkzStats {
         if (days.size < 3) return null
         val win = cl.map { c -> returns(c).takeLast(decl.windowDays) }
         val vols = win.mapIndexed { i, r ->
-            MarkzVols(histVol(r, decl.annualDays), ewmaVol(r, decl.lambda, decl.annualDays), garchVol(r, decl.alpha, decl.beta, decl.annualDays), implied.getOrNull(i))
+            // GARCH: the parameters fitted to the asset's own whole history (cached by data hash); the declared defaults on the window when it is too short
+            val fit = GarchFitter.fit(closes[i], decl.alpha, decl.beta)
+            val g = if (fit.fitted) fit.vol(GarchFitter.logReturns(closes[i].map { it.second }), decl.annualDays) else garchVol(r, decl.alpha, decl.beta, decl.annualDays)
+            MarkzVols(histVol(r, decl.annualDays), ewmaVol(r, decl.lambda, decl.annualDays), g, implied.getOrNull(i), fit)
         }
         val corr = win.indices.map { i -> win.indices.map { j -> if (i == j) 1.0 else corr(win[i], win[j]) } }
         return MarkzStatsResult(ids, minOf(days.size - 1, decl.windowDays), days.last().toString(), win, vols, corr, annualised(cl.last(), decl.annualDays))

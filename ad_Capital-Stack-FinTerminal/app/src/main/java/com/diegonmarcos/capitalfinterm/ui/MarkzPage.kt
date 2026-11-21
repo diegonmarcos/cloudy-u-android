@@ -63,6 +63,7 @@ import com.diegonmarcos.capitalfinterm.MarkzInputs
 import com.diegonmarcos.capitalfinterm.MarkzMatrix
 import com.diegonmarcos.capitalfinterm.MarkzOpt
 import com.diegonmarcos.capitalfinterm.MarkzPort
+import com.diegonmarcos.capitalfinterm.MarkzScreen
 import com.diegonmarcos.capitalfinterm.MarkzStats
 import com.diegonmarcos.capitalfinterm.MarkzStatsResult
 import com.diegonmarcos.capitalfinterm.QuotesStore
@@ -601,8 +602,9 @@ private fun ModelTabs(d: MarkzDecl) {
 private fun VolatilityBody(d: MarkzDecl, r: MarkzStatsResult, names: List<String>) {
     ModelTabs(d)
     FinPanel("", d.word("st_pick")) {
-        Grid(listOf(d.word("st_asset"), d.word("st_hist"), d.word("st_ewma"), d.word("st_garch"), d.word("st_implied")),
-            r.vols.mapIndexed { i, v -> listOf(names[i], pct(v.hist), pct(v.ewma), pct(v.garch), pct(v.implied)) }, "volatility")
+        Grid(MarkzScreen.volColumns(d), r.vols.mapIndexed { i, v -> MarkzScreen.volRow(names[i], v) }, "volatility")
+        Text(d.word("st_g_title"), Modifier.padding(horizontal = 8.dp, vertical = 4.dp), color = LocalFinPalette.current.text2, style = FinType.caption)
+        Grid(MarkzScreen.garchColumns(d, names), MarkzScreen.garchRows(d, r.vols, d.stats.annualDays), "garch")
         val p = LocalFinPalette.current
         (d.stats.assets + d.stats.benchmark).forEach { a ->
             Text(a.short + ": " + a.symbol + " · " + a.name + (if (a.implied.isNotEmpty()) " · " + d.word("st_implied") + ": " + a.implied + " (" + a.impliedName + ")" else ""),
