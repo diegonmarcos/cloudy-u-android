@@ -9,13 +9,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.media.AudioManager
-import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
-import android.provider.Settings
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 
@@ -24,7 +22,7 @@ import androidx.core.content.ContextCompat
  *
  *  - Its process is cached, then killed by the low-memory killer, oldest and largest first; no flag prevents that. A WebView's renderer is
  *    a separate process the system kills before the app's own. So the page state is persisted ([BrowserSessionSnapshots]) and restored.
- *  - A battery-optimisation exemption (REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, [exemptionIntent]) keeps Doze from deferring the app's
+ *  - A battery-optimisation exemption (asked through libs:perms, the catalogue's battery_opt row) keeps Doze from deferring the app's
  *    network and jobs; it does not stop the low-memory killer. It is requested once, with an explanation, from the page the user opens
  *    (Configs > General > Perms), never forced.
  *  - A foreground service lifts the process out of the cached tier while it runs. It is used ONLY while media is playing
@@ -51,12 +49,7 @@ object BrowserKeepAlive {
     fun exempt(ctx: Context): Boolean =
         runCatching { (ctx.getSystemService(Context.POWER_SERVICE) as PowerManager).isIgnoringBatteryOptimizations(ctx.packageName) }.getOrDefault(false)
 
-    /** The system's one-tap exemption dialog for this app (null on a phone that has no such screen). */
-    fun exemptionIntent(ctx: Context): Intent? {
-        val direct = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${ctx.packageName}"))
-        val list = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-        return listOf(direct, list).firstOrNull { it.resolveActivity(ctx.packageManager) != null }
-    }
+    // The exemption is ASKED by libs:perms (build.json::perms.needs battery_opt: Configs > General > Perms, Grant, and first run), never by this lib.
 
     fun mediaPlaying(ctx: Context): Boolean =
         runCatching { (ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager).isMusicActive }.getOrDefault(false)
