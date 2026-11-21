@@ -64,6 +64,7 @@ jobs:
                   a = dict(re.findall(r'([\w-]+)="([^"]*)"', m.group(0)))
                   b = re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", a.get("bounds", ""))
                   if b: a["_b"] = tuple(map(int, b.groups())); yield a
+          def onscreen(a): x1, y1, x2, y2 = a["_b"]; return x2 > x1 and y2 > y1
           def centre(a): x1, y1, x2, y2 = a["_b"]; return "%d %d" % ((x1 + x2) // 2, (y1 + y2) // 2)
           cmd = sys.argv[1]
           if cmd == "text":          # ui.py text dump.xml "Label" [n]   -> n-th node whose text matches (case-insensitive)
@@ -80,8 +81,9 @@ jobs:
               y0 = anchor[0]["_b"][1]
               hits = sorted((a for a in nodes(sys.argv[2]) if a.get("text", "").strip() == sys.argv[4] and a["_b"][1] > y0), key=lambda a: a["_b"][1])
               print(centre(hits[0]) if hits else "")
-          elif cmd == "desc":        # ui.py desc dump.xml "Expand" n  -> n-th node with that content-desc, top to bottom
-              hits = sorted((a for a in nodes(sys.argv[2]) if a.get("content-desc", "") == sys.argv[3]), key=lambda a: a["_b"][1])
+          elif cmd == "desc":        # ui.py desc dump.xml "Expand" n  -> n-th ON-SCREEN node with that content-desc, top to bottom
+              # (a row scrolled fully out of view stays in the dump with bounds [0,0][0,0]: it sorts first and a tap on it is (0,0))
+              hits = sorted((a for a in nodes(sys.argv[2]) if a.get("content-desc", "") == sys.argv[3] and onscreen(a)), key=lambda a: a["_b"][1])
               n = int(sys.argv[4]); print(centre(hits[n]) if len(hits) > n else "")
           elif cmd == "checked":     # ui.py checked dump.xml X Y  -> checked of the smallest checkable node holding the point
               px, py = int(sys.argv[3]), int(sys.argv[4])
@@ -89,7 +91,7 @@ jobs:
               hit.sort(key=lambda a: (a["_b"][2] - a["_b"][0]) * (a["_b"][3] - a["_b"][1]))
               print(hit[0].get("checked", "") if hit else "")
           elif cmd == "count-desc":
-              print(sum(1 for a in nodes(sys.argv[2]) if a.get("content-desc", "") == sys.argv[3]))
+              print(sum(1 for a in nodes(sys.argv[2]) if a.get("content-desc", "") == sys.argv[3] and onscreen(a)))
           elif cmd == "badges":      # ui.py badges build.json -> "id<TAB>channel<TAB>label" per persistent badge
               for p in json.load(open(sys.argv[2]))["ui"]["notification_center"]["producers"]:
                   if p.get("badge") and p.get("channel"): print("%s\t%s\t%s" % (p["id"], p["channel"], p["label"]))
