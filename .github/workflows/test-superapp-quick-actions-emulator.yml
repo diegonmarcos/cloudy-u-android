@@ -157,9 +157,16 @@ jobs:
           a11y() { adb shell settings get secure enabled_accessibility_services | tr -d '\r'; }
           shoot() { adb exec-out screencap -p > "out/$1.png"; adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb pull /sdcard/u.xml "out/$1.xml" >/dev/null 2>&1; }
           sec() { page panels-security; sleep 8; shoot "$1"; }
-          tapmode() { page presets; skipdlg
-            for _ in 1 2 3 4 5 6 7 8; do
+          tapmode() { pos=""; page presets; skipdlg
+            for it in 1 2 3 4 5 6 7 8 9 10; do
+              awake; sleep 3
               adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb pull /sdcard/u.xml out/pm.xml >/dev/null 2>&1
+              adb exec-out screencap -p > "out/pm-$it.png"
+              # the app's own idle screensaver or a first-start dialog can cover the page: take it down, then look again
+              un=$(python3 ui.py text out/pm.xml Unlock); [ -n "$un" ] && { adb shell input tap $un; sleep 3; continue; }
+              grep -q 'text="Install unknown apps"' out/pm.xml && { skipdlg; continue; }
+              # the page body not drawn yet (only the strip and the nav): wait, do not scroll
+              grep -q 'text="Sandboxes"' out/pm.xml || { sleep 5; continue; }
               pos=$(python3 - <<'PY'
           import re
           x = open("out/pm.xml", encoding="utf-8", errors="replace").read()
@@ -176,13 +183,13 @@ jobs:
           before=$(a11y); echo "a11y before: $before"
           case "$before" in *LockScreen*) check ok "setup: the app's accessibility service is enabled";; *) check no "setup: accessibility service not enabled ($before)";; esac
           sec banking-1-security-before
-          tapmode && shoot banking-2-presets-on
+          tapmode && { shoot banking-2-presets-on; adb shell input swipe 540 1800 540 900 400; sleep 2; shoot banking-2b-report-on; }
           during=$(a11y); echo "a11y during: $during"
           case "$during" in *LockScreen*) check no "Banking Apps Mode on: the accessibility entry is still there ($during)";; *) check ok "Banking Apps Mode on: the accessibility entry was removed ($during)";; esac
           grep -qi "Banking Apps Mode" out/banking-2-presets-on.xml && check ok "the Mode group shows Banking Apps Mode" || check no "Banking Apps Mode tile not on the Presets page"
           adb logcat -d | grep -i "pairing" | grep -vi "wd-keeper\|WdKeeper" > out/banking-pairing.log || true
           sec banking-3-security-during
-          tapmode && shoot banking-4-presets-off
+          tapmode && { shoot banking-4-presets-off; adb shell input swipe 540 1800 540 900 400; sleep 2; shoot banking-4b-report-off; }
           after=$(a11y); echo "a11y after: $after"
           case "$after" in *LockScreen*) check ok "Banking Apps Mode off: the accessibility entry is back ($after)";; *) check no "Banking Apps Mode off: the entry did not come back ($after)";; esac
           sec banking-5-security-after
