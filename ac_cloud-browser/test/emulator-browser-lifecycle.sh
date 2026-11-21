@@ -23,6 +23,8 @@ adb install -r -g "$APK" >/dev/null || { bad "install of Cloud Browser failed"; 
 [ -n "$SAPK" ] && { adb install -r -g "$SAPK" >/dev/null || echo "NOTE superapp install failed"; }
 adb root >/dev/null 2>&1 || true; sleep 3
 adb shell settings put global window_animation_scale 0 || true
+adb shell svc power stayon true || true
+adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard >/dev/null 2>&1 || true
 
 dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb shell cat /sdcard/ui.xml 2>/dev/null > "$OUT/$1.xml" || true; }
 shot() { adb exec-out screencap -p > "$OUT/$1.png" 2>/dev/null || true; dump "$1"; }
@@ -53,13 +55,13 @@ adb logcat -c || true
 for u in https://example.com/ https://example.org/ https://info.cern.ch/; do open_url "$u"; sleep 12; done
 shot l1-tabs-open; black_check l1-tabs-open "L1 three tabs open"
 adb shell am start -a android.settings.SETTINGS >/dev/null 2>&1; sleep 8; shot l1-other-app
-adb shell am start -n "$BPKG/.MainActivity" >/dev/null 2>&1; sleep 6
+adb shell input keyevent KEYCODE_BACK; sleep 6   # back from the other app returns to the browser task as it was
 shot l1-back; black_check l1-back "L1 back from another app"
 adb logcat -d -s CBrowser/Life:V CBrowser/Tab:V CBrowser/Render:V CBrowser/Mem:V CBrowser/Keep:V CBrowser/Core:V > "$OUT/applog-l1.txt" 2>/dev/null || true
 for tag in "ev=resume" "ev=pause" "ev=create" "ev=load-finish"; do grep -q -- "$tag" "$OUT/applog-l1.txt" && ok "L1 app log has $tag" || bad "L1 app log has no $tag (applog-l1.txt)"; done
 
 # L2 kill the renderer
-PIDS=$(adb shell ps -A 2>/dev/null | tr -d '\r' | grep -E "sandboxed_process|webview_zygote" | grep -v zygote64 | awk '{print $2}')
+PIDS=$(adb shell ps -A 2>/dev/null | tr -d '\r' | grep -E "sandboxed_process" | awk '{print $2}')
 echo "$PIDS" > "$OUT/renderer-pids.txt"
 APP=$(adb shell pidof "$BPKG" | tr -d '\r' | awk '{print $1}')
 if [ -z "$PIDS" ]; then echo "NOTE  L2 no sandboxed renderer process found (renderer-pids.txt)"; else
@@ -95,8 +97,8 @@ if [ -n "$SAPK" ]; then
   tap '^Add$' || tap 'Add' || true; sleep 6; shot p1-result
   grep -qiE "sent to|Added" "$OUT/p1-result.xml" && ok "P1 the sheet reports success ($(grep -oiE 'Added [^"]*|was sent to [^"]*' "$OUT/p1-result.xml" | head -1))" || bad "P1 the sheet shows no success (p1-result.png)"
   adb shell cat /data/data/$SPKG/files/launcher/pinned-shortcuts.json > "$OUT/pinned-shortcuts.json" 2>/dev/null || true
-  grep -q "example" "$OUT/pinned-shortcuts.json" && ok "P1 the shortcut is persisted on the SuperApp home: $(cut -c1-160 "$OUT/pinned-shortcuts.json")" || bad "P1 nothing pinned in the SuperApp store"
-  adb shell input keyevent KEYCODE_HOME; sleep 5
+  grep -qi "example" "$OUT/pinned-shortcuts.json" && ok "P1 the shortcut is persisted on the SuperApp home: $(cut -c1-160 "$OUT/pinned-shortcuts.json")" || bad "P1 nothing pinned in the SuperApp store"
+  adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard >/dev/null 2>&1 || true; adb shell input keyevent KEYCODE_HOME; sleep 5
   for _ in 1 2 3 4; do dump _home; grep -q "Pinned" "$OUT/_home.xml" && break; adb shell input swipe 540 1500 540 600 300; sleep 2; done
   shot p1-home-after
   grep -q "Pinned" "$OUT/p1-home-after.xml" && ok "P1 the Pinned section is on the SuperApp home (p1-home-after.png)" || echo "NOTE  P1 the Pinned section is not on the first screen of the home (p1-home-after.png); the store holds the pin"
@@ -104,4 +106,5 @@ else
   echo "NOTE  P1 skipped: no SuperApp APK given"
 fi
 adb logcat -d -s CBrowser/Life:V CBrowser/Tab:V CBrowser/Render:V CBrowser/Mem:V CBrowser/Keep:V CBrowser/Core:V > "$OUT/applog-all.txt" 2>/dev/null || true
+adb logcat -d 2>/dev/null | grep -iE "chromium|webview|CBrowser|SuperApp/Pins|renderer|sandboxed" | tail -400 > "$OUT/logcat-webview.txt" || true
 echo "failures: $fails"; exit $((fails > 0 ? 1 : 0))
