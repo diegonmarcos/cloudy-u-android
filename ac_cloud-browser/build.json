@@ -2087,14 +2087,26 @@
         }
       ]
     },
-    "_doc_nav": "#868/#1493 THE nav declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island, ui.sections[] what each item opens, ui.default_section where the app opens. Island order (#1493): Weby, Cloudy, Browser, Tabs, Domains. browser = BrowserHostFragment's page (its address bar, tab strip and overlays are the lib's own UI, so the section has no pages), tabs = the tab switcher (BrowserHostFragment.openTabs, #886), weby = the bookmarks as a launcher icon grid in folders, seeded from the SuperApp phone apps, cloudy = Cloudy-Public GH-Pages | Cloudy-Private Webserver, domains = Headless Browsers | Files Cached | Perms&Actions | History | Visited; those three are drawn by MainActivity over the host from sites/ (top tabs = ui.sections[<id>].pages). favourites and search stay declared sections reached from the first row (the AI icon opens Search), no longer island items; configs = the browser settings over the host (showSettings), one top tab per Configs page: ui.sections[configs].pages = settings_sections (#900). MainActivity feeds the island from NavDecl and follows the host's overlays so the pill goes back to Browser when one closes.",
+    "_doc_nav": "#868/#1493 THE nav declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island, ui.sections[] what each item opens, ui.default_section where the app opens. Island order (#1842): Domains, Tabs, Browser, Cloudy, Weby (it was Weby, Cloudy, Browser, Tabs, Domains). browser = BrowserHostFragment's page (its address bar, tab strip and overlays are the lib's own UI, so the section has no pages), tabs = the tab switcher (BrowserHostFragment.openTabs, #886), weby = the bookmarks as a launcher icon grid in folders, seeded from the SuperApp phone apps, cloudy = Cloudy-Public GH-Pages | Cloudy-Private Webserver, domains = Headless Browsers | Files Cached | Perms&Actions | History | Visited; those three are drawn by MainActivity over the host from sites/ (top tabs = ui.sections[<id>].pages). favourites and search stay declared sections reached from the first row (the AI icon opens Search), no longer island items; configs = the browser settings over the host (showSettings), one top tab per Configs page: ui.sections[configs].pages = settings_sections (#900). MainActivity feeds the island from NavDecl and follows the host's overlays so the pill goes back to Browser when one closes.",
     "bottom_nav": [
-      "weby",
-      "cloudy",
-      "browser",
+      "domains",
       "tabs",
-      "domains"
+      "browser",
+      "cloudy",
+      "weby"
     ],
+    "url_uri": {
+      "_doc": "#1842 the Url-Uri dropdown (libs:bottomnav UrlUri, drawn by libs:ui-nav-bars at the far left of the first row of EVERY app): Pages = the bottom-nav pages + AI + the app's own pages slot + Settings/Profile + Settings/Configs; Tools = back, up, home, send to background, force close, restart + the app's own tools slot. Only the two app slots are declared here; a pages entry opens the section (or section/page) it names, a tools entry is run by the host (BrowserHostFragment.act).",
+      "pages": [
+        {"id": "search", "label": "Search", "icon": "search", "page": "search"},
+        {"id": "favourites", "label": "Favourites", "icon": "favourites", "page": "favourites"}
+      ],
+      "tools": [
+        {"id": "new_tab", "label": "New tab", "icon": "tab"},
+        {"id": "new_private_tab", "label": "New private tab", "icon": "add_circle"},
+        {"id": "reload", "label": "Reload page", "icon": "sync"}
+      ]
+    },
     "sections": [
       {
         "id": "favourites",
@@ -2132,12 +2144,10 @@
         "label": "Cloudy",
         "icon": "cloud",
         "pages": [
-          {"id": "gh_pages", "label": "GH Pages", "icon": "public"},
-          {"id": "webserver", "label": "Local Webserver", "icon": "dns"},
-          {"id": "private_urls", "label": "Cloudy Private URLs", "icon": "lock"},
-          {"id": "public_urls", "label": "Cloudy Public URLs", "icon": "language"}
+          {"id": "webapps", "label": "WebApps", "icon": "apps"},
+          {"id": "c3_urls", "label": "C3 Urls", "icon": "link"}
         ],
-        "_doc": "#1493/#1531 the owner's sites, four tabs: GH Pages (declared repos + front-html pages.json), Local Webserver (the pages the phone's Cloud-Webserver serves, and a link that opens its APK), Cloudy Private URLs and Cloudy Public URLs (the fleet's Caddy routes, ac_cloud-c3 data/routes.json: the mesh address / the public address of each). All derived at build time (ui.cloudy)."
+        "_doc": "#1493/#1531 the owner's sites, two tabs (#1842): WebApps (Weby's page over fixed sections WebApps / GitHub Pages / Local Webserver: the former GH Pages and Local Webserver tabs, with the link that opens the Cloud-Webserver APK) and C3 Urls (the former Cloudy Private URLs and Cloudy Public URLs merged: one icon grid of the fleet's containers by c3-infra category, ac_cloud-c3 data/routes.json, a private / public chooser per container). All derived at build time (ui.cloudy)."
       },
       {
         "id": "domains",
@@ -2199,6 +2209,7 @@
         "add_bookmark": "Add bookmark", "add_folder": "New folder", "add_short": "+", "remove_short": "×", "path_sep": " › ",
         "remove_bookmark": "Remove this bookmark?", "remove_folder": "Remove this folder and everything in it?",
         "field_title": "Title", "field_url": "Address", "field_folder": "Folder", "ok": "OK", "cancel": "Cancel", "empty": "No bookmarks.",
+        "view_quickmarks": "Quickmarks", "view_bookmarks": "Bookmarks (all)",
         "menu_open": "Open",
     "menu_launch": "Open app", "menu_refresh_icon": "Refresh icon", "menu_remove": "Remove"
       },
@@ -2208,6 +2219,8 @@
     "cloudy": {
       "_doc": "#1493 Cloudy. pages_url = front-html's Pages list (the owner's GitHub Pages, public ones, refreshed over the network and kept in the cloudy_cache prefs); the declared repos' Pages (ac_cloud-c3 data/repos_declared.json) and the Cloud-Webserver's serving map, Pages sub-pages and Repos store (ac_cloud-c3-webserver/build.json) are read by app/build.gradle. webserver_base_role = the serving endpoint the Webserver's own pages are served on.",
       "pages_url": "https://raw.githubusercontent.com/diegonmarcos/_front-html___/main/pages.json",
+      "_doc_webapps": "#1842 Cloudy > WebApps is Weby's page over three fixed sections: WebApps (the Cloud web apps by Cloud Store category), GitHub Pages and Local Webserver. The categories and members come from the Store's declaration (aa_cloud-superapp/data/constellation-fleet.json app_categories), each member's icon is the SuperApp's own tile drawable converted to path data and its link id the repo directory; both are baked by app/build.gradle into ui.cloudy.webapps (categories, icons), never typed here. links_url = the cloudy-h-webapps-mob repo's generated app-links.json (the declared web address of each Cloud app), fetched and kept in the cloudy_cache prefs; a member without an address yet is drawn greyed.",
+      "webapps": {"links_url": "https://raw.githubusercontent.com/diegonmarcos/cloudy-h-webapps-mob/main/packages/cloudy-ui/nav/app-links.json"},
       "webserver_base_role": "drive",
       "timeout_ms": 1500,
       "private_scheme": "http://",
@@ -2216,7 +2229,9 @@
       "texts": {
         "gh_empty": "No public GitHub Pages found yet.", "ws_empty": "The Cloud-Webserver declares no pages.", "up": "up", "down": "down",
         "ws_open": "Open Cloud-Webserver", "ws_not_installed": "Cloud-Webserver is not installed on this phone. Install it from the constellation store first.",
-        "urls_empty": "The fleet declares no routes."
+        "urls_empty": "The fleet declares no routes.",
+        "c3_private": "Private (mesh)", "c3_public": "Public", "c3_copied": "URL copied", "cancel": "Cancel",
+        "c3_hint": "Tap a URL to open it, long-press to copy it."
       }
     },
     "domains": {

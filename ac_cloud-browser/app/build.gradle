@@ -180,6 +180,40 @@ def webserverLauncher = ''
     if (webserverLauncher == '' && m[2].contains('android.intent.category.LAUNCHER')) webserverLauncher = ((m[1] =~ /android:name="([^"]+)"/)[0][1]).toString()
 }
 if (webserverLauncher == '') throw new GradleException("ac_cloud-c3-webserver AndroidManifest.xml has no LAUNCHER activity: Cloudy cannot open the Cloud-Webserver")
+// #1842 Cloudy > WebApps: the Cloud Store's categories (aa_cloud-superapp/data/constellation-fleet.json app_categories, themselves derived from the
+// SuperApp's Cloud tile groups) with their member apps, each app's icon = the SuperApp Cloud tile's own vector drawable (the "SVG" icon: its viewport and
+// path strings), and its link id = its repo directory (the id the cloudy-h-webapps-mob repo's app-links.json uses). Declared data only, never a hand list.
+def fleetData      = new groovy.json.JsonSlurper().parse(new File(superappDir, 'data/constellation-fleet.json'))
+def fleetApps      = fleetData.apps.collectEntries { [(it.id): it] }
+def fleetByPackage = fleetData.apps.findAll { it.package }.collectEntries { [(it.package): it.id] }
+def extInstall     = (superappUi.external_apps ?: []).collectEntries { [(it.id): it.install_package] }
+def tileIconOf     = [:]
+(superappUi.sections.find { it.id == 'cloud' }?.tile_groups ?: []).each { g ->
+    (g.tiles ?: []).each { tile ->
+        def fid = tile.fleet_app
+        def target = (tile.target ?: '').toString()
+        if (!fid && target.startsWith('extapp:')) fid = fleetByPackage[extInstall[target.substring(7).replaceAll(/#.*$/, '')]]
+        if (!fid && target.startsWith('app://')) fid = fleetByPackage[target.substring(6)]
+        if (fid && tile.icon && !tileIconOf.containsKey(fid)) tileIconOf[fid] = tile.icon.toString()
+    }
+}
+def webappIcons = [:]
+def glyphOf = { String name ->
+    def f = new File(superappDir, "app/src/main/res/drawable/${name}.xml")
+    if (!f.exists()) return null
+    def x = new groovy.xml.XmlSlurper(false, false).parse(f)
+    if (x.name() != 'vector') return null
+    def ds = x.depthFirst().findAll { it.name() == 'path' && it.attributes()['android:pathData'] && it.attributes()['android:fillColor'] }.collect { it.attributes()['android:pathData'].toString() }
+    ds ? [w: x.attributes()['android:viewportWidth'].toString().toDouble(), h: x.attributes()['android:viewportHeight'].toString().toDouble(), d: ds] : null
+}
+def webappCategories = fleetData.app_categories.collect { cat ->
+    [id: cat.id, label: cat.label, members: cat.members.findAll { fleetApps[it] }.collect { mid ->
+        def app = fleetApps[mid]
+        def ic = tileIconOf[mid]
+        if (ic && !webappIcons.containsKey(ic)) { def gl = glyphOf(ic); if (gl) webappIcons[ic] = gl }
+        [id: mid, label: (app.display_name ?: app.label ?: mid).toString(), link_id: ((app.repo_url ?: mid).toString().tokenize('/').last()).replaceFirst(/^a[a-z]_/, '').toLowerCase(), icon: (ic && webappIcons.containsKey(ic)) ? ic : '']
+    }]
+}
 def sitesDecl = [
     // #1634 the FULL phone-apps catalogue beside the Quickmarks groups: the SuperApp's own taxonomy (ui.phone_sections and
     // ui.phone_folders: id/order/label/match_keywords/pin/sink) plus the fleet's own packages by folder (ui.external_apps), read
@@ -202,6 +236,7 @@ def sitesDecl = [
             'package' : webserverPackage,
             launcher_activity: webserverLauncher,
         ],
+        webapps: (buildJson.ui.cloudy?.webapps ?: [:]) + [categories: webappCategories, icons: webappIcons],
         routes: fleetRoutes.collect { [container: (it.container ?: ''), category: (it.category ?: ''), auth_type: (it.auth_type ?: ''), public_url: (it.public_url ?: ''), private_url: (it.private_url ?: '')] },
     ],
     domains: buildJson.ui.domains ?: [:],
@@ -211,6 +246,7 @@ def sitesDeclB64 = b64(stripDocs(sitesDecl))
 def uiBottomNav      = (buildJson.ui.bottom_nav ?: []).join(',')
 def uiSectionsB64    = b64(buildJson.ui.sections ?: [])
 def uiDefaultSection = (buildJson.ui.default_section ?: '').toString()
+def uiUrlUriB64      = b64(stripDocs(buildJson.ui.url_uri ?: [:]))
 // #802 the /api/<group>/* name this app's routes register under (cloud-search's shape).
 def debugGroup = (buildJson.ui?.debug_api?.group ?: '').toString()
 if (!debugGroup) throw new GradleException("build.json::ui.debug_api.group missing — /api/<group>/* would register under no name")
@@ -346,6 +382,8 @@ android {
         buildConfigField "String", "UI_BROWSER_CONFIG_B64",      bcString(uiBrowserConfigB64)
         buildConfigField "String", "UI_BOTTOM_NAV",              "\"${uiBottomNav}\""
         buildConfigField "String", "UI_SECTIONS_B64",            "\"${uiSectionsB64}\""
+        // #1842 the Url-Uri dropdown's two app slots (build.json::ui.url_uri); the dropdown itself is every app's, this is only what the app adds.
+        buildConfigField "String", "UI_URL_URI_B64",             "\"${uiUrlUriB64}\""
         buildConfigField "String", "UI_DEFAULT_SECTION",         "\"${uiDefaultSection}\""
         buildConfigField "String", "SITES_DECL_B64",             bcString(sitesDeclB64)
         buildConfigField "String", "PIN_OFFLINE",                "\"${(buildJson.pin_offline ?: []).join(',')}\""   // #1518 sites pinned offline by default

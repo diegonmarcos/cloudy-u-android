@@ -1,0 +1,166 @@
+{
+ "_doc": "#1842 Rule 16 baseline, frozen BEFORE the browser nav / Weby / Cloudy / top bar change: what each of them offered, so test-browser-parity.sh fails when any of it is removed. Adding is free, removing is not. A value that MOVED is listed with where it went.",
+ "nav": {
+  "items_before": [
+   "weby",
+   "cloudy",
+   "browser",
+   "tabs",
+   "domains"
+  ],
+  "order_after": [
+   "domains",
+   "tabs",
+   "browser",
+   "cloudy",
+   "weby"
+  ],
+  "default_section": "browser"
+ },
+ "cloudy": {
+  "pages_before_to_after": {
+   "gh_pages": "webapps",
+   "webserver": "webapps",
+   "private_urls": "c3_urls",
+   "public_urls": "c3_urls"
+  },
+  "pages_after": [
+   "webapps",
+   "c3_urls"
+  ],
+  "api_before": [
+   "seedPages",
+   "merge",
+   "declaredWebserver",
+   "storeEntries",
+   "probe",
+   "fleetUrls",
+   "webserverTarget"
+  ],
+  "tags_before": [
+   "cloudy:ws:open"
+  ],
+  "texts_before": [
+   "down",
+   "gh_empty",
+   "up",
+   "urls_empty",
+   "ws_empty",
+   "ws_not_installed",
+   "ws_open"
+  ],
+  "sections_after": [
+   "WebApps",
+   "GitHub Pages",
+   "Local Webserver"
+  ],
+  "c3_tags": [
+   "cloudy:c3",
+   "cloudy:c3:chooser",
+   "cloudy:c3:choose:"
+  ]
+ },
+ "weby": {
+  "views_after": [
+   "quickmarks",
+   "bookmarks"
+  ],
+  "tags_before": [
+   "weby:grid",
+   "weby:actions",
+   "weby:add_bookmark",
+   "weby:add_folder",
+   "weby:menu:open",
+   "weby:menu:launch",
+   "weby:menu:refresh_icon",
+   "weby:menu:remove",
+   "weby:confirm",
+   "weby:field:title",
+   "weby:field:url",
+   "weby:field:folder"
+  ],
+  "texts_before": [
+   "add_bookmark",
+   "add_folder",
+   "add_short",
+   "cancel",
+   "empty",
+   "field_folder",
+   "field_title",
+   "field_url",
+   "menu_launch",
+   "menu_open",
+   "menu_refresh_icon",
+   "menu_remove",
+   "ok",
+   "path_sep",
+   "remove_bookmark",
+   "remove_folder",
+   "remove_short"
+  ],
+  "api_before": [
+   "WebySeed",
+   "WebyCatalogue",
+   "WebyLayout",
+   "WebyOps",
+   "WebyStore"
+  ]
+ },
+ "top_bar": {
+  "pages_after": [
+   "ai",
+   "profile",
+   "configs"
+  ],
+  "tools_after": [
+   "back",
+   "up",
+   "home",
+   "background",
+   "force_close",
+   "restart"
+  ],
+  "icon_right_dp": 17,
+  "tags_before": [
+   "topbar",
+   "topbar_title",
+   "topbar_ai",
+   "topbar_account",
+   "topbar_configs",
+   "topbar_menu",
+   "navtop1_more",
+   "navtop1_dropdown",
+   "navtop1_actions"
+  ],
+  "apps_with_shared_first_row": [
+   "ac_cloud-account",
+   "ac_cloud-browser",
+   "ac_cloud-c3",
+   "ac_cloud-c3-webserver",
+   "ac_cloud-calc",
+   "ac_cloud-canvas",
+   "ac_cloud-contacts",
+   "ac_cloud-dialer",
+   "ac_cloud-drive",
+   "ac_cloud-gallery",
+   "ac_cloud-keyboard",
+   "ac_cloud-kg-store",
+   "ac_cloud-mail",
+   "ac_cloud-me",
+   "ac_cloud-nav",
+   "ac_cloud-news",
+   "ac_cloud-notes",
+   "ac_cloud-search",
+   "ac_cloud-shopping",
+   "ac_cloud-store",
+   "ac_cloud-superintel",
+   "ac_cloud-tasks",
+   "ac_cloud-tools-small-llms",
+   "ac_cloud-wiki",
+   "ad_CG-Omniverse",
+   "ad_Capital-Stack-FinTerminal",
+   "ad_Hardtech-BioMed",
+   "ad_Hardtech-CAD"
+  ]
+ }
+}

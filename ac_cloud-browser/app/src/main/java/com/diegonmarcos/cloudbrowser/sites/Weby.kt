@@ -5,7 +5,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /** One site tile. [url] null = the declaration knows no web address for it: the tile is drawn greyed and does nothing. */
-data class WebyTile(val id: String, val label: String, val url: String?, val pkg: String? = null)
+data class WebyTile(val id: String, val label: String, val url: String?, val pkg: String? = null, val icon: String? = null)
 
 /** A launcher folder: tiles, then sub-folders. */
 data class WebyFolder(val title: String, val tiles: List<WebyTile>, val folders: List<WebyFolder> = emptyList())
@@ -245,4 +245,77 @@ class WebyStore(context: Context, private val seed: List<WebyFolder>) {
     fun load(): List<WebyFolder> = WebyOps.fromJson(sp.getString(KEY, null)) ?: seed
     fun save(list: List<WebyFolder>) { sp.edit().putString(KEY, WebyOps.toJson(list).toString()).apply() }
     private companion object { const val KEY = "folders_json" }
+}
+
+/** #1842 one SuperApp icon as vector data: the viewport and the path strings of the drawable it was derived from (app/build.gradle bakes them, `ui.cloudy.webapps.icons`). */
+data class WebyGlyph(val w: Float, val h: Float, val paths: List<String>)
+
+object WebyGlyphs {
+    fun parse(icons: JSONObject?): Map<String, WebyGlyph> {
+        val out = HashMap<String, WebyGlyph>()
+        icons?.keys()?.forEach { k ->
+            val o = icons.optJSONObject(k) ?: return@forEach
+            val d = o.optJSONArray("d") ?: return@forEach
+            val paths = (0 until d.length()).map { d.optString(it) }.filter { it.isNotBlank() }
+            if (paths.isNotEmpty()) out[k] = WebyGlyph(o.optDouble("w", 24.0).toFloat(), o.optDouble("h", 24.0).toFloat(), paths)
+        }
+        return out
+    }
+}
+
+/**
+ * #1842 Weby's second view, pure (JVM-tested in WebyBookmarksTest): BOOKMARKS (ALL). Weby splits into Quickmarks (the SuperApp's quick groups
+ * and the user's own folders, [Weby]) and Bookmarks (all): every bookmark there is, so nothing is reachable only from one view. It holds
+ * the browser's own saved bookmarks (by folder), every Quickmark folder with its tiles, and the full Phone-apps catalogue.
+ */
+object WebyBookmarks {
+    const val BROWSER = "Browser bookmarks"
+    const val QUICK = "Quickmarks"
+    const val UNSORTED = "Unsorted"
+
+    fun all(quick: List<WebyFolder>, browser: List<Triple<String, String, String>>, catalogue: List<WebyFolder>): List<WebyFolder> {
+        // browser = (url, title, folder)
+        val byFolder = LinkedHashMap<String, MutableList<WebyTile>>()
+        browser.forEach { (url, title, folder) ->
+            val host = url.substringAfter("://").substringBefore('/')
+            byFolder.getOrPut(folder.ifBlank { UNSORTED }) { ArrayList() }.add(WebyTile("u:$url", title.ifBlank { host }, url))
+        }
+        val unsorted = byFolder.remove(UNSORTED).orEmpty()
+        val out = ArrayList<WebyFolder>()
+        if (byFolder.isNotEmpty() || unsorted.isNotEmpty()) out += WebyFolder(BROWSER, unsorted, byFolder.map { (f, t) -> WebyFolder(f.replace('/', '-'), t) })
+        if (quick.isNotEmpty()) out += WebyFolder(QUICK, emptyList(), quick)
+        return out + catalogue
+    }
+}
+
+/**
+ * #1842 Cloudy > WebApps, pure (JVM-tested in CloudyWebAppsTest): the SAME Weby grid, three sections: WebApps (the Cloud web apps, by Cloud Store
+ * category), GitHub Pages and Local Webserver. [decl] = ui.cloudy.webapps (categories from the Store's declaration, each member with its link id and
+ * SuperApp icon, baked by app/build.gradle); [links] = link id -> web address (the cloudy-h-webapps-mob repo's generated app-links.json,
+ * fetched; empty until it has been: a member with no address is drawn greyed, it is never dropped).
+ */
+object CloudyWebApps {
+    const val WEBAPPS = "WebApps"
+    const val GH_PAGES = "GitHub Pages"
+    const val LOCAL = "Local Webserver"
+
+    /** link id -> address, from app-links.json (`{links:[{id,href}]}`); a link with no href is absent. */
+    fun links(json: String?): Map<String, String> {
+        val a = runCatching { JSONObject(json ?: return emptyMap()).optJSONArray("links") }.getOrNull() ?: return emptyMap()
+        val out = HashMap<String, String>()
+        for (i in 0 until a.length()) { val o = a.optJSONObject(i) ?: continue; o.optString("href").takeIf { it.isNotBlank() && it != "null" }?.let { out[o.optString("id")] = it } }
+        return out
+    }
+
+    fun derive(decl: JSONObject, links: Map<String, String>, gh: List<CloudyEntry>, local: List<CloudyEntry>): List<WebyFolder> {
+        val cats = decl.optJSONArray("categories") ?: JSONArray()
+        val apps = (0 until cats.length()).mapNotNull { cats.optJSONObject(it) }.map { c ->
+            val m = c.optJSONArray("members") ?: JSONArray()
+            WebyFolder(c.optString("label"), (0 until m.length()).mapNotNull { m.optJSONObject(it) }.map { a ->
+                WebyTile(a.optString("id"), a.optString("label"), links[a.optString("link_id")], null, a.optString("icon").takeIf { it.isNotBlank() })
+            })
+        }.filter { it.tiles.isNotEmpty() }
+        fun tiles(es: List<CloudyEntry>) = es.map { WebyTile(it.url, it.title.ifBlank { it.url.substringAfter("://").trimEnd('/') }, it.url) }
+        return listOf(WebyFolder(WEBAPPS, emptyList(), apps), WebyFolder(GH_PAGES, tiles(gh), emptyList()), WebyFolder(LOCAL, tiles(local), emptyList()))
+    }
 }

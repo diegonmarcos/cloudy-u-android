@@ -43,14 +43,21 @@ class CloudyCache(context: Context) {
     private val sp = context.applicationContext.getSharedPreferences("cloudy_cache", Context.MODE_PRIVATE)
     fun pagesJson(): String? = sp.getString(KEY, null)
 
+    /** #1842 the cloudy-h-webapps-mob app-links.json, kept the same way. */
+    fun linksJson(): String? = sp.getString(LINKS, null)
+
     /** GET [url] (https) and keep the answer; null when the network says no. BLOCKING. */
-    fun refresh(url: String, timeoutMs: Int): String? = runCatching {
+    fun refresh(url: String, timeoutMs: Int): String? = fetch(url, timeoutMs, KEY)
+
+    fun refreshLinks(url: String, timeoutMs: Int): String? = fetch(url, timeoutMs, LINKS)
+
+    private fun fetch(url: String, timeoutMs: Int, key: String): String? = runCatching {
         val c = URL(url).openConnection() as HttpURLConnection
         c.connectTimeout = timeoutMs; c.readTimeout = timeoutMs
-        c.inputStream.bufferedReader().use { it.readText() }.also { sp.edit().putString(KEY, it).apply() }
+        c.inputStream.bufferedReader().use { it.readText() }.also { sp.edit().putString(key, it).apply() }
     }.getOrNull()
 
-    private companion object { const val KEY = "pages_json" }
+    private companion object { const val KEY = "pages_json"; const val LINKS = "app_links_json" }
 }
 
 /** #1531 one GET of a site's public icon or page (at most [max] bytes) with the WebView's own user agent; null when the network or the site says no. BLOCKING. */

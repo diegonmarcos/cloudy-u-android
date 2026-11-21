@@ -23,7 +23,8 @@ def ok(c, m):
     global fails
     print(("PASS  " if c else "FAIL  ") + m)
     if not c: fails += 1
-missing = [i for i in fz["ids"] if i not in now]
+merged = fz.get("merged", {})
+missing = [i for i in fz["ids"] if i not in now and merged.get(i) not in now]
 ok(not missing, "all %d frozen menu / settings / section ids are still declared%s" % (len(fz["ids"]), (" (missing: %s)" % missing[:8]) if missing else ""))
 core = os.path.join(root, "ab_cloud-libs-shared", "libs", "browser-core-rs")
 rs = "".join(open(os.path.join(core, "src", f)).read() for f in ("jni_api.rs", "omnibox.rs", "reader.rs", "filter.rs", "store.rs", "search.rs"))

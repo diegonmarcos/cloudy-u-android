@@ -1,0 +1,76 @@
+# Test -> Cloud Browser pages and the Url-Uri dropdown (emulator) (#1842).
+# The island order, Weby (Quickmarks | Bookmarks (all)), Cloudy > WebApps and C3 Urls (chooser), the Url-Uri dropdown in the browser and in Cloud Calc.
+# Evidence artifact: `browser-pages-evidence`. Script: ac_cloud-browser/test/emulator-browser-pages-1842.sh.
+name: "Test -> Cloud Browser pages (emulator)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      browser_run_id:
+        description: "Ship Cloud Browser run id whose APK artifact to test"
+        required: true
+      calc_run_id:
+        description: "Ship Cloud Calc run id (the second app showing the same dropdown); empty = skip"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch the APKs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          B_RUN: ${{ inputs.browser_run_id }}
+          C_RUN: ${{ inputs.calc_run_id }}
+        run: |
+          set -eu
+          fetch() { # run-id prefix out
+            mkdir -p "apk-$3"
+            gh api "repos/$REPO/actions/runs/$1/artifacts" --paginate --jq ".artifacts[] | select(.name|startswith(\"$2\")) | .name" |
+            while read -r name; do gh run download "$1" -R "$REPO" -n "$name" -D "apk-$3/$name"; done
+            pick=""
+            for want in x86_64 universal arm64 ''; do
+              pick=$(find "apk-$3" -name '*.apk' | sort | grep -i -- "$want" | head -1 || true)
+              [ -n "$pick" ] && break
+            done
+            [ -n "$pick" ] || { echo "::error::no $2 APK"; exit 1; }
+            cp "$pick" "$3.apk"
+          }
+          fetch "$B_RUN" Cloud-Browser- browser
+          if [ -n "$C_RUN" ]; then fetch "$C_RUN" Cloud-Calc- calc; fi
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot emulator + walk the pages
+        timeout-minutes: 25
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-browser/test/emulator-browser-pages-1842.sh browser.apk out $([ -f calc.apk ] && echo calc.apk)
+
+      - name: Upload evidence (screenshots, ui dumps)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-pages-evidence
+          path: out/
+          if-no-files-found: warn

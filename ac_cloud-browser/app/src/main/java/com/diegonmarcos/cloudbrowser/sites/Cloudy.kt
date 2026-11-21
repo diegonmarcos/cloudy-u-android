@@ -8,6 +8,12 @@ import java.net.Socket
 /** One site Cloudy lists. [port] is set for a page the phone serves (the live probe asks it). */
 data class CloudyEntry(val title: String, val url: String, val detail: String = "", val port: Int? = null)
 
+/** #1842 one c3-infra container: its category, and its private (mesh) and public address, either of which may be absent. Each container is ONE of these. */
+data class C3Container(val name: String, val category: String, val auth: String, val privateUrl: String?, val publicUrl: String?)
+
+/** #1842 a c3-infra category and its containers, in the icon grid. */
+data class C3Group(val category: String, val containers: List<C3Container>)
+
 /** The Cloud-Webserver's launcher activity: [pkg] and the fully qualified [cls] an explicit intent names. */
 data class WebserverTarget(val pkg: String, val cls: String)
 
@@ -74,6 +80,25 @@ object Cloudy {
             CloudyEntry(o.optString("container"), (if (private_) privateScheme else publicScheme) + addr,
                 listOf(o.optString("category"), o.optString("auth_type")).filter { it.isNotBlank() }.joinToString(" · "))
         }.distinctBy { it.title + it.url }.sortedBy { it.title.lowercase() }
+
+    /**
+     * #1842 Cloudy C3 Urls: the private and public pages merged. The fleet's routes (ac_cloud-c3 data/routes.json) grouped by their c3-infra category,
+     * each container ONCE with both addresses (the very ones [fleetUrls] lists for the private and the public page), categories and containers sorted by name.
+     */
+    fun c3Groups(routes: JSONArray?, privateScheme: String, publicScheme: String): List<C3Group> {
+        val byName = LinkedHashMap<String, C3Container>()
+        for (i in 0 until (routes?.length() ?: 0)) {
+            val o = routes?.optJSONObject(i) ?: continue
+            val name = o.optString("container").takeIf { it.isNotBlank() } ?: continue
+            val priv = o.optString("private_url").takeIf { it.isNotBlank() }?.let { privateScheme + it }
+            val pub = o.optString("public_url").takeIf { it.isNotBlank() }?.let { publicScheme + it }
+            val old = byName[name]
+            byName[name] = if (old == null) C3Container(name, o.optString("category"), o.optString("auth_type"), priv, pub)
+            else old.copy(privateUrl = old.privateUrl ?: priv, publicUrl = old.publicUrl ?: pub, category = old.category.ifBlank { o.optString("category") })
+        }
+        return byName.values.groupBy { it.category.ifBlank { "other" } }
+            .map { (cat, cs) -> C3Group(cat, cs.sortedBy { it.name.lowercase() }) }.sortedBy { it.category.lowercase() }
+    }
 
     /** The explicit-intent target of the Cloud-Webserver: [decl] = ui.cloudy.webserver (package, launcher_activity); null when either is not declared. */
     fun webserverTarget(decl: JSONObject): WebserverTarget? {

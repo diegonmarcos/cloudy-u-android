@@ -31,11 +31,12 @@ import com.diegonmarcos.superapp.themebg.ThemeColors
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-public fun NavBarTopCleanRow(colors: ThemeColors, labels: AppTopBarLabels, controller: AppTopBarController, modifier: Modifier = Modifier) {
+public fun NavBarTopCleanRow(colors: ThemeColors, labels: AppTopBarLabels, controller: AppTopBarController, modifier: Modifier = Modifier, leading: (@Composable () -> Unit)? = null) {
     Row(
         modifier.semantics { testTagsAsResourceId = true }.fillMaxWidth().height(TopFirstRowSpec.HEIGHT).background(navTopRowFill()).testTag(TopFirstRowTags.ROW),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        leading?.invoke()
         Box(
             Modifier.size(TopFirstRowSpec.ICON_TARGET).testTag(CleanDrawerTags.MENU)
                 .clickable(role = Role.Button) { controller.openDrawer() }.semantics { contentDescription = labels.menu },

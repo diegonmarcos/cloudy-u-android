@@ -264,6 +264,12 @@ class MainActivity : AppCompatActivity() {
             onAi = { openSection("search") },
             dark = true,
             onTitleClick = if (onPage) ({ hostFragment?.openAddress() }) else null,
+            // #1842 the Url-Uri dropdown (the far-left control, every app has it): Pages = the bottom-nav pages (+ the app's slot, ui.url_uri.pages);
+            // Tools = back, up, home, background, force close, restart (+ the app's slot, ui.url_uri.tools, run by the host fragment).
+            bottomPages = decl.bottomSections(),
+            defaultSection = BuildConfig.UI_DEFAULT_SECTION,
+            urlUri = com.diegonmarcos.superapp.bottomnav.UrlUriDecl.fromBuildConfig(BuildConfig.UI_URL_URI_B64),
+            onUrlUriAction = { id -> hostFragment?.act(id) },
         ) {
             TopBarDrawer { close ->
                 val p = LocalKitPalette.current

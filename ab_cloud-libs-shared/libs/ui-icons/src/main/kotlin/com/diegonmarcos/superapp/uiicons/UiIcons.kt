@@ -238,6 +238,12 @@ public object UiIcons {
         "configs" to Icons.Outlined.Settings,
         "ai" to Icons.Outlined.AutoAwesome,
         "more" to Icons.Outlined.MoreVert,
+        // #1842 the Url-Uri dropdown's Tools (every app's top bar): navigation and app actions.
+        "arrow_back" to Icons.Outlined.ArrowBack,
+        "arrow_upward" to Icons.Outlined.ArrowUpward,
+        "minimize" to Icons.Outlined.Minimize,
+        "power_settings_new" to Icons.Outlined.PowerSettingsNew,
+        "restart_alt" to Icons.Outlined.RestartAlt,
         // Section and page names the apps declared before the catalog existed, each with the glyph its app drew (#1160).
         "personal" to Icons.Outlined.AccountCircle,
         "data" to Icons.Outlined.Key,

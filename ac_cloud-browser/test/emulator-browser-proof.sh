@@ -147,7 +147,7 @@ adb shell am force-stop "$BPKG" >/dev/null 2>&1 || true
 adb shell am start -W -n "$BPKG/.MainActivity" >/dev/null 2>&1 || adb shell monkey -p "$BPKG" 1 >/dev/null 2>&1
 sleep 6
 # open Favourites and wait until its title is on screen (a first launch can show Tabs for a while). Favourites is an off-bar
-# section (ui.bottom_nav is Weby|Cloudy|Browser|Tabs|Domains): it is entered from the first row's title dropdown, entry navtop1_entry_favourites
+# section (ui.bottom_nav is Domains|Tabs|Browser|Cloudy|Weby): it is entered from the first row's title dropdown, entry navtop1_entry_favourites
 onfav=0
 for _ in $(seq 1 10); do
   # the dropdown may already be open from the previous round: take the entry first, open the dropdown only when it is not there

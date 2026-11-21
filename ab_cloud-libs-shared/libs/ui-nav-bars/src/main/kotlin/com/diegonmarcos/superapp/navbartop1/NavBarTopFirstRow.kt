@@ -85,6 +85,8 @@ import com.diegonmarcos.superapp.bottomnav.NavChromeScroll
 import com.diegonmarcos.superapp.bottomnav.AppTopBarScaffold
 import com.diegonmarcos.superapp.bottomnav.TopBarDecl
 import com.diegonmarcos.superapp.bottomnav.TopBarSettings
+import com.diegonmarcos.superapp.bottomnav.UrlUriBuildConfig
+import com.diegonmarcos.superapp.bottomnav.UrlUriDecl
 import com.diegonmarcos.superapp.bottomnav.appTopBarLabels
 import com.diegonmarcos.superapp.bottomnav.rememberAppTopBarController
 import com.diegonmarcos.superapp.bottomnav.NavPage
@@ -106,6 +108,8 @@ public object TopFirstRowSpec {
     /** The touch target of each plain icon, and the glyph drawn in it (no circle behind it). */
     public val ICON_TARGET: Dp = 44.dp
     public val ICON: Dp = 24.dp
+    /** #1842 the right-side icons (AI, Profile, Configs, the Url-Uri glyph) at the size of Android's own status-bar icons (17dp), the owner's bench being the Claude app's top bar. The touch target stays [ICON_TARGET]. */
+    public val ICON_RIGHT: Dp = 17.dp
     public const val ICONS_RIGHT: Int = 3
     /** The right slot (AI, Profile, Configs); the title takes the rest of the row, from the left edge. */
     public val SLOT: Dp = ICON_TARGET * ICONS_RIGHT
@@ -244,6 +248,8 @@ public fun NavBarTopFirstRow(
     onConfigsUi: (() -> Unit)? = null,
     /** Non-null: a "Configs > About" entry follows General. */
     onConfigsAbout: (() -> Unit)? = null,
+    /** #1842 the far-left control (the Url-Uri dropdown, [UrlUriDropdown]); the scaffold fills it for every app. */
+    leading: (@Composable () -> Unit)? = null,
 ) {
     var open by remember { mutableStateOf(false) }
     val nav = remember(appName, title, hierarchy, sections, leaf) { titleNav(appName, title, hierarchy, sections, leaf) }
@@ -251,6 +257,7 @@ public fun NavBarTopFirstRow(
         modifier.semantics { testTagsAsResourceId = true }.fillMaxWidth().height(TopFirstRowSpec.HEIGHT).testTag(TopFirstRowTags.ROW),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        leading?.invoke()
         Box(Modifier.weight(1f).padding(start = TopFirstRowSpec.ISLAND_PAD_H / 2), contentAlignment = Alignment.CenterStart) {
             val shape = RoundedCornerShape(TopFirstRowSpec.ISLAND_RADIUS)
             val anchor = rememberDropdownAnchor()
@@ -409,7 +416,7 @@ private fun PlainIcon(icon: ImageVector, label: String, tag: String, colors: The
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = null, tint = colors.ink, modifier = Modifier.size(TopFirstRowSpec.ICON))
+        Icon(icon, contentDescription = null, tint = colors.ink, modifier = Modifier.size(TopFirstRowSpec.ICON_RIGHT))
     }
 }
 
@@ -451,6 +458,14 @@ public fun NavBarTopFirstRowScaffold(
      * the scaffold's own dialog, so the app never shows a second, parallel Configs.
      */
     onConfigsPage: ((FleetConfigsPage) -> Unit)? = null,
+    /** #1842 the Url-Uri dropdown's app slots (build.json::ui.url_uri, [UrlUriDecl.fromBuildConfig]); empty is fine, the dropdown is in every app. */
+    urlUri: UrlUriDecl? = null,
+    /** #1842 the app's default section (build.json::ui.default_section): what Home opens; null reads the app's BuildConfig, blank = the first bottom page. */
+    defaultSection: String? = null,
+    /** #1842 the Pages list's bottom-nav parent pages; null reads the app's BuildConfig (ui.bottom_nav over ui.sections), else [sections]. */
+    bottomPages: List<NavSection>? = null,
+    /** #1842 an entry of the app's own Tools slot was tapped (its declared id). */
+    onUrlUriAction: (String) -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     // Configs > General and Configs > About (libs:ui-nav-bars fleetconfigs): the same two pages in every app, from build.json::configs_pages.
@@ -475,6 +490,10 @@ public fun NavBarTopFirstRowScaffold(
     val bottom = sections.ifEmpty { listOfNotNull(here?.let { NavSection(it.sectionId, it.label, "") }) }
     val current = sections.firstOrNull { it.id == here?.sectionId }
     val cleanModel = cleanDrawerModel(bottom, current, followed.lastOrNull { it.depth > 0 && it.selected }?.id, actionsInDrawer = ui.actionsInDrawer)
+    val hostCtx = LocalContext.current
+    val urlUriDecl = urlUri ?: remember(hostCtx) { UrlUriBuildConfig.decl(hostCtx) }
+    val urlUriHome = defaultSection ?: remember(hostCtx) { UrlUriBuildConfig.defaultSection(hostCtx) }
+    val urlUriPages = bottomPages ?: remember(hostCtx, bottom) { UrlUriBuildConfig.bottomPages(hostCtx).ifEmpty { bottom } }
     val cleanDrawerBody: @Composable ColumnScope.(close: () -> Unit) -> Unit = { close ->
         CleanDrawerContent(
             model = cleanModel, labels = labels,
@@ -521,13 +540,19 @@ public fun NavBarTopFirstRowScaffold(
             topRow = { c ->
                 val slot = c.drawerContent
                 Box(Modifier.background(underlay).testTag(TopFirstRowTags.UNDERLAY)) {
-                if (plan.hamburger) NavBarTopCleanRow(ThemeBackground.colors(dark), labels, c) else NavBarTopFirstRow(
+                val urlUriControl: @Composable () -> Unit = {
+                    UrlUriDropdown(
+                        ThemeBackground.colors(dark), followed, urlUriPages, urlUriDecl, urlUriHome, navigate,
+                        onAi = { if (onAi != null) onAi() else c.toggleAi() }, onProfile = onAccount, onConfigs = onConfigs, onAction = onUrlUriAction,
+                    )
+                }
+                if (plan.hamburger) NavBarTopCleanRow(ThemeBackground.colors(dark), labels, c, leading = urlUriControl) else NavBarTopFirstRow(
                     title, ThemeBackground.colors(dark), labels, followed, navigate,
                     onAi = { if (onAi != null) onAi() else c.toggleAi() },
                     onProfile = onAccount, onConfigs = onConfigs, avatar = avatar, onTitleClick = onTitleClick,
                     appName = appName, sections = sections, leaf = leaf ?: leafState.text,
                     extra = if (slot != null) ({ close -> slot(close) }) else null,
-                    onConfigsUi = openGeneral, onConfigsAbout = openAbout,
+                    onConfigsUi = openGeneral, onConfigsAbout = openAbout, leading = urlUriControl,
                 )
                 }
             },

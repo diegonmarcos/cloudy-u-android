@@ -4,7 +4,7 @@
 # ╚══════════════════════════════════════════════════════════════════╝
 #
 # What this certifies, statically (the nav is data, the bar and the strips are libs:bottomnav's):
-#   S1 build.json::ui is ONE declaration: bottom_nav = weby|cloudy|browser|tabs|domains (#1493), default_section browser
+#   S1 build.json::ui is ONE declaration: bottom_nav = domains|tabs|browser|cloudy|weby (#1842), default_section browser
 #      (the web tabs, address bar and every overlay stay libs:browser's own UI: no pages; #900 Configs alone has pages, its
 #      the Configs top tabs (#1402: Sites, Permissions, Autocomplete, General, About), drawn by NavBarTopSecondRow in MainActivity: test-browser-page-menu.sh holds their ids and order).
 #   S2 the app compiles libs:bottomnav and bakes UI_BOTTOM_NAV + UI_SECTIONS_B64 + UI_DEFAULT_SECTION.
@@ -25,14 +25,14 @@ import json, os, re, sys
 APP = os.environ["APP_DIR"]
 CFG = json.loads(r'''{
  "bottom": [
-  "weby",
-  "cloudy",
-  "browser",
+  "domains",
   "tabs",
-  "domains"
+  "browser",
+  "cloudy",
+  "weby"
  ],
  "pages": {
-  "cloudy": ["gh_pages", "webserver", "private_urls", "public_urls"],
+  "cloudy": ["webapps", "c3_urls"],
   "domains": ["headless_browsers", "files", "site_perms", "history", "visited"]
  },
  "gone_modules": [

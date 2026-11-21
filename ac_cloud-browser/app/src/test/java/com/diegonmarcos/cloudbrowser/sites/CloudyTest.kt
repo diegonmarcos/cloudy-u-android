@@ -48,12 +48,37 @@ class CloudyTest {
     private val routes = org.json.JSONArray(java.io.File(root, "ac_cloud-c3/data/routes.json").readText())
 
     @Test
-    fun `the Cloudy tabs are GH Pages, Local Webserver, Cloudy Private URLs, Cloudy Public URLs, in that order`() {
+    fun `the Cloudy tabs are WebApps and C3 Urls, in that order`() {
         val sections = browser.getJSONObject("ui").getJSONArray("sections")
         val cloudy = (0 until sections.length()).map { sections.getJSONObject(it) }.first { it.getString("id") == "cloudy" }.getJSONArray("pages")
         val pages = (0 until cloudy.length()).map { cloudy.getJSONObject(it) }
-        assertEquals(listOf("gh_pages", "webserver", "private_urls", "public_urls"), pages.map { it.getString("id") })
-        assertEquals(listOf("GH Pages", "Local Webserver", "Cloudy Private URLs", "Cloudy Public URLs"), pages.map { it.getString("label") })
+        assertEquals(listOf("webapps", "c3_urls"), pages.map { it.getString("id") })
+        assertEquals(listOf("WebApps", "C3 Urls"), pages.map { it.getString("label") })
+    }
+
+    @Test
+    fun `C3 Urls holds each container once with the very addresses the private and public lists had, grouped by c3-infra category`() {
+        val groups = Cloudy.c3Groups(routes, "http://", "https://")
+        val all = groups.flatMap { it.containers }
+        assertEquals("each container once", all.size, all.map { it.name }.toSet().size)
+        val priv = Cloudy.fleetUrls(routes, true, "http://", "https://")
+        val pub = Cloudy.fleetUrls(routes, false, "http://", "https://")
+        assertEquals(priv.map { it.title to it.url }.toSet(), all.filter { it.privateUrl != null }.map { it.name to it.privateUrl!! }.toSet())
+        assertEquals(pub.map { it.title to it.url }.toSet(), all.filter { it.publicUrl != null }.map { it.name to it.publicUrl!! }.toSet())
+        val cats = (0 until routes.length()).map { routes.getJSONObject(it).optString("category") }.toSet()
+        assertEquals(cats, groups.map { it.category }.toSet())
+        assertTrue(groups.all { g -> g.containers.all { it.category == g.category } })
+        assertEquals(groups.map { it.category }.sortedBy { it.lowercase() }, groups.map { it.category })
+        assertTrue(Cloudy.c3Groups(null, "http://", "https://").isEmpty())
+    }
+
+    @Test
+    fun `a container with only one address keeps the other null, and two routes of one container merge`() {
+        val r = org.json.JSONArray("""[{"container":"a","category":"app","auth_type":"mesh","private_url":"a.mesh:1","public_url":""},{"container":"a","category":"app","public_url":"a.pub"},{"container":"b","category":"data","public_url":"b.pub"}]""")
+        val g = Cloudy.c3Groups(r, "http://", "https://")
+        assertEquals(listOf("app", "data"), g.map { it.category })
+        assertEquals(C3Container("a", "app", "mesh", "http://a.mesh:1", "https://a.pub"), g[0].containers.single())
+        assertEquals(null, g[1].containers.single().privateUrl)
     }
 
     @Test
