@@ -60,7 +60,7 @@ class FolderMembershipListSqlTest {
     }
 
     private fun flat(scopes: List<Pair<String, String>>, members: Set<Int>) =
-        ids(pagingSql(scopes.size, SortOrder.DATE_DESC, false, ListShape.NONE, members), scopes.flatMap { listOf(it.first, it.second) })
+        ids(pagingSql(scopes.size, SortOrder.DATE_DESC, false, ListShape.NONE, members), scopeArgs(scopes, members))
 
     @Test fun `without the membership term a label lists only what is filed in it (the legacy list, unchanged)`() {
         assertEquals(listOf("only"), flat(lbl, emptySet()))
@@ -88,12 +88,14 @@ class FolderMembershipListSqlTest {
 
     @Test fun `the selection and the count read the same rows as the list`() {
         val scopes = lbl
-        val args = scopes.flatMap { listOf(it.first, it.second) }
-        assertEquals(setOf("both", "only"), ids(selectionIdsSql(1, false, ListShape.NONE, setOf(0)).replace("SELECT accountId, id", "SELECT id"), args).toSet())
+        assertEquals(
+            setOf("both", "only"),
+            ids(selectionIdsSql(1, false, ListShape.NONE, setOf(0)).replace("SELECT accountId, id", "SELECT id"), scopeArgs(scopes, setOf(0))).toSet(),
+        )
         db.prepareStatement(listCountSql(1)).use { ps -> ps.setString(1, "acc"); ps.setString(2, "lbl"); ps.executeQuery().use { it.next(); assertEquals(1, it.getInt(1)) } }
     }
 
-    @Test fun `the conversation list numbers its three clauses and the Sent pairs, and finds the message in the label`() {
+    @Test fun `the conversation list binds four values per member pair in each of its three clauses plus the Sent pairs, and finds the message in the label`() {
         val sent = listOf("acc" to "sent")
         val q = conversationQuery(lbl, SortOrder.DATE_DESC, false, accountId = "acc", sentMailboxes = sent, shape = ListShape.NONE, memberScopes = setOf("acc" to "lbl"))
         val rows = db.prepareStatement(q.sql).use { ps ->

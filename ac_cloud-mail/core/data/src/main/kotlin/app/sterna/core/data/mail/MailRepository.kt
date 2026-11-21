@@ -567,7 +567,7 @@ private fun pagingQuery(
     memberScopes: Set<Pair<String, String>> = emptySet(),
 ): SimpleSQLiteQuery = SimpleSQLiteQuery(
     pagingSql(scopes.size, sort, unreadOnly, shape, memberPairIndexes(scopes, memberScopes)),
-    scopes.flatMap { listOf(it.first, it.second) }.toTypedArray(),
+    scopeArgs(scopes, memberPairIndexes(scopes, memberScopes)).toTypedArray(),
 )
 
 /** The folder scope of a list query, for rows of [table]: a disjunction of (account id, mailbox id)
@@ -575,25 +575,24 @@ private fun pagingQuery(
  *  `mailboxId IN (…)` also selects a sibling account's folder of that id (#121).
  *
  *  #1837: a pair listed in [memberPairs] (its index in the scope list; the folders the core's feed files extra messages in, see
- *  `EmailDao.observeExtraScopes`) ALSO selects the messages the server files in that mailbox through `email_mailboxes`, as a
- *  second OR term that reaches `emails` through its own key, so the first term keeps the composite index plan every other
- *  folder has (`ConversationIndexPlanSqlTest`). Those pairs reuse their mailbox bind through SQLite's numbered parameters, so the
- *  binders keep binding (account, mailbox) pairs and nothing else: with [memberPairs] non-empty every pair of the clause is
- *  numbered from [firstParam] (the clauses of one statement are numbered in statement order); with it empty the text is the
- *  anonymous `?` form it always was. */
-internal fun folderScopeSql(scopeCount: Int, table: String, firstParam: Int = 1, memberPairs: Set<Int> = emptySet()): String =
+ *  `EmailDao.observeExtraScopes`) ALSO selects the messages the server files in that mailbox through `email_mailboxes`. It binds
+ *  four values instead of two (account, mailbox, account, mailbox): [scopeArgs] builds the binds for every clause. Every other
+ *  pair, and every list with no such folder, is the legacy two-bind text, so its plan is unchanged (`ConversationIndexPlanSqlTest`). */
+internal fun folderScopeSql(scopeCount: Int, table: String, memberPairs: Set<Int> = emptySet()): String =
     if (scopeCount == 0) "0" else List(scopeCount) { i ->
-        if (memberPairs.isEmpty()) {
+        if (i !in memberPairs) {
             "($table.accountId = ? AND $table.mailboxId = ?)"
         } else {
-            val acc = "?${firstParam + 2 * i}"
-            val box = "?${firstParam + 2 * i + 1}"
-            val own = "($table.accountId = $acc AND $table.mailboxId = $box)"
-            if (i !in memberPairs) own else
-                "($own OR ($table.accountId = $acc AND $table.id IN " +
-                    "(SELECT emailId FROM email_mailboxes WHERE accountId = $acc AND mailboxId = $box)))"
+            "($table.accountId = ? AND ($table.mailboxId = ? OR $table.id IN " +
+                "(SELECT emailId FROM email_mailboxes WHERE accountId = ? AND mailboxId = ?)))"
         }
     }.joinToString(" OR ")
+
+/** The binds of ONE [folderScopeSql] clause over [scopes]: (account, mailbox) per pair, twice for a pair in [memberPairs]. */
+internal fun scopeArgs(scopes: List<Pair<String, String>>, memberPairs: Set<Int> = emptySet()): List<String> =
+    scopes.flatMapIndexed { i, (account, mailbox) ->
+        if (i in memberPairs) listOf(account, mailbox, account, mailbox) else listOf(account, mailbox)
+    }
 
 /** The indexes in [scopes] of the pairs [memberScopes] names: what [folderScopeSql] takes as `memberPairs`. */
 internal fun memberPairIndexes(scopes: List<Pair<String, String>>, memberScopes: Set<Pair<String, String>>): Set<Int> =
@@ -623,7 +622,7 @@ internal fun pagingSql(
 /** WHICH ROWS the flat list holds, sort excluded. ONE clause, shared by the two readers that must
  *  not disagree — [pagingSql] and [selectionIdsSql], what "Select all" takes (#126). */
 internal fun listRowsWhereSql(scopeCount: Int, unreadOnly: Boolean, shape: ListShape = ListShape.NONE, memberPairs: Set<Int> = emptySet()): String {
-    val scope = folderScopeSql(scopeCount, "emails", memberPairs = memberPairs)
+    val scope = folderScopeSql(scopeCount, "emails", memberPairs)
     val seenFilter = (if (unreadOnly) " AND seen = 0" else "") + shape.whereSql("emails")
     val notSnoozed = " AND ${notSnoozedSql("emails")}"
     return "($scope)$seenFilter$notSnoozed"
@@ -652,7 +651,7 @@ internal fun selectionIdsQuery(
     memberScopes: Set<Pair<String, String>> = emptySet(),
 ): SimpleSQLiteQuery = SimpleSQLiteQuery(
     selectionIdsSql(scopes.size, unreadOnly, shape, memberPairIndexes(scopes, memberScopes)),
-    scopes.flatMap { listOf(it.first, it.second) }.toTypedArray(),
+    scopeArgs(scopes, memberPairIndexes(scopes, memberScopes)).toTypedArray(),
 )
 
 /** The home-screen widget's read of the unified inbox, as one bounded statement. WHICH ROWS is
@@ -723,7 +722,7 @@ internal fun conversationQuery(
     // Bind order matches the clauses left-to-right, and EVERY clause binds the same shape —
     // (accountId, mailboxId) per scope, account first; the account-wide total binds nothing.
     val sent = ConversationScope.sentFolders(sentMailboxes, accountId)
-    val perClause = scopes.flatMap { listOf(it.first, it.second) }
+    val perClause = scopeArgs(scopes, memberPairIndexes(scopes, memberScopes))
     val chipClause = perClause + sent.flatMap { listOf(it.first, it.second) }
     val args = perClause + chipClause + perClause
     return SimpleSQLiteQuery(
@@ -754,10 +753,9 @@ internal fun conversationSql(
         else -> "COALESCE($t.threadId, $t.id)"
     }
     val shapeWhere = shape.whereSql("emails")
-    // Numbered in statement order (see [folderScopeSql]): g, then c (its pairs, then the Sent pairs' anonymous `?`s), then the outer clause.
-    val scope = folderScopeSql(scopeCount, "emails", memberPairs = memberPairs)
-    val scopeC = folderScopeSql(scopeCount, "emails", firstParam = 1 + 2 * scopeCount, memberPairs = memberPairs)
-    val scopeOuter = folderScopeSql(scopeCount, "e", firstParam = 1 + 4 * scopeCount + 2 * sentMailboxCount, memberPairs = memberPairs)
+    val scope = folderScopeSql(scopeCount, "emails", memberPairs)
+    val scopeC = scope
+    val scopeOuter = folderScopeSql(scopeCount, "e", memberPairs)
     val sentAlternatives = " OR (accountId = ? AND mailboxId = ?)".repeat(sentMailboxCount)
     val notSnoozed = notSnoozedSql("emails")
     val notSnoozedOuter = notSnoozedSql("e")
@@ -1754,6 +1752,11 @@ class MailRepository(
         val scopes = listOf(credentials.id to mailboxId)
         return extraScopes().flatMapLatest { extra ->
             RustMailEngine.log("list $mailboxId: membership term=${scopes.any { it in extra }} (folders with extra members: ${extra.size}), conversation=$conversationView")
+            if (scopes.any { it in extra }) {
+                // evidence for the offline proof: how many rows the flat membership query finds right now
+                val rows = runCatching { emailDao.keysForSelection(selectionIdsQuery(scopes, false, ListShape.NONE, extra)).size }
+                RustMailEngine.log("list $mailboxId: flat membership query finds $rows rows")
+            }
             if (conversationView) {
                 Pager(
                     config = pagingConfig(),
