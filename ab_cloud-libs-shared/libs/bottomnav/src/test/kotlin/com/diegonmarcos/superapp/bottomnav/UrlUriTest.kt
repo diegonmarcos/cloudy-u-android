@@ -31,15 +31,12 @@ class UrlUriTest {
         assertEquals(UrlUriIds.FIXED_TOOLS, m.tools.map { it.id })
     }
 
-    @Test fun `the declaration parses from json and from the baked base64, and a malformed one is empty`() {
+    @Test fun `the declaration parses from json, and a malformed or blank one is empty`() {
         val json = """{"pages":[{"id":"s","label":"Search","icon":"search","page":"search"}],"tools":[{"id":"nt","label":"New tab","icon":"add"}]}"""
         val d = UrlUriDecl.parse(json)
         assertEquals(listOf("s"), d.pages.map { it.id }); assertEquals("search", d.pages[0].page); assertEquals(listOf("nt"), d.tools.map { it.id })
         assertEquals(emptyList<String>(), d.problems())
-        @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
-        val b64 = kotlin.io.encoding.Base64.encode(json.encodeToByteArray())
-        assertEquals(d, UrlUriDecl.fromBuildConfig(b64))
-        assertEquals(UrlUriDecl(), UrlUriDecl.fromBuildConfig("%%%not-base64%%%"))
+        assertEquals(UrlUriDecl(), UrlUriDecl.parse(""))
         assertEquals(UrlUriDecl(), UrlUriDecl.parse("[1,2"))
     }
 

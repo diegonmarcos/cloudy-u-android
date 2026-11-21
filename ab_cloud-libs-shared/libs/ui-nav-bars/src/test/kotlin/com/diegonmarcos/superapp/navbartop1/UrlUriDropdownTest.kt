@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import com.diegonmarcos.superapp.bottomnav.NavPage
 import com.diegonmarcos.superapp.bottomnav.NavSection
 import com.diegonmarcos.superapp.bottomnav.UrlUriDecl
@@ -72,17 +73,17 @@ class UrlUriDropdownTest {
     @Test fun `a page entry navigates, the slot page opens the declared page, AI and the tool slot call their handlers`() {
         val picked = ArrayList<HierarchyEntry>(); var ai = 0; val acted = ArrayList<String>()
         show({ picked += it }, { ai++ }, { acted += it })
-        compose.onNodeWithTag(UrlUriTags.BUTTON).performClick(); compose.onNodeWithTag(UrlUriTags.entry("section:b")).performClick()
-        compose.onNodeWithTag(UrlUriTags.BUTTON).performClick(); compose.onNodeWithTag(UrlUriTags.entry("slot_page:x")).performClick()
-        compose.onNodeWithTag(UrlUriTags.BUTTON).performClick(); compose.onNodeWithTag(UrlUriTags.entry(UrlUriIds.AI)).performClick()
-        compose.onNodeWithTag(UrlUriTags.BUTTON).performClick(); compose.onNodeWithTag(UrlUriTags.entry("slot_tool:t")).performClick()
+        compose.onNodeWithTag(UrlUriTags.BUTTON).performClick(); compose.onNodeWithTag(UrlUriTags.entry("section:b")).performScrollTo().performClick()
+        compose.onNodeWithTag(UrlUriTags.BUTTON).performClick(); compose.onNodeWithTag(UrlUriTags.entry("slot_page:x")).performScrollTo().performClick()
+        compose.onNodeWithTag(UrlUriTags.BUTTON).performClick(); compose.onNodeWithTag(UrlUriTags.entry(UrlUriIds.AI)).performScrollTo().performClick()
+        compose.onNodeWithTag(UrlUriTags.BUTTON).performClick(); compose.onNodeWithTag(UrlUriTags.entry("slot_tool:t")).performScrollTo().performClick()
         assertEquals(listOf("b", "b"), picked.map { it.sectionId }); assertEquals(1, ai); assertEquals(listOf("t"), acted)
         assertTrue(picked.all { it.depth == 0 })
     }
 
     @Test fun `home opens the declared default section`() {
         val picked = ArrayList<HierarchyEntry>(); show({ picked += it })
-        compose.onNodeWithTag(UrlUriTags.BUTTON).performClick(); compose.onNodeWithTag(UrlUriTags.entry(UrlUriIds.HOME)).performClick()
+        compose.onNodeWithTag(UrlUriTags.BUTTON).performClick(); compose.onNodeWithTag(UrlUriTags.entry(UrlUriIds.HOME)).performScrollTo().performClick()
         assertEquals("a", picked.single().sectionId)
     }
 }

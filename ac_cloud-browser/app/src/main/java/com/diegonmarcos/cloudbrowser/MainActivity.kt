@@ -268,7 +268,7 @@ class MainActivity : AppCompatActivity() {
             // Tools = back, up, home, background, force close, restart (+ the app's slot, ui.url_uri.tools, run by the host fragment).
             bottomPages = decl.bottomSections(),
             defaultSection = BuildConfig.UI_DEFAULT_SECTION,
-            urlUri = com.diegonmarcos.superapp.bottomnav.UrlUriDecl.fromBuildConfig(BuildConfig.UI_URL_URI_B64),
+            urlUri = com.diegonmarcos.superapp.bottomnav.UrlUriDecl.parse(sites.urlUri.toString()),
             onUrlUriAction = { id -> hostFragment?.act(id) },
         ) {
             TopBarDrawer { close ->

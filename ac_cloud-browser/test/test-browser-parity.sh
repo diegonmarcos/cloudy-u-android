@@ -101,7 +101,7 @@ def check(root, ok):
     ok("pages = decl.pages" in uu or "decl.pages.forEach" in uu, "T3 the app's pages slot is read from the declaration")
     ok("decl.tools.forEach" in uu, "T3 the app's tools slot is read from the declaration")
     ok(set(i["id"] for i in ui["url_uri"]["pages"]) <= set(secs) and ui["url_uri"]["tools"], "T4 build.json::ui.url_uri fills the slots (its pages name declared sections)")
-    ok("UI_URL_URI_B64" in bg and "UrlUriDecl.fromBuildConfig(BuildConfig.UI_URL_URI_B64)" in src.get(APP + "/MainActivity.kt", ""), "T5 the browser bakes and reads its slots")
+    ok("url_uri: buildJson.ui.url_uri" in bg and "UrlUriDecl.parse(sites.urlUri.toString())" in src.get(APP + "/MainActivity.kt", ""), "T5 the browser carries its slots (ui.url_uri) in its declaration and hands them to the bar")
     ok("UrlUriBuildConfig" in src.get(BARS.replace("/src/main/kotlin", "/src/main/kotlin") + "/NavBarTopFirstRow.kt", ""), "T6 an app that passes nothing still gets the dropdown (read from its BuildConfig)")
     row = src.get(BARS + "/NavBarTopFirstRow.kt", ""); clean = src.get(BARS + "/NavBarTopCleanRow.kt", "")
     ok(row.count("leading?.invoke()") == 1 and clean.count("leading?.invoke()") == 1 and row.count("leading = urlUriControl") == 2, "T7 the Url-Uri dropdown leads BOTH first rows (Classic and Clean)")
@@ -156,7 +156,7 @@ main("test-browser-parity", check, [
     mut("a Tools entry is removed", bn, "listOf(BACK, UP, HOME, BACKGROUND, FORCE_CLOSE, RESTART)", "listOf(BACK, UP, HOME, BACKGROUND, RESTART)", "T2"),
     mut("a Pages entry is removed", bn, "listOf(AI, PROFILE, CONFIGS)", "listOf(AI, CONFIGS)", "T1"),
     mut("the app's tools slot is ignored", bn, "decl.tools.forEach", "emptyList<UrlUriItem>().forEach", "T3"),
-    mut("the browser stops filling its slots", APP + "/MainActivity.kt", "UrlUriDecl.fromBuildConfig(BuildConfig.UI_URL_URI_B64)", "UrlUriDecl()", "T5"),
+    mut("the browser stops filling its slots", APP + "/MainActivity.kt", "UrlUriDecl.parse(sites.urlUri.toString())", "UrlUriDecl()", "T5"),
     mut("the Clean row loses the dropdown", BARS + "/NavBarTopCleanRow.kt", "leading?.invoke()", "", "T7"),
     mut("the Classic row loses the dropdown", BARS + "/NavBarTopFirstRow.kt", "leading?.invoke()", "", "T7"),
     mut("the right icons grow back", BARS + "/NavBarTopFirstRow.kt", "ICON_RIGHT: Dp = 17.dp", "ICON_RIGHT: Dp = 24.dp", "T8"),

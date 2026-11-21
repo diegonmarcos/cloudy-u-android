@@ -550,9 +550,9 @@ public fun NavBarTopFirstRowScaffold(
                     title, ThemeBackground.colors(dark), labels, followed, navigate,
                     onAi = { if (onAi != null) onAi() else c.toggleAi() },
                     onProfile = onAccount, onConfigs = onConfigs, avatar = avatar, onTitleClick = onTitleClick,
-                    appName = appName, sections = sections, leaf = leaf ?: leafState.text,
+                    appName = appName, sections = sections, leaf = leaf ?: leafState.text, leading = urlUriControl,
                     extra = if (slot != null) ({ close -> slot(close) }) else null,
-                    onConfigsUi = openGeneral, onConfigsAbout = openAbout, leading = urlUriControl,
+                    onConfigsUi = openGeneral, onConfigsAbout = openAbout,
                 )
                 }
             },

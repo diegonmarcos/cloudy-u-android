@@ -15,6 +15,8 @@ class SitesDecl(val root: JSONObject) {
     val weby: JSONObject get() = block("weby")
     val cloudy: JSONObject get() = block("cloudy")
     val domains: JSONObject get() = block("domains")
+    /** #1842 the Url-Uri dropdown's app slots (build.json::ui.url_uri). */
+    val urlUri: JSONObject get() = block("url_uri")
 
     /** The words of one block (`texts`); a missing key answers itself, so a gap shows up on screen rather than as a blank. */
     fun texts(of: JSONObject): (String) -> String {

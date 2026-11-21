@@ -7,16 +7,14 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
 import androidx.activity.ComponentActivity
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
 
 /**
  * #1842 THE Url-Uri dropdown of every app's top bar: the far-left control of the first row, automatic (an app that declares
  * nothing still has it), listing with icons
  *   A) Pages  the parent (bottom-nav) pages of the app, AI, the app's own pages slot, Settings > Profile, Settings > Configs;
  *   B) Tools  back, up, home; send the app to the background, force close, restart; the app's own tools slot.
- * The two slots are DECLARED (`build.json::ui.url_uri = {"pages": [{id,label,icon,page}], "tools": [{id,label,icon}]}`, baked as
- * `UI_URL_URI_B64`): an app fills them from its build.json and draws nothing itself. Pure here ([urlUriModel]); the first row in
+ * The two slots are DECLARED (`build.json::ui.url_uri = {"pages": [{id,label,icon,page}], "tools": [{id,label,icon}]}`; an app hands it
+ * to the first row ([UrlUriDecl.parse]) from a declaration it already carries, or bakes it as the plain JSON field `UI_URL_URI`): an app fills them from its build.json and draws nothing itself. Pure here ([urlUriModel]); the first row in
  * libs:ui-nav-bars draws it and routes a tap ([UrlUriSystem] for the platform actions).
  */
 public object UrlUriIds {
@@ -67,13 +65,6 @@ public data class UrlUriDecl(val pages: List<UrlUriItem> = emptyList(), val tool
         public fun parse(json: String): UrlUriDecl = runCatching {
             val o = MiniJson.parse(json) as? Map<*, *> ?: return@runCatching UrlUriDecl()
             UrlUriDecl(items(o["pages"]), items(o["tools"]))
-        }.getOrDefault(UrlUriDecl())
-
-        /** From BuildConfig.UI_URL_URI_B64; blank or malformed is the empty declaration. */
-        @OptIn(ExperimentalEncodingApi::class)
-        public fun fromBuildConfig(b64: String): UrlUriDecl = runCatching {
-            if (b64.isBlank()) return@runCatching UrlUriDecl()
-            parse(Base64.Default.withPadding(Base64.PaddingOption.PRESENT_OPTIONAL).decode(b64.filterNot { it.isWhitespace() }).decodeToString())
         }.getOrDefault(UrlUriDecl())
     }
 }
@@ -160,8 +151,8 @@ public object UrlUriBuildConfig {
     public fun field(ctx: Context, name: String): String =
         runCatching { buildConfig(ctx)?.getField(name)?.get(null) as? String }.getOrNull().orEmpty()
 
-    /** `build.json::ui.url_uri`, baked as UI_URL_URI_B64. */
-    public fun decl(ctx: Context): UrlUriDecl = UrlUriDecl.fromBuildConfig(field(ctx, "UI_URL_URI_B64"))
+    /** `build.json::ui.url_uri` as plain JSON text in the field UI_URL_URI (an app that passes the declaration itself does not need it). */
+    public fun decl(ctx: Context): UrlUriDecl = UrlUriDecl.parse(field(ctx, "UI_URL_URI"))
 
     /** `build.json::ui.default_section`, what Home opens. */
     public fun defaultSection(ctx: Context): String = field(ctx, "UI_DEFAULT_SECTION")
