@@ -176,7 +176,9 @@ jobs:
                   print((int(b.group(1)) + int(b.group(3))) // 2, (int(b.group(2)) + int(b.group(4))) // 2); break
           PY
               )
-              [ -n "$pos" ] && break; adb shell input swipe 540 1800 540 900 400; sleep 1
+              [ -n "$pos" ] && break
+              # a slow drag from the right third (a quick flick at the middle was taken by the home swipe gestures / edge pads)
+              if [ $((it % 2)) -eq 0 ]; then adb shell input swipe 760 1900 760 800 1200; else adb shell input draganddrop 760 1900 760 800 900; fi; sleep 2
             done
             [ -n "$pos" ] || { echo "no Banking Apps Mode tile"; return 1; }
             adb shell input tap $pos; sleep 12; }
