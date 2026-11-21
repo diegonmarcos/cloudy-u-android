@@ -348,11 +348,26 @@ object C3MeshProbe {
         return "no A record"
     }
 
+    /**
+     * #1845 the phone's own address in the SAME /24 as [dest], or null. The tunnel carries two IPv4 identities (10.0.0.x on Mesh-1, 10.1.0.x on Mesh-2) and
+     * Android sources an unbound socket from the FIRST, so a Mesh-2 probe left unbound left as 10.0.0.x and the Mesh-2 hub dropped it (cryptokey routing):
+     * "10.1.0.1:53 timed out from /10.0.0.10" while the hub was fine. A probe is bound to its own mesh's address.
+     */
+    fun sourceInMesh(dest: String, locals: List<String>): String? {
+        val d = dest.split('.'); if (d.size != 4) return null
+        return locals.firstOrNull { l -> l != dest && l.split('.').let { it.size == 4 && it[0] == d[0] && it[1] == d[1] && it[2] == d[2] } }
+    }
+
+    private fun localV4(): List<String> = runCatching {
+        java.net.NetworkInterface.getNetworkInterfaces().toList().flatMap { i -> i.inetAddresses.toList().filterIsInstance<java.net.Inet4Address>().mapNotNull { it.hostAddress } }
+    }.getOrDefault(emptyList())
+
     object SystemIo : Io {
         override fun query(server: String, name: String, timeoutMs: Int, padTo: Int): String {
             val id = (System.nanoTime() and 0xFFFF).toInt()
             val (q, qEnd) = buildQuery(id, name, padTo)
-            DatagramSocket().use { s ->
+            val from = sourceInMesh(InetAddress.getByName(server).hostAddress.orEmpty(), localV4())
+            (if (from != null) DatagramSocket(InetSocketAddress(InetAddress.getByName(from), 0)) else DatagramSocket()).use { s ->
                 s.soTimeout = timeoutMs
                 s.send(DatagramPacket(q, q.size, InetAddress.getByName(server), 53))
                 val buf = ByteArray(4096)
@@ -363,7 +378,12 @@ object C3MeshProbe {
         }
         override fun systemResolve(name: String): List<String> = InetAddress.getAllByName(name).mapNotNull { it.hostAddress }
         override fun tcp(host: String, port: Int, timeoutMs: Int) {
-            Socket().use { it.connect(InetSocketAddress(InetAddress.getByName(host), port), timeoutMs) }
+            val dest = InetAddress.getByName(host)
+            val from = sourceInMesh(dest.hostAddress.orEmpty(), localV4())
+            Socket().use { s ->
+                if (from != null) s.bind(InetSocketAddress(InetAddress.getByName(from), 0))
+                s.connect(InetSocketAddress(dest, port), timeoutMs)
+            }
         }
         override fun https(url: String, timeoutMs: Int): Int {
             val c = URL(url).openConnection() as HttpURLConnection

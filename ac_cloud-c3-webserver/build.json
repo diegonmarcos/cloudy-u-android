@@ -1014,7 +1014,7 @@
     "_doc": "#1845 THE VPN table of Home (ui/VpnReader.kt, VpnModel.kt): the full mesh status read LIVE from the engine's INetBackend (libs:net AidlBackend, the same engine and calls the SuperApp's VPN page drives through WgState.backend), never a proxy. `meshes` is the SuperApp's ui.mesh_page.meshes (held equal by test/test-c3-webserver-vpn-parity.sh): per mesh the phone's address, the route, the hub resolver among Android's, TCP :53 to the hub from the phone's address in THAT mesh, and the private name. `tunnel_candidates` are the names the SuperApp gives its active tunnel (WireGuardPrefs.activateProfile: config-<profile id>; wg-mesh is the default); the first one UP in the engine is the tunnel.",
     "tunnel_candidates": ["config-v4-split", "config-v4-full", "config-v6-split", "config-v6-full", "wg-mesh"],
     "meshes": [
-      {"id": "wg0", "label": "Mesh-1", "cidr": "10.0.0.0/24", "hub": "10.0.0.1", "resolver": "10.0.0.1", "name": "c3-infra-api.mesh.diegonmarcos.com", "service_url": "https://c3-infra-api.mesh.diegonmarcos.com/"},
+      {"id": "wg0", "label": "Mesh-1", "cidr": "10.0.0.0/24", "hub": "10.0.0.1", "resolver": "10.0.0.1", "name": "c3-infra-api.mesh.diegonmarcos.com", "service_url": "http://c3-infra-api.mesh.diegonmarcos.com:8081/"},
       {"id": "wg-public", "label": "Mesh-2", "cidr": "10.1.0.0/24", "hub": "10.1.0.1", "resolver": "10.1.0.1", "name": "maddy.mesh.diegonmarcos.com", "service_url": ""}
     ]
   },

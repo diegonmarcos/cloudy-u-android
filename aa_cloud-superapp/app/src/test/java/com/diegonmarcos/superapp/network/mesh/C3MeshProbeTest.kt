@@ -179,4 +179,14 @@ class C3MeshProbeTest {
         assertEquals(listOf("10.0.0.1"), MeshStore.ipLiterals("Private only · 10.0.0.1"))
         assertEquals(emptyList<String>(), MeshStore.ipLiterals("none"))
     }
+
+    @Test fun `#1845 a probe is sourced from the phone's address in the SAME mesh, not the tunnel's first address`() {
+        val locals = listOf("127.0.0.1", "192.168.1.20", "10.0.0.10", "10.1.0.12")
+        assertEquals("10.1.0.12", C3MeshProbe.sourceInMesh("10.1.0.1", locals))   // Mesh-2 hub: the first address (10.0.0.10) is dropped by that hub
+        assertEquals("10.0.0.10", C3MeshProbe.sourceInMesh("10.0.0.1", locals))
+        assertEquals("10.0.0.10", C3MeshProbe.sourceInMesh("10.0.0.6", locals))
+        assertNull("a public or other-mesh destination is left to the routing table", C3MeshProbe.sourceInMesh("8.8.8.8", locals))
+        assertNull(C3MeshProbe.sourceInMesh("10.1.0.12", listOf("10.1.0.12")))   // never bound to itself
+        assertNull(C3MeshProbe.sourceInMesh("not-an-ip", locals))
+    }
 }
