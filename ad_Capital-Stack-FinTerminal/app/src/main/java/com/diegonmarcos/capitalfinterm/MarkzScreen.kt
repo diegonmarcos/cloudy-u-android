@@ -33,7 +33,9 @@ object MarkzScreen {
             row("st_g_ll") { f(it.logLik, 1) },
             row("st_g_n") { it.n.toString() },
             row("st_g_range") { (it.from?.toString() ?: "?") + " .. " + (it.to?.toString() ?: "?") },
-            row("st_g_source") { d.word(if (it.fitted) "st_g_fitted" else "st_g_defaults") },
+            row("st_g_source") { d.word(when (it.basis) { "capped" -> "st_g_capped"; "targeted" -> "st_g_targeted"; "defaults" -> "st_g_defaults"; else -> "st_g_fitted" }) },
+            row("st_g_realised") { f(it.realisedVol, 2) },
+            row("st_g_dropped") { it.dropped.toString() },
         )
     }
 }

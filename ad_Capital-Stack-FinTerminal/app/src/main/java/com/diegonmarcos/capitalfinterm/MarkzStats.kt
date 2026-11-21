@@ -154,7 +154,7 @@ object MarkzStats {
         val vols = win.mapIndexed { i, r ->
             // GARCH: the parameters fitted to the asset's own whole history (cached by data hash); the declared defaults on the window when it is too short
             val fit = GarchFitter.fit(closes[i], decl.alpha, decl.beta)
-            val g = if (fit.fitted) fit.vol(GarchFitter.logReturns(closes[i].map { it.second }), decl.annualDays) else garchVol(r, decl.alpha, decl.beta, decl.annualDays)
+            val g = if (fit.fitted) fit.vol(GarchFitter.cleanReturns(closes[i].map { it.second }).first, decl.annualDays) else garchVol(r, decl.alpha, decl.beta, decl.annualDays)
             MarkzVols(histVol(r, decl.annualDays), ewmaVol(r, decl.lambda, decl.annualDays), g, implied.getOrNull(i), fit)
         }
         val corr = win.indices.map { i -> win.indices.map { j -> if (i == j) 1.0 else corr(win[i], win[j]) } }

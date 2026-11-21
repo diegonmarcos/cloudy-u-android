@@ -46,7 +46,7 @@ Lnktree family, declared in `1_cicd/src/data/app-families.json`; the Cloud famil
   long-only minimum-variance / maximum-Sharpe optimiser and its frontier, each return sendable to the Sensy Matrix). Personal portfolio (the
   holdings list, `MYPM`) is kept, and the former MY-PM Homepage is MARKZ > Index. Rule 16: `ui.renamed` maps the old ids, `ui.redirects` sends the
   old deep links and the command word MY-PM to MARKZ; `Rename1832ParityTest` holds every MY-PM element to `nav-parity-baseline-1832.json`,
-  `MarkzParityTest` every element of the owner's page to `markz-owner-page-1832.json`; `MarkzTest` and `MarkzStatsTest` cover the math. `GarchFit.kt` fits GARCH(1,1) by maximum likelihood to each asset's own history (cached by data hash; fewer than 500 returns: the declared defaults, marked "defaults (short history)"); `GarchFitTest` and `MarkzGarchParityTest` cover it.
+  `MarkzParityTest` every element of the owner's page to `markz-owner-page-1832.json`; `MarkzTest` and `MarkzStatsTest` cover the math. `GarchFit.kt` fits GARCH(1,1) by maximum likelihood to each asset's own history (bad prints dropped, persistence capped at 0.995, long-run vol gated against the realised vol; cached by data hash; fewer than 500 returns: the declared defaults, marked "defaults (short history)"); `GarchFitTest` and `MarkzGarchParityTest` cover it.
 
 * EM yield curves (#1832): CB > Yield Curves adds the curves of the major emerging markets, each read the way the US Treasury and ECB curves are
   (a declared `points` panel in `data/dashboards.json`, its publisher in `data/sources.json`, a parser in `Feeds.kt`): India from CCIL's tenor-wise

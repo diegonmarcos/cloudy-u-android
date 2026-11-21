@@ -14,6 +14,12 @@ import kotlin.math.sqrt
 data class GarchFit(
     val omega: Double, val alpha: Double, val beta: Double, val mu: Double, val logLik: Double, val n: Int,
     val from: LocalDate?, val to: LocalDate?, val fitted: Boolean,
+    /** "fitted", "capped" (persistence at its cap), "targeted" (omega from the realised variance: the fit failed the sanity gate) or "defaults". */
+    val basis: String = if (fitted) "fitted" else "defaults",
+    /** Returns dropped as bad prints (splits, a jump reversed the next day) before the fit. */
+    val dropped: Int = 0,
+    /** The annualised volatility of the returns kept, percent (what the long-run vol is gated against). */
+    val realisedVol: Double = Double.NaN,
 ) {
     val persistence: Double get() = alpha + beta
     /** Days for a variance shock to halve: ln(1/2) / ln(alpha + beta); infinite when the persistence is 0 (no memory) is reported as 0. */
@@ -41,17 +47,37 @@ data class GarchFit(
 object GarchFitter {
     /** Fewer log returns than this: the defaults are used and the asset is marked as such. */
     const val MIN_OBS = 500
-    const val MAX_PERSISTENCE = 0.9999
+    const val MAX_PERSISTENCE = 0.995
+    /** A return beyond this (log) is a bad print or a split on a fund. */
+    const val MAX_ABS_RETURN = 0.25
+    /** A jump beyond this that the next day reverses (the two sum to under a quarter of it) is a bad print. */
+    const val JUMP = 0.10
+    /** The long-run vol must stay within [1/GATE, GATE] x the realised vol, else the omega is variance-targeted. */
+    const val GATE = 2.0
 
     /** How many optimiser runs happened (a cache hit does not count). */
     @Volatile var fits: Int = 0; private set
     private val cache = ConcurrentHashMap<String, GarchFit>()
+
+    /** Trading days a year the realised vol is annualised with: the daily vol times sqrt(ANNUAL). */
+    const val ANNUAL = 252
 
     fun clearCache() { cache.clear() }
 
     fun sampleVar(r: List<Double>, mu: Double): Double = if (r.isEmpty()) 0.0 else r.sumOf { (it - mu) * (it - mu) } / r.size
 
     fun logReturns(closes: List<Double>): List<Double> = closes.zipWithNext { a, b -> ln(b / a) }
+
+    /** The log returns of [closes] without the bad prints (|r| > [MAX_ABS_RETURN], or a jump over [JUMP] reversed the next day: both legs), and how many were dropped. */
+    fun cleanReturns(closes: List<Double>): Pair<List<Double>, Int> {
+        val r = logReturns(closes)
+        val bad = BooleanArray(r.size)
+        for (i in r.indices) {
+            if (Math.abs(r[i]) > MAX_ABS_RETURN) bad[i] = true
+            if (i + 1 < r.size && Math.abs(r[i]) > JUMP && r[i] * r[i + 1] < 0 && Math.abs(r[i] + r[i + 1]) < 0.25 * Math.abs(r[i])) { bad[i] = true; bad[i + 1] = true }
+        }
+        return r.filterIndexed { i, _ -> !bad[i] } to bad.count { it }
+    }
 
     /** A hash of the closes (dates and values) and the defaults: the cache key. */
     fun dataHash(closes: List<Pair<LocalDate, Double>>, alpha: Double, beta: Double, minObs: Int): String {
@@ -66,14 +92,14 @@ object GarchFitter {
         cache.getOrPut(dataHash(closes, defAlpha, defBeta, minObs)) { compute(closes, defAlpha, defBeta, minObs) }
 
     private fun compute(closes: List<Pair<LocalDate, Double>>, defAlpha: Double, defBeta: Double, minObs: Int): GarchFit {
-        val r = logReturns(closes.map { it.second })
+        val (r, dropped) = cleanReturns(closes.map { it.second })
         val from = closes.firstOrNull()?.first; val to = closes.lastOrNull()?.first
         val mu = if (r.isEmpty()) 0.0 else r.sum() / r.size
         if (r.size < minObs || sampleVar(r, mu) <= 0.0) {
             val lr = sampleVar(r, mu)
             val omega = (1 - defAlpha - defBeta) * lr
             val ll = if (lr > 0) logLik(r.map { (it - mu) * 100 }, omega * 1e4, defAlpha, defBeta) + r.size * ln(100.0) else Double.NaN
-            return GarchFit(omega, defAlpha, defBeta, mu, ll, r.size, from, to, false)
+            return GarchFit(omega, defAlpha, defBeta, mu, ll, r.size, from, to, false, "defaults", dropped, sqrt(lr * ANNUAL) * 100)
         }
         fits++
         val y = r.map { (it - mu) * 100 }   // percent, demeaned: the optimiser works near unit scale
@@ -99,8 +125,19 @@ object GarchFitter {
             val f = nll(x)
             if (f < bestF) { bestF = f; best = x }
         }
-        val (o, a, b) = unpack(best!!)
-        return GarchFit(o * 1e-4, a, b, mu, -bestF + r.size * ln(100.0), r.size, from, to, true)
+        val (o0, a, b) = unpack(best!!)
+        var o = o0
+        var basis = if (a + b >= MAX_PERSISTENCE * 0.999) "capped" else "fitted"
+        // sanity gate: the long-run vol against the realised vol of the same returns (variance in percent^2, the same annualisation for both)
+        gate(o, a, b, s2)?.let { o = it; basis = "targeted" }
+        val ll = logLik(y, o, a, b)
+        return GarchFit(o * 1e-4, a, b, mu, ll + r.size * ln(100.0), r.size, from, to, true, basis, dropped, sqrt(s2 * 1e-4 * ANNUAL) * 100)
+    }
+
+    /** The variance-targeted omega ((1 - alpha - beta) x [s2]) when the long-run variance omega / (1 - alpha - beta) is outside [1/GATE, GATE] x the realised in vol terms; null = it passes. */
+    fun gate(omega: Double, alpha: Double, beta: Double, s2: Double): Double? {
+        val longRun = sqrt(omega / (1 - alpha - beta)); val real = sqrt(s2)
+        return if (longRun < real / GATE || longRun > real * GATE) (1 - alpha - beta) * s2 else null
     }
 
     /** The Gaussian log-likelihood of [y] under GARCH(1,1), the variance seeded with the sample variance. */
