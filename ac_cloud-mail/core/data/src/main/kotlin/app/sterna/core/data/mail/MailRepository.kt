@@ -582,29 +582,16 @@ internal fun folderScopeSql(scopeCount: Int, table: String, memberPairs: Set<Int
     if (scopeCount == 0) "0" else List(scopeCount) { i ->
         if (i !in memberPairs) {
             "($table.accountId = ? AND $table.mailboxId = ?)"
-        } else when (MEMBER_FORM) {
-            1 -> "($table.accountId = ? AND ($table.mailboxId = ? OR EXISTS (SELECT 1 FROM email_mailboxes x " +
-                "WHERE x.accountId = $table.accountId AND x.emailId = $table.id AND x.mailboxId = ?)))"
-            2 -> "(($table.accountId = ? AND $table.id IN (SELECT emailId FROM email_mailboxes WHERE accountId = ? AND mailboxId = ?)) " +
-                "OR ($table.accountId = ? AND $table.mailboxId = ?))"
-            3 -> "($table.accountId = ? AND $table.id IN (SELECT emailId FROM email_mailboxes WHERE accountId = ? AND mailboxId = ?))"
-            else -> "($table.accountId = ? AND ($table.mailboxId = ? OR $table.id IN " +
+        } else {
+            "($table.accountId = ? AND ($table.mailboxId = ? OR $table.id IN " +
                 "(SELECT emailId FROM email_mailboxes WHERE accountId = ? AND mailboxId = ?)))"
         }
     }.joinToString(" OR ")
 
-/** DIAGNOSTIC (#1837, removed once the device form is chosen): which form of the membership term [folderScopeSql] writes. */
-@Volatile internal var MEMBER_FORM: Int = 0
-
-/** The binds of ONE [folderScopeSql] clause over [scopes]: (account, mailbox) per pair, more for a pair in [memberPairs]. */
+/** The binds of ONE [folderScopeSql] clause over [scopes]: (account, mailbox) per pair, twice for a pair in [memberPairs]. */
 internal fun scopeArgs(scopes: List<Pair<String, String>>, memberPairs: Set<Int> = emptySet()): List<String> =
-    scopes.flatMapIndexed { i, (a, m) ->
-        if (i !in memberPairs) listOf(a, m) else when (MEMBER_FORM) {
-            1 -> listOf(a, m, m)
-            2 -> listOf(a, a, m, a, m)
-            3 -> listOf(a, a, m)
-            else -> listOf(a, m, a, m)
-        }
+    scopes.flatMapIndexed { i, (account, mailbox) ->
+        if (i in memberPairs) listOf(account, mailbox, account, mailbox) else listOf(account, mailbox)
     }
 
 /** The indexes in [scopes] of the pairs [memberScopes] names: what [folderScopeSql] takes as `memberPairs`. */
@@ -1733,6 +1720,8 @@ class MailRepository(
     }
 
     /** The (account, mailbox) folders that hold messages filed under ANOTHER mailbox, as `email_mailboxes` says (#1837); usually empty. */
+    fun observeExtraFolders(): Flow<Set<Pair<String, String>>> = extraScopes()
+
     private fun extraScopes(): Flow<Set<Pair<String, String>>> =
         emailDao.observeExtraScopes().map { rows -> rows.mapTo(HashSet()) { it.accountId to it.mailboxId } }.distinctUntilChanged()
 
@@ -1765,32 +1754,6 @@ class MailRepository(
         val scopes = listOf(credentials.id to mailboxId)
         return extraScopes().flatMapLatest { extra ->
             RustMailEngine.log("list $mailboxId: membership term=${scopes.any { it in extra }} (folders with extra members: ${extra.size}), conversation=$conversationView")
-            if (scopes.any { it in extra }) {
-                // evidence for the offline proof: how many rows the flat membership query finds right now
-                val rows = runCatching { emailDao.keysForSelection(selectionIdsQuery(scopes, false, ListShape.NONE, extra)).size }
-                RustMailEngine.log("list $mailboxId: flat membership query finds $rows rows")
-                // what the PAGER itself gets: the first page of the very source the list uses (and the error, if it throws)
-                val paged = runCatching {
-                    emailDao.conversationPagingSource(conversationQuery(scopes, sort, unreadOnly, credentials.id, sentMailboxes, shape, extra))
-                        .load(androidx.paging.PagingSource.LoadParams.Refresh(null, 30, false))
-                }
-                RustMailEngine.log("list $mailboxId: pager first page = " + paged.fold({ r ->
-                    when (r) {
-                        is androidx.paging.PagingSource.LoadResult.Page -> "page of ${r.data.size}"
-                        is androidx.paging.PagingSource.LoadResult.Error -> "ERROR ${r.throwable}"
-                        else -> r.toString()
-                    }
-                }, { "threw $it" }))
-                for (form in 0..3) {
-                    val saved = MEMBER_FORM
-                    val q = try {
-                        MEMBER_FORM = form
-                        conversationQuery(scopes, SortOrder.DATE_DESC, false, credentials.id, sentMailboxes, shape, extra)
-                    } finally { MEMBER_FORM = saved }
-                    val n = runCatching { emailDao.conversationRows(q).size }
-                    RustMailEngine.log("list $mailboxId: conversation form $form finds $n rows")
-                }
-            }
             if (conversationView) {
                 Pager(
                     config = pagingConfig(),

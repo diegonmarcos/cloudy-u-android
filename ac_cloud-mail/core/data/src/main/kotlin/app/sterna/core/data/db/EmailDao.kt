@@ -79,9 +79,6 @@ interface EmailDao {
     @RawQuery(observedEntities = [EmailEntity::class, SnoozedEntity::class, EmailMailboxEntity::class])
     fun conversationPagingSource(query: SupportSQLiteQuery): PagingSource<Int, ConversationRow>
 
-    /** DIAGNOSTIC (#1837): the conversation query's rows, to log what a form of the membership term finds on the device. */
-    @RawQuery(observedEntities = [EmailEntity::class, SnoozedEntity::class, EmailMailboxEntity::class])
-    suspend fun conversationRows(query: SupportSQLiteQuery): List<ConversationRow>
 
     /** One live count of a list's rows, built by MailRepository.listCountSql from the list's own WHERE. */
     @RawQuery(observedEntities = [EmailEntity::class, SnoozedEntity::class, EmailMailboxEntity::class])

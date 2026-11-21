@@ -1554,6 +1554,9 @@ fun InboxScreen(
                 // inserts its first page. Without this guard the rows branch draws another folder's
                 // mail under the new header; every field of listKey is also a PageKey member.
                 val listKey = ListKey(ui.accountId, ui.selectedMailboxId, ui.unified, ui.unreadView)
+                // #1837: does this folder list messages filed under another mailbox (a label also holding an Inbox message)?
+                val extraFolders by viewModel.extraFolders.collectAsStateWithLifecycle()
+                val memberFolder = ui.accountId != null && ui.selectedMailboxId != null && (ui.accountId to ui.selectedMailboxId) in extraFolders
                 // ONE read of the presented snapshot, shared by the two derivations below, or the
                 // guard compares one folder's row against another folder's ownership.
                 val presentedRows = listRows.itemSnapshotList.items
@@ -1563,7 +1566,7 @@ fun InboxScreen(
                 // has can be produced by the OLD generation on its own. Both ENDS are asked: in
                 // Drafts the first row is the phone's own draft and would vouch for the old folder's
                 // mail behind it. Only for a single folder is the question decidable — rowsForeign.
-                val foreign = rowsForeign(listKey, firstRow, presentedRows.lastOrNull())
+                val foreign = rowsForeign(listKey, firstRow, presentedRows.lastOrNull(), memberFolder)
                 // Valve: after ROWS_GUARD_GIVE_UP_MS with nothing loading and nothing moved, give the
                 // screen back to the rows. Keyed on listKey, so the next switch re-arms the guard.
                 val gaveUp = remember(listKey) { mutableStateOf(false) }

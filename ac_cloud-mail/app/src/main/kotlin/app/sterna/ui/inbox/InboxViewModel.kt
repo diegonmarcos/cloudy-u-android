@@ -1147,6 +1147,11 @@ class InboxViewModel(
     val pagedListRows: Flow<PagingData<InboxRow>> =
         combine(pagedEmails, localDraftRows) { paged, local -> withLocalDrafts(paged, local) }
 
+    /** #1837: the (account, mailbox) folders that also list messages filed under another mailbox (a label holding an Inbox message):
+     *  the rows guard cannot call such a row foreign by its mailbox ([rowsForeign]). */
+    val extraFolders: StateFlow<Set<Pair<String, String>>> =
+        repo.observeExtraFolders().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+
     /** The accounts' Sent folders backing the chip's "plus Sent replies" scope — live from the
      *  folder cache in conversation mode, none in flat mode. Kept in [listScope] with the folder(s)
      *  [key] pages: unfolding a row must reuse what that row's chip counted. The viewed folders come

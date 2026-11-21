@@ -313,6 +313,19 @@ class RowsGuardTest {
     }
 
     @Test
+    fun `a folder that also lists messages filed elsewhere is not called foreign by their mailbox (1837 membership)`() {
+        val label = ListKey("accA", "mb-receipts", unified = false, unreadView = false)
+        val inInbox = row("accA", "mb-inbox", "e1") // a message of the Inbox that the label also holds
+        val own = row("accA", "mb-receipts", "e2")
+        assertTrue("without the membership fact the mailbox says foreign", rowsForeign(label, inInbox, own))
+        assertFalse("with it, the mailbox proves nothing", rowsForeign(label, inInbox, own, memberFolder = true))
+        assertTrue(
+            "another account's row is foreign whatever the folder lists",
+            rowsForeign(label, row("accB", "mb-receipts", "e3"), own, memberFolder = true),
+        )
+    }
+
+    @Test
     fun `rowsForeign asks both ends, because either end alone can be honest`() {
         val drafts = ListKey("accA", "mb-drafts", unified = false, unreadView = false)
         assertTrue(

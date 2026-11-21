@@ -130,7 +130,7 @@ class RowsGuardWiringLintTest {
                 "and vouches for the twenty inbox messages drawn under it. RowsGuardTest runs " +
                 "rowsForeign in isolation and can never see this — the arguments are pinned HERE. " +
                 "Belonging lines found:",
-            listOf("val foreign = rowsForeign(listKey, firstRow, presentedRows.lastOrNull())"),
+            listOf("val foreign = rowsForeign(listKey, firstRow, presentedRows.lastOrNull(), memberFolder)"),
             codeLines(INBOX_SCREEN).map { it.trim() }.filter { it.startsWith("val foreign =") },
         )
     }

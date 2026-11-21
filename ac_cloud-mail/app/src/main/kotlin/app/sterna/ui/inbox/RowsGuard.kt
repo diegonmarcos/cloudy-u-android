@@ -29,13 +29,16 @@ internal fun rowsSignature(itemCount: Int, first: InboxRow?): String =
 
 /** Whether the rows Paging is presenting demonstrably belong to a selection other than [key].
  * Both ends of the snapshot are asked and one suffices: `withLocalDrafts` prefixes rows of the
- *  selected folder, so a genuine Drafts row can vouch for twenty foreign ones. */
-internal fun rowsForeign(key: ListKey, first: InboxRow?, last: InboxRow?): Boolean = when {
+ *  selected folder, so a genuine Drafts row can vouch for twenty foreign ones. [memberFolder]: the folder also lists rows filed
+ *  under another mailbox (#1837), so a row's mailbox proves nothing there. */
+internal fun rowsForeign(key: ListKey, first: InboxRow?, last: InboxRow?, memberFolder: Boolean = false): Boolean = when {
     first == null -> false
     key.unified || key.unreadView -> false
     key.accountId == null || key.selectedMailboxId == null -> false
     else -> listOfNotNull(first, last).any {
-        it.email.accountId != key.accountId || it.email.mailboxId != key.selectedMailboxId
+        // #1837: a folder that lists messages filed under ANOTHER mailbox ([memberFolder], from `email_mailboxes`) owns rows whose
+        // `mailboxId` is not its own, so there the mailbox cannot prove a row foreign (the account still can).
+        it.email.accountId != key.accountId || (!memberFolder && it.email.mailboxId != key.selectedMailboxId)
     }
 }
 

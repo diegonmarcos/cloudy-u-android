@@ -260,6 +260,8 @@ has "$E" 'emailDao.applyProjection(' "the projection writes every fed message's 
 has "$E" 'coalesceMs: Long = 0L' "the core sync can answer a folder sync from a pass that just completed"
 has "$APP/core/data/src/test/kotlin/app/sterna/core/data/db/FolderMembershipMigrationSqlTest.kt" 'the table has the columns, NOT NULL and primary key order Room generates' "the migration test exists"
 has "$APP/core/data/src/test/kotlin/app/sterna/core/data/mail/FolderMembershipListSqlTest.kt" 'with the membership term the label lists the message that is also in the Inbox' "the list SQL test exists"
+has "$APP/app/src/main/kotlin/app/sterna/ui/inbox/RowsGuard.kt" 'memberFolder' "the rows guard knows a label holds rows filed under another mailbox"
+has "$APP/app/src/main/kotlin/app/sterna/ui/inbox/InboxScreen.kt" 'viewModel.extraFolders' "the screen tells the guard which folders list extra messages"
 has "$APP/test/walk-mail-core-offline.sh" 'must list its own message AND the Inbox message that is also in the label' "the emulator proof asserts the label lists the Inbox message too"
 
 echo
