@@ -140,17 +140,16 @@ jobs:
           elif cmd == "texts":     # ui.py texts dump.xml: every text and content-desc on screen, for the log
               print(" | ".join(t for a in ns for t in (a.get("text", ""), a.get("content-desc", "")) if t.strip())[:1500])
           elif cmd == "island":    # ui.py island dump.xml: "N x y" = the island's item count and the fifth item's centre
+              # The items are content-desc nodes (QR CODE, OBJECTS, CAMERA, VIDEO, Scanner); the selected one is not clickable,
+              # so count by content-desc, not by clickable. The icon's centre lies inside its clickable cell.
               isl = [a for a in ns if a.get("resource-id", "").endswith("camera_mode_island")]
               if not isl: print("0 0 0"); sys.exit()
               x1, y1, x2, y2 = isl[0]["_b"]
-              kids = sorted((a for a in ns if a is not isl[0] and a.get("clickable") == "true"
+              kids = sorted((a for a in ns if a is not isl[0] and a.get("content-desc", "").strip()
                              and a["_b"][0] >= x1 and a["_b"][2] <= x2 and a["_b"][1] >= y1 and a["_b"][3] <= y2), key=lambda a: a["_b"][0])
-              items = []
-              for a in kids:
-                  cx = (a["_b"][0] + a["_b"][2]) // 2
-                  if not items or cx - items[-1][0] > 20: items.append((cx, (a["_b"][1] + a["_b"][3]) // 2))
-              if len(items) >= 5: print(len(items), items[4][0], items[4][1])
-              else: print(0, x1 + (x2 - x1) * 9 // 10, (y1 + y2) // 2)   # items not readable: the fifth of five equal cells
+              if len(kids) >= 5: c = centre(kids[4]); print(len(kids), c)
+              else:   # items not readable: the fifth of five equal cells between the island's padded ends (108..972 of 1080)
+                  w = x2 - x1; print(0, x1 + w // 10 + (w * 8 // 10) * 9 // 10, (y1 + y2) // 2)
           PY
           # stage.py: measure the Scanner's image stage (between the page strip and the tab row) in a screenshot.
           #   stage.py frame  shot.png dump.xml dpi        the cyan corner quad must hug the page (light region), not the whole photo
@@ -232,7 +231,8 @@ jobs:
           uncover() { for _ in 1 2 3; do adb shell uiautomator dump /sdcard/u0.xml >/dev/null 2>&1; adb pull /sdcard/u0.xml u0.xml >/dev/null 2>&1
             u=$(python3 -I ui.py text u0.xml Unlock)
             [ -z "$u" ] && grep -q 'text="Install unknown apps"' u0.xml && u=$(python3 -I ui.py starts u0.xml Skip)
-            [ -z "$u" ] && u=$(python3 -I ui.py text u0.xml Wait)
+            # a system "X isn't responding" dialog (Pixel Launcher on these runners, #1805/#1804) swallows every tap: answer Wait
+            [ -z "$u" ] && grep -q "isn't responding\|isn&apos;t responding" u0.xml && u=$(python3 -I ui.py text u0.xml Wait)
             [ -z "$u" ] && return 0; adb shell input tap $u; sleep 2; done; }
           dump() { awake; uncover; for _ in 1 2 3; do r=$(adb shell uiautomator dump /sdcard/ui.xml 2>&1 | tr -d '\r'); case "$r" in *dumped*) break;; esac; sleep 1; done
             adb pull /sdcard/ui.xml "$OUT/$1.xml" >/dev/null 2>&1; }
@@ -242,9 +242,14 @@ jobs:
           tap_id() { for _ in 1 2 3 4; do dump _t; xy=$(python3 -I ui.py id "$OUT/_t.xml" "$1"); [ -n "$xy" ] && { adb shell input tap $xy; echo "tapped id '$1' at $xy"; return 0; }; sleep 2; done
             echo "no id '$1'; on screen: $(python3 -I ui.py texts "$OUT/_t.xml")"; return 1; }
           on_scanner() { for _ in 1 2 3 4 5 6; do adb shell dumpsys activity activities | tr -d '\r' | grep -E "topResumedActivity|ResumedActivity" | grep -q "scanner.ScannerActivity" && return 0; sleep 2; done; return 1; }
-          launch() { adb shell am force-stop "$PKG"; adb shell am start -n "$ACT" >/dev/null; sleep 10; }
+          app_up() { adb shell dumpsys activity activities | tr -d '\r' | grep -E "topResumedActivity|ResumedActivity" | grep -q "$PKG/"; }
+          # ensure_app: the camera must be the resumed app (not the launcher, its long-press menu, or a not-responding dialog) before a step
+          ensure_app() { for _ in 1 2 3; do uncover; app_up && return 0; adb shell input keyevent KEYCODE_HOME; sleep 1; adb shell am start -W -n "$ACT" >/dev/null; sleep 4; done; uncover; app_up; }
+          launch() { uncover; adb shell am force-stop "$PKG"; adb shell am start -W -n "$ACT" >/dev/null; sleep 8; ensure_app || echo "warn: $PKG is not the resumed activity"; }
           # open_scanner: tap the island's fifth slot (read from the dump); sets ISLAND_N (items read, 0 = unreadable)
-          open_scanner() { dump nav; set -- $(python3 -I ui.py island "$OUT/nav.xml"); ISLAND_N=$1; echo "island items=$1 fifth=($2,$3)"; adb shell input tap "$2" "$3"; }
+          # then checks ScannerActivity is resumed, and retries the tap once if not
+          open_scanner() { for try in 1 2; do ensure_app; dump nav; set -- $(python3 -I ui.py island "$OUT/nav.xml"); ISLAND_N=$1; echo "island items=$1 fifth=($2,$3) try=$try"
+              adb shell input tap "$2" "$3"; sleep 3; on_scanner && return 0; done; return 1; }
 
           # ── the fixture on the phone: Pictures + media scan, read back from MediaStore ──
           python3 -I fixture.py "$OUT/scan-test-page.png" || exit 2
@@ -257,15 +262,15 @@ jobs:
           # ── 1. Scanner is the fifth nav item and opens ScannerActivity ──
           decl=$(python3 -I -c 'import json; print(",".join(json.load(open("ac_cloud-camera/build.json"))["ui"]["bottom_nav"]))')
           launch; shot camera-page; dump camera-page
-          open_scanner; sleep 3; shot scanner-open; dump scanner-open
+          open_scanner; sleep 1; shot scanner-open; dump scanner-open
           if on_scanner; then opened=yes; else opened=no; fi
-          if [ "$decl" = "qr_scan,objects,photo,video,scanner" ] && [ "$opened" = yes ] && { [ "$ISLAND_N" -eq 5 ] || [ "$ISLAND_N" -eq 0 ]; }; then
-            check ok "1 Scanner is the fifth bottom-nav item (build.json: $decl; island items read: $ISLAND_N, 0 = not readable, tapped by position) and its tap opens ScannerActivity"
+          if [ "$decl" = "qr_scan,objects,photo,video,scanner" ] && [ "$opened" = yes ] && [ "$ISLAND_N" -eq 5 ]; then
+            check ok "1 Scanner is the fifth bottom-nav item (build.json: $decl; island items read: $ISLAND_N, tapped at the fifth item) and its tap opens ScannerActivity"
           else check no "1 bottom_nav='$decl' island items=$ISLAND_N ScannerActivity opened=$opened"; fi
           adb shell input keyevent KEYCODE_BACK; sleep 3
 
           # ── 2. the Filters button on the Camera page opens the Filters/VR screen ──
-          dump camera-back
+          ensure_app; dump camera-back
           if [ -n "$(python3 -I ui.py id "$OUT/camera-back.xml" filters_option)" ]; then check ok "2 the Camera page shows the Filters button (filters_option)"; else check no "2 no Filters button on the Camera page: $(python3 -I ui.py texts "$OUT/camera-back.xml")"; fi
           tap_id filters_option; sleep 6; shot filters-screen; dump filters-screen
           vr=$(python3 -I ui.py id "$OUT/filters-screen.xml" vr_status); gone=$(python3 -I ui.py id "$OUT/filters-screen.xml" filters_option)
@@ -273,7 +278,7 @@ jobs:
           else check no "2 Filters tap: vr_status='$vr' filters_option still shown='$gone'; on screen: $(python3 -I ui.py texts "$OUT/filters-screen.xml")"; fi
 
           # ── 3. import the test page through the Scanner's Import button and the system picker ──
-          launch; open_scanner; sleep 3
+          launch; open_scanner || echo "warn: ScannerActivity did not open for the import step"; sleep 2
           tap_text Import; sleep 4; shot picker; dump picker
           picked=no
           for attempt in 1 2 3 4; do
