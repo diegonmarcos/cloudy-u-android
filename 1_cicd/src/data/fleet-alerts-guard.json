@@ -26,8 +26,8 @@
     ".kt",
     ".java"
   ],
-  "notify_call": "(?:\\.notify|\\bNotifyGate\\.post(?:Ctx)?)\\(\\s*[^)\\s]",
-  "_doc_notify_call": "A NotificationManager/NotificationManagerCompat post, or a post handed to the SuperApp's NotifyGate (NotifyGate.post / NotifyGate.postCtx: the dedupe and debounce door every repeating SuperApp notification goes through since #1629). Counting the door's CALLERS keeps each poster classified by its own file; the door's single notify() is classified once as notify_gate. Object.notify() (no arguments) is excluded by requiring an argument; comments are stripped before matching, so a note that names notify() is not a call.",
+  "notify_call": "(?:\\.notify|\\bNotifyGate\\.post(?:Ctx|Kept)?)\\(\\s*[^)\\s]",
+  "_doc_notify_call": "A NotificationManager/NotificationManagerCompat post, or a post handed to the SuperApp's NotifyGate (NotifyGate.post / NotifyGate.postCtx / NotifyGate.postKept, #1844: the dedupe and debounce door every repeating SuperApp notification goes through since #1629). Counting the door's CALLERS keeps each poster classified by its own file; the door's single notify() is classified once as notify_gate. Object.notify() (no arguments) is excluded by requiring an argument; comments are stripped before matching, so a note that names notify() is not a call.",
   "kinds": {
     "badge": "a persistent badge of one of the four shade groups, re-posted by its owner",
     "media": "a media transport mirroring a playback session",
@@ -85,6 +85,12 @@
       "kind": "media",
       "notify_calls": 2,
       "why": "G3 Media Player badge: the transport mirroring the active media session (playing + idle faces)."
+    },
+    {
+      "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/system/BankingWatcher.kt",
+      "kind": "user_action",
+      "notify_calls": 1,
+      "why": "#1847 Banking Apps Mode: the optional offer (auto = offer) when a declared bank app opens or is left; a one-tap prompt that opens Quick actions > Preset where the owner turns the mode on or restores it. Not an alert about the fleet, and off by default."
     },
     {
       "path": "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/notificationcenter/NotifyGroups.kt",
