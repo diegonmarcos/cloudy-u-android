@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
         LaunchTarget.from(intent)
         runCatching { WebserverBenchmarks.register() }   // #1728 X-Ray App > Performance benchmarks
         Core.attach(this)
-        Thread { runCatching { FleetTokens.migrate(applicationContext) } }.start()   // #1835 one-time import from the SuperApp, off the main thread
+        Thread { runCatching { FleetTokens.deliver(applicationContext); FleetTokens.migrate(applicationContext) } }.start()   // #1835 vault delivery first, then the one-time SuperApp import, off the main thread
         com.diegonmarcos.cloudwebserver.owner.AdbOwnerSide.install(applicationContext)   // #1682 P2b no-op unless this app owns ADB
         syncKeepAlive()
         setContent { WebserverTheme { WebserverShell() } }

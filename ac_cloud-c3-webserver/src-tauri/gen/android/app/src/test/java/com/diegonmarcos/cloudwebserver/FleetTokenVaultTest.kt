@@ -79,4 +79,23 @@ class FleetTokenVaultTest {
         assertEquals(FleetTokenLogic.Migration.NONE, FleetTokenLogic.migrationPlan(true, false, "x".repeat(20)))
         assertEquals(FleetTokenLogic.Migration.IMPORT, FleetTokenLogic.migrationPlan(false, false, "x".repeat(20)))
     }
+
+    @Test fun vaultDeliveryImportsConfirmsReplacesAndNeverOverwritesAPhoneToken() {
+        val v = vault()
+        assertFalse(v.deliver(null)); assertFalse(v.deliver(" "))
+        assertTrue(v.deliver("vault-delivered-token-0001")); assertTrue(v.status().inVault)
+        assertFalse("same value again: nothing to do", v.deliver("vault-delivered-token-0001"))
+        assertTrue("the vault rotated its value", v.deliver("vault-delivered-token-0002")); assertEquals("vault-delivered-token-0002", v.reveal())
+        v.rotate()
+        val s = v.status(); assertFalse("a phone Rotate is not in the vault", s.inVault); assertEquals(FleetTokenLogic.PHONE, s.source)
+        val local = v.reveal()
+        assertFalse("a phone token is kept over a different vault value", v.deliver("vault-delivered-token-0003")); assertEquals(local, v.reveal())
+        assertTrue("delivered back: the same value is marked in the vault", v.deliver(local)); assertTrue(v.status().inVault)
+    }
+
+    @Test fun pasteGenerateAndTheSuperAppImportAreNotInTheVault() {
+        val v = vault(); v.set("pasted-token-pasted-token-1"); assertFalse(v.status().inVault)
+        val w = vault(); assertTrue(w.migrate { "superapp-token-superapp-token" }); assertEquals(FleetTokenLogic.SUPERAPP, w.status().source); assertFalse(w.status().inVault)
+        assertEquals(FleetTokenLogic.Delivery.REPLACE, FleetTokenLogic.deliveryPlan("a".repeat(20), FleetTokenLogic.VAULT, "b".repeat(20)))
+    }
 }

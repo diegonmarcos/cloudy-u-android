@@ -6,7 +6,6 @@
          package, not QUERY_ALL_PACKAGES — the mesh only ever reads SuperApp. -->
     <queries>
         <package android:name="com.diegonmarcos.superapp" />
-        <!-- #1835 the fleet token's OWNER (Cloud C3 Webserver): every member reads it from there first. -->
         <package android:name="com.diegonmarcos.cloudwebserver" />
         <!-- #733 every OTHER mesh member. Same-signature apps are NOT mutually
              visible on Android 11+ (the documented automatic-visibility list

@@ -19,7 +19,7 @@ class RelayKeyDefaultGrantTest {
     private val ctx = ApplicationProvider.getApplicationContext<android.content.Context>()
 
     @Test fun `seed v20 grants the SuperApp the relay key and nothing else`() {
-        assertEquals(20, AccountVault.SEED_VERSION)
+        assertTrue("v20 is seeded (v21, #1835, came after it)", AccountVault.SEED_VERSION >= 20)
         assertEquals(mapOf("com.diegonmarcos.superapp" to listOf("cred.mesh.relay_key")), AccountVault.DEFAULT_GRANTS_BY_VERSION.getValue(20))
         val e = AppCredentialsContract.entry("mesh.relay_key")!!
         assertTrue("a secret: hidden on the page", e.secret)

@@ -21,7 +21,7 @@ import java.util.Date
  * Configs > Fleet token (owner decision on #1835): this app owns the fleet bearer token the mesh API / MCP and every fleet member
  * authenticate with. Status shows set / not set, the LAST 4 characters and the set date; Paste, Generate (256-bit hex), Rotate and Clear
  * change it; Reveal and Copy hand out the full value only after the owner's device credential. Nothing here logs the value.
- * There is no vault button: the repo declares no phone-to-vault delivery path, and none is invented here.
+ * The token is DELIVERED from the owner's vault by Cloud Account (App credentials fleet.mesh_token, build.json::fleet_token); Paste / Generate / Rotate are the fallback and read \"not in vault\" until the vault holds the same value. There is no phone-to-vault write path.
  */
 @Composable
 fun FleetTokenPage() {
@@ -51,6 +51,7 @@ fun FleetTokenPage() {
         Card("Fleet token", "c3_fleet_token") {
             Kv("Status", if (st.isSet) "set" else "not set", up = st.isSet)
             Kv("Value", if (st.isSet) "••••" + st.last4 else "-", mono = true)
+            Kv("Vault", when { !st.isSet -> "-"; st.inVault -> "in vault (delivered by Cloud Account)"; else -> "not in vault (${st.source ?: "phone"} only) until delivered back" })
             Kv("Set on", st.setAtMs?.let { DateFormat.getDateTimeInstance().format(Date(it)) } ?: "-")
             revealed?.let { Kv("Revealed (hides in 20 s)", it, mono = true) }
             Acts {
@@ -62,6 +63,7 @@ fun FleetTokenPage() {
                 Act("Rotate", "c3_fleet_token_rotate", enabled = st.isSet) { vault.rotate(); revealed = null; tick++; toast(ctx, "Rotated: peers read the new value on their next request") }
             }
             Acts {
+                Act("Fetch from vault", "c3_fleet_token_fetch") { Thread { val ok = FleetTokens.deliver(ctx.applicationContext); tick++; android.os.Handler(android.os.Looper.getMainLooper()).post { toast(ctx, if (ok) "Token delivered from the vault" else "Cloud Account delivered nothing new") } }.start() }
                 Act("Reveal", "c3_fleet_token_reveal", enabled = st.isSet) { if (revealed != null) revealed = null else gated("reveal") }
                 Act("Copy", "c3_fleet_token_copy", enabled = st.isSet) { gated("copy") }
                 Act("Clear", "c3_fleet_token_clear", enabled = st.isSet) { vault.clear(); revealed = null; tick++; toast(ctx, "Token cleared") }

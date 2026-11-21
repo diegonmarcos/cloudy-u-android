@@ -35,16 +35,12 @@ object FleetToken {
      *  permission would only add a way for the two answers to disagree. */
     const val PERMISSION = "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"
 
-    /** The app that mints the token in the LEGACY path. Since #1835 the token is OWNED by [OWNER_PKG] (Cloud C3 Webserver,
-     *  Configs > Fleet token); this authority stays only as the read-only FALLBACK during the migration, and SuperApp's
-     *  Configs > About shows the owner's value as a read-only mirror. */
+    /** Legacy minting app: since #1835 only the read-only FALLBACK while [OWNER_PKG] holds no token. */
     const val AUTHORITY_PKG = "com.diegonmarcos.superapp"
 
-    /** #1835 the OWNER of the fleet token: Cloud C3 Webserver, which stores it Keystore-encrypted and serves it from its
-     *  signature-guarded `<pkg>.fleettoken` provider (FleetTokenOwnerProvider). Read FIRST by [get]. */
+    /** #1835 the OWNER: Cloud C3 Webserver (`<pkg>.fleettoken` provider, signature-guarded). Read FIRST by [get]. */
     const val OWNER_PKG = "com.diegonmarcos.cloudwebserver"
     private const val OWNER_URI = "content://$OWNER_PKG.fleettoken/token"
-    private const val OWNER_TTL_MS = 15_000L
 
     /** Authority of [FleetTokenProvider] in the minting app. Every member ships
      *  the provider under its own `${applicationId}.fleet`, but only this one is
@@ -53,35 +49,19 @@ object FleetToken {
 
     @Volatile private var cached: String? = null
     @Volatile private var ownerAt = 0L
-
-    /**
-     * #1835 the owner's value: the webserver's provider, mirrored into this app's own prefs so a member keeps authenticating while the
-     * webserver is stopped. The owner is re-read every [OWNER_TTL_MS] so a rotation reaches every member within seconds. Off-main only.
-     */
+    /** #1835 the owner's value, mirrored into this app's prefs (offline cache); re-read every 15 s. Off-main only. */
     private fun owner(app: Context): String? {
-        val fetched = runCatching {
-            app.contentResolver.query(Uri.parse(OWNER_URI), null, null, null, null)
-                ?.use { c -> if (c.moveToFirst()) c.getString(0) else null }
-        }.getOrNull()
-        if (fetched.isNullOrBlank()) return null
-        DevControlPrefs(app).adopt(fetched)
-        return fetched
+        val fetched = runCatching { app.contentResolver.query(Uri.parse(OWNER_URI), null, null, null, null)?.use { c -> if (c.moveToFirst()) c.getString(0) else null } }.getOrNull()
+        return fetched?.takeIf { it.isNotBlank() }?.also { DevControlPrefs(app).adopt(it) }
     }
-
-    /** Refresh this app's mirror of the owner's token (SuperApp calls it at start and from its gateway threads). */
-    fun refreshFromOwner(ctx: Context): Boolean = owner(ctx.applicationContext) != null
 
     fun get(ctx: Context): String {
         val app = ctx.applicationContext
         val now = System.currentTimeMillis()
-        cached?.let { if (now - ownerAt < OWNER_TTL_MS) return it }
-        // Owner first; the legacy SuperApp path is only the read-only fallback while no owner token exists yet.
-        val t = owner(app)
-            ?: cached
-            ?: if (app.packageName == AUTHORITY_PKG) DevControlPrefs(app).token else adopt(app)
+        cached?.let { if (now - ownerAt < 15_000L) return it }
+        val t = owner(app) ?: cached ?: if (app.packageName == AUTHORITY_PKG) DevControlPrefs(app).token else adopt(app)
         if (t != null) {
-            cached = t
-            ownerAt = now
+            cached = t; ownerAt = now
             return t
         }
         // Fail closed, but do NOT cache the miss: installing SuperApp later then

@@ -43,6 +43,26 @@ object FleetTokenLogic {
 
     enum class Migration { NONE, IMPORT }
 
+    /** Where the held value came from: [VAULT] = delivered by Cloud Account from the owner's vault; the others are NOT in the vault. */
+    const val VAULT = "vault"
+    const val PHONE = "phone"
+    const val SUPERAPP = "superapp"
+
+    enum class Delivery { NONE, IMPORT, MARK_VAULT, REPLACE, KEEP_LOCAL }
+
+    /**
+     * The declarative vault delivery (the vault's value is the owner's): nothing delivered = nothing to do; nothing held = import it;
+     * the same value = mark it as in the vault; a different value over a vault-sourced one = the vault was rotated, replace;
+     * a different value over a phone-made one = keep it (Generate / Rotate on the phone), which stays "not in vault".
+     */
+    fun deliveryPlan(held: String?, source: String?, delivered: String?): Delivery = when {
+        delivered.isNullOrBlank() -> Delivery.NONE
+        held.isNullOrBlank() -> Delivery.IMPORT
+        held == delivered -> if (source == VAULT) Delivery.NONE else Delivery.MARK_VAULT
+        source == VAULT -> Delivery.REPLACE
+        else -> Delivery.KEEP_LOCAL
+    }
+
     /**
      * One-time import from the SuperApp: only while this app has no token, the migration has not run, and the SuperApp has one.
      * Once anything is set, generated, pasted or cleared here, [migrated] is true and the SuperApp is never read again.
@@ -52,21 +72,24 @@ object FleetTokenLogic {
 }
 
 class FleetTokenVault(private val kv: Kv, private val codec: TokenCodec, private val now: () -> Long = System::currentTimeMillis) {
-    data class Status(val isSet: Boolean, val last4: String, val setAtMs: Long?, val migrated: Boolean)
+    data class Status(val isSet: Boolean, val last4: String, val setAtMs: Long?, val migrated: Boolean, val source: String? = null) {
+        val inVault: Boolean get() = isSet && source == FleetTokenLogic.VAULT
+    }
 
     /** The full value. Callers: the guarded provider (peers, the mesh listener) and the credential-gated Reveal / Copy. */
     fun reveal(): String? = kv.get(K_CT)?.let { runCatching { String(codec.decode(hex(it)), Charsets.UTF_8) }.getOrNull() }?.takeIf { it.isNotBlank() }
 
     fun status(): Status {
         val t = reveal()
-        return Status(t != null, FleetTokenLogic.last4(t), kv.get(K_AT)?.toLongOrNull().takeIf { t != null }, kv.get(K_MIG) == "1")
+        return Status(t != null, FleetTokenLogic.last4(t), kv.get(K_AT)?.toLongOrNull().takeIf { t != null }, kv.get(K_MIG) == "1", kv.get(K_SRC).takeIf { t != null })
     }
 
-    fun set(token: String): Boolean {
+    fun set(token: String, source: String = FleetTokenLogic.PHONE): Boolean {
         val t = FleetTokenLogic.cleanPaste(token) ?: return false
         kv.put(K_CT, unhex(codec.encode(t.toByteArray(Charsets.UTF_8))))
         kv.put(K_AT, now().toString())
         kv.put(K_MIG, "1")
+        kv.put(K_SRC, source)
         return true
     }
 
@@ -76,7 +99,7 @@ class FleetTokenVault(private val kv: Kv, private val codec: TokenCodec, private
     fun rotate(): String = generate()
 
     fun clear() {
-        kv.remove(K_CT); kv.remove(K_AT)
+        kv.remove(K_CT); kv.remove(K_AT); kv.remove(K_SRC)
         kv.put(K_MIG, "1")   // a cleared token must not be re-imported from the SuperApp
     }
 
@@ -85,7 +108,18 @@ class FleetTokenVault(private val kv: Kv, private val codec: TokenCodec, private
         val s = status()
         if (s.isSet || s.migrated) return false
         val got = superapp()
-        return if (FleetTokenLogic.migrationPlan(s.isSet, s.migrated, got) == FleetTokenLogic.Migration.IMPORT) set(got!!.trim()) else false
+        return if (FleetTokenLogic.migrationPlan(s.isSet, s.migrated, got) == FleetTokenLogic.Migration.IMPORT) set(got!!.trim(), FleetTokenLogic.SUPERAPP) else false
+    }
+
+    /** The value Cloud Account delivered from the owner's vault (see [FleetTokenLogic.deliveryPlan]); true when the held token changed or was confirmed. */
+    fun deliver(delivered: String?): Boolean {
+        val s = status()
+        val d = delivered?.trim()
+        return when (FleetTokenLogic.deliveryPlan(reveal(), s.source, d)) {
+            FleetTokenLogic.Delivery.IMPORT, FleetTokenLogic.Delivery.REPLACE -> set(d!!, FleetTokenLogic.VAULT)
+            FleetTokenLogic.Delivery.MARK_VAULT -> { kv.put(K_SRC, FleetTokenLogic.VAULT); true }
+            else -> false
+        }
     }
 
     private fun unhex(b: ByteArray) = b.joinToString("") { "%02x".format(it) }
@@ -95,5 +129,6 @@ class FleetTokenVault(private val kv: Kv, private val codec: TokenCodec, private
         const val K_CT = "ct"
         const val K_AT = "set_at"
         const val K_MIG = "migrated"
+        const val K_SRC = "source"
     }
 }

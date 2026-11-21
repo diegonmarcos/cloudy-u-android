@@ -36,6 +36,7 @@ object AppCredentialsContract {
     const val PKG_ME = "com.diegonmarcos.cloudme"
     const val PKG_BROWSER = "com.diegonmarcos.cloudbrowser"
     const val PKG_MAIL = "com.diegonmarcos.comms.mail"
+    const val PKG_WEBSERVER = "com.diegonmarcos.cloudwebserver"
 
     /** Grows with each migrated app (each batch adds its entries and a seed version in AccountVault). */
     val CATALOG: List<Entry> = listOf(
@@ -51,6 +52,8 @@ object AppCredentialsContract {
         // #1798 the TLS-443 relay's key: the wstunnel server's upgrade-path secret, filed from the vault bundle, never typed on the phone.
         Entry("mesh.relay_key", "TLS-443 relay key", "the wstunnel server's upgrade-path secret (WSTUNNEL_PATH_PREFIX): the SuperApp's Cloud Mesh fallback when a network blocks WireGuard UDP", listOf(PKG_SUPERAPP)),
         Entry("me.buro_backup_passphrase", "Cloud Me Buro backup passphrase", "encrypts and decrypts the Buro backup bundle (Cloud Me > Buro > Import / Export)", listOf(PKG_ME)),
+        // #1835 the fleet bearer token the mesh API / MCP and every member authenticate with: owned by Cloud C3 Webserver, filed from the vault (SUPERAPP_FLEET_TOKEN), never typed.
+        Entry("fleet.mesh_token", "Fleet mesh token", "the on-device mesh's bearer token (vault key SUPERAPP_FLEET_TOKEN): Cloud C3 Webserver takes it from here", listOf(PKG_WEBSERVER)),
         // The YouTube Music device grant runs in Cloud Account; Cloud Browser's Music page takes the client and the tokens it filed.
         Entry("music.ytmusic.client_id", "YouTube Music client id", "the TVs and Limited Input OAuth client id (Google Cloud console)", listOf(PKG_BROWSER), secret = false),
         Entry("music.ytmusic.client_secret", "YouTube Music client secret", "the secret of that OAuth client", listOf(PKG_BROWSER)),

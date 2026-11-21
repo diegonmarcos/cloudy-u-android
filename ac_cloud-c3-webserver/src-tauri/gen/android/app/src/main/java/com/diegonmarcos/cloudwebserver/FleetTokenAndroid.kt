@@ -40,6 +40,22 @@ object FleetTokens {
     /** The SuperApp's fleet provider: the existing read path, used ONLY by the one-time migration. */
     private const val SUPERAPP_TOKEN_URI = "content://com.diegonmarcos.superapp.fleet/token"
 
+    /**
+     * The declarative vault-to-phone path (#1693 App credentials): Cloud Account files `fleet.mesh_token` from the owner's vault and
+     * grants it to this app (seed v21); wire = AppCredentialsContract (accountdata, method app_credential). Foreground use only
+     * (MainActivity start, the page's "Fetch from vault"): Cloud Account is never woken on a peer's behalf (#1502).
+     */
+    private const val ACCOUNT_URI = "content://com.diegonmarcos.cloudaccount.accountdata"
+    const val VAULT_CREDENTIAL = "fleet.mesh_token"
+
+    fun deliver(ctx: Context): Boolean {
+        val v = runCatching {
+            ctx.applicationContext.contentResolver.call(Uri.parse(ACCOUNT_URI), "app_credential", VAULT_CREDENTIAL, null)
+                ?.takeIf { it.getBoolean("ok") }?.getString("value")
+        }.getOrNull()
+        return of(ctx).deliver(v)
+    }
+
     @Volatile private var vault: FleetTokenVault? = null
 
     fun of(ctx: Context): FleetTokenVault = vault ?: synchronized(this) {

@@ -80,6 +80,20 @@ need("read-only mirror, managed in Cloud C3 Webserver" in frag[a:b] and 'button(
 need('row("Token",    prefs.token)' not in frag, "P1 the About Token row still shows the full token")
 need("page:config/fleet-token" in rd(kdir + "/MainActivity.kt"), "P1 the webserver does not open the Fleet token page from the About link")
 
+# V1 vault delivery (declared by name; Cloud Account's App credentials is the vault-to-phone path; foreground only)
+ft = bj.get("fleet_token", {})
+need(ft.get("name") == "SUPERAPP_FLEET_TOKEN" and ft.get("vault", {}).get("key") == "SUPERAPP_FLEET_TOKEN" and ft.get("owner") == "ac_cloud-c3-webserver", "V1 build.json::fleet_token does not declare the secret by name")
+dl = ft.get("delivery", {})
+contract = rd("ab_cloud-libs-shared/libs/fleet-endpoints/src/main/kotlin/com/diegonmarcos/superapp/fleetendpoints/AppCredentialsContract.kt")
+need('const val METHOD = "%s"' % dl.get("method") in contract, "V1 delivery.method is not AppCredentialsContract.METHOD")
+need('Entry("%s"' % dl.get("credential") in contract and "PKG_WEBSERVER" in contract, "V1 the credential is not in the App credentials catalogue for the webserver")
+need('"com.diegonmarcos.cloudwebserver" to listOf("%s")' % dl.get("grant") in rd("ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/settings/AccountVault.kt"), "V1 Cloud Account does not seed the grant to the webserver")
+andr = rd(kdir + "/FleetTokenAndroid.kt")
+need(dl.get("authority") in andr and '"%s"' % dl.get("method") in andr and dl.get("credential") in andr, "V1 the webserver's delivery call does not match the declaration")
+need("deliver" not in re.search(r"class FleetTokenOwnerProvider.*", andr, re.S).group(0), "V1 the peer-facing provider must not wake Cloud Account")
+need("fleet_token_vault" in rd("ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"), "V1 the store is not declared in fleet-config.json")
+need("Fetch from vault" in page and "not in vault" in page, "V1 the page lacks Fetch from vault / the 'not in vault' mark")
+
 if errors:
     print("\n".join("  FAIL " + e for e in errors)); sys.exit(1)
 print("  ok  fleet token: owned by the webserver; SuperApp is fallback / mirror only; nothing removed")

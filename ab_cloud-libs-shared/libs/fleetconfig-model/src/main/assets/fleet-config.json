@@ -722,6 +722,12 @@
         "lib-webserver"
       ]
     },
+    "fleet_token_vault": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "#1835 Cloud C3 Webserver's fleet bearer token, OWNED there: one AES-256-GCM ciphertext (key in the Android Keystore, never exported) plus set date, source (vault | phone | superapp) and migration flag. Never migrates as a store: it is DELIVERED from the owner's vault by Cloud Account (App credentials fleet.mesh_token) and the ciphertext is device-bound.",
+      "used_by": ["ac_cloud-c3-webserver"]
+    },
     "commons": {
       "kind": "prefs",
       "class": "config",

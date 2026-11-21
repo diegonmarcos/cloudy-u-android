@@ -297,6 +297,35 @@
     },
     "serve_root": "/storage/emulated/0"
   },
+  "fleet_token": {
+    "_doc": "#1835 THE FLEET BEARER TOKEN, DECLARED BY NAME. This app OWNS it (it used to be minted by the SuperApp): the mesh listener (server/src/meshlogs.rs) and every fleet member's FleetToken read it from the signature-guarded `{package}.fleettoken` provider. It is DECLARATIVE: it lives in the owner's vault under `vault.key` and reaches the phone through the existing vault-to-phone path, Cloud Account's App credentials (credential `delivery.credential`, granted to this app by Cloud Account's seed v21, read with method `delivery.method`), so nothing is typed. Paste / Generate / Rotate (Configs > Fleet token) are the fallback and read 'not in vault' until the vault holds the same value. There is no phone-to-vault write path in the repo, so none is offered.",
+    "name": "SUPERAPP_FLEET_TOKEN",
+    "owner": "ac_cloud-c3-webserver",
+    "vault": {
+      "repo": "cloud-me-pvt-vault",
+      "file": "Linux-Containers/infra-api_cloud-infra-mcp/src/secrets.fleet.yaml",
+      "key": "SUPERAPP_FLEET_TOKEN",
+      "format": "sops (age); never decrypted by this repo's tooling"
+    },
+    "delivery": {
+      "via": "cloud-account.app_credentials",
+      "authority": "com.diegonmarcos.cloudaccount.accountdata",
+      "method": "app_credential",
+      "credential": "fleet.mesh_token",
+      "grant": "cred.fleet.mesh_token",
+      "foreground_only": true
+    },
+    "store": { "prefs": "fleet_token_vault", "keystore_alias": "c3-fleet-token", "cipher": "AES/GCM/NoPadding" },
+    "provider": "{package}.fleettoken",
+    "consumers": [
+      "server/src/meshlogs.rs (the mesh listener: the /logs, /ipc and /endpoints bearer)",
+      "libs:devtools FleetToken.get (every fleet member's debug server, FleetIpc, StoreMesh, RishBridge, SuperappBridgeChannel)",
+      "aa_cloud-superapp DevControlServer (loopback :38080) and its Configs > About read-only mirror",
+      "cloud-infra-mcp / cloud-superapp-mcp (the same vault key, off-device)"
+    ],
+    "fallback": "the SuperApp's `.fleet` provider, read-only: FleetToken.get after the owner, and the webserver's one-time import while it holds no token",
+    "rotation": "rotate in the vault (SUPERAPP_FLEET_TOKEN) and re-file it in Cloud Account; a phone-side Rotate takes effect at once but stays 'not in vault' until the vault holds the same value"
+  },
   "mesh": {
     "_doc": "#1490 THE MESH LISTENER: the fleet's log exports, routed onto the mesh. It binds the phone's own mesh address ONLY (never 0.0.0.0, never loopback, never a public address): `bind` is resolved at build time by server/build.rs from `profile_from` (the first IPv4 of that WireGuard profile's address, declared once in the SuperApp), and the listener refuses to start unless it lies inside `cidrs`; it answers only peers from those subnets AND only with the fleet bearer (the token the SuperApp mints, read through its fleet provider) on every path. While the tunnel is down the address does not exist, the bind fails and is retried every `retry_s` seconds. `/logs/<app>` calls that app's <package>.logexport provider (libs:log-export) and relays its JSON; `/logs` lists the apps. Nothing here names an app: the list is the fleet manifest.",
     "profile_from": {

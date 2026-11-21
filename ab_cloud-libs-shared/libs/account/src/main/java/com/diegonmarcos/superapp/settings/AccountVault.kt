@@ -252,12 +252,14 @@ class AccountVault(context: Context) {
             19 to mapOf(MAIL_PACKAGE to listOf(FleetEndpointsContract.GRANT_ENDPOINTS)),
             // #1798 the SuperApp's Cloud Mesh takes the TLS-443 relay key from here (filed from the vault bundle) instead of a hand paste.
             20 to mapOf("com.diegonmarcos.superapp" to listOf("cred.mesh.relay_key")),
+            // #1835 Cloud C3 Webserver owns the fleet mesh token and takes it from here (filed from the vault).
+            21 to mapOf("com.diegonmarcos.cloudwebserver" to listOf("cred.fleet.mesh_token")),
         )
         const val DRIVE_PACKAGE = "com.diegonmarcos.clouddrive"
         const val KEYBOARD_PACKAGE = "com.diegonmarcos.cloudkeyboard"
         const val VAULT_PACKAGE = "com.diegonmarcos.cloudvault"
         const val MAIL_PACKAGE = "com.diegonmarcos.comms.mail"
-        const val SEED_VERSION = 20
+        const val SEED_VERSION = 21
         val DEFAULT_GRANTS: Map<String, List<String>> = DEFAULT_GRANTS_BY_VERSION.values
             .fold(emptyMap<String, List<String>>()) { acc, m -> acc + m.mapValues { (k, v) -> acc[k].orEmpty() + v } }
 

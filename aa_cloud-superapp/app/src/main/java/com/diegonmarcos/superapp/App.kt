@@ -188,7 +188,7 @@ class App : Application(), WorkManagerConfiguration.Provider {
         }
         // #1835 the owner of the fleet token is Cloud C3 Webserver: mirror its value into the slot (off the main thread, one cross-process
         // query); the BuildConfig value above stays only as the fallback while the webserver has none.
-        Thread { runCatching { com.diegonmarcos.superapp.devtools.FleetToken.refreshFromOwner(this) } }.start()
+        Thread { runCatching { com.diegonmarcos.superapp.devtools.FleetToken.get(this) } }.start()
         // DevControlServer FIRST so even if anything downstream
         // crashes I can still curl /logcat / /trace / /crashes from
         // this device's shell to debug.
