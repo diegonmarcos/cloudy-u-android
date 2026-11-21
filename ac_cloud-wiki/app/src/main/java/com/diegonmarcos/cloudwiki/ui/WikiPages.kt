@@ -104,37 +104,24 @@ fun WikiPage(data: WikiData?, wiki: NavSection, pageId: String, nav: WikiNav, on
 }
 
 /**
- * #1831 the Chronos topic: ONE tab row, Overview and its era pages (the dataset), then | the simulators of lib-chronos ([chronosTabs]);
- * a simulator tab shows the simulator (its own sub-pages as a second row), any other tab the dataset page as every topic does.
+ * #1831 the Chronos topic: ONE tab row of the lib-chronos simulators ([chronosTabs]), Home (the repo's root page) first;
+ * #1843 the Overview and the dataset era tabs left this row by the owner's order. A simulator tab shows the simulator (its own
+ * sub-pages as a second row); opening Chronos with no simulator chosen shows Home.
  */
 @Composable
-private fun ChronosTopic(data: WikiData?, sim: com.diegonmarcos.cloudwiki.ChronosPage?, nav: WikiNav, onTopic: (String) -> Unit) {
-    val p = LocalKitPalette.current
+private fun ChronosTopic(@Suppress("UNUSED_PARAMETER") data: WikiData?, sim: com.diegonmarcos.cloudwiki.ChronosPage?, @Suppress("UNUSED_PARAMETER") nav: WikiNav, onTopic: (String) -> Unit) {
     val tree = Decl.chronos
-    val topic = data?.topic(Chronos.PARENT)
-    val tab = chronosTabOf(tree, sim?.id)
-        ?: nav.tabs[Chronos.PARENT]?.takeIf { t -> t == WikiNav.OVERVIEW || topic?.pages?.any { it.id == t } == true }
-        ?: WikiNav.OVERVIEW
-    val overview = stringResource(R.string.overview)
+    val shown = sim ?: tree.root
+    val tab = chronosTabOf(tree, shown?.id)
     Column(Modifier.fillMaxSize().testTag(Tags.PAGE)) {
         NavBarTopSecondRow(
-            pages = listOf(NavPage(WikiNav.OVERVIEW, overview, "menu_book")) + topic?.pages.orEmpty().map { NavPage(it.id, it.title, "description") } + chronosTabs(tree),
+            pages = chronosTabs(tree),
             selectedId = tab,
-            onSelect = { t -> if (tree.page(t.id) != null) onTopic(t.id) else { nav.tabs[Chronos.PARENT] = t.id; onTopic(Chronos.PARENT) } },
+            onSelect = { t -> onTopic(t.id) },
             modifier = Modifier.testTag(Tags.TABS),
             underTopChrome = false,
         )
-        when {
-            sim != null -> ChronosSimPage(tree, sim, onOpen = onTopic)
-            data == null || topic == null ->
-                KitStoreCaption(stringResource(R.string.loading), Modifier.fillMaxWidth().padding(KitStoreRow.padH).testTag(Tags.LOADING), color = p.textSecondary, align = TextAlign.Center)
-            else -> {
-                val open: (String) -> Unit = { id -> data.page(id)?.let { pg -> nav.tabs[pg.topic] = pg.id; onTopic(pg.topic) } }
-                val page = data.page(tab)
-                if (page == null) Overview(data, topic.intro, topic.pages, nav, open)
-                else Article(data, page, nav, open, goOverview = { nav.tabs[topic.id] = WikiNav.OVERVIEW })
-            }
-        }
+        if (shown != null) ChronosSimPage(tree, shown, onOpen = onTopic)
     }
 }
 

@@ -31,7 +31,7 @@ class ChronosTest {
     /** #1831 the menu names are the repo's own: each page as its hub card names it (as the repo's README lists them). */
     @Test fun theLabelsAreTheReposOwnNames() {
         assertEquals(
-            listOf("All cycles", "Humansphere - Circadian", "Earthsphere - Cycles", "Milkwaysphere - Orbits", "Quantum Cycles",
+            listOf("Home", "Humansphere - Circadian", "Earthsphere - Cycles", "Milkwaysphere - Orbits", "Quantum Cycles",
                 "Quantum Decoherence Cycle", "Quantum Gravity Cycle", "Astronomy - Astrological Sphere"),
             tree.pages.map { it.label },
         )

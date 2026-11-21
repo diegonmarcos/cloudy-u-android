@@ -299,7 +299,7 @@
             "pages": [
               {
                 "id": "chronos.lib",
-                "label": "All cycles",
+                "label": "Home",
                 "icon": "timeline",
                 "asset": "Chronos/index.html"
               },

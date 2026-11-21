@@ -93,13 +93,11 @@ fun withChronos(section: com.diegonmarcos.superapp.bottomnav.NavSection, @Suppre
 }
 
 /**
- * #1831 the Chronos topic's top tabs after its dataset pages: the simulators of [tree] (the repo's root page "All cycles" and its
- * sections, in repo order), the first one after a group separator. A section's own sub-pages (Quantum Cycles) are its second row.
+ * #1831 the Chronos topic's top tabs: the simulators of [tree] (the repo's root page "Home" and its sections, in repo order);
+ * #1843 they are the whole row (no Overview or dataset tabs, so no separator). A section's own sub-pages (Quantum Cycles) are its second row.
  */
 fun chronosTabs(tree: ChronosTree): List<com.diegonmarcos.superapp.bottomnav.NavPage> =
-    tree.pages.filter { it.parent == null }.mapIndexed { i, p ->
-        com.diegonmarcos.superapp.bottomnav.NavPage(p.id, p.label, p.icon, separatorBefore = i == 0)
-    }
+    tree.pages.filter { it.parent == null }.map { p -> com.diegonmarcos.superapp.bottomnav.NavPage(p.id, p.label, p.icon) }
 
 /** #1831 the simulator tab a page sits under: the top of its path (Quantum Gravity Cycle -> Quantum Cycles). */
 fun chronosTabOf(tree: ChronosTree, id: String?): String? = tree.path(id).firstOrNull()?.id

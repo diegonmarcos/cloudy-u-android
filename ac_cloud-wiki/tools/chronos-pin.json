@@ -23,7 +23,7 @@
       "3.Quantum-Cycles/3.1.Quantum-Gravity-Cycle": "rocket_launch",
       "4.Astronomy-Astrological-sphere": "auto_awesome"
     },
-    "root_label": "All cycles",
+    "root_label": "Home",
     "title_suffix": " - Chronos",
     "_doc_labels": "#1831 menu names: a page's name is the <h2> of the card that links to it on a hub page of the repo (the repo's own names: Humansphere - Circadian, ...), else its <title> without title_suffix; the repo's root page is root_label. The pages sit FLAT under the Chronos topic: the root page first, then the first-level sections in repo order, deeper pages nested under their section."
   },
