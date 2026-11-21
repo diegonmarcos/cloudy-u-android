@@ -28,6 +28,7 @@ pub mod engines;
 pub mod ipc;
 pub mod jump;
 pub mod meshlogs;
+pub mod meshmcp;
 pub mod power;
 pub mod repos;
 pub mod roots;

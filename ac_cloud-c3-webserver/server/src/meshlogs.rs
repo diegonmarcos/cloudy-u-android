@@ -188,6 +188,10 @@ pub fn route(m: &Mesh, apps: &[App], req: &Req, token: Option<&str>, src: &LogSo
         return deny;
     }
     let p = req.path.trim_end_matches('/');
+    // #1835 the MCP endpoint of this listener, after the bearer gate: it lists this phone's tools and runs them as internal GETs.
+    if p == crate::meshmcp::MCP_PATH {
+        return crate::meshmcp::handle(req, &|r| route(m, apps, r, token, src));
+    }
     // #1495/#1580 the UNIFIED holder, after the bearer gate: /ipc/<app>/<route>, dispatched through the declared registry with
     // centralized per-peer, per-route ACL (ipc.rs). #1580 the per-app /browser and /shell endpoints are now served ONLY here;
     // /logs is still served below too (kept until its mesh_page row moves to the gateway).
@@ -334,6 +338,20 @@ mod tests {
         }
         let r = route(&m, &a, &get("/logs/calc", None), Some("tok"), &stub);
         assert!(r.headers.iter().any(|(k, v)| k == "www-authenticate" && v == "Bearer"));
+    }
+
+    #[test]
+    fn the_mcp_endpoint_needs_the_bearer_and_lists_tools() {
+        // #1835 /mcp is behind the same gate as every other path (and the listener itself binds the mesh address only).
+        let (m, a) = (mesh(), apps());
+        assert_eq!(route(&m, &a, &post("/mcp", None, "{}"), Some("tok"), &stub).status, 401);
+        assert_eq!(route(&m, &a, &post("/mcp", Some("Bearer wrong"), "{}"), Some("tok"), &stub).status, 401);
+        assert_eq!(route(&m, &a, &post("/mcp", Some("Bearer x"), "{}"), None, &stub).status, 503);
+        let ok = route(&m, &a, &post("/mcp", Some("Bearer tok"), "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"), Some("tok"), &stub);
+        assert_eq!(ok.status, 200);
+        assert!(String::from_utf8_lossy(&ok.body).contains("endpoints_mesh"));
+        let call = route(&m, &a, &post("/mcp", Some("Bearer tok"), "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/call\",\"params\":{\"name\":\"endpoints_mesh\"}}"), Some("tok"), &stub);
+        assert!(String::from_utf8_lossy(&call.body).contains("Endpoints"));
     }
 
     #[test]
