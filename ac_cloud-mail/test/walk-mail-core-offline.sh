@@ -26,6 +26,12 @@ adb logcat -c
 adb logcat -v threadtime "*:W" MailCore:I MailSync:I NavWalkSeed:I MailOpen:I MailPrefetch:I > "$OUT/logcat-online.txt" 2>&1 &
 LP=$!
 
+# the app's own database, copied out through run-as (a debug build), printed by mail-offline-db.py: the cached rows and the memberships
+dbdump() { # $1 = name
+  mkdir -p "$OUT/db-$1"
+  for f in sterna.db sterna.db-wal sterna.db-shm; do adb exec-out run-as "$PKG" cat "databases/$f" > "$OUT/db-$1/$f" 2>/dev/null || true; done
+  python3 -I ac_cloud-mail/test/mail-offline-db.py "$OUT/db-$1" > "$OUT/db-$1.txt" 2>&1 || true
+}
 shot() { adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; adb exec-out screencap -p > "$OUT/$1.png"; }
 dump() {
   for round in 1 2 3; do
@@ -72,6 +78,7 @@ go_folder "Receipts" 10; shot 03-online-receipts; dump 03-online-receipts
 $UI has "$OUT/03-online-receipts.xml" "Label only: Warranty card" "Receipt 1001 from Shop" \
   || fail "the online Receipts label must list its own message AND the Inbox message that is also in the label"
 go_folder "Inbox" 5; shot 04-online-inbox-again
+dbdump online
 curl -s -m 5 "http://127.0.0.1:$PORT/__stats" > "$OUT/stats-01-online.json"
 note "fake JMAP server after the online sync: $(cat "$OUT/stats-01-online.json")"
 python3 -I - "$OUT/stats-01-online.json" <<'PY' || fail "the app did not sync against the fake server (no API calls or no raw message downloads)"
@@ -101,6 +108,7 @@ $UI has "$OUT/05-offline-inbox.xml" "España: reunión de equipo" "Weekly Digest
   || fail "the offline Inbox does not show every seeded subject"
 go_folder "Archive" 6; dump 06-offline-archive; shot 06-offline-archive
 $UI has "$OUT/06-offline-archive.xml" "Archived: Tax documents 2025" || fail "the offline Archive does not show its seeded message"
+dbdump offline-before-receipts
 go_folder "Receipts" 6; dump 07-offline-receipts; shot 07-offline-receipts
 # #1837 membership table: the label lists its own message AND the one that is also in the Inbox (filed under the Inbox)
 $UI has "$OUT/07-offline-receipts.xml" "Label only: Warranty card" "Receipt 1001 from Shop" \
