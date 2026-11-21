@@ -173,7 +173,7 @@ jobs:
               for i in range(0, sw, step):
                   r, g, b = px[i, j]; tot += 1
                   if abs(r - 79) < 28 and abs(g - 195) < 28 and abs(b - 247) < 28: cy.append((i, j)); continue
-                  if min(r, g, b) > 200: light.append((i, j))
+                  if (r + g + b) / 3 > 200 and min(r, g, b) > 170: light.append((i, j))  # paper: white, or the cream page the Original filter keeps (blue ~200)
                   if max(r, g, b) - min(r, g, b) > 25: col += 1
           def box(p): return (min(i for i, _ in p), min(j for _, j in p), max(i for i, _ in p), max(j for _, j in p)) if p else None
           if cmd == "frame":
@@ -344,7 +344,8 @@ jobs:
           saved=""
           for _ in $(seq 1 60); do
             dump save-picker
-            s=$(python3 -I ui.py id "$OUT/save-picker.xml" container_save)
+            # the documents UI's save bar: tap its SAVE button (android:id/button1), not the middle of container_save
+            s=""; [ -n "$(python3 -I ui.py id "$OUT/save-picker.xml" container_save)" ] && { s=$(python3 -I ui.py id "$OUT/save-picker.xml" button1); [ -z "$s" ] && s=$(python3 -I ui.py text "$OUT/save-picker.xml" SAVE); }
             if [ -n "$s" ]; then
               shot save-picker; adb shell input tap $s; sleep 5
               saved=$(adb shell 'find /sdcard -maxdepth 3 -name "scan*.pdf" 2>/dev/null' | tr -d '\r' | head -1)
