@@ -578,7 +578,7 @@ private fun Grid(columns: List<String>, rows: List<List<String>>, tag: String) {
         }
         rows.forEach { r ->
             Row(Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 4.dp)) {
-                r.forEachIndexed { i, c -> Text(c, Modifier.weight(if (i == 0) 1.4f else 1f), color = if (i == 0) p.text else p.text, style = if (i == 0) FinType.body else FinType.num, textAlign = if (i == 0) TextAlign.Start else TextAlign.End, maxLines = 1) }
+                r.forEachIndexed { i, c -> Text(c, Modifier.weight(if (i == 0) 1.4f else 1f), color = if (i == 0) p.text else p.text, style = if (i == 0) FinType.body else FinType.num, textAlign = if (i == 0) TextAlign.Start else TextAlign.End, maxLines = 3) }
             }
         }
     }
