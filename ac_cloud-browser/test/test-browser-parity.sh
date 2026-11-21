@@ -9,7 +9,8 @@
 #   W  Weby keeps every tag, text and engine object it had and gains the Quickmarks | Bookmarks (all) views; Bookmarks (all) holds every Quickmark
 #   C  the four old Cloudy pages are WebApps (GH Pages + Local Webserver, in Weby's page) and C3 Urls (Private + Public merged: one grid
 #      by c3-infra category, a chooser, tap opens, long-press copies); every function and word they used is still there
-#   T  the shared top bar: the Url-Uri dropdown at the far left of BOTH first rows (Pages and Tools, the frozen ids, the app slots read from
+#   T  the shared top bar: ONE control (amendment 7): the Classic row's path dropdown carries Url-Uri (A Pages, B Tools) and the tree of parents and keeps
+#      every entry of the old path popup (T14); the Clean row keeps the Url-Uri button (Pages and Tools, the frozen ids, the app slots read from
 #      build.json::ui.url_uri), the right icons at the Android status-icon size, every tag and the hamburger kept, and every app that drew
 #      the shared first row still draws it
 # Each check is then re-run against planted mutations of the real sources; a mutation that leaves every check green fails this tester.
@@ -104,7 +105,19 @@ def check(root, ok):
     ok("url_uri: buildJson.ui.url_uri" in bg and "UrlUriDecl.parse(sites.urlUri.toString())" in src.get(APP + "/MainActivity.kt", ""), "T5 the browser carries its slots (ui.url_uri) in its declaration and hands them to the bar")
     ok("UrlUriBuildConfig" in src.get(BARS.replace("/src/main/kotlin", "/src/main/kotlin") + "/NavBarTopFirstRow.kt", ""), "T6 an app that passes nothing still gets the dropdown (read from its BuildConfig)")
     row = src.get(BARS + "/NavBarTopFirstRow.kt", ""); clean = src.get(BARS + "/NavBarTopCleanRow.kt", "")
-    ok(row.count("leading?.invoke()") == 1 and clean.count("leading?.invoke()") == 1 and row.count("leading = urlUriControl") == 2, "T7 the Url-Uri dropdown leads BOTH first rows (Classic and Clean)")
+    ok(clean.count("leading?.invoke()") == 1 and row.count("leading?.invoke()") == 1 and row.count("leading = urlUriControl") == 1 and row.count("NavBarTopCleanRow(") == 1, "T7 the Clean row keeps the Url-Uri button (it has no path popup)")
+    ok("urlUri = UrlUriMenu(" in row and "UrlUriPagesGroup(uu, colors)" in row and "UrlUriToolsGroup(uu, colors)" in row,
+       "T7 the Classic row has ONE control: its path dropdown carries Url-Uri Pages and Tools, no chain-link button (amendment 7)")
+    # amendment 7 field parity (source): every tag of the previous path popup and of the previous Url-Uri popup is still drawn by the merged dropdown
+    dd = src.get(BARS + "/UrlUriDropdown.kt", "")
+    for tag in ("TopFirstRowTags.crumb(i))", "TopFirstRowTags.SEPARATOR_PAGES)", "TopFirstRowTags.SEPARATOR_ACTIONS)", "TopFirstRowTags.ACTIONS)", "TopFirstRowTags.SEPARATOR_SECTIONS)", "TopFirstRowTags.CONFIGS_GENERAL)", "TopFirstRowTags.CONFIGS_ABOUT)", "TopFirstRowTags.entry(e.id))", "TopFirstRowTags.DROPDOWN)"):
+        ok(tag in row, "T14 the path popup's %s is kept in the merged dropdown" % tag)
+    for tag in ("UrlUriTags.HEADER_PAGES", "UrlUriTags.HEADER_TOOLS", "UrlUriTags.entry(e.id)"):
+        ok(tag in dd, "T14 the Url-Uri %s is drawn by the shared groups" % tag)
+    ok("UrlUriTags.SEPARATOR" in row and "UrlUriTags.DROPDOWN" in row and "UrlUriTags.SEPARATOR" in dd, "T14 the Url-Uri separator and container tags stay")
+    pop = row.find("nav.crumbs.forEachIndexed")
+    pos = [row.find(k, pop) if pop >= 0 else -1 for k in ("TopFirstRowTags.crumb(i)", "nav.related.forEach", "UrlUriPagesGroup(uu", "SEPARATOR_ACTIONS", "UrlUriToolsGroup(uu", "nav.sections.forEach", "CONFIGS_GENERAL")]
+    ok(all(x >= 0 for x in pos) and pos == sorted(pos), "T14 the merged order is tree, related, Pages, actions, Tools, sections, Configs")
     ok(re.search(r"ICON_RIGHT: Dp = %d\.dp" % t["icon_right_dp"], row) is not None and "modifier = Modifier.size(TopFirstRowSpec.ICON_RIGHT))\n    }\n}" in row,
        "T8 the right-side icons are drawn at the status-bar icon size (%ddp)" % t["icon_right_dp"])
     ok("CleanDrawerTags.MENU" in clean and "controller.openDrawer()" in clean, "T9 the Clean hamburger is kept")
@@ -159,6 +172,11 @@ main("test-browser-parity", check, [
     mut("the browser stops filling its slots", APP + "/MainActivity.kt", "UrlUriDecl.parse(sites.urlUri.toString())", "UrlUriDecl()", "T5"),
     mut("the Clean row loses the dropdown", BARS + "/NavBarTopCleanRow.kt", "leading?.invoke()", "", "T7"),
     mut("the Classic row loses the dropdown", BARS + "/NavBarTopFirstRow.kt", "leading?.invoke()", "", "T7"),
+    mut("the path dropdown loses the Tools group", BARS + "/NavBarTopFirstRow.kt", "UrlUriToolsGroup(uu, colors) { open = false }", "", "T7"),
+    mut("the path dropdown loses the Pages group", BARS + "/NavBarTopFirstRow.kt", "UrlUriPagesGroup(uu, colors) { open = false }", "", "T7"),
+    mut("the path popup loses Configs About", BARS + "/NavBarTopFirstRow.kt", "TopFirstRowTags.CONFIGS_ABOUT)", "TopFirstRowTags.CONFIGS_ABOUTX)", "T14"),
+    mut("the path popup loses the sections separator", BARS + "/NavBarTopFirstRow.kt", "TopFirstRowTags.SEPARATOR_SECTIONS", "TopFirstRowTags.SEPARATOR_SECTIONSX", "T14"),
+    mut("the chain-link button returns on the Classic row", BARS + "/NavBarTopFirstRow.kt", "leaf = leaf ?: leafState.text,\n", "leaf = leaf ?: leafState.text, leading = urlUriControl,\n", "T7"),
     mut("the right icons grow back", BARS + "/NavBarTopFirstRow.kt", "ICON_RIGHT: Dp = 17.dp", "ICON_RIGHT: Dp = 24.dp", "T8"),
     mut("the right icons ignore the status size", BARS + "/NavBarTopFirstRow.kt", "modifier = Modifier.size(TopFirstRowSpec.ICON_RIGHT))\n    }\n}", "modifier = Modifier.size(TopFirstRowSpec.ICON))\n    }\n}", "T8"),
     mut("the Clean hamburger is removed", BARS + "/NavBarTopCleanRow.kt", "controller.openDrawer()", "Unit", "T9"),

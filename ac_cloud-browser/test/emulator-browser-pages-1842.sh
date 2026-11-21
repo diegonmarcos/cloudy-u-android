@@ -6,7 +6,7 @@
 #   N1 the island reads Domains, Tabs, Browser, Cloudy, Weby left to right (x of each bottomnav_item_<id>)
 #   P1 Domains, Tabs, Browser, Cloudy > WebApps, Cloudy > C3 Urls, Weby > Quickmarks, Weby > Bookmarks (all): each page's screenshot
 #   C1 C3 Urls: a tap on a container icon opens the private / public chooser
-#   U1 the Url-Uri dropdown (urluri_button): Pages and Tools with their entries, in the browser and in the second app
+#   U1 the Url-Uri dropdown (the path island's dropdown, #1842 amendment 7: navtop1_more on the browser, whose title is the address field, topbar_title (TopFirstRowTags.ISLAND) otherwise): Pages and Tools with their entries, in the browser and in the second app
 set -u
 APK="$1"; OUT="$2"; APK2="${3:-}"; mkdir -p "$OUT"
 BPKG=com.diegonmarcos.cloudbrowser
@@ -77,14 +77,14 @@ tap 'Bookmarks \(all\)' text && sleep 3 && shot page-weby-bookmarks && ok "P1 We
 
 # U1 the Url-Uri dropdown, in the browser
 tap 'bottomnav_item_browser' >/dev/null
-tap 'urluri_button' && shot dropdown-browser
+tap 'navtop1_more' && shot dropdown-browser
 # the dropdown scrolls: swipe INSIDE it (a touch outside dismisses it) and read the entries again
 scroll_dropdown() {
   dump _dd
   local xy; xy=$(python3 - "$OUT/_dd.xml" <<'PY'
 import re, sys, xml.etree.ElementTree as ET
 for n in ET.parse(sys.argv[1]).getroot().iter("node"):
-    if n.get("resource-id", "") == "urluri_dropdown":
+    if n.get("resource-id", "") == "navtop1_dropdown":
         a, b, c, d = map(int, re.findall(r"\d+", n.get("bounds")))
         print((a + c) // 2, d - 40, (a + c) // 2, b + 40); break
 PY
@@ -100,6 +100,6 @@ adb shell input keyevent KEYCODE_BACK
 # U1 the same dropdown in another app
 if [ -n "$APK2" ]; then
   adb install -r -g "$APK2" >/dev/null && { adb shell monkey -p com.diegonmarcos.cloudcalc -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1; sleep 8; shot app2-launch
-    tap 'urluri_button' && shot dropdown-app2 && has 'urluri_entry_ai' dropdown-app2 && has 'urluri_entry_back' dropdown-app2 && ok "U1 the dropdown is in the second app too" || bad "U1 no Url-Uri dropdown in the second app"; } || bad "install of the second app failed"
+    tap '^topbar_title$' && shot dropdown-app2 && has 'urluri_entry_ai' dropdown-app2 && has 'urluri_entry_back' dropdown-app2 && ok "U1 the dropdown is in the second app too" || bad "U1 no Url-Uri dropdown in the second app"; } || bad "install of the second app failed"
 fi
 [ "$fails" -eq 0 ]

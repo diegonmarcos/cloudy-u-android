@@ -27,7 +27,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
-/** #1842 the Url-Uri dropdown: the far-left control, Pages then Tools with icons, taps routed. */
+/** #1842 the Url-Uri dropdown (the Clean row's control; the Classic row's path dropdown carries the same groups, MergedPathDropdownTest): Pages then Tools with icons, taps routed. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], qualifiers = "w360dp-h640dp-mdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)

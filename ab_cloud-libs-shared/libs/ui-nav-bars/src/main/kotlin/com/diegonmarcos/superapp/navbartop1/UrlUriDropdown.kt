@@ -3,6 +3,7 @@ package com.diegonmarcos.superapp.navbartop1
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,6 +46,7 @@ import com.diegonmarcos.superapp.bottomnav.NavTokens
 import com.diegonmarcos.superapp.bottomnav.UrlUriDecl
 import com.diegonmarcos.superapp.bottomnav.UrlUriEntry
 import com.diegonmarcos.superapp.bottomnav.UrlUriIds
+import com.diegonmarcos.superapp.bottomnav.UrlUriModel
 import com.diegonmarcos.superapp.bottomnav.UrlUriSystem
 import com.diegonmarcos.superapp.bottomnav.urlUriModel
 import com.diegonmarcos.superapp.themebg.ThemeColors
@@ -80,39 +82,9 @@ public fun UrlUriDropdown(
     onAction: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val ctx = LocalContext.current
     var open by remember { mutableStateOf(false) }
-    val here = hierarchy.firstOrNull { it.depth == 0 }
-    val currentDepth = hierarchy.filter { it.selected }.maxOfOrNull { it.depth } ?: 0
-    val model = remember(sections, here?.sectionId, decl, currentDepth) { urlUriModel(sections, here?.sectionId, decl, canUp = currentDepth > 0 || sections.size > 1) }
+    val content = rememberUrlUriContent(hierarchy, sections, decl, defaultSection, onNavigate, onAi, onProfile, onConfigs, onAction)
     val anchor = rememberDropdownAnchor()
-    fun go(id: String, label: String) {
-        val section = id.substringBefore('/')
-        onNavigate(HierarchyEntry(id.substringAfter('/'), label, if ('/' in id) 1 else 0, section, selected = false))
-    }
-    fun runEntry(e: UrlUriEntry) {
-        open = false
-        val id = e.id
-        when {
-            id.startsWith(UrlUriIds.SECTION_PREFIX) -> go(id.removePrefix(UrlUriIds.SECTION_PREFIX), e.label)
-            id.startsWith(UrlUriIds.PAGE_SLOT_PREFIX) -> decl.pages.firstOrNull { UrlUriIds.pageSlot(it.id) == id }?.let { go(it.page, e.label) }
-            id.startsWith(UrlUriIds.TOOL_SLOT_PREFIX) -> onAction(id.removePrefix(UrlUriIds.TOOL_SLOT_PREFIX))
-            id == UrlUriIds.AI -> onAi()
-            id == UrlUriIds.PROFILE -> onProfile()
-            id == UrlUriIds.CONFIGS -> onConfigs()
-            id == UrlUriIds.BACK -> UrlUriSystem.back(ctx)
-            // Up: the parent of the page shown (the section when it is a sub-page), else the first bottom page.
-            id == UrlUriIds.UP -> {
-                val sel = hierarchy.lastOrNull { it.selected && it.depth > 0 }
-                val parent = sel?.let { s -> hierarchy.lastOrNull { it.depth == s.depth - 1 && hierarchy.indexOf(it) < hierarchy.indexOf(s) } }
-                if (parent != null) onNavigate(parent) else sections.firstOrNull()?.let { onNavigate(HierarchyEntry(it.id, it.label, 0, it.id, selected = false)) }
-            }
-            id == UrlUriIds.HOME -> (sections.firstOrNull { it.id == defaultSection } ?: sections.firstOrNull())?.let { onNavigate(HierarchyEntry(it.id, it.label, 0, it.id, selected = false)) }
-            id == UrlUriIds.BACKGROUND -> UrlUriSystem.toBackground(ctx)
-            id == UrlUriIds.FORCE_CLOSE -> UrlUriSystem.forceClose(ctx)
-            id == UrlUriIds.RESTART -> UrlUriSystem.restart(ctx)
-        }
-    }
     Box(modifier.dropdownAnchor(anchor)) {
         Row(
             Modifier.size(width = TopFirstRowSpec.ICON_TARGET, height = TopFirstRowSpec.ICON_TARGET).testTag(UrlUriTags.BUTTON)
@@ -135,11 +107,9 @@ public fun UrlUriDropdown(
                     modifier = Modifier.width(TopFirstRowSpec.DROPDOWN_WIDTH).heightIn(max = dropdownMaxHeight(anchor)).testTag(UrlUriTags.DROPDOWN),
                 ) {
                     Column(Modifier.verticalScroll(rememberScrollState())) {
-                        Header("Pages", UrlUriTags.HEADER_PAGES, colors)
-                        model.pages.forEach { UrlUriRow(it) { e -> runEntry(e) } }
+                        UrlUriPagesGroup(content, colors) { open = false }
                         HorizontalDivider(Modifier.testTag(UrlUriTags.SEPARATOR), color = colors.islandBorder)
-                        Header("Tools", UrlUriTags.HEADER_TOOLS, colors)
-                        model.tools.forEach { UrlUriRow(it) { e -> runEntry(e) } }
+                        UrlUriToolsGroup(content, colors) { open = false }
                     }
                 }
             }
@@ -148,13 +118,13 @@ public fun UrlUriDropdown(
 }
 
 @Composable
-private fun Header(text: String, tag: String, colors: ThemeColors) {
+internal fun Header(text: String, tag: String, colors: ThemeColors) {
     Text(text, Modifier.padding(horizontal = 16.dp, vertical = 6.dp).testTag(tag), color = colors.accentOnIsland, fontSize = 12.sp, fontWeight = FontWeight.Bold)
 }
 
 /** A compact row (36dp): the icon, then the label; the dropdown is long (every page and every tool), so rows are tight. */
 @Composable
-private fun UrlUriRow(e: UrlUriEntry, onClick: (UrlUriEntry) -> Unit) {
+internal fun UrlUriRow(e: UrlUriEntry, onClick: (UrlUriEntry) -> Unit) {
     Row(
         Modifier.fillMaxWidth().heightIn(min = 36.dp).alpha(if (e.enabled) 1f else 0.4f)
             .clickable(enabled = e.enabled, role = Role.Button) { onClick(e) }
@@ -165,4 +135,66 @@ private fun UrlUriRow(e: UrlUriEntry, onClick: (UrlUriEntry) -> Unit) {
         Spacer(Modifier.width(16.dp))
         Text(e.label, fontSize = 14.sp, fontWeight = if (e.selected) FontWeight.Bold else FontWeight.Normal)
     }
+}
+
+/** The model and the tap router of the Url-Uri entries, shared by the Clean row's [UrlUriDropdown] and the path dropdown ([NavBarTopFirstRow]). */
+internal class UrlUriContent(val model: UrlUriModel, val run: (UrlUriEntry) -> Unit)
+
+@Composable
+internal fun rememberUrlUriContent(
+    hierarchy: List<HierarchyEntry>,
+    sections: List<NavSection>,
+    decl: UrlUriDecl,
+    defaultSection: String,
+    onNavigate: (HierarchyEntry) -> Unit,
+    onAi: () -> Unit,
+    onProfile: () -> Unit,
+    onConfigs: () -> Unit,
+    onAction: (String) -> Unit,
+): UrlUriContent {
+    val ctx = LocalContext.current
+    val here = hierarchy.firstOrNull { it.depth == 0 }
+    val currentDepth = hierarchy.filter { it.selected }.maxOfOrNull { it.depth } ?: 0
+    val model = remember(sections, here?.sectionId, decl, currentDepth) { urlUriModel(sections, here?.sectionId, decl, canUp = currentDepth > 0 || sections.size > 1) }
+    fun go(id: String, label: String) {
+        val section = id.substringBefore('/')
+        onNavigate(HierarchyEntry(id.substringAfter('/'), label, if ('/' in id) 1 else 0, section, selected = false))
+    }
+    fun runEntry(e: UrlUriEntry) {
+        val id = e.id
+        when {
+            id.startsWith(UrlUriIds.SECTION_PREFIX) -> go(id.removePrefix(UrlUriIds.SECTION_PREFIX), e.label)
+            id.startsWith(UrlUriIds.PAGE_SLOT_PREFIX) -> decl.pages.firstOrNull { UrlUriIds.pageSlot(it.id) == id }?.let { go(it.page, e.label) }
+            id.startsWith(UrlUriIds.TOOL_SLOT_PREFIX) -> onAction(id.removePrefix(UrlUriIds.TOOL_SLOT_PREFIX))
+            id == UrlUriIds.AI -> onAi()
+            id == UrlUriIds.PROFILE -> onProfile()
+            id == UrlUriIds.CONFIGS -> onConfigs()
+            id == UrlUriIds.BACK -> UrlUriSystem.back(ctx)
+            // Up: the parent of the page shown (the section when it is a sub-page), else the first bottom page.
+            id == UrlUriIds.UP -> {
+                val sel = hierarchy.lastOrNull { it.selected && it.depth > 0 }
+                val parent = sel?.let { s -> hierarchy.lastOrNull { it.depth == s.depth - 1 && hierarchy.indexOf(it) < hierarchy.indexOf(s) } }
+                if (parent != null) onNavigate(parent) else sections.firstOrNull()?.let { onNavigate(HierarchyEntry(it.id, it.label, 0, it.id, selected = false)) }
+            }
+            id == UrlUriIds.HOME -> (sections.firstOrNull { it.id == defaultSection } ?: sections.firstOrNull())?.let { onNavigate(HierarchyEntry(it.id, it.label, 0, it.id, selected = false)) }
+            id == UrlUriIds.BACKGROUND -> UrlUriSystem.toBackground(ctx)
+            id == UrlUriIds.FORCE_CLOSE -> UrlUriSystem.forceClose(ctx)
+            id == UrlUriIds.RESTART -> UrlUriSystem.restart(ctx)
+        }
+    }
+    return UrlUriContent(model, ::runEntry)
+}
+
+/** A Pages: its header and every Pages entry; [close] runs before a tap is routed. */
+@Composable
+internal fun ColumnScope.UrlUriPagesGroup(c: UrlUriContent, colors: ThemeColors, close: () -> Unit) {
+    Header("Pages", UrlUriTags.HEADER_PAGES, colors)
+    c.model.pages.forEach { UrlUriRow(it) { e -> close(); c.run(e) } }
+}
+
+/** B Tools: its header and every Tools entry. */
+@Composable
+internal fun ColumnScope.UrlUriToolsGroup(c: UrlUriContent, colors: ThemeColors, close: () -> Unit) {
+    Header("Tools", UrlUriTags.HEADER_TOOLS, colors)
+    c.model.tools.forEach { UrlUriRow(it) { e -> close(); c.run(e) } }
 }

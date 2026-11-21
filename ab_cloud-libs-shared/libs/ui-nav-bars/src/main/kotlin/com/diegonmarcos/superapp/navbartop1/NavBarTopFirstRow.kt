@@ -214,6 +214,20 @@ public fun hierarchyWithShown(hierarchy: List<HierarchyEntry>, shown: Collection
 }
 
 /**
+ * #1842 (amendment 7) what the path dropdown needs to carry the Url-Uri structure (A Pages, B Tools): the app's bottom pages, its two slots,
+ * what Home opens and the handlers of AI / Profile / Configs / a tools-slot entry. Null on [NavBarTopFirstRow]: the dropdown has no Url-Uri groups.
+ */
+public class UrlUriMenu(
+    public val sections: List<NavSection>,
+    public val decl: UrlUriDecl,
+    public val defaultSection: String,
+    public val onAi: () -> Unit,
+    public val onProfile: () -> Unit,
+    public val onConfigs: () -> Unit,
+    public val onAction: (String) -> Unit,
+)
+
+/**
  * THE first row of every app (#1154): no hamburger; the title at the LEFT as a breadcrumb path ("{App} / {Section} / {Page}",
  * [titleNav]) in a rounded darker-gray box, truncated from the left with an ellipsis when long; a tap opens the dropdown:
  * the path with each segment tappable, a separator, the siblings and children of the page shown, and (second separator)
@@ -250,6 +264,8 @@ public fun NavBarTopFirstRow(
     onConfigsAbout: (() -> Unit)? = null,
     /** #1842 the far-left control (the Url-Uri dropdown, [UrlUriDropdown]); the scaffold fills it for every app. */
     leading: (@Composable () -> Unit)? = null,
+    /** #1842 the Url-Uri groups of the merged path dropdown (the chain-link button is gone from this row); null = none. */
+    urlUri: UrlUriMenu? = null,
 ) {
     var open by remember { mutableStateOf(false) }
     val nav = remember(appName, title, hierarchy, sections, leaf) { titleNav(appName, title, hierarchy, sections, leaf) }
@@ -295,22 +311,24 @@ public fun NavBarTopFirstRow(
                     color = colors.island, contentColor = NavTokens().dropdownOnSurface, shape = RoundedCornerShape(12.dp), shadowElevation = 8.dp,
                     modifier = Modifier.width(TopFirstRowSpec.DROPDOWN_WIDTH).heightIn(max = dropdownMaxHeight(anchor)).testTag(TopFirstRowTags.DROPDOWN),
                   ) {
+                  // the Url-Uri dropdown's own container tag stays on the merged dropdown's content (#1842 amendment 7)
+                  Box(if (urlUri != null) Modifier.testTag(UrlUriTags.DROPDOWN) else Modifier) {
                   Column(Modifier.verticalScroll(rememberScrollState())) {
-                    // line 1: the path, each segment a tap to that ancestor
-                    Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
-                        nav.crumbs.forEachIndexed { i, c ->
-                            if (i > 0) Text(" / ", color = colors.onIsland, fontSize = TopFirstRowSpec.TITLE_SP.sp)
-                            val target = c.target
-                            Text(
-                                c.label,
-                                (if (target != null) Modifier.clickable(role = Role.Button) { open = false; onNavigate(target) } else Modifier)
-                                    .testTag(TopFirstRowTags.crumb(i)),
-                                color = if (i == nav.crumbs.lastIndex) colors.accentOnIsland else colors.onIsland,
-                                fontSize = TopFirstRowSpec.TITLE_SP.sp,
-                                fontWeight = if (i == nav.crumbs.lastIndex) FontWeight.Bold else FontWeight.Normal,
-                                maxLines = 1,
-                            )
-                        }
+                    // 1 the tree of parents: the app, then each ancestor down to the current page, indented by depth, each a tap; the current one highlighted
+                    nav.crumbs.forEachIndexed { i, c ->
+                        val target = c.target
+                        val here = i == nav.crumbs.lastIndex
+                        Text(
+                            c.label,
+                            (if (target != null) Modifier.clickable(role = Role.Button) { open = false; onNavigate(target) } else Modifier)
+                                .fillMaxWidth().heightIn(min = 36.dp)
+                                .padding(start = 16.dp + 12.dp * i, end = 16.dp, top = 8.dp, bottom = 8.dp)
+                                .testTag(TopFirstRowTags.crumb(i)),
+                            color = if (here) colors.accentOnIsland else colors.onIsland,
+                            fontSize = TopFirstRowSpec.TITLE_SP.sp,
+                            fontWeight = if (here) FontWeight.Bold else FontWeight.Normal,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        )
                     }
                     if (nav.related.isNotEmpty()) HorizontalDivider(Modifier.testTag(TopFirstRowTags.SEPARATOR_PAGES), color = colors.islandBorder)
                     nav.related.forEach { e ->
@@ -327,13 +345,23 @@ public fun NavBarTopFirstRow(
                             modifier = Modifier.testTag(TopFirstRowTags.entry(e.id)),
                         )
                     }
+                    // 3 A Pages (Url-Uri), 4 the page's actions, 5 B Tools (Url-Uri)
+                    val uu = urlUri?.let { m -> rememberUrlUriContent(hierarchy, m.sections, m.decl, m.defaultSection, onNavigate, m.onAi, m.onProfile, m.onConfigs, m.onAction) }
+                    if (uu != null) {
+                        HorizontalDivider(color = colors.islandBorder)
+                        UrlUriPagesGroup(uu, colors) { open = false }
+                    }
                     if (extra != null) {
                         HorizontalDivider(Modifier.testTag(TopFirstRowTags.SEPARATOR_ACTIONS), color = colors.islandBorder)
                         // The popup's column scrolls (infinite height), so a page's actions get a FINITE bound: its own verticalScroll /
                         // LazyColumn then measures instead of crashing, and the popup's scroll reaches all of it.
                         Column(Modifier.heightIn(max = TopFirstRowSpec.ACTIONS_MAX_HEIGHT).testTag(TopFirstRowTags.ACTIONS)) { extra { open = false } }
                     }
-                    // #1758 below depth 0 the sections follow the pages and the page's actions, so nothing that was shown moves
+                    if (uu != null) {
+                        HorizontalDivider(Modifier.testTag(UrlUriTags.SEPARATOR), color = colors.islandBorder)
+                        UrlUriToolsGroup(uu, colors) { open = false }
+                    }
+                    // 6 #1758 below depth 0 the sections follow the pages and the page's actions, so nothing that was shown moves
                     if (nav.sections.isNotEmpty()) {
                         HorizontalDivider(Modifier.testTag(TopFirstRowTags.SEPARATOR_SECTIONS), color = colors.islandBorder)
                         nav.sections.forEach { e ->
@@ -351,6 +379,7 @@ public fun NavBarTopFirstRow(
                             )
                         }
                     }
+                    // 7 Configs
                     if (onConfigsUi != null || onConfigsAbout != null) HorizontalDivider(color = colors.islandBorder)
                     if (onConfigsUi != null) {
                         DropdownMenuItem(
@@ -366,6 +395,7 @@ public fun NavBarTopFirstRow(
                             modifier = Modifier.testTag(TopFirstRowTags.CONFIGS_ABOUT),
                         )
                     }
+                  }
                   }
                   }
                   }
@@ -540,17 +570,20 @@ public fun NavBarTopFirstRowScaffold(
             topRow = { c ->
                 val slot = c.drawerContent
                 Box(Modifier.background(underlay).testTag(TopFirstRowTags.UNDERLAY)) {
+                val urlUriAi: () -> Unit = { if (onAi != null) onAi() else c.toggleAi() }
+                // The Clean row (no path popup) keeps the Url-Uri button; the Classic row's path dropdown carries the same groups (amendment 7).
                 val urlUriControl: @Composable () -> Unit = {
                     UrlUriDropdown(
                         ThemeBackground.colors(dark), followed, urlUriPages, urlUriDecl, urlUriHome, navigate,
-                        onAi = { if (onAi != null) onAi() else c.toggleAi() }, onProfile = onAccount, onConfigs = onConfigs, onAction = onUrlUriAction,
+                        onAi = urlUriAi, onProfile = onAccount, onConfigs = onConfigs, onAction = onUrlUriAction,
                     )
                 }
                 if (plan.hamburger) NavBarTopCleanRow(ThemeBackground.colors(dark), labels, c, leading = urlUriControl) else NavBarTopFirstRow(
                     title, ThemeBackground.colors(dark), labels, followed, navigate,
                     onAi = { if (onAi != null) onAi() else c.toggleAi() },
                     onProfile = onAccount, onConfigs = onConfigs, avatar = avatar, onTitleClick = onTitleClick,
-                    appName = appName, sections = sections, leaf = leaf ?: leafState.text, leading = urlUriControl,
+                    appName = appName, sections = sections, leaf = leaf ?: leafState.text,
+                    urlUri = UrlUriMenu(urlUriPages, urlUriDecl, urlUriHome, urlUriAi, onAccount, onConfigs, onUrlUriAction),
                     extra = if (slot != null) ({ close -> slot(close) }) else null,
                     onConfigsUi = openGeneral, onConfigsAbout = openAbout,
                 )
