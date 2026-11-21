@@ -62,6 +62,8 @@ object SectionPages {
         // #1545 #1548 A page that declares `hub_sections` IS the titled icon grid over those subgroups (Configs ▸ Agents ▸
         // Watchdog), by data like `tabs` and `url`, so another hub is a build.json edit, not a branch.
         hubSections.isNotEmpty() -> SubgroupHubFragment.newInstance(sectionId, pageId)
+        // #1848 Actions (the bottom-nav slot Boards left) IS Quick Actions: the one-row strip of Configs > Launcher, not a copy.
+        sectionId == "actions" && pageId == "quick-actions" -> SectionTabsFragment.forPage("config", "controls")
         sectionId == "mail"  -> MailPages.fragmentFor(pageId)
         // Phone ▸ Apps: installed Android apps, not build.json tile data — so
         // it is an ordinary page here, unlike its `facet: true` sibling Configs.

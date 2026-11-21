@@ -1,0 +1,1243 @@
+{
+ "_doc": "#1848 frozen baseline (before Notify two rows): the communication and boards sections as declared, the config notify page, ui.bottom_nav, swipe_walk. Rule 16: nothing declared here may be lost or changed except what #1848 names (the Persistent Badges label -> Persistents, a | before it, the bottom-nav Boards slot -> Actions, the Quick Actions slot of the Boards row -> X-Ray Device in Notify).",
+ "communication": {
+  "id": "communication",
+  "label": "Notify",
+  "icon": "ic_p_inbox",
+  "module": null,
+  "is_aggregator": true,
+  "pages": [
+   {
+    "id": "my-rss",
+    "label": "All",
+    "icon": "ic_p_sol_personal",
+    "facet": true
+   },
+   {
+    "id": "notify-badges",
+    "label": "Persistent Badges",
+    "icon": "ic_rss",
+    "facet": true
+   },
+   {
+    "id": "notify-cloudy",
+    "label": "Cloudy Apps",
+    "icon": "ic_p_sol_cloud",
+    "facet": true
+   },
+   {
+    "id": "notify-phone",
+    "label": "Phone Apps",
+    "icon": "ic_p_inbox",
+    "facet": true
+   },
+   {
+    "id": "notify-configs",
+    "label": "Configs",
+    "icon": "ic_settings",
+    "facet": true
+   },
+   {
+    "id": "rss-inboxes",
+    "label": "Inboxes",
+    "icon": "ic_p_inbox",
+    "facet": true,
+    "hidden": true
+   },
+   {
+    "id": "rss-data",
+    "label": "Data Apps",
+    "icon": "ic_p_sol_cloud",
+    "facet": true,
+    "hidden": true
+   },
+   {
+    "id": "rss-tools",
+    "label": "Tools",
+    "icon": "ic_p_sol_tools",
+    "facet": true,
+    "hidden": true
+   },
+   {
+    "id": "rss-services",
+    "label": "Services",
+    "icon": "ic_p_folder",
+    "facet": true,
+    "hidden": true
+   },
+   {
+    "id": "rss-sys",
+    "label": "Sys",
+    "icon": "ic_settings",
+    "facet": true,
+    "hidden": true
+   }
+  ],
+  "tabs": true,
+  "_doc_pages_1672": "#1672 (owner 2026-11-12, supersedes the six presets): Notify is FIVE top-nav sub-pages, in this order: All | Persistent Badges | Cloudy Apps | Phone Apps | Configs. All = the Android-style notification centre (every notification, cloudy and phone together, one expandable box per app, newest first, actions, swipe to dismiss / archive, the persistent badges summarised on top as ongoing one-liners). Persistent Badges = the Media, Me Infos, Device Infos, Actions cards, each collapsible. Cloudy Apps / Phone Apps = the real notifications of that side with a View switch By Categories (one section per app category, sections A-Z, items by time) or By Time (one timeline). Configs = the whole notify configuration on ONE level (Filters, the badge list, the app lists, notification access). Archived is an entry at the bottom of All and of both app pages. `state_pages` maps every sub-page to ONE state key (my-rss), so the Filters set on Configs, read marks and the Archive are the same on every sub-page. The five old presets (rss-inboxes ... rss-sys) are kept as hidden pages so their links still resolve. Removed, and only these: the C3 Ntfy table and the Channels block.",
+  "state_pages": {
+   "my-rss": "my-rss",
+   "notify-badges": "my-rss",
+   "notify-cloudy": "my-rss",
+   "notify-phone": "my-rss",
+   "notify-configs": "my-rss"
+  },
+  "_doc_pages": "Notify — one Apps RSS stack, six PRESETS of it. Every tab renders the SAME three panels (Cloud publishers, Phone apps, C3 Ntfy) and differs only in the `default` of its taxonomy rows, so a preset is data, not a second implementation: All shows everything, and the other five open pre-narrowed to one phone-taxonomy section. C3 Ntfy stopped being its own tab and became the third panel plus a Source option, because it was never a different KIND of page — only a different origin, which Source already models. Filter choices are remembered per PAGE ID, so narrowing one preset never disturbs another. Msgs moved out to Projects (page id kept, relabelled Inboxes): it is a mail/chat console, not a notification stack, and it never belonged on a page whose every sibling reads a notification store.",
+  "_doc_stack_my-rss": "Apps RSS is a NOTIFICATION CENTRE divided per app, not a stack of feeds. It declares one card per STREAM and each card renders one group per PUBLISHER. Phone stream: the group key is the notification's own `packageName`, labelled with its `appLabel` — carried by the notification itself, so an app installed tomorrow groups correctly with no edit here and no package list to rot. Cloud stream: the group key is the ntfy TOPIC (and the `source` field for the in-app feed), because a cloud message has no package and the address it was published to is the closest thing it carries to one — a topic has exactly one publisher the way a package has exactly one app. Grouping by SCOPE was the alternative and is wrong: advisory/user/cloud is a routing category shared by many publishers, so it would collapse every unrelated channel into one bucket, which is the undivided list this page replaced. Scope still selects WHICH topics the cloud card carries, via `scopes` below, over the same ui.ntfy catalog Infra RSS browses — there is still no second topic list anywhere. The old rss / notifications / phone_notifications / news_feeds panels are gone: three of the four were child fragments embedded through the fixed host-id pool, which is exactly what cannot survive a card that re-renders on every toggle tap. EVERY panel here must declare \"stream\": \"phone\", \"cloud\" or \"channels\" — a panel that declares none renders a bare `no stream declared` line and logs the panel title to logcat, because the grammar for fixing it is addressed to whoever opens THIS file and is useless to the person holding the phone. THE TWO BADGE PANELS (#580) belong to THIS page only (stack_my-rss, the All tab — the other five do not declare them) and are not notification streams: `notification_badges` is the persistent-badge boxes (BadgePanes.badges, live state from BadgeServices) and carries `above_filters: true`, which draws it ABOVE the Filters row instead of below it; `notification_badge_configs` is the customization menus that used to be the Push tab (BadgePanes.configs), declared `collapsed` so it starts folded under the Filters. Both are VIEWS onto the badges that already live in the one notification centre and read ui.notification_center — neither posts, clears or stores anything, so the #497/#515 single-centre guards (test-notification-centre-is-singular T2/T4-T7) are untouched. Configs ▸ Launcher ▸ Notify mirrors this page, so it shows them too; they carry no `origin`, so the Source filter never hides them.",
+  "_doc_filters_my-rss": "The five toggles above the Apps RSS stack. Declared here, not in Kotlin: the OPTION SET and the LABELS are data, only the five filter IDS (sort|source|tools|services|show) are a contract the fragment implements. `default` is what a phone shows before the user has ever touched the row; the choice is then remembered per page in SharedPreferences (committed, not applied — this app is the launcher and Android restarts it many times an hour, so a queued write is a setting that silently reverts), and a stored id this file no longer declares falls back to the default rather than stranding the row on an invisible choice. SORT now chooses the ORDER OF THE APP GROUPS — App = alphabetical, Time = most recently active app first — never whether grouping happens, because the division per app IS this page; inside a group the order is always newest-first, so flipping Sort can never bury something fresh. TIME IS THE DEFAULT ON ALL SIX TABS and it is declared HERE, never in Kotlin, so what a phone shows before anyone has touched the row is a build.json edit; test/test-notify-sort-default.sh asserts every generated tab carries the same one, because a default fixed on the tab you happened to open and missing from the other five is exactly the failure this page is shaped to produce. Sort reaches the ntfy CHANNEL boxes too: those were ordered alphabetically under BOTH modes, which made them the one construction site where Time did nothing, and since every tab draws its channels through that same code the page read as name-ordered on all six while this file said time on all six. A channel is ordered on its LAST MEASUREMENT, and one that has never been polled — or whose poll failed — sorts last rather than claiming a freshness nobody measured; the order is fixed at draw time so a poll landing can never reshuffle boxes under the reader's thumb. SOURCE works off each panel's `origin` below rather than any package list: a stream is Phone or Cloud by WHERE IT COMES FROM, which cannot go stale. SHOW is All vs Unread and NOT All vs Dismissed: neither NotificationStore nor PhoneNotificationStore records a dismissed flag — PhoneNotificationStore deliberately keeps entries the system already dismissed, and opening the cloud card calls cancelAll(), which destroys dismissal state rather than recording it, so a Dismissed filter would read a field nothing writes and render an eternally empty list. Unread needs no new field at all: it is `ts > last visit`, read before the watermark is advanced so toggling within one visit keeps answering the same question, and both stores already carry ts. TOOLS and SERVICES filter by the PHONE-APPS TAXONOMY: each option id IS the section prefix character declared in ui.phone_sections, so a section added there becomes filterable with no Kotlin change, and PhoneTaxonomy resolves a package to its prefix through the same PhoneAppClassifier + phone_folders the launcher uses. They are ONE choice spread over two rows — an app is a Tool or a Service, never both, so narrowing one row returns the other to All rather than AND-ing to a permanently empty page. They prune the phone groups before rendering, not after, so an empty result still lands on the filtered-away note. AN OPTION ID IS A SET OF PREFIXES, not one prefix: \"-+\" (Services) matches both Services · Buro (-) and Services · Others (+), and \"=>*\" (Tools) matches Primary (=), Media (>) and Health (*). AggregatorStackFragment.taxonomyKeeps tests membership, so single-character ids keep working unchanged and every phone_sections prefix stays reachable from some tab. THE SIX NOTIFY TABS are one page cloned six times: they all share stack_* (cloud + phone + C3-ntfy) and differ only in their filters_<pageid> defaults — my-rss all/all, rss-inboxes @, rss-data ., rss-tools =>*, rss-services -+, rss-sys _. Selections persist per PAGE ID, so a tab the user retunes keeps its own bucket and the others stay on their preset.",
+  "filters_my-rss": [
+   {
+    "id": "sort",
+    "label": "By",
+    "default": "time",
+    "options": [
+     {
+      "id": "time",
+      "label": "Time"
+     },
+     {
+      "id": "app",
+      "label": "App"
+     }
+    ]
+   },
+   {
+    "id": "source",
+    "label": "Source",
+    "default": "both",
+    "options": [
+     {
+      "id": "both",
+      "label": "All"
+     },
+     {
+      "id": "cloud",
+      "label": "Cloud"
+     },
+     {
+      "id": "phone",
+      "label": "Phone"
+     }
+    ]
+   },
+   {
+    "id": "tools",
+    "label": "Source · Tools",
+    "default": "all",
+    "options": [
+     {
+      "id": "all",
+      "label": "All"
+     },
+     {
+      "id": "_",
+      "label": "Setup"
+     },
+     {
+      "id": "@",
+      "label": "Communication"
+     },
+     {
+      "id": ".",
+      "label": "Data"
+     },
+     {
+      "id": "=~",
+      "label": "Tools"
+     },
+     {
+      "id": "*",
+      "label": "AGI"
+     },
+     {
+      "id": "#",
+      "label": "Projects"
+     }
+    ]
+   },
+   {
+    "id": "services",
+    "label": "Source · Services",
+    "default": "all",
+    "options": [
+     {
+      "id": "all",
+      "label": "All"
+     },
+     {
+      "id": "+",
+      "label": "Services"
+     }
+    ]
+   },
+   {
+    "id": "show",
+    "label": "Show",
+    "default": "unread",
+    "options": [
+     {
+      "id": "all",
+      "label": "All"
+     },
+     {
+      "id": "unread",
+      "label": "Unread"
+     }
+    ]
+   },
+   {
+    "id": "__collapsed",
+    "label": "Filters",
+    "default": "no",
+    "options": [
+     {
+      "id": "no",
+      "label": "Expanded"
+     },
+     {
+      "id": "yes",
+      "label": "Collapsed"
+     }
+    ]
+   }
+  ],
+  "_doc_origin_my-rss": "`origin` is the Cloud-vs-Phone classifier, and it is a property of the STREAM, not of any individual notification. Everything captured by the notification listener is by construction from an app installed on this device (phone); everything in the ntfy catalog and the in-app SuperApp feed is by construction from off-device (cloud). Each card renders the stream its own `origin` would hide, so `origin` and `stream` cannot disagree. A panel with no `origin` is never hidden by the Source toggle — an unclassified card stays visible rather than disappearing, the same fail-visible rule ui.ntfy.scopes uses for an unknown prefix.",
+  "_doc_scopes_my-rss": "`scopes` selects WHICH ui.ntfy topics the Cloud publishers card polls; a topic whose scope is not listed is not fetched at all. An empty CHANNELS list therefore means no channel in ui.ntfy falls in this card's scopes — nothing is being polled, which is NOT the same as every channel being quiet, and the card says only \"no channels in scope\" because the person holding the phone cannot close a declaration gap. AggregatorStackFragment.renderNtfyGroups logs the panel and its scopes to logcat when it happens. A panel that declares no `scopes` at all carries the whole catalog rather than nothing, the same fail-visible rule `origin` uses.",
+  "stack_my-rss": [
+   {
+    "kind": "notification_badges",
+    "title": "Persistent badges",
+    "title_res": "notify_badges_title",
+    "above_filters": true,
+    "summary": true
+   },
+   {
+    "kind": "notification_center",
+    "stream": "cloud",
+    "split": "all",
+    "title": "Notifications"
+   }
+  ],
+  "stack_notify-badges": [
+   {
+    "kind": "notification_badges",
+    "title": "Persistent badges",
+    "title_res": "notify_badges_title",
+    "above_filters": true
+   }
+  ],
+  "stack_notify-cloudy": [
+   {
+    "kind": "notification_center",
+    "stream": "cloud",
+    "split": "cloudy",
+    "title": "Cloudy Apps",
+    "origin": "cloud"
+   }
+  ],
+  "stack_notify-phone": [
+   {
+    "kind": "notification_center",
+    "stream": "phone",
+    "split": "phone",
+    "title": "Phone Apps",
+    "origin": "phone"
+   }
+  ],
+  "stack_notify-configs": [
+   {
+    "kind": "tile_row",
+    "title": "Filter presets",
+    "tiles": [
+     {
+      "id": "rss-inboxes",
+      "label": "Inboxes",
+      "icon": "ic_p_inbox",
+      "target": "page:communication/rss-inboxes"
+     },
+     {
+      "id": "rss-data",
+      "label": "Data Apps",
+      "icon": "ic_p_sol_cloud",
+      "target": "page:communication/rss-data"
+     },
+     {
+      "id": "rss-tools",
+      "label": "Tools",
+      "icon": "ic_p_sol_tools",
+      "target": "page:communication/rss-tools"
+     },
+     {
+      "id": "rss-services",
+      "label": "Services",
+      "icon": "ic_p_folder",
+      "target": "page:communication/rss-services"
+     },
+     {
+      "id": "rss-sys",
+      "label": "Sys",
+      "icon": "ic_settings",
+      "target": "page:communication/rss-sys"
+     }
+    ]
+   },
+   {
+    "kind": "notification_badge_configs",
+    "title": "Configs",
+    "title_res": "notify_configs_title",
+    "bottom": true
+   }
+  ],
+  "stack_rss-inboxes": [
+   {
+    "kind": "notification_center",
+    "stream": "cloud",
+    "split": "cloudy",
+    "title": "Cloud Apps Notifications",
+    "origin": "cloud"
+   },
+   {
+    "kind": "notification_center",
+    "stream": "phone",
+    "split": "phone",
+    "title": "Phone Apps Notifications",
+    "origin": "phone"
+   }
+  ],
+  "stack_rss-data": [
+   {
+    "kind": "notification_center",
+    "stream": "cloud",
+    "split": "cloudy",
+    "title": "Cloud Apps Notifications",
+    "origin": "cloud"
+   },
+   {
+    "kind": "notification_center",
+    "stream": "phone",
+    "split": "phone",
+    "title": "Phone Apps Notifications",
+    "origin": "phone"
+   }
+  ],
+  "stack_rss-tools": [
+   {
+    "kind": "notification_center",
+    "stream": "cloud",
+    "split": "cloudy",
+    "title": "Cloud Apps Notifications",
+    "origin": "cloud"
+   },
+   {
+    "kind": "notification_center",
+    "stream": "phone",
+    "split": "phone",
+    "title": "Phone Apps Notifications",
+    "origin": "phone"
+   }
+  ],
+  "stack_rss-services": [
+   {
+    "kind": "notification_center",
+    "stream": "cloud",
+    "split": "cloudy",
+    "title": "Cloud Apps Notifications",
+    "origin": "cloud"
+   },
+   {
+    "kind": "notification_center",
+    "stream": "phone",
+    "split": "phone",
+    "title": "Phone Apps Notifications",
+    "origin": "phone"
+   }
+  ],
+  "stack_rss-sys": [
+   {
+    "kind": "notification_center",
+    "stream": "cloud",
+    "split": "cloudy",
+    "title": "Cloud Apps Notifications",
+    "origin": "cloud"
+   },
+   {
+    "kind": "notification_center",
+    "stream": "phone",
+    "split": "phone",
+    "title": "Phone Apps Notifications",
+    "origin": "phone"
+   }
+  ],
+  "filters_rss-inboxes": [
+   {
+    "id": "sort",
+    "label": "By",
+    "default": "time",
+    "options": [
+     {
+      "id": "time",
+      "label": "Time"
+     },
+     {
+      "id": "app",
+      "label": "App"
+     }
+    ]
+   },
+   {
+    "id": "source",
+    "label": "Source",
+    "default": "both",
+    "options": [
+     {
+      "id": "both",
+      "label": "All"
+     },
+     {
+      "id": "cloud",
+      "label": "Cloud"
+     },
+     {
+      "id": "phone",
+      "label": "Phone"
+     }
+    ]
+   },
+   {
+    "id": "tools",
+    "label": "Source · Tools",
+    "default": "@",
+    "options": [
+     {
+      "id": "all",
+      "label": "All"
+     },
+     {
+      "id": "_",
+      "label": "Setup"
+     },
+     {
+      "id": "@",
+      "label": "Communication"
+     },
+     {
+      "id": ".",
+      "label": "Data"
+     },
+     {
+      "id": "=~",
+      "label": "Tools"
+     },
+     {
+      "id": "*",
+      "label": "AGI"
+     },
+     {
+      "id": "#",
+      "label": "Projects"
+     }
+    ]
+   },
+   {
+    "id": "services",
+    "label": "Source · Services",
+    "default": "all",
+    "options": [
+     {
+      "id": "all",
+      "label": "All"
+     },
+     {
+      "id": "+",
+      "label": "Services"
+     }
+    ]
+   },
+   {
+    "id": "show",
+    "label": "Show",
+    "default": "unread",
+    "options": [
+     {
+      "id": "all",
+      "label": "All"
+     },
+     {
+      "id": "unread",
+      "label": "Unread"
+     }
+    ]
+   },
+   {
+    "id": "__collapsed",
+    "label": "Filters",
+    "default": "yes",
+    "options": [
+     {
+      "id": "no",
+      "label": "Expanded"
+     },
+     {
+      "id": "yes",
+      "label": "Collapsed"
+     }
+    ]
+   }
+  ],
+  "filters_rss-data": [
+   {
+    "id": "sort",
+    "label": "By",
+    "default": "time",
+    "options": [
+     {
+      "id": "time",
+      "label": "Time"
+     },
+     {
+      "id": "app",
+      "label": "App"
+     }
+    ]
+   },
+   {
+    "id": "source",
+    "label": "Source",
+    "default": "both",
+    "options": [
+     {
+      "id": "both",
+      "label": "All"
+     },
+     {
+      "id": "cloud",
+      "label": "Cloud"
+     },
+     {
+      "id": "phone",
+      "label": "Phone"
+     }
+    ]
+   },
+   {
+    "id": "tools",
+    "label": "Source · Tools",
+    "default": ".",
+    "options": [
+     {
+      "id": "all",
+      "label": "All"
+     },
+     {
+      "id": "_",
+      "label": "Setup"
+     },
+     {
+      "id": "@",
+      "label": "Communication"
+     },
+     {
+      "id": ".",
+      "label": "Data"
+     },
+     {
+      "id": "=~",
+      "label": "Tools"
+     },
+     {
+      "id": "*",
+      "label": "AGI"
+     },
+     {
+      "id": "#",
+      "label": "Projects"
+     }
+    ]
+   },
+   {
+    "id": "services",
+    "label": "Source · Services",
+    "default": "all",
+    "options": [
+     {
+      "id": "all",
+      "label": "All"
+     },
+     {
+      "id": "+",
+      "label": "Services"
+     }
+    ]
+   },
+   {
+    "id": "show",
+    "label": "Show",
+    "default": "unread",
+    "options": [
+     {
+      "id": "all",
+      "label": "All"
+     },
+     {
+      "id": "unread",
+      "label": "Unread"
+     }
+    ]
+   },
+   {
+    "id": "__collapsed",
+    "label": "Filters",
+    "default": "yes",
+    "options": [
+     {
+      "id": "no",
+      "label": "Expanded"
+     },
+     {
+      "id": "yes",
+      "label": "Collapsed"
+     }
+    ]
+   }
+  ],
+  "filters_rss-tools": [
+   {
+    "id": "sort",
+    "label": "By",
+    "default": "time",
+    "options": [
+     {
+      "id": "time",
+      "label": "Time"
+     },
+     {
+      "id": "app",
+      "label": "App"
+     }
+    ]
+   },
+   {
+    "id": "source",
+    "label": "Source",
+    "default": "both",
+    "options": [
+     {
+      "id": "both",
+      "label": "All"
+     },
+     {
+      "id": "cloud",
+      "label": "Cloud"
+     },
+     {
+      "id": "phone",
+      "label": "Phone"
+     }
+    ]
+   },
+   {
+    "id": "tools",
+    "label": "Source · Tools",
+    "default": "=~",
+    "options": [
+     {
+      "id": "all",
+      "label": "All"
+     },
+     {
+      "id": "_",
+      "label": "Setup"
+     },
+     {
+      "id": "@",
+      "label": "Communication"
+     },
+     {
+      "id": ".",
+      "label": "Data"
+     },
+     {
+      "id": "=~",
+      "label": "Tools"
+     },
+     {
+      "id": "*",
+      "label": "AGI"
+     },
+     {
+      "id": "#",
+      "label": "Projects"
+     }
+    ]
+   },
+   {
+    "id": "services",
+    "label": "Source · Services",
+    "default": "all",
+    "options": [
+     {
+      "id": "all",
+      "label": "All"
+     },
+     {
+      "id": "+",
+      "label": "Services"
+     }
+    ]
+   },
+   {
+    "id": "show",
+    "label": "Show",
+    "default": "unread",
+    "options": [
+     {
+      "id": "all",
+      "label": "All"
+     },
+     {
+      "id": "unread",
+      "label": "Unread"
+     }
+    ]
+   },
+   {
+    "id": "__collapsed",
+    "label": "Filters",
+    "default": "yes",
+    "options": [
+     {
+      "id": "no",
+      "label": "Expanded"
+     },
+     {
+      "id": "yes",
+      "label": "Collapsed"
+     }
+    ]
+   }
+  ],
+  "filters_rss-services": [
+   {
+    "id": "sort",
+    "label": "By",
+    "default": "time",
+    "options": [
+     {
+      "id": "time",
+      "label": "Time"
+     },
+     {
+      "id": "app",
+      "label": "App"
+     }
+    ]
+   },
+   {
+    "id": "source",
+    "label": "Source",
+    "default": "both",
+    "options": [
+     {
+      "id": "both",
+      "label": "All"
+     },
+     {
+      "id": "cloud",
+      "label": "Cloud"
+     },
+     {
+      "id": "phone",
+      "label": "Phone"
+     }
+    ]
+   },
+   {
+    "id": "tools",
+    "label": "Source · Tools",
+    "default": "all",
+    "options": [
+     {
+      "id": "all",
+      "label": "All"
+     },
+     {
+      "id": "_",
+      "label": "Setup"
+     },
+     {
+      "id": "@",
+      "label": "Communication"
+     },
+     {
+      "id": ".",
+      "label": "Data"
+     },
+     {
+      "id": "=~",
+      "label": "Tools"
+     },
+     {
+      "id": "*",
+      "label": "AGI"
+     },
+     {
+      "id": "#",
+      "label": "Projects"
+     }
+    ]
+   },
+   {
+    "id": "services",
+    "label": "Source · Services",
+    "default": "+",
+    "options": [
+     {
+      "id": "all",
+      "label": "All"
+     },
+     {
+      "id": "+",
+      "label": "Services"
+     }
+    ]
+   },
+   {
+    "id": "show",
+    "label": "Show",
+    "default": "unread",
+    "options": [
+     {
+      "id": "all",
+      "label": "All"
+     },
+     {
+      "id": "unread",
+      "label": "Unread"
+     }
+    ]
+   },
+   {
+    "id": "__collapsed",
+    "label": "Filters",
+    "default": "yes",
+    "options": [
+     {
+      "id": "no",
+      "label": "Expanded"
+     },
+     {
+      "id": "yes",
+      "label": "Collapsed"
+     }
+    ]
+   }
+  ],
+  "filters_rss-sys": [
+   {
+    "id": "sort",
+    "label": "By",
+    "default": "time",
+    "options": [
+     {
+      "id": "time",
+      "label": "Time"
+     },
+     {
+      "id": "app",
+      "label": "App"
+     }
+    ]
+   },
+   {
+    "id": "source",
+    "label": "Source",
+    "default": "both",
+    "options": [
+     {
+      "id": "both",
+      "label": "All"
+     },
+     {
+      "id": "cloud",
+      "label": "Cloud"
+     },
+     {
+      "id": "phone",
+      "label": "Phone"
+     }
+    ]
+   },
+   {
+    "id": "tools",
+    "label": "Source · Tools",
+    "default": "_",
+    "options": [
+     {
+      "id": "all",
+      "label": "All"
+     },
+     {
+      "id": "_",
+      "label": "Setup"
+     },
+     {
+      "id": "@",
+      "label": "Communication"
+     },
+     {
+      "id": ".",
+      "label": "Data"
+     },
+     {
+      "id": "=~",
+      "label": "Tools"
+     },
+     {
+      "id": "*",
+      "label": "AGI"
+     },
+     {
+      "id": "#",
+      "label": "Projects"
+     }
+    ]
+   },
+   {
+    "id": "services",
+    "label": "Source · Services",
+    "default": "all",
+    "options": [
+     {
+      "id": "all",
+      "label": "All"
+     },
+     {
+      "id": "+",
+      "label": "Services"
+     }
+    ]
+   },
+   {
+    "id": "show",
+    "label": "Show",
+    "default": "unread",
+    "options": [
+     {
+      "id": "all",
+      "label": "All"
+     },
+     {
+      "id": "unread",
+      "label": "Unread"
+     }
+    ]
+   },
+   {
+    "id": "__collapsed",
+    "label": "Filters",
+    "default": "yes",
+    "options": [
+     {
+      "id": "no",
+      "label": "Expanded"
+     },
+     {
+      "id": "yes",
+      "label": "Collapsed"
+     }
+    ]
+   }
+  ]
+ },
+ "boards": {
+  "_doc_icons": "Per-mode icons: in Apps mode shows the everyday logs glyph; in Admin mode swaps to the C3-workflows glyph so the ops view reads as the workflows dashboard. Both the bottom-nav item AND the home_groups tile resolve via Section.iconForMode(mode) — single source of truth.",
+  "_doc_me": "My-PM is now ME (2026-10-23, #1114): only the label changed. The page id stays `my-pm` (so `page:boards/my-pm`, `section:boards#my-pm` and every older deep link keep landing) and `page_aliases` adds `me`. ME holds MyBuro/MyFin, MyHealth and MyTrips; the calendar is gone from it and the tasks table moved to Boards ▸ Tasks.",
+  "_doc_rename": "Boards (2026-10-17, owner): was `infos`, labelled Projects. `aliases` keeps the old section id resolvable so `section:infos` / `page:infos/<p>` deep links from other apps and older builds still land here; `page_aliases` sends the two removed pages (work-pm, cloud = C3-PM) to Tasks, which replaced them.",
+  "aliases": [
+   "infos"
+  ],
+  "page_aliases": {
+   "work-pm": "tasks",
+   "cloud": "tasks",
+   "me": "my-pm"
+  },
+  "id": "boards",
+  "label": "Boards",
+  "icon": "ic_pm_boards",
+  "module": null,
+  "is_aggregator": true,
+  "pages": [
+   {
+    "id": "msgs",
+    "label": "Inboxes",
+    "icon": "ic_chat",
+    "facet": true
+   },
+   {
+    "id": "my-pm",
+    "label": "ME",
+    "icon": "ic_p_sol_personal",
+    "facet": true
+   },
+   {
+    "id": "tasks",
+    "label": "Tasks",
+    "icon": "ic_pm_boards",
+    "facet": true
+   },
+   {
+    "_doc": "Resources: the phone, live (battery, memory, storage, CPU, networks, device, sensors), one card per `resource` of stack_resources, every value read from the platform by boards/ResourcesProvider and refreshed every 2 s while the page is visible. `separator_before` draws the strip's \"|\" group separator between Tasks and this group (Resources, Quick Actions).",
+    "id": "resources",
+    "label": "Resources",
+    "icon": "ic_devices",
+    "facet": true,
+    "separator_before": true
+   },
+   {
+    "_doc": "Quick Actions: THE page Configs > Launcher > Quick Actions opens (page:config/controls), mirrored by page so there is one implementation and no copy.",
+    "id": "quick-actions",
+    "label": "Quick Actions",
+    "icon": "ic_home",
+    "facet": true,
+    "mirror_page": "config/controls"
+   }
+  ],
+  "tabs": true,
+  "_doc_pages": "Boards = what you WORK ON and what ARRIVES, each read live from the app that owns it. Inboxes = unread/recent messages: fleet mail through cloud-mail's signature-guarded agentmail provider, every other app (fleet chat/matrix/ntfy and third-party WhatsApp, Gmail, Telegram…) through the SuperApp's own notification listener, grouped by app. ME (was My-PM) = MyBuro/MyFin, MyHealth (steps, sleep, heart rate) and MyTrips (the last 24 h timeline from cloud-nav, tracker/segments + tracker/daily over the fleet IPC door; tracker/timeline only as a one-release shim). Tasks = one card per project declared in cloud-tasks (projects/list over the fleet IPC door), the tasks table and the calendar. Work-PM and C3-PM were removed by the owner (2026-10-17); their ids alias to Tasks. No board carries sample numbers: an unreachable source says so.",
+  "stack_my-pm": [
+   {
+    "_doc": "MyBuro/MyFin (was 'Myfin'): the MyBuro group's MyFin card. It lives in Cloud-Me (Buro ▸ Fin); the card only opens the real page. `anchor` is the id, `aliases` the retired ids that still resolve (anchor: deep links).",
+    "kind": "open_link",
+    "title": "MyBuro/MyFin",
+    "anchor": "myburo/myfin",
+    "aliases": [
+     "myfin",
+     "my-fin"
+    ],
+    "url": "extapp:cloud-me#page:buro/cashflow"
+   },
+   {
+    "_doc": "MyHealth (was 'My-health'): Health Connect board. The kind stays board_steps. `aliases` are the retired ids that still resolve.",
+    "kind": "board_steps",
+    "title": "MyHealth",
+    "anchor": "myhealth",
+    "aliases": [
+     "my-health"
+    ],
+    "subtitle": "Steps · sleep · heart rate",
+    "url": "extapp:cloud-nav"
+   },
+   {
+    "_doc": "MyTrips (was 'Navigation/Tracker', #1114): the last 24 h as an ordered timeline (start, move, stop, move, sleep, ...) read from Cloud Nav's ONE timeline store over the fleet IPC door, op tracker/segments (contract v1; tracker/timeline only as a one-release compatibility shim; read-only). The SuperApp only fetches and draws it. `aliases` are the retired ids that still resolve.",
+    "kind": "board_timeline",
+    "title": "MyTrips",
+    "anchor": "mytrips",
+    "aliases": [
+     "navigation/tracker",
+     "nav-tracker",
+     "nav_tracker",
+     "tracker"
+    ],
+    "subtitle": "Last 24 h · move · stop · sleep",
+    "url": "extapp:cloud-nav"
+   }
+  ],
+  "tiles_my-pm": [],
+  "stack_tasks": [
+   {
+    "_doc": "One card per project declared in cloud-tasks, read from its own database over the fleet IPC door (op projects/list): name, open/done counts, next due item. Tap opens that project in cloud-tasks.",
+    "kind": "board_task_projects",
+    "title": "Projects",
+    "subtitle": "cloud-tasks",
+    "url": "extapp:cloud-tasks"
+   },
+   {
+    "_doc": "Tasks table (moved here from ME, #1114): single card hosting the Agenda · Day · ToDo views. Tab switch is in-process (no fragment swap).",
+    "kind": "tasks",
+    "title": "Tasks",
+    "subtitle": "Agenda · Day · ToDo"
+   },
+   {
+    "_doc": "The calendar component (CalendarMonthFragment); it left ME with #1114 and stays here.",
+    "kind": "calendar_month",
+    "title": "Calendar",
+    "subtitle": "Month view"
+   }
+  ],
+  "stack_resources": [
+   {
+    "kind": "board_resources",
+    "resource": "battery",
+    "title": "Battery",
+    "subtitle": "Level, state, health, temperature, voltage, cycles"
+   },
+   {
+    "kind": "board_resources",
+    "resource": "memory",
+    "title": "Memory",
+    "subtitle": "RAM used and free"
+   },
+   {
+    "kind": "board_resources",
+    "resource": "storage",
+    "title": "Storage",
+    "subtitle": "Used and free per volume"
+   },
+   {
+    "kind": "board_resources",
+    "resource": "cpu",
+    "title": "CPU",
+    "subtitle": "Cores, frequency, load"
+   },
+   {
+    "kind": "board_resources",
+    "resource": "network",
+    "title": "Networks",
+    "subtitle": "Wi-Fi, mobile, VPN / mesh, Bluetooth"
+   },
+   {
+    "kind": "board_resources",
+    "resource": "device",
+    "title": "Device",
+    "subtitle": "Model, Android, security patch, uptime"
+   },
+   {
+    "kind": "board_resources",
+    "resource": "sensors",
+    "title": "Sensors",
+    "subtitle": "What this phone carries"
+   }
+  ],
+  "_doc_moved_cloud": "stack_cloud / tiles_cloud USED to hang here — GHA runs, repo commits and the Dagu deeplink. They are now sections[c3].stack_observability, under Cloud ▸ C3 ▸ Observability — which IS the c3 section's own Observability tab, not a copy of it beside the pages it points at. Nothing else keyed off them: `page:infos/cloud` addresses the PAGE, not these lists.",
+  "_doc_stack_msgs": "Projects ▸ Inboxes. A card here is a CHANNEL CLASS — Mail, Chat, Messenger, RSS — and never one app. The owner asked for this on 2026-09-10: the page used to carry one card per app (Mail · accounts, Chat · Matrix, Chat · Mattermost, Messenger (Element), Dialer (Fossy)), which meant the question \"is there anything for me in my messages\" had to be asked five times and re-asked every time an app was installed. A panel names its class with `class: <id>`, an id from ui.inbox_classes, and draws that class's slice of the SAME phone notification feed Notify ▸ Inboxes reads, with a counted summary above it. WHY THE MEMBERSHIP IS NOT WRITTEN HERE: it lives in ui.inbox_classes beside ui.phone_folders, because a package roster is a CLASSIFICATION and every classification in this file lives under ui.* keyed on package — phone_folders, ntfy.taxon, external_apps. A roster inside a stack would be the only one that no other surface and no tester could read. WHY A FIFTH CARD: four curated classes are not a catch-all, and the card this page replaced was. An app that no class claims lands in the class marked `catch_all: true` (Other) rather than vanishing — the owner installing a messaging app nobody classified must still see its notifications on the screen they check, and a screen that silently drops notifications is worse than the per-app screen it replaced. WHAT THE SUMMARY IS: counts, measured from the notification listener — how many apps or channels the class holds, how many notifications, and how long ago the newest one arrived. It is deliberately not a written digest: kind=stats on this page prints numbers declared in this file under the caption 'Mock data — live fetch pending', and replacing five mock dashboards with a sixth, or with a paid model call the owner did not ask to pay for, would be a worse card than an honest count. WHAT MAIL REACHES: mail NOTIFICATIONS, not mail content. The message bodies live in the mail app's own store; ui.mail_accounts on this page is connection config (server, user, ports) and carries no messages, which is why renderMailAccounts has always captioned its own list 'Unread / total counts pending JMAP slice C2 + IMAP slice'. The Mail card says so on the card rather than presenting the lesser thing under the greater name. RSS is the one class that is not phone packages: it declares `source: c3ntfy` and reuses the stream=channels renderer the C3 Ntfy panel already had, so it is a retitle plus a summary and not new plumbing.",
+  "stack_msgs": [
+   {
+    "_doc": "The unified inbox: fleet mail (cloud-mail agentmail provider, unread first) plus every app's notifications from the SuperApp's listener, grouped by app — icon, sender, preview, time; a tap opens the thread when the app left one, else the app. The class cards below stay as the per-class view.",
+    "kind": "board_inbox",
+    "title": "All inboxes",
+    "subtitle": "Fleet + phone apps"
+   },
+   {
+    "kind": "class_inbox",
+    "class": "mail",
+    "title_res": "inbox_class_mail",
+    "title": "Mail",
+    "url": "extapp:cloud-mail"
+   },
+   {
+    "kind": "class_inbox",
+    "class": "chat",
+    "title_res": "inbox_class_chat",
+    "title": "Chat",
+    "url": "extapp:cloud-chat"
+   },
+   {
+    "_doc": "Declares extapp:cloud-matrix so the card header opens Element, the messenger the owner actually reads. The class it draws is far wider than that one app — see ui.inbox_classes[messenger] — which is the whole point of classing by channel and not by app.",
+    "kind": "class_inbox",
+    "class": "messenger",
+    "title_res": "inbox_class_messenger",
+    "title": "Messenger",
+    "url": "extapp:cloud-matrix"
+   },
+   {
+    "_doc": "No `url`: there is no single app behind a class whose notifications arrive as ntfy channel messages over the cloud stream, and a header that opened an arbitrary one would be a lie about where these came from.",
+    "kind": "class_inbox",
+    "class": "rss",
+    "title_res": "inbox_class_rss",
+    "title": "RSS"
+   },
+   {
+    "_doc": "The catch-all, and the reason this page cannot silently lose a notification. It draws every app the four classes above do not claim, so a newly installed messaging app is visible here from its first notification and stays visible until somebody decides which class it belongs to. It is last on purpose — it is a triage queue, not a destination.",
+    "kind": "class_inbox",
+    "class": "other",
+    "title_res": "inbox_class_other",
+    "title": "Other"
+   }
+  ],
+  "tiles_msgs": [
+   {
+    "id": "mail",
+    "note_res": "inbox_note_mail",
+    "label": "Mail",
+    "icon": "ic_mail",
+    "target": "extapp:cloud-mail"
+   },
+   {
+    "id": "chat-matrix",
+    "label": "Chat-Matrix",
+    "icon": "ic_p_chat_matrix",
+    "target": "extapp:cloud-matrix"
+   },
+   {
+    "id": "chat-mm",
+    "label": "Chat-Mattermost",
+    "icon": "ic_p_chat_mattermost",
+    "target": "extapp:cloud-chat"
+   }
+  ]
+ },
+ "config_notify": {
+  "_doc": "Tab 4 of Launcher — NOTIFY (#580), the notification centre in one place. It was Configs ▸ Home ▸ Notify, and Home's other tab, Push, was merged INTO it: the persistent-badge boxes now lead the page and Push's customization menus sit under the Filters as a collapsed Configs card. Then the page moved here and the emptied Home was deleted. `mirror_page` names sections[communication].pages[my-rss] and LauncherNavController.aggregatorPage renders that page's own fragment, so the cards, the filter row and the stack_my-rss declaration all stay owned by the Communication section — the two badge panes are stack_my-rss panels (kinds notification_badges / notification_badge_configs), not a copy declared here. mirror_page is the page-level twin of `mirror_section` (Cloud ▸ Configs / Cloud ▸ C3) and exists for the same reason those do: a tab that IS the other surface cannot drift from it, a second copy of it always does. Mirroring one PAGE rather than the section is what keeps this one tab instead of the Communication section's own six-tab strip nested inside ours. KEPT ITS ID: `hidden` keeps it out of the Configs grid while Section.allPages keeps `page:config/notify` resolvable, and the tab-owner lookup lands that target on this tab of Launcher.",
+  "id": "notify",
+  "label": "Notify",
+  "icon": "ic_rss",
+  "facet": true,
+  "mirror_page": "communication/my-rss",
+  "group": "Launcher",
+  "subgroup": ""
+ },
+ "bottom_nav": [
+  "communication",
+  "boards",
+  "home",
+  "cloud",
+  "phone"
+ ],
+ "swipe_walk": [
+  {
+   "id": "comms",
+   "section": "communication",
+   "label": "Inboxes"
+  },
+  {
+   "id": "boards-my-pm",
+   "section": "boards",
+   "page": "my-pm",
+   "label": "Boards · ME"
+  },
+  {
+   "id": "boards-tasks",
+   "section": "boards",
+   "page": "tasks",
+   "label": "Boards · Tasks"
+  },
+  {
+   "id": "cloud-apps",
+   "section": "cloud",
+   "page": "apps",
+   "label": "Cloud · Apps"
+  },
+  {
+   "id": "phone",
+   "section": "phone",
+   "page": "apps",
+   "label": "Phone"
+  },
+  {
+   "id": "lnktree",
+   "section": "cloud",
+   "page": "lnktree",
+   "label": "Linktree"
+  },
+  {
+   "id": "c3",
+   "section": "c3",
+   "label": "C3"
+  },
+  {
+   "id": "configs",
+   "section": "config",
+   "label": "Configs"
+  }
+ ]
+}

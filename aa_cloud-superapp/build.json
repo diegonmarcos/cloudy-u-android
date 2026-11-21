@@ -1729,7 +1729,7 @@
     },
     "_doc": "Navigation taxonomy - data-driven source for MainActivity's BottomNavigationView (bottom buttons), DrawerLayout (left-side collapsable 2-level menu), and per-section Toolbar menus. Every section child is a PAGE: one `pages` list per section feeds the section grid, the bottom-nav long-press fan, the Sirius ring and the tablet detail pane. The retired `tab:` and `mode:` target prefixes and the per-section `long_press` list were all just 'open child X of section Y' - write `page:<section>/<page>`. Adding a new section = one entry here + one drawable + one fragment placeholder.",
     "_doc_bottom_nav": "The bottom-nav island (libs:bottomnav, #531): the sections it shows, left to right. THE one declaration of which sections are in the bar and in what order - Home in the centre. It replaced res/menu/bottom_nav.xml (the order and ids) AND the per-section bottom_nav booleans (membership), which were two declarations of one list. Each entry is a ui.sections id; its label and per-mode icon come from that section. A section not listed here is reached from the drawer or a tile. ShellBottomNav reads it through BuildConfig.UI_BOTTOM_NAV; five fit the island's even cells at phone width.",
-    "bottom_nav": ["communication", "boards", "home", "cloud", "phone"],
+    "bottom_nav": ["communication", "actions", "home", "cloud", "phone"],
     "_doc_home_index": "The `home` section is the master index — its content is a TileGrid of every other section. Lives at the center of the bottom nav (replacing Chat, which moves to drawer-only). Tapping any drawer tab or bottom-nav button always lands the right-pane on that section's TileGrid (sub-pages as squared tiles).",
     "_doc_aggregator_sections": "Aggregator sections are pure NAV — their tiles deep-link into real content sections via target ids ('section:X' | 'page:X/Y' | 'action:X' | 'extapp:X' | a URI). Each declares tiles_shared (section-wide) and/or a tiles_<page-id> / stack_<page-id> pair per child. Children marked \"facet\": true render THIS section's lists (LauncherNavController.aggregatorPage, which prefers stack_<id>, then tiles_<id>, then the section-wide tile_groups); non-facet children are ordinary pages served by a SectionPages factory — or, when they declare a `url`, by WebPageFragment. The bottom nav hosts exactly these 5 aggregators: Inboxes · Projects · HOME · Cloud · Phone.",
     "sections": [
@@ -1748,9 +1748,10 @@
           },
           {
             "id": "notify-badges",
-            "label": "Persistent Badges",
+            "label": "Persistents",
             "icon": "ic_rss",
-            "facet": true
+            "facet": true,
+            "separator_before": true
           },
           {
             "id": "notify-cloudy",
@@ -1769,6 +1770,43 @@
             "label": "Configs",
             "icon": "ic_settings",
             "facet": true
+          },
+          {
+            "_doc": "#1848 Notify > Boards row: the bottom-nav Boards page moved here. These are mirrors (mirror_page) of the Boards section's own pages, so there is ONE implementation of each and the Boards section (its pages, stacks and state) is kept as it was; page:boards/<id> still resolves. Quick Actions left this row for Actions in the bottom nav; X-Ray Device takes its slot.",
+            "id": "boards-msgs",
+            "label": "Inboxes",
+            "icon": "ic_chat",
+            "facet": true,
+            "mirror_page": "boards/msgs"
+          },
+          {
+            "id": "boards-me",
+            "label": "Me",
+            "icon": "ic_p_sol_personal",
+            "facet": true,
+            "mirror_page": "boards/my-pm"
+          },
+          {
+            "id": "boards-tasks",
+            "label": "Tasks",
+            "icon": "ic_pm_boards",
+            "facet": true,
+            "mirror_page": "boards/tasks"
+          },
+          {
+            "id": "boards-resources",
+            "label": "Resources",
+            "icon": "ic_devices",
+            "facet": true,
+            "separator_before": true,
+            "mirror_page": "boards/resources"
+          },
+          {
+            "id": "boards-xray",
+            "label": "X-Ray Device",
+            "icon": "ic_monitor_heart",
+            "facet": true,
+            "mirror_page": "config/xray"
           },
           {
             "id": "rss-inboxes",
@@ -1807,6 +1845,11 @@
           }
         ],
         "tabs": true,
+        "_doc_row_groups_1848": "#1848 the sub-pages in TWO rows (SectionTabsFragment draws one strip per group, both over the one pane): row 1 `Cards` = All | Persistents, Cloudy Apps, Phone Apps, Configs; row 2 `Boards` = Inboxes, Me, Tasks | Resources, X-Ray Device. `separator_before` on a page draws the | before it. Every visible page is named by exactly one group (guard: test-notify-two-rows-1848.sh). The hidden rss-* pages stay out of the rows.",
+        "row_groups": [
+          {"id": "cards", "label": "Cards", "pages": ["my-rss", "notify-badges", "notify-cloudy", "notify-phone", "notify-configs"]},
+          {"id": "boards", "label": "Boards", "pages": ["boards-msgs", "boards-me", "boards-tasks", "boards-resources", "boards-xray"]}
+        ],
         "_doc_pages_1672": "#1672 (owner 2026-11-12, supersedes the six presets): Notify is FIVE top-nav sub-pages, in this order: All | Persistent Badges | Cloudy Apps | Phone Apps | Configs. All = the Android-style notification centre (every notification, cloudy and phone together, one expandable box per app, newest first, actions, swipe to dismiss / archive, the persistent badges summarised on top as ongoing one-liners). Persistent Badges = the Media, Me Infos, Device Infos, Actions cards, each collapsible. Cloudy Apps / Phone Apps = the real notifications of that side with a View switch By Categories (one section per app category, sections A-Z, items by time) or By Time (one timeline). Configs = the whole notify configuration on ONE level (Filters, the badge list, the app lists, notification access). Archived is an entry at the bottom of All and of both app pages. `state_pages` maps every sub-page to ONE state key (my-rss), so the Filters set on Configs, read marks and the Archive are the same on every sub-page. The five old presets (rss-inboxes ... rss-sys) are kept as hidden pages so their links still resolve. Removed, and only these: the C3 Ntfy table and the Channels block.",
         "state_pages": {"my-rss": "my-rss", "notify-badges": "my-rss", "notify-cloudy": "my-rss", "notify-phone": "my-rss", "notify-configs": "my-rss"},
         "_doc_pages": "Notify — one Apps RSS stack, six PRESETS of it. Every tab renders the SAME three panels (Cloud publishers, Phone apps, C3 Ntfy) and differs only in the `default` of its taxonomy rows, so a preset is data, not a second implementation: All shows everything, and the other five open pre-narrowed to one phone-taxonomy section. C3 Ntfy stopped being its own tab and became the third panel plus a Source option, because it was never a different KIND of page — only a different origin, which Source already models. Filter choices are remembered per PAGE ID, so narrowing one preset never disturbs another. Msgs moved out to Projects (page id kept, relabelled Inboxes): it is a mail/chat console, not a notification stack, and it never belonged on a page whose every sibling reads a notification store.",
@@ -1933,7 +1976,7 @@
         "stack_my-rss": [
           {
             "kind": "notification_badges",
-            "title": "Persistent badges",
+            "title": "Persistents",
             "title_res": "notify_badges_title",
             "above_filters": true,
             "summary": true
@@ -1948,7 +1991,7 @@
         "stack_notify-badges": [
           {
             "kind": "notification_badges",
-            "title": "Persistent badges",
+            "title": "Persistents",
             "title_res": "notify_badges_title",
             "above_filters": true
           }
@@ -2673,6 +2716,21 @@
                 "label": "Collapsed"
               }
             ]
+          }
+        ]
+      },
+      {
+        "_doc": "#1848 Actions: the bottom-nav slot Boards left. A single-page section that IS Quick Actions (config/controls, the one-row Preset | Battery Security UI Network Others All page, #1846): SectionPages routes (actions, quick-actions) to that very strip, so there is one implementation. Boards moved into Notify as its second row; the Boards section stays declared (not in the bottom nav) so page:boards/<id> resolves.",
+        "id": "actions",
+        "label": "Actions",
+        "icon": "ic_home",
+        "module": null,
+        "single_page": true,
+        "pages": [
+          {
+            "id": "quick-actions",
+            "label": "Quick Actions",
+            "icon": "ic_home"
           }
         ]
       },
@@ -5988,6 +6046,8 @@
             "icon": "ic_rss",
             "facet": true,
             "mirror_page": "communication/my-rss",
+            "_doc_1848": "#1848 ONE Notify page: this Configs tile (and page:config/notify, and every link that used it) is REDIRECTED to Notify (communication) on its All sub-page, with its full two-row menu (Cards | Boards). mirror_page is kept as the record of what this tile used to render; the redirect is applied by Sections.canonicalPage, before any page is built.",
+            "redirect": "communication/my-rss",
             "group": "Launcher",
             "subgroup": ""
           },
@@ -6993,14 +7053,14 @@
       },
       {
         "id": "boards-my-pm",
-        "section": "boards",
-        "page": "my-pm",
+        "section": "communication",
+        "page": "boards-me",
         "label": "Boards · ME"
       },
       {
         "id": "boards-tasks",
-        "section": "boards",
-        "page": "tasks",
+        "section": "communication",
+        "page": "boards-tasks",
         "label": "Boards · Tasks"
       },
       {
@@ -11556,7 +11616,7 @@
             {
               "key": "enabled",
               "type": "toggle",
-              "label": "Show this badge",
+              "label": "Show this card",
               "default": true
             },
             {
@@ -11612,7 +11672,7 @@
             {
               "key": "enabled",
               "type": "toggle",
-              "label": "Show this badge",
+              "label": "Show this card",
               "default": true
             },
             {
@@ -11674,7 +11734,7 @@
             {
               "key": "enabled",
               "type": "toggle",
-              "label": "Show this badge",
+              "label": "Show this card",
               "default": true
             },
             {
@@ -11730,7 +11790,7 @@
             {
               "key": "enabled",
               "type": "toggle",
-              "label": "Show this badge",
+              "label": "Show this card",
               "default": true
             },
             {
@@ -11763,7 +11823,7 @@
             {
               "key": "enabled",
               "type": "toggle",
-              "label": "Show this badge",
+              "label": "Show this card",
               "default": true
             },
             {
@@ -11796,7 +11856,7 @@
             {
               "key": "enabled",
               "type": "toggle",
-              "label": "Show this badge",
+              "label": "Show this card",
               "default": true
             },
             {
@@ -11829,7 +11889,7 @@
             {
               "key": "enabled",
               "type": "toggle",
-              "label": "Show this badge",
+              "label": "Show this card",
               "default": true
             },
             {
@@ -11863,7 +11923,7 @@
             {
               "key": "enabled",
               "type": "toggle",
-              "label": "Show this badge",
+              "label": "Show this card",
               "default": true
             },
             {
@@ -11904,7 +11964,7 @@
             {
               "key": "enabled",
               "type": "toggle",
-              "label": "Show this badge",
+              "label": "Show this card",
               "default": true
             },
             {
@@ -11966,7 +12026,7 @@
           {
            "key": "enabled",
            "type": "toggle",
-           "label": "Show this badge",
+           "label": "Show this card",
            "default": true
           },
           {
@@ -12050,7 +12110,7 @@
             {
               "key": "enabled",
               "type": "toggle",
-              "label": "Show this badge",
+              "label": "Show this card",
               "default": true
             },
             {

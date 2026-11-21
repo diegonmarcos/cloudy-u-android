@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tester: #1672 the Notify page - sub-pages All | Persistent Badges | Cloudy Apps | Phone Apps | Configs; the feeds
+# Tester: #1672 the Notify page - sub-pages All | Persistents (was Persistent Badges, #1848) | Cloudy Apps | Phone Apps | Configs; the feeds
 # are real notifications (All per app like Android, app pages By Categories / By Time), the C3 Ntfy table and the
 # Channels block removed (only those two), Configs one level, no polling (listener callback), no crash without access.
 # Static: build.json read as data, the Kotlin checked for the contract the data relies on.
@@ -23,14 +23,15 @@ gl = {g['id']: g['label'] for g in nc['groups']}
 labels = [gl.get(i, '?' + i) for i in nc['page_order']]
 comm = next(s for s in ui['sections'] if s['id'] == 'communication')
 pages = [(p['id'], p['label']) for p in comm['pages'] if not p.get('hidden')]
-want = [('my-rss', 'All'), ('notify-badges', 'Persistent Badges'), ('notify-cloudy', 'Cloudy Apps'),
+want = [('my-rss', 'All'), ('notify-badges', 'Persistents'), ('notify-cloudy', 'Cloudy Apps'),
         ('notify-phone', 'Phone Apps'), ('notify-configs', 'Configs')]
-if pages != want: print('sub-pages %s' % pages)
+# #1848 the Cards row is these five; the Boards row (mirrors of the Boards pages) follows them, checked by test-notify-two-rows-1848.sh
+if pages[:5] != want: print('sub-pages %s' % pages)
 elif labels != ['Media', 'Me Infos', 'Device Infos', 'Actions']: print('badge sections %s' % labels)
 elif any(comm.get('state_pages', {}).get(p) != 'my-rss' for p, _ in want): print('sub-pages do not share one state')
 else: print('OK')
 PY
-)" "T1 sub-pages All | Persistent Badges | Cloudy Apps | Phone Apps | Configs; badge sections Media, Me Infos, Device Infos, Actions; one shared state"
+)" "T1 Cards row All | Persistents | Cloudy Apps | Phone Apps | Configs (#1848 renamed, Boards row follows); badge sections Media, Me Infos, Device Infos, Actions; one shared state"
 
 check "$(python3 - "$APP/build.json" <<'PY'
 import json, sys

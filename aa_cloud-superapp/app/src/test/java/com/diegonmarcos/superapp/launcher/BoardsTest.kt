@@ -87,7 +87,7 @@ class BoardsTest : KitPageHarness() {
         val boards = Sections.byId("boards")
         assertNotNull(boards)
         assertEquals("Boards", boards!!.label)
-        assertTrue("bottom nav shows Boards", "boards" in Sections.bottomNavIds())
+        assertTrue("#1848 Boards left the bottom nav for Notify; Actions took its slot", "boards" !in Sections.bottomNavIds() && "actions" in Sections.bottomNavIds())
         assertFalse("bottom nav no longer names infos", "infos" in Sections.bottomNavIds())
         assertEquals("boards", Sections.byId("infos")?.id)
         assertEquals("boards", Sections.canonicalId("infos"))

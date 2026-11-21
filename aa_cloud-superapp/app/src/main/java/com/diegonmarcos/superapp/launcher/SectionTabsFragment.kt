@@ -11,6 +11,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.FragmentContainerView
 import com.diegonmarcos.superapp.ShellActivity
@@ -199,21 +202,39 @@ class SectionTabsFragment : KitComposeFragment(), Collapsible, BackHandler {
             true
         }
 
+        val onTab: (com.diegonmarcos.superapp.bottomnav.NavPage) -> Unit = select@{ tapped ->
+            val position = pages.indexOfFirst { it.id == tapped.id }
+            val page = pages.getOrNull(position) ?: return@select
+            if (page.action.isNotBlank()) {
+                (activity as? ShellActivity)?.dispatchTarget(page.action)
+                return@select
+            }
+            selected = page.id
+            lastContentTab = position
+            selectedPageId = page.id
+            activePane = if (paneCount > 1) position.coerceAtMost(paneCount - 1) else 0
+            (activity as? ShellActivity)?.nav?.syncModeForPage(page.id)
+            (activity as? ShellActivity)?.nav?.recordActiveTab(tabKey, page.id)
+        }
+        // #1848 a section can declare `row_groups`: one strip per group, over the one pane (Notify: Cards | Boards).
+        val rows = if (owner == null) Sections.byId(sectionId)?.rowGroups.orEmpty() else emptyList()
+
         Column(Modifier.fillMaxSize()) {
-            PageTabs(pages.map(Sections::navPage), selected, onSelect = select@{ tapped ->
-                val position = pages.indexOfFirst { it.id == tapped.id }
-                val page = pages.getOrNull(position) ?: return@select
-                if (page.action.isNotBlank()) {
-                    (activity as? ShellActivity)?.dispatchTarget(page.action)
-                    return@select
+            if (rows.isEmpty()) {
+                PageTabs(pages.map(Sections::navPage), selected, onSelect = onTab, underTopChrome = false, flushTop = true,
+                    fitText = ownerPageId in FIT_TEXT_OWNERS)   // #1080: the shell's container already clears the top row; the strip starts at its edge
+            } else {
+                for ((i, g) in rows.withIndex()) {
+                    val rowPages = g.pageIds.mapNotNull { id -> pages.firstOrNull { it.id == id } }
+                    androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        androidx.compose.material3.Text(g.label, color = com.diegonmarcos.superapp.uikit.LocalKitPalette.current.textSecondary,
+                            style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(start = 10.dp).testTag("section-row-label:${g.id}"))
+                        PageTabs(rowPages.map(Sections::navPage), selected, onSelect = onTab, modifier = Modifier.weight(1f),
+                            underTopChrome = false, flushTop = i == 0, fitText = true)
+                    }
                 }
-                selected = page.id
-                lastContentTab = position
-                selectedPageId = page.id
-                activePane = if (paneCount > 1) position.coerceAtMost(paneCount - 1) else 0
-                (activity as? ShellActivity)?.nav?.syncModeForPage(page.id)
-                (activity as? ShellActivity)?.nav?.recordActiveTab(tabKey, page.id)
-            }, underTopChrome = false, flushTop = true, fitText = ownerPageId in FIT_TEXT_OWNERS)   // #1080: the shell's container already clears the top row; the strip starts at its edge
+            }
             Row(Modifier.fillMaxWidth().weight(1f)) {
                 for (i in 0 until paneCount) {
                     // One pane per page on a tablet (Suite shows Cloud and Phone side by side); one pane on a phone,

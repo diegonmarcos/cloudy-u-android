@@ -169,16 +169,16 @@
          producer label/subtitle text stays raw English in build.json, same
          gap the comment above documents for Control's per-control text.
          The two card titles are named by stack_my-rss title_res. -->
-    <string name="notify_badges_title">Persistent badges</string>
+    <string name="notify_badges_title">Persistents</string>
     <string name="notify_configs_title">Configs</string>
-    <string name="notify_settings_sub">Every declared badge. Show this badge turns the badge on (and launches it) or off; Make it Persistent holds its place in the shade. The viewer page shows them read-only.</string>
-    <string name="notify_turn_all">Turn all badges on / off</string>
+    <string name="notify_settings_sub">Every declared card. Show this card turns the card on (and launches it) or off; Make it Persistent holds its place in the shade. The viewer page shows them read-only.</string>
+    <string name="notify_turn_all">Turn all cards on / off</string>
     <string name="push_producer_off">Declared off</string>
 
     <!-- #515/#518 the two views: the badge boxes, and their customization. -->
-    <string name="push_section_badges_sub">One box per badge that goes in the notification centre, as it appears there. A badge that is not in the shade says why here.</string>
-    <string name="push_section_custom_sub">One menu per badge above, same order. Changes take effect on the live badge.</string>
-    <string name="push_none_badges">No badges are declared — build.json::ui.notification_center has no producer with badge=true.</string>
+    <string name="push_section_badges_sub">One box per card that goes in the notification centre, as it appears there. A card that is not in the shade says why here.</string>
+    <string name="push_section_custom_sub">One menu per card above, same order. Changes take effect on the live card.</string>
+    <string name="push_none_badges">No cards are declared — build.json::ui.notification_center has no producer with badge=true.</string>
     <string name="push_state_live">LIVE</string>
     <string name="push_state_dead">NOT IN THE SHADE</string>
     <string name="push_state_blocked">BLOCKED</string>
@@ -188,8 +188,8 @@
     <string name="push_not_posted">Its service is running but nothing is posted on channel %1$s — swiped away, or the channel is blocked.</string>
     <string name="push_open">Open</string>
     <string name="push_launch">Launch</string>
-    <string name="push_launch_all">Launch all badges</string>
-    <string name="push_launched">Launched %1$d badge(s).</string>
+    <string name="push_launch_all">Launch all cards</string>
+    <string name="push_launched">Launched %1$d card(s).</string>
     <!-- #777 the four shade groups + the fleet Alerts group -->
     <string name="notify_group_up">Move up</string>
     <string name="notify_group_down">Move down</string>
@@ -232,7 +232,7 @@
          number have to be changed together. -->
     <string name="badge_markets_title">Markets</string>
     <string name="badge_markets_source">Cloud SA - Markets · Yahoo Finance</string>
-    <string name="badge_markets_no_instruments">No instruments are declared for this badge.</string>
+    <string name="badge_markets_no_instruments">No instruments are declared for this card.</string>
     <string name="badge_markets_power_saving">Power saving is on — prices are not being refreshed.</string>
     <!-- A write the device refused. %1$s = the control's label, %2$s = what
          the re-read reported. -->

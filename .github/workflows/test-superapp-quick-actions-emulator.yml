@@ -1,4 +1,4 @@
-# #1846 Quick actions on an emulator (and #1847 Banking Apps Mode on and off, with the Security tab before, during and after), with the x86_64 APK a Ship Cloud SuperApp run built: every tab of the ONE row
+# #1848 shoots Notify's two rows, the config-icon entry and the new bottom nav; #1846 Quick actions on an emulator (and #1847 Banking Apps Mode on and off, with the Security tab before, during and after), with the x86_64 APK a Ship Cloud SuperApp run built: every tab of the ONE row
 # (Preset | Battery Security UI Network Others All) is opened by its deep link, shot, dumped, and checked for its tab row and its
 # tiles (resource ids control:tile:<id>, test tags exposed as resource ids) with the detail line each tile paints
 # (control:detail:<id>). Evidence: quick-actions-evidence (PNGs, uiautomator XML, tiles.tsv, verdict.txt). Any missing tab label,
@@ -126,6 +126,20 @@ jobs:
             f=ui; case $t in hotspot|nfc|private_dns|always_on_vpn|wifi|mobile_data|bluetooth|airplane_mode) f=network;; esac
             grep -q "tile $t state=.* detail=.\+" "out/$f.log" && check ok "$t has a live reading and a detail line" || check no "$t: no detail line in the $f tab log"
           done
+          # ── #1848 Notify two rows (Cards | Boards), the config-icon entry, the bottom nav with Actions ──
+          target() { adb shell am start -n "$ACT" --es shortcut_action "$1" >/dev/null; awake; sleep 10; }
+          walkt() { name=$1; tg=$2; shift 2; target "$tg"; adb exec-out screencap -p > "out/$name.png"
+            adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb pull /sdcard/u.xml "out/$name.xml" >/dev/null 2>&1
+            for w in "$@"; do grep -qiF "$w" "out/$name.xml" && check ok "$name: '$w' on screen" || check no "$name: '$w' missing"; done; }
+          walkt notify-cards section:communication "Cards" "All" "Persistents" "Cloudy Apps" "Phone Apps" "Configs" "Boards" "Inboxes" "Tasks" "Resources" "X-Ray Device"
+          walkt notify-boards-tasks page:communication/boards-tasks "Cards" "Boards" "Tasks"
+          walkt notify-boards-xray page:communication/boards-xray "Boards" "X-Ray Device"
+          walkt notify-config-entry page:config/notify "Cards" "Boards" "Persistents"
+          grep -qi "Persistent Badges" out/notify-cards.xml && check no "the old label Persistent Badges is still drawn" || check ok "no Persistent Badges label"
+          walkt actions-tab section:actions "Preset" "Battery" "Security" "Network" "Others"
+          adb shell am start -n "$ACT" >/dev/null; awake; sleep 8; adb exec-out screencap -p > out/bottom-nav.png; adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb pull /sdcard/u.xml out/bottom-nav.xml >/dev/null 2>&1
+          for w in Notify Actions Home Cloud Phone; do grep -qiF "$w" out/bottom-nav.xml && check ok "bottom nav: $w" || check no "bottom nav: $w missing"; done
+          grep -qiE 'text="Boards"|content-desc="Boards"' out/bottom-nav.xml && check no "bottom nav still has Boards" || check ok "bottom nav has no Boards"
           # ── #1847 Banking Apps Mode: on and off from Preset > Mode, the Security tab before / during / after ──
           # The run keeps its own adb link: USB debugging, wireless debugging and Developer options are in the mode's skip list here
           # (unit tests cover them); the accessibility entry the mode must remove and put back is the app's own service.

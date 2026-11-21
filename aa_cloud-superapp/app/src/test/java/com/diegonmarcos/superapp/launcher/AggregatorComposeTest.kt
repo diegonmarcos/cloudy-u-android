@@ -271,7 +271,8 @@ class AggregatorComposeTest : KitPageHarness() {
         val sec = Sections.byId("communication")!!
         // The page tabs across the top of Notify.
         // #1672 (owner 2026-11-12): the Notify sub-pages; the old presets (Inboxes ...) are hidden pages, still routable.
-        assertEquals(listOf("All", "Persistent Badges", "Cloudy Apps", "Phone Apps", "Configs"), sec.pages.map { it.label })
+        assertEquals(listOf("All", "Persistents", "Cloudy Apps", "Phone Apps", "Configs"), sec.pages.take(5).map { it.label }) // #1848 the Cards row
+        assertEquals(listOf("Inboxes", "Me", "Tasks", "Resources", "X-Ray Device"), sec.pages.drop(5).map { it.label })   // #1848 the Boards row
         assertTrue(sec.allPages.any { it.id == "rss-inboxes" })
         val filters = filtersOf("communication", "my-rss")
         assumeTrue("the All tab declares no filter row in this build", filters.isNotEmpty())

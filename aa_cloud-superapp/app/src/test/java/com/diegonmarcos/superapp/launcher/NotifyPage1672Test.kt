@@ -101,7 +101,8 @@ class NotifyPage1672Test : KitPageHarness() {
     @Test
     fun `1 the sub-pages and the badge sections are in the declared order`() {
         val sec = Sections.byId("communication")!!
-        assertEquals(listOf("All", "Persistent Badges", "Cloudy Apps", "Phone Apps", "Configs"), sec.pages.map { it.label })
+        assertEquals(listOf("All", "Persistents", "Cloudy Apps", "Phone Apps", "Configs"), sec.pages.take(5).map { it.label }) // #1848 the Cards row
+        assertEquals(listOf("Inboxes", "Me", "Tasks", "Resources", "X-Ray Device"), sec.pages.drop(5).map { it.label })   // #1848 the Boards row
         page("notify-badges")
         val order = listOf("media", "live", "network", "actions").map { BadgeCardTags.section(it) }
         val tops = order.map { top(it) }
@@ -274,7 +275,7 @@ class NotifyPage1672Test : KitPageHarness() {
                 if (!ok) missing += it.getString("id")
             }
         }
-        for (p in Sections.byId("communication")!!.allPages) {
+        for (p in Sections.byId("communication")!!.allPages.filter { !it.id.startsWith("boards-") }) { // #1848 the Boards row mirrors Boards pages (own tests)
             page(p.id)
             for (r in all.filter { it.getString("status") == "removed" })
                 assertEquals("${r.getString("id")} is back on ${p.id}", 0,

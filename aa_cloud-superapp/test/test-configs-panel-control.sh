@@ -1332,7 +1332,8 @@ for k, v in stacks.items():
     if k != 'stack_notify-configs' and any(p.get('kind') == 'notification_badge_configs' for p in v):
         bad.append('%s also declares the badge Configs' % k)
 order = [p['id'] for p in comm['pages'] if not p.get('hidden')]
-if order != ['my-rss', 'notify-badges', 'notify-cloudy', 'notify-phone', 'notify-configs']:
+# #1848 the Cards row is the first five; the Boards row (mirrors of the Boards pages, X-Ray Device) follows
+if order[:5] != ['my-rss', 'notify-badges', 'notify-cloudy', 'notify-phone', 'notify-configs'] or order[5:] != ['boards-msgs', 'boards-me', 'boards-tasks', 'boards-resources', 'boards-xray']:
     bad.append('Notify sub-pages are %s' % order)
 for p in (badges, configs):
     if p and not p.get('title_res'): bad.append('%s has no title_res' % p['kind'])

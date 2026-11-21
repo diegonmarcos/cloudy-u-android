@@ -626,7 +626,7 @@ internal fun ConfigSection(
                 // The badge list is drawn straight into Configs under a plain label: no card, no second fold.
                 if (panel.kind == "notification_badge_configs") Column(Modifier.fillMaxWidth().anchorTarget(anchors, panel.anchor)
                     .testTag(AggTags.panel(i))) {
-                    ConfigLabel(panelTitle(LocalContext.current, panel).let { if (it.equals("Configs", true)) "Badges" else it })
+                    ConfigLabel(panelTitle(LocalContext.current, panel).let { if (it.equals("Configs", true)) "Cards" else it })
                     BadgePane(state) { redraw -> BadgePanes.badges(redraw) }
                 }
                 else PagePanel(state, i, panel, anchors, actions)

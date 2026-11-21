@@ -66,6 +66,8 @@ object Sections {
          *  Capped by [SectionTabsFragment.MAX_PANES]. Source:
          *  build.json::sections[*].tabs. */
         val tabs: Boolean = false,
+        /** #1848 `row_groups`: the tab strip in several rows, one per group (Notify: Cards | Boards). Empty = one strip. */
+        val rowGroups: List<RowGroup> = emptyList(),
         /** Aggregator sections live ONLY in the bottom nav (Communication,
          *  Infos, Cloud, Phone today). Their `tiles*` lists are deep-link
          *  pointers into real content sections, not pages of their own. */
@@ -396,6 +398,9 @@ object Sections {
             tiles.filterNot { it.separator }.flatMap { it.destinations }
     }
 
+    /** #1848 one row of a section's tab strip: its label and the ids of the pages it holds, in order. */
+    data class RowGroup(val id: String, val label: String, val pageIds: List<String>)
+
     data class Page(
         val id: String,
         val label: String,
@@ -453,6 +458,10 @@ object Sections {
          *  `page:communication/my-rss` opens, cards and filter row and all,
          *  with stack_my-rss still declared by the section that owns it. */
         val mirrorPage: String = "",
+
+        /** #1848 `redirect` ("section/page"): this page is not drawn, a link to it opens THAT page ([canonicalPage]). Configs >
+         *  Launcher > Notify redirects to Notify so there is one Notify page, with its full sub-page menu. */
+        val redirect: String = "",
 
         /** When set, this facet appends THAT section's Actions (its
          *  `is_action` pages plus its star extras) under an Actions heading,
@@ -767,6 +776,7 @@ object Sections {
                         },
                         mirrorSection = po.optString("mirror_section", ""),
                         mirrorPage = po.optString("mirror_page", ""),
+                        redirect = po.optString("redirect", ""),
                         actionsFromSection = po.optString("actions_from_section", ""),
                         hidden   = po.optBoolean("hidden", false),
                         separator = po.optBoolean("separator", false),
@@ -1033,6 +1043,12 @@ object Sections {
                     singlePage      = o.optBoolean("single_page", false),
                     gridColumns     = o.optInt("grid_columns", 0),
                     tabs            = o.optBoolean("tabs", false),
+                    rowGroups       = o.optJSONArray("row_groups")?.let { ra ->
+                        (0 until ra.length()).mapNotNull { ra.optJSONObject(it) }.map { g ->
+                            RowGroup(g.optString("id"), g.optString("label"),
+                                g.optJSONArray("pages")?.let { pa -> (0 until pa.length()).map { pa.optString(it) } }.orEmpty())
+                        }
+                    }.orEmpty(),
                     isAggregator    = o.optBoolean("is_aggregator", false),
                     tilesShared     = parseTiles("tiles_shared"),
                     tilesApps       = parseTiles("tiles_apps"),
@@ -1122,7 +1138,11 @@ object Sections {
     /** (section, page) with both old ids resolved: `infos/work-pm` -> `boards/tasks`. Unknown ids pass through. */
     fun canonicalPage(sectionId: String, pageId: String): Pair<String, String> {
         val sec = byId(sectionId) ?: return sectionId to pageId
-        return sec.id to (sec.pageAliases[pageId] ?: pageId)
+        val page = sec.pageAliases[pageId] ?: pageId
+        // #1848 a page that declares `redirect` ("section/page") is another page's twin: the link opens that one.
+        val to = sec.allPages.firstOrNull { it.id == page }?.redirect.orEmpty().split('/', limit = 2)
+        if (to.size == 2 && to.none(String::isBlank)) return (byId(to[0])?.id ?: to[0]) to to[1]
+        return sec.id to page
     }
 
     /** build.json::ui.bottom_nav — the section ids the bottom-nav island shows, left to right. */

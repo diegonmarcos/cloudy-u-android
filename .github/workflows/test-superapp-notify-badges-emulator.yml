@@ -179,13 +179,13 @@ jobs:
           page notify-configs; shot configs-before; tall notify-configs configs-before-tall
 
           # 1. Turn all OFF.
-          page notify-configs; setsw false text 'Turn all badges on / off'
+          page notify-configs; setsw false text 'Turn all cards on / off'
           p1=$(until_shade all-off none_in); n1=$(in_shade "$p1"); echo "all off: $p1"
           [ "$n1" -eq 0 ] && check ok "1 Turn all OFF: no badge in the shade ($p1)" || check no "1 Turn all OFF: $n1 badge channels still in the shade ($p1)"
           page notify-configs; shot configs-all-off; shade 1-all-off
 
           # 2. Turn all ON.
-          page notify-configs; setsw true text 'Turn all badges on / off'
+          page notify-configs; setsw true text 'Turn all cards on / off'
           p2=$(until_shade all-on some_in); n2=$(in_shade "$p2"); echo "all on: $p2"
           [ "$n2" -ge 3 ] && check ok "2 Turn all ON: $n2 badge channels back in the shade ($p2)" || check no "2 Turn all ON: only $n2 badge channels in the shade ($p2)"
           page notify-configs; shot configs-all-on; shade 2-all-on
@@ -195,12 +195,12 @@ jobs:
           if [ -n "$tid" ]; then
             tch=$(grep -P "^$tid\t" badges.tsv | cut -f2); tlabel=$(grep -P "^$tid\t" badges.tsv | cut -f3)
             gone() { case " $1 " in *" $tch "*) return 1;; esac; return 0; }; back() { ! gone "$1"; }
-            page notify-configs; setsw false below "$tlabel" 'Show this badge'
+            page notify-configs; setsw false below "$tlabel" 'Show this card'
             p3=$(until_shade one-off gone); echo "$tid off: $p3"
             case " $p3 " in *" $tch "*) check no "3 '$tlabel' Show this badge OFF: channel $tch still in the shade";; *) check ok "3 '$tlabel' Show this badge OFF: channel $tch left the shade";; esac
             others=$(in_shade "$p3"); [ "$others" -ge 1 ] && check ok "3 the other badges stayed ($others)" || check no "3 switching one badge off took the others too"
             shot configs-one-off; shade 3-one-off
-            page notify-configs; setsw true below "$tlabel" 'Show this badge'
+            page notify-configs; setsw true below "$tlabel" 'Show this card'
             p4=$(until_shade one-on back); echo "$tid on: $p4"
             case " $p4 " in *" $tch "*) check ok "3 '$tlabel' Show this badge ON: channel $tch back in the shade";; *) check no "3 '$tlabel' Show this badge ON: channel $tch not posted";; esac
             shade 4-one-on
