@@ -320,9 +320,11 @@ public fun NavBarTopFirstRow(
                         val here = i == nav.crumbs.lastIndex
                         Text(
                             c.label,
-                            (if (target != null) Modifier.clickable(role = Role.Button) { open = false; onNavigate(target) } else Modifier)
-                                .fillMaxWidth().heightIn(min = 36.dp)
-                                .padding(start = 16.dp + 12.dp * i, end = 16.dp, top = 8.dp, bottom = 8.dp)
+                            // the indent is OUTSIDE the clickable and the tag, so the node itself moves right by depth (its bounds, not just its text)
+                            Modifier.padding(start = 12.dp * i).fillMaxWidth()
+                                .then(if (target != null) Modifier.clickable(role = Role.Button) { open = false; onNavigate(target) } else Modifier)
+                                .heightIn(min = 36.dp)
+                                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
                                 .testTag(TopFirstRowTags.crumb(i)),
                             color = if (here) colors.accentOnIsland else colors.onIsland,
                             fontSize = TopFirstRowSpec.TITLE_SP.sp,

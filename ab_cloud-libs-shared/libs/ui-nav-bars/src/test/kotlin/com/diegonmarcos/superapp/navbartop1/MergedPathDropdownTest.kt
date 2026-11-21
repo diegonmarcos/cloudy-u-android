@@ -10,6 +10,9 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.click
+import androidx.compose.ui.geometry.Offset
 import com.diegonmarcos.superapp.bottomnav.AppTopBarLabels
 import com.diegonmarcos.superapp.bottomnav.NavPage
 import com.diegonmarcos.superapp.bottomnav.NavSection
@@ -78,6 +81,9 @@ class MergedPathDropdownTest {
 
     private fun open() { compose.onNodeWithTag(TopFirstRowTags.ISLAND).performClick() }
 
+    /** A tap on the title's TEXT (its left part), not the arrow: the island's centre can fall on the arrow, which opens the dropdown instead. */
+    private fun tapTitle() { compose.onNodeWithTag(TopFirstRowTags.ISLAND).performTouchInput { click(Offset(20f, centerY)) } }
+
     @Test fun `there is no chain-link button on the path row`() {
         show()
         compose.onNodeWithTag(UrlUriTags.BUTTON).assertDoesNotExist()
@@ -137,7 +143,7 @@ class MergedPathDropdownTest {
     @Test fun `a host with onTitleClick keeps its tap and the arrow opens the merged dropdown`() {
         var clicks = 0
         show(onTitleClick = { clicks++ })
-        open()
+        tapTitle()
         assertEquals(1, clicks)
         compose.onNodeWithTag(UrlUriTags.HEADER_PAGES).assertDoesNotExist()
         compose.onNodeWithTag(TopFirstRowTags.MORE).performClick()
