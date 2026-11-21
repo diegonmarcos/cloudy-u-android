@@ -61,6 +61,8 @@ jobs:
               json.dump(cur, h, indent=1, ensure_ascii=False)
               h.write("\n")
           PY
+          # the inventory discovers lock files with `git ls-files`: an untracked lock is invisible to it (and to `check`)
+          git add -N -- "$crate/Cargo.lock"
           python3 1_cicd/src/scripts/cloud-android-licence-inventory.py refresh . --offline
           python3 -I - "$RUNNER_TEMP/inventory.before.json" <<'PY'
           import json, sys

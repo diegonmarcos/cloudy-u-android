@@ -13,11 +13,14 @@
    "LicenseRef-GeneralUser-GS-2.0": 1
   },
   "cargo": {
-   "MIT OR Apache-2.0": 32,
+   "MIT OR Apache-2.0": 67,
+   "Unicode-3.0": 18,
+   "MIT": 14,
+   "Apache-2.0 OR MIT": 9,
    "Unlicense OR MIT": 4,
-   "MIT": 3,
+   "MPL-2.0": 2,
+   "BSD-2-Clause OR Apache-2.0 OR MIT": 2,
    "CC0-1.0 OR Apache-2.0 OR Apache-2.0 WITH LLVM-exception": 1,
-   "Apache-2.0 OR MIT": 1,
    "CC0-1.0 OR MIT-0 OR Apache-2.0": 1,
    "(MIT OR Apache-2.0) AND Unicode-3.0": 1
   },
@@ -4788,12 +4791,45 @@
    "licence": "Apache-2.0",
    "licence_source": "Roboto (googlefonts/roboto-2) is published by Google under the Apache License 2.0"
   },
+  "cargo:ahash": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.8.12",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:ammonia": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "4.2.5",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
   "cargo:arrayvec": {
    "kind": "cargo",
    "declared_in": [
     "ab_cloud-libs-shared/libs/drive-core-rs/Cargo.lock"
    ],
    "version": "0.7.8",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:bitflags": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "2.13.2",
    "scope": "shipped",
    "licence": "MIT OR Apache-2.0",
    "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
@@ -4909,6 +4945,17 @@
    "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
    "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
   },
+  "cargo:cssparser": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.38.0",
+   "scope": "shipped",
+   "licence": "MPL-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
   "cargo:digest": {
    "kind": "cargo",
    "declared_in": [
@@ -4917,6 +4964,83 @@
    "version": "0.10.7",
    "scope": "shipped",
    "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:displaydoc": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.2.7",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:dtoa": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "1.0.11",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:dtoa-short": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.3.5",
+   "scope": "shipped",
+   "licence": "MPL-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:equivalent": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "1.0.3",
+   "scope": "shipped",
+   "licence": "Apache-2.0 OR MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:fallible-iterator": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.3.0",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:fallible-streaming-iterator": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.1.9",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:fastrand": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "2.5.0",
+   "scope": "shipped",
+   "licence": "Apache-2.0 OR MIT",
    "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
    "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
   },
@@ -4931,6 +5055,17 @@
    "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
    "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
   },
+  "cargo:form_urlencoded": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "1.2.3",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
   "cargo:generic-array": {
    "kind": "cargo",
    "declared_in": [
@@ -4939,6 +5074,171 @@
    "version": "0.14.7",
    "scope": "shipped",
    "licence": "MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:hashbrown": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.14.5",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:hashify": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.2.9",
+   "scope": "shipped",
+   "licence": "Apache-2.0 OR MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:hashlink": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.9.1",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:html5ever": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.40.1",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:icu_collections": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "2.4.0",
+   "scope": "shipped",
+   "licence": "Unicode-3.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:icu_locale_core": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "2.4.0",
+   "scope": "shipped",
+   "licence": "Unicode-3.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:icu_normalizer": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "2.4.0",
+   "scope": "shipped",
+   "licence": "Unicode-3.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:icu_normalizer_data": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "2.4.0",
+   "scope": "shipped",
+   "licence": "Unicode-3.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:icu_properties": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "2.4.0",
+   "scope": "shipped",
+   "licence": "Unicode-3.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:icu_properties_data": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "2.4.0",
+   "scope": "shipped",
+   "licence": "Unicode-3.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:icu_provider": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "2.4.0",
+   "scope": "shipped",
+   "licence": "Unicode-3.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:idna": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "1.1.0",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:idna_adapter": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "1.2.2",
+   "scope": "shipped",
+   "licence": "Apache-2.0 OR MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:indexmap": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "2.14.2",
+   "scope": "shipped",
+   "licence": "Apache-2.0 OR MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:itoa": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "1.0.19",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
    "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
    "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
   },
@@ -4986,12 +5286,78 @@
    "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
    "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
   },
+  "cargo:libsqlite3-sys": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.28.0",
+   "scope": "shipped",
+   "licence": "MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:litemap": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.8.3",
+   "scope": "shipped",
+   "licence": "Unicode-3.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:lock_api": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.4.14",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
   "cargo:log": {
    "kind": "cargo",
    "declared_in": [
     "ab_cloud-libs-shared/libs/drive-core-rs/Cargo.lock"
    ],
    "version": "0.4.35",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:mail-parser": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.11.9",
+   "scope": "shipped",
+   "licence": "Apache-2.0 OR MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:maplit": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "1.0.2",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:markup5ever": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.40.0",
    "scope": "shipped",
    "licence": "MIT OR Apache-2.0",
    "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
@@ -5005,6 +5371,138 @@
    "version": "2.8.3",
    "scope": "shipped",
    "licence": "Unlicense OR MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:new_debug_unreachable": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "1.0.6",
+   "scope": "shipped",
+   "licence": "MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:once_cell": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "1.21.4",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:parking_lot": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.12.5",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:parking_lot_core": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.9.12",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:percent-encoding": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "2.3.2",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:phf": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.14.0",
+   "scope": "shipped",
+   "licence": "MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:phf_codegen": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.14.0",
+   "scope": "shipped",
+   "licence": "MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:phf_generator": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.14.0",
+   "scope": "shipped",
+   "licence": "MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:phf_shared": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.14.0",
+   "scope": "shipped",
+   "licence": "MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:pkg-config": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.3.34",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:potential_utf": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.1.6",
+   "scope": "shipped",
+   "licence": "Unicode-3.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:precomputed-hash": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.1.1",
+   "scope": "shipped",
+   "licence": "MIT",
    "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
    "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
   },
@@ -5030,6 +5528,28 @@
    "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
    "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
   },
+  "cargo:redox_syscall": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.5.18",
+   "scope": "shipped",
+   "licence": "MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:rusqlite": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.31.0",
+   "scope": "shipped",
+   "licence": "MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
   "cargo:same-file": {
    "kind": "cargo",
    "declared_in": [
@@ -5038,6 +5558,61 @@
    "version": "1.0.6",
    "scope": "shipped",
    "licence": "Unlicense OR MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:scopeguard": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "1.2.0",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:serde": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "1.0.229",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:serde_core": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "1.0.229",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:serde_derive": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "1.0.229",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:serde_json": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "1.0.154",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
    "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
    "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
   },
@@ -5063,12 +5638,89 @@
    "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
    "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
   },
+  "cargo:siphasher": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "1.0.4",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:smallvec": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "1.16.6",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:stable_deref_trait": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "1.2.1",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:string_cache": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.11.0",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:string_cache_codegen": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.11.2",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
   "cargo:syn": {
    "kind": "cargo",
    "declared_in": [
     "ab_cloud-libs-shared/libs/drive-core-rs/Cargo.lock"
    ],
    "version": "2.0.119",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:synstructure": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.14.0",
+   "scope": "shipped",
+   "licence": "MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:tendril": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.5.1",
    "scope": "shipped",
    "licence": "MIT OR Apache-2.0",
    "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
@@ -5096,6 +5748,17 @@
    "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
    "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
   },
+  "cargo:tinystr": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.8.5",
+   "scope": "shipped",
+   "licence": "Unicode-3.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
   "cargo:typenum": {
    "kind": "cargo",
    "declared_in": [
@@ -5118,6 +5781,50 @@
    "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
    "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
   },
+  "cargo:url": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "2.5.9",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:utf8_iter": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "1.1.0",
+   "scope": "shipped",
+   "licence": "Apache-2.0 OR MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:utf_types": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "1.0.0",
+   "scope": "shipped",
+   "licence": "Apache-2.0 OR MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:vcpkg": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.2.15",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
   "cargo:version_check": {
    "kind": "cargo",
    "declared_in": [
@@ -5137,6 +5844,17 @@
    "version": "2.5.0",
    "scope": "shipped",
    "licence": "Unlicense OR MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:web_atoms": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.3.0",
+   "scope": "shipped",
+   "licence": "MIT OR Apache-2.0",
    "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
    "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
   },
@@ -5258,6 +5976,127 @@
    "version": "0.42.2",
    "scope": "shipped",
    "licence": "MIT OR Apache-2.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:writeable": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.6.4",
+   "scope": "shipped",
+   "licence": "Unicode-3.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:yoke": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.8.4",
+   "scope": "shipped",
+   "licence": "Unicode-3.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:yoke-derive": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.8.4",
+   "scope": "shipped",
+   "licence": "Unicode-3.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:zerocopy": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.8.64",
+   "scope": "shipped",
+   "licence": "BSD-2-Clause OR Apache-2.0 OR MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:zerocopy-derive": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.8.64",
+   "scope": "shipped",
+   "licence": "BSD-2-Clause OR Apache-2.0 OR MIT",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:zerofrom": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.1.8",
+   "scope": "shipped",
+   "licence": "Unicode-3.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:zerofrom-derive": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.1.8",
+   "scope": "shipped",
+   "licence": "Unicode-3.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:zerotrie": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.2.5",
+   "scope": "shipped",
+   "licence": "Unicode-3.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:zerovec": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.11.9",
+   "scope": "shipped",
+   "licence": "Unicode-3.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:zerovec-derive": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "0.11.7",
+   "scope": "shipped",
+   "licence": "Unicode-3.0",
+   "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
+   "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
+  },
+  "cargo:zmij": {
+   "kind": "cargo",
+   "declared_in": [
+    "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
+   ],
+   "version": "1.0.23",
+   "scope": "shipped",
+   "licence": "MIT",
    "licence_source": "licenses/curated.json::cargo_licences (the SPDX expression the crate declares, read with cargo metadata)",
    "transitive": "resolved: Cargo.lock lists the whole closure and every crate in it is a subject"
   },
