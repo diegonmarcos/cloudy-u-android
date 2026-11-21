@@ -78,22 +78,32 @@ tap 'Bookmarks \(all\)' text && sleep 3 && shot page-weby-bookmarks && ok "P1 We
 # U1 the Url-Uri dropdown, in the browser
 tap 'bottomnav_item_browser' >/dev/null
 tap 'navtop1_more' && shot dropdown-browser
-# the dropdown scrolls: swipe INSIDE it (a touch outside dismisses it) and read the entries again
+# the dropdown is long (parents, related pages, Pages, actions, Tools, sections, Configs) and scrolls: swipe INSIDE it (a touch outside
+# dismisses it), a half-height step at a time, until two dumps in a row are the same (the end) or 25 swipes; collect the tags of every dump
 scroll_dropdown() {
-  dump _dd
-  local xy; xy=$(python3 - "$OUT/_dd.xml" <<'PY'
+  local xy; xy=$(python3 -I - "$OUT/$1.xml" <<'PY'
 import re, sys, xml.etree.ElementTree as ET
-for n in ET.parse(sys.argv[1]).getroot().iter("node"):
+try: root = ET.parse(sys.argv[1]).getroot()
+except Exception: sys.exit(0)
+for n in root.iter("node"):
     if n.get("resource-id", "") == "navtop1_dropdown":
         a, b, c, d = map(int, re.findall(r"\d+", n.get("bounds")))
-        print((a + c) // 2, d - 40, (a + c) // 2, b + 40); break
+        h = d - b
+        print((a + c) // 2, b + h * 3 // 4, (a + c) // 2, b + h // 4); break
 PY
 )
-  [ -n "$xy" ] && adb shell input swipe ${xy% * *} ${xy#* * } 400 && sleep 1
+  [ -n "$xy" ] && adb shell input swipe ${xy% * *} ${xy#* * } 600 && sleep 1
 }
-scroll_dropdown; shot dropdown-browser-tools
+cp "$OUT/dropdown-browser.xml" "$OUT/dropdown-browser-all.xml"
+prev=$(md5sum < "$OUT/dropdown-browser.xml"); last=dropdown-browser
+for i in $(seq 1 25); do
+  scroll_dropdown "$last"; shot dropdown-browser-s$i; last=dropdown-browser-s$i
+  cat "$OUT/$last.xml" >> "$OUT/dropdown-browser-all.xml"
+  cur=$(md5sum < "$OUT/$last.xml"); [ "$cur" = "$prev" ] && break; prev=$cur
+done
+cp "$OUT/$last.xml" "$OUT/dropdown-browser-tools.xml"; cp "$OUT/$last.png" "$OUT/dropdown-browser-tools.png" 2>/dev/null || true
 for e in section:domains section:tabs section:browser section:cloudy section:weby ai slot_page:search profile configs back up home background force_close restart slot_tool:new_tab; do
-  { has "urluri_entry_$e" dropdown-browser || has "urluri_entry_$e" dropdown-browser-tools; } && ok "U1 browser dropdown lists $e" || bad "U1 browser dropdown misses $e"
+  has "urluri_entry_$e" dropdown-browser-all && ok "U1 browser dropdown lists $e" || bad "U1 browser dropdown misses $e"
 done
 adb shell input keyevent KEYCODE_BACK
 
