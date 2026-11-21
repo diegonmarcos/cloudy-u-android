@@ -218,7 +218,7 @@ class PresetModesTest {
             ModeRig.stepsFor("super_saving")!!.map { it.id }.containsAll(heavy) && ModeRig.ids.filter { it != "super_saving" }.none { m -> ModeRig.stepsFor(m)!!.any { it.id in heavy } })
         for (id in ModeRig.ids) for (s in ModeRig.stepsFor(id)!!) {
             assertTrue("$id/${s.id}: every step has a label", s.label.isNotBlank())
-            assertTrue("$id/${s.id}: an unknown step kind cannot be restored", s.kind in setOf("launcher_toggles", "setting", "setting_cap", "shell_toggle", "bg_policy", "sync", "idle_screen_off", "keeper", "fleet_stop"))
+            assertTrue("$id/${s.id}: an unknown step kind cannot be restored", s.kind in setOf("launcher_toggles", "setting", "setting_cap", "shell_toggle", "bg_policy", "sync", "idle_screen_off", "keeper", "fleet_stop", "device"))
         }
     }
 
