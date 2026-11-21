@@ -439,7 +439,10 @@ private fun ModeReportPanel(r: ModeReport?, all: Boolean, toggleAll: () -> Unit,
             modifier = Modifier.padding(start = 12.dp, top = 2.dp).testTag("mode-step-failed:${f.id}"))
         for (n in needsTap) Text("→ ${n.label}: ${n.verdict} (open Settings) - ${n.note.ifBlank { "no reason given" }}", color = p.warn, style = small,
             modifier = Modifier.padding(start = 12.dp, top = 2.dp).clickable {
-                runCatching { ctx.startActivity(android.content.Intent(n.link).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                runCatching {
+                    if (n.link.startsWith("perms:")) com.diegonmarcos.superapp.perms.PermsLink.open(ctx, n.label, listOf(n.link.removePrefix("perms:")))
+                    else ctx.startActivity(android.content.Intent(n.link).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+                }
             }.testTag("mode-step-owner:${n.id}"))
         if (all) for (x in rest) Text(
             (if (x.state == com.diegonmarcos.superapp.bgpolicy.SsState.APPLIED) "✓ ${x.label}: done" else "○ ${x.label}: skipped") + if (x.note.isBlank()) "" else " - ${x.note}",

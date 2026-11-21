@@ -24,10 +24,14 @@ import org.json.JSONObject
 object BankingMode {
     const val MODE_ID = "banking"
 
+    /** The report link that opens the Perms page on its accessibility row (PermsLink), not Android's Settings directly. */
+    const val PERMS_A11Y = "perms:accessibility"
+
     /** The Settings screen the owner uses when Android allows no programmatic change of an item. */
     fun link(item: String): String = when (item) {
         "developer_options", "usb_debugging", "wireless_debugging" -> DeviceControls.developmentSettingsAction()
-        "a11y_fleet" -> Settings.ACTION_ACCESSIBILITY_SETTINGS
+        // #1515 one place: accessibility is granted on the Perms page, so the owner's link is a Perms row, never a raw Settings action.
+        "a11y_fleet" -> PERMS_A11Y
         else -> ""
     }
 
