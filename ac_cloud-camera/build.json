@@ -187,7 +187,7 @@
       "objects",
       "photo",
       "video",
-      "vr"
+      "scanner"
     ],
     "sections": [
       {
@@ -243,7 +243,15 @@
         "id": "vr",
         "label": "VR",
         "icon": "vr",
-        "pages": []
+        "pages": [],
+        "_doc": "#1839 the Filters page (the VR mode, face and object filters) left the bottom nav for a Filters icon on the Camera page; it is still a declared section so every CameraMode stays declared and the swipe order still reaches it. Nothing of it was removed."
+      },
+      {
+        "id": "scanner",
+        "label": "Scanner",
+        "icon": "scanner",
+        "pages": [],
+        "_doc": "#1839 the Scanner page (ScannerActivity), the bottom nav's fifth slot, in the place the Filters tab held."
       }
     ],
     "default_section": "photo"
@@ -275,7 +283,8 @@
         "Everything stays in the phone's gallery",
         "Timer, zoom and exposure bars",
         "Objects: live on-device detection with boxes, labels, confidence and tracking ids",
-        "VR: face and object filters (hats, glasses, masks, backgrounds, colour looks, stickers)"
+        "VR: face and object filters (hats, glasses, masks, backgrounds, colour looks, stickers)",
+        "Scanner: documents in, a clean searchable PDF out (edge detection, perspective, document filters, page sizes, on-device OCR)"
       ],
       "screens": [
         {
@@ -297,6 +306,10 @@
         {
           "name": "VR",
           "what": "Face and object filters (hats, glasses, masks, backgrounds, colour looks, stickers) on the live preview."
+        },
+        {
+          "name": "Scanner",
+          "what": "Scan documents with the camera or import images: frame, flatten, filter, size, read the text on the phone and export a searchable PDF, images or text."
         }
       ],
       "guide": [

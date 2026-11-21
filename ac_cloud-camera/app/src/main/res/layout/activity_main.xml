@@ -785,6 +785,23 @@
 
         </FrameLayout>
 
+        <!-- #1839 Filters: the VR page (face and object filters) left the bottom nav for this button; it opens the same screen. -->
+        <ImageButton
+            android:id="@+id/filters_option"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:minWidth="48dp"
+            android:minHeight="48dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            tools:visibility="visible"
+            android:paddingHorizontal="16dp"
+            android:background="@null"
+            android:src="@drawable/ic_filters"
+            android:tooltipText="@string/filters_open"
+            android:contentDescription="@string/filters_open"/>
+
         <ImageButton
             android:id="@+id/settings_option"
             android:layout_alignParentTop="true"

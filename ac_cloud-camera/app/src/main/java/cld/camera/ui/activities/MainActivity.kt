@@ -86,6 +86,7 @@ import cld.camera.util.isPackageInstalled
 import cld.camera.objects.ObjectsController
 import cld.camera.ui.ModeNav
 import cld.camera.vr.VrController
+import cld.camera.scanner.ScannerActivity
 import cld.camera.ui.CountDownTimerUI
 import cld.camera.ui.CustomGrid
 import cld.camera.ui.QROverlay
@@ -204,6 +205,7 @@ open class MainActivity : AppCompatActivity(),
     lateinit var threeButtons: LinearLayout
 
     lateinit var settingsIcon: ImageView
+    lateinit var filtersIcon: ImageView
 
     private lateinit var exposurePlusIcon: ImageView
     private lateinit var exposureNegIcon: ImageView
@@ -783,7 +785,17 @@ open class MainActivity : AppCompatActivity(),
         modeNav = ModeNav(
             binding.cameraModeTabs, binding.cameraModeIsland, binding.cameraModeStrip,
             NavDecl.fromBuildConfig(BuildConfig.UI_SECTIONS_B64, BuildConfig.UI_BOTTOM_NAV, BuildConfig.UI_DEFAULT_SECTION),
+            // #1839 the island's Scanner slot opens the Scanner page (its own activity), not a camera mode.
+            onLaunch = { startActivity(ScannerActivity.intent(this)) },
         ) { mode -> finalizeMode(mode) }
+
+        // #1839 Filters: the VR page left the island; this button on the Camera page opens the same screen. Hidden on the page itself
+        // and wherever the mode is not offered (the lock-screen camera).
+        filtersIcon = binding.filtersOption
+        filtersIcon.setOnClickListener { if (!videoCapturer.isRecording) finalizeMode(CameraMode.VR) }
+        modeNav.onSelected = { mode ->
+            filtersIcon.visibility = if (CameraMode.VR in modeNav.modes && mode != CameraMode.VR) View.VISIBLE else View.GONE
+        }
 
         timerView = binding.timer
         previewView.previewStreamState.observe(this) { state: StreamState ->

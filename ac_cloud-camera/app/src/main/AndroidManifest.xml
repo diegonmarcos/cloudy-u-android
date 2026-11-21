@@ -244,6 +244,24 @@
             android:exported="false"
             tools:ignore="DiscouragedApi,LockedOrientationActivity" />
 
+        <!-- #1839 Scanner: the bottom nav's fifth slot (documents in, searchable PDF out). -->
+        <activity
+            android:name=".scanner.ScannerActivity"
+            android:theme="@style/Theme.App"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false" />
+
+        <!-- #1839 Scanner: the captured photos and the staged exports, shared by content Uri. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.scanshare"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/scanner_paths" />
+        </provider>
+
         <!-- #772 /api/image/recognize, #798 /api/image/detect and /api/sound/classify on the fleet debug API (registers before Application.onCreate). -->
         <provider
             android:name=".debugapi.ImageDebugApiProvider"

@@ -4,8 +4,8 @@
 # ╚══════════════════════════════════════════════════════════════════╝
 #
 # What this certifies, statically (the nav is data, the bar and the strips are libs:bottomnav's):
-#   S1 build.json::ui is ONE declaration: bottom_nav = qr_scan|objects|photo|video|vr (QR Code | Objects |
-#      Camera | Video | VR, in that order), default_section photo, and
+#   S1 build.json::ui is ONE declaration: bottom_nav = qr_scan|objects|photo|video|scanner (QR Code | Objects |
+#      Camera | Video | Scanner, in that order; #1839 the VR/Filters page is a declared section reached by the Camera page's Filters button), default_section photo, and
 #      the photo family's pages are the flavours (auto|face_retouch|portrait|night|hdr|camera). Every
 #      CameraMode is declared, under its lower-cased name.
 #   S2 the app compiles libs:bottomnav and bakes UI_BOTTOM_NAV + UI_SECTIONS_B64 + UI_DEFAULT_SECTION.
@@ -32,7 +32,7 @@ CFG = json.loads(r'''{
   "objects",
   "photo",
   "video",
-  "vr"
+  "scanner"
  ],
  "default": "photo",
  "pages": {

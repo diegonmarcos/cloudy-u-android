@@ -4,7 +4,7 @@
 # ╚══════════════════════════════════════════════════════════════════╝
 #
 # What this certifies, statically (the JVM suite in app/src/test runs the anchor maths, the catalogue and the LUT):
-#   R1 VR is a mode of the camera, declared in build.json::ui (id vr, the fifth bar item), entered and left by the
+#   R1 VR is a mode of the camera, declared in build.json::ui (id vr; since #1839 opened by the Filters button on the Camera page, not a bar item), entered and left by the
 #      mode switch; the shutter saves the composited photo, Record the composited video.
 #   R2 the analysis is ONE ImageAnalysis, STRATEGY_KEEP_ONLY_LATEST, installed only through AnalyzerLifecycle; hiding
 #      the page or pausing the activity stops it, stops a recording and RELEASES the models.
@@ -64,7 +64,7 @@ def checks(f):
     except ValueError:
         return ["build.json / vr-filters.json / inventory.json is unreadable"]
     ui = b["ui"]
-    need("R1 VR is the fifth bar item", ui["bottom_nav"][-1] == "vr" and "vr" in [s["id"] for s in ui["sections"]])
+    need("R1 VR is a declared section, opened by the Filters button on the Camera page (#1839)", "vr" in [s["id"] for s in ui["sections"]] and "filters_option" in f["layout"] and "finalizeMode(CameraMode.VR)" in c["main"])
     need("R1 CameraMode has VR", re.search(r"\bVR\(", c["cam"]) is not None)
     need("R1 the mode switch enters and leaves VR", "mActivity.vr.enter()" in c["cam"] and "vrIfStarted?.leave()" in c["cam"] and "isVrMode = mode == CameraMode.VR" in c["cam"])
     need("R1 the shutter saves the composited photo", re.search(r"isVrMode\)\s*\{\s*vr\.snapshot\(\)", c["main"]) is not None)
@@ -136,7 +136,8 @@ if fails:
 print("PASS     VR: mode, analyzer lifecycle, bundled local ML, declared filters, compositor, capture, licences")
 
 M = [
-    ("VR leaves the bar", "build", edit_json("build", lambda d: d["ui"]["bottom_nav"].remove("vr"))),
+    ("VR is no longer a declared section", "build", edit_json("build", lambda d: d["ui"].__setitem__("sections", [s for s in d["ui"]["sections"] if s["id"] != "vr"]))),
+    ("the Filters button opens nothing", "main", lambda t: t.replace("finalizeMode(CameraMode.VR)", "")),
     ("the mode switch forgets VR", "cam", lambda t: t.replace("mActivity.vr.enter()", "")),
     ("the shutter stops saving the composited photo", "main", lambda t: t.replace("vr.snapshot()", "")),
     ("the analysis keeps every frame", "ctl", lambda t: t.replace("STRATEGY_KEEP_ONLY_LATEST", "STRATEGY_BLOCK_PRODUCER")),

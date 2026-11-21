@@ -33,8 +33,17 @@ class ModeNav(
     private val island: BottomNavIslandView,
     private val strip: PageTabsView,
     private val decl: NavDecl,
+    /** #1839 an island item that is a page of its own, not a camera mode (the Scanner), was tapped. */
+    private val onLaunch: (String) -> Unit = {},
     private val onPick: (CameraMode) -> Unit,
 ) {
+    /** The bar's sections first, then the declared sections the bar does not carry (the Filters/VR mode: its button is on the Camera page). */
+    private val allSections: List<NavSection> =
+        decl.bottomSections() + decl.sections.filter { s -> decl.bottomSections().none { it.id == s.id } }
+
+    /** Called whenever the highlight moves (the host shows or hides the Filters button with it). */
+    var onSelected: ((CameraMode?) -> Unit)? = null
+
     private var available: List<CameraMode> = emptyList()
     private val lastInSection = HashMap<String, CameraMode>()
 
@@ -65,7 +74,18 @@ class ModeNav(
     fun getAllModes(): Set<CameraMode> = available.toSet()
 
     init {
-        island.onSelect = { id -> decl.section(id)?.let { pick(modeOfSection(it)) } }
+        island.onSelect = { id ->
+            val s = decl.section(id)
+            if (s != null) {
+                if (isLauncher(s)) {
+                    onLaunch(s.id)
+                    // The Scanner is a page of its own: the highlight stays on the camera mode.
+                    island.selectedId = selected?.let { m -> sectionOf(m)?.id?.takeIf { it in decl.bottomNav } }
+                } else {
+                    pick(modeOfSection(s))
+                }
+            }
+        }
         island.onReselect = {}
         // The smaller nav: icons only, no labels (the island's own compact form).
         island.collapsed = true
@@ -81,9 +101,9 @@ class ModeNav(
 
     /** The modes the camera can offer right now, [current] highlighted. Cheap to call again. */
     fun setModes(offered: Set<CameraMode>, current: CameraMode?) {
-        available = decl.bottomSections().flatMap { s -> modesOf(s) }.filter { it in offered }
+        available = allSections.flatMap { s -> modesOf(s) }.filter { it in offered }
         island.items = decl.bottomSections()
-            .filter { s -> modesOf(s).any { it in available } }
+            .filter { s -> isLauncher(s) || modesOf(s).any { it in available } }
             .map { s -> BottomNavViewItem(s.id, labelOf(s), iconOf(s)) }
         select(current?.takeIf { it in available } ?: available.firstOrNull())
     }
@@ -92,12 +112,13 @@ class ModeNav(
     fun select(mode: CameraMode?) {
         selected = mode
         val section = mode?.let { sectionOf(it) }
-        island.selectedId = section?.id
+        island.selectedId = section?.id?.takeIf { it in decl.bottomNav }
         if (section != null && mode != null) lastInSection[section.id] = mode
         val pages = section?.pages.orEmpty().filter { p -> modeOf(p.id)?.let { it in available } == true }
         strip.pages = pages.map { p -> p.copy(label = labelOf(p)) }
         strip.selectedId = mode?.let { idOf(it) }
         strip.visibility = if (pages.size >= 2) View.VISIBLE else View.GONE
+        onSelected?.invoke(mode)
     }
 
     // ── the declaration, read once ───────────────────────────────────────────────────────
@@ -105,8 +126,11 @@ class ModeNav(
     private fun modesOf(s: NavSection): List<CameraMode> =
         if (s.pages.isEmpty()) listOfNotNull(modeOf(s.id)) else s.pages.mapNotNull { modeOf(it.id) }
 
+    /** A section that is no camera mode (no page, no CameraMode of its name): the island item opens a page of its own. */
+    private fun isLauncher(s: NavSection): Boolean = s.pages.isEmpty() && modeOf(s.id) == null
+
     private fun sectionOf(mode: CameraMode): NavSection? =
-        decl.bottomSections().firstOrNull { s -> mode in modesOf(s) }
+        allSections.firstOrNull { s -> mode in modesOf(s) }
 
     /** Where tapping a family lands: the mode last used in it, else its Camera page, else its first. */
     private fun modeOfSection(s: NavSection): CameraMode? {
