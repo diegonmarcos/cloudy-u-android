@@ -3,7 +3,7 @@
   "repo": "diegonmarcos/lib-chronos",
   "url": "https://github.com/diegonmarcos/lib-chronos.git",
   "ref": "main",
-  "commit": "c9c8120edd443e53550f7eb5a474fd4c6676ae30",
+  "commit": "3b5c40065830c17c67a30acffa224282275d5f23",
   "source_dir": "Chronos",
   "assets_dir": "app/src/main/assets/chronos",
   "serve_path": "/chronos/",

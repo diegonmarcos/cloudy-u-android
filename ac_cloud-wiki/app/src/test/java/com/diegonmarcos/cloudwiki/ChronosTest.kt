@@ -47,9 +47,7 @@ class ChronosTest {
     @Test fun noBakedChronosPageIsAPlaceholder() {
         val pages = File("src/main/assets/chronos/Chronos").walkTopDown().filter { it.extension == "html" }.toList()
         assertTrue("the baked Chronos pages exist", pages.size >= 8)
-        // #1830 Humansphere is the one page allowed to wait for the owner's own simulator (the generated one was removed)
-        pages.filterNot { it.path.contains("0.Humansphere-Circadian") }
-            .forEach { assertTrue(it.path + " is a placeholder", !it.readText().contains("Simulator pending upload")) }
+        pages.forEach { assertTrue(it.path + " is a placeholder", !it.readText().contains("Simulator pending upload")) }
     }
 
     @Test fun aPageLoadsByItsDirectorySoRelativeLinksResolve() {
