@@ -135,15 +135,14 @@ class BankingModeTest {
         val banks = BankingMode.parseBanks(entry)
         assertTrue(banks.size >= 5); assertTrue("com.revolut.revolut" in banks)
         val b = banks.keys
-        val A = BankingMode.Auto; val X = BankingMode.Action
-        assertEquals(X.OFFER_ON, BankingMode.decide("com.revolut.revolut", "home", b, false, A.OFFER, false))
-        assertEquals(X.APPLY_ON, BankingMode.decide("com.revolut.revolut", "home", b, false, A.APPLY, false))
-        assertEquals("one visit is one offer", X.NONE, BankingMode.decide("com.revolut.revolut", "com.revolut.revolut", b, false, A.OFFER, false))
-        assertEquals(X.NONE, BankingMode.decide("com.revolut.revolut", "home", b, true, A.APPLY, true))
-        assertEquals(X.OFFER_OFF, BankingMode.decide("home", "com.revolut.revolut", b, true, A.OFFER, true))
-        assertEquals(X.APPLY_OFF, BankingMode.decide("home", "com.revolut.revolut", b, true, A.APPLY, true))
-        assertEquals("a mode the owner picked is offered, not restored behind their back", X.OFFER_OFF, BankingMode.decide("home", "com.revolut.revolut", b, true, A.APPLY, false))
-        assertEquals(X.NONE, BankingMode.decide("com.revolut.revolut", "home", b, false, A.OFF, false))
-        assertEquals(X.NONE, BankingMode.decide(null, "com.revolut.revolut", b, true, A.APPLY, true))
+        assertEquals(BankingMode.Action.OFFER_ON, BankingMode.decide("com.revolut.revolut", "home", b, false, BankingMode.Auto.OFFER, false))
+        assertEquals(BankingMode.Action.APPLY_ON, BankingMode.decide("com.revolut.revolut", "home", b, false, BankingMode.Auto.APPLY, false))
+        assertEquals("one visit is one offer", BankingMode.Action.NONE, BankingMode.decide("com.revolut.revolut", "com.revolut.revolut", b, false, BankingMode.Auto.OFFER, false))
+        assertEquals(BankingMode.Action.NONE, BankingMode.decide("com.revolut.revolut", "home", b, true, BankingMode.Auto.APPLY, true))
+        assertEquals(BankingMode.Action.OFFER_OFF, BankingMode.decide("home", "com.revolut.revolut", b, true, BankingMode.Auto.OFFER, true))
+        assertEquals(BankingMode.Action.APPLY_OFF, BankingMode.decide("home", "com.revolut.revolut", b, true, BankingMode.Auto.APPLY, true))
+        assertEquals("a mode the owner picked is offered, not restored behind their back", BankingMode.Action.OFFER_OFF, BankingMode.decide("home", "com.revolut.revolut", b, true, BankingMode.Auto.APPLY, false))
+        assertEquals(BankingMode.Action.NONE, BankingMode.decide("com.revolut.revolut", "home", b, false, BankingMode.Auto.OFF, false))
+        assertEquals(BankingMode.Action.NONE, BankingMode.decide(null, "com.revolut.revolut", b, true, BankingMode.Auto.APPLY, true))
     }
 }
