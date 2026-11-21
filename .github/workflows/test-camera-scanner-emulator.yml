@@ -288,6 +288,10 @@ jobs:
               for b in button_add Add Select; do a=$(python3 -I ui.py id "$OUT/picker.xml" "$b"); [ -z "$a" ] && a=$(python3 -I ui.py text "$OUT/picker.xml" "$b"); [ -n "$a" ] && { adb shell input tap $a; break; }; done
               picked=yes; break
             fi
+            # the photo picker can come up with its overflow menu open ("Browse…", which covers the grid in the dump):
+            # Browse… opens the system documents picker, which the next branch drives by the file's name
+            b=$(python3 -I ui.py text "$OUT/picker.xml" "Browse…")
+            if [ -n "$b" ]; then echo "photo picker: Browse… to the documents picker"; adb shell input tap $b; sleep 4; continue; fi
             xy=$(python3 -I ui.py text "$OUT/picker.xml" scan-test-page.png)
             if [ -n "$xy" ]; then
               echo "documents picker: file at $xy"; adb shell input tap $xy; sleep 3; dump picker
