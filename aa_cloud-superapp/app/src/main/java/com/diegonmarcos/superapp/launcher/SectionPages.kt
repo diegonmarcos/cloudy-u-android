@@ -96,6 +96,8 @@ object SectionPages {
         sectionId == "config" && pageId == "panels-ui" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_UI)
         sectionId == "config" && pageId == "panels-battery" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_BATTERY)
         sectionId == "config" && pageId == "panels-security" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_SECURITY)
+        sectionId == "config" && pageId == "panels-quick-ui" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_QUICK_UI)
+        sectionId == "config" && pageId == "panels-network" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_NETWORK)
         sectionId == "config" && pageId == "panels-tools" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_TOOLS)
         sectionId == "config" && pageId == "kde"            -> com.diegonmarcos.superapp.kdeconnect.KdeConnectFragment.newInstance()
         // Configs ▸ Fleet ▸ Bluetooth (#1221): the `bluetooth` page declares `tabs`, so the strip branch at the top answered it;

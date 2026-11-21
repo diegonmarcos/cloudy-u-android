@@ -111,6 +111,8 @@ class LauncherConfigFragment : KitComposeFragment() {
         val showBattery = all || scope == SCOPE_BATTERY
         val showTools = all || scope == SCOPE_TOOLS
         val showSecurity = all || scope == SCOPE_SECURITY
+        val showQuickUi = all || scope == SCOPE_QUICK_UI
+        val showNetwork = all || scope == SCOPE_NETWORK
 
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
             val settingsPrefs = remember { LauncherSettingsPrefs(ctx) }
@@ -183,7 +185,19 @@ class LauncherConfigFragment : KitComposeFragment() {
                 ControlsGridHost(R.id.security_grid_host, com.diegonmarcos.superapp.configs.DeviceControls.TAB_SECURITY)
             }
 
-            // ── Tools: the device switch board, Connectivity, Notifications, Others, default launcher ──
+            // ── #1846 UI and Network: the most-used toggles of each, the same tile grid, groups declared with a `tab` ──
+            if (showQuickUi) {
+                GapDp(16)
+                ControlsGridHost(R.id.ui_grid_host, com.diegonmarcos.superapp.configs.QuickControls.TAB_UI)
+                toggleGroups(com.diegonmarcos.superapp.configs.QuickControls.TAB_UI, settingsPrefs, epoch)
+            }
+            if (showNetwork) {
+                GapDp(16)
+                ControlsGridHost(R.id.network_grid_host, com.diegonmarcos.superapp.configs.QuickControls.TAB_NETWORK)
+                toggleGroups(com.diegonmarcos.superapp.configs.QuickControls.TAB_NETWORK, settingsPrefs, epoch)
+            }
+
+            // ── Others (ex-Tools): the device switch board, Connectivity, Notifications, Others, default launcher ──
             if (showTools) {
                 // The device switch board. ControlFragment is embedded, not re-implemented: one implementation of every
                 // tile, one place its behaviour is asserted. It is committed only when nothing is already attached at
@@ -726,6 +740,8 @@ class LauncherConfigFragment : KitComposeFragment() {
         const val SCOPE_BATTERY = "battery"
         const val SCOPE_TOOLS = "tools"
         const val SCOPE_SECURITY = "security"
+        const val SCOPE_QUICK_UI = "quick_ui"
+        const val SCOPE_NETWORK = "network"
 
         // The same two numbers Configs ▸ Panel ▸ Control uses for its badges, so
         // the two grids read as one screen. #338 is why they are stated once:

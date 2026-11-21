@@ -200,6 +200,8 @@
     <string name="control_group_security_access_features_sub">Cada función que necesita un servicio de accesibilidad o una superposición, activada por separado.</string>
     <string name="control_group_security_net">VPN y ubicación</string>
     <string name="control_group_security_net_sub">Si el túnel de Cloud Mesh está activo y si la ubicación está activada.</string>
+    <string name="control_group_network_more">Ubicación</string>
+    <string name="control_group_network_more_sub">Si la ubicación está activada: la misma casilla que en Seguridad.</string>
     <string name="control_group_ui">Interfaz</string>
     <string name="control_group_ui_sub">Cómo se ve y cómo responde este lanzador bajo el pulgar.</string>
     <string name="control_group_battery">Devoradores de batería</string>

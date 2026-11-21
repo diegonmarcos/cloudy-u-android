@@ -58,11 +58,11 @@ for r in (launcher, tools, cfg):
     first = ids.index(r[0])
     if ids[first:first + len(r)] != r: print('not CONSECUTIVE: %r' % (ids[first:first + len(r)],)); sys.exit()
 by = {p['id']: p for p in pages}
-if by['controls'].get('tabs') != ['presets', 'panels'] or by['panels'].get('tabs') != ['panels-all', 'panels-battery', 'panels-security', 'panels-tools']:
-    print('Controls is not Presets | Panels(All | Battery Hungers | Tools) [#1623 UI promoted out]: %r / %r' % (by['controls'].get('tabs'), by['panels'].get('tabs'))); sys.exit()
+if by['controls'].get('tabs') != ['presets','panels-battery','panels-security','panels-quick-ui','panels-network','panels-tools','panels-all']:
+    print('#1846 Controls is not Preset | Battery Security UI Network Others All: %r / %r' % (by['controls'].get('tabs'), by['panels'].get('tabs'))); sys.exit()
 if by['panels-ui'].get('hidden') or by['panels-ui'].get('group') != 'Launcher':
     print('UI (panels-ui) is not a visible Launcher tile: %r' % (by.get('panels-ui'),)); sys.exit()
-loose = [i for i in ('presets', 'panels', 'panels-all', 'panels-battery', 'panels-security', 'panels-tools') if i not in by or not by[i].get('hidden')]
+loose = [i for i in ('presets', 'panels-all', 'panels-battery', 'panels-security', 'panels-quick-ui', 'panels-network', 'panels-tools') if i not in by or not by[i].get('hidden')]
 if loose:
     print('tab page(s) missing or drawing a tile of their own: %r' % (loose,)); sys.exit()
 print('OK')
@@ -84,9 +84,9 @@ print(','.join(p['id'] for p in pages if p.get('tabs')))
 # Agents (folded into Configs ▸ Observability ▸ X-Ray) and Apps Mesh (Apps | IPC |
 # Identity) have checks of their own: test-configs-agents-page.sh A2, test-ipc-mesh-page.sh R1 and
 # test-fleet-shared-uid.sh U4.
-[ "$OWNERS" = "controls,wifi,bluetooth,adb-shell,panels" ] \
+[ "$OWNERS" = "controls,wifi,bluetooth,adb-shell" ] \
   && ok "the Configs tab strips are Controls (#1621 Presets | UI | Panels), ADB Shell (Status | Shell | Perms | All; check T2b and test-adb-shell-cockpit.sh), Panels (All | Battery Hungers | Tools), Bluetooth (Find | Connect | Interact | Debug | Dev; test-bluetooth-page.sh B1), WiFi (Scan | Channels | Link | Tools | Log; test-wifi-page.sh W1); Agents was folded into X-Ray (no strip of its own) (Apps Mesh, IPC and Identity are Cloud Store > Access now: no strip here) (Store opens Cloud Store since #865)" \
-  || bad "Configs tab strips are [$OWNERS], expected controls,wifi,bluetooth,adb-shell,panels - a new one must bring a check of its own"
+  || bad "Configs tab strips are [$OWNERS], expected controls,wifi,bluetooth,adb-shell - a new one must bring a check of its own"
 
 echo "== T2b: ADB Shell is a strip over Status | Shell | Perms | All, each tab a hidden, routed page =="
 check "$(python3 - "$BJ" <<'PY'

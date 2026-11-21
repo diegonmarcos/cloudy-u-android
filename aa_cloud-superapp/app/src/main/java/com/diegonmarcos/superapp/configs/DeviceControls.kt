@@ -706,6 +706,81 @@ object DeviceControls {
                 "Needs a live shell channel (cmd location); use the tile's hold for Location settings." },
             open = { ctx -> open(ctx, Settings.ACTION_LOCATION_SOURCE_SETTINGS) },
         ),
+
+        // ─────────── #1846 Quick actions ▸ Network and ▸ UI: the tabs' own tiles (reads and steps in QuickControls) ───────────
+
+        "hotspot" to Control(
+            observed = true,
+            read = { ctx -> QuickControls.hotspot(ctx) },
+            probe = { ctx -> QuickControls.hotspot(ctx).let { Probe(it, "WifiManager.isWifiApEnabled: ${QuickControls.onOff(it)}") } },
+            open = { ctx -> open(ctx, Settings.ACTION_WIRELESS_SETTINGS) },
+        ),
+        "nfc" to Control(
+            observed = true,
+            read = { ctx -> QuickControls.nfc(ctx) },
+            probe = { ctx -> QuickControls.nfc(ctx).let { Probe(it, if (it == null) "NfcAdapter: no adapter on this device" else "NfcAdapter.isEnabled: ${QuickControls.onOff(it)}") } },
+            open = { ctx -> open(ctx, Settings.ACTION_NFC_SETTINGS) },
+        ),
+        "private_dns" to Control(
+            observed = true,
+            read = { ctx -> QuickControls.privateDnsOn(QuickControls.privateDnsMode(ctx)) },
+            probe = { ctx -> QuickControls.privateDnsMode(ctx).let { Probe(QuickControls.privateDnsOn(it), "Settings.Global private_dns_mode=${it ?: "unset (opportunistic)"}") } },
+            set = { ctx, on ->
+                if (SecurityControls.holdsSecure(ctx)) runCatching {
+                    Settings.Global.putString(ctx.contentResolver, "private_dns_mode", if (on) "opportunistic" else "off")
+                }
+                val now = QuickControls.privateDnsOn(QuickControls.privateDnsMode(ctx))
+                Verdict(now == on, "private_dns_mode=${QuickControls.privateDnsMode(ctx) ?: "unset"}")
+            },
+            blocked = { ctx -> if (SecurityControls.holdsSecure(ctx)) "" else "Needs WRITE_SECURE_SETTINGS; hold the tile for Private DNS in Settings." },
+            open = { ctx -> open(ctx, Settings.ACTION_WIRELESS_SETTINGS) },
+        ),
+        "always_on_vpn" to Control(
+            observed = true,
+            read = { ctx -> QuickControls.alwaysOnVpn(ctx)?.isNotBlank() },
+            probe = { ctx -> QuickControls.alwaysOnVpn(ctx).let { Probe(it?.isNotBlank(), "Settings.Secure always_on_vpn_app=" + (it?.ifBlank { "none" } ?: "unreadable")) } },
+            open = { ctx -> open(ctx, Settings.ACTION_VPN_SETTINGS) },
+        ),
+        "keep_screen_on" to Control(
+            observed = true,
+            read = { ctx -> QuickControls.keepScreenOn(ctx)?.let { it != 0 } },
+            probe = { ctx -> QuickControls.keepScreenOn(ctx).let { Probe(it?.let { v -> v != 0 }, "Settings.Global stay_on_while_plugged_in=${it ?: "unreadable"}") } },
+            set = { ctx, on ->
+                val w = SecurityControls.setGlobal(ctx, Settings.Global.STAY_ON_WHILE_PLUGGED_IN, on) { c -> QuickControls.keepScreenOn(c)?.let { it != 0 } }
+                Verdict(w.ok, w.detail)
+            },
+            blocked = { ctx -> if (SecurityControls.canWrite(ctx)) "" else SecurityControls.NO_CHANNEL },
+            open = { ctx -> open(ctx, Settings.ACTION_DISPLAY_SETTINGS) },
+        ),
+        "screen_timeout" to Control(
+            observed = true,
+            read = { ctx -> QuickControls.screenTimeoutMs(ctx)?.let { it != QuickControls.DEFAULT_TIMEOUT_MS } },
+            probe = { ctx -> QuickControls.screenTimeoutMs(ctx).let { Probe(it?.let { v -> v != QuickControls.DEFAULT_TIMEOUT_MS },
+                "Settings.System screen_off_timeout=${QuickControls.timeoutLabel(it)} (On = not the 30 s default); tap steps it") } },
+            tap = { ctx ->
+                if (!Settings.System.canWrite(ctx)) { perms(ctx, "Quick actions: system settings", "write_settings"); QuickControls.NEEDS_WRITE }
+                else {
+                    val to = QuickControls.next(QuickControls.TIMEOUT_STEPS_MS, QuickControls.screenTimeoutMs(ctx))
+                    runCatching { Settings.System.putInt(ctx.contentResolver, Settings.System.SCREEN_OFF_TIMEOUT, to) }
+                    "screen timeout " + QuickControls.timeoutLabel(QuickControls.screenTimeoutMs(ctx))
+                }
+            },
+            open = { ctx -> open(ctx, Settings.ACTION_DISPLAY_SETTINGS) },
+        ),
+        "font_size" to Control(
+            observed = true,
+            read = { ctx -> QuickControls.fontScale(ctx)?.let { it != QuickControls.DEFAULT_FONT } },
+            probe = { ctx -> QuickControls.fontScale(ctx).let { Probe(it?.let { v -> v != QuickControls.DEFAULT_FONT }, "Settings.System font_scale=${it ?: "unreadable"} (On = not 1.0); tap steps it") } },
+            tap = { ctx ->
+                if (!Settings.System.canWrite(ctx)) { perms(ctx, "Quick actions: system settings", "write_settings"); QuickControls.NEEDS_WRITE }
+                else {
+                    val to = QuickControls.next(QuickControls.FONT_STEPS, QuickControls.fontScale(ctx))
+                    runCatching { Settings.System.putFloat(ctx.contentResolver, Settings.System.FONT_SCALE, to) }
+                    "font scale ${QuickControls.fontScale(ctx)}"
+                }
+            },
+            open = { ctx -> open(ctx, Settings.ACTION_DISPLAY_SETTINGS) },
+        ),
     )
 
     /** #1833 the Perms row's existing action for Unverified developers: open the step's Settings page (About phone while

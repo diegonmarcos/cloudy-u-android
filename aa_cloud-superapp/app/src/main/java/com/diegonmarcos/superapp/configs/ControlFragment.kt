@@ -428,7 +428,7 @@ class ControlFragment : KitComposeFragment() {
             if (!inFlight.add(id)) continue
             scope.launch(if (control.slow) slowDispatcher else ioDispatcher) {
                 try {
-                    val probe = runCatching { control.sample(ctx) }.getOrNull()
+                    val probe = runCatching { control.sample(ctx) }.getOrNull()?.let { QuickControls.detailed(id, it) }
                     val blocked = runCatching { control.blocked(ctx) }.getOrDefault("")
                     withContext(kotlinx.coroutines.Dispatchers.Main) { if (isAdded) landed(id, probe?.state, blocked, probe?.detail.orEmpty()) }
                 } finally { inFlight.remove(id) }
@@ -441,7 +441,7 @@ class ControlFragment : KitComposeFragment() {
         readings[id] = Reading(state, SystemClock.elapsedRealtime(), blocked, detail)
         // #1833 the Security tab's readings, one line each, exactly as the tile is painted: the emulator proof compares them with
         // adb's ground truth without a uiautomator dump (a UiAutomation connection suppresses the accessibility services it checks).
-        if (tab == DeviceControls.TAB_SECURITY) android.util.Log.i(LOG_TAG, "tile $id state=$state blocked=${blocked.isNotEmpty()} detail=$detail")
+        if (tab != DeviceControls.TAB_TOOLS) android.util.Log.i(LOG_TAG, "tile $id state=$state blocked=${blocked.isNotEmpty()} detail=$detail")
     }
 
     /**
@@ -469,7 +469,7 @@ class ControlFragment : KitComposeFragment() {
             val verdict = runCatching { set(ctx, want) }.getOrElse {
                 DeviceControls.Verdict(false, it.message ?: it::class.java.simpleName)
             }
-            val probe = runCatching { control.sample(ctx) }.getOrNull()
+            val probe = runCatching { control.sample(ctx) }.getOrNull()?.let { QuickControls.detailed(decl.id, it) }
             val blocked = runCatching { control.blocked(ctx) }.getOrDefault("")
             withContext(kotlinx.coroutines.Dispatchers.Main) {
                 writing.remove(decl.id)

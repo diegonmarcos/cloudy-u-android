@@ -49,13 +49,12 @@ echo "== T1: #1621 UI promoted to the Quick Actions parent (Presets | UI | Panel
 # (panels-all/ui/battery/tools) all still exist and route; only panels-ui's
 # PARENT changed (panels -> controls), so page:config/panels-ui still resolves
 # and the UI content is still reachable under Panels ▸ All (the union view).
-check "Controls strip = Presets | Panels; Panels = All | Battery Hungers | Security | Tools (#1833); UI is its own Launcher tile (#1623)" "
+check "#1846 Controls strip = Preset | Battery Security UI Network Others All (the old Panels strip page is retired into controls); the full UI config is still its own Launcher tile (#1623)" "
 ctrl = [by[i]['label'] for i in by['controls']['tabs']]
-pnl  = [by[i]['label'] for i in by['panels']['tabs']]
-ok = (by['controls']['tabs'] == ['presets','panels'] and ctrl == ['Presets','Panels']
-      and by['panels']['tabs'] == ['panels-all','panels-battery','panels-security','panels-tools'] and pnl == ['All','Battery Hungers','Security','Tools']
+ok = (by['controls']['tabs'] == ['presets','panels-battery','panels-security','panels-quick-ui','panels-network','panels-tools','panels-all']
+      and ctrl == ['Preset','Battery','Security','UI','Network','Others','All']
       and not by['panels-ui'].get('hidden') and by['panels-ui'].get('group') == 'Launcher' and by['panels-ui'].get('label') == 'UI'
-      and all(by[i].get('hidden') for i in ('panels-all','panels-battery','panels-security','panels-tools','panels','presets')))
+      and all(by[i].get('hidden') for i in ('panels-all','panels-battery','panels-security','panels-quick-ui','panels-network','panels-tools','presets')))
 print('OK' if ok else 'Controls=%r Panels=%r UI_hidden=%r' % (ctrl, pnl, by['panels-ui'].get('hidden')))"
 for pair in "panels-all:SCOPE_ALL" "panels-ui:SCOPE_UI" "panels-battery:SCOPE_BATTERY" "panels-security:SCOPE_SECURITY" "panels-tools:SCOPE_TOOLS"; do
   grep -qF "pageId == \"${pair%%:*}\" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.${pair##*:})" "$PAGES" \
@@ -63,9 +62,9 @@ for pair in "panels-all:SCOPE_ALL" "panels-ui:SCOPE_UI" "panels-battery:SCOPE_BA
 done
 
 echo "== T2: switch groups sit on Tools / Battery Hungers, none on UI =="
-check "connectivity, notifications, others -> tools; battery -> battery; nothing on ui" "
+check "#1846 notifications -> tools (Others); battery -> battery; connectivity -> network; others -> ui (Quick actions UI tab, not the full UI config)" "
 g = {x['id']: x.get('tab') for x in ls['toggle_groups']}
-print('OK' if g == {'battery': 'battery', 'connectivity': 'tools', 'notifications': 'tools', 'others': 'tools'} else g)"
+print('OK' if g == {'battery': 'battery', 'connectivity': 'network', 'notifications': 'tools', 'others': 'ui'} else g)"
 grep -q 'tab *= o.optString("tab", "tools")' "$KT/settings/LauncherSettingsPrefs.kt" && grep -q 'filter { it.tab == tab }' "$CFG" \
   && ok "the tab of a group is read from the declaration, not a Kotlin list" || bad "group->tab is not data driven"
 

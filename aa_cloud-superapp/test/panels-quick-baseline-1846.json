@@ -1,0 +1,665 @@
+{
+ "_doc": "#1846 frozen baseline: ui.control_panel groups and ui.launcher_settings toggle_groups as of the commit before the one-row Quick actions. Rule 16: every control, every field, every toggle group is still declared (only `tab` and a control's group may move).",
+ "groups": [
+  {
+   "id": "security_home",
+   "label": "Security controls",
+   "label_res": "control_group_security_home",
+   "subtitle": "Home of the Security tab's controls; drawn through the groups below.",
+   "subtitle_res": "control_group_security_home_sub",
+   "tab": "security",
+   "draw": false,
+   "controls": [
+    {
+     "id": "developer_options",
+     "icon": "ic_code",
+     "label": "Developer options",
+     "security_debug": true,
+     "subtitle": "Settings.Global development_settings_enabled. Off hides Developer options and with them Wireless debugging."
+    },
+    {
+     "id": "adb_shell",
+     "icon": "ic_terminal",
+     "label": "ADB shell",
+     "security_debug": true,
+     "subtitle": "The privileged shell channel, asked with a real round trip. A tap connects it; it closes when Wireless or USB debugging goes off."
+    },
+    {
+     "id": "usb_debugging",
+     "icon": "ic_terminal",
+     "label": "USB debugging",
+     "security_debug": true,
+     "subtitle": "Settings.Global adb_enabled. Off also ends Wireless debugging and the shell channel riding it."
+    },
+    {
+     "id": "unverified_developers",
+     "icon": "ic_lock",
+     "label": "Unverified developers",
+     "security_debug": true,
+     "subtitle": "Android's Apps from unverified developers (#1822): the verifier package and its setting, read in-process. Lit = such installs are allowed. Tap opens the step's Settings page; hold opens the Perms row."
+    },
+    {
+     "id": "access_keyboard",
+     "icon": "ic_keyboard",
+     "label": "Keyboard Grabber",
+     "access_app": true,
+     "access_feature": true,
+     "a11y_package": "com.diegonmarcos.cloudkeyboard",
+     "subtitle": "Cloud Keyboard's accessibility service: the Grabber reads the selected text of any app through it. Lit while the system has it bound (AccessibilityManager)."
+    },
+    {
+     "id": "access_superapp",
+     "icon": "ic_nav_lock",
+     "label": "Cloud SuperApp",
+     "access_app": true,
+     "a11y_package": "com.diegonmarcos.superapp",
+     "subtitle": "SuperApp's accessibility service: the lock-screen action (lock the phone from the launcher). Lit while the system has it bound; the edge menu is an overlay and needs none."
+    },
+    {
+     "id": "access_vault",
+     "icon": "ic_vault",
+     "label": "Autofill (Cloud Vault)",
+     "access_feature": true,
+     "a11y_package": "com.diegonmarcos.cloudvault",
+     "subtitle": "Vault autofill: Cloud Vault's accessibility service bound, or Android's autofill service (Settings.Secure autofill_service) is Vault. The detail says which."
+    },
+    {
+     "id": "access_others",
+     "icon": "ic_lock",
+     "label": "Other fleet services",
+     "access_app": true,
+     "subtitle": "Fleet entries in Settings.Secure enabled_accessibility_services whose service is no longer installed (an uninstalled app or old library build). Lit = one is listed; a tap removes them. Every installed fleet service has its own tile beside this one."
+    },
+    {
+     "id": "edge_menus",
+     "icon": "ic_onehand",
+     "label": "Edge menu",
+     "access_feature": true,
+     "subtitle": "The One-Hand edge pads, read from the overlay's own strips on screen, not the stored switch."
+    },
+    {
+     "id": "vpn",
+     "icon": "ic_ctl_firewall",
+     "label": "VPN",
+     "security_net": true,
+     "subtitle": "The Cloud Mesh tunnel, read from the WireGuard engine (lit only while it is UP). Tap switches it; hold opens the Cloud Mesh page."
+    },
+    {
+     "id": "location",
+     "icon": "ic_map_pin",
+     "label": "Location",
+     "security_net": true,
+     "subtitle": "LocationManager location on/off; switched with cmd location over the shell channel."
+    }
+   ]
+  },
+  {
+   "id": "device",
+   "label": "Device",
+   "label_res": "control_group_device",
+   "subtitle": "The handset's own hardware and attention.",
+   "subtitle_res": "control_group_device_sub",
+   "controls": [
+    {
+     "id": "torch",
+     "icon": "ic_nav_torch",
+     "label": "Torch",
+     "battery_hungry": true,
+     "subtitle": "The flash unit, straight through CameraManager — no permission needed."
+    },
+    {
+     "id": "dnd",
+     "icon": "ic_nav_dnd",
+     "label": "Do Not Disturb",
+     "subtitle": "Silences everything but priority senders."
+    },
+    {
+     "id": "power_saving",
+     "icon": "ic_nav_powersave",
+     "label": "Power saving",
+     "perms_surface": true,
+     "subtitle": "The phone's own power-saving mode (PowerManager.isPowerSaveMode). Set through WRITE_SECURE_SETTINGS, else the ADB channel. The SuperApp's low-power mode follows it.",
+     "adb": {
+      "enable": [
+       "settings put global low_power 1"
+      ],
+      "disable": [
+       "settings put global low_power 0"
+      ]
+     },
+     "low_power_mode": {
+      "pause_animation": true,
+      "poll_multiplier": 4,
+      "slows": [
+       "3D/4D auto-rotate (paused)",
+       "network badge",
+       "floating nav poll",
+       "resources panel",
+       "notify badges",
+       "energy sampler",
+       "status dropdowns"
+      ]
+     }
+    },
+    {
+     "id": "super_power_saving",
+     "icon": "ic_nav_powersave",
+     "label": "Super power saving",
+     "perms_surface": true,
+     "subtitle": "Power saving + SuperApp low-power mode, and releases this app's own Device admin and Notification access (only those on, restored on exit) so Maximum power saving stops listing it as essential. Accessibility untouched.",
+     "services": [
+      {
+       "class": "com.diegonmarcos.superapp.floatingnav.FloatingNavService",
+       "label": "Floating nav"
+      },
+      {
+       "class": "com.diegonmarcos.superapp.floatingnav.ScreensaverService",
+       "label": "Screensaver"
+      },
+      {
+       "class": "com.diegonmarcos.superapp.notificationcenter.KdeStatusService",
+       "label": "KDE status"
+      },
+      {
+       "class": "com.diegonmarcos.superapp.notificationcenter.NetworkBadgeService",
+       "label": "Network badge"
+      },
+      {
+       "class": "com.diegonmarcos.clocktools.ClockService",
+       "label": "Clock / stopwatch"
+      },
+      {
+       "class": "com.diegonmarcos.superapp.light.LightService",
+       "label": "Light"
+      },
+      {
+       "class": "com.diegonmarcos.superapp.browser.download.DlService",
+       "label": "Downloads"
+      },
+      {
+       "class": "com.diegonmarcos.superapp.updater.BatchForegroundService",
+       "label": "Fleet updates (keep-alive)"
+      },
+      {
+       "class": "com.diegonmarcos.superapp.adbdebug.AdbPairingService",
+       "label": "ADB pairing",
+       "adb_last": true
+      },
+      {
+       "class": "com.diegonmarcos.superapp.adbdebug.WdKeeperService",
+       "label": "Wireless debugging keeper",
+       "adb_last": true
+      },
+      {
+       "class": "com.diegonmarcos.superapp.adbdebug.HostShellService",
+       "label": "ADB host shell",
+       "adb_last": true
+      },
+      {
+       "class": "com.diegonmarcos.superapp.firewall.FirewallVpnService",
+       "label": "Firewall VPN",
+       "keep": true
+      },
+      {
+       "class": "com.diegonmarcos.superapp.firewall.FirestackTunnelService",
+       "label": "Firestack VPN",
+       "keep": true
+      }
+     ]
+    },
+    {
+     "id": "rotation_lock",
+     "icon": "ic_nav_lock",
+     "label": "Rotation lock",
+     "subtitle": "Freezes the screen in its current orientation."
+    }
+   ]
+  },
+  {
+   "id": "network",
+   "label": "Network",
+   "label_res": "control_group_network",
+   "subtitle": "Everything that moves bytes — this handset's radios and the fleet's tunnels, in one place.",
+   "subtitle_res": "control_group_network_sub",
+   "controls": [
+    {
+     "id": "wifi",
+     "icon": "ic_ctl_wifi",
+     "label": "Wi-Fi",
+     "subtitle": "Android forbids an app to flip the Wi-Fi radio."
+    },
+    {
+     "id": "mobile_data",
+     "icon": "ic_ctl_mobile_data",
+     "label": "Mobile data",
+     "battery_hungry": true,
+     "subtitle": "Carrier data is a system-only switch."
+    },
+    {
+     "id": "bluetooth",
+     "icon": "ic_route_bluetooth",
+     "label": "Bluetooth",
+     "battery_hungry": true,
+     "subtitle": "The adapter's own enable/disable is a no-op for a normal app."
+    },
+    {
+     "id": "airplane_mode",
+     "icon": "ic_ctl_airplane",
+     "label": "Airplane mode",
+     "subtitle": "Writable as a setting, but the broadcast that moves the radios is not ours to send — writing it alone changes the icon and nothing else."
+    },
+    {
+     "id": "mesh",
+     "icon": "ic_wg",
+     "label": "WireGuard mesh",
+     "battery_hungry": true,
+     "subtitle": "The 10.0.0.x tunnel. Needs the engine APK and VPN consent."
+    },
+    {
+     "id": "firewall",
+     "icon": "ic_ctl_firewall",
+     "label": "Per-app firewall",
+     "battery_hungry": true,
+     "subtitle": "The local no-root VpnService that blocks per-app egress."
+    }
+   ]
+  },
+  {
+   "id": "tools",
+   "label": "Tools",
+   "label_res": "control_group_tools",
+   "subtitle": "The machinery this app and the fleet are driven through.",
+   "subtitle_res": "control_group_tools_sub",
+   "controls": [
+    {
+     "id": "wireless_debugging",
+     "icon": "ic_terminal",
+     "label": "Wireless debugging",
+     "battery_hungry": true,
+     "security_debug": true,
+     "subtitle": "The adbd this app's own privileged plane talks to. Turning it off ends silent installs and self-grants until it is back on."
+    },
+    {
+     "id": "wireless_debugging_keepalive",
+     "icon": "ic_refresh",
+     "label": "Keep Wireless debugging on",
+     "default_on": false,
+     "subtitle": "Turns Wireless debugging back on whenever Android drops it (Wi-Fi change, reboot) and reconnects the shell channel. Off (the default) leaves it exactly as you set it and the app never connects the channel by itself."
+    },
+    {
+     "id": "app_api",
+     "icon": "ic_code",
+     "label": "App API",
+     "subtitle": "DevControlServer — the loopback HTTP surface the MCP and every script drive this app through."
+    },
+    {
+     "id": "auto_update",
+     "icon": "ic_refresh",
+     "label": "Fleet auto-update",
+     "battery_hungry": true,
+     "subtitle": "Periodic GHCR check and silent install for every constellation app."
+    }
+   ]
+  },
+  {
+   "id": "ui",
+   "label": "UI",
+   "label_res": "control_group_ui",
+   "subtitle": "How this launcher looks and feels under the thumb.",
+   "subtitle_res": "control_group_ui_sub",
+   "controls": [
+    {
+     "id": "floating_nav",
+     "icon": "ic_nav",
+     "label": "Floating menu",
+     "battery_hungry": true,
+     "access_feature": true,
+     "subtitle": "The draggable overlay button, on top of any app."
+    },
+    {
+     "id": "admin_mode",
+     "icon": "ic_p_c3_stack",
+     "label": "Admin mode",
+     "subtitle": "Swaps the Home grid, drawer and bottom-nav to their Admin variants."
+    },
+    {
+     "id": "all_anim",
+     "icon": "ic_sparkles",
+     "label": "All animations",
+     "battery_hungry": true,
+     "subtitle": "Master motion gate — off stops every animated surface at once."
+    },
+    {
+     "id": "haptics",
+     "icon": "ic_ctl_vibration",
+     "label": "Vibration on tap",
+     "subtitle": "Haptic feedback on every tap."
+    },
+    {
+     "id": "auto_brightness",
+     "icon": "ic_ctl_brightness",
+     "label": "Auto brightness",
+     "subtitle": "Android's adaptive-brightness mode."
+    }
+   ]
+  },
+  {
+   "id": "battery",
+   "label": "Battery Hungers",
+   "label_res": "control_group_battery",
+   "subtitle": "The same controls again, gathered so everything draining the battery can be switched off from one row.",
+   "subtitle_res": "control_group_battery_sub",
+   "derive": "battery_hungry",
+   "details": "energy_usage",
+   "details_res": "control_group_battery_details",
+   "controls": []
+  },
+  {
+   "id": "security_debug",
+   "label": "Developer & debugging",
+   "label_res": "control_group_security_debug",
+   "subtitle": "Developer options, Wireless and USB debugging, and the ADB shell channel this app's privileged plane uses.",
+   "subtitle_res": "control_group_security_debug_sub",
+   "tab": "security",
+   "derive": "security_debug",
+   "controls": []
+  },
+  {
+   "id": "security_access_apps",
+   "label": "Accessibility apps",
+   "label_res": "control_group_security_access_apps",
+   "subtitle": "Every installed accessibility service of a fleet app or library, from AccessibilityManager, lit while the system has it bound. An old library build is named and taps to Uninstall; Other removes stale entries.",
+   "subtitle_res": "control_group_security_access_apps_sub",
+   "tab": "security",
+   "derive": "access_app",
+   "dynamic": "fleet_accessibility_services",
+   "dynamic_before": "access_others",
+   "controls": []
+  },
+  {
+   "id": "security_access_features",
+   "label": "Features using accessibility",
+   "label_res": "control_group_security_access_features",
+   "subtitle": "Each feature that needs an accessibility service or an overlay, switched on its own.",
+   "subtitle_res": "control_group_security_access_features_sub",
+   "tab": "security",
+   "derive": "access_feature",
+   "controls": []
+  },
+  {
+   "id": "security_net",
+   "label": "VPN & location",
+   "label_res": "control_group_security_net",
+   "subtitle": "Whether the Cloud Mesh tunnel is up and whether location is on.",
+   "subtitle_res": "control_group_security_net_sub",
+   "tab": "security",
+   "derive": "security_net",
+   "controls": []
+  }
+ ],
+ "toggle_groups": [
+  {
+   "id": "battery",
+   "tab": "battery",
+   "label": "Launcher Battery Hungers",
+   "subtitle": "Continuous motion, the 3D home pane, live stats and background work — the effects that actually drain the cell. Off = leaner.",
+   "master": true,
+   "master_label": "All battery-hungry effects",
+   "master_subtitle": "One switch to flip every effect below on or off."
+  },
+  {
+   "id": "connectivity",
+   "tab": "tools",
+   "label": "Connectivity",
+   "subtitle": "What the launcher keeps talking to the network about. Power Saving cuts compute but PINS the tunnel up, mirroring Samsung / Apple / Pixel power-save."
+  },
+  {
+   "id": "notifications",
+   "tab": "tools",
+   "label": "Notifications",
+   "subtitle": "Delivery of messages the launcher pushes at you. Pausing background work silently stops these, which is why the switch has to be visible."
+  },
+  {
+   "id": "others",
+   "tab": "tools",
+   "label": "Others",
+   "subtitle": "Chrome, haptics, eye protection and the edge menus — preferences that cost no battery worth naming."
+  }
+ ],
+ "toggles": [
+  {
+   "id": "all_anim",
+   "label": "All animations",
+   "subtitle": "Master switch - off stops every animation.",
+   "default": true,
+   "group": "battery",
+   "icon": "ic_sparkles"
+  },
+  {
+   "id": "pets_anim",
+   "label": "Animal animations",
+   "subtitle": "Animate the status-bar pets.",
+   "default": true,
+   "group": "battery",
+   "icon": "ic_heart"
+  },
+  {
+   "id": "cube_anim",
+   "label": "Cube animation",
+   "subtitle": "3D home cube motion.",
+   "default": true,
+   "group": "battery",
+   "icon": "ic_mode_apps"
+  },
+  {
+   "id": "cube_interactive",
+   "label": "Cube drag-to-spin",
+   "subtitle": "Touch and drag the home cube to spin it across its 3D faces.",
+   "default": false,
+   "group": "others",
+   "icon": "ic_device_gamepad"
+  },
+  {
+   "id": "island_anim",
+   "label": "Island animation",
+   "subtitle": "Home-screen island wave motion.",
+   "default": true,
+   "group": "battery",
+   "icon": "ic_nav"
+  },
+  {
+   "id": "stars_anim",
+   "label": "Stars animation",
+   "subtitle": "Galaxy backdrop stars + comets.",
+   "default": true,
+   "group": "battery",
+   "icon": "ic_ai_sparkle"
+  },
+  {
+   "id": "status_live",
+   "label": "Live system stats",
+   "subtitle": "Refresh RAM/CPU/storage every 10s (off = frozen numbers, leaner).",
+   "default": true,
+   "group": "battery",
+   "icon": "ic_p_c3_stack"
+  },
+  {
+   "id": "star_twinkle",
+   "label": "Star twinkle",
+   "subtitle": "Pulse the home Sirius star (off = static).",
+   "default": true,
+   "group": "battery",
+   "icon": "ic_ai_sparkle"
+  },
+  {
+   "id": "fleet_check",
+   "label": "Store update check",
+   "subtitle": "Periodic GHCR check for sibling-app updates (off = manual only, saves network).",
+   "default": true,
+   "group": "connectivity",
+   "icon": "ic_refresh"
+  },
+  {
+   "id": "haptics",
+   "label": "Vibration on tap",
+   "subtitle": "Haptic feedback on every tap.",
+   "default": true,
+   "group": "others",
+   "icon": "ic_ctl_vibration"
+  },
+  {
+   "id": "eye_protection",
+   "label": "Eye protection",
+   "subtitle": "Warm amber overlay to cut blue light.",
+   "default": false,
+   "group": "others",
+   "icon": "ic_ctl_brightness"
+  },
+  {
+   "id": "home_3d",
+   "label": "3D home pane",
+   "subtitle": "The rotating cube home screen (off = the flat app grid).",
+   "default": true,
+   "group": "battery",
+   "icon": "ic_home"
+  },
+  {
+   "id": "dynamic_island",
+   "label": "Dynamic island",
+   "subtitle": "The floating pill above the toolbar.",
+   "default": true,
+   "group": "battery",
+   "icon": "ic_nav"
+  },
+  {
+   "id": "oled_black",
+   "label": "OLED black background",
+   "subtitle": "Pure black window background — an OLED panel spends no power on black pixels.",
+   "default": false,
+   "group": "battery",
+   "icon": "ic_nav_powersave"
+  },
+  {
+   "id": "background_pause",
+   "label": "Pause background work",
+   "subtitle": "Tear down the location tracker, the update poll and the message poll.",
+   "default": false,
+   "group": "battery",
+   "icon": "ic_nav_dnd"
+  },
+  {
+   "id": "apps_warmup",
+   "label": "Warm up the app list",
+   "subtitle": "Pre-index installed apps at launch so the Phone tab opens instantly.",
+   "default": true,
+   "group": "battery",
+   "icon": "ic_home_apps"
+  },
+  {
+   "id": "maps_tracker",
+   "label": "Location tracking",
+   "subtitle": "Keep the Maps location service running in the background.",
+   "default": true,
+   "group": "connectivity",
+   "icon": "ic_map_pin"
+  },
+  {
+   "id": "wireguard_pinned",
+   "label": "Keep WireGuard up",
+   "subtitle": "Pin the tunnel ON — connectivity survives power saving.",
+   "default": false,
+   "group": "connectivity",
+   "icon": "ic_wg"
+  },
+  {
+   "id": "ntfy_poll",
+   "label": "Message polling",
+   "subtitle": "Poll the ntfy server for new messages and notifications.",
+   "default": true,
+   "group": "notifications",
+   "icon": "ic_stat_notify"
+  },
+  {
+   "id": "analytics_batch",
+   "label": "Usage batch upload",
+   "subtitle": "Send batched usage events when the network is idle.",
+   "default": true,
+   "group": "connectivity",
+   "icon": "ic_database"
+  },
+  {
+   "id": "bottom_nav",
+   "label": "Bottom navigation bar",
+   "subtitle": "The section bar along the bottom of the screen.",
+   "default": true,
+   "group": "others",
+   "icon": "ic_nav"
+  },
+  {
+   "id": "drawer",
+   "label": "Side drawer",
+   "subtitle": "The slide-in section drawer.",
+   "default": true,
+   "group": "others",
+   "icon": "ic_hamburger_asymmetric"
+  },
+  {
+   "id": "edge_menus",
+   "label": "Edge menus",
+   "subtitle": "One-Hand edge gesture pads on the screen borders.",
+   "default": false,
+   "group": "others",
+   "user_owned": true,
+   "store": "onehand",
+   "icon": "ic_onehand"
+  },
+  {
+   "id": "dark_mode",
+   "label": "Dark mode",
+   "subtitle": "System-wide light/dark — needs the shell channel.",
+   "default": true,
+   "group": "others",
+   "user_owned": true,
+   "store": "nightmode",
+   "icon": "ic_nav_screensaver"
+  }
+ ],
+ "pages": {
+  "controls": {
+   "label": "Quick Actions"
+  },
+  "presets": {
+   "label": "Presets"
+  },
+  "panels": {
+   "label": "Panels"
+  },
+  "panels-all": {
+   "label": "All"
+  },
+  "panels-battery": {
+   "label": "Battery Hungers"
+  },
+  "panels-security": {
+   "label": "Security"
+  },
+  "panels-tools": {
+   "label": "Tools"
+  },
+  "panels-ui": {
+   "label": "UI"
+  }
+ },
+ "tabs": {
+  "controls": [
+   "presets",
+   "panels"
+  ],
+  "panels": [
+   "panels-all",
+   "panels-battery",
+   "panels-security",
+   "panels-tools"
+  ]
+ }
+}

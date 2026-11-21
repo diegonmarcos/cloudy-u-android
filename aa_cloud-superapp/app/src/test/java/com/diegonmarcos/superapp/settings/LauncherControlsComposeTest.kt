@@ -74,11 +74,25 @@ class LauncherControlsComposeTest : KitPageHarness() {
     }
 
     @Test
-    fun `L5 Tools holds Connectivity, Notifications and Others`() {
+    fun `L5 Others (ex-Tools) holds Notifications`() {
         show(LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_TOOLS))
         for (g in LauncherSettingsPrefs.Config.groups.filter { it.tab == "tools" }) assertText(g.label, true)
-        assertText("Connectivity", true)
         assertText("Notifications", true)
+        // #1846 Connectivity moved to Network, the Others switch group to UI: not drawn here any more.
+        assertText("Connectivity", false)
+    }
+
+    @Test
+    fun `L5b Network holds the Connectivity switch group`() {
+        show(LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_NETWORK))
+        for (g in LauncherSettingsPrefs.Config.groups.filter { it.tab == "network" }) assertText(g.label, true)
+        assertText("Connectivity", true)
+    }
+
+    @Test
+    fun `L5c the Quick actions UI tab holds the Others switch group`() {
+        show(LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_QUICK_UI))
+        for (g in LauncherSettingsPrefs.Config.groups.filter { it.tab == "ui" }) assertText(g.label, true)
         assertText("Others", true)
     }
 

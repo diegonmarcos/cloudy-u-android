@@ -13,6 +13,8 @@
          as the embeds below: a saved child must find its container again. -->
     <item name="controls_grid_host"   type="id" />
     <item name="security_grid_host"   type="id" />
+    <item name="ui_grid_host"         type="id" />
+    <item name="network_grid_host"    type="id" />
 
     <!-- AggregatorStackFragment embeds. -->
     <item name="stack_embed_0"        type="id" />

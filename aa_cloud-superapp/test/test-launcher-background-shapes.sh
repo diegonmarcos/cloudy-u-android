@@ -46,11 +46,10 @@ pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'
 by = {p['id']: p for p in pages}
 ctrl = [by[i]['label'] for i in by['controls']['tabs']]
 ui = by['panels-ui']
-print('OK' if by['controls']['tabs'] == ['presets','panels'] and ctrl == ['Presets','Panels']
-      and by['panels']['tabs'] == ['panels-all','panels-battery','panels-security','panels-tools']
+print('OK' if by['controls']['tabs'] == ['presets','panels-battery','panels-security','panels-quick-ui','panels-network','panels-tools','panels-all'] and ctrl == ['Preset','Battery','Security','UI','Network','Others','All']
       and not ui.get('hidden') and ui.get('group') == 'Launcher' else 'controls=%r panels=%r UI_hidden=%r' % (by['controls']['tabs'], by['panels']['tabs'], ui.get('hidden')))
 PY
-)" "controls strip is Presets | Panels; panels is All | Battery Hungers | Tools; UI is its own Launcher tile"
+)" "#1846 controls strip is Preset | Battery Security UI Network Others All; panels aliases the six; UI is its own Launcher tile"
 
 echo "== T2: the Background declaration =="
 check "$(python3 - "$BJ" <<'PY'

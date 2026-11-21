@@ -1,0 +1,148 @@
+# #1846 Quick actions on an emulator, with the x86_64 APK a Ship Cloud SuperApp run built: every tab of the ONE row
+# (Preset | Battery Security UI Network Others All) is opened by its deep link, shot, dumped, and checked for its tab row and its
+# tiles (resource ids control:tile:<id>, test tags exposed as resource ids) with the detail line each tile paints
+# (control:detail:<id>). Evidence: quick-actions-evidence (PNGs, uiautomator XML, tiles.tsv, verdict.txt). Any missing tab label,
+# tile or detail line fails the job. Later tickets (#1847 Banking Apps Mode, #1848 Notify and the bottom nav) add rows to the same walk.
+name: "Test -> SuperApp Quick actions tabs (emulator)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      superapp_run_id:
+        description: "Ship Cloud SuperApp run id whose x86_64 APK artifact to test"
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  walk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Fetch the Cloud SuperApp APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          W_RUN: ${{ inputs.superapp_run_id }}
+        run: |
+          set -eu
+          mkdir -p apk
+          gh api "repos/$REPO/actions/runs/$W_RUN/artifacts" --paginate --jq '.artifacts[] | select(.name|startswith("Cloud-SuperApp")) | .name' |
+          while read -r name; do gh run download "$W_RUN" -R "$REPO" -n "$name" -D "apk/$name"; done
+          pick=""
+          for want in x86_64 universal ''; do
+            pick=$(find apk -name '*.apk' | sort | grep -i -- "$want" | head -1 || true)
+            [ -n "$pick" ] && break
+          done
+          [ -n "$pick" ] || { echo "::error::no Cloud SuperApp APK"; exit 1; }
+          cp "$pick" superapp.apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Write the scripts
+        run: |
+          # ui.py: find a node in a uiautomator dump and print its centre ("x y"), or the declared badges.
+          cat > ui.py <<'PY'
+          import json, re, sys
+          def nodes(path):
+              x = open(path, encoding="utf-8", errors="replace").read()
+              for m in re.finditer(r"<node [^>]*>", x):
+                  a = dict(re.findall(r'([\w-]+)="([^"]*)"', m.group(0)))
+                  b = re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", a.get("bounds", ""))
+                  if b: a["_b"] = tuple(map(int, b.groups())); yield a
+          def centre(a): x1, y1, x2, y2 = a["_b"]; return "%d %d" % ((x1 + x2) // 2, (y1 + y2) // 2)
+          cmd = sys.argv[1]
+          if cmd == "text":          # ui.py text dump.xml "Label" [n]   -> n-th node whose text matches (case-insensitive)
+              want = sys.argv[3].lower(); n = int(sys.argv[4]) if len(sys.argv) > 4 else 0
+              hits = sorted((a for a in nodes(sys.argv[2]) if a.get("text", "").strip().lower() == want), key=lambda a: a["_b"][1])
+              print(centre(hits[n]) if len(hits) > n else "")
+          elif cmd == "below":       # ui.py below dump.xml "Anchor" "Label"  -> first Label node below the Anchor node
+              anchor = [a for a in nodes(sys.argv[2]) if a.get("text", "").strip() == sys.argv[3]]
+              if not anchor: print(""); sys.exit()
+              y0 = anchor[0]["_b"][1]
+              hits = sorted((a for a in nodes(sys.argv[2]) if a.get("text", "").strip() == sys.argv[4] and a["_b"][1] > y0), key=lambda a: a["_b"][1])
+              print(centre(hits[0]) if hits else "")
+          elif cmd == "desc":        # ui.py desc dump.xml "Expand" n  -> n-th node with that content-desc, top to bottom
+              hits = sorted((a for a in nodes(sys.argv[2]) if a.get("content-desc", "") == sys.argv[3]), key=lambda a: a["_b"][1])
+              n = int(sys.argv[4]); print(centre(hits[n]) if len(hits) > n else "")
+          elif cmd == "checked":     # ui.py checked dump.xml X Y  -> checked of the smallest checkable node holding the point
+              px, py = int(sys.argv[3]), int(sys.argv[4])
+              hit = [a for a in nodes(sys.argv[2]) if a.get("checkable") == "true" and a["_b"][0] <= px <= a["_b"][2] and a["_b"][1] <= py <= a["_b"][3]]
+              hit.sort(key=lambda a: (a["_b"][2] - a["_b"][0]) * (a["_b"][3] - a["_b"][1]))
+              print(hit[0].get("checked", "") if hit else "")
+          elif cmd == "count-desc":
+              print(sum(1 for a in nodes(sys.argv[2]) if a.get("content-desc", "") == sys.argv[3]))
+          elif cmd == "badges":      # ui.py badges build.json -> "id<TAB>channel<TAB>label" per persistent badge
+              for p in json.load(open(sys.argv[2]))["ui"]["notification_center"]["producers"]:
+                  if p.get("badge") and p.get("channel"): print("%s\t%s\t%s" % (p["id"], p["channel"], p["label"]))
+          PY
+          # posted.py: the channels this package has in the shade right now, from `dumpsys notification --noredact`.
+          cat > walk.sh <<'EOF2'
+          set -u
+          mkdir -p out
+          : > out/verdict.txt; : > out/tiles.tsv
+          fails=0
+          check() { if [ "$1" = ok ]; then echo "PASS $2" | tee -a out/verdict.txt; else echo "FAIL $2" | tee -a out/verdict.txt; fails=$((fails+1)); fi; }
+          adb install -r -g superapp.apk || exit 2
+          aapt2=$(ls -d "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          PKG=$("$aapt2" dump packagename superapp.apk)
+          ACT=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
+          adb shell cmd package set-home-activity "$PKG/.HomeActivity" || true
+          adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher >/dev/null 2>&1 || true
+          adb shell settings put global hide_error_dialogs 1 || true
+          adb shell svc power stayon true; adb shell locksettings set-disabled true || true
+          for k in screensaver_enabled screensaver_activate_on_sleep screensaver_activate_on_dock; do adb shell settings put secure $k 0 || true; done
+          echo '<?xml version="1.0" encoding="utf-8" standalone="yes" ?><map><int name="screensaver_timeout" value="0" /></map>' > ls.xml
+          adb push ls.xml /data/local/tmp/launcher_settings.xml
+          adb shell am start -W -n "$ACT" >/dev/null; sleep 5; adb shell am force-stop "$PKG"
+          adb shell "run-as $PKG sh -c 'mkdir -p shared_prefs && cp /data/local/tmp/launcher_settings.xml shared_prefs/launcher_settings.xml'" || true
+          adb shell am start -W -n "$ACT" >/dev/null; sleep 20
+          awake() { adb shell am stopservice -n "$PKG/.floatingnav.ScreensaverService" >/dev/null 2>&1 || true; adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard; }
+          page() { adb shell am start -n "$ACT" --es shortcut_action "page:config/$1" >/dev/null; awake; sleep 10; }
+          # walk NAME PAGE WORD...: open the page, shoot it, and require every WORD (case-insensitive) among the dump's texts.
+          walk() { name=$1; pg=$2; shift 2
+            adb logcat -c; page "$pg"
+            adb exec-out screencap -p > "out/$name.png"
+            adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb pull /sdcard/u.xml "out/$name.xml" >/dev/null 2>&1
+            for w in "$@"; do grep -qiF "$w" "out/$name.xml" && check ok "$name: '$w' on screen" || check no "$name: '$w' missing"; done
+            grep -o 'resource-id="control:tile:[^"]*"' "out/$name.xml" | sed 's/.*tile://; s/"//' | sort -u | sed "s/^/$name\t/" >> out/tiles.tsv
+            n=$(grep -o 'resource-id="control:detail:[^"]*"' "out/$name.xml" | sort -u | wc -l); t=$(grep -o 'resource-id="control:tile:[^"]*"' "out/$name.xml" | sort -u | wc -l)
+            echo "$name: $t tiles, $n detail lines" | tee -a out/verdict.txt
+            timeout 30 adb logcat -d -s C3SecurityTile > "out/$name.log" || true; }
+          ROW="Preset Battery Security UI Network Others All"
+          walk preset presets $ROW
+          walk battery panels-battery $ROW
+          walk security panels-security $ROW "Developer"
+          walk ui panels-quick-ui $ROW "Do Not Disturb" "Rotation lock" "Auto brightness" "Screen timeout" "Font size" "Keep screen on"
+          walk network panels-network $ROW "Wi-Fi" "Mobile data" "Bluetooth" "Hotspot" "Airplane" "Always-on VPN" "Private DNS" "NFC" "Location"
+          walk others panels-tools $ROW "Torch"
+          walk all panels-all $ROW "Screensaver"
+          # every UI and Network tile paints a detail line (the log line carries it: "tile <id> state=... detail=...")
+          for t in hotspot nfc private_dns always_on_vpn keep_screen_on screen_timeout font_size wifi mobile_data bluetooth airplane_mode dnd rotation_lock; do
+            f=ui; case $t in hotspot|nfc|private_dns|always_on_vpn|wifi|mobile_data|bluetooth|airplane_mode) f=network;; esac
+            grep -q "tile $t state=.* detail=.\+" "out/$f.log" && check ok "$t has a live reading and a detail line" || check no "$t: no detail line in the $f tab log"
+          done
+          cat out/verdict.txt
+          [ "$fails" -eq 0 ]
+          EOF2
+          chmod +x walk.sh
+      - name: Boot emulator and walk
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_7
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash walk.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quick-actions-evidence
+          path: out/
+          if-no-files-found: warn

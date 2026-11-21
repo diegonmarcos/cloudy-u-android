@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # #1833 Quick actions ▸ Panels ▸ Security.
 #
-#  P1  the Panels strip is All | Battery Hungers | Security | Tools: Security comes right after Battery Hungers.
+#  P1  the Quick actions row is Preset | Battery Security UI Network Others All (#1846): Security comes right after Battery.
 #  P2  RULE 16 PARITY: every Tools-tab group of the control panel, and every field of every control in it, is what it was
 #      before Security existed (test/panels-tools-baseline-1833.json). A field may be ADDED (the two share flags), none
 #      removed or changed, and no Tools group moved to the Security tab.
@@ -30,21 +30,20 @@ ok()  { PASS=$((PASS+1)); echo "  PASS: $1"; }
 bad() { FAIL=$((FAIL+1)); echo "  FAIL: $1"; }
 check() { if [ "$1" = OK ]; then ok "$2"; else bad "$2 — $1"; fi; }
 
-echo "== P1: Security sits right after Battery Hungers =="
+echo "== P1: Security sits right after Battery =="
 check "$(python3 - "$BJ" <<'PY'
 import json, sys
 sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
 by = {p['id']: p for p in sec['pages']}
-tabs = by['panels']['tabs']
-labels = [by[t]['label'] for t in tabs]
+tabs = by['controls']['tabs']
 p = by.get('panels-security', {})
-ok = tabs == ['panels-all', 'panels-battery', 'panels-security', 'panels-tools'] and labels == ['All', 'Battery Hungers', 'Security', 'Tools'] \
+ok = tabs[1:3] == ['panels-battery', 'panels-security'] and by['panels-battery']['label'] == 'Battery' and by['panels-security']['label'] == 'Security' \
      and p.get('hidden') is True and p.get('group') == 'Launcher'
 launcher = next(g for g in sec['groups'] if g['id'] == 'launcher')['pages']
 ok = ok and 'panels-security' in launcher and launcher.index('panels-security') == launcher.index('panels-battery') + 1
-print('OK' if ok else 'tabs=%r labels=%r page=%r' % (tabs, labels, p))
+print('OK' if ok else 'tabs=%r page=%r' % (tabs, p))
 PY
-)" "Panels = All | Battery Hungers | Security | Tools; panels-security declared hidden under Launcher"
+)" "#1846 the Quick actions row is Preset | Battery Security ...; panels-security declared hidden under Launcher"
 
 echo "== P2: rule 16 — the Tools tab lost nothing =="
 check "$(python3 - "$BJ" test/panels-tools-baseline-1833.json <<'PY'
@@ -52,25 +51,26 @@ import json, sys
 cp = json.load(open(sys.argv[1]))['ui']['control_panel']
 base = json.load(open(sys.argv[2]))
 now = {g['id']: g for g in cp['groups']}
+ctl = {c['id']: g for g in cp['groups'] for c in g.get('controls', [])}
+cdef = {c['id']: c for g in cp['groups'] for c in g.get('controls', [])}
 probs = []
-tools_now = [g['id'] for g in cp['groups'] if g.get('tab', 'tools') == 'tools' and g.get('draw', True)]
-if tools_now != [g['id'] for g in base['groups']]: probs.append('Tools groups %r != %r' % (tools_now, [g['id'] for g in base['groups']]))
+# #1846 a Tools group or control may MOVE to the UI or Network tab (never to Security); nothing may be lost or changed.
 for g in base['groups']:
     n = now.get(g['id'])
     if n is None: probs.append('group %s gone' % g['id']); continue
+    if n.get('tab', 'tools') == 'security': probs.append('group %s moved to Security' % g['id'])
     for k, v in g.items():
-        if k == 'controls': continue
+        if k in ('controls', 'tab'): continue
         if n.get(k) != v: probs.append('group %s field %s changed' % (g['id'], k))
-    nc = {c['id']: c for c in n.get('controls', [])}
-    if [c['id'] for c in n.get('controls', [])] != [c['id'] for c in g.get('controls', [])]:
-        probs.append('group %s controls %r' % (g['id'], [c['id'] for c in n.get('controls', [])]))
     for c in g.get('controls', []):
-        m = nc.get(c['id'], {})
+        m = cdef.get(c['id'])
+        if m is None: probs.append('control %s gone' % c['id']); continue
+        if ctl[c['id']].get('tab', 'tools') == 'security': probs.append('control %s moved to Security' % c['id'])
         for k, v in c.items():
             if m.get(k) != v: probs.append('%s.%s changed/lost' % (c['id'], k))
 print('; '.join(probs) or 'OK')
 PY
-)" "every Tools group and every field of every control matches the frozen baseline"
+)" "every Tools group and every field of every control matches the frozen baseline (moved to UI / Network at most, #1846)"
 
 echo "== P2b: rule 16 - the Security tab lost nothing in the redo =="
 check "$(python3 - "$BJ" test/panels-security-baseline-1833.json <<'PY'

@@ -5749,10 +5749,11 @@
               "launcher-sep-1",
               "notify",
               "presets",
-              "panels",
               "panels-all",
               "panels-battery",
               "panels-security",
+              "panels-quick-ui",
+              "panels-network",
               "panels-tools",
               "focus"
             ]
@@ -5859,6 +5860,9 @@
             "onehand",
             "notify"
           ],
+          "panels": [
+            "controls"
+          ],
           "about": [
             "xray",
             "app-about"
@@ -5889,6 +5893,7 @@
           "agents-superapp": "xray",
           "agents-fleet": "xray",
           "watchdog": "agents-watchdog",
+        "panels": "controls",
           "watchtower": "xray",
           "agents-watchtower": "xray"
         },
@@ -5927,12 +5932,18 @@
           {
             "_doc": "Tab 2 of Launcher — the CONTROLS (#574): ONE producer, LauncherConfigFragment, drawing the device/fleet switchboard (the Samsung-style icon grid declared in ui.control_panel and implemented in configs/DeviceControls.kt, formerly Configs ▸ Panel ▸ Control) followed by the launcher's own screensaver, switches, sliders and set-as-default-launcher. The theme picker that used to open this tab moved to Presets ▸ Themes — the SAME LauncherThemes.apply, not a copy. Nothing persisted moves with it: LauncherSettingsPrefs keys off fixed store names, never off the page id. hidden = reached through the strip, not as its own Configs tile.",
             "_doc_ui_promoted": "#1621: the Quick Actions strip now reads Presets | UI | Panels — UI was promoted out of Panels to sit as a sibling of Presets and Panels. It is the SAME page (panels-ui, LauncherConfigFragment scope ui); only its parent moved from `panels` to `controls`, so page:config/panels-ui still resolves and nothing persisted moved. Panels keeps its union All view (which still unions UI + Battery Hungers + Tools) plus Battery Hungers and Tools — the UI content is therefore still reachable under Panels ▸ All, it is no longer a second nested tab there.",
+            "_doc_1846": "#1846 ONE tab row: Preset | Battery Security UI Network Others All. The Panels tabs are direct tabs of this strip now (the `|` is separator_before on panels-battery); the old `panels` strip page is retired into this page (retired_pages + page_aliases), so page:config/panels still resolves here. UI here is panels-quick-ui (the most-used UI toggles); the full UI config is still the Launcher tile panels-ui.",
             "id": "controls",
             "label": "Quick Actions",
             "icon": "ic_home",
             "tabs": [
               "presets",
-              "panels"
+              "panels-battery",
+              "panels-security",
+              "panels-quick-ui",
+              "panels-network",
+              "panels-tools",
+              "panels-all"
             ],
             "group": "Launcher",
             "subgroup": ""
@@ -6410,23 +6421,8 @@
           {
             "_doc": "Tab 1 of Launcher — the PRESETS: things you pick in one tap. Three groups, declared in ui.launcher_presets (order, names and which declaration feeds each group): Sandboxes (ui.launcher_profiles — Work · Personal · Guest), Themes (ui.launcher_themes — Cloud Purple · Cloud Minimalistic) and Modes (ui.launcher_modes — Power · Focus · Saving Energy). LauncherPresetsFragment draws them and owns no name of its own. Its id is `presets`, not `profile`, because `profile` is already this section's own top-level page (the owner's identity) and a section cannot hold two pages under one id. Nothing persisted moves with the rename: LauncherProfilePrefs/LauncherThemePrefs/LauncherModePrefs key off fixed store names, never off the page id. hidden = reached through the strip, not as its own Configs tile.",
             "id": "presets",
-            "label": "Presets",
+            "label": "Preset",
             "icon": "ic_p_sol_personal",
-            "hidden": true,
-            "group": "Launcher",
-            "subgroup": ""
-          },
-          {
-            "_doc": "Configs ▸ Setup ▸ Launcher ▸ Controls ▸ Panels — today's Controls content (device switch board, screensaver, toggles, icons per row, brightness) as a strip. A hidden tab of `controls`; the id `controls` now names the strip itself, so page:config/controls and page:config/presets both land on the Controls entry. #1621: UI was promoted to the parent Quick Actions strip (Presets | UI | Panels), so it is no longer a nested tab here — Panels is now All | Battery Hungers | Tools, and the All union still draws the UI section first, so no UI control was dropped.",
-            "id": "panels",
-            "label": "Panels",
-            "icon": "ic_home",
-            "tabs": [
-              "panels-all",
-              "panels-battery",
-              "panels-security",
-              "panels-tools"
-            ],
             "hidden": true,
             "group": "Launcher",
             "subgroup": ""
@@ -6443,7 +6439,8 @@
           {
             "_doc": "Panels ▸ Battery Hungers — the launcher's battery-hungry effect switches (toggle group `battery`, with its master), the heaviest consumers per charge cycle or month resolved to app names (BatteryRepository per-uid mAh, the batterystats probe; ADB channel for the mAh) and the Battery Hunger panel (rank drainers, restrict, stop). LauncherConfigFragment scope battery.",
             "id": "panels-battery",
-            "label": "Battery Hungers",
+            "label": "Battery",
+            "separator_before": true,
             "icon": "ic_settings",
             "hidden": true,
             "group": "Launcher",
@@ -6459,9 +6456,27 @@
             "subgroup": ""
           },
           {
+            "_doc": "#1846 Quick actions ▸ UI: the most-used UI toggles only (ui.control_panel groups with tab ui: Do Not Disturb, rotation lock, auto brightness, screen timeout, font size, keep screen on, floating menu, animations, vibration ... and the toggle groups declared tab ui: Others (dark mode, edge menus, bottom nav ...)). Live read and a detail line on every tile, tap toggles, hold opens the full setting. LauncherConfigFragment scope quick_ui. The full UI config (screensaver, icons per row, brightness, display) stays the Launcher tile panels-ui.",
+            "id": "panels-quick-ui",
+            "label": "UI",
+            "icon": "ic_ctl_brightness",
+            "hidden": true,
+            "group": "Launcher",
+            "subgroup": ""
+          },
+          {
+            "_doc": "#1846 Quick actions ▸ Network: the most-used network toggles (ui.control_panel groups with tab network: Wi-Fi, mobile data, Bluetooth, hotspot, airplane mode, mesh VPN, Always-on VPN, Private DNS, NFC, location, firewall, and the Connectivity toggle group declared tab network). Live read and a detail line on every tile. LauncherConfigFragment scope network.",
+            "id": "panels-network",
+            "label": "Network",
+            "icon": "ic_ctl_wifi",
+            "hidden": true,
+            "group": "Launcher",
+            "subgroup": ""
+          },
+          {
             "_doc": "Panels ▸ Tools — everything that is not UI or a battery effect: the device switch board (ui.control_panel: Device, Network and Tools groups — Torch, DND, Wi-Fi, Firewall, Wireless debugging …), the Connectivity, Notifications and Others switch groups (incl. the in-app Scale slider) and the Set-as-default-launcher action. LauncherConfigFragment scope tools.",
             "id": "panels-tools",
-            "label": "Tools",
+            "label": "Others",
             "icon": "ic_settings",
             "hidden": true,
             "group": "Launcher",
@@ -10817,7 +10832,7 @@
         },
         {
           "id": "connectivity",
-          "tab": "tools",
+          "tab": "network",
           "label": "Connectivity",
           "subtitle": "What the launcher keeps talking to the network about. Power Saving cuts compute but PINS the tunnel up, mirroring Samsung / Apple / Pixel power-save."
         },
@@ -10829,7 +10844,7 @@
         },
         {
           "id": "others",
-          "tab": "tools",
+          "tab": "ui",
           "label": "Others",
           "subtitle": "Chrome, haptics, eye protection and the edge menus — preferences that cost no battery worth naming."
         }
@@ -11125,6 +11140,7 @@
               "icon": "ic_map_pin",
               "label": "Location",
               "security_net": true,
+              "net_tab": true,
               "subtitle": "LocationManager location on/off; switched with cmd location over the shell channel."
             }
           ]
@@ -11142,12 +11158,6 @@
               "label": "Torch",
               "battery_hungry": true,
               "subtitle": "The flash unit, straight through CameraManager — no permission needed."
-            },
-            {
-              "id": "dnd",
-              "icon": "ic_nav_dnd",
-              "label": "Do Not Disturb",
-              "subtitle": "Silences everything but priority senders."
             },
             {
               "id": "power_saving",
@@ -11188,12 +11198,6 @@
                 {"class": "com.diegonmarcos.superapp.firewall.FirewallVpnService", "label": "Firewall VPN", "keep": true},
                 {"class": "com.diegonmarcos.superapp.firewall.FirestackTunnelService", "label": "Firestack VPN", "keep": true}
               ]
-            },
-            {
-              "id": "rotation_lock",
-              "icon": "ic_nav_lock",
-              "label": "Rotation lock",
-              "subtitle": "Freezes the screen in its current orientation."
             }
           ]
         },
@@ -11203,6 +11207,8 @@
           "label_res": "control_group_network",
           "subtitle": "Everything that moves bytes — this handset's radios and the fleet's tunnels, in one place.",
           "subtitle_res": "control_group_network_sub",
+          "tab": "network",
+          "_doc_tab": "#1846 drawn on Quick actions > Network (was Others). Hotspot, Always-on VPN, Private DNS and NFC are new tiles (configs/QuickControls.kt).",
           "controls": [
             {
               "id": "wifi",
@@ -11243,8 +11249,41 @@
               "label": "Per-app firewall",
               "battery_hungry": true,
               "subtitle": "The local no-root VpnService that blocks per-app egress."
+            },
+            {
+              "id": "hotspot",
+              "icon": "ic_ctl_wifi",
+              "label": "Hotspot",
+              "subtitle": "Wi-Fi tethering, read from WifiManager. Android keeps the switch to the system: tap opens it."
+            },
+            {
+              "id": "always_on_vpn",
+              "icon": "ic_ctl_firewall",
+              "label": "Always-on VPN",
+              "subtitle": "Settings.Secure always_on_vpn_app: lit while a VPN app is pinned. Tap opens the VPN settings."
+            },
+            {
+              "id": "private_dns",
+              "icon": "ic_ctl_firewall",
+              "label": "Private DNS",
+              "subtitle": "Settings.Global private_dns_mode (off = off). Tap switches it with WRITE_SECURE_SETTINGS, else hold opens the setting."
+            },
+            {
+              "id": "nfc",
+              "icon": "ic_ctl_wifi",
+              "label": "NFC",
+              "subtitle": "NfcAdapter.isEnabled. Tap opens the NFC settings."
             }
           ]
+        },
+        {
+          "id": "network_more",
+          "label": "Location",
+          "label_res": "control_group_network_more",
+          "subtitle": "Whether location is on: the same tile as on Security, gathered by flag.",
+          "subtitle_res": "control_group_network_more_sub",
+          "tab": "network",
+          "derive": "net_tab"
         },
         {
           "id": "tools",
@@ -11289,6 +11328,8 @@
           "label_res": "control_group_ui",
           "subtitle": "How this launcher looks and feels under the thumb.",
           "subtitle_res": "control_group_ui_sub",
+          "tab": "ui",
+          "_doc_tab": "#1846 drawn on Quick actions > UI (was Others). Do Not Disturb and Rotation lock moved here from Device (fields unchanged); Screen timeout, Font size and Keep screen on are new tiles (configs/QuickControls.kt).",
           "controls": [
             {
               "id": "floating_nav",
@@ -11322,6 +11363,36 @@
               "icon": "ic_ctl_brightness",
               "label": "Auto brightness",
               "subtitle": "Android's adaptive-brightness mode."
+            },
+            {
+              "id": "dnd",
+              "icon": "ic_nav_dnd",
+              "label": "Do Not Disturb",
+              "subtitle": "Silences everything but priority senders."
+            },
+            {
+              "id": "rotation_lock",
+              "icon": "ic_nav_lock",
+              "label": "Rotation lock",
+              "subtitle": "Freezes the screen in its current orientation."
+            },
+            {
+              "id": "screen_timeout",
+              "icon": "ic_ctl_brightness",
+              "label": "Screen timeout",
+              "subtitle": "Settings.System screen_off_timeout. Tap steps 15 s, 30 s, 1, 2, 5, 10 min (WRITE_SETTINGS); hold opens Display."
+            },
+            {
+              "id": "font_size",
+              "icon": "ic_ctl_brightness",
+              "label": "Font size",
+              "subtitle": "Settings.System font_scale. Tap steps 0.85, 1.0, 1.15, 1.3 (WRITE_SETTINGS); hold opens Display."
+            },
+            {
+              "id": "keep_screen_on",
+              "icon": "ic_ctl_brightness",
+              "label": "Keep screen on",
+              "subtitle": "Settings.Global stay_on_while_plugged_in: the screen stays on while charging."
             }
           ]
         },
