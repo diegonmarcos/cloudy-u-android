@@ -161,7 +161,7 @@ class GarchFitTest {
     @Test fun everyVolModelSeesTheCleanedReturns() {
         val a = sim(400, 2e-6, 0.08, 0.90, 51); val m = sim(400, 2e-6, 0.08, 0.90, 52)
         // a one-day wrong print (+40% then back) in the asset only
-        val dirty = a.mapIndexed { i, (d, c) -> d to (if (i == 380) c * 1.4 else c) }
+        val dirty = a.mapIndexed { i, (d, c) -> d to (if (i == 300) c * 1.4 else c) }
         val clean = MarkzStats.compute(decl, listOf("a", "m"), listOf(a, m), listOf(null, null))!!
         val r = MarkzStats.compute(decl, listOf("a", "m"), listOf(dirty, m), listOf(null, null))!!
         assertEquals(2, r.dropped); assertEquals(0, clean.dropped)
