@@ -22,7 +22,7 @@ use mail_parser::{MessageParser, MimeHeaders, PartType};
 use serde::Deserialize;
 
 /// Bumped when parse() changes what it produces: stored parsed documents of an older version are re-parsed from the raw message.
-pub const READER_VERSION: i64 = 1;
+pub const READER_VERSION: i64 = 2;
 
 /// Replaced by the screen's own wording of "quoted text" in [wrap].
 pub const QUOTE_PLACEHOLDER: &str = "{{QUOTE}}";
@@ -87,8 +87,14 @@ pub fn parse(raw: &[u8]) -> Result<Parsed, String> {
 
     if !html.trim().is_empty() {
         let cids = collect_cids(&msg);
-        let clean = sanitize(&html);
-        let fragment = inline_cids(&clean, &cids);
+        // <style> blocks (head and body) are kept like Gmail keeps them: lifted out, sanitised and scoped by us, put back as ONE block.
+        let (body_html, raw_css) = extract_styles(&html);
+        let css = sanitize_css(&raw_css, &cids);
+        let clean = sanitize(&body_html);
+        let mut fragment = inline_cids(&clean, &cids);
+        if !css.is_empty() {
+            fragment = format!("<style>{css}</style>{fragment}");
+        }
         let remote_images = fragment.contains("src=\"http") || fragment.contains("url(http") || fragment.contains("url(\"http");
         let text = match msg.body_text(0) {
             Some(t) => t.into_owned(),
@@ -187,7 +193,7 @@ fn sanitizer() -> &'static Builder<'static> {
     B.get_or_init(|| {
         let mut b = Builder::default();
         b.add_tags(&["font", "big", "section", "main", "address", "center"]);
-        b.add_generic_attributes(&["style", "align", "valign", "bgcolor", "width", "height", "dir", "lang", "title"]);
+        b.add_generic_attributes(&["style", "align", "valign", "bgcolor", "width", "height", "dir", "lang", "title", "class", "id"]);
         b.add_tag_attributes("table", &["border", "cellpadding", "cellspacing"]);
         b.add_tag_attributes("td", &["colspan", "rowspan", "nowrap"]);
         b.add_tag_attributes("th", &["colspan", "rowspan", "nowrap", "scope"]);
@@ -207,6 +213,245 @@ fn sanitizer() -> &'static Builder<'static> {
         });
         b
     })
+}
+
+// ── <style> blocks ──────────────────────────────────────────────────────────────────────────────────────────────────
+
+/// The HTML without its `<style>` elements, and their contents joined.
+fn extract_styles(html: &str) -> (String, String) {
+    let lower = html.to_ascii_lowercase();
+    let mut out = String::with_capacity(html.len());
+    let mut css = String::new();
+    let mut pos = 0;
+    while let Some(i) = lower[pos..].find("<style") {
+        let start = pos + i;
+        let after = start + 6;
+        let nb = lower.as_bytes().get(after).copied().unwrap_or(b'>');
+        if !(nb == b'>' || nb.is_ascii_whitespace() || nb == b'/') {
+            out.push_str(&html[pos..after]);
+            pos = after;
+            continue;
+        }
+        out.push_str(&html[pos..start]);
+        let Some(gt) = lower[after..].find('>') else {
+            pos = html.len();
+            break;
+        };
+        let body_start = after + gt + 1;
+        match lower[body_start..].find("</style") {
+            Some(e) => {
+                css.push_str(&html[body_start..body_start + e]);
+                css.push('\n');
+                pos = lower[body_start + e..].find('>').map(|g| body_start + e + g + 1).unwrap_or(html.len());
+            }
+            None => {
+                css.push_str(&html[body_start..]);
+                pos = html.len();
+                break;
+            }
+        }
+    }
+    out.push_str(&html[pos.min(html.len())..]);
+    (out, css)
+}
+
+type Cids<'a> = HashMap<String, (String, &'a [u8])>;
+
+fn strip_css_comments(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut rest = s;
+    while let Some(i) = rest.find("/*") {
+        out.push_str(&rest[..i]);
+        match rest[i + 2..].find("*/") {
+            Some(e) => rest = &rest[i + 2 + e + 2..],
+            None => {
+                rest = "";
+                break;
+            }
+        }
+    }
+    out.push_str(rest);
+    out
+}
+
+fn find_block_end(s: &str, from: usize) -> Option<usize> {
+    let b = s.as_bytes();
+    let mut depth = 1;
+    let mut i = from;
+    while i < b.len() {
+        match b[i] {
+            b'{' => depth += 1,
+            b'}' => {
+                depth -= 1;
+                if depth == 0 {
+                    return Some(i);
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    None
+}
+
+/// A mail's stylesheet reduced to rules and `@media` blocks of whitelisted properties, every selector scoped under `.m` (the
+/// reader's message container) so mail CSS cannot restyle the reader chrome. `@import`, `@font-face`, `@keyframes` and every other
+/// at-rule are dropped; so is any declaration with a remote `url()`, `expression()`, `behavior`, `-moz-binding`, position, etc.
+pub fn sanitize_css(css: &str, cids: &Cids) -> String {
+    sanitize_rules(&strip_css_comments(css), cids, 0)
+}
+
+fn sanitize_rules(s: &str, cids: &Cids, depth: u8) -> String {
+    let b = s.as_bytes();
+    let mut out = String::new();
+    let mut i = 0;
+    while i < b.len() {
+        if b[i].is_ascii_whitespace() || b[i] == b'}' {
+            i += 1;
+            continue;
+        }
+        if b[i] == b'@' {
+            let name_end = s[i..].find(|c: char| c.is_whitespace() || c == '{' || c == ';' || c == '(').map(|k| i + k).unwrap_or(s.len());
+            let name = s[i + 1..name_end].to_ascii_lowercase();
+            let Some(rel) = s[name_end..].find(|c: char| c == ';' || c == '{') else { break };
+            let p = name_end + rel;
+            if b[p] == b';' {
+                i = p + 1;
+                continue;
+            }
+            let Some(end) = find_block_end(s, p + 1) else { break };
+            if name == "media" && depth < 2 {
+                let prelude = s[name_end..p].trim();
+                if prelude.chars().all(|c| c.is_ascii_alphanumeric() || " ():,.-_/<>=".contains(c)) {
+                    let inner = sanitize_rules(&s[p + 1..end], cids, depth + 1);
+                    if !inner.is_empty() {
+                        out.push_str(&format!("@media {prelude}{{{inner}}}"));
+                    }
+                }
+            }
+            i = end + 1;
+            continue;
+        }
+        let Some(rel) = s[i..].find('{') else { break };
+        let p = i + rel;
+        let Some(end) = s[p + 1..].find('}').map(|k| p + 1 + k) else { break };
+        let sel = scope_selectors(&s[i..p]);
+        let decls = sanitize_decls(&s[p + 1..end], cids);
+        if let (Some(sel), false) = (sel, decls.is_empty()) {
+            out.push_str(&format!("{sel}{{{decls}}}"));
+        }
+        i = end + 1;
+    }
+    out
+}
+
+fn scope_selectors(raw: &str) -> Option<String> {
+    let t = raw.trim();
+    let low = t.to_ascii_lowercase();
+    if t.is_empty() || t.contains(|c: char| "<{}\\;@".contains(c)) || low.contains("expression") {
+        return None;
+    }
+    let mut parts: Vec<String> = Vec::new();
+    for p in t.split(',') {
+        let p = p.trim();
+        if p.is_empty() {
+            continue;
+        }
+        let l = p.to_ascii_lowercase();
+        if l == "html" || l == "body" || l == ":root" {
+            parts.push(".m".to_string());
+        } else if l.starts_with("html ") || l.starts_with("body ") {
+            parts.push(format!(".m {}", p[5..].trim()));
+        } else {
+            parts.push(format!(".m {p}"));
+        }
+    }
+    if parts.is_empty() { None } else { Some(parts.join(", ")) }
+}
+
+fn split_decls(s: &str) -> Vec<&str> {
+    let mut v = Vec::new();
+    let mut depth = 0i32;
+    let mut quote: Option<char> = None;
+    let mut start = 0;
+    for (i, c) in s.char_indices() {
+        match quote {
+            Some(q) => {
+                if c == q {
+                    quote = None;
+                }
+            }
+            None => match c {
+                '"' | '\'' => quote = Some(c),
+                '(' => depth += 1,
+                ')' => depth -= 1,
+                ';' if depth <= 0 => {
+                    v.push(&s[start..i]);
+                    start = i + 1;
+                }
+                _ => {}
+            },
+        }
+    }
+    v.push(&s[start..]);
+    v
+}
+
+fn sanitize_decls(body: &str, cids: &Cids) -> String {
+    let mut out = String::new();
+    for d in split_decls(body) {
+        let Some(colon) = d.find(':') else { continue };
+        let name = d[..colon].trim().to_ascii_lowercase();
+        if !STYLE_PROPERTIES.contains(&name.as_str()) {
+            continue;
+        }
+        if let Some(v) = check_value(d[colon + 1..].trim(), cids) {
+            if !v.is_empty() {
+                out.push_str(&name);
+                out.push(':');
+                out.push_str(&v);
+                out.push(';');
+            }
+        }
+    }
+    out
+}
+
+/// A declaration value, or None when it holds anything dangerous. `url()` survives only as a `data:image/` URI or a cid the message carries.
+fn check_value(v: &str, cids: &Cids) -> Option<String> {
+    let low = v.to_ascii_lowercase();
+    for bad in ["expression", "behavior", "binding", "javascript:", "vbscript:", "@import", "\\", "<", "image-set", "src(", "var(", "env("] {
+        if low.contains(bad) {
+            return None;
+        }
+    }
+    let mut out = String::new();
+    let mut rest = v;
+    loop {
+        let l = rest.to_ascii_lowercase();
+        let Some(i) = l.find("url(") else {
+            out.push_str(rest);
+            break;
+        };
+        out.push_str(&rest[..i]);
+        let after = &rest[i + 4..];
+        let close = after.find(')')?;
+        let arg = after[..close].trim().trim_matches(|c: char| c == '"' || c == '\'');
+        if arg.is_empty() || arg.contains(|c: char| c == '"' || c == '\'' || c.is_whitespace()) {
+            return None;
+        }
+        let al = arg.to_ascii_lowercase();
+        if al.starts_with("data:image/") {
+            out.push_str(&format!("url(\"{arg}\")"));
+        } else if let Some(c) = al.strip_prefix("cid:") {
+            let (mime, bytes) = cids.get(c.trim().trim_start_matches('<').trim_end_matches('>'))?;
+            out.push_str(&format!("url(\"data:{mime};base64,{}\")", base64(bytes)));
+        } else {
+            return None;
+        }
+        rest = &after[close + 1..];
+    }
+    Some(out.trim().to_string())
 }
 
 /// The HTML reduced to the whitelist (see the module doc).
@@ -669,16 +914,82 @@ mod tests {
         let raw = msg("MIME-Version: 1.0\r\nContent-Type: text/html; charset=utf-8\r\nContent-Transfer-Encoding: 8bit", MARKETING.as_bytes());
         let p = parse(&raw).unwrap();
         let f = &p.fragment;
-        for gone in ["<script", "alert(1)", "onclick", "onload", "onmouseover", "<form", "<input", "<button", "<iframe", "javascript:", "position", "z-index", "<style", "evil.example"] {
+        for gone in ["<script", "alert(1)", "onclick", "onload", "onmouseover", "<form", "<input", "<button", "<iframe", "javascript:", "position", "z-index", "evil.example"] {
             assert!(!f.contains(gone), "`{gone}` survived: {f}");
         }
         for kept in ["<table", "width=\"600\"", "align=\"center\"", "cellpadding=\"0\"", "bgcolor=\"#f4f4f4\"", "background-color:#f4f4f4", "color:#d93025", "font-size:28px",
             "padding:20px 30px", "border-radius:4px", "href=\"https://shop.example.com/?utm=1\"", "Big sale", "España &amp; co", "src=\"data:image/gif;base64,", "width=\"800\""] {
             assert!(f.contains(kept), "`{kept}` was lost: {f}");
         }
+        assert!(f.contains("<style>.m .x{color:red;}</style>"), "the head <style> is kept, scoped: {f}");
         assert!(p.remote_images, "the tracking pixel is a remote image");
         assert_eq!(p.kind, "html");
         assert!(p.text.contains("Big sale"), "{}", p.text);
+    }
+
+    #[test]
+    fn a_newsletter_whose_layout_lives_in_a_style_block_keeps_it_scoped() {
+        let html = r##"<html><head><style type="text/css">
+          /* layout */
+          body { background:#eeeeee; font-family:Arial,sans-serif }
+          .wrapper { width:600px; margin:0 auto; background-color:#ffffff }
+          .btn, a.cta { background:#1a73e8; color:#ffffff; padding:10px 20px; border-radius:4px }
+          html .top { color:#333333 }
+          @media (max-width:480px) { .wrapper { width:100% } .hide { display:none } }
+        </style></head><body><div class="wrapper"><p class="top">Hi</p><a class="btn" href="https://x.example/">Go</a></div>
+        <style>.late{color:#d93025}</style></body></html>"##;
+        let raw = msg("MIME-Version: 1.0\r\nContent-Type: text/html; charset=utf-8\r\nContent-Transfer-Encoding: 8bit", html.as_bytes());
+        let f = parse(&raw).unwrap().fragment;
+        for kept in [
+            ".m{background:#eeeeee;font-family:Arial,sans-serif;}",
+            ".m .wrapper{width:600px;margin:0 auto;background-color:#ffffff;}",
+            ".m .btn, .m a.cta{background:#1a73e8;color:#ffffff;padding:10px 20px;border-radius:4px;}",
+            ".m .top{color:#333333;}",
+            "@media (max-width:480px){.m .wrapper{width:100%;}.m .hide{display:none;}}",
+            ".m .late{color:#d93025;}",
+            "class=\"wrapper\"",
+            "class=\"btn\"",
+        ] {
+            assert!(f.contains(kept), "`{kept}` missing: {f}");
+        }
+        assert_eq!(f.matches("<style>").count(), 1, "one <style> block: {f}");
+        assert!(f.starts_with("<style>"));
+        // Every selector of every rule starts with the container class.
+        let css = &f[7..f.find("</style>").unwrap()];
+        for rule in css.split('}').filter(|r| r.contains('{')) {
+            let sel = rule.rsplit('{').last().unwrap_or("");
+            let _ = sel;
+            let head = rule.split('{').next().unwrap_or("");
+            let head = head.trim_start_matches("@media (max-width:480px)");
+            for s in head.split(',') {
+                let s = s.trim();
+                assert!(s.is_empty() || s.starts_with(".m"), "unscoped selector `{s}` in {css}");
+            }
+        }
+    }
+
+    #[test]
+    fn hostile_css_is_stripped() {
+        let html = r##"<html><head><style>
+          @import url(https://evil.example/x.css);
+          @font-face { font-family:x; src:url(https://evil.example/f.woff) }
+          @keyframes k { from{color:red} to{color:blue} }
+          .a { background:url(https://evil.example/p.gif); color:red }
+          .b { background-image:url(data:image/png;base64,AAAA); width:expression(alert(1)) }
+          .c { behavior:url(x.htc); -moz-binding:url(x); position:fixed; top:0; color:blue }
+          body { position:fixed; color:#111111 }
+          .d { background:url(javascript:alert(1)); color:green }
+          .e { color:red\9; background:url(cid:logo@x) }
+          </style><script>alert(1)</script><img src=x onerror=alert(2)></head><body><p class="a">x</p></body></html>"##;
+        let raw = msg("MIME-Version: 1.0\r\nContent-Type: text/html; charset=utf-8\r\nContent-Transfer-Encoding: 8bit", html.as_bytes());
+        let f = parse(&raw).unwrap().fragment;
+        for gone in ["evil.example", "@import", "@font-face", "@keyframes", "expression", "behavior", "binding", "position", "javascript:", "<script", "alert(", "onerror", "top:0"] {
+            assert!(!f.contains(gone), "`{gone}` survived: {f}");
+        }
+        for kept in [".m .a{color:red;}", ".m .b{background-image:url(\"data:image/png;base64,AAAA\");}", ".m .c{color:blue;}", ".m{color:#111111;}", ".m .d{color:green;}"] {
+            assert!(f.contains(kept), "`{kept}` missing: {f}");
+        }
+        assert!(!f.contains("cid:logo"), "{f}");
     }
 
     #[test]
