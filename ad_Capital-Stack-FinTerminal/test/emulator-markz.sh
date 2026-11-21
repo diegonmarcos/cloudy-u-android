@@ -23,6 +23,9 @@ scroll; shot markz-home-2
 open markz-overview; shot markz-overview
 open markz-markovitz; shot markz-markovitz
 has markz-markovitz "Markovitz" | tee -a "$OUT/verdict.txt"
+open markz-volatility; shot markz-volatility
+for i in 2 3; do scroll; shot "markz-volatility-$i"; done
+for t in "GARCH" "Persistence" "Half-life" "Realised vol" "Bad prints dropped" "fitted"; do has markz-volatility "$t"; done | tee -a "$OUT/verdict.txt"
 adb logcat -d -t 5000 > "$OUT/logcat.txt" 2>/dev/null || true
 echo "crashes: $(grep -c "FATAL EXCEPTION" "$OUT/logcat.txt")" | tee -a "$OUT/verdict.txt"
 ls -la "$OUT"
