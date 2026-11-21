@@ -1769,6 +1769,18 @@ class MailRepository(
                 // evidence for the offline proof: how many rows the flat membership query finds right now
                 val rows = runCatching { emailDao.keysForSelection(selectionIdsQuery(scopes, false, ListShape.NONE, extra)).size }
                 RustMailEngine.log("list $mailboxId: flat membership query finds $rows rows")
+                // what the PAGER itself gets: the first page of the very source the list uses (and the error, if it throws)
+                val paged = runCatching {
+                    emailDao.conversationPagingSource(conversationQuery(scopes, sort, unreadOnly, credentials.id, sentMailboxes, shape, extra))
+                        .load(androidx.paging.PagingSource.LoadParams.Refresh(null, 30, false))
+                }
+                RustMailEngine.log("list $mailboxId: pager first page = " + paged.fold({ r ->
+                    when (r) {
+                        is androidx.paging.PagingSource.LoadResult.Page -> "page of ${r.data.size}"
+                        is androidx.paging.PagingSource.LoadResult.Error -> "ERROR ${r.throwable}"
+                        else -> r.toString()
+                    }
+                }, { "threw $it" }))
                 for (form in 0..3) {
                     val saved = MEMBER_FORM
                     val q = try {
