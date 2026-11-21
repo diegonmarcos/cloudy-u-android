@@ -10,7 +10,7 @@
 //!     build-time mesh.bind is only the fallback) and refuses to
 //!     start unless that address lies inside `mesh.cidrs`; 0.0.0.0, loopback and any public address are refused;
 //!   * it answers only peers inside `mesh.cidrs`;
-//!   * EVERY path needs `Authorization: Bearer <fleet token>` (the token the SuperApp mints), compared in constant time; with no
+//!   * EVERY path needs `Authorization: Bearer <fleet token>` (the token THIS app owns and stores encrypted, #1835), compared in constant time; with no
 //!     token known the answer is 503, never open.
 
 use crate::apis::{self, App};
@@ -23,7 +23,7 @@ use std::time::Duration;
 
 /// (authority, method, arg) -> Ok((mime, payload)) | Err(reason): ContentResolver.call(content://authority, method, arg).
 pub type LogSource = dyn Fn(&str, &str, &str) -> Result<(String, String), String> + Send + Sync;
-/// The fleet bearer token, or None when it cannot be read (SuperApp missing).
+/// The fleet bearer token THIS app owns (#1835: Configs > Fleet token, Keystore-encrypted), or None when none is set.
 pub type TokenSource = dyn Fn() -> Option<String> + Send + Sync;
 
 static LOGS: OnceLock<Box<LogSource>> = OnceLock::new();
@@ -34,6 +34,16 @@ pub fn set_log_source(f: Box<LogSource>) -> bool {
 }
 pub fn set_token_source(f: Box<TokenSource>) -> bool {
     TOKEN.set(f).is_ok()
+}
+
+/// What the listener authorises against: the installed token source (this app's own owner provider), nothing else.
+pub fn current_token() -> Option<String> {
+    TOKEN.get().and_then(|t| t())
+}
+
+/// #1835 the content URI of the token's OWNER, this app's own provider (`<own package>.<suffix>`), never the SuperApp's.
+pub fn owner_token_target(own_package: &str, suffix: &str) -> String {
+    format!("content://{}.{}/token", own_package, suffix)
 }
 
 #[derive(Clone, Debug)]
@@ -168,7 +178,7 @@ fn ct_eq(a: &[u8], b: &[u8]) -> bool {
 pub fn authorize(header: Option<&str>, token: Option<&str>) -> Option<Resp> {
     let token = match token.filter(|t| !t.is_empty()) {
         Some(t) => t,
-        None => return Some(Resp::json(503, format!("{{\"error\":{}}}", jstr("no fleet token is available (is the SuperApp installed?)")))),
+        None => return Some(Resp::json(503, format!("{{\"error\":{}}}", jstr("no fleet token is set (Cloud C3 Webserver > Configs > Fleet token)")))),
     };
     let presented = header.and_then(|h| h.strip_prefix("Bearer ").or_else(|| h.strip_prefix("bearer "))).unwrap_or("");
     if !presented.is_empty() && ct_eq(presented.as_bytes(), token.as_bytes()) {
@@ -254,13 +264,13 @@ pub fn start(m: Mesh, stop: Arc<std::sync::atomic::AtomicBool>) -> Result<(), St
     let handler: Arc<http::Handler> = {
         let m = m.clone();
         Arc::new(move |req: &Req| {
-            let (src, token) = (LOGS.get(), TOKEN.get());
+            let src = LOGS.get();
             // #1836 the mesh log export is part of the API service
             if let Some(r) = crate::gate(crate::power::Service::Api, &crate::power::enabled_pair()) {
                 return r;
             }
             match src {
-                Some(s) => route(&m, apis::apps(), req, token.and_then(|t| t()).as_deref(), &**s),
+                Some(s) => route(&m, apis::apps(), req, current_token().as_deref(), &**s),
                 None => Resp::json(503, "{\"error\":\"no log bridge in this process\"}".to_string()),
             }
         })
@@ -364,6 +374,18 @@ mod tests {
             assert!(String::from_utf8_lossy(&ok.body).contains("Endpoints"), "{}", k);
         }
         assert_eq!(route(&m, &a, &get("/endpoints/other", Some("Bearer tok")), Some("tok"), &stub).status, 404);
+    }
+
+    #[test]
+    fn the_listener_uses_the_webserver_own_token() {
+        // #1835 the installed source is the webserver's own owner provider, addressed by its own package, not the SuperApp's.
+        let target = owner_token_target("com.diegonmarcos.cloudwebserver", "fleettoken");
+        assert_eq!(target, "content://com.diegonmarcos.cloudwebserver.fleettoken/token");
+        assert!(!target.contains("superapp"));
+        assert!(set_token_source(Box::new(|| Some("webserver-token".to_string()))));
+        assert_eq!(current_token().as_deref(), Some("webserver-token"));
+        assert!(authorize(Some("Bearer webserver-token"), current_token().as_deref()).is_none());
+        assert_eq!(authorize(Some("Bearer superapp-token"), current_token().as_deref()).unwrap().status, 401);
     }
 
     #[test]

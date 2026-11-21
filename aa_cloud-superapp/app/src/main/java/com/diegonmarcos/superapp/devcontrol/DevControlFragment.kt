@@ -1286,8 +1286,15 @@ class DevControlFragment : KitComposeFragment() {
                 loopback       -> "✓ Loopback only (127.0.0.1) — unreachable from LAN"
                 else           -> "✗ Reachable from LAN — bind addr ${bound ?: "?"}"
             })
-            row("Token",    prefs.token)
-            small("Bearer token — long-press to copy. DECLARATIVE: baked from the vault sops secret (BuildConfig.FLEET_TOKEN), the same value cloud-superapp-mcp is configured with, so it is stable across installs and there is nothing to regenerate. Endpoints follow /api/{group}/{op}. Full catalog: GET /api/docs.")
+            // #1835 the fleet token is OWNED by Cloud C3 Webserver (Configs > Fleet token); this row is its read-only MIRROR, last 4 only.
+            row("Token",    "••••" + prefs.token.takeLast(4) + "  (read-only mirror, managed in Cloud C3 Webserver)")
+            small("Bearer token, read-only mirror: managed in Cloud C3 Webserver (Configs > Fleet token: paste, generate, rotate, reveal, clear). This app reads it from there first and keeps its own baked value (BuildConfig.FLEET_TOKEN) only as the fallback while the webserver has none. Endpoints follow /api/{group}/{op}. Full catalog: GET /api/docs.")
+            button("Open in Cloud C3 Webserver") {
+                runCatching {
+                    startActivity(requireContext().packageManager.getLaunchIntentForPackage(com.diegonmarcos.superapp.devtools.FleetToken.OWNER_PKG)!!
+                        .putExtra("shortcut_action", "page:config/fleet-token"))
+                }
+            }
 
             // Toggle Switch: persists pref + start/stop the server live.
             toggle("API enabled", prefs.enabled) { checked ->

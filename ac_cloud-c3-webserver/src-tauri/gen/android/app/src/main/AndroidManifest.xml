@@ -140,6 +140,13 @@
             </intent-filter>
         </receiver>
 
+        <!-- The fleet token's owner door (owner decision on #1835): signature-guarded, read-only, the value is this app's own Keystore-encrypted one. -->
+        <provider
+          android:name=".FleetTokenOwnerProvider"
+          android:authorities="${applicationId}.fleettoken"
+          android:exported="true"
+          android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA" />
+
         <provider
           android:name="androidx.core.content.FileProvider"
           android:authorities="${applicationId}.fileprovider"

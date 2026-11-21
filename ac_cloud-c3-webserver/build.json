@@ -221,6 +221,12 @@
             "label": "Links",
             "icon": "link",
             "pages": []
+          },
+          {
+            "id": "fleet_token",
+            "label": "Fleet token",
+            "icon": "key",
+            "pages": []
           }
         ]
       }
@@ -310,7 +316,7 @@
     "no_wake": ["com.diegonmarcos.cloudaccount", "com.diegonmarcos.cloudstore"],
     "_doc_no_wake": "#1502 a /logs/<app> call starts that app (ContentResolver.call on its provider). Cloud Account must never be woken in the background and Cloud Store only with auto-update on over Wi-Fi, so these two answer 403 here instead.",
     "endpoints_route": "/endpoints",
-    "token_authority_suffix": "fleet",
+    "token_authority_suffix": "fleettoken",
     "ipc": {
       "authority_suffix": "logexport",
       "default_method": "export",

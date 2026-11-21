@@ -53,7 +53,7 @@ fun WebserverShell() {
     fun open(sectionId: String, pageId: String? = null) { section = sectionId; page = pageId }
     // #1682 P4 every fleet link that opens "the ADB Shell page" lands here (ShellArmActivity -> MainActivity extra): the ADB Shell section
     val wanted = LaunchTarget.section
-    androidx.compose.runtime.LaunchedEffect(wanted) { if (wanted != null && nav.section(wanted) != null) { open(wanted); LaunchTarget.section = null } }
+    androidx.compose.runtime.LaunchedEffect(wanted) { if (wanted != null && nav.section(wanted) != null) { open(wanted, LaunchTarget.page); LaunchTarget.page = null; LaunchTarget.section = null } }
 
     Box(Modifier.fillMaxSize().themeBackground(dark = true).windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))) {
         NavBarTopFirstRowScaffold(
@@ -102,6 +102,7 @@ private fun SectionBody(section: String?, page: String?, open: (String, String?)
             page == Decl.PAGE_DEVICE -> DevicePage()
             page == Decl.PAGE_ENGINES -> EnginesPage()
             page == Decl.PAGE_LINKS -> LinksPage()
+            page == Decl.PAGE_FLEET_TOKEN -> FleetTokenPage()
             page != null && isFleetConfigsPage(page) -> FleetConfigsPageBody(page, dark = true, onAppConfigs = { open(Decl.SECTION_CONFIGS, Decl.PAGE_SERVER) })
             else -> FleetConfigsPageBody(page ?: "general", dark = true, onAppConfigs = { open(Decl.SECTION_CONFIGS, Decl.PAGE_SERVER) })
         }

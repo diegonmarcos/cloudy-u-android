@@ -34,6 +34,7 @@ object Decl {
     const val PAGE_PERMS = "perms"   // #1724 Configs > Perms (build.json::ui configs perms)
     const val PAGE_ENGINES = "engines"
     const val PAGE_LINKS = "links"
+    const val PAGE_FLEET_TOKEN = "fleet_token"   // Configs > Fleet token (#1835: this app owns the fleet bearer token)
 
     // #1713 the ADB Shell section's sub pages (the fleet second row): Status, Shell, Perms, Server, All. Ids are unique in the app (N12).
     const val PAGE_ADB_STATUS = "adb_status"

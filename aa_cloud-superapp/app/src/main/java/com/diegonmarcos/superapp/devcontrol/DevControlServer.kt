@@ -137,7 +137,9 @@ object DevControlServer {
         }
     }
 
-    private fun handle(ctx: Context, socket: Socket, token: String) {
+    private fun handle(ctx: Context, socket: Socket, startToken: String) {
+        // #1835 the token is owned by Cloud C3 Webserver: read per request (owner first, cached 15 s), the start-time value is the fallback.
+        val token = runCatching { com.diegonmarcos.superapp.devtools.FleetToken.get(ctx) }.getOrDefault(startToken)
         // #ipc a gateway request DETACHES the socket to [gatewayPool] (it waits on the target
         // app, up to 30 s with a cold start); everything else is answered inline, as before.
         var detached = false

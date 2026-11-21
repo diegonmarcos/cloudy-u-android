@@ -59,7 +59,7 @@ pub fn install(env: &mut JNIEnv, activity: &JObject) {
     HOOKS.call_once(|| {
         c3_webserver::diag::set_source(Box::new(read_bridge));
         // #1490 the mesh listener's two reads: an app's log export (any fleet authority the server crate names)
-        // and the fleet bearer token the SuperApp mints.
+        // and the fleet bearer token this app owns (#1835).
         c3_webserver::meshlogs::set_log_source(Box::new(call_provider));
         c3_webserver::meshlogs::set_token_source(Box::new(read_token));
         c3_webserver::diag::set_opener(Box::new(open_in_browser));
@@ -160,13 +160,15 @@ fn read_bridge(method: &str, arg: &str) -> Result<(String, String), String> {
     call_provider(&authority, method, arg)
 }
 
-/// The fleet bearer token: `content://<superapp>.fleet/token`, first row, first column (FleetToken's own handshake).
-/// None when the SuperApp is missing or refuses; the mesh listener then answers 503, never open.
+/// The fleet bearer token, OWNED by this app (#1835): its own `content://<own package>.fleettoken/token` (FleetTokenOwnerProvider, the
+/// Keystore-encrypted value of Configs > Fleet token; the provider also runs the one-time SuperApp import), first row, first column.
+/// None when no token is set; the mesh listener then answers 503, never open. The SuperApp is not read here.
 fn read_token() -> Option<String> {
-    let sv = c3_webserver::serving::get();
-    let suffix = c3_webserver::apis::build()["mesh"]["token_authority_suffix"].as_str().unwrap_or("fleet").to_string();
-    let target = format!("content://{}.{}/token", sv.bridge_package, suffix);
+    let suffix = c3_webserver::apis::build()["mesh"]["token_authority_suffix"].as_str().unwrap_or("fleettoken").to_string();
     with_env(|env, activity| {
+        let own = env.call_method(activity, "getPackageName", "()Ljava/lang/String;", &[])?.l()?;
+        let own = String::from(env.get_string(&JString::from(own))?);
+        let target = c3_webserver::meshlogs::owner_token_target(&own, &suffix);
         let cr = env.call_method(activity, "getContentResolver", "()Landroid/content/ContentResolver;", &[])?.l()?;
         let u = uri(env, &target)?;
         let null = JObject::null();
