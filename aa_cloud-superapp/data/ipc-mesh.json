@@ -1716,6 +1716,17 @@
      "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
      "level": "signature",
      "source": "ac_cloud-c3-webserver/src-tauri/gen/android/app/src/main/AndroidManifest.xml",
+     "component": ".FleetTokenOwnerProvider",
+     "id": "provider:<pkg>.fleettoken",
+     "kind": "provider",
+     "name": "FleetTokenOwnerProvider",
+     "authority": "<pkg>.fleettoken",
+     "callers": []
+    },
+    {
+     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+     "level": "signature",
+     "source": "ac_cloud-c3-webserver/src-tauri/gen/android/app/src/main/AndroidManifest.xml",
      "component": ".KeepAliveService",
      "id": "service:.KeepAliveService",
      "kind": "service",
