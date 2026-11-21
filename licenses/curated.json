@@ -1854,10 +1854,20 @@
   }
  },
  "cargo_lockfiles": [
-  "ab_cloud-libs-shared/libs/drive-core-rs/Cargo.lock"
+  "ab_cloud-libs-shared/libs/drive-core-rs/Cargo.lock",
+  "ab_cloud-libs-shared/libs/mail-core-rs/Cargo.lock"
  ],
  "cargo_licences": {
+  "ahash": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "ammonia": {
+   "licence": "MIT OR Apache-2.0"
+  },
   "arrayvec": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "bitflags": {
    "licence": "MIT OR Apache-2.0"
   },
   "blake3": {
@@ -1890,14 +1900,86 @@
   "crypto-common": {
    "licence": "MIT OR Apache-2.0"
   },
+  "cssparser": {
+   "licence": "MPL-2.0"
+  },
   "digest": {
    "licence": "MIT OR Apache-2.0"
+  },
+  "displaydoc": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "dtoa": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "dtoa-short": {
+   "licence": "MPL-2.0"
+  },
+  "equivalent": {
+   "licence": "Apache-2.0 OR MIT"
+  },
+  "fallible-iterator": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "fallible-streaming-iterator": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "fastrand": {
+   "licence": "Apache-2.0 OR MIT"
   },
   "find-msvc-tools": {
    "licence": "MIT OR Apache-2.0"
   },
+  "form_urlencoded": {
+   "licence": "MIT OR Apache-2.0"
+  },
   "generic-array": {
    "licence": "MIT"
+  },
+  "hashbrown": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "hashify": {
+   "licence": "Apache-2.0 OR MIT"
+  },
+  "hashlink": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "html5ever": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "icu_collections": {
+   "licence": "Unicode-3.0"
+  },
+  "icu_locale_core": {
+   "licence": "Unicode-3.0"
+  },
+  "icu_normalizer": {
+   "licence": "Unicode-3.0"
+  },
+  "icu_normalizer_data": {
+   "licence": "Unicode-3.0"
+  },
+  "icu_properties": {
+   "licence": "Unicode-3.0"
+  },
+  "icu_properties_data": {
+   "licence": "Unicode-3.0"
+  },
+  "icu_provider": {
+   "licence": "Unicode-3.0"
+  },
+  "idna": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "idna_adapter": {
+   "licence": "Apache-2.0 OR MIT"
+  },
+  "indexmap": {
+   "licence": "Apache-2.0 OR MIT"
+  },
+  "itoa": {
+   "licence": "MIT OR Apache-2.0"
   },
   "jni": {
    "licence": "MIT OR Apache-2.0"
@@ -1911,11 +1993,65 @@
   "libc": {
    "licence": "MIT OR Apache-2.0"
   },
+  "libsqlite3-sys": {
+   "licence": "MIT"
+  },
+  "litemap": {
+   "licence": "Unicode-3.0"
+  },
+  "lock_api": {
+   "licence": "MIT OR Apache-2.0"
+  },
   "log": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "mail-parser": {
+   "licence": "Apache-2.0 OR MIT"
+  },
+  "maplit": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "markup5ever": {
    "licence": "MIT OR Apache-2.0"
   },
   "memchr": {
    "licence": "Unlicense OR MIT"
+  },
+  "new_debug_unreachable": {
+   "licence": "MIT"
+  },
+  "once_cell": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "parking_lot": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "parking_lot_core": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "percent-encoding": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "phf": {
+   "licence": "MIT"
+  },
+  "phf_codegen": {
+   "licence": "MIT"
+  },
+  "phf_generator": {
+   "licence": "MIT"
+  },
+  "phf_shared": {
+   "licence": "MIT"
+  },
+  "pkg-config": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "potential_utf": {
+   "licence": "Unicode-3.0"
+  },
+  "precomputed-hash": {
+   "licence": "MIT"
   },
   "proc-macro2": {
    "licence": "MIT OR Apache-2.0"
@@ -1923,8 +2059,29 @@
   "quote": {
    "licence": "MIT OR Apache-2.0"
   },
+  "redox_syscall": {
+   "licence": "MIT"
+  },
+  "rusqlite": {
+   "licence": "MIT"
+  },
   "same-file": {
    "licence": "Unlicense OR MIT"
+  },
+  "scopeguard": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "serde": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "serde_core": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "serde_derive": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "serde_json": {
+   "licence": "MIT OR Apache-2.0"
   },
   "sha2": {
    "licence": "MIT OR Apache-2.0"
@@ -1932,7 +2089,28 @@
   "shlex": {
    "licence": "MIT OR Apache-2.0"
   },
+  "siphasher": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "smallvec": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "stable_deref_trait": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "string_cache": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "string_cache_codegen": {
+   "licence": "MIT OR Apache-2.0"
+  },
   "syn": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "synstructure": {
+   "licence": "MIT"
+  },
+  "tendril": {
    "licence": "MIT OR Apache-2.0"
   },
   "thiserror": {
@@ -1941,17 +2119,35 @@
   "thiserror-impl": {
    "licence": "MIT OR Apache-2.0"
   },
+  "tinystr": {
+   "licence": "Unicode-3.0"
+  },
   "typenum": {
    "licence": "MIT OR Apache-2.0"
   },
   "unicode-ident": {
    "licence": "(MIT OR Apache-2.0) AND Unicode-3.0"
   },
+  "url": {
+   "licence": "MIT OR Apache-2.0"
+  },
+  "utf8_iter": {
+   "licence": "Apache-2.0 OR MIT"
+  },
+  "utf_types": {
+   "licence": "Apache-2.0 OR MIT"
+  },
+  "vcpkg": {
+   "licence": "MIT OR Apache-2.0"
+  },
   "version_check": {
    "licence": "MIT OR Apache-2.0"
   },
   "walkdir": {
    "licence": "Unlicense OR MIT"
+  },
+  "web_atoms": {
+   "licence": "MIT OR Apache-2.0"
   },
   "winapi-util": {
    "licence": "Unlicense OR MIT"
@@ -1985,6 +2181,39 @@
   },
   "windows_x86_64_msvc": {
    "licence": "MIT OR Apache-2.0"
+  },
+  "writeable": {
+   "licence": "Unicode-3.0"
+  },
+  "yoke": {
+   "licence": "Unicode-3.0"
+  },
+  "yoke-derive": {
+   "licence": "Unicode-3.0"
+  },
+  "zerocopy": {
+   "licence": "BSD-2-Clause OR Apache-2.0 OR MIT"
+  },
+  "zerocopy-derive": {
+   "licence": "BSD-2-Clause OR Apache-2.0 OR MIT"
+  },
+  "zerofrom": {
+   "licence": "Unicode-3.0"
+  },
+  "zerofrom-derive": {
+   "licence": "Unicode-3.0"
+  },
+  "zerotrie": {
+   "licence": "Unicode-3.0"
+  },
+  "zerovec": {
+   "licence": "Unicode-3.0"
+  },
+  "zerovec-derive": {
+   "licence": "Unicode-3.0"
+  },
+  "zmij": {
+   "licence": "MIT"
   }
  },
  "_doc_cargo": "#1729 Rust crates: cargo_lockfiles lists the Cargo.lock files whose registry crates are inventory subjects (cargo:<crate>); cargo_licences maps each crate to the SPDX expression it declares (cargo metadata; the legacy 'A/B' spelling written as 'A OR B'). A new crate in a listed lock fails the licence guard until it is added here and the inventory is refreshed."
