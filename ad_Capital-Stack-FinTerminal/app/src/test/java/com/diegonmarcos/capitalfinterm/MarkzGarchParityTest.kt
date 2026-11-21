@@ -55,6 +55,11 @@ class MarkzGarchParityTest {
         assertTrue(labels.all { it.isNotEmpty() })
         assertEquals("n/a", rows[0][2])                       // an asset without a fit shows n/a, not a made-up figure
         assertEquals(f.n.toString(), rows.single { it[0] == d.word("st_g_n") }[1])
-        assertTrue(rows.single { it[0] == d.word("st_g_range") }[1].contains("2020-01-01"))
+        assertEquals("2020-01-01\n→ 2021-12-01", rows.single { it[0] == d.word("st_g_range") }[1])
+        // the short basis labels never lose the full wording: the legend spells out each one
+        assertEquals(listOf("MLE", "MLE capped", "var-target", "defaults"), listOf("fitted", "capped", "targeted", "defaults").map { d.word("st_g_s_$it") })
+        val legend = MarkzScreen.garchLegend(d)
+        listOf("fitted (MLE)", "fitted (persistence capped)", "fitted (variance-targeted)", "defaults (short history)").forEach { assertTrue(it, legend.contains(it)) }
+        assertTrue(rows.all { r -> r.none { it.contains("..") } })
     }
 }

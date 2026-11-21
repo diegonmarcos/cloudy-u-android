@@ -606,6 +606,7 @@ private fun VolatilityBody(d: MarkzDecl, r: MarkzStatsResult, names: List<String
         Text(d.word("st_g_common", "v" to r.dropped.toString()), Modifier.padding(horizontal = 8.dp, vertical = 2.dp), color = LocalFinPalette.current.text3, style = FinType.caption)
         Text(d.word("st_g_title"), Modifier.padding(horizontal = 8.dp, vertical = 4.dp), color = LocalFinPalette.current.text2, style = FinType.caption)
         Grid(MarkzScreen.garchColumns(d, names), MarkzScreen.garchRows(d, r.vols, d.stats.annualDays), "garch")
+        Text(MarkzScreen.garchLegend(d), Modifier.padding(horizontal = 8.dp, vertical = 2.dp), color = LocalFinPalette.current.text3, style = FinType.caption)
         val p = LocalFinPalette.current
         (d.stats.assets + d.stats.benchmark).forEach { a ->
             Text(a.short + ": " + a.symbol + " · " + a.name + (if (a.implied.isNotEmpty()) " · " + d.word("st_implied") + ": " + a.implied + " (" + a.impliedName + ")" else ""),

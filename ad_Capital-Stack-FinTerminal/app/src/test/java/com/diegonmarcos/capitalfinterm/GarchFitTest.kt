@@ -59,7 +59,8 @@ class GarchFitTest {
         val d = Markz.parse(DataFiles.markzJson)!!
         assertEquals("defaults (short history)", d.word("st_g_defaults"))
         val rows = MarkzScreen.garchRows(d, listOf(MarkzVols(1.0, 1.0, 1.0, null, f)), 252)
-        assertEquals("defaults (short history)", rows.single { it[0] == d.word("st_g_source") }[1])
+        assertEquals("defaults", rows.single { it[0] == d.word("st_g_source") }[1])
+        assertTrue(MarkzScreen.garchLegend(d).contains("defaults = defaults (short history)"))
         // exactly MIN_OBS returns is enough
         assertTrue(GarchFitter.fit(sim(GarchFitter.MIN_OBS, 2e-6, 0.08, 0.90, 5), decl.alpha, decl.beta).fitted)
     }

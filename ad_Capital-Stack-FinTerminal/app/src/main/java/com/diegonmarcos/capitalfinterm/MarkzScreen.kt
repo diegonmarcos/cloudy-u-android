@@ -17,6 +17,9 @@ object MarkzScreen {
     /** The GARCH fit table: one column per asset, one row per figure. */
     fun garchColumns(d: MarkzDecl, names: List<String>): List<String> = listOf(d.word("st_g_param")) + names
 
+    /** The one-line legend under the fit table: each short basis label spelled out in full. */
+    fun garchLegend(d: MarkzDecl): String = listOf("capped", "targeted", "fitted", "defaults").joinToString(" · ") { d.word("st_g_s_$it") + " = " + d.word("st_g_$it") }
+
     private fun sci(v: Double): String = if (v.isFinite()) String.format(Locale.US, "%.3e", v) else "n/a"
     private fun f(v: Double, n: Int): String = if (v.isFinite()) Markz.fixed(v, n) else "n/a"
 
@@ -32,8 +35,8 @@ object MarkzScreen {
             row("st_g_lrvol") { f(it.longRunVol(annual), 2) },
             row("st_g_ll") { f(it.logLik, 1) },
             row("st_g_n") { it.n.toString() },
-            row("st_g_range") { (it.from?.toString() ?: "?") + " .. " + (it.to?.toString() ?: "?") },
-            row("st_g_source") { d.word(when (it.basis) { "capped" -> "st_g_capped"; "targeted" -> "st_g_targeted"; "defaults" -> "st_g_defaults"; else -> "st_g_fitted" }) },
+            row("st_g_range") { (it.from?.toString() ?: "?") + "\n" + d.word("st_g_arrow") + " " + (it.to?.toString() ?: "?") },
+            row("st_g_source") { d.word(when (it.basis) { "capped" -> "st_g_s_capped"; "targeted" -> "st_g_s_targeted"; "defaults" -> "st_g_s_defaults"; else -> "st_g_s_fitted" }) },
             row("st_g_realised") { f(it.realisedVol, 2) },
             row("st_g_dropped") { it.dropped.toString() },
         )
