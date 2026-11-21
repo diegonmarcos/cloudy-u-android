@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -14,7 +16,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Link
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -27,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -150,13 +152,17 @@ private fun Header(text: String, tag: String, colors: ThemeColors) {
     Text(text, Modifier.padding(horizontal = 16.dp, vertical = 6.dp).testTag(tag), color = colors.accentOnIsland, fontSize = 12.sp, fontWeight = FontWeight.Bold)
 }
 
+/** A compact row (36dp): the icon, then the label; the dropdown is long (every page and every tool), so rows are tight. */
 @Composable
 private fun UrlUriRow(e: UrlUriEntry, onClick: (UrlUriEntry) -> Unit) {
-    DropdownMenuItem(
-        text = { Text(e.label, fontWeight = if (e.selected) FontWeight.Bold else FontWeight.Normal) },
-        leadingIcon = { Icon(UiIcons.painter(e.icon), contentDescription = null, modifier = Modifier.size(20.dp)) },
-        enabled = e.enabled,
-        onClick = { onClick(e) },
-        modifier = Modifier.testTag(UrlUriTags.entry(e.id)),
-    )
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 36.dp).alpha(if (e.enabled) 1f else 0.4f)
+            .clickable(enabled = e.enabled, role = Role.Button) { onClick(e) }
+            .padding(horizontal = 16.dp, vertical = 4.dp).testTag(UrlUriTags.entry(e.id)),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(UiIcons.painter(e.icon), contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(16.dp))
+        Text(e.label, fontSize = 14.sp, fontWeight = if (e.selected) FontWeight.Bold else FontWeight.Normal)
+    }
 }

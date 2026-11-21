@@ -68,7 +68,8 @@ has 'weby:foldertile:WebApps\|WebApps' page-cloudy-webapps && ok "P1 the WebApps
 tap '^C3 Urls$' text && sleep 4 && shot page-cloudy-c3
 has 'cloudy:c3' page-cloudy-c3 && ok "P1 Cloudy > C3 Urls is one icon grid" || bad "P1 C3 Urls grid missing"
 tap 'cloudy:c3:tile:' && sleep 2 && shot c3-chooser
-has 'cloudy:c3:choose:private' c3-chooser && has 'cloudy:c3:choose:public' c3-chooser && ok "C1 the chooser offers the private and the public URL" || bad "C1 no chooser"
+# the chooser is a dialog window (no resource ids): its words
+has 'Private (mesh)' c3-chooser && has 'Public' c3-chooser && ok "C1 the chooser offers the private and the public URL" || bad "C1 no chooser"
 adb shell input keyevent KEYCODE_BACK; sleep 1
 tap 'bottomnav_item_weby' && shot page-weby-quickmarks
 has 'weby:views\|Quickmarks' page-weby-quickmarks && ok "P1 Weby > Quickmarks" || bad "P1 Weby has no Quickmarks view"
@@ -77,10 +78,23 @@ tap 'Bookmarks \(all\)' text && sleep 3 && shot page-weby-bookmarks && ok "P1 We
 # U1 the Url-Uri dropdown, in the browser
 tap 'bottomnav_item_browser' >/dev/null
 tap 'urluri_button' && shot dropdown-browser
+# the dropdown scrolls: swipe INSIDE it (a touch outside dismisses it) and read the entries again
+scroll_dropdown() {
+  dump _dd
+  local xy; xy=$(python3 - "$OUT/_dd.xml" <<'PY'
+import re, sys, xml.etree.ElementTree as ET
+for n in ET.parse(sys.argv[1]).getroot().iter("node"):
+    if n.get("resource-id", "") == "urluri_dropdown":
+        a, b, c, d = map(int, re.findall(r"\d+", n.get("bounds")))
+        print((a + c) // 2, d - 40, (a + c) // 2, b + 40); break
+PY
+)
+  [ -n "$xy" ] && adb shell input swipe ${xy% * *} ${xy#* * } 400 && sleep 1
+}
+scroll_dropdown; shot dropdown-browser-tools
 for e in section:domains section:tabs section:browser section:cloudy section:weby ai slot_page:search profile configs back up home background force_close restart slot_tool:new_tab; do
-  has "urluri_entry_$e" dropdown-browser || { adb shell input swipe 400 1500 400 600 300; sleep 1; dump dropdown-browser-2; has "urluri_entry_$e" dropdown-browser-2; } && ok "U1 browser dropdown lists $e" || bad "U1 browser dropdown misses $e"
+  { has "urluri_entry_$e" dropdown-browser || has "urluri_entry_$e" dropdown-browser-tools; } && ok "U1 browser dropdown lists $e" || bad "U1 browser dropdown misses $e"
 done
-adb shell input swipe 400 1500 400 600 300; sleep 1; shot dropdown-browser-tools
 adb shell input keyevent KEYCODE_BACK
 
 # U1 the same dropdown in another app
