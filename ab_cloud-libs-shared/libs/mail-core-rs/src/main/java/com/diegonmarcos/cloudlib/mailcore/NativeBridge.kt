@@ -31,6 +31,7 @@ internal object NativeBridge {
 
     @JvmStatic external fun nativeVersion(): String?
     @JvmStatic external fun nativeSync(db: String, config: String, transport: MailCoreTransport): String?
+    @JvmStatic external fun nativeFetchRaw(db: String, args: String, transport: MailCoreTransport): String?
     @JvmStatic external fun nativeQuery(db: String, query: String): String?
     @JvmStatic external fun nativePanicProbe(): String?
 }

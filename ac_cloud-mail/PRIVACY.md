@@ -267,13 +267,18 @@ contacts them in the background.
 There is no intermediary. Your mail never passes through any infrastructure
 operated by the Sterna project.
 
-## Remote content is blocked by default
+## Remote images load by default (since the Gmail-like reader)
 
 Many emails contain remote images and **tracking pixels** that report back to the
-sender when (and sometimes where) you open a message. Sterna **blocks remote
-content in messages by default**, so simply opening an email does not leak that
-you read it. Inline images that are part of the message itself are rendered from
-the message, not fetched from the network.
+sender when (and sometimes where) you open a message. Like Gmail, Sterna now
+**loads remote images by default**, so a message looks the way its sender made
+it: this is the **Load remote images** switch in Settings, on by default (it was
+off before; a stored "off" of the old default was turned on once, by the update
+that made the reader Gmail-like). Turn it off to get the old behaviour described
+below: remote content blocked until you ask, so simply opening an email does not
+leak that you read it. Only the message you are actually reading fetches images,
+never a neighbouring message the pager prepared. Inline images that are part of
+the message itself are rendered from the message, not fetched from the network.
 
 You can lift the block yourself, in two ways. **Show images** loads the remote
 content of the message you are reading, that once only. **Always show images from

@@ -154,6 +154,17 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch { settings.setStripTrackingParams(value) }
     }
 
+    /** #1837 Load remote images automatically: on by default (the first frame is the same definition the stored value is read against). */
+    val remoteImages = settings.remoteImages.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = app.sterna.core.data.settings.REMOTE_IMAGES_DEFAULT,
+    )
+
+    fun setRemoteImages(value: Boolean) {
+        viewModelScope.launch { settings.setRemoteImages(value) }
+    }
+
     val confirmLinks = settings.confirmLinks.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

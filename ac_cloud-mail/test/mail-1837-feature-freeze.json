@@ -2228,5 +2228,26 @@
   "widget_latest_title",
   "widget_unread_description",
   "widget_unread_title"
+ ],
+ "reader_features": [
+  "BlockingWebViewClient",
+  "CSP_META",
+  "EmailWebView",
+  "FIT_CSS",
+  "applyFitSettings",
+  "bodySpacerCss",
+  "buildHtmlDocument",
+  "buildPrintDocument",
+  "einkReaderCss",
+  "embedInlineImages",
+  "foldTopLevelQuotes",
+  "linkifyEscaped",
+  "markDeceptiveLinks",
+  "neutraliseDarkModeStyles",
+  "readerBody",
+  "reflowFormatFlowed",
+  "sanitiseReceivedHtml",
+  "showRemoteImages",
+  "wrapEmoji"
  ]
 }

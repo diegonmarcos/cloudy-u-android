@@ -55,11 +55,13 @@ class ReaderBodyTest {
     // --- remote images -------------------------------------------------------------------------
 
     @Test
-    fun `remote images are blocked unless asked for or the sender is allowed`() {
-        assertTrue(showRemoteImages(manualShow = true, senderAllowed = false))
-        assertTrue(showRemoteImages(manualShow = false, senderAllowed = true))
-        assertTrue(showRemoteImages(manualShow = true, senderAllowed = true))
-        assertFalse(showRemoteImages(manualShow = false, senderAllowed = false))
+    fun `remote images are blocked only when the setting is off and nothing asked for them`() {
+        assertTrue(showRemoteImages(manualShow = true, senderAllowed = false, autoLoad = false))
+        assertTrue(showRemoteImages(manualShow = false, senderAllowed = true, autoLoad = false))
+        assertTrue(showRemoteImages(manualShow = true, senderAllowed = true, autoLoad = false))
+        assertFalse(showRemoteImages(manualShow = false, senderAllowed = false, autoLoad = false))
+        // #1837: the setting ON (the default) loads them for any message.
+        assertTrue(showRemoteImages(manualShow = false, senderAllowed = false, autoLoad = true))
     }
 
     // --- the document --------------------------------------------------------------------------
@@ -127,9 +129,9 @@ class ReaderBodyTest {
     // --- source checks (the weakest things in this file) ---------------------------------------
 
     @Test
-    fun `both remote-image sites ask the same two-term decision`() {
-        val calls = lines(messageScreenSource(), """val showRemote = showRemoteImages\(manualShow, senderAllowed\)""")
-        assertEquals("the two showRemote sites must both call showRemoteImages(manualShow, senderAllowed)", 2, calls)
+    fun `both remote-image sites ask the same three-term decision`() {
+        val calls = lines(messageScreenSource(), """val showRemote = showRemoteImages\(manualShow, senderAllowed, autoLoad\)""")
+        assertEquals("the two showRemote sites must both call showRemoteImages(manualShow, senderAllowed, autoLoad)", 2, calls)
         assertFalse(
             "a site still computes the remote-image verdict itself",
             Regex("""showRemote\s*=\s*manualShow""").containsMatchIn(messageScreenSource()),

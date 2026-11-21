@@ -290,6 +290,36 @@ pub fn body(c: &Connection, account: &str, id: &str) -> Result<Value, String> {
     Ok(row.unwrap_or_else(|| json!({ "fetched": false })))
 }
 
+/// The reader document of a message, from the store: `{"available":true,"kind","fragment","text","remoteImages",...}` or
+/// `{"available":false}` when the raw message is not stored. The parsed document is what an open reads (one indexed row); a
+/// document of an older READER_VERSION is re-parsed from the stored raw message once and written back.
+pub fn reader(c: &Connection, account: &str, id: &str) -> Result<Value, String> {
+    let started = std::time::Instant::now();
+    let mut parsed = crate::store::get_reader(c, account, id)?;
+    let mut reparsed = false;
+    if parsed.is_none() {
+        if let Some(raw) = crate::store::get_raw(c, account, id)? {
+            let p = crate::reader::parse(&raw)?;
+            crate::store::put_reader(c, account, id, &p, crate::store::now_ms())?;
+            parsed = Some(p);
+            reparsed = true;
+        }
+    }
+    Ok(match parsed {
+        Some(p) => json!({
+            "available": true,
+            "kind": p.kind,
+            "fragment": p.fragment,
+            "text": p.text,
+            "remoteImages": p.remote_images,
+            "encodingProblem": p.encoding_problem,
+            "reparsed": reparsed,
+            "ms": started.elapsed().as_millis() as u64,
+        }),
+        None => json!({ "available": false }),
+    })
+}
+
 /// The local account ids the store holds: `{"ids": [...]}`.
 pub fn accounts(c: &Connection) -> Result<Value, String> {
     let mut st = c.prepare("SELECT id FROM accounts ORDER BY id").map_err(err)?;
@@ -300,7 +330,7 @@ pub fn accounts(c: &Connection) -> Result<Value, String> {
 /// Row counts of every table, for the logs and X-Ray.
 pub fn stats(c: &Connection) -> Result<Value, String> {
     let mut out = serde_json::Map::new();
-    for t in ["accounts", "mailboxes", "messages", "membership", "tombstones", "sync_state", "bodies"] {
+    for t in ["accounts", "mailboxes", "messages", "membership", "tombstones", "sync_state", "bodies", "raw_messages", "reader_docs"] {
         let n: i64 = c.query_row(&format!("SELECT COUNT(*) FROM {t}"), [], |r| r.get(0)).map_err(err)?;
         out.insert(t.to_string(), json!(n));
     }

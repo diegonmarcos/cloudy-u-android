@@ -2,4 +2,4 @@
 # app's transport object by name. R8 must neither rename nor strip them.
 -keep class com.diegonmarcos.cloudlib.mailcore.NativeBridge { *; }
 -keep interface com.diegonmarcos.cloudlib.mailcore.MailCoreTransport { *; }
--keep class * implements com.diegonmarcos.cloudlib.mailcore.MailCoreTransport { public java.lang.String post(java.lang.String); }
+-keep class * implements com.diegonmarcos.cloudlib.mailcore.MailCoreTransport { public java.lang.String post(java.lang.String); public byte[] download(java.lang.String); }

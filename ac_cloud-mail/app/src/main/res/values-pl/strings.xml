@@ -488,6 +488,8 @@
     <string name="settings_strip_tracking_subtitle">Usuwaj elementy śledzące (utm_*, fbclid, gclid…) z linków przed ich otwarciem, aby nadawcy nie wiedzieli, kiedy w nie klikasz.</string>
     <string name="settings_confirm_links_title">Potwierdzaj przed otwarciem linków</string>
     <string name="settings_confirm_links_subtitle">Pokaż adres docelowy i zapytaj przed otwarciem linku z wiadomości.</string>
+    <string name="settings_remote_images_title">Wczytuj obrazy zdalne</string>
+    <string name="settings_remote_images_subtitle">Automatycznie pobiera obrazy z wiadomości, jak Gmail. Wyłącz, aby pytać za każdym razem; nadawcę nadal można zezwolić z poziomu wiadomości.</string>
     <string name="settings_read_receipt_section">Prośby o potwierdzenie przeczytania</string>
     <string name="settings_read_receipt_title">Pytaj przed wysłaniem potwierdzenia przeczytania</string>
     <string name="settings_read_receipt_subtitle">Niektórzy nadawcy proszą o powiadomienie, gdy ich wiadomość zostanie wyświetlona. Wyłączone — prośba jest ignorowana. Włączone — otwarta wiadomość zaproponuje odpowiedź i nic nie zostanie wysłane bez Twojej zgody.</string>

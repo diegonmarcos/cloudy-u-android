@@ -1161,6 +1161,37 @@ class MailRepository(
     }
 
     /**
+     * #1837 phase 2: the reader document of a message from the Rust core's store, with NO network (the prefetch stored the raw
+     * message and its parsed document), so the reader opens instantly and offline. Null = not stored, or no core: the old path.
+     */
+    suspend fun coreReaderStored(accountId: String, emailId: String): CoreReaderDoc? {
+        val core = mailCore ?: return null
+        if (core.unavailableReason() != null) return null
+        return core.reader(accountId, emailId)
+    }
+
+    /**
+     * #1837 phase 2: a message the prefetch has not reached: its raw message is downloaded into the store through the app's HTTP
+     * client and the document read back. Null on any failure (logged, tag MailCore): the old reader path runs.
+     */
+    suspend fun coreReaderFetched(credentials: AccountCredentials, emailId: String): CoreReaderDoc? {
+        if (credentials.protocol == MailProtocol.IMAP) return null
+        val core = mailCore ?: return null
+        if (core.unavailableReason() != null) return null
+        return try {
+            val auth = jmapAuth(credentials)
+            val session = client.fetchSession(Jmap.sessionUrlFor(credentials.server), auth)
+            val accountId = jmapAccountIdFor(credentials, session)
+            if (core.fetchRaw(client, session, accountId, auth, credentials.id, listOf(emailId)) > 0) core.reader(credentials.id, emailId) else null
+        } catch (c: CancellationException) {
+            throw c
+        } catch (t: Throwable) {
+            android.util.Log.w("MailCore", "reader fetch ${credentials.id}/$emailId failed, old reader path: ${t.message}")
+            null
+        }
+    }
+
+    /**
      * #1837 the background pass of the Rust mail core (MailCoreSyncWorker: periodic and on app open) for one account: the
      * core syncs the whole account within [budgetMs] and the Inbox's list rows are brought to its store. Accounts that left
      * the app leave the store first. Answers the pass summary, or null when nothing ran: an IMAP account (phase 1 keeps the

@@ -101,6 +101,13 @@ def extract(root, rev):
             strings |= set(re.findall(r'<string name="([^"]+)"', read(p)))
             strings |= {"plurals:" + n for n in re.findall(r'<plurals name="([^"]+)"', read(p))}
     out["ui_strings"] = sorted(strings)
+    # The reader's own machinery (phase 2 changes WHAT draws the page, never what the reader can do): every pass of the old
+    # document builder must still be in the tree, whichever document the core hands over.
+    reader_names = ["buildHtmlDocument", "buildPrintDocument", "readerBody", "sanitiseReceivedHtml", "embedInlineImages",
+                    "neutraliseDarkModeStyles", "markDeceptiveLinks", "foldTopLevelQuotes", "wrapEmoji", "linkifyEscaped",
+                    "reflowFormatFlowed", "einkReaderCss", "showRemoteImages", "applyFitSettings", "FIT_CSS", "CSP_META",
+                    "BlockingWebViewClient", "bodySpacerCss", "EmailWebView"]
+    out["reader_features"] = sorted(n for n in reader_names if re.search(r"\b" + n + r"\b", allsrc))
     return out
 
 if __name__ == "__main__":
@@ -174,6 +181,33 @@ SHIP="$ROOT/1_cicd/src/cicd/ship-cloud-mail.yml"
 has "$SHIP" 'working-directory: ab_cloud-libs-shared/libs/mail-core-rs' "the ship workflow runs the Rust core's tests"
 has "$SHIP" 'libmail_core' "the ship workflow checks libmail_core.so is in the APK"
 has "$SHIP" 'MAIL_CORE_RS_REQUIRED: "1"' "CI refuses an APK without the core"
+
+echo "== P4: the #1837 phase 2 reader (Rust MIME/charset/HTML core, Gmail-like document, images on by default, offline open) =="
+CORE="$ROOT/ab_cloud-libs-shared/libs/mail-core-rs"
+MV="$APP/app/src/main/kotlin/app/sterna/ui/message/MessageViewModel.kt"
+MS="$APP/app/src/main/kotlin/app/sterna/ui/message/MessageScreen.kt"
+SR="$D/settings/SettingsRepository.kt"
+has "$CORE/Cargo.toml" 'mail-parser' "the core parses MIME with mail-parser (every charset, QP, base64, nested multipart)"
+has "$CORE/Cargo.toml" 'ammonia' "the core sanitises HTML with ammonia"
+has "$CORE/src/reader.rs" 'pub fn parse(raw: &\[u8\])' "the core has the raw-message parser"
+has "$CORE/src/reader.rs" 'pub fn wrap(kind: &str, fragment: &str, o: &Opts)' "the core builds the Gmail-like reader document"
+has "$CORE/src/reader.rs" 'font:14px/1.5 Roboto' "the stylesheet is Gmail's (Roboto 14 px)"
+has "$CORE/src/reader.rs" 'pre.ascii' "plain-text ASCII tables keep their alignment"
+has "$CORE/src/sync.rs" 'fn prefetch_raw' "the prefetch stores the raw message and its parsed document (open is offline)"
+has "$CORE/src/tests.rs" 'budget_message_open_from_the_store_under_100_ms' "the open-from-store budget (100 ms) is asserted"
+has "$CORE/src/reader.rs" 'latin1_body_decodes_without_replacement_characters' "Latin-1 fixture (Espana, no replacement character)"
+has "$CORE/src/reader.rs" 'windows_1252_smart_quotes_and_dashes' "Windows-1252 smart quotes fixture"
+has "$CORE/src/reader.rs" 'nested_multipart_with_an_inline_cid_image' "nested multipart + inline cid image fixture"
+has "$CORE/src/reader.rs" 'a_marketing_email_is_sanitised_but_keeps_its_look' "marketing HTML fixture (sanitised, look kept)"
+has "$MV" 'repo.coreReaderStored' "the reader reads the core's store first (no network)"
+has "$MS" 'buildCoreDocument(coreDoc' "the reader screen draws the core's document first"
+has "$MS" 'fromCore ?: buildHtmlDocument(' "the old document is the fallback"
+has "$MS" 'the core document could not be built, old reader path' "the fallback is logged (tag MailCore)"
+has "$SR" 'const val REMOTE_IMAGES_DEFAULT = true' "remote image download defaults to on"
+has "$SR" 'fun migrateRemoteImagesToDefaultOn' "a stored off flips to on once (migration)"
+has "$SR" 'val imageAllowlist' "the sender image allowlist is kept (rule 16)"
+has "$MS" 'showRemoteImages(manualShow, senderAllowed, autoLoad)' "the setting, the per-message override and the allowlist all decide the images"
+has "$APP/core/data/src/test/kotlin/app/sterna/core/data/settings/RemoteImagesDefaultTest.kt" 'a stored off flips to on once' "the Kotlin test of the default and the migration exists"
 
 echo
 echo "passed=$PASS failed=$FAIL"

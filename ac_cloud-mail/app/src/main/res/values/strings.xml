@@ -823,6 +823,8 @@
     <string name="settings_strip_tracking_subtitle">Remove trackers (utm_*, fbclid, gclid…) from links before opening them, so senders can\'t tell when you click.</string>
     <string name="settings_confirm_links_title">Confirm before opening links</string>
     <string name="settings_confirm_links_subtitle">Show the destination and ask before opening a link from a message.</string>
+    <string name="settings_remote_images_title">Load remote images</string>
+    <string name="settings_remote_images_subtitle">Download the pictures in a message automatically, like Gmail. Turn off to be asked each time; a sender can still be allowed from a message.</string>
     <string name="settings_read_receipt_section">Read-receipt requests</string>
     <string name="settings_read_receipt_title">Ask before sending a read receipt</string>
     <string name="settings_read_receipt_subtitle">Some senders ask to be told when their message is displayed. Off, the request is ignored. On, the message you open offers to answer it, and nothing leaves unless you say so.</string>

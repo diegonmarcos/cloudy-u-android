@@ -9,6 +9,8 @@
 //!   tombstones  a membership that ended (delete, move), with the `seq` it ended at: the projection feed's removals
 //!   sync_state  per mailbox: the Email/query state, the server total, the local count, complete or not, gaps found
 //!   bodies      the prefetched bodies (text and HTML part values, the raw part list), with a fetched flag
+//!   raw_messages  the message's RFC 5322 bytes as the server holds them (JMAP blob download), what the reader parses
+//!   reader_docs   the parsed reader document (kind, sanitised fragment, decoded text), versioned: an open never parses
 //!   messages_fts  FTS5 over subject, sender and preview (rowid = messages.rowid)
 //!
 //! `seq` is a store-wide counter bumped once per write batch: every row a batch writes and every membership it ends carries
@@ -109,6 +111,26 @@ CREATE TABLE IF NOT EXISTS bodies(
   fetched_at INTEGER,
   PRIMARY KEY(account, email_id)
 );
+CREATE TABLE IF NOT EXISTS raw_messages(
+  account TEXT NOT NULL,
+  email_id TEXT NOT NULL,
+  raw BLOB NOT NULL,
+  size INTEGER NOT NULL,
+  fetched_at INTEGER NOT NULL,
+  PRIMARY KEY(account, email_id)
+);
+CREATE TABLE IF NOT EXISTS reader_docs(
+  account TEXT NOT NULL,
+  email_id TEXT NOT NULL,
+  version INTEGER NOT NULL,
+  kind TEXT NOT NULL,
+  fragment TEXT NOT NULL,
+  text_body TEXT,
+  remote_images INTEGER NOT NULL DEFAULT 0,
+  encoding_problem INTEGER NOT NULL DEFAULT 0,
+  parsed_at INTEGER NOT NULL,
+  PRIMARY KEY(account, email_id)
+);
 CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5(subject, sender, preview, tokenize = 'unicode61 remove_diacritics 2');
 "#;
 
@@ -203,7 +225,7 @@ pub fn drop_account(conn: &Connection, account: &str) -> Result<(), String> {
         params![account],
     )
     .map_err(err)?;
-    for t in ["messages", "membership", "tombstones", "sync_state", "bodies", "mailboxes"] {
+    for t in ["messages", "membership", "tombstones", "sync_state", "bodies", "mailboxes", "raw_messages", "reader_docs"] {
         conn.execute(&format!("DELETE FROM {t} WHERE account = ?1"), params![account]).map_err(err)?;
     }
     conn.execute("DELETE FROM accounts WHERE id = ?1", params![account]).map_err(err)?;
@@ -463,6 +485,8 @@ pub fn delete_email(conn: &Connection, account: &str, id: &str, seq: i64) -> Res
     }
     conn.execute("DELETE FROM messages WHERE account = ?1 AND id = ?2", params![account, id]).map_err(err)?;
     conn.execute("DELETE FROM bodies WHERE account = ?1 AND email_id = ?2", params![account, id]).map_err(err)?;
+    conn.execute("DELETE FROM raw_messages WHERE account = ?1 AND email_id = ?2", params![account, id]).map_err(err)?;
+    conn.execute("DELETE FROM reader_docs WHERE account = ?1 AND email_id = ?2", params![account, id]).map_err(err)?;
     Ok(())
 }
 
@@ -612,6 +636,96 @@ pub fn put_body(conn: &Connection, account: &str, v: &Value, now_ms: i64) -> Res
     )
     .map_err(err)?;
     Ok(())
+}
+
+// ── raw messages and the parsed reader documents ────────────────────────────────────────────────────────────────────────
+
+/// Store a message's raw bytes and its parsed reader document in one transaction.
+pub fn put_raw(conn: &Connection, account: &str, id: &str, raw: &[u8], parsed: Option<&crate::reader::Parsed>, now_ms: i64) -> Result<(), String> {
+    let tx = conn.unchecked_transaction().map_err(err)?;
+    tx.execute(
+        "INSERT INTO raw_messages(account, email_id, raw, size, fetched_at) VALUES(?1, ?2, ?3, ?4, ?5)
+         ON CONFLICT(account, email_id) DO UPDATE SET raw = excluded.raw, size = excluded.size, fetched_at = excluded.fetched_at",
+        params![account, id, raw, raw.len() as i64, now_ms],
+    )
+    .map_err(err)?;
+    if let Some(p) = parsed {
+        put_reader(&tx, account, id, p, now_ms)?;
+    }
+    tx.commit().map_err(err)
+}
+
+pub fn put_reader(conn: &Connection, account: &str, id: &str, p: &crate::reader::Parsed, now_ms: i64) -> Result<(), String> {
+    conn.execute(
+        "INSERT INTO reader_docs(account, email_id, version, kind, fragment, text_body, remote_images, encoding_problem, parsed_at)
+         VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
+         ON CONFLICT(account, email_id) DO UPDATE SET version = excluded.version, kind = excluded.kind, fragment = excluded.fragment,
+           text_body = excluded.text_body, remote_images = excluded.remote_images, encoding_problem = excluded.encoding_problem,
+           parsed_at = excluded.parsed_at",
+        params![account, id, crate::reader::READER_VERSION, p.kind, p.fragment, p.text, p.remote_images, p.encoding_problem, now_ms],
+    )
+    .map_err(err)?;
+    Ok(())
+}
+
+pub fn has_raw(conn: &Connection, account: &str, id: &str) -> Result<bool, String> {
+    let n: i64 = conn
+        .query_row("SELECT COUNT(*) FROM raw_messages WHERE account = ?1 AND email_id = ?2", params![account, id], |r| r.get(0))
+        .map_err(err)?;
+    Ok(n > 0)
+}
+
+/// The stored parsed document of the current version.
+pub fn get_reader(conn: &Connection, account: &str, id: &str) -> Result<Option<crate::reader::Parsed>, String> {
+    conn.query_row(
+        "SELECT kind, fragment, text_body, remote_images, encoding_problem FROM reader_docs
+         WHERE account = ?1 AND email_id = ?2 AND version = ?3",
+        params![account, id, crate::reader::READER_VERSION],
+        |r| {
+            Ok(crate::reader::Parsed {
+                kind: r.get(0)?,
+                fragment: r.get(1)?,
+                text: r.get::<_, Option<String>>(2)?.unwrap_or_default(),
+                remote_images: r.get(3)?,
+                encoding_problem: r.get(4)?,
+            })
+        },
+    )
+    .optional()
+    .map_err(err)
+}
+
+pub fn get_raw(conn: &Connection, account: &str, id: &str) -> Result<Option<Vec<u8>>, String> {
+    conn.query_row("SELECT raw FROM raw_messages WHERE account = ?1 AND email_id = ?2", params![account, id], |r| r.get::<_, Vec<u8>>(0))
+        .optional()
+        .map_err(err)
+}
+
+/// The JMAP blobId a stored message was fetched with (the server's Email object verbatim is in `json`).
+pub fn blob_id(conn: &Connection, account: &str, id: &str) -> Result<Option<String>, String> {
+    let json: Option<String> = conn
+        .query_row("SELECT json FROM messages WHERE account = ?1 AND id = ?2", params![account, id], |r| r.get(0))
+        .optional()
+        .map_err(err)?;
+    Ok(json.and_then(|j| serde_json::from_str::<Value>(&j).ok()).and_then(|v| v.get("blobId").and_then(Value::as_str).map(str::to_string)))
+}
+
+/// The newest [n] messages of [mailbox] whose raw message is not stored yet and whose size is at most [max_size], with their size.
+pub fn unraw_newest(conn: &Connection, account: &str, mailbox: &str, n: usize, max_size: i64) -> Result<Vec<String>, String> {
+    let mut st = conn
+        .prepare(
+            "SELECT b.email_id FROM membership b
+             JOIN messages m ON m.account = b.account AND m.id = b.email_id
+             WHERE b.account = ?1 AND b.mailbox_id = ?2
+               AND b.email_id IN (SELECT email_id FROM membership WHERE account = ?1 AND mailbox_id = ?2
+                                  ORDER BY received_ms DESC, email_id DESC LIMIT ?3)
+               AND COALESCE(m.size, 0) <= ?4
+               AND NOT EXISTS (SELECT 1 FROM raw_messages y WHERE y.account = b.account AND y.email_id = b.email_id)
+             ORDER BY b.received_ms DESC, b.email_id DESC",
+        )
+        .map_err(err)?;
+    let rows = st.query_map(params![account, mailbox, n as i64, max_size], |r| r.get::<_, String>(0)).map_err(err)?;
+    rows.collect::<Result<Vec<_>, _>>().map_err(err)
 }
 
 /// Every mailbox of [account] must be re-read whole (the Email state was lost): set before the walks, cleared by each walk.

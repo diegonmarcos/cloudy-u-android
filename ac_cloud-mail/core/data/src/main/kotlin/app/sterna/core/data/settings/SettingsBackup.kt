@@ -20,6 +20,8 @@ data class SettingsBackup(
     val contactSuggestions: Boolean? = null,
     val stripTracking: Boolean? = null,
     val confirmLinks: Boolean? = null,
+    /** #1837 Load remote images automatically (on by default). */
+    val remoteImages: Boolean? = null,
     /**
      * Whether an opened message may ASK the reader to answer a sender's read-receipt request
      * (#148). Never "send receipts": this backs up permission to be asked.
@@ -70,7 +72,7 @@ data class SettingsBackup(
     fun isPlausible(): Boolean =
         themeMode != null || dynamicColor != null || listDensity != null || previewLines != null ||
             swipeRight != null || swipeLeft != null || sortOrder != null || contactSuggestions != null ||
-            stripTracking != null || confirmLinks != null || askReadReceipt != null ||
+            stripTracking != null || confirmLinks != null || remoteImages != null || askReadReceipt != null ||
             imageAllowlist != null ||
             quietHoursEnabled != null || quietHoursStart != null || quietHoursEnd != null ||
             pushAllAccounts != null || language != null || conversationView != null ||

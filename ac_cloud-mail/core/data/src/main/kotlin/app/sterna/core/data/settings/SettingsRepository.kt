@@ -318,6 +318,25 @@ class SettingsRepository(context: Context) {
         dataStore.edit { it[KEY_STRIP_TRACKING] = enabled }
     }
 
+    /**
+     * #1837 Download remote images automatically (ON by default since the Gmail-like reader; it was off). Off = the old behaviour:
+     * images wait for "show images" on the message or a sender on [imageAllowlist]. The setting is kept, only its default flipped.
+     */
+    val remoteImages: Flow<Boolean> = dataStore.data.map(::remoteImagesFrom).distinctUntilChanged()
+
+    suspend fun setRemoteImages(enabled: Boolean) {
+        dataStore.edit {
+            it[booleanPreferencesKey(REMOTE_IMAGES_KEY)] = enabled
+            // An explicit choice is never overwritten by the one-time migration.
+            it[booleanPreferencesKey(REMOTE_IMAGES_MIGRATION_KEY)] = true
+        }
+    }
+
+    /** The one-time migration of #1837: a stored "off" (the old default) flips to on, once. Idempotent; run at app start. */
+    suspend fun migrateRemoteImagesDefault() {
+        dataStore.edit { migrateRemoteImagesToDefaultOn(it) }
+    }
+
     /** Whether to show the destination and ask before opening a tapped link (off by default). */
     val confirmLinks: Flow<Boolean> = dataStore.data.map { it[KEY_CONFIRM_LINKS] ?: false }
 
@@ -433,6 +452,7 @@ class SettingsRepository(context: Context) {
         contactSuggestions = contactSuggestions.first(),
         stripTracking = stripTrackingParams.first(),
         confirmLinks = confirmLinks.first(),
+        remoteImages = remoteImages.first(),
         askReadReceipt = askReadReceipt.first(),
         imageAllowlist = imageAllowlist.first().toList(),
         rssFeeds = rssFeeds.first().toList(),
@@ -468,6 +488,7 @@ class SettingsRepository(context: Context) {
         backup.contactSuggestions?.let { setContactSuggestions(it) }
         backup.stripTracking?.let { setStripTrackingParams(it) }
         backup.confirmLinks?.let { setConfirmLinks(it) }
+        backup.remoteImages?.let { setRemoteImages(it) }
         backup.askReadReceipt?.let { setAskReadReceipt(it) }
         backup.imageAllowlist?.let { setImageAllowlist(it.toSet()) }
         backup.rssFeeds?.let { feeds ->
@@ -660,6 +681,35 @@ const val QUOTED_DATES_UTC_DEFAULT = false
 /** Whether outgoing quoted/forwarded dates are written in UTC, read from the stored preferences. */
 internal fun quotedDatesUtcFrom(prefs: Preferences): Boolean =
     prefs[KEY_QUOTED_DATES_UTC] ?: QUOTED_DATES_UTC_DEFAULT
+
+/** The DataStore key of "Load remote images" (#1837). */
+const val REMOTE_IMAGES_KEY = "remote_images"
+
+/** Remote images load automatically unless the reader turned that off (#1837: the default flipped from off to on). */
+const val REMOTE_IMAGES_DEFAULT = true
+
+/** Set once the default-on migration has run (or the reader chose explicitly). */
+const val REMOTE_IMAGES_MIGRATION_KEY = "remote_images_default_on_1837"
+
+/** The stored "Load remote images" choice; absent reads as [REMOTE_IMAGES_DEFAULT]. */
+internal fun remoteImagesFrom(prefs: Preferences): Boolean =
+    prefs[booleanPreferencesKey(REMOTE_IMAGES_KEY)] ?: REMOTE_IMAGES_DEFAULT
+
+/**
+ * The #1837 migration: a stored `false` (the previous default, written by an app that had the setting) becomes `true` ONCE; the
+ * marker is set either way so a later explicit "off" is respected. True when a stored value was flipped.
+ */
+internal fun migrateRemoteImagesToDefaultOn(prefs: androidx.datastore.preferences.core.MutablePreferences): Boolean {
+    val done = booleanPreferencesKey(REMOTE_IMAGES_MIGRATION_KEY)
+    if (prefs[done] == true) return false
+    prefs[done] = true
+    val key = booleanPreferencesKey(REMOTE_IMAGES_KEY)
+    if (prefs[key] == false) {
+        prefs[key] = true
+        return true
+    }
+    return false
+}
 
 /** The DataStore key of "Download attachments"; declared for the new-phone migration in the fleet config manifest. */
 const val OFFLINE_ATTACHMENT_POLICY_KEY = "offline_attachment_policy"

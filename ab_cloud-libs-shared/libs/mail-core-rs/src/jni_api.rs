@@ -10,10 +10,10 @@ use std::collections::HashMap;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::{Arc, Mutex, OnceLock};
 
-use jni::objects::{JClass, JObject, JString, JValue};
+use jni::objects::{JByteArray, JClass, JObject, JString, JValue};
 use jni::sys::jstring;
 use jni::JNIEnv;
-use serde_json::Value;
+use serde_json::{json, Value};
 
 use crate::jmap::Transport;
 use crate::store::Store;
@@ -98,6 +98,11 @@ pub fn do_query(db: &str, q: &str) -> Result<String, String> {
             let limit = q.get("limit").and_then(Value::as_u64).unwrap_or(100) as usize;
             with_store(db, false, |st| query::search(&st.conn, s(&q, "account")?, s(&q, "text")?, limit))?
         }
+        "reader" => with_store(db, false, |st| query::reader(&st.conn, s(&q, "account")?, s(&q, "id")?))?,
+        "wrap" => {
+            let o: crate::reader::Opts = serde_json::from_value(q.clone()).map_err(parse)?;
+            json!({ "doc": crate::reader::wrap(s(&q, "kind")?, s(&q, "fragment")?, &o) })
+        }
         "body" => with_store(db, false, |st| query::body(&st.conn, s(&q, "account")?, s(&q, "id")?))?,
         "stats" => with_store(db, false, |st| query::stats(&st.conn))?,
         "accounts" => with_store(db, false, |st| query::accounts(&st.conn))?,
@@ -108,6 +113,15 @@ pub fn do_query(db: &str, q: &str) -> Result<String, String> {
         other => return Err(format!("unknown op {other}")),
     };
     Ok(out.to_string())
+}
+
+/// The on-demand fetch of raw messages (a message opened before the prefetch reached it). Its own short-lived connection, not
+/// the cached writer: a long sync holds that one, and an open must not wait for it (SQLite's busy timeout serialises the writes).
+pub fn do_fetch_raw(db: &str, args: &str, t: &dyn Transport) -> Result<String, String> {
+    let a: sync::FetchArgs = serde_json::from_str(args).map_err(|e| format!("fetch args: {e}"))?;
+    let st = Store::open(db)?;
+    let r = sync::fetch_raw(&st, t, &a)?;
+    serde_json::to_string(&r).map_err(|e| e.to_string())
 }
 
 /// A deliberate panic, so the boundary's catch is provable: `ERR\tpanic: ...`.
@@ -123,6 +137,10 @@ struct JniTransport<'a, 'local, 'o> {
 }
 
 impl Transport for JniTransport<'_, '_, '_> {
+    fn download(&self, blob_id: &str) -> Result<Vec<u8>, String> {
+        self.download_bytes(blob_id)
+    }
+
     fn post(&self, body: &str) -> Result<String, String> {
         let mut env = self.env.borrow_mut();
         let obj = self.obj;
@@ -146,6 +164,43 @@ impl Transport for JniTransport<'_, '_, '_> {
                         let _ = env.exception_clear();
                     }
                     Ok(Err(format!("the transport threw: {e}")))
+                }
+            }
+        });
+        match r {
+            Ok(inner) => inner,
+            Err(e) => {
+                if env.exception_check().unwrap_or(false) {
+                    let _ = env.exception_clear();
+                }
+                Err(format!("JNI: {e}"))
+            }
+        }
+    }
+}
+
+impl JniTransport<'_, '_, '_> {
+    /// `MailCoreTransport.download(String): ByteArray`: a thrown exception is an Err, never an unwind into the JVM.
+    fn download_bytes(&self, blob_id: &str) -> Result<Vec<u8>, String> {
+        let mut env = self.env.borrow_mut();
+        let obj = self.obj;
+        let r: Result<Result<Vec<u8>, String>, jni::errors::Error> = env.with_local_frame(8, |env| {
+            let jid = env.new_string(blob_id)?;
+            match env.call_method(obj, "download", "(Ljava/lang/String;)[B", &[JValue::Object(&jid)]) {
+                Ok(v) => {
+                    let o = v.l()?;
+                    if o.is_null() {
+                        return Ok(Err("the transport answered null".to_string()));
+                    }
+                    let arr = JByteArray::from(o);
+                    let bytes = env.convert_byte_array(arr)?;
+                    Ok(Ok(bytes))
+                }
+                Err(e) => {
+                    if env.exception_check().unwrap_or(false) {
+                        let _ = env.exception_clear();
+                    }
+                    Ok(Err(format!("the download threw: {e}")))
                 }
             }
         });
@@ -189,6 +244,24 @@ pub extern "system" fn Java_com_diegonmarcos_cloudlib_mailcore_NativeBridge_nati
         (Ok(d), Ok(c)) => {
             let t = JniTransport { env: RefCell::new(&mut env), obj: &transport };
             guard(|| do_sync(&d, &c, &t))
+        }
+        (Err(e), _) | (_, Err(e)) => format!("ERR\t{}", one_line(&e)),
+    };
+    answer(&mut env, text)
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_diegonmarcos_cloudlib_mailcore_NativeBridge_nativeFetchRaw(
+    mut env: JNIEnv,
+    _c: JClass,
+    db: JString,
+    args: JString,
+    transport: JObject,
+) -> jstring {
+    let text = match (read(&mut env, &db), read(&mut env, &args)) {
+        (Ok(d), Ok(a)) => {
+            let t = JniTransport { env: RefCell::new(&mut env), obj: &transport };
+            guard(|| do_fetch_raw(&d, &a, &t))
         }
         (Err(e), _) | (_, Err(e)) => format!("ERR\t{}", one_line(&e)),
     };

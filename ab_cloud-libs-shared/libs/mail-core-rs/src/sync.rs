@@ -39,6 +39,12 @@ fn d_max_changes() -> usize {
 fn d_prefetch() -> usize {
     20
 }
+fn d_raw_max() -> i64 {
+    8 * 1024 * 1024
+}
+fn d_prefetch_raw() -> usize {
+    30
+}
 fn d_body_bytes() -> usize {
     256 * 1024
 }
@@ -47,8 +53,9 @@ fn d_verify_after() -> i64 {
 }
 
 /// The properties every message is fetched with: what the store's columns need. The app adds its own list properties.
-pub const BASE_PROPERTIES: [&str; 14] = [
+pub const BASE_PROPERTIES: [&str; 15] = [
     "id",
+    "blobId",
     "threadId",
     "mailboxIds",
     "keywords",
@@ -84,6 +91,12 @@ pub struct SyncConfig {
     pub prefetch_bodies: usize,
     #[serde(default = "d_body_bytes")]
     pub max_body_bytes: usize,
+    /// The newest N messages of each mailbox (except Trash and Junk) whose RAW message is downloaded and parsed, so the reader
+    /// opens them offline; 0 = none. Messages larger than [raw_max_bytes] are left to the on-demand fetch.
+    #[serde(default = "d_prefetch_raw")]
+    pub prefetch_raw: usize,
+    #[serde(default = "d_raw_max")]
+    pub raw_max_bytes: i64,
     /// A mailbox whose counts agree is still re-walked (ids only) when its last walk is older than this.
     #[serde(default = "d_verify_after")]
     pub verify_after_ms: i64,
@@ -103,6 +116,8 @@ impl SyncConfig {
             max_changes: d_max_changes(),
             prefetch_bodies: d_prefetch(),
             max_body_bytes: d_body_bytes(),
+            prefetch_raw: d_prefetch_raw(),
+            raw_max_bytes: d_raw_max(),
             verify_after_ms: d_verify_after(),
             budget_ms: None,
         }
@@ -150,6 +165,11 @@ pub struct SyncReport {
     pub removed: usize,
     pub walks: Vec<Walk>,
     pub bodies: usize,
+    /// Raw messages downloaded and parsed for the reader in this pass.
+    pub raw: usize,
+    /// Raw downloads that failed in this pass (the first reason is in [raw_error]); a failed download never fails the sync.
+    pub raw_failed: usize,
+    pub raw_error: String,
     pub requests: usize,
     pub ms: u64,
     pub email_state: String,
@@ -411,6 +431,130 @@ fn prefetch_bodies(x: &Ctx) -> Result<usize, String> {
     Ok(n)
 }
 
+/// The blobId of each message: from the stored Email object, else asked of the server (Email/get, blobId only).
+fn blob_ids(x: &Ctx, ids: &[String]) -> Result<Vec<(String, String)>, String> {
+    let mut out: Vec<(String, String)> = Vec::new();
+    let mut ask: Vec<String> = Vec::new();
+    for id in ids {
+        match store::blob_id(x.c, x.acct(), id)? {
+            Some(b) => out.push((id.clone(), b)),
+            None => ask.push(id.clone()),
+        }
+    }
+    for chunk in ask.chunks(x.cfg.get_chunk.clamp(1, 50)) {
+        let props = vec!["id".to_string(), "blobId".to_string()];
+        let got = x.j.email_get(chunk, &props).map_err(jerr)?;
+        for v in &got.list {
+            if let (Some(id), Some(b)) = (v.get("id").and_then(Value::as_str), v.get("blobId").and_then(Value::as_str)) {
+                out.push((id.to_string(), b.to_string()));
+            }
+        }
+    }
+    Ok(out)
+}
+
+/// Download one message's raw bytes through the transport, parse them for the reader and store both. A message the parser
+/// rejects keeps its raw bytes (the reader answers unavailable and the app falls back to its own path).
+fn download_and_store(c: &rusqlite::Connection, account: &str, t: &dyn Transport, id: &str, blob: &str) -> Result<(), String> {
+    let raw = t.download(blob)?;
+    let parsed = crate::reader::parse(&raw).ok();
+    store::put_raw(c, account, id, &raw, parsed.as_ref(), store::now_ms())
+}
+
+/// The reader prefetch: the newest `prefetch_raw` messages of each mailbox (not Trash, not Junk) that have no stored raw message
+/// are downloaded and parsed, so opening them needs no network. Failures are counted, never raised; three in a row stop the pass.
+fn prefetch_raw(x: &Ctx, rep: &mut SyncReport) {
+    if x.cfg.prefetch_raw == 0 {
+        return;
+    }
+    let boxes = match store::mailboxes(x.c, x.acct()) {
+        Ok(b) => b,
+        Err(_) => return,
+    };
+    let mut failures = 0;
+    for mb in boxes {
+        if matches!(mb.role.as_deref(), Some("trash") | Some("junk")) {
+            continue;
+        }
+        if x.over_budget() || failures >= 3 {
+            break;
+        }
+        let ids = match store::unraw_newest(x.c, x.acct(), &mb.id, x.cfg.prefetch_raw, x.cfg.raw_max_bytes) {
+            Ok(i) => i,
+            Err(_) => continue,
+        };
+        let pairs = match blob_ids(x, &ids) {
+            Ok(p) => p,
+            Err(e) => {
+                failures += 1;
+                rep.raw_failed += 1;
+                if rep.raw_error.is_empty() {
+                    rep.raw_error = e;
+                }
+                continue;
+            }
+        };
+        for (id, blob) in pairs {
+            if x.over_budget() || failures >= 3 {
+                break;
+            }
+            match download_and_store(x.c, x.acct(), x.j.transport, &id, &blob) {
+                Ok(()) => {
+                    rep.raw += 1;
+                    failures = 0;
+                }
+                Err(e) => {
+                    failures += 1;
+                    rep.raw_failed += 1;
+                    if rep.raw_error.is_empty() {
+                        rep.raw_error = e;
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FetchArgs {
+    pub account: String,
+    pub jmap_account_id: String,
+    pub ids: Vec<String>,
+}
+
+#[derive(Debug, Default, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FetchReport {
+    pub fetched: usize,
+    pub failed: usize,
+    pub error: String,
+    pub ms: u64,
+}
+
+/// The on-demand fetch: the raw message of each of [FetchArgs::ids] downloaded, parsed and stored (a message opened before the
+/// prefetch reached it).
+pub fn fetch_raw(st: &Store, t: &dyn Transport, a: &FetchArgs) -> Result<FetchReport, String> {
+    let started = Instant::now();
+    let cfg = SyncConfig::new(&a.account, &a.jmap_account_id);
+    let j = Jmap::new(t, &a.jmap_account_id);
+    let x = Ctx { c: &st.conn, j: &j, cfg: &cfg, props: Vec::new(), started };
+    let mut rep = FetchReport::default();
+    for (id, blob) in blob_ids(&x, &a.ids)? {
+        match download_and_store(x.c, x.acct(), t, &id, &blob) {
+            Ok(()) => rep.fetched += 1,
+            Err(e) => {
+                rep.failed += 1;
+                if rep.error.is_empty() {
+                    rep.error = e;
+                }
+            }
+        }
+    }
+    rep.ms = started.elapsed().as_millis() as u64;
+    Ok(rep)
+}
+
 /// One sync pass of [cfg]'s account into [st] over [t]. See the module doc.
 pub fn sync(st: &Store, t: &dyn Transport, cfg: &SyncConfig) -> Result<SyncReport, String> {
     let started = Instant::now();
@@ -501,6 +645,7 @@ fn run(x: &Ctx, rep: &mut SyncReport) -> Result<(), String> {
         tx.commit().map_err(err)?;
     }
     rep.bodies = prefetch_bodies(x)?;
+    prefetch_raw(x, rep);
     // The state the store now follows (a walk does not move it).
     rep.email_state = state;
     Ok(())

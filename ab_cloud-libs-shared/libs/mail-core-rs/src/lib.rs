@@ -6,6 +6,8 @@
 //!           HTTP stack (mesh first, public + fleet bearer, the gateway cookie, the phone's trust store), in tests a fake server
 //!   sync    the sync engine: every mailbox and every message, newest first and paged; then Mailbox/changes + Email/changes;
 //!           gap detection (server total vs local count, the missing ids re-queried); deletes and moves; body prefetch
+//!   reader  (phase 2) the raw message -> mail-parser (every charset, QP, base64, nested multipart, cid images) -> ammonia (whitelist)
+//!           -> a Gmail-like document; the raw bytes and the parsed document are stored, so an open is one indexed read, offline
 //!   query   the list queries the UI draws: server date order, thread / sender / domain grouping, unread counts, the
 //!           projection feed (changes since a cursor) and full-text search, as JSON
 //!
@@ -16,6 +18,7 @@ pub mod domain;
 pub mod jmap;
 pub mod jni_api;
 pub mod query;
+pub mod reader;
 pub mod store;
 pub mod sync;
 

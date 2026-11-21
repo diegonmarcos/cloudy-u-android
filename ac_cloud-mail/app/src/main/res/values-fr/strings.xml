@@ -488,6 +488,8 @@
     <string name="settings_strip_tracking_subtitle">Supprimez les traceurs (utm_*, fbclid, gclid…) des liens avant de les ouvrir, afin que les expéditeurs ne puissent pas savoir quand vous cliquez.</string>
     <string name="settings_confirm_links_title">Confirmer avant d\'ouvrir les liens</string>
     <string name="settings_confirm_links_subtitle">Affichez la destination et demandez confirmation avant d\'ouvrir un lien contenu dans un message.</string>
+    <string name="settings_remote_images_title">Charger les images distantes</string>
+    <string name="settings_remote_images_subtitle">Télécharge automatiquement les images des messages, comme Gmail. Désactivez pour demander à chaque fois ; un expéditeur peut toujours être autorisé depuis un message.</string>
     <string name="settings_read_receipt_section">Demandes d\'accusé de lecture</string>
     <string name="settings_read_receipt_title">Demander avant d\'envoyer un accusé de lecture</string>
     <string name="settings_read_receipt_subtitle">Certains expéditeurs demandent à être prévenus quand leur message est affiché. Désactivé, la demande est ignorée. Activé, le message ouvert vous propose d\'y répondre, et rien ne part sans votre accord.</string>

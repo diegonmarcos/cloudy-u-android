@@ -488,6 +488,8 @@
     <string name="settings_strip_tracking_subtitle">Tracker (utm_*, fbclid, gclid…) aus Links entfernen, bevor sie geöffnet werden, damit Absender nicht erkennen können, wann du klickst.</string>
     <string name="settings_confirm_links_title">Vor dem Öffnen von Links bestätigen</string>
     <string name="settings_confirm_links_subtitle">Das Ziel anzeigen und nachfragen, bevor ein Link aus einer Nachricht geöffnet wird.</string>
+    <string name="settings_remote_images_title">Bilder aus dem Internet laden</string>
+    <string name="settings_remote_images_subtitle">Bilder in Nachrichten automatisch laden, wie in Gmail. Ausschalten, um jedes Mal zu fragen; ein Absender kann weiterhin einzeln erlaubt werden.</string>
     <string name="settings_read_receipt_section">Anfragen nach Lesebestätigung</string>
     <string name="settings_read_receipt_title">Vor dem Senden einer Lesebestätigung fragen</string>
     <string name="settings_read_receipt_subtitle">Manche Absender möchten erfahren, wann ihre Nachricht angezeigt wird. Aus: Die Anfrage wird ignoriert. An: Die geöffnete Nachricht bietet an, sie zu beantworten, und ohne deine Zustimmung wird nichts gesendet.</string>

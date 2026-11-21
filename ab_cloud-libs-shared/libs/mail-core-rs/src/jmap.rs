@@ -12,6 +12,12 @@ pub const USING: [&str; 2] = ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap
 /// One POST to the JMAP apiUrl: request JSON in, response JSON out. An Err is a transport failure (no answer, HTTP error).
 pub trait Transport {
     fn post(&self, body: &str) -> Result<String, String>;
+
+    /// GET the raw bytes of the blob [blob_id] of the account (a message's RFC 5322 source: the JMAP download URL). On Android
+    /// the app's own HTTP client again (same routing, bearer, cookie and trust store as [Transport::post]).
+    fn download(&self, _blob_id: &str) -> Result<Vec<u8>, String> {
+        Err("this transport cannot download blobs".to_string())
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]

@@ -878,6 +878,7 @@ private fun PrivacySecurityScreen(viewModel: SettingsViewModel, onBack: () -> Un
     val contactSuggestions by viewModel.contactSuggestions.collectAsStateWithLifecycle()
     val stripTracking by viewModel.stripTrackingParams.collectAsStateWithLifecycle()
     val confirmLinks by viewModel.confirmLinks.collectAsStateWithLifecycle()
+    val remoteImages by viewModel.remoteImages.collectAsStateWithLifecycle()
     val askReadReceipt by viewModel.askReadReceipt.collectAsStateWithLifecycle()
     val quotedDatesUtc by viewModel.quotedDatesUtc.collectAsStateWithLifecycle()
     val imageAllowlist by viewModel.imageAllowlist.collectAsStateWithLifecycle()
@@ -909,6 +910,12 @@ private fun PrivacySecurityScreen(viewModel: SettingsViewModel, onBack: () -> Un
                 }
             }
             SettingsSection(stringResource(R.string.settings_links_section)) {
+                SettingSwitch(
+                    title = stringResource(R.string.settings_remote_images_title),
+                    subtitle = stringResource(R.string.settings_remote_images_subtitle),
+                    checked = remoteImages,
+                    onCheckedChange = viewModel::setRemoteImages,
+                )
                 SettingSwitch(
                     title = stringResource(R.string.settings_strip_tracking_title),
                     subtitle = stringResource(R.string.settings_strip_tracking_subtitle),

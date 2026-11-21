@@ -97,7 +97,7 @@ Running your own server, with a free certificate or one you issued yourself? See
 ## 💚 What Sterna stands for
 
 - **🔒 Privacy first.** No tracking, no ads, no analytics, no Google services.
-  Remote images and tracking pixels are blocked by default; tapped links can be
+  Remote images load by default like Gmail (Settings > Load remote images turns that off, and tracking pixels are then blocked); tapped links can be
   stripped of tracking parameters and confirmed before opening.
 - **🆓 Free and open.** Licensed under the GPLv3, anyone can read, audit, and
   improve the code.

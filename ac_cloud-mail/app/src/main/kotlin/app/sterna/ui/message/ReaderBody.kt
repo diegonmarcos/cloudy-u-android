@@ -38,11 +38,12 @@ internal fun readerBody(
 }
 
 /**
- * Whether remote images may be fetched for the page as it currently stands: only when the reader
- * asked for them on this message, or the sender is on the allowlist. Blocked by default.
+ * Whether remote images may be fetched for the page as it currently stands: when the reader's "Load remote
+ * images" setting is on ([autoLoad]; ON by default since #1837, like Gmail), or the reader asked for them on
+ * this message, or the sender is on the allowlist. With the setting off they are blocked until one of the other two.
  */
-internal fun showRemoteImages(manualShow: Boolean, senderAllowed: Boolean): Boolean =
-    manualShow || senderAllowed
+internal fun showRemoteImages(manualShow: Boolean, senderAllowed: Boolean, autoLoad: Boolean): Boolean =
+    manualShow || senderAllowed || autoLoad
 
 /** A text-only message as the document carries it: escaped, line breaks kept, web addresses linked. */
 private fun plainFragment(text: String): String =

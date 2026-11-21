@@ -53,6 +53,10 @@ pub struct Fake {
     /// When true, email mutations are not written to the Email change log (the mailbox counters still move).
     pub silent: bool,
     pub requests: usize,
+    /// Raw RFC 5322 messages by email id (the blob `b-<id>`), served by `Transport::download`.
+    pub raw: BTreeMap<String, Vec<u8>>,
+    /// Blob downloads served.
+    pub downloads: usize,
 }
 
 pub struct FakeJmap {
@@ -347,6 +351,18 @@ impl Fake {
 }
 
 impl Transport for FakeJmap {
+    fn download(&self, blob_id: &str) -> Result<Vec<u8>, String> {
+        let mut f = self.inner.borrow_mut();
+        let id = blob_id.strip_prefix("b-").unwrap_or(blob_id).to_string();
+        match f.raw.get(&id).cloned() {
+            Some(b) => {
+                f.downloads += 1;
+                Ok(b)
+            }
+            None => Err(format!("fake: no blob {blob_id}")),
+        }
+    }
+
     fn post(&self, body: &str) -> Result<String, String> {
         let req: Value = serde_json::from_str(body).map_err(|e| format!("fake: bad request {e}"))?;
         let mut f = self.inner.borrow_mut();

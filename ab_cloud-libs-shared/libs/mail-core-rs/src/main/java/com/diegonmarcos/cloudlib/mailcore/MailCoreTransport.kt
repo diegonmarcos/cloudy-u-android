@@ -11,6 +11,12 @@ package com.diegonmarcos.cloudlib.mailcore
 interface MailCoreTransport {
     fun post(body: String): String
 
+    /**
+     * #1837 phase 2: the raw bytes of the JMAP blob [blobId] of the account (a message's RFC 5322 source), through the same HTTP
+     * client. A failure is thrown: the core records it and carries on (a failed download never fails a sync).
+     */
+    fun download(blobId: String): ByteArray
+
     companion object {
         /** The answer of a request that failed; the reason becomes the sync's error. */
         fun error(reason: String): String = "\u0001ERR\t" + reason.replace('\n', ' ')

@@ -2539,6 +2539,52 @@ class JmapClient internal constructor(
         }
     }
 
+    /**
+     * #1837 phase 2: the raw bytes of the blob [blobId] (a message's RFC 5322 source), for the Rust core's reader prefetch: a GET of
+     * the session's download URL through THIS client (the fleet route, the bearer, the gateway cookie, the phone's trust store) with
+     * [postRawBlocking]'s 429 retry. Blocking, called from the core's own thread (never the main thread); refuses past [maxBytes].
+     */
+    fun downloadBlobBlocking(
+        session: JmapSession,
+        accountId: String,
+        blobId: String,
+        auth: JmapAuth,
+        maxBytes: Long = RAW_MESSAGE_MAX_BYTES,
+    ): ByteArray {
+        val template = session.downloadUrl ?: throw JmapException("Server has no downloadUrl")
+        val url = template
+            .replace("{accountId}", accountId)
+            .replace("{blobId}", blobId)
+            .replace("{type}", encodePathSegment("message/rfc822"))
+            .replace("{name}", encodePathSegment("message.eml"))
+        var attempt = 0
+        while (true) {
+            val request = Request.Builder()
+                .url(url)
+                .header("Authorization", auth.authorizationHeader())
+                .build()
+            val outcome = httpClient.newCall(request).execute().use { r ->
+                if (r.isSuccessful) {
+                    val declared = r.header("Content-Length")?.toLongOrNull()
+                    if (declared != null && declared > maxBytes) {
+                        throw ContentTooLargeException("Download is $declared bytes, over the $maxBytes limit.", bytes = declared, maxBytes = maxBytes)
+                    }
+                    val body = r.body ?: return@use ByteArray(0) to 200
+                    readAtMost(body.byteStream(), maxBytes) to 200
+                } else {
+                    ByteArray(0) to r.code
+                }
+            }
+            if (outcome.second in 200..299) return outcome.first
+            if (outcome.second == 429 && attempt < LIMIT_RETRY_MAX) {
+                attempt++
+                Thread.sleep(LIMIT_RETRY_BASE_MS * attempt)
+                continue
+            }
+            throw JmapException("Download failed: HTTP ${outcome.second}", httpCode = outcome.second)
+        }
+    }
+
     /** #1837 the property set every cached list row is fetched with ([EMAIL_LIST_PROPERTIES]), for the Rust core's sync. */
     fun emailListProperties(): List<String> = EMAIL_LIST_PROPERTIES
 
@@ -2718,6 +2764,8 @@ class JmapClient internal constructor(
         /** Retries for the transient limit/429 error, with a linear backoff step. */
         private const val LIMIT_RETRY_MAX = 4
         private const val LIMIT_RETRY_BASE_MS = 120L
+        /** #1837 the largest raw message the core's reader prefetch downloads (bigger ones are read by the old path). */
+        const val RAW_MESSAGE_MAX_BYTES = 16L * 1024 * 1024
 
                 /**
                  * Whether the redirect that took [requested] to [landedAt] cost us the `Authorization`

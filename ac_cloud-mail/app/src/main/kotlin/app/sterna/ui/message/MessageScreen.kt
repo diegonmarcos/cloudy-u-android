@@ -12,6 +12,9 @@ import app.sterna.appLocale
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.VerifiedUser
+import app.sterna.core.data.mail.CoreReaderDoc
+import app.sterna.core.data.mail.CoreReaderTheme
+import app.sterna.core.data.mail.RustMailEngine
 import app.sterna.core.data.mail.UnsubscribeAction
 import app.sterna.core.data.mail.UnsubscribeOptions
 import app.sterna.core.data.mail.preferredAction
@@ -892,11 +895,13 @@ private fun MessageActions(
     // Only to know whether the open message has its BODY: a message never opened while online holds
     // its cached header and nothing else, and a "Print" entry offered on it would print a blank page.
     val messages by viewModel.messages.collectAsStateWithLifecycle()
+    val coreDoc by viewModel.coreDoc.collectAsStateWithLifecycle()
     val printable = messages.firstOrNull()?.body != null
     val loaded = state as? MessageState.Loaded ?: return
     val senderEmail = loaded.email.from.firstOrNull()?.email
     val senderAllowed = senderEmail?.lowercase()?.let { it in imageAllowlist } == true
-    val showRemote = showRemoteImages(manualShow, senderAllowed)
+    val autoLoad by viewModel.remoteImages.collectAsStateWithLifecycle()
+    val showRemote = showRemoteImages(manualShow, senderAllowed, autoLoad)
     val noContent = stringResource(R.string.message_no_content)
     // Text tools on a RECEIVED message. onApply is null and stays null: this body is a record
     // of what somebody sent, so the result is shown to read or copy and the stored message is
@@ -1800,7 +1805,11 @@ private fun MessageContent(
     // and `shouldInterceptRequest` in one move. Allowing a sender from the open message must not let
     // the neighbour beside it fetch his pictures and report that it was opened.
     val senderAllowed = everActive && senderEmail?.lowercase()?.let { it in imageAllowlist } == true
-    val showRemote = showRemoteImages(manualShow, senderAllowed)
+    // The "Load remote images" setting, latched on `everActive` like the two terms above: a neighbour page the pager
+    // pre-composes must not fetch pictures (and report the message opened) just because the setting is on.
+    val autoLoadRaw by viewModel.remoteImages.collectAsStateWithLifecycle()
+    val autoLoad = everActive && autoLoadRaw
+    val showRemote = showRemoteImages(manualShow, senderAllowed, autoLoad)
     // The per-sender filter rule offered from the participants panel. The Trash is named from the
     // account's OWN cached folder list (no network), the script state is read once when the panel
     // opens, and which of the four answers all that makes is senderRuleEntry()'s.
@@ -2133,6 +2142,7 @@ private fun MessageContent(
                 translatedFragment = translation.fragmentFor(readerFragment),
                 translating = translation.running,
                 deliveryTimeline = deliveryTimeline,
+                coreDoc = coreDoc,
             )
         }
     }
@@ -2202,6 +2212,8 @@ private fun ConversationBody(
     translating: Boolean = false,
     /** #1802: the delivery stages when this message is filed in Sent; null draws nothing. */
     deliveryTimeline: DeliveryTimeline? = null,
+    /** #1837: the message's reader document from the Rust core's store; null = the old document. */
+    coreDoc: CoreReaderDoc? = null,
 ) {
     val msg = messages.firstOrNull() ?: return
     val full = msg.body
@@ -2314,12 +2326,23 @@ private fun ConversationBody(
                 // must stay out of this key: it would rebuild the document under the reader's finger,
                 // flash white, send her back to the top and reset the zoom, in a loop.
                 val html = remember(
+                    coreDoc,
                     full, msg.inlineImages, emailTheme, topSpacerCss, bottomSpacerCss,
                     noContent, quoteLabel, deceptiveLinkLabel,
                     translatedFragment,
                 ) {
                     app.sterna.core.data.mail.MailTiming.phase(msg.id, "html-build") {
-                        buildHtmlDocument(
+                        // #1837 the core's reader document first (Gmail-like, decoded in the right charset, from the
+                        // store); the old document is the fallback, and the reason is logged under the tag MailCore.
+                        val fromCore = if (translatedFragment == null && coreDoc != null && coreDoc.emailId == msg.id) {
+                            buildCoreDocument(coreDoc, emailTheme, topSpacerCss, bottomSpacerCss, quoteLabel, deceptiveLinkLabel)
+                        } else {
+                            null
+                        }
+                        if (coreDoc != null && fromCore == null && translatedFragment == null) {
+                            RustMailEngine.log("reader ${msg.id}: the core document could not be built, old reader path")
+                        }
+                        fromCore ?: buildHtmlDocument(
                             full, msg.inlineImages, emailTheme, topSpacerCss, bottomSpacerCss,
                             noContent, quoteLabel, deceptiveLinkLabel,
                             translatedFragment = translatedFragment,
@@ -5328,6 +5351,46 @@ internal fun buildHtmlDocument(
           .s-deceptive { margin-left: 0.4em; font-size: 0.85em; opacity: 0.85; white-space: nowrap; }
         </style></head><body>$inner</body></html>
     """.trimIndent()
+}
+
+/**
+ * #1837 the reader document built by the Rust core: its sanitised fragment gets the reader's own passes (the deceptive-link marker,
+ * the quote fold, emoji colours in the dark invert), then the core wraps it in the Gmail-like stylesheet with the page's spacers
+ * and theme colours. Null when the core cannot wrap it (not loaded): the caller draws the old document.
+ */
+internal fun buildCoreDocument(
+    doc: CoreReaderDoc,
+    theme: EmailTheme,
+    topSpacerCss: String,
+    bottomSpacerCss: String,
+    quoteLabel: String,
+    deceptiveLinkLabel: String,
+): String? {
+    var inner = doc.fragment
+    if (doc.kind == "html") {
+        if (deceptiveLinkLabel.isNotBlank()) {
+            inner = markDeceptiveLinks(inner) { host ->
+                "<span class=\"s-deceptive\">${htmlEscape(deceptiveLinkLabel.format(host))}</span>"
+            }
+        }
+        inner = foldTopLevelQuotes(inner, quoteLabel)
+        if (theme.dark) inner = wrapEmoji(inner)
+    }
+    val page = RustMailEngine.wrap(
+        doc.kind,
+        inner,
+        CoreReaderTheme(
+            dark = theme.dark,
+            background = theme.background,
+            text = theme.text,
+            link = theme.link,
+            topSpacerCss = topSpacerCss,
+            bottomSpacerCss = bottomSpacerCss,
+            quoteLabel = quoteLabel,
+        ),
+    ) ?: return null
+    // The Cloud E-ink style's reading CSS rides along, as in the old document.
+    return if (theme.eink) page.replaceFirst("</style>", einkReaderCss(theme) + "</style>") else page
 }
 
 /** Resolved theme colours (CSS hex) handed to the email WebView so it matches the app. */

@@ -71,15 +71,7 @@ class RustMailEngine(
         budgetMs: Long?,
     ): CoreSyncReport = mutex.withLock {
         withContext(Dispatchers.IO) {
-            val transport = object : MailCoreTransport {
-                override fun post(body: String): String = try {
-                    client.postRawBlocking(session.apiUrl, auth, body)
-                } catch (c: CancellationException) {
-                    MailCoreTransport.error("cancelled")
-                } catch (t: Throwable) {
-                    MailCoreTransport.error(t.message ?: t.javaClass.simpleName)
-                }
-            }
+            val transport = transportFor(client, session, jmapAccountId, auth)
             val batch = session.getBatchSize()
             val config = buildJsonObject {
                 put("account", localAccountId)
@@ -89,11 +81,82 @@ class RustMailEngine(
                 put("getChunk", batch.coerceIn(1, 200))
                 put("maxChanges", 500)
                 put("prefetchBodies", PREFETCH_BODIES)
+                put("prefetchRaw", PREFETCH_BODIES)
                 if (budgetMs != null) put("budgetMs", budgetMs)
             }
             val text = MailCore.sync(dbPath, config.toString(), transport).getOrThrow()
             CoreSyncReport.parse(text).also { log("sync $localAccountId: ${it.summary}") }
         }
+    }
+
+    /** The core's view of the app's HTTP client: the JMAP POST and the blob GET, both through [client]. */
+    private fun transportFor(client: JmapClient, session: JmapSession, jmapAccountId: String, auth: JmapAuth) = object : MailCoreTransport {
+        override fun post(body: String): String = try {
+            client.postRawBlocking(session.apiUrl, auth, body)
+        } catch (c: CancellationException) {
+            MailCoreTransport.error("cancelled")
+        } catch (t: Throwable) {
+            MailCoreTransport.error(t.message ?: t.javaClass.simpleName)
+        }
+
+        override fun download(blobId: String): ByteArray = client.downloadBlobBlocking(session, jmapAccountId, blobId, auth)
+    }
+
+    /**
+     * #1837 phase 2: the reader document of a message FROM THE STORE, no network: the raw message was downloaded and parsed by the
+     * prefetch (or by [fetchRaw]), so an open is one indexed read (budget 100 ms, asserted in the core's tests) and works offline.
+     * Null = not in the store yet, or the core is not loaded: the caller keeps the old reader path.
+     */
+    suspend fun reader(localAccountId: String, emailId: String): CoreReaderDoc? = withContext(Dispatchers.IO) {
+        if (MailCore.unavailableReason() != null) return@withContext null
+        val started = System.nanoTime()
+        val answer = MailCore.query(
+            dbPath,
+            buildJsonObject { put("op", "reader"); put("account", localAccountId); put("id", emailId) }.toString(),
+        ).getOrElse {
+            log("reader $localAccountId/$emailId: failed, old reader path: ${it.message}")
+            return@withContext null
+        }
+        val o = JSON.parseToJsonElement(answer).jsonObject
+        if (o["available"]?.jsonPrimitive?.boolean != true) {
+            log("reader $localAccountId/$emailId: not in the store, old reader path")
+            return@withContext null
+        }
+        CoreReaderDoc(
+            emailId = emailId,
+            kind = o["kind"]!!.jsonPrimitive.content,
+            fragment = o["fragment"]!!.jsonPrimitive.content,
+            text = o["text"]?.jsonPrimitive?.content.orEmpty(),
+            remoteImages = o["remoteImages"]?.jsonPrimitive?.boolean ?: false,
+            encodingProblem = o["encodingProblem"]?.jsonPrimitive?.boolean ?: false,
+        ).also {
+            log("reader $localAccountId/$emailId: ${it.kind} from the store in ${(System.nanoTime() - started) / 1_000_000} ms" +
+                (if (it.encodingProblem) " (encoding problem noted)" else ""))
+        }
+    }
+
+    /** Download, parse and store the raw message of [emailIds] (a message opened before the prefetch reached it). Answers how many landed. */
+    suspend fun fetchRaw(
+        client: JmapClient,
+        session: JmapSession,
+        jmapAccountId: String,
+        auth: JmapAuth,
+        localAccountId: String,
+        emailIds: List<String>,
+    ): Int = withContext(Dispatchers.IO) {
+        val args = buildJsonObject {
+            put("account", localAccountId)
+            put("jmapAccountId", jmapAccountId)
+            putJsonArray("ids") { emailIds.forEach { add(it) } }
+        }
+        val text = MailCore.fetchRaw(dbPath, args.toString(), transportFor(client, session, jmapAccountId, auth)).getOrElse {
+            log("fetchRaw $localAccountId: failed: ${it.message}")
+            return@withContext 0
+        }
+        val o = JSON.parseToJsonElement(text).jsonObject
+        val fetched = o["fetched"]?.jsonPrimitive?.int ?: 0
+        log("fetchRaw $localAccountId: fetched=$fetched failed=${o["failed"]?.jsonPrimitive?.int ?: 0} ${o["error"]?.jsonPrimitive?.content.orEmpty()}")
+        fetched
     }
 
     /** The account ids the store holds rows for. */
@@ -281,6 +344,25 @@ class RustMailEngine(
             encodeDefaults = true
         }
 
+        /**
+         * The Gmail-like reading document around a reader [fragment] (the core owns the stylesheet: Roboto 14 px, Gmail's colours,
+         * images and tables fit the width, `pre` keeps its alignment). Pure: it reads no store. Null when the core is not loaded.
+         */
+        fun wrap(kind: String, fragment: String, theme: CoreReaderTheme): String? {
+            if (MailCore.unavailableReason() != null) return null
+            val q = buildJsonObject {
+                put("op", "wrap"); put("kind", kind); put("fragment", fragment)
+                put("dark", theme.dark); put("bg", theme.background); put("fg", theme.text); put("link", theme.link)
+                put("images", true); put("top", theme.topSpacerCss); put("bottom", theme.bottomSpacerCss)
+                put("quoteLabel", theme.quoteLabel)
+            }
+            val answer = MailCore.query(":memory:", q.toString()).getOrElse {
+                log("wrap: failed, old reader path: ${it.message}")
+                return null
+            }
+            return runCatching { JSON.parseToJsonElement(answer).jsonObject["doc"]?.jsonPrimitive?.content }.getOrNull()
+        }
+
         fun log(message: String) {
             runCatching { android.util.Log.i("MailCore", message) }
         }
@@ -332,3 +414,24 @@ data class CoreSyncReport(
         }
     }
 }
+
+/** A message's reader document as the core stored it: [fragment] is sanitised HTML (inline images embedded), [kind] "html" or "text". */
+data class CoreReaderDoc(
+    val emailId: String,
+    val kind: String,
+    val fragment: String,
+    val text: String,
+    val remoteImages: Boolean,
+    val encodingProblem: Boolean,
+)
+
+/** What the screen tells the core about the page: theme colours (CSS hex), the two spacers (CSS lengths) and the quote button's words. */
+data class CoreReaderTheme(
+    val dark: Boolean,
+    val background: String,
+    val text: String,
+    val link: String,
+    val topSpacerCss: String,
+    val bottomSpacerCss: String,
+    val quoteLabel: String,
+)

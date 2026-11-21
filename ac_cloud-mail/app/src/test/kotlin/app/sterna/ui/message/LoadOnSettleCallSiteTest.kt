@@ -759,7 +759,11 @@ class LoadOnSettleCallSiteTest {
             "everActive: Boolean,",
             MANUAL_SHOW_LATCHED,
             SENDER_ALLOWED_LATCHED,
+            // #1837: the third producer of the remote-image answer, the "Load remote images" setting, latched like the other two.
+            AUTO_LOAD_LATCHED,
         )
+
+        const val AUTO_LOAD_LATCHED = "val autoLoad = everActive && autoLoadRaw"
 
         /**
          * The page's SECOND producer of the remote-image answer, at its origin and latched.

@@ -488,6 +488,8 @@
     <string name="settings_strip_tracking_subtitle">Удалять трекеры (utm_*, fbclid, gclid…) из ссылок перед их открытием, чтобы отправители не могли узнать, когда вы переходите по ссылке.</string>
     <string name="settings_confirm_links_title">Подтверждать перед открытием ссылок</string>
     <string name="settings_confirm_links_subtitle">Показывать адрес назначения и запрашивать подтверждение перед открытием ссылки из письма.</string>
+    <string name="settings_remote_images_title">Загружать изображения из сети</string>
+    <string name="settings_remote_images_subtitle">Автоматически загружать картинки в письмах, как в Gmail. Отключите, чтобы спрашивать каждый раз; отправителя по-прежнему можно разрешить из письма.</string>
     <string name="settings_read_receipt_section">Запросы уведомления о прочтении</string>
     <string name="settings_read_receipt_title">Спрашивать перед отправкой уведомления о прочтении</string>
     <string name="settings_read_receipt_subtitle">Некоторые отправители просят сообщить им, когда их письмо будет показано. Выключено — запрос игнорируется. Включено — открытое письмо предложит ответить на него, и ничего не отправляется без вашего согласия.</string>

@@ -488,6 +488,8 @@
     <string name="settings_strip_tracking_subtitle">Remove rastreadores (utm_*, fbclid, gclid…) dos links antes de abri-los, para que os remetentes não saibam quando você clica.</string>
     <string name="settings_confirm_links_title">Confirmar antes de abrir links</string>
     <string name="settings_confirm_links_subtitle">Mostra o destino e pede confirmação antes de abrir um link de uma mensagem.</string>
+    <string name="settings_remote_images_title">Carregar imagens remotas</string>
+    <string name="settings_remote_images_subtitle">Transfere automaticamente as imagens das mensagens, como o Gmail. Desative para perguntar sempre; um remetente continua a poder ser permitido a partir de uma mensagem.</string>
     <string name="settings_read_receipt_section">Solicitações de confirmação de leitura</string>
     <string name="settings_read_receipt_title">Perguntar antes de enviar uma confirmação de leitura</string>
     <string name="settings_read_receipt_subtitle">Alguns remetentes pedem para ser avisados quando a mensagem deles é exibida. Desativado, o pedido é ignorado. Ativado, a mensagem aberta oferece responder, e nada é enviado sem você permitir.</string>

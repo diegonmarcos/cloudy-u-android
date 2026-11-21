@@ -9,6 +9,7 @@ import android.provider.OpenableColumns
 import com.diegonmarcos.superapp.image.mlkit.BarcodeScan
 import com.diegonmarcos.superapp.image.mlkit.ImageScanEngine
 import com.diegonmarcos.superapp.image.mlkit.OcrResult
+import app.sterna.core.data.mail.CoreReaderDoc
 import app.sterna.core.data.mail.MessageCrypto
 import app.sterna.core.data.mail.MessageUnavailableException
 import app.sterna.core.data.mail.requireAttachmentBytes
@@ -57,6 +58,7 @@ import app.sterna.core.jmap.ContentTooLargeException
 import app.sterna.core.jmap.DownloadLimits
 import app.sterna.core.jmap.model.Email
 import app.sterna.core.jmap.model.EmailBodyPart
+import app.sterna.core.jmap.model.EmailBodyValue
 import app.sterna.core.jmap.model.EmailHeader
 import app.sterna.core.jmap.model.Mailbox
 import app.sterna.net.hasUsableNetwork
@@ -73,6 +75,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -313,6 +317,9 @@ private fun Email.markRead(): Email =
  *  in the reader's first frames was fetched straight away, silently. */
 internal const val CONFIRM_LINKS_UNLOADED = true
 
+/** #1837 how long an open waits for the core's raw-message fetch (it runs beside the old path's own fetch) before drawing without it. */
+internal const val CORE_FETCH_WAIT_MS = 2_000L
+
 /**
  * Which failure to open a message earns a sentence of OUR own, and which keeps the text it carries.
  */
@@ -359,6 +366,16 @@ class MessageViewModel(application: Application) : AndroidViewModel(application)
             initialValue = ReadReceiptSetting.NOT_LOADED,
         )
 
+    /**
+     * #1837 "Load remote images": on by default. Eagerly started with the ViewModel, so the stored value is in by the time a page
+     * composes; the first frame is the default the stored value is read against ([app.sterna.core.data.settings.REMOTE_IMAGES_DEFAULT]).
+     */
+    val remoteImages = settings.remoteImages.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = app.sterna.core.data.settings.REMOTE_IMAGES_DEFAULT,
+    )
+
     /** Sender addresses whose remote images load automatically. */
     val imageAllowlist = settings.imageAllowlist.stateIn(
         scope = viewModelScope,
@@ -392,6 +409,14 @@ class MessageViewModel(application: Application) : AndroidViewModel(application)
 
     /** The whole conversation as a stack of collapsible messages, oldest first. */
     private val _messages = MutableStateFlow<List<ThreadMessage>>(emptyList())
+
+    /**
+     * #1837 phase 2: the open message's reader document from the Rust core's store (MIME decoded in the right charset, HTML
+     * sanitised, inline images embedded, a Gmail-like stylesheet), or null while it is not there: the screen then draws the old
+     * path. Read from the store with no network, so it is there at once and offline; logged under the tag MailCore.
+     */
+    private val _coreDoc = MutableStateFlow<CoreReaderDoc?>(null)
+    val coreDoc: StateFlow<CoreReaderDoc?> = _coreDoc.asStateFlow()
     val messages = _messages.asStateFlow()
 
     /** Transient status while downloading/opening an attachment. */
@@ -1265,6 +1290,7 @@ class MessageViewModel(application: Application) : AndroidViewModel(application)
         // BUTTON, and until the fetch returns it would still be wired to the previous message's
         // list — a tap unsubscribing from something the reader is no longer looking at.
         _unsubscribe.value = null
+        if (_coreDoc.value?.emailId != emailId) _coreDoc.value = null
         _mailboxIds.value = emptySet()
         _metadataHeaders.value = emptyList()
         _unsubscribeState.value = UnsubscribeState.Idle
@@ -1323,6 +1349,15 @@ class MessageViewModel(application: Application) : AndroidViewModel(application)
         // can be the previous account's.
         _identityAddresses.value = store.identities(accountId).map { it.email }
         viewModelScope.launch {
+            // #1837 the core's reader document, from the store: no network, a millisecond or two, works offline. A message the
+            // prefetch has not reached is fetched in the background below, while the old path opens it.
+            var coreFetch: kotlinx.coroutines.Deferred<CoreReaderDoc?>? = null
+            val storedDoc = runCatching { credentials()?.let { repo.coreReaderStored(it.id, emailId) } }.getOrNull()
+            if (storedDoc != null) {
+                _coreDoc.value = storedDoc
+            } else {
+                coreFetch = credentials()?.let { c -> async { runCatching { repo.coreReaderFetched(c, emailId) }.getOrNull() } }
+            }
             // Account-scoped: a snooze belongs to one account's message (issue #31).
             _snoozedUntil.value = runCatching {
                 credentials()?.let { repo.snoozedUntil(it.id, emailId) }
@@ -1351,6 +1386,8 @@ class MessageViewModel(application: Application) : AndroidViewModel(application)
                 // The tapped message: cache-first body + its inline images, arriving together so the
                 // WebView renders once, complete. Not marked read here — see [onActiveChanged].
                 val opened = repo.openMessage(credentials, emailId, markRead = false, lazyInlineImages = true)
+                // Both ran together; wait (bounded) so the page is drawn ONCE, from the core's document when it has one.
+                coreFetch?.let { job -> withTimeoutOrNull(CORE_FETCH_WAIT_MS) { job.await() } }?.let { _coreDoc.value = it }
                 // Stamp the owning account: the fetched body never carries one, and downstream
                 // actions route by it.
                 val anchor = opened.email.copy(accountId = opened.email.accountId ?: accountId)
@@ -1437,6 +1474,22 @@ class MessageViewModel(application: Application) : AndroidViewModel(application)
                 // REPLACES the technical text (#159) — so unless the throwable is logged here, the
                 // reason this message would not open exists nowhere.
                 android.util.Log.w("SternaMessage", "message load failed: $emailId", t)
+                // #1837 offline (or the server refused): the core holds the message. Show it from the store rather than an error.
+                val offlineDoc = _coreDoc.value ?: storedDoc
+                if (offlineDoc != null && listEmail != null && t !is CancellationException) {
+                    val shown = anchorDisplay(
+                        listEmail.copy(
+                            accountId = listEmail.accountId ?: accountId,
+                            textBody = listOf(EmailBodyPart(partId = "core", type = "text/plain")),
+                            bodyValues = mapOf("core" to EmailBodyValue(value = offlineDoc.text)),
+                        ),
+                    )
+                    _coreDoc.value = offlineDoc
+                    _state.value = MessageState.Loaded(shown)
+                    _messages.value = listOf(ThreadMessage(id = shown.id, header = shown, body = shown))
+                    app.sterna.core.data.mail.RustMailEngine.log("reader $emailId: opened from the store after the old path failed (${t.javaClass.simpleName})")
+                    return@launch
+                }
                 _state.value = MessageState.Error(
                     readFailureText(t),
                     signIn = app.sterna.core.data.mail.AuthRetry.isAuthFailure(t),

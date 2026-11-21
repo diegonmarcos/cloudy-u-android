@@ -469,3 +469,120 @@ fn budget_sync_of_1000_headers_under_5_s() {
     budget("incremental sync of 1,000 new headers", Duration::from_secs(5), || sync(&st, &f, &c).unwrap());
     assert_eq!(store::local_count(&st.conn, ACC, "inbox").unwrap(), 2000);
 }
+
+// ── phase 2: the reader (raw message prefetch, offline open, budgets) ────────────────────────────────────────────────
+
+/// A Latin-1 message ("España" as byte 0xF1), served as the blob of every email of the fake server.
+fn latin1_raw(id: &str) -> Vec<u8> {
+    let mut v = format!(
+        "From: Ana <ana@example.es>\r\nTo: me@example.org\r\nSubject: =?ISO-8859-1?Q?Espa=F1a?=\r\nDate: Fri, 14 Nov 2025 10:00:00 +0000\r\n\
+         Message-ID: <{id}@example.es>\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=ISO-8859-1\r\nContent-Transfer-Encoding: 8bit\r\n\r\n"
+    )
+    .into_bytes();
+    v.extend_from_slice(b"Hola desde Espa\xf1a, ma\xf1ana.\r\n");
+    v
+}
+
+fn serve_raw(f: &FakeJmap) {
+    f.with(|s| {
+        let ids: Vec<String> = s.emails.keys().cloned().collect();
+        for id in ids {
+            s.raw.insert(id.clone(), latin1_raw(&id));
+        }
+    });
+}
+
+#[test]
+fn raw_messages_are_prefetched_and_open_offline_without_replacement_characters() {
+    let f = seeded(200);
+    serve_raw(&f);
+    let st = Store::open(":memory:").unwrap();
+    let mut c = cfg();
+    c.prefetch_raw = 5;
+    let r = sync(&st, &f, &c).unwrap();
+    assert!(r.raw >= 5 && r.raw_failed == 0, "raw={} failed={} {}", r.raw, r.raw_failed, r.raw_error);
+    assert_eq!(f.inner.borrow().downloads, r.raw);
+    let newest = f.inner.borrow().query_ids("inbox").into_iter().take(5).collect::<Vec<_>>();
+    // No transport from here on: the store alone answers.
+    for id in &newest {
+        let a = query::reader(&st.conn, ACC, id).unwrap();
+        assert_eq!(a["available"], true, "{id}");
+        assert_eq!(a["kind"], "text");
+        let frag = a["fragment"].as_str().unwrap();
+        assert!(frag.contains("Hola desde España, mañana."), "{frag}");
+        assert!(!frag.contains('\u{FFFD}'));
+    }
+    // A message beyond the prefetch is not available offline; the on-demand fetch brings it.
+    let older = f.inner.borrow().query_ids("inbox")[60].clone();
+    assert_eq!(query::reader(&st.conn, ACC, &older).unwrap()["available"], false);
+    let rep = crate::sync::fetch_raw(&st, &f, &crate::sync::FetchArgs { account: ACC.into(), jmap_account_id: "u1".into(), ids: vec![older.clone()] }).unwrap();
+    assert_eq!((rep.fetched, rep.failed), (1, 0), "{}", rep.error);
+    assert_eq!(query::reader(&st.conn, ACC, &older).unwrap()["available"], true);
+    // A second pass downloads nothing again.
+    let before = f.inner.borrow().downloads;
+    sync(&st, &f, &c).unwrap();
+    assert_eq!(f.inner.borrow().downloads, before);
+    // A deleted message takes its raw bytes and its document with it.
+    f.with(|s| s.destroy_email(&newest[0]));
+    sync(&st, &f, &c).unwrap();
+    assert_eq!(query::reader(&st.conn, ACC, &newest[0]).unwrap()["available"], false);
+    assert!(!store::has_raw(&st.conn, ACC, &newest[0]).unwrap());
+}
+
+#[test]
+fn a_failing_download_never_fails_the_sync() {
+    let f = seeded(100);
+    // No raw messages served: every download errs.
+    let st = Store::open(":memory:").unwrap();
+    let r = sync(&st, &f, &cfg()).unwrap();
+    assert_eq!(r.raw, 0);
+    assert!(r.raw_failed > 0 && !r.raw_error.is_empty());
+    assert_mirrors(&st, &f);
+}
+
+#[test]
+fn an_old_reader_version_is_re_parsed_from_the_stored_raw_message() {
+    let st = Store::open(":memory:").unwrap();
+    let raw = latin1_raw("x1");
+    store::put_raw(&st.conn, ACC, "x1", &raw, None, 1).unwrap();
+    let a = query::reader(&st.conn, ACC, "x1").unwrap();
+    assert_eq!((a["available"].clone(), a["reparsed"].clone()), (json!(true), json!(true)));
+    assert_eq!(query::reader(&st.conn, ACC, "x1").unwrap()["reparsed"], false);
+    st.conn.execute("UPDATE reader_docs SET version = 0", []).unwrap();
+    assert_eq!(query::reader(&st.conn, ACC, "x1").unwrap()["reparsed"], true);
+}
+
+fn big_marketing_raw() -> Vec<u8> {
+    let row = r##"<tr><td style="font-family:Arial,sans-serif;font-size:14px;padding:8px 12px;color:#333333;background-color:#f4f4f4" width="300" align="left">Espa&ntilde;a &mdash; oferta <a href="https://shop.example.com/p?id=1&amp;utm_source=mail" style="color:#1a73e8;text-decoration:none">ver m&aacute;s</a></td><td width="300" bgcolor="#ffffff" style="padding:8px"><img src="https://img.example.com/p.jpg" width="280" height="120" alt="p" style="display:block"></td></tr>"##;
+    let html = format!("<html><head><style>p{{color:red}}</style></head><body><table width=\"600\" align=\"center\" cellpadding=\"0\" cellspacing=\"0\">{}</table></body></html>", row.repeat(300));
+    let mut v = b"From: News <news@example.com>\r\nTo: me@example.org\r\nSubject: Offers\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=utf-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n".to_vec();
+    v.extend_from_slice(html.as_bytes());
+    v
+}
+
+#[test]
+fn budget_message_open_from_the_store_under_100_ms() {
+    let st = Store::open(":memory:").unwrap();
+    let raw = big_marketing_raw();
+    println!("fixture: {} KB of raw message", raw.len() / 1024);
+    assert!(raw.len() > 100 * 1024);
+    let parsed = budget("parse + sanitise of a 100 KB marketing email (prefetch-time cost)", Duration::from_millis(1500), || crate::reader::parse(&raw).unwrap());
+    assert!(parsed.remote_images && parsed.fragment.contains("España — oferta"));
+    store::put_raw(&st.conn, ACC, "m1", &raw, Some(&parsed), 1).unwrap();
+    let opts = crate::reader::Opts { top: "10vh".into(), bottom: "8vh".into(), images: true, ..Default::default() };
+    let max = Duration::from_millis(100);
+    let doc = budget("open: reader document from the store (read + wrap)", max, || {
+        let a = query::reader(&st.conn, ACC, "m1").unwrap();
+        assert_eq!(a["available"], true);
+        crate::reader::wrap(a["kind"].as_str().unwrap(), a["fragment"].as_str().unwrap(), &opts)
+    });
+    assert!(doc.contains("font:14px/1.5 Roboto") && doc.contains("España — oferta"));
+    // The same through the JNI query boundary (JSON in, JSON out).
+    budget("open through the JNI query boundary", max, || {
+        let a = crate::jni_api::guard(|| crate::jni_api::do_query(":memory:", r#"{"op":"wrap","kind":"html","fragment":"<p>x</p>","top":"10vh"}"#));
+        assert!(a.starts_with("OK\n{\"doc\":\"<!DOCTYPE html>"), "{a}");
+    });
+    // A message whose document must be re-parsed from the raw bytes (older version) is bounded too.
+    st.conn.execute("DELETE FROM reader_docs", []).unwrap();
+    budget("open with a re-parse of a 100 KB message", Duration::from_millis(1500), || query::reader(&st.conn, ACC, "m1").unwrap());
+}

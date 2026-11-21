@@ -488,6 +488,8 @@
     <string name="settings_strip_tracking_subtitle">Rimuove i tracker (utm_*, fbclid, gclid…) dai collegamenti prima di aprirli, così i mittenti non possono sapere quando fai clic.</string>
     <string name="settings_confirm_links_title">Conferma prima di aprire i collegamenti</string>
     <string name="settings_confirm_links_subtitle">Mostra la destinazione e chiedi conferma prima di aprire un collegamento da un messaggio.</string>
+    <string name="settings_remote_images_title">Carica le immagini remote</string>
+    <string name="settings_remote_images_subtitle">Scarica automaticamente le immagini dei messaggi, come Gmail. Disattiva per chiedere ogni volta; un mittente può comunque essere autorizzato da un messaggio.</string>
     <string name="settings_read_receipt_section">Richieste di conferma di lettura</string>
     <string name="settings_read_receipt_title">Chiedi prima di inviare una conferma di lettura</string>
     <string name="settings_read_receipt_subtitle">Alcuni mittenti chiedono di essere avvisati quando il loro messaggio viene visualizzato. Disattivato, la richiesta viene ignorata. Attivato, il messaggio aperto propone di rispondere e non viene inviato nulla senza il tuo consenso.</string>

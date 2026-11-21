@@ -488,6 +488,8 @@
     <string name="settings_strip_tracking_subtitle">Verwijder trackers (utm_*, fbclid, gclid…) uit links voordat je ze opent, zodat afzenders niet kunnen zien wanneer je klikt.</string>
     <string name="settings_confirm_links_title">Bevestigen voor het openen van links</string>
     <string name="settings_confirm_links_subtitle">Toon de bestemming en vraag om bevestiging voordat een link uit een bericht wordt geopend.</string>
+    <string name="settings_remote_images_title">Externe afbeeldingen laden</string>
+    <string name="settings_remote_images_subtitle">Download afbeeldingen in berichten automatisch, zoals Gmail. Zet uit om telkens te vragen; een afzender kan nog steeds vanuit een bericht worden toegestaan.</string>
     <string name="settings_read_receipt_section">Verzoeken om leesbevestiging</string>
     <string name="settings_read_receipt_title">Vragen voordat een leesbevestiging wordt verstuurd</string>
     <string name="settings_read_receipt_subtitle">Sommige afzenders vragen om bericht te krijgen wanneer hun bericht wordt weergegeven. Uit: het verzoek wordt genegeerd. Aan: het geopende bericht biedt aan om te antwoorden, en er wordt niets verstuurd zonder jouw toestemming.</string>
