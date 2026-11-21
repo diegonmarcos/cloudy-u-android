@@ -28,24 +28,27 @@ LP=$!
 
 shot() { adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; adb exec-out screencap -p > "$OUT/$1.png"; }
 dump() {
-  for t in 1 2 3 4 5 6; do
-    adb shell rm -f /sdcard/ui.xml; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
-    adb exec-out cat /sdcard/ui.xml > "$OUT/$1.xml"; grep -q "<hierarchy" "$OUT/$1.xml" && break; sleep 3
+  for round in 1 2 3; do
+    for t in 1 2 3 4 5 6; do
+      adb shell rm -f /sdcard/ui.xml; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+      adb exec-out cat /sdcard/ui.xml > "$OUT/$1.xml"; grep -q "<hierarchy" "$OUT/$1.xml" && break; sleep 3
+    done
+    $UI texts "$OUT/$1.xml" > "$OUT/$1.texts.txt" 2>/dev/null || true
+    # a system ANR dialog (the emulator's launcher is slow) hides the app from uiautomator: press Wait and dump again
+    if grep -q "isn't responding" "$OUT/$1.texts.txt"; then
+      pt=$($UI tap "$OUT/$1.xml" "Wait" exact) && adb shell input tap $pt; sleep 2
+    else
+      break
+    fi
   done
-  $UI texts "$OUT/$1.xml" > "$OUT/$1.texts.txt" 2>/dev/null || true
 }
 # tap the first node starting with $1 ("exact" as $2: equal to it) in a fresh dump
 tapt() { dump scan; pt=$($UI tap "$OUT/scan.xml" "$1" "${2:-}") || return 1; adb shell input tap $pt; }
 skip_welcome() { if tapt "Skip" exact; then sleep 4; fi; }
-open_drawer() {
-  adb shell input swipe 20 1200 800 1200 300; sleep 2; dump scan
-  $UI has "$OUT/scan.xml" "Archive" >/dev/null 2>&1 && return 0
-  for w in "Open navigation" "Navigation" "Menu"; do tapt "$w" && { sleep 2; return 0; }; done
-  return 1
-}
-go_folder() { # $1 = the folder's name in the drawer
-  open_drawer || { fail "the drawer did not open to reach $1"; return 1; }
-  tapt "$1" exact || { fail "no $1 entry in the drawer"; return 1; }
+# The folders are a vertical rail with three-letter labels (Inb, Dra, Sen, Tra, Spa, Arc, Rec), not a drawer.
+go_folder() { # $1 = the folder's name; $2 = seconds to let it load
+  case "$1" in Inbox) lbl=Inb;; Archive) lbl=Arc;; Receipts) lbl=Rec;; *) lbl="$1";; esac
+  tapt "$lbl" exact || { fail "no $1 ($lbl) entry in the folder rail"; return 1; }
   sleep "${2:-8}"
 }
 
