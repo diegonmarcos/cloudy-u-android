@@ -13,6 +13,22 @@ object MeshReport {
 
     fun redact(text: String): String = SECRET.replace(text) { "${it.groupValues[1]}${it.groupValues[2]}[redacted]" }
 
+    /** #1845 The status text as Markdown for Export to Md: the title line, one `##` heading per `==` section, the rows fenced so the columns stay aligned. */
+    fun markdown(plain: String): String {
+        val out = StringBuilder()
+        var open = false
+        fun close() { if (open) { out.append("```\n\n"); open = false } }
+        plain.lines().forEachIndexed { i, l ->
+            when {
+                i == 0 -> out.append("# ").append(l).append("\n\n")
+                l.startsWith("== ") -> { close(); out.append("## ").append(l.removePrefix("== ")).append("\n\n```\n"); open = true }
+                else -> { if (!open) { out.append("```\n"); open = true }; out.append(l).append('\n') }
+            }
+        }
+        close()
+        return out.toString().trimEnd() + "\n"
+    }
+
     fun build(
         s: MeshSnapshot?,
         dnsPreset: String,

@@ -366,7 +366,7 @@ pub fn status_json() -> Value {
         "svc": svc.iter().map(|(k, v)| (k.to_string(), v.clone())).collect::<serde_json::Map<String, Value>>(),
         "pid": std::process::id(), "uptime_s": uptime_s(),
         "server": st.sw.server, "keep_alive": st.sw.keep_alive, "running": running, "content": crate::content_running(), "admin": true,
-        "sites": crate::repos::host().count(), "ports": ports, "off_url": cfg().off_url, "ssh_door": ssh,
+        "sites": crate::repos::host().count(), "ports": ports, "off_url": cfg().off_url, "ssh_door": ssh, "vpn": apis::build()["vpn"].clone(),
         "plan": {"listeners": p.listeners, "admin": p.admin, "service": p.service, "boot": p.boot, "sticky": p.sticky, "wake": p.wake},
     })
 }

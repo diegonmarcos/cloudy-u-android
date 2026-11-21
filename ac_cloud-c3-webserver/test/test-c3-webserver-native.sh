@@ -115,6 +115,9 @@ if not re.search(r"keepclasseswithmembernames class [\w.]*MainActivity \{ native
 
 # K4 exposure
 for rel, src in main.items():
+    # #1845 the ONE client-side source bind: VpnReader pins its hub probe (a connect, never a listener) to the phone's address in that mesh
+    if rel.endswith("ui/VpnReader.kt"):
+        src = src.replace("if (from != null) s.bind(InetSocketAddress(InetAddress.getByName(from), 0))", "")
     if re.search(r"\b(ServerSocket|LocalServerSocket|DatagramSocket)\b|\.bind\(", src):
         errors.append("K4 %s opens or binds a socket: the UI only talks to the core's loopback server" % rel)
 api = rd(kdir + "/Api.kt")

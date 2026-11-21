@@ -8755,6 +8755,7 @@
           "controls": [
             { "id": "status_copy_all", "kind": "action", "label": "Copy all", "engine": "clipboard.all" },
             { "id": "status_export_all", "kind": "action", "label": "Export all", "engine": "export.all" },
+            { "id": "status_export_md", "kind": "action", "label": "Export to Md", "engine": "export.md" },
             { "id": "reach_run", "kind": "action", "label": "Run again", "engine": "reach.run" },
             { "id": "reach_meshes_run", "kind": "action", "label": "Probe meshes", "engine": "mesh.probe" },
             { "id": "status_profiler_copy", "kind": "action", "label": "Copy report", "engine": "profiler.copy" },

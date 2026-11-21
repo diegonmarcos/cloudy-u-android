@@ -174,6 +174,7 @@ class MeshPageComposeTest : KitPageHarness() {
         val store = showStore()
         compose.onNodeWithTag(MeshTags.control("status_copy_all")).assertExists()
         compose.onNodeWithTag(MeshTags.control("status_export_all")).assertExists()
+        compose.onNodeWithTag(MeshTags.control("status_export_md")).assertExists()   // #1845
         compose.onNodeWithTag(MeshTags.control("reach_run")).assertExists()
         open(store, "peers")
         compose.onNodeWithTag("mesh:topology").performScrollTo().assertExists()

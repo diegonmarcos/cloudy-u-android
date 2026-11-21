@@ -88,9 +88,9 @@ class MeshDeclTest {
         assertTrue(rows.indexOf("export") < rows.indexOf("interface"))
         // every #1120 / #1153 control, in its order, then the #1797 additions
         val cids = d.page("status")!!.controls.map { it.id }
-        assertEquals(listOf("status_copy_all", "status_export_all", "reach_run"), cids.take(3))
+        assertEquals(listOf("status_copy_all", "status_export_all", "status_export_md", "reach_run"), cids.take(4))
         assertEquals(listOf("vpn_connect", "vpn_disconnect", "vpn_reconnect", "vpn_always_on"), cids.takeLast(4))
-        assertEquals(setOf("reach_meshes_run", "status_profiler_copy", "status_profiler_export", "status_log_open"), (cids - cids.take(3).toSet() - cids.takeLast(4).toSet()).toSet())
+        assertEquals(setOf("reach_meshes_run", "status_profiler_copy", "status_profiler_export", "status_log_open"), (cids - cids.take(4).toSet() - cids.takeLast(4).toSet()).toSet())
         assertEquals("alwayson.set", d.control("vpn_always_on")!!.engine)
         assertEquals("switch", d.control("vpn_always_on")!!.kind)
     }
@@ -137,6 +137,7 @@ class MeshDeclTest {
         assertTrue("view.topology" !in ids)
         assertEquals("clipboard.all", d.control("status_copy_all")!!.engine)
         assertEquals("export.all", d.control("status_export_all")!!.engine)
+        assertEquals("export.md", d.control("status_export_md")!!.engine)
         assertEquals(listOf("all", "warn", "error"), d.control("log_level")!!.choices)
         assertTrue("the log keeps a bounded ring of at least 500 lines", d.logCap >= 500)
     }

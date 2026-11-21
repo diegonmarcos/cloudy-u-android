@@ -78,20 +78,23 @@ fun SummaryTable(h: HomeData) {
     val pw = h.pw
     val serverOn = pw?.optBoolean("server") == true
     val adbUp = h.adb?.takeIf { it.has("server_up") && !it.isNull("server_up") }?.optBoolean("server_up")
-    val pages = HomeModel.pages(pw, h.served); val api = HomeModel.api(pw, h.health); val ssh = HomeModel.sshd(h.sshd, pw); val srv = HomeModel.server(pw); val adb = HomeModel.adb(h.adb, h.live)
-    val rows = h.served.objs("rows"); val doors = h.sshd.objs("doors")
+    val pages = HomeModel.pages(pw, h.served); val api = HomeModel.api(pw, h.health); val ssh = HomeModel.sshd(h.sshd, pw)
+    val sum = HomeModel.summaryRows(pw, h.health, h.served, h.sshd, h.adb, h.live)
     val state = HomeModel.summary(pw, listOf(pages, api, ssh), adbUp)
+    val goto = mapOf<String, () -> Unit>(
+        "Server" to { h.open(Decl.SECTION_CONFIGS, Decl.PAGE_SERVER) }, "Pages" to { h.open(Decl.SECTION_PAGES, Decl.PAGE_ALL) }, "API" to { h.open(Decl.SECTION_API, Decl.PAGE_TOPOLOGY) },
+        "SSHD" to { h.open(Decl.SECTION_SSHD, null) }, "ADB Shell" to { h.open(Decl.SECTION_ADB_SHELL, Decl.PAGE_ADB_STATUS) })
+    val tags = mapOf("Server" to "c3_sum_server", "Pages" to "c3_sum_pages", "API" to "c3_sum_api", "SSHD" to "c3_sum_sshd", "ADB Shell" to "c3_sum_adb")
     DenseCard("Summary", "c3_status_summary", badges = { when (state) {
             SummaryState.UNKNOWN -> Badge("?"); SummaryState.STOPPED -> Badge("STOPPED"); SummaryState.ALL_DISABLED -> Badge("ALL DISABLED")
             SummaryState.STARTING -> Badge("STARTING", Tone.Down); SummaryState.ALL_UP -> Badge("ALL UP", Tone.Up); SummaryState.ATTENTION -> Badge("ATTENTION", Tone.Bad)
         } },
         trailing = { DLink("Device ›", "c3_home_goto_device") { h.open(Decl.SECTION_CONFIGS, Decl.PAGE_DEVICE) } }) {
-        DLights("Server", srv, if (pw == null) "not answering" else if (!serverOn) (if (srv.disabled) "Stopped (admin page stays up)" else "OFF, Keep alive wants it up (fault)") else "pid ${pw.str("pid")} · up ${fmtUp(pw.longOrNull("uptime_s"))} · ${HomeModel.servicesMsg(pw)}", "c3_sum_server") { h.open(Decl.SECTION_CONFIGS, Decl.PAGE_SERVER) }
-        DLights("Pages", pages, "${rows.count { it.optBoolean("serving") }} of ${rows.size} serving (connect probe per port)" + (if (pages.disabled) " · Disabled" else ""), "c3_sum_pages") { h.open(Decl.SECTION_PAGES, Decl.PAGE_ALL) }
-        DLights("API", api, if (api.disabled) "Disabled" else if (h.health == null) "not answering" else if (h.health.optBoolean("ok")) "health ok (:8003 answered)" else "health not ok", "c3_sum_api") { h.open(Decl.SECTION_API, Decl.PAGE_TOPOLOGY) }
-        DLights("SSHD", ssh, (if (ssh.disabled) "Disabled · " else "") + "${doors.count { sshState(it) == SshState.GREEN }} of ${doors.size} doors up (bind state)", "c3_sum_sshd") { h.open(Decl.SECTION_SSHD, null) }
-        DLights("ADB Shell", adb, when (adbUp) { true -> "server answering"; false -> "server not answering"; null -> "no probe (owner side or SuperApp missing)" } +
-            (h.live.roundTrip?.let { if (it) " · echo round trip ok" else " · no echo" } ?: ""), "c3_sum_adb") { h.open(Decl.SECTION_ADB_SHELL, Decl.PAGE_ADB_STATUS) }
+        // #1845 one row per service with its three lights, its state and, when it is not healthy, the cause named on the row
+        sum.forEach { r ->
+            DLights(r.name, r.lights, r.msg + (if (r.cause.isEmpty()) "" else " · ${r.cause}"), tags[r.name].orEmpty()) { goto[r.name]?.invoke() }
+        }
+        if (state == SummaryState.ATTENTION) HomeModel.attentionWhy(sum).takeIf { it.isNotEmpty() }?.let { DNote("Why ATTENTION: $it") }
         DNote(HomeModel.LEGEND)
         DRow("Mode", if (UiMode.edit) "Edit (switches work)" else "View only (switches locked)")
         DActs {
@@ -301,5 +304,20 @@ fun ServerTable(h: HomeData) {
         DRow("Keep-alive", HomeModel.onOff(l.keepAlive).uppercase(), up = l.keepAlive)
         DRow("Services enabled", HomeModel.servicesMsg(pw))
         DRow("Active sites", pw.str("sites"))
+    }
+}
+
+/** #1845 VPN: the full mesh status of the phone, read live from the engine (VpnReader: INetBackend), one block per mesh after the tunnel's own. */
+@Composable
+fun VpnTable(h: HomeData, vpn: VpnReading?) {
+    val (badge, up) = VpnModel.verdict(vpn)
+    DenseCard("VPN", "c3_home_vpn", badges = { Badge(badge, if (up == true) Tone.Up else Tone.Down) }) {
+        DActs { DAct("Probe", "c3_vpn_probe") { h.bump() } }
+        DNote("read live from the VPN engine (INetBackend), the same source as Cloud SuperApp > VPN > Status; probes run from this phone through the tunnel")
+        VpnModel.tunnelRows(vpn).forEach { DRow(it.key, it.value, up = it.up) }
+        vpn?.meshes.orEmpty().forEach { m ->
+            DNote(m.decl.label.uppercase() + " · " + m.decl.cidr)
+            VpnModel.meshRows(m).forEach { DRow(it.key, it.value, up = it.up) }
+        }
     }
 }

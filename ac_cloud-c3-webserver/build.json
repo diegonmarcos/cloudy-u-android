@@ -898,6 +898,7 @@
   "modules": {
     "_doc": "Shared modules the gradle project (native.android_project) includes BY REFERENCE beside :app. Its settings.gradle iterates this map and, like every other reader of it (the ship workflow's trigger derivation, the publish gate, ab_cloud-libs-shared/libs/shared-modules.test.sh), resolves each dir against THIS directory, not against the gradle root three levels down. They are compiled Kotlin libraries, not source in this app's tree, so test/test-c3-webserver-native.sh (K2) does not see them. libs:devtools finds this file by walking up from the gradle root (src-tauri/gen/android), as libs:analytics does, so there is one declaration and no copy.",
     "libs:fleet-notify": {"dir": "../ab_cloud-libs-shared/libs/fleet-notify", "type": "library", "comment": "#1660 FleetNotify + KeepAliveStatus (the keep-alive and data-widget notifications), out of libs:core; linked by the app (the servers keep-alive notification)."},
+    "libs:net": {"dir": "../ab_cloud-libs-shared/libs/net", "type": "library", "depends_on": ["libs:core"], "comment": "#1845 Home VPN table: the INetBackend client (AidlBackend) the SuperApp VPN page drives, read-only here (tunnel state, statistics, always-on, relay)."},
     "libs:core": {
       "_doc_dir": "Fleet mesh membership: core manifest-merges the CONSTELLATION_DATA signature permission (defined and requested). Declared so a core change rebuilds this app instead of shipping a stale mesh member.",
       "type": "library",
@@ -1007,6 +1008,14 @@
         "ghcr_tag_suffix": "-x86_64",
         "update_tag": "latest-x86_64"
       }
+    ]
+  },
+  "vpn": {
+    "_doc": "#1845 THE VPN table of Home (ui/VpnReader.kt, VpnModel.kt): the full mesh status read LIVE from the engine's INetBackend (libs:net AidlBackend, the same engine and calls the SuperApp's VPN page drives through WgState.backend), never a proxy. `meshes` is the SuperApp's ui.mesh_page.meshes (held equal by test/test-c3-webserver-vpn-parity.sh): per mesh the phone's address, the route, the hub resolver among Android's, TCP :53 to the hub from the phone's address in THAT mesh, and the private name. `tunnel_candidates` are the names the SuperApp gives its active tunnel (WireGuardPrefs.activateProfile: config-<profile id>; wg-mesh is the default); the first one UP in the engine is the tunnel.",
+    "tunnel_candidates": ["config-v4-split", "config-v4-full", "config-v6-split", "config-v6-full", "wg-mesh"],
+    "meshes": [
+      {"id": "wg0", "label": "Mesh-1", "cidr": "10.0.0.0/24", "hub": "10.0.0.1", "resolver": "10.0.0.1", "name": "c3-infra-api.mesh.diegonmarcos.com", "service_url": "https://c3-infra-api.mesh.diegonmarcos.com/"},
+      {"id": "wg-public", "label": "Mesh-2", "cidr": "10.1.0.0/24", "hub": "10.1.0.1", "resolver": "10.1.0.1", "name": "maddy.mesh.diegonmarcos.com", "service_url": ""}
     ]
   },
   "tests": {

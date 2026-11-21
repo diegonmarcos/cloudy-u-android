@@ -45,8 +45,83 @@ object HomeModel {
     fun pages(pw: JSONObject?, served: JSONObject?): Lights {
         if (neutral(pw, "pages")) return off(pw)
         val rows = served.objs("rows"); val flag = svcFlag(pw, "pages")
-        return Lights(if (served == null) null else flag && rows.any { it.optBoolean("serving") }, bool(pw, "keep_alive"), if (served == null) null else flag && rows.isNotEmpty() && rows.all { it.optBoolean("serving") })
+        // #1845 healthy = every page THIS server serves answers; another app's page (external: its own server, closed app) and a Repos site the owner has not started are named by pagesCause, not a fault of the Pages service
+        val mine = ours(rows)
+        return Lights(if (served == null) null else flag && rows.any { it.optBoolean("serving") }, bool(pw, "keep_alive"), if (served == null) null else flag && mine.isNotEmpty() && mine.all { it.optBoolean("serving") })
     }
+
+    private val NOT_OURS = setOf("external", "place", "adopted")
+    private fun ours(rows: List<JSONObject>) = rows.filter { it.optString("role") !in NOT_OURS }
+
+    /** One row of the Summary: the service, its three lights, its one-line state and the CAUSE when it is not healthy (empty when healthy). */
+    data class SumRow(val name: String, val lights: Lights, val msg: String, val cause: String)
+
+    /** #1845 why Pages is not healthy, by name: the pages this server serves that do not answer, then the others' pages that are closed. */
+    fun pagesCause(served: JSONObject?): String {
+        if (served == null) return "the served list was not read"
+        val rows = served.objs("rows")
+        val down = ours(rows).filter { !it.optBoolean("serving") }.joinToString(", ") { "${it.optString("name")} :${it.opt("port")} (${it.optString("role")})" }
+        val ext = rows.filter { it.optString("role") == "external" && !it.optBoolean("serving") }.map { it.optString("name") }
+        val place = rows.count { it.optString("role") == "place" && !it.optBoolean("serving") }
+        return listOfNotNull(
+            if (down.isEmpty()) null else "not answering: $down",
+            if (ext.isEmpty()) null else "${ext.size} other app page(s) closed, their own app is not open: ${ext.joinToString(", ")} (not a fault here)",
+            if (place == 0) null else "$place repo site(s) not started (the owner's choice)",
+        ).joinToString(" · ")
+    }
+
+    fun apiCause(health: JSONObject?): String = when {
+        health == null -> "no answer on the diagnostics port :8003 (its listener is not bound)"
+        !health.optBoolean("ok") -> "the health route answered not ok"
+        else -> ""
+    }
+
+    /** #1845 every door that is not up, named with its own verdict and reason; and the reconciliation when the service reads ON. */
+    fun sshdCause(sshd: JSONObject?): String {
+        val doors = sshd.objs("doors")
+        if (doors.isEmpty()) return "no door declared"
+        val bad = doors.filter { sshState(it) != SshState.GREEN }
+        if (bad.isEmpty()) return ""
+        val why = bad.joinToString("; ") { d ->
+            val reason = d.optJSONObject("status")?.optString("reason").orEmpty().ifEmpty { d.optString("state") }
+            "${d.optString("title")}${if (d.has("port") && !d.isNull("port")) " :" + d.opt("port") else ""} ${sshWord(d)}${if (reason.isEmpty()) "" else " ($reason)"}"
+        }
+        val alive = doors.count { doorOn(it) && sshState(it) != SshState.GREEN }
+        return (if (alive > 0) "ON means a process answers its own check (${alive}), UP needs the bind and banner checks too: " else "") + why
+    }
+
+    fun adbCause(adb: JSONObject?, live: AdbLive): String {
+        val up = bool(adb, "server_up")
+        if (up == true && live.roundTrip != false) return ""
+        val parts = mutableListOf<String>()
+        if (adb == null) parts += "the ADB status was not read" else if (up == false) parts += "nothing answers on 127.0.0.1:${adb.optString("server_port").ifEmpty { "?" }}" else if (up == null) parts += "no probe (owner side or SuperApp missing)"
+        if (live.roundTrip == false) parts += "no echo round trip"
+        adb?.optString("last_start")?.takeIf { it.isNotEmpty() }?.let { parts += "last start: $it" }
+        return parts.joinToString(" · ")
+    }
+
+    /** #1845 the Summary rows (Home draws them, the Markdown export prints them): the one place the lights, the message and the cause are built. */
+    fun summaryRows(pw: JSONObject?, health: JSONObject?, served: JSONObject?, sshd: JSONObject?, adb: JSONObject?, live: AdbLive): List<SumRow> {
+        val serverOn = pw?.optBoolean("server") == true
+        val adbUp = bool(adb, "server_up")
+        val pg = HomeModel.pages(pw, served); val ap = HomeModel.api(pw, health); val ss = HomeModel.sshd(sshd, pw); val sv = HomeModel.server(pw); val ab = HomeModel.adb(adb, live)
+        val rows = served.objs("rows"); val doors = sshd.objs("doors")
+        fun cause(l: Lights, c: String) = if (l.disabled || l.healthy == true) "" else c
+        return listOf(
+            SumRow("Server", sv, if (pw == null) "not answering" else if (!serverOn) (if (sv.disabled) "Stopped (admin page stays up)" else "OFF, Keep alive wants it up (fault)") else "pid ${pw.optString("pid")} · up ${fmtUp(if (pw.has("uptime_s")) pw.optLong("uptime_s") else null)} · ${servicesMsg(pw)}",
+                if (pw != null && serverOn && sv.healthy != true) "the admin or diagnostics listener is not bound" else ""),
+            SumRow("Pages", pg, "${rows.count { it.optBoolean("serving") }} of ${rows.size} serving (connect probe per port)" + (if (pg.disabled) " · Disabled" else "") +
+                (if (pg.healthy == true) pagesCause(served).let { if (it.isEmpty()) "" else " · $it" } else ""), cause(pg, pagesCause(served))),
+            SumRow("API", ap, if (ap.disabled) "Disabled" else if (health == null) "not answering" else if (health.optBoolean("ok")) "health ok (:8003 answered)" else "health not ok", cause(ap, apiCause(health))),
+            SumRow("SSHD", ss, (if (ss.disabled) "Disabled · " else "") + "${doors.count { sshState(it) == SshState.GREEN }} of ${doors.size} doors up (bind state)", cause(ss, sshdCause(sshd))),
+            SumRow("ADB Shell", ab, when (adbUp) { true -> "server answering"; false -> "server not answering"; null -> "no probe (owner side or SuperApp missing)" } + (live.roundTrip?.let { if (it) " · echo round trip ok" else " · no echo" } ?: ""),
+                if (adbUp == true && live.roundTrip != false) "" else adbCause(adb, live)),
+        )
+    }
+
+    /** #1845 the one line under the badge: which rows make it ATTENTION. */
+    fun attentionWhy(rows: List<SumRow>): String =
+        rows.filter { !it.lights.disabled && it.cause.isNotEmpty() }.joinToString(" · ") { "${it.name}: ${it.cause}" }
 
     fun api(pw: JSONObject?, health: JSONObject?): Lights {
         if (neutral(pw, "api")) return off(pw)

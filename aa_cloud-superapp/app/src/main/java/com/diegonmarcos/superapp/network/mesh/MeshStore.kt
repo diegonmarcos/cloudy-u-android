@@ -269,6 +269,8 @@ class MeshStore(
         "view.statusLog" to { a, _ -> view["status_log_open"] = a },
         "clipboard.all" to { _, _ -> host.copy("mesh status", reportText()); notice = "whole status copied (private keys are never included)" },
         "export.all" to { _, _ -> host.exportText("cloud-mesh-status.txt", reportText()) },
+        // #1845 the same whole status as a Markdown file (headings per section, the rows fenced)
+        "export.md" to { _, _ -> host.exportMarkdown("cloud-mesh-status.md", MeshReport.markdown(reportText())) },
         "log.level" to { a, _ -> logLevel = if (a in setOf("all", "warn", "error")) a else "all"; journalRev++ },
         "view.sort" to { a, _ -> view["peer_sort"] = a },
         "view.routeFilter" to { a, _ -> view["route_filter"] = a },

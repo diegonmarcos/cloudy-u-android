@@ -233,6 +233,22 @@ class MeshStoreTest {
         assertFalse(r.ok); assertEquals("https", r.steps.last().id); assertEquals("HTTP 502", r.steps.last().detail)
     }
 
+    @Test fun `#1845 export to Md is the whole status as Markdown, one heading per section, and never a private or pre-shared key`() {
+        val port = FakePort(up = true); val host = FakeHost()
+        port.peers[0] = port.peers[0].copy(presharedKey = "PSKSECRETVALUE")
+        val s = MeshStore(port, MeshDecl.baked, host, clock = { now }, exec = { it.run() }, reachIo = FakeIo())
+        s.poll(); s.run("reach.run")
+        s.journal.add(LogEvent(now, "action", "private key = SUPERSECRETKEY123="))
+        s.run("export.md")
+        assertEquals("cloud-mesh-status.md", host.exported!!.first)
+        val t = host.exported!!.second
+        assertTrue(t.startsWith("# Cloud Mesh status"))
+        for (h in listOf("## Tunnel", "## Interface", "## DNS", "## Peers", "## Meshes", "## Reachability", "## Log")) assertTrue("missing $h", h in t)
+        assertEquals("every section is fenced", t.lines().count { it == "```" } % 2, 0)
+        assertFalse(t.contains("PSKSECRETVALUE")); assertFalse(t.contains("SUPERSECRETKEY123"))
+        assertEquals("the same rows as Export all", s.reportText().lines().count { it.startsWith("== ") }, t.lines().count { it.startsWith("## ") })
+    }
+
     @Test fun `copy all and export all carry the whole status and never a private or pre-shared key`() {
         val port = FakePort(up = true); val host = FakeHost()
         port.peers[0] = port.peers[0].copy(presharedKey = "PSKSECRETVALUE")

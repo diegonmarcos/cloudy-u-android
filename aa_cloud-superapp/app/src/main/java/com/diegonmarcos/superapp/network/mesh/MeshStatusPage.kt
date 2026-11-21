@@ -42,7 +42,7 @@ private fun StatusRow(id: String, store: MeshStore, s: MeshSnapshot) {
             Modifier.testTag(tag).padding(bottom = MeshDensity.dp(MeshDensity.S6)),
             horizontalArrangement = Arrangement.spacedBy(MeshDensity.dp(MeshDensity.S6)),
         ) {
-            for (cid in listOf("status_copy_all", "status_export_all")) store.decl.page("status")?.control(cid)?.let { c ->
+            for (cid in listOf("status_copy_all", "status_export_all", "status_export_md")) store.decl.page("status")?.control(cid)?.let { c ->
                 MButton(declLabel("ctl", c.id, c.label), { store.run(c.engine) }, Modifier.testTag(MeshTags.control(c.id)))
             }
         }

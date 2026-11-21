@@ -127,6 +127,8 @@ interface MeshHost {
     fun openCustomTab(url: String)
     /** #1153 Save [text] as a file the owner picks (Storage Access Framework), suggested [name]. */
     fun exportText(name: String, text: String) {}
+    /** #1845 Save [text] as a Markdown file the owner picks; a host without its own picker falls back to the text export. */
+    fun exportMarkdown(name: String, text: String) = exportText(name, text)
 }
 
 /** #1074 What is registered with Cloudflare: [warp] a WARP device exists, [one] a Cloudflare One device exists, [active] the profile name that is the tunnel when it is a Cloudflare one. */

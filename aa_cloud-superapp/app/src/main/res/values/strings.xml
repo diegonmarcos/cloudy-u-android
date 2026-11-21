@@ -662,6 +662,7 @@
     <string name="mesh_reach_none">Not run yet: %1$d private mesh URLs are tested (DNS, TCP 443, TLS issuer and trust, HTTPS).</string>
     <string name="mesh_ctl_status_copy_all">Copy all</string>
     <string name="mesh_ctl_status_export_all">Export all</string>
+    <string name="mesh_ctl_status_export_md">Export to Md</string>
     <string name="mesh_ctl_reach_run">Run again</string>
     <string name="mesh_opt_warn">Warnings</string>
     <string name="mesh_opt_error">Errors</string>

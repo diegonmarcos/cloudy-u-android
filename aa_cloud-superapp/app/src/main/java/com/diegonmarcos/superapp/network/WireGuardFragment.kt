@@ -103,8 +103,22 @@ class WireGuardFragment : KitComposeFragment() {
             }
         }
 
+    /** #1845 Export to Md: the same hand-over with a Markdown mime type, so the file keeps its .md name. */
+    private var pendingMarkdown: String = ""
+    private val exportMdLauncher: ActivityResultLauncher<String> =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("text/markdown")) { uri ->
+            uri ?: return@registerForActivityResult
+            val text = pendingMarkdown; pendingMarkdown = ""
+            val resolver = requireContext().contentResolver
+            report("export status (Markdown)") {
+                resolver.openOutputStream(uri)?.use { out -> out.write(text.toByteArray()) } ?: error("could not write the file")
+                "saved the whole status as Markdown (no private keys)"
+            }
+        }
+
     private val host = object : MeshHost {
         override fun exportText(name: String, text: String) { pendingExport = text; exportAllLauncher.launch(name) }
+        override fun exportMarkdown(name: String, text: String) { pendingMarkdown = text; exportMdLauncher.launch(name) }
         override fun requestConsent(intent: Intent, then: () -> Unit) { afterConsent = then; vpnConsentLauncher.launch(intent) }
 
         override fun copy(label: String, text: String) {

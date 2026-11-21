@@ -65,6 +65,10 @@ fun HomePage(open: (String, String?) -> Unit) {
     // the ADB owner's real reads (the keep-alive switch, an echo round trip), off the main thread, re-read on every refresh
     var live by remember { mutableStateOf(AdbLive(false, null, null)) }
     LaunchedEffect(tick) { live = withContext(Dispatchers.IO) { runCatching { AdbOwnerSide.readLive(ctx) }.getOrDefault(live) } }
+    // #1845 the VPN table: read live from the engine (INetBackend) off the main thread on every refresh, never a proxy
+    var vpn by remember { mutableStateOf<VpnReading?>(null) }
+    val vpnDecl = (power as? Load.Ok)?.value?.optJSONObject("vpn")
+    LaunchedEffect(tick, vpnDecl) { if (vpnDecl != null) vpn = withContext(Dispatchers.IO) { runCatching { VpnReader.read(ctx, vpnDecl) }.getOrDefault(vpn) } }
     val actions = rememberActions(bump)
     var confirmOff by remember { mutableStateOf<Boolean?>(null) }   // non-null = the Server OFF question is open (true = Stop All, ADB goes down too)
     val data = HomeData(
@@ -89,6 +93,15 @@ fun HomePage(open: (String, String?) -> Unit) {
         AdbTable(data, tick)
         SectionBand("server", "Server")
         ServerTable(data)
+        SectionBand("vpn", "VPN")
+        VpnTable(data, vpn)
+        // #1845 the whole page as Markdown, from the same models the tables draw
+        DenseCard("Export", "c3_home_export") {
+            DActs {
+                DAct("Export all to Md", "c3_home_export_md") { shareMarkdown(ctx, HomeReport.markdown(data, vpn, homeStamp())) }
+                DAct("Copy all", "c3_home_copy_all") { copyText(ctx, "Home", HomeReport.markdown(data, vpn, homeStamp())) }
+            }
+        }
     }
     if (confirmOff != null) AlertDialog(
         onDismissRequest = { confirmOff = null },
@@ -172,3 +185,16 @@ fun aboutText(groups: JSONArray): String = groups.objs().joinToString("\n\n") { 
         "# ${s.optString("title")}\n" + s.optJSONArray("rows").pairs().joinToString("\n") { "${it.first}: ${it.second}" }
     }
 } + "\n"
+
+private fun homeStamp() = "exported " + java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US).format(java.util.Date())
+
+/** #1845 Export to Md: the text is written to the app's cache and handed to the share sheet as a .md file (FileProvider, read grant only). */
+fun shareMarkdown(ctx: android.content.Context, text: String, name: String = "cloud-c3-webserver-home-" + java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US).format(java.util.Date()) + ".md") {
+    runCatching {
+        val f = java.io.File(ctx.cacheDir, name).also { it.writeText(text) }
+        val uri = androidx.core.content.FileProvider.getUriForFile(ctx, ctx.packageName + ".fileprovider", f)
+        val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/markdown").putExtra(android.content.Intent.EXTRA_STREAM, uri)
+            .putExtra(android.content.Intent.EXTRA_SUBJECT, name).addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        ctx.startActivity(android.content.Intent.createChooser(send, "Export to Md").addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+    }.onFailure { toast(ctx, "Export failed: ${it.message}") }
+}
