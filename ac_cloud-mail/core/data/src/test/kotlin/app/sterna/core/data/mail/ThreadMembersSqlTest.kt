@@ -27,6 +27,7 @@ class ThreadMembersSqlTest {
                 )
                 """.trimIndent(),
             )
+            st.executeUpdate("CREATE TABLE email_mailboxes(accountId TEXT, emailId TEXT, mailboxId TEXT, PRIMARY KEY(accountId, emailId, mailboxId))")
         }
     }
 

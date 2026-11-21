@@ -244,6 +244,24 @@ has "$ROOT/1_cicd/src/cicd/mail-core-cargo-lock.yml" 'cargo generate-lockfile' "
 if python3 -I "$APP/test/fake-jmap-server.py" --selftest >/dev/null 2>&1; then ok "the fake JMAP server passes its own selftest"; else bad "the fake JMAP server selftest fails"; fi
 if python3 -I "$APP/test/mail-offline-ui.py" selftest >/dev/null 2>&1; then ok "the dump helper passes its own selftest"; else bad "the dump helper selftest fails"; fi
 
+echo "== P6: the #1837 membership table (a label lists a message also in the Inbox; unread counts per membership; one core sync per refresh) =="
+DB="$D/db"
+has "$DB/EmailMailboxEntity.kt" 'tableName = "email_mailboxes"' "the membership entity exists"
+has "$DB/SternaDatabase.kt" 'SCHEMA_VERSION = 33' "the schema version moved to 33"
+has "$DB/SternaDatabase.kt" 'MIGRATION_32_33' "the 32 to 33 migration is registered"
+has "$DB/Migrations.kt" 'CREATE TABLE IF NOT EXISTS `email_mailboxes`' "the migration creates the membership table"
+has "$DB/EmailDao.kt" 'suspend fun applyProjection(' "the core's feed writes rows and memberships in one transaction"
+has "$DB/EmailDao.kt" 'fun observeExtraScopes()' "the folders that list extra messages are observed"
+has "$DB/EmailDao.kt" 'JOIN emails e ON e.accountId = m.accountId AND e.id = m.emailId WHERE m.mailboxId <> e.mailboxId' "the unread badges count memberships"
+has "$R" 'memberPairs: Set<Int> = emptySet()' "the folder scope takes the membership term only for the folders that need it (legacy plan kept)"
+has "$R" 'extraScopes().flatMapLatest' "the pagers follow the folders that list extra messages"
+has "$R" 'coalesceMs = RustMailEngine.COALESCE_MS' "the per-folder core syncs of one refresh are coalesced"
+has "$E" 'emailDao.applyProjection(' "the projection writes every fed message's mailbox set"
+has "$E" 'coalesceMs: Long = 0L' "the core sync can answer a folder sync from a pass that just completed"
+has "$APP/core/data/src/test/kotlin/app/sterna/core/data/db/FolderMembershipMigrationSqlTest.kt" 'the table has the columns, NOT NULL and primary key order Room generates' "the migration test exists"
+has "$APP/core/data/src/test/kotlin/app/sterna/core/data/mail/FolderMembershipListSqlTest.kt" 'with the membership term the label lists the message that is also in the Inbox' "the list SQL test exists"
+has "$APP/test/walk-mail-core-offline.sh" 'must list its own message AND the Inbox message that is also in the label' "the emulator proof asserts the label lists the Inbox message too"
+
 echo
 echo "passed=$PASS failed=$FAIL"
 [ "$FAIL" = 0 ]

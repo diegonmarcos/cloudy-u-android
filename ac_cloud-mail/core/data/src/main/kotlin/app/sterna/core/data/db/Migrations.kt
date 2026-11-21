@@ -417,3 +417,19 @@ val MIGRATION_31_32 = object : Migration(31, 32) {
         db.execSQL("ALTER TABLE emails ADD COLUMN messageId TEXT")
     }
 }
+
+/**
+ * v32 -> v33 (#1837 phase 3): `email_mailboxes`, the (message, mailbox) membership the Rust core's feed mirrors, so a label lists a
+ * message that is also in the Inbox. A new empty table and its index, no row rewritten: until the core's projection fills it every
+ * list reads exactly as before (the scope falls back to `emails.mailboxId`). The DDL is what Room generates for
+ * [EmailMailboxEntity] (names, NOT NULL, primary key order, the index name), which `validateMigration` checks at open.
+ */
+val MIGRATION_32_33 = object : Migration(32, 33) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `email_mailboxes` (`accountId` TEXT NOT NULL, `emailId` TEXT NOT NULL, " +
+                "`mailboxId` TEXT NOT NULL, PRIMARY KEY(`accountId`, `emailId`, `mailboxId`))",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_email_mailboxes_accountId_mailboxId` ON `email_mailboxes` (`accountId`, `mailboxId`)")
+    }
+}

@@ -209,7 +209,8 @@ interface EmailDao {
 
     /** All cached messages from one sender (lower-cased address) in [mailboxIds], newest first: the members of a sender group. */
     @Query(
-        "SELECT * FROM emails WHERE accountId = :accountId AND mailboxId IN (:mailboxIds) " +
+        "SELECT * FROM emails WHERE accountId = :accountId AND (mailboxId IN (:mailboxIds) OR EXISTS (SELECT 1 FROM email_mailboxes m " +
+            "WHERE m.accountId = emails.accountId AND m.emailId = emails.id AND m.mailboxId IN (:mailboxIds))) " +
             "AND LOWER(TRIM(fromEmail)) = :sender ORDER BY sortKey DESC",
     )
     fun cachedSenderEmails(accountId: String, mailboxIds: List<String>, sender: String): Flow<List<EmailEntity>>
@@ -224,13 +225,63 @@ interface EmailDao {
 
     /** All cached messages from one sender DOMAIN ("" = no usable address) in [mailboxIds], newest first: a domain group. */
     @Query(
-        "SELECT * FROM emails WHERE accountId = :accountId AND mailboxId IN (:mailboxIds) " +
+        "SELECT * FROM emails WHERE accountId = :accountId AND (mailboxId IN (:mailboxIds) OR EXISTS (SELECT 1 FROM email_mailboxes m " +
+            "WHERE m.accountId = emails.accountId AND m.emailId = emails.id AND m.mailboxId IN (:mailboxIds))) " +
             "AND fromDomain = :domain ORDER BY sortKey DESC",
     )
     fun cachedDomainEmails(accountId: String, mailboxIds: List<String>, domain: String): Flow<List<EmailEntity>>
 
     @Upsert
-    suspend fun upsertAll(emails: List<EmailEntity>)
+    suspend fun upsertRows(emails: List<EmailEntity>)
+
+    /**
+     * Writes the rows. A row written here comes from a path that does not know the message's other mailboxes (a local move, the
+     * Kotlin window sync), so its set of extra memberships ([EmailMailboxEntity]) is cleared; the core's projection writes it
+     * again AFTER this ([applyDelta]'s memberships, [replaceMemberships]).
+     */
+    @Transaction
+    suspend fun upsertAll(emails: List<EmailEntity>) {
+        emails.groupBy { it.accountId }.forEach { (account, rows) ->
+            rows.map { it.id }.chunked(500).forEach { clearMemberships(account, it) }
+        }
+        upsertRows(emails)
+    }
+
+    @Query("DELETE FROM email_mailboxes WHERE accountId = :accountId AND emailId IN (:ids)")
+    suspend fun clearMemberships(accountId: String, ids: List<String>)
+
+    /** The folders that hold messages filed under ANOTHER mailbox (#1837), live: the list queries add the membership term for these only. */
+    @Query(
+        "SELECT DISTINCT m.accountId AS accountId, m.mailboxId AS mailboxId FROM email_mailboxes m " +
+            "JOIN emails e ON e.accountId = m.accountId AND e.id = m.emailId WHERE m.mailboxId <> e.mailboxId",
+    )
+    fun observeExtraScopes(): Flow<List<MailboxScopeRow>>
+
+    @Upsert
+    suspend fun upsertMemberships(rows: List<EmailMailboxEntity>)
+
+    /** The messages [mailboxId] holds through the membership table (ids of cached rows only). */
+    @Query(
+        "SELECT m.emailId FROM email_mailboxes m JOIN emails e ON e.accountId = m.accountId AND e.id = m.emailId " +
+            "WHERE m.accountId = :accountId AND m.mailboxId = :mailboxId",
+    )
+    suspend fun membershipIdsForMailbox(accountId: String, mailboxId: String): List<String>
+
+    /** Each message's whole set of mailboxes replaced by [memberships] (message id -> mailbox ids), in the caller's transaction. */
+    @Transaction
+    suspend fun replaceMemberships(accountId: String, memberships: Map<String, Set<String>>) {
+        memberships.keys.chunked(500).forEach { clearMemberships(accountId, it) }
+        val rows = memberships.flatMap { (id, boxes) -> boxes.map { EmailMailboxEntity(accountId, id, it) } }
+        if (rows.isNotEmpty()) upsertMemberships(rows)
+    }
+
+    /** The core's projection of one feed page as ONE transaction: [applyDelta] plus the memberships of the rows it wrote. */
+    @Transaction
+    suspend fun applyProjection(accountId: String, deleteIds: List<String>, upserts: List<EmailEntity>, memberships: Map<String, Set<String>>) {
+        deleteIds.chunked(500).forEach { clearMemberships(accountId, it) }
+        applyDelta(accountId, deleteIds, upserts)
+        replaceMemberships(accountId, memberships)
+    }
 
     /**
      * Prune a mailbox's cached page down to [keepIds] — window eviction, not removal: the messages
@@ -393,7 +444,8 @@ interface EmailDao {
      * All cached messages of one thread, newest first, scoped to one account and [mailboxIds] (the
      */
     @Query(
-        "SELECT * FROM emails WHERE accountId = :accountId AND mailboxId IN (:mailboxIds) " +
+        "SELECT * FROM emails WHERE accountId = :accountId AND (mailboxId IN (:mailboxIds) OR EXISTS (SELECT 1 FROM email_mailboxes m " +
+            "WHERE m.accountId = emails.accountId AND m.emailId = emails.id AND m.mailboxId IN (:mailboxIds))) " +
             "AND COALESCE(threadId, id) = :threadKey ORDER BY sortKey DESC",
     )
     fun cachedThreadEmails(accountId: String, mailboxIds: List<String>, threadKey: String): Flow<List<EmailEntity>>
@@ -403,7 +455,9 @@ interface EmailDao {
      */
     @Query(
         "SELECT accountId, mailboxId, COUNT(*) AS count FROM (" +
-            "SELECT accountId, mailboxId, COALESCE(threadId, id) AS tk FROM emails " +
+            "SELECT accountId, mailboxId, COALESCE(threadId, id) AS tk FROM (SELECT accountId, id, mailboxId, threadId, seen FROM emails UNION ALL " +
+            "SELECT e.accountId, e.id, m.mailboxId, e.threadId, e.seen FROM email_mailboxes m " +
+            "JOIN emails e ON e.accountId = m.accountId AND e.id = m.emailId WHERE m.mailboxId <> e.mailboxId) emails " +
             "WHERE NOT EXISTS (SELECT 1 FROM snoozed WHERE snoozed.emailId = emails.id " +
             "AND snoozed.accountId = emails.accountId AND snoozed.until > " +
             "(CAST(strftime('%s','now') AS INTEGER) * 1000)) " +
@@ -417,7 +471,9 @@ interface EmailDao {
      * not-snoozed filter. Reactive, as [observeThreadUnreadCounts].
      */
     @Query(
-        "SELECT accountId, mailboxId, COUNT(*) AS count FROM emails " +
+        "SELECT accountId, mailboxId, COUNT(*) AS count FROM (SELECT accountId, id, mailboxId, threadId, seen FROM emails UNION ALL " +
+            "SELECT e.accountId, e.id, m.mailboxId, e.threadId, e.seen FROM email_mailboxes m " +
+            "JOIN emails e ON e.accountId = m.accountId AND e.id = m.emailId WHERE m.mailboxId <> e.mailboxId) emails " +
             "WHERE seen = 0 AND NOT EXISTS (SELECT 1 FROM snoozed WHERE snoozed.emailId = emails.id " +
             "AND snoozed.accountId = emails.accountId AND snoozed.until > " +
             "(CAST(strftime('%s','now') AS INTEGER) * 1000)) " +
@@ -580,3 +636,6 @@ data class DomainIndexRow(val accountId: String, val id: String, val fromEmail: 
 
 /** A partial [EmailEntity] for [EmailDao.setFromDomains]: the key and the one column it writes. */
 data class FromDomainUpdate(val accountId: String, val id: String, val fromDomain: String)
+
+/** One (account, mailbox) pair: a folder scope. */
+data class MailboxScopeRow(val accountId: String, val mailboxId: String)

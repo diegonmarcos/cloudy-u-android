@@ -49,6 +49,7 @@ class RustMailEngine(
     private val cursors: ProjectionCursors = ProjectionCursors.InMemory(),
 ) {
     private val mutex = Mutex()
+    private val lastComplete = java.util.concurrent.ConcurrentHashMap<String, Pair<Long, CoreSyncReport>>()
     @Volatile private var loggedUnavailable = false
 
     /** Null when the core can run in this process, otherwise why not (logged once). */
@@ -69,7 +70,15 @@ class RustMailEngine(
         auth: JmapAuth,
         localAccountId: String,
         budgetMs: Long?,
+        // One refresh syncs many folders and each asks for a core pass: a COMPLETE pass of this account that finished less than
+        // this long ago answers the later ones (the folder projections still run), so a refresh costs one incremental sync, not one per folder.
+        coalesceMs: Long = 0L,
     ): CoreSyncReport = mutex.withLock {
+        val last = lastComplete[localAccountId]
+        if (coalesceMs > 0 && last != null && System.currentTimeMillis() - last.first < coalesceMs) {
+            log("sync $localAccountId: coalesced into the pass of ${System.currentTimeMillis() - last.first} ms ago")
+            return@withLock last.second
+        }
         withContext(Dispatchers.IO) {
             val transport = transportFor(client, session, jmapAccountId, auth)
             val batch = session.getBatchSize()
@@ -85,7 +94,10 @@ class RustMailEngine(
                 if (budgetMs != null) put("budgetMs", budgetMs)
             }
             val text = MailCore.sync(dbPath, config.toString(), transport).getOrThrow()
-            CoreSyncReport.parse(text).also { log("sync $localAccountId: ${it.summary}") }
+            CoreSyncReport.parse(text).also {
+                log("sync $localAccountId: ${it.summary}")
+                if (it.complete) lastComplete[localAccountId] = System.currentTimeMillis() to it else lastComplete.remove(localAccountId)
+            }
         }
     }
 
@@ -170,6 +182,7 @@ class RustMailEngine(
         withContext(Dispatchers.IO) {
             MailCore.query(dbPath, buildJsonObject { put("op", "dropAccount"); put("account", localAccountId) }.toString()).getOrThrow()
             cursors.dropAccount(localAccountId)
+            lastComplete.remove(localAccountId)
         }
     }
 
@@ -232,7 +245,12 @@ class RustMailEngine(
                 val plan = FolderFiling.plan(mailboxId, page.emails, page.moved, page.removed, page.primary, inRoom, isProtected)
                 if (plan.rows.isNotEmpty() || plan.gone.isNotEmpty()) {
                     beforeWrite()
-                    emailDao.applyDelta(localAccountId, plan.gone, plan.rows.map { (e, filedUnder) -> e.toEntity(localAccountId, filedUnder) })
+                    // #1837: beside the row (filed under its primary mailbox) the message's whole set of server mailboxes, so a label lists it too.
+                    val memberships = plan.rows.filter { it.first.mailboxIds.isNotEmpty() }.associate { it.first.id to it.first.mailboxIds.keys }
+                    emailDao.applyProjection(
+                        localAccountId, plan.gone,
+                        plan.rows.map { (e, filedUnder) -> e.toEntity(localAccountId, filedUnder) }, memberships,
+                    )
                     plan.rows.forEach { (e, filedUnder) -> if (filedUnder == mailboxId && e.id !in inRoom) upserted += e.id }
                     removed += plan.gone
                 }
@@ -245,7 +263,9 @@ class RustMailEngine(
             complete = count?.complete == true
             val roomIds = emailDao.idsForMailbox(localAccountId, mailboxId).toHashSet()
             // The rows this mailbox owns are those the filing rule gives it (a message also in the Inbox is the Inbox's), not all its members.
-            if (count == null || count.primaryLocal == roomIds.size) break
+            // The memberships too: the extra rows this mailbox holds through `email_mailboxes` must be the ones the store lists for it.
+            val heldHere = emailDao.membershipIdsForMailbox(localAccountId, mailboxId).filter { it !in roomIds }.toHashSet()
+            if (count == null || (count.primaryLocal == roomIds.size && count.local - count.primaryLocal == heldHere.size)) break
             val (inStore, filedHere) = members(localAccountId, mailboxId)
             if (count.complete) {
                 val extra = roomIds.filter { it !in inStore && !isProtected(it) }
@@ -256,7 +276,8 @@ class RustMailEngine(
                 }
             }
             // Missing = rows the store files here that the app lacks; misfiled = rows the app holds here that the rule files elsewhere.
-            val missing = filedHere.any { it !in roomIds } || roomIds.any { it in inStore && it !in filedHere }
+            val missing = filedHere.any { it !in roomIds } || roomIds.any { it in inStore && it !in filedHere } ||
+                inStore.any { it !in roomIds && it !in filedHere && it !in heldHere }
             // Re-feed from the start once when the app lacks rows the store has; never loop on a row another path re-files.
             if (!missing || rounds > 1 || start == 0L) break
             seq = 0L
@@ -352,6 +373,8 @@ class RustMailEngine(
         const val FEED_PAGE = 500
         /** How long an interactive refresh lets the core walk before it shows what it has (the worker continues). */
         const val INTERACTIVE_BUDGET_MS = 8_000L
+        /** A complete core pass of an account answers the folder syncs of the same refresh within this long. */
+        const val COALESCE_MS = 4_000L
         /** How long one background pass of the worker may walk. */
         const val WORKER_BUDGET_MS = 8 * 60_000L
 

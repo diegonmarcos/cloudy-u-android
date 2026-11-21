@@ -48,6 +48,7 @@ class InboxSplitTest {
                 """.trimIndent(),
             )
             st.executeUpdate("CREATE TABLE snoozed(emailId TEXT, accountId TEXT, until INTEGER, PRIMARY KEY(accountId, emailId))")
+            st.executeUpdate("CREATE TABLE email_mailboxes(accountId TEXT, emailId TEXT, mailboxId TEXT, PRIMARY KEY(accountId, emailId, mailboxId))")
         }
         senders.forEachIndexed { i, from -> insert("m$i", "inbox", from, i.toLong()) }
         insert("nullsender", "inbox", null, 99)

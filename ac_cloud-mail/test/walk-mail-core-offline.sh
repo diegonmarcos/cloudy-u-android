@@ -69,6 +69,8 @@ shot 01-online-inbox
 sleep 20 # the core's body prefetch and the worker's pass over every folder
 go_folder "Archive" 10; shot 02-online-archive; dump 02-online-archive
 go_folder "Receipts" 10; shot 03-online-receipts; dump 03-online-receipts
+$UI has "$OUT/03-online-receipts.xml" "Label only: Warranty card" "Receipt 1001 from Shop" \
+  || fail "the online Receipts label must list its own message AND the Inbox message that is also in the label"
 go_folder "Inbox" 5; shot 04-online-inbox-again
 curl -s -m 5 "http://127.0.0.1:$PORT/__stats" > "$OUT/stats-01-online.json"
 note "fake JMAP server after the online sync: $(cat "$OUT/stats-01-online.json")"
@@ -100,7 +102,9 @@ $UI has "$OUT/05-offline-inbox.xml" "España: reunión de equipo" "Weekly Digest
 go_folder "Archive" 6; dump 06-offline-archive; shot 06-offline-archive
 $UI has "$OUT/06-offline-archive.xml" "Archived: Tax documents 2025" || fail "the offline Archive does not show its seeded message"
 go_folder "Receipts" 6; dump 07-offline-receipts; shot 07-offline-receipts
-$UI has "$OUT/07-offline-receipts.xml" "Label only: Warranty card" || fail "the offline Receipts label does not show its own message"
+# #1837 membership table: the label lists its own message AND the one that is also in the Inbox (filed under the Inbox)
+$UI has "$OUT/07-offline-receipts.xml" "Label only: Warranty card" "Receipt 1001 from Shop" \
+  || fail "the offline Receipts label must list its own message AND the Inbox message that is also in the label"
 go_folder "Inbox" 5
 if tapt "España: reunión"; then
   sleep 6

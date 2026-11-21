@@ -30,6 +30,7 @@ class ListViewSqlTest {
                 """.trimIndent(),
             )
             st.executeUpdate("CREATE TABLE snoozed(emailId TEXT, accountId TEXT, until INTEGER, PRIMARY KEY(accountId, emailId))")
+            st.executeUpdate("CREATE TABLE email_mailboxes(accountId TEXT, emailId TEXT, mailboxId TEXT, PRIMARY KEY(accountId, emailId, mailboxId))")
         }
         // authClass: 1 Ga Code, 2 Gb Link to auth, 0 Gc No Auth, null not classified
         //        id   thread subject  from    seen flag att auth key
