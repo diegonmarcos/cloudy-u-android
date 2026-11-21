@@ -57,14 +57,18 @@ class NavLayoutTest {
         assertEquals(flat, order)
     }
 
-    @Test fun declaredNavOrderIsQrObjectsCameraVideoVr() {
+    @Test fun declaredNavOrderIsQrObjectsCameraVideoScanner() {
         // The nav is data: build.json::ui.bottom_nav (the unit task runs in the app module, build.json is its parent).
         val ui = org.json.JSONObject(java.io.File("../build.json").readText()).getJSONObject("ui")
         val bar = ui.getJSONArray("bottom_nav")
-        assertEquals(listOf("qr_scan", "objects", "photo", "video", "vr"), (0 until bar.length()).map { bar.getString(it) })
+        // #1839 Scanner takes the bar's fifth slot; VR (the Filters screen) stays a declared section, opened by the Camera page's Filters icon.
+        assertEquals(listOf("qr_scan", "objects", "photo", "video", "scanner"), (0 until bar.length()).map { bar.getString(it) })
         // Every ui section id a bar item opens resolves to a mode: the section itself or the photo family's pages.
         val ids = ui.getJSONArray("sections").let { a -> (0 until a.length()).map { a.getJSONObject(it).getString("id") } }
-        assertEquals(bar.length(), ids.size)
+        // Every bar item is a declared section, and the off-bar VR section is still declared (rule 16: nothing removed).
+        for (i in 0 until bar.length()) assertTrue("${bar.getString(i)} is a section", bar.getString(i) in ids)
+        assertTrue("vr stays declared", "vr" in ids)
+        assertEquals(bar.length() + 1, ids.size)
         for (mode in CameraMode.entries) {
             val id = mode.name.lowercase()
             val pages = ui.getJSONArray("sections").let { a -> (0 until a.length()).flatMap { i -> a.getJSONObject(i).getJSONArray("pages").let { p -> (0 until p.length()).map { p.getJSONObject(it).getString("id") } } } }
