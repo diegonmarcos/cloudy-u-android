@@ -1782,7 +1782,7 @@
           {
             "id": "boards-me",
             "label": "Me",
-            "icon": "ic_p_sol_personal",
+            "icon": "ic_person",
             "facet": true,
             "mirror_page": "boards/my-pm"
           },

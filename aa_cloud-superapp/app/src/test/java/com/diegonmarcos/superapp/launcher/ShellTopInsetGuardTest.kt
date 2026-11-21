@@ -211,7 +211,8 @@ class ShellTopInsetGuardTest(private val key: String) : KitPageHarness() {
                         out += "$name @strip ${stripDp}dp: the tab strip starts at ${top}px, the reserved band ends at ${band}px (a gap of ${top - band}px; tabs must sit directly under the row)"
                     if (stripDp == SHOT_STRIP && kotlin.math.abs(top - limit) > tol)
                         out += "$name @strip ${stripDp}dp: the tab strip starts at ${top}px, the top row ends at ${limit}px (tabs must sit directly under the row)"
-                    val first = strips.minByOrNull { it.boundsInWindow.top }!!
+                    // #1848 a section may declare several strip rows (Notify: Cards | Boards): the pane sits under the LOWEST one
+                    val first = strips.maxByOrNull { it.boundsInWindow.bottom }!!
                     val pane = compose.runOnUiThread { compose.activity.findViewById<View>(R.id.section_pane_0)?.let { windowTop(it) } }
                     if (pane != null && pane > 0) {
                         val gap = pane - first.boundsInWindow.bottom

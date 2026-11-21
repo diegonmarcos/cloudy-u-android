@@ -231,7 +231,7 @@ class SectionTabsFragment : KitComposeFragment(), Collapsible, BackHandler {
                             style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
                             modifier = Modifier.padding(start = 10.dp).testTag("section-row-label:${g.id}"))
                         PageTabs(rowPages.map(Sections::navPage), selected, onSelect = onTab, modifier = Modifier.weight(1f),
-                            underTopChrome = false, flushTop = i == 0, fitText = true)
+                            underTopChrome = false, flushTop = true, fitText = true)
                     }
                 }
             }
