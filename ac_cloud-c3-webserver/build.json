@@ -303,8 +303,9 @@
     "owner": "ac_cloud-c3-webserver",
     "vault": {
       "repo": "cloud-me-pvt-vault",
-      "file": "Linux-Containers/infra-api_cloud-infra-mcp/src/secrets.fleet.yaml",
+      "file": "Shared/Providers/D_TOOLS-DEVICES/d2-android/fleet-token.secrets.yaml",
       "key": "SUPERAPP_FLEET_TOKEN",
+      "delivered_copies": ["Linux-Containers/infra-api_cloud-infra-mcp/src/secrets.fleet.yaml"],
       "format": "sops (age); never decrypted by this repo's tooling"
     },
     "delivery": {
