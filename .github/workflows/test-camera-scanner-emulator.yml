@@ -225,7 +225,10 @@ jobs:
           adb shell settings put global cloud_perms_first_run 0 || true
           for k in screensaver_enabled screensaver_activate_on_sleep screensaver_activate_on_dock; do adb shell settings put secure $k 0 || true; done
           adb shell settings put global stay_on_while_plugged_in 7 || true
-          awake() { adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard; adb shell input keyevent 82; }
+          # KEYCODE_MENU (82) only while the keyguard shows: on an unlocked screen it opens the foreground's overflow menu
+          # (the photo picker's "Browse…", the documents picker's "Sort by / Select all"), which then covers the page
+          awake() { adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard
+            adb shell dumpsys window 2>/dev/null | grep -qE "mDreamingLockscreen=true|isKeyguardShowing=true|mShowingLockscreen=true" && adb shell input keyevent 82; true; }
           # A screensaver ("Unlock") or the first-start "Install unknown apps" ask can cover the page: take it down before reading or tapping.
           # The ask's button is "Skip", or "Skip (don't ask again)" on its last ask, so match the prefix.
           uncover() { for _ in 1 2 3; do adb shell uiautomator dump /sdcard/u0.xml >/dev/null 2>&1; adb pull /sdcard/u0.xml u0.xml >/dev/null 2>&1
