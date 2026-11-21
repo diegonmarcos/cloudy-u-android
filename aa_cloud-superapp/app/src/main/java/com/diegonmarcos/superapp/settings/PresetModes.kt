@@ -169,7 +169,7 @@ class ModeSwitch(
     /** The last outcome is kept (one small JSON) so the page shows each step's reason after the toast is gone. */
     private fun done(o: Outcome): Outcome {
         runCatching {
-            fun rows(l: List<SsResult>) = JSONArray(l.map { JSONObject().put("id", it.id).put("label", it.label).put("state", it.state.name).put("note", it.note).put("adb", it.needsAdb) })
+            fun rows(l: List<SsResult>) = JSONArray(l.map { JSONObject().put("id", it.id).put("label", it.label).put("state", it.state.name).put("note", it.note).put("adb", it.needsAdb).put("link", it.link) })
             kv.put(K_REPORT, JSONObject().put("mode", o.mode ?: "").put("op", o.op).put("ok", o.ok).put("message", o.message)
                 .put("at", System.currentTimeMillis()).put("steps", rows(o.results)).put("restored", rows(o.restored)).toString())
         }
@@ -204,7 +204,7 @@ class ModeSwitch(
                     val a = o.optJSONArray(k) ?: return emptyList()
                     return (0 until a.length()).map { i ->
                         val r = a.getJSONObject(i)
-                        SsResult(r.optString("id"), r.optString("label"), SsState.valueOf(r.optString("state")), r.optString("note"), r.optBoolean("adb"))
+                        SsResult(r.optString("id"), r.optString("label"), SsState.valueOf(r.optString("state")), r.optString("note"), r.optBoolean("adb"), r.optString("link"))
                     }
                 }
                 ModeReport(o.optString("mode"), o.optString("op"), o.optBoolean("ok"), o.optString("message"), o.optLong("at"), rows("steps"), rows("restored"))
@@ -265,7 +265,7 @@ object PresetModes {
 
     /** The next mode after the active one in declared order (the badge's Change); from none, the first. */
     fun next(ctx: Context): String? {
-        val ids = LauncherModes.load().map { it.id }
+        val ids = LauncherModes.load().filter { it.cycle }.map { it.id } // #1847 Banking Apps Mode is picked on purpose, never cycled into
         if (ids.isEmpty()) return null
         val cur = PresetState.mode(ctx)
         val i = if (cur == null) -1 else ids.indexOf(cur)

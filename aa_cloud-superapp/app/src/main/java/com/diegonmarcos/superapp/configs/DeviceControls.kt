@@ -783,6 +783,9 @@ object DeviceControls {
         ),
     )
 
+    /** #1847 the Settings screen of Developer options (the owner's deep link when Banking Apps Mode cannot change it itself). */
+    fun developmentSettingsAction(): String = Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS
+
     /** #1833 the Perms row's existing action for Unverified developers: open the step's Settings page (About phone while
      *  Developer options are off, else Developer options, where "Apps from unverified developers" lives). Says what it opened. */
     private fun devVerifierStep(ctx: Context): String {

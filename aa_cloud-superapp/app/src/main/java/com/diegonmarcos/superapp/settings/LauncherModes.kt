@@ -36,6 +36,10 @@ object LauncherModes {
         val steps: String = "",
         /** #1720 The declared switches as written (JSON object), handed to the engine's launcher step so it can journal each prior value. */
         val togglesJson: String = "",
+        /** #1847 true = picking or leaving this mode never opens the ADB connect prompt: its steps need no shell (Banking Apps Mode). */
+        val noShell: Boolean = false,
+        /** #1847 false = left out of the badge's Change cycle ([PresetModes.next]): a mode that switches things off is picked on purpose. */
+        val cycle: Boolean = true,
     )
 
     private fun declaration(): JSONArray =
@@ -52,7 +56,8 @@ object LauncherModes {
             val id = o.optString("id")
             val own = toggles[id] ?: emptyMap()
             Mode(id, o.optString("label"), o.optString("subtitle"), own, o.optString("engine"), o.optString("cmd"),
-                o.optJSONArray("steps")?.toString().orEmpty(), JSONObject(own).toString())
+                o.optJSONArray("steps")?.toString().orEmpty(), JSONObject(own).toString(),
+                o.optBoolean("no_shell", false), o.optBoolean("cycle", true))
         }
     }.getOrDefault(emptyList())
 

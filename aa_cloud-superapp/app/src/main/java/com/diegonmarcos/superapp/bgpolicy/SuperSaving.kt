@@ -29,10 +29,30 @@ interface SsHost {
     /** #1720 Capability detection: the maker (lower case, "" = unknown) and the API level of this device. */
     fun manufacturer(): String = ""
     fun sdk(): Int = Int.MAX_VALUE
+    /** #1847 a device item of the `device` step (Banking Apps Mode): its live state, null = unreadable or no such item. */
+    fun deviceRead(item: String): DeviceRead = DeviceRead(null, "this build has no item $item")
+    /** #1847 switch a device item on or off; [captured] is what [deviceRead] captured before the mode changed it. */
+    fun deviceSet(item: String, on: Boolean, captured: String): DeviceWrite = DeviceWrite(false, "this build cannot change $item")
 }
 
+/** #1847 [on] true = the thing banking apps refuse is on right now; [captured] = what a restore needs besides "on" (the services that were bound). */
+data class DeviceRead(val on: Boolean?, val detail: String = "", val captured: String = "")
+
+/** #1847 what a device write did. [link] = the Settings screen the owner must use when Android allows no programmatic change;
+ *  [verify] false = nothing here can be re-read after the write (the engine then trusts [ok]). */
+data class DeviceWrite(val ok: Boolean, val note: String, val link: String = "", val verify: Boolean = true)
+
 enum class SsState { APPLIED, SKIPPED, FAILED }
-data class SsResult(val id: String, val label: String, val state: SsState, val note: String, val needsAdb: Boolean)
+/** [link] (#1847) non-blank on a skipped or failed step = the owner's own tap is needed, and this is where (a Settings action). */
+data class SsResult(val id: String, val label: String, val state: SsState, val note: String, val needsAdb: Boolean, val link: String = "") {
+    /** #1847 the per-item verdict a report shows: done, needs the owner's tap, failed, or skipped. */
+    val verdict: String get() = when {
+        state == SsState.APPLIED -> "done"
+        link.isNotBlank() -> "needs your tap"
+        state == SsState.FAILED -> "failed"
+        else -> "skipped"
+    }
+}
 
 /**
  * #1506 Super Saving Battery Mode: the ordered, data-declared list of reversible steps, with a snapshot of each step's prior
@@ -78,9 +98,9 @@ class SuperSaving(
 
     val active: Boolean get() = snapshot() != null
 
-    private fun result(s: SsStep, st: SsState, note: String): SsResult {
-        audit("$tag ${s.id}: ${st.name.lowercase()}${if (note.isNotEmpty()) " ($note)" else ""}")
-        return SsResult(s.id, s.label, st, note, s.adb)
+    private fun result(s: SsStep, st: SsState, note: String, link: String = ""): SsResult {
+        audit("$tag ${s.id}: ${st.name.lowercase()}${if (note.isNotEmpty()) " ($note)" else ""}${if (link.isNotEmpty()) " [owner: $link]" else ""}")
+        return SsResult(s.id, s.label, st, note, s.adb, link)
     }
 
     // ── batched settings ──
@@ -193,6 +213,7 @@ class SuperSaving(
             }
         }
         "shell_toggle" -> applyToggle(s, entry)
+        "device" -> applyDevice(s, entry)
         "launcher_toggles" -> applyLauncher(s, entry)
         "sync" -> {
             val old = host.masterSync()
@@ -217,6 +238,27 @@ class SuperSaving(
             result(s, if (bad == 0) SsState.APPLIED else SsState.FAILED, "${outs.count { it.ok }} engines stopped, $bad did not stop, ${outs.count { it.skipped }} kept")
         }
         else -> result(s, SsState.FAILED, "unknown step kind ${s.kind}")
+    }
+
+    /**
+     * #1847 One Banking Apps Mode item. Only what the mode itself changes is journaled: an item already off (or unreadable) is
+     * skipped and never put back. The verdict is the RE-READ, not the write: still on and Android allows no programmatic change
+     * = skipped with the owner's deep link; still on otherwise = failed (journaled, so Off can still try).
+     */
+    private fun applyDevice(s: SsStep, entry: JSONObject): SsResult {
+        val item = s.p.getString("item")
+        val before = host.deviceRead(item)
+        if (before.on == null) return result(s, SsState.SKIPPED, "not read, left alone: ${before.detail}")
+        if (before.on == false) return result(s, SsState.SKIPPED, "already off")
+        val fresh = !entry.has("old")
+        if (fresh) { entry.put("old", true); entry.put("captured", before.captured) } // first capture wins
+        val w = host.deviceSet(item, false, entry.optString("captured"))
+        val after = if (w.verify) host.deviceRead(item) else DeviceRead(!w.ok)
+        return when {
+            after.on == false -> result(s, SsState.APPLIED, w.note)
+            w.link.isNotEmpty() -> { if (fresh) { entry.remove("old"); entry.remove("captured") }; result(s, SsState.SKIPPED, w.note, w.link) }
+            else -> result(s, SsState.FAILED, w.note.ifBlank { "still on after the write: ${after.detail}" })
+        }
     }
 
     private fun applySettings(s: SsStep, entry: JSONObject): SsResult {
@@ -392,6 +434,18 @@ class SuperSaving(
             else {
                 host.armIdle(entry.optBoolean("old", false)); sh(BgCmd.UNFORCE_IDLE)
                 if (host.idleArmed() == entry.optBoolean("old", false)) result(s, SsState.APPLIED, "unforced") else result(s, SsState.FAILED, "the screen-off hook is still armed")
+            }
+        "device" ->
+            if (!entry.has("old")) result(s, SsState.APPLIED, nothing)
+            else {
+                val item = s.p.getString("item")
+                if (host.deviceRead(item).on == true) result(s, SsState.APPLIED, "already back on")
+                else {
+                    val w = host.deviceSet(item, true, entry.optString("captured"))
+                    val after = if (w.verify) host.deviceRead(item) else DeviceRead(w.ok)
+                    if (after.on == true) result(s, SsState.APPLIED, w.note)
+                    else result(s, SsState.FAILED, w.note.ifBlank { "did not come back: ${after.detail}" }, w.link)
+                }
             }
         "keeper" ->
             if (!entry.has("old")) result(s, SsState.APPLIED, nothing)

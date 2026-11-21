@@ -1,4 +1,4 @@
-# #1846 Quick actions on an emulator, with the x86_64 APK a Ship Cloud SuperApp run built: every tab of the ONE row
+# #1846 Quick actions on an emulator (and #1847 Banking Apps Mode on and off, with the Security tab before, during and after), with the x86_64 APK a Ship Cloud SuperApp run built: every tab of the ONE row
 # (Preset | Battery Security UI Network Others All) is opened by its deep link, shot, dumped, and checked for its tab row and its
 # tiles (resource ids control:tile:<id>, test tags exposed as resource ids) with the detail line each tile paints
 # (control:detail:<id>). Evidence: quick-actions-evidence (PNGs, uiautomator XML, tiles.tsv, verdict.txt). Any missing tab label,
@@ -126,6 +126,50 @@ jobs:
             f=ui; case $t in hotspot|nfc|private_dns|always_on_vpn|wifi|mobile_data|bluetooth|airplane_mode) f=network;; esac
             grep -q "tile $t state=.* detail=.\+" "out/$f.log" && check ok "$t has a live reading and a detail line" || check no "$t: no detail line in the $f tab log"
           done
+          # ── #1847 Banking Apps Mode: on and off from Preset > Mode, the Security tab before / during / after ──
+          # The run keeps its own adb link: USB debugging, wireless debugging and Developer options are in the mode's skip list here
+          # (unit tests cover them); the accessibility entry the mode must remove and put back is the app's own service.
+          adb shell pm grant "$PKG" android.permission.WRITE_SECURE_SETTINGS || true
+          SVC="$PKG/com.diegonmarcos.superapp.system.LockScreenAccessibilityService"
+          adb shell settings put secure enabled_accessibility_services "$SVC"; adb shell settings put secure accessibility_enabled 1
+          adb shell am force-stop "$PKG"
+          echo '<?xml version="1.0" encoding="utf-8" standalone="yes" ?><map><string name="skip">usb_debugging,developer_options,wireless_debugging,adb_shell</string></map>' > bm.xml
+          adb push bm.xml /data/local/tmp/banking_mode.xml
+          adb shell "run-as $PKG sh -c 'mkdir -p shared_prefs && cp /data/local/tmp/banking_mode.xml shared_prefs/banking_mode.xml'" || echo "run-as failed"
+          adb shell am start -W -n "$ACT" >/dev/null; sleep 15
+          a11y() { adb shell settings get secure enabled_accessibility_services | tr -d '\r'; }
+          shoot() { adb exec-out screencap -p > "out/$1.png"; adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb pull /sdcard/u.xml "out/$1.xml" >/dev/null 2>&1; }
+          sec() { page panels-security; sleep 8; shoot "$1"; }
+          tapmode() { page presets
+            for _ in 1 2 3 4 5 6 7 8; do
+              adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb pull /sdcard/u.xml out/pm.xml >/dev/null 2>&1
+              pos=$(python3 - <<'PY'
+          import re
+          x = open("out/pm.xml", encoding="utf-8", errors="replace").read()
+          for m in re.finditer(r"<node [^>]*>", x):
+              n = m.group(0); t = re.search(r' text="([^"]*)"', n); d = re.search(r'content-desc="([^"]*)"', n); b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
+              if b and "Banking Apps Mode" in ((t.group(1) if t else "") + (d.group(1) if d else "")) and int(b.group(2)) > 300 and int(b.group(4)) < 2100:
+                  print((int(b.group(1)) + int(b.group(3))) // 2, (int(b.group(2)) + int(b.group(4))) // 2); break
+          PY
+              )
+              [ -n "$pos" ] && break; adb shell input swipe 540 1800 540 900 400; sleep 1
+            done
+            [ -n "$pos" ] || { echo "no Banking Apps Mode tile"; return 1; }
+            adb shell input tap $pos; sleep 12; }
+          before=$(a11y); echo "a11y before: $before"
+          case "$before" in *LockScreen*) check ok "setup: the app's accessibility service is enabled";; *) check no "setup: accessibility service not enabled ($before)";; esac
+          sec banking-1-security-before
+          tapmode && shoot banking-2-presets-on
+          during=$(a11y); echo "a11y during: $during"
+          case "$during" in *LockScreen*) check no "Banking Apps Mode on: the accessibility entry is still there ($during)";; *) check ok "Banking Apps Mode on: the accessibility entry was removed ($during)";; esac
+          grep -qi "Banking Apps Mode" out/banking-2-presets-on.xml && check ok "the Mode group shows Banking Apps Mode" || check no "Banking Apps Mode tile not on the Presets page"
+          adb logcat -d | grep -i "pairing" | grep -vi "wd-keeper\|WdKeeper" > out/banking-pairing.log || true
+          sec banking-3-security-during
+          tapmode && shoot banking-4-presets-off
+          after=$(a11y); echo "a11y after: $after"
+          case "$after" in *LockScreen*) check ok "Banking Apps Mode off: the accessibility entry is back ($after)";; *) check no "Banking Apps Mode off: the entry did not come back ($after)";; esac
+          sec banking-5-security-after
+          [ -z "$(grep -i 'adb pairing\|pairing notification\|PairingNotif' out/banking-pairing.log)" ] && check ok "no ADB pairing prompt was raised during the walk" || check no "pairing activity during the walk"
           cat out/verdict.txt
           [ "$fails" -eq 0 ]
           EOF2

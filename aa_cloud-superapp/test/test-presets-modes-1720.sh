@@ -55,7 +55,8 @@ for m in par["modes"]:
         if k in m and n.get(k) != m[k]: p.append("mode %s: %s changed" % (m["id"], k))
     for t, v in m.get("toggles", {}).items():
         if n.get("toggles", {}).get(t) != v: p.append("mode %s: toggle %s lost or changed" % (m["id"], t))
-if [m["id"] for m in ui["launcher_modes"]] != [m["id"] for m in par["modes"]]: p.append("the mode list or order changed")
+# #1847 Banking Apps Mode is appended: every frozen mode keeps its place, new modes may only follow them
+if [m["id"] for m in ui["launcher_modes"]][:len(par["modes"])] != [m["id"] for m in par["modes"]]: p.append("the mode list or order changed")
 for key, decl in (("profiles", "launcher_profiles"), ("themes", "launcher_themes")):
     now = by(ui[decl])
     for m in par[key]:
@@ -168,8 +169,8 @@ import json, sys, re
 bj = json.load(open(sys.argv[1])); ss = json.load(open(sys.argv[2])); man = open(sys.argv[3]).read()
 p = []
 modes = bj["ui"]["launcher_modes"]
-if [m["id"] for m in modes] != ["power", "focus", "saving_energy", "super_saving"]: p.append("the four modes are not power, focus, saving_energy, super_saving")
-kinds = {"setting", "setting_cap", "shell_toggle", "bg_policy", "sync", "idle_screen_off", "keeper", "fleet_stop"}
+if [m["id"] for m in modes] != ["power", "focus", "saving_energy", "super_saving", "banking"]: p.append("the modes are not power, focus, saving_energy, super_saving, banking (#1847)")
+kinds = {"setting", "setting_cap", "shell_toggle", "bg_policy", "sync", "idle_screen_off", "keeper", "fleet_stop", "device"}
 allsteps = {}
 for m in modes:
     st = ss["steps"] if m.get("engine") else m.get("steps", [])

@@ -156,6 +156,7 @@ class LauncherPresetsFragment : KitComposeFragment() {
                         com.diegonmarcos.superapp.system.AdbReadiness.openAdbShell(requireContext())
                     }
                     if (t.activeMode) ModeActions(busy, off = { modeOff(force = false) }, reapply = { modePick(t.id) })
+                    if (t.id == com.diegonmarcos.superapp.system.BankingMode.MODE_ID) BankingSettingsPanel()
                     Spacer(Modifier.height(8.dp))
                 }
                 if (group.kind == LauncherPresets.KIND_MODE) {
@@ -264,7 +265,7 @@ class LauncherPresetsFragment : KitComposeFragment() {
     private fun modePick(id: String) {
         val mode = LauncherModes.load().firstOrNull { it.id == id } ?: return
         val app = requireContext().applicationContext // read here, on the UI thread: the worker must not ask a detached fragment
-        modeRun("Not turned on.", after = {
+        modeRun("Not turned on.", noShell = mode.noShell, after = {
             // #1591 a preset can trigger a shell action: run its command through the adb-shell broker.
             if (mode.cmd.isNotBlank() && PresetState.mode(app) == id) runPresetCmd(mode)
             com.diegonmarcos.superapp.appstore.ConstellationWorker.start(app)
@@ -274,18 +275,22 @@ class LauncherPresetsFragment : KitComposeFragment() {
     /** #1720 Off of the active mode: restore its journal. [force] = leave the steps that cannot be restored as pending. */
     private fun modeOff(force: Boolean) {
         val app = requireContext().applicationContext
-        modeRun("Not changed: Off needs the ADB shell for the steps that used it.") { sh -> PresetModes.off(app, sh, force) }
+        val noShell = LauncherModes.load().firstOrNull { it.id == PresetState.mode(app) }?.noShell == true // #1847 Banking Apps Mode: no ADB prompt
+        modeRun("Not changed: Off needs the ADB shell for the steps that used it.", noShell = noShell) { sh -> PresetModes.off(app, sh, force) }
     }
 
     /** [cancelled] = what the toast says when the owner backs out of the ADB prompt. */
-    private fun modeRun(cancelled: String, after: () -> Unit = {}, op: (com.diegonmarcos.superapp.bgpolicy.BgShell?) -> ModeSwitch.Outcome) {
+    private fun modeRun(cancelled: String, after: () -> Unit = {}, noShell: Boolean = false, op: (com.diegonmarcos.superapp.bgpolicy.BgShell?) -> ModeSwitch.Outcome) {
         if (busy || !isAdded) return
         busy = true
         val act = requireActivity()
         Thread({
             try {
-                val sh = com.diegonmarcos.superapp.bgpolicy.BgUi.acquire(act, dialogs, withoutAdb = true, title = GATE_TITLE, message = GATE_MESSAGE)
-                val text = if (!sh.proceed) cancelled else runCatching { op(sh.shell).message }.getOrElse { "Not changed: ${it.message ?: it.javaClass.simpleName}" }
+                // #1847 a mode whose steps need no shell (Banking Apps Mode) never opens the ADB connect prompt: the shell is used only when it is already armed.
+                val proceed: Boolean; val shell: com.diegonmarcos.superapp.bgpolicy.BgShell?
+                if (noShell) { proceed = true; shell = com.diegonmarcos.superapp.bgpolicy.BgHost.shell(act) }
+                else { val sh = com.diegonmarcos.superapp.bgpolicy.BgUi.acquire(act, dialogs, withoutAdb = true, title = GATE_TITLE, message = GATE_MESSAGE); proceed = sh.proceed; shell = sh.shell }
+                val text = if (!proceed) cancelled else runCatching { op(shell).message }.getOrElse { "Not changed: ${it.message ?: it.javaClass.simpleName}" }
                 com.diegonmarcos.superapp.bgpolicy.BgUi.toast(act, text)
             } finally {
                 act.runOnUiThread {
@@ -422,13 +427,20 @@ private fun ModeReportPanel(r: ModeReport?, all: Boolean, toggleAll: () -> Unit,
     val p = LocalKitPalette.current
     val small = androidx.compose.material3.MaterialTheme.typography.bodySmall
     val rows = r.restored + r.steps
-    val failed = rows.filter { it.state == com.diegonmarcos.superapp.bgpolicy.SsState.FAILED }
-    val rest = rows.filter { it.state != com.diegonmarcos.superapp.bgpolicy.SsState.FAILED }
+    val failed = rows.filter { it.state == com.diegonmarcos.superapp.bgpolicy.SsState.FAILED && it.link.isBlank() }
+    // #1847 an item only the owner can change (Android allows no programmatic change): always shown, with its Settings deep link
+    val needsTap = rows.filter { it.link.isNotBlank() }
+    val rest = rows.filter { it.state != com.diegonmarcos.superapp.bgpolicy.SsState.FAILED && it.link.isBlank() }
+    val ctx = androidx.compose.ui.platform.LocalContext.current
     val at = if (r.at > 0) java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US).format(java.util.Date(r.at)) else ""
     Column(Modifier.fillMaxWidth().padding(top = 8.dp).testTag("mode-report")) {
         Text("Last change $at · ${r.message}", color = if (r.ok) p.textSecondary else p.warn, style = small, modifier = Modifier.testTag("mode-report-head"))
         for (f in failed) Text("● ${f.label}: did not take - ${f.note.ifBlank { "no reason given" }}", color = p.warn, style = small,
             modifier = Modifier.padding(start = 12.dp, top = 2.dp).testTag("mode-step-failed:${f.id}"))
+        for (n in needsTap) Text("→ ${n.label}: ${n.verdict} (open Settings) - ${n.note.ifBlank { "no reason given" }}", color = p.warn, style = small,
+            modifier = Modifier.padding(start = 12.dp, top = 2.dp).clickable {
+                runCatching { ctx.startActivity(android.content.Intent(n.link).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            }.testTag("mode-step-owner:${n.id}"))
         if (all) for (x in rest) Text(
             (if (x.state == com.diegonmarcos.superapp.bgpolicy.SsState.APPLIED) "✓ ${x.label}: done" else "○ ${x.label}: skipped") + if (x.note.isBlank()) "" else " - ${x.note}",
             color = p.textSecondary, style = small, modifier = Modifier.padding(start = 12.dp, top = 2.dp).testTag("mode-step:${x.id}"))
@@ -455,6 +467,46 @@ private fun PendingPanel(pending: Map<String, List<String>>, labelOf: (String) -
                 KitStoreQuick("Retry restore", KitStoreRow.BLUE_FILL, Modifier.testTag("mode-pending-retry:$id")) { retry(id) }
                 Spacer(Modifier.width(8.dp))
                 KitStoreQuick("Forget", KitStoreRow.RULE, Modifier.testTag("mode-pending-forget:$id")) { forget(id) }
+            }
+        }
+    }
+}
+
+/**
+ * #1847 Banking Apps Mode's own settings, under its tile: auto (off | offer | apply when a bank comes to the foreground), the
+ * per-mode VPN switch (default keep the VPN on) and the bank list (the declared banks plus the owner's additions).
+ */
+@Composable
+private fun BankingSettingsPanel() {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val p = LocalKitPalette.current
+    val small = androidx.compose.material3.MaterialTheme.typography.bodySmall
+    val bm = com.diegonmarcos.superapp.system.BankingMode
+    var auto by androidx.compose.runtime.remember { mutableStateOf(bm.auto(ctx)) }
+    var vpn by androidx.compose.runtime.remember { mutableStateOf(bm.vpnWanted(ctx)) }
+    var added by androidx.compose.runtime.remember { mutableStateOf(bm.addedBanks(ctx)) }
+    var draft by androidx.compose.runtime.remember { mutableStateOf("") }
+    val declared = androidx.compose.runtime.remember { bm.declaredBanks() }
+    Column(Modifier.fillMaxWidth().padding(start = 16.dp, top = 4.dp).testTag("banking-settings")) {
+        Row {
+            KitStoreQuick("Auto: " + auto.name.lowercase(), KitStoreRow.BLUE_FILL, Modifier.testTag("banking-auto")) {
+                auto = bm.nextAuto(auto); bm.setAuto(ctx, auto)
+            }
+            Spacer(Modifier.width(8.dp))
+            KitStoreQuick("VPN off too: " + if (vpn) "yes" else "no", KitStoreRow.RULE, Modifier.testTag("banking-vpn")) {
+                vpn = !vpn; bm.setVpnWanted(ctx, vpn)
+            }
+        }
+        Text("Auto offers or applies the mode when one of these apps opens, and offers or restores it when you leave: " +
+            (declared.values + added).joinToString(", "), color = p.textSecondary, style = small, modifier = Modifier.padding(top = 4.dp).testTag("banking-banks"))
+        for (pkg in added) Text("✕ $pkg", color = p.textSecondary, style = small,
+            modifier = Modifier.padding(top = 2.dp).clickable { bm.removeBank(ctx, pkg); added = bm.addedBanks(ctx) }.testTag("banking-remove:$pkg"))
+        Row(Modifier.padding(top = 4.dp)) {
+            androidx.compose.material3.OutlinedTextField(draft, { draft = it }, singleLine = true,
+                label = { Text("Bank app package") }, modifier = Modifier.weight(1f).testTag("banking-add-field"))
+            Spacer(Modifier.width(8.dp))
+            KitStoreQuick("Add", KitStoreRow.BLUE_FILL, Modifier.testTag("banking-add")) {
+                bm.addBank(ctx, draft); added = bm.addedBanks(ctx); draft = ""
             }
         }
     }

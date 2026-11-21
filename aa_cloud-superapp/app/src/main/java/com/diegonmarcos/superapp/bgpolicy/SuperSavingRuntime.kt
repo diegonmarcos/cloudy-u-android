@@ -53,6 +53,9 @@ object SuperSavingRuntime {
         override fun setToggles(want: Map<String, Boolean>) = LauncherThemes.applyToggles(app, want)
         override fun manufacturer(): String = android.os.Build.MANUFACTURER.orEmpty()
         override fun sdk(): Int = android.os.Build.VERSION.SDK_INT
+        // #1847 Banking Apps Mode items (developer options, debugging, accessibility, overlays ...)
+        override fun deviceRead(item: String) = com.diegonmarcos.superapp.system.BankingMode.read(app, item)
+        override fun deviceSet(item: String, on: Boolean, captured: String) = com.diegonmarcos.superapp.system.BankingMode.set(app, item, on, captured)
     }
 
     const val STEP_LAUNCHER = "launcher"

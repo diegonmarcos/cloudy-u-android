@@ -6825,6 +6825,39 @@
         "label": "Super Saving Battery Mode",
         "subtitle": "The most aggressive battery mode: every non-essential app restricted, battery saver and doze forced, radios and scans off, sync off, slowest display, fleet engines stopped. One tap on Off restores everything exactly. Most steps need the ADB shell.",
         "engine": "super_saving"
+      },
+      {
+        "_doc": "#1847 Banking Apps Mode: switches off what banking apps refuse to run with and restores the exact previous state. Not a bundle of launcher switches: it names no toggles; each `device` step is one item (developer options, USB and wireless debugging, the embedded ADB shell server, the fleet's accessibility services as AccessibilityManager lists them live, the edge-menu and floating-menu overlays, and the VPN only when the mode's own switch is on, default keep it on) and the `keeper` step is the Keep Wireless debugging on switch (the ADB owner's keep-alive), turned off FIRST so nothing re-arms debugging and restored LAST. The engine is the one mode engine (bgpolicy/SuperSaving): it journals only what the mode itself changed (an item already off is skipped and never put back), restores in reverse, and reads the real state after each step: done, needs your tap (a deep link to the Settings screen when Android allows no programmatic change) or failed. PAIRING GATE (#1833): no step connects, arms or pairs the ADB channel (`no_shell`: picking it never opens the ADB connect prompt), the shell is used only when already armed. `cycle` false keeps it out of the badge's Change cycle. `banks` is the declared bank list (package, label), editable in the mode's settings (additions are stored); `auto_default` is off | offer | apply: when a bank comes to the foreground the mode is offered or applied, when it leaves it is offered or restored.",
+        "id": "banking",
+        "label": "Banking Apps Mode",
+        "subtitle": "Switches off what banking apps refuse (developer options, USB and wireless debugging, the ADB shell server, accessibility services, overlays) and puts back exactly what was on. Never starts an ADB pairing.",
+        "no_shell": true,
+        "cycle": false,
+        "auto_default": "off",
+        "banks": [
+          {"pkg": "com.revolut.revolut", "label": "Revolut"},
+          {"pkg": "de.number26.android", "label": "N26"},
+          {"pkg": "com.transferwise.android", "label": "Wise"},
+          {"pkg": "com.paypal.android.p2pmobile", "label": "PayPal"},
+          {"pkg": "es.bancosantander.apps", "label": "Santander"},
+          {"pkg": "com.bbva.bbvacontigo", "label": "BBVA"},
+          {"pkg": "es.lacaixa.mobile.android.newwapicon", "label": "CaixaBank"},
+          {"pkg": "www.ingdirect.nativeframe", "label": "ING Spain"},
+          {"pkg": "com.bankinter.launcher", "label": "Bankinter"},
+          {"pkg": "com.imaginbank.app", "label": "imagin"},
+          {"pkg": "com.bancsabadell.wallet", "label": "Sabadell"}
+        ],
+        "steps": [
+          {"id": "keeper_off", "label": "Keep Wireless debugging on: off (so nothing re-arms it)", "kind": "keeper", "adb": false},
+          {"id": "wireless_debugging_off", "label": "Wireless debugging off", "kind": "device", "adb": false, "item": "wireless_debugging"},
+          {"id": "usb_debugging_off", "label": "USB debugging off", "kind": "device", "adb": false, "item": "usb_debugging"},
+          {"id": "adb_shell_closed", "label": "ADB shell server closed (it rides on debugging)", "kind": "device", "adb": false, "item": "adb_shell"},
+          {"id": "developer_options_off", "label": "Developer options off", "kind": "device", "adb": false, "item": "developer_options"},
+          {"id": "a11y_fleet_off", "label": "The fleet's accessibility services off (as AccessibilityManager lists them)", "kind": "device", "adb": false, "item": "a11y_fleet"},
+          {"id": "edge_menus_off", "label": "Edge menus off (overlay)", "kind": "device", "adb": false, "item": "edge_menus"},
+          {"id": "floating_nav_off", "label": "Floating menu off (overlay)", "kind": "device", "adb": false, "item": "floating_nav"},
+          {"id": "vpn_off", "label": "VPN off (only when the mode's own VPN switch is on)", "kind": "device", "adb": false, "item": "vpn"}
+        ]
       }
     ],
     "_doc_launcher_presets": "Configs ▸ Launcher ▸ Presets — the ONE declaration of what the tab shows: which groups, in what order, under what name, and which declaration feeds each. `kind` selects the renderer (profile → ui.launcher_profiles, theme → ui.launcher_themes, mode → ui.launcher_modes); the tiles' own names and order come from those arrays, so no caption is written in Kotlin and no id is ever displayed as a caption.",

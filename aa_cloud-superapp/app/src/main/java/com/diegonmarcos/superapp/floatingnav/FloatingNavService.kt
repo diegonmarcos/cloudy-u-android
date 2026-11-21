@@ -187,6 +187,7 @@ class FloatingNavService : Service() {
                 // UsageStats.queryEvents is a binder call: read it off the main thread, apply the result on it.
                 runCatching { (pollExecutor ?: pollIo).execute {
                     val fg = foregroundPackage()
+                    runCatching { com.diegonmarcos.superapp.system.BankingWatcher.onForeground(applicationContext, fg) } // #1847 optional auto mode
                     main.post { if (isRunning) { refresh(fg); reschedule() } }
                 } }.onFailure { reschedule() }
             }

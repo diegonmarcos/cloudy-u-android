@@ -1,0 +1,338 @@
+{
+ "_doc": "#1847 frozen baseline: ui.launcher_modes before Banking Apps Mode. Rule 16: every mode, every field is still declared as it was.",
+ "modes": [
+  {
+   "id": "power",
+   "label": "Power Mode",
+   "subtitle": "Everything on — every animation, live stats, the 3D home, background polls. Full experience, full battery cost.",
+   "toggles": {
+    "all_anim": true,
+    "pets_anim": true,
+    "cube_anim": true,
+    "island_anim": true,
+    "stars_anim": true,
+    "star_twinkle": true,
+    "status_live": true,
+    "home_3d": true,
+    "dynamic_island": true,
+    "apps_warmup": true,
+    "fleet_check": true,
+    "ntfy_poll": true,
+    "background_pause": false,
+    "oled_black": false
+   },
+   "_doc_cmd": "#1591 presets→adb: picking a preset can also run a shell command through the adb-shell broker (ShellBroker.execText), run after the toggles by LauncherPresetsFragment.runPresetCmd. Power restores heads-up (peek) notifications that Focus turned off; a safe, reversible global setting, a no-op toast when no shell channel is armed.",
+   "cmd": "settings put global heads_up_notifications_enabled 1",
+   "_doc_steps": "#1720 the system half of this mode, in the step vocabulary of app/src/main/assets/super-saving.json (kinds setting / shell_toggle; `when` samsung | not_samsung, `skip_if_unset`, `min_sdk` = runtime capability detection, a step this device cannot run is skipped with the reason). Every step journals the prior value before it writes; Off (or picking another mode) puts back exactly those.",
+   "steps": [
+    {
+     "id": "battery_saver_off",
+     "label": "System battery saver off",
+     "kind": "setting",
+     "adb": true,
+     "items": [
+      {
+       "ns": "global",
+       "key": "low_power",
+       "value": "0"
+      }
+     ]
+    },
+    {
+     "id": "heads_up_on",
+     "label": "Heads-up (peek) notifications on",
+     "kind": "setting",
+     "adb": true,
+     "items": [
+      {
+       "ns": "global",
+       "key": "heads_up_notifications_enabled",
+       "value": "1"
+      }
+     ]
+    },
+    {
+     "id": "refresh_rate_samsung",
+     "label": "Motion smoothness: adaptive, up to the panel maximum (Samsung)",
+     "kind": "setting",
+     "adb": true,
+     "when": "samsung",
+     "items": [
+      {
+       "ns": "secure",
+       "key": "refresh_rate_mode",
+       "value": "1",
+       "skip_if_unset": true
+      }
+     ]
+    },
+    {
+     "id": "refresh_rate",
+     "label": "Smooth display: peak refresh rate uncapped (plain Android)",
+     "kind": "setting",
+     "adb": true,
+     "when": "not_samsung",
+     "items": [
+      {
+       "ns": "system",
+       "key": "peak_refresh_rate",
+       "value": "Infinity",
+       "skip_if_unset": true
+      }
+     ]
+    },
+    {
+     "id": "processing_speed_samsung",
+     "label": "Processing speed: enhanced processing on (Samsung)",
+     "kind": "setting",
+     "adb": true,
+     "when": "samsung",
+     "items": [
+      {
+       "ns": "global",
+       "key": "sem_enhanced_cpu_responsiveness",
+       "value": "1",
+       "skip_if_unset": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "focus",
+   "label": "Focus Mode",
+   "subtitle": "Quiet launcher — decorative animation, the dynamic island and message polling off, so nothing moves or interrupts.",
+   "toggles": {
+    "pets_anim": false,
+    "cube_anim": false,
+    "island_anim": false,
+    "stars_anim": false,
+    "star_twinkle": false,
+    "dynamic_island": false,
+    "ntfy_poll": false
+   },
+   "_doc_cmd": "#1591 presets→adb: Focus silences heads-up (peek) notifications via the adb-shell broker, the shell counterpart to #1596's in-app non-urgent-alert hush. Reversible — Power turns it back on.",
+   "cmd": "settings put global heads_up_notifications_enabled 0",
+   "_doc_steps": "#1720 the system half of this mode, in the step vocabulary of app/src/main/assets/super-saving.json (kinds setting / shell_toggle; `when` samsung | not_samsung, `skip_if_unset`, `min_sdk` = runtime capability detection, a step this device cannot run is skipped with the reason). Every step journals the prior value before it writes; Off (or picking another mode) puts back exactly those.",
+   "steps": [
+    {
+     "id": "dnd",
+     "label": "Do Not Disturb: priority only",
+     "kind": "shell_toggle",
+     "adb": true,
+     "read": "settings get global zen_mode",
+     "read_re": "^([0-3])",
+     "apply": "cmd notification set_dnd priority",
+     "skip_if_old": [
+      "1"
+     ],
+     "verify": [
+      "1"
+     ],
+     "revert_by_old": {
+      "0": "cmd notification set_dnd off",
+      "2": "cmd notification set_dnd none",
+      "3": "cmd notification set_dnd alarms"
+     }
+    },
+    {
+     "id": "heads_up_off",
+     "label": "Heads-up (peek) notifications off",
+     "kind": "setting",
+     "adb": true,
+     "items": [
+      {
+       "ns": "global",
+       "key": "heads_up_notifications_enabled",
+       "value": "0"
+      }
+     ]
+    },
+    {
+     "id": "edge_lighting_samsung",
+     "label": "Edge lighting off (Samsung)",
+     "kind": "setting",
+     "adb": true,
+     "when": "samsung",
+     "items": [
+      {
+       "ns": "system",
+       "key": "edge_lighting",
+       "value": "0",
+       "skip_if_unset": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "saving_energy",
+   "label": "Saving Energy Mode",
+   "subtitle": "Leanest launcher — animations, live stats and 3D home off, background work paused, pure-black OLED window, usage uploads batched.",
+   "toggles": {
+    "all_anim": false,
+    "pets_anim": false,
+    "cube_anim": false,
+    "island_anim": false,
+    "stars_anim": false,
+    "star_twinkle": false,
+    "status_live": false,
+    "home_3d": false,
+    "dynamic_island": false,
+    "apps_warmup": false,
+    "maps_tracker": false,
+    "fleet_check": false,
+    "background_pause": true,
+    "oled_black": true,
+    "analytics_batch": true
+   },
+   "_doc_steps": "#1720 the system half of this mode, in the step vocabulary of app/src/main/assets/super-saving.json (kinds setting / shell_toggle; `when` samsung | not_samsung, `skip_if_unset`, `min_sdk` = runtime capability detection, a step this device cannot run is skipped with the reason). Every step journals the prior value before it writes; Off (or picking another mode) puts back exactly those.",
+   "steps": [
+    {
+     "id": "battery_saver",
+     "label": "System battery saver on (Samsung: Power saving)",
+     "kind": "setting",
+     "adb": true,
+     "items": [
+      {
+       "ns": "global",
+       "key": "low_power",
+       "value": "1"
+      }
+     ]
+    },
+    {
+     "id": "adaptive_battery",
+     "label": "Adaptive battery on",
+     "kind": "setting",
+     "adb": true,
+     "items": [
+      {
+       "ns": "global",
+       "key": "adaptive_battery_management_enabled",
+       "value": "1"
+      }
+     ]
+    },
+    {
+     "id": "refresh_rate_samsung",
+     "label": "Motion smoothness: standard, 60 Hz (Samsung)",
+     "kind": "setting",
+     "adb": true,
+     "when": "samsung",
+     "items": [
+      {
+       "ns": "secure",
+       "key": "refresh_rate_mode",
+       "value": "0",
+       "skip_if_unset": true
+      }
+     ]
+    },
+    {
+     "id": "refresh_rate",
+     "label": "Refresh rate 60 Hz (plain Android)",
+     "kind": "setting",
+     "adb": true,
+     "when": "not_samsung",
+     "items": [
+      {
+       "ns": "system",
+       "key": "peak_refresh_rate",
+       "value": "60",
+       "skip_if_unset": true
+      },
+      {
+       "ns": "system",
+       "key": "min_refresh_rate",
+       "value": "60",
+       "skip_if_unset": true
+      }
+     ]
+    },
+    {
+     "id": "processing_speed_samsung",
+     "label": "Processing speed: enhanced processing off (Samsung)",
+     "kind": "setting",
+     "adb": true,
+     "when": "samsung",
+     "items": [
+      {
+       "ns": "global",
+       "key": "sem_enhanced_cpu_responsiveness",
+       "value": "0",
+       "skip_if_unset": true
+      }
+     ]
+    },
+    {
+     "id": "screen_timeout",
+     "label": "Screen timeout 30 s",
+     "kind": "setting",
+     "adb": true,
+     "items": [
+      {
+       "ns": "system",
+       "key": "screen_off_timeout",
+       "value": "30000"
+      }
+     ]
+    },
+    {
+     "id": "aod_doze",
+     "label": "Always-on display off",
+     "kind": "setting",
+     "adb": true,
+     "items": [
+      {
+       "ns": "secure",
+       "key": "doze_always_on",
+       "value": "0",
+       "skip_if_unset": true
+      }
+     ]
+    },
+    {
+     "id": "aod_samsung",
+     "label": "Always-on display off (Samsung)",
+     "kind": "setting",
+     "adb": true,
+     "when": "samsung",
+     "items": [
+      {
+       "ns": "system",
+       "key": "aod_mode",
+       "value": "0",
+       "skip_if_unset": true
+      }
+     ]
+    },
+    {
+     "id": "background_scans",
+     "label": "Background Wi-Fi and Bluetooth LE scanning off",
+     "kind": "setting",
+     "adb": true,
+     "items": [
+      {
+       "ns": "global",
+       "key": "wifi_scan_always_enabled",
+       "value": "0"
+      },
+      {
+       "ns": "global",
+       "key": "ble_scan_always_enabled",
+       "value": "0"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "_doc": "#1506 Not a bundle of launcher switches: `engine` hands the pick to bgpolicy/SuperSaving, whose ordered, reversible steps are declared in app/src/main/assets/super-saving.json (background policy, battery saver, doze, radios, sync, display, fleet). It names no toggles; picking it takes a snapshot of the prior state, and picking it again (or the notification's Off) restores everything exactly. Steps that need the ADB shell are skipped with a note when it is not connected.",
+   "id": "super_saving",
+   "label": "Super Saving Battery Mode",
+   "subtitle": "The most aggressive battery mode: every non-essential app restricted, battery saver and doze forced, radios and scans off, sync off, slowest display, fleet engines stopped. One tap on Off restores everything exactly. Most steps need the ADB shell.",
+   "engine": "super_saving"
+  }
+ ]
+}
