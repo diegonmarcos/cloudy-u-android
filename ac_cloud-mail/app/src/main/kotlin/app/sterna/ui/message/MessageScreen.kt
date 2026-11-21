@@ -895,7 +895,6 @@ private fun MessageActions(
     // Only to know whether the open message has its BODY: a message never opened while online holds
     // its cached header and nothing else, and a "Print" entry offered on it would print a blank page.
     val messages by viewModel.messages.collectAsStateWithLifecycle()
-    val coreDoc by viewModel.coreDoc.collectAsStateWithLifecycle()
     val printable = messages.firstOrNull()?.body != null
     val loaded = state as? MessageState.Loaded ?: return
     val senderEmail = loaded.email.from.firstOrNull()?.email
@@ -1767,6 +1766,8 @@ private fun MessageContent(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val messages by viewModel.messages.collectAsStateWithLifecycle()
+    // #1837 the core's reader document of the open message (null = the old document).
+    val coreDoc by viewModel.coreDoc.collectAsStateWithLifecycle()
     val attachmentStatus by viewModel.attachmentStatus.collectAsStateWithLifecycle()
     val calendar by viewModel.calendar.collectAsStateWithLifecycle()
     val ownMessage by viewModel.ownMessage.collectAsStateWithLifecycle()
