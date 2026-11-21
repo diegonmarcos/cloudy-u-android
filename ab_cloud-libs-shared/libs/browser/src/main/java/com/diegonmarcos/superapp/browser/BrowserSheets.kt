@@ -121,7 +121,7 @@ fun BrowserSheet(
                             modifier = Modifier.padding(top = 10.dp, bottom = 2.dp).testTag("browser:menu:category:$cat"))
                         group.forEach { r ->
                             val suffix = when (r.checked) { true -> "  ✓"; false -> ""; null -> "" }
-                            KitSettingsRow(
+                            PageToolsRow(
                                 title = r.label + suffix,
                                 subtitle = if (r.enabled) "" else r.why.orEmpty(),
                                 modifier = Modifier.testTag("browser:menu:${r.id}"),
@@ -134,6 +134,26 @@ fun BrowserSheet(
         }
     }
 }
+
+/**
+ * #1840 a Page-Tools link: the fleet's settings row (title, optional reason, tappable) with its text TWO font steps larger than the kit's
+ * row (bodySmall 12 sp -> bodyMedium 14 sp -> bodyLarge 16 sp) and a touch target to match. Nothing else about the row changes.
+ */
+@Composable
+private fun PageToolsRow(title: String, subtitle: String, modifier: Modifier, onClick: (() -> Unit)?) {
+    val p = LocalKitPalette.current
+    Column(
+        modifier.fillMaxWidth().then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .heightIn(min = PAGE_TOOLS_ROW_MIN_DP.dp).padding(vertical = 8.dp),
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(title, color = p.textPrimary, style = MaterialTheme.typography.bodyLarge)
+        if (subtitle.isNotBlank()) Text(subtitle, color = p.textSecondary, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+/** #1840 the Page-Tools link's minimum height. */
+const val PAGE_TOOLS_ROW_MIN_DP = 44
 
 @Composable
 private fun IconCell(r: SheetRow, modifier: Modifier, onPick: (String) -> Unit) {

@@ -3351,6 +3351,7 @@
         "lib-bluetooth",
         "lib-bottomnav",
         "lib-browser",
+        "lib-browser-core-rs",
         "lib-core",
         "lib-crash",
         "lib-decisions-link",

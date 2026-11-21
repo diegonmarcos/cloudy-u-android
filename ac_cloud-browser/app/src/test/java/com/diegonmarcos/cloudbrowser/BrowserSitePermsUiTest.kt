@@ -36,7 +36,7 @@ import org.robolectric.annotation.GraphicsMode
 import java.io.File
 
 /**
- * #1401 Browsing Tools on the tab row, its five sections, and the Perms page DRAWN from the SHIPPED build.json;
+ * #1401 Page-Tools on the tab row, its five sections, and the Perms page DRAWN from the SHIPPED build.json;
  * the per-site state persists in the browser_site_permissions prefs. Compose under Robolectric.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -64,7 +64,7 @@ class BrowserSitePermsUiTest {
     private fun tap(tag: String) = compose.onNodeWithTag(tag, useUnmergedTree = true).performScrollTo().performClick()
 
     @Test
-    fun `the tab row ends with the tools icon and a tap opens Browsing Tools`() {
+    fun `the tab row ends with the tools icon and a tap opens Page-Tools`() {
         var opened = 0
         compose.setContent { CloudKitTheme(palette) { BrowserTabStrip(emptyList(), "", "", 0, onSelect = {}, onNew = {}, onTools = { opened++ }) } }
         compose.waitForIdle()

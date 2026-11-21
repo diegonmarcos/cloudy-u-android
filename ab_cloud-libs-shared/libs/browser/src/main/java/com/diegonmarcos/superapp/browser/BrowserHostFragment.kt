@@ -16,6 +16,7 @@ import android.view.ViewGroup
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import com.diegonmarcos.cloudlib.browsercore.BrowserCore
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
@@ -158,6 +159,23 @@ class BrowserHostFragment : Fragment() {
     private lateinit var config: BrowserConfig
     /** #900 Block trackers: the app's declared hosts. */
     private val trackers by lazy { BrowserTrackers(config.trackerHosts) }
+
+    // #1841 the persisted session, the renderer-gone policy and the pieces of the black-page guard.
+    private val snapshots by lazy { BrowserSessionSnapshots(requireContext().applicationContext) }
+    private val renderGuard = BrowserRenderGuard()
+    /** Set from the renderer-gone callback until the tab's WebView is rebuilt: a dead view is never drawn into a thumbnail or saved. */
+    private var rendererDead = false
+    /** The scroll a snapshot restore applies once, when its page has loaded (tab key, url, x, y). */
+    private var pendingScroll: Triple<String, String, Pair<Int, Int>>? = null
+    private val saveSoon = Runnable { saveTabState() }
+    /** #1841 set after an unclean end: the tab the previous run was on, offered back by a banner instead of reopened. */
+    private var restoreOffer by mutableStateOf<BrowserTab?>(null)
+    private var resumeProbeToken = 0
+    private val trimCallbacks = object : android.content.ComponentCallbacks2 {
+        override fun onTrimMemory(level: Int) { onTrim(level) }
+        override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {}
+        @Deprecated("onTrimMemory covers it") override fun onLowMemory() { BrowserLog.w(BrowserLog.MEM, "low-memory") }
+    }
     /** The host of the page the WebView is on, kept for shouldInterceptRequest (WebView methods may not be called off the main thread). */
     @Volatile private var pageHostNow = ""
     /** What the page area shows: the tab switcher, or one tab's address bar over its WebView. */
@@ -284,6 +302,20 @@ class BrowserHostFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, s: Bundle?): View {
         val ctx = inflater.context
+        BrowserCore.onFallback = { job, why -> BrowserLog.w(BrowserLog.CORE, "fallback", "job" to job, "why" to why) }
+        if (!processLogged) {
+            processLogged = true
+            BrowserLog.i(BrowserLog.LIFE, "process-start", "pid" to android.os.Process.myPid(), "sdk" to android.os.Build.VERSION.SDK_INT,
+                "uptime_ms" to (android.os.SystemClock.elapsedRealtime() - android.os.Process.getStartElapsedRealtime()), "saved_state" to (s != null))
+            BrowserLog.i(BrowserLog.CORE, "engine", "native" to BrowserCore.native, "version" to BrowserCore.version(), "why_not" to BrowserCore.unavailableReason())
+        }
+        BrowserLog.i(BrowserLog.LIFE, "create-view", "recreated" to (s != null))
+        if (!healthChecked) {
+            healthChecked = true
+            uncleanStart = BrowserSessionHealth.startAndCheck(ctx.filesDir)
+            BrowserLog.i(BrowserLog.LIFE, "session-health", "previous_run" to (if (uncleanStart) "unclean" else "clean"))
+        }
+        ctx.applicationContext.registerComponentCallbacks(trimCallbacks)
         prefs = BrowserTabPrefs(ctx)
         if (PrivateProfile.staleAtStart(profileSupported, prefs.all())) dropPrivateProfile()
         history = BrowserHistory(ctx)
@@ -312,7 +344,10 @@ class BrowserHostFragment : Fragment() {
         val openUrl = arguments?.getString(ARG_OPEN_URL)
         // #886 a fragment that outlives its view (rotation) comes back on the tab it was showing.
         val kept = (mode as? Mode.DETAIL)?.let { prefs.byId(it.id) }
-        val restore = prefs.activeTab()?.takeIf { browserSettings.bool("restore_tabs_on_start") == true }
+        // #1841 after an unclean end the last page is NOT reopened by itself: the grid shows, with "Restore previous tabs" offered
+        val lastTab = prefs.activeTab()
+        if (uncleanStart && lastTab != null && openUrl.isNullOrBlank() && kept == null) restoreOffer = lastTab
+        val restore = lastTab?.takeIf { browserSettings.bool("restore_tabs_on_start") == true && !uncleanStart }
         if (!openUrl.isNullOrBlank() && !openUrlHandled) {
             openUrlHandled = true
             openUrlInTab(openUrl)
@@ -329,6 +364,10 @@ class BrowserHostFragment : Fragment() {
     /** #802 a write from outside the screen (debug route, fleet import) shows up live. */
     override fun onResume() {
         super.onResume()
+        BrowserSessionHealth.markRunning(requireContext().filesDir)
+        BrowserLog.i(BrowserLog.LIFE, "resume", "tab" to BrowserLog.tab(webTabKey), "webview" to (webView != null))
+        BrowserKeepAlive.onForeground(requireContext().applicationContext)
+        ensureWebViewAlive("resume")
         BrowserBus.listener = { change -> if (isAdded) onBusChange(change) }
         BrowserBus.page = pageHost
         syncDownloadPolicy()
@@ -362,12 +401,16 @@ class BrowserHostFragment : Fragment() {
 
     override fun onStop() {
         saveTabState()
+        BrowserSessionHealth.markClean(requireContext().filesDir)
+        BrowserLog.i(BrowserLog.LIFE, "stop", "tab" to BrowserLog.tab(webTabKey))
         super.onStop()
     }
 
     override fun onPause() {
         commitSwipe()
         saveTabState()   // #886 the app going away is the last chance to keep where the tab was
+        BrowserLog.i(BrowserLog.LIFE, "pause", "tab" to BrowserLog.tab(webTabKey), "changing_config" to (activity?.isChangingConfigurations == true))
+        if (activity?.isChangingConfigurations != true) BrowserKeepAlive.onBackground(requireContext().applicationContext, downloadsActive = false)
         BrowserBus.listener = null
         if (BrowserBus.page === pageHost) BrowserBus.page = null
         super.onPause()
@@ -949,6 +992,15 @@ class BrowserHostFragment : Fragment() {
         if (!BrowserTabStore.shouldCommit(wv.url) || readerOn) return
         prefs.commit(tab.key, wv.url, wv.title)
         if (!tab.isPrivate) BrowserWebState.save(requireContext(), wv, tab.key)
+        // #1841 and the tab's snapshot (url, back/forward stack, scroll, title, favicon): what a dead renderer or process restores from
+        if (!tab.isPrivate && !rendererDead) snapshotNow(wv, tab)
+    }
+
+    /** #1841 write [tab]'s snapshot from [wv] (cheap: one row; the heavy WebView state file is saveTabState's). */
+    private fun snapshotNow(wv: WebView, tab: BrowserTab) {
+        val snap = snapshots.read(wv, tab.key, tab.iconPath) ?: return
+        if (snapshots.save(snap)) BrowserLog.d(BrowserLog.TAB, "snapshot", "tab" to BrowserLog.tab(tab.key), "url" to BrowserLog.url(snap.url),
+            "scroll_y" to snap.scrollY, "history" to snap.history.size, "engine" to (if (snapshots.usingCore) "rust" else "kotlin"))
     }
 
     private fun showDetail(tab: BrowserTab) {
@@ -990,8 +1042,15 @@ class BrowserHostFragment : Fragment() {
             if (tab.isPrivate) settings.cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
             applySettings(this, url)
             webViewClient = object : CloudWebClient(WebProfile.BROWSER) {
+                /** #1841 the renderer died (memory pressure, a GPU crash, chrome://crash): rebuild this tab from its snapshot, never leave a dead view. */
+                override fun onRenderProcessGone(view: WebView?, detail: android.webkit.RenderProcessGoneDetail?): Boolean {
+                    handleRenderGone(view, tabKey, detail?.didCrash() == true, if (android.os.Build.VERSION.SDK_INT >= 26) detail?.rendererPriorityAtExit() ?: -1 else -1)
+                    return true
+                }
+
                 override fun onPageStarted(view: WebView?, startedUrl: String?, favicon: Bitmap?) {
                     super.onPageStarted(view, startedUrl, favicon)
+                    BrowserLog.i(BrowserLog.TAB, "load-start", "tab" to BrowserLog.tab(tabKey), "url" to BrowserLog.url(startedUrl))
                     // A real navigation leaves reader view; the reader's own render does not.
                     if (readerPending) readerPending = false else { readerOn = false; translator.abandon() }
                     domAutofill.dismiss()
@@ -1057,6 +1116,8 @@ class BrowserHostFragment : Fragment() {
 
                 override fun onReceivedError(view: WebView?, request: android.webkit.WebResourceRequest?, error: android.webkit.WebResourceError?) {
                     super.onReceivedError(view, request, error)
+                    if (request?.isForMainFrame != false) BrowserLog.w(BrowserLog.TAB, "load-error", "tab" to BrowserLog.tab(tabKey),
+                        "url" to BrowserLog.url(request?.url?.toString()), "code" to error?.errorCode)
                     if (request?.isForMainFrame != false) pullRefresh?.isRefreshing = false
                 }
 
@@ -1064,6 +1125,13 @@ class BrowserHostFragment : Fragment() {
                     super.onPageFinished(view, finishedUrl)
                     pullRefresh?.isRefreshing = false
                     val u = finishedUrl ?: return
+                    BrowserLog.i(BrowserLog.TAB, "load-finish", "tab" to BrowserLog.tab(tabKey), "url" to BrowserLog.url(u), "progress" to view?.progress)
+                    renderGuard.onHealthy(tabKey)
+                    // #1841 a page restored from its snapshot goes back to where it was scrolled (once, and only for the page the snapshot named)
+                    pendingScroll?.takeIf { it.first == tabKey && it.second == u }?.let { (_, _, xy) ->
+                        pendingScroll = null
+                        view?.postDelayed({ if (webView === view) view?.scrollTo(xy.first, xy.second) }, 250)
+                    }
                     view?.let { onWebPageFinished?.invoke(it) }
                     // #1141 desktop view: the layout viewport is a desktop width even if the page's meta viewport says device-width.
                     if (desktopMode) view?.evaluateJavascript(ViewModePlan.DESKTOP_VIEWPORT_JS, null)
@@ -1162,10 +1230,25 @@ class BrowserHostFragment : Fragment() {
             // New text arrives as the reader scrolls: translate it too while a translation is on.
             setOnScrollChangeListener { _, _, y, _, oldY ->
                 onWebScroll?.invoke((y - oldY).toFloat())
+                // #1841 the scroll position is part of the snapshot: written 1.5 s after the scrolling stops
+                if (!tab.isPrivate) { ui.removeCallbacks(saveSoon); ui.postDelayed(saveSoon, 1500) }
                 if (translator.active) { ui.removeCallbacks(translateMore); ui.postDelayed(translateMore, 700) }
             }
-            if (tab.isPrivate || !BrowserWebState.restore(ctx, this, tabKey)) loadResolved(url)
+            // #1841 restore order: WebView state (back stack, scroll, form input), else the snapshot's page at its scroll, else the tab's url
+            val stateRestored = !tab.isPrivate && BrowserWebState.restore(ctx, this, tabKey)
+            val plan = BrowserSessionSnapshots.plan(stateRestored, if (tab.isPrivate) null else snapshots.load(tabKey), url)
+            BrowserLog.i(BrowserLog.TAB, "restore", "tab" to BrowserLog.tab(tabKey), "source" to plan.source.label, "url" to BrowserLog.url(plan.url),
+                "scroll_y" to plan.scrollY, "private" to tab.isPrivate)
+            if (!stateRestored) {
+                if (plan.scrollY > 0) pendingScroll = Triple(tabKey, plan.url, plan.scrollX to plan.scrollY)
+                loadResolved(plan.url)
+            }
+            // #1841 the visible tab's renderer keeps its priority while the app is backgrounded (the policy is in BrowserKeepAlive)
+            runCatching { setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false) }
         }
+        rendererDead = false
+        BrowserLog.i(BrowserLog.TAB, "create", "tab" to BrowserLog.tab(tabKey), "url" to BrowserLog.url(url), "private" to tab.isPrivate,
+            "live_webviews" to 1)
         overlays.clear()
         onOverlaysClosed?.invoke()
         refreshStripFor(tab)
@@ -1558,7 +1641,7 @@ class BrowserHostFragment : Fragment() {
         }
     }
 
-    /** #1401 Browsing Tools > Site Perms > Perms: every permission a site can request, this site's state, the global default. */
+    /** #1401 Page-Tools > Site Perms > Perms: every permission a site can request, this site's state, the global default. */
     private fun showSiteSettings(host: String) {
         overlay { close ->
             BrowserPermsScreen("Perms", host, config.sitePerms,
@@ -1957,6 +2040,15 @@ class BrowserHostFragment : Fragment() {
                 is Screen.Detail -> key(sc.id) { DetailScreen(sc) }
             }
             overlays.toList().forEach { e -> key(e) { OverlayHost(e) } }
+            restoreOffer?.let { t ->
+                Row(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(Color(0xE61A0033)).padding(12.dp).testTag("browser:restore_offer"),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    Text("The last session ended unexpectedly. Your tabs are kept.", color = Color.White, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                    TextButton({ val o = t; restoreOffer = null; BrowserLog.i(BrowserLog.TAB, "restore-previous", "tab" to BrowserLog.tab(o.key)); showDetail(prefs.byId(o.key) ?: o) },
+                        Modifier.testTag("browser:restore_offer:go")) { Text("Restore previous tabs") }
+                    TextButton({ restoreOffer = null }) { Text("Dismiss") }
+                }
+            }
         }
     }
 
@@ -2159,7 +2251,7 @@ class BrowserHostFragment : Fragment() {
         val iconRows = config.menu.iconRows(facts).map { r -> r.map { it.sheet() } }
         val sections = config.menu.listSections(facts).map { (s, rows) -> s.label to rows.map { it.sheet() } }
         overlay { close ->
-            BrowserSheet(iconRows.firstOrNull().orEmpty(), sections, onPick = { id -> close(); runAction(id) }, onDismiss = close, moreIcons = iconRows.drop(1), title = "page-tools")
+            BrowserSheet(iconRows.firstOrNull().orEmpty(), sections, onPick = { id -> close(); runAction(id) }, onDismiss = close, moreIcons = iconRows.drop(1), title = PAGE_TOOLS_LABEL)
         }
     }
 
@@ -2795,9 +2887,11 @@ class BrowserHostFragment : Fragment() {
     }
 
     private fun teardownWebView() {
-        saveTabState()
+        if (!rendererDead) saveTabState()
         // Leaving a tab (to the switcher or to another tab): its last look, while the page is still alive.
-        webView?.let { wv -> webTabKey?.let { if (isAdded) runCatching { captureTab(wv, it) } } }
+        // #1841 never from a view whose renderer is gone, and never a blank picture (a dead or detached WebView draws black).
+        webView?.let { wv -> webTabKey?.let { if (isAdded && !rendererDead) runCatching { captureTab(wv, it) } } }
+        ui.removeCallbacks(saveSoon)
         webTabKey = null
         webView?.let {
             runCatching { webBluetooth.detach(it) }
@@ -2809,7 +2903,82 @@ class BrowserHostFragment : Fragment() {
         pullRefresh = null
     }
 
+    // ── #1841 black-page guard: renderer-gone recovery, the resume probe, memory ─────────────────────────────────────────
+
+    /**
+     * The renderer of [view] is gone. WHY THIS EXISTS: the fleet client (CloudWebClient) answered this by destroying the dead view and
+     * swapping a bare WebView into its parent, while this host (and Compose's AndroidView, which re-attaches `screen`'s WebView whenever
+     * the page area is recomposed, e.g. on coming back from another app) kept pointing at the destroyed one: a destroyed or unbound
+     * WebView draws nothing, and the page area stayed black. Now the host owns the answer: it rebuilds the tab's WebView from its snapshot
+     * ([BrowserSessionSnapshots]), through the one path every tab is built by ([showDetail]), so the clients, the profile and the bridges
+     * are the host's. A tab that kills its renderer over and over is rebuilt on an error page ([BrowserRenderGuard]).
+     */
+    private fun handleRenderGone(view: WebView?, tabKey: String, didCrash: Boolean, priorityAtExit: Int) {
+        val current = webView
+        BrowserLog.w(BrowserLog.RENDER, "renderer-gone", "tab" to BrowserLog.tab(tabKey), "did_crash" to didCrash, "priority_at_exit" to priorityAtExit,
+            "is_current" to (view != null && view === current), "url" to BrowserLog.url(runCatching { view?.url }.getOrNull()))
+        if (view == null || view !== current) {   // a popup's or an already replaced view: just release it
+            view?.let { v -> runCatching { (v.parent as? ViewGroup)?.removeView(v) } }
+            runCatching { view?.destroy() }
+            return
+        }
+        rendererDead = true
+        val action = renderGuard.onGone(tabKey)
+        ui.post {
+            if (!isAdded || webView !== view) return@post
+            val tab = prefs.byId(tabKey)
+            if (tab == null) { rendererDead = false; showGrid(); return@post }
+            if (action == BrowserRenderGuard.Action.GIVE_UP_SHOW_ERROR) {
+                BrowserLog.w(BrowserLog.RENDER, "loop-guard", "tab" to BrowserLog.tab(tabKey), "deaths" to renderGuard.deathsOf(tabKey))
+                showDetail(tab)
+                webView?.loadDataWithBaseURL(null, BrowserRenderGuard.errorPage(BrowserSitePolicy.hostOf(tab.url)), "text/html", "utf-8", null)
+            } else {
+                BrowserLog.i(BrowserLog.RENDER, "recover", "tab" to BrowserLog.tab(tabKey), "from" to "snapshot", "deaths" to renderGuard.deathsOf(tabKey))
+                showDetail(tab)
+            }
+        }
+    }
+
+    /**
+     * Back from another app: the WebView must be alive, attached and answering. A view that lost its window is re-attached by building the
+     * page area again; a renderer that does not answer a trivial script in time (twice) is treated as gone and the tab is rebuilt from
+     * its snapshot. Never leaves the black page for the user to find.
+     */
+    private fun ensureWebViewAlive(why: String) {
+        val wv = webView ?: return
+        val tab = currentTab() ?: return
+        runCatching { wv.onResume(); wv.resumeTimers() }
+        if (!wv.isAttachedToWindow || wv.parent == null) {
+            BrowserLog.w(BrowserLog.RENDER, "reattach", "tab" to BrowserLog.tab(tab.key), "why" to why, "attached" to wv.isAttachedToWindow)
+            screen = Screen.Detail(++detailSeq, tab, wv)
+        }
+        val token = ++resumeProbeToken
+        fun probe(attempt: Int) {
+            var answered = false
+            runCatching { wv.evaluateJavascript("1") { answered = true } }
+            ui.postDelayed({
+                if (token != resumeProbeToken || !isAdded || webView !== wv || answered) {
+                    if (answered) BrowserLog.d(BrowserLog.RENDER, "probe-ok", "tab" to BrowserLog.tab(tab.key), "attempt" to attempt)
+                    return@postDelayed
+                }
+                if (attempt < 2) { BrowserLog.w(BrowserLog.RENDER, "probe-slow", "tab" to BrowserLog.tab(tab.key)); probe(attempt + 1) }
+                else handleRenderGone(wv, tab.key, didCrash = false, priorityAtExit = -1)
+            }, PROBE_MS)
+        }
+        probe(1)
+    }
+
+    /** onTrimMemory: log the level by name, and keep the tab's state safe before the system may take the process. */
+    private fun onTrim(level: Int) {
+        val rt = Runtime.getRuntime()
+        BrowserLog.i(BrowserLog.MEM, "trim", "level" to BrowserLog.trimName(level), "heap_used_mb" to ((rt.totalMemory() - rt.freeMemory()) shr 20),
+            "heap_max_mb" to (rt.maxMemory() shr 20), "live_webviews" to (if (webView != null) 1 else 0), "tab" to BrowserLog.tab(webTabKey))
+        if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN && isAdded) saveTabState()
+    }
+
     override fun onDestroyView() {
+        BrowserLog.i(BrowserLog.LIFE, "destroy-view", "tab" to BrowserLog.tab(webTabKey))
+        runCatching { context?.applicationContext?.unregisterComponentCallbacks(trimCallbacks) }
         teardownWebView()
         super.onDestroyView()
     }
@@ -2817,6 +2986,13 @@ class BrowserHostFragment : Fragment() {
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
 
     companion object {
+        /** #1841 how long the resume probe waits for a trivial script's answer before it asks again, then gives the renderer up. */
+        private const val PROBE_MS = 4000L
+        @Volatile private var healthChecked = false
+        @Volatile private var uncleanStart = false
+        /** #1841 the process-start line is logged once per process, by the first view. */
+        @Volatile private var processLogged = false
+
         /** #1274 the catalogue feature (perms-catalogue.json) whose entries Cloud Browser needs. */
         const val PERMS_FEATURE = "browser"
         private const val TAG = "Browser"

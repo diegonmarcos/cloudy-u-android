@@ -425,6 +425,7 @@ dependencies {
     implementation project(':libs:analytics')
     implementation project(':libs:core')
     implementation project(':libs:browser')
+    implementation project(':libs:browser-core-rs')   // #1841 the Rust core (session store, search, filter) and its Kotlin twin
     // #1222 the Bluetooth stack the Web Bluetooth polyfill drives (the app's tests run the bridge over a fake adapter).
     implementation project(':libs:bluetooth')
     // Tier 2 DOM autofill: the Cloud Account SOT contract libs:browser reads (its types are in DomAutofill's API).

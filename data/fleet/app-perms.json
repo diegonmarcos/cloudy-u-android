@@ -63,7 +63,8 @@
     "camera",
     "microphone",
     "storage_write",
-    "install_unknown"
+    "install_unknown",
+    "battery_opt"
    ],
    "first_run": "libs:perms",
    "helpers": []

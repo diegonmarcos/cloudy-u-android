@@ -54,7 +54,7 @@ def check(root, ok):
             cats.setdefault(i["category"], []).append(i["id"])
     ok(list(cats) == ["Reading", "Save & Export", "Find & Share", "View mode", "Autofill"], "P1 Page Tools rows are grouped in categories", str(list(cats)))
     ok(items.get("dev_graphics", {}).get("section") == "dev_tools" and '"dev_graphics" ->' in run, "P1 the Graphics debugger row has its runAction branch")
-    ok('title = "page-tools"' in frag and "browser:menu:tab:" in src.get(LIB + "/BrowserSheets.kt", ""), "P1 the sheet is titled page-tools and drawn as tabs")
+    ok('title = PAGE_TOOLS_LABEL' in frag and "browser:menu:tab:" in src.get(LIB + "/BrowserSheets.kt", ""), "P1 the sheet is titled Page-Tools and drawn as tabs")
     for g in GLOBAL:
         ok(g not in items, "P1 `%s` is not a dropdown row" % g)
     ok(all("settings_section" not in i for i in items.values()), "P1 no dropdown row sits inside a settings topic")

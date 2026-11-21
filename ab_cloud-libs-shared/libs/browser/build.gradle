@@ -43,6 +43,8 @@ android {
 
 dependencies {
     api project(':libs:web-core')   // #1371 the fleet's one web view (CloudWeb, WebProfile)
+    // #1841 the native core (session/tab snapshot store, history search, content-blocking matching) and its Kotlin twin
+    api project(':libs:browser-core-rs')
     implementation project(':libs:perms')   // #1274 PermsLink: the host's Permissions page asks, not this lib
     implementation project(':libs:core')
     // #1222 navigator.bluetooth for pages: WebBluetoothBridge drives libs:bluetooth's GattSession.

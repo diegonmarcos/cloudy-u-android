@@ -1,11 +1,11 @@
 #!/bin/sh
 # ╔══════════════════════════════════════════════════════════════════╗
-# ║ #1401 ⋮ = Configs; Browsing Tools on the tab row; five sections;  ║
+# ║ #1401 ⋮ = Configs; Page-Tools on the tab row; five sections;  ║
 # ║       every site permission, per site, with a global default      ║
 # ╚══════════════════════════════════════════════════════════════════╝
 #
 #   T1 the app bar's ⋮ opens the app's Configs (MainActivity onConfigs), never the page menu;
-#   T2 the tab row's icon (browser:tabrow:tools) opens the Browsing Tools sheet, and the page bar has no ⋮ of its own;
+#   T2 the tab row's icon (browser:tabrow:tools) opens the Page-Tools sheet, and the page bar has no ⋮ of its own;
 #   T3 the sheet's sections are, in order: Actions, Page Tools, Site Data, Site Perms, Dev Tools; Site Perms is one row, "Perms";
 #   T4 every action the sheet held before #1401 is still a row of it (none lost);
 #   T5 the Perms list: the most-used first, in the owner's order, then all the rest; the list is complete;
@@ -46,8 +46,8 @@ def check(root, ok):
     ok('onConfigs = { openSection("configs") }' in act, "T1 the app bar's ⋮ opens Configs")
     ok("onConfigs = { hostFragment?.openMenu() }" not in act, "T1 the app bar's ⋮ no longer opens the page menu")
     ok('TAB_ROW_TOOLS_TAG = "browser:tabrow:tools"' in strip and "if (onTools != null) BrowserTabRowToolsIcon(onTools)" in strip,
-       "T2 the tab strip ends with the Browsing Tools icon")
-    ok("onTools = { showMenuSheet() }" in frag and "BrowserTabRowToolsIcon { showMenuSheet() }" in frag, "T2 the icon opens the Browsing Tools sheet (strip on and off)")
+       "T2 the tab strip ends with the Page-Tools icon")
+    ok("onTools = { showMenuSheet() }" in frag and "BrowserTabRowToolsIcon { showMenuSheet() }" in frag, "T2 the icon opens the Page-Tools sheet (strip on and off)")
     ok('BarButton("⋮")' not in frag, "T2 the page bar has no ⋮ of its own")
     m = b["menu"]
     secs = [(s["id"], s["label"]) for s in m["sections"]]
@@ -57,7 +57,7 @@ def check(root, ok):
     ok('"site_settings" -> { showSiteSettings(' in frag, "T3 Perms opens the Perms page")
     ids = [i["id"] for i in m["items"]]
     for a in BEFORE:
-        ok(a in ids, "T4 `%s` is still in Browsing Tools" % a)
+        ok(a in ids, "T4 `%s` is still in Page-Tools" % a)
         ok(re.search(r'"%s"(\s*,\s*"[a-z_]+")*\s*->' % re.escape(a), frag[frag.find("private fun runAction(id: String, args"):]), "T4 `%s` still runs" % a)
     p = b["site_permissions"]
     pid = [x["id"] for x in p]

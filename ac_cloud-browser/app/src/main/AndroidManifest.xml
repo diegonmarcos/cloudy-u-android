@@ -26,6 +26,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- #1841 keep-alive: the system's one-tap battery-optimisation exemption (asked once, with its reason, from Configs > General >
+         Perms) and a mediaPlayback foreground service held ONLY while a page plays audio in the background (BrowserKeepAliveService). -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
     <!-- Self-update: download + install new APK from GHCR silently.
@@ -58,6 +62,7 @@
 
     <application
         android:hardwareAccelerated="true"
+        android:enableOnBackInvokedCallback="true"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -345,6 +350,11 @@
             android:name="com.diegonmarcos.superapp.browser.download.DlService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+        <!-- #1841 the keep-alive service: foreground (type mediaPlayback) only while a page plays audio in the background; it stops itself when the audio stops. -->
+        <service
+            android:name="com.diegonmarcos.superapp.browser.BrowserKeepAliveService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
         <service
             android:name="com.diegonmarcos.superapp.browser.download.DlResumeJob"
             android:exported="false"

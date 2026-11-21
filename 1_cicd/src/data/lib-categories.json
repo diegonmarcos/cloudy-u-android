@@ -64,6 +64,7 @@
     "disk",
     "disk-scan",
     "drive-core-rs",
+    "browser-core-rs",
     "mail-core-rs",
     "mounts",
     "rclone",

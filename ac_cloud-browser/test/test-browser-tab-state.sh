@@ -40,7 +40,7 @@ def check(root, ok):
     ok("saveTabState()" in td[:td.find("webView = null")], "a WebView is never destroyed before its state is saved")
     ok("BrowserWebState.save(requireContext(), wv, tab.key)" in frag and "if (!tab.isPrivate) BrowserWebState.save(" in frag,
        "the back stack is saved, and never for a private tab")
-    ok("BrowserWebState.restore(ctx, this, tabKey)) loadResolved(url)" in frag.replace("\n", " ") or "!BrowserWebState.restore(ctx, this, tabKey)) loadResolved(url)" in frag,
+    ok("BrowserWebState.restore(ctx, this, tabKey)" in frag and "BrowserSessionSnapshots.plan(stateRestored" in frag and "loadResolved(plan.url)" in frag,
        "a tab reopens from its saved state, else from its committed url")
     ok("val url = tab.url" in frag, "the url loaded is the tab's stored (committed) url")
     ok("if (next.isNotEmpty()) webView?.loadResolved(next)" in frag and "prefs.remove(prior)" not in frag,
@@ -59,9 +59,9 @@ main("tab state", check, [
     ("a finished page stops committing", FRAG, "onCommitted(tabKey, view, u)\n", "\n", "finished page commits"),
     ("pause stops saving the state", FRAG, "saveTabState()   // #886 the app going away", "Unit   // #886 the app going away", "pausing saves"),
     ("stop stops saving the state", FRAG, "override fun onStop() {\n        saveTabState()", "override fun onStop() {\n        Unit", "stopping saves"),
-    ("the WebView is destroyed unsaved", FRAG, "private fun teardownWebView() {\n        saveTabState()", "private fun teardownWebView() {\n        Unit", "never destroyed before its state is saved"),
+    ("the WebView is destroyed unsaved", FRAG, "private fun teardownWebView() {\n        if (!rendererDead) saveTabState()", "private fun teardownWebView() {\n        Unit", "never destroyed before its state is saved"),
     ("a private tab's back stack is saved", FRAG, "if (!tab.isPrivate) BrowserWebState.save(", "if (true) BrowserWebState.save(", "never for a private tab"),
-    ("the saved state is never restored", FRAG, "if (tab.isPrivate || !BrowserWebState.restore(ctx, this, tabKey)) loadResolved(url)", "loadResolved(url)", "reopens from its saved state"),
+    ("the saved state is never restored", FRAG, "val stateRestored = !tab.isPrivate && BrowserWebState.restore(ctx, this, tabKey)", "val stateRestored = false", "reopens from its saved state"),
     ("the address bar closes and re-adds the tab", FRAG, "if (next.isNotEmpty()) webView?.loadResolved(next)", "if (next.isNotEmpty()) { prefs.remove(prefs.activeUrl() ?: url); navigateTo(next) }", "in place"),
     ("a closed tab leaves its state behind", FRAG, "BrowserWebState.delete(requireContext(), tab.key)", "Unit", "removes its saved state"),
     ("an about:blank navigation overwrites the url", LIB + "/BrowserTabStore.kt", "if (!shouldCommit(url)) return tabs", "", "only a real committed page"),

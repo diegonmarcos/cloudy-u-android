@@ -58,7 +58,7 @@ class BrowserPageDropdownUiTest {
     private fun show(facts: Map<String, Boolean>) {
         val iconRows = cfg.menu.iconRows(facts).map { r -> r.map { it.sheet() } }
         val sections = cfg.menu.listSections(facts).map { (s, rows) -> s.label to rows.map { it.sheet() } }
-        compose.setContent { CloudKitTheme(palette) { BrowserSheet(iconRows.firstOrNull().orEmpty(), sections, onPick = { picked += it }, onDismiss = {}, moreIcons = iconRows.drop(1), title = "page-tools") } }
+        compose.setContent { CloudKitTheme(palette) { BrowserSheet(iconRows.firstOrNull().orEmpty(), sections, onPick = { picked += it }, onDismiss = {}, moreIcons = iconRows.drop(1), title = "Page-Tools") } }
         compose.waitForIdle()
     }
 
@@ -95,9 +95,9 @@ class BrowserPageDropdownUiTest {
     }
 
     @Test
-    fun `the sheet is titled page-tools with the tabs Actions, Page Tools, Site Data, Site Perms, Dev Tools`() {
+    fun `the sheet is titled Page-Tools with the tabs Actions, Page Tools, Site Data, Site Perms, Dev Tools`() {
         show(pageFacts)
-        assertTrue("title is drawn", compose.onAllNodesWithTagOrText("page-tools"))
+        assertTrue("title is drawn", compose.onAllNodesWithTagOrText("Page-Tools"))
         listOf("Actions", "Page Tools", "Site Data", "Site Perms", "Dev Tools").forEachIndexed { i, title ->
             assertTrue("tab $title is drawn", compose.onAllNodesWithTag("browser:menu:tab:$i", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
             assertTrue("tab $title is labelled", compose.onAllNodesWithTagOrText(title))

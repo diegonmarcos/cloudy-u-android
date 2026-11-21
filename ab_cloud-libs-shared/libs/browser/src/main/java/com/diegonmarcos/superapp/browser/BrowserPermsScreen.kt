@@ -33,7 +33,7 @@ val PERM_STATE_LABELS = listOf(BrowserSitePolicy.ASK to "Ask", BrowserSitePolicy
 data class PermSite(val host: String, val summary: String)
 
 /**
- * #1401 THE ONE PERMS COMPONENT. With a [host] it is the page's Perms (Browsing Tools > Site Perms): each permission's
+ * #1401 THE ONE PERMS COMPONENT. With a [host] it is the page's Perms (Page-Tools > Site Perms): each permission's
  * state for that site, the global default beside it, Reset when the site has a rule of its own. Without a host it is
  * Configs > Sites Permissions: one default per permission, then [sites] (the sites with overrides, Edit / Reset each).
  * The list is [BrowserSitePolicy.ordered]: the most-used first, then all the rest. A permission WebView cannot enforce

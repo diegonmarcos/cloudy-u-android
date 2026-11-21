@@ -20,6 +20,16 @@
     "type": "gradle",
     "entry": "build.sh"
   },
+  "native_core": {
+    "_doc": "#1841 the Rust browser core (libs:browser-core-rs, libbrowser_core.so): the session / tab snapshot store (bundled SQLite), history and bookmark search, content-blocking host matching. When it is not loaded (no .so for the ABI) or a call fails, the same call runs in Kotlin (BrowserCore's twins) and logs why (tag CBrowser/Core).",
+    "crates": ["rusqlite (bundled)", "serde", "serde_json", "jni"],
+    "toolchain": {
+      "_doc": "Read by the ship workflow (never restated there), the shape of ac_cloud-mail/build.json::native_core.toolchain: cargo builds the crate for each Android ABI with the NDK clang as linker and C compiler; BROWSER_CORE_ABIS picks the ABIs built.",
+      "ndk": "27.2.12479018",
+      "rust": "stable",
+      "rust_targets": ["aarch64-linux-android", "x86_64-linux-android"]
+    }
+  },
   "android": {
     "application_id": "com.diegonmarcos.cloudbrowser",
     "compile_sdk": 36,
@@ -112,6 +122,11 @@
       "type": "library",
       "_doc_dir": "Shared BY REFERENCE from aa_cloud-superapp/libs/ - settings.gradle points projectDir here instead of at a local copy. browser was three byte-identical trees (superapp, browser, vault); nothing kept them in step, so a WebView fix had to be pasted three times or it silently reached one app.",
       "dir": "../ab_cloud-libs-shared/libs/browser"
+    },
+    "libs:browser-core-rs": {
+      "type": "library",
+      "_doc": "#1841 Cloud Browser's native core: the session / tab snapshot store (bundled SQLite), history and bookmark search and content-blocking filter matching, in Rust (cargo + the NDK clang, JNI, jniLibs per ABI) behind the Kotlin BrowserCore facade, which carries the same three jobs in Kotlin as the fallback when libbrowser_core.so is not loaded. libs:browser links it (api). Shared BY REFERENCE, like libs:mail-core-rs.",
+      "dir": "../ab_cloud-libs-shared/libs/browser-core-rs"
     },
     "libs:autofill": {
       "type": "library",
@@ -805,7 +820,7 @@
       },
       "_doc_reader_css": "#802 the stylesheet reader mode renders the extracted article with (assets/browser/reader.js does the extraction).",
       "reader_css": "body{max-width:42em;margin:auto;padding:1em;font:18px/1.6 Georgia,serif;background:#111;color:#eee}img,video{max-width:100%;height:auto}a{color:#a78bfa}pre{white-space:pre-wrap}",
-      "_doc_menu": "#802/#900/#1401 BROWSING TOOLS, declared: the page-tools dropdown (section ids match the tab labels: actions, page_tools, site_data, site_perms, dev_tools): the sheet opened by the icon at the far right of the tab row (the app bar's ⋮ opens Configs). It holds ONLY what acts on the current page or domain, as five TABS in this order: Actions (navigation, reload/refresh, bookmark, copy URL, open in another app, home screen, pin/download site), Page Tools (grouped by `category`: Reading, Save & Export, Find & Share, View mode, Autofill; add-on page rows join here), Site Data (cookies and storage of this site, clear, autocomplete, trackers, images), Site Perms (one row, Perms: every permission a site can request), Dev Tools (console, network, elements, storage, graphics stats, remote debugging, JavaScript for this site). Global things live on the Configs pages.",
+      "_doc_menu": "#802/#900/#1401 PAGE-TOOLS, declared: the page-tools dropdown (section ids match the tab labels: actions, page_tools, site_data, site_perms, dev_tools): the sheet opened by the icon at the far right of the tab row (the app bar's ⋮ opens Configs). It holds ONLY what acts on the current page or domain, as five TABS in this order: Actions (navigation, reload/refresh, bookmark, copy URL, open in another app, home screen, pin/download site), Page Tools (grouped by `category`: Reading, Save & Export, Find & Share, View mode, Autofill; add-on page rows join here), Site Data (cookies and storage of this site, clear, autocomplete, trackers, images), Site Perms (one row, Perms: every permission a site can request), Dev Tools (console, network, elements, storage, graphics stats, remote debugging, JavaScript for this site). Global things live on the Configs pages.",
       "menu": {
         "sections": [
           {
@@ -2514,7 +2529,8 @@
       "camera",
       "microphone",
       "storage_write",
-      "install_unknown"
+      "install_unknown",
+      "battery_opt"
     ],
     "helpers": [],
     "first_run": "libs:perms"

@@ -74,7 +74,8 @@
     "camera",
     "microphone",
     "storage_write",
-    "install_unknown"
+    "install_unknown",
+    "battery_opt"
    ],
    "helpers": []
   },

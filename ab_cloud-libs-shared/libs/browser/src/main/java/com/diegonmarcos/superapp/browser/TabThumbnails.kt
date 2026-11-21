@@ -83,6 +83,8 @@ class TabThumbnails(
         val f = fileOf(id)
         if (!f.isFile) return null
         val bmp = runCatching { BitmapFactory.decodeFile(f.absolutePath) }.getOrNull() ?: return null
+        // #1841 a black picture written by an earlier build stays on disk across restarts: it is dropped, so the card shows its placeholder
+        if (isBlack(bmp)) { f.delete(); bmp.recycle(); return null }
         f.setLastModified(System.currentTimeMillis())   // touched: the disk LRU keeps what is looked at
         mem.put(id, bmp)
         return bmp
@@ -125,11 +127,21 @@ class TabThumbnails(
             val c = Canvas(bmp)
             c.scale(config.scale, config.scale)
             v.draw(c)
+            // #1841 a WebView drawn on a software canvas while its renderer is gone, detached or not yet painted comes out black: that
+            // picture must never replace a good one (it made every tab card read as a black page)
+            if (isBlack(bmp)) { bmp.recycle(); return@runCatching }
             put(id, bmp, incognito)
         }
     }
 
     private fun fileOf(id: String) = File(dir, key(id) + EXT)
+
+    /** True when a sample of [bmp]'s pixels is all black or fully transparent. */
+    private fun isBlack(bmp: Bitmap): Boolean {
+        val w = bmp.width; val h = bmp.height
+        val px = IntArray(w * h).also { bmp.getPixels(it, 0, w, 0, 0, w, h) }
+        return blackPixels(px)
+    }
 
     private fun write(id: String, bmp: Bitmap) {
         dir.mkdirs()
@@ -155,6 +167,20 @@ class TabThumbnails(
     companion object {
         const val EXT = ".webp"
         const val DIR = "tabs"
+
+        /** #1841 pure: every pixel (a sample of at most ~512) is black or fully transparent, the look of a WebView drawn without its renderer. */
+        fun blackPixels(px: IntArray): Boolean {
+            if (px.isEmpty()) return true
+            val step = (px.size / 512).coerceAtLeast(1)
+            var i = 0
+            while (i < px.size) {
+                val p = px[i]
+                val alpha = p ushr 24
+                if (alpha != 0 && ((p shr 16) and 0xFF) + ((p shr 8) and 0xFF) + (p and 0xFF) > 24) return false
+                i += step
+            }
+            return true
+        }
 
         fun key(id: String): String =
             MessageDigest.getInstance("SHA-256").digest(id.toByteArray()).joinToString("") { "%02x".format(it) }.take(40)

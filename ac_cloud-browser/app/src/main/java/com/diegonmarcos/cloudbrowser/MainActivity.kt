@@ -239,7 +239,7 @@ class MainActivity : AppCompatActivity() {
 
     /**
      * The first row over the page. The title island is the URL bar while a page is showing (a tap opens the host's address
-     * overlay) and the section's name otherwise (on Configs it lists the config pages); the row's ⋮ opens Configs (Browsing Tools is
+     * overlay) and the section's name otherwise (on Configs it lists the config pages); the row's ⋮ opens Configs (Page-Tools is
      * the tab row's icon); AI opens the Search page; the hamburger's drawer holds the page actions.
      */
     @Composable
@@ -259,7 +259,7 @@ class MainActivity : AppCompatActivity() {
             sections = decl.sections,
             onNavigate = { e -> if (e.depth == 0) openSection(e.sectionId) else if (selectedId == "cloudy" || selectedId == "domains") sitesPage = e.id else openConfigsPage(e.id) },
             onAccount = rememberAccountLauncher(),
-            // #1401 the app bar's ⋮ opens the app's Configs, like every fleet app; Browsing Tools is the tab row's icon.
+            // #1401 the app bar's ⋮ opens the app's Configs, like every fleet app; Page-Tools is the tab row's icon.
             onConfigs = { openSection("configs") },
             onAi = { openSection("search") },
             dark = true,

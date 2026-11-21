@@ -152,18 +152,14 @@ class BrowserSitePermissions(context: Context) {
  * content (build.json::ui.browser.tracker_hosts); this class ships no list.
  */
 class BrowserTrackers(hosts: Collection<String>) {
-    private val set = hosts.map { it.lowercase().trim().trimEnd('.') }.filter { it.contains('.') }.toSet()
+    // #1841 the host matcher is the browser core's (Rust: libbrowser_core.so, Kotlin twin when it is not loaded): one rule per line
+    private val filter = com.diegonmarcos.cloudlib.browsercore.BrowserCore.Filter(hosts.joinToString("\n"))
 
     /** [host] is a tracker host or a subdomain of one. A bare TLD never matches. */
-    fun isTracker(host: String): Boolean =
-        BrowserSitePolicy.suffixes(host).any { it.contains('.') && it in set }
+    fun isTracker(host: String): Boolean = filter.isTracker(host)
 
-    /** Answer this request empty? [pageHost] is the page it was made from. */
-    fun shouldBlock(requestHost: String, pageHost: String, mainFrame: Boolean): Boolean {
-        if (mainFrame || requestHost.isEmpty() || !isTracker(requestHost)) return false
-        // The page IS the tracker's own site (hotjar.com opened on purpose): its own requests are not blocked.
-        return !isTracker(pageHost)
-    }
+    /** Answer this request empty? [pageHost] is the page it was made from. The page IS the tracker's own site (hotjar.com opened on purpose): its own requests are not blocked. */
+    fun shouldBlock(requestHost: String, pageHost: String, mainFrame: Boolean): Boolean = filter.shouldBlock(requestHost, pageHost, mainFrame)
 }
 
 /**

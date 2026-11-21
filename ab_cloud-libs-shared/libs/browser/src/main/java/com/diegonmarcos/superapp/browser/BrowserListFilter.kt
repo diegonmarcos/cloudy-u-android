@@ -12,5 +12,14 @@ object BrowserListFilter {
 
     fun tabs(query: String, tabs: List<BrowserTab>): List<BrowserTab> = tabs.filter { matches(query, it.title, it.url) }
 
-    fun visits(query: String, visits: List<BrowserVisit>): List<BrowserVisit> = visits.filter { matches(query, it.title, it.url) }
+    /** #1841 a long history is filtered by the browser core (Rust, input order kept); a short one, and a phone without the core, in Kotlin. */
+    fun visits(query: String, visits: List<BrowserVisit>): List<BrowserVisit> {
+        if (visits.size < CORE_MIN || query.isBlank()) return visits.filter { matches(query, it.title, it.url) }
+        val idx = com.diegonmarcos.cloudlib.browsercore.BrowserCore.search(
+            visits.map { com.diegonmarcos.cloudlib.browsercore.SearchEntry(it.title, it.url, it.ts) }, query, Int.MAX_VALUE, ranked = false)
+        return idx.map { visits[it] }
+    }
+
+    /** From this many rows the filter goes through the core. */
+    const val CORE_MIN = 200
 }
