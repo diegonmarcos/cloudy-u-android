@@ -91,7 +91,7 @@ class FolderMembershipMigrationSqlTest {
         assertTrue("SternaDatabase must list the entity", database.contains("EmailMailboxEntity::class"))
     }
 
-    @Test fun `a write through upsertAll clears the message's extra memberships and the projection writes them back`() {
+    @Test fun `a write through upsertAll clears the extra memberships only of a message that changes mailbox, and the projection writes them back`() {
         val dao = SourceText.read("core/data/src/main/kotlin/app/sterna/core/data/db/EmailDao.kt")
         assertTrue(dao.contains("suspend fun upsertAll(emails: List<EmailEntity>) {"))
         assertTrue(dao.contains("clearMemberships(account, it)"))

@@ -242,10 +242,17 @@ interface EmailDao {
     @Transaction
     suspend fun upsertAll(emails: List<EmailEntity>) {
         emails.groupBy { it.accountId }.forEach { (account, rows) ->
-            rows.map { it.id }.chunked(500).forEach { clearMemberships(account, it) }
+            // Only a row that changes mailbox loses its set (a local move, the window sync filing it elsewhere); a rewrite in place
+            // (the domain / auth / preview backfills) keeps it, or the label would lose the message until the next online pass.
+            val before = rows.map { it.id }.chunked(500).flatMap { mailboxesOf(account, it) }.associate { it.id to it.mailboxId }
+            rows.filter { before[it.id] != null && before[it.id] != it.mailboxId }.map { it.id }
+                .chunked(500).forEach { clearMemberships(account, it) }
         }
         upsertRows(emails)
     }
+
+    @Query("SELECT id, mailboxId FROM emails WHERE accountId = :accountId AND id IN (:ids)")
+    suspend fun mailboxesOf(accountId: String, ids: List<String>): List<EmailFiledRow>
 
     @Query("DELETE FROM email_mailboxes WHERE accountId = :accountId AND emailId IN (:ids)")
     suspend fun clearMemberships(accountId: String, ids: List<String>)
@@ -636,6 +643,9 @@ data class DomainIndexRow(val accountId: String, val id: String, val fromEmail: 
 
 /** A partial [EmailEntity] for [EmailDao.setFromDomains]: the key and the one column it writes. */
 data class FromDomainUpdate(val accountId: String, val id: String, val fromDomain: String)
+
+/** A cached message and the mailbox its row is filed under. */
+data class EmailFiledRow(val id: String, val mailboxId: String)
 
 /** One (account, mailbox) pair: a folder scope. */
 data class MailboxScopeRow(val accountId: String, val mailboxId: String)

@@ -101,7 +101,7 @@ def seed():
     for i in range(1, 4):
         add("m-plain%d" % i, ["mb-inbox"], 3 + i, "Plain hello %d" % i, "Pat %d" % i, "pat%d@example.net" % i,
             text="Hello number %d, nothing special.\n" % i, seen=True)
-    add("m-warranty", ["mb-receipts"], 8, "Label only: Warranty card", "Shop", "care@shop.example",
+    add("m-warranty", ["mb-receipts"], 8, "Label only: Warranty card", "Care Desk", "care@warranty.example",
         text="Your warranty card is attached to this label.\n")
     add("m-tax", ["mb-archive"], 9, "Archived: Tax documents 2025", "Tax Office", "tax@gov.example",
         text="The documents for 2025 are archived here.\n", seen=True)
