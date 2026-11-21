@@ -54,12 +54,18 @@ class HomeData(
     /** Turn the Server OFF (asks first); the flag says the ADB server goes down with it (Stop All). */
     val askOff: (Boolean) -> Unit,
     val setPower: (String, Any?) -> Unit,
+    /** #1836 post several power keys at once (a service flag with the Server, a restart). */
+    val setMany: (JSONObject) -> Unit,
 )
 
 /** The mcp tools of the api-mcp sub page: every row head is one tool. */
 fun mcpTools(mcp: JSONObject?): List<String> = mcp.objs("groups").flatMap { g -> g.objs("rows").map { it.str("head") } }
 
 private fun edit(ctx: android.content.Context, go: () -> Unit) { if (UiMode.edit) go() else toast(ctx, "View only: switch Mode to Edit to change this") }
+
+/** #1836 the status block every service table starts with (HomeModel.statusRows). */
+@Composable
+private fun ServiceStatusRows(rows: List<HomeModel.SRow>) { rows.forEach { DRow(it.key, it.value, up = it.up) } }
 
 /** Summary: one row per service with its three lights, the Mode switch and the three bulk actions with their live status messages. */
 @Composable
@@ -72,12 +78,13 @@ fun SummaryTable(h: HomeData) {
     val pw = h.pw
     val serverOn = pw?.optBoolean("server") == true
     val adbUp = h.adb?.takeIf { it.has("server_up") && !it.isNull("server_up") }?.optBoolean("server_up")
-    val pages = HomeModel.pages(pw, h.served); val api = HomeModel.api(pw, h.health); val ssh = HomeModel.sshd(h.sshd); val adb = HomeModel.adb(h.adb, h.live)
+    val pages = HomeModel.pages(pw, h.served); val api = HomeModel.api(pw, h.health); val ssh = HomeModel.sshd(h.sshd, pw); val srv = HomeModel.server(pw); val adb = HomeModel.adb(h.adb, h.live)
     val rows = h.served.objs("rows"); val doors = h.sshd.objs("doors")
-    val allUp = pages.healthy == true && api.healthy == true && ssh.healthy == true && adbUp != false
+    val allUp = srv.healthy == true && pages.healthy == true && api.healthy == true && ssh.healthy == true && adbUp != false
     DenseCard("Summary", "c3_status_summary", badges = { Badge(if (pw == null) "?" else if (!serverOn) "OFF" else if (pw.optBoolean("running").not()) "STARTING" else if (allUp) "ALL UP" else "ATTENTION", if (allUp && serverOn) Tone.Up else Tone.Down) },
         trailing = { DLink("Device ›", "c3_home_goto_device") { h.open(Decl.SECTION_CONFIGS, Decl.PAGE_DEVICE) } }) {
-        DLights("Pages", pages, "${rows.count { it.optBoolean("serving") }} of ${rows.size} serving (connect probe per port)", "c3_sum_pages") { h.open(Decl.SECTION_PAGES, Decl.PAGE_ALL) }
+        DLights("Server", srv, if (pw == null) "not answering" else if (!serverOn) "OFF (admin page stays up)" else "pid ${pw.str("pid")} · up ${fmtUp(pw.longOrNull("uptime_s"))} · ${HomeModel.servicesMsg(pw)}", "c3_sum_server") { h.open(Decl.SECTION_CONFIGS, Decl.PAGE_SERVER) }
+        DLights("Pages", pages, "${rows.count { it.optBoolean("serving") }} of ${rows.size} serving (connect probe per port)" + (if (HomeModel.svcFlag(pw, "pages")) "" else " · service OFF"), "c3_sum_pages") { h.open(Decl.SECTION_PAGES, Decl.PAGE_ALL) }
         DLights("API", api, if (h.health == null) "not answering" else if (h.health.optBoolean("ok")) "health ok (:8003 answered)" else "health not ok", "c3_sum_api") { h.open(Decl.SECTION_API, Decl.PAGE_TOPOLOGY) }
         DLights("SSHD", ssh, "${doors.count { sshState(it) == SshState.GREEN }} of ${doors.size} doors up (bind state)", "c3_sum_sshd") { h.open(Decl.SECTION_SSHD, null) }
         DLights("ADB Shell", adb, when (adbUp) { true -> "server answering"; false -> "server not answering"; null -> "no probe (owner side or SuperApp missing)" } +
@@ -122,13 +129,15 @@ fun PagesTable(h: HomeData) {
     val rs = h.roots?.optJSONArray("roots").objs()
     val on = pw?.optBoolean("server") == true
     val running = pw?.optBoolean("running") == true
-    val state = if (pw == null) "-" else if (on) (if (running) "Server ON, serving" else "Server ON, starting") else "Server OFF: pages, sshd, DNS and sites stopped; this admin page stays up"
-    DenseCard("Pages · ${rows.size} served", "c3_home_pages", badges = { Badge(if (on) "ON" else "OFF", if (on) Tone.Up else Tone.Down) }, trailing = { DLink("Pages ›", "c3_home_goto_pages") { h.open(Decl.SECTION_PAGES, Decl.PAGE_ALL) } }) {
+    val state = if (pw == null) "-" else if (on && !HomeModel.svcFlag(pw, "pages")) "Server ON, Pages service OFF (stopped; API and sshd keep running)" else if (on) (if (running) "Server ON, serving" else "Server ON, starting") else "Server OFF: pages, sshd, DNS and sites stopped; this admin page stays up"
+    DenseCard("Pages · ${rows.size} served", "c3_home_pages", badges = { val p = HomeModel.svcOn(pw, "pages") == true; Badge(if (p) "ON" else "OFF", if (p) Tone.Up else Tone.Down) }, trailing = { DLink("Pages ›", "c3_home_goto_pages") { h.open(Decl.SECTION_PAGES, Decl.PAGE_ALL) } }) {
         if (pw != null) {
-            SwitchRow("Server", on, "OFF stops the served pages, DNS, the mesh listener, sshd and every site; this admin page stays up so you can switch it back ON", "c3_power_server") { to -> if (!to) h.askOff(false) else h.setPower("server", true) }
+            SwitchRow("Pages service", HomeModel.svcOn(pw, "pages") == true, "OFF stops only the served pages (the drive's files, the diagnostics page, the sites); the API, sshd and the Server keep running. ON starts the Server too when it is down", "c3_pages_enabled") { to -> h.setMany(HomeModel.svcSet("pages", to)) }
             SwitchRow("Keep alive", pw.optBoolean("keep_alive"), "ON keeps the server up with a notification and starts it at boot; OFF stops it when the app closes", "c3_power_keep_alive") { h.setPower("keep_alive", it) }
         }
         DActs { DAct("Probe", "c3_pages_probe") { h.bump() } }
+        ServiceStatusRows(HomeModel.statusRows(if (pw == null) null else HomeModel.svcFlag(pw, "pages"), if (pw == null) null else on, HomeModel.pages(pw, served),
+            rows.joinToString(", ") { ":" + it.str("port") }, "${rows.count { it.optBoolean("serving") }} of ${rows.size} serving (connect probe per port)"))
         DRow("Depends on", "Server ON (switch above) · the served roots' apps · storage access (Configs > Perms)", tag = "c3_pages_depends") { h.open(Decl.SECTION_CONFIGS, Decl.PAGE_PERMS) }
         DRow("State", state, up = on && running)
         DRow("Keep alive", if (pw == null) "-" else "${if (pw.optBoolean("keep_alive")) "ON" else "OFF"} · ${pw.str("sites")} active sites")
@@ -162,12 +171,15 @@ fun ApiTable(h: HomeData) {
     val pw = h.pw
     val health = h.health
     val ok = health?.optBoolean("ok") == true
+    val apiOn = HomeModel.svcOn(pw, "api") == true
     DenseCard("API", "c3_status_api", badges = { Badge(if (health == null) "NO ANSWER" else if (ok) "HEALTH OK" else "NOT OK", if (ok) Tone.Up else Tone.Down) }, trailing = { DLink("API ›", "c3_status_goto_api") { h.open(Decl.SECTION_API, Decl.PAGE_TOPOLOGY) } }) {
         DActs {
-            DAct(if (pw?.optBoolean("server") == true) "Stop" else "Start", "c3_api_toggle") { edit(ctx) { if (pw?.optBoolean("server") == true) h.askOff(false) else h.setPower("server", true) } }
+            DAct(if (apiOn) "Stop" else "Start", "c3_api_toggle") { edit(ctx) { h.setMany(HomeModel.svcSet("api", !apiOn)) } }
             DAct("Probe health", "c3_api_probe") { h.bump() }
             DAct((if (pw?.optBoolean("keep_alive") == true) "Keep alive: turn OFF" else "Keep alive: turn ON"), "c3_api_keep_alive") { edit(ctx) { h.setPower("keep_alive", pw?.optBoolean("keep_alive") != true) } }
         }
+        ServiceStatusRows(HomeModel.statusRows(if (pw == null) null else HomeModel.svcFlag(pw, "api"), if (pw == null) null else pw.optBoolean("server"), HomeModel.api(pw, health),
+            HomeModel.portsOf(pw, "diagnostics", "mesh", "dns"), if (health == null) "no answer from :8003" else if (ok) "health ok" else "health not ok"))
         DRow("Depends on", "Server ON (the API stops with it) · the loopback port :8003")
         DRow("Health", if (health != null) (if (ok) "ok" else "not ok") else "not answering (Server OFF stops :8003)", up = ok)
         DRow("Version", if (h.sv != null) "${h.sv.str("app")} ${h.sv.str("version_name")}" else "-")
@@ -193,12 +205,16 @@ fun SshdTable(h: HomeData) {
     val ssh = pw?.optJSONObject("ssh_door")
     DenseCard("SSHD", "c3_home_sshd", badges = { Badge("keep alive ${if (d?.optBoolean("keep_alive") == true) "ON" else "OFF"}") }, trailing = { DLink("SSHd ›", "c3_home_goto_sshd") { h.open(Decl.SECTION_SSHD, null) } }) {
         if (pw != null) {
+            SwitchRow("SSHD service", HomeModel.svcOn(pw, "sshd") == true, "OFF closes only the hosted sshd; Pages, the API and the Server keep running. ON starts the Server too when it is down", "c3_sshd_enabled") { to -> h.setMany(HomeModel.svcSet("sshd", to)) }
             SwitchRow("Keep alive", pw.optBoolean("keep_alive"), "ON keeps the server up with a notification and starts it at boot; the doors follow it until set below", "c3_sshd_keep_alive") { h.setPower("keep_alive", it) }
             SwitchRow("SSH door :${ssh.str("port")}", ssh?.optBoolean("wanted") == true, "ON asks Cloud Terminal Nix-on-Droid to start its sshd; follows Keep alive until set here. It is stopped again only if this app started it", "c3_power_ssh_door") { h.setPower("ssh_door", it) }
             val follows = ssh == null || !ssh.has("explicit") || ssh.isNull("explicit")
             DRow("SSH door", "tcp ${ssh.str("port")} ${ssh.str("state")} · ${if (follows) "follows Keep alive" else "own switch"} · via ${ssh.str("via")}")
             if (!follows) DActs { DAct("Follow Keep alive", "c3_power_ssh_follow") { h.setPower("ssh_door", null) } }
         }
+        val doorsAll = d.objs("doors")
+        ServiceStatusRows(HomeModel.statusRows(if (pw == null) null else HomeModel.svcFlag(pw, "sshd"), if (pw == null) null else pw.optBoolean("server"), HomeModel.sshd(d, pw),
+            doorsAll.filter { it.has("port") && !it.isNull("port") }.joinToString(", ") { "tcp " + it.str("port") }, "${doorsAll.count { sshState(it) == SshState.GREEN }} of ${doorsAll.size} doors up (bind state)"))
         DRow("Depends on", "Server ON · Keep alive (the doors follow it) · Cloud Terminal Nix-on-Droid sshd for its door")
         d.objs("doors").forEach { x ->
             val id = x.optString("id")
@@ -245,10 +261,42 @@ fun AdbTable(h: HomeData, tick: Int) {
             }
             if (said.isNotEmpty()) DNote(said)
         }
+        ServiceStatusRows(HomeModel.statusRows(null, up, HomeModel.adb(adb, h.live), if (port == null) "" else "tcp $port", h.live.roundTrip?.let { if (it) "echo round trip ok" else "no echo" } ?: when (up) { true -> "port answers"; false -> "no answer"; null -> "not probed" }))
         DRow("Depends on", "Wireless debugging ON · paired once · the embedded adb session that launches the server (rows above, each opens its page)")
         DNote("ADB SHELL")
         DRow("Loopback server", if (port == null) "not declared" else "127.0.0.1:$port · " + if (up == true) "answering now" else "not answering", up = up == true, mono = true)
         DRow("Opens", adb?.let { "${it.str("package")} · ${it.str("extra")}=${it.str("value")}" } ?: "-", mono = true)
         DRow("Server", if (port == null) "-" else "127.0.0.1:$port", up = up == true, mono = true)
+    }
+}
+
+/** #1836 Server: the process itself (the master switch of the services above): start / stop / restart, pid, uptime, the ports it has bound, keep-alive. */
+@Composable
+fun ServerTable(h: HomeData) {
+    val ctx = LocalContext.current
+    val pw = h.pw
+    val on = pw?.optBoolean("server") == true
+    val running = pw?.optBoolean("running") == true
+    val l = HomeModel.server(pw)
+    DenseCard("Server", "c3_home_server", badges = { Badge(if (pw == null) "?" else if (!on) "OFF" else if (running) "RUNNING" else "STARTING", if (on && running) Tone.Up else Tone.Down) },
+        trailing = { DLink("Server ›", "c3_home_goto_server") { h.open(Decl.SECTION_CONFIGS, Decl.PAGE_SERVER) } }) {
+        if (pw != null) {
+            SwitchRow("Server", on, "OFF stops the served pages, DNS, the mesh listener, sshd and every site; this admin page stays up so you can switch it back ON", "c3_power_server") { to -> if (!to) h.askOff(false) else h.setPower("server", true) }
+            SwitchRow("Keep alive", pw.optBoolean("keep_alive"), "ON keeps the server up with a notification and starts it at boot; OFF stops it when the app closes", "c3_server_keep_alive") { h.setPower("keep_alive", it) }
+        }
+        DActs {
+            DAct("Start", "c3_server_start") { edit(ctx) { h.setPower("server", true) } }
+            DAct("Stop", "c3_server_stop") { edit(ctx) { h.askOff(false) } }
+            DAct("Restart", "c3_server_restart") { edit(ctx) { if (on) h.setMany(JSONObject().put("restart", true)) else h.setPower("server", true) } }
+            DAct("Probe", "c3_server_probe") { h.bump() }
+        }
+        DRow("Depends on", "Nothing: it is the master of Pages, API and SSHD; Keep alive keeps it up in the background")
+        DRow("Service status", if (pw == null) "unknown (status not read)" else if (!on) "OFF (the admin page :8002 stays up)" else if (running) "ON, running" else "ON, starting", up = l.on)
+        DRow("PID", if (pw != null && pw.has("pid")) pw.str("pid") else "-")
+        DRow("Uptime", if (pw != null && pw.has("uptime_s")) fmtUp(pw.longOrNull("uptime_s")) else "-")
+        DRow("Ports bound", HomeModel.portsOf(pw, "admin", "diagnostics", "dns", "mesh", "site", "ssh").ifEmpty { "none" }, up = l.healthy)
+        DRow("Keep-alive", HomeModel.onOff(l.keepAlive).uppercase(), up = l.keepAlive)
+        DRow("Services enabled", HomeModel.servicesMsg(pw))
+        DRow("Active sites", pw.str("sites"))
     }
 }

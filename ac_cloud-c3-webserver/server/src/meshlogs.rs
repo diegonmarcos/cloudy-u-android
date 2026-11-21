@@ -251,6 +251,10 @@ pub fn start(m: Mesh, stop: Arc<std::sync::atomic::AtomicBool>) -> Result<(), St
         let m = m.clone();
         Arc::new(move |req: &Req| {
             let (src, token) = (LOGS.get(), TOKEN.get());
+            // #1836 the mesh log export is part of the API service
+            if let Some(r) = crate::gate(crate::power::Service::Api, &crate::power::enabled_pair()) {
+                return r;
+            }
             match src {
                 Some(s) => route(&m, apis::apps(), req, token.and_then(|t| t()).as_deref(), &**s),
                 None => Resp::json(503, "{\"error\":\"no log bridge in this process\"}".to_string()),

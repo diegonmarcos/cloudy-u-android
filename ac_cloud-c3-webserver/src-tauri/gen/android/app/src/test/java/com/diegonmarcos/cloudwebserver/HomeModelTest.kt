@@ -52,4 +52,61 @@ class HomeModelTest {
         assertTrue(HomeModel.keepAliveMsg(pw(true, true, false), AdbLive(false, null, null)).contains("n/a here"))
         assertTrue(HomeModel.probeMsg(served(true, false), null, null, null, AdbLive(false, null, null)).startsWith("Pages 1/2 serving"))
     }
+
+    // #1836 per-service enable flags: Server is the master, each service has its own flag, Stop on one leaves the others serving
+    private fun pws(server: Boolean, pages: Boolean, api: Boolean, sshd: Boolean, ports: String = "") = JSONObject(
+        """{"server":$server,"running":$server,"keep_alive":true,"svc":{"pages":{"enabled":$pages},"api":{"enabled":$api},"sshd":{"enabled":$sshd}},"ports":[$ports]}""")
+
+    @Test fun `a service is on only while the server and its own flag are on, and an old status without svc means enabled`() {
+        assertEquals(true, HomeModel.svcOn(pws(true, true, true, true), "api"))
+        assertEquals(false, HomeModel.svcOn(pws(true, true, false, true), "api"))
+        assertEquals(true, HomeModel.svcOn(pws(true, true, false, true), "pages"))
+        assertEquals(false, HomeModel.svcOn(pws(false, true, true, true), "pages"))
+        assertEquals(true, HomeModel.svcOn(pw(true, true, true), "sshd"))
+        assertNull(HomeModel.svcOn(null, "api"))
+    }
+
+    @Test fun `stopping API leaves the Pages and SSHD lights on, and the other way round`() {
+        val served = served(true); val door = JSONObject("""{"doors":[${door("green", true)}]}""")
+        val apiOff = pws(true, true, false, true)
+        assertEquals(false, HomeModel.api(apiOff, JSONObject("""{"ok":true}""")).on)
+        assertEquals(false, HomeModel.api(apiOff, JSONObject("""{"ok":true}""")).healthy)
+        assertEquals(true, HomeModel.pages(apiOff, served).on)
+        assertEquals(true, HomeModel.sshd(door, apiOff).on)
+        val pagesOff = pws(true, false, true, true)
+        assertEquals(false, HomeModel.pages(pagesOff, served).on)
+        assertEquals(false, HomeModel.pages(pagesOff, served).healthy)
+        assertEquals(true, HomeModel.api(pagesOff, JSONObject("""{"ok":true}""")).healthy)
+        assertEquals(false, HomeModel.sshd(door, pws(true, true, true, false)).on)
+    }
+
+    @Test fun `a service switch posts only its own flag, and Start also turns the server on`() {
+        val stop = HomeModel.svcSet("api", false)
+        assertEquals(false, stop.getBoolean("svc_api")); assertTrue(!stop.has("server")); assertTrue(!stop.has("svc_pages"))
+        val start = HomeModel.svcSet("pages", true)
+        assertEquals(true, start.getBoolean("svc_pages")); assertEquals(true, start.getBoolean("server"))
+    }
+
+    @Test fun `every service table gets the same status rows in the same order, read from the live state`() {
+        val keys = listOf("Service status", "Enabled", "Server (master)", "Listening on", "Probe", "Keep-alive")
+        val on = Lights(true, true, true)
+        for (rows in listOf(HomeModel.statusRows(true, true, on, "tcp 1", "ok"), HomeModel.statusRows(null, true, on, "tcp 2", "echo"), HomeModel.statusRows(false, true, Lights(false, true, false), "tcp 3", "x"))) {
+            assertEquals(keys, rows.map { it.key })
+        }
+        val off = HomeModel.statusRows(false, true, Lights(false, true, false), "tcp 3", "x")
+        assertTrue(off[0].value.startsWith("stopped (service disabled")); assertEquals(false, off[1].up); assertEquals(true, off[2].up)
+        assertTrue(HomeModel.statusRows(true, false, Lights(false, null, false), "", "x")[0].value.contains("Server OFF"))
+        assertEquals("none", HomeModel.statusRows(true, true, on, "", "ok")[3].value)
+    }
+
+    @Test fun `the server light needs the admin and diagnostics listeners bound`() {
+        val ports = """{"name":"admin","port":8002,"proto":"tcp"},{"name":"diagnostics","port":8003,"proto":"tcp"}"""
+        val l = HomeModel.server(pws(true, true, true, true, ports))
+        assertEquals(true, l.on); assertEquals(true, l.keepAlive); assertEquals(true, l.healthy)
+        assertEquals(false, HomeModel.server(pws(true, true, true, true, """{"name":"admin","port":8002,"proto":"tcp"}""")).healthy)
+        assertEquals(false, HomeModel.server(pws(false, true, true, true)).on)
+        assertNull(HomeModel.server(null).on)
+        assertEquals("tcp 8002, tcp 8003", HomeModel.portsOf(pws(true, true, true, true, ports), "admin", "diagnostics"))
+        assertEquals("Pages ON · API OFF · SSHD ON", HomeModel.servicesMsg(pws(true, true, false, true)))
+    }
 }

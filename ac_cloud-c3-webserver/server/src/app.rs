@@ -65,7 +65,7 @@ pub const ROUTES: &[Route] = &[
     Route { kind: Kind::Api, path: "/__app__/api/repos", tab: None, post: true, summary: "GET the repo entries; POST {op: add|remove|start|stop, ...}: the Repos store and its sites (loopback or mesh, never public)", handler: sub::api_repos },
     Route { kind: Kind::Api, path: "/__app__/api/repos/discover", tab: None, post: false, summary: "GET ?source=<id>: the git repositories a Repos source holds", handler: sub::api_discover },
     Route { kind: Kind::Api, path: "/__app__/api/served", tab: None, post: true, summary: "GET the Pages tab: every served page (declared, user-added, adopted) with status, metadata, source and links, the add form and the undeclared-pages scan; POST {op: start|stop|start_app|rescan|declare|forget|stop_undeclared, ...}", handler: served::api_served },
-    Route { kind: Kind::Api, path: "/__app__/api/power", tab: None, post: true, summary: "GET the master controls and the live state (running, ports, sites); POST {server?, keep_alive?, ssh_door?} sets Server ON/OFF, Keep alive ON/OFF and the SSH door's own switch (true, false, or null to follow Keep alive) (build.json::power, ::ssh_doors)", handler: api_power },
+    Route { kind: Kind::Api, path: "/__app__/api/power", tab: None, post: true, summary: "GET the master controls and the live state (running, ports, sites); POST {server?, keep_alive?, svc_pages?, svc_api?, svc_sshd?, restart?, ssh_door?} sets Server ON/OFF (master), Keep alive ON/OFF, each service's own enable flag (the others keep serving), a server restart and the SSH door's own switch (true, false, or null to follow Keep alive) (build.json::power, ::ssh_doors)", handler: api_power },
     Route { kind: Kind::Api, path: "/__app__/api/sshd", tab: None, post: true, summary: "GET every SSH door, probed live (declared in build.json::ssh_doors); POST {door, op: start|stop|follow} starts or stops the supervised door (the nix-on-droid mesh sshd) or this app's own hosted sshd (webserver, :8025, ON by default) or hands it back to its default; POST {door?, mesh_only: true|false|null} sets that port's SSH reachable over the mesh VPN only (default ON, one switch per port) and re-applies it to a running door", handler: api_sshd },
     Route { kind: Kind::Api, path: "/__app__/api/open", tab: None, post: true, summary: "POST {url} or {id,via:name|ip}: hand an http(s) link to cloud-browser", handler: api_open },
     Route { kind: Kind::Api, path: "/__app__/api/launch", tab: None, post: true, summary: "POST {target: superapp|browser}: launch a declared fleet app's MAIN/LAUNCHER activity through the Android bridge (the X-Ray Device page's Start Superapp). Only the packages declared in build.json (the SuperApp bridge package, the browser opener package) may be launched", handler: api_launch },
@@ -219,12 +219,31 @@ fn api_power(_ctx: &Ctx, req: &Req) -> Resp {
             serde_json::Value::Null => None,
             _ => return jerr(400, "ssh_door must be true, false or null"),
         };
+        // #1836 the per-service enable flags: persisted before the switches are applied, so a Start that also turns Server ON binds only
+        // the enabled services.
+        let mut flagged = false;
+        for s in crate::power::Service::ALL {
+            let k = format!("svc_{}", s.name());
+            match &body[k.as_str()] {
+                serde_json::Value::Null => {}
+                serde_json::Value::Bool(b) => {
+                    crate::power::set_service(s, *b);
+                    flagged = true;
+                }
+                _ => return jerr(400, &format!("{} must be true or false", k)),
+            }
+        }
         let sw = match (want("server", cur.server), want("keep_alive", cur.keep_alive)) {
             (Ok(server), Ok(keep_alive)) => crate::power::Switches { server, keep_alive },
             (Err(e), _) | (_, Err(e)) => return jerr(400, &e),
         };
-        if let Err(e) = crate::power::apply(sw) {
+        let restart = body["restart"] == true;
+        let res = if restart { crate::power::restart() } else { crate::power::apply(sw) };
+        if let Err(e) = res {
             return jerr(500, &e);
+        }
+        if flagged {
+            crate::sync_services();
         }
         if let Some(op) = door_op {
             if let Err(e) = crate::door::set(op) {

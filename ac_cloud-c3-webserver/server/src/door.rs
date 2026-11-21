@@ -306,7 +306,7 @@ pub fn door_mesh_only(st: &power::State, d: &Door) -> bool {
 
 /// Is a hosted door running (wanted)? Server OFF never; otherwise its own switch, else the declared default (webserver ON).
 pub fn hosted_wanted(st: &power::State, d: &Door) -> bool {
-    st.sw.server && st.door_on.get(&d.id).copied().unwrap_or(d.default_on)
+    power::service_on(st.sw, st.svc, power::Service::Sshd) && st.door_on.get(&d.id).copied().unwrap_or(d.default_on)
 }
 
 // ── live facts ──────────────────────────────────────────────────────────────
@@ -800,7 +800,7 @@ mod tests {
         assert!(c.mesh.cidrs.iter().any(|x| x == "10.0.0.0/24") && c.mesh.cidrs.iter().any(|x| x.starts_with("fd0c:1d00")));
         let nix = c.doors.iter().find(|d| d.id == "nix").unwrap();
         assert_eq!(nix.control.as_ref().unwrap().extra_mesh_only, "com.diegonmarcos.cloud.extra.MESH_ONLY");
-        let st = power::State { sw: power::Switches { server: true, keep_alive: true }, sites: vec![], ssh_door: None, ssh_owned: false, mesh_only: None, door_on: Default::default(), door_mesh: Default::default() };
+        let st = power::State { sw: power::Switches { server: true, keep_alive: true }, svc: Default::default(), sites: vec![], ssh_door: None, ssh_owned: false, mesh_only: None, door_on: Default::default(), door_mesh: Default::default() };
         assert!(mesh_only(&st));
         assert!(!mesh_only(&power::State { mesh_only: Some(false), ..st.clone() }));
         for d in &c.doors {
@@ -812,6 +812,8 @@ mod tests {
         assert!(!door_mesh_only(&off, web) && door_mesh_only(&off, c.doors.iter().find(|d| d.id == "termux").unwrap()), "the switch is per port");
         assert!(hosted_wanted(&st, web), "the webserver sshd is ON by default");
         assert!(!hosted_wanted(&power::State { sw: power::Switches { server: false, keep_alive: true }, ..st.clone() }, web), "Server OFF closes it");
+        assert!(!hosted_wanted(&power::State { svc: power::Svc { sshd: false, ..Default::default() }, ..st.clone() }, web), "SSHD disabled closes it while Server stays ON");
+        assert!(hosted_wanted(&power::State { svc: power::Svc { pages: false, api: false, sshd: true }, ..st.clone() }, web), "Pages and API disabled leave it open");
         for t in ["nix", "termux"] {
             assert!(!hosted_wanted(&st, c.doors.iter().find(|d| d.id == t).unwrap()), "the terminals' sshd is OFF by default");
         }

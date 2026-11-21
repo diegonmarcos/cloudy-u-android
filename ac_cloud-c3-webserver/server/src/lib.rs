@@ -62,6 +62,22 @@ fn private_names() -> Vec<String> {
 /// The :8003 listener: the diagnostics page and its three bridge reads, plus liveness and the
 /// served-ports map the page's header draws. It serves no files.
 pub fn handle_diag(ctx: &Ctx, req: &Req) -> Resp {
+    diag_route(ctx, req, &power::enabled_pair())
+}
+
+/// #1836 the 503 a stopped service answers (None = it serves). `st` = (Server ON, the per-service flags), read per request.
+pub fn gate(s: power::Service, st: &(power::Switches, power::Svc)) -> Option<Resp> {
+    if !st.0.server {
+        return Some(Resp::text(503, "Server is OFF (open /__app__/ > Home > Server ON)"));
+    }
+    if !power::service_on(st.0, st.1, s) {
+        return Some(Resp::text(503, &format!("{} is stopped (open /__app__/ > Home > {} > Start)", s.name().to_uppercase(), s.name().to_uppercase())));
+    }
+    None
+}
+
+/// [`handle_diag`] against an explicit state: `/__diag__` is the Pages service, every `/__api__/` route is the API service.
+pub fn diag_route(ctx: &Ctx, req: &Req, st: &(power::Switches, power::Svc)) -> Resp {
     // Pages > Stop serving (served.rs): a paused page answers 503 until it is started again.
     if serving::get().endpoints.iter().any(|e| e.role == serving::Role::Diag && served::is_paused(&e.id)) {
         return Resp::text(503, "This page is stopped (Pages > Start serving)");
@@ -73,7 +89,14 @@ pub fn handle_diag(ctx: &Ctx, req: &Req) -> Resp {
         }
     }
     let p = req.path.trim_end_matches('/');
-    match if p.is_empty() { "/__diag__" } else { p } {
+    let route = if p.is_empty() { "/__diag__" } else { p };
+    let svc = if route == "/__diag__" { power::Service::Pages } else { power::Service::Api };
+    if matches!(route, "/__diag__" | "/__api__/health" | "/__api__/serving" | "/__api__/diag/about" | "/__api__/diag/logcat" | "/__api__/diag/diagnose") {
+        if let Some(r) = gate(svc, st) {
+            return r;
+        }
+    }
+    match route {
         "/__diag__" => diag::page(ctx, req),
         "/__api__/health" => Resp::json(
             200,
@@ -103,6 +126,10 @@ pub fn drive_handler(ctx: Ctx, files: Arc<http::Handler>) -> Arc<http::Handler> 
             if !power::plan(power::current().sw).listeners {
                 return Resp::text(503, "Server is OFF (open /__app__/ > Home > Server ON)");
             }
+            // #1836 Pages disabled: the drive's files answer 503 while the API, sshd and the app shell keep going
+            if let Some(r) = gate(power::Service::Pages, &power::enabled_pair()) {
+                return r;
+            }
             if serving::get().endpoints.iter().any(|e| e.role == serving::Role::Drive && served::is_paused(&e.id)) {
                 return Resp::text(503, "This page is stopped (Pages > Start serving)");
             }
@@ -126,6 +153,7 @@ pub struct Config {
 /// The root is NOT required to be readable yet: on Android the storage grant arrives after the app has started,
 /// and every request resolves its path afresh, so a root that becomes readable later is served from then on.
 pub fn start(cfg: Config) -> Result<(), String> {
+    power::uptime_s();
     *CFG.lock().map_err(|_| "poisoned")? = Some(cfg.clone());
     // The admin surface (:8002 /__app__ + /api/power) is ALWAYS bound, so Server OFF can always be turned back on from the web UI.
     let admin = {
@@ -260,7 +288,15 @@ fn start_content(cfg: Config, stop: Arc<AtomicBool>) -> Result<(), String> {
     }
     // The webserver's own sshd (door.rs): opens while its run-state is ON (default), tied to this server being up.
     door::sync_hosted();
-    // #1502 ON starts the enabled Repos sites too.
+    start_sites();
+    Ok(())
+}
+
+/// #1502 ON starts the enabled Repos sites too (they are Pages: only while the Pages service is enabled).
+fn start_sites() {
+    if !power::current().svc.pages {
+        return;
+    }
     if let Ok(rc) = repos::cfg() {
         if let Ok(entries) = repos::load(&rc.store) {
             for id in power::current().sites {
@@ -272,7 +308,19 @@ fn start_content(cfg: Config, stop: Arc<AtomicBool>) -> Result<(), String> {
             }
         }
     }
-    Ok(())
+}
+
+/// #1836 bring the running listeners in line with the per-service flags without touching the other services: Pages off ends the sites,
+/// Pages on starts the enabled ones, SSHD follows its flag. API and the drive/diag pages gate per request (503), nothing to rebind.
+pub fn sync_services() {
+    if content_running() {
+        if power::current().svc.pages {
+            start_sites();
+        } else {
+            repos::host().stop_all();
+        }
+    }
+    door::sync_hosted();
 }
 
 #[cfg(test)]
@@ -337,5 +385,25 @@ mod tests {
     #[test]
     fn jstr_is_the_shared_one() {
         assert_eq!(jstr("a\"b"), "\"a\\\"b\"");
+    }
+
+    #[test]
+    fn a_disabled_service_answers_503_while_the_others_keep_serving() {
+        let on = power::Switches { server: true, keep_alive: true };
+        let ctx = Ctx { root: std::env::temp_dir(), port: 8003, started: Instant::now(), binary: "t".to_string() };
+        let get = |p: &str, svc: power::Svc, sw: power::Switches| diag_route(&ctx, &http::parse_request(&format!("GET {} HTTP/1.1\r\nhost: 127.0.0.1\r\n\r\n", p)).unwrap(), &(sw, svc));
+        let api_off = power::Svc::default().with(power::Service::Api, false);
+        for p in ["/__api__/health", "/__api__/serving", "/__api__/diag/about"] {
+            assert_eq!(get(p, api_off, on).status, 503, "{} with API disabled", p);
+        }
+        assert_eq!(get("/__api__/health", power::Svc::default(), on).status, 200, "enabled");
+        assert_eq!(get("/__diag__", api_off, on).status, 200, "API stopped, Pages keep serving");
+        let pages_off = power::Svc::default().with(power::Service::Pages, false);
+        assert_eq!(get("/__diag__", pages_off, on).status, 503, "Pages disabled");
+        assert_eq!(get("/__api__/health", pages_off, on).status, 200, "Pages stopped, API keeps serving");
+        assert_eq!(get("/__api__/health", power::Svc::default(), power::Switches { server: false, ..on }).status, 503, "Server is the master");
+        assert!(gate(power::Service::Pages, &(on, power::Svc::default())).is_none());
+        assert_eq!(gate(power::Service::Pages, &(on, pages_off)).unwrap().status, 503, "the drive's files");
+        assert!(gate(power::Service::Api, &(on, pages_off)).is_none());
     }
 }

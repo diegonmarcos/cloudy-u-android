@@ -74,10 +74,81 @@ pub fn cfg() -> &'static Cfg {
     C.get_or_init(|| Cfg::from_build(apis::build()).expect("build.json::power is invalid (the tests catch this)"))
 }
 
+/// #1836 the services one server process hosts, each with its own enable flag. Server is the master: a service answers only while
+/// Server is ON AND its own flag is ON. ADB Shell is not hosted by this process (it has its own owner-side server).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Service {
+    Pages,
+    Api,
+    Sshd,
+}
+
+impl Service {
+    pub const ALL: [Service; 3] = [Service::Pages, Service::Api, Service::Sshd];
+    pub fn name(self) -> &'static str {
+        match self {
+            Service::Pages => "pages",
+            Service::Api => "api",
+            Service::Sshd => "sshd",
+        }
+    }
+}
+
+/// The per-service enable flags (persisted as `svc`; a missing key is ON, so an old store keeps serving everything).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct Svc {
+    pub pages: bool,
+    pub api: bool,
+    pub sshd: bool,
+}
+
+impl Default for Svc {
+    fn default() -> Svc {
+        Svc { pages: true, api: true, sshd: true }
+    }
+}
+
+impl Svc {
+    pub fn get(&self, s: Service) -> bool {
+        match s {
+            Service::Pages => self.pages,
+            Service::Api => self.api,
+            Service::Sshd => self.sshd,
+        }
+    }
+    pub fn with(mut self, s: Service, on: bool) -> Svc {
+        match s {
+            Service::Pages => self.pages = on,
+            Service::Api => self.api = on,
+            Service::Sshd => self.sshd = on,
+        }
+        self
+    }
+}
+
+/// #1836 does `s` answer? Server (master) ON and the service's own flag ON.
+pub fn service_on(sw: Switches, svc: Svc, s: Service) -> bool {
+    plan(sw).listeners && svc.get(s)
+}
+
+/// The persisted (switches, flags) pair the request gates read.
+pub fn enabled_pair() -> (Switches, Svc) {
+    let st = current();
+    (st.sw, st.svc)
+}
+
+/// [`service_on`] against the persisted state.
+pub fn enabled(s: Service) -> bool {
+    let st = current();
+    service_on(st.sw, st.svc, s)
+}
+
 /// The persisted state: the two switches and the ids of the Repos sites that are enabled (started again when the server starts).
 #[derive(Clone, Debug, PartialEq)]
 pub struct State {
     pub sw: Switches,
+    /// #1836 the per-service enable flags (Server stays the master switch).
+    pub svc: Svc,
     pub sites: Vec<String>,
     /// The SSH door's own switch (door.rs): None follows Keep alive, Some is the owner's choice.
     pub ssh_door: Option<bool>,
@@ -99,6 +170,7 @@ pub fn load(path: &Path, default: Switches) -> State {
     let v: Value = std::fs::read_to_string(path).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or(Value::Null);
     State {
         sw: Switches { server: v["server"].as_bool().unwrap_or(default.server), keep_alive: v["keep_alive"].as_bool().unwrap_or(default.keep_alive) },
+        svc: Svc { pages: v["svc"]["pages"].as_bool().unwrap_or(true), api: v["svc"]["api"].as_bool().unwrap_or(true), sshd: v["svc"]["sshd"].as_bool().unwrap_or(true) },
         sites: v["sites"].as_array().map(|a| a.iter().filter_map(|s| s.as_str().map(str::to_string)).collect()).unwrap_or_default(),
         ssh_door: v["ssh_door"].as_bool(),
         ssh_owned: v["ssh_owned"].as_bool().unwrap_or(false),
@@ -115,6 +187,9 @@ pub fn save(path: &Path, st: &State) -> Result<(), String> {
     }
     let tmp = path.with_extension("json.tmp");
     let mut doc = json!({"version": 1, "server": st.sw.server, "keep_alive": st.sw.keep_alive, "sites": st.sites, "ssh_owned": st.ssh_owned});
+    if st.svc != Svc::default() {
+        doc["svc"] = json!({"pages": st.svc.pages, "api": st.svc.api, "sshd": st.svc.sshd});
+    }
     if let Some(on) = st.ssh_door {
         doc["ssh_door"] = json!(on);
     }
@@ -136,6 +211,23 @@ static LOCK: Mutex<()> = Mutex::new(());
 
 pub fn current() -> State {
     load(&cfg().store, cfg().default)
+}
+
+/// #1836 one service's own enable flag: persisted only; [`crate::sync_services`] acts on it.
+pub fn set_service(s: Service, on: bool) {
+    let _g = LOCK.lock();
+    let mut st = current();
+    st.svc = st.svc.with(s, on);
+    if let Err(e) = save(&cfg().store, &st) {
+        eprintln!("c3-webserver: {}", e);
+    }
+}
+
+static STARTED: OnceLock<std::time::Instant> = OnceLock::new();
+
+/// #1836 seconds this server process has been up (the clock starts at the first start or first read).
+pub fn uptime_s() -> u64 {
+    STARTED.get_or_init(std::time::Instant::now).elapsed().as_secs()
 }
 
 /// Remember that a Repos site is enabled (or not): ON starts the enabled ones.
@@ -237,6 +329,13 @@ pub fn apply(sw: Switches) -> Result<(), String> {
     Ok(())
 }
 
+/// #1836 restart the server: Server OFF (content listeners end), then ON again with the persisted per-service flags.
+pub fn restart() -> Result<(), String> {
+    let sw = current().sw;
+    apply(Switches { server: false, ..sw })?;
+    apply(Switches { server: true, ..sw })
+}
+
 /// The live state for the Home and Configs controls and for tools: switches, plan, what listens, how many sites.
 pub fn status_json() -> Value {
     let st = current();
@@ -259,7 +358,10 @@ pub fn status_json() -> Value {
         ports.push(json!({"name": "ssh", "port": ssh["port"], "proto": "tcp"}));
     }
     let p = plan(st.sw);
+    let svc: Vec<(&str, Value)> = Service::ALL.iter().map(|s| (s.name(), json!({"enabled": st.svc.get(*s), "on": service_on(st.sw, st.svc, *s)}))).collect();
     json!({
+        "svc": svc.iter().map(|(k, v)| (k.to_string(), v.clone())).collect::<serde_json::Map<String, Value>>(),
+        "pid": std::process::id(), "uptime_s": uptime_s(),
         "server": st.sw.server, "keep_alive": st.sw.keep_alive, "running": running, "content": crate::content_running(), "admin": true,
         "sites": crate::repos::host().count(), "ports": ports, "off_url": cfg().off_url, "ssh_door": ssh,
         "plan": {"listeners": p.listeners, "admin": p.admin, "service": p.service, "boot": p.boot, "sticky": p.sticky, "wake": p.wake},
@@ -328,8 +430,8 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("c3ws-power-{}", std::process::id()));
         let f = dir.join("power.json");
         let d = Switches { server: true, keep_alive: false };
-        assert_eq!(load(&f, d), State { sw: d, sites: vec![], ssh_door: None, ssh_owned: false, mesh_only: None, door_on: BTreeMap::new(), door_mesh: BTreeMap::new() }, "a missing file is the default");
-        let st = State { sw: Switches { server: false, keep_alive: true }, sites: vec!["a".into()], ssh_door: Some(false), ssh_owned: true, mesh_only: Some(false), door_on: BTreeMap::from([("webserver".to_string(), false)]), door_mesh: BTreeMap::from([("webserver".to_string(), false)]) };
+        assert_eq!(load(&f, d), State { sw: d, svc: Svc::default(), sites: vec![], ssh_door: None, ssh_owned: false, mesh_only: None, door_on: BTreeMap::new(), door_mesh: BTreeMap::new() }, "a missing file is the default");
+        let st = State { sw: Switches { server: false, keep_alive: true }, svc: Svc { pages: false, api: true, sshd: false }, sites: vec!["a".into()], ssh_door: Some(false), ssh_owned: true, mesh_only: Some(false), door_on: BTreeMap::from([("webserver".to_string(), false)]), door_mesh: BTreeMap::from([("webserver".to_string(), false)]) };
         save(&f, &st).unwrap();
         assert_eq!(load(&f, d), st);
         let follow = State { ssh_door: None, ..st.clone() };
@@ -340,6 +442,38 @@ mod tests {
         assert_eq!(load(&f, d).mesh_only, None, "no key means the declared default");
         std::fs::write(&f, "not json").unwrap();
         assert_eq!(load(&f, d).sw, d);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_service_answers_only_while_server_and_its_own_flag_are_on() {
+        let on = Switches { server: true, keep_alive: true };
+        let off = Switches { server: false, keep_alive: true };
+        for s in Service::ALL {
+            assert!(service_on(on, Svc::default(), s), "{:?} defaults ON", s);
+            assert!(!service_on(off, Svc::default(), s), "Server OFF stops {:?} (master)", s);
+            assert!(!service_on(on, Svc::default().with(s, false), s), "{:?} disabled", s);
+            for other in Service::ALL.into_iter().filter(|o| *o != s) {
+                assert!(service_on(on, Svc::default().with(s, false), other), "disabling {:?} leaves {:?} serving", s, other);
+            }
+        }
+        assert!(plan(off).admin, "the admin surface stays so a service can be started again");
+    }
+
+    #[test]
+    fn the_service_flags_persist_and_an_old_store_means_all_on() {
+        let dir = std::env::temp_dir().join(format!("c3ws-svc-{}", std::process::id()));
+        let f = dir.join("power.json");
+        let d = Switches { server: true, keep_alive: true };
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(&f, r#"{"version":1,"server":true,"keep_alive":true}"#).unwrap();
+        assert_eq!(load(&f, d).svc, Svc::default(), "no `svc` key: every service ON");
+        let st = State { svc: Svc::default().with(Service::Api, false), ..load(&f, d) };
+        save(&f, &st).unwrap();
+        let back = load(&f, d).svc;
+        assert!(!back.api && back.pages && back.sshd, "only API was disabled: {:?}", back);
+        std::fs::write(&f, r#"{"svc":{"pages":"x"}}"#).unwrap();
+        assert_eq!(load(&f, d).svc, Svc::default(), "a malformed flag is ON");
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

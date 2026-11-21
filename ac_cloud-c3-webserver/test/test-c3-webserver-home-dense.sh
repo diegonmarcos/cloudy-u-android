@@ -28,10 +28,10 @@ FROZEN = [
  # Status card + Server card (PowerCard) -> Pages / API / SSHD
  ("State", P), ("Server ON, serving", P), ("Server ON, starting", P), ("Server OFF: pages, sshd, DNS and sites stopped", P),
  ("Version", A), ("Uptime", A), ("Health", A), ("not answering (Server OFF stops :8003)", A), ("Keep alive", P), ("Ports", P), ("Active sites", P),
- ("c3_power_server", P), ("c3_power_keep_alive", P), ("OFF stops the served pages, DNS, the mesh listener, sshd and every site", P),
+ ("c3_power_server", "ServerTable"), ("c3_power_keep_alive", P), ("OFF stops the served pages, DNS, the mesh listener, sshd and every site", "ServerTable"),  # #1836: the Server switch moved to the Server table, Pages has its own service switch
  ("ON keeps the server up with a notification and starts it at boot", P), ("Server", P),
  ("c3_power_ssh_door", S), ("c3_power_ssh_follow", S), ("Follow Keep alive", S), ("SSH door", S), ("ON asks Cloud Terminal Nix-on-Droid to start its sshd", S),
- ("Turn the Server OFF?", U), ("Turn OFF", U), ("Turn ON", "SwitchRow"),
+ ("Server", "ServerTable"), ("Turn the Server OFF?", U), ("Turn OFF", U), ("Turn ON", "SwitchRow"),
  # Served pages / Pages status
  ("c3_home_pages", P), ("Pages \u203a", P), ("c3_home_goto_pages", P), ("Undeclared ports", P), ("serving", P), ("not serving", P), ("stopped", P), ("role", P),
  ("Page status", P), ("App status", P), ("Serving status", P), ("Served list", P), ("c3_status_goto_pages", P), ("answering now", P), ("PAGES", P),

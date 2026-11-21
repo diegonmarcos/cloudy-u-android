@@ -33,7 +33,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Home (#1834): the Summary (three real lights per service, Start/Stop All, Keep Alive All, Probe All) and then one table per service,
+ * Home (#1834, #1836): the Summary (three real lights per service and for the Server, Start/Stop All, Keep Alive All, Probe All) and then one table per service,
  * Pages, API, SSHD, ADB Shell (StatusPage.kt), each with its whole control chain. The tables of the previous Home are folded into the
  * service they describe (rule 16: test-c3-webserver-home-dense.sh holds every field); the device report stays on Configs > Device.
  * Drawn as the dense console of #1723 (Dense.kt, KitDensity).
@@ -72,6 +72,7 @@ fun HomePage(open: (String, String?) -> Unit) {
         (about as? Load.Ok)?.value, (roots as? Load.Ok)?.value, (adb as? Load.Ok)?.value, (mcp as? Load.Ok)?.value, (mesh as? Load.Ok)?.value, live, bump, open,
         { all -> confirmOff = all },
         { key, value -> actions.post(Api.POWER, JSONObject().put(key, value ?: JSONObject.NULL)) { "Applied" } },
+        { body -> actions.post(Api.POWER, body) { "Applied" } },
     )
     DensePage("c3_home") {
         DActs { DAct("Refresh", "c3_home_refresh") { bump() } }
@@ -86,6 +87,8 @@ fun HomePage(open: (String, String?) -> Unit) {
         SshdTable(data)
         SectionBand("adb", "ADB Shell")
         AdbTable(data, tick)
+        SectionBand("server", "Server")
+        ServerTable(data)
     }
     if (confirmOff != null) AlertDialog(
         onDismissRequest = { confirmOff = null },
