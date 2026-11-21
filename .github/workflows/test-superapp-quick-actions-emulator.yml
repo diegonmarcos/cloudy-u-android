@@ -47,18 +47,19 @@ jobs:
         run: |
           # ui.py: find a node in a uiautomator dump and print its centre ("x y"), or the declared badges.
           cat > ui.py <<'PY'
-          import json, re, sys
+          import html, json, re, sys
           def nodes(path):
               x = open(path, encoding="utf-8", errors="replace").read()
               for m in re.finditer(r"<node [^>]*>", x):
-                  a = dict(re.findall(r'([\w-]+)="([^"]*)"', m.group(0)))
+                  a = {k: html.unescape(v) for k, v in re.findall(r'([\w-]+)="([^"]*)"', m.group(0))}
                   b = re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", a.get("bounds", ""))
                   if b: a["_b"] = tuple(map(int, b.groups())); yield a
+          def vis(a): x1, y1, x2, y2 = a["_b"]; return x2 > x1 and y2 > y1   # a row scrolled out of view keeps bounds [0,0][0,0]
           def centre(a): x1, y1, x2, y2 = a["_b"]; return "%d %d" % ((x1 + x2) // 2, (y1 + y2) // 2)
           cmd = sys.argv[1]
           if cmd == "text":          # ui.py text dump.xml "Label" [n]   -> n-th node whose text matches (case-insensitive)
               want = sys.argv[3].lower(); n = int(sys.argv[4]) if len(sys.argv) > 4 else 0
-              hits = sorted((a for a in nodes(sys.argv[2]) if a.get("text", "").strip().lower() == want), key=lambda a: a["_b"][1])
+              hits = sorted((a for a in nodes(sys.argv[2]) if vis(a) and a.get("text", "").strip().lower() == want), key=lambda a: a["_b"][1])
               print(centre(hits[n]) if len(hits) > n else "")
           elif cmd == "below":       # ui.py below dump.xml "Anchor" "Label"  -> first Label node below the Anchor node
               anchor = [a for a in nodes(sys.argv[2]) if a.get("text", "").strip() == sys.argv[3]]
@@ -76,6 +77,31 @@ jobs:
               print(hit[0].get("checked", "") if hit else "")
           elif cmd == "count-desc":
               print(sum(1 for a in nodes(sys.argv[2]) if a.get("content-desc", "") == sys.argv[3]))
+          elif cmd in ("starts", "contains", "match", "textof", "verdict", "texts"):
+              # starts   dump "Prefix"       centre of the first node whose text starts with Prefix (Skip, "Skip (don't ask again)")
+              # contains dump "Sub" [lo hi]  centre of the topmost node whose text or content-desc holds Sub, centre y inside lo..hi (300..2100)
+              # match    dump REGEX          centre of the first node whose text matches REGEX
+              # textof   dump "Sub"          the text of the topmost node holding Sub
+              # verdict  dump "Sub"          the report row holding Sub: tap (needs your tap) | done | skipped | failed | none
+              ns = sorted((a for a in nodes(sys.argv[2]) if vis(a)), key=lambda a: (a["_b"][1], a["_b"][0]))
+              arg = sys.argv[3] if len(sys.argv) > 3 else ""
+              if cmd == "texts": print(" | ".join(t for a in ns for t in (a.get("text", ""), a.get("content-desc", "")) if t.strip())); sys.exit()
+              has = lambda a: arg in a.get("text", "") or arg in a.get("content-desc", "")
+              if cmd == "starts":
+                  hits = [a for a in ns if a.get("text", "").strip().lower().startswith(arg.lower())]
+                  print(centre(hits[0]) if hits else "")
+              elif cmd == "contains":
+                  lo = int(sys.argv[4]) if len(sys.argv) > 4 else 300; hi = int(sys.argv[5]) if len(sys.argv) > 5 else 2100
+                  hits = [a for a in ns if has(a) and lo < (a["_b"][1] + a["_b"][3]) // 2 < hi]
+                  print(centre(hits[0]) if hits else "")
+              elif cmd == "match":
+                  hits = [a for a in ns if re.search(arg, a.get("text", "").strip())]
+                  print(centre(hits[0]) if hits else "")
+              else:
+                  hits = [a for a in ns if has(a)]
+                  t = (hits[0].get("text", "") or hits[0].get("content-desc", "")).replace("\n", " ") if hits else ""
+                  if cmd == "textof": print(t)
+                  else: print("none" if not t else "tap" if "needs your tap" in t else "done" if t.startswith("\u2713") else "skipped" if t.startswith("\u25cb") else "failed" if t.startswith("\u25cf") else "none")
           elif cmd == "badges":      # ui.py badges build.json -> "id<TAB>channel<TAB>label" per persistent badge
               for p in json.load(open(sys.argv[2]))["ui"]["notification_center"]["producers"]:
                   if p.get("badge") and p.get("channel"): print("%s\t%s\t%s" % (p["id"], p["channel"], p["label"]))
@@ -101,7 +127,8 @@ jobs:
           adb shell am start -W -n "$ACT" >/dev/null; sleep 5; adb shell am force-stop "$PKG"
           adb shell "run-as $PKG sh -c 'mkdir -p shared_prefs && cp /data/local/tmp/launcher_settings.xml shared_prefs/launcher_settings.xml'" || true
           adb shell am start -W -n "$ACT" >/dev/null; sleep 20
-          awake() { adb shell am stopservice -n "$PKG/.floatingnav.ScreensaverService" >/dev/null 2>&1 || true; adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard; }
+          awake() { adb shell am stopservice -n "$PKG/.floatingnav.ScreensaverService" >/dev/null 2>&1 || true; adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard
+            adb shell dumpsys window 2>/dev/null | grep -qE "mDreamingLockscreen=true|isKeyguardShowing=true|mShowingLockscreen=true" && adb shell input keyevent 82; true; }
           page() { adb shell am start -n "$ACT" --es shortcut_action "page:config/$1" >/dev/null; awake; sleep 10; }
           # walk NAME PAGE WORD...: open the page, shoot it, and require every WORD (case-insensitive) among the dump's texts.
           walk() { name=$1; pg=$2; shift 2
@@ -150,37 +177,51 @@ jobs:
           adb push bm.xml /data/local/tmp/banking_mode.xml
           adb shell "run-as $PKG sh -c 'mkdir -p shared_prefs && cp /data/local/tmp/banking_mode.xml shared_prefs/banking_mode.xml'" || echo "run-as failed"
           adb shell am start -W -n "$ACT" >/dev/null; sleep 15
-          skipdlg() { adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb pull /sdcard/u.xml out/dlg.xml >/dev/null 2>&1
-            if grep -q 'text="Install unknown apps"' out/dlg.xml; then sp=$(python3 ui.py text out/dlg.xml Skip); [ -n "$sp" ] && adb shell input tap $sp && sleep 3; fi; }
+          # A screensaver ("Unlock"), the first-start "Install unknown apps" ask (button "Skip", or "Skip (don't ask again)": match the prefix)
+          # or a system "X isn't responding" dialog (answer Wait, as the camera walk does) can cover the page: take it down first.
+          skipdlg() { for _ in 1 2 3; do adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb pull /sdcard/u.xml out/dlg.xml >/dev/null 2>&1
+              u=$(python3 -I ui.py text out/dlg.xml Unlock)
+              [ -z "$u" ] && grep -q 'text="Install unknown apps"' out/dlg.xml && u=$(python3 -I ui.py starts out/dlg.xml Skip)
+              [ -z "$u" ] && grep -q "isn't responding\|isn&apos;t responding" out/dlg.xml && u=$(python3 -I ui.py text out/dlg.xml Wait)
+              [ -z "$u" ] && return 0; adb shell input tap $u; sleep 3; done; }
           skipdlg
           adb shell settings put secure enabled_accessibility_services "$SVC"; adb shell settings put secure accessibility_enabled 1
           a11y() { adb shell settings get secure enabled_accessibility_services | tr -d '\r'; }
           shoot() { adb exec-out screencap -p > "out/$1.png"; adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb pull /sdcard/u.xml "out/$1.xml" >/dev/null 2>&1; }
           sec() { page panels-security; sleep 8; shoot "$1"; }
-          tapmode() { pos=""; page presets; skipdlg
-            for it in 1 2 3 4 5 6 7 8 9 10; do
-              awake; sleep 3
-              adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb pull /sdcard/u.xml out/pm.xml >/dev/null 2>&1
-              adb exec-out screencap -p > "out/pm-$it.png"
-              # the app's own idle screensaver or a first-start dialog can cover the page: take it down, then look again
-              un=$(python3 ui.py text out/pm.xml Unlock); [ -n "$un" ] && { adb shell input tap $un; sleep 3; continue; }
-              grep -q 'text="Install unknown apps"' out/pm.xml && { skipdlg; continue; }
-              # the page body not drawn yet (only the strip and the nav): wait, do not scroll
-              grep -q 'text="Sandboxes"' out/pm.xml || { sleep 5; continue; }
-              pos=$(python3 - <<'PY'
-          import re
-          x = open("out/pm.xml", encoding="utf-8", errors="replace").read()
-          for m in re.finditer(r"<node [^>]*>", x):
-              n = m.group(0); t = re.search(r' text="([^"]*)"', n); d = re.search(r'content-desc="([^"]*)"', n); b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
-              if b and "Banking Apps Mode" in ((t.group(1) if t else "") + (d.group(1) if d else "")) and int(b.group(2)) > 300 and int(b.group(4)) < 2100:
-                  print((int(b.group(1)) + int(b.group(3))) // 2, (int(b.group(2)) + int(b.group(4))) // 2); break
-          PY
-              )
-              [ -n "$pos" ] && break
-              # a slow drag from the right third (a quick flick at the middle was taken by the home swipe gestures / edge pads)
-              if [ $((it % 2)) -eq 0 ]; then adb shell input swipe 760 1900 760 800 1200; else adb shell input draganddrop 760 1900 760 800 900; fi; sleep 2
+          dumpto() { for _ in 1 2 3; do r=$(adb shell uiautomator dump /sdcard/u.xml 2>&1 | tr -d '\r'); case "$r" in *dumped*) break;; esac; sleep 1; done; adb pull /sdcard/u.xml "$1" >/dev/null 2>&1; }
+          # a slow drag from the right third (a quick flick at the middle was taken by the home swipe gestures / edge pads); the two gestures alternate
+          swipe_down() { if [ $(( $1 % 2 )) -eq 0 ]; then adb shell input swipe 760 1900 760 800 1200; else adb shell input draganddrop 760 1900 760 800 900; fi; sleep 2; }
+          swipe_up() { adb shell input swipe 760 800 760 1900 400; sleep 1; }
+          # scrollfind NAME CMD ARGS...: scroll the page down until `ui.py CMD out/NAME.xml ARGS...` answers (pos = its centre). Dumps are compared as the notify
+          # and browser walks do: two dumps in a row identical = the page's end (the swipe gesture alternates, so a dud gesture is not taken for the end),
+          # at most 25 swipes.
+          scrollfind() { nm=$1; shift; pos=""; prev=""; same=0
+            for i in $(seq 0 25); do
+              awake; skipdlg; dumpto "out/$nm.xml"
+              pos=$(python3 -I ui.py "$1" "out/$nm.xml" "${@:2}")
+              [ -n "$pos" ] && { echo "scrollfind $nm: '$pos' after $i swipes"; return 0; }
+              cur=$(md5sum < "out/$nm.xml")
+              if [ "$cur" = "$prev" ]; then same=$((same+1)); [ "$same" -ge 2 ] && break; else same=0; fi
+              prev=$cur; swipe_down "$i"
             done
-            [ -n "$pos" ] || { echo "no Banking Apps Mode tile"; return 1; }
+            echo "scrollfind $nm: not found, end of page after $i swipes"; return 1; }
+          # totop: swipe back up until two dumps in a row are identical (at most 25)
+          totop() { prev=""; for _ in $(seq 1 25); do swipe_up; dumpto out/top.xml; cur=$(md5sum < out/top.xml); [ "$cur" = "$prev" ] && return 0; prev=$cur; done; }
+          # collect NAME: from the page top to its end, every dump appended to out/NAME-all.xml; the first screen with the report's head is shot as NAME-report.png
+          collect() { nm=$1; : > "out/$nm-all.xml"; prev=""; same=0; shot=0
+            for i in $(seq 0 25); do
+              awake; skipdlg; dumpto "out/$nm-s.xml"; cat "out/$nm-s.xml" >> "out/$nm-all.xml"
+              [ "$shot" -eq 0 ] && grep -q 'Last change' "out/$nm-s.xml" && { adb exec-out screencap -p > "out/$nm-report.png"; shot=1; }
+              cur=$(md5sum < "out/$nm-s.xml")
+              if [ "$cur" = "$prev" ]; then same=$((same+1)); [ "$same" -ge 2 ] && break; else same=0; fi
+              prev=$cur; swipe_down "$i"
+            done; [ "$shot" -eq 1 ]; }
+          # the Preset body (Sandboxes ...) drawn: wait, do not scroll
+          bodywait() { for _ in 1 2 3 4 5 6; do awake; skipdlg; dumpto out/pm.xml; grep -q 'text="Sandboxes"' out/pm.xml && return 0; sleep 5; done; return 1; }
+          tapmode() { pos=""; page presets; bodywait || { echo "the Preset body never drew"; return 1; }
+            scrollfind pm contains "Banking Apps Mode" 300 2100 || { echo "no Banking Apps Mode tile"; return 1; }
+            adb exec-out screencap -p > out/pm-tile.png
             adb shell input tap $pos; sleep 12; }
           before=$(a11y); echo "a11y before: $before"
           case "$before" in *LockScreen*) check ok "setup: the app's accessibility service is enabled";; *) check no "setup: accessibility service not enabled ($before)";; esac
@@ -196,6 +237,105 @@ jobs:
           case "$after" in *LockScreen*) check ok "Banking Apps Mode off: the accessibility entry is back ($after)";; *) check no "Banking Apps Mode off: the entry did not come back ($after)";; esac
           sec banking-5-security-after
           [ -z "$(grep -i 'adb pairing\|pairing notification\|PairingNotif' out/banking-pairing.log)" ] && check ok "no ADB pairing prompt was raised during the walk" || check no "pairing activity during the walk"
+          # ── #1847 the round trip proof: the tile reached by scrolling, the ON report per item, the Perms link, the OFF restore read back ──
+          # What BankingMode writes: Settings.Global development_settings_enabled, adb_enabled, adb_wifi_enabled (WRITE_SECURE_SETTINGS, else the shell
+          # broker only when already armed), the fleet's accessibility entry, the keep-alive switch and the overlay switches. adb_enabled=0 on an emulator
+          # ends adbd and with it THIS walk's adb, so USB debugging (and the ADB shell item that rides on it) is in the skip list for the proof: the report
+          # must list it as left alone and adb_enabled must be unchanged. Developer options and Wireless debugging are written for real and read back.
+          g() { adb shell settings get global "$1" | tr -d '\r'; }
+          adb_alive() { timeout 60 adb wait-for-device; [ "$(adb get-state 2>/dev/null | tr -d '\r')" = device ]; }
+          setup_banking() { # $1 skip list, $2 grant | revoke WRITE_SECURE_SETTINGS
+            adb shell am force-stop "$PKG"
+            echo "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\" ?><map><string name=\"skip\">$1</string></map>" > bm.xml
+            adb push bm.xml /data/local/tmp/banking_mode.xml
+            adb shell "run-as $PKG sh -c 'mkdir -p shared_prefs && cp /data/local/tmp/banking_mode.xml shared_prefs/banking_mode.xml'" || echo "run-as failed"
+            adb shell pm $2 "$PKG" android.permission.WRITE_SECURE_SETTINGS || true
+            adb shell settings put global development_settings_enabled 1
+            adb shell am start -W -n "$ACT" >/dev/null; sleep 15; skipdlg
+            adb shell settings put secure enabled_accessibility_services "$SVC"; adb shell settings put secure accessibility_enabled 1; sleep 3; }
+          # wait_mode on|off: poll the tile's own label ("... on, tap to turn off") until the mode run has finished
+          wait_mode() { for _ in 1 2 3 4 5 6 7 8; do sleep 5; awake; skipdlg; dumpto out/wm.xml; t=$(python3 -I ui.py textof out/wm.xml "Banking Apps Mode")
+              case "$t" in "") ;; *"turn off"*) [ "$1" = on ] && return 0;; *) [ "$1" = off ] && return 0;; esac; done; return 1; }
+          # report NAME: expand the applied steps ("All N steps"), then read the whole page, top to end, into out/NAME-all.xml
+          report() { scrollfind "$1-f" match '^All [0-9]+ steps$' && { adb shell input tap $pos; sleep 2; }
+            totop; collect "$1" && check ok "$1: the report is on the page" || check no "$1: no 'Last change' report on the page"; }
+          item() { python3 -I ui.py verdict "out/$1-all.xml" "$2"; }
+          want_item() { v=$(item "$1" "$2"); case " $4 " in *" $v "*) check ok "$1: $3 is $v";; *) check no "$1: $3 is '$v', want $4";; esac; }
+          note_of() { python3 -I ui.py textof "out/$1-all.xml" "$2"; }
+          pairing_free() { adb logcat -d | grep -i "pairing" | grep -vi "wd-keeper\|WdKeeper" | grep -i 'adb pairing\|pairing notification\|PairingNotif' > "out/banking-pairing-$1.log" || true
+            [ ! -s "out/banking-pairing-$1.log" ] && check ok "$1: no ADB pairing prompt was raised" || check no "$1: pairing activity"; }
+
+          # A. permission held: Developer options and Wireless debugging written for real, USB debugging left alone (the walk's own adb)
+          setup_banking "usb_debugging,adb_shell" grant
+          dev0=$(g development_settings_enabled); adb0=$(g adb_enabled); wifi0=$(g adb_wifi_enabled); a0=$(a11y)
+          echo "A before: development_settings_enabled=$dev0 adb_enabled=$adb0 adb_wifi_enabled=$wifi0 a11y=$a0"
+          [ "$dev0" = 1 ] && check ok "A setup: Developer options are on ($dev0)" || check no "A setup: Developer options not on ($dev0)"
+          case "$a0" in *LockScreen*) check ok "A setup: the accessibility entry is there";; *) check no "A setup: no accessibility entry ($a0)";; esac
+          if tapmode; then
+            cp out/pm-tile.png out/banking-A1-tile.png; check ok "A1 the Banking Apps Mode tile was reached on Preset > Mode by scrolling"
+          else check no "A1 the Banking Apps Mode tile was not reached"; fi
+          wait_mode on && check ok "A the tile reads 'on, tap to turn off'" || check no "A the mode did not report itself on"
+          adb_alive && check ok "A the walk's own adb survived the ON" || check no "A the adb link died on ON"
+          dev1=$(g development_settings_enabled); adb1=$(g adb_enabled); wifi1=$(g adb_wifi_enabled); a1=$(a11y)
+          echo "A on: development_settings_enabled=$dev1 adb_enabled=$adb1 adb_wifi_enabled=$wifi1 a11y=$a1"
+          [ "$dev1" = 0 ] && check ok "A2 ON: development_settings_enabled $dev0 -> $dev1" || check no "A2 ON: development_settings_enabled is $dev1, want 0"
+          [ "$adb1" = "$adb0" ] && check ok "A2 ON: adb_enabled left at $adb1 (skip list)" || check no "A2 ON: adb_enabled changed $adb0 -> $adb1"
+          [ "$wifi0" = 1 ] && { [ "$wifi1" = 0 ] && check ok "A2 ON: adb_wifi_enabled 1 -> 0" || check no "A2 ON: adb_wifi_enabled is $wifi1, want 0"; } || { [ "$wifi1" = "$wifi0" ] && check ok "A2 ON: adb_wifi_enabled was already off ($wifi0), unchanged" || check no "A2 ON: adb_wifi_enabled $wifi0 -> $wifi1"; }
+          case "$a1" in *LockScreen*) check no "A2 ON: the accessibility entry is still there ($a1)";; *) check ok "A2 ON: the accessibility entry was removed ($a1)";; esac
+          adb exec-out screencap -p > out/banking-A2-on-state.png
+          report banking-A-on; cp out/banking-A-on-report.png out/banking-A3-on-report.png 2>/dev/null || true
+          want_item banking-A-on "Developer options off" "developer options" "done"
+          want_item banking-A-on "USB debugging off" "USB debugging" "skipped"
+          note_of banking-A-on "USB debugging off" | grep -qi "skip list" && check ok "A2 ON: the USB debugging row says it is left alone (skip list)" || check no "A2 ON: the USB debugging row does not say why"
+          [ "$wifi0" = 1 ] && want_item banking-A-on "Wireless debugging off" "wireless debugging" "done" || want_item banking-A-on "Wireless debugging off" "wireless debugging (already off)" "skipped done"
+          want_item banking-A-on "accessibility services off" "accessibility" "done"
+          echo "SKIP A2 USB debugging flip (adb_enabled=0): on an emulator it ends adbd and this walk's own adb; the report row (left alone, skip list) and adb_enabled=$adb0 unchanged are asserted instead" | tee -a out/verdict.txt
+          if tapmode; then check ok "A the tile is found again for the OFF"; else check no "A the tile is not found for the OFF"; fi
+          wait_mode off && check ok "A the tile no longer reads on" || check no "A the mode did not report itself off"
+          adb_alive && check ok "A the walk's own adb survived the OFF" || check no "A the adb link died on OFF"
+          dev2=$(g development_settings_enabled); adb2=$(g adb_enabled); wifi2=$(g adb_wifi_enabled); a2=$(a11y)
+          echo "A off: development_settings_enabled=$dev2 adb_enabled=$adb2 adb_wifi_enabled=$wifi2 a11y=$a2"
+          [ "$dev2" = "$dev0" ] && check ok "A4 OFF: development_settings_enabled restored to $dev0" || check no "A4 OFF: development_settings_enabled is $dev2, was $dev0"
+          [ "$adb2" = "$adb0" ] && check ok "A4 OFF: adb_enabled is $adb0" || check no "A4 OFF: adb_enabled is $adb2, was $adb0"
+          [ "$wifi2" = "$wifi0" ] && check ok "A4 OFF: adb_wifi_enabled restored to $wifi0" || check no "A4 OFF: adb_wifi_enabled is $wifi2, was $wifi0"
+          case "$a2" in *LockScreen*) check ok "A4 OFF: the accessibility entry is back ($a2)";; *) check no "A4 OFF: the accessibility entry did not come back ($a2)";; esac
+          adb exec-out screencap -p > out/banking-A4-off-state.png
+          report banking-A-off; cp out/banking-A-off-report.png out/banking-A5-off-report.png 2>/dev/null || true
+          want_item banking-A-off "Developer options off" "developer options restore" "done"
+          pairing_free A
+
+          # B. no WRITE_SECURE_SETTINGS (the permission revoked): nothing Android lets the app change is changed; each item is "needs your tap" with
+          #    its link, and the accessibility link opens the Perms page (PERMS_A11Y "perms:accessibility" through PermsLink)
+          setup_banking "usb_debugging,adb_shell" revoke
+          if adb shell dumpsys package "$PKG" | grep "android.permission.WRITE_SECURE_SETTINGS" | grep -q "granted=true"; then
+            echo "SKIP B (needs-tap report and the Perms link): WRITE_SECURE_SETTINGS could not be revoked on this image" | tee -a out/verdict.txt
+          else
+            devB=$(g development_settings_enabled); aB=$(a11y); wifiB=$(g adb_wifi_enabled)
+            tapmode && check ok "B1 the Banking Apps Mode tile was reached by scrolling" || check no "B1 the Banking Apps Mode tile was not reached"
+            cp out/pm-tile.png out/banking-B1-tile.png
+            wait_mode on && check ok "B the tile reads on" || check no "B the mode did not report itself on"
+            adb_alive && check ok "B the walk's own adb survived" || check no "B the adb link died"
+            [ "$(g development_settings_enabled)" = "$devB" ] && check ok "B ON: development_settings_enabled untouched ($devB): no channel to write it" || check no "B ON: development_settings_enabled changed without a channel"
+            report banking-B-on; cp out/banking-B-on-report.png out/banking-B2-on-report.png 2>/dev/null || true
+            want_item banking-B-on "Developer options off" "developer options" "tap"
+            want_item banking-B-on "accessibility services off" "accessibility" "tap"
+            want_item banking-B-on "USB debugging off" "USB debugging" "skipped"
+            note_of banking-B-on "accessibility services off" | grep -q "open Settings" && check ok "B2 the accessibility row carries its link (open Settings)" || check no "B2 the accessibility row has no link"
+            # the accessibility link: tap the row, land on the Perms page
+            totop
+            if scrollfind banking-B-link contains "accessibility services off" 300 2100; then
+              adb shell input tap $pos; sleep 6; awake; skipdlg; dumpto out/banking-B3-perms.xml; adb exec-out screencap -p > out/banking-B3-perms.png
+              if grep -q 'text="Sandboxes"' out/banking-B3-perms.xml; then check no "B3 tapping the accessibility link left the Preset page up"
+              elif python3 -I ui.py contains out/banking-B3-perms.xml "Accessibility service" 0 3000 | grep -q . || python3 -I ui.py contains out/banking-B3-perms.xml "Grant all" 0 3000 | grep -q .; then check ok "B3 the accessibility link lands on the Perms page"
+              else check no "B3 the accessibility link did not land on the Perms page; on screen: $(python3 -I ui.py texts out/banking-B3-perms.xml 2>/dev/null | head -c 300)"; fi
+              adb shell input keyevent KEYCODE_BACK; sleep 2
+            else check no "B3 the accessibility row was not found to tap"; fi
+            tapmode && wait_mode off && check ok "B the tile no longer reads on" || check no "B the mode did not report itself off"
+            [ "$(g development_settings_enabled)" = "$devB" ] && check ok "B4 OFF: development_settings_enabled is $devB (nothing was changed, nothing to restore)" || check no "B4 OFF: development_settings_enabled changed"
+            case "$(a11y)" in *LockScreen*) check ok "B4 OFF: the accessibility entry is still there";; *) check no "B4 OFF: the accessibility entry went missing";; esac
+            adb exec-out screencap -p > out/banking-B4-off-state.png
+            pairing_free B
+          fi
           cat out/verdict.txt
           [ "$fails" -eq 0 ]
           EOF2
