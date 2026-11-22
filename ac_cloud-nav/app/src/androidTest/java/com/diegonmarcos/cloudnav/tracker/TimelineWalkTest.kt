@@ -5,6 +5,7 @@ import android.content.Context
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Looper
+import android.os.ParcelFileDescriptor
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.diegonmarcos.cloudnav.maps.LocationTrackerService
@@ -16,7 +17,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Assume
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.File
 import java.time.Instant
 import java.time.ZoneId
 
@@ -28,7 +28,13 @@ import java.time.ZoneId
  */
 @RunWith(AndroidJUnit4::class)
 class TimelineWalkTest {
-    private val marker = File("/data/local/tmp/walk-done")
+    // The markers live in /data/local/tmp, which the app's own uid can neither write nor list (run 45011349673: the
+    // start marker was never written, so the injector waited the whole job). Both go through the instrumentation's
+    // shell (uiAutomation runs as shell, which owns that directory).
+    private val markerPath = "/data/local/tmp/walk-done"
+    private fun sh(cmd: String): String = InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(cmd)
+        .let { pfd -> ParcelFileDescriptor.AutoCloseInputStream(pfd).bufferedReader().use { it.readText() } }
+    private fun markerExists(): Boolean = sh("ls $markerPath").contains("walk-done")
 
     @Test fun walkInjectedWithGeoFixShowsSeveralStaysAndMovesWithKmAndTimelineMatchesDay() {
         val inst = InstrumentationRegistry.getInstrumentation()
@@ -48,13 +54,14 @@ class TimelineWalkTest {
             @Suppress("MissingPermission") lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10_000L, 0f, keepGps, Looper.getMainLooper())
         }
         LocationTrackerService.startTracking(ctx)
-        runCatching { File("/data/local/tmp/walk-start").apply { writeText("1"); setReadable(true, false) } }   // the injector waits for this
+        sh("touch /data/local/tmp/walk-start")   // the injector waits for this
+        assertTrue("the start marker was written (the injector waits for it)", sh("ls /data/local/tmp/walk-start").contains("walk-start"))
 
-        val deadline = System.currentTimeMillis() + 110 * 60_000L
-        while (!marker.exists() && System.currentTimeMillis() < deadline) Thread.sleep(10_000L)
+        val deadline = System.currentTimeMillis() + 95 * 60_000L   // inside the job's 120 min with the build and boot
+        while (!markerExists() && System.currentTimeMillis() < deadline) Thread.sleep(10_000L)
         inst.runOnMainSync { lm.removeUpdates(keepGps) }
         LocationTrackerService.stopTracking(ctx)
-        assertTrue("the injector never finished (no ${marker.path})", marker.exists())
+        assertTrue("the injector never finished (no $markerPath)", markerExists())
 
         val now = System.currentTimeMillis()
         val fixes = db.fixesBetween(0L, now)
