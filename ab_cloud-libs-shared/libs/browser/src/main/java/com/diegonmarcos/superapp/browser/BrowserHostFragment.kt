@@ -1325,6 +1325,9 @@ class BrowserHostFragment : Fragment() {
      */
     var onHistory: (() -> Unit)? = null
 
+    /** #1856 Site Data > Open Local Folder: the app shows this site's files kept on the phone (Cloud Browser: Domains > Files Cached). */
+    var onOpenLocalFolder: ((url: String) -> Unit)? = null
+
     /** Item 5's view of the on-device history, with Clear. */
     private fun showHistory() {
         onHistory?.let { it(); return }
@@ -1862,6 +1865,28 @@ class BrowserHostFragment : Fragment() {
 
     /** The result line the scraper sheet shows; Compose state so a finished run redraws it. */
     private val scrapeResult = androidx.compose.runtime.mutableStateOf("")
+
+    /** #1856 the declared Scrapper-tab tools of the scraper add-on. */
+    private val fleet by lazy { FleetScrapper.parse(config.addons["scraper"]?.config?.optJSONObject("fleet")) }
+
+    /** #1856 one fleet tool on [url]: asked off the main thread (mesh first), the answer shown in the source viewer; a file answer is saved to the app's Downloads folder. */
+    private fun runFleet(id: String, url: String, done: (JSONObject) -> Unit) {
+        val tool = fleet.tools[id] ?: return done(JSONObject().put("ok", false).put("error", "$id: not a fleet tool"))
+        if (!url.startsWith("http")) return done(JSONObject().put("ok", false).put("error", "$id: needs an http(s) page"))
+        val title = config.menu.item(id)?.label ?: id
+        val app = requireContext().applicationContext
+        toast("$title: asking the fleet…")
+        val secret = { k: String -> BrowserHostHooks.secret?.invoke(k) }
+        Thread {
+            val text = if (tool.download) FleetScrapper.download(fleet, id, url, secret) { ins, name ->
+                val dir = app.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS) ?: app.filesDir
+                val f = java.io.File(dir, name.replace(Regex("[^A-Za-z0-9._-]"), "_"))
+                f.outputStream().use { ins.copyTo(it) }; f.absolutePath
+            } else FleetScrapper.call(fleet, id, url, secret)
+            activity?.runOnUiThread { showSource(title, text) }
+        }.start()
+        done(JSONObject().put("ok", true).put("id", id).put("started", true))
+    }
 
     private fun showScraper() {
         val sc = config.addons["scraper"]?.config ?: JSONObject()
@@ -2783,6 +2808,9 @@ class BrowserHostFragment : Fragment() {
                 if (i != null) roleRequest.launch(i)
                 done(ok().put("requested", i != null))
             }
+            // #1856 the Scrapper tab: the fleet's headless browser / scrapper API on the current page URL (build.json addons[scraper].fleet)
+            in fleet.tools.keys -> { wv ?: return needPage(); runFleet(id, url, done) }
+            "open_local_folder" -> { val open = onOpenLocalFolder ?: return done(ok().put("ok", false).put("why", "this app has no local folder page")); open(url); done(ok()) }
             else -> done(JSONObject().put("ok", false).put("error", "$id: not a menu action"))
         }
     }

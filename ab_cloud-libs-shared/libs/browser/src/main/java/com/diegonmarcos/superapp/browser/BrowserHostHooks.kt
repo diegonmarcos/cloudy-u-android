@@ -22,4 +22,7 @@ object BrowserHostHooks {
 
     /** A fact the app owns for the menu (site_pinned). */
     @Volatile var fact: ((id: String, url: String) -> Boolean)? = null
+
+    /** #1856 a secret by its store key NAME (the Scrapper tab's bearer for cloudy-browser-headless); null = none. The value never leaves this call. */
+    @Volatile var secret: ((key: String) -> String?)? = null
 }
