@@ -5703,6 +5703,842 @@
     "moves": [],
     "drops": []
    }
+  },
+  {
+   "name": "view_pages_by_day groups by the zone's local day, newest day and page first",
+   "op": "view_pages_by_day",
+   "in": {
+    "visits": [
+     {
+      "url": "https://a/",
+      "title": "A",
+      "ts": 1710113400000
+     },
+     {
+      "url": "https://b/",
+      "title": "B",
+      "ts": 1710072000000
+     },
+     {
+      "url": "https://c/",
+      "title": "C",
+      "ts": 1710133200000
+     },
+     {
+      "url": "https://d/",
+      "title": "D",
+      "ts": 1704065400000
+     }
+    ],
+    "offsets": [
+     [
+      0,
+      3600000
+     ]
+    ]
+   },
+   "out": {
+    "days": [
+     {
+      "day": "2024-03-11",
+      "pages": [
+       {
+        "url": "https://c/",
+        "title": "C",
+        "ts": 1710133200000
+       },
+       {
+        "url": "https://a/",
+        "title": "A",
+        "ts": 1710113400000
+       }
+      ]
+     },
+     {
+      "day": "2024-03-10",
+      "pages": [
+       {
+        "url": "https://b/",
+        "title": "B",
+        "ts": 1710072000000
+       }
+      ]
+     },
+     {
+      "day": "2024-01-01",
+      "pages": [
+       {
+        "url": "https://d/",
+        "title": "D",
+        "ts": 1704065400000
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "name": "view_pages_by_day follows a zone's offset change",
+   "op": "view_pages_by_day",
+   "in": {
+    "visits": [
+     {
+      "url": "https://e/",
+      "title": "E",
+      "ts": 1711845000000
+     },
+     {
+      "url": "https://f/",
+      "title": "F",
+      "ts": 1711924200000
+     }
+    ],
+    "offsets": [
+     [
+      0,
+      3600000
+     ],
+     [
+      1711846800000,
+      7200000
+     ]
+    ]
+   },
+   "out": {
+    "days": [
+     {
+      "day": "2024-04-01",
+      "pages": [
+       {
+        "url": "https://f/",
+        "title": "F",
+        "ts": 1711924200000
+       }
+      ]
+     },
+     {
+      "day": "2024-03-31",
+      "pages": [
+       {
+        "url": "https://e/",
+        "title": "E",
+        "ts": 1711845000000
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "name": "view_pages_by_day with a negative offset",
+   "op": "view_pages_by_day",
+   "in": {
+    "visits": [
+     {
+      "url": "https://g/",
+      "title": "G",
+      "ts": 1710039600000
+     }
+    ],
+    "offsets": [
+     [
+      0,
+      -18000000
+     ]
+    ]
+   },
+   "out": {
+    "days": [
+     {
+      "day": "2024-03-09",
+      "pages": [
+       {
+        "url": "https://g/",
+        "title": "G",
+        "ts": 1710039600000
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "name": "view_pages_by_day before 1970",
+   "op": "view_pages_by_day",
+   "in": {
+    "visits": [
+     {
+      "url": "https://p/",
+      "title": "P",
+      "ts": -86400000
+     }
+    ],
+    "offsets": []
+   },
+   "out": {
+    "days": [
+     {
+      "day": "1969-12-31",
+      "pages": [
+       {
+        "url": "https://p/",
+        "title": "P",
+        "ts": -86400000
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "name": "view_domains_by_day counts pages per domain, most first then name, skips a page with no domain",
+   "op": "view_domains_by_day",
+   "in": {
+    "visits": [
+     {
+      "url": "https://x.com/1",
+      "title": "1",
+      "ts": 1714903200001,
+      "domain": "x.com"
+     },
+     {
+      "url": "https://x.com/2",
+      "title": "2",
+      "ts": 1714903200005,
+      "domain": "x.com"
+     },
+     {
+      "url": "https://y.org/",
+      "title": "y",
+      "ts": 1714903200002,
+      "domain": "y.org"
+     },
+     {
+      "url": "https://x.com/3",
+      "title": "3",
+      "ts": 1714903200003,
+      "domain": "x.com"
+     },
+     {
+      "url": "https://z.net/1",
+      "title": "z1",
+      "ts": 1714903200004,
+      "domain": "z.net"
+     },
+     {
+      "url": "https://z.net/2",
+      "title": "z2",
+      "ts": 1714903200006,
+      "domain": "z.net"
+     },
+     {
+      "url": "https://z.net/3",
+      "title": "z3",
+      "ts": 1714903200007,
+      "domain": "z.net"
+     },
+     {
+      "url": "file:///x",
+      "title": "f",
+      "ts": 1714903200008,
+      "domain": ""
+     }
+    ],
+    "offsets": [
+     [
+      0,
+      0
+     ]
+    ]
+   },
+   "out": {
+    "days": [
+     {
+      "day": "2024-05-05",
+      "domains": [
+       {
+        "domain": "x.com",
+        "pages": 3,
+        "last": 1714903200005
+       },
+       {
+        "domain": "z.net",
+        "pages": 3,
+        "last": 1714903200007
+       },
+       {
+        "domain": "y.org",
+        "pages": 1,
+        "last": 1714903200002
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "name": "view_domains_by_day derives the host when no domain is given",
+   "op": "view_domains_by_day",
+   "in": {
+    "visits": [
+     {
+      "url": "https://www.Derived.org:81/p",
+      "title": "t",
+      "ts": 1714903200000
+     }
+    ],
+    "offsets": []
+   },
+   "out": {
+    "days": [
+     {
+      "day": "2024-05-05",
+      "domains": [
+       {
+        "domain": "derived.org",
+        "pages": 1,
+        "last": 1714903200000
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "name": "view_sites: first and last visit, distinct pages, first-seen order",
+   "op": "view_sites",
+   "in": {
+    "visits": [
+     {
+      "url": "https://a.com/1",
+      "title": "t",
+      "ts": 10,
+      "domain": "a.com"
+     },
+     {
+      "url": "https://a.com/1",
+      "title": "t",
+      "ts": 30,
+      "domain": "a.com"
+     },
+     {
+      "url": "https://a.com/2",
+      "title": "t",
+      "ts": 20,
+      "domain": "a.com"
+     },
+     {
+      "url": "https://b.org/",
+      "title": "t",
+      "ts": 5,
+      "domain": "b.org"
+     },
+     {
+      "url": "x:",
+      "title": "t",
+      "ts": 1,
+      "domain": ""
+     }
+    ]
+   },
+   "out": {
+    "sites": [
+     {
+      "domain": "a.com",
+      "first": 10,
+      "last": 30,
+      "pages": 2
+     },
+     {
+      "domain": "b.org",
+      "first": 5,
+      "last": 5,
+      "pages": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "view_sites_sort by name ignores case",
+   "op": "view_sites_sort",
+   "in": {
+    "sites": [
+     {
+      "domain": "b.org"
+     },
+     {
+      "domain": "A.com"
+     },
+     {
+      "domain": "c.net"
+     }
+    ],
+    "by": "name"
+   },
+   "out": {
+    "sites": [
+     {
+      "domain": "A.com"
+     },
+     {
+      "domain": "b.org"
+     },
+     {
+      "domain": "c.net"
+     }
+    ]
+   }
+  },
+  {
+   "name": "view_sites_sort by last visit, ties by name",
+   "op": "view_sites_sort",
+   "in": {
+    "sites": [
+     {
+      "domain": "x",
+      "last": 5
+     },
+     {
+      "domain": "b",
+      "last": 9
+     },
+     {
+      "domain": "a",
+      "last": 9
+     }
+    ],
+    "by": "last"
+   },
+   "out": {
+    "sites": [
+     {
+      "domain": "a",
+      "last": 9
+     },
+     {
+      "domain": "b",
+      "last": 9
+     },
+     {
+      "domain": "x",
+      "last": 5
+     }
+    ]
+   }
+  },
+  {
+   "name": "view_sites_sort of anything else is by name",
+   "op": "view_sites_sort",
+   "in": {
+    "sites": [
+     {
+      "domain": "b"
+     },
+     {
+      "domain": "a"
+     }
+    ],
+    "by": "whatever"
+   },
+   "out": {
+    "sites": [
+     {
+      "domain": "a"
+     },
+     {
+      "domain": "b"
+     }
+    ]
+   }
+  },
+  {
+   "name": "view_ever_seen: visited and rule hosts, A to Z",
+   "op": "view_ever_seen",
+   "in": {
+    "visited": [
+     "b.com",
+     "a.com"
+    ],
+    "rule_hosts": [
+     "www.c.com",
+     "*",
+     "",
+     "a.com",
+     "B.net"
+    ]
+   },
+   "out": {
+    "hosts": [
+     "a.com",
+     "b.com",
+     "B.net",
+     "c.com"
+    ]
+   }
+  },
+  {
+   "name": "suggest_score git https://www.github.com/x t",
+   "op": "suggest_score",
+   "in": {
+    "needle": "git",
+    "url": "https://www.github.com/x",
+    "title": "t"
+   },
+   "out": {
+    "score": 100.0
+   }
+  },
+  {
+   "name": "suggest_score git https://x.io Git guide",
+   "op": "suggest_score",
+   "in": {
+    "needle": "git",
+    "url": "https://x.io",
+    "title": "Git guide"
+   },
+   "out": {
+    "score": 90.0
+   }
+  },
+  {
+   "name": "suggest_score git https://x.io My git notes",
+   "op": "suggest_score",
+   "in": {
+    "needle": "git",
+    "url": "https://x.io",
+    "title": "My git notes"
+   },
+   "out": {
+    "score": 70.0
+   }
+  },
+  {
+   "name": "suggest_score git https://x.io/legit n",
+   "op": "suggest_score",
+   "in": {
+    "needle": "git",
+    "url": "https://x.io/legit",
+    "title": "n"
+   },
+   "out": {
+    "score": 50.0
+   }
+  },
+  {
+   "name": "suggest_score git https://q.io digit",
+   "op": "suggest_score",
+   "in": {
+    "needle": "git",
+    "url": "https://q.io",
+    "title": "digit"
+   },
+   "out": {
+    "score": 40.0
+   }
+  },
+  {
+   "name": "suggest_score git https://q.io none",
+   "op": "suggest_score",
+   "in": {
+    "needle": "git",
+    "url": "https://q.io",
+    "title": "none"
+   },
+   "out": {
+    "score": null
+   }
+  },
+  {
+   "name": "suggest_score a http://www.a.org x",
+   "op": "suggest_score",
+   "in": {
+    "needle": "a",
+    "url": "http://www.a.org",
+    "title": "x"
+   },
+   "out": {
+    "score": 100.0
+   }
+  },
+  {
+   "name": "suggest_score note https://x.io a-note|b",
+   "op": "suggest_score",
+   "in": {
+    "needle": "note",
+    "url": "https://x.io",
+    "title": "a-note|b"
+   },
+   "out": {
+    "score": 70.0
+   }
+  },
+  {
+   "name": "suggest_rank: open tabs first, then history by match and recency, one row per url, capped",
+   "op": "suggest_rank",
+   "in": {
+    "needle": "rust",
+    "now": 1717200000000,
+    "limit": 3,
+    "tabs": [
+     {
+      "url": "https://rust-lang.org/",
+      "title": "Rust"
+     },
+     {
+      "url": "https://docs.rs/",
+      "title": "Docs for rust crates"
+     }
+    ],
+    "history": [
+     {
+      "url": "https://rust-lang.org/",
+      "title": "Rust again",
+      "ts": 1717200000000
+     },
+     {
+      "url": "https://crates.io/",
+      "title": "Crates",
+      "ts": 1717200000000
+     },
+     {
+      "url": "https://blog.example/rustaceans",
+      "title": "A blog",
+      "ts": 1717113600000
+     },
+     {
+      "url": "https://old.example/x",
+      "title": "rusty",
+      "ts": 1714608000000
+     }
+    ]
+   },
+   "out": {
+    "rows": [
+     {
+      "url": "https://rust-lang.org/",
+      "label": "Rust",
+      "source": "TAB"
+     },
+     {
+      "url": "https://docs.rs/",
+      "label": "Docs for rust crates",
+      "source": "TAB"
+     },
+     {
+      "url": "https://old.example/x",
+      "label": "rusty",
+      "source": "HISTORY"
+     }
+    ]
+   }
+  },
+  {
+   "name": "suggest_rank: a blank title shows the url, recency breaks a tie",
+   "op": "suggest_rank",
+   "in": {
+    "needle": "zz",
+    "now": 1717200000000,
+    "limit": 5,
+    "tabs": [],
+    "history": [
+     {
+      "url": "https://zz.old/",
+      "title": "",
+      "ts": 1716336000000
+     },
+     {
+      "url": "https://zz.new/",
+      "title": "",
+      "ts": 1717200000000
+     }
+    ]
+   },
+   "out": {
+    "rows": [
+     {
+      "url": "https://zz.new/",
+      "label": "https://zz.new/",
+      "source": "HISTORY"
+     },
+     {
+      "url": "https://zz.old/",
+      "label": "https://zz.old/",
+      "source": "HISTORY"
+     }
+    ]
+   }
+  },
+  {
+   "name": "suggest_fav: matching favourites, best first, one per url",
+   "op": "suggest_fav",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "https://github.com/a",
+      "title": "GitHub A"
+     },
+     {
+      "url": "https://news.example/",
+      "title": "News on github"
+     },
+     {
+      "url": "https://other.io/",
+      "title": "Other"
+     },
+     {
+      "url": "https://github.com/a",
+      "title": "GitHub A again"
+     }
+    ],
+    "query": "git",
+    "limit": 5
+   },
+   "out": {
+    "rows": [
+     {
+      "url": "https://github.com/a",
+      "title": "GitHub A"
+     },
+     {
+      "url": "https://news.example/",
+      "title": "News on github"
+     }
+    ]
+   }
+  },
+  {
+   "name": "suggest_fav leaves out a url already shown",
+   "op": "suggest_fav",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "https://github.com/a",
+      "title": "GitHub A"
+     },
+     {
+      "url": "https://news.example/",
+      "title": "News on github"
+     },
+     {
+      "url": "https://other.io/",
+      "title": "Other"
+     },
+     {
+      "url": "https://github.com/a",
+      "title": "GitHub A again"
+     }
+    ],
+    "query": "git",
+    "limit": 5,
+    "skip": [
+     "https://github.com/a"
+    ]
+   },
+   "out": {
+    "rows": [
+     {
+      "url": "https://news.example/",
+      "title": "News on github"
+     }
+    ]
+   }
+  },
+  {
+   "name": "suggest_fav needs every word",
+   "op": "suggest_fav",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "https://github.com/a",
+      "title": "GitHub A"
+     },
+     {
+      "url": "https://news.example/",
+      "title": "News on github"
+     },
+     {
+      "url": "https://other.io/",
+      "title": "Other"
+     },
+     {
+      "url": "https://github.com/a",
+      "title": "GitHub A again"
+     }
+    ],
+    "query": "github news",
+    "limit": 5
+   },
+   "out": {
+    "rows": [
+     {
+      "url": "https://news.example/",
+      "title": "News on github"
+     }
+    ]
+   }
+  },
+  {
+   "name": "suggest_fav of a blank query or no room is empty",
+   "op": "suggest_fav",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "https://github.com/a",
+      "title": "GitHub A"
+     },
+     {
+      "url": "https://news.example/",
+      "title": "News on github"
+     },
+     {
+      "url": "https://other.io/",
+      "title": "Other"
+     },
+     {
+      "url": "https://github.com/a",
+      "title": "GitHub A again"
+     }
+    ],
+    "query": " ",
+    "limit": 5
+   },
+   "out": {
+    "rows": []
+   }
+  },
+  {
+   "name": "suggest_fav limit",
+   "op": "suggest_fav",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "https://github.com/a",
+      "title": "GitHub A"
+     },
+     {
+      "url": "https://news.example/",
+      "title": "News on github"
+     },
+     {
+      "url": "https://other.io/",
+      "title": "Other"
+     },
+     {
+      "url": "https://github.com/a",
+      "title": "GitHub A again"
+     }
+    ],
+    "query": "git",
+    "limit": 1
+   },
+   "out": {
+    "rows": [
+     {
+      "url": "https://github.com/a",
+      "title": "GitHub A"
+     }
+    ]
+   }
   }
  ]
 }

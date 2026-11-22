@@ -301,4 +301,38 @@ class BrowserCoreListsTest {
             for (g in listOf(true, false)) assertEquals(when (st) { "allow" -> true; "deny" -> false; else -> g }, BrowserSitePolicy.popupAllowed(st, g))
         }
     }
+
+    // ── phase 2: the history pages and the address bar, the old rules as the oracle ─────────────────────────────────────────
+
+    private fun v(u: String, t: String, ts: Long) = BrowserVisit(u, t, ts)
+
+    @Test fun `history per day, domains per day and Visited match the old rules in several zones`() {
+        val base = 1_717_200_000_000L   // 2024-06-01
+        val visits = (0 until 300).map { i -> v("https://${listOf("a.com", "www.b.org", "c.net", "d.io", "weird host/x")[i % 5]}/p${i % 17}", "t$i", base + i * 5_400_000L - (i % 7) * 86_400_000L * 40) } +
+            v("about:blank", "blank", base) + v("file:///x", "f", base + 1)
+        for (zone in listOf("UTC", "Europe/Madrid", "America/New_York", "Asia/Kolkata", "Pacific/Auckland").map { java.time.ZoneId.of(it) }) {
+            assertEquals(zone.id, HistoryDays.pagesByDayRules(visits, zone), HistoryDays.pagesByDay(visits, zone))
+            assertEquals(zone.id, HistoryDays.domainsByDayRules(visits, zone), HistoryDays.domainsByDay(visits, zone))
+        }
+        assertEquals(Visited.sitesRules(visits), Visited.sites(visits))
+        val sites = Visited.sites(visits)
+        for (by in listOf(Visited.BY_NAME, Visited.BY_LAST, "other")) assertEquals(by, Visited.sortRules(sites, by), Visited.sort(sites, by))
+        assertEquals(listOf("a.com"), Visited.everSeen(Visited.sites(listOf(v("https://a.com/", "t", 1))), listOf("www.a.com", "*", "")))
+        assertTrue(HistoryDays.pagesByDay(emptyList(), java.time.ZoneId.of("UTC")).isEmpty())
+    }
+
+    @Test fun `address bar ranking matches the old rules`() {
+        val now = 1_717_200_000_000L
+        val history = listOf(v("https://rust-lang.org/", "Rust", now), v("https://docs.rs/", "Docs for rust", now - 86_400_000L), v("https://blog.example/rustaceans", "A blog", now - 3 * 86_400_000L),
+            v("https://old.example/x", "rusty", now - 30 * 86_400_000L), v("https://crates.io/", "Crates", now), v("https://x.io/", "", now - 5), v("https://www.zeta.org/rust", "zeta", now - 9))
+        val tabs = listOf(BrowserTab("https://rust-lang.org/", "Rust Lang", 3), BrowserTab("https://tab.example/rust", "tab", 2, isPrivate = true), BrowserTab("https://other.example/", "Other rust tab", 1))
+        for (needle in listOf("rust", "r", "docs", "x", "zeta", "nomatch", "crates", "a blog", "www")) for (limit in listOf(1, 3, 5))
+            assertEquals("$needle/$limit", BrowserSuggest.rankRules(needle, tabs, history, now, limit), BrowserSuggest.rank(needle, tabs, history, now, limit))
+        val favs = listOf(BrowserBookmark("https://github.com/a", "GitHub A", "Public", 1), BrowserBookmark("https://news.example/", "News on github", "", 2), BrowserBookmark("https://other.io/", "Other", "x", 3),
+            BrowserBookmark("https://gitlab.com/b", "Lab", "x", 4))
+        for (q in listOf("git", "github news", " ", "x", "GIT", "lab", "zzz")) for (skip in listOf(emptySet(), setOf("https://github.com/a"))) for (limit in listOf(0, 1, 5))
+            assertEquals("$q/$skip/$limit", BrowserFavourites.suggestRules(favs, q, limit, skip), BrowserFavourites.suggest(favs, q, limit, skip))
+        for ((n, u, t) in listOf(Triple("git", "https://www.github.com/x", "t"), Triple("git", "https://x.io", "My git notes"), Triple("a", "http://a.org", "b"), Triple("q", "https://z.io", "q")))
+            assertEquals(BrowserSuggest.matchScore(n, u, t), BrowserCore.lists("suggest_score", JSONObject().put("needle", n).put("url", u).put("title", t)).let { if (it.isNull("score")) null else it.getDouble("score") })
+    }
 }

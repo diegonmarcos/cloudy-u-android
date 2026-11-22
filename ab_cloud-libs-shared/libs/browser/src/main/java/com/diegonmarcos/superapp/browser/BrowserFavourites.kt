@@ -154,6 +154,16 @@ object BrowserFavourites {
      * [skip] (already shown above) is left out so a page is never offered twice.
      */
     fun suggest(list: List<BrowserBookmark>, q: String, limit: Int, skip: Set<String> = emptySet()): List<BrowserBookmark> {
+        // #1841 the ranking is the browser core's (`suggest_fav`); [suggestRules] is the readable rule it is held to
+        if (tokens(q).isEmpty() || limit <= 0) return emptyList()
+        val r = BrowserCore.lists("suggest_fav", JSONObject().put("query", q).put("limit", limit).put("skip", JSONArray(skip.toList())).put("bookmarks", BrowserBookmarkOps.toJson(list)))
+        val rows = r.optJSONArray("rows") ?: return emptyList()
+        // the core answers url and title; the rest of the bookmark is the list's own row for that url
+        val byUrl = HashMap<String, BrowserBookmark>().also { m -> list.forEach { m.putIfAbsent(it.url, it) } }
+        return (0 until rows.length()).mapNotNull { i -> rows.getJSONObject(i).getString("url").let { u -> byUrl[u] } }
+    }
+
+    fun suggestRules(list: List<BrowserBookmark>, q: String, limit: Int, skip: Set<String> = emptySet()): List<BrowserBookmark> {
         val ts = tokens(q)
         if (ts.isEmpty() || limit <= 0) return emptyList()
         return list.filter { it.url !in skip && matches(it, q) }

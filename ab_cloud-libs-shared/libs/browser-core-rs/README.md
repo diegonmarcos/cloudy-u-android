@@ -35,8 +35,15 @@ writing a backup file under `files/browser-core/backup/` and keeping the old tex
 ONE corpus `cargo test` (`src/tests.rs`) and `BrowserCoreListsTest` (the twin; the core too where JNI loads) are held to, and its `models`
 entry is the field-parity list for `BrowserVisit` / `BrowserBookmark`.
 
-## Not yet moved
+## Phase 2 (more.rs, KtMore)
 
-Settings, site permissions and the download queue still live in the app's SharedPreferences stores, which the fleet config migration
-contract declares; the core's rows table and `download_next` are in place for them, the migration of each store is a separate, tested step
-(phase 2).
+Downloads (`dl_*`: the DownloadManager index, the job list with every field, the policy clamps, backoff, sizes in words, safe names, the
+seeding rule, the page's filter), settings (`set_*`: validation against the catalogue, the FleetConfig snapshot, repair of a value stored under
+the wrong type), site permissions (`perm_*`: rule resolution, zoom, the Sites page's hosts, set / forget, the WebView state mappings, the
+lowercase-host repair), the history pages (`view_*`: per day, per domain, Visited, by the zone offsets Kotlin hands over) and the address bar's
+ranking (`suggest_*`). The prefs files and keys are unchanged everywhere; the migrations back up first (`BrowserListMigration`).
+
+## Still in Kotlin
+
+Content-Disposition parsing (a regex engine; no new crate), `DlFormat.unique` (it asks the file system), the view mode and collapsed groups of
+the favourites (plain prefs), the host parsing of a page's address (java.net.URI, handed to the core as `domain`), the tab model and ordering.

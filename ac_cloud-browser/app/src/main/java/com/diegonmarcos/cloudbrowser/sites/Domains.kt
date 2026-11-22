@@ -1,5 +1,6 @@
 package com.diegonmarcos.cloudbrowser.sites
 
+import com.diegonmarcos.cloudlib.browsercore.BrowserCore
 import com.diegonmarcos.superapp.browser.BrowserSitePolicy
 import com.diegonmarcos.superapp.browser.BrowserVisit
 import org.json.JSONArray
@@ -42,12 +43,47 @@ object HistoryDays {
     /** `yyyy-MM-dd` of [ts] in [zone]. */
     fun dayOf(ts: Long, zone: ZoneId): String = Instant.ofEpochMilli(ts).atZone(zone).toLocalDate().toString()
 
-    /** Pages per day, the newest day first and the newest page first within it. */
-    fun pagesByDay(visits: List<BrowserVisit>, zone: ZoneId): List<PageDay> =
+    /** The visits as the core reads them: url, title, time and the page's domain (parsed here, by java.net.URI, the platform's own parser). */
+    private fun rows(visits: List<BrowserVisit>) = JSONArray().also { a ->
+        visits.forEach { a.put(JSONObject().put("url", it.url).put("title", it.title).put("ts", it.ts).put("domain", VisitLog.domainOf(it.url))) }
+    }
+
+    /** The zone's UTC offsets over the span of [visits], `[[from_ms, offset_ms], ...]`: the core has no time-zone database, it applies these. */
+    fun zoneOffsets(visits: List<BrowserVisit>, zone: ZoneId): JSONArray {
+        val out = JSONArray()
+        if (visits.isEmpty()) return out
+        val lo = visits.minOf { it.ts }; val hi = visits.maxOf { it.ts }
+        val rules = zone.rules
+        out.put(JSONArray().put(lo).put(rules.getOffset(Instant.ofEpochMilli(lo)).totalSeconds * 1000L))
+        var t = rules.nextTransition(Instant.ofEpochMilli(lo))
+        while (t != null && t.instant.toEpochMilli() <= hi) {
+            out.put(JSONArray().put(t.instant.toEpochMilli()).put(t.offsetAfter.totalSeconds * 1000L))
+            t = rules.nextTransition(t.instant)
+        }
+        return out
+    }
+
+    private fun visit(o: JSONObject) = BrowserVisit(o.optString("url"), o.optString("title"), o.optLong("ts"))
+
+    /** Pages per day, the newest day first and the newest page first within it (#1841: the browser core's `view_pages_by_day`). */
+    fun pagesByDay(visits: List<BrowserVisit>, zone: ZoneId): List<PageDay> {
+        val a = BrowserCore.lists("view_pages_by_day", JSONObject().put("visits", rows(visits)).put("offsets", zoneOffsets(visits, zone))).optJSONArray("days") ?: return emptyList()
+        return (0 until a.length()).map { i -> a.getJSONObject(i).let { d -> PageDay(d.getString("day"), d.getJSONArray("pages").let { p -> (0 until p.length()).map { visit(p.getJSONObject(it)) } }) } }
+    }
+
+    /** Domains per day with how many pages each had that day: most pages first, then name (the core's `view_domains_by_day`). */
+    fun domainsByDay(visits: List<BrowserVisit>, zone: ZoneId): List<DomainDay> {
+        val a = BrowserCore.lists("view_domains_by_day", JSONObject().put("visits", rows(visits)).put("offsets", zoneOffsets(visits, zone))).optJSONArray("days") ?: return emptyList()
+        return (0 until a.length()).map { i -> a.getJSONObject(i).let { d ->
+            DomainDay(d.getString("day"), d.getJSONArray("domains").let { c -> (0 until c.length()).map { c.getJSONObject(it).let { o -> DomainCount(o.getString("domain"), o.getInt("pages"), o.getLong("last")) } } })
+        } }
+    }
+
+    /** The readable rules [pagesByDay] and [domainsByDay] are held to. */
+    fun pagesByDayRules(visits: List<BrowserVisit>, zone: ZoneId): List<PageDay> =
         visits.sortedByDescending { it.ts }.groupBy { dayOf(it.ts, zone) }.map { (d, v) -> PageDay(d, v) }.sortedByDescending { it.day }
 
-    /** Domains per day with how many pages each had that day: most pages first, then name. */
-    fun domainsByDay(visits: List<BrowserVisit>, zone: ZoneId): List<DomainDay> =
+    fun domainsByDayRules(visits: List<BrowserVisit>, zone: ZoneId): List<DomainDay> =
         visits.filter { VisitLog.domainOf(it.url).isNotEmpty() }.groupBy { dayOf(it.ts, zone) }.map { (d, v) ->
             DomainDay(d, v.groupBy { VisitLog.domainOf(it.url) }.map { (dom, p) -> DomainCount(dom, p.size, p.maxOf { it.ts }) }
                 .sortedWith(compareByDescending<DomainCount> { it.pages }.thenBy { it.domain }))
@@ -61,19 +97,32 @@ object Visited {
     const val BY_NAME = "name"
     const val BY_LAST = "last"
 
-    fun sites(visits: List<BrowserVisit>): List<Site> =
+    /** #1841 the browser core's `view_sites` (first and last visit, distinct pages per domain). */
+    fun sites(visits: List<BrowserVisit>): List<Site> {
+        val rows = JSONArray().also { a -> visits.forEach { a.put(JSONObject().put("url", it.url).put("title", it.title).put("ts", it.ts).put("domain", VisitLog.domainOf(it.url))) } }
+        return siteList(BrowserCore.lists("view_sites", JSONObject().put("visits", rows)).optJSONArray("sites"))
+    }
+
+    private fun siteList(a: JSONArray?): List<Site> =
+        if (a == null) emptyList() else (0 until a.length()).map { a.getJSONObject(it).let { o -> Site(o.getString("domain"), o.getLong("first"), o.getLong("last"), o.getInt("pages")) } }
+
+    fun sitesRules(visits: List<BrowserVisit>): List<Site> =
         visits.filter { VisitLog.domainOf(it.url).isNotEmpty() }.groupBy { VisitLog.domainOf(it.url) }
             .map { (d, v) -> Site(d, v.minOf { it.ts }, v.maxOf { it.ts }, v.map { it.url }.distinct().size) }
 
-    /** `name` = A to Z (ignoring case); `last` = most recently visited first, ties by name; anything else = name. */
-    fun sort(sites: List<Site>, by: String): List<Site> = when (by) {
+    /** `name` = A to Z (ignoring case); `last` = most recently visited first, ties by name; anything else = name (the core's `view_sites_sort`). */
+    fun sort(sites: List<Site>, by: String): List<Site> = siteList(BrowserCore.lists("view_sites_sort", JSONObject().put("by", by)
+        .put("sites", JSONArray().also { a -> sites.forEach { a.put(JSONObject().put("domain", it.domain).put("first", it.first).put("last", it.last).put("pages", it.pages)) } })).optJSONArray("sites"))
+
+    fun sortRules(sites: List<Site>, by: String): List<Site> = when (by) {
         BY_LAST -> sites.sortedWith(compareByDescending<Site> { it.last }.thenBy { it.domain })
         else -> sites.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.domain })
     }
 
-    /** Every site that has ever been seen: the visited ones and the ones holding a permission rule, A to Z. */
+    /** Every site that has ever been seen: the visited ones and the ones holding a permission rule, A to Z (the core's `view_ever_seen`). */
     fun everSeen(visited: List<Site>, ruleHosts: Collection<String>): List<String> =
-        (visited.map { it.domain } + ruleHosts.map { it.removePrefix("www.") }.filter { it.isNotEmpty() && it != BrowserSitePolicy.ANY_HOST }).distinct().sortedBy { it.lowercase() }
+        BrowserCore.lists("view_ever_seen", JSONObject().put("visited", JSONArray(visited.map { it.domain })).put("rule_hosts", JSONArray(ruleHosts.toList()))).getJSONArray("hosts")
+            .let { a -> (0 until a.length()).map { a.getString(it) } }
 }
 
 /** One cached file as the actions see it. */

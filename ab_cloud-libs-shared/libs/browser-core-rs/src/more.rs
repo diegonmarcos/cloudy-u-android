@@ -5,6 +5,9 @@
 //!   set_*     settings: validate and type a value against the catalogue, the FleetConfig snapshot, the repair of values stored under the wrong type
 //!   perm_*    site permissions: the per-site rule resolution (most specific host, global default, declared default), zoom, the Sites page's
 //!             hosts, set / forget, the WebView state mappings, the lowercase-host repair
+//!   view_*    the history pages' grouping (pages per day, domains per day, Visited sites, their sort, "every site seen"), by the zone offsets
+//!             Kotlin hands over (a time-zone database is not in this crate)
+//!   suggest_* the address bar's ranking: match score, recency, tabs and history merged and ranked, the Favorites section
 //! The ops of lists.rs are tried first; an op neither knows is an `Err` (the JNI boundary answers `ERR`, Kotlin runs its twin).
 
 use serde_json::{json, Map, Value};
@@ -564,6 +567,234 @@ fn perms(op: &str, a: &Value) -> Option<Value> {
     })
 }
 
+// ── history pages: grouping by day and by domain ─────────────────────────────────────────────────────────────────────────
+
+/// `[[from_ms, offset_ms], ...]` sorted by `from_ms`: the zone's UTC offset in force from that instant (the first entry also holds before it).
+fn offset_at(offsets: &[(i64, i64)], ts: i64) -> i64 {
+    let mut cur = offsets.first().map(|o| o.1).unwrap_or(0);
+    for (from, off) in offsets {
+        if *from <= ts {
+            cur = *off;
+        } else {
+            break;
+        }
+    }
+    cur
+}
+
+/// `yyyy-MM-dd` of a day number counted from 1970-01-01 (the proleptic Gregorian calendar).
+fn civil(days: i64) -> String {
+    let z = days + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z.rem_euclid(146_097);
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let y = yoe + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let y = if m <= 2 { y + 1 } else { y };
+    format!("{y:04}-{m:02}-{d:02}")
+}
+
+fn day_of(offsets: &[(i64, i64)], ts: i64) -> String {
+    civil((ts + offset_at(offsets, ts)).div_euclid(86_400_000))
+}
+
+fn offsets_in(a: &Value) -> Vec<(i64, i64)> {
+    arr(a, "offsets").iter().filter_map(|p| p.as_array().map(|p| (long_at(p, 0), long_at(p, 1)))).collect()
+}
+
+/// A visit of a history page: url, title, time and (when Kotlin parsed it with java.net.URI) the page's `domain`; without it the host is derived here.
+fn visit_rows(a: &Value) -> Vec<(String, String, i64, String)> {
+    arr(a, "visits")
+        .iter()
+        .filter(|o| o.is_object())
+        .map(|o| {
+            let url = text(o, "url", "");
+            let domain = match o.get("domain") {
+                Some(Value::String(d)) => d.clone(),
+                _ => crate::lists::host_of(&url),
+            };
+            (url.clone(), text(o, "title", &url), long(o, "ts"), domain)
+        })
+        .collect()
+}
+
+fn visit_json(v: &(String, String, i64, String)) -> Value {
+    json!({ "url": v.0, "title": v.1, "ts": v.2 })
+}
+
+fn views(op: &str, a: &Value) -> Option<Value> {
+    Some(match op {
+        "view_pages_by_day" => {
+            let offs = offsets_in(a);
+            let mut v = visit_rows(a);
+            v.sort_by(|x, y| y.2.cmp(&x.2));
+            let mut days: Vec<(String, Vec<Value>)> = Vec::new();
+            for x in &v {
+                let d = day_of(&offs, x.2);
+                match days.iter().position(|(k, _)| *k == d) {
+                    Some(i) => days[i].1.push(visit_json(x)),
+                    None => days.push((d, vec![visit_json(x)])),
+                }
+            }
+            days.sort_by(|x, y| y.0.cmp(&x.0));
+            json!({ "days": days.into_iter().map(|(d, p)| json!({ "day": d, "pages": p })).collect::<Vec<_>>() })
+        }
+        "view_domains_by_day" => {
+            let offs = offsets_in(a);
+            let v: Vec<_> = visit_rows(a).into_iter().filter(|x| !x.3.is_empty()).collect();
+            let mut days: Vec<(String, Vec<(String, i64, i64)>)> = Vec::new();
+            for x in &v {
+                let d = day_of(&offs, x.2);
+                let di = match days.iter().position(|(k, _)| *k == d) {
+                    Some(i) => i,
+                    None => {
+                        days.push((d, Vec::new()));
+                        days.len() - 1
+                    }
+                };
+                match days[di].1.iter().position(|c| c.0 == x.3) {
+                    Some(i) => {
+                        days[di].1[i].1 += 1;
+                        days[di].1[i].2 = days[di].1[i].2.max(x.2);
+                    }
+                    None => days[di].1.push((x.3.clone(), 1, x.2)),
+                }
+            }
+            for (_, doms) in days.iter_mut() {
+                doms.sort_by(|x, y| y.1.cmp(&x.1).then(x.0.cmp(&y.0)));
+            }
+            days.sort_by(|x, y| y.0.cmp(&x.0));
+            json!({ "days": days.into_iter().map(|(d, c)| json!({ "day": d, "domains": c.into_iter().map(|(n, p, l)| json!({ "domain": n, "pages": p, "last": l })).collect::<Vec<_>>() })).collect::<Vec<_>>() })
+        }
+        "view_sites" => {
+            let v: Vec<_> = visit_rows(a).into_iter().filter(|x| !x.3.is_empty()).collect();
+            let mut sites: Vec<(String, i64, i64, Vec<String>)> = Vec::new();
+            for x in &v {
+                match sites.iter().position(|s| s.0 == x.3) {
+                    Some(i) => {
+                        sites[i].1 = sites[i].1.min(x.2);
+                        sites[i].2 = sites[i].2.max(x.2);
+                        if !sites[i].3.contains(&x.0) {
+                            sites[i].3.push(x.0.clone());
+                        }
+                    }
+                    None => sites.push((x.3.clone(), x.2, x.2, vec![x.0.clone()])),
+                }
+            }
+            json!({ "sites": sites.into_iter().map(|(d, f, l, u)| json!({ "domain": d, "first": f, "last": l, "pages": u.len() })).collect::<Vec<_>>() })
+        }
+        "view_sites_sort" => {
+            let mut sites: Vec<Value> = arr(a, "sites").to_vec();
+            if text(a, "by", "name") == "last" {
+                sites.sort_by(|x, y| long(y, "last").cmp(&long(x, "last")).then(text(x, "domain", "").cmp(&text(y, "domain", ""))));
+            } else {
+                sites.sort_by_key(|x| lower(&text(x, "domain", "")));
+            }
+            json!({ "sites": sites })
+        }
+        "view_ever_seen" => {
+            let mut all: Vec<String> = arr(a, "visited").iter().filter_map(|x| x.as_str().map(String::from)).collect();
+            all.extend(arr(a, "rule_hosts").iter().filter_map(|x| x.as_str()).map(|h| h.strip_prefix("www.").unwrap_or(h).to_string()).filter(|h| !h.is_empty() && h != "*"));
+            let mut seen = HashSet::new();
+            all.retain(|x| seen.insert(x.clone()));
+            all.sort_by_key(|x| lower(x));
+            json!({ "hosts": all })
+        }
+        _ => return None,
+    })
+}
+
+// ── the address bar's ranking ────────────────────────────────────────────────────────────────────────────────────────────
+
+/// How well `needle` (lower-case) matches a page: the host starting with it beats a title word starting with it, which beats a substring of the
+/// url, which beats one of the title. `None` = no match.
+pub fn match_score(needle: &str, url: &str, title: &str) -> Option<f64> {
+    let l = lower(url);
+    let u = l.strip_prefix("https://").unwrap_or(&l);
+    let u = u.strip_prefix("http://").unwrap_or(u);
+    let u = u.strip_prefix("www.").unwrap_or(u);
+    let t = lower(title);
+    if u.starts_with(needle) {
+        Some(100.0)
+    } else if t.starts_with(needle) {
+        Some(90.0)
+    } else if t.split(|c| c == ' ' || c == '-' || c == '_' || c == '|' || c == '/' || c == '.').any(|w| !w.is_empty() && w.starts_with(needle)) {
+        Some(70.0)
+    } else if u.contains(needle) {
+        Some(50.0)
+    } else if t.contains(needle) {
+        Some(40.0)
+    } else {
+        None
+    }
+}
+
+/// 0..30: a visit from this minute is worth 30, one from a month ago about 1.
+pub fn recency(ts: i64, now: i64) -> f64 {
+    let days = (now - ts).max(0) as f64 / 86_400_000.0;
+    30.0 / (1.0 + days)
+}
+
+fn suggest(op: &str, a: &Value) -> Option<Value> {
+    Some(match op {
+        "suggest_score" => json!({ "score": match_score(&text(a, "needle", ""), &text(a, "url", ""), &text(a, "title", "")) }),
+        "suggest_rank" => {
+            let needle = text(a, "needle", "");
+            let now = long(a, "now");
+            let limit = int(a, "limit", 5).max(0) as usize;
+            let mut seen: HashSet<String> = HashSet::new();
+            let mut rows: Vec<(f64, &str, String, String)> = Vec::new();
+            for t in arr(a, "tabs") {
+                let url = text(t, "url", "");
+                if let Some(m) = match_score(&needle, &url, &text(t, "title", "")) {
+                    if seen.insert(url.clone()) {
+                        let title = text(t, "title", "");
+                        rows.push((m + 1000.0, "TAB", url.clone(), if blank(&title) { url } else { title }));
+                    }
+                }
+            }
+            for v in arr(a, "history") {
+                let url = text(v, "url", "");
+                if let Some(m) = match_score(&needle, &url, &text(v, "title", "")) {
+                    if seen.insert(url.clone()) {
+                        let title = text(v, "title", "");
+                        rows.push((m + recency(long(v, "ts"), now), "HISTORY", url.clone(), if blank(&title) { url } else { title }));
+                    }
+                }
+            }
+            rows.sort_by(|x, y| y.0.partial_cmp(&x.0).unwrap_or(std::cmp::Ordering::Equal));
+            rows.truncate(limit);
+            json!({ "rows": rows.into_iter().map(|(_, s, u, l)| json!({ "url": u, "label": l, "source": s })).collect::<Vec<_>>() })
+        }
+        "suggest_fav" => {
+            let toks: Vec<String> = lower(&text(a, "query", "")).split(|c| c == ' ' || c == '\t').filter(|t| !t.is_empty()).map(String::from).collect();
+            let limit = int(a, "limit", 5);
+            if toks.is_empty() || limit <= 0 {
+                return Some(json!({ "rows": [] }));
+            }
+            let skip: HashSet<String> = arr(a, "skip").iter().filter_map(|x| x.as_str().map(String::from)).collect();
+            let mut rows: Vec<(f64, Value)> = Vec::new();
+            for b in arr(a, "bookmarks") {
+                let (url, title) = (text(b, "url", ""), text(b, "title", ""));
+                if skip.contains(&url) || !toks.iter().all(|t| lower(&format!("{title} {url}")).contains(t.as_str())) {
+                    continue;
+                }
+                let score = toks.iter().map(|t| match_score(t, &url, &title).unwrap_or(10.0)).sum::<f64>() / toks.len() as f64;
+                rows.push((score, json!({ "url": url, "title": title })));
+            }
+            rows.sort_by(|x, y| y.0.partial_cmp(&x.0).unwrap_or(std::cmp::Ordering::Equal));
+            let mut seen: HashSet<String> = HashSet::new();
+            rows.retain(|(_, b)| seen.insert(text(b, "url", "")));
+            rows.truncate(limit as usize);
+            json!({ "rows": rows.into_iter().map(|(_, b)| b).collect::<Vec<_>>() })
+        }
+        _ => return None,
+    })
+}
+
 /// The canonical list (and its text) of a stored store of `kind` handled here, for lists.rs `migrate`; `None` = not a kind of this file.
 pub fn migrate_kind(kind: &str, src: &[Value]) -> Option<(Value, String)> {
     let v: Vec<Value> = match kind {
@@ -587,6 +818,12 @@ pub fn run(op: &str, a: &Value) -> Result<Value, String> {
         _ => {}
     }
     if let Some(v) = perms(op, a) {
+        return Ok(v);
+    }
+    if let Some(v) = views(op, a) {
+        return Ok(v);
+    }
+    if let Some(v) = suggest(op, a) {
         return Ok(v);
     }
     Err(format!("unknown list op {op}"))

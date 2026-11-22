@@ -330,6 +330,127 @@ internal object KtMore {
         }
     }
 
+    // ── history pages ──────────────────────────────────────────────────────────────────────────────────────────────────
+
+    private fun offsetAt(offs: List<Pair<Long, Long>>, ts: Long): Long {
+        var cur = offs.firstOrNull()?.second ?: 0L
+        for ((from, off) in offs) { if (from <= ts) cur = off else break }
+        return cur
+    }
+
+    private fun civil(days: Long): String {
+        val z = days + 719_468
+        val era = Math.floorDiv(z, 146_097L)
+        val doe = Math.floorMod(z, 146_097L)
+        val yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365
+        val y = yoe + era * 400
+        val doy = doe - (365 * yoe + yoe / 4 - yoe / 100)
+        val mp = (5 * doy + 2) / 153
+        val d = doy - (153 * mp + 2) / 5 + 1
+        val m = if (mp < 10) mp + 3 else mp - 9
+        val yy = if (m <= 2) y + 1 else y
+        return String.format(java.util.Locale.ROOT, "%04d-%02d-%02d", yy, m, d)
+    }
+
+    private fun dayOf(offs: List<Pair<Long, Long>>, ts: Long) = civil(Math.floorDiv(ts + offsetAt(offs, ts), 86_400_000L))
+
+    private fun offsetsIn(a: JSONObject): List<Pair<Long, Long>> {
+        val arr = a.optJSONArray("offsets") ?: return emptyList()
+        return (0 until arr.length()).mapNotNull { arr.optJSONArray(it) }.map { longAt(it, 0) to longAt(it, 1) }
+    }
+
+    private class Row(val url: String, val title: String, val ts: Long, val domain: String)
+
+    private fun visitRows(a: JSONObject): List<Row> = KtLists.objs(a.optJSONArray("visits")).map { o ->
+        val url = text(o, "url", "")
+        Row(url, text(o, "title", url), long(o, "ts"), (o.opt("domain") as? String) ?: KtLists.hostOf(url))
+    }
+
+    private fun rowJson(r: Row) = JSONObject().put("url", r.url).put("title", r.title).put("ts", r.ts)
+
+    private fun views(op: String, a: JSONObject): JSONObject? = when (op) {
+        "view_pages_by_day" -> {
+            val offs = offsetsIn(a)
+            val days = visitRows(a).sortedByDescending { it.ts }.groupBy { dayOf(offs, it.ts) }.toList().sortedByDescending { it.first }
+            JSONObject().put("days", JSONArray().also { r -> days.forEach { (d, v) -> r.put(JSONObject().put("day", d).put("pages", JSONArray(v.map { rowJson(it) }))) } })
+        }
+        "view_domains_by_day" -> {
+            val offs = offsetsIn(a)
+            val days = visitRows(a).filter { it.domain.isNotEmpty() }.groupBy { dayOf(offs, it.ts) }.map { (d, v) ->
+                d to v.groupBy { it.domain }.map { (dom, p) -> Triple(dom, p.size, p.maxOf { it.ts }) }.sortedWith(compareByDescending<Triple<String, Int, Long>> { it.second }.thenBy { it.first })
+            }.sortedByDescending { it.first }
+            JSONObject().put("days", JSONArray().also { r -> days.forEach { (d, c) ->
+                r.put(JSONObject().put("day", d).put("domains", JSONArray().also { x -> c.forEach { x.put(JSONObject().put("domain", it.first).put("pages", it.second).put("last", it.third)) } }))
+            } })
+        }
+        "view_sites" -> JSONObject().put("sites", JSONArray().also { r ->
+            visitRows(a).filter { it.domain.isNotEmpty() }.groupBy { it.domain }.forEach { (d, v) ->
+                r.put(JSONObject().put("domain", d).put("first", v.minOf { it.ts }).put("last", v.maxOf { it.ts }).put("pages", v.map { it.url }.distinct().size))
+            }
+        })
+        "view_sites_sort" -> {
+            val sites = KtLists.objs(a.optJSONArray("sites"))
+            JSONObject().put("sites", JSONArray(if (text(a, "by", "name") == "last") sites.sortedWith(compareByDescending<JSONObject> { long(it, "last") }.thenBy { text(it, "domain", "") })
+                else sites.sortedBy { text(it, "domain", "").lowercase() }))
+        }
+        "view_ever_seen" -> {
+            val visited = strs(a.optJSONArray("visited")); val rule = strs(a.optJSONArray("rule_hosts"))
+            JSONObject().put("hosts", JSONArray((visited + rule.map { it.removePrefix("www.") }.filter { it.isNotEmpty() && it != "*" }).distinct().sortedBy { it.lowercase() }))
+        }
+        else -> null
+    }
+
+    // ── the address bar's ranking ──────────────────────────────────────────────────────────────────────────────────────
+
+    fun matchScore(needle: String, url: String, title: String): Double? {
+        val u = url.lowercase().removePrefix("https://").removePrefix("http://").removePrefix("www.")
+        val t = title.lowercase()
+        return when {
+            u.startsWith(needle) -> 100.0
+            t.startsWith(needle) -> 90.0
+            t.split(' ', '-', '_', '|', '/', '.').any { it.isNotEmpty() && it.startsWith(needle) } -> 70.0
+            u.contains(needle) -> 50.0
+            t.contains(needle) -> 40.0
+            else -> null
+        }
+    }
+
+    fun recency(ts: Long, now: Long): Double = 30.0 / (1.0 + maxOf(now - ts, 0L) / 86_400_000.0)
+
+    private class Ranked(val score: Double, val source: String, val url: String, val label: String)
+
+    private fun suggestOp(op: String, a: JSONObject): JSONObject? = when (op) {
+        "suggest_score" -> JSONObject().put("score", matchScore(text(a, "needle", ""), text(a, "url", ""), text(a, "title", "")) ?: JSONObject.NULL)
+        "suggest_rank" -> {
+            val needle = text(a, "needle", ""); val now = long(a, "now"); val limit = maxOf(int(a, "limit", 5), 0L).toInt()
+            val seen = HashSet<String>(); val rows = ArrayList<Ranked>()
+            for (t in KtLists.objs(a.optJSONArray("tabs"))) {
+                val url = text(t, "url", ""); val m = matchScore(needle, url, text(t, "title", "")) ?: continue
+                if (seen.add(url)) rows.add(Ranked(m + 1000.0, "TAB", url, text(t, "title", "").ifBlank { url }))
+            }
+            for (v in KtLists.objs(a.optJSONArray("history"))) {
+                val url = text(v, "url", ""); val m = matchScore(needle, url, text(v, "title", "")) ?: continue
+                if (seen.add(url)) rows.add(Ranked(m + recency(long(v, "ts"), now), "HISTORY", url, text(v, "title", "").ifBlank { url }))
+            }
+            JSONObject().put("rows", JSONArray(rows.sortedByDescending { it.score }.take(limit).map { JSONObject().put("url", it.url).put("label", it.label).put("source", it.source) }))
+        }
+        "suggest_fav" -> {
+            val toks = text(a, "query", "").lowercase().split(' ', '\t').filter { it.isNotEmpty() }
+            val limit = int(a, "limit", 5)
+            if (toks.isEmpty() || limit <= 0) JSONObject().put("rows", JSONArray())
+            else {
+                val skip = strs(a.optJSONArray("skip")).toSet()
+                val rows = KtLists.objs(a.optJSONArray("bookmarks")).filter { b ->
+                    val url = text(b, "url", ""); val hay = (text(b, "title", "") + " " + url).lowercase()
+                    url !in skip && toks.all { hay.contains(it) }
+                }.sortedByDescending { b -> toks.sumOf { matchScore(it, text(b, "url", ""), text(b, "title", "")) ?: 10.0 } / toks.size }
+                    .distinctBy { text(it, "url", "") }.take(limit.toInt())
+                JSONObject().put("rows", JSONArray(rows.map { JSONObject().put("url", text(it, "url", "")).put("title", text(it, "title", "")) }))
+            }
+        }
+        else -> null
+    }
+
     /** The canonical list of a stored store of [kind] handled here (lists.rs `migrate`), null = not a kind of this file. */
     fun migrateKind(kind: String, src: JSONArray?): JSONArray? = when (kind) {
         "downloads" -> JSONArray(KtLists.objs(src).filter { it.has("id") }.map { indexRow(it) })
@@ -340,5 +461,7 @@ internal object KtMore {
     fun run(op: String, a: JSONObject): JSONObject = downloads(op, a)
         ?: when (op) { "set_parse" -> setParse(a); "set_snapshot" -> setSnapshot(a); "set_migrate" -> setMigrate(a); else -> null }
         ?: permsOp(op, a)
+        ?: views(op, a)
+        ?: suggestOp(op, a)
         ?: throw IllegalArgumentException("unknown list op $op")
 }

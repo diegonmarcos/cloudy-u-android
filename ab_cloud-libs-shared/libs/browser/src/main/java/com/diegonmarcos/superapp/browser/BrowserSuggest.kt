@@ -1,5 +1,9 @@
 package com.diegonmarcos.superapp.browser
 
+import com.diegonmarcos.cloudlib.browsercore.BrowserCore
+import org.json.JSONArray
+import org.json.JSONObject
+
 /**
  * What the address-bar dropdown offers while typing.
  *
@@ -112,6 +116,26 @@ object BrowserSuggest {
             search.add(Suggestion(BrowserSearch.searchUrl(t, engine), t, Source.SEARCH, t))
         }
 
+        val ranked = rank(needle, tabs, history, now, historyLimit)
+        val shown = ranked.map { it.url }.toSet()
+        val favs = BrowserFavourites.suggest(favourites, q, favLimit, shown)
+            .map { Suggestion(it.url, it.title.ifBlank { it.url }, Source.FAV, it.url) }
+        return Sections(search, ranked, favs)
+    }
+
+    /**
+     * #1841 the History section's ranking is the browser core's (`suggest_rank`; its Kotlin twin without the library): open tabs first (a private
+     * tab never), then history by [matchScore] plus [recency], one row per url, at most [limit]. [rankRules] below is the readable rule it is held to.
+     */
+    fun rank(needle: String, tabs: List<BrowserTab>, history: List<BrowserVisit>, now: Long, limit: Int): List<Suggestion> {
+        val a = JSONObject().put("needle", needle).put("now", now).put("limit", limit)
+            .put("tabs", JSONArray().also { arr -> BrowserTabOrder.sort(tabs.filter { BrowserSitePolicy.shouldRecord(it) }).forEach { arr.put(JSONObject().put("url", it.url).put("title", it.title)) } })
+            .put("history", JSONArray().also { arr -> history.forEach { arr.put(JSONObject().put("url", it.url).put("title", it.title).put("ts", it.ts)) } })
+        val rows = BrowserCore.lists("suggest_rank", a).optJSONArray("rows") ?: return emptyList()
+        return (0 until rows.length()).map { rows.getJSONObject(it).let { o -> Suggestion(o.getString("url"), o.getString("label"), Source.valueOf(o.getString("source")), o.getString("url")) } }
+    }
+
+    fun rankRules(needle: String, tabs: List<BrowserTab>, history: List<BrowserVisit>, now: Long, limit: Int): List<Suggestion> {
         val out = LinkedHashMap<String, Pair<Double, Suggestion>>()
         for (t in BrowserTabOrder.sort(tabs.filter { BrowserSitePolicy.shouldRecord(it) })) {
             val m = matchScore(needle, t.url, t.title) ?: continue
@@ -121,11 +145,7 @@ object BrowserSuggest {
             val m = matchScore(needle, v.url, v.title) ?: continue
             out.getOrPut(v.url) { (m + recency(v.ts, now)) to Suggestion(v.url, v.title.ifBlank { v.url }, Source.HISTORY, v.url) }
         }
-        val ranked = out.values.sortedByDescending { it.first }.take(historyLimit).map { it.second }
-        val shown = ranked.map { it.url }.toSet()
-        val favs = BrowserFavourites.suggest(favourites, q, favLimit, shown)
-            .map { Suggestion(it.url, it.title.ifBlank { it.url }, Source.FAV, it.url) }
-        return Sections(search, ranked, favs)
+        return out.values.sortedByDescending { it.first }.take(limit).map { it.second }
     }
 
     /** Dense: five rows a section at most (the search section counts its own "Search ..." row). */
