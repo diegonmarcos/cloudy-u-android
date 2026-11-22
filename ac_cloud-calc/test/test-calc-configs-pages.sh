@@ -19,7 +19,9 @@ def nodup(pairs):
 d = json.load(open(sys.argv[1]), object_pairs_hook=nodup)
 cfg = [m for m in d["ui"]["modes"] if m.get("tab") == "configs"]
 want = [("configs_general", "General", "fleet_general"), ("configs_permissions", "Permissions", "fleet_perms"), ("configs_about", "About", "fleet_about")]
-if [(m["id"], m["label"], m["kind"]) for m in cfg[:3]] != want: bad.append("P1 configs tab does not start with General | Permissions | About")
+# #1852 the own pages come first, then the shared ones (General, Agents, Perms, Logcat, X-Ray App, About: the guard holds the whole order)
+if [(m["id"], m["label"], m["kind"]) for m in cfg if m["kind"] in ("fleet_general", "fleet_perms", "fleet_about")] != want: bad.append("P1 configs tab does not carry General | Permissions | About")
+if [m["kind"] for m in cfg][-6:] != ["fleet_general", "fleet_agents", "fleet_perms", "fleet_logcat", "fleet_xray", "fleet_about"]: bad.append("P1 configs tab does not end with the six shared pages in order")
 needs = d["perms"]["needs"]
 for p in ("fine_location", "nearby_wifi"):
     if p not in needs: bad.append("P2 perms.needs lacks " + p)

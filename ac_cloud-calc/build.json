@@ -5119,30 +5119,6 @@
         "kind": "jev"
       },
       {
-        "id": "configs_general",
-        "label": "General",
-        "icon": "settings",
-        "tab": "configs",
-        "kind": "fleet_general",
-        "_doc": "#1406 Configs > General: the shared Configs v2 General page (libs:ui-nav-bars FleetGeneralPage) from configs_pages.general."
-      },
-      {
-        "id": "configs_permissions",
-        "label": "Permissions",
-        "icon": "security",
-        "tab": "configs",
-        "kind": "fleet_perms",
-        "_doc": "#1406 Configs > Permissions: libs:perms AppPermsSection over perms.needs, highlighting what a feature asked for (MainActivity is the PermsHost, so every Open Permissions lands here)."
-      },
-      {
-        "id": "configs_about",
-        "label": "About",
-        "icon": "info",
-        "tab": "configs",
-        "kind": "fleet_about",
-        "_doc": "#1406 Configs > About: the shared Configs v2 About page (libs:ui-nav-bars FleetAboutPage) from configs_pages.about."
-      },
-      {
         "id": "jev_token",
         "label": "Token",
         "tab": "configs",
@@ -5174,12 +5150,28 @@
         "_doc": "#772 Configs > Image recognition route: On-device ML (the default, offline) or an OpenRouter decision model, and that model, picked from the live decision catalogue the image engine reads. The choice is this app's (RecognitionPrefs); the routes, thresholds and the default model are libs:ml-l-image/recognition.json, shared with Cloud Camera."
       },
       {
+        "id": "configs_general",
+        "label": "General",
+        "icon": "settings",
+        "tab": "configs",
+        "kind": "fleet_general",
+        "_doc": "#1406 Configs > General: the shared Configs v2 General page (libs:ui-nav-bars FleetGeneralPage) from configs_pages.general."
+      },
+      {
         "id": "configs_agents",
         "label": "Agents",
         "icon": "psychology",
         "tab": "configs",
         "kind": "fleet_agents",
         "_doc": "#1630 the fleet-default Configs tail: the strip draws General, own tabs, | , Agents, Perms, Logcat, X-Ray App, About (ConfigsTail in ui/CalcShell.kt reorders these modes). Agents is the opt-in libs:fleetconfigs-agents page."
+      },
+      {
+        "id": "configs_permissions",
+        "label": "Permissions",
+        "icon": "security",
+        "tab": "configs",
+        "kind": "fleet_perms",
+        "_doc": "#1406 Configs > Permissions: libs:perms AppPermsSection over perms.needs, highlighting what a feature asked for (MainActivity is the PermsHost, so every Open Permissions lands here)."
       },
       {
         "id": "configs_logcat",
@@ -5196,6 +5188,14 @@
         "tab": "configs",
         "kind": "fleet_xray",
         "_doc": "#1630 the fleet-default Configs tail: the opt-in libs:fleetconfigs-xray page."
+      },
+      {
+        "id": "configs_about",
+        "label": "About",
+        "icon": "info",
+        "tab": "configs",
+        "kind": "fleet_about",
+        "_doc": "#1406 Configs > About: the shared Configs v2 About page (libs:ui-nav-bars FleetAboutPage) from configs_pages.about."
       },
       {
         "id": "history",

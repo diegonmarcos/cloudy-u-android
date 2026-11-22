@@ -26,7 +26,7 @@ class DialerConfigsTest {
     @Test fun configsPagesAreTheDeclaredTopNavInOrder() {
         val pages = DialerConfigsPages.parse(BuildConfig.CONFIGS_TOP_NAV)
         assertEquals(DialerConfigsPages.ORDER, pages.map { it.id })
-        assertEquals(listOf("General", "Perms", "About", "SIM", "Status", "Usage"), pages.map { it.label })
+        assertEquals(listOf("SIM", "Status", "Usage", "General", "Perms", "About"), pages.map { it.label })
         assertTrue(pages.all { it.icon.isNotBlank() })
     }
 

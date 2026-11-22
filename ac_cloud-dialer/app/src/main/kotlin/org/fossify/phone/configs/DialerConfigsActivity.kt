@@ -98,14 +98,14 @@ class DialerConfigsActivity : ComponentActivity() {
 
 /** build.json::configs_pages.top_nav, as baked: "id:Label:icon,...". */
 object DialerConfigsPages {
-    val ORDER: List<String> = listOf("general", "perms", "about", "sim", "status", "usage")
+    val ORDER: List<String> = listOf("sim", "status", "usage", "general", "perms", "about")
 
     fun parse(baked: String): List<NavPage> = baked.split(',').mapNotNull { e ->
         val p = e.split(':')
         if (p.size == 3 && p[0].isNotBlank()) NavPage(p[0], p[1], p[2]) else null
     }
 
-    /** #1630 the strip: build.json's top_nav through the fleet tail, [General, SIM, Status, Usage] | Agents, Perms, Logcat, X-Ray App, About. */
+    /** #1852 the strip: build.json's top_nav through the fleet tail, [SIM, Status, Usage] | General, Agents, Perms, Logcat, X-Ray App, About. */
     val pages: List<NavPage> by lazy { com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.withTail(parse(BuildConfig.CONFIGS_TOP_NAV)) }
 }
 

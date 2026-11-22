@@ -55,11 +55,12 @@ class DeclarationsTest {
         val configs = Declarations.configsTab
         assertEquals("configs", configs?.id)
         assertTrue("Configs is not on the bar", Declarations.sections.none { it.id == configs?.section })
-        assertEquals(listOf("configs_general", "configs_permissions", "configs_about", "jev_token", "jev_routing", "jev_models", "jev_test", "image_route", "configs_agents", "configs_logcat", "configs_xray"), Declarations.modesOf("configs").map { it.id })
-        // #1630 the strip ends with the fleet-default tail, in the exact owner order, the "|" before the first of the five
+        assertEquals(listOf("jev_token", "jev_routing", "jev_models", "jev_test", "image_route", "configs_general", "configs_agents", "configs_permissions", "configs_logcat", "configs_xray", "configs_about"), Declarations.modesOf("configs").map { it.id })
+        // #1852 the strip ends with the shared tabs, in the exact owner order, the "|" before the first of the six (General)
         val strip = com.diegonmarcos.cloudcalc.ui.ConfigsTail.order("configs", Declarations.modesOf("configs"))
-        assertEquals(listOf("fleet_agents", "fleet_perms", "fleet_logcat", "fleet_xray", "fleet_about"), strip.takeLast(5).map { it.kind })
-        assertEquals("configs_agents", com.diegonmarcos.cloudcalc.ui.ConfigsTail.separatorBefore("configs", strip))
+        assertEquals(listOf("fleet_general", "fleet_agents", "fleet_perms", "fleet_logcat", "fleet_xray", "fleet_about"), strip.takeLast(6).map { it.kind })
+        assertEquals(listOf("jev_token", "jev_routing", "jev_models", "jev_test", "image_route"), strip.take(5).map { it.id })   // the own modes come first
+        assertEquals("configs_general", com.diegonmarcos.cloudcalc.ui.ConfigsTail.separatorBefore("configs", strip))
         assertTrue("no tab was lost", Declarations.modesOf("configs").all { m -> strip.any { it.id == m.id } })
     }
 

@@ -225,13 +225,13 @@ object CalcTags {
 }
 
 /**
- * #1630 The Configs strip is [General + the app's own modes] | Agents, Perms, Logcat, X-Ray App, About. build.json declares the modes
- * (General | Permissions | About first, then the own pages and the three opt-in tail pages); this puts the five tail kinds last, in
- * the fleet order, with the "|" before the first. Every other tab is returned as declared.
+ * #1852 The Configs strip is {the app's own modes} | General, Agents, Perms, Logcat, X-Ray App, About. build.json declares the modes
+ * (the own pages first, then the shared pages); this puts the six tail kinds last, in the fleet order, with the "|" before the first.
+ * Every other tab is returned as declared.
  */
 object ConfigsTail {
     /** The tail's mode kinds, in the order they are drawn after the "|". */
-    val KINDS: List<String> = listOf("fleet_agents", "fleet_perms", "fleet_logcat", "fleet_xray", "fleet_about")
+    val KINDS: List<String> = listOf("fleet_general", "fleet_agents", "fleet_perms", "fleet_logcat", "fleet_xray", "fleet_about")
 
     fun order(tabId: String, modes: List<Declarations.Mode>): List<Declarations.Mode> {
         if (tabId != "configs") return modes
