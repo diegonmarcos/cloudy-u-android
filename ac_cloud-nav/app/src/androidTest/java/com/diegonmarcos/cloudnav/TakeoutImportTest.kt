@@ -73,6 +73,14 @@ class TakeoutImportTest {
         }
     }
 
+    /** compose.waitUntil that says WHICH wait timed out and what the import was doing. */
+    private fun await(what: String, ms: Long, cond: () -> Boolean) {
+        try { compose.waitUntil(ms, cond) } catch (e: androidx.compose.ui.test.ComposeTimeoutException) {
+            val st = ImportController.state
+            throw AssertionError("timed out at $what; import state=" + (if (st is ImportState.Failed) "failed: " + st.message else st::class.simpleName), e)
+        }
+    }
+
     private fun shot(name: String) {
         Thread.sleep(1_000)
         val pfd = InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand("screencap -p /data/local/tmp/$name.png")
@@ -92,27 +100,27 @@ class TakeoutImportTest {
         val file = File(ctx.cacheDir, "takeout-fixture.zip").also { zip(it, yesterday, before) }
         try {
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-                compose.waitUntil(30_000) { compose.onAllNodesWithTag("bottomnav_item_tracker").fetchSemanticsNodes().isNotEmpty() }
+                await("wait@95+9", 30_000) { compose.onAllNodesWithTag("bottomnav_item_tracker").fetchSemanticsNodes().isNotEmpty() }
                 var shellPage = false
-                compose.waitUntil(30_000) { scenario.onActivity { act -> act.supportFragmentManager.executePendingTransactions(); shellPage = act.supportFragmentManager.fragments.isNotEmpty() }; shellPage }
+                await("wait@97+9", 30_000) { scenario.onActivity { act -> act.supportFragmentManager.executePendingTransactions(); shellPage = act.supportFragmentManager.fragments.isNotEmpty() }; shellPage }
                 val day = DayFragment()
                 scenario.onActivity { act -> act.supportFragmentManager.beginTransaction().replace(R.id.nav_host_main, day).commitNow() }
 
                 // the import tab with the buttons that open the system pickers (zip or file, folder)
-                compose.waitUntil(30_000) { compose.onAllNodesWithTag(DayTags.tab(DayTab.IMPORT)).fetchSemanticsNodes().isNotEmpty() }
+                await("wait@102+9", 30_000) { compose.onAllNodesWithTag(DayTags.tab(DayTab.IMPORT)).fetchSemanticsNodes().isNotEmpty() }
                 compose.onNodeWithTag(DayTags.tab(DayTab.IMPORT)).performClick()
-                compose.waitUntil(30_000) { compose.onAllNodesWithTag(ImportTags.FILE).fetchSemanticsNodes().isNotEmpty() }
+                await("wait@104+9", 30_000) { compose.onAllNodesWithTag(ImportTags.FILE).fetchSemanticsNodes().isNotEmpty() }
                 assertTrue("the folder picker button is there", compose.onAllNodesWithTag(ImportTags.FOLDER).fetchSemanticsNodes().isNotEmpty())
 
                 // the picker's result: the zip's Uri goes to the screen's import entry
                 scenario.onActivity { day.importFrom(Uri.fromFile(file)) }
-                compose.waitUntil(120_000) { ImportController.state is ImportState.Done || ImportController.state is ImportState.Failed }
+                await("wait@109+9", 120_000) { ImportController.state is ImportState.Done || ImportController.state is ImportState.Failed }
                 val done = ImportController.state
                 assertTrue("import ended well: " + ((done as? ImportState.Failed)?.message ?: ""), done is ImportState.Done)
                 val sum = (done as ImportState.Done).summary
                 assertEquals("visits", 2L, sum.visits); assertEquals("activities", 1L, sum.activities); assertEquals("places", 2, sum.places)
                 assertEquals("raw positions", 7L + 9L + 9L, sum.fixes); assertEquals("days", 2, sum.days); assertTrue(sum.failedFiles.isEmpty())
-                compose.waitUntil(30_000) { compose.onAllNodesWithTag(ImportTags.SUMMARY).fetchSemanticsNodes().isNotEmpty() }
+                await("wait@115+9", 30_000) { compose.onAllNodesWithTag(ImportTags.SUMMARY).fetchSemanticsNodes().isNotEmpty() }
                 compose.onNodeWithTag(ImportTags.SUMMARY).assertExists()
                 shot("takeout-import")
 
@@ -129,22 +137,22 @@ class TakeoutImportTest {
 
                 // the pages over it: Day (yesterday), Places, Cities, World
                 compose.onNodeWithTag(DayTags.tab(DayTab.DAY)).performClick()
-                compose.waitUntil(30_000) { compose.onAllNodesWithTag(DayTags.PREV).fetchSemanticsNodes().isNotEmpty() }
+                await("wait@132+9", 30_000) { compose.onAllNodesWithTag(DayTags.PREV).fetchSemanticsNodes().isNotEmpty() }
                 compose.onNodeWithTag(DayTags.PREV).performClick()
-                compose.waitUntil(30_000) { compose.onAllNodesWithTag(DayTags.LIST).fetchSemanticsNodes().isNotEmpty() }
-                compose.waitUntil(30_000) { runCatching { compose.onNodeWithTag(DayTags.LIST).performScrollToNode(hasText("Walk Test Office", substring = true)) }.isSuccess }
-                compose.waitUntil(30_000) { compose.onAllNodesWithText("Walk Test Office", substring = true).fetchSemanticsNodes().isNotEmpty() }
+                await("wait@134+9", 30_000) { compose.onAllNodesWithTag(DayTags.LIST).fetchSemanticsNodes().isNotEmpty() }
+                await("wait@135+9", 30_000) { runCatching { compose.onNodeWithTag(DayTags.LIST).performScrollToNode(hasText("Walk Test Office", substring = true)) }.isSuccess }
+                await("wait@136+9", 30_000) { compose.onAllNodesWithText("Walk Test Office", substring = true).fetchSemanticsNodes().isNotEmpty() }
                 shot("takeout-day")
                 compose.onNodeWithTag(DayTags.tab(DayTab.PLACES)).performClick()
-                compose.waitUntil(30_000) { compose.onAllNodesWithText("Walk Test Office", substring = true).fetchSemanticsNodes().isNotEmpty() }
+                await("wait@139+9", 30_000) { compose.onAllNodesWithText("Walk Test Office", substring = true).fetchSemanticsNodes().isNotEmpty() }
                 compose.onNodeWithTag(DayTags.tab(DayTab.CITIES)).performClick()
-                compose.waitUntil(30_000) { compose.onAllNodesWithText("Berlin", substring = true).fetchSemanticsNodes().isNotEmpty() }
+                await("wait@141+9", 30_000) { compose.onAllNodesWithText("Berlin", substring = true).fetchSemanticsNodes().isNotEmpty() }
                 compose.onNodeWithTag(DayTags.tab(DayTab.WORLD)).performClick()
-                compose.waitUntil(30_000) { compose.onAllNodesWithText("Germany", substring = true).fetchSemanticsNodes().isNotEmpty() }
+                await("wait@143+9", 30_000) { compose.onAllNodesWithText("Germany", substring = true).fetchSemanticsNodes().isNotEmpty() }
 
                 // the same zip again: nothing doubles
                 scenario.onActivity { day.importFrom(Uri.fromFile(file)) }
-                compose.waitUntil(120_000) { ImportController.state is ImportState.Done || ImportController.state is ImportState.Failed }
+                await("wait@147+9", 120_000) { ImportController.state is ImportState.Done || ImportController.state is ImportState.Failed }
                 assertTrue(ImportController.state is ImportState.Done)
                 assertEquals("a re-import changes no row count", before1, counts(db))
             }
