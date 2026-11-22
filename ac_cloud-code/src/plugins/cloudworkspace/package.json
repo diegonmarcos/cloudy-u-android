@@ -1,0 +1,16 @@
+{
+  "name": "cordova-plugin-cloudworkspace",
+  "version": "1.0.0",
+  "description": "cloud-code: Cloud Drive's repository workspace (libs:repo-workspace) for the Git and Backlog tabs",
+  "cordova": {
+    "id": "cordova-plugin-cloudworkspace",
+    "platforms": [
+      "android"
+    ]
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android"
+  ],
+  "license": "MIT"
+}

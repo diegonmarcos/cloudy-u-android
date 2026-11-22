@@ -32,7 +32,7 @@ out(m.ageText(0, 1) === "" && m.ageText(1000, 1000 + 5 * 60000) === "5 min ago",
 
 // Declaration + wiring.
 out(nav.backlog.index === "index.html" && /\.html$/.test(nav.backlog.last_good) && !nav.backlog.last_good.includes("/"), "nav.backlog declares the root index and the last-good file");
-out(/import \{ loadIndex, ageText(, firstExisting)? \} from "\.\/backlog-index"/.test(index) && /sandbox: "allow-scripts"/.test(index) && /id: "index-refresh"/.test(index) && /cordova\.file\.dataDirectory/.test(index), "index.js renders the index in a sandboxed frame, with Refresh and the data-dir copy");
+out(/import \{ loadIndex, ageText(, firstExisting)?(, notOnDevice)? \} from "\.\/backlog-index"/.test(index) && /sandbox: "allow-scripts"/.test(index) && /id: "index-refresh"/.test(index) && /cordova\.file\.dataDirectory/.test(index), "index.js renders the index in a sandboxed frame, with Refresh and the data-dir copy");
 out(/repoUrl\("docs\.dir", nav\.docs\.root\)/.test(index) && /nav\.backlog\.index/.test(index), "the index is read from the cloud-me-pvt-tasks clone (nav.docs.root)");
 out(!/new WebView|CloudWeb|android\.webkit/.test(index), "no native WebView is constructed (the page is Cordova's own; webview guard excludes ac_cloud-code)");
 

@@ -80,3 +80,9 @@ export async function firstExisting(candidates, exists, fallback = null, timeout
 	}
 	return fallback || list[0] || null;
 }
+
+// #1855 P1 the Backlog's "not on this device" state: the reason is the not-found one (reasonOf), so the page offers
+// "Clone with Cloud Drive" there (and not for a permission or an unusable-file reason, where a clone would not help).
+export function notOnDevice(got) {
+	return !!got && got.state !== "live" && /not on this device/.test(got.reason || "");
+}

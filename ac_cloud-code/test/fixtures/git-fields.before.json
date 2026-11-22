@@ -1,0 +1,25 @@
+{
+ "_doc": "#1855 P1 field parity: the Git tab (was Repos) as of origin/main 6b5eed256 (two volume columns, before Drive's list became a source). Every entry must still exist; the test fails when one is removed.",
+ "volume_ids": ["shared", "emulated"],
+ "volume_labels": ["Cloud-Shared-Store/Git", "Emulated/Git"],
+ "repo_row_fields": ["r.url", "r.name", "r.branch", "cloud-repo-name", "cloud-repo-info"],
+ "snippets": [
+  "cloud-vol-path",
+  "\"cloud-vol-count\"",
+  "\"cloud-vol-head\"",
+  "\"data-volume\"",
+  "\"No repos\"",
+  "Grant all-files access, then retry",
+  "id: \"rescan\", label: \"Rescan\"",
+  "await listRepos(root)",
+  "await ensureDir(base, v.subdir)",
+  "Not available: ${err?.message || err}",
+  "\"Scanning …\""
+ ],
+ "backlog_states": [
+  "Reading the repository clone …",
+  "Offline copy saved ${ageText(got.savedAt, Date.now())}. ${got.reason}",
+  "Allow access to all files, then retry",
+  "Nothing to show yet. Use the Views switch for the dist pages once the clone exists."
+ ]
+}

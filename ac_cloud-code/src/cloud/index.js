@@ -38,7 +38,8 @@ import { mountBars } from "./bars-dom";
 import { pageOfFile } from "./bars";
 import { listAgents, listRepos } from "./seams";
 import { el } from "./dom";
-import { loadIndex, ageText, firstExisting } from "./backlog-index";
+import { loadIndex, ageText, firstExisting, notOnDevice } from "./backlog-index";
+import { bridge, driveList, urlFromDrive, columnsFor, parentOf, requestClone } from "./workspace";
 import { bindTitle, drawer, topBar } from "./chrome";
 import { openProfile } from "./profile";
 import { chatDrawer, renderChat } from "./chat/view";
@@ -124,10 +125,25 @@ function repoCandidates(relative) {
 	return out;
 }
 
+// #1855 P1 Cloud Drive owns git: a folder set in the menu wins, then Drive's findRepo (any volume, incl. external),
+// then this app's own volume probe (Drive absent or not holding the clone).
 async function repoUrl(key, relative) {
 	const set = localStorage.getItem(`cloud-code.${key}`);
 	if (set) return set;
+	const fromDrive = await urlFromDrive(bridge(), relative);
+	if (fromDrive) return fromDrive;
 	return firstExisting(repoCandidates(relative), (u) => fsOperation(u).exists(), gitPath(relative));
+}
+
+// #1855 P1 the repo is nowhere on this device: hand it to Cloud Drive's clone flow (Sync, Git, the dialog prefilled).
+function cloneWithDriveButton(repoName) {
+	return el("button", {
+		className: "cloud-row cloud-clone-drive",
+		onclick: async () => {
+			const got = await requestClone(bridge(), repoName);
+			toast(got.ok ? `Cloud Drive opened: clone ${repoName} there, then come back and Refresh` : got.reason || "Cloud Drive did not open");
+		},
+	}, el("span", { className: "icon git" }), "Clone with Cloud Drive");
 }
 
 // ── Backlog: render the ONE existing source, as-is ─────────────────────────
@@ -158,6 +174,7 @@ async function renderBacklogView(panel, title, entry, { extra = [], docs = false
 				el("p", {}, `Cannot read ${dir}${file}`),
 				el("p", { className: "cloud-muted" }, String(err?.message || err)),
 				el("p", { className: "cloud-muted" }, "The backlog repository is private: clone it with Cloud Drive (Sync ▸ Git ▸ cloud-me-pvt-tasks ▸ Clone / open) and it appears here through the shared store. Or point this tab at another 1.1.Product-Backlog/dist/ folder."),
+				cloneWithDriveButton(nav.backlog.source_dir.split("/")[0]),
 				grant,
 			);
 		}
@@ -293,6 +310,8 @@ async function renderBacklogView(panel, title, entry, { extra = [], docs = false
 	});
 	async function refreshIndex() {
 		indexNote.textContent = "Reading the repository clone …";
+		// #1855 P1 after a clone the repository may have landed on another volume: ask Drive again (a menu-set folder still wins).
+		if (!localStorage.getItem("cloud-code.docs.dir")) docsDir = await repoUrl("docs.dir", nav.docs.root);
 		let got;
 		try {
 			got = await loadIndex(indexIo(), `${docsDir.replace(/^file:\/\//, "")}/${nav.backlog.index}`);
@@ -307,9 +326,9 @@ async function renderBacklogView(panel, title, entry, { extra = [], docs = false
 		if (got.state === "live") {
 			indexNote.textContent = `cloud-me-pvt-tasks index.html, read from the clone ${ageText(got.savedAt, Date.now())}`;
 		} else if (got.state === "offline") {
-			indexNote.replaceChildren(`Offline copy saved ${ageText(got.savedAt, Date.now())}. ${got.reason}`, grant);
+			indexNote.replaceChildren(`Offline copy saved ${ageText(got.savedAt, Date.now())}. ${got.reason}`, ...(notOnDevice(got) ? [cloneWithDriveButton(nav.docs.root)] : []), grant);
 		} else {
-			indexNote.replaceChildren(got.reason, grant);
+			indexNote.replaceChildren(got.reason, ...(notOnDevice(got) ? [cloneWithDriveButton(nav.docs.root)] : []), grant);
 		}
 		if (got.html) {
 			// Sandboxed: the page's own scripts may run (filters) but it cannot reach this app's DOM or storage.
@@ -407,7 +426,7 @@ function repoRow(r, panel) {
 			openFolder(r.url, { name: r.name });
 			showTab("editor");
 		},
-	}, el("span", { className: "icon git" }), el("span", { className: "cloud-repo-name" }, r.name), el("span", { className: "cloud-repo-info" }, r.branch || ""));
+	}, el("span", { className: "icon git" }), el("span", { className: "cloud-repo-name" }, r.name), el("span", { className: "cloud-repo-info" }, r.info || r.branch || ""));
 }
 
 async function fillVolume(v, body, count, panel) {
@@ -431,17 +450,48 @@ async function fillVolume(v, body, count, panel) {
 	}
 }
 
+// #1855 P1 one column from Drive's list (repos on that volume, as Drive sees them).
+function fillFromDrive(col, body, count, panel) {
+	count.textContent = String(col.items.length);
+	body.replaceChildren(
+		el("p", { className: "cloud-muted cloud-vol-path" }, col.items.length ? parentOf(col.items) : "Cloud Drive lists no repos here"),
+		...(col.items.length ? col.items.map((r) => repoRow(r, panel)) : [el("p", { className: "cloud-muted" }, "No repos")]),
+	);
+}
+
+function volumeSection(id, label, count, body) {
+	return el("section", { className: "cloud-vol", "data-volume": id }, el("h3", { className: "cloud-vol-head" }, el("span", {}, label), count), body);
+}
+
 async function renderGit(panel) {
-	const cols = nav.repos.volumes.map((v) => {
+	const parts = nav.repos.volumes.map((v) => {
 		const count = el("span", { className: "cloud-vol-count" }, "…");
 		const body = el("div", { className: "cloud-list" }, "Scanning …");
-		fillVolume(v, body, count, panel);
-		return el("section", { className: "cloud-vol", "data-volume": v.id }, el("h3", { className: "cloud-vol-head" }, el("span", {}, v.label), count), body);
+		return { v, count, body, section: volumeSection(v.id, v.label, count, body) };
 	});
-	panel.replaceChildren(panelHeader("Git"), el("div", { className: "cloud-vols" }, ...cols));
+	const holder = el("div", { className: "cloud-vols" }, ...parts.map((p) => p.section));
+	panel.replaceChildren(panelHeader("Git"), holder);
 	MENUS[panel.dataset.tab] = () => ({ items: [
 		{ id: "rescan", label: "Rescan", icon: "refresh", run: () => renderGit(panel) },
 	] });
+	// #1855 P1 Cloud Drive owns git: when it answers with repositories, ITS list is the source (every volume, incl. an
+	// attached drive, in the two columns plus External); no answer (absent, empty, slow) = this tab's own volume listing.
+	const drive = await driveList(bridge());
+	if (drive.drive && drive.repos.length) {
+		const cols = columnsFor(nav.repos.volumes, drive.repos);
+		cols.forEach((col, i) => {
+			const p = parts[i] || (() => {
+				const count = el("span", { className: "cloud-vol-count" }, "…");
+				const body = el("div", { className: "cloud-list" });
+				const made = { count, body, section: volumeSection(col.id, col.label, count, body) };
+				holder.append(made.section);
+				return made;
+			})();
+			fillFromDrive(col, p.body, p.count, panel);
+		});
+		return;
+	}
+	parts.forEach((p) => fillVolume(p.v, p.body, p.count, panel));
 }
 
 // ── Agents: the backlog's own agent views, plus the live seam ──────────────

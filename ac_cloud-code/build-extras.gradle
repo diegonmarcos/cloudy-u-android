@@ -122,3 +122,11 @@ android {
 dependencies {
     implementation project(':libs:text-tools')
 }
+
+// ── cloud-code (#1855 P1): Cloud Drive owns git; Code asks it over the IRepoWorkspace binder (a contract lib):
+// which repositories are on the phone (every volume), where one is, and "clone it with Drive". The
+// CloudWorkspace Cordova plugin (src/plugins/cloudworkspace) is the only caller. settings-extras.gradle
+// includes it from build.json::modules.
+dependencies {
+    implementation project(':libs:repo-workspace')
+}

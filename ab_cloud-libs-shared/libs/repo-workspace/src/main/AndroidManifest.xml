@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Merged into every app that links libs:repo-workspace. Same shape as libs:text-tools: the
+  CONSTELLATION_DATA signature permission is both DEFINED (Cloud Drive serves the binder and guards its
+  service and clone activity with it) and REQUESTED (a caller needs it); <queries> is the Android 11+
+  package-visibility grant without which bindService to Drive fails with "service not found".
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <permission
+        android:name="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"
+        android:label="Cloud constellation data"
+        android:protectionLevel="signature" />
+
+    <uses-permission android:name="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA" />
+
+    <queries>
+        <intent>
+            <action android:name="com.diegonmarcos.superapp.repoworkspace.IRepoWorkspace" />
+        </intent>
+        <intent>
+            <action android:name="com.diegonmarcos.superapp.repoworkspace.CLONE" />
+        </intent>
+    </queries>
+
+</manifest>

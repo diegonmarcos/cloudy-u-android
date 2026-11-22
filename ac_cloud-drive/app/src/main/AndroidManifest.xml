@@ -222,6 +222,29 @@
             android:theme="@style/Theme.CloudDrive"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- #1855 P1 libs:repo-workspace: Drive SERVES the fleet's repository contract (which repositories are on the phone, where) and opens its
+             clone flow for a repository another app asks for. Both are guarded by the CONSTELLATION_DATA signature permission (declared by
+             :libs:repo-workspace), so the platform refuses any app not signed with the Cloud key. -->
+        <service
+            android:name=".workspace.RepoWorkspaceService"
+            android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.diegonmarcos.superapp.repoworkspace.IRepoWorkspace" />
+            </intent-filter>
+        </service>
+        <activity
+            android:name=".workspace.RepoCloneActivity"
+            android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="com.diegonmarcos.superapp.repoworkspace.CLONE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <!-- #1375 "Choose an app for the USB device": a USB mass-storage drive (res/xml/device_filter.xml, class 8)
              offers Cloud Drive next to the other file managers. The activity opens Explorer on the drive Android
              mounted, or browses it raw over USB (libaums, FAT32) when Android did not; the USB permission goes

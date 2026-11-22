@@ -50,7 +50,8 @@
       },
       "cordova-plugin-acode-webview": {},
       "cordova-plugin-system": {},
-      "cordova-plugin-cloudchat": {}
+      "cordova-plugin-cloudchat": {},
+      "cordova-plugin-cloudworkspace": {}
     },
     "platforms": [
       "android"
@@ -95,6 +96,7 @@
     "cordova-plugin-browser": "file:src/plugins/browser",
     "cordova-plugin-buildinfo": "file:src/plugins/cordova-plugin-buildinfo",
     "cordova-plugin-cloudchat": "file:src/plugins/cloudchat",
+    "cordova-plugin-cloudworkspace": "file:src/plugins/cloudworkspace",
     "cordova-plugin-crashhandler": "file:src/plugins/cordova-plugin-crashhandler",
     "cordova-plugin-device": "^2.1.0",
     "cordova-plugin-file": "^8.1.3",

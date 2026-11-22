@@ -70,6 +70,9 @@ fun GitPageScreen(
     actions: DriveActions,
     page: String? = null,
     onPageConsumed: () -> Unit = {},
+    /** #1855 P1 a repository another fleet app asked Drive to clone (libs:repo-workspace): the "me" page opens its clone dialog prefilled. */
+    cloneRequest: String? = null,
+    onCloneHandled: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val pages = Declarations.navPages(Declarations.SECTION_GIT)
@@ -88,6 +91,8 @@ fun GitPageScreen(
     val ctx = androidx.compose.ui.platform.LocalContext.current
     var storage by remember { mutableStateOf(gitStorageSelected(ctx)) }
     var storageRefresh by remember { mutableStateOf(0) }
+    // #1855 P1 the clone dialog lives on the Cloud-Store page (the registry's clone path): switch to it when a request arrives.
+    LaunchedEffect(cloneRequest) { if (cloneRequest != null && storage != GitStorage.Kind.STORE) { storage = GitStorage.Kind.STORE; gitStorageSelect(ctx, GitStorage.Kind.STORE) } }
     val storageView = if (storage == GitStorage.Kind.STORE) null else rememberGitStorageView(storage, storageRefresh)
     // #1452 the coordinator scans, caches and counts duplicates in the selected environment only.
     LaunchedEffect(storage) { git.setEnvironment(storage) }
@@ -114,7 +119,8 @@ fun GitPageScreen(
                 val key = if (storageRepos == null) "" else "/" + storage.id
                 when (id) {
                     "me" -> GitReposScreen(git, actions, nextRun, view = GitView.ME, prefs = prefs, storageRepos = storageRepos, storageKey = key,
-                        storageMenu = storageMenu, cloneTargets = cloneTargets, selectedStorage = storage, onStorageChanged = { storageRefresh++ })
+                        storageMenu = storageMenu, cloneTargets = cloneTargets, selectedStorage = storage, onStorageChanged = { storageRefresh++ },
+                        clonePrefill = cloneRequest, onClonePrefillHandled = onCloneHandled)
                     "cloud" -> GitReposScreen(git, actions, nextRun, view = GitView.CLOUD, prefs = prefs, storageRepos = storageRepos, storageKey = key,
                         storageMenu = storageMenu, cloneTargets = cloneTargets, selectedStorage = storage, onStorageChanged = { storageRefresh++ })
                     else -> EmptyState(IconCatalog.vectorOrDefault(Declarations.iconDefault), stringResource(R.string.chrome_unknown_tab), "")

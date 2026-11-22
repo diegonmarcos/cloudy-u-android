@@ -63,7 +63,7 @@ object LocalRepos {
     }
 
     /** The git directory of [dir]: its `.git` folder, or the folder a `.git` FILE (`gitdir: ...`: a worktree or submodule) points at. */
-    private fun gitDirOf(dir: File): File? {
+    internal fun gitDirOf(dir: File): File? {
         val dot = File(dir, ".git")
         if (dot.isDirectory) return dot
         if (!dot.isFile) return null

@@ -102,6 +102,13 @@ class MainActivity : ComponentActivity(), DriveActions {
     private val volumeTreeLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r -> persistTreeGrant(r.data?.data) }
     /** #1375 a folder to open Explorer on, handed over by UsbDriveActivity (the drive just plugged in). */
     private val pendingOpen = mutableStateOf<String?>(null)
+    /** #1855 P1 a repository name another fleet app asked Drive to clone (RepoCloneActivity): Sync > Git opens its clone dialog prefilled. */
+    private val pendingClone = mutableStateOf<String?>(null)
+
+    companion object {
+        const val ACTION_OPEN_CLONE = "com.diegonmarcos.clouddrive.OPEN_CLONE"
+        const val EXTRA_CLONE_NAME = "clone_name"
+    }
 
     /** The engines come back with a path to reveal in the active Files pane (#567 push 5). */
     private val engineLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -129,6 +136,7 @@ class MainActivity : ComponentActivity(), DriveActions {
             return
         }
         pendingOpen.value = intent?.getStringExtra(com.diegonmarcos.clouddrive.usb.UsbDriveActivity.EXTRA_OPEN_PATH)
+        handleCloneIntent(intent)
         handleOpenIntent(intent)
         // #603 the shared store's first-run seed (build.json::storage.seed): the declared PUBLIC
         // repositories, cloned shallow into the store the first time it does not hold them.
@@ -213,7 +221,15 @@ class MainActivity : ComponentActivity(), DriveActions {
         super.onNewIntent(intent)
         setIntent(intent)
         intent.getStringExtra(com.diegonmarcos.clouddrive.usb.UsbDriveActivity.EXTRA_OPEN_PATH)?.let { pendingOpen.value = it }
+        handleCloneIntent(intent)
         handleOpenIntent(intent)
+    }
+
+    /** #1855 P1 ACTION_OPEN_CLONE from RepoCloneActivity: a plain repository name only (the same rule the binder applies). */
+    private fun handleCloneIntent(i: Intent?) {
+        if (i?.action != ACTION_OPEN_CLONE) return
+        val name = i.getStringExtra(EXTRA_CLONE_NAME)?.trim()
+        if (com.diegonmarcos.clouddrive.workspace.RepoWorkspaceCatalog.refusal(name).isEmpty()) pendingClone.value = name
     }
 
     /**
@@ -293,6 +309,9 @@ class MainActivity : ComponentActivity(), DriveActions {
         LaunchedEffect(Unit) { if (EditorHook.pending.value != null) jump(Declarations.SECTION_EDITOR, "") }
         val usbOpen by pendingOpen
         LaunchedEffect(usbOpen) { usbOpen?.let { openPath(it); pendingOpen.value = null } }
+        // #1855 P1 a clone another app asked for: select Sync > Git (the "me" page); GitPageScreen shows the dialog and clears the request.
+        val cloneAsk by pendingClone
+        LaunchedEffect(cloneAsk) { if (cloneAsk != null) jump(Declarations.SECTION_GIT, "me") }
 
         // #1106 the startup sequence: terminal installed -> started -> $HOME ready -> mounted -> the shell.
         // A failure shows its remedies and "Continue with local files" (degraded mode) instead of a crash.
@@ -310,7 +329,7 @@ class MainActivity : ComponentActivity(), DriveActions {
                     "editor" -> EditorScreen(this, openPath)
                     "ai" -> AiScreen()
                     "manage" -> ManageScreen(this, prefs, storage, onShowInExplorer = openPath, onRoute = jump, page = jumpPage, onPageConsumed = { jumpPage = null })
-                    "git" -> GitPageScreen(git, prefs, this, jumpPage, onPageConsumed = { jumpPage = null })
+                    "git" -> GitPageScreen(git, prefs, this, jumpPage, onPageConsumed = { jumpPage = null }, cloneRequest = cloneAsk, onCloneHandled = { pendingClone.value = null })
                     "fsync" -> FsyncPageScreen(storage, rclone, this, prefs, jumpPage, onPageConsumed = { jumpPage = null })
                     "mounts" -> MountsPageScreen(storage, rclone, prefs, this, jumpPage, onPageConsumed = { jumpPage = null })
                     "configs" -> ConfigsScreen(mirrors, prefs, this, hasAccess, rcloneVersion, git, storage, rclone, jumpPage, onPageConsumed = { jumpPage = null })

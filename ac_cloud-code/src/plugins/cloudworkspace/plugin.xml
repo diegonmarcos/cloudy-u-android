@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- cloud-code's bridge to Cloud Drive's repository workspace (libs:repo-workspace, the IRepoWorkspace binder):
+     listRepos / findRepo / requestClone. Cloud Drive owns git; Code builds no sync engine. See src/CloudWorkspacePlugin.java. -->
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android" id="cordova-plugin-cloudworkspace"
+    version="1.0.0">
+    <name>Cloud Workspace</name>
+
+    <js-module name="CloudWorkspace" src="www/cloudworkspace.js">
+        <clobbers target="CloudWorkspace" />
+    </js-module>
+
+    <platform name="android">
+        <config-file parent="/*" target="res/xml/config.xml">
+            <feature name="CloudWorkspace">
+                <param name="android-package" value="com.diegonmarcos.cloudcode.workspace.CloudWorkspacePlugin" />
+            </feature>
+        </config-file>
+
+        <source-file src="src/CloudWorkspacePlugin.java" target-dir="src/com/diegonmarcos/cloudcode/workspace" />
+    </platform>
+</plugin>

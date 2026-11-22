@@ -43,6 +43,9 @@
     <string name="git_storage_create">Create</string>
     <string name="git_storage_created">Created %1$s</string>
     <string name="git_storage_create_failed">Could not create %1$s (no write access)</string>
+    <string name="git_clone_request_title">Clone %1$s?</string>
+    <string name="git_clone_request_body">Another Cloud app asked Cloud Drive to clone %1$s. It lands in %2$s.</string>
+    <string name="git_clone_request_confirm">Clone</string>
     <string name="git_conflicts_title">Repositories with conflicts</string>
     <string name="git_conflicts_none">No repository has conflicts.</string>
     <string name="git_conflicts_count">%1$d conflicted file(s)</string>

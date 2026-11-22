@@ -761,6 +761,8 @@ dependencies {
     implementation project(':libs:shell-client')
     // The AI tab: the fleet's AI chat over the fleet agent gateway (no token on the phone). It brings libs:model-catalogue along.
     implementation project(':libs:ai')
+    // #1855 P1 SERVES the fleet's repository contract (RepoWorkspaceService, RepoCloneActivity); Cloud Code and others bind it.
+    implementation project(':libs:repo-workspace')
     // #646 THE DECLARED GIT AUTH+OPS CHAIN, one ordered declaration (libs-shared
     // build.json::auth.git_chain: fleet, then github) walked by libs:git-sync's
     // GitAuthChain. #705 neither of its binaries is linked here: gh runs in

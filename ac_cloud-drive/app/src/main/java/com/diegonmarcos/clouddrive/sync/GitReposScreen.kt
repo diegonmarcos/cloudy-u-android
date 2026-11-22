@@ -169,7 +169,9 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     /** #1356 the storage selector drawn in the top menu, the clone target picker's choices and the selected storage. */
     storageMenu: @Composable () -> Unit = {}, cloneTargets: List<GitStorage.Target> = emptyList(), selectedStorage: GitStorage.Kind = GitStorage.Kind.STORE,
     /** #1356 the selected volume's git folder changed (created, or a clone landed): re-read it. */
-    onStorageChanged: () -> Unit = {}) {
+    onStorageChanged: () -> Unit = {},
+    /** #1855 P1 libs:repo-workspace: a repository name another fleet app asked Drive to clone; the clone dialog opens prefilled, [onClonePrefillHandled] clears the request. */
+    clonePrefill: String? = null, onClonePrefillHandled: () -> Unit = {}) {
     val setup = view == GitView.ME && part == GitPart.SETUP
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -1133,6 +1135,15 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     if (showDepthReport) depthRun?.let { r -> DepthReportWindow(r, onCancel = { coordinator.cancelDepthRun() }, onClose = { showDepthReport = false }) }
     topConfirm?.let { item -> GitTopConfirm(item, page.topBar, scopeTargets.size, onConfirm = { runTopItem(item); topConfirm = null }, onDismiss = { topConfirm = null }, cancelLabel = stringResource(R.string.chrome_cancel)) }
     if (showFilters) GitFilterSheet(page.topBar, page.filters, filterSel, ::countsOf, onPick = { f, o -> coordinator.setFilter(f.id, RepoFilters.toggle(f, filterSel, o)) }, onClear = { coordinator.clearFilters(); query = "" }, onDismiss = { showFilters = false })
+    if (view == GitView.ME && !setup) clonePrefill?.let { n ->
+        AlertDialog(
+            onDismissRequest = onClonePrefillHandled,
+            title = { Text(stringResource(R.string.git_clone_request_title, n)) },
+            text = { Text(stringResource(R.string.git_clone_request_body, n, cloneTarget?.label.orEmpty())) },
+            confirmButton = { TextButton(onClick = { clone(n); onClonePrefillHandled() }, modifier = Modifier.testTag(DriveTags.SYNC_GIT_STORAGE + "_clone_request")) { Text(stringResource(R.string.git_clone_request_confirm)) } },
+            dismissButton = { TextButton(onClick = onClonePrefillHandled) { Text(stringResource(R.string.chrome_cancel)) } },
+        )
+    }
     createFolder?.let { f ->
         AlertDialog(
             onDismissRequest = { createFolder = null },

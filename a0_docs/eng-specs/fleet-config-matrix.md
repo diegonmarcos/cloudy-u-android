@@ -680,7 +680,7 @@ Coverage: 8 covered, 0 gaps.
 
 ## cloud-code — `com.diegonmarcos.code`
 
-Module `ac_cloud-code`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-perms, lib-sysdns, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
+Module `ac_cloud-code`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-perms, lib-repo-workspace, lib-sysdns, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-nav-bars.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -791,7 +791,7 @@ Coverage: 9 covered, 2 gaps — call_history, file:system CallLog and BlockedNum
 
 ## cloud-drive — `com.diegonmarcos.clouddrive`
 
-Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-disk, lib-disk-scan, lib-drive-core-rs, lib-editor-core, lib-file-editor, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-json-viewer, lib-local-serve, lib-media-viewer, lib-ml-l-image, lib-model-catalogue, lib-mounts, lib-ocr, lib-odf, lib-pdf, lib-perms, lib-rclone, lib-shared-store, lib-shell-client, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core, lib-wysiwyg.
+Module `ac_cloud-drive`; libs: lib-ai, lib-analytics, lib-auth, lib-bottomnav, lib-core, lib-crash, lib-databackend, lib-decisions-link, lib-devtools, lib-disk, lib-disk-scan, lib-drive-core-rs, lib-editor-core, lib-file-editor, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-git-core, lib-git-repos, lib-git-sync, lib-git-ui, lib-json-viewer, lib-local-serve, lib-media-viewer, lib-ml-l-image, lib-model-catalogue, lib-mounts, lib-ocr, lib-odf, lib-pdf, lib-perms, lib-rclone, lib-repo-workspace, lib-shared-store, lib-shell-client, lib-sysdns, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core, lib-wysiwyg.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|

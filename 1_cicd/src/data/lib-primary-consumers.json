@@ -46,6 +46,7 @@
     "ops": "aa_cloud-superapp",
     "shizuku-adb-debug-tools": "aa_cloud-superapp",
     "sysdns": "ac_cloud-termux",
+    "repo-workspace": "ac_cloud-drive",
     "text-tools": "aa_cloud-superapp",
     "translate": "ac_cloud-keyboard",
     "ui-kit": "aa_cloud-superapp",

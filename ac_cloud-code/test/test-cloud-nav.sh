@@ -40,6 +40,19 @@ while IFS= read -r line; do
 done <<< "$idx_out"
 [ "$idx_checks" -ge 30 ] || fail "the backlog index driver made only $idx_checks checks"
 
+# ── #1855 P1 Cloud Drive owns git: repoUrl asks Drive first, the Git tab lists Drive's repos, the Backlog offers 'Clone with Cloud Drive' (+ rule-16 parity) ──
+ws_out="$(node "$ROOT/test/workspace.mjs" "$ROOT" 2>&1)"
+ws_status=$?
+[ "$ws_status" -eq 0 ] || fail "workspace driver crashed (exit $ws_status): $ws_out"
+ws_checks=0
+while IFS= read -r line; do
+  case "$line" in
+    "CHECK ok "*)  ok "${line#CHECK ok }"; ws_checks=$((ws_checks + 1)) ;;
+    "CHECK bad "*) fail "${line#CHECK bad }"; ws_checks=$((ws_checks + 1)) ;;
+  esac
+done <<< "$ws_out"
+[ "$ws_checks" -ge 40 ] || fail "the workspace driver made only $ws_checks checks"
+
 # ── #1158 the shared bars (first row, second row, bottom bar, gradient), through the real bars.js ──
 bars_out="$(node "$ROOT/test/cloud_bars.mjs" "$ROOT" 2>&1)"
 status=$?

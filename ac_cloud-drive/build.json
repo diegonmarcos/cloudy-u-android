@@ -1318,6 +1318,7 @@
     },
     "libs:usb-drive": {"dir": "../ab_cloud-libs-shared/libs/usb-drive", "type": "library", "depends_on": [], "comment": "#1375/#1405 USB-C drives (StorageVolumes, UsbVolumeModel, RawUsbDrive, libaums), shared with Cloud Store by reference."},
     "libs:fleet-data-client": {"dir": "../ab_cloud-libs-shared/libs/fleet-data-client", "type": "library"},
+    "libs:repo-workspace": {"dir": "../ab_cloud-libs-shared/libs/repo-workspace", "type": "library", "_doc": "#1855 P1 the repository contract (IRepoWorkspace, a `contract` lib): this APK SERVES it (RepoWorkspaceService lists every repository on every volume, RepoCloneActivity opens the clone dialog); Cloud Code declares the same module to CALL it."},
     "libs:perms": {"dir": "../ab_cloud-libs-shared/libs/perms", "type": "library", "depends_on": [], "comment": "#1274 the permission contract: the catalogue, PermsNeeds, PermsLink and PermsActivity, the Permissions page this app hosts for its libs (permissions are per package, so never another app's page)."},
     "libs:decisions-link": {
       "type": "library",
@@ -1356,7 +1357,8 @@
         "libs:drive-core-rs",
         "libs:shell-client",
         "libs:ai",
-        "libs:model-catalogue"
+        "libs:model-catalogue",
+        "libs:repo-workspace"
       ]
     },
     "libs:shell-client": {
