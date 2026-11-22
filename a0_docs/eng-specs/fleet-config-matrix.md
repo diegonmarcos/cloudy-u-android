@@ -22,7 +22,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | cloud-account | `com.diegonmarcos.cloudaccount` | 20 | 1 | 95% |
 | cloud-tasks | `com.diegonmarcos.cloudagenda` | 12 | 0 | 100% |
 | cloud-browser | `com.diegonmarcos.cloudbrowser` | 18 | 0 | 100% |
-| cloud-c3-webserver | `com.diegonmarcos.cloudwebserver` | 7 | 0 | 100% |
+| cloud-c3-webserver | `com.diegonmarcos.cloudwebserver` | 9 | 0 | 100% |
 | cloud-media-center | `com.diegonmarcos.cloudmediacenter` | 4 | 0 | 100% |
 | cloud-c3 | `com.diegonmarcos.cloudc3` | 13 | 0 | 100% |
 | cloud-calc | `com.diegonmarcos.cloudcalc` | 18 | 0 | 100% |
@@ -58,7 +58,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 5 | 0 | 100% |
 | hardtech-biomed | `com.diegonmarcos.hardtechbiomed` | 5 | 0 | 100% |
-| **fleet** | | **457** | **57** | **88%** |
+| **fleet** | | **459** | **57** | **88%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -434,10 +434,13 @@ Coverage: 18 covered, 0 gaps.
 
 ## cloud-c3-webserver — `com.diegonmarcos.cloudwebserver`
 
-Module `ac_cloud-c3-webserver`; libs: lib-adb-grants, lib-adb-readiness, lib-adb-shell-core, lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-net, lib-perms, lib-shell-broker, lib-shell-client, lib-shizuku-adb-debug-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-web-core.
+Module `ac_cloud-c3-webserver`; libs: lib-account, lib-adb-grants, lib-adb-readiness, lib-adb-shell-core, lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-net, lib-perms, lib-shell-broker, lib-shell-client, lib-shizuku-adb-debug-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
+| `account_activity` | prefs | device | no | #1081 Cloud Account's Activity page: a short on-device log (newest last, capped at 200) of what the account did, as sentences naming a thing (revealed github.token, auto-backup ok). It never holds a secret value (ActivityFeed.record drops one that looks like it) and records this phone's history, never configuration. |
+| `account_data_migration` | prefs | device | no | #867 whether this app has already copied the imported configs, profile and S/R/L account files over from the Cloud Account app. It records this phone's progress, never configuration. |
+| `account_migrate` | prefs | device | no | #783 the new-phone migration journal: per app, the hash of the declared copy applied and its outcome, so a re-run resumes. It describes this phone's progress, never configuration. |
 | `adb_shell` | prefs | device | no | Per-install random token shared with the local adb shell server (install identity), the flag that this install was ever paired with Wireless Debugging (drives the Cloud Store channel control: not paired vs down), and channel_mode, the owner's Privileged channel choice (local \| embedded \| shizuku \| auto; default local where the app owns a local server). |
 | `adb_terminal` | prefs | config | yes | Configs > ADB Terminal: the owner's favourite shell commands (string set under key 'favourites', command ids from the shipped shell allowlist) pinned to the top of the terminal. Absent until the first star. |
 | `c3_links` | prefs | device | no | #1682 Cloud C3 Webserver's remembered link choice per link type (build.json::links: Open in browser / Open embedded); a per-device convenience the web shell kept in its WebView localStorage, reset in Configs > Links. |
@@ -446,14 +449,17 @@ Module `ac_cloud-c3-webserver`; libs: lib-adb-grants, lib-adb-readiness, lib-adb
 | `fleet_datasync_budget` | prefs | device | no | #1382 core DataSyncBudget: the spans (start:end ms) this app held a dataSync foreground service in the last 24 h, so user-initiated work stops asking under Android 15's 6 h cap. Per phone and per install: it never moves. |
 | `fleet_setup_status` | prefs | device | no | #873 the last `apply` the setup provider (`<package>.fleetsetup`) served: which store, when, whether it committed. It records this phone's progress, never configuration. |
 | `fleet_token_vault` | prefs | device | no | #1835 Cloud C3 Webserver's fleet bearer token, OWNED there: one AES-256-GCM ciphertext (key in the Android Keystore, never exported) plus set date, source (vault \| phone \| superapp) and migration flag. Never migrates as a store: it is DELIVERED from the owner's vault by Cloud Account (App credentials fleet.mesh_token) and the ciphertext is device-bound. |
+| `import_configs` | encrypted | secret (keys: app_configs_json→secret, configs_json→secret, data_json→secret, grants_json→device, grants_seeded→device, mail_signatures→device) | yes | EncryptedSharedPreferences, THE Account vault's one keystore-backed file (#874): `configs_json` the Connections (the imported blob incl. auth.authelia_token and email, fleet bearer, mesh, DNS, Dagu, mail), `data_json` the identities, `app_configs_json` the Configs captured from every app; `grants_json` the per-app Secret grants (never migrates: a grant is the owner's decision on THIS phone) and `grants_seeded` its marker. Mostly credentials. `mail_signatures` is the copy of Mail's signatures the vault last held for the bundle (Mail's own store is the source of truth and travels through mail_signatures). |
 | `location_use_ledger` | prefs | device | no | #1666 libs:perms LocationUse: the last location-class access per call site (API, trigger, time), listed by X-Ray App's Location use section. A record of this install's own accesses; a new phone starts empty, so it never migrates. |
 | `nav_modes` | prefs | config | yes | #1189 the user's per-section choice of how child pages are navigated (one row, two rows, side menu; overrides the build.json declaration) and whether the side menu is expanded or the rail. Written by the shared nav bars (NavModePrefs) from each app's Configs; part of the app's settings, so it migrates and backs up with them. |
 | `nav_ui` | prefs | config | yes | The user's nav UI choice for this app (Configs > UI): the nav mode, Classic or Clean, and the scroll-hide toggle (a downward scroll hides every bar until an upward one). Written by the shared Configs card (NavUiPrefs, libs:ui-nav-bars NavUiConfigCard); part of the app's settings, so it migrates and backs up with them. The app's declared default is build.json::ui.nav_ui. |
 | `notification_store` | prefs | content | no | Stored in-app notification log (info/warn/error). |
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
+| `profile_prefs` | prefs | config (keys: banner_uri→device, install_id→device, install_secret→device, picture_uri→device, schema_version→device) | yes | Owner profile card fields (name, email, phone, birth, company, location, website, titles) plus install identity. |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
 | `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `store_notify` | prefs | config | yes | Cloud Store > Configs > Notifications: which Store messages (update available, install done, failures) are posted on which channel (system notification, in-app feed); the owner's switches, everything on until turned off, so it moves with the phone. |
+| `vault_cockpit` | prefs | device | no | Only holds this phone's device_id used in the vault cockpit. |
 | `wd_keepalive` | prefs | config | yes | Wireless-debugging keepalive switch (`enabled`), the owner's choice in Configs ▸ Controls. |
 | `wd_keepalive_status` | prefs | device | no | Wireless-debugging keepalive worker status (ready, last tick/reconnect/failure times). |
 | `wd_keeper` | prefs | device | no | #1467 Keep wireless debugging on: the shared keeper's armed flag, write-permission flag and leader heartbeat; per-install state the keeper rebuilds from each app's switch, so it never migrates. |
@@ -463,7 +469,7 @@ Module `ac_cloud-c3-webserver`; libs: lib-adb-grants, lib-adb-readiness, lib-adb
 | `shared_prefs/c3_links.xml` | device | The remembered link choice per declared link type (Configs > Links); never migrates. |
 | `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
-Coverage: 7 covered, 0 gaps.
+Coverage: 9 covered, 0 gaps.
 
 ## cloud-media-center — `com.diegonmarcos.cloudmediacenter`
 
