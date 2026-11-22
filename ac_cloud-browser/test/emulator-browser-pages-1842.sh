@@ -95,7 +95,25 @@ if tap 'Page-Tools' text; then
   # the list inside the sheet keeps ONE scroll position across its tabs, and uiautomator reports Compose lists as not scrollable: swipe at fixed
   # places inside the sheet (the lower part of the screen), up to the end of a tab's list and, first, back to its top
   WH=$(adb shell wm size | tr -d "\r" | grep -oE "[0-9]+x[0-9]+" | tail -1); WX=${WH%x*}; WY=${WH#*x}
-  sheet_swipe() { if [ "$1" = up ]; then adb shell input swipe $((WX / 2)) $((WY * 80 / 100)) $((WX / 2)) $((WY * 40 / 100)) 400; else adb shell input swipe $((WX / 2)) $((WY * 40 / 100)) $((WX / 2)) $((WY * 80 / 100)) 400; fi; sleep 1; }
+  # the swipe stays INSIDE the sheet: from its title (Page-Tools) down to the bottom island, whatever height the tab makes it (a drag on the scrim must not close it)
+  sheet_swipe() {
+    dump _sh
+    local xy; xy=$(python3 -I - "$OUT/_sh.xml" "$1" <<'PY'
+import re, sys, xml.etree.ElementTree as ET
+try: root = ET.parse(sys.argv[1]).getroot()
+except Exception: sys.exit(0)
+top = bot = None; x = 100
+for n in root.iter("node"):
+    a, b, c, d = map(int, re.findall(r"\d+", n.get("bounds", "[0,0][0,0]")))
+    if n.get("text") == "Page-Tools" or n.get("content-desc") == "Page-Tools": top = d; x = (a + c) // 2
+    if n.get("resource-id", "") == "bottomnav_island": bot = b
+if top is None or bot is None or bot <= top: sys.exit(0)
+h = bot - top; hi, lo = top + h * 85 // 100, top + h * 30 // 100
+print(x, *((hi, lo) if sys.argv[2] == "up" else (lo, hi)))
+PY
+)
+    [ -n "$xy" ] && adb shell input swipe ${xy%% *} $(echo "$xy" | cut -d' ' -f2) ${xy%% *} ${xy##* } 400; sleep 1
+  }
   # the six tab chips scroll sideways: bring the later ones into view by swiping the chip row left (its y is read from a chip's node)
   chips_left() {
     dump _chips
