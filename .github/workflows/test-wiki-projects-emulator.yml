@@ -45,6 +45,7 @@ jobs:
           import html, re, sys
           # ui.py id   DUMP RID   -> centre "x y" of the node with that resource-id (testTagsAsResourceId), else ""
           # ui.py top  DUMP RID   -> the top y of that node, else ""
+          # ui.py seq  DUMP       -> the side menu's heading/item ids in screen order, space separated
           # ui.py text DUMP TEXT  -> 1 when a visible node's text or content-desc contains TEXT, else 0
           def nodes(path):
               x = open(path, encoding="utf-8", errors="replace").read()
@@ -52,12 +53,15 @@ jobs:
                   a = {k: html.unescape(v) for k, v in re.findall(r'([\w-]+)="([^"]*)"', m.group(0))}
                   b = re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", a.get("bounds", ""))
                   if b and int(b.group(3)) > int(b.group(1)) and int(b.group(4)) > int(b.group(2)): a["_b"] = tuple(map(int, b.groups())); yield a
-          cmd, path, arg = sys.argv[1:4]
+          cmd, path = sys.argv[1:3]
+          arg = sys.argv[3] if len(sys.argv) > 3 else ""
           ns = list(nodes(path))
           if cmd in ("id", "top"):
               hit = [a for a in ns if a.get("resource-id", "").split("/")[-1] == arg]
               if cmd == "top": print(hit[0]["_b"][1] if hit else "")
               else: print("%d %d" % ((hit[0]["_b"][0] + hit[0]["_b"][2]) // 2, (hit[0]["_b"][1] + hit[0]["_b"][3]) // 2) if hit else "")
+          elif cmd == "seq":
+              print(" ".join(a["resource-id"].split("/")[-1] for a in ns if re.match(r"navside_(heading_|item_)", a.get("resource-id", "").split("/")[-1])))
           elif cmd == "text":
               print(1 if any(arg in a.get("text", "") or arg in a.get("content-desc", "") for a in ns) else 0)
           PY
@@ -79,22 +83,27 @@ jobs:
           has() { [ -n "$(rid "$1")" ]; }
           txt() { [ "$(python3 -I ui.py text out/ui.xml "$1")" = 1 ]; }
           tap() { xy=$(rid "$1"); [ -n "$xy" ] && adb shell input tap $xy; }
-          # the side menu's items are tapped by their tag; when the menu overlay hides them (expanded state is a saved preference) toggle first
-          item() { dump "pre-$1"; has "navside_item_$1" || { tap navside_toggle; sleep 2; dump "pre-$1-open"; }; tap "navside_item_$1"; }
+          # the side menu scrolls: swipe it up until the item's centre is well inside the screen, then tap it
+          scrollmenu() { adb shell input swipe 90 1700 90 600 400; sleep 1; dump "$1"; }
+          item() {
+            dump "pre-$1"
+            for i in 1 2 3 4 5; do
+              xy=$(rid "navside_item_$1")
+              if [ -n "$xy" ] && [ "${xy#* }" -gt 350 ] && [ "${xy#* }" -lt 2100 ]; then adb shell input tap $xy; return 0; fi
+              scrollmenu "scroll-$1-$i"
+            done
+            return 1
+          }
           adb shell am start -n "$ACT" >/dev/null 2>&1
           sleep 20; dump 00-launch
-          # the groups, in order: expand the menu and read the headings' positions
-          has navside_heading_sciences || { tap navside_toggle; sleep 3; dump 01-menu-open; }
-          prev=-1; order=ok
-          for g in sciences humanities arts projects explore; do
-            y=$(python3 -I ui.py top out/ui.xml "navside_heading_$g")
-            if [ -z "$y" ]; then check bad "the side menu shows the group $g"; order=bad; else check ok "the side menu shows the group $g"; [ "$y" -gt "$prev" ] || order=bad; prev=$y; fi
-          done
-          check $order "the groups are Sciences, Humanities, Arts, Projects, Explore in that order"
-          cy=$(python3 -I ui.py top out/ui.xml navside_item_chronos); py=$(python3 -I ui.py top out/ui.xml navside_heading_projects); ey=$(python3 -I ui.py top out/ui.xml navside_heading_explore)
-          sy=$(python3 -I ui.py top out/ui.xml navside_item_sacred)
-          if [ -n "$cy" ] && [ -n "$py" ] && [ -n "$ey" ] && [ "$cy" -gt "$py" ] && [ "$cy" -lt "$ey" ]; then check ok "Chronos sits under Projects"; else check bad "Chronos sits under Projects"; fi
-          if [ -n "$sy" ] && [ -n "$cy" ] && [ "$sy" -gt "$cy" ] && [ "$sy" -lt "${ey:-0}" ]; then check ok "Sacred Geometry sits under Projects after Chronos"; else check bad "Sacred Geometry sits under Projects after Chronos"; fi
+          # the menu's order: heading and item ids in screen order, merged over the scroll positions (scrolled to the end)
+          seq=$(python3 -I ui.py seq out/ui.xml)
+          for i in 1 2 3 4; do scrollmenu "menu-scroll-$i"; seq="$seq $(python3 -I ui.py seq out/ui.xml)"; done
+          merged=$(echo $seq | tr ' ' '\n' | awk '!seen[$0]++' | sed 's/navside_heading_group://;s/navside_heading_/H:/;s/navside_item_//' | tr '\n' ' ')
+          echo "menu order: $merged" | tee -a out/verdict.txt
+          want="sciences math cs physics astronomy eng medicine humanities anthropology beliefs arts art theater music movies projects chronos sacred explore graph "
+          [ "$merged" = "$want" ] && check ok "the menu is Sciences, Humanities, Arts, Projects (Chronos, Sacred Geometry), Explore with every topic in place" || check bad "the menu is Sciences, Humanities, Arts, Projects (Chronos, Sacred Geometry), Explore with every topic in place (got: $merged)"
+          adb shell am force-stop "$PKG"; adb shell am start -n "$ACT" >/dev/null 2>&1; sleep 15
           # Projects > Chronos
           item chronos; sleep 15; dump 02-projects-chronos
           has wiki_chronos_web && check ok "Projects > Chronos opens its web view" || check bad "Projects > Chronos opens its web view"
