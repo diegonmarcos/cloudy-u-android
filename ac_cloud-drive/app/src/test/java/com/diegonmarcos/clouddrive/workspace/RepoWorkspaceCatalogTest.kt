@@ -116,7 +116,7 @@ class RepoWorkspaceCatalogTest {
         val r = RepoInfo("n", "/p/n", RepoWorkspace.VOLUME_EMULATED, "main", 7L, "dirty", "dirty\t2\nx")
         val back = RepoInfo.decode(r.encode())!!
         assertEquals(r.copy(summary = "dirty 2 x"), back)
-        assertEquals(RepoInfo("n", "/p"), RepoInfo.decode("n\t/p"))
+        assertEquals(RepoInfo("n", "/p", ""), RepoInfo.decode("n\t/p"))
         assertNull(RepoInfo.decode("")); assertNull(RepoInfo.decode("onlyname")); assertNull(RepoInfo.decode(null))
         assertEquals(0L, RepoInfo.decode("n\t/p\tstore\tmain\tNaN")!!.lastSyncMs)
         assertEquals(listOf("a"), RepoInfo.decodeAll(arrayOf("a\t/a", "bad")).map { it.name })
