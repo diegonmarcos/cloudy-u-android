@@ -106,7 +106,7 @@ class RepoCommitActivity : ComponentActivity() {
             val r = repo; val p = picked
             diff = if (r == null || p == null) "" else withContext(Dispatchers.IO) {
                 runCatching { GitEngine(applicationContext, File(r.path)).use { e -> RepoChanges.diffOf(e, File(r.path), p.relpath, RepoWorkspace.DIFF_DEFAULT_BYTES) } }.getOrDefault("")
-            }.ifBlank { stringResource(R.string.commit_no_diff_text) }
+            }.ifBlank { getString(R.string.commit_no_diff_text) }
         }
         BackHandler { if (picked != null) picked = null else onClose() }
 
