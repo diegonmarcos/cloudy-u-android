@@ -334,7 +334,8 @@ jobs:
             if scrollfind banking-B-link contains "accessibility services off" 300 2100; then
               adb shell input tap $pos; sleep 6; awake; skipdlg; dumpto out/banking-B3-perms.xml; adb exec-out screencap -p > out/banking-B3-perms.png
               if grep -q 'text="Sandboxes"' out/banking-B3-perms.xml; then check no "B3 tapping the accessibility link left the Preset page up"
-              elif python3 -I ui.py contains out/banking-B3-perms.xml "Accessibility service" 0 3000 | grep -q . || python3 -I ui.py contains out/banking-B3-perms.xml "Grant all" 0 3000 | grep -q .; then check ok "B3 the accessibility link lands on the Perms page"
+              # the Perms page opens on its summary (N Granted | N Missing | Needs shell); the accessibility row lies further down: scroll to it
+              elif grep -q 'Granted"' out/banking-B3-perms.xml && grep -q 'Missing"' out/banking-B3-perms.xml && scrollfind banking-B3-row contains "ccessibility" 0 3000; then check ok "B3 the accessibility link lands on the Perms page"
               else check no "B3 the accessibility link did not land on the Perms page; on screen: $(python3 -I ui.py texts out/banking-B3-perms.xml 2>/dev/null | head -c 300)"; fi
               adb shell input keyevent KEYCODE_BACK; sleep 2
             else check no "B3 the accessibility row was not found to tap"; fi
