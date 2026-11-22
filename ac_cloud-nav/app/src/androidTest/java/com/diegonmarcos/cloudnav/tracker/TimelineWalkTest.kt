@@ -22,7 +22,7 @@ import java.time.ZoneId
 
 /**
  * #1851 the emulator walk. The workflow `test-cloud-nav-walk` boots an emulator, starts this test with `walk=1`, and in parallel injects
- * a walk with `adb emu geo fix` (home, walk, cafe, tram, office, walk home, home; ~65 min wall clock, one fix every 20 s). This test starts
+ * a walk with `adb emu geo fix` (home, walk, cafe, tram, office, walk home, home; ~62 min wall clock, one fix every 20 s). This test starts
  * the tracker the way the user's Start does, waits for the injector's marker file, rebuilds the store and asserts what the Day page and
  * Tracker > Timeline would show: several stays and moves, nonzero km, and the two lists agree. Without `walk=1` (the normal suite) it is skipped.
  */

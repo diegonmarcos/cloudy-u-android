@@ -43,7 +43,10 @@ object TrackGate {
     const val MAX_ACCURACY_M = 100f          // a worse fix is noise, never stored
     const val MAX_FIX_AGE_MS = 20 * 60_000L   // an older fix is history, not a position (a batched sample may arrive up to 15 min late)
     const val MIN_DISPLACEMENT_M = 25.0       // the minimum displacement filter
-    const val HEARTBEAT_MS = 9 * 60_000L      // #1851 a still phone keeps a fix at least this far apart (the still sample below arrives every 10-15 min)
+    const val HEARTBEAT_MS = 9 * 60_000L      // #1851 a phone keeps a fix at least this far apart (the still sample below arrives every 10-15 min)
+    /** #1851 the passive listener asks the platform for NO distance filter and a short floor: the gate above is the one filter. A 25 m platform filter hid a phone at rest from the gate (its heartbeat never fired) and a 60 s floor starved a fast move. */
+    const val PASSIVE_MIN_INTERVAL_MS = 10_000L
+    const val PASSIVE_MIN_DISTANCE_M = 0f
     const val EXIT_M = 150.0                  // a passive fix this far from the stable place, seen STILL, is a geofence exit
     const val EXIT_MAX_ACCURACY_M = 50f
 
@@ -78,8 +81,8 @@ object TrackGate {
         val last = s.lastAccepted
         if (last != null && f.timeMs <= last.timeMs) return Offer(s, false, "duplicate")
         val moved = last?.let { distanceM(it, f) }
-        // keep a point when it is the first, moved enough (beyond both the filter and the new fix's own noise), or it is the still heartbeat
-        val keep = last == null || moved!! >= maxOf(MIN_DISPLACEMENT_M, acc.toDouble()) || (s.mode == GateMode.STILL && f.timeMs - last.timeMs >= HEARTBEAT_MS)
+        // keep a point when it is the first, moved enough (beyond both the filter and the new fix's own noise), or it is the heartbeat (also inside a MOVING hold: a stop the activity sensor has not yet called still still gets its dwell fixes)
+        val keep = last == null || moved!! >= maxOf(MIN_DISPLACEMENT_M, acc.toDouble()) || f.timeMs - last.timeMs >= HEARTBEAT_MS
         if (!keep) return Offer(s, false, "displacement")
         var out = s.copy(lastAccepted = f)
         if (s.mode == GateMode.STILL && s.anchor != null && acc <= EXIT_MAX_ACCURACY_M && distanceM(s.anchor, f) >= EXIT_M)

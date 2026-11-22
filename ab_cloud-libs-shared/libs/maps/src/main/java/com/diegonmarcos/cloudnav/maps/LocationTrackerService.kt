@@ -215,7 +215,7 @@ class LocationTrackerService : Service() {
         if (!fine) return
         if (plan.passive && passiveListener == null) {
             val l = LocationListenerCompat { loc -> offerFix(loc) }
-            val req = LocationRequestCompat.Builder(PASSIVE_MIN_INTERVAL_MS).setMinUpdateDistanceMeters(TrackGate.MIN_DISPLACEMENT_M.toFloat()).build()
+            val req = LocationRequestCompat.Builder(TrackGate.PASSIVE_MIN_INTERVAL_MS).setMinUpdateDistanceMeters(TrackGate.PASSIVE_MIN_DISTANCE_M).build()
             com.diegonmarcos.superapp.perms.LocationUse.note(this, SITE, "LocationManager PASSIVE_PROVIDER (other apps' fixes, no request of ours)",
                 com.diegonmarcos.superapp.perms.LocationUse.Trigger.TRACKER)
             val ok = runCatching {
@@ -250,6 +250,7 @@ class LocationTrackerService : Service() {
         val now = System.currentTimeMillis()
         val f = GateFix(loc.latitude, loc.longitude, if (loc.hasAccuracy()) loc.accuracy else null, loc.time)
         val o = TrackGate.offer(gate, f, now)
+        android.util.Log.d("TrackGate", "offer ${loc.provider} ${o.reason} acc=${f.accuracyM} mode=${gate.mode}")   // #1851 evidence for the emulator walk
         if (!o.accepted) return
         ingest(loc)
         val open = activeStop
@@ -465,9 +466,6 @@ class LocationTrackerService : Service() {
         const val ACTION_USER_START = "com.diegonmarcos.cloudnav.maps.ACTION_USER_START"
         const val SITE = "libs:maps LocationTrackerService (Maps ▸ Start)"
         fun isUserStart(action: String?): Boolean = action == ACTION_USER_START
-
-        /** The passive listener's floor between deliveries: a passive fix costs nothing, this only bounds the wakeups. */
-        private const val PASSIVE_MIN_INTERVAL_MS = 60_000L
 
         @Volatile private var instance: LocationTrackerService? = null
 
