@@ -131,8 +131,12 @@ class MergedPathDropdownTest {
         }
         open()
         compose.onNodeWithTag(TopFirstRowTags.HEADER_TREE).assertExists()
-        compose.onNodeWithTag(TopFirstRowTags.HEADER_SIBLINGS).assertDoesNotExist()
+        // the Siblings list always holds the current page itself (Breadcrumb: depth 0 lists the section peers), so its header stays
+        compose.onNodeWithTag(TopFirstRowTags.HEADER_SIBLINGS).assertExists()
+        compose.onNodeWithTag(TopFirstRowTags.entry("lone")).assertExists()
+        // no page actions: the Actions header and its separator are skipped
         compose.onNodeWithTag(TopFirstRowTags.HEADER_ACTIONS).assertDoesNotExist()
+        compose.onNodeWithTag(TopFirstRowTags.SEPARATOR_ACTIONS).assertDoesNotExist()
     }
 
     @Test fun `a line sits between Settings Profile and Settings Configs`() {
