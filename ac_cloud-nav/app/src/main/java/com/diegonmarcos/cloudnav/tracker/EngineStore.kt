@@ -79,7 +79,7 @@ class EngineDb private constructor(ctx: Context) : SQLiteOpenHelper(ctx, "tracke
     fun addSample(ts: Long, delta: Long, headingDeg: Double?) {
         // #1851 the slice this sample closes goes to the one store (maps.db) as well
         if (delta > 0) runCatching {
-            val prev = readableDatabase.rawQuery("SELECT MAX(ts) FROM step_samples", null).use { if (it.moveToFirst() && !it.isNull(0)) it.getLong(0) else 0L }
+            val prev = readableDatabase.rawQuery("SELECT MAX(ts) FROM step_samples WHERE ts < ?", arrayOf(ts.toString())).use { if (it.moveToFirst() && !it.isNull(0)) it.getLong(0) else 0L }
             val start = if (prev == 0L) ts - SAMPLE_MS else maxOf(prev, ts - 2 * SAMPLE_MS)
             MapsDb.get(appCtx).appendStepSlice(TlSteps(start, ts, delta), "counter")
         }
