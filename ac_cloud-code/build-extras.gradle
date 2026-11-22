@@ -130,3 +130,10 @@ dependencies {
 dependencies {
     implementation project(':libs:repo-workspace')
 }
+
+// ── cloud-code (#1855 P2): Cloud SuperIntel holds the AI engines; Code binds the IAiEngine contract (a contract lib): which providers
+// and models there are, and a streamed chat performed by SuperIntel, so no key is needed on this road. The CloudAiEngine Cordova plugin
+// (src/plugins/cloudaiengine) is the only caller. settings-extras.gradle includes it from build.json::modules.
+dependencies {
+    implementation project(':libs:ai-engine')
+}

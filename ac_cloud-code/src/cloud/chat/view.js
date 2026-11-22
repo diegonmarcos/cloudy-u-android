@@ -11,6 +11,7 @@ import targets from "../targets.gen.json";
 import { el, icon } from "../dom";
 import { option, sheet, toggleRow, page, closeOverlay } from "../chrome";
 import * as M from "./model";
+import * as E from "./engine";
 import fsOperation from "fileSystem";
 
 // nav.json is the tab's own declaration; the gateway and OpenRouter come from the shared AI contract (libs:ai ai.json),
@@ -38,6 +39,10 @@ const S = {
 	panel: null,
 	chrome: null,
 	catalogue: null,
+	// Cloud SuperIntel's AI engines (#1855 P2): undefined = not asked yet, {si: false} = absent (the direct gateway road stays), {si: true, providers}
+	engine: undefined,
+	// the request id the engine road is streaming (stop() cancels it through SuperIntel instead of the plugin)
+	engineStreaming: null,
 };
 
 const plugin = () => window.CloudChat;
@@ -136,6 +141,12 @@ async function refreshLive() {
 	draw();
 }
 
+/** SuperIntel's provider list (#1855 P2). A missing bridge or an absent SuperIntel is {si: false}: the direct road and the install hint. */
+async function refreshEngine() {
+	S.engine = await E.engineProviders(E.bridge());
+	draw();
+}
+
 async function reasoningIds() {
 	try {
 		const cached = JSON.parse(localStorage.getItem(`${M.KEY}reasoning`) || "null");
@@ -179,6 +190,7 @@ export async function renderChat(panel, chrome) {
 	panel.replaceChildren(chrome.bar("AI"), $list, composer);
 	draw();
 	refreshLive().catch(() => {});
+	refreshEngine().catch(() => {});
 }
 
 function draw() {
@@ -196,7 +208,8 @@ function drawMessages() {
 		const a = agent();
 		$list.replaceChildren(el("div", { className: "cloud-chat-empty" },
 			el("div", { className: "cloud-chat-hello" }, "How can I help?"),
-			el("div", { className: "cloud-muted" }, a ? `${a.label} · ${M.modelControl(a, modelOf(a), S.health).label}` : "No agent can be reached")));
+			el("div", { className: "cloud-muted" }, a ? `${a.label} · ${M.modelControl(a, modelOf(a), S.health).label}` : "No agent can be reached"),
+			E.roadLabel(S.engine, a) ? el("div", { className: "cloud-muted cloud-chat-road" }, E.roadLabel(S.engine, a)) : null));
 		return;
 	}
 	$list.replaceChildren(...s.messages.map(bubble));
@@ -208,7 +221,7 @@ function bubble(m) {
 	if (m.role === "user") return el("div", { className: "cloud-msg user" }, el("div", { className: "cloud-msg-body" }, m.content), chips.length ? el("div", { className: "cloud-chips" }, chips) : null);
 	const body = el("div", { className: "cloud-msg-body cloud-md" });
 	body.innerHTML = DOMPurify.sanitize(md.render(m.content || (m.streaming ? "…" : "")));
-	const meta = el("div", { className: "cloud-msg-meta cloud-muted" }, [m.agent, m.model].filter(Boolean).join(" · "), m.error ? ` · ${m.error}` : "");
+	const meta = el("div", { className: "cloud-msg-meta cloud-muted" }, [m.agent, m.model, m.via].filter(Boolean).join(" · "), m.error ? ` · ${m.error}` : "");
 	return el("div", { className: `cloud-msg assistant${m.error ? " error" : ""}` }, body, meta);
 }
 
@@ -321,9 +334,12 @@ function agentSheet() {
 		sub: M.agentSub(a),
 		run: () => { s.agent = a.id; persist(); draw(); },
 	}));
-	sheet("Agent", rows, S.health === null
+	// The engines SuperIntel runs (#1855 P2), or the install hint: informational rows under the agents, nothing above them is removed.
+	if (S.engine?.si) for (const p of S.engine.providers) rows.push(option(`${p.label || p.id} \u00b7 ${p.health || "unknown"}`, { disabled: true, iconName: "memory", sub: [p.kind, p.model, p.detail].filter(Boolean).join(" \u00b7 ") }));
+	else if (S.engine) rows.push(option(E.INSTALL_SHORT, { disabled: true, iconName: "download", sub: E.INSTALL_HINT }));
+	sheet("Agent", rows, [S.health === null
 		? "The gateway did not answer: the fleet's declared agents are shown, marked offline."
-		: "From the fleet: the agents the C3 catalogue declares and the gateway's /health serves now.");
+		: "From the fleet: the agents the C3 catalogue declares and the gateway's /health serves now.", E.engineNote(S.engine)].filter(Boolean).join(" "));
 }
 
 function effortSheet() {
@@ -390,7 +406,11 @@ function moreItem(a, it) {
 	}
 	if (it.kind === "usage") {
 		const lines = M.usageLines(S.sessions, s.id);
-		return page(it.label, null, el("pre", { className: "cloud-pre" }, lines.length ? lines.map((l) => `${l.label}: ${l.value}`).join("\n") : "The backend has reported no usage yet. Tokens and cost appear here once an answer carries them."));
+		const text = (all) => (all.length ? all.map((l) => `${l.label}: ${l.value}`).join("\n") : "The backend has reported no usage yet. Tokens and cost appear here once an answer carries them.");
+		const pre = el("pre", { className: "cloud-pre" }, text(lines));
+		// What Cloud SuperIntel metered (#1855 P2) is added under the on-phone lines when it answers.
+		if (S.engine?.si) E.engineUsage(E.bridge()).then((r) => { const e = E.usageLines(r.usage); if (e.length) pre.textContent = text([...lines, ...e]); }).catch(() => {});
+		return page(it.label, null, pre);
 	}
 	if (it.kind === "export") return exportChat();
 	if (it.kind === "retry") return retry();
@@ -551,7 +571,14 @@ export async function modelPage(refresh = false, onPick = null) {
 		pg.close();
 	};
 	let tab = null;
+	let shown = null;
+	// The models Cloud SuperIntel lists for this agent's provider (#1855 P2): added above the catalogue tables when it answers, loaded after the page opens.
+	let engineModels = null;
+	if (!onPick && a && E.engineUsable(S.engine, a) && E.bridge()) {
+		E.engineModels(E.bridge(), E.providerFor(a)).then((r) => { engineModels = r.models; if (shown && pg.node.isConnected) show(shown); }).catch(() => {});
+	}
 	const show = (cat) => {
+		shown = cat;
 		const mc = a ? M.modelControl(a, chosen, S.health) : { pick: true, label: chosen };
 		const head = onPick || mc.pick
 			? `Selected: ${chosen}`
@@ -569,6 +596,7 @@ export async function modelPage(refresh = false, onPick = null) {
 			el("p", { className: "cloud-cat-current" }, head),
 			bar,
 			...(tab === "core" ? [
+				...(E.modelSection(S.engine, a, engineModels) ? [engineSection(E.modelSection(S.engine, a, engineModels))] : []),
 				el("p", { className: "cloud-muted" }, `Prices as of ${cat.as_of} (${cat.origin})`),
 				...sections.map((sec) => section(sec, M.checkedRow(sections, chosen))),
 				el("p", { className: "cloud-muted" }, "The fleet's model catalogue (libs:model-catalogue, shared with Cloud Search): A0 Code, A1 Agentic, A2 Base, A3 Reasoning. Anthropic first, then providers by price. Prices are OpenRouter's, read at most daily."),
@@ -583,6 +611,24 @@ export async function modelPage(refresh = false, onPick = null) {
 		if (refresh) toast(`Prices: ${live.origin}, as of ${live.as_of}`);
 	} catch (e) {
 		body.replaceChildren(el("p", {}, `The catalogue could not be read: ${e?.message || e}`));
+	}
+
+	function engineSection(sec) {
+		const cols = ["", "Model", "ID", "Group", "Context", "Input $/1M", "Output $/1M", "Note"];
+		const mc = M.modelControl(a, chosen, S.health);
+		const rows = sec.rows.map((r) => {
+			// An agent mode is not a model (it is picked in Agent); a fixed-model agent runs its own.
+			const st = r.group === "mode" ? { allowed: false, reason: "an agent mode: pick it in Agent" } : mc.pick ? { allowed: true, reason: "" } : { allowed: false, reason: `set by ${a.label}` };
+			const radio = el("input", { type: "radio", name: "cloud-model", value: r.id, checked: chosen === r.id, disabled: !st.allowed, "aria-label": r.name });
+			radio.addEventListener("change", () => choose(r));
+			radio.addEventListener("click", (e) => e.stopPropagation());
+			const name = el("div", {}, r.name, st.allowed ? null : el("div", { className: "cloud-cat-why" }, st.reason));
+			return el("tr", { className: `${st.allowed ? "" : "dim"}${chosen === r.id ? " current" : ""}`, "data-model": r.id, onclick: st.allowed ? () => choose(r) : null },
+				el("td", {}, radio), el("td", {}, name), el("td", {}, r.id), el("td", {}, r.group), el("td", {}, r.context), el("td", {}, r.input), el("td", {}, r.output), el("td", {}, r.note));
+		});
+		return el("section", { className: "cloud-cat-section", "data-section": sec.id },
+			el("div", { className: "cloud-cat-head" }, el("strong", {}, sec.label), el("div", { className: "cloud-muted" }, sec.note)),
+			el("div", { className: "cloud-cat-scroll" }, el("table", {}, el("thead", {}, el("tr", {}, cols.map((h) => el("th", {}, h)))), el("tbody", {}, rows))));
 	}
 
 	function declaredSection(g) {
@@ -669,43 +715,83 @@ function stream(s, a) {
 		$list.scrollTop = $list.scrollHeight;
 	};
 	return new Promise((resolve) => {
-		plugin().stream({ ...req, id }, (ev) => {
-			if (ev.type === "head") {
-				status = ev.status;
-				sse = /event-stream/.test(ev.content_type) && status < 400;
-			} else if (ev.type === "data") {
-				if (sse) {
-					for (const d of parser.push(ev.text)) reply.content += d;
-					if (!frame) frame = requestAnimationFrame(paint);
-				} else whole += ev.text;
-			} else {
-				if (ev.type === "error" && S.streaming === id) reply.error = ev.message;
-				if (!sse && ev.type === "end") {
-					const r = M.parseWhole(status, whole);
-					if (r.error) reply.error = r.error;
-					else reply.content = r.text;
-					if (r.usage) reply.usage = r.usage;
-				}
-				if (parser.usage) reply.usage = parser.usage;
-				reply.at = Date.now();
-				if (parser.error) reply.error = parser.error;
-				if (S.streaming !== id && !reply.content) reply.error = "stopped";
-				delete reply.streaming;
-				S.streaming = null;
-				$send.replaceChildren(icon("send"));
-				s.updated = Date.now();
-				persist();
-				drawMessages();
-				resolve();
+		// The end of the stream, on either road: ev is {type: "end"} or {type: "error", message}.
+		const finish = (ev) => {
+			if (ev.type === "error" && S.streaming === id) reply.error = ev.message;
+			if (!sse && ev.type === "end") {
+				const r = M.parseWhole(status, whole);
+				if (r.error) reply.error = r.error;
+				else reply.content = r.text;
+				if (r.usage) reply.usage = r.usage;
 			}
-		});
+			if (parser.usage) reply.usage = parser.usage;
+			reply.at = Date.now();
+			if (parser.error) reply.error = parser.error;
+			if (S.streaming !== id && !reply.content) reply.error = "stopped";
+			delete reply.streaming;
+			S.streaming = null;
+			S.engineStreaming = null;
+			$send.replaceChildren(icon("send"));
+			s.updated = Date.now();
+			persist();
+			drawMessages();
+			resolve();
+		};
+		// The direct road: this app's own gateway / OpenRouter request through the CloudChat plugin (kept, and the fallback of the engine road).
+		const direct = () => {
+			delete reply.via;
+			plugin().stream({ ...req, id }, (ev) => {
+				if (ev.type === "head") {
+					status = ev.status;
+					sse = /event-stream/.test(ev.content_type) && status < 400;
+				} else if (ev.type === "data") {
+					if (sse) {
+						for (const d of parser.push(ev.text)) reply.content += d;
+						if (!frame) frame = requestAnimationFrame(paint);
+					} else whole += ev.text;
+				} else finish(ev);
+			});
+		};
+		// The engine road (#1855 P2): Cloud SuperIntel performs the request with its own backends and streams it back; no key is here.
+		if (!(E.engineUsable(S.engine, a) && E.bridge())) return direct();
+		let ereq;
+		try {
+			ereq = E.engineRequest(id, a, req);
+		} catch {
+			return direct();
+		}
+		reply.via = "Cloud SuperIntel";
+		S.engineStreaming = id;
+		sse = true; // the engine hands over the answer's text, never an SSE body or a whole-answer JSON
+		E.bridge().chat(ereq, (ev) => {
+			if (ev.type === "chunk") {
+				reply.content += ev.text || "";
+				if (!frame) frame = requestAnimationFrame(paint);
+			} else if (ev.type === "done") {
+				try {
+					const u = ev.usage ? JSON.parse(ev.usage) : null;
+					if (u && (u.prompt || u.completion)) reply.usage = M.usageOf({ prompt_tokens: u.prompt, completion_tokens: u.completion, cost: u.cost });
+				} catch {
+					// no usage is better than a wrong one
+				}
+				finish({ type: "end" });
+			} else if (ev.type === "absent" && !reply.content) {
+				// SuperIntel went away between the list and the send: nothing was sent, the direct road takes over and the hint shows.
+				S.engine = { si: false, providers: [] };
+				S.engineStreaming = null;
+				sse = false;
+				direct();
+			} else finish({ type: "error", message: ev.type === "refused" ? `Cloud SuperIntel: ${ev.reason}` : ev.reason || "failed" });
+		}).catch((e) => finish({ type: "error", message: String(e?.message || e) }));
 	});
 }
 
 function stop() {
 	const id = S.streaming;
 	S.streaming = null;
-	if (id) plugin().cancel(id).catch(() => {});
+	if (!id) return;
+	if (S.engineStreaming === id) E.bridge()?.cancel(id)?.catch?.(() => {});
+	else plugin().cancel(id).catch(() => {});
 }
 
 // ── the drawer items this page supplies (the hamburger) ─────────────────────

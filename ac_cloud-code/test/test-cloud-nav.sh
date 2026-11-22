@@ -53,6 +53,19 @@ while IFS= read -r line; do
 done <<< "$ws_out"
 [ "$ws_checks" -ge 40 ] || fail "the workspace driver made only $ws_checks checks"
 
+# ── #1855 P2 Cloud SuperIntel holds the AI engines: the AI tab prefers the engine, keeps its direct gateway road, shows the install hint (+ rule-16 parity) ──
+ae_out="$(node "$ROOT/test/aiengine.mjs" "$ROOT" 2>&1)"
+ae_status=$?
+[ "$ae_status" -eq 0 ] || fail "aiengine driver crashed (exit $ae_status): $ae_out"
+ae_checks=0
+while IFS= read -r line; do
+  case "$line" in
+    "CHECK ok "*)  ok "${line#CHECK ok }"; ae_checks=$((ae_checks + 1)) ;;
+    "CHECK bad "*) fail "${line#CHECK bad }"; ae_checks=$((ae_checks + 1)) ;;
+  esac
+done <<< "$ae_out"
+[ "$ae_checks" -ge 60 ] || fail "the aiengine driver made only $ae_checks checks"
+
 # ── #1158 the shared bars (first row, second row, bottom bar, gradient), through the real bars.js ──
 bars_out="$(node "$ROOT/test/cloud_bars.mjs" "$ROOT" 2>&1)"
 status=$?

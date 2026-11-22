@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- cloud-code's bridge to Cloud SuperIntel's AI engines (libs:ai-engine, the IAiEngine binder):
+     providers / models / chat (streamed) / cancel / usage. SuperIntel holds the engines and the keys; Code binds the contract.
+     See src/CloudAiEnginePlugin.java. -->
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android" id="cordova-plugin-cloudaiengine"
+    version="1.0.0">
+    <name>Cloud AI Engine</name>
+
+    <js-module name="CloudAiEngine" src="www/cloudaiengine.js">
+        <clobbers target="CloudAiEngine" />
+    </js-module>
+
+    <platform name="android">
+        <config-file parent="/*" target="res/xml/config.xml">
+            <feature name="CloudAiEngine">
+                <param name="android-package" value="com.diegonmarcos.cloudcode.aiengine.CloudAiEnginePlugin" />
+            </feature>
+        </config-file>
+
+        <source-file src="src/CloudAiEnginePlugin.java" target-dir="src/com/diegonmarcos/cloudcode/aiengine" />
+    </platform>
+</plugin>

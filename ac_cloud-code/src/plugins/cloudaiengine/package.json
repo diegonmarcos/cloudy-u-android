@@ -1,0 +1,16 @@
+{
+  "name": "cordova-plugin-cloudaiengine",
+  "version": "1.0.0",
+  "description": "cloud-code: Cloud SuperIntel's AI engines (libs:ai-engine) for the AI tab",
+  "cordova": {
+    "id": "cordova-plugin-cloudaiengine",
+    "platforms": [
+      "android"
+    ]
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android"
+  ],
+  "license": "MIT"
+}

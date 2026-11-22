@@ -50,6 +50,7 @@ on:
       #   input: "ac_cloud-myterminal/hub/src/main/AndroidManifest.xml"
       # ── end MANAGED-PATHS-HEADER ──
       - "1_cicd/src/scripts/cloud-code-engine.sh"
+      - "ab_cloud-libs-shared/libs/ai-engine/**"
       - "ab_cloud-libs-shared/libs/ai/**"
       - "ab_cloud-libs-shared/libs/bottomnav/**"
       - "ab_cloud-libs-shared/libs/core/**"
@@ -70,6 +71,8 @@ on:
       - "ab_cloud-libs-shared/libs/ui-nav-bars/**"
       - "ac_cloud-code/**"
       - "!ab_cloud-libs-shared/libs/**/*.md"
+      - "ab_cloud-libs-shared/libs/ai-engine/**/assets/**"
+      - "ab_cloud-libs-shared/libs/ai-engine/**/res/**"
       - "ab_cloud-libs-shared/libs/ai/**/assets/**"
       - "ab_cloud-libs-shared/libs/ai/**/res/**"
       - "ab_cloud-libs-shared/libs/bottomnav/**/assets/**"
