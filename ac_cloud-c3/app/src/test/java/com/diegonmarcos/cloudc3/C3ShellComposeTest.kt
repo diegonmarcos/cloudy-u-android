@@ -156,39 +156,47 @@ class C3ShellComposeTest {
 
     // ── the title dropdown (the former drawer) ───────────────────────────────────────────────────────────────────────
 
+    // #1850 the generic drawer slot left the dropdown (it repeated the pages); every section is a Parent Page
+    // (Url-Uri, Configs through Settings / Configs) and the open section's pages are its Siblings.
+    private fun parentPage(sectionId: String) = com.diegonmarcos.superapp.navbartop1.UrlUriTags.entry(
+        if (sectionId == com.diegonmarcos.superapp.bottomnav.UrlUriIds.CONFIGS) com.diegonmarcos.superapp.bottomnav.UrlUriIds.CONFIGS
+        else com.diegonmarcos.superapp.bottomnav.UrlUriIds.section(sectionId))
+
     @Test
-    fun `the title dropdown ends with the full tree of every section and page, tappable`() {
-        show()
+    fun `the title dropdown reaches every section and the open section's pages, tappable`() {
+        val start = C3Nav.start(Declarations.nav, Declarations.aliases)!!.section
+        show(start)
         assertFalse(exists(com.diegonmarcos.superapp.navbartop1.TopFirstRowTags.DROPDOWN))
         tap(TopBarTags.TITLE)
         compose.onNodeWithTag(com.diegonmarcos.superapp.navbartop1.TopFirstRowTags.DROPDOWN).assertIsDisplayed()
-        for (s in Declarations.nav.sections) {
-            assertTrue("section ${s.id} in the dropdown", exists(C3Tags.drawerSection(s.id)))
-            for (p in s.allPages()) assertTrue("page ${s.id}/${p.id} in the dropdown", exists(C3Tags.drawerPage(s.id, p.id)))
-        }
+        for (s in Declarations.nav.sections) assertTrue("section ${s.id} is a Parent Page", exists(parentPage(s.id)))
+        for (p in Declarations.nav.section(start)!!.pages) assertTrue("page $start/${p.id} is in the open section's tree", exists(com.diegonmarcos.superapp.navbartop1.TopFirstRowTags.entry(p.id)))
     }
 
     @Test
     fun `a tree page opens its section and page, and closes the dropdown`() {
-        show()
+        show("containers")
         tap(TopBarTags.TITLE)
-        tapIn(C3Tags.drawerPage("containers", "all_table"))
-        assertEquals(listOf(C3Nav.Target("containers", "all_table")), opened)
+        val page = Declarations.nav.section("containers")!!.pages.first()
+        tapIn(com.diegonmarcos.superapp.navbartop1.TopFirstRowTags.entry(page.id))
+        assertEquals(C3Nav.Target("containers", page.id), opened.last())
         assertFalse("the dropdown closes after a tap", exists(com.diegonmarcos.superapp.navbartop1.TopFirstRowTags.DROPDOWN))
     }
 
     @Test
-    fun `a tree section header opens the section`() {
+    fun `a Parent Page opens the section`() {
         show()
         tap(TopBarTags.TITLE)
-        tapIn(C3Tags.drawerSection("ops"))
-        assertEquals(listOf(C3Nav.Target("ops")), opened)
+        tapIn(parentPage("ops"))
+        assertEquals(C3Nav.Target("ops"), opened.last())
     }
 
     @Test
     fun `Configs is reachable from the title dropdown though it is off the island`() {
         show()
         tap(TopBarTags.TITLE)
-        assertTrue(exists(C3Tags.drawerSection("configs")))
+        assertTrue(exists(parentPage("configs")))
+        tapIn(parentPage("configs"))
+        assertTrue("Settings / Configs opens this app's Configs", configs == 1 || opened.lastOrNull() == C3Nav.Target("configs"))
     }
 }
