@@ -95,20 +95,29 @@ class BrowserPageDropdownUiTest {
     }
 
     @Test
-    fun `the sheet is titled Page-Tools with the tabs Actions, Page Tools, Site Data, Site Perms, Dev Tools`() {
+    fun `the sheet is titled Page-Tools with the tabs Nav, Scrapper, Reading, Site Data, Perms, Dev Tools`() {
         show(pageFacts)
         assertTrue("title is drawn", compose.onAllNodesWithTagOrText("Page-Tools"))
-        listOf("Actions", "Page Tools", "Site Data", "Site Perms", "Dev Tools").forEachIndexed { i, title ->
+        listOf("Nav", "Scrapper", "Reading", "Site Data", "Perms", "Dev Tools").forEachIndexed { i, title ->
             assertTrue("tab $title is drawn", compose.onAllNodesWithTag("browser:menu:tab:$i", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
             assertTrue("tab $title is labelled", compose.onAllNodesWithTagOrText(title))
         }
     }
 
     @Test
-    fun `Page Tools shows its category sub-headers`() {
+    fun `Reading and Scrapper show their category sub-headers`() {
+        show(pageFacts)
+        openTab(2)
+        listOf("Reading", "Find & Share", "View mode", "Autofill").forEach { c ->
+            assertTrue("category $c is drawn", compose.onAllNodesWithTag("browser:menu:category:$c", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
+        }
+    }
+
+    @Test
+    fun `Scrapper shows Save and Export and the fleet tools`() {
         show(pageFacts)
         openTab(1)
-        listOf("Reading", "Save & Export", "Find & Share", "View mode", "Autofill").forEach { c ->
+        listOf("Save & Export", "Headless browser (fleet)", "Scrapper API (fleet)").forEach { c ->
             assertTrue("category $c is drawn", compose.onAllNodesWithTag("browser:menu:category:$c", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
         }
     }

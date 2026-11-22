@@ -148,6 +148,8 @@ class MainActivity : AppCompatActivity() {
         FleetChrome.apply(this)
         // #1518 the offline copy and the GPU page plug into the shared host; fullscreen events drive the refresh rate
         com.diegonmarcos.cloudbrowser.offline.SiteOffline.install(this)
+        // #1856 the Scrapper tab's bearer for cloudy-browser-headless: read from the encrypted store by key name, never held
+        com.diegonmarcos.superapp.browser.BrowserHostHooks.secret = { k -> com.diegonmarcos.superapp.headless.HeadlessStore(applicationContext).get(k) }
         com.diegonmarcos.cloudbrowser.offline.SiteOffline.seedDeclared(this)
         com.diegonmarcos.superapp.browser.BrowserHostHooks.gpuPage = { GpuPageBlock() }
         com.diegonmarcos.cloudlib.web.CloudChromeClient.fullscreenListener =
@@ -166,6 +168,8 @@ class MainActivity : AppCompatActivity() {
                 }
                 // #1531 the Tabs page's History link opens Domains > History, the one history page
                 f.onHistory = { openHistory() }
+                // #1856 Site Data > Open Local Folder opens Domains > Files Cached
+                f.onOpenLocalFolder = { openLocalFolder() }
                 f.onOverlaysClosed = {
                     selectedId = decl.section(if (f.isTabsOpen) "tabs" else "browser")?.id
                     chromeCollapse?.restore()
@@ -361,6 +365,13 @@ class MainActivity : AppCompatActivity() {
     /** #1531 the History link of the Tabs page and of the menu: the Domains > History page. */
     private fun openHistory() {
         val (section, page) = com.diegonmarcos.cloudbrowser.sites.SitesRoute.history { s, pg -> decl.section(s)?.pages.orEmpty().any { it.id == pg } } ?: return
+        openSection(section)
+        sitesPage = page
+    }
+
+    /** #1856 the page menu's Open Local Folder: Domains > Files Cached. */
+    private fun openLocalFolder() {
+        val (section, page) = com.diegonmarcos.cloudbrowser.sites.SitesRoute.localFolder { s, pg -> decl.section(s)?.pages.orEmpty().any { it.id == pg } } ?: return
         openSection(section)
         sitesPage = page
     }

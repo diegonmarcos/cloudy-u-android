@@ -277,36 +277,65 @@ private const val WEBY_ALL = "bookmarks"
 // ───────────────────────────── Cloudy ─────────────────────────────
 
 /**
- * #1842 Cloudy: [page] is a ui.sections[cloudy].pages id, `webapps` or `c3_urls`. WebApps is Weby's own page over fixed folders (WebApps by Cloud
- * Store category, GitHub Pages, Local Webserver: [CloudyWebApps]); C3 Urls is one icon grid of the fleet's containers by c3-infra category
- * with a private / public chooser. A tap on a site opens it in the browser.
+ * #1856 Cloudy: [page] is a ui.sections[cloudy].pages id: `webapps`, `gh_pages`, `local` or `c3_urls` (labelled C3). WebApps is Weby's own page over the Cloud SuperApp > Cloud rows
+ * (one section per Cloud Store category: [CloudyWebApps.webApps]); GH Pages the pages published from diegonmarcos.github.io (+ the front-html list and the declared
+ * repos' Pages); Local the Cloud-Webserver's File Explorers then Pages, with the link that opens its APK; C3 one icon grid of the fleet's containers by c3-infra
+ * category with a private / public chooser. A tap on a site opens it in the browser.
  */
 @Composable
 fun CloudyPage(page: String?, decl: SitesDecl, onOpen: (String) -> Unit) {
     val c = decl.cloudy
     val t = remember { decl.texts(c) }
-    if (page == "c3_urls") C3UrlsPage(c, t, onOpen) else CloudyWebAppsPage(decl, c, t, onOpen)
+    when (page) {
+        "c3_urls" -> C3UrlsPage(c, t, onOpen)
+        "gh_pages" -> CloudyGhPagesPage(decl, c, onOpen)
+        "local" -> CloudyLocalPage(decl, c, t, onOpen)
+        else -> CloudyWebAppsPage(decl, c, onOpen)
+    }
 }
 
 @Composable
-private fun CloudyWebAppsPage(decl: SitesDecl, c: org.json.JSONObject, t: (String) -> String, onOpen: (String) -> Unit) {
+private fun CloudyWebAppsPage(decl: SitesDecl, c: org.json.JSONObject, onOpen: (String) -> Unit) {
     val ctx = LocalContext.current
     val cache = remember { CloudyCache(ctx) }
-    val ws = c.optJSONObject("webserver") ?: org.json.JSONObject()
     val webapps = c.optJSONObject("webapps") ?: org.json.JSONObject()
     val timeout = c.optInt("timeout_ms", 0)
-    val seed = remember { Cloudy.seedPages(c) }
-    val gh by loaded(Cloudy.merge(seed, cache.pagesJson()), "gh") { Cloudy.merge(seed, cache.refresh(c.optString("pages_url"), timeout) ?: cache.pagesJson()) }
-    val local by loaded(Cloudy.declaredWebserver(ws), "ws") {
-        val store = runCatching { File(ws.optString("repos_store")).readText() }.getOrNull()
-        Cloudy.declaredWebserver(ws) + Cloudy.storeEntries(store)
-    }
-    val up by loaded(emptyMap<Int, Boolean>(), local) { local.mapNotNull { it.port }.distinct().associateWith { Cloudy.probe(it, timeout) } }
     // the cloudy-h-webapps-mob repo's generated app-links.json: the web address of each Cloud app, kept on the phone once fetched
     val links by loaded(CloudyWebApps.links(cache.linksJson()), "links") { CloudyWebApps.links(cache.refreshLinks(webapps.optString("links_url"), timeout * 4) ?: cache.linksJson()) }
-    val folders = remember(links, gh, local) { CloudyWebApps.derive(webapps, links, gh, local) }
-    val down = remember(local, up) { local.filter { e -> e.port != null && up[e.port] == false }.map { it.url }.toSet() }
-    Column(Modifier.fillMaxSize().testTag("cloudy:webapps")) {
+    val folders = remember(links) { CloudyWebApps.webApps(webapps, links) }
+    Box(Modifier.fillMaxSize().testTag("cloudy:webapps")) { WebyPage(decl, fixed = folders, down = emptySet(), onOpen = onOpen) }
+}
+
+@Composable
+private fun CloudyGhPagesPage(decl: SitesDecl, c: org.json.JSONObject, onOpen: (String) -> Unit) {
+    val ctx = LocalContext.current
+    val cache = remember { CloudyCache(ctx) }
+    val timeout = c.optInt("timeout_ms", 0)
+    val site = c.optJSONObject("gh_site") ?: org.json.JSONObject()
+    val seed = remember { Cloudy.seedPages(c) }
+    val gh by loaded(Cloudy.merge(seed, cache.pagesJson()), "gh") { Cloudy.merge(seed, cache.refresh(c.optString("pages_url"), timeout) ?: cache.pagesJson()) }
+    // the full page list of the repo diegonmarcos.github.io: its own front-topology.json, read at runtime and kept on the phone (never baked)
+    val pages by loaded(Cloudy.sitePages(cache.topologyJson(), site.optString("base")), "topology") {
+        Cloudy.sitePages(cache.refreshTopology(site.optString("topology_url"), timeout * 4) ?: cache.topologyJson(), site.optString("base"))
+    }
+    val folders = remember(gh, pages) { CloudyWebApps.ghPages(gh, pages, site.optString("repo")) }
+    Box(Modifier.fillMaxSize().testTag("cloudy:gh_pages")) { WebyPage(decl, fixed = folders, down = emptySet(), onOpen = onOpen) }
+}
+
+@Composable
+private fun CloudyLocalPage(decl: SitesDecl, c: org.json.JSONObject, t: (String) -> String, onOpen: (String) -> Unit) {
+    val ctx = LocalContext.current
+    val ws = c.optJSONObject("webserver") ?: org.json.JSONObject()
+    val timeout = c.optInt("timeout_ms", 0)
+    val explorers = remember { Cloudy.webserverExplorers(ws) }
+    val pages by loaded(Cloudy.webserverPages(ws), "ws") {
+        val store = runCatching { File(ws.optString("repos_store")).readText() }.getOrNull()
+        Cloudy.webserverPages(ws) + Cloudy.storeEntries(store)
+    }
+    val up by loaded(emptyMap<Int, Boolean>(), pages) { (explorers + pages).mapNotNull { it.port }.distinct().associateWith { Cloudy.probe(it, timeout) } }
+    val folders = remember(pages) { CloudyWebApps.local(explorers, pages) }
+    val down = remember(pages, up) { (explorers + pages).filter { e -> e.port != null && up[e.port] == false }.map { it.url }.toSet() }
+    Column(Modifier.fillMaxSize().testTag("cloudy:local")) {
         // The Cloud-Webserver APK: an explicit intent to its launcher activity, a clear message when it is not installed.
         KitStoreRowLine(Modifier.testTag("cloudy:ws:open"), onClick = { openWebserver(ctx, ws, t) }) {
             KitStoreName(t("ws_open"), Modifier.weight(1f), LocalKitPalette.current.accent)

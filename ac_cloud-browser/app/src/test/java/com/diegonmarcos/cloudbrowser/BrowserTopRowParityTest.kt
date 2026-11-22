@@ -40,8 +40,8 @@ class BrowserTopRowParityTest {
         assertTrue(sheets.contains("PageToolsRow(") && sheets.contains("MaterialTheme.typography.bodyLarge"))   // kit row: bodySmall (12) -> bodyMedium (14) -> bodyLarge (16)
         assertTrue(PAGE_TOOLS_ROW_MIN_DP >= 44)
         val bj = src("ac_cloud-browser/build.json")
-        listOf("add_to_home", "open_external", "copy_url", "bookmark", "pin_site").forEach { assertTrue("$it kept", bj.contains("\"id\": \"$it\"")) }
-        listOf("Actions", "Page Tools", "Site Data", "Site Perms", "Dev Tools").forEach { assertTrue("$it kept", bj.contains("\"label\": \"$it\"")) }
+        listOf("add_to_home", "open_external", "copy_url", "bookmark").forEach { assertTrue("$it kept", bj.contains("\"id\": \"$it\"")) }
+        listOf("Nav", "Scrapper", "Reading", "Site Data", "Perms", "Dev Tools").forEach { assertTrue("$it kept", bj.contains("\"label\": \"$it\"")) }   // #1856 renamed; pin_site is the one authorised removal
     }
 
     @Test fun `the add to home sheet and its IPC are declared`() {

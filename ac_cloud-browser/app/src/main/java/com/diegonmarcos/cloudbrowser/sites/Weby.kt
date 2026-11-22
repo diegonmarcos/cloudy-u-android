@@ -339,6 +339,9 @@ object CloudyWebApps {
     const val WEBAPPS = "WebApps"
     const val GH_PAGES = "GitHub Pages"
     const val LOCAL = "Local Webserver"
+    const val GH_PAGES_REPOS = "Repos' Pages"
+    const val FILE_EXPLORERS = "File Explorers"
+    const val LOCAL_PAGES = "Pages"
 
     /** link id -> address, from app-links.json (`{links:[{id,href}]}`); a link with no href is absent. */
     fun links(json: String?): Map<String, String> {
@@ -348,15 +351,37 @@ object CloudyWebApps {
         return out
     }
 
-    fun derive(decl: JSONObject, links: Map<String, String>, gh: List<CloudyEntry>, local: List<CloudyEntry>): List<WebyFolder> {
+    /**
+     * #1856 Cloudy > WebApps: the Cloud SuperApp > Cloud page's own rows. One top-level section per Cloud Store category (the SuperApp's Cloud tile groups: same
+     * titles, same order, same members, [decl] = ui.cloudy.webapps.categories derived from them), each a row of the member apps' tiles, exactly as the SuperApp
+     * page lays them out; no wrapper folder. A member with no address yet is drawn greyed, never dropped.
+     */
+    fun webApps(decl: JSONObject, links: Map<String, String>): List<WebyFolder> {
         val cats = decl.optJSONArray("categories") ?: JSONArray()
-        val apps = (0 until cats.length()).mapNotNull { cats.optJSONObject(it) }.map { c ->
+        return (0 until cats.length()).mapNotNull { cats.optJSONObject(it) }.map { c ->
             val m = c.optJSONArray("members") ?: JSONArray()
             WebyFolder(c.optString("label"), (0 until m.length()).mapNotNull { m.optJSONObject(it) }.map { a ->
                 WebyTile(a.optString("id"), a.optString("label"), links[a.optString("link_id")], null, a.optString("icon").takeIf { it.isNotBlank() })
             })
         }.filter { it.tiles.isNotEmpty() }
-        fun tiles(es: List<CloudyEntry>) = es.map { WebyTile(it.url, it.title.ifBlank { it.url.substringAfter("://").trimEnd('/') }, it.url) }
+    }
+
+    private fun tiles(es: List<CloudyEntry>) = es.map { WebyTile(it.url, it.title.ifBlank { it.url.substringAfter("://").trimEnd('/') }, it.url) }
+
+    /**
+     * #1856 Cloudy > GH Pages: the GitHub Pages the owner publishes. First the front-html list and the declared repos' Pages ([gh], section [GH_PAGES_REPOS]), then every
+     * page of the repo diegonmarcos.github.io ([site], from [Cloudy.sitePages]) as one section per category of that repo; a site with nothing read yet still shows
+     * its root so the page is never empty.
+     */
+    fun ghPages(gh: List<CloudyEntry>, site: List<Pair<String, List<CloudyEntry>>>, siteTitle: String): List<WebyFolder> =
+        listOf(WebyFolder(GH_PAGES_REPOS, tiles(gh))) + site.map { (cat, es) -> WebyFolder("$siteTitle › $cat", tiles(es)) }
+
+    /** #1856 Cloudy > Local: two groups, File Explorers first, then Pages. */
+    fun local(explorers: List<CloudyEntry>, pages: List<CloudyEntry>): List<WebyFolder> =
+        listOf(WebyFolder(FILE_EXPLORERS, tiles(explorers)), WebyFolder(LOCAL_PAGES, tiles(pages)))
+
+    fun derive(decl: JSONObject, links: Map<String, String>, gh: List<CloudyEntry>, local: List<CloudyEntry>): List<WebyFolder> {
+        val apps = webApps(decl, links)
         return listOf(WebyFolder(WEBAPPS, emptyList(), apps), WebyFolder(GH_PAGES, tiles(gh), emptyList()), WebyFolder(LOCAL, tiles(local), emptyList()))
     }
 }

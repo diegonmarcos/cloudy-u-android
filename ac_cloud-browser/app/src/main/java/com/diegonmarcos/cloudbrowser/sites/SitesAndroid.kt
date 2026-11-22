@@ -58,13 +58,18 @@ class CloudyCache(context: Context) {
 
     fun refreshLinks(url: String, timeoutMs: Int): String? = fetch(url, timeoutMs, LINKS)
 
+    /** #1856 the diegonmarcos.github.io repo's front-topology.json (its full page list), kept the same way. */
+    fun topologyJson(): String? = sp.getString(TOPOLOGY, null)
+
+    fun refreshTopology(url: String, timeoutMs: Int): String? = fetch(url, timeoutMs, TOPOLOGY)
+
     private fun fetch(url: String, timeoutMs: Int, key: String): String? = runCatching {
         val c = URL(url).openConnection() as HttpURLConnection
         c.connectTimeout = timeoutMs; c.readTimeout = timeoutMs
         c.inputStream.bufferedReader().use { it.readText() }.also { sp.edit().putString(key, it).apply() }
     }.getOrNull()
 
-    private companion object { const val KEY = "pages_json"; const val LINKS = "app_links_json" }
+    private companion object { const val KEY = "pages_json"; const val LINKS = "app_links_json"; const val TOPOLOGY = "front_topology_json" }
 }
 
 /** #1531 one GET of a site's public icon or page (at most [max] bytes) with the WebView's own user agent; null when the network or the site says no. BLOCKING. */

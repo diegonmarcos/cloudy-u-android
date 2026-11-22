@@ -73,17 +73,17 @@ class BrowserSitePermsUiTest {
     }
 
     @Test
-    fun `the sheet shows the five sections in order and every former action`() {
+    fun `the sheet shows the six sections in order and every former action`() {
         val facts = mapOf("page" to true, "can_go_back" to true, "can_go_forward" to true, "text_tools" to true, "profile_present" to true)
         val sections = cfg.menu.listSections(facts).map { (s, rows) -> s.label to rows.map { it.sheet() } }
-        assertEquals(listOf("Actions", "Page Tools", "Site Data", "Site Perms", "Dev Tools"), sections.map { it.first })
-        assertEquals(listOf("site_settings"), sections.first { it.first == "Site Perms" }.second.map { it.id })
+        assertEquals(listOf("Nav", "Scrapper", "Reading", "Site Data", "Perms", "Dev Tools"), sections.map { it.first })
+        assertEquals(setOf("site_settings", "shield_trackers", "shield_images", "shield_js"), sections.first { it.first == "Perms" }.second.map { it.id }.toSet())
         compose.setContent { CloudKitTheme(palette) { BrowserSheet(emptyList(), sections, onPick = {}, onDismiss = {}) } }
         compose.waitForIdle()
         listOf("back", "forward", "reload", "bookmark", "download_page", "translate", "desktop", "hard_refresh", "light_refresh",
             "find", "share", "copy_url", "open_external", "zoom", "summarize_topics", "reader", "print", "add_to_home", "save_page",
             "save_site", "fill_profile", "site_settings", "shield_trackers", "shield_js", "shield_images", "clear_site_cookies",
-            "clear_site_data", "site_autocomplete", "view_source", "dev_console", "dev_network", "dev_elements", "dev_storage",
+            "clear_site_data", "site_autocomplete", "open_local_folder", "view_source", "dev_console", "dev_network", "dev_elements", "dev_storage",
             "dev_graphics", "dev_remote_debug").forEach { id ->
             // the sheet is tabbed: only the open tab's rows are drawn
             val reachable = sections.indices.any { i -> tap("browser:menu:tab:$i"); compose.waitForIdle(); has("browser:menu:$id") }

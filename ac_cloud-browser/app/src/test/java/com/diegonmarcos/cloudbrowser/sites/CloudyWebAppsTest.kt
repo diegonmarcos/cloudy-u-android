@@ -24,6 +24,17 @@ class CloudyWebAppsTest {
         assertEquals(listOf("http://emulated.app/"), out[2].tiles.map { it.url })
     }
 
+    @Test fun `#1856 WebApps is the Cloud rows, one top-level section per Store category, GH Pages and Local have their own sections`() {
+        val rows = CloudyWebApps.webApps(decl, mapOf("cloud-mail" to "https://webmail.example/"))
+        assertEquals(listOf("Primary"), rows.map { it.title })
+        assertEquals(listOf("mail", "dialer"), rows[0].tiles.map { it.id })
+        val gh = CloudyWebApps.ghPages(listOf(CloudyEntry("repo", "https://o.github.io/repo/")), listOf("Lnktree" to listOf(CloudyEntry("Linktree", "https://o.github.io/linktree/"))), "diegonmarcos.github.io")
+        assertEquals(listOf("Repos' Pages", "diegonmarcos.github.io › Lnktree"), gh.map { it.title })
+        val local = CloudyWebApps.local(listOf(CloudyEntry("Local", "http://emulated.app/", port = 8002)), listOf(CloudyEntry("Drive", "http://emulated.app/p/drive")))
+        assertEquals("File Explorers first, then Pages", listOf("File Explorers", "Pages"), local.map { it.title })
+        assertEquals(listOf("http://emulated.app/"), local[0].tiles.map { it.url })
+    }
+
     @Test fun `links come from app-links json and a missing or null href is absent`() {
         val m = CloudyWebApps.links("""{"links":[{"id":"cloud-mail","href":"https://w/"},{"id":"cloud-dialer","href":null},{"id":"x"}]}""")
         assertEquals(mapOf("cloud-mail" to "https://w/"), m)

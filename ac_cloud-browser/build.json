@@ -820,16 +820,20 @@
       },
       "_doc_reader_css": "#802 the stylesheet reader mode renders the extracted article with (assets/browser/reader.js does the extraction).",
       "reader_css": "body{max-width:42em;margin:auto;padding:1em;font:18px/1.6 Georgia,serif;background:#111;color:#eee}img,video{max-width:100%;height:auto}a{color:#a78bfa}pre{white-space:pre-wrap}",
-      "_doc_menu": "#802/#900/#1401 PAGE-TOOLS, declared: the page-tools dropdown (section ids match the tab labels: actions, page_tools, site_data, site_perms, dev_tools): the sheet opened by the icon at the far right of the tab row (the app bar's ⋮ opens Configs). It holds ONLY what acts on the current page or domain, as five TABS in this order: Actions (navigation, reload/refresh, bookmark, copy URL, open in another app, home screen, pin/download site), Page Tools (grouped by `category`: Reading, Save & Export, Find & Share, View mode, Autofill; add-on page rows join here), Site Data (cookies and storage of this site, clear, autocomplete, trackers, images), Site Perms (one row, Perms: every permission a site can request), Dev Tools (console, network, elements, storage, graphics stats, remote debugging, JavaScript for this site). Global things live on the Configs pages.",
+      "_doc_menu": "#802/#900/#1401/#1856 PAGE-TOOLS, declared: the page-tools sheet opened by the icon at the far right of the tab row (the app bar's ⋮ opens Configs). It holds ONLY what acts on the current page or domain, as six TABS in this order (section ids are stable, labels are what is drawn): Nav (id actions: navigation, reload/refresh, bookmark, copy URL, open in another app, home screen, zoom this site), Scrapper (Save & Export, then the fleet's headless browser and scrapper API run on the page URL, mesh first: ui.browser.addons[scraper].fleet), Reading (id page_tools, grouped by `category`: Reading, Find & Share, View mode, Autofill; add-on page rows join here unless they name a `section`), Site Data (cookies and storage of this site, clear, autocomplete, Open Local Folder), Perms (id site_perms: the per-site permission list and the blockers as toggles: trackers, images, JavaScript), Dev Tools (view source, console, network, elements, storage, graphics stats, remote debugging). #1856 removed on the owner's order: Pin this site offline and Download full site (their runAction branches stay). Global things live on the Configs pages.",
       "menu": {
         "sections": [
           {
             "id": "actions",
-            "label": "Actions"
+            "label": "Nav"
+          },
+          {
+            "id": "scrapper",
+            "label": "Scrapper"
           },
           {
             "id": "page_tools",
-            "label": "Page Tools"
+            "label": "Reading"
           },
           {
             "id": "site_data",
@@ -837,7 +841,7 @@
           },
           {
             "id": "site_perms",
-            "label": "Site Perms"
+            "label": "Perms"
           },
           {
             "id": "dev_tools",
@@ -911,6 +915,184 @@
             ]
           },
           {
+            "id": "zoom",
+            "section": "actions",
+            "label": "Zoom (this site)…",
+            "requires": [
+              "page"
+            ],
+            "api": true
+          },
+          {
+            "id": "copy_url",
+            "section": "actions",
+            "label": "Copy URL",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "open_external",
+            "section": "actions",
+            "label": "Open in another app…",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "add_to_home",
+            "section": "actions",
+            "label": "Add to home screen",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "print",
+            "section": "scrapper",
+            "category": "Save & Export",
+            "label": "Print…",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "convert_pdf",
+            "section": "scrapper",
+            "category": "Save & Export",
+            "label": "Convert to PDF",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "download_page",
+            "section": "scrapper",
+            "category": "Save & Export",
+            "label": "Download this page",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "save_page",
+            "section": "scrapper",
+            "category": "Save & Export",
+            "label": "Save this page offline",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "save_site",
+            "section": "scrapper",
+            "category": "Save & Export",
+            "label": "Save this site offline",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "fleet_readable",
+            "section": "scrapper",
+            "category": "Headless browser (fleet)",
+            "label": "Readable text (Markdown)",
+            "requires": [
+              "page"
+            ],
+            "_doc": "cloudy-browser-headless: open the page URL, then the readable command (markdown). Mesh first (ui.browser.addons[scraper].fleet)."
+          },
+          {
+            "id": "fleet_text",
+            "section": "scrapper",
+            "category": "Headless browser (fleet)",
+            "label": "Plain text",
+            "requires": [
+              "page"
+            ],
+            "_doc": "cloudy-browser-headless: open + text."
+          },
+          {
+            "id": "fleet_links",
+            "section": "scrapper",
+            "category": "Headless browser (fleet)",
+            "label": "All links",
+            "requires": [
+              "page"
+            ],
+            "_doc": "cloudy-browser-headless: open + links."
+          },
+          {
+            "id": "fleet_html",
+            "section": "scrapper",
+            "category": "Headless browser (fleet)",
+            "label": "Rendered HTML",
+            "requires": [
+              "page"
+            ],
+            "_doc": "cloudy-browser-headless: open + html (the DOM after scripts ran)."
+          },
+          {
+            "id": "fleet_screenshot",
+            "section": "scrapper",
+            "category": "Headless browser (fleet)",
+            "label": "Screenshot (full page)",
+            "requires": [
+              "page"
+            ],
+            "_doc": "cloudy-browser-headless: open + screenshot; the answer is the image size and a data note."
+          },
+          {
+            "id": "fleet_pdf",
+            "section": "scrapper",
+            "category": "Headless browser (fleet)",
+            "label": "PDF of the page",
+            "requires": [
+              "page"
+            ],
+            "_doc": "cloudy-browser-headless: open + pdf."
+          },
+          {
+            "id": "fleet_ocr",
+            "section": "scrapper",
+            "category": "Headless browser (fleet)",
+            "label": "OCR the images",
+            "requires": [
+              "page"
+            ],
+            "_doc": "cloudy-browser-headless: open + ocr (container-only extension)."
+          },
+          {
+            "id": "fleet_crawl",
+            "section": "scrapper",
+            "category": "Scrapper API (fleet)",
+            "label": "Crawl this page (text list)",
+            "requires": [
+              "page"
+            ],
+            "_doc": "cloudy-browser-scrapper-api POST /scrape/crawl {url}."
+          },
+          {
+            "id": "fleet_youtube_video",
+            "section": "scrapper",
+            "category": "Scrapper API (fleet)",
+            "label": "YouTube: download video",
+            "requires": [
+              "page"
+            ],
+            "_doc": "cloudy-browser-scrapper-api POST /download/youtube {url, mode: video}; for content the owner has rights to."
+          },
+          {
+            "id": "fleet_youtube_audio",
+            "section": "scrapper",
+            "category": "Scrapper API (fleet)",
+            "label": "YouTube: download audio",
+            "requires": [
+              "page"
+            ],
+            "_doc": "cloudy-browser-scrapper-api POST /download/youtube {url, mode: audio}."
+          },
+          {
             "id": "reader",
             "section": "page_tools",
             "category": "Reading",
@@ -935,74 +1117,10 @@
             "checked": "translated"
           },
           {
-            "id": "zoom",
-            "section": "page_tools",
-            "category": "Reading",
-            "label": "Zoom (this site)…",
-            "requires": [
-              "page"
-            ],
-            "api": true
-          },
-          {
             "id": "summarize_topics",
             "section": "page_tools",
             "category": "Reading",
             "label": "Summarise page by topics",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "view_source",
-            "section": "page_tools",
-            "category": "Reading",
-            "label": "View source",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "print",
-            "section": "page_tools",
-            "category": "Save & Export",
-            "label": "Print…",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "convert_pdf",
-            "section": "page_tools",
-            "category": "Save & Export",
-            "label": "Convert to PDF",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "download_page",
-            "section": "page_tools",
-            "category": "Save & Export",
-            "label": "Download this page",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "save_page",
-            "section": "page_tools",
-            "category": "Save & Export",
-            "label": "Save this page offline",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "save_site",
-            "section": "page_tools",
-            "category": "Save & Export",
-            "label": "Save this site offline",
             "requires": [
               "page"
             ]
@@ -1046,48 +1164,6 @@
             ]
           },
           {
-            "id": "copy_url",
-            "section": "actions",
-            "label": "Copy URL",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "open_external",
-            "section": "actions",
-            "label": "Open in another app…",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "add_to_home",
-            "section": "actions",
-            "label": "Add to home screen",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "pin_site",
-            "section": "actions",
-            "label": "Pin this site offline",
-            "kind": "toggle",
-            "checked": "site_pinned",
-            "requires": [
-              "page"
-            ]
-          },
-          {
-            "id": "download_site",
-            "section": "actions",
-            "label": "Download full site (offline cache)",
-            "requires": [
-              "page"
-            ]
-          },
-          {
             "id": "clear_site_data",
             "section": "site_data",
             "label": "Site data: cookies & storage…",
@@ -1113,8 +1189,17 @@
             ]
           },
           {
-            "id": "shield_trackers",
+            "id": "open_local_folder",
             "section": "site_data",
+            "label": "Open Local Folder",
+            "requires": [
+              "page"
+            ],
+            "_doc": "#1856 this site's files kept on the phone: opens Domains > Files Cached (the browser's cache and offline copies, read as a folder tree)."
+          },
+          {
+            "id": "shield_trackers",
+            "section": "site_perms",
             "label": "Block trackers here",
             "kind": "toggle",
             "checked": "shield_trackers",
@@ -1124,7 +1209,7 @@
           },
           {
             "id": "shield_images",
-            "section": "site_data",
+            "section": "site_perms",
             "label": "Block images here",
             "kind": "toggle",
             "checked": "shield_images",
@@ -1135,7 +1220,25 @@
           {
             "id": "site_settings",
             "section": "site_perms",
-            "label": "Perms",
+            "label": "Every site permission…",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "shield_js",
+            "section": "site_perms",
+            "label": "Block JavaScript here",
+            "kind": "toggle",
+            "checked": "shield_js",
+            "requires": [
+              "page"
+            ]
+          },
+          {
+            "id": "view_source",
+            "section": "dev_tools",
+            "label": "View source",
             "requires": [
               "page"
             ]
@@ -1187,16 +1290,6 @@
             "label": "Remote debugging (chrome://inspect)",
             "kind": "toggle",
             "checked": "remote_debug"
-          },
-          {
-            "id": "shield_js",
-            "section": "dev_tools",
-            "label": "Block JavaScript here",
-            "kind": "toggle",
-            "checked": "shield_js",
-            "requires": [
-              "page"
-            ]
           }
 ]
       },
@@ -1784,10 +1877,40 @@
             "endpoint": "http://10.0.0.6:3020/scrape/crawl",
             "timeout_ms": 60000
           },
+          "_doc_fleet": "#1856 the Scrapper tab of the page-tools sheet: the fleet's headless browser and scrapper API run on the CURRENT page URL ({url} in a body). Mesh first (cloud-u-containers: cloudy-browser-headless mesh :3118, WG-only, BROWSER_TOKEN bearer read from the encrypted store key `bearer_key` by the host; cloudy-browser-scrapper-api mesh :3020, its public route is behind two-factor so it is not listed). Headless commands are headless-api v1 (POST /run {steps}); `show` is the step whose result is the answer; the trailing close frees the session. `download` tools stream a file into the app's Downloads folder. FleetScrapper in libs:browser reads this block; a tool here without a menu row (or a row without a tool) fails test-browser-scrapper.sh.",
+          "fleet": {
+            "services": {
+              "headless": {
+                "bases": [
+                  "http://cloudy-browser-headless.mesh.diegonmarcos.com:3118"
+                ],
+                "bearer_key": "headless.cloudy.token"
+              },
+              "scrapper_api": {
+                "bases": [
+                  "http://cloudy-browser-scrapper-api.mesh.diegonmarcos.com:3020"
+                ]
+              }
+            },
+            "tools": [
+              {"id": "fleet_readable", "service": "headless", "path": "/run", "show": 1, "body": {"steps": [{"cmd": "open", "url": "{url}"}, {"cmd": "readable", "format": "markdown"}, {"cmd": "close"}]}},
+              {"id": "fleet_text", "service": "headless", "path": "/run", "show": 1, "body": {"steps": [{"cmd": "open", "url": "{url}"}, {"cmd": "text"}, {"cmd": "close"}]}},
+              {"id": "fleet_links", "service": "headless", "path": "/run", "show": 1, "body": {"steps": [{"cmd": "open", "url": "{url}"}, {"cmd": "links"}, {"cmd": "close"}]}},
+              {"id": "fleet_html", "service": "headless", "path": "/run", "show": 1, "body": {"steps": [{"cmd": "open", "url": "{url}"}, {"cmd": "html"}, {"cmd": "close"}]}},
+              {"id": "fleet_screenshot", "service": "headless", "path": "/run", "show": 1, "body": {"steps": [{"cmd": "open", "url": "{url}"}, {"cmd": "screenshot", "format": "jpeg", "quality": 60}, {"cmd": "close"}]}},
+              {"id": "fleet_pdf", "service": "headless", "path": "/run", "show": 1, "body": {"steps": [{"cmd": "open", "url": "{url}"}, {"cmd": "pdf"}, {"cmd": "close"}]}},
+              {"id": "fleet_ocr", "service": "headless", "path": "/run", "show": 1, "body": {"steps": [{"cmd": "open", "url": "{url}"}, {"cmd": "ocr"}, {"cmd": "close"}]}},
+              {"id": "fleet_crawl", "service": "scrapper_api", "path": "/scrape/crawl", "body": {"url": "{url}"}},
+              {"id": "fleet_youtube_video", "service": "scrapper_api", "path": "/download/youtube", "download": true, "body": {"url": "{url}", "mode": "video"}},
+              {"id": "fleet_youtube_audio", "service": "scrapper_api", "path": "/download/youtube", "download": true, "body": {"url": "{url}", "mode": "audio"}}
+            ]
+          },
           "menu": [
             {
               "id": "scraper",
               "label": "Web scraper…",
+              "section": "scrapper",
+              "category": "Web scraper (this phone)",
               "requires": [
                 "page"
               ]
@@ -2145,9 +2268,11 @@
         "icon": "cloud",
         "pages": [
           {"id": "webapps", "label": "WebApps", "icon": "apps"},
-          {"id": "c3_urls", "label": "C3 Urls", "icon": "link"}
+          {"id": "gh_pages", "label": "GH Pages", "icon": "public"},
+          {"id": "local", "label": "Local", "icon": "folder_open"},
+          {"id": "c3_urls", "label": "C3", "icon": "link"}
         ],
-        "_doc": "#1493/#1531 the owner's sites, two tabs (#1842): WebApps (Weby's page over fixed sections WebApps / GitHub Pages / Local Webserver: the former GH Pages and Local Webserver tabs, with the link that opens the Cloud-Webserver APK) and C3 Urls (the former Cloudy Private URLs and Cloudy Public URLs merged: one icon grid of the fleet's containers by c3-infra category, ac_cloud-c3 data/routes.json, a private / public chooser per container). All derived at build time (ui.cloudy)."
+        "_doc": "#1493/#1531/#1856 the owner's sites, four subpages: WebApps (Weby's page over the Cloud SuperApp > Cloud rows: one section per Cloud Store category, same titles, order and members as the SuperApp's Cloud tile groups), GH Pages (the repos' Pages and the front-html list, then every page of the repo diegonmarcos.github.io read at runtime from that repo's own front-topology.json), Local (the Cloud-Webserver: File Explorers, then Pages, with the link that opens its APK) and C3 (the former C3 Urls: one icon grid of the fleet's containers by c3-infra category, ac_cloud-c3 data/routes.json, a private / public chooser per container). The former WebApps sections GitHub Pages and Local Webserver moved to GH Pages and Local (none dropped). Derived at build time or read at runtime (ui.cloudy)."
       },
       {
         "id": "domains",
@@ -2219,7 +2344,13 @@
     "cloudy": {
       "_doc": "#1493 Cloudy. pages_url = front-html's Pages list (the owner's GitHub Pages, public ones, refreshed over the network and kept in the cloudy_cache prefs); the declared repos' Pages (ac_cloud-c3 data/repos_declared.json) and the Cloud-Webserver's serving map, Pages sub-pages and Repos store (ac_cloud-c3-webserver/build.json) are read by app/build.gradle. webserver_base_role = the serving endpoint the Webserver's own pages are served on.",
       "pages_url": "https://raw.githubusercontent.com/diegonmarcos/_front-html___/main/pages.json",
-      "_doc_webapps": "#1842 Cloudy > WebApps is Weby's page over three fixed sections: WebApps (the Cloud web apps by Cloud Store category), GitHub Pages and Local Webserver. The categories and members come from the Store's declaration (aa_cloud-superapp/data/constellation-fleet.json app_categories), each member's icon is the SuperApp's own tile drawable converted to path data and its link id the repo directory; both are baked by app/build.gradle into ui.cloudy.webapps (categories, icons), never typed here. links_url = the cloudy-h-webapps-mob repo's generated app-links.json (the declared web address of each Cloud app), fetched and kept in the cloudy_cache prefs; a member without an address yet is drawn greyed.",
+      "_doc_gh_site": "#1856 Cloudy > GH Pages lists the FULL set of pages published from the repo diegonmarcos.github.io: that repo's own front-topology.json (generated by its build: every project with its deploy_name, its path under base) is read AT RUNTIME from topology_url and kept in the cloudy_cache prefs (runtime-data guard: nothing baked, no new asset). Grouped by the repo's categories.",
+      "gh_site": {
+        "repo": "diegonmarcos.github.io",
+        "base": "https://diegonmarcos.github.io/",
+        "topology_url": "https://raw.githubusercontent.com/diegonmarcos/diegonmarcos.github.io/main/front-topology.json"
+      },
+      "_doc_webapps": "#1842/#1856 Cloudy > WebApps is Weby's page over the Cloud SuperApp > Cloud rows (the Cloud web apps by Cloud Store category, one section each; GitHub Pages and Local Webserver are the GH Pages and Local subpages). The categories and members come from the Store's declaration (aa_cloud-superapp/data/constellation-fleet.json app_categories), each member's icon is the SuperApp's own tile drawable converted to path data and its link id the repo directory; both are baked by app/build.gradle into ui.cloudy.webapps (categories, icons), never typed here. links_url = the cloudy-h-webapps-mob repo's generated app-links.json (the declared web address of each Cloud app), fetched and kept in the cloudy_cache prefs; a member without an address yet is drawn greyed.",
       "webapps": {"links_url": "https://raw.githubusercontent.com/diegonmarcos/cloudy-h-webapps-mob/main/packages/cloudy-ui/nav/app-links.json"},
       "webserver_base_role": "drive",
       "timeout_ms": 1500,

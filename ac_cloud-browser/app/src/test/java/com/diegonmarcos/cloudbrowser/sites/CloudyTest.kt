@@ -48,12 +48,36 @@ class CloudyTest {
     private val routes = org.json.JSONArray(java.io.File(root, "ac_cloud-c3/data/routes.json").readText())
 
     @Test
-    fun `the Cloudy tabs are WebApps and C3 Urls, in that order`() {
+    fun `the Cloudy subpages are WebApps, GH Pages, Local and C3, in that order`() {
         val sections = browser.getJSONObject("ui").getJSONArray("sections")
         val cloudy = (0 until sections.length()).map { sections.getJSONObject(it) }.first { it.getString("id") == "cloudy" }.getJSONArray("pages")
         val pages = (0 until cloudy.length()).map { cloudy.getJSONObject(it) }
-        assertEquals(listOf("webapps", "c3_urls"), pages.map { it.getString("id") })
-        assertEquals(listOf("WebApps", "C3 Urls"), pages.map { it.getString("label") })
+        assertEquals(listOf("webapps", "gh_pages", "local", "c3_urls"), pages.map { it.getString("id") })
+        assertEquals(listOf("WebApps", "GH Pages", "Local", "C3"), pages.map { it.getString("label") })
+    }
+
+    @Test
+    fun `#1856 every page of diegonmarcos github io comes from its front-topology, by category, once per category`() {
+        val topo = """{"projects":[
+            {"name":"Linktree","category":"Lnktree","deploy_name":"linktree","framework":"vanilla"},
+            {"name":"Cloud SuperApp","category":"cloud-webapps","deploy_name":"cloud-superapp"},
+            {"name":"Cloud Mobile","category":"a_Portals","deploy_name":"cloud-superapp"},
+            {"name":"Dup","category":"Lnktree","deploy_name":"linktree"},
+            {"name":"Unpublished","category":"Lnktree","deploy_name":""}]}"""
+        val out = Cloudy.sitePages(topo, "https://diegonmarcos.github.io/")
+        assertEquals(listOf("a_Portals", "cloud-webapps", "Lnktree"), out.map { it.first })
+        assertEquals(listOf("https://diegonmarcos.github.io/linktree/"), out.first { it.first == "Lnktree" }.second.map { it.url })
+        assertEquals("a project is listed in each category it belongs to", "https://diegonmarcos.github.io/cloud-superapp/", out[0].second[0].url)
+        assertTrue(Cloudy.sitePages(null, "https://x/").isEmpty() && Cloudy.sitePages("nope", "https://x/").isEmpty())
+    }
+
+    @Test
+    fun `#1856 the declared Webserver splits into File Explorers (endpoints) and Pages, and loses nothing`() {
+        val ws = JSONObject("""{"base_role":"drive","endpoints":[{"title":"Local","name":"emulated.app","role":"drive","port":8002},{"title":"Termux","name":"termux.app","role":"external","port":8000}],
+            "pages":[{"label":"Drive","route":"/p/drive","tab":"pages"}]}""")
+        assertEquals(listOf("Local", "Termux"), Cloudy.webserverExplorers(ws).map { it.title })
+        assertEquals(listOf("Drive"), Cloudy.webserverPages(ws).map { it.title })
+        assertEquals(Cloudy.webserverExplorers(ws) + Cloudy.webserverPages(ws), Cloudy.declaredWebserver(ws))
     }
 
     @Test
