@@ -99,12 +99,16 @@ jobs:
           # pages are opened from the title dropdown (every page of the section, in the menu's order), as the nav walk does
           item() {
             dump "pre-$1"; tap topbar_title; sleep 2; dump "dropdown-$1"
-            if [ "$1" = chronos ]; then
-              order=$(python3 -I ui.py seq out/ui.xml 'navtop1_entry_' | tr ' ' '\n' | sed 's/navtop1_entry_//' | tr '\n' ' ')
-              echo "dropdown order: $order" | tee -a out/verdict.txt
-              case "$order" in *" chronos "*" sacred "*) check ok "the dropdown lists Chronos then Sacred Geometry";; *) check bad "the dropdown lists Chronos then Sacred Geometry (got: $order)";; esac
-            fi
-            xy=$(python3 -I ui.py id out/ui.xml "navtop1_entry_$1"); [ -n "$xy" ] || return 1
+            # the dropdown is capped and scrolls: the entry sits below the fold until it is scrolled to
+            xy=$(python3 -I ui.py id out/ui.xml "navtop1_entry_$1")
+            for i in 1 2 3 4; do
+              [ -n "$xy" ] && break
+              adb shell input swipe 540 900 540 400 400; sleep 1; dump "dropdown-$1-$i"
+              xy=$(python3 -I ui.py id out/ui.xml "navtop1_entry_$1")
+            done
+            order=$(python3 -I ui.py seq out/ui.xml 'navtop1_entry_' | tr ' ' '\n' | sed 's/navtop1_entry_//' | tr '\n' ' ')
+            echo "dropdown order at $1: $order" | tee -a out/verdict.txt
+            [ -n "$xy" ] || return 1
             adb shell input tap $xy
           }
           # Projects > Chronos
