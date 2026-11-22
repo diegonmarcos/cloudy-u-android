@@ -46,6 +46,8 @@ import xml.etree.ElementTree as ET
 TITLE, CONFIGS, MORE = "topbar_title", "topbar_configs", "navtop1_more"
 CRUMB0 = "navtop1_crumb_0"
 ENTRY = "navtop1_entry_"
+# #1850 the removed "sections" list: a section is reached from Parent Pages (urluri_entry_section:<id>) or, at depth 0, from Siblings (navtop1_entry_<id>)
+SECTION_ENTRY = "urluri_entry_section:"
 ITEM, LABEL = "bottomnav_item_", "bottomnav_label_"
 ISLAND = "bottomnav_island"
 TAB = "pagetabs_tab_"
@@ -478,7 +480,7 @@ class Walk:
         if nodes is None:
             return False
         for i in range(DROPDOWN_SWIPES):
-            e = find(nodes, ENTRY + pid)
+            e = find(nodes, ENTRY + pid) or find(nodes, SECTION_ENTRY + pid)
             if e is not None:
                 tap(e)
                 settle(1.6)
@@ -560,11 +562,11 @@ class Walk:
         nodes = dump() or []
         seen = set()
         for _ in range(DROPDOWN_SWIPES):
-            seen |= {n.rid[len(ENTRY):] for n in findall(nodes, ENTRY)}
+            seen |= {n.rid[len(ENTRY):] for n in findall(nodes, ENTRY)} | {n.rid[len(SECTION_ENTRY):] for n in findall(nodes, SECTION_ENTRY)}
             if not self.scroll_dropdown(nodes):
                 break
             nodes = dump() or nodes
-        seen |= {n.rid[len(ENTRY):] for n in findall(nodes, ENTRY)}
+        seen |= {n.rid[len(ENTRY):] for n in findall(nodes, ENTRY)} | {n.rid[len(SECTION_ENTRY):] for n in findall(nodes, SECTION_ENTRY)}
         return seen
 
     def check_section_list(self):

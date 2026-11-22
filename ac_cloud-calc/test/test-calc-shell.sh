@@ -424,7 +424,7 @@ if "top_bar" in bj["ui"]:
     bad.append("C15 build.json::ui.top_bar is back: the first row is the shared NavBarTopFirstRow, which has no declaration of its own")
 for need in ("NavBarTopFirstRowScaffold(", "NavBarBottomHost(", "NavBarTopSecondRows(", "titleHierarchy(", "themeBackground(",
              "onAccount = rememberAccountLauncher()", "onConfigs = { state.openConfigs() }", "onAi = { state.showSection(Declarations.AI_SECTION) }",
-             "TopBarDrawer { close -> CalcDrawer(close) }"):
+             "TopBarDrawerWithActions { close -> CalcDrawer(close) }"):
     if need not in shell:
         bad.append("C15 ui/CalcShell.kt must draw the shared bars: missing %s" % need)
 for gone in ("AppTopBarScaffold", "BottomNavHost(", "PageTabs(", "ConfigsButton", "CircleShape"):

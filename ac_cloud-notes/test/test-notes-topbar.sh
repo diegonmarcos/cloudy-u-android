@@ -65,7 +65,7 @@ check(ui.get('nav_ui', {}).get('mode') == 'clean' and 'nav_ui' in (ui.get('confi
       'build.json::ui.nav_ui declares Clean as the default nav mode and lists nav_ui in configs_ui')
 check('"UI_NAV_UI_B64"' in gradle and 'UI_NAV_UI_B64' in shell and 'LocalNavUiDefault provides' in shell,
       'app/build.gradle bakes ui.nav_ui and NotesShell provides it as the nav default')
-check('TopBarDrawer {' in shell, 'the drawer is filled through TopBarDrawer')
+check('TopBarDrawerWithActions {' in shell, 'the drawer is filled through TopBarDrawer')
 
 # bridge
 for const, kt in (('NATIVE_NAV_EVENT', 'EVENT'), ('NATIVE_OPEN_SETTINGS_EVENT', 'OPEN_SETTINGS_EVENT'), ('NATIVE_OPEN_DOC_EVENT', 'OPEN_DOC_EVENT')):

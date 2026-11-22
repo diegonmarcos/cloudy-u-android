@@ -219,6 +219,29 @@ public fun TopBarDrawer(content: TopBarDrawerContent) {
     }
 }
 
+/**
+ * #1850 a page's own NON-navigation actions (reload, new tab, sheets, saved items, projects...), listed in the merged path dropdown under an
+ * "Actions" header. The drawer slot ([TopBarDrawer]) is no longer listed there: it is the generic page list, which Parent Pages and Siblings
+ * already carry. Call it from the page, next to [TopBarDrawer] when the hamburger drawer should show the same rows.
+ */
+@Composable
+public fun TopBarActions(content: TopBarDrawerContent) {
+    val controller = LocalAppTopBar.current ?: return
+    val latest by rememberUpdatedState(content)
+    DisposableEffect(controller) {
+        val slot: TopBarDrawerContent = { close -> latest(this, close) }
+        controller.actionsContent = slot
+        onDispose { if (controller.actionsContent === slot) controller.actionsContent = null }
+    }
+}
+
+/** [TopBarDrawer] and [TopBarActions] with the same rows: for a page whose drawer holds real actions, not only page navigation (#1850). */
+@Composable
+public fun TopBarDrawerWithActions(content: TopBarDrawerContent) {
+    TopBarDrawer(content)
+    TopBarActions(content)
+}
+
 /** What a page puts in the drawer: a column, and a way to dismiss the drawer. */
 public typealias TopBarDrawerContent = @Composable ColumnScope.(close: () -> Unit) -> Unit
 
@@ -230,6 +253,10 @@ public class AppTopBarController {
         private set
     public var settingsOpen: Boolean by mutableStateOf(false)
         private set
+
+    /** What the page said through [TopBarActions]: its non-navigation actions, listed in the title dropdown (#1850). */
+    public var actionsContent: TopBarDrawerContent? by mutableStateOf<TopBarDrawerContent?>(null)
+        internal set
 
     /** What the page said through [TopBarDrawer]; public so libs:ui-nav-bars can list it in the title dropdown (no hamburger there). */
     public var drawerContent: TopBarDrawerContent? by mutableStateOf<TopBarDrawerContent?>(null)

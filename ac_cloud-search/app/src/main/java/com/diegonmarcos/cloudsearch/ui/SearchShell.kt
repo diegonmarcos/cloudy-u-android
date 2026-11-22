@@ -53,7 +53,7 @@ import com.diegonmarcos.cloudsearch.data.Account
 import com.diegonmarcos.cloudsearch.data.Services
 import com.diegonmarcos.superapp.bottomnav.NavDecl
 import com.diegonmarcos.superapp.bottomnav.PageTabsTags
-import com.diegonmarcos.superapp.bottomnav.TopBarDrawer
+import com.diegonmarcos.superapp.bottomnav.TopBarDrawerWithActions
 import com.diegonmarcos.superapp.bottomnav.islandEntries
 import com.diegonmarcos.superapp.bottomnav.rememberAccountLauncher
 import com.diegonmarcos.superapp.navbarbottom.BottomTags
@@ -309,7 +309,7 @@ private fun Chrome(state: SearchState, v: SearchConfig.Vertical) {
         onAi = { state.openSection("chat"); state.chatPage = state.chatVertical },
         dark = state.dark,
     ) {
-        TopBarDrawer { close ->
+        TopBarDrawerWithActions { close ->
             Column(Modifier.fillMaxWidth().background(g.menu).padding(Metrics.gutter).testTag(Tags.CATEGORIES), verticalArrangement = Arrangement.spacedBy(Metrics.gap)) {
                 Categories(state, close)
             }

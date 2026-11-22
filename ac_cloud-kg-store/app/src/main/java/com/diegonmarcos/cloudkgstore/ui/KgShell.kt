@@ -41,7 +41,7 @@ import com.diegonmarcos.superapp.ai.AiSettingsPickers
 import com.diegonmarcos.superapp.ai.AiStrings
 import com.diegonmarcos.superapp.ai.AiTheme
 import com.diegonmarcos.superapp.ai.materialAiTheme
-import com.diegonmarcos.superapp.bottomnav.TopBarDrawer
+import com.diegonmarcos.superapp.bottomnav.TopBarDrawerWithActions
 import com.diegonmarcos.superapp.bottomnav.islandEntries
 import com.diegonmarcos.superapp.bottomnav.rememberAccountLauncher
 import com.diegonmarcos.superapp.navbarbottom.NavBarBottomHost
@@ -108,7 +108,7 @@ fun KgShell() {
                 modifier = Modifier.testTag(KgTags.SHELL),
             ) {
                 // The hamburger's left drawer: new chat, then the assistant's sessions (open, rename, delete).
-                TopBarDrawer { close -> AiSessionsPanel(chat, theme, onPicked = { open(Decl.SECTION_ASK, null); close() }) }
+                TopBarDrawerWithActions { close -> AiSessionsPanel(chat, theme, onPicked = { open(Decl.SECTION_ASK, null); close() }) }
                 val pageBody: @Composable () -> Unit = {
                     Box(Modifier.fillMaxSize()) {
                         val kg = pageId?.let { svc.kg.page(it) }

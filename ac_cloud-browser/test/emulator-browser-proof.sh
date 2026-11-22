@@ -147,11 +147,11 @@ adb shell am force-stop "$BPKG" >/dev/null 2>&1 || true
 adb shell am start -W -n "$BPKG/.MainActivity" >/dev/null 2>&1 || adb shell monkey -p "$BPKG" 1 >/dev/null 2>&1
 sleep 6
 # open Favourites and wait until its title is on screen (a first launch can show Tabs for a while). Favourites is an off-bar
-# section (ui.bottom_nav is Domains|Tabs|Browser|Cloudy|Weby): it is entered from the first row's title dropdown, entry navtop1_entry_favourites
+# section (ui.bottom_nav is Domains|Tabs|Browser|Cloudy|Weby): it is entered from the first row's title dropdown, entry navtop1_entry_favourites (Siblings) or urluri_entry_section:favourites (Parent Pages, #1850)
 onfav=0
 for _ in $(seq 1 10); do
   # the dropdown may already be open from the previous round: take the entry first, open the dropdown only when it is not there
-  tapid '^navtop1_entry_favourites$' || { tapid '^navtop1_more$' || tapid '^topbar_title$' || true; tapid '^navtop1_entry_favourites$' || true; }
+  tapid '^(navtop1_entry_favourites|urluri_entry_section:favourites)$' || { tapid '^navtop1_more$' || tapid '^topbar_title$' || true; tapid '^(navtop1_entry_favourites|urluri_entry_section:favourites)$' || true; }
   dump _fav; grep -q 'text="Favourites"' "$OUT/_fav.xml" && { onfav=1; break; }
   sleep 3
 done

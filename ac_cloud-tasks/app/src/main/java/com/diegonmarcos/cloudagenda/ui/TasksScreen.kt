@@ -63,7 +63,7 @@ import com.diegonmarcos.cloudagenda.data.TaskFiltering
 import com.diegonmarcos.cloudagenda.data.TaskNode
 import com.diegonmarcos.cloudagenda.data.TaskStatus
 import com.diegonmarcos.cloudagenda.links.newAttachment
-import com.diegonmarcos.superapp.bottomnav.TopBarDrawer
+import com.diegonmarcos.superapp.bottomnav.TopBarDrawerWithActions
 import com.diegonmarcos.superapp.uikit.KitConfirmDialog
 import com.diegonmarcos.superapp.uikit.KitEmptyState
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
@@ -112,7 +112,7 @@ fun TasksScreen(controller: TasksController, host: TasksHost, pickedLink: Attach
     // A mail the Cloud Mail picker returned, waiting for the editor to take it into its draft.
     var mailLink by remember { mutableStateOf<Attachment?>(null) }
 
-    TopBarDrawer { close ->
+    TopBarDrawerWithActions { close ->
         ProjectsDrawerContent(
             snapshot = snap, selectedListId = controller.selectedListId, expanded = expanded,
             onToggle = { id -> expanded = if (id in expanded) expanded - id else expanded + id },

@@ -141,9 +141,11 @@ public object TopFirstRowTags {
     /** The chevron that opens the dropdown when a tap on the title does something else (onTitleClick). */
     public const val MORE: String = "navtop1_more"
     public const val SEPARATOR_PAGES: String = "navtop1_sep_pages"
-    /** #1758 the divider above the "Sections" group (below depth 0 the sections follow the pages). */
-    public const val SEPARATOR_SECTIONS: String = "navtop1_sep_sections"
     public const val SEPARATOR_ACTIONS: String = "navtop1_sep_actions"
+    /** #1850 the headers of the tree and the related pages, and of the page's own actions. */
+    public const val HEADER_TREE: String = "navtop1_header_tree"
+    public const val HEADER_SIBLINGS: String = "navtop1_header_siblings"
+    public const val HEADER_ACTIONS: String = "navtop1_header_actions"
     public const val ACTIONS: String = "navtop1_actions"
     /** The shared "Configs > General" entry at the end of the dropdown (the nav UI card is a section of General). */
     public const val CONFIGS_GENERAL: String = "navtop1_configs_general"
@@ -154,6 +156,13 @@ public object TopFirstRowTags {
     public fun crumb(index: Int): String = "navtop1_crumb_$index"
     public fun entry(id: String): String = "navtop1_entry_$id"
 }
+
+/**
+ * #1850 the sections Parent Pages lists: the bottom pages, then every declared section that is not one yet (an off-bar section such as Tools or
+ * Settings), so dropping the old "sections" list loses no destination. A "configs" section is skipped: Settings / Configs reaches it. Pure.
+ */
+internal fun mergedParentPages(bottom: List<NavSection>, declared: List<NavSection>): List<NavSection> =
+    bottom + declared.filter { d -> d.id != "configs" && bottom.none { it.id == d.id } }
 
 /** The ink role of a title-dropdown entry: the current page, an entry indented under the current level, else a parent. */
 internal fun dropdownEntryRole(e: HierarchyEntry, currentDepth: Int): DropdownEntryRole = when {
@@ -314,7 +323,8 @@ public fun NavBarTopFirstRow(
                   // the Url-Uri dropdown's own container tag stays on the merged dropdown's content (#1842 amendment 7)
                   Box(if (urlUri != null) Modifier.testTag(UrlUriTags.DROPDOWN) else Modifier) {
                   Column(Modifier.verticalScroll(rememberScrollState())) {
-                    // 1 the tree of parents: the app, then each ancestor down to the current page, indented by depth, each a tap; the current one highlighted
+                    // 1 the tree of parents (#1850 header "Parents Tree"): the app, then each ancestor down to the current page, indented by depth, each a tap; the current one highlighted
+                    if (nav.crumbs.isNotEmpty()) Header("Parents Tree", TopFirstRowTags.HEADER_TREE, colors)
                     nav.crumbs.forEachIndexed { i, c ->
                         val target = c.target
                         val here = i == nav.crumbs.lastIndex
@@ -332,7 +342,10 @@ public fun NavBarTopFirstRow(
                             maxLines = 1, overflow = TextOverflow.Ellipsis,
                         )
                     }
-                    if (nav.related.isNotEmpty()) HorizontalDivider(Modifier.testTag(TopFirstRowTags.SEPARATOR_PAGES), color = colors.islandBorder)
+                    if (nav.related.isNotEmpty()) {
+                        HorizontalDivider(Modifier.testTag(TopFirstRowTags.SEPARATOR_PAGES), color = colors.islandBorder)
+                        Header("Siblings", TopFirstRowTags.HEADER_SIBLINGS, colors)
+                    }
                     nav.related.forEach { e ->
                         DropdownMenuItem(
                             text = {
@@ -347,8 +360,9 @@ public fun NavBarTopFirstRow(
                             modifier = Modifier.testTag(TopFirstRowTags.entry(e.id)),
                         )
                     }
-                    // 3 A Pages (Url-Uri), 4 the page's actions, 5 B Tools (Url-Uri)
-                    val uu = urlUri?.let { m -> rememberUrlUriContent(hierarchy, m.sections, m.decl, m.defaultSection, onNavigate, m.onAi, m.onProfile, m.onConfigs, m.onAction) }
+                    // 3 A Parent Pages (Url-Uri), 4 the page's own actions (#1850: not the generic page drawer), 5 B Tools (Url-Uri)
+                    // #1850 the removed "sections" list is carried by Parent Pages: every declared section that is not a bottom page joins it (Configs is Settings / Configs).
+                    val uu = urlUri?.let { m -> rememberUrlUriContent(hierarchy, mergedParentPages(m.sections, sections), m.decl, m.defaultSection, onNavigate, m.onAi, m.onProfile, m.onConfigs, m.onAction) }
                     if (uu != null) {
                         HorizontalDivider(color = colors.islandBorder)
                         UrlUriPagesGroup(uu, colors) { open = false }
@@ -357,31 +371,14 @@ public fun NavBarTopFirstRow(
                         HorizontalDivider(Modifier.testTag(TopFirstRowTags.SEPARATOR_ACTIONS), color = colors.islandBorder)
                         // The popup's column scrolls (infinite height), so a page's actions get a FINITE bound: its own verticalScroll /
                         // LazyColumn then measures instead of crashing, and the popup's scroll reaches all of it.
+                        Header("Actions", TopFirstRowTags.HEADER_ACTIONS, colors)
                         Column(Modifier.heightIn(max = TopFirstRowSpec.ACTIONS_MAX_HEIGHT).testTag(TopFirstRowTags.ACTIONS)) { extra { open = false } }
                     }
                     if (uu != null) {
                         HorizontalDivider(Modifier.testTag(UrlUriTags.SEPARATOR), color = colors.islandBorder)
                         UrlUriToolsGroup(uu, colors) { open = false }
                     }
-                    // 6 #1758 below depth 0 the sections follow the pages and the page's actions, so nothing that was shown moves
-                    if (nav.sections.isNotEmpty()) {
-                        HorizontalDivider(Modifier.testTag(TopFirstRowTags.SEPARATOR_SECTIONS), color = colors.islandBorder)
-                        nav.sections.forEach { e ->
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        e.label,
-                                        Modifier.padding(start = 16.dp * (e.depth - nav.currentDepth).coerceAtLeast(0)),
-                                        fontWeight = if (e.selected) FontWeight.Bold else FontWeight.Normal,
-                                        color = NavTokens().dropdownInk(dropdownEntryRole(e, nav.currentDepth)),
-                                    )
-                                },
-                                onClick = { open = false; onNavigate(e) },
-                                modifier = Modifier.testTag(TopFirstRowTags.entry(e.id)),
-                            )
-                        }
-                    }
-                    // 7 Configs
+                    // 6 Configs
                     if (onConfigsUi != null || onConfigsAbout != null) HorizontalDivider(color = colors.islandBorder)
                     if (onConfigsUi != null) {
                         DropdownMenuItem(
@@ -570,7 +567,7 @@ public fun NavBarTopFirstRowScaffold(
             aiPanel = aiPanel,
             barVisible = barVisible && !collapse.collapsed,
             topRow = { c ->
-                val slot = c.drawerContent
+                val slot = c.actionsContent
                 Box(Modifier.background(underlay).testTag(TopFirstRowTags.UNDERLAY)) {
                 val urlUriAi: () -> Unit = { if (onAi != null) onAi() else c.toggleAi() }
                 // The Clean row (no path popup) keeps the Url-Uri button; the Classic row's path dropdown carries the same groups (amendment 7).

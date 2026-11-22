@@ -77,7 +77,7 @@ import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Send
 import androidx.compose.ui.res.colorResource
 import com.diegonmarcos.cloudsuperintel.Persona
-import com.diegonmarcos.superapp.bottomnav.TopBarDrawer
+import com.diegonmarcos.superapp.bottomnav.TopBarDrawerWithActions
 import com.diegonmarcos.superapp.bottomnav.rememberAccountLauncher
 import com.diegonmarcos.superapp.bottomnav.islandEntries
 import com.diegonmarcos.superapp.navbarbottom.NavBarBottomHost
@@ -175,7 +175,7 @@ fun SiShell() {
                 modifier = Modifier.testTag(SiTags.SHELL),
             ) {
                 // The hamburger's left drawer: new chat, then the sessions (open, rename, delete).
-                TopBarDrawer { close -> AiSessionsPanel(chat, theme, onPicked = { if (persona == null) open(Decl.SECTION_SI, siDefault); close() }) }
+                TopBarDrawerWithActions { close -> AiSessionsPanel(chat, theme, onPicked = { if (persona == null) open(Decl.SECTION_SI, siDefault); close() }) }
                 val pageBody: @Composable () -> Unit = {
                     Box(Modifier.fillMaxSize()) {
                         when (sec?.id) {

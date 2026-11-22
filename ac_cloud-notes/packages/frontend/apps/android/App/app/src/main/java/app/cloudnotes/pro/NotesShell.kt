@@ -37,7 +37,7 @@ import com.diegonmarcos.superapp.bottomnav.rememberAppTopBarController
 import com.diegonmarcos.superapp.bottomnav.LocalNavChromeCollapse
 import com.diegonmarcos.superapp.bottomnav.LocalNavUiDefault
 import com.diegonmarcos.superapp.bottomnav.NavUiDecl
-import com.diegonmarcos.superapp.bottomnav.TopBarDrawer
+import com.diegonmarcos.superapp.bottomnav.TopBarDrawerWithActions
 import com.diegonmarcos.superapp.bottomnav.navEntry
 import com.diegonmarcos.superapp.bottomnav.rememberAccountLauncher
 import com.diegonmarcos.superapp.navbarbottom.NavBarBottomHost
@@ -200,7 +200,7 @@ internal class NotesShell(
                 dark = dark,
                 controller = topBar,
             ) {
-                TopBarDrawer { close -> Drawer(close) }
+                TopBarDrawerWithActions { close -> Drawer(close) }
                 val history = currentNavUi().historyBar
                 NavBarBottomHost(
                     entries = if (history) historyEntries else sectionEntries,

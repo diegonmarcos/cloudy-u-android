@@ -42,7 +42,7 @@ import com.diegonmarcos.superapp.bottomnav.BottomNavCollapse
 import com.diegonmarcos.superapp.bottomnav.FleetChrome
 import com.diegonmarcos.superapp.bottomnav.NavChromeScroll
 import com.diegonmarcos.superapp.bottomnav.NavDecl
-import com.diegonmarcos.superapp.bottomnav.TopBarDrawer
+import com.diegonmarcos.superapp.bottomnav.TopBarDrawerWithActions
 import com.diegonmarcos.superapp.bottomnav.rememberAccountLauncher
 import com.diegonmarcos.superapp.bottomnav.islandEntries
 import com.diegonmarcos.superapp.navbarbottom.NavBarBottom
@@ -271,7 +271,7 @@ class MainActivity : AppCompatActivity() {
             urlUri = com.diegonmarcos.superapp.bottomnav.UrlUriDecl.parse(sites.urlUri.toString()),
             onUrlUriAction = { id -> hostFragment?.act(id) },
         ) {
-            TopBarDrawer { close ->
+            TopBarDrawerWithActions { close ->
                 val p = LocalKitPalette.current
                 for ((id, label) in listOf("back" to "Back", "forward" to "Forward", "reload" to "Reload", "new_tab" to "New tab", "new_private_tab" to "New private tab")) {
                     Text(

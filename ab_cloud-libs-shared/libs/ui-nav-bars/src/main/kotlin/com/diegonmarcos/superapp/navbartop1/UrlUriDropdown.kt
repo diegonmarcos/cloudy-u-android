@@ -59,6 +59,7 @@ public object UrlUriTags {
     public const val HEADER_PAGES: String = "urluri_header_pages"
     public const val HEADER_TOOLS: String = "urluri_header_tools"
     public const val SEPARATOR: String = "urluri_separator"
+    public const val SEPARATOR_SETTINGS: String = "urluri_separator_settings"
     public fun entry(id: String): String = "urluri_entry_$id"
 }
 
@@ -185,11 +186,15 @@ internal fun rememberUrlUriContent(
     return UrlUriContent(model, ::runEntry)
 }
 
-/** A Pages: its header and every Pages entry; [close] runs before a tap is routed. */
+/** A Parent Pages: its header and every Pages entry; [close] runs before a tap is routed. */
 @Composable
 internal fun ColumnScope.UrlUriPagesGroup(c: UrlUriContent, colors: ThemeColors, close: () -> Unit) {
-    Header("Pages", UrlUriTags.HEADER_PAGES, colors)
-    c.model.pages.forEach { UrlUriRow(it) { e -> close(); c.run(e) } }
+    Header("Parent Pages", UrlUriTags.HEADER_PAGES, colors)
+    c.model.pages.forEach {
+        // #1850 a line between Settings / Profile and Settings / Configs
+        if (it.id == UrlUriIds.CONFIGS) HorizontalDivider(Modifier.testTag(UrlUriTags.SEPARATOR_SETTINGS), color = colors.islandBorder)
+        UrlUriRow(it) { e -> close(); c.run(e) }
+    }
 }
 
 /** B Tools: its header and every Tools entry. */

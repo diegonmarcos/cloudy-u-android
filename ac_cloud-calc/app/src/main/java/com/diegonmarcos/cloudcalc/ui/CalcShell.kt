@@ -44,7 +44,7 @@ import com.diegonmarcos.superapp.navbartop1.NavBarTopFirstRowScaffold
 import com.diegonmarcos.superapp.navbartop1.titleHierarchy
 import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRows
 import com.diegonmarcos.superapp.themebg.themeBackground
-import com.diegonmarcos.superapp.bottomnav.TopBarDrawer
+import com.diegonmarcos.superapp.bottomnav.TopBarDrawerWithActions
 import com.diegonmarcos.superapp.bottomnav.islandEntries
 import com.diegonmarcos.superapp.bottomnav.rememberAccountLauncher
 import androidx.activity.compose.BackHandler
@@ -83,7 +83,7 @@ fun CalcShell(api: CalcApi, state: CalcState) {
                     modifier = Modifier.testTag(CalcTags.SHELL),
                 ) {
                     // The Sheet page's sheets and workbooks go to the end of the title dropdown.
-                    if (Declarations.modesOf(state.tab).any { it.kind == "sheet" }) TopBarDrawer { close -> CalcDrawer(close) }
+                    if (Declarations.modesOf(state.tab).any { it.kind == "sheet" }) TopBarDrawerWithActions { close -> CalcDrawer(close) }
                     // Configs is off the island (the first row's Configs opens it), so Back leaves it.
                     BackHandler(enabled = state.onConfigs) { state.toggleConfigs() }
                     Column(Modifier.fillMaxSize()) {

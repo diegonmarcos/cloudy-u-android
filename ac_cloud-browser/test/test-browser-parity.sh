@@ -110,14 +110,22 @@ def check(root, ok):
        "T7 the Classic row has ONE control: its path dropdown carries Url-Uri Pages and Tools, no chain-link button (amendment 7)")
     # amendment 7 field parity (source): every tag of the previous path popup and of the previous Url-Uri popup is still drawn by the merged dropdown
     dd = src.get(BARS + "/UrlUriDropdown.kt", "")
-    for tag in ("TopFirstRowTags.crumb(i))", "TopFirstRowTags.SEPARATOR_PAGES)", "TopFirstRowTags.SEPARATOR_ACTIONS)", "TopFirstRowTags.ACTIONS)", "TopFirstRowTags.SEPARATOR_SECTIONS)", "TopFirstRowTags.CONFIGS_GENERAL)", "TopFirstRowTags.CONFIGS_ABOUT)", "TopFirstRowTags.entry(e.id))", "TopFirstRowTags.DROPDOWN)"):
+    for tag in ("TopFirstRowTags.crumb(i))", "TopFirstRowTags.SEPARATOR_PAGES)", "TopFirstRowTags.SEPARATOR_ACTIONS)", "TopFirstRowTags.ACTIONS)", "TopFirstRowTags.HEADER_TREE", "TopFirstRowTags.HEADER_SIBLINGS", "TopFirstRowTags.HEADER_ACTIONS", "TopFirstRowTags.CONFIGS_GENERAL)", "TopFirstRowTags.CONFIGS_ABOUT)", "TopFirstRowTags.entry(e.id))", "TopFirstRowTags.DROPDOWN)"):
         ok(tag in row, "T14 the path popup's %s is kept in the merged dropdown" % tag)
     for tag in ("UrlUriTags.HEADER_PAGES", "UrlUriTags.HEADER_TOOLS", "UrlUriTags.entry(e.id)"):
         ok(tag in dd, "T14 the Url-Uri %s is drawn by the shared groups" % tag)
     ok("UrlUriTags.SEPARATOR" in row and "UrlUriTags.DROPDOWN" in row and "UrlUriTags.SEPARATOR" in dd, "T14 the Url-Uri separator and container tags stay")
-    pop = row.find("nav.crumbs.forEachIndexed")
-    pos = [row.find(k, pop) if pop >= 0 else -1 for k in ("TopFirstRowTags.crumb(i)", "nav.related.forEach", "UrlUriPagesGroup(uu", "SEPARATOR_ACTIONS", "UrlUriToolsGroup(uu", "nav.sections.forEach", "CONFIGS_GENERAL")]
-    ok(all(x >= 0 for x in pos) and pos == sorted(pos), "T14 the merged order is tree, related, Pages, actions, Tools, sections, Configs")
+    pop = row.find("Header(\"Parents Tree\"")
+    pos = [row.find(k, pop) if pop >= 0 else -1 for k in ("Header(\"Parents Tree\"", "TopFirstRowTags.crumb(i)", "HEADER_SIBLINGS", "nav.related.forEach", "UrlUriPagesGroup(uu", "SEPARATOR_ACTIONS", "UrlUriToolsGroup(uu", "CONFIGS_GENERAL")]
+    ok(all(x >= 0 for x in pos) and pos == sorted(pos), "T14 the merged order is Parents Tree, Siblings, Parent Pages, actions, Tools, Configs (#1850)")
+    # #1850 the owner-approved removal of the page drawer list and the sections list: the parity check proves every destination is still reachable instead
+    ok("nav.sections.forEach" not in row and "SEPARATOR_SECTIONS" not in row, "T15 the sections list is removed from the path popup (#1850, owner-approved)")
+    ok("c.actionsContent" in row and "c.drawerContent" not in row, "T15 the page drawer slot is no longer listed; only the page's own actions are (#1850)")
+    ok("mergedParentPages(m.sections, sections)" in row, "T15 every declared section the removed list carried is a Parent Page (no destination lost)")
+    ok('Header("Parents Tree"' in row and 'Header("Siblings"' in row and 'Header("Parent Pages"' in dd and "SEPARATOR_SETTINGS" in dd, "T15 the headers and the Settings line are drawn")
+    ok("Pages\", UrlUriTags.HEADER_PAGES" not in dd.replace('"Parent Pages"', ""), "T15 the old Pages header text is gone")
+    app_src = src.get(APP + "/MainActivity.kt", "")
+    ok("TopBarDrawerWithActions" in app_src and "TopBarDrawer {" not in app_src, "T15 the browser keeps its real actions (back, forward, reload, new tab) under the Actions header")
     ok(re.search(r"ICON_RIGHT: Dp = %d\.dp" % t["icon_right_dp"], row) is not None and "modifier = Modifier.size(TopFirstRowSpec.ICON_RIGHT))\n    }\n}" in row,
        "T8 the right-side icons are drawn at the status-bar icon size (%ddp)" % t["icon_right_dp"])
     ok("CleanDrawerTags.MENU" in clean and "controller.openDrawer()" in clean, "T9 the Clean hamburger is kept")
@@ -175,7 +183,9 @@ main("test-browser-parity", check, [
     mut("the path dropdown loses the Tools group", BARS + "/NavBarTopFirstRow.kt", "UrlUriToolsGroup(uu, colors) { open = false }", "", "T7"),
     mut("the path dropdown loses the Pages group", BARS + "/NavBarTopFirstRow.kt", "UrlUriPagesGroup(uu, colors) { open = false }", "", "T7"),
     mut("the path popup loses Configs About", BARS + "/NavBarTopFirstRow.kt", "TopFirstRowTags.CONFIGS_ABOUT)", "TopFirstRowTags.CONFIGS_ABOUTX)", "T14"),
-    mut("the path popup loses the sections separator", BARS + "/NavBarTopFirstRow.kt", "TopFirstRowTags.SEPARATOR_SECTIONS", "TopFirstRowTags.SEPARATOR_SECTIONSX", "T14"),
+    mut("Parent Pages stops carrying the off-bar sections", BARS + "/NavBarTopFirstRow.kt", "mergedParentPages(m.sections, sections)", "m.sections", "T15"),
+    mut("the page drawer slot returns to the path popup", BARS + "/NavBarTopFirstRow.kt", "val slot = c.actionsContent", "val slot = c.drawerContent", "T15"),
+    mut("the browser loses its actions", APP + "/MainActivity.kt", "TopBarDrawerWithActions {", "TopBarDrawer {", "T15"),
     mut("the chain-link button returns on the Classic row", BARS + "/NavBarTopFirstRow.kt", "leaf = leaf ?: leafState.text,\n", "leaf = leaf ?: leafState.text, leading = urlUriControl,\n", "T7"),
     mut("the right icons grow back", BARS + "/NavBarTopFirstRow.kt", "ICON_RIGHT: Dp = 17.dp", "ICON_RIGHT: Dp = 24.dp", "T8"),
     mut("the right icons ignore the status size", BARS + "/NavBarTopFirstRow.kt", "modifier = Modifier.size(TopFirstRowSpec.ICON_RIGHT))\n    }\n}", "modifier = Modifier.size(TopFirstRowSpec.ICON))\n    }\n}", "T8"),
