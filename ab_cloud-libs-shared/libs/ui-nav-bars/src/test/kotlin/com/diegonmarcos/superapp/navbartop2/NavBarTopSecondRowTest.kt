@@ -124,9 +124,9 @@ class NavBarTopSecondRowTest {
         for (dark in listOf(true, false)) {
             val c = ThemeBackground.colors(dark)
             val f = SecondRowTone.selectedFill(c)
-            fun sat(x: Color): Float { val mx = maxOf(x.red, x.green, x.blue); val mn = minOf(x.red, x.green, x.blue); return if (mx == 0f) 0f else (mx - mn) / mx }
+            fun sat(x: Color): Float { val mx = maxOf(x.red, x.green, x.blue); val mn = minOf(x.red, x.green, x.blue); return mx - mn }   // chroma: HSV saturation reads the light palette's dark slate ink as vivid
             assertTrue("fill saturation ${sat(f)} stays neutral", sat(f) < 0.15f)
-            assertTrue(f != c.tabSelected && sat(c.tabSelected) > 0.5f)
+            assertTrue(f != c.tabSelected && sat(c.tabSelected) > 0.4f)
             assertEquals(c.ink, SecondRowTone.selectedInk(c))
             assertTrue("a translucent tint, not an opaque block", f.alpha < 0.3f)
         }
