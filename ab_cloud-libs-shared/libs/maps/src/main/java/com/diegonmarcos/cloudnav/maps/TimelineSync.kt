@@ -39,7 +39,7 @@ object TimelineSync {
         val db = MapsDb.get(ctx)
         val wf = if (fromMs <= 0L) 0L else fromMs - TimelineBuilder.MAX_GAP_MS
         // #1851 THE inputs are the store's own: the fix log, the step slices, Health Connect's daily steps and sleep sessions.
-        val fixes = db.fixesBetween(wf, nowMs)
+        val fixes = db.trackedFixesBetween(wf, nowMs)   // #1853 the tracked timeline is built from tracked fixes only
         val slices = db.stepSlices(wf, nowMs)
         val day0 = java.time.Instant.ofEpochMilli(maxOf(wf, 0L)).atZone(zone).toLocalDate().minusDays(1)
         val day1 = java.time.Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate()

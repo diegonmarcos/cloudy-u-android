@@ -143,4 +143,6 @@ dependencies {
     // work off-device (no Robolectric needed for pure JSON logic).
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.json:json:20250107'
+    // #1853 the import's SQL (v5 to v6 migration, idempotent upserts, the tracked-wins view) runs against a real SQLite off-device
+    testImplementation 'org.xerial:sqlite-jdbc:3.46.1.3'
 }

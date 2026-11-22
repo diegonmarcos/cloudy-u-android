@@ -26,6 +26,10 @@ data class TlSegment(
     val lat: Double?, val lon: Double?, val place: String?,
     val steps: Long, val distanceM: Double, val locSource: String?,
     val neighborhood: String? = null, val city: String? = null, val country: String? = null,
+    /** #1853 where the row came from: `tracked` (the phone recorded it) or an import's tag (takeout-semantic, timeline-export, takeout-records). */
+    val source: String = "tracked",
+    /** #1853 the import row (imp_visits / imp_activities key) that holds every Google field of this segment; null for tracked rows. */
+    val ref: String? = null,
 ) {
     val durationMs: Long get() = endMs - startMs
     /** The line a view prints for the place: the name, else neighborhood and city. */

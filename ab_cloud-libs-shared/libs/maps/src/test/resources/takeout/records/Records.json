@@ -1,0 +1,708 @@
+{
+ "locations": [
+  {
+   "timestamp": "2026-03-10T06:00:00.000Z",
+   "latitudeE7": 525162700,
+   "longitudeE7": 133776700,
+   "accuracy": 20,
+   "altitude": 34,
+   "verticalAccuracy": 3,
+   "velocity": 0,
+   "heading": 270,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "platformType": "ANDROID",
+   "formFactor": "PHONE",
+   "serverTimestamp": "2026-03-10T06:00:05.000Z",
+   "deviceTimestamp": "2026-03-10T06:00:00.000Z",
+   "batteryCharging": true,
+   "osLevel": 34,
+   "placeId": "ChIJ-FIXTURE-REC",
+   "activity": [
+    {
+     "timestamp": "2026-03-10T06:00:01.000Z",
+     "activity": [
+      {
+       "type": "STILL",
+       "confidence": 90
+      },
+      {
+       "type": "IN_VEHICLE",
+       "confidence": 5
+      }
+     ]
+    }
+   ],
+   "locationMetadata": [
+    {
+     "wifiScan": {
+      "deliveryTime": "2026-03-10T06:00:00.000Z",
+      "accessPoints": [
+       {
+        "mac": "00:00:5e:00:53:af",
+        "strength": -60,
+        "frequencyMhz": 2412
+       }
+      ]
+     },
+     "timestampMs": "1773122400000"
+    }
+   ],
+   "inferredLocation": [
+    {
+     "latitudeE7": 525163000,
+     "longitudeE7": 133777000,
+     "source": "INFERRED"
+    }
+   ]
+  },
+  {
+   "latitudeE7": 525163300,
+   "longitudeE7": 133777300,
+   "accuracy": 13,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T06:10:00.000Z"
+  },
+  {
+   "latitudeE7": 525162700,
+   "longitudeE7": 133777300,
+   "accuracy": 14,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T06:20:00.000Z"
+  },
+  {
+   "latitudeE7": 525163300,
+   "longitudeE7": 133776700,
+   "accuracy": 15,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestampMs": "1773124200000"
+  },
+  {
+   "latitudeE7": 525162700,
+   "longitudeE7": 133777300,
+   "accuracy": 16,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T06:40:00.000Z",
+   "velocity": 0,
+   "heading": 68,
+   "altitude": 35,
+   "verticalAccuracy": 3
+  },
+  {
+   "latitudeE7": 525163300,
+   "longitudeE7": 133777300,
+   "accuracy": 12,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T06:50:00.000Z"
+  },
+  {
+   "latitudeE7": 525162700,
+   "longitudeE7": 133776700,
+   "accuracy": 13,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestampMs": "1773126000000"
+  },
+  {
+   "latitudeE7": 525163300,
+   "longitudeE7": 133777300,
+   "accuracy": 14,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T07:10:00.000Z"
+  },
+  {
+   "latitudeE7": 525162700,
+   "longitudeE7": 133777300,
+   "accuracy": 15,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T07:20:00.000Z",
+   "velocity": 0,
+   "heading": 136,
+   "altitude": 36,
+   "verticalAccuracy": 3
+  },
+  {
+   "latitudeE7": 525163300,
+   "longitudeE7": 133776700,
+   "accuracy": 16,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestampMs": "1773127800000"
+  },
+  {
+   "latitudeE7": 525162700,
+   "longitudeE7": 133777300,
+   "accuracy": 12,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T07:40:00.000Z"
+  },
+  {
+   "latitudeE7": 525163300,
+   "longitudeE7": 133777300,
+   "accuracy": 13,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T07:50:00.000Z"
+  },
+  {
+   "latitudeE7": 525162700,
+   "longitudeE7": 133776700,
+   "accuracy": 14,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestampMs": "1773129600000",
+   "velocity": 2,
+   "heading": 204,
+   "altitude": 34,
+   "verticalAccuracy": 3
+  },
+  {
+   "latitudeE7": 525168600,
+   "longitudeE7": 133812500,
+   "accuracy": 15,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T08:00:30.000Z"
+  },
+  {
+   "latitudeE7": 525174200,
+   "longitudeE7": 133848000,
+   "accuracy": 16,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T08:01:00.000Z"
+  },
+  {
+   "latitudeE7": 525179800,
+   "longitudeE7": 133883500,
+   "accuracy": 12,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestampMs": "1773129690000"
+  },
+  {
+   "latitudeE7": 525185400,
+   "longitudeE7": 133919000,
+   "accuracy": 13,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T08:02:00.000Z",
+   "velocity": 2,
+   "heading": 272,
+   "altitude": 35,
+   "verticalAccuracy": 3
+  },
+  {
+   "latitudeE7": 525191000,
+   "longitudeE7": 133954500,
+   "accuracy": 14,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T08:02:30.000Z"
+  },
+  {
+   "latitudeE7": 525196600,
+   "longitudeE7": 133990000,
+   "accuracy": 15,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestampMs": "1773129780000"
+  },
+  {
+   "latitudeE7": 525202200,
+   "longitudeE7": 134025500,
+   "accuracy": 16,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T08:03:30.000Z"
+  },
+  {
+   "latitudeE7": 525207800,
+   "longitudeE7": 134061000,
+   "accuracy": 12,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T08:04:00.000Z",
+   "velocity": 2,
+   "heading": 340,
+   "altitude": 36,
+   "verticalAccuracy": 3
+  },
+  {
+   "latitudeE7": 525213400,
+   "longitudeE7": 134096500,
+   "accuracy": 13,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestampMs": "1773129870000"
+  },
+  {
+   "latitudeE7": 525218700,
+   "longitudeE7": 134131700,
+   "accuracy": 14,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T08:05:00.000Z"
+  },
+  {
+   "latitudeE7": 525219300,
+   "longitudeE7": 134132300,
+   "accuracy": 15,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T08:25:00.000Z"
+  },
+  {
+   "latitudeE7": 525218700,
+   "longitudeE7": 134132300,
+   "accuracy": 16,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestampMs": "1773132300000",
+   "velocity": 2,
+   "heading": 48,
+   "altitude": 34,
+   "verticalAccuracy": 3
+  },
+  {
+   "latitudeE7": 525219300,
+   "longitudeE7": 134131700,
+   "accuracy": 12,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T09:05:00.000Z"
+  },
+  {
+   "latitudeE7": 525218700,
+   "longitudeE7": 134132300,
+   "accuracy": 13,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T09:25:00.000Z"
+  },
+  {
+   "latitudeE7": 525219300,
+   "longitudeE7": 134132300,
+   "accuracy": 14,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestampMs": "1773135900000"
+  },
+  {
+   "latitudeE7": 525218700,
+   "longitudeE7": 134131700,
+   "accuracy": 15,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T10:05:00.000Z",
+   "velocity": 2,
+   "heading": 116,
+   "altitude": 35,
+   "verticalAccuracy": 3
+  },
+  {
+   "latitudeE7": 525219300,
+   "longitudeE7": 134132300,
+   "accuracy": 16,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T10:25:00.000Z"
+  },
+  {
+   "latitudeE7": 525218700,
+   "longitudeE7": 134132300,
+   "accuracy": 12,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestampMs": "1773139500000"
+  },
+  {
+   "latitudeE7": 525219300,
+   "longitudeE7": 134131700,
+   "accuracy": 13,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T11:05:00.000Z"
+  },
+  {
+   "latitudeE7": 525218700,
+   "longitudeE7": 134132300,
+   "accuracy": 14,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T11:25:00.000Z",
+   "velocity": 2,
+   "heading": 184,
+   "altitude": 36,
+   "verticalAccuracy": 3
+  },
+  {
+   "latitudeE7": 525219300,
+   "longitudeE7": 134132300,
+   "accuracy": 15,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestampMs": "1773143100000"
+  },
+  {
+   "latitudeE7": 525218700,
+   "longitudeE7": 134131700,
+   "accuracy": 16,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T12:05:00.000Z"
+  },
+  {
+   "latitudeE7": 525219300,
+   "longitudeE7": 134132300,
+   "accuracy": 12,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T12:25:00.000Z"
+  },
+  {
+   "latitudeE7": 525218700,
+   "longitudeE7": 134132300,
+   "accuracy": 13,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestampMs": "1773146700000",
+   "velocity": 2,
+   "heading": 252,
+   "altitude": 34,
+   "verticalAccuracy": 3
+  },
+  {
+   "latitudeE7": 525219300,
+   "longitudeE7": 134131700,
+   "accuracy": 14,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T13:05:00.000Z"
+  },
+  {
+   "latitudeE7": 525218700,
+   "longitudeE7": 134132300,
+   "accuracy": 15,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T13:25:00.000Z"
+  },
+  {
+   "latitudeE7": 525219300,
+   "longitudeE7": 134132300,
+   "accuracy": 16,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestampMs": "1773150300000"
+  },
+  {
+   "latitudeE7": 525218700,
+   "longitudeE7": 134131700,
+   "accuracy": 12,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T14:05:00.000Z",
+   "velocity": 2,
+   "heading": 320,
+   "altitude": 35,
+   "verticalAccuracy": 3
+  },
+  {
+   "latitudeE7": 525219300,
+   "longitudeE7": 134132300,
+   "accuracy": 13,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T14:25:00.000Z"
+  },
+  {
+   "latitudeE7": 525218700,
+   "longitudeE7": 134132300,
+   "accuracy": 14,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestampMs": "1773153900000"
+  },
+  {
+   "latitudeE7": 525219300,
+   "longitudeE7": 134131700,
+   "accuracy": 15,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T15:05:00.000Z"
+  },
+  {
+   "latitudeE7": 525218700,
+   "longitudeE7": 134132300,
+   "accuracy": 16,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T15:25:00.000Z",
+   "velocity": 2,
+   "heading": 28,
+   "altitude": 36,
+   "verticalAccuracy": 3
+  },
+  {
+   "latitudeE7": 525219300,
+   "longitudeE7": 134132300,
+   "accuracy": 12,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestampMs": "1773157500000"
+  },
+  {
+   "latitudeE7": 525213400,
+   "longitudeE7": 134096500,
+   "accuracy": 13,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T16:00:30.000Z"
+  },
+  {
+   "latitudeE7": 525207800,
+   "longitudeE7": 134061000,
+   "accuracy": 14,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T16:01:00.000Z"
+  },
+  {
+   "latitudeE7": 525202200,
+   "longitudeE7": 134025500,
+   "accuracy": 15,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestampMs": "1773158490000",
+   "velocity": 2,
+   "heading": 96,
+   "altitude": 34,
+   "verticalAccuracy": 3
+  },
+  {
+   "latitudeE7": 525196600,
+   "longitudeE7": 133990000,
+   "accuracy": 16,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T16:02:00.000Z"
+  },
+  {
+   "latitudeE7": 525191000,
+   "longitudeE7": 133954500,
+   "accuracy": 12,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T16:02:30.000Z"
+  },
+  {
+   "latitudeE7": 525185400,
+   "longitudeE7": 133919000,
+   "accuracy": 13,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestampMs": "1773158580000"
+  },
+  {
+   "latitudeE7": 525179800,
+   "longitudeE7": 133883500,
+   "accuracy": 14,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T16:03:30.000Z",
+   "velocity": 2,
+   "heading": 164,
+   "altitude": 35,
+   "verticalAccuracy": 3
+  },
+  {
+   "latitudeE7": 525174200,
+   "longitudeE7": 133848000,
+   "accuracy": 15,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T16:04:00.000Z"
+  },
+  {
+   "latitudeE7": 525168600,
+   "longitudeE7": 133812500,
+   "accuracy": 16,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestampMs": "1773158670000"
+  },
+  {
+   "latitudeE7": 525162700,
+   "longitudeE7": 133776700,
+   "accuracy": 12,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T16:05:00.000Z"
+  },
+  {
+   "latitudeE7": 525163300,
+   "longitudeE7": 133777300,
+   "accuracy": 13,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T16:25:00.000Z",
+   "velocity": 2,
+   "heading": 232,
+   "altitude": 36,
+   "verticalAccuracy": 3
+  },
+  {
+   "latitudeE7": 525162700,
+   "longitudeE7": 133777300,
+   "accuracy": 14,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestampMs": "1773161100000"
+  },
+  {
+   "latitudeE7": 525163300,
+   "longitudeE7": 133776700,
+   "accuracy": 15,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T17:05:00.000Z"
+  },
+  {
+   "latitudeE7": 525162700,
+   "longitudeE7": 133777300,
+   "accuracy": 16,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T17:25:00.000Z"
+  },
+  {
+   "latitudeE7": 525163300,
+   "longitudeE7": 133777300,
+   "accuracy": 12,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestampMs": "1773164700000",
+   "velocity": 2,
+   "heading": 300,
+   "altitude": 34,
+   "verticalAccuracy": 3
+  },
+  {
+   "latitudeE7": 525162700,
+   "longitudeE7": 133776700,
+   "accuracy": 13,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T18:05:00.000Z"
+  },
+  {
+   "latitudeE7": 525163300,
+   "longitudeE7": 133777300,
+   "accuracy": 14,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T18:25:00.000Z"
+  },
+  {
+   "latitudeE7": 525162700,
+   "longitudeE7": 133777300,
+   "accuracy": 15,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestampMs": "1773168300000"
+  },
+  {
+   "latitudeE7": 525163300,
+   "longitudeE7": 133776700,
+   "accuracy": 16,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T19:05:00.000Z",
+   "velocity": 2,
+   "heading": 8,
+   "altitude": 35,
+   "verticalAccuracy": 3
+  },
+  {
+   "latitudeE7": 525162700,
+   "longitudeE7": 133777300,
+   "accuracy": 12,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T19:25:00.000Z"
+  },
+  {
+   "latitudeE7": 525163300,
+   "longitudeE7": 133777300,
+   "accuracy": 13,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestampMs": "1773171900000"
+  },
+  {
+   "latitudeE7": 525162700,
+   "longitudeE7": 133776700,
+   "accuracy": 14,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T20:05:00.000Z"
+  },
+  {
+   "latitudeE7": 525163300,
+   "longitudeE7": 133777300,
+   "accuracy": 15,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T20:25:00.000Z",
+   "velocity": 2,
+   "heading": 76,
+   "altitude": 36,
+   "verticalAccuracy": 3
+  },
+  {
+   "latitudeE7": 525162700,
+   "longitudeE7": 133777300,
+   "accuracy": 16,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestampMs": "1773175500000"
+  },
+  {
+   "latitudeE7": 525163300,
+   "longitudeE7": 133776700,
+   "accuracy": 12,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T21:05:00.000Z"
+  },
+  {
+   "latitudeE7": 525162700,
+   "longitudeE7": 133777300,
+   "accuracy": 13,
+   "source": "WIFI",
+   "deviceTag": -1234567,
+   "timestamp": "2026-03-10T21:25:00.000Z"
+  },
+  {
+   "latitudeE7": 525163300,
+   "longitudeE7": 133777300,
+   "accuracy": 14,
+   "source": "GPS",
+   "deviceTag": -1234567,
+   "timestampMs": "1773179100000",
+   "velocity": 2,
+   "heading": 144,
+   "altitude": 34,
+   "verticalAccuracy": 3
+  }
+ ]
+}

@@ -1,0 +1,180 @@
+{
+ "semanticSegments": [
+  {
+   "startTime": "2026-03-12T07:00:00.000+01:00",
+   "endTime": "2026-03-12T08:00:00.000+01:00",
+   "startTimeTimezoneUtcOffsetMinutes": 60,
+   "endTimeTimezoneUtcOffsetMinutes": 60,
+   "visit": {
+    "hierarchyLevel": 0,
+    "probability": 0.85,
+    "isTimelessVisit": false,
+    "topCandidate": {
+     "placeId": "ChIJ-FIXTURE-HOME",
+     "semanticType": "HOME",
+     "probability": 0.92,
+     "placeLocation": {
+      "latLng": "52.5163000\u00b0, 13.3777000\u00b0"
+     }
+    }
+   }
+  },
+  {
+   "startTime": "2026-03-12T08:00:00.000+01:00",
+   "endTime": "2026-03-12T08:30:00.000+01:00",
+   "startTimeTimezoneUtcOffsetMinutes": 60,
+   "endTimeTimezoneUtcOffsetMinutes": 60,
+   "activity": {
+    "start": {
+     "latLng": "52.5163000\u00b0, 13.3777000\u00b0"
+    },
+    "end": {
+     "latLng": "52.5219000\u00b0, 13.4132000\u00b0"
+    },
+    "distanceMeters": 3100.4,
+    "probability": 0.77,
+    "topCandidate": {
+     "type": "IN_SUBWAY",
+     "probability": 0.81
+    }
+   },
+   "timelineMemory": {
+    "destinations": [
+     {
+      "identifier": {
+       "placeId": "ChIJ-FIXTURE-WORK"
+      }
+     }
+    ],
+    "distanceFromOriginKms": 3.1
+   }
+  },
+  {
+   "startTime": "2026-03-12T08:30:00.000+01:00",
+   "endTime": "2026-03-12T16:30:00.000+01:00",
+   "startTimeTimezoneUtcOffsetMinutes": 60,
+   "endTimeTimezoneUtcOffsetMinutes": 60,
+   "visit": {
+    "hierarchyLevel": 0,
+    "probability": 0.9,
+    "topCandidate": {
+     "placeId": "ChIJ-FIXTURE-WORK",
+     "semanticType": "WORK",
+     "probability": 0.88,
+     "placeLocation": {
+      "latLng": "52.5219000\u00b0, 13.4132000\u00b0"
+     }
+    }
+   }
+  },
+  {
+   "startTime": "2026-03-12T16:30:00.000+01:00",
+   "endTime": "2026-03-12T16:45:00.000+01:00",
+   "startTimeTimezoneUtcOffsetMinutes": 60,
+   "endTimeTimezoneUtcOffsetMinutes": 60,
+   "timelinePath": [
+    {
+     "point": "52.5219000\u00b0, 13.4132000\u00b0",
+     "time": "2026-03-12T16:30:00.000+01:00"
+    },
+    {
+     "point": "52.5208000\u00b0, 13.4094000\u00b0",
+     "time": "2026-03-12T16:40:00.000+01:00"
+    }
+   ]
+  }
+ ],
+ "rawSignals": [
+  {
+   "position": {
+    "LatLng": "52.5163000\u00b0, 13.3777000\u00b0",
+    "accuracyMeters": 14,
+    "altitudeMeters": 36.5,
+    "source": "GPS",
+    "speedMetersPerSecond": 0.4,
+    "timestamp": "2026-03-12T07:10:00.000+01:00"
+   }
+  },
+  {
+   "position": {
+    "LatLng": "52.5219000\u00b0, 13.4132000\u00b0",
+    "accuracyMeters": 20,
+    "altitudeMeters": 38,
+    "source": "WIFI",
+    "speedMetersPerSecond": 0,
+    "timestamp": "2026-03-12T09:10:00.000+01:00"
+   }
+  },
+  {
+   "activityRecord": {
+    "probableActivities": [
+     {
+      "type": "STILL",
+      "confidence": 0.9
+     },
+     {
+      "type": "WALKING",
+      "confidence": 0.1
+     }
+    ],
+    "timestamp": "2026-03-12T07:10:01.000+01:00"
+   }
+  },
+  {
+   "wifiScan": {
+    "deliveryTime": "2026-03-12T07:10:02.000+01:00",
+    "devicesRecords": [
+     {
+      "mac": 1234567,
+      "rawRssi": -61
+     }
+    ]
+   }
+  }
+ ],
+ "userLocationProfile": {
+  "frequentPlaces": [
+   {
+    "placeId": "ChIJ-FIXTURE-HOME",
+    "placeLocation": "52.5163000\u00b0, 13.3777000\u00b0",
+    "label": "HOME"
+   },
+   {
+    "placeId": "ChIJ-FIXTURE-WORK",
+    "placeLocation": "52.5219000\u00b0, 13.4132000\u00b0",
+    "label": "WORK"
+   }
+  ],
+  "frequentTrips": [
+   {
+    "startTimeMinutes": 480,
+    "endTimeMinutes": 510,
+    "durationMinutes": 30,
+    "confidence": 0.7,
+    "commuteDirection": "HOME_TO_WORK",
+    "waypointIds": [
+     "ChIJ-FIXTURE-HOME",
+     "ChIJ-FIXTURE-WORK"
+    ],
+    "modeDistribution": [
+     {
+      "mode": "IN_SUBWAY",
+      "rate": 0.9
+     }
+    ]
+   }
+  ],
+  "persona": {
+   "travelModeAffinities": [
+    {
+     "mode": "WALKING",
+     "affinity": 0.4
+    },
+    {
+     "mode": "IN_SUBWAY",
+     "affinity": 0.6
+    }
+   ]
+  }
+ }
+}

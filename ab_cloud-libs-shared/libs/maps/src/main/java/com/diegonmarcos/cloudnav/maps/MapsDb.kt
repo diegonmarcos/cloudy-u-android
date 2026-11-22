@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import com.diegonmarcos.cloudnav.maps.takeout.TakeoutSchema
 import org.json.JSONObject
 
 /**
@@ -65,6 +66,7 @@ class MapsDb private constructor(ctx: Context) :
         createTimeline(db)
         createFixes(db)
         createStore(db)
+        for (q in TakeoutSchema.MIGRATE_V6) db.execSQL(q)   // v6 (#1853): the fresh database gets the imported-history columns and tables too
         db.execSQL(
             """
             CREATE TABLE places_cache (
@@ -83,6 +85,7 @@ class MapsDb private constructor(ctx: Context) :
             createFixes(db)
             db.execSQL("INSERT INTO fixes (ts, lat, lon, accuracy, speed, provider) SELECT ts, lat, lon, accuracy, speed, 'legacy-points' FROM points;")
         }
+        if (oldVersion < 6) for (q in TakeoutSchema.MIGRATE_V6) db.execSQL(q)   // v6 (#1853): source columns on fixes / segments / rollups, the Google history tables; existing rows are tracked
     }
 
     /** #1851 v4: the rest of the one store. Inputs (step slices, Health Connect daily steps and sleep sessions) and outputs (day rollups, aggregates). */
@@ -208,15 +211,12 @@ class MapsDb private constructor(ctx: Context) :
     /** THE timeline store: every segment overlapping fromTs..toTs, oldest first. Daily, Stops, Steps and MyTrips read this. */
     fun segmentsBetween(fromTs: Long, toTs: Long): List<TlSegment> {
         val out = mutableListOf<TlSegment>()
-        readableDatabase.rawQuery(
-            "SELECT kind,start_ms,end_ms,lat,lon,place,steps,distance_m,loc_src,neighborhood,city,country FROM timeline_segments " +
-                "WHERE end_ms >= ? AND start_ms <= ? ORDER BY start_ms ASC;",
-            arrayOf(fromTs.toString(), toTs.toString()),
-        ).use { c ->
+        // #1853 tracked rows win: an imported row is hidden only while a higher-priority row overlaps it (both stay stored)
+        readableDatabase.rawQuery(TakeoutSchema.VISIBLE_SEGMENTS, arrayOf(fromTs.toString(), toTs.toString())).use { c ->
             while (c.moveToNext()) out.add(TlSegment(
                 TlKind.parse(c.getString(0)), c.getLong(1), c.getLong(2),
                 if (c.isNull(3)) null else c.getDouble(3), if (c.isNull(4)) null else c.getDouble(4),
-                c.getString(5), c.getLong(6), c.getDouble(7), c.getString(8), c.getString(9), c.getString(10), c.getString(11)))
+                c.getString(5), c.getLong(6), c.getDouble(7), c.getString(8), c.getString(9), c.getString(10), c.getString(11), c.getString(12) ?: TakeoutSchema.SRC_TRACKED, c.getString(13)))
         }
         return out
     }
@@ -226,7 +226,7 @@ class MapsDb private constructor(ctx: Context) :
     /** Replaces everything that ends at or after [fromMs] with [segs] in one transaction (a rebuild of that window). */
     fun replaceSegments(fromMs: Long, segs: List<TlSegment>) = runInTransaction {
         val db = writableDatabase
-        db.delete("timeline_segments", "end_ms >= ?", arrayOf(fromMs.toString()))
+        db.delete("timeline_segments", "end_ms >= ? AND source = 'tracked'", arrayOf(fromMs.toString()))   // #1853 imported rows are rebuilt by TakeoutRebuild, never here
         for (s in segs) db.insert("timeline_segments", null, ContentValues().apply {
             put("kind", s.kind.name); put("start_ms", s.startMs); put("end_ms", s.endMs)
             if (s.lat != null) put("lat", s.lat) else putNull("lat")
@@ -234,6 +234,19 @@ class MapsDb private constructor(ctx: Context) :
             put("place", s.place); put("steps", s.steps); put("distance_m", s.distanceM); put("loc_src", s.locSource)
             put("neighborhood", s.neighborhood); put("city", s.city); put("country", s.country)
         })
+    }
+
+    /** #1853 when the earliest imported segment starts (null = nothing imported): the aggregates reach back that far. */
+    fun firstImportedMs(): Long? = readableDatabase.rawQuery("SELECT MIN(start_ms) FROM timeline_segments WHERE prio > 0;", null).use { if (it.moveToFirst() && !it.isNull(0)) it.getLong(0) else null }
+
+    /** #1853 the phone's own fixes only: what the tracked timeline is segmented from (imported positions are segmented by TakeoutRebuild). */
+    fun trackedFixesBetween(fromTs: Long, toTs: Long): List<Fix> {
+        val out = mutableListOf<Fix>()
+        readableDatabase.rawQuery(TakeoutSchema.TRACKED_FIXES, arrayOf(fromTs.toString(), toTs.toString())).use { c ->
+            while (c.moveToNext()) out.add(Fix(c.getLong(0), c.getDouble(1), c.getDouble(2),
+                if (c.isNull(3)) null else c.getDouble(3), if (c.isNull(4)) null else c.getDouble(4), c.getString(5) ?: "gps"))
+        }
+        return out
     }
 
     /** Stops that overlap fromTs..toTs (an open stop counts), oldest first: the timeline's input. */
@@ -502,7 +515,11 @@ class MapsDb private constructor(ctx: Context) :
         db.execSQL("DELETE FROM fixes;")
         for (t in listOf("step_slices", "steps_daily", "sleep_sessions", "day_rollups", "aggregates")) db.execSQL("DELETE FROM $t;")
         db.execSQL("DELETE FROM places_cache;")
+        for (t in listOf("imp_visits", "imp_candidates", "imp_activities", "imp_signals", "imp_profile", "imports")) db.execSQL("DELETE FROM $t;")   // #1853 the imported Google history goes with the rest
     }
+
+    /** #1853 this store as the import engine's database handle (the same SQL runs in the JVM tests over sqlite-jdbc). */
+    fun sqlExec(): com.diegonmarcos.cloudnav.maps.takeout.SqlExec = com.diegonmarcos.cloudnav.maps.takeout.SqliteExec(writableDatabase)
 
     data class PointRow(
         val ts: Long,
@@ -550,7 +567,7 @@ class MapsDb private constructor(ctx: Context) :
 
     companion object {
         private const val DB_NAME = "maps.db"
-        private const val DB_VERSION = 5
+        private const val DB_VERSION = 6
 
         @Volatile private var instance: MapsDb? = null
         fun get(ctx: Context): MapsDb = instance ?: synchronized(this) {

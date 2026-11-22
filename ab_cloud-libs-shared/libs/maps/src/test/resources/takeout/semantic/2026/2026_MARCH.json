@@ -1,0 +1,314 @@
+{
+ "timelineObjects": [
+  {
+   "placeVisit": {
+    "location": {
+     "latitudeE7": 525163000,
+     "longitudeE7": 133777000,
+     "placeId": "ChIJ-FIXTURE-HOME",
+     "address": "Fixture Strasse 1, 10117 Berlin, Germany",
+     "name": "Fixture Home",
+     "sourceInfo": {
+      "deviceTag": -1234567
+     },
+     "semanticType": "TYPE_HOME",
+     "locationConfidence": 94.5,
+     "calibratedProbability": 91.5
+    },
+    "duration": {
+     "startTimestamp": "2026-03-11T07:00:00.000Z",
+     "endTimestamp": "2026-03-11T08:00:00.000Z"
+    },
+    "placeConfidence": "HIGH_CONFIDENCE",
+    "visitConfidence": 85,
+    "locationConfidence": 94,
+    "placeVisitType": "SINGLE_PLACE",
+    "placeVisitImportance": "MAIN",
+    "centerLatE7": 525163000,
+    "centerLngE7": 133777000,
+    "editConfirmationStatus": "NOT_CONFIRMED",
+    "lastEditedTimestamp": "2026-03-12T09:00:00.000Z",
+    "otherCandidateLocations": [
+     {
+      "latitudeE7": 525208000,
+      "longitudeE7": 134094000,
+      "placeId": "ChIJ-FIXTURE-OTH1",
+      "address": "Fixture Weg 4, 10117 Berlin, Germany",
+      "name": "Fixture Neighbour",
+      "sourceInfo": {
+       "deviceTag": -1234567
+      },
+      "semanticType": "TYPE_SEARCHED_ADDRESS",
+      "locationConfidence": 20.1,
+      "calibratedProbability": 91.5
+     },
+     {
+      "latitudeE7": 525219000,
+      "longitudeE7": 134132000,
+      "placeId": "ChIJ-FIXTURE-OTH2",
+      "address": "Fixture Weg 5, 10117 Berlin, Germany",
+      "name": "Fixture Second",
+      "sourceInfo": {
+       "deviceTag": -1234567
+      },
+      "semanticType": "TYPE_ALIASED_LOCATION",
+      "locationConfidence": 11.0,
+      "calibratedProbability": 91.5
+     }
+    ],
+    "childVisits": [
+     {
+      "location": {
+       "latitudeE7": 525208000,
+       "longitudeE7": 134094000,
+       "placeId": "ChIJ-FIXTURE-CHILD",
+       "address": "Fixture Weg 6, 10117 Berlin, Germany",
+       "name": "Fixture Child",
+       "sourceInfo": {
+        "deviceTag": -1234567
+       },
+       "semanticType": "TYPE_UNKNOWN",
+       "locationConfidence": 60.0,
+       "calibratedProbability": 91.5
+      },
+      "duration": {
+       "startTimestamp": "2026-03-11T07:10:00.000Z",
+       "endTimestamp": "2026-03-11T07:40:00.000Z"
+      },
+      "placeConfidence": "MEDIUM_CONFIDENCE",
+      "visitConfidence": 70,
+      "locationConfidence": 60,
+      "placeVisitType": "CHILD",
+      "placeVisitImportance": "MAIN",
+      "centerLatE7": 525208000,
+      "centerLngE7": 134094000,
+      "editConfirmationStatus": "NOT_CONFIRMED",
+      "lastEditedTimestamp": "2026-03-12T09:01:00.000Z",
+      "otherCandidateLocations": [
+       {
+        "latitudeE7": 525163000,
+        "longitudeE7": 133777000,
+        "placeId": "ChIJ-FIXTURE-CHILDOTH",
+        "address": "Fixture Weg 7, 10117 Berlin, Germany",
+        "name": "Fixture Child Other",
+        "sourceInfo": {
+         "deviceTag": -1234567
+        },
+        "semanticType": "TYPE_HOME",
+        "locationConfidence": 5.0,
+        "calibratedProbability": 91.5
+       }
+      ]
+     }
+    ],
+    "simplifiedRawPath": {
+     "points": [
+      {
+       "latE7": 525163000,
+       "lngE7": 133777000,
+       "accuracyMeters": 15,
+       "timestamp": "2026-03-11T07:05:00.000Z"
+      }
+     ],
+     "source": "BACKFILLED",
+     "distanceMeters": 12.5
+    }
+   }
+  },
+  {
+   "activitySegment": {
+    "startLocation": {
+     "latitudeE7": 525163000,
+     "longitudeE7": 133777000,
+     "placeId": "ChIJ-FIXTURE-HOME",
+     "address": "Fixture Strasse 1, 10117 Berlin, Germany",
+     "name": "Fixture Home",
+     "sourceInfo": {
+      "deviceTag": -1234567
+     }
+    },
+    "endLocation": {
+     "latitudeE7": 525219000,
+     "longitudeE7": 134132000,
+     "placeId": "ChIJ-FIXTURE-WORK",
+     "address": "Fixture Platz 2, 10178 Berlin, Germany",
+     "name": "Fixture Office",
+     "sourceInfo": {
+      "deviceTag": -1234567
+     }
+    },
+    "duration": {
+     "startTimestamp": "2026-03-11T08:00:00.000Z",
+     "endTimestamp": "2026-03-11T08:30:00.000Z"
+    },
+    "distance": 3100,
+    "activityType": "IN_TRAIN",
+    "confidence": "HIGH",
+    "activities": [
+     {
+      "activityType": "IN_TRAIN",
+      "probability": 71.2
+     },
+     {
+      "activityType": "WALKING",
+      "probability": 20.3
+     },
+     {
+      "activityType": "IN_BUS",
+      "probability": 8.5
+     }
+    ],
+    "waypointPath": {
+     "waypoints": [
+      {
+       "latE7": 525163000,
+       "lngE7": 133777000
+      },
+      {
+       "latE7": 525208000,
+       "lngE7": 134094000
+      }
+     ],
+     "source": "INFERRED",
+     "roadSegment": [
+      {
+       "placeId": "ChIJ-FIXTURE-ROAD",
+       "duration": "300s"
+      }
+     ],
+     "distanceMeters": 3100.5,
+     "travelMode": "TRANSIT",
+     "confidence": 0.8
+    },
+    "simplifiedRawPath": {
+     "points": [
+      {
+       "latE7": 525163000,
+       "lngE7": 133777000,
+       "accuracyMeters": 20,
+       "timestamp": "2026-03-11T08:01:00.000Z"
+      },
+      {
+       "latE7": 525219000,
+       "lngE7": 134132000,
+       "accuracyMeters": 18,
+       "timestampMs": "1773217740000"
+      }
+     ],
+     "source": "BACKFILLED",
+     "distanceMeters": 3099.0
+    },
+    "transitPath": {
+     "transitStops": [
+      {
+       "latitudeE7": 525163000,
+       "longitudeE7": 133777000,
+       "placeId": "ChIJ-FIXTURE-STOP1",
+       "name": "Fixture Stop A"
+      },
+      {
+       "latitudeE7": 525219000,
+       "longitudeE7": 134132000,
+       "placeId": "ChIJ-FIXTURE-STOP2",
+       "name": "Fixture Stop B"
+      }
+     ],
+     "name": "Fixture Line 1",
+     "hexRgbColor": "FF0000",
+     "linePlaceId": "ChIJ-FIXTURE-LINE",
+     "source": "INFERRED"
+    },
+    "parkingEvent": {
+     "location": {
+      "latitudeE7": 525219000,
+      "longitudeE7": 134132000,
+      "accuracyMetres": 10
+     },
+     "method": "EXPLICIT_USER_INPUT",
+     "locationSource": "FROM_ACTIVITY_END",
+     "timestamp": "2026-03-11T08:30:00.000Z"
+    },
+    "editConfirmationStatus": "NOT_CONFIRMED",
+    "lastEditedTimestamp": "2026-03-12T09:02:00.000Z"
+   }
+  },
+  {
+   "placeVisit": {
+    "location": {
+     "latitudeE7": 525219000,
+     "longitudeE7": 134132000,
+     "placeId": "ChIJ-FIXTURE-WORK",
+     "address": "Fixture Platz 2, 10178 Berlin, Germany",
+     "name": "Fixture Office",
+     "sourceInfo": {
+      "deviceTag": -1234567
+     },
+     "semanticType": "TYPE_WORK",
+     "locationConfidence": 88.0,
+     "calibratedProbability": 91.5
+    },
+    "duration": {
+     "startTimestampMs": "1773217800000",
+     "endTimestampMs": "1773248400000"
+    },
+    "placeConfidence": "HIGH_CONFIDENCE",
+    "visitConfidence": 90,
+    "locationConfidence": 88,
+    "placeVisitType": "SINGLE_PLACE",
+    "placeVisitImportance": "MAIN",
+    "centerLatE7": 525219000,
+    "centerLngE7": 134132000,
+    "editConfirmationStatus": "CONFIRMED"
+   }
+  },
+  {
+   "activitySegment": {
+    "startLocation": {
+     "latitudeE7": 525219000,
+     "longitudeE7": 134132000
+    },
+    "endLocation": {
+     "latitudeE7": 525163000,
+     "longitudeE7": 133777000
+    },
+    "duration": {
+     "startTimestampMs": "1773248400000",
+     "endTimestampMs": "1773250800000"
+    },
+    "distance": 3200,
+    "activityType": "IN_PASSENGER_VEHICLE",
+    "confidence": "MEDIUM",
+    "activities": [
+     {
+      "activityType": "IN_PASSENGER_VEHICLE",
+      "probability": 90.0
+     }
+    ]
+   }
+  },
+  {
+   "placeVisit": {
+    "location": {
+     "latitudeE7": 525163000,
+     "longitudeE7": 133777000,
+     "placeId": "ChIJ-FIXTURE-HOME",
+     "address": "Fixture Strasse 1, 10117 Berlin, Germany",
+     "name": "Fixture Home",
+     "sourceInfo": {
+      "deviceTag": -1234567
+     },
+     "semanticType": "TYPE_HOME",
+     "locationConfidence": 94.5,
+     "calibratedProbability": 91.5
+    },
+    "duration": {
+     "startTimestamp": "2026-03-11T18:00:00.000Z",
+     "endTimestamp": "2026-03-12T07:00:00.000Z"
+    },
+    "placeConfidence": "HIGH_CONFIDENCE",
+    "visitConfidence": 92,
+    "placeVisitType": "SINGLE_PLACE"
+   }
+  }
+ ]
+}
