@@ -1,0 +1,141 @@
+name: "Test -> Cloud SI nav and windows (emulator: Models | Context strips with the group divider, the Cost, Context and Files windows)"
+
+# #1854: install an already built Cloud SuperIntel x86_64 debug APK (the artifact of a Ship run, input run_id) on an API-34 emulator and walk
+# the new bottom nav: Models (Agents, Models, Tasks | API) and Context (Plugins | MCP-KG, MCP-Tools, Hooks, Skills) with exactly one "|" on each
+# strip between the declared groups, then the three top-right windows of the SI chat (Cost, Context, Files). Each step is a PASS/FAIL row in
+# verdict.txt (uiautomator dump + PNG); any FAIL fails the job. Dispatch only; nothing is published.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Ship Cloud SuperIntel run whose x86_64 debug APK artifact is tested"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  si-nav:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Download the APK of the Ship run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          mkdir apk-in
+          gh run download "${{ inputs.run_id }}" --repo "$GITHUB_REPOSITORY" --pattern 'Cloud-SuperIntel-x86_64-debug-*' --dir apk-in
+          apk=$(find apk-in -name '*.apk' | sort | head -1)
+          [ -n "$apk" ] || { echo "::error::no x86_64 APK in run ${{ inputs.run_id }}"; exit 1; }
+          cp "$apk" app-under-test.apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Write the scripts
+        run: |
+          cat > ui.py <<'PY'
+          import html, re, sys
+          # ui.py find DUMP LABEL [n]  -> centre "x y" of the n-th node (top to bottom, left to right; -1 = the bottom-most, the bottom nav's) whose text or content-desc equals LABEL, else ""
+          # ui.py xs   DUMP LABEL      -> the left x of every visible node with that text/desc, space separated
+          # ui.py starts DUMP PREFIX   -> 1 when a visible node's text starts with PREFIX, else 0
+          def nodes(path):
+              x = open(path, encoding="utf-8", errors="replace").read()
+              for m in re.finditer(r"<node [^>]*>", x):
+                  a = {k: html.unescape(v) for k, v in re.findall(r'([\w-]+)="([^"]*)"', m.group(0))}
+                  b = re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", a.get("bounds", ""))
+                  if b and int(b.group(3)) > int(b.group(1)) and int(b.group(4)) > int(b.group(2)): a["_b"] = tuple(map(int, b.groups())); yield a
+          cmd, path, arg = sys.argv[1:4]
+          ns = sorted(nodes(path), key=lambda a: (a["_b"][1], a["_b"][0]))
+          if cmd in ("find", "xs"):
+              hits = [a for a in ns if arg in (a.get("text", "").strip(), a.get("content-desc", "").strip())]
+              if cmd == "xs": print(" ".join(str(a["_b"][0]) for a in sorted(hits, key=lambda a: a["_b"][0])))
+              else:
+                  n = int(sys.argv[4]) if len(sys.argv) > 4 else 0
+                  print("%d %d" % ((hits[n]["_b"][0] + hits[n]["_b"][2]) // 2, (hits[n]["_b"][1] + hits[n]["_b"][3]) // 2) if hits else "")
+          elif cmd == "starts":
+              print(1 if any(a.get("text", "").strip().startswith(arg) for a in ns) else 0)
+          PY
+          cat > walk.sh <<'SH'
+          #!/bin/bash
+          set -u
+          mkdir -p out/shots
+          : > out/verdict.txt
+          fails=0
+          check() { if [ "$1" = ok ]; then echo "PASS $2" | tee -a out/verdict.txt; else echo "FAIL $2" | tee -a out/verdict.txt; fails=$((fails+1)); fi; }
+          PKG=com.diegonmarcos.cloudsuperintel
+          adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
+          sleep 30
+          adb install -r -g app-under-test.apk || { echo "::error::adb install failed"; exit 2; }
+          dump() { for t in 1 2 3 4; do adb shell rm -f /sdcard/ui.xml; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > out/ui.xml; grep -q "<hierarchy" out/ui.xml && break; sleep 2; done; cp out/ui.xml "out/$1.xml"; adb exec-out screencap -p > "out/shots/$1.png"; }
+          tap() { xy=$(python3 -I ui.py find out/ui.xml "$1" "${2:-0}"); [ -n "$xy" ] && adb shell input tap $xy; }
+          has() { [ -n "$(python3 -I ui.py find out/ui.xml "$1")" ]; }
+          adb shell am start -n "$PKG/.MainActivity" >/dev/null 2>&1 || adb shell monkey -p $PKG -c android.intent.category.LAUNCHER 1 >/dev/null
+          sleep 15; dump 00-launch
+          # bottom nav: Notebook, CGCs, SI, Models, Context; Cost left it (it is a top-right window now)
+          for l in Notebook CGCs SI Models Context; do has "$l" && check ok "bottom nav has $l" || check bad "bottom nav has $l"; done
+          has Cost && check bad "Cost is not in the bottom nav" || check ok "Cost is not in the bottom nav"
+          # a strip: open the section, every page present left to right, exactly one "|" and it sits between the declared groups
+          strip() { # $1 section, $2 shot, $3 the page before the "|", $4 the page after it, rest: every page in order
+            sec=$1; shotn=$2; before=$3; after=$4; shift 4
+            tap "$sec" -1; sleep 3; dump "$shotn"
+            prev=-1; okorder=ok
+            for p in "$@"; do x=$(python3 -I ui.py xs out/ui.xml "$p" | awk '{print $1}'); if [ -z "$x" ]; then check bad "$sec strip shows $p"; okorder=bad; else check ok "$sec strip shows $p"; [ "$x" -gt "$prev" ] || okorder=bad; prev=$x; fi; done
+            check $okorder "$sec strip pages are in the declared order"
+            bars=$(python3 -I ui.py xs out/ui.xml "|"); n=$(echo $bars | wc -w)
+            [ "$n" = 1 ] && check ok "$sec strip draws exactly one '|'" || check bad "$sec strip draws exactly one '|' (got $n)"
+            bx=$(echo $bars | awk '{print $1}'); bf=$(python3 -I ui.py xs out/ui.xml "$before" | awk '{print $1}'); af=$(python3 -I ui.py xs out/ui.xml "$after" | awk '{print $1}')
+            if [ -n "$bx" ] && [ -n "$bf" ] && [ -n "$af" ] && [ "$bf" -lt "$bx" ] && [ "$bx" -lt "$af" ]; then check ok "$sec '|' sits between $before and $after"; else check bad "$sec '|' sits between $before and $after"; fi
+          }
+          strip Models 01-models Tasks API Agents Models Tasks API
+          strip Context 02-context Plugins MCP-KG Plugins MCP-KG MCP-Tools Hooks Skills
+          for p in MCP-Tools Hooks Skills; do tap "$p" 0; sleep 2; dump "03-context-$p"; done
+          # the three top-right windows of the SI chat
+          tap SI -1; sleep 4; dump 04-si
+          win() { # $1 icon description, $2 window title, $3 subtitle prefix, $4 shot
+            tap "$1" 0; sleep 4; dump "$4"
+            [ "$(python3 -I ui.py starts out/ui.xml "$3")" = 1 ] && check ok "the $2 window opens ($3...)" || check bad "the $2 window opens ($3...)"
+            adb shell input keyevent KEYCODE_BACK; sleep 2; dump "$4-closed"
+            [ "$(python3 -I ui.py starts out/ui.xml "$3")" = 0 ] && check ok "the $2 window closes" || check bad "the $2 window closes"
+          }
+          win "Usage & Cost" Cost "Claude and OpenRouter side by side" 05-window-cost
+          win "Context Breakdown" Context "What fills the model" 06-window-context
+          win "Files in this chat" Files "The files in this chat" 07-window-files
+          timeout 60 adb logcat -d -v threadtime "*:E" > out/logcat-errors.txt || true
+          echo "fails=$fails" | tee -a out/verdict.txt
+          [ "$fails" = 0 ]
+          SH
+          chmod +x walk.sh
+
+      - name: Boot emulator + walk
+        timeout-minutes: 30
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: ./walk.sh
+
+      - name: Upload the evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: si-nav-evidence
+          path: |
+            out/shots/*.png
+            out/*.xml
+            out/verdict.txt
+            out/logcat-errors.txt
+          if-no-files-found: warn
