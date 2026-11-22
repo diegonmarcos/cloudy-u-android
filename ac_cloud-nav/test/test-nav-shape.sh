@@ -42,15 +42,15 @@ CFG = json.loads(r'''{
    "sleep"
   ],
   "configs": [
-   "general",
-   "perms",
-   "about",
    "tracker",
    "apis",
    "update",
    "cache",
    "layers",
-   "device"
+   "device",
+   "general",
+   "perms",
+   "about"
   ]
  },
  "gone_ui_keys": [
