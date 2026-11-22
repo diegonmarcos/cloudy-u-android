@@ -23,7 +23,7 @@
   "mdl": "P-Backlog-mdl.md"
  },
  "snippets": [
-  "stored(\"backlog.dir\", gitPath(nav.backlog.source_dir))",
+  "repoUrl(\"backlog.dir\", nav.backlog.source_dir)",
   "fsOperation(dir, file).readFile(\"utf8\")",
   "markdownIt({ html: false, linkify: true })",
   "browser.open(href)",

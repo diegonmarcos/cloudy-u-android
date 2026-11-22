@@ -76,7 +76,7 @@ out(!!renderer, `index.js has one shared backlog renderer (${renderer})`);
 const entryOf = (fn) => new RegExp(`function ${fn}\\(panel\\) \\{[\\s\\S]*?${renderer}\\(panel, "[^"]+", (nav\\.\\w+\\.entry)`).exec(index)?.[1];
 out(entryOf("renderBacklog") === "nav.backlog.entry", `Backlog renders nav.backlog.entry through ${renderer} (got ${entryOf("renderBacklog")})`);
 out(entryOf("renderAgents") === "nav.agents.entry", `Agents renders nav.agents.entry through ${renderer} (got ${entryOf("renderAgents")})`);
-const dirReads = [...index.matchAll(/stored\("backlog\.dir"/g)].length;
+const dirReads = [...index.matchAll(/repoUrl\("backlog\.dir"/g)].length; // #1855 F4 read through repoUrl (every Git volume)
 out(dirReads === 1 && !/nav\.agents\.source_dir|stored\("agents\./.test(index), `the backlog folder is read in one place (${dirReads}); Agents declares no second source`);
 for (const k of ["backlog", "agents"]) {
 	out(/^[\w-]+\.md$/.test(nav[k]?.entry || ""), `nav.${k}.entry is a markdown file of the backlog dist (${nav[k]?.entry})`);
@@ -109,7 +109,7 @@ out(/def git_subdir\(app_root, fleet_id\)/.test(resolver) && /"git_subdir": git_
 out(/\("storage"\) or \{\}\)\.get\("git_subdir"\)/.test(resolver) && /sub\.startswith\("\/"\) or "\/" in sub/.test(resolver), "the resolver reads storage.git_subdir and refuses an absolute or nested one");
 out(/function sharedRoot\(\) \{\s*return `\$\{cordova\.file\.externalRootDirectory\}\$\{targets\.shared_root\}\/`;/.test(index), "index.js composes the root from the device's externalRootDirectory + targets.shared_root");
 out(/function gitPath\(relative\) \{\s*return `\$\{sharedRoot\(\)\}\$\{targets\.git_subdir\}\/\$\{relative\}`;/.test(index), "index.js composes every git-tree path through the store's declared git folder (#676)");
-out(/stored\("backlog\.dir", gitPath\(nav\.backlog\.source_dir\)\)/.test(index) && /gitPath\(nav\.repos\.root\)/.test(index), "Backlog and Git default to paths under the store's git folder");
+out(/repoUrl\("backlog\.dir", nav\.backlog\.source_dir\)/.test(index) && /gitPath\(relative\)/.test(index) && /gitPath\(nav\.repos\.root\)/.test(index), "Backlog and Git default to paths under the store's git folder (Backlog also finds a clone on any Git volume, #1855)");
 // Git tab (was Repos): labelled Git, two mounted volumes, repos enumerated per volume in two horizontal columns.
 const gitTab = nav.tabs.find((t) => t.id === "git");
 out(gitTab?.label === "Git" && gitTab.view === "git" && gitTab.aliases?.includes("repos") && !nav.tabs.some((t) => /repos/i.test(t.label)), "the section is labelled Git (id git, old id repos kept as alias)");

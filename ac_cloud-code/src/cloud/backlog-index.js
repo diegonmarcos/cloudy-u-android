@@ -60,3 +60,17 @@ export function ageText(savedAt, now) {
 	if (m < 2880) return `${Math.round(m / 60)} h ago`;
 	return `${Math.round(m / 1440)} days ago`;
 }
+
+// #1855 F3/F4 a repo-relative path lives on ONE of the volumes the Git tab lists (the store's git
+// folder, its legacy mirror, Emulated/Git): the first candidate that exists wins; none exists ->
+// the first candidate (the store), so the "not on this device" reason names the expected place.
+// `exists` is injected (index.js: fsOperation; the tester: fakes); a throwing probe counts as absent.
+export async function firstExisting(candidates, exists) {
+	const list = (candidates || []).filter(Boolean);
+	for (const url of list) {
+		try {
+			if (await exists(url)) return url;
+		} catch { /* unreadable volume: try the next one */ }
+	}
+	return list[0] || null;
+}

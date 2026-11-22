@@ -38,7 +38,7 @@ import { mountBars } from "./bars-dom";
 import { pageOfFile } from "./bars";
 import { listAgents, listRepos } from "./seams";
 import { el } from "./dom";
-import { loadIndex, ageText } from "./backlog-index";
+import { loadIndex, ageText, firstExisting } from "./backlog-index";
 import { bindTitle, drawer, topBar } from "./chrome";
 import { openProfile } from "./profile";
 import { chatDrawer, renderChat } from "./chat/view";
@@ -112,12 +112,30 @@ function gitPath(relative) {
 	return `${sharedRoot()}${targets.git_subdir}/${relative}`;
 }
 
+// #1855 F3/F4 every volume the Git tab lists (nav.repos.volumes), in order: the store's real home,
+// its legacy mirror (gitPath), Emulated/Git. A repo cloned on any of them is found; a path the user
+// set in the menu (localStorage) still wins.
+function repoCandidates(relative) {
+	const out = [];
+	for (const v of nav.repos.volumes) {
+		if (v.id === "emulated") out.push(`${cordova.file.externalRootDirectory}${v.subdir}/${relative}`);
+		else out.push(`${v.store_home}/${targets.git_subdir}/${relative}`, gitPath(relative));
+	}
+	return out;
+}
+
+async function repoUrl(key, relative) {
+	const set = localStorage.getItem(`cloud-code.${key}`);
+	if (set) return set;
+	return firstExisting(repoCandidates(relative), (u) => fsOperation(u).exists());
+}
+
 // ── Backlog: render the ONE existing source, as-is ─────────────────────────
 // Backlog and Agents are two entry files of the same backlog dist, read from
 // the same folder (one localStorage key), through this one renderer.
 async function renderBacklogView(panel, title, entry, { extra = [], docs = false } = {}) {
 	const md = markdownIt({ html: false, linkify: true });
-	let dir = stored("backlog.dir", gitPath(nav.backlog.source_dir));
+	let dir = await repoUrl("backlog.dir", nav.backlog.source_dir);
 	let current = entry;
 	const body = el("div", { className: "cloud-md" });
 
@@ -194,7 +212,7 @@ async function renderBacklogView(panel, title, entry, { extra = [], docs = false
 	// it in place through the shared preview (pages/markdownPreview renderer + html),
 	// so the backlog repo is served and read inside the tab. The root is declared in
 	// nav.docs.root (RELATIVE to the store git folder) and overridable per device.
-	let docsDir = stored("docs.dir", gitPath(nav.docs.root));
+	let docsDir = await repoUrl("docs.dir", nav.docs.root);
 	let docsTree = null;
 	const buildDocsPane = () => {
 		const treeBox = el("div", { className: "cloud-docs-treebox" });

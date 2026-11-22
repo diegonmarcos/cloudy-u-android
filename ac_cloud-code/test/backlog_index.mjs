@@ -32,9 +32,17 @@ out(m.ageText(0, 1) === "" && m.ageText(1000, 1000 + 5 * 60000) === "5 min ago",
 
 // Declaration + wiring.
 out(nav.backlog.index === "index.html" && /\.html$/.test(nav.backlog.last_good) && !nav.backlog.last_good.includes("/"), "nav.backlog declares the root index and the last-good file");
-out(/import \{ loadIndex, ageText \} from "\.\/backlog-index"/.test(index) && /sandbox: "allow-scripts"/.test(index) && /id: "index-refresh"/.test(index) && /cordova\.file\.dataDirectory/.test(index), "index.js renders the index in a sandboxed frame, with Refresh and the data-dir copy");
-out(/stored\("docs\.dir", gitPath\(nav\.docs\.root\)\)/.test(index) && /nav\.backlog\.index/.test(index), "the index is read from the cloud-me-pvt-tasks clone (nav.docs.root)");
+out(/import \{ loadIndex, ageText(, firstExisting)? \} from "\.\/backlog-index"/.test(index) && /sandbox: "allow-scripts"/.test(index) && /id: "index-refresh"/.test(index) && /cordova\.file\.dataDirectory/.test(index), "index.js renders the index in a sandboxed frame, with Refresh and the data-dir copy");
+out(/repoUrl\("docs\.dir", nav\.docs\.root\)/.test(index) && /nav\.backlog\.index/.test(index), "the index is read from the cloud-me-pvt-tasks clone (nav.docs.root)");
 out(!/new WebView|CloudWeb|android\.webkit/.test(index), "no native WebView is constructed (the page is Cordova's own; webview guard excludes ac_cloud-code)");
+
+// #1855 F3/F4 the repo is looked up on every volume the Git tab lists.
+const vols = ["store/git/r", "mirror/git/r", "emu/Git/r"];
+out(await m.firstExisting(vols, async (u) => u === "emu/Git/r") === "emu/Git/r", "a clone on Emulated/Git is found");
+out(await m.firstExisting(vols, async (u) => u !== "store/git/r") === "mirror/git/r", "the first existing volume wins, in the Git tab's order");
+out(await m.firstExisting(vols, async () => false) === "store/git/r", "no clone anywhere -> the store path, so the reason names it");
+out(await m.firstExisting(vols, async (u) => { if (u === "store/git/r") throw new Error("EACCES"); return u === "emu/Git/r"; }) === "emu/Git/r", "an unreadable volume is skipped, not fatal");
+out(/repoUrl\("backlog\.dir", nav\.backlog\.source_dir\)/.test(index) && /v\.id === "emulated"/.test(index) && /firstExisting\(repoCandidates/.test(index), "Backlog and Docs resolve through every Git volume");
 
 // Rule 16 field parity: everything the page had before #1699 is still there.
 const before = JSON.parse(readFileSync(join(root, "test/fixtures/backlog-fields.before.json"), "utf8"));
