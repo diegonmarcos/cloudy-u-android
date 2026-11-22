@@ -53,7 +53,7 @@ tapf() { # X% Y% of the screen
 # logged its state. Rows above Backlog (the open page's own hierarchy) only change page; a tap outside the dropdown closes it.
 open_backlog() {
     local y
-    for y in 12 15 18 21 24 27 30 33; do
+    for y in 12 15 18 21 24 27 30 33 36 39 42; do
         tapf 50 5; sleep 1
         tapf 50 "$y"; sleep 5
         if $T adb logcat -d | grep -q "cloud-code backlog index"; then echo "backlog reached through the dropdown (row at ${y}%)"; return 0; fi
@@ -99,8 +99,12 @@ launch 1; shot unavailable 3
 expect unavailable 'index: unavailable.*No earlier copy'
 
 # #1855 P3 the five bottom pages, one screenshot each (cells of the 5-item bar, centres at 15 / 32 / 50 / 68 / 85 % of the width)
-dropdown_shot() { tapf 50 5; shot first-row-dropdown 2; tapf 50 60; sleep 1; }
-dropdown_shot
+# the dropdown is closed by tapping its island again (a tap on the page behind could press one of its buttons), then the app is
+# restarted so the bottom pages are shot from the default page
+tapf 50 5; shot first-row-dropdown 2; tapf 50 5; sleep 1
+$T adb shell am force-stop "$PKG"; $T adb logcat -c || true
+$T adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
+sleep 25; dismiss
 for pair in "workspace 15" "editor 32" "agent 50" "changes 68" "run 85"; do
     set -- $pair; tapf "$2" 92; shot "tab-$1" 4
 done
