@@ -21,7 +21,7 @@ class NavDeclTest {
         assertEquals(setOf(Ids.INBOXES, Ids.BACKLOGS, Ids.HOME, Ids.TASKS, Ids.LIBRARY, Ids.SETTINGS), nav.sections.map { it.id }.toSet())
         assertEquals(listOf(Ids.PAGE_CALENDAR, Ids.PAGE_LIST, Ids.PAGE_GANTT, Ids.PAGE_KANBAN, Ids.PAGE_MINDMAP, Ids.PAGE_CLOCK), nav.section(Ids.TASKS)!!.pages.map { it.id })
         assertEquals(
-            listOf(Ids.PAGE_GENERAL, Ids.PAGE_PERMS, Ids.PAGE_ABOUT, Ids.PAGE_APPEARANCE, Ids.PAGE_AGENT, Ids.PAGE_INBOX, Ids.PAGE_FEEDS),
+            listOf(Ids.PAGE_APPEARANCE, Ids.PAGE_AGENT, Ids.PAGE_INBOX, Ids.PAGE_FEEDS, Ids.PAGE_GENERAL, Ids.PAGE_PERMS, Ids.PAGE_ABOUT),   // #1852 own pages first
             nav.section(Ids.SETTINGS)!!.pages.map { it.id },
         )
         assertEquals(listOf(Ids.PAGE_NOTES, Ids.PAGE_SYNCED), nav.section(Ids.INBOXES)!!.pages.map { it.id })
