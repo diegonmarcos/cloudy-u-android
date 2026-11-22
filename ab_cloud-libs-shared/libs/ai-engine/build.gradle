@@ -1,0 +1,32 @@
+// libs:ai-engine (#1855 P2) - the boundary the fleet reaches Cloud SuperIntel's AI engines across, and
+// NOTHING else. Cloud SuperIntel holds the engines (the fleet gateway, OpenRouter, claude-cli through the
+// gateway) and the keys; an app that wants a chat, a provider list or a model list binds this contract
+// instead of talking to a gateway itself (Cloud Code's AI tab first).
+//
+// This module holds only the AIDL contract, its wire rows (ProviderInfo, ModelInfo) and the client that
+// binds it. Deliberately dependency-free beyond core-ktx: every consumer links this.
+
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.diegonmarcos.superapp.aiengine'
+    compileSdk 36
+    defaultConfig {
+        minSdk 26
+    }
+    buildFeatures {
+        aidl true
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions { jvmTarget = '17' }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.13.1'
+}

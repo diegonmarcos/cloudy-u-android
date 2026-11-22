@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Merged into every app that links libs:ai-engine. Same shape as libs:text-tools and libs:repo-workspace: the
+  CONSTELLATION_DATA signature permission is both DEFINED (Cloud SuperIntel serves the binder and guards its
+  service with it) and REQUESTED (a caller needs it); <queries> is the Android 11+ package-visibility grant
+  without which bindService to Cloud SuperIntel fails with "service not found".
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <permission
+        android:name="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"
+        android:label="Cloud constellation data"
+        android:protectionLevel="signature" />
+
+    <uses-permission android:name="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA" />
+
+    <queries>
+        <intent>
+            <action android:name="com.diegonmarcos.superapp.aiengine.IAiEngine" />
+        </intent>
+    </queries>
+
+</manifest>

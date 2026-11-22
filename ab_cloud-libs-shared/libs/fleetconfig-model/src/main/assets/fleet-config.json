@@ -3684,6 +3684,7 @@
       "schema_version": 1,
       "libs": [
         "lib-ai",
+        "lib-ai-engine",
         "lib-bottomnav",
         "lib-core",
         "lib-crash",
@@ -4796,6 +4797,7 @@
       "schema_version": 1,
       "libs": [
         "lib-ai",
+        "lib-ai-engine",
         "lib-ai-usage",
         "lib-bottomnav",
         "lib-core",

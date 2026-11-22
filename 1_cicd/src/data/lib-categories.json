@@ -49,6 +49,7 @@
     "watchdog",
     "text-tools",
     "repo-workspace",
+    "ai-engine",
     "model-catalogue"
    ]
   },
