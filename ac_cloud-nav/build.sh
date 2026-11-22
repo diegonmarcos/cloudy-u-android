@@ -265,8 +265,10 @@ step_instrument() {
   _export_variant_abis
   # The JVM suites (tracker/timeline rules, libs:maps TimelineHost) run here: this is the CI job that has
   # gradle, the SDK and the key. (Ship's "unit" step runs before any of them are set up.)
-  in_nix gradle :app:testDebugUnitTest :libs:maps:testDebugUnitTest
-  in_nix gradle connectedAndroidTest
+  # NAV_INSTRUMENT_ARGS narrows the device run (the #1851 walk workflow passes the one test class + walk=1); NAV_INSTRUMENT_ONLY=1 skips the JVM suites
+  [ "${NAV_INSTRUMENT_ONLY:-}" = 1 ] || in_nix gradle :app:testDebugUnitTest :libs:maps:testDebugUnitTest
+  # shellcheck disable=SC2086
+  in_nix gradle connectedAndroidTest ${NAV_INSTRUMENT_ARGS:-}
 }
 step_lint()       { log "Lint"; in_nix gradle lint; }
 step_clean()      { log "Clean"; in_nix gradle clean; rm -rf "$DIST_DIR"; }
