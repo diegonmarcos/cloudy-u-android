@@ -261,7 +261,7 @@ jobs:
             adb shell settings put secure enabled_accessibility_services "$SVC"; adb shell settings put secure accessibility_enabled 1; sleep 3; }
           # wait_mode on|off: poll the tile's own label ("... on, tap to turn off") until the mode run has finished
           # wait_mode on|off [a11y]: with a11y the mode is also writing the accessibility entry, so wait for that write (<= 60 s) before any dump touches it
-          wait_mode() { if [ "$2" = a11y ]; then for _ in $(seq 1 30); do case "$(a11y)" in *LockScreen*) [ "$1" = off ] && break;; *) [ "$1" = on ] && break;; esac; sleep 2; done; fi
+          wait_mode() { if [ "${2:-}" = a11y ]; then for _ in $(seq 1 30); do case "$(a11y)" in *LockScreen*) [ "$1" = off ] && break;; *) [ "$1" = on ] && break;; esac; sleep 2; done; fi
             for _ in 1 2 3 4 5 6 7 8; do sleep 5; awake; skipdlg; dumpto out/wm.xml; t=$(python3 -I ui.py textof out/wm.xml "Banking Apps Mode")
               case "$t" in "") ;; *"turn off"*) [ "$1" = on ] && return 0;; *) [ "$1" = off ] && return 0;; esac; done; return 1; }
           # report NAME: expand the applied steps ("All N steps"), then read the whole page, top to end, into out/NAME-all.xml
