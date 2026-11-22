@@ -95,7 +95,8 @@ def text_edit(rel, old, new=""):
     open(p, "w").write(s.replace(old, new, 1))
 exec(code)
 PY
-  if node "$ROOT/test/nav_parity.mjs" "$mut_root/copy" 2>&1 | grep -q '^CHECK bad '; then ok "parity mutation '$1' is caught"; else fail "parity mutation '$1' was NOT caught: the parity test is blind to it"; fi
+  mut_out="$(node "$ROOT/test/nav_parity.mjs" "$mut_root/copy" 2>&1)"
+  if grep -q '^CHECK bad ' <<<"$mut_out"; then ok "parity mutation '$1' is caught"; else fail "parity mutation '$1' was NOT caught: the parity test is blind to it"; fi
 }
 mutate "git redirect and alias dropped" 'nav_edit(lambda d: (d["redirects"].pop("git"), [t.__setitem__("aliases", []) for t in d["tabs"] if t["id"] == "workspace"]))'
 mutate "agents lands on Models" 'nav_edit(lambda d: d["redirects"].__setitem__("agents", {"tab": "agent", "page": "mdl"}))'
