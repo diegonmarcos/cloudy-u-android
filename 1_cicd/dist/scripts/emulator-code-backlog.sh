@@ -107,10 +107,10 @@ expect unavailable 'index: unavailable.*No earlier copy'
 tapf 50 5; shot first-row-dropdown 2; tapf 50 5; sleep 1
 $T adb shell am force-stop "$PKG"; $T adb logcat -c || true
 $T adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
-sleep 25; dismiss
+sleep 25; dismiss; sleep 10
 for pair in "workspace 15" "editor 32" "agent 50" "changes 68" "run 85"; do
     # the first tap after a restart can be taken by the chat composer's focus: tap the cell twice (a tab tapped again stays selected)
-    set -- $pair; tapf "$2" 92; sleep 2; tapf "$2" 92; shot "tab-$1" 4
+    set -- $pair; tapf "$2" 92; sleep 3; tapf "$2" 92; sleep 3; tapf "$2" 92; shot "tab-$1" 4
 done
 
 $T adb logcat -d -t 30000 > "$OUT/logcat.txt"; $T adb logcat -d -b crash > "$OUT/logcat-crash.txt" 2>&1 || true
