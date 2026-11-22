@@ -94,8 +94,10 @@ class AiCostTest {
         assertEquals(l.PACKAGE, JSONObject(File("../build.json").readText()).getJSONObject("android").getString("application_id"))
         assertTrue(File("src/main/AndroidManifest.xml").readText().contains("<action android:name=\"${l.ACTION}\" />"))
         val bj = JSONObject(File("../build.json").readText())
+        // #1854 Cost left the bottom nav: the link's target is the `cost` page of pages.json, which the top-right Cost window draws (the shell opens it).
         val sections = bj.getJSONObject("ui").getJSONArray("sections")
-        assertTrue((0 until sections.length()).any { sections.getJSONObject(it).getString("id") == l.COST })
+        assertTrue((0 until sections.length()).none { sections.getJSONObject(it).getString("id") == l.COST })
+        assertEquals(AiData.KIND_COST, AiData.pages(Data.ai("pages.json")).getValue(l.COST).kind)
     }
 
     @Test fun withoutAConfiguredOpenRouterTheSampleShowsLabelled() {
