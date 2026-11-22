@@ -4,8 +4,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * The Kotlin twin of src/more.rs (#1841 phase 2): the stores after the lists (downloads; settings, site permissions and the page views are
- * added by their own commits). Same ops, same answers; BrowserCoreListsTest holds both to fixtures/lists-corpus.json.
+ * The Kotlin twin of src/more.rs (#1841 phase 2): the stores after the lists (downloads, settings, site permissions). Same ops, same answers; BrowserCoreListsTest holds both to fixtures/lists-corpus.json.
  */
 internal object KtMore {
     private fun text(o: JSONObject, k: String, d: String) = KtLists.text(o, k, d)
@@ -165,6 +164,172 @@ internal object KtMore {
         else -> null
     }
 
+    // ── settings ───────────────────────────────────────────────────────────────────────────────────────────────────────
+
+    private fun strs(a: JSONArray?): List<String> = if (a == null) emptyList() else (0 until a.length()).map { a.opt(it).let { x -> if (x is String) x else x.toString() } }
+
+    private fun setting(cat: List<JSONObject>, key: String) = cat.firstOrNull { text(it, "key", "") == key }
+
+    private fun parseBool(v: String): Boolean? = when (v.lowercase()) {
+        "true", "1", "on", "yes" -> true
+        "false", "0", "off", "no" -> false
+        else -> null
+    }
+
+    private fun splitSet(v: String): List<String> = v.split(',').map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+
+    private fun limit(s: JSONObject, k: String): Long? = (s.opt(k) as? Number)?.toLong()
+
+    private fun err(m: String) = JSONObject().put("error", m)
+
+    private fun setParse(a: JSONObject): JSONObject {
+        val cat = KtLists.objs(a.optJSONArray("catalogue"))
+        val key = text(a, "key", "")
+        val s = setting(cat, key) ?: return err("$key: not a setting (see settings/catalogue)")
+        val v = text(a, "raw", "").trim()
+        val ty = text(s, "type", "string")
+        val values = strs(s.optJSONArray("values"))
+        return when (ty) {
+            "bool" -> parseBool(v)?.let { JSONObject().put("value", it).put("type", "bool") } ?: err("$key: '$v' is not a bool (true/false)")
+            "int" -> {
+                val n = v.toIntOrNull() ?: return err("$key: '$v' is not an int")
+                val mn = limit(s, "min"); val mx = limit(s, "max")
+                if ((mn != null && n < mn) || (mx != null && n > mx)) err("$key: $n is out of range $mn..$mx") else JSONObject().put("value", n).put("type", "int")
+            }
+            "enum" -> if (v in values) JSONObject().put("value", v).put("type", "enum") else err("$key: '$v' is not one of $values")
+            "set" -> {
+                val set = splitSet(v)
+                val bad = if (values.isEmpty()) emptyList() else set.filterNot { it in values }
+                if (bad.isEmpty()) JSONObject().put("value", JSONArray(set)).put("type", "set") else err("$key: $bad not in $values")
+            }
+            else -> JSONObject().put("value", v).put("type", ty)
+        }
+    }
+
+    private fun setSnapshot(a: JSONObject): JSONObject {
+        val values = a.optJSONObject("values") ?: JSONObject()
+        val out = JSONObject(); val types = JSONObject()
+        for (s in KtLists.objs(a.optJSONArray("catalogue"))) {
+            val key = text(s, "key", "")
+            var v: Any? = if (!values.has(key) || values.isNull(key)) (if (s.has("default")) s.opt("default") else JSONObject.NULL) else values.opt(key)
+            if (v is JSONArray) v = JSONArray(strs(v).sorted())
+            out.put(key, v ?: JSONObject.NULL)
+            types.put(key, text(s, "type", "string"))
+        }
+        return out.put("_types", types)
+    }
+
+    private fun setCoerce(ty: String, v: Any?): Any? = when (ty) {
+        "bool" -> when (v) { is Boolean -> v; is String -> parseBool(v.trim()); else -> null }
+        "int" -> when (v) {
+            is Number -> v.toLong().takeIf { v !is Double && v !is Float && it in Int.MIN_VALUE..Int.MAX_VALUE }
+            is String -> v.trim().toIntOrNull()
+            else -> null
+        }
+        "set" -> when (v) {
+            is JSONArray -> JSONArray((0 until v.length()).mapNotNull { v.opt(it) as? String })
+            is String -> JSONArray(splitSet(v.trim()))
+            else -> null
+        }
+        else -> when (v) { is String -> v; is Number -> v.toString(); is Boolean -> v.toString(); else -> null }
+    }
+
+    private fun setMigrate(a: JSONObject): JSONObject {
+        val cat = KtLists.objs(a.optJSONArray("catalogue"))
+        val fixes = JSONObject(); val drops = ArrayList<String>()
+        val stored = a.optJSONObject("stored") ?: JSONObject()
+        for (k in stored.keys().asSequence().toList().sorted()) {
+            val s = setting(cat, k) ?: continue
+            val ty = text(s, "type", "string")
+            val want = when (ty) { "bool" -> "Boolean"; "int" -> "Integer"; "set" -> "Set"; else -> "String" }
+            val e = stored.optJSONObject(k) ?: JSONObject()
+            if (text(e, "t", "") == want) continue
+            val c = setCoerce(ty, e.opt("v"))
+            if (c != null) fixes.put(k, JSONObject().put("t", if (ty == "enum") "string" else ty).put("v", c)) else drops.add(k)
+        }
+        return JSONObject().put("fixes", fixes).put("drops", JSONArray(drops))
+    }
+
+    // ── site permissions ───────────────────────────────────────────────────────────────────────────────────────────────
+
+    private fun pkey(host: String, perm: String) = "${host.lowercase()}|$perm"
+
+    private fun suffixes(host: String): List<String> {
+        val parts = host.lowercase().split('.').filter { it.isNotEmpty() }
+        return parts.indices.map { parts.drop(it).joinToString(".") }
+    }
+
+    private fun rule(rules: JSONObject, k: String): String? = rules.opt(k) as? String
+
+    private fun permsOp(op: String, a: JSONObject): JSONObject? {
+        val rules = a.optJSONObject("rules") ?: JSONObject()
+        return when (op) {
+            "perm_key" -> JSONObject().put("key", pkey(text(a, "host", ""), text(a, "perm", "")))
+            "perm_resolve" -> {
+                val perm = text(a, "perm", "")
+                JSONObject().put("value", suffixes(text(a, "host", "")).firstNotNullOfOrNull { rule(rules, pkey(it, perm)) } ?: rule(rules, pkey("*", perm)) ?: text(a, "default", "ask"))
+            }
+            "perm_default" -> JSONObject().put("value", rule(rules, pkey("*", text(a, "perm", ""))) ?: text(a, "default", "ask"))
+            "perm_zoom" -> JSONObject().put("zoom", suffixes(text(a, "host", "")).firstNotNullOfOrNull { rule(rules, pkey(it, "zoom")) }?.toIntOrNull()?.coerceIn(50, 300) ?: JSONObject.NULL)
+            "perm_hosts" -> {
+                val by = java.util.TreeMap<String, JSONObject>()
+                for (k in rules.keys()) {
+                    val h = k.substringBefore('|', "")
+                    if (h.isNotEmpty() && h != "*") by.getOrPut(h) { JSONObject() }.put(k.substringAfter('|'), rules.opt(k))
+                }
+                JSONObject().put("hosts", JSONArray().also { r -> by.forEach { (h, v) -> r.put(JSONObject().put("host", h).put("rules", v)) } })
+            }
+            "perm_ordered" -> {
+                val p = KtLists.objs(a.optJSONArray("perms"))
+                JSONObject().put("ids", JSONArray((p.filter { it.optBoolean("top", false) } + p.filterNot { it.optBoolean("top", false) }).map { text(it, "id", "") }))
+            }
+            "perm_set" -> {
+                val host = text(a, "host", ""); val perm = text(a, "perm", ""); val value = text(a, "value", "")
+                when {
+                    host.isBlank() -> err("host= is required")
+                    value !in listOf("allow", "deny", "ask") -> err("value must be one of [allow, deny, ask]")
+                    else -> JSONObject().put("key", pkey(host, perm)).put("value", value)
+                }
+            }
+            "perm_set_zoom" -> {
+                val host = text(a, "host", "")
+                if (host.isBlank()) JSONObject().put("action", "none")
+                else {
+                    val k = pkey(host, "zoom")
+                    val p = (a.opt("percent") as? Number)?.toLong()
+                    if (p == null) JSONObject().put("action", "remove").put("key", k)
+                    else JSONObject().put("action", "put").put("key", k).put("value", p.coerceIn(50, 300).toString())
+                }
+            }
+            "perm_forget" -> {
+                val host = text(a, "host", "").lowercase()
+                JSONObject().put("remove", JSONArray(strs(a.optJSONArray("keys")).filter { it.substringBefore('|') == host }))
+            }
+            "perm_map" -> {
+                val state = text(a, "state", ""); val gesture = a.optBoolean("gesture", false)
+                when (val kind = text(a, "kind", "")) {
+                    "autoplay_needs_gesture" -> JSONObject().put("value", state != "allow")
+                    "mixed_content" -> JSONObject().put("value", when (state) { "allow" -> 0; "deny" -> 1; else -> 2 })
+                    "popup_allowed" -> JSONObject().put("value", when (state) { "allow" -> true; "deny" -> false; else -> gesture })
+                    "on_unless_blocked" -> JSONObject().put("value", state != "deny")
+                    else -> err("unknown mapping $kind")
+                }
+            }
+            "perm_migrate" -> {
+                val moves = JSONArray(); val drops = ArrayList<String>(); val movedTo = HashSet<String>()
+                for (k in rules.keys().asSequence().toList().sorted()) {
+                    val h = k.substringBefore('|', "")
+                    if (h.isNotEmpty() && h.lowercase() != h) {
+                        val to = h.lowercase() + "|" + k.substringAfter('|')
+                        if (rules.has(to) || to in movedTo) drops.add(k) else { movedTo.add(to); moves.put(JSONObject().put("from", k).put("to", to).put("value", rules.opt(k))) }
+                    }
+                }
+                JSONObject().put("moves", moves).put("drops", JSONArray(drops))
+            }
+            else -> null
+        }
+    }
+
     /** The canonical list of a stored store of [kind] handled here (lists.rs `migrate`), null = not a kind of this file. */
     fun migrateKind(kind: String, src: JSONArray?): JSONArray? = when (kind) {
         "downloads" -> JSONArray(KtLists.objs(src).filter { it.has("id") }.map { indexRow(it) })
@@ -172,5 +337,8 @@ internal object KtMore {
         else -> null
     }
 
-    fun run(op: String, a: JSONObject): JSONObject = downloads(op, a) ?: throw IllegalArgumentException("unknown list op $op")
+    fun run(op: String, a: JSONObject): JSONObject = downloads(op, a)
+        ?: when (op) { "set_parse" -> setParse(a); "set_snapshot" -> setSnapshot(a); "set_migrate" -> setMigrate(a); else -> null }
+        ?: permsOp(op, a)
+        ?: throw IllegalArgumentException("unknown list op $op")
 }

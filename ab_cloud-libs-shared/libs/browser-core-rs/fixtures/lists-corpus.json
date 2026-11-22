@@ -50,6 +50,35 @@
    "sequential",
    "seed"
   ],
+  "setting_core": [
+   "key",
+   "type",
+   "default",
+   "values",
+   "min",
+   "max"
+  ],
+  "setting_display": [
+   "label",
+   "section",
+   "cls",
+   "doc",
+   "valueLabels",
+   "group"
+  ],
+  "sitePerm_core": [
+   "id",
+   "default",
+   "top"
+  ],
+  "sitePerm_display": [
+   "label",
+   "android",
+   "webkit",
+   "webview",
+   "why",
+   "enforcedBy"
+  ],
   "dlpolicy": [
    "parallel",
    "wifiOnly",
@@ -3511,6 +3540,2168 @@
       "seed": false
      }
     ]
+   }
+  },
+  {
+   "name": "set_parse desktop ' YES '",
+   "op": "set_parse",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "key": "desktop",
+    "raw": " YES "
+   },
+   "out": {
+    "value": true,
+    "type": "bool"
+   }
+  },
+  {
+   "name": "set_parse desktop 'off'",
+   "op": "set_parse",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "key": "desktop",
+    "raw": "off"
+   },
+   "out": {
+    "value": false,
+    "type": "bool"
+   }
+  },
+  {
+   "name": "set_parse desktop 'maybe'",
+   "op": "set_parse",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "key": "desktop",
+    "raw": "maybe"
+   },
+   "out": {
+    "error": "desktop: 'maybe' is not a bool (true/false)"
+   }
+  },
+  {
+   "name": "set_parse zoom '150'",
+   "op": "set_parse",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "key": "zoom",
+    "raw": "150"
+   },
+   "out": {
+    "value": 150,
+    "type": "int"
+   }
+  },
+  {
+   "name": "set_parse zoom 'abc'",
+   "op": "set_parse",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "key": "zoom",
+    "raw": "abc"
+   },
+   "out": {
+    "error": "zoom: 'abc' is not an int"
+   }
+  },
+  {
+   "name": "set_parse zoom '10'",
+   "op": "set_parse",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "key": "zoom",
+    "raw": "10"
+   },
+   "out": {
+    "error": "zoom: 10 is out of range 50..300"
+   }
+  },
+  {
+   "name": "set_parse zoom '301'",
+   "op": "set_parse",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "key": "zoom",
+    "raw": "301"
+   },
+   "out": {
+    "error": "zoom: 301 is out of range 50..300"
+   }
+  },
+  {
+   "name": "set_parse zoom '99999999999'",
+   "op": "set_parse",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "key": "zoom",
+    "raw": "99999999999"
+   },
+   "out": {
+    "error": "zoom: '99999999999' is not an int"
+   }
+  },
+  {
+   "name": "set_parse zmin '-5'",
+   "op": "set_parse",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "key": "zmin",
+    "raw": "-5"
+   },
+   "out": {
+    "value": -5,
+    "type": "int"
+   }
+  },
+  {
+   "name": "set_parse lo '3'",
+   "op": "set_parse",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "key": "lo",
+    "raw": "3"
+   },
+   "out": {
+    "error": "lo: 3 is out of range 5..null"
+   }
+  },
+  {
+   "name": "set_parse theme ' dark '",
+   "op": "set_parse",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "key": "theme",
+    "raw": " dark "
+   },
+   "out": {
+    "value": "dark",
+    "type": "enum"
+   }
+  },
+  {
+   "name": "set_parse theme 'blue'",
+   "op": "set_parse",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "key": "theme",
+    "raw": "blue"
+   },
+   "out": {
+    "error": "theme: 'blue' is not one of [auto, dark, light]"
+   }
+  },
+  {
+   "name": "set_parse addons 'a, c ,a'",
+   "op": "set_parse",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "key": "addons",
+    "raw": "a, c ,a"
+   },
+   "out": {
+    "value": [
+     "a",
+     "c"
+    ],
+    "type": "set"
+   }
+  },
+  {
+   "name": "set_parse addons 'a,z,y'",
+   "op": "set_parse",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "key": "addons",
+    "raw": "a,z,y"
+   },
+   "out": {
+    "error": "addons: [z, y] not in [a, b, c]"
+   }
+  },
+  {
+   "name": "set_parse anyset 'x,y'",
+   "op": "set_parse",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "key": "anyset",
+    "raw": "x,y"
+   },
+   "out": {
+    "value": [
+     "x",
+     "y"
+    ],
+    "type": "set"
+   }
+  },
+  {
+   "name": "set_parse anyset ''",
+   "op": "set_parse",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "key": "anyset",
+    "raw": ""
+   },
+   "out": {
+    "value": [],
+    "type": "set"
+   }
+  },
+  {
+   "name": "set_parse home '  hi '",
+   "op": "set_parse",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "key": "home",
+    "raw": "  hi "
+   },
+   "out": {
+    "value": "hi",
+    "type": "string"
+   }
+  },
+  {
+   "name": "set_parse nope '1'",
+   "op": "set_parse",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "key": "nope",
+    "raw": "1"
+   },
+   "out": {
+    "error": "nope: not a setting (see settings/catalogue)"
+   }
+  },
+  {
+   "name": "set_snapshot is every value, else its default, sets sorted, plus _types",
+   "op": "set_snapshot",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "values": {
+     "desktop": true,
+     "zoom": 150,
+     "addons": [
+      "c",
+      "a"
+     ],
+     "home": null
+    }
+   },
+   "out": {
+    "desktop": true,
+    "zoom": 150,
+    "zmin": 1,
+    "lo": null,
+    "theme": "auto",
+    "addons": [
+     "a",
+     "c"
+    ],
+    "anyset": [],
+    "home": "about:blank",
+    "_types": {
+     "desktop": "bool",
+     "zoom": "int",
+     "zmin": "int",
+     "lo": "int",
+     "theme": "enum",
+     "addons": "set",
+     "anyset": "set",
+     "home": "string"
+    }
+   }
+  },
+  {
+   "name": "set_migrate coerces a value stored under the wrong type and drops what cannot be",
+   "op": "set_migrate",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "stored": {
+     "desktop": {
+      "t": "String",
+      "v": "true"
+     },
+     "zoom": {
+      "t": "Long",
+      "v": 150
+     },
+     "theme": {
+      "t": "Integer",
+      "v": 3
+     },
+     "addons": {
+      "t": "String",
+      "v": "a,b"
+     },
+     "home": {
+      "t": "String",
+      "v": "x"
+     },
+     "search_engine_id": {
+      "t": "Integer",
+      "v": 1
+     },
+     "zmin": {
+      "t": "Boolean",
+      "v": true
+     },
+     "anyset": {
+      "t": "Float",
+      "v": 1.5
+     }
+    }
+   },
+   "out": {
+    "fixes": {
+     "desktop": {
+      "t": "bool",
+      "v": true
+     },
+     "zoom": {
+      "t": "int",
+      "v": 150
+     },
+     "theme": {
+      "t": "string",
+      "v": "3"
+     },
+     "addons": {
+      "t": "set",
+      "v": [
+       "a",
+       "b"
+      ]
+     }
+    },
+    "drops": [
+     "anyset",
+     "zmin"
+    ]
+   }
+  },
+  {
+   "name": "set_migrate of well-typed values is nothing",
+   "op": "set_migrate",
+   "in": {
+    "catalogue": [
+     {
+      "key": "desktop",
+      "type": "bool",
+      "default": false
+     },
+     {
+      "key": "zoom",
+      "type": "int",
+      "default": 100,
+      "min": 50,
+      "max": 300
+     },
+     {
+      "key": "zmin",
+      "type": "int",
+      "default": 1,
+      "min": null,
+      "max": null
+     },
+     {
+      "key": "lo",
+      "type": "int",
+      "min": 5,
+      "max": null
+     },
+     {
+      "key": "theme",
+      "type": "enum",
+      "values": [
+       "auto",
+       "dark",
+       "light"
+      ],
+      "default": "auto"
+     },
+     {
+      "key": "addons",
+      "type": "set",
+      "values": [
+       "a",
+       "b",
+       "c"
+      ],
+      "default": [
+       "a"
+      ]
+     },
+     {
+      "key": "anyset",
+      "type": "set",
+      "values": [],
+      "default": []
+     },
+     {
+      "key": "home",
+      "type": "string",
+      "default": "about:blank"
+     }
+    ],
+    "stored": {
+     "desktop": {
+      "t": "Boolean",
+      "v": true
+     }
+    }
+   },
+   "out": {
+    "fixes": {},
+    "drops": []
+   }
+  },
+  {
+   "name": "perm_resolve A.B.example.org camera",
+   "op": "perm_resolve",
+   "in": {
+    "rules": {
+     "example.org|camera": "deny",
+     "*|camera": "allow",
+     "a.example.org|mic": "ask",
+     "*|mic": "deny",
+     "example.org|zoom": "500",
+     "b.example.org|zoom": "abc",
+     "*|zoom": "90"
+    },
+    "host": "A.B.example.org",
+    "perm": "camera",
+    "default": "ask"
+   },
+   "out": {
+    "value": "deny"
+   }
+  },
+  {
+   "name": "perm_resolve example.org mic",
+   "op": "perm_resolve",
+   "in": {
+    "rules": {
+     "example.org|camera": "deny",
+     "*|camera": "allow",
+     "a.example.org|mic": "ask",
+     "*|mic": "deny",
+     "example.org|zoom": "500",
+     "b.example.org|zoom": "abc",
+     "*|zoom": "90"
+    },
+    "host": "example.org",
+    "perm": "mic",
+    "default": "ask"
+   },
+   "out": {
+    "value": "deny"
+   }
+  },
+  {
+   "name": "perm_resolve a.example.org mic",
+   "op": "perm_resolve",
+   "in": {
+    "rules": {
+     "example.org|camera": "deny",
+     "*|camera": "allow",
+     "a.example.org|mic": "ask",
+     "*|mic": "deny",
+     "example.org|zoom": "500",
+     "b.example.org|zoom": "abc",
+     "*|zoom": "90"
+    },
+    "host": "a.example.org",
+    "perm": "mic",
+    "default": "deny"
+   },
+   "out": {
+    "value": "ask"
+   }
+  },
+  {
+   "name": "perm_resolve x.net geolocation",
+   "op": "perm_resolve",
+   "in": {
+    "rules": {
+     "example.org|camera": "deny",
+     "*|camera": "allow",
+     "a.example.org|mic": "ask",
+     "*|mic": "deny",
+     "example.org|zoom": "500",
+     "b.example.org|zoom": "abc",
+     "*|zoom": "90"
+    },
+    "host": "x.net",
+    "perm": "geolocation",
+    "default": "allow"
+   },
+   "out": {
+    "value": "allow"
+   }
+  },
+  {
+   "name": "perm_resolve x.net camera",
+   "op": "perm_resolve",
+   "in": {
+    "rules": {
+     "example.org|camera": "deny",
+     "*|camera": "allow",
+     "a.example.org|mic": "ask",
+     "*|mic": "deny",
+     "example.org|zoom": "500",
+     "b.example.org|zoom": "abc",
+     "*|zoom": "90"
+    },
+    "host": "x.net",
+    "perm": "camera",
+    "default": "ask"
+   },
+   "out": {
+    "value": "allow"
+   }
+  },
+  {
+   "name": "perm_default is the user's global rule, else the declared one",
+   "op": "perm_default",
+   "in": {
+    "rules": {
+     "example.org|camera": "deny",
+     "*|camera": "allow",
+     "a.example.org|mic": "ask",
+     "*|mic": "deny",
+     "example.org|zoom": "500",
+     "b.example.org|zoom": "abc",
+     "*|zoom": "90"
+    },
+    "perm": "camera",
+    "default": "ask"
+   },
+   "out": {
+    "value": "allow"
+   }
+  },
+  {
+   "name": "perm_default falls back to the declared",
+   "op": "perm_default",
+   "in": {
+    "rules": {
+     "example.org|camera": "deny",
+     "*|camera": "allow",
+     "a.example.org|mic": "ask",
+     "*|mic": "deny",
+     "example.org|zoom": "500",
+     "b.example.org|zoom": "abc",
+     "*|zoom": "90"
+    },
+    "perm": "notifications",
+    "default": "deny"
+   },
+   "out": {
+    "value": "deny"
+   }
+  },
+  {
+   "name": "perm_zoom clamps",
+   "op": "perm_zoom",
+   "in": {
+    "rules": {
+     "example.org|camera": "deny",
+     "*|camera": "allow",
+     "a.example.org|mic": "ask",
+     "*|mic": "deny",
+     "example.org|zoom": "500",
+     "b.example.org|zoom": "abc",
+     "*|zoom": "90"
+    },
+    "host": "example.org"
+   },
+   "out": {
+    "zoom": 300
+   }
+  },
+  {
+   "name": "perm_zoom of an unreadable rule is none (the parent is not asked)",
+   "op": "perm_zoom",
+   "in": {
+    "rules": {
+     "example.org|camera": "deny",
+     "*|camera": "allow",
+     "a.example.org|mic": "ask",
+     "*|mic": "deny",
+     "example.org|zoom": "500",
+     "b.example.org|zoom": "abc",
+     "*|zoom": "90"
+    },
+    "host": "b.example.org"
+   },
+   "out": {
+    "zoom": null
+   }
+  },
+  {
+   "name": "perm_zoom with no rule",
+   "op": "perm_zoom",
+   "in": {
+    "rules": {
+     "example.org|camera": "deny",
+     "*|camera": "allow",
+     "a.example.org|mic": "ask",
+     "*|mic": "deny",
+     "example.org|zoom": "500",
+     "b.example.org|zoom": "abc",
+     "*|zoom": "90"
+    },
+    "host": "x.org"
+   },
+   "out": {
+    "zoom": null
+   }
+  },
+  {
+   "name": "perm_hosts groups the rules by host, sorted, without the global one",
+   "op": "perm_hosts",
+   "in": {
+    "rules": {
+     "example.org|camera": "deny",
+     "*|camera": "allow",
+     "a.example.org|mic": "ask",
+     "*|mic": "deny",
+     "example.org|zoom": "500",
+     "b.example.org|zoom": "abc",
+     "*|zoom": "90"
+    }
+   },
+   "out": {
+    "hosts": [
+     {
+      "host": "a.example.org",
+      "rules": {
+       "mic": "ask"
+      }
+     },
+     {
+      "host": "b.example.org",
+      "rules": {
+       "zoom": "abc"
+      }
+     },
+     {
+      "host": "example.org",
+      "rules": {
+       "camera": "deny",
+       "zoom": "500"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "perm_ordered puts the most used first",
+   "op": "perm_ordered",
+   "in": {
+    "perms": [
+     {
+      "id": "a"
+     },
+     {
+      "id": "b",
+      "top": true
+     },
+     {
+      "id": "c"
+     },
+     {
+      "id": "d",
+      "top": true
+     }
+    ]
+   },
+   "out": {
+    "ids": [
+     "b",
+     "d",
+     "a",
+     "c"
+    ]
+   }
+  },
+  {
+   "name": "perm_set refuses a blank host",
+   "op": "perm_set",
+   "in": {
+    "host": " ",
+    "perm": "camera",
+    "value": "allow"
+   },
+   "out": {
+    "error": "host= is required"
+   }
+  },
+  {
+   "name": "perm_set refuses a value",
+   "op": "perm_set",
+   "in": {
+    "host": "x.org",
+    "perm": "camera",
+    "value": "maybe"
+   },
+   "out": {
+    "error": "value must be one of [allow, deny, ask]"
+   }
+  },
+  {
+   "name": "perm_set lower-cases the host in the key",
+   "op": "perm_set",
+   "in": {
+    "host": "Example.ORG",
+    "perm": "camera",
+    "value": "allow"
+   },
+   "out": {
+    "key": "example.org|camera",
+    "value": "allow"
+   }
+  },
+  {
+   "name": "perm_set_zoom clamps low",
+   "op": "perm_set_zoom",
+   "in": {
+    "host": "x.org",
+    "percent": 10
+   },
+   "out": {
+    "action": "put",
+    "key": "x.org|zoom",
+    "value": "50"
+   }
+  },
+  {
+   "name": "perm_set_zoom clamps high",
+   "op": "perm_set_zoom",
+   "in": {
+    "host": "x.org",
+    "percent": 999
+   },
+   "out": {
+    "action": "put",
+    "key": "x.org|zoom",
+    "value": "300"
+   }
+  },
+  {
+   "name": "perm_set_zoom clears",
+   "op": "perm_set_zoom",
+   "in": {
+    "host": "X.org",
+    "percent": null
+   },
+   "out": {
+    "action": "remove",
+    "key": "x.org|zoom"
+   }
+  },
+  {
+   "name": "perm_set_zoom of a blank host is nothing",
+   "op": "perm_set_zoom",
+   "in": {
+    "host": "",
+    "percent": 100
+   },
+   "out": {
+    "action": "none"
+   }
+  },
+  {
+   "name": "perm_forget lists every key of the host",
+   "op": "perm_forget",
+   "in": {
+    "host": "Example.org",
+    "keys": [
+     "example.org|camera",
+     "a.example.org|mic",
+     "example.org|zoom",
+     "example.orgx|y"
+    ]
+   },
+   "out": {
+    "remove": [
+     "example.org|camera",
+     "example.org|zoom"
+    ]
+   }
+  },
+  {
+   "name": "perm_map popup_allowed ask",
+   "op": "perm_map",
+   "in": {
+    "kind": "popup_allowed",
+    "state": "ask",
+    "gesture": true
+   },
+   "out": {
+    "value": true
+   }
+  },
+  {
+   "name": "perm_map popup_allowed ask",
+   "op": "perm_map",
+   "in": {
+    "kind": "popup_allowed",
+    "state": "ask",
+    "gesture": false
+   },
+   "out": {
+    "value": false
+   }
+  },
+  {
+   "name": "perm_map popup_allowed allow",
+   "op": "perm_map",
+   "in": {
+    "kind": "popup_allowed",
+    "state": "allow",
+    "gesture": false
+   },
+   "out": {
+    "value": true
+   }
+  },
+  {
+   "name": "perm_map popup_allowed deny",
+   "op": "perm_map",
+   "in": {
+    "kind": "popup_allowed",
+    "state": "deny",
+    "gesture": true
+   },
+   "out": {
+    "value": false
+   }
+  },
+  {
+   "name": "perm_map mixed_content allow",
+   "op": "perm_map",
+   "in": {
+    "kind": "mixed_content",
+    "state": "allow",
+    "gesture": false
+   },
+   "out": {
+    "value": 0
+   }
+  },
+  {
+   "name": "perm_map mixed_content deny",
+   "op": "perm_map",
+   "in": {
+    "kind": "mixed_content",
+    "state": "deny",
+    "gesture": false
+   },
+   "out": {
+    "value": 1
+   }
+  },
+  {
+   "name": "perm_map mixed_content ask",
+   "op": "perm_map",
+   "in": {
+    "kind": "mixed_content",
+    "state": "ask",
+    "gesture": false
+   },
+   "out": {
+    "value": 2
+   }
+  },
+  {
+   "name": "perm_map autoplay_needs_gesture allow",
+   "op": "perm_map",
+   "in": {
+    "kind": "autoplay_needs_gesture",
+    "state": "allow",
+    "gesture": false
+   },
+   "out": {
+    "value": false
+   }
+  },
+  {
+   "name": "perm_map autoplay_needs_gesture ask",
+   "op": "perm_map",
+   "in": {
+    "kind": "autoplay_needs_gesture",
+    "state": "ask",
+    "gesture": false
+   },
+   "out": {
+    "value": true
+   }
+  },
+  {
+   "name": "perm_map on_unless_blocked deny",
+   "op": "perm_map",
+   "in": {
+    "kind": "on_unless_blocked",
+    "state": "deny",
+    "gesture": false
+   },
+   "out": {
+    "value": false
+   }
+  },
+  {
+   "name": "perm_map on_unless_blocked ask",
+   "op": "perm_map",
+   "in": {
+    "kind": "on_unless_blocked",
+    "state": "ask",
+    "gesture": false
+   },
+   "out": {
+    "value": true
+   }
+  },
+  {
+   "name": "perm_map on_unless_blocked allow",
+   "op": "perm_map",
+   "in": {
+    "kind": "on_unless_blocked",
+    "state": "allow",
+    "gesture": false
+   },
+   "out": {
+    "value": true
+   }
+  },
+  {
+   "name": "perm_migrate moves an upper-case host key to the canonical one, a clash keeps the canonical",
+   "op": "perm_migrate",
+   "in": {
+    "rules": {
+     "Example.org|camera": "deny",
+     "example.org|camera": "allow",
+     "Foo.com|mic": "ask",
+     "Bar.com|mic": "deny",
+     "x.org|zoom": "90"
+    }
+   },
+   "out": {
+    "moves": [
+     {
+      "from": "Bar.com|mic",
+      "to": "bar.com|mic",
+      "value": "deny"
+     },
+     {
+      "from": "Foo.com|mic",
+      "to": "foo.com|mic",
+      "value": "ask"
+     }
+    ],
+    "drops": [
+     "Example.org|camera"
+    ]
+   }
+  },
+  {
+   "name": "perm_migrate of canonical rules is nothing",
+   "op": "perm_migrate",
+   "in": {
+    "rules": {
+     "example.org|camera": "deny",
+     "*|camera": "allow",
+     "a.example.org|mic": "ask",
+     "*|mic": "deny",
+     "example.org|zoom": "500",
+     "b.example.org|zoom": "abc",
+     "*|zoom": "90"
+    }
+   },
+   "out": {
+    "moves": [],
+    "drops": []
    }
   }
  ]

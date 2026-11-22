@@ -66,7 +66,7 @@ internal object KtLists {
     private fun visitsArr(v: List<V>) = JSONArray().also { a -> v.forEach { a.put(visitJson(it)) } }
     private fun visitsOut(v: List<V>): JSONObject { val a = visitsArr(v); return JSONObject().put("visits", a).put("raw", a.toString()).put("count", v.size) }
 
-    fun hostOf(url: String): String {
+    internal fun hostOf(url: String): String {
         val l = low(url)
         val rest = (if (l.contains("://")) l.substringAfter("://") else l).removePrefix("www.")
         return rest.takeWhile { it != '/' && it != '?' && it != '#' && it != ':' }

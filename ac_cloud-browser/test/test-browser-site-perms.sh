@@ -69,7 +69,7 @@ def check(root, ok):
             ok(x.get("enforced_by", "").strip() != "", "T5 `%s` names its WebView hook" % x["id"])
         else:
             ok(x.get("why", "").startswith("not supported in WebView"), "T5 `%s` says why WebView cannot" % x["id"])
-    ok("fun ordered(perms: List<BrowserSitePerm>): List<BrowserSitePerm> = perms.filter { it.top } + perms.filterNot { it.top }" in priv, "T5 the page lists the most-used first")
+    ok("fun ordered(perms: List<BrowserSitePerm>): List<BrowserSitePerm>" in priv and '"perm_ordered"' in priv, "T5 the page lists the most-used first (#1841: the browser core's perm_ordered, held to filter { top } + filterNot { top } by BrowserCoreListsTest)")
     ok("BrowserSitePolicy.ordered(perms)" in screen, "T5 the Perms component draws that order")
     ok('getSharedPreferences("browser_site_permissions"' in priv and "?: rules[key(ANY_HOST, perm)] ?: default" in priv, "T6 per-site rules persist; the global default sits under `*`")
     for e in ENFORCED_BY_STATE:
@@ -97,7 +97,7 @@ main("site perms + browsing tools", check, [
     ("a top perm moves down", BJ, '"top": true,\n          "webview": true,\n          "enforced_by": "WebChromeClient.onPermissionRequest (VIDEO_CAPTURE)"', '"webview": true,\n          "enforced_by": "WebChromeClient.onPermissionRequest (VIDEO_CAPTURE)"', "T5 the most-used"),
     ("a perm is dropped", BJ, '"id": "nfc"', '"id": "nfc_gone"', "T5 the list is complete"),
     ("an unsupported perm gives no reason", BJ, '"why": "not supported in WebView: WebView does not implement WebXR."', '"why": ""', "T5 `vr_ar`"),
-    ("the list is not ordered", PRIV, "perms.filter { it.top } + perms.filterNot { it.top }", "perms", "T5 the page lists"),
+    ("the list is not ordered", PRIV, '"perm_ordered"', '"perm_unordered"', "T5 the page lists"),
     ("the global default is ignored", PRIV, "?: rules[key(ANY_HOST, perm)] ?: default", "?: default", "T6 per-site rules persist"),
     ("autoplay stops being enforced", FRAG, 'permState(host, "autoplay")', 'permState(host, "nothing")', "T6 `autoplay`"),
     ("popups stop being enforced", FRAG, 'hostOf(view?.url), "popups")', 'hostOf(view?.url), "nothing")', "T6 `popups`"),

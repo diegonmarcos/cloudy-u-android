@@ -1,12 +1,20 @@
 package com.diegonmarcos.cloudbrowser
 
+import com.diegonmarcos.cloudbrowser.sites.HistoryDays
 import com.diegonmarcos.cloudbrowser.sites.VisitLog
+import com.diegonmarcos.cloudbrowser.sites.Visited
+import com.diegonmarcos.superapp.browser.BrowserSuggest
+import com.diegonmarcos.superapp.browser.BrowserTab
 import com.diegonmarcos.cloudbrowser.sites.WebyBookmarks
 import com.diegonmarcos.cloudbrowser.sites.WebyCore
 import com.diegonmarcos.cloudbrowser.sites.WebyFolder
 import com.diegonmarcos.cloudbrowser.sites.WebyTile
 import com.diegonmarcos.cloudlib.browsercore.BrowserCore
 import com.diegonmarcos.superapp.browser.BrowserBookmark
+import com.diegonmarcos.superapp.browser.BrowserSetting
+import com.diegonmarcos.superapp.browser.BrowserSettingsCatalogue
+import com.diegonmarcos.superapp.browser.BrowserSitePerm
+import com.diegonmarcos.superapp.browser.BrowserSitePolicy
 import com.diegonmarcos.superapp.browser.BrowserBookmarkOps
 import com.diegonmarcos.superapp.browser.BrowserDownload
 import com.diegonmarcos.superapp.browser.BrowserDownloadIndex
@@ -79,6 +87,9 @@ class BrowserCoreListsTest {
         assertEquals(want("dljob"), fields(DlJob::class.java))
         assertEquals(want("dlpolicy"), fields(DlPolicy::class.java))
         assertEquals(want("download"), fields(BrowserDownload::class.java))
+        // the catalogue and the permission declarations: the core reads its core fields, the rest is display metadata that stays on the Kotlin side
+        assertEquals(want("setting_core") + want("setting_display"), fields(com.diegonmarcos.superapp.browser.BrowserSetting::class.java))
+        assertEquals(want("sitePerm_core") + want("sitePerm_display"), fields(com.diegonmarcos.superapp.browser.BrowserSitePerm::class.java))
         // an answer's rows carry exactly those fields
         val h = BrowserCore.lists("history_record", JSONObject().put("raw", "[]").put("url", "u").put("title", "t").put("now", 1)).getJSONArray("visits").getJSONObject(0)
         assertEquals(want("visit"), h.keys().asSequence().toSet())
@@ -236,5 +247,58 @@ class BrowserCoreListsTest {
         assertEquals(DlState.RUNNING, DlCodec.fromJson(DlCodec.toJson(listOf(running))).single().state)
         val p = DlPolicy(parallel = 2, wifiOnly = true, allowMetered = false, speedLimitKbps = 500, segments = 6, sharedStore = true, seed = true, seedRatio = 150, seedMinutes = 30, uploadKbps = 9)
         assertEquals(p, DlPolicy.fromJson(p.toJson().toString()))
+    }
+
+    // ── phase 2: settings and site permissions, the old Kotlin rules as the oracle ─────────────────────────────────────────
+
+    private val catalogue = BrowserSettingsCatalogue(listOf(
+        BrowserSetting("desktop", "bool", false), BrowserSetting("zoom", "int", 100, min = 50, max = 300), BrowserSetting("lo", "int", null, min = 5),
+        BrowserSetting("theme", "enum", "auto", values = listOf("auto", "dark", "light")), BrowserSetting("addons", "set", setOf("a"), values = listOf("a", "b", "c")),
+        BrowserSetting("anyset", "set", emptySet<String>()), BrowserSetting("home", "string", "about:blank"),
+    ))
+
+    @Test fun `setting validation matches the catalogue's own rules, message for message`() {
+        val raws = listOf("true", " YES ", "off", "maybe", "150", "abc", "10", "301", "-5", "99999999999", "", "dark", " dark ", "blue", "a, c ,a", "a,z,y", "x,y", "  hi ", "+7", "3")
+        for (key in listOf("desktop", "zoom", "lo", "theme", "addons", "anyset", "home", "nope")) for (raw in raws) {
+            val old = runCatching { catalogue.parseValue(key, raw) }
+            val r = BrowserCore.lists("set_parse", JSONObject().put("catalogue", catalogue.toJson()).put("key", key).put("raw", raw))
+            if (old.isFailure) assertEquals("$key=$raw", old.exceptionOrNull()!!.message, r.optString("error"))
+            else {
+                assertTrue("$key=$raw gave ${r}", !r.has("error"))
+                val v = r.get("value")
+                val got: Any = if (v is JSONArray) (0 until v.length()).map { v.getString(it) }.toSet() else v
+                assertEquals("$key=$raw", old.getOrNull(), got)
+            }
+        }
+    }
+
+    @Test fun `the settings snapshot matches the catalogue's own`() {
+        val stored = mapOf<String, Any?>("desktop" to true, "zoom" to 150, "addons" to setOf("c", "a"))
+        val old = catalogue.snapshot { stored[it.key] }
+        val values = JSONObject().also { o -> stored.forEach { (k, v) -> o.put(k, if (v is Set<*>) JSONArray(v.toList()) else v) } }
+        val got = BrowserCore.lists("set_snapshot", JSONObject().put("catalogue", catalogue.toJson()).put("values", values))
+        assertEquals(canon(old), canon(got))
+    }
+
+    private val rules = mapOf("example.org|camera" to "deny", "*|camera" to "allow", "a.example.org|mic" to "ask", "*|mic" to "deny", "example.org|zoom" to "500", "b.example.org|zoom" to "abc", "*|zoom" to "90",
+        "x.com|camera" to "ask", "y.co.uk|zoom" to "120", "y.co.uk|mic" to "allow")
+
+    @Test fun `site permission resolution, zoom and hosts match the old rules`() {
+        for (host in listOf("example.org", "A.B.example.org", "b.example.org", "x.com", "www.x.com", "y.co.uk", "z.y.co.uk", "nowhere.net", "", "org", "a.example.org"))
+            for (perm in listOf("camera", "mic", "geolocation", "zoom", "notifications"))
+                assertEquals("$host $perm", BrowserSitePolicy.resolveRules(rules, host, perm, "ask"), BrowserSitePolicy.resolve(rules, host, perm, "ask"))
+        assertEquals(300, BrowserSitePolicy.zoomOf(rules, "example.org")); assertEquals(null, BrowserSitePolicy.zoomOf(rules, "b.example.org"))
+        assertEquals(120, BrowserSitePolicy.zoomOf(rules, "a.y.co.uk")); assertEquals(null, BrowserSitePolicy.zoomOf(rules, "none.net"))
+        assertEquals(BrowserSitePolicy.hostsWithRulesRules(rules), BrowserSitePolicy.hostsWithRules(rules))
+        assertEquals(BrowserSitePolicy.hostsWithRulesRules(rules).keys.toList(), BrowserSitePolicy.hostsWithRules(rules).keys.toList())
+        val perms = listOf(BrowserSitePerm("a", "A", "ask"), BrowserSitePerm("b", "B", "allow", top = true), BrowserSitePerm("c", "C", "deny"), BrowserSitePerm("d", "D", "ask", top = true))
+        assertEquals(perms.filter { it.top } + perms.filterNot { it.top }, BrowserSitePolicy.ordered(perms))
+        assertEquals("allow", BrowserSitePolicy.defaultOf(rules, perms[0].copy(id = "camera"))); assertEquals("deny", BrowserSitePolicy.defaultOf(rules, perms[2]))
+        for (st in listOf("allow", "deny", "ask")) {
+            assertEquals(st != "allow", BrowserSitePolicy.autoplayNeedsGesture(st))
+            assertEquals(when (st) { "allow" -> 0; "deny" -> 1; else -> 2 }, BrowserSitePolicy.mixedContentMode(st))
+            assertEquals(st != "deny", BrowserSitePolicy.onUnlessBlocked(st))
+            for (g in listOf(true, false)) assertEquals(when (st) { "allow" -> true; "deny" -> false; else -> g }, BrowserSitePolicy.popupAllowed(st, g))
+        }
     }
 }

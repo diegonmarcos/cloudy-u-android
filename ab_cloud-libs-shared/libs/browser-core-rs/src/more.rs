@@ -2,6 +2,9 @@
 //! to the same fixture corpus as its Kotlin twin (ListsMore.kt, KtMore):
 //!   dl_*      downloads: the DownloadManager index, the download manager's job list (every field), its policy, backoff, names and sizes in
 //!             words, the seeding rule, the Downloads page's filter and sort
+//!   set_*     settings: validate and type a value against the catalogue, the FleetConfig snapshot, the repair of values stored under the wrong type
+//!   perm_*    site permissions: the per-site rule resolution (most specific host, global default, declared default), zoom, the Sites page's
+//!             hosts, set / forget, the WebView state mappings, the lowercase-host repair
 //! The ops of lists.rs are tried first; an op neither knows is an `Err` (the JNI boundary answers `ERR`, Kotlin runs its twin).
 
 use serde_json::{json, Map, Value};
@@ -264,6 +267,303 @@ fn downloads(op: &str, a: &Value) -> Option<Value> {
     })
 }
 
+// ── settings ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+fn kt_list(v: &[String]) -> String {
+    format!("[{}]", v.join(", "))
+}
+
+fn setting<'a>(cat: &'a [Value], key: &str) -> Option<&'a Value> {
+    cat.iter().find(|s| text(s, "key", "") == key)
+}
+
+fn str_list(v: &Value, k: &str) -> Vec<String> {
+    arr(v, k).iter().map(|x| text(&json!({ "x": x }), "x", "")).collect()
+}
+
+fn parse_bool(v: &str) -> Option<bool> {
+    match lower(v).as_str() {
+        "true" | "1" | "on" | "yes" => Some(true),
+        "false" | "0" | "off" | "no" => Some(false),
+        _ => None,
+    }
+}
+
+fn split_set(v: &str) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    for p in v.split(',').map(|x| x.trim()).filter(|x| !x.is_empty()) {
+        if !out.iter().any(|o| o == p) {
+            out.push(p.to_string());
+        }
+    }
+    out
+}
+
+fn limit(s: &Value, k: &str) -> Option<i64> {
+    s.get(k).and_then(Value::as_i64)
+}
+
+/// `raw` (a query-string value) -> the typed value to store, or the error in words (the Kotlin catalogue's own messages).
+fn set_parse(a: &Value) -> Value {
+    let cat = arr(a, "catalogue");
+    let key = text(a, "key", "");
+    let s = match setting(cat, &key) {
+        Some(s) => s,
+        None => return json!({ "error": format!("{key}: not a setting (see settings/catalogue)") }),
+    };
+    let raw = text(a, "raw", "");
+    let v = raw.trim();
+    let ty = text(s, "type", "string");
+    let values = str_list(s, "values");
+    let err = |m: String| json!({ "error": m });
+    match ty.as_str() {
+        "bool" => match parse_bool(v) {
+            Some(b) => json!({ "value": b, "type": "bool" }),
+            None => err(format!("{key}: '{v}' is not a bool (true/false)")),
+        },
+        "int" => match v.parse::<i32>() {
+            Err(_) => err(format!("{key}: '{v}' is not an int")),
+            Ok(n) => {
+                let (mn, mx) = (limit(s, "min"), limit(s, "max"));
+                if mn.map_or(false, |m| (n as i64) < m) || mx.map_or(false, |m| (n as i64) > m) {
+                    let show = |o: Option<i64>| o.map_or("null".to_string(), |x| x.to_string());
+                    err(format!("{key}: {n} is out of range {}..{}", show(mn), show(mx)))
+                } else {
+                    json!({ "value": n, "type": "int" })
+                }
+            }
+        },
+        "enum" => {
+            if values.iter().any(|x| x == v) { json!({ "value": v, "type": "enum" }) } else { err(format!("{key}: '{v}' is not one of {}", kt_list(&values))) }
+        }
+        "set" => {
+            let set = split_set(v);
+            let bad: Vec<String> = if values.is_empty() { vec![] } else { set.iter().filter(|x| !values.contains(x)).cloned().collect() };
+            if bad.is_empty() { json!({ "value": set, "type": "set" }) } else { err(format!("{key}: {} not in {}", kt_list(&bad), kt_list(&values))) }
+        }
+        _ => json!({ "value": v, "type": ty }),
+    }
+}
+
+/// Every setting's current value (else its default) plus `_types`, the FleetConfig export shape.
+fn set_snapshot(a: &Value) -> Value {
+    let values = a.get("values").cloned().unwrap_or_else(|| json!({}));
+    let mut out = Map::new();
+    let mut types = Map::new();
+    for s in arr(a, "catalogue") {
+        let key = text(s, "key", "");
+        let v = match values.get(&key) {
+            Some(Value::Null) | None => s.get("default").cloned().unwrap_or(Value::Null),
+            Some(v) => v.clone(),
+        };
+        let v = match v {
+            Value::Array(items) => {
+                let mut t: Vec<String> = items.iter().map(|x| text(&json!({ "x": x }), "x", "")).collect();
+                t.sort();
+                json!(t)
+            }
+            other => other,
+        };
+        out.insert(key.clone(), v);
+        types.insert(key, json!(text(s, "type", "string")));
+    }
+    out.insert("_types".into(), Value::Object(types));
+    Value::Object(out)
+}
+
+/// A stored value the prefs hold under the wrong type (reading it would throw) coerced to the catalogue's type, or dropped.
+fn set_coerce(ty: &str, v: &Value) -> Option<Value> {
+    match ty {
+        "bool" => match v {
+            Value::Bool(_) => Some(v.clone()),
+            Value::String(s) => parse_bool(s.trim()).map(|b| json!(b)),
+            _ => None,
+        },
+        "int" => match v {
+            Value::Number(n) => n.as_i64().filter(|x| i32::try_from(*x).is_ok()).map(|x| json!(x)),
+            Value::String(s) => s.trim().parse::<i32>().ok().map(|x| json!(x)),
+            _ => None,
+        },
+        "set" => match v {
+            Value::Array(items) => Some(json!(items.iter().filter_map(|x| x.as_str().map(String::from)).collect::<Vec<_>>())),
+            Value::String(s) => Some(json!(split_set(s.trim()))),
+            _ => None,
+        },
+        _ => match v {
+            Value::String(_) => Some(v.clone()),
+            Value::Number(n) => Some(json!(n.to_string())),
+            Value::Bool(b) => Some(json!(b.to_string())),
+            _ => None,
+        },
+    }
+}
+
+/// `stored` = `{key: {"t": prefs type (Boolean|Integer|Long|Float|String|Set), "v": value}}`: what to rewrite and what to drop.
+fn set_migrate(a: &Value) -> Value {
+    let cat = arr(a, "catalogue");
+    let mut fixes = Map::new();
+    let mut drops: Vec<String> = Vec::new();
+    let stored = a.get("stored").and_then(Value::as_object).cloned().unwrap_or_default();
+    let mut keys: Vec<&String> = stored.keys().collect();
+    keys.sort();
+    for k in keys {
+        let s = match setting(cat, k) {
+            Some(s) => s,
+            None => continue, // a key the catalogue does not declare (search_engine_id ...) is left alone
+        };
+        let ty = text(s, "type", "string");
+        let want = match ty.as_str() { "bool" => "Boolean", "int" => "Integer", "set" => "Set", _ => "String" };
+        let e = &stored[k];
+        if text(e, "t", "") == want {
+            continue;
+        }
+        match set_coerce(&ty, e.get("v").unwrap_or(&Value::Null)) {
+            Some(v) => {
+                let tag = if ty == "enum" { "string".to_string() } else { ty.clone() };
+                fixes.insert(k.clone(), json!({ "t": tag, "v": v }));
+            }
+            None => drops.push(k.clone()),
+        }
+    }
+    json!({ "fixes": fixes, "drops": drops })
+}
+
+// ── site permissions ───────────────────────────────────────────────────────────────────────────────────────────────────
+
+fn perm_key(host: &str, perm: &str) -> String {
+    format!("{}|{}", lower(host), perm)
+}
+
+fn suffixes(host: &str) -> Vec<String> {
+    let l = lower(host);
+    let parts: Vec<&str> = l.split('.').filter(|p| !p.is_empty()).collect();
+    (0..parts.len()).map(|i| parts[i..].join(".")).collect()
+}
+
+fn rule<'a>(rules: &'a Value, k: &str) -> Option<&'a str> {
+    rules.get(k).and_then(Value::as_str)
+}
+
+fn perm_resolve(rules: &Value, host: &str, perm: &str, default: &str) -> String {
+    suffixes(host)
+        .iter()
+        .find_map(|h| rule(rules, &perm_key(h, perm)))
+        .or_else(|| rule(rules, &perm_key("*", perm)))
+        .unwrap_or(default)
+        .to_string()
+}
+
+fn perm_zoom(rules: &Value, host: &str) -> Option<i64> {
+    suffixes(host).iter().find_map(|h| rule(rules, &perm_key(h, "zoom"))).and_then(|s| s.parse::<i32>().ok()).map(|n| (n as i64).clamp(50, 300))
+}
+
+fn perm_hosts(rules: &Value) -> Value {
+    let mut by: std::collections::BTreeMap<String, Map<String, Value>> = std::collections::BTreeMap::new();
+    if let Some(o) = rules.as_object() {
+        for (k, v) in o {
+            if let Some((h, p)) = k.split_once('|') {
+                if !h.is_empty() && h != "*" {
+                    by.entry(h.to_string()).or_default().insert(p.to_string(), v.clone());
+                }
+            }
+        }
+    }
+    Value::Array(by.into_iter().map(|(h, r)| json!({ "host": h, "rules": r })).collect())
+}
+
+fn perms(op: &str, a: &Value) -> Option<Value> {
+    let rules = a.get("rules").cloned().unwrap_or_else(|| json!({}));
+    Some(match op {
+        "perm_key" => json!({ "key": perm_key(&text(a, "host", ""), &text(a, "perm", "")) }),
+        "perm_resolve" => json!({ "value": perm_resolve(&rules, &text(a, "host", ""), &text(a, "perm", ""), &text(a, "default", "ask")) }),
+        "perm_default" => json!({ "value": rule(&rules, &perm_key("*", &text(a, "perm", ""))).map(String::from).unwrap_or_else(|| text(a, "default", "ask")) }),
+        "perm_zoom" => json!({ "zoom": perm_zoom(&rules, &text(a, "host", "")) }),
+        "perm_hosts" => json!({ "hosts": perm_hosts(&rules) }),
+        "perm_ordered" => {
+            let p = arr(a, "perms");
+            let top = |x: &&Value| x.get("top").and_then(Value::as_bool).unwrap_or(false);
+            let ids: Vec<String> = p.iter().filter(top).chain(p.iter().filter(|x| !top(x))).map(|x| text(x, "id", "")).collect();
+            json!({ "ids": ids })
+        }
+        "perm_set" => {
+            let (host, perm, value) = (text(a, "host", ""), text(a, "perm", ""), text(a, "value", ""));
+            if blank(&host) {
+                json!({ "error": "host= is required" })
+            } else if !["allow", "deny", "ask"].contains(&value.as_str()) {
+                json!({ "error": "value must be one of [allow, deny, ask]" })
+            } else {
+                json!({ "key": perm_key(&host, &perm), "value": value })
+            }
+        }
+        "perm_set_zoom" => {
+            let host = text(a, "host", "");
+            if blank(&host) {
+                json!({ "action": "none" })
+            } else {
+                let k = perm_key(&host, "zoom");
+                match a.get("percent").and_then(Value::as_i64) {
+                    None => json!({ "action": "remove", "key": k }),
+                    Some(p) => json!({ "action": "put", "key": k, "value": p.clamp(50, 300).to_string() }),
+                }
+            }
+        }
+        "perm_forget" => {
+            let host = lower(&text(a, "host", ""));
+            let keys: Vec<String> = arr(a, "keys").iter().filter_map(|x| x.as_str()).filter(|k| k.split('|').next().unwrap_or("") == host).map(String::from).collect();
+            json!({ "remove": keys })
+        }
+        "perm_map" => {
+            let state = text(a, "state", "");
+            let gesture = a.get("gesture").and_then(Value::as_bool).unwrap_or(false);
+            let kind = text(a, "kind", "");
+            match kind.as_str() {
+                "autoplay_needs_gesture" => json!({ "value": state != "allow" }),
+                "mixed_content" => {
+                    let mode = match state.as_str() {
+                        "allow" => 0,
+                        "deny" => 1,
+                        _ => 2,
+                    };
+                    json!({ "value": mode })
+                }
+                "popup_allowed" => {
+                    let ok = match state.as_str() {
+                        "allow" => true,
+                        "deny" => false,
+                        _ => gesture,
+                    };
+                    json!({ "value": ok })
+                }
+                "on_unless_blocked" => json!({ "value": state != "deny" }),
+                other => json!({ "error": format!("unknown mapping {other}") }),
+            }
+        }
+        "perm_migrate" => {
+            // keys written with an upper-case host never matched a lookup (the lookups lower-case): they move to the canonical key
+            let mut moves: Vec<Value> = Vec::new();
+            let mut drops: Vec<String> = Vec::new();
+            if let Some(o) = rules.as_object() {
+                let mut keys: Vec<&String> = o.keys().collect();
+                keys.sort();
+                for k in keys {
+                    if let Some((h, p)) = k.split_once('|') {
+                        if !h.is_empty() && lower(h) != h {
+                            let to = format!("{}|{p}", lower(h));
+                            if o.contains_key(&to) || moves.iter().any(|m| m["to"] == json!(to)) {
+                                drops.push(k.clone());
+                            } else {
+                                moves.push(json!({ "from": k, "to": to, "value": o[k] }));
+                            }
+                        }
+                    }
+                }
+            }
+            json!({ "moves": moves, "drops": drops })
+        }
+        _ => return None,
+    })
+}
+
 /// The canonical list (and its text) of a stored store of `kind` handled here, for lists.rs `migrate`; `None` = not a kind of this file.
 pub fn migrate_kind(kind: &str, src: &[Value]) -> Option<(Value, String)> {
     let v: Vec<Value> = match kind {
@@ -278,6 +578,15 @@ pub fn migrate_kind(kind: &str, src: &[Value]) -> Option<(Value, String)> {
 
 pub fn run(op: &str, a: &Value) -> Result<Value, String> {
     if let Some(v) = downloads(op, a) {
+        return Ok(v);
+    }
+    match op {
+        "set_parse" => return Ok(set_parse(a)),
+        "set_snapshot" => return Ok(set_snapshot(a)),
+        "set_migrate" => return Ok(set_migrate(a)),
+        _ => {}
+    }
+    if let Some(v) = perms(op, a) {
         return Ok(v);
     }
     Err(format!("unknown list op {op}"))

@@ -1,6 +1,9 @@
 package com.diegonmarcos.superapp.browser
 
 import android.content.Context
+import com.diegonmarcos.cloudlib.browsercore.BrowserCore
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * What the USER has chosen, over the [BrowserSettingsCatalogue] the app declared.
@@ -18,6 +21,11 @@ class BrowserSettings(context: Context, val catalogue: BrowserSettingsCatalogue 
 
     private val sp = context.applicationContext
         .getSharedPreferences("browser_settings", Context.MODE_PRIVATE)
+
+    init {
+        // #1841 a value stored under the wrong type (it threw when read) is repaired once, after a backup of the prefs
+        BrowserListMigration.ensureMap(context, "browser_settings", "set_migrate", catalogue.toJson())
+    }
 
     /** null until he picks one — meaning "use the configured default". */
     fun searchEngineId(): String? = sp.getString(KEY_ENGINE, null)
@@ -44,9 +52,19 @@ class BrowserSettings(context: Context, val catalogue: BrowserSettingsCatalogue 
     @Suppress("UNCHECKED_CAST")
     fun stringSet(key: String): Set<String>? = value(key) as? Set<String>
 
-    /** Validate [raw] against the catalogue and store it. @return the error in words, or null. */
+    /**
+     * Validate [raw] against the catalogue and store it. @return the error in words, or null.
+     * #1841 the validation and typing are the browser core's (`set_parse`; the pure [BrowserSettingsCatalogue.parseValue] is the rule it is held to).
+     */
     fun set(key: String, raw: String): String? {
-        val v = runCatching { catalogue.parseValue(key, raw) }.getOrElse { return it.message }
+        val r = BrowserCore.lists("set_parse", JSONObject().put("catalogue", catalogue.toJson()).put("key", key).put("raw", raw))
+        if (r.has("error")) return r.optString("error")
+        val v: Any = when (r.optString("type")) {
+            "bool" -> r.getBoolean("value")
+            "int" -> r.getInt("value")
+            "set" -> r.getJSONArray("value").let { a -> (0 until a.length()).map { a.getString(it) }.toSet() }
+            else -> r.getString("value")
+        }
         put(key, v)
         return null
     }
@@ -64,7 +82,12 @@ class BrowserSettings(context: Context, val catalogue: BrowserSettingsCatalogue 
         BrowserBus.post(BrowserBus.SETTINGS)
     }
 
-    fun snapshot() = catalogue.snapshot { value(it.key) }
+    /** Every setting's current value plus `_types`, the FleetConfig export shape ([BrowserCore] `set_snapshot`; [BrowserSettingsCatalogue.snapshot] is the reference). */
+    fun snapshot(): JSONObject {
+        val values = JSONObject()
+        for (st in catalogue.settings) value(st.key)?.let { v -> values.put(st.key, if (v is Set<*>) JSONArray(v.map { it.toString() }) else v) }
+        return BrowserCore.lists("set_snapshot", JSONObject().put("catalogue", catalogue.toJson()).put("values", values))
+    }
 
     private companion object {
         const val KEY_ENGINE = "search_engine_id"

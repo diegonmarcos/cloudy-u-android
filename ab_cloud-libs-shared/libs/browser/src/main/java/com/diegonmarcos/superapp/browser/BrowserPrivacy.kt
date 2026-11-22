@@ -2,6 +2,8 @@ package com.diegonmarcos.superapp.browser
 
 import com.diegonmarcos.cloudlib.web.CloudWeb
 import android.content.Context
+import com.diegonmarcos.cloudlib.browsercore.BrowserCore
+import org.json.JSONArray
 import android.webkit.CookieManager
 import android.webkit.WebStorage
 import android.webkit.WebView
@@ -54,22 +56,34 @@ object BrowserSitePolicy {
 
     /** The site's rule (most specific host first), else the user's global default, else the declared [default]. */
     fun resolve(rules: Map<String, String>, host: String, perm: String, default: String): String =
+        BrowserCore.lists("perm_resolve", JSONObject().put("rules", JSONObject(rules)).put("host", host).put("perm", perm).put("default", default)).getString("value")
+
+    /** The readable rule [resolve] (the browser core's `perm_resolve`) is held to. */
+    fun resolveRules(rules: Map<String, String>, host: String, perm: String, default: String): String =
         suffixes(host).firstNotNullOfOrNull { rules[key(it, perm)] } ?: rules[key(ANY_HOST, perm)] ?: default
 
     /** #1401 the global default: the user's `*` rule, else the declared one. */
-    fun defaultOf(rules: Map<String, String>, perm: BrowserSitePerm): String = rules[key(ANY_HOST, perm.id)] ?: perm.default
+    fun defaultOf(rules: Map<String, String>, perm: BrowserSitePerm): String =
+        BrowserCore.lists("perm_default", JSONObject().put("rules", JSONObject(rules)).put("perm", perm.id).put("default", perm.default)).getString("value")
 
     /** #1401 the Perms list order: the most-used first, then all the rest, each in declared order. */
-    fun ordered(perms: List<BrowserSitePerm>): List<BrowserSitePerm> = perms.filter { it.top } + perms.filterNot { it.top }
+    fun ordered(perms: List<BrowserSitePerm>): List<BrowserSitePerm> {
+        val ids = BrowserCore.lists("perm_ordered", JSONObject().put("perms", JSONArray().also { a -> perms.forEach { a.put(JSONObject().put("id", it.id).put("top", it.top)) } })).getJSONArray("ids")
+        val used = BooleanArray(perms.size)
+        return (0 until ids.length()).mapNotNull { i -> perms.indices.firstOrNull { !used[it] && perms[it].id == ids.getString(i) }?.also { used[it] = true }?.let { perms[it] } }
+    }
 
-    /** #1401 the WebView settings a state turns into (pure, so the mapping is JVM-tested). */
-    fun autoplayNeedsGesture(state: String) = state != ALLOW
+    private fun map(kind: String, state: String, gesture: Boolean = false) =
+        BrowserCore.lists("perm_map", JSONObject().put("kind", kind).put("state", state).put("gesture", gesture)).get("value")
+
+    /** #1401 the WebView settings a state turns into (the browser core's `perm_map`, JVM-tested). */
+    fun autoplayNeedsGesture(state: String) = map("autoplay_needs_gesture", state) as Boolean
     /** WebSettings.MIXED_CONTENT_ALWAYS_ALLOW = 0, NEVER_ALLOW = 1, COMPATIBILITY_MODE = 2. */
-    fun mixedContentMode(state: String) = when (state) { ALLOW -> 0; DENY -> 1; else -> 2 }
+    fun mixedContentMode(state: String) = (map("mixed_content", state) as Number).toInt()
     /** A window.open / target=_blank: allow opens it, block refuses it, ask opens it only on a user gesture. */
-    fun popupAllowed(state: String, userGesture: Boolean) = when (state) { ALLOW -> true; DENY -> false; else -> userGesture }
+    fun popupAllowed(state: String, userGesture: Boolean) = map("popup_allowed", state, userGesture) as Boolean
     /** Storage, third-party cookies, fullscreen: on unless blocked (ask has no WebView prompt, so it behaves as allow). */
-    fun onUnlessBlocked(state: String) = state != DENY
+    fun onUnlessBlocked(state: String) = map("on_unless_blocked", state) as Boolean
 
     /** History, previews and suggestions never see a private tab. */
     fun shouldRecord(tab: BrowserTab?): Boolean = tab?.isPrivate != true
@@ -81,10 +95,21 @@ object BrowserSitePolicy {
 
     /** The text zoom (percent) set for [host] (or a parent domain), else null = use the global one. */
     fun zoomOf(rules: Map<String, String>, host: String): Int? =
-        suffixes(host).firstNotNullOfOrNull { rules[key(it, ZOOM)] }?.toIntOrNull()?.coerceIn(ZOOM_MIN, ZOOM_MAX)
+        BrowserCore.lists("perm_zoom", JSONObject().put("rules", JSONObject(rules)).put("host", host)).let { if (it.isNull("zoom")) null else it.getInt("zoom") }
 
-    /** Hosts that hold at least one rule, with their rules: the Sites page of Configs. */
-    fun hostsWithRules(rules: Map<String, String>): Map<String, Map<String, String>> =
+    /** Hosts that hold at least one rule, with their rules: the Sites page of Configs (the browser core's `perm_hosts`). */
+    fun hostsWithRules(rules: Map<String, String>): Map<String, Map<String, String>> {
+        val a = BrowserCore.lists("perm_hosts", JSONObject().put("rules", JSONObject(rules))).getJSONArray("hosts")
+        val out = LinkedHashMap<String, Map<String, String>>()
+        for (i in 0 until a.length()) {
+            val o = a.getJSONObject(i); val r = o.getJSONObject("rules")
+            out[o.getString("host")] = r.keys().asSequence().associateWith { r.getString(it) }
+        }
+        return out
+    }
+
+    /** The readable rule [hostsWithRules] is held to. */
+    fun hostsWithRulesRules(rules: Map<String, String>): Map<String, Map<String, String>> =
         rules.entries.mapNotNull { (k, v) -> k.substringBefore('|', "").takeIf { it.isNotEmpty() }?.let { h -> Triple(h, k.substringAfter('|'), v) } }
             .filter { it.first != ANY_HOST }
             .groupBy({ it.first }, { it.second to it.third }).mapValues { it.value.toMap() }.toSortedMap()
@@ -101,9 +126,18 @@ object BrowserSitePolicy {
 
 /** #802 the per-site rules, in the declared `browser_site_permissions` prefs (config: they move with the phone). */
 class BrowserSitePermissions(context: Context) {
-    private val sp = context.applicationContext.getSharedPreferences("browser_site_permissions", Context.MODE_PRIVATE)
+    private val ctx = context.applicationContext
+    private val sp = ctx.getSharedPreferences("browser_site_permissions", Context.MODE_PRIVATE)
 
-    fun rules(): Map<String, String> = sp.all.mapNotNull { (k, v) -> (v as? String)?.let { k to it } }.toMap()
+    /**
+     * #1841 the rules' logic (resolution, zoom, the Sites page's hosts, set, forget) is the browser core's (`perm_*`; its Kotlin twin without
+     * the library). The prefs file and its `host|perm` keys are unchanged; [BrowserListMigration.ensureMap] moves an upper-case host key to
+     * its canonical one once, after a backup of the prefs.
+     */
+    fun rules(): Map<String, String> {
+        BrowserListMigration.ensureMap(ctx, "browser_site_permissions", "perm_migrate", null)
+        return sp.all.mapNotNull { (k, v) -> (v as? String)?.let { k to it } }.toMap()
+    }
 
     fun resolve(host: String, perm: BrowserSitePerm) = BrowserSitePolicy.resolve(rules(), host, perm.id, perm.default)
 
@@ -124,24 +158,26 @@ class BrowserSitePermissions(context: Context) {
 
     /** #900 set (50..300) or clear (null) this site's zoom. */
     fun setZoom(host: String, percent: Int?) {
-        if (host.isBlank()) return
-        val k = BrowserSitePolicy.key(host, BrowserSitePolicy.ZOOM)
-        if (percent == null) sp.edit().remove(k).apply()
-        else sp.edit().putString(k, percent.coerceIn(BrowserSitePolicy.ZOOM_MIN, BrowserSitePolicy.ZOOM_MAX).toString()).apply()
+        val a = BrowserCore.lists("perm_set_zoom", JSONObject().put("host", host).put("percent", percent ?: JSONObject.NULL))
+        when (a.optString("action")) {
+            "remove" -> sp.edit().remove(a.getString("key")).apply()
+            "put" -> sp.edit().putString(a.getString("key"), a.getString("value")).apply()
+        }
     }
 
     /** #900 forget every rule of [host] (the Sites page). */
     fun forget(host: String) {
+        val a = BrowserCore.lists("perm_forget", JSONObject().put("host", host).put("keys", JSONArray(sp.all.keys.toList()))).getJSONArray("remove")
         val ed = sp.edit()
-        sp.all.keys.filter { it.substringBefore('|') == host.lowercase() }.forEach { ed.remove(it) }
+        for (i in 0 until a.length()) ed.remove(a.getString(i))
         ed.apply()
     }
 
     /** Store a decision; [value] must be allow/deny/ask. @return the refusal in words, or null. */
     fun set(host: String, perm: String, value: String): String? {
-        if (host.isBlank()) return "host= is required"
-        if (value !in BrowserSitePolicy.VALUES) return "value must be one of ${BrowserSitePolicy.VALUES}"
-        sp.edit().putString(BrowserSitePolicy.key(host, perm), value).apply()
+        val a = BrowserCore.lists("perm_set", JSONObject().put("host", host).put("perm", perm).put("value", value))
+        if (a.has("error")) return a.getString("error")
+        sp.edit().putString(a.getString("key"), a.getString("value")).apply()
         return null
     }
 }
