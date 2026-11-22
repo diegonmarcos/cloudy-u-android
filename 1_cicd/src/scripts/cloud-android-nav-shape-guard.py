@@ -595,8 +595,8 @@ DYNAMIC_CHILDREN = ("mail_folders_labels",)
 
 def check_second_rows(app, sections, bad):
     """N10: ui.sections[].nav_mode is horizontal_one_row (alias one_row, the default) | horizontal_two_rows (alias many_rows) |
-    vertical_side_menu; groups ({id,label,icon,pages:[page ids]}) only with horizontal_two_rows or vertical_side_menu;
-    in horizontal_two_rows every page of the section is in exactly one group, in vertical_side_menu a page may stay ungrouped
+    vertical_side_menu; groups ({id,label,icon,pages:[page ids]}) in any mode (#1854: in horizontal_one_row they only order the
+    pages and draw a "|" between groups); in horizontal_two_rows and horizontal_one_row every page of the section is in exactly one group, in vertical_side_menu a page may stay ungrouped
     (it is listed after the groups); a group names only the section's pages, ids unique. `dynamic_children` (the side menu's
     items come from the app's own data, e.g. the mail account's folders and labels) names a known source and needs the side menu."""
     for s in sections or []:
@@ -612,11 +612,7 @@ def check_second_rows(app, sections, bad):
                 bad.append(f"N10 {app}: ui.sections {sid} declares dynamic_children {dyn!r}, not one of {', '.join(DYNAMIC_CHILDREN)}")
             if mode not in SIDE_MENU_MODES:
                 bad.append(f"N10 {app}: ui.sections {sid} declares dynamic_children but nav_mode is not vertical_side_menu")
-        grouped = mode in TWO_ROWS_MODES or mode in SIDE_MENU_MODES
         if groups is None and mode not in TWO_ROWS_MODES:
-            continue
-        if not grouped:
-            bad.append(f"N10 {app}: ui.sections {sid} declares groups but nav_mode is not horizontal_two_rows or vertical_side_menu")
             continue
         flat = [p.get("id") for p in s.get("pages") or [] if isinstance(p, dict)]
         ids, seen = [], []
@@ -635,10 +631,10 @@ def check_second_rows(app, sections, bad):
                 seen.append(pid)
         if len(ids) != len(set(ids)):
             bad.append(f"N10 {app}: ui.sections {sid} repeats a group id")
-        if mode in TWO_ROWS_MODES:
+        if mode in TWO_ROWS_MODES or mode in ONE_ROW_MODES:
             for pid in flat:
                 if pid not in seen:
-                    bad.append(f"N10 {app}: ui.sections {sid} horizontal_two_rows: page {pid!r} is in no group")
+                    bad.append(f"N10 {app}: ui.sections {sid} {mode}: page {pid!r} is in no group")
 
 
 def check_backgrounds(app, sections, spec, code, rel, bad):

@@ -178,7 +178,8 @@ mutate "a surface chosen in code"                "$KT" "s+='\nval x = TabSurface
 mutate "a theme background no strip reads"       "$FIX/build.json" "$(J "d['ui']['sections'][0]['background']='theme'")" "N9 $FIX: declares a light/theme page background but no source calls stripSurface("
 # N10: the second row's mode and page groups
 mutate "an unknown nav_mode"                     "$FIX/build.json" "$(J "d['ui']['sections'][0]['nav_mode']='three_rows'")" "N10 $FIX: ui.sections a declares nav_mode 'three_rows'"
-mutate "groups without a grouped mode"              "$FIX/build.json" "$(J "d['ui']['sections'][0]['groups']=[{'id':'g','label':'G','icon':'i','pages':['p1']}]")" "N10 $FIX: ui.sections a declares groups but nav_mode is not horizontal_two_rows or vertical_side_menu"
+green  "one-row groups (#1854: a | between groups) covering every page" "$FIX/build.json" "$(J "d['ui']['sections'][0]['groups']=[{'id':'g','label':'G','icon':'i','pages':['p1']},{'id':'h','label':'H','icon':'i','pages':['p2']}]")"
+mutate "one-row groups leaving a page out"        "$FIX/build.json" "$(J "d['ui']['sections'][0]['groups']=[{'id':'g','label':'G','icon':'i','pages':['p1']}]")" "N10 $FIX: ui.sections a horizontal_one_row: page 'p2' is in no group"
 mutate "a page in two groups"                    "$FIX/build.json" "$(J "d['ui']['sections'][0].update(nav_mode='horizontal_two_rows', groups=[{'id':'g','label':'G','icon':'i','pages':['p1','p2']},{'id':'h','label':'H','icon':'i','pages':['p2']}])")" "N10 $FIX: ui.sections a page 'p2' is in two groups"
 mutate "a page in no group"                      "$FIX/build.json" "$(J "d['ui']['sections'][0].update(nav_mode='horizontal_two_rows', groups=[{'id':'g','label':'G','icon':'i','pages':['p1']}])")" "N10 $FIX: ui.sections a horizontal_two_rows: page 'p2' is in no group"
 # the three modes and the old contract names

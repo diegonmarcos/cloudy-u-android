@@ -280,9 +280,20 @@ public class NavDecl(
                 val gid = go.text("id").ifBlank { return@mapNotNull null }
                 NavGroup(gid, go.text("label", gid), (go["pages"] as? List<*>).orEmpty().mapNotNull { byId[it as? String] }, go.text("icon"))
             }.orEmpty()
-            return NavSection(id, o.text("label", id), o.text("icon"), flat,
-                PageBackground.of(o.text("background")) ?: PageBackground.Dark,
-                SecondRowMode.of(o.text("nav_mode")) ?: SecondRowMode.OneRow, groups)
+            val mode = SecondRowMode.of(o.text("nav_mode")) ?: SecondRowMode.OneRow
+            return NavSection(id, o.text("label", id), o.text("icon"), if (mode == SecondRowMode.OneRow) groupedStrip(flat, groups) else flat,
+                PageBackground.of(o.text("background")) ?: PageBackground.Dark, mode, groups)
+        }
+
+        /**
+         * #1854 `groups` on a one-row section: the one strip lists the pages in group order (pages no group names after them) and the
+         * first page of every group but the first carries [NavPage.separatorBefore], so a "|" is drawn between groups. No groups: [flat].
+         */
+        private fun groupedStrip(flat: List<NavPage>, groups: List<NavGroup>): List<NavPage> {
+            if (groups.isEmpty()) return flat
+            val named = groups.flatMap { g -> g.pages.map { it.id } }.toSet()
+            val firsts = groups.mapNotNull { g -> g.pages.firstOrNull()?.id }.drop(1).toSet()
+            return (groups.flatMap { it.pages } + flat.filter { it.id !in named }).map { if (it.id in firsts) it.copy(separatorBefore = true) else it }
         }
 
         private fun pages(a: Any?): List<NavPage> =

@@ -313,6 +313,20 @@
             "icon": "api",
             "pages": []
           }
+        ],
+        "groups": [
+          {
+            "id": "agents_models_tasks",
+            "label": "Agents, Models, Tasks",
+            "icon": "memory",
+            "pages": ["tools_pickers", "tools_models", "tools_tasks"]
+          },
+          {
+            "id": "api",
+            "label": "API",
+            "icon": "api",
+            "pages": ["apis"]
+          }
         ]
       },
       {
@@ -485,6 +499,20 @@
             "label": "Skills",
             "icon": "description",
             "pages": []
+          }
+        ],
+        "groups": [
+          {
+            "id": "plugins",
+            "label": "Plugins",
+            "icon": "build",
+            "pages": ["plugins"]
+          },
+          {
+            "id": "mcp_kg_tools",
+            "label": "MCP, Hooks, Skills",
+            "icon": "hub",
+            "pages": ["mcp_kg", "mcp", "hooks", "skills"]
           }
         ]
       },
