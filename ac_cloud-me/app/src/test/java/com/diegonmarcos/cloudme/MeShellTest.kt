@@ -138,9 +138,13 @@ class MeShellTest {
         compose.onNodeWithTag(TopBarTags.TITLE).performClick()
         compose.waitForIdle()
         compose.onNodeWithTag(TopFirstRowTags.DROPDOWN).assertIsDisplayed()
-        for (s in Sections.all()) compose.onNodeWithTag(MeTopBar.drawerItem(s.id)).assertExists()
+        // #1850 the left menu's section list is the dropdown's Parent Pages (Configs through Settings / Configs)
+        fun parent(id: String) = com.diegonmarcos.superapp.navbartop1.UrlUriTags.entry(
+            if (id == com.diegonmarcos.superapp.bottomnav.UrlUriIds.CONFIGS) com.diegonmarcos.superapp.bottomnav.UrlUriIds.CONFIGS
+            else com.diegonmarcos.superapp.bottomnav.UrlUriIds.section(id))
+        for (s in Sections.all()) compose.onNodeWithTag(parent(s.id)).assertExists()
         // The dropdown is capped at 520dp and scrolls: with the Profile pages open, the section list starts below the fold.
-        compose.onNodeWithTag(MeTopBar.drawerItem("inventory")).performScrollTo().performClick()
+        compose.onNodeWithTag(parent("inventory")).performScrollTo().performClick()
         compose.waitForIdle()
         assertEquals(listOf("inventory"), opened)
         compose.onNodeWithTag(TopFirstRowTags.DROPDOWN).assertDoesNotExist()
