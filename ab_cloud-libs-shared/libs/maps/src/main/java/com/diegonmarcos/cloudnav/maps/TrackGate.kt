@@ -27,7 +27,7 @@ data class Offer(val state: GateState, val accepted: Boolean, val reason: String
 /**
  * #1770 THE tracking state machine of Cloud Nav, event-driven and pure (JVM-tested, no platform call in here).
  *
- *   STILL  : only the passive listener (fixes other apps already produced cost nothing); no fused request; no timer.
+ *   STILL  : the passive listener plus ONE low-rate batched fused sample (every 10-15 min, off under battery saver); no timer.
  *   MOVING : one batched BALANCED_POWER fused request ([FUSED]) until the hold lapses or an activity STILL arrives.
  *
  * Signals ([signal]): activity MOVING / geofence exit hold MOVING for [MOVE_HOLD_MS]; significant motion alone holds
@@ -41,11 +41,14 @@ object TrackGate {
     const val START_HOLD_MS = 5 * 60_000L
 
     const val MAX_ACCURACY_M = 100f          // a worse fix is noise, never stored
-    const val MAX_FIX_AGE_MS = 10 * 60_000L   // an older fix is history, not a position
+    const val MAX_FIX_AGE_MS = 20 * 60_000L   // an older fix is history, not a position (a batched sample may arrive up to 15 min late)
     const val MIN_DISPLACEMENT_M = 25.0       // the minimum displacement filter
-    const val HEARTBEAT_MS = 30 * 60_000L     // a still phone refreshes its last known position this often from passive fixes
+    const val HEARTBEAT_MS = 9 * 60_000L      // #1851 a still phone keeps a fix at least this far apart (the still sample below arrives every 10-15 min)
     const val EXIT_M = 150.0                  // a passive fix this far from the stable place, seen STILL, is a geofence exit
     const val EXIT_MAX_ACCURACY_M = 50f
+
+    /** #1851 STILL is not silent: one batched balanced-power sample every 10-15 min (the platform batches it with other apps' requests), so a phone at rest still records where it is. Dropped under battery saver. */
+    val STILL_SAMPLE = FusedParams(intervalMs = 12 * 60_000L, minIntervalMs = 10 * 60_000L, maxUpdateDelayMs = 15 * 60_000L, minDistanceM = 0f)
 
     val FUSED = FusedParams(intervalMs = 60_000L, minIntervalMs = 30_000L, maxUpdateDelayMs = 5 * 60_000L, minDistanceM = MIN_DISPLACEMENT_M.toFloat())
 
@@ -62,7 +65,8 @@ object TrackGate {
     fun expire(s: GateState, now: Long): GateState =
         if (s.mode == GateMode.MOVING && now >= s.untilMs) s.copy(mode = GateMode.STILL, untilMs = 0L, anchor = s.lastAccepted ?: s.anchor) else s
 
-    fun plan(s: GateState): GatePlan = GatePlan(passive = true, fused = if (s.mode == GateMode.MOVING) FUSED else null)
+    fun plan(s: GateState, powerSave: Boolean = false): GatePlan =
+        GatePlan(passive = true, fused = if (s.mode == GateMode.MOVING) FUSED else if (powerSave) null else STILL_SAMPLE)
 
     /** Judge one fix. Accepted fixes update [GateState.lastAccepted]; a trusted fix far from the stable place while STILL is itself a MOVE wake. */
     fun offer(s: GateState, f: GateFix, now: Long): Offer {

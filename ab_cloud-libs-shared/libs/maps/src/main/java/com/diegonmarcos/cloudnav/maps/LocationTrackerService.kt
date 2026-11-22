@@ -35,8 +35,8 @@ import com.google.android.gms.location.Priority
  *     [MapsTrackerPrefs.lastFix*], drive the stop-detector.
  *   • stopService → tears down the callback + foreground notification.
  *
- * #1770 EVENT-DRIVEN, no polling loop: the platform subscription follows [TrackGate]. STILL = only the PASSIVE listener (other apps'
- * fixes, no radio of ours) and no fused request; MOVING (Activity Recognition, geofence exit, significant motion or the user's Start,
+ * #1770 EVENT-DRIVEN, no polling loop: the platform subscription follows [TrackGate]. STILL = the PASSIVE listener plus a 12 min batched sample (#1851); the old note continues:
+ * fixes) plus, since #1851, one low-rate batched sample every 10-15 min (off under battery saver) so a phone at rest still records; MOVING (Activity Recognition, geofence exit, significant motion or the user's Start,
  * signalled by Cloud Nav's WakeSources through [signal]) = ONE batched BALANCED_POWER fused request (interval 60 s, maxUpdateDelay 5 min,
  * 25 m minimum displacement) until the hold lapses or activity STILL arrives. Fixes pass the gate's accuracy / age / displacement filter
  * before they are stored. A place visit (Stop) is emitted when the phone has been still for the dwell time, closed when it leaves.
@@ -190,7 +190,7 @@ class LocationTrackerService : Service() {
     private fun setGate(next: GateState, now: Long) {
         val prev = gate
         gate = next
-        applyPlan(TrackGate.plan(next))
+        applyPlan(TrackGate.plan(next, (getSystemService(POWER_SERVICE) as? android.os.PowerManager)?.isPowerSaveMode == true))
         main.removeCallbacks(expireRun)
         if (next.mode == GateMode.MOVING) {
             main.removeCallbacks(stopRun)
@@ -240,7 +240,7 @@ class LocationTrackerService : Service() {
             }
         }
         callback = cb
-        com.diegonmarcos.superapp.perms.LocationUse.note(this, SITE, "FusedLocationProviderClient.requestLocationUpdates (BALANCED_POWER, batched, only while moving)",
+        com.diegonmarcos.superapp.perms.LocationUse.note(this, SITE, "FusedLocationProviderClient.requestLocationUpdates (BALANCED_POWER, batched: 60 s while moving, 12 min while still)",
             com.diegonmarcos.superapp.perms.LocationUse.Trigger.TRACKER)
         fused.requestLocationUpdates(req, cb, Looper.getMainLooper())
     }

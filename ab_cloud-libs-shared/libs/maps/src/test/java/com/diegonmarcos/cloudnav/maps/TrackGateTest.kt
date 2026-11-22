@@ -14,9 +14,22 @@ class TrackGateTest {
     /** A point [m] metres north of [home] at [t]. */
     private fun north(m: Double, t: Long, acc: Float? = 10f) = GateFix(home.lat + m / 111_320.0, home.lon, acc, t)
 
-    @Test fun `still holds only the passive listener and no fused request`() {
+    @Test fun `still holds the passive listener and one low-rate sample every 10 to 15 minutes`() {
         val p = TrackGate.plan(GateState())
+        assertTrue(p.passive)
+        assertEquals(TrackGate.STILL_SAMPLE, p.fused)
+        assertTrue(p.fused!!.minIntervalMs >= 10 * 60_000L && p.fused!!.maxUpdateDelayMs <= 15 * 60_000L)
+    }
+
+    @Test fun `battery saver drops the still sample but keeps the passive listener`() {
+        val p = TrackGate.plan(GateState(), powerSave = true)
         assertTrue(p.passive); assertNull(p.fused)
+    }
+
+    @Test fun `a still sample is stored although the phone did not move`() {
+        val s = GateState(anchor = home, lastAccepted = home)
+        val o = TrackGate.offer(s, north(3.0, t0 + 12 * 60_000L), t0 + 12 * 60_000L + 1)
+        assertTrue(o.accepted)
     }
 
     @Test fun `still to moving to still follows the activity transitions`() {
@@ -27,7 +40,7 @@ class TrackGateTest {
         assertNotNull(p); assertEquals(60_000L, p!!.intervalMs); assertEquals(5 * 60_000L, p.maxUpdateDelayMs); assertEquals(25f, p.minDistanceM)
         s = TrackGate.offer(s, north(300.0, t0 + 120_000), t0 + 121_000).state
         s = TrackGate.signal(s, GateSignal.ACTIVITY_STILL, t0 + 600_000)
-        assertEquals(GateMode.STILL, s.mode); assertNull(TrackGate.plan(s).fused)
+        assertEquals(GateMode.STILL, s.mode); assertEquals(TrackGate.STILL_SAMPLE, TrackGate.plan(s).fused)
         assertEquals(s.lastAccepted, s.anchor)   // the place the phone stopped at
     }
 
@@ -61,7 +74,7 @@ class TrackGateTest {
         val now = t0 + 120_000
         assertEquals("accuracy", TrackGate.offer(s, north(100.0, t0 + 60_000, acc = 150f), now).reason)
         assertEquals("accuracy", TrackGate.offer(s, north(100.0, t0 + 60_000, acc = null), now).reason)
-        assertEquals("age", TrackGate.offer(s, north(100.0, t0 - 700_000), now).reason)
+        assertEquals("age", TrackGate.offer(s, north(100.0, t0 - 1_500_000), now).reason)
         assertEquals("age", TrackGate.offer(s, north(100.0, now + 120_000), now).reason)
         assertEquals("duplicate", TrackGate.offer(s, north(100.0, t0), now).reason)
         assertEquals("displacement", TrackGate.offer(s, north(10.0, t0 + 60_000), now).reason)
