@@ -30,7 +30,7 @@ import java.time.ZoneId
 class TimelineWalkTest {
     private val marker = File("/data/local/tmp/walk-done")
 
-    @Test fun `a walk injected with adb emu geo fix shows several stays and moves with km, and the Timeline matches the Day`() {
+    @Test fun walkInjectedWithGeoFixShowsSeveralStaysAndMovesWithKmAndTimelineMatchesDay() {
         val inst = InstrumentationRegistry.getInstrumentation()
         Assume.assumeTrue("only in the walk workflow (walk=1)", InstrumentationRegistry.getArguments().getString("walk") == "1")
         val ctx: Context = inst.targetContext
