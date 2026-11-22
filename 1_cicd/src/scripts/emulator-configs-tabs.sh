@@ -130,6 +130,12 @@ merge() { # append labels not seen yet, in on-screen order
 ROW_Y=""
 merge "$OUT/$NAME-configs-open.xml"
 W="$($T adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1 | cut -dx -f1)"; W="${W:-1080}"
+# the strip opens scrolled to the selected tab (General), so the app's own tabs and the `|` can sit off screen to the left: go back to the
+# strip's start first (a screenshot as evidence), then read it left to right
+if [ -n "$ROW_Y" ]; then
+    for i in 1 2 3 4 5 6; do $T adb shell input swipe $((W * 2 / 10)) "$ROW_Y" $((W * 8 / 10)) "$ROW_Y" 300; done
+    shot strip-home 1; order=(); merge "$OUT/$NAME-strip-home.xml"
+fi
 for i in 1 2 3 4 5 6; do
     [ -n "$ROW_Y" ] || break
     $T adb shell input swipe $((W * 8 / 10)) "$ROW_Y" $((W * 2 / 10)) "$ROW_Y" 400; sleep 1; dump "strip-$i"; merge "$OUT/strip-$i.xml"
