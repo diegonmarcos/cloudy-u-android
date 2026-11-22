@@ -42,17 +42,19 @@ def check(root, ok):
     menu = b["menu"]
     items = {i["id"]: i for i in menu["items"]}
     secs = [s["id"] for s in menu["sections"]]
-    ok(secs == ["actions", "page_tools", "site_data", "site_perms", "dev_tools"], "P1 the page-tools tabs are Actions, Page Tools, Site Data, Site Perms, Dev Tools", str(secs))
-    ok([s["label"] for s in menu["sections"]] == ["Actions", "Page Tools", "Site Data", "Site Perms", "Dev Tools"], "P1 with the owner's tab labels")
-    for i in ("find", "share", "desktop", "print", "download_page", "save_page", "save_site", "fill_profile"):
-        ok(items.get(i, {}).get("section") == "page_tools", "P1 `%s` is a Page Tool" % i)
-    for i in ("back", "forward", "reload", "bookmark", "copy_url", "open_external", "add_to_home", "hard_refresh", "light_refresh"):
-        ok(items.get(i, {}).get("section") == "actions", "P1 `%s` stays an Action" % i)
+    ok(secs == ["actions", "scrapper", "page_tools", "site_data", "site_perms", "dev_tools"], "P1 the page-tools tabs are Nav, Scrapper, Reading, Site Data, Perms, Dev Tools (#1856: ids are stable)", str(secs))
+    ok([s["label"] for s in menu["sections"]] == ["Nav", "Scrapper", "Reading", "Site Data", "Perms", "Dev Tools"], "P1 with the owner's tab labels")
+    for i in ("find", "share", "desktop", "fill_profile", "reader", "translate", "summarize_topics"):
+        ok(items.get(i, {}).get("section") == "page_tools", "P1 `%s` is a Reading row" % i)
+    for i in ("print", "convert_pdf", "download_page", "save_page", "save_site"):
+        ok(items.get(i, {}).get("section") == "scrapper", "P1 `%s` is a Scrapper row" % i)
+    for i in ("back", "forward", "reload", "bookmark", "copy_url", "open_external", "add_to_home", "hard_refresh", "light_refresh", "zoom"):
+        ok(items.get(i, {}).get("section") == "actions", "P1 `%s` is a Nav row" % i)
     cats = {}
     for i in menu["items"]:
         if i["section"] == "page_tools" and i.get("category"):
             cats.setdefault(i["category"], []).append(i["id"])
-    ok(list(cats) == ["Reading", "Save & Export", "Find & Share", "View mode", "Autofill"], "P1 Page Tools rows are grouped in categories", str(list(cats)))
+    ok(list(cats) == ["Reading", "Find & Share", "View mode", "Autofill"], "P1 Reading rows are grouped in categories", str(list(cats)))
     ok(items.get("dev_graphics", {}).get("section") == "dev_tools" and '"dev_graphics" ->' in run, "P1 the Graphics debugger row has its runAction branch")
     ok('title = PAGE_TOOLS_LABEL' in frag and "browser:menu:tab:" in src.get(LIB + "/BrowserSheets.kt", ""), "P1 the sheet is titled Page-Tools and drawn as tabs")
     for g in GLOBAL:
@@ -93,8 +95,8 @@ BJ = "ac_cloud-browser/build.json"
 FRAG = LIB + "/BrowserHostFragment.kt"
 main("page menu is page-only", check, [
     ("a global row comes back in the dropdown", BJ, '"id": "find",\n            "section": "page_tools"', '"id": "history",\n            "section": "page_tools"', "`history` is not a dropdown row"),
-    ("a settings section comes back", BJ, '"id": "page_tools",\n            "label": "Page Tools"\n          },', '"id": "page_tools",\n            "label": "Page Tools"\n          },\n          {"id": "settings", "label": "Settings"},', "page-tools tabs are Actions"),
-    ("a page row leaves the dropdown", BJ, '"id": "view_source",\n            "section": "page_tools"', '"id": "view_source_gone",\n            "section": "page_tools"', "`view_source` is in the dropdown"),
+    ("a settings section comes back", BJ, '"id": "page_tools",\n            "label": "Reading"\n          },', '"id": "page_tools",\n            "label": "Reading"\n          },\n          {"id": "settings", "label": "Settings"},', "page-tools tabs are Nav"),
+    ("a page row leaves the dropdown", BJ, '"id": "view_source",\n            "section": "dev_tools"', '"id": "view_source_gone",\n            "section": "dev_tools"', "`view_source` is in the dropdown"),
     ("a global row loses its Configs page", BJ, '"id": "clear_data",\n            "label": "Clear browsing data…",\n            "page": "browsing"', '"id": "clear_data",\n            "label": "Clear browsing data…",\n            "page": "nowhere"', "Configs row `clear_data`"),
     ("trackers stop being blocked", FRAG, "override fun shouldInterceptRequest", "override fun shouldInterceptRequestGone", "Block trackers is wired"),
     ("zoom stops being per site", FRAG, "sitePerms.setZoom(host, v.toInt())", "browserSettings.set(\"text_zoom\", v)", "Zoom is stored per site"),

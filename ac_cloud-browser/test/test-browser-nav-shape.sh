@@ -32,7 +32,7 @@ CFG = json.loads(r'''{
   "weby"
  ],
  "pages": {
-  "cloudy": ["webapps", "c3_urls"],
+  "cloudy": ["webapps", "gh_pages", "local", "c3_urls"],
   "domains": ["headless_browsers", "files", "site_perms", "history", "visited"]
  },
  "gone_modules": [

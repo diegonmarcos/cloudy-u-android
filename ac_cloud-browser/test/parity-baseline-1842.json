@@ -19,13 +19,15 @@
  },
  "cloudy": {
   "pages_before_to_after": {
-   "gh_pages": "webapps",
-   "webserver": "webapps",
+   "gh_pages": "gh_pages",
+   "webserver": "local",
    "private_urls": "c3_urls",
    "public_urls": "c3_urls"
   },
   "pages_after": [
    "webapps",
+   "gh_pages",
+   "local",
    "c3_urls"
   ],
   "api_before": [

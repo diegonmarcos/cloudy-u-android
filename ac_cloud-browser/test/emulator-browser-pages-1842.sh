@@ -4,8 +4,10 @@
 #
 # Evidence (screenshot + ui dump per check):
 #   N1 the island reads Domains, Tabs, Browser, Cloudy, Weby left to right (x of each bottomnav_item_<id>)
-#   P1 Domains, Tabs, Browser, Cloudy > WebApps, Cloudy > C3 Urls, Weby > Quickmarks, Weby > Bookmarks (all): each page's screenshot
-#   C1 C3 Urls: a tap on a container icon opens the private / public chooser
+#   P1 Domains, Tabs, Browser, Cloudy > WebApps, Cloudy > GH Pages, Cloudy > Local, Cloudy > C3, Weby > Quickmarks, Weby > Bookmarks (all): each page's screenshot
+#   C1 C3: a tap on a container icon opens the private / public chooser
+#   C2 (#1856) GH Pages lists the owner's pages, Local shows File Explorers then Pages
+#   S1 (#1856) the Tools sheet (the icon at the right of the tab row): Nav, Scrapper, Reading, Site Data, Perms, Dev Tools, each tab screenshotted with its rows
 #   U1 the Url-Uri dropdown (the path island's dropdown, #1842 amendment 7: navtop1_more on the browser, whose title is the address field, topbar_title (TopFirstRowTags.ISLAND) otherwise): Pages and Tools with their entries, in the browser and in the second app
 set -u
 APK="$1"; OUT="$2"; APK2="${3:-}"; mkdir -p "$OUT"
@@ -65,8 +67,16 @@ tap 'bottomnav_item_browser' && shot page-browser && ok "P1 Browser" || bad "P1 
 tap 'bottomnav_item_cloudy' && sleep 5 && shot page-cloudy-webapps
 has 'cloudy:webapps\|weby:grid' page-cloudy-webapps && ok "P1 Cloudy > WebApps draws Weby's grid" || bad "P1 Cloudy > WebApps has no Weby grid"
 has 'weby:foldertile:WebApps\|WebApps' page-cloudy-webapps && ok "P1 the WebApps section is there" || bad "P1 no WebApps section"
-tap '^C3 Urls$' text && sleep 4 && shot page-cloudy-c3
-has 'cloudy:c3' page-cloudy-c3 && ok "P1 Cloudy > C3 Urls is one icon grid" || bad "P1 C3 Urls grid missing"
+# #1856 the four Cloudy subpages: WebApps (the Cloud rows), GH Pages, Local (File Explorers, Pages), C3
+tap '^GH Pages$' text && sleep 6 && shot page-cloudy-gh-pages
+has 'cloudy:gh_pages\|weby:grid' page-cloudy-gh-pages && ok "P1 Cloudy > GH Pages draws its grid" || bad "P1 Cloudy > GH Pages has no grid"
+has "Repos' Pages\|diegonmarcos.github.io" page-cloudy-gh-pages && ok "C2 GH Pages lists the owner's pages" || bad "C2 GH Pages shows no section"
+tap '^Local$' text && sleep 4 && shot page-cloudy-local
+has 'cloudy:local\|weby:grid' page-cloudy-local && ok "P1 Cloudy > Local draws its grid" || bad "P1 Cloudy > Local has no grid"
+has 'File Explorers' page-cloudy-local && ok "C2 Local shows File Explorers" || bad "C2 Local has no File Explorers group"
+has 'cloudy:ws:open' page-cloudy-local && ok "C2 Local keeps the Open Cloud-Webserver row" || bad "C2 Local lost the Open Cloud-Webserver row"
+tap '^C3$' text && sleep 4 && shot page-cloudy-c3
+has 'cloudy:c3' page-cloudy-c3 && ok "P1 Cloudy > C3 is one icon grid" || bad "P1 C3 grid missing"
 tap 'cloudy:c3:tile:' && sleep 2 && shot c3-chooser
 # the chooser is a dialog window (no resource ids): its words
 has 'Private (mesh)' c3-chooser && has 'Public' c3-chooser && ok "C1 the chooser offers the private and the public URL" || bad "C1 no chooser"
@@ -74,6 +84,43 @@ adb shell input keyevent KEYCODE_BACK; sleep 1
 tap 'bottomnav_item_weby' && shot page-weby-quickmarks
 has 'weby:views\|Quickmarks' page-weby-quickmarks && ok "P1 Weby > Quickmarks" || bad "P1 Weby has no Quickmarks view"
 tap 'Bookmarks \(all\)' text && sleep 3 && shot page-weby-bookmarks && ok "P1 Weby > Bookmarks (all)" || bad "P1 Weby has no Bookmarks (all) view"
+
+# S1 (#1856) the Tools sheet: one screenshot per tab, scrolled to its end (the sheet scrolls inside itself), the rows each tab must hold
+tap 'bottomnav_item_browser' >/dev/null
+sleep 2
+if tap 'browser:tabrow:tools'; then
+  shot tools-open
+  has 'browser:sheet' tools-open && ok "S1 the Tools sheet opens" || bad "S1 no Tools sheet"
+  scroll_sheet() {
+    local xy; xy=$(python3 -I - "$OUT/$1.xml" <<'PY'
+import re, sys, xml.etree.ElementTree as ET
+try: root = ET.parse(sys.argv[1]).getroot()
+except Exception: sys.exit(0)
+for n in root.iter("node"):
+    if n.get("resource-id", "") == "browser:sheet":
+        a, b, c, d = map(int, re.findall(r"\d+", n.get("bounds")))
+        h = d - b
+        print((a + c) // 2, b + h * 3 // 4, (a + c) // 2, b + h // 4); break
+PY
+)
+    [ -n "$xy" ] && adb shell input swipe ${xy% * *} ${xy#* * } 500 && sleep 1
+  }
+  i=0
+  for spec in "nav:Nav:zoom" "scrapper:Scrapper:fleet_readable,fleet_crawl,fleet_youtube_video,print" "reading:Reading:reader,find" "sitedata:Site Data:open_local_folder,clear_site_cookies" "perms:Perms:site_settings,shield_trackers,shield_images,shield_js" "dev:Dev Tools:view_source,dev_console"; do
+    key=${spec%%:*}; rest=${spec#*:}; label=${rest%%:*}; rows=${rest#*:}
+    tap "browser:menu:tab:$i" && shot tools-$key || bad "S1 tab $label not reachable"
+    cp "$OUT/tools-$key.xml" "$OUT/tools-$key-all.xml"; prev=$(md5sum < "$OUT/tools-$key.xml"); last=tools-$key
+    for j in 1 2 3 4 5 6; do scroll_sheet "$last"; shot tools-$key-s$j; last=tools-$key-s$j; cat "$OUT/$last.xml" >> "$OUT/tools-$key-all.xml"; cur=$(md5sum < "$OUT/$last.xml"); [ "$cur" = "$prev" ] && break; prev=$cur; done
+    has "$label" tools-$key-all && ok "S1 the tab $label is there" || bad "S1 no $label tab"
+    for r in $(echo "$rows" | tr ',' ' '); do
+      has "browser:menu:$r" tools-$key-all && ok "S1 $label holds $r" || bad "S1 $label misses $r"
+    done
+    i=$((i + 1))
+  done
+  adb shell input keyevent KEYCODE_BACK; sleep 1
+else
+  bad "S1 the tab row's Tools icon is not reachable"
+fi
 
 # U1 the Url-Uri dropdown, in the browser
 tap 'bottomnav_item_browser' >/dev/null

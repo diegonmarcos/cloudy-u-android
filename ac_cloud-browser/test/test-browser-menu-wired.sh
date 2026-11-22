@@ -28,11 +28,13 @@ def check(root, ok):
     run = frag[frag.find("private fun runAction(id: String, args"):]
     facts = frag[frag.find("private fun facts()"):frag.find("private fun showMenuSheet")]
     whys = menu.get("requires_why", {})
+    # #1856 the Scrapper tab's rows are the scraper add-on's declared fleet tools: ONE branch (`in fleet.tools.keys ->`) runs them all
+    fleet_ids = {t["id"] for a in build_json(root)["ui"]["browser"].get("addons", []) if a.get("id") == "scraper" for t in a.get("fleet", {}).get("tools", [])}
     for it in items:
         i = it["id"]
         ok(it.get("section") in sections, "row `%s` is in a declared section" % i)
         # a branch may name several ids: "a", "b" -> { ... }
-        ok(re.search(r'"%s"(\s*,\s*"[a-z_]+")*\s*->' % re.escape(i), run), "row `%s` has its branch in runAction" % i)
+        ok(re.search(r'"%s"(\s*,\s*"[a-z_]+")*\s*->' % re.escape(i), run) or (i in fleet_ids and "in fleet.tools.keys ->" in run), "row `%s` has its branch in runAction" % i)
         for f in it.get("requires", []):
             ok('"%s" to' % f in facts, "fact `%s` (needed by `%s`) is produced by facts()" % (f, i))
             ok(f in whys, "fact `%s` says why in requires_why" % f)

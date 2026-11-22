@@ -56,8 +56,8 @@ def check(root, ok):
     ok("BrowserHostHooks.intercept = { req -> SiteMirrorStore.intercept(app, pinned(app), req) }" in off, "O2 the app plugs web-core's store in")
     # O3
     menu = {m["id"]: m for m in b["menu"]["items"]}
-    ok(menu.get("pin_site", {}).get("kind") == "toggle" and menu["pin_site"].get("checked") == "site_pinned", "O3 Pin this site offline is a toggle on site_pinned")
-    ok("download_site" in menu and menu["download_site"]["section"] == "actions", "O3 Download full site is a page action")
+    # #1856 the owner ordered Pin this site offline and Download full site out of the page menu (test-browser-tools-regroup.sh lists them as the only authorised removals); the engine behind them stays
+    ok("pin_site" not in menu and "download_site" not in menu, "O3 the two rows are no longer in the page menu (#1856, authorised removal)")
     ok('"pin_site", "download_site" ->' in frag and '"site_pinned" to' in frag, "O3 both have their branch and the fact is produced")
     ok('"pin_site" ->' in off and '"download_site" ->' in off and "userTap = true" in off and "userTap = false" in off, "O3 download is a tap, a pin queues the unattended run")
     # O4

@@ -38,7 +38,7 @@ def check(root, ok):
     # W2
     secs = {s["id"]: s for s in ui["sections"]}
     ok(ui["bottom_nav"] == ["domains", "tabs", "browser", "cloudy", "weby"], "W2 the island is Domains | Tabs | Browser | Cloudy | Weby")
-    ok([p["id"] for p in secs["cloudy"]["pages"]] == ["webapps", "c3_urls"], "W2 Cloudy has WebApps | C3 Urls (#1842; the four old tabs are merged into them, test-browser-parity.sh)")
+    ok([p["id"] for p in secs["cloudy"]["pages"]] == ["webapps", "gh_pages", "local", "c3_urls"], "W2 Cloudy has WebApps | GH Pages | Local | C3 (#1856; the old Local Webserver and GH Pages sections are their own subpages again, test-browser-parity.sh)")
     ok([p["id"] for p in secs["domains"]["pages"]] == ["headless_browsers", "files", "site_perms", "history", "visited"], "W2 Domains has Headless Browsers | Files | Perms&Actions | History | Visited")
     ok([a["id"] for a in ui["domains"]["actions"]] == ["cookies", "media", "cache", "storage", "reset_perms"], "W2 the five site actions are declared")
     ok(ui["domains"]["visited_sorts"][0]["id"] == "name" and ui["domains"]["visited_sorts"][1]["id"] == "last", "W2 Visited sorts by name or last visited")

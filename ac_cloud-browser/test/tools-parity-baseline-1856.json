@@ -1,0 +1,319 @@
+{
+ "_doc": "#1856 Rule 16 baseline, frozen from build.json::ui.browser.menu BEFORE the Tools sheet regroup (Actions, Page Tools, Site Data, Site Perms, Dev Tools): every row with its old section and label, plus the add-on rows that joined Page Tools. test-browser-tools-regroup.sh proves each is reachable in its new place; the ONLY removals are the two the owner ordered. Adding is free, removing is not.",
+ "sections_before": [
+  {
+   "id": "actions",
+   "label": "Actions"
+  },
+  {
+   "id": "page_tools",
+   "label": "Page Tools"
+  },
+  {
+   "id": "site_data",
+   "label": "Site Data"
+  },
+  {
+   "id": "site_perms",
+   "label": "Site Perms"
+  },
+  {
+   "id": "dev_tools",
+   "label": "Dev Tools"
+  }
+ ],
+ "rows": [
+  {
+   "id": "back",
+   "label": "Back",
+   "section": "actions",
+   "kind": "action",
+   "category": null
+  },
+  {
+   "id": "forward",
+   "label": "Forward",
+   "section": "actions",
+   "kind": "action",
+   "category": null
+  },
+  {
+   "id": "reload",
+   "label": "Reload",
+   "section": "actions",
+   "kind": "action",
+   "category": null
+  },
+  {
+   "id": "hard_refresh",
+   "label": "Hard refresh (cache, cookies, storage)",
+   "section": "actions",
+   "kind": "action",
+   "category": null
+  },
+  {
+   "id": "light_refresh",
+   "label": "Light refresh (cache)",
+   "section": "actions",
+   "kind": "action",
+   "category": null
+  },
+  {
+   "id": "bookmark",
+   "label": "Bookmark this page",
+   "section": "actions",
+   "kind": "toggle",
+   "category": null
+  },
+  {
+   "id": "reader",
+   "label": "Reader mode",
+   "section": "page_tools",
+   "kind": "toggle",
+   "category": "Reading"
+  },
+  {
+   "id": "translate",
+   "label": "Translate page",
+   "section": "page_tools",
+   "kind": "toggle",
+   "category": "Reading"
+  },
+  {
+   "id": "zoom",
+   "label": "Zoom (this site)…",
+   "section": "page_tools",
+   "kind": "action",
+   "category": "Reading"
+  },
+  {
+   "id": "summarize_topics",
+   "label": "Summarise page by topics",
+   "section": "page_tools",
+   "kind": "action",
+   "category": "Reading"
+  },
+  {
+   "id": "view_source",
+   "label": "View source",
+   "section": "page_tools",
+   "kind": "action",
+   "category": "Reading"
+  },
+  {
+   "id": "print",
+   "label": "Print…",
+   "section": "page_tools",
+   "kind": "action",
+   "category": "Save & Export"
+  },
+  {
+   "id": "convert_pdf",
+   "label": "Convert to PDF",
+   "section": "page_tools",
+   "kind": "action",
+   "category": "Save & Export"
+  },
+  {
+   "id": "download_page",
+   "label": "Download this page",
+   "section": "page_tools",
+   "kind": "action",
+   "category": "Save & Export"
+  },
+  {
+   "id": "save_page",
+   "label": "Save this page offline",
+   "section": "page_tools",
+   "kind": "action",
+   "category": "Save & Export"
+  },
+  {
+   "id": "save_site",
+   "label": "Save this site offline",
+   "section": "page_tools",
+   "kind": "action",
+   "category": "Save & Export"
+  },
+  {
+   "id": "find",
+   "label": "Find in page",
+   "section": "page_tools",
+   "kind": "action",
+   "category": "Find & Share"
+  },
+  {
+   "id": "share",
+   "label": "Share…",
+   "section": "page_tools",
+   "kind": "action",
+   "category": "Find & Share"
+  },
+  {
+   "id": "desktop",
+   "label": "Desktop site",
+   "section": "page_tools",
+   "kind": "toggle",
+   "category": "View mode"
+  },
+  {
+   "id": "fill_profile",
+   "label": "Autofill this page…",
+   "section": "page_tools",
+   "kind": "action",
+   "category": "Autofill"
+  },
+  {
+   "id": "copy_url",
+   "label": "Copy URL",
+   "section": "actions",
+   "kind": "action",
+   "category": null
+  },
+  {
+   "id": "open_external",
+   "label": "Open in another app…",
+   "section": "actions",
+   "kind": "action",
+   "category": null
+  },
+  {
+   "id": "add_to_home",
+   "label": "Add to home screen",
+   "section": "actions",
+   "kind": "action",
+   "category": null
+  },
+  {
+   "id": "pin_site",
+   "label": "Pin this site offline",
+   "section": "actions",
+   "kind": "toggle",
+   "category": null
+  },
+  {
+   "id": "download_site",
+   "label": "Download full site (offline cache)",
+   "section": "actions",
+   "kind": "action",
+   "category": null
+  },
+  {
+   "id": "clear_site_data",
+   "label": "Site data: cookies & storage…",
+   "section": "site_data",
+   "kind": "action",
+   "category": null
+  },
+  {
+   "id": "clear_site_cookies",
+   "label": "Clear cookies for this site",
+   "section": "site_data",
+   "kind": "action",
+   "category": null
+  },
+  {
+   "id": "site_autocomplete",
+   "label": "Autocomplete for this site…",
+   "section": "site_data",
+   "kind": "action",
+   "category": null
+  },
+  {
+   "id": "shield_trackers",
+   "label": "Block trackers here",
+   "section": "site_data",
+   "kind": "toggle",
+   "category": null
+  },
+  {
+   "id": "shield_images",
+   "label": "Block images here",
+   "section": "site_data",
+   "kind": "toggle",
+   "category": null
+  },
+  {
+   "id": "site_settings",
+   "label": "Perms",
+   "section": "site_perms",
+   "kind": "action",
+   "category": null
+  },
+  {
+   "id": "dev_console",
+   "label": "Console and JS REPL",
+   "section": "dev_tools",
+   "kind": "action",
+   "category": null
+  },
+  {
+   "id": "dev_network",
+   "label": "Network requests",
+   "section": "dev_tools",
+   "kind": "action",
+   "category": null
+  },
+  {
+   "id": "dev_elements",
+   "label": "Elements (live DOM)",
+   "section": "dev_tools",
+   "kind": "action",
+   "category": null
+  },
+  {
+   "id": "dev_storage",
+   "label": "Storage: cookies, local, session, workers",
+   "section": "dev_tools",
+   "kind": "action",
+   "category": null
+  },
+  {
+   "id": "dev_graphics",
+   "label": "Graphics: FPS, draw calls, GPU (debugger)",
+   "section": "dev_tools",
+   "kind": "action",
+   "category": null
+  },
+  {
+   "id": "dev_remote_debug",
+   "label": "Remote debugging (chrome://inspect)",
+   "section": "dev_tools",
+   "kind": "toggle",
+   "category": null
+  },
+  {
+   "id": "shield_js",
+   "label": "Block JavaScript here",
+   "section": "dev_tools",
+   "kind": "toggle",
+   "category": null
+  }
+ ],
+ "addon_rows": [
+  {
+   "id": "scraper",
+   "label": "Web scraper…",
+   "section": "page_tools",
+   "addon": "scraper"
+  },
+  {
+   "id": "ai_chat",
+   "label": "AI assistant…",
+   "section": "page_tools",
+   "addon": "ai"
+  },
+  {
+   "id": "ai_summarize",
+   "label": "Summarize the page",
+   "section": "page_tools",
+   "addon": "ai"
+  },
+  {
+   "id": "vault_fill",
+   "label": "Fill with Cloud Vault",
+   "section": "page_tools",
+   "addon": "vault"
+  }
+ ]
+}

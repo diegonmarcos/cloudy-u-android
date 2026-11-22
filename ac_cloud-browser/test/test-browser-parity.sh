@@ -55,7 +55,7 @@ def check(root, ok):
     ok(all(i in secs for i in ui["bottom_nav"]), "N4 every island item is a declared section")
     # ── C Cloudy
     c = BASE["cloudy"]
-    ok([p["id"] for p in secs["cloudy"]["pages"]] == c["pages_after"], "C1 Cloudy's pages are WebApps | C3 Urls")
+    ok([p["id"] for p in secs["cloudy"]["pages"]] == c["pages_after"], "C1 Cloudy's pages are WebApps | GH Pages | Local | C3 (#1856)")
     ok(all(new in c["pages_after"] for new in c["pages_before_to_after"].values()), "C2 every old Cloudy page has a home")
     cloudy_kt = src.get(SITES + "/Cloudy.kt", "")
     for fn in c["api_before"]:
@@ -64,10 +64,10 @@ def check(root, ok):
         ok('"%s"' % t in ui_sites, "C4 the tag %s is still drawn" % t)
     for k in c["texts_before"]:
         ok(k in ui["cloudy"]["texts"], "C5 the word %s is still declared" % k)
-    ok("Cloudy.merge(seed, cache.refresh(" in ui_sites and "Cloudy.merge(seed, cache.pagesJson())" in ui_sites and "Cloudy.declaredWebserver(" in ui_sites and "Cloudy.storeEntries(" in ui_sites and "Cloudy.seedPages(" in ui_sites,
-       "C6 WebApps lists the GH Pages (declared + live) and the Local Webserver (declared + Repos store)")
+    ok("Cloudy.merge(seed, cache.refresh(" in ui_sites and "Cloudy.merge(seed, cache.pagesJson())" in ui_sites and "Cloudy.webserverExplorers(" in ui_sites and "Cloudy.webserverPages(" in ui_sites and "Cloudy.storeEntries(" in ui_sites and "Cloudy.seedPages(" in ui_sites,
+       "C6 GH Pages lists the declared + live pages and Local the Webserver (declared + Repos store), each on its own subpage (#1856)")
     weby_kt = src.get(SITES + "/Weby.kt", "")
-    ok("CloudyWebApps.derive(" in ui_sites and "WebyPage(decl, fixed = folders" in ui_sites, "C7 WebApps is Weby's own page over the three fixed sections")
+    ok("CloudyWebApps.webApps(" in ui_sites and "CloudyWebApps.ghPages(" in ui_sites and "CloudyWebApps.local(" in ui_sites and "WebyPage(decl, fixed = folders" in ui_sites, "C7 WebApps, GH Pages and Local are Weby's own page over fixed sections (#1856)")
     for sec in c["sections_after"]:
         ok('"%s"' % sec in weby_kt or sec.replace(" ", "_").upper() in weby_kt, "C8 the section %s exists" % sec)
     ok("const val WEBAPPS = \"WebApps\"" in weby_kt and "const val GH_PAGES = \"GitHub Pages\"" in weby_kt and "const val LOCAL = \"Local Webserver\"" in weby_kt, "C8 the three section titles")
@@ -159,11 +159,13 @@ browser_tester.COPY.append(os.path.dirname(calc_rel).split("/src/")[0])
 main("test-browser-parity", check, [
     mut("the island order reverts", "ac_cloud-browser/build.json", '"bottom_nav": [\n      "domains",\n      "tabs",', '"bottom_nav": [\n      "tabs",\n      "domains",', "N1"),
     mut("an island item is dropped", "ac_cloud-browser/build.json", '"cloudy",\n      "weby"\n    ],', '"cloudy"\n    ],', "N2"),
-    mut("Cloudy loses C3 Urls", "ac_cloud-browser/build.json", '{"id": "c3_urls", "label": "C3 Urls", "icon": "link"}', '{"id": "c3_x", "label": "C3 Urls", "icon": "link"}', "C1"),
+    mut("Cloudy loses C3 Urls", "ac_cloud-browser/build.json", '{"id": "c3_urls", "label": "C3", "icon": "link"}', '{"id": "c3_x", "label": "C3", "icon": "link"}', "C1"),
     mut("Cloudy stops listing the GH pages", SITES + "/SitesUi.kt", "Cloudy.merge(seed, cache.refresh(", "Cloudy.mergeX(seed, cache.refresh(", "C6"),
     mut("a Cloudy function is removed", SITES + "/Cloudy.kt", "fun storeEntries(", "fun storeEntriesX(", "C3"),
     mut("the Webserver open row goes", SITES + "/SitesUi.kt", '"cloudy:ws:open"', '"cloudy:ws:openX"', "C4"),
-    mut("WebApps stops using Weby's page", SITES + "/SitesUi.kt", "WebyPage(decl, fixed = folders", "WebyPageX(decl, fixed = folders", "C7"),
+    mut("WebApps stops using Weby's page", SITES + "/SitesUi.kt", "CloudyWebApps.webApps(", "CloudyWebApps.webAppsX(", "C7"),
+    mut("GH Pages stops listing the site's pages", SITES + "/SitesUi.kt", "CloudyWebApps.ghPages(", "CloudyWebApps.ghPagesX(", "C7"),
+    mut("Local loses File Explorers and Pages", SITES + "/SitesUi.kt", "CloudyWebApps.local(", "CloudyWebApps.localX(", "C7"),
     mut("the C3 long-press stops copying", SITES + "/SitesUi.kt", "onLongClick = { copyUrl(", "onLongClick = { copyUrlX(", "C10"),
     mut("the chooser is skipped (a tap opens at once)", SITES + "/SitesUi.kt", "chosen = ct }", "onOpen(ct.publicUrl ?: \"\") }", "C10"),
     mut("C3 stops merging both addresses", SITES + "/Cloudy.kt", 'o.optString("public_url").takeIf', 'o.optString("public_urlX").takeIf', "C9"),

@@ -1,5 +1,5 @@
 # Test -> Cloud Browser pages and the Url-Uri dropdown (emulator) (#1842).
-# The island order, Weby (Quickmarks | Bookmarks (all)), Cloudy > WebApps and C3 Urls (chooser), the Url-Uri dropdown in the browser and in Cloud Calc.
+# The island order, Weby (Quickmarks | Bookmarks (all)), Cloudy > WebApps | GH Pages | Local | C3 (chooser), the Tools sheet tabs (Nav, Scrapper, Reading, Site Data, Perms, Dev Tools; #1856), the Url-Uri dropdown in the browser and in Cloud Calc.
 # Evidence artifact: `browser-pages-evidence`. Script: ac_cloud-browser/test/emulator-browser-pages-1842.sh.
 name: "Test -> Cloud Browser pages (emulator)"
 

@@ -24,7 +24,9 @@ def ok(c, m):
     print(("PASS  " if c else "FAIL  ") + m)
     if not c: fails += 1
 merged = fz.get("merged", {})
-missing = [i for i in fz["ids"] if i not in now and merged.get(i) not in now]
+# #1856 the owner's explicit deletions (not a regroup): each needs a reason; test-browser-tools-regroup.sh holds that no OTHER id is lost
+removed = fz.get("authorised_removals", {})
+missing = [i for i in fz["ids"] if i not in now and merged.get(i) not in now and not (i in removed and str(removed[i]).strip())]
 ok(not missing, "all %d frozen menu / settings / section ids are still declared%s" % (len(fz["ids"]), (" (missing: %s)" % missing[:8]) if missing else ""))
 core = os.path.join(root, "ab_cloud-libs-shared", "libs", "browser-core-rs")
 rs = "".join(open(os.path.join(core, "src", f)).read() for f in ("jni_api.rs", "omnibox.rs", "reader.rs", "filter.rs", "store.rs", "search.rs"))

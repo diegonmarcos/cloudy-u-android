@@ -67,6 +67,7 @@ def check(root, ok):
               and "agentapi/AgentFetchProvider" not in p  # #913 the fleet agent door's read-only GET, held by test-browser-agent-door.sh
               and "/download/DlHttpEngine.kt" not in p and "/download/DlQueue.kt" not in p
               and "/FavFeed.kt" not in p
+              and "/FleetScrapper.kt" not in p  # #1856 the Scrapper tab: ONE user tap sends the open page's URL to the declared fleet mesh endpoint (held by test-browser-tools-regroup.sh)
               and "/sites/SitesAndroid.kt" not in p]  # #1493 Cloudy + #1531 Weby icons: GETs of public pages and icons, no user data, cached; the same one GET of the public pages.json (front-html), cached; no user data  # #1458 one GET of the public pages.json (front-html), no user data, held by test-browser-pages-hub.sh  # the download manager fetches only what the user chose to download (a file, a .torrent)
     ok(not others, "U4 no other browser file opens a connection", str(others))
     s = [x for x in build_json(root)["ui"]["browser"]["settings"] if x["key"] == "search_suggestions"]

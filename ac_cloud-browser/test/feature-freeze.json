@@ -1,8 +1,12 @@
 {
  "_doc": "#1841 the feature list frozen BEFORE the Rust core was widened (Rule 16): every declared menu item, setting key and section id of build.json::ui. test-browser-feature-freeze.sh fails when one is missing now; adding is free, removing is not. #1842 merged: the four Cloudy pages became WebApps (GH Pages + Local Webserver) and C3 Urls (Private + Public URLs); a merged id is held by its target, whose content test-browser-parity.sh holds.",
+ "authorised_removals": {
+  "menu:pin_site": "#1856 the owner ordered Pin this site offline out of the page menu",
+  "menu:download_site": "#1856 the owner ordered Download full site out of the page menu"
+ },
  "merged": {
-  "sections:gh_pages": "sections:webapps",
-  "sections:webserver": "sections:webapps",
+  "sections:gh_pages": "sections:gh_pages",
+  "sections:webserver": "sections:local",
   "sections:private_urls": "sections:c3_urls",
   "sections:public_urls": "sections:c3_urls"
  },
