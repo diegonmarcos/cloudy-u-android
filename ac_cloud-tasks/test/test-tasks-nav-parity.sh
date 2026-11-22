@@ -48,7 +48,11 @@ for s in old["sections"]:
 # sections that kept their id keep their page order
 for s in old["sections"]:
     if s["id"] in new_sections:
-        check([p["id"] for p in s["pages"]] == [p["id"] for p in new_sections[s["id"]]["pages"]], "section %s keeps its pages in the same order" % s["id"])
+        # #1852 the shared pages (General, Perms, About) now follow the app's own pages; every page and the own pages' relative order stay
+        SHARED = ("general", "perms", "about")
+        oids = [p["id"] for p in s["pages"]]
+        nids = [p["id"] for p in new_sections[s["id"]]["pages"]]
+        check([i for i in oids if i not in SHARED] + [i for i in oids if i in SHARED] == nids, "section %s keeps its pages in the same order (the shared ones last, #1852)" % s["id"])
 
 # ── the new island: the five asked for, every old tab still one tap away ─────────────────────────────────────
 check(new["bottom_nav"] == ["inboxes", "backlogs", "home", "tasks", "library"], "island = Inbox | Backlog | Home | Tasks | Library")

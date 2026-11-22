@@ -10,7 +10,7 @@ const shell = readFileSync(join(SRC, 'VaultShell.tsx'), 'utf8');
 
 test('the Configs strip: the shared fleet tabs open the Android screen, the app pages have a body (vault is the default branch)', () => {
   const fleet = decl.configs.pages.filter(p => p.native !== undefined).map(p => [p.id, p.native]);
-  assert.deepEqual(fleet, [['general', 'general'], ['perms', 'perms'], ['agents', 'agents'], ['logcat', 'logcat'], ['xray', 'xray'], ['about', 'about']]);
+  assert.deepEqual(fleet, [['general', 'general'], ['agents', 'agents'], ['perms', 'perms'], ['logcat', 'logcat'], ['xray', 'xray'], ['about', 'about']]);
   assert.deepEqual(decl.configs.pages.filter(p => p.native === undefined).map(p => p.id), ['notes', 'ui', 'sources', 'vault']);
   for (const p of decl.configs.pages.filter(x => x.native === undefined && x.id !== 'vault')) assert.ok(pane.includes(`case '${p.id}':`), `page ${p.id}`);
   assert.match(pane, /h\.openFleetConfigsPage\(p\.native\)/);

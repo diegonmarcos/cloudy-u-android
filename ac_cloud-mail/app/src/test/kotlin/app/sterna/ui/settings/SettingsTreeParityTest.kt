@@ -199,14 +199,14 @@ class SettingsTreeParityTest {
         assertEquals(setOf("mail"), NAV_DYNAMIC_SECTIONS)
     }
 
-    /** The fleet pages are the lib's own: General plus FleetConfigsExtensions.TAIL_IDS, drawn through the lib's page body (no copy). */
+    /** The fleet pages are the lib's own: FleetConfigsExtensions.TAIL_IDS (General first), drawn through the lib's page body (no copy). */
     @Test
     fun `the fleet pages are the shared ones, reused not copied`() {
         val ext = File(ROOT.parentFile, "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsExtensions.kt")
         assertTrue("cannot read ${ext.path}", ext.isFile)
         val tail = Regex("""TAIL_IDS: List<String> = listOf\(([^)]*)\)""").find(ext.readText())!!.groupValues[1]
             .let { Regex(""""([a-z_]+)"""").findAll(it).map { m -> m.groupValues[1] }.toList() }
-        assertEquals(listOf("general") + tail, oldFleetPages)
+        assertEquals(tail, oldFleetPages)
         assertEquals(oldFleetPages, FLEET_PAGE_IDS)
         val tree = TREE.readText()
         for (needle in listOf("FleetConfigsPageBody(", "isFleetConfigsPage(", "FleetConfigsExtensions.withTail(")) assertTrue("SettingsTree.kt no longer uses $needle", needle in tree)
