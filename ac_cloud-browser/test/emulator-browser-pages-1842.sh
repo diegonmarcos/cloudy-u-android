@@ -88,38 +88,41 @@ tap 'Bookmarks \(all\)' text && sleep 3 && shot page-weby-bookmarks && ok "P1 We
 # S1 (#1856) the Tools sheet: one screenshot per tab, scrolled to its end (the sheet scrolls inside itself), the rows each tab must hold
 tap 'bottomnav_item_browser' >/dev/null
 sleep 2
-if tap 'browser:tabrow:tools'; then
+# (the sheet is Compose inside the host fragment: its test tags are not resource ids, so the walk reads the icon's description and the tabs and rows by their words)
+if tap 'Page-Tools' text; then
   shot tools-open
-  has 'browser:sheet' tools-open && ok "S1 the Tools sheet opens" || bad "S1 no Tools sheet"
+  has 'Scrapper' tools-open && ok "S1 the Tools sheet opens" || bad "S1 no Tools sheet"
   scroll_sheet() {
     local xy; xy=$(python3 -I - "$OUT/$1.xml" <<'PY'
 import re, sys, xml.etree.ElementTree as ET
 try: root = ET.parse(sys.argv[1]).getroot()
 except Exception: sys.exit(0)
+best = None
 for n in root.iter("node"):
-    if n.get("resource-id", "") == "browser:sheet":
+    if n.get("scrollable") == "true":
         a, b, c, d = map(int, re.findall(r"\d+", n.get("bounds")))
-        h = d - b
-        print((a + c) // 2, b + h * 3 // 4, (a + c) // 2, b + h // 4); break
+        if best is None or (d - b) > (best[3] - best[1]): best = (a, b, c, d)
+if best:
+    a, b, c, d = best; h = d - b
+    print((a + c) // 2, b + h * 3 // 4, (a + c) // 2, b + h // 4)
 PY
 )
     [ -n "$xy" ] && adb shell input swipe ${xy% * *} ${xy#* * } 500 && sleep 1
   }
-  i=0
-  for spec in "nav:Nav:zoom" "scrapper:Scrapper:fleet_readable,fleet_crawl,fleet_youtube_video,print" "reading:Reading:reader,find" "sitedata:Site Data:open_local_folder,clear_site_cookies" "perms:Perms:site_settings,shield_trackers,shield_images,shield_js" "dev:Dev Tools:view_source,dev_console"; do
-    key=${spec%%:*}; rest=${spec#*:}; label=${rest%%:*}; rows=${rest#*:}
-    tap "browser:menu:tab:$i" && shot tools-$key || bad "S1 tab $label not reachable"
+  for spec in "nav|Nav|Zoom" "scrapper|Scrapper|Readable text|Crawl this page|YouTube: download video|Print" "reading|Reading|Reader mode|Find in page" "sitedata|Site Data|Open Local Folder|Clear cookies for this site" "perms|Perms|Every site permission|Block trackers here|Block images here|Block JavaScript here" "dev|Dev Tools|View source|Console and JS REPL"; do
+    IFS='|' read -r key label rows <<< "$spec"; rows=${spec#*|*|}
+    tap "^$label\$" text && shot tools-$key || bad "S1 tab $label not reachable"
     cp "$OUT/tools-$key.xml" "$OUT/tools-$key-all.xml"; prev=$(md5sum < "$OUT/tools-$key.xml"); last=tools-$key
     for j in 1 2 3 4 5 6; do scroll_sheet "$last"; shot tools-$key-s$j; last=tools-$key-s$j; cat "$OUT/$last.xml" >> "$OUT/tools-$key-all.xml"; cur=$(md5sum < "$OUT/$last.xml"); [ "$cur" = "$prev" ] && break; prev=$cur; done
     has "$label" tools-$key-all && ok "S1 the tab $label is there" || bad "S1 no $label tab"
-    for r in $(echo "$rows" | tr ',' ' '); do
-      has "browser:menu:$r" tools-$key-all && ok "S1 $label holds $r" || bad "S1 $label misses $r"
+    IFS='|' read -ra want <<< "$rows"
+    for r in "${want[@]}"; do
+      has "$r" tools-$key-all && ok "S1 $label holds $r" || bad "S1 $label misses $r"
     done
-    i=$((i + 1))
   done
   adb shell input keyevent KEYCODE_BACK; sleep 1
 else
-  bad "S1 the tab row's Tools icon is not reachable"
+  bad "S1 the tab row's Tools icon (Page-Tools) is not reachable"
 fi
 
 # U1 the Url-Uri dropdown, in the browser
