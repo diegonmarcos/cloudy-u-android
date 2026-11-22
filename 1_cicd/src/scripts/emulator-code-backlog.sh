@@ -51,10 +51,11 @@ launch() { # FIRST=1 on a fresh app data: Acode asks once about update checks (C
     $T adb shell am force-stop "$PKG"; $T adb logcat -c || true
     $T adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
     sleep 25
-    # the update-check CONFIRM can land after a blind tap (#1855 run 45011963894): dismiss it by its words,
-    # again right before the Backlog tap, then fall back to the old blind Cancel tap only if it is still up
-    dismiss; sleep 2; dismiss
-    if [ "${1:-0}" = 1 ]; then dump cur; grep -q 'Enable update' "$OUT/cur.xml" && { tapf 25 63; sleep 3; }; fi
+    # Acode's update-check CONFIRM is web content (no accessibility text to match) and can come up late
+    # (#1855 runs 45011963894, 45013174083): tap its Cancel spot twice, 8 s apart; with no dialog up the spot
+    # is empty chat area, so a spare tap does nothing
+    dismiss
+    if [ "${1:-0}" = 1 ]; then tapf 25 63; sleep 8; tapf 25 63; sleep 3; fi
     tapf 13 92; sleep 6
 }
 expect() { # NAME REGEX: the console line the page logged for this state
