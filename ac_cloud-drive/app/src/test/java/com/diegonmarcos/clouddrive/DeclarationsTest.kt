@@ -79,7 +79,7 @@ class DeclarationsTest {
         val configs = configs()
         // #1216 the owner's split: General, Git (auths), Fsync (servers/APIs/SFTPs), Mounts (rclone setup), then Webserver
         // (opens cloud-c3-webserver). The Backups and Others pages are gone.
-        assertEquals(listOf("general", "perms", "about", "drive", "git", "fsync", "mounts", "webserver"), configs.pages.map { it.id })
+        assertEquals(listOf("drive", "git", "fsync", "mounts", "webserver", "general", "perms", "about"), configs.pages.map { it.id })
         assertTrue(configs.pages.all { it.label.isNotBlank() && it.icon.isNotBlank() })
     }
 

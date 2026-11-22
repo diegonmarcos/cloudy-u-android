@@ -33,7 +33,7 @@ class BrowserConfigsLayoutTest {
         val secs = root.getJSONObject("ui").getJSONArray("sections")
         val configs = (0 until secs.length()).map { secs.getJSONObject(it) }.first { it.getString("id") == "configs" }
         val tabs = configs.getJSONArray("pages").let { a -> (0 until a.length()).map { a.getJSONObject(it).getString("id") } }
-        assertEquals(listOf("general", "perms", "about") + cfg.settingsSections.map { it.first }, tabs)
+        assertEquals(cfg.settingsSections.map { it.first } + listOf("general", "perms", "about"), tabs)   // #1852 own pages first
         assertEquals(listOf("Sites", "Permissions", "Autocomplete", "Browser", "Headless Browser", "GPU"), cfg.settingsSections.map { it.second })
     }
 

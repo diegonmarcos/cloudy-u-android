@@ -82,8 +82,8 @@ class BrowserConfigsTabsUiTest {
     @Test
     fun `the Configs section declares the categories as its tabs, in the owner's order`() {
         val pages = decl.section("configs")!!.pages
-        assertEquals(listOf("general", "perms", "about") + order, pages.map { it.id })   // #1443 the fleet's three first
-        assertEquals(listOf("General", "Perms", "About", "Sites", "Permissions", "Autocomplete", "Browser", "Headless Browser", "GPU"), pages.map { it.label })
+        assertEquals(order + listOf("general", "perms", "about"), pages.map { it.id })   // #1852 the own pages first, then the fleet's three
+        assertEquals(listOf("Sites", "Permissions", "Autocomplete", "Browser", "Headless Browser", "GPU", "General", "Perms", "About"), pages.map { it.label })
         assertTrue("the declaration is valid", decl.problems().isEmpty())
     }
 

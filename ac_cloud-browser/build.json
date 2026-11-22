@@ -2292,9 +2292,6 @@
         "label": "Configs",
         "icon": "configs",
         "pages": [
-          {"id": "general", "label": "General", "icon": "settings", "_doc": "#1443 the fleet Configs tabs: General | Perms | About (libs:ui-nav-bars FleetConfigsPageBody, drawn by MainActivity over the host), then the browser's own pages."},
-          {"id": "perms", "label": "Perms", "icon": "security"},
-          {"id": "about", "label": "About", "icon": "info"},
           {
             "id": "sites",
             "label": "Sites",
@@ -2324,7 +2321,10 @@
             "id": "gpu",
             "label": "GPU",
             "icon": "language"
-          }
+          },
+          {"id": "general", "label": "General", "icon": "settings", "_doc": "#1443 the fleet Configs tabs: General | Perms | About (libs:ui-nav-bars FleetConfigsPageBody, drawn by MainActivity over the host), then the browser's own pages."},
+          {"id": "perms", "label": "Perms", "icon": "security"},
+          {"id": "about", "label": "About", "icon": "info"}
         ]
       }
     ],
