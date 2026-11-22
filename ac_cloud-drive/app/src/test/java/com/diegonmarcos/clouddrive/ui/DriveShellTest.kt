@@ -29,7 +29,9 @@ import com.diegonmarcos.clouddrive.configs.WebserverPage
 import com.diegonmarcos.superapp.bottomnav.AccountLaunch
 import com.diegonmarcos.superapp.bottomnav.BottomNavTags
 import com.diegonmarcos.superapp.bottomnav.TopBarTags
+import com.diegonmarcos.superapp.bottomnav.UrlUriIds
 import com.diegonmarcos.superapp.navbartop1.TopFirstRowTags
+import com.diegonmarcos.superapp.navbartop1.UrlUriTags
 import java.io.File
 import java.nio.file.Files
 import kotlinx.coroutines.CoroutineScope
@@ -145,8 +147,12 @@ class DriveShellTest {
         compose.onNodeWithTag(TopBarTags.TITLE).performClick()
         compose.waitForIdle()
         compose.onNodeWithTag(TopFirstRowTags.DROPDOWN).assertIsDisplayed()
-        Declarations.nav.sections.forEach { compose.onNodeWithTag(DriveTags.drawerItem(it.id)).performScrollTo().assertIsDisplayed() } // #1483 the list holds the off-bar sections too: the menu scrolls
-        compose.onNodeWithTag(DriveTags.drawerItem("git")).performScrollTo().performClick()
+        // #1483 the list holds the off-bar sections too: the menu scrolls. #1850: they sit in Parent Pages; configs is Settings / Configs.
+        Declarations.nav.sections.forEach {
+            val entryId = if (it.id == UrlUriIds.CONFIGS) UrlUriIds.CONFIGS else UrlUriIds.section(it.id)
+            compose.onNodeWithTag(UrlUriTags.entry(entryId)).performScrollTo().assertIsDisplayed()
+        }
+        compose.onNodeWithTag(UrlUriTags.entry(UrlUriIds.section("git"))).performScrollTo().performClick()
         compose.waitForIdle()
         compose.onNodeWithText("content:git").assertIsDisplayed()
         compose.onNodeWithTag(BottomNavTags.item("git")).assertIsSelected()
