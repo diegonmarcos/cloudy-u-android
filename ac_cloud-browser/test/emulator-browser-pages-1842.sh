@@ -95,7 +95,7 @@ if tap 'Page-Tools' text; then
   # the list inside the sheet keeps ONE scroll position across its tabs, and uiautomator reports Compose lists as not scrollable: swipe at fixed
   # places inside the sheet (the lower part of the screen), up to the end of a tab's list and, first, back to its top
   WH=$(adb shell wm size | tr -d "\r" | grep -oE "[0-9]+x[0-9]+" | tail -1); WX=${WH%x*}; WY=${WH#*x}
-  sheet_swipe() { if [ "$1" = up ]; then adb shell input swipe $((WX / 2)) $((WY * 90 / 100)) $((WX / 2)) $((WY * 50 / 100)) 400; else adb shell input swipe $((WX / 2)) $((WY * 50 / 100)) $((WX / 2)) $((WY * 90 / 100)) 400; fi; sleep 1; }
+  sheet_swipe() { if [ "$1" = up ]; then adb shell input swipe $((WX / 2)) $((WY * 80 / 100)) $((WX / 2)) $((WY * 40 / 100)) 400; else adb shell input swipe $((WX / 2)) $((WY * 40 / 100)) $((WX / 2)) $((WY * 80 / 100)) 400; fi; sleep 1; }
   # the six tab chips scroll sideways: bring the later ones into view by swiping the chip row left (its y is read from a chip's node)
   chips_left() {
     dump _chips
