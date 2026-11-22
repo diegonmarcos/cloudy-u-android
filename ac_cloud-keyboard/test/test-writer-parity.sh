@@ -37,7 +37,7 @@ import glob, json, os, re, shutil, sys, tempfile
 BASELINE = {
     "bottom_nav": ["enhancer", "drafter", "home", "translator", "grammar"],
     "tools_pages": ["enhance", "translation", "grammar", "ai_routing", "routes"],
-    "settings_pages": ["general", "perms", "about", "appearance", "models", "ocr"],
+    "settings_pages": ["appearance", "models", "ocr", "general", "perms", "about"],   # #1852 the own pages first, then the fleet pages
     "sections": ["enhancer", "drafter", "home", "translator", "grammar", "writer", "tools", "settings"],
     "default_section": "home",
     # page id of WriterSurface -> the keyboard host route id (hostRoute("<id>")) that reaches it; None = intentionally not a top-nav page

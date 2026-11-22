@@ -1616,15 +1616,15 @@ class WriterSurface(
     // ── configs ──────────────────────────────────────────────────────────
 
     /**
-     * #1457 Configs, the fleet pattern: General | Perms | About (libs:ui-nav-bars' shared pages) first on the second row, then this
-     * app's own pages (Appearance, Models, OCR). The ids and icons are build.json::ui.sections[settings].pages; only the localized
+     * #1457 Configs, the fleet pattern (#1852): this app's own pages (Appearance, Models, OCR) first on the second row, then the shared
+     * pages of libs:ui-nav-bars (General, Agents, Perms, Logcat, X-Ray App, About) after a `|`. The ids and icons are build.json::ui.sections[settings].pages; only the localized
      * label is code.
      */
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun ConfigsScreen() {
         val dark = WriterTheme.isDark()
-        // #1630 {own tabs} | Agents, Perms, Logcat, X-Ray App, About
+        // #1852 {own tabs} | General, Agents, Perms, Logcat, X-Ray App, About
         val declared: List<NavPage> = com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.withTail(
             WriterNav.decl.section(WriterNav.SETTINGS)?.pages.orEmpty().map { it.copy(label = configsLabel(it.id, it.label)) })
         val selected = declared.firstOrNull { it.id == configsPage.value } ?: declared.firstOrNull()
