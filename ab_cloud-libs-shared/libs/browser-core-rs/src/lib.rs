@@ -27,6 +27,7 @@
 pub mod filter;
 pub mod jni_api;
 pub mod lists;
+pub mod more;
 pub mod omnibox;
 pub mod reader;
 pub mod search;

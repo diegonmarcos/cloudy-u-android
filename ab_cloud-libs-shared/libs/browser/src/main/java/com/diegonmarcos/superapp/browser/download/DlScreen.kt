@@ -67,6 +67,16 @@ object DlRowText {
 
     fun matches(j: DlJob, q: String): Boolean = q.isBlank() ||
         j.fileName.contains(q, ignoreCase = true) || j.url.contains(q, ignoreCase = true) || j.state.name.contains(q, ignoreCase = true)
+
+    /** #1841 the page's filter (and an optional sort: "input", "created", "name") through the browser core; [matches] is the readable rule it is held to. */
+    fun filter(jobs: List<DlJob>, q: String, sort: String = "input"): List<DlJob> {
+        if (q.isBlank() && sort == "input") return jobs
+        val a = org.json.JSONObject().put("query", q).put("sort", sort).put("jobs", org.json.JSONArray().also { arr ->
+            jobs.forEach { arr.put(org.json.JSONObject().put("id", it.id).put("fileName", it.fileName).put("url", it.url).put("state", it.state.name).put("createdAt", it.createdAt)) }
+        })
+        val idx = com.diegonmarcos.cloudlib.browsercore.BrowserCore.lists("dl_jobs_query", a).optJSONArray("indices") ?: return jobs.filter { matches(it, q) }
+        return (0 until idx.length()).map { jobs[idx.getInt(it)] }
+    }
 }
 
 /**
@@ -94,7 +104,7 @@ fun DownloadsScreen(
         onDispose { q.removeListener(l) }
     }
     LaunchedEffect(q) { while (true) { delay(1_000); rev++ } }   // speeds and ETAs move without a state change
-    val jobs = rev.let { q.all() }.filter { DlRowText.matches(it, filter) }
+    val jobs = rev.let { DlRowText.filter(q.all(), filter) }
     Column(Modifier.fillMaxSize().background(p.surface).padding(KitDensity.large).testTag("browser:downloads")) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             KitTextButton(onClose) { Text("← Back") }

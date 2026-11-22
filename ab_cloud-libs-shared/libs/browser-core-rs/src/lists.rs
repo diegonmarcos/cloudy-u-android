@@ -55,7 +55,7 @@ pub fn model_fields() -> Value {
 
 // ── tolerant reads (the semantics of org.json's optString / optLong) ────────────────────────────────────────────────────
 
-fn text(v: &Value, k: &str, d: &str) -> String {
+pub(crate) fn text(v: &Value, k: &str, d: &str) -> String {
     match v.get(k) {
         Some(Value::String(s)) => s.clone(),
         Some(Value::Number(n)) => n.to_string(),
@@ -64,7 +64,7 @@ fn text(v: &Value, k: &str, d: &str) -> String {
     }
 }
 
-fn long(v: &Value, k: &str) -> i64 {
+pub(crate) fn long(v: &Value, k: &str) -> i64 {
     match v.get(k) {
         Some(Value::Number(n)) => n.as_i64().or_else(|| n.as_f64().map(|f| f as i64)).unwrap_or(0),
         Some(Value::String(s)) => s.trim().parse::<i64>().unwrap_or(0),
@@ -72,26 +72,26 @@ fn long(v: &Value, k: &str) -> i64 {
     }
 }
 
-fn blank(s: &str) -> bool {
+pub(crate) fn blank(s: &str) -> bool {
     s.trim().is_empty()
 }
 
-fn arr<'a>(a: &'a Value, k: &str) -> &'a [Value] {
+pub(crate) fn arr<'a>(a: &'a Value, k: &str) -> &'a [Value] {
     a.get(k).and_then(Value::as_array).map(|v| v.as_slice()).unwrap_or(&[])
 }
 
-fn raw_array(raw: &str) -> Vec<Value> {
+pub(crate) fn raw_array(raw: &str) -> Vec<Value> {
     match serde_json::from_str::<Value>(raw) {
         Ok(Value::Array(a)) => a,
         _ => vec![],
     }
 }
 
-fn cap_of(a: &Value, default: usize) -> usize {
+pub(crate) fn cap_of(a: &Value, default: usize) -> usize {
     a.get("cap").and_then(Value::as_i64).filter(|c| *c > 0).map(|c| c as usize).unwrap_or(default)
 }
 
-fn lower(s: &str) -> String {
+pub(crate) fn lower(s: &str) -> String {
     s.to_lowercase()
 }
 
@@ -545,7 +545,10 @@ fn migrate(a: &Value) -> Result<Value, String> {
             let rows: Vec<LogRow> = v.iter().map(|x| LogRow { u: &x.url, t: &x.title, s: x.ts }).collect();
             (serde_json::to_value(&rows).unwrap_or(Value::Null), serde_json::to_string(&rows).unwrap_or_default())
         }
-        other => return Err(format!("unknown list kind {other}")),
+        other => match crate::more::migrate_kind(other, &src) {
+            Some(x) => x,
+            None => return Err(format!("unknown list kind {other}")),
+        },
     };
     let count = list.as_array().map(|x| x.len()).unwrap_or(0);
     let changed = match &parsed {
@@ -675,6 +678,6 @@ pub fn run(op: &str, a: &Value) -> Result<Value, String> {
         "weby_encode" => json!({ "raw": Value::Array(weby_parse(arr(a, "folders"))).to_string() }),
         "weby_all" => weby_all(a),
         "migrate" => migrate(a)?,
-        other => return Err(format!("unknown list op {other}")),
+        other => return crate::more::run(other, a),
     })
 }

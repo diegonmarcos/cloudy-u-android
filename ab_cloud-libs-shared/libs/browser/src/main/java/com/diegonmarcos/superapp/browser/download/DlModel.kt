@@ -1,10 +1,10 @@
 package com.diegonmarcos.superapp.browser.download
 
+import com.diegonmarcos.cloudlib.browsercore.BrowserCore
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.URLDecoder
 import java.util.Locale
-import kotlin.math.min
 
 /**
  * The download manager's data model: what one download is, its state, and the pure
@@ -95,22 +95,21 @@ data class DlPolicy(
         .put("seed", seed).put("seedRatio", seedRatio).put("seedMinutes", seedMinutes).put("uploadKbps", uploadKbps)
 
     companion object {
+        /** #1841 the clamping is the browser core's (downloads: dl_policy); the Kotlin twin without the library. */
         fun fromJson(raw: String?): DlPolicy {
-            val o = runCatching { JSONObject(raw ?: "{}") }.getOrDefault(JSONObject())
-            val d = DlPolicy()
+            val o = BrowserCore.lists("dl_policy", JSONObject().put("raw", raw ?: "{}")).getJSONObject("policy")
             return DlPolicy(
-                o.optInt("parallel", d.parallel).coerceIn(1, 8), o.optBoolean("wifiOnly", d.wifiOnly),
-                o.optBoolean("allowMetered", d.allowMetered), o.optInt("speedLimitKbps", 0).coerceAtLeast(0),
-                o.optInt("segments", d.segments).coerceIn(1, 8), o.optBoolean("sharedStore", false),
-                o.optBoolean("seed", false), o.optInt("seedRatio", 0).coerceAtLeast(0), o.optInt("seedMinutes", 0).coerceAtLeast(0),
-                o.optInt("uploadKbps", 0).coerceAtLeast(0))
+                o.getInt("parallel"), o.getBoolean("wifiOnly"), o.getBoolean("allowMetered"), o.getInt("speedLimitKbps"), o.getInt("segments"),
+                o.getBoolean("sharedStore"), o.getBoolean("seed"), o.getInt("seedRatio"), o.getInt("seedMinutes"), o.getInt("uploadKbps"))
         }
     }
 }
 
 /** JSON (de)serialisation of the jobs list, pure and JVM-tested. */
 object DlCodec {
-    fun toJson(jobs: List<DlJob>): String = JSONArray().also { arr -> jobs.forEach { arr.put(job(it)) } }.toString()
+    /** #1841 the stored text is written by the browser core (every field, the unknown state as paused), from the jobs' json. */
+    fun toJson(jobs: List<DlJob>): String =
+        BrowserCore.lists("dl_jobs_load", JSONObject().put("jobs", JSONArray().also { arr -> jobs.forEach { arr.put(job(it)) } })).getString("raw")
 
     fun job(j: DlJob): JSONObject = JSONObject().apply {
         put("id", j.id); put("url", j.url); put("fileName", j.fileName); put("mime", j.mime); put("dir", j.dir)
@@ -125,8 +124,9 @@ object DlCodec {
         put("sequential", j.sequential); put("seed", j.seed)
     }
 
-    fun fromJson(raw: String?): List<DlJob> {
-        val arr = runCatching { JSONArray(raw ?: "[]") }.getOrDefault(JSONArray())
+    /** #1841 the rows are read by the browser core (dl_jobs_load: defaults, unknown state = paused, [requeue] = a RUNNING / RETRYING row of a dead process goes back to QUEUED). */
+    fun fromJson(raw: String?, requeue: Boolean = false): List<DlJob> {
+        val arr = BrowserCore.lists("dl_jobs_load", JSONObject().put("raw", raw ?: "[]").put("requeue", requeue)).optJSONArray("jobs") ?: JSONArray()
         return (0 until arr.length()).mapNotNull { i -> arr.optJSONObject(i)?.let { runCatching { parse(it) }.getOrNull() } }
     }
 
@@ -155,34 +155,23 @@ object DlCodec {
 /** Retry timing: exponential with a cap and a little jitter, so a flapping server is not hammered. */
 object DlBackoff {
     const val MAX_ATTEMPTS = 8
-    fun delayMs(attempt: Int, jitter: Double = Math.random()): Long {
-        val base = 2_000L shl min(attempt.coerceAtLeast(0), 8)          // 2s, 4s, 8s ... 512s
-        return min(base, 300_000L) + (jitter * 1_000).toLong()          // capped at 5 min
-    }
+    fun delayMs(attempt: Int, jitter: Double = Math.random()): Long =   // 2s, 4s, 8s ... 512s, capped at 5 min (#1841: the browser core's dl_backoff)
+        BrowserCore.lists("dl_backoff", JSONObject().put("attempt", attempt).put("jitter", jitter)).getLong("delay_ms")
 
     /** HTTP statuses worth another try; everything else 4xx is final. */
-    fun retryable(status: Int) = status == 408 || status == 425 || status == 429 || status >= 500
+    fun retryable(status: Int) = BrowserCore.lists("dl_retryable", JSONObject().put("status", status)).getBoolean("retryable")
 }
 
 /** Names and sizes in words. */
 object DlFormat {
-    fun bytes(n: Long): String {
-        if (n < 0) return "?"
-        if (n < 1024) return "$n B"
-        val units = arrayOf("KB", "MB", "GB", "TB")
-        var v = n / 1024.0; var i = 0
-        while (v >= 1024 && i < units.lastIndex) { v /= 1024; i++ }
-        return String.format(Locale.US, if (v >= 100) "%.0f %s" else "%.1f %s", v, units[i])
-    }
+    /** #1841 sizes and times in words are the browser core's (dl_format); the Kotlin twin without the library. */
+    private fun fmt(kind: String, n: Long) = BrowserCore.lists("dl_format", JSONObject().put("kind", kind).put("n", n)).getString("text")
 
-    fun speed(bps: Long) = bytes(bps) + "/s"
+    fun bytes(n: Long): String = fmt("bytes", n)
 
-    fun eta(sec: Long): String = when {
-        sec < 0 -> "--"
-        sec < 60 -> "${sec}s"
-        sec < 3600 -> "${sec / 60}m ${sec % 60}s"
-        else -> "${sec / 3600}h ${(sec % 3600) / 60}m"
-    }
+    fun speed(bps: Long) = fmt("speed", bps)
+
+    fun eta(sec: Long): String = fmt("eta", sec)
 
     /**
      * The file name a Content-Disposition header names: RFC 6266 `filename*=UTF-8''…` wins over
@@ -202,11 +191,7 @@ object DlFormat {
     }
 
     /** A name safe for one path segment. */
-    fun safeName(raw: String): String {
-        val base = raw.substringAfterLast('/').substringAfterLast('\\')
-        val clean = base.replace(Regex("""[\u0000-\u001f<>:"|?*]"""), "_").trim().trimStart('.')
-        return clean.ifBlank { "download" }.take(200)
-    }
+    fun safeName(raw: String): String = BrowserCore.lists("dl_safe_name", JSONObject().put("raw", raw)).getString("name")
 
     /** "name.ext" -> "name (2).ext" when [taken] says the name is in use. */
     fun unique(name: String, taken: (String) -> Boolean): String {
@@ -222,6 +207,6 @@ object DlFormat {
 /** When a seeding torrent has given back enough: the ratio (percent of its size uploaded) or the time cap. */
 object DlSeedRule {
     fun reached(p: DlPolicy, uploaded: Long, size: Long, seedingSec: Long): Boolean =
-        (p.seedRatio > 0 && size > 0 && uploaded * 100 >= p.seedRatio.toLong() * size) ||
-            (p.seedMinutes > 0 && seedingSec >= p.seedMinutes * 60L)
+        BrowserCore.lists("dl_seed_reached", JSONObject().put("policy", JSONObject().put("seedRatio", p.seedRatio).put("seedMinutes", p.seedMinutes))
+            .put("uploaded", uploaded).put("size", size).put("seeding_sec", seedingSec)).getBoolean("reached")
 }

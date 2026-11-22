@@ -46,10 +46,9 @@ class DlQueue private constructor(context: Context) {
     val torrent: DlTorrentBridge? by lazy { DlTorrentBridge.load(app) }
 
     init {
-        DlCodec.fromJson(sp.getString(KEY_JOBS, "[]")).forEach { j ->
-            // A process that died mid-transfer left RUNNING rows: they go back in the queue.
-            jobs[j.id] = if (j.state == DlState.RUNNING || j.state == DlState.RETRYING) j.copy(state = DlState.QUEUED) else j
-        }
+        com.diegonmarcos.superapp.browser.BrowserListMigration.ensure(app, "dljobs", "browser_downloads", KEY_JOBS)
+        // A process that died mid-transfer left RUNNING rows: the core's reader sends them back to the queue (requeue).
+        DlCodec.fromJson(sp.getString(KEY_JOBS, "[]"), requeue = true).forEach { j -> jobs[j.id] = j }
         runCatching {
             app.getSystemService(ConnectivityManager::class.java).registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) { main.postDelayed({ pump() }, 1_000) }

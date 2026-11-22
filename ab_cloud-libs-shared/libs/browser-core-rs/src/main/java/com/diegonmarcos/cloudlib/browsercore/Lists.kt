@@ -19,28 +19,28 @@ internal object KtLists {
 
     // ── tolerant reads ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-    private fun text(o: JSONObject, k: String, d: String): String = when (val x = o.opt(k)) {
+    internal fun text(o: JSONObject, k: String, d: String): String = when (val x = o.opt(k)) {
         is String -> x
         is Number -> x.toString()
         is Boolean -> x.toString()
         else -> d
     }
 
-    private fun long(o: JSONObject, k: String): Long = when (val x = o.opt(k)) {
+    internal fun long(o: JSONObject, k: String): Long = when (val x = o.opt(k)) {
         is Number -> x.toLong()
         is String -> x.trim().toLongOrNull() ?: 0L
         else -> 0L
     }
 
-    private fun num(o: JSONObject, k: String): Long? = (o.opt(k) as? Number)?.toLong()
+    internal fun num(o: JSONObject, k: String): Long? = (o.opt(k) as? Number)?.toLong()
 
-    private fun objs(a: JSONArray?): List<JSONObject> = if (a == null) emptyList() else (0 until a.length()).mapNotNull { a.optJSONObject(it) }
+    internal fun objs(a: JSONArray?): List<JSONObject> = if (a == null) emptyList() else (0 until a.length()).mapNotNull { a.optJSONObject(it) }
 
-    private fun rawArray(raw: String): JSONArray = try { JSONArray(raw) } catch (_: Throwable) { JSONArray() }
+    internal fun rawArray(raw: String): JSONArray = try { JSONArray(raw) } catch (_: Throwable) { JSONArray() }
 
-    private fun cap(a: JSONObject, d: Int): Int = num(a, "cap")?.takeIf { it > 0 }?.coerceAtMost(Int.MAX_VALUE.toLong())?.toInt() ?: d
+    internal fun cap(a: JSONObject, d: Int): Int = num(a, "cap")?.takeIf { it > 0 }?.coerceAtMost(Int.MAX_VALUE.toLong())?.toInt() ?: d
 
-    private fun low(s: String) = s.lowercase()
+    internal fun low(s: String) = s.lowercase()
 
     /** A structural, key-order-free text of a json value (the comparison the migration's `changed` and the tests use). */
     fun canon(x: Any?): String = when {
@@ -274,7 +274,7 @@ internal object KtLists {
             "bookmarks" -> bmsArr(parseBms(src))
             "weby" -> webyParse(src)
             "visitlog" -> JSONArray().also { r -> logIn(JSONObject().put("raw", raw), "raw", "none").forEach { r.put(JSONObject().put("u", it.url).put("t", it.title).put("s", it.ts)) } }
-            else -> throw IllegalArgumentException("unknown list kind $kind")
+            else -> KtMore.migrateKind(kind, src) ?: throw IllegalArgumentException("unknown list kind $kind")
         }
         val count = list.length()
         val changed = src == null || canon(src) != canon(list)
@@ -334,6 +334,6 @@ internal object KtLists {
         "weby_encode" -> JSONObject().put("raw", webyParse(a.optJSONArray("folders")).toString())
         "weby_all" -> webyAll(a)
         "migrate" -> migrate(a)
-        else -> throw IllegalArgumentException("unknown list op $op")
+        else -> KtMore.run(op, a)
     }
 }

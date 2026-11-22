@@ -391,3 +391,29 @@ fn budget_list_ops_on_big_lists() {
         }
     });
 }
+
+/// Rule 16, downloads: every field of the Kotlin download index row, job and policy is in the core's answers.
+#[test]
+fn the_download_answers_carry_every_field_of_the_kotlin_models() {
+    let corpus: Value = serde_json::from_str(LISTS_CORPUS).unwrap();
+    let keys = |v: &Value| -> Vec<String> {
+        let mut k: Vec<String> = v.as_object().unwrap().keys().cloned().collect();
+        k.sort();
+        k
+    };
+    let want = |m: &str| -> Vec<String> {
+        let mut w: Vec<String> = corpus["models"][m].as_array().unwrap().iter().map(|x| x.as_str().unwrap().to_string()).collect();
+        w.sort();
+        w
+    };
+    let row = crate::lists::run("dl_index_load", &json!({"downloads": [{"id": 1}]})).unwrap();
+    assert_eq!(keys(&row["downloads"][0]), want("download"));
+    // a job with every optional field set answers exactly the Kotlin DlJob's fields
+    let full = json!({"id":"a","url":"u","fileName":"f","mime":"m","dir":"d","kind":"http","userAgent":"ua","referer":"r","cookie":"c","checksum":"s","state":"PAUSED",
+        "total":1,"downloaded":1,"etag":"e","lastModified":"l","acceptRanges":true,"segments":[],"attempts":1,"nextAttemptAt":1,"error":"x","file":"f",
+        "publishedUri":"p","saveToSharedStore":true,"createdAt":1,"finishedAt":1,"infoHash":"h","selectedFiles":[1],"sequential":true,"seed":true});
+    let job = crate::lists::run("dl_jobs_load", &json!({"jobs": [full]})).unwrap();
+    assert_eq!(keys(&job["jobs"][0]), want("dljob"));
+    let pol = crate::lists::run("dl_policy", &json!({"raw": "{}"})).unwrap();
+    assert_eq!(keys(&pol["policy"]), want("dlpolicy"));
+}

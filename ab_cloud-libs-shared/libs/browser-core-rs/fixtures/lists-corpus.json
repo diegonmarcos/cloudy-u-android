@@ -11,6 +11,56 @@
    "title",
    "folder",
    "ts"
+  ],
+  "download": [
+   "id",
+   "url",
+   "file",
+   "mime",
+   "ts"
+  ],
+  "dljob": [
+   "id",
+   "url",
+   "fileName",
+   "mime",
+   "dir",
+   "kind",
+   "userAgent",
+   "referer",
+   "cookie",
+   "checksum",
+   "state",
+   "total",
+   "downloaded",
+   "etag",
+   "lastModified",
+   "acceptRanges",
+   "segments",
+   "attempts",
+   "nextAttemptAt",
+   "error",
+   "file",
+   "publishedUri",
+   "saveToSharedStore",
+   "createdAt",
+   "finishedAt",
+   "infoHash",
+   "selectedFiles",
+   "sequential",
+   "seed"
+  ],
+  "dlpolicy": [
+   "parallel",
+   "wifiOnly",
+   "allowMetered",
+   "speedLimitKbps",
+   "segments",
+   "sharedStore",
+   "seed",
+   "seedRatio",
+   "seedMinutes",
+   "uploadKbps"
   ]
  },
  "cases": [
@@ -2206,6 +2256,1259 @@
        }
       ],
       "folders": []
+     }
+    ]
+   }
+  },
+  {
+   "name": "dl_index_load keeps rows with an id, reads a numeric string id, defaults the rest",
+   "op": "dl_index_load",
+   "in": {
+    "raw": "[{\"id\": 5, \"url\": \"u\", \"file\": \"f\", \"mime\": \"m\", \"ts\": 9}, {\"url\": \"noid\"}, 3, {\"id\": \"7\"}]"
+   },
+   "out": {
+    "downloads": [
+     {
+      "id": 5,
+      "url": "u",
+      "file": "f",
+      "mime": "m",
+      "ts": 9
+     },
+     {
+      "id": 7,
+      "url": "",
+      "file": "",
+      "mime": "",
+      "ts": 0
+     }
+    ],
+    "count": 2
+   }
+  },
+  {
+   "name": "dl_index_load of junk is empty",
+   "op": "dl_index_load",
+   "in": {
+    "raw": "oops"
+   },
+   "out": {
+    "downloads": [],
+    "count": 0
+   }
+  },
+  {
+   "name": "dl_index_add puts the new row first, replaces its id, caps",
+   "op": "dl_index_add",
+   "in": {
+    "downloads": [
+     {
+      "id": 1,
+      "url": "a",
+      "file": "",
+      "mime": "",
+      "ts": 0
+     },
+     {
+      "id": 2,
+      "url": "b",
+      "file": "",
+      "mime": "",
+      "ts": 0
+     }
+    ],
+    "download": {
+     "id": 2,
+     "url": "new",
+     "file": "f",
+     "mime": "m",
+     "ts": 5
+    },
+    "cap": 2
+   },
+   "out": {
+    "downloads": [
+     {
+      "id": 2,
+      "url": "new",
+      "file": "f",
+      "mime": "m",
+      "ts": 5
+     },
+     {
+      "id": 1,
+      "url": "a",
+      "file": "",
+      "mime": "",
+      "ts": 0
+     }
+    ],
+    "count": 2
+   }
+  },
+  {
+   "name": "dl_index_add on an empty index",
+   "op": "dl_index_add",
+   "in": {
+    "raw": "[]",
+    "download": {
+     "id": 9,
+     "url": "u",
+     "file": "",
+     "mime": "",
+     "ts": 0
+    }
+   },
+   "out": {
+    "downloads": [
+     {
+      "id": 9,
+      "url": "u",
+      "file": "",
+      "mime": "",
+      "ts": 0
+     }
+    ]
+   }
+  },
+  {
+   "name": "dl_status 1",
+   "op": "dl_status",
+   "in": {
+    "code": 1
+   },
+   "out": {
+    "status": "pending"
+   }
+  },
+  {
+   "name": "dl_status 2",
+   "op": "dl_status",
+   "in": {
+    "code": 2
+   },
+   "out": {
+    "status": "running"
+   }
+  },
+  {
+   "name": "dl_status 4",
+   "op": "dl_status",
+   "in": {
+    "code": 4
+   },
+   "out": {
+    "status": "paused"
+   }
+  },
+  {
+   "name": "dl_status 8",
+   "op": "dl_status",
+   "in": {
+    "code": 8
+   },
+   "out": {
+    "status": "successful"
+   }
+  },
+  {
+   "name": "dl_status 16",
+   "op": "dl_status",
+   "in": {
+    "code": 16
+   },
+   "out": {
+    "status": "failed"
+   }
+  },
+  {
+   "name": "dl_status 3",
+   "op": "dl_status",
+   "in": {
+    "code": 3
+   },
+   "out": {
+    "status": "unknown"
+   }
+  },
+  {
+   "name": "dl_status 0",
+   "op": "dl_status",
+   "in": {
+    "code": 0
+   },
+   "out": {
+    "status": "unknown"
+   }
+  },
+  {
+   "name": "dl_jobs_load keeps every field, drops a row without an id, an unknown state is paused, a process death re-queues RUNNING",
+   "op": "dl_jobs_load",
+   "in": {
+    "raw": "[{\"id\": \"a\", \"url\": \"u\", \"fileName\": \"f.bin\", \"state\": \"RUNNING\", \"total\": 100, \"downloaded\": 50, \"segments\": [[0, 49, 10], [50, 99, 0], \"x\"], \"attempts\": 2, \"etag\": \"W/1\", \"cookie\": null, \"selectedFiles\": [0, 2], \"acceptRanges\": true, \"seed\": true}, {\"url\": \"no id\"}, {\"id\": \"b\", \"state\": \"WHATEVER\"}]",
+    "requeue": true
+   },
+   "out": {
+    "jobs": [
+     {
+      "id": "a",
+      "url": "u",
+      "fileName": "f.bin",
+      "mime": "",
+      "dir": "",
+      "kind": "http",
+      "state": "QUEUED",
+      "total": 100,
+      "downloaded": 50,
+      "segments": [
+       [
+        0,
+        49,
+        10
+       ],
+       [
+        50,
+        99,
+        0
+       ]
+      ],
+      "attempts": 2,
+      "nextAttemptAt": 0,
+      "file": "",
+      "saveToSharedStore": false,
+      "createdAt": 0,
+      "finishedAt": 0,
+      "sequential": false,
+      "seed": true,
+      "etag": "W/1",
+      "acceptRanges": true,
+      "selectedFiles": [
+       0,
+       2
+      ]
+     },
+     {
+      "id": "b",
+      "url": "",
+      "fileName": "",
+      "mime": "",
+      "dir": "",
+      "kind": "http",
+      "state": "PAUSED",
+      "total": -1,
+      "downloaded": 0,
+      "segments": [],
+      "attempts": 0,
+      "nextAttemptAt": 0,
+      "file": "",
+      "saveToSharedStore": false,
+      "createdAt": 0,
+      "finishedAt": 0,
+      "sequential": false,
+      "seed": false
+     }
+    ],
+    "count": 2
+   }
+  },
+  {
+   "name": "dl_jobs_load without requeue keeps RETRYING",
+   "op": "dl_jobs_load",
+   "in": {
+    "raw": "[{\"id\": \"r\", \"state\": \"RETRYING\", \"cookie\": \"c=1\", \"userAgent\": \"ua\", \"referer\": \"r\", \"checksum\": \"x\", \"lastModified\": \"lm\", \"error\": \"e\", \"publishedUri\": \"p\", \"infoHash\": \"h\", \"kind\": \"torrent\", \"sequential\": true, \"saveToSharedStore\": true, \"createdAt\": 5, \"finishedAt\": 6, \"nextAttemptAt\": 7, \"file\": \"/f\", \"dir\": \"d\", \"mime\": \"m\"}]"
+   },
+   "out": {
+    "jobs": [
+     {
+      "id": "r",
+      "url": "",
+      "fileName": "",
+      "mime": "m",
+      "dir": "d",
+      "kind": "torrent",
+      "state": "RETRYING",
+      "total": -1,
+      "downloaded": 0,
+      "segments": [],
+      "attempts": 0,
+      "nextAttemptAt": 7,
+      "file": "/f",
+      "saveToSharedStore": true,
+      "createdAt": 5,
+      "finishedAt": 6,
+      "sequential": true,
+      "seed": false,
+      "cookie": "c=1",
+      "userAgent": "ua",
+      "referer": "r",
+      "checksum": "x",
+      "lastModified": "lm",
+      "error": "e",
+      "publishedUri": "p",
+      "infoHash": "h"
+     }
+    ]
+   }
+  },
+  {
+   "name": "dl_jobs_load of junk",
+   "op": "dl_jobs_load",
+   "in": {
+    "raw": "nope"
+   },
+   "out": {
+    "jobs": [],
+    "count": 0
+   }
+  },
+  {
+   "name": "dl_policy clamps",
+   "op": "dl_policy",
+   "in": {
+    "raw": "{\"parallel\": 99, \"wifiOnly\": true, \"speedLimitKbps\": -5, \"segments\": 0, \"seedRatio\": 150, \"uploadKbps\": 7}"
+   },
+   "out": {
+    "policy": {
+     "parallel": 8,
+     "wifiOnly": true,
+     "allowMetered": true,
+     "speedLimitKbps": 0,
+     "segments": 1,
+     "sharedStore": false,
+     "seed": false,
+     "seedRatio": 150,
+     "seedMinutes": 0,
+     "uploadKbps": 7
+    }
+   }
+  },
+  {
+   "name": "dl_policy of nothing is the defaults",
+   "op": "dl_policy",
+   "in": {
+    "raw": "nope"
+   },
+   "out": {
+    "policy": {
+     "parallel": 3,
+     "wifiOnly": false,
+     "allowMetered": true,
+     "speedLimitKbps": 0,
+     "segments": 4,
+     "sharedStore": false,
+     "seed": false,
+     "seedRatio": 0,
+     "seedMinutes": 0,
+     "uploadKbps": 0
+    }
+   }
+  },
+  {
+   "name": "dl_backoff attempt 0 jitter 0",
+   "op": "dl_backoff",
+   "in": {
+    "attempt": 0,
+    "jitter": 0
+   },
+   "out": {
+    "delay_ms": 2000
+   }
+  },
+  {
+   "name": "dl_backoff attempt 3 jitter 0",
+   "op": "dl_backoff",
+   "in": {
+    "attempt": 3,
+    "jitter": 0
+   },
+   "out": {
+    "delay_ms": 16000
+   }
+  },
+  {
+   "name": "dl_backoff attempt 20 jitter 0",
+   "op": "dl_backoff",
+   "in": {
+    "attempt": 20,
+    "jitter": 0
+   },
+   "out": {
+    "delay_ms": 300000
+   }
+  },
+  {
+   "name": "dl_backoff attempt 0 jitter 0.5",
+   "op": "dl_backoff",
+   "in": {
+    "attempt": 0,
+    "jitter": 0.5
+   },
+   "out": {
+    "delay_ms": 2500
+   }
+  },
+  {
+   "name": "dl_backoff attempt -1 jitter 0",
+   "op": "dl_backoff",
+   "in": {
+    "attempt": -1,
+    "jitter": 0
+   },
+   "out": {
+    "delay_ms": 2000
+   }
+  },
+  {
+   "name": "dl_backoff attempt 8 jitter 0.999",
+   "op": "dl_backoff",
+   "in": {
+    "attempt": 8,
+    "jitter": 0.999
+   },
+   "out": {
+    "delay_ms": 300999
+   }
+  },
+  {
+   "name": "dl_retryable 408",
+   "op": "dl_retryable",
+   "in": {
+    "status": 408
+   },
+   "out": {
+    "retryable": true
+   }
+  },
+  {
+   "name": "dl_retryable 425",
+   "op": "dl_retryable",
+   "in": {
+    "status": 425
+   },
+   "out": {
+    "retryable": true
+   }
+  },
+  {
+   "name": "dl_retryable 429",
+   "op": "dl_retryable",
+   "in": {
+    "status": 429
+   },
+   "out": {
+    "retryable": true
+   }
+  },
+  {
+   "name": "dl_retryable 500",
+   "op": "dl_retryable",
+   "in": {
+    "status": 500
+   },
+   "out": {
+    "retryable": true
+   }
+  },
+  {
+   "name": "dl_retryable 503",
+   "op": "dl_retryable",
+   "in": {
+    "status": 503
+   },
+   "out": {
+    "retryable": true
+   }
+  },
+  {
+   "name": "dl_retryable 404",
+   "op": "dl_retryable",
+   "in": {
+    "status": 404
+   },
+   "out": {
+    "retryable": false
+   }
+  },
+  {
+   "name": "dl_retryable 200",
+   "op": "dl_retryable",
+   "in": {
+    "status": 200
+   },
+   "out": {
+    "retryable": false
+   }
+  },
+  {
+   "name": "dl_retryable 403",
+   "op": "dl_retryable",
+   "in": {
+    "status": 403
+   },
+   "out": {
+    "retryable": false
+   }
+  },
+  {
+   "name": "dl_format bytes -1",
+   "op": "dl_format",
+   "in": {
+    "kind": "bytes",
+    "n": -1
+   },
+   "out": {
+    "text": "?"
+   }
+  },
+  {
+   "name": "dl_format bytes 0",
+   "op": "dl_format",
+   "in": {
+    "kind": "bytes",
+    "n": 0
+   },
+   "out": {
+    "text": "0 B"
+   }
+  },
+  {
+   "name": "dl_format bytes 1023",
+   "op": "dl_format",
+   "in": {
+    "kind": "bytes",
+    "n": 1023
+   },
+   "out": {
+    "text": "1023 B"
+   }
+  },
+  {
+   "name": "dl_format bytes 1024",
+   "op": "dl_format",
+   "in": {
+    "kind": "bytes",
+    "n": 1024
+   },
+   "out": {
+    "text": "1.0 KB"
+   }
+  },
+  {
+   "name": "dl_format bytes 1536",
+   "op": "dl_format",
+   "in": {
+    "kind": "bytes",
+    "n": 1536
+   },
+   "out": {
+    "text": "1.5 KB"
+   }
+  },
+  {
+   "name": "dl_format bytes 1280",
+   "op": "dl_format",
+   "in": {
+    "kind": "bytes",
+    "n": 1280
+   },
+   "out": {
+    "text": "1.3 KB"
+   }
+  },
+  {
+   "name": "dl_format bytes 102400",
+   "op": "dl_format",
+   "in": {
+    "kind": "bytes",
+    "n": 102400
+   },
+   "out": {
+    "text": "100 KB"
+   }
+  },
+  {
+   "name": "dl_format bytes 104448",
+   "op": "dl_format",
+   "in": {
+    "kind": "bytes",
+    "n": 104448
+   },
+   "out": {
+    "text": "102 KB"
+   }
+  },
+  {
+   "name": "dl_format bytes 102912",
+   "op": "dl_format",
+   "in": {
+    "kind": "bytes",
+    "n": 102912
+   },
+   "out": {
+    "text": "101 KB"
+   }
+  },
+  {
+   "name": "dl_format bytes 153600",
+   "op": "dl_format",
+   "in": {
+    "kind": "bytes",
+    "n": 153600
+   },
+   "out": {
+    "text": "150 KB"
+   }
+  },
+  {
+   "name": "dl_format bytes 1048576",
+   "op": "dl_format",
+   "in": {
+    "kind": "bytes",
+    "n": 1048576
+   },
+   "out": {
+    "text": "1.0 MB"
+   }
+  },
+  {
+   "name": "dl_format bytes 1125899906842624",
+   "op": "dl_format",
+   "in": {
+    "kind": "bytes",
+    "n": 1125899906842624
+   },
+   "out": {
+    "text": "1024 TB"
+   }
+  },
+  {
+   "name": "dl_format speed",
+   "op": "dl_format",
+   "in": {
+    "kind": "speed",
+    "n": 2048
+   },
+   "out": {
+    "text": "2.0 KB/s"
+   }
+  },
+  {
+   "name": "dl_format eta -1",
+   "op": "dl_format",
+   "in": {
+    "kind": "eta",
+    "n": -1
+   },
+   "out": {
+    "text": "--"
+   }
+  },
+  {
+   "name": "dl_format eta 0",
+   "op": "dl_format",
+   "in": {
+    "kind": "eta",
+    "n": 0
+   },
+   "out": {
+    "text": "0s"
+   }
+  },
+  {
+   "name": "dl_format eta 59",
+   "op": "dl_format",
+   "in": {
+    "kind": "eta",
+    "n": 59
+   },
+   "out": {
+    "text": "59s"
+   }
+  },
+  {
+   "name": "dl_format eta 61",
+   "op": "dl_format",
+   "in": {
+    "kind": "eta",
+    "n": 61
+   },
+   "out": {
+    "text": "1m 1s"
+   }
+  },
+  {
+   "name": "dl_format eta 3599",
+   "op": "dl_format",
+   "in": {
+    "kind": "eta",
+    "n": 3599
+   },
+   "out": {
+    "text": "59m 59s"
+   }
+  },
+  {
+   "name": "dl_format eta 3700",
+   "op": "dl_format",
+   "in": {
+    "kind": "eta",
+    "n": 3700
+   },
+   "out": {
+    "text": "1h 1m"
+   }
+  },
+  {
+   "name": "dl_safe_name 'a/b\\\\c<d>.txt'",
+   "op": "dl_safe_name",
+   "in": {
+    "raw": "a/b\\c<d>.txt"
+   },
+   "out": {
+    "name": "c_d_.txt"
+   }
+  },
+  {
+   "name": "dl_safe_name '  ..hidden '",
+   "op": "dl_safe_name",
+   "in": {
+    "raw": "  ..hidden "
+   },
+   "out": {
+    "name": "hidden"
+   }
+  },
+  {
+   "name": "dl_safe_name '../../x'",
+   "op": "dl_safe_name",
+   "in": {
+    "raw": "../../x"
+   },
+   "out": {
+    "name": "x"
+   }
+  },
+  {
+   "name": "dl_safe_name '???'",
+   "op": "dl_safe_name",
+   "in": {
+    "raw": "???"
+   },
+   "out": {
+    "name": "___"
+   }
+  },
+  {
+   "name": "dl_safe_name ''",
+   "op": "dl_safe_name",
+   "in": {
+    "raw": ""
+   },
+   "out": {
+    "name": "download"
+   }
+  },
+  {
+   "name": "dl_safe_name '   '",
+   "op": "dl_safe_name",
+   "in": {
+    "raw": "   "
+   },
+   "out": {
+    "name": "download"
+   }
+  },
+  {
+   "name": "dl_safe_name 'a\\x01b'",
+   "op": "dl_safe_name",
+   "in": {
+    "raw": "a\u0001b"
+   },
+   "out": {
+    "name": "a_b"
+   }
+  },
+  {
+   "name": "dl_safe_name 'xxxxxxxxxxxx'",
+   "op": "dl_safe_name",
+   "in": {
+    "raw": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+   },
+   "out": {
+    "name": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+   }
+  },
+  {
+   "name": "dl_safe_name 'dir/'",
+   "op": "dl_safe_name",
+   "in": {
+    "raw": "dir/"
+   },
+   "out": {
+    "name": "download"
+   }
+  },
+  {
+   "name": "dl_safe_name '....'",
+   "op": "dl_safe_name",
+   "in": {
+    "raw": "...."
+   },
+   "out": {
+    "name": "download"
+   }
+  },
+  {
+   "name": "dl_unique a.txt",
+   "op": "dl_unique",
+   "in": {
+    "name": "a.txt",
+    "taken": [
+     "a.txt",
+     "a (2).txt"
+    ]
+   },
+   "out": {
+    "name": "a (3).txt"
+   }
+  },
+  {
+   "name": "dl_unique README",
+   "op": "dl_unique",
+   "in": {
+    "name": "README",
+    "taken": [
+     "README"
+    ]
+   },
+   "out": {
+    "name": "README (2)"
+   }
+  },
+  {
+   "name": "dl_unique .bashrc",
+   "op": "dl_unique",
+   "in": {
+    "name": ".bashrc",
+    "taken": [
+     ".bashrc"
+    ]
+   },
+   "out": {
+    "name": ".bashrc (2)"
+   }
+  },
+  {
+   "name": "dl_unique a.tar.gz",
+   "op": "dl_unique",
+   "in": {
+    "name": "a.tar.gz",
+    "taken": [
+     "a.tar.gz"
+    ]
+   },
+   "out": {
+    "name": "a.tar (2).gz"
+   }
+  },
+  {
+   "name": "dl_unique free.txt",
+   "op": "dl_unique",
+   "in": {
+    "name": "free.txt",
+    "taken": [
+     "x"
+    ]
+   },
+   "out": {
+    "name": "free.txt"
+   }
+  },
+  {
+   "name": "dl_seed_reached [100, 0, 100, 100, 0]",
+   "op": "dl_seed_reached",
+   "in": {
+    "policy": {
+     "seedRatio": 100,
+     "seedMinutes": 0
+    },
+    "uploaded": 100,
+    "size": 100,
+    "seeding_sec": 0
+   },
+   "out": {
+    "reached": true
+   }
+  },
+  {
+   "name": "dl_seed_reached [100, 0, 99, 100, 0]",
+   "op": "dl_seed_reached",
+   "in": {
+    "policy": {
+     "seedRatio": 100,
+     "seedMinutes": 0
+    },
+    "uploaded": 99,
+    "size": 100,
+    "seeding_sec": 0
+   },
+   "out": {
+    "reached": false
+   }
+  },
+  {
+   "name": "dl_seed_reached [0, 1, 0, 0, 60]",
+   "op": "dl_seed_reached",
+   "in": {
+    "policy": {
+     "seedRatio": 0,
+     "seedMinutes": 1
+    },
+    "uploaded": 0,
+    "size": 0,
+    "seeding_sec": 60
+   },
+   "out": {
+    "reached": true
+   }
+  },
+  {
+   "name": "dl_seed_reached [0, 1, 0, 0, 59]",
+   "op": "dl_seed_reached",
+   "in": {
+    "policy": {
+     "seedRatio": 0,
+     "seedMinutes": 1
+    },
+    "uploaded": 0,
+    "size": 0,
+    "seeding_sec": 59
+   },
+   "out": {
+    "reached": false
+   }
+  },
+  {
+   "name": "dl_seed_reached [0, 0, 5, 5, 999]",
+   "op": "dl_seed_reached",
+   "in": {
+    "policy": {
+     "seedRatio": 0,
+     "seedMinutes": 0
+    },
+    "uploaded": 5,
+    "size": 5,
+    "seeding_sec": 999
+   },
+   "out": {
+    "reached": false
+   }
+  },
+  {
+   "name": "dl_seed_reached [100, 0, 500, 0, 0]",
+   "op": "dl_seed_reached",
+   "in": {
+    "policy": {
+     "seedRatio": 100,
+     "seedMinutes": 0
+    },
+    "uploaded": 500,
+    "size": 0,
+    "seeding_sec": 0
+   },
+   "out": {
+    "reached": false
+   }
+  },
+  {
+   "name": "dl_jobs_query by url",
+   "op": "dl_jobs_query",
+   "in": {
+    "jobs": [
+     {
+      "id": "1",
+      "fileName": "Movie.MKV",
+      "url": "https://x/m",
+      "state": "COMPLETED",
+      "createdAt": 1
+     },
+     {
+      "id": "2",
+      "fileName": "song.mp3",
+      "url": "https://y/s",
+      "state": "RUNNING",
+      "createdAt": 3
+     },
+     {
+      "id": "3",
+      "fileName": "doc.pdf",
+      "url": "https://x/d",
+      "state": "FAILED",
+      "createdAt": 2
+     }
+    ],
+    "query": "x/"
+   },
+   "out": {
+    "indices": [
+     0,
+     2
+    ]
+   }
+  },
+  {
+   "name": "dl_jobs_query by state name, any case",
+   "op": "dl_jobs_query",
+   "in": {
+    "jobs": [
+     {
+      "id": "1",
+      "fileName": "Movie.MKV",
+      "url": "https://x/m",
+      "state": "COMPLETED",
+      "createdAt": 1
+     },
+     {
+      "id": "2",
+      "fileName": "song.mp3",
+      "url": "https://y/s",
+      "state": "RUNNING",
+      "createdAt": 3
+     },
+     {
+      "id": "3",
+      "fileName": "doc.pdf",
+      "url": "https://x/d",
+      "state": "FAILED",
+      "createdAt": 2
+     }
+    ],
+    "query": "run"
+   },
+   "out": {
+    "indices": [
+     1
+    ]
+   }
+  },
+  {
+   "name": "dl_jobs_query by file name, any case",
+   "op": "dl_jobs_query",
+   "in": {
+    "jobs": [
+     {
+      "id": "1",
+      "fileName": "Movie.MKV",
+      "url": "https://x/m",
+      "state": "COMPLETED",
+      "createdAt": 1
+     },
+     {
+      "id": "2",
+      "fileName": "song.mp3",
+      "url": "https://y/s",
+      "state": "RUNNING",
+      "createdAt": 3
+     },
+     {
+      "id": "3",
+      "fileName": "doc.pdf",
+      "url": "https://x/d",
+      "state": "FAILED",
+      "createdAt": 2
+     }
+    ],
+    "query": "mkv"
+   },
+   "out": {
+    "indices": [
+     0
+    ]
+   }
+  },
+  {
+   "name": "dl_jobs_query blank is everything",
+   "op": "dl_jobs_query",
+   "in": {
+    "jobs": [
+     {
+      "id": "1",
+      "fileName": "Movie.MKV",
+      "url": "https://x/m",
+      "state": "COMPLETED",
+      "createdAt": 1
+     },
+     {
+      "id": "2",
+      "fileName": "song.mp3",
+      "url": "https://y/s",
+      "state": "RUNNING",
+      "createdAt": 3
+     },
+     {
+      "id": "3",
+      "fileName": "doc.pdf",
+      "url": "https://x/d",
+      "state": "FAILED",
+      "createdAt": 2
+     }
+    ],
+    "query": " "
+   },
+   "out": {
+    "indices": [
+     0,
+     1,
+     2
+    ],
+    "count": 3
+   }
+  },
+  {
+   "name": "dl_jobs_query sort name",
+   "op": "dl_jobs_query",
+   "in": {
+    "jobs": [
+     {
+      "id": "1",
+      "fileName": "Movie.MKV",
+      "url": "https://x/m",
+      "state": "COMPLETED",
+      "createdAt": 1
+     },
+     {
+      "id": "2",
+      "fileName": "song.mp3",
+      "url": "https://y/s",
+      "state": "RUNNING",
+      "createdAt": 3
+     },
+     {
+      "id": "3",
+      "fileName": "doc.pdf",
+      "url": "https://x/d",
+      "state": "FAILED",
+      "createdAt": 2
+     }
+    ],
+    "query": "",
+    "sort": "name"
+   },
+   "out": {
+    "indices": [
+     2,
+     0,
+     1
+    ]
+   }
+  },
+  {
+   "name": "dl_jobs_query sort created, newest first",
+   "op": "dl_jobs_query",
+   "in": {
+    "jobs": [
+     {
+      "id": "1",
+      "fileName": "Movie.MKV",
+      "url": "https://x/m",
+      "state": "COMPLETED",
+      "createdAt": 1
+     },
+     {
+      "id": "2",
+      "fileName": "song.mp3",
+      "url": "https://y/s",
+      "state": "RUNNING",
+      "createdAt": 3
+     },
+     {
+      "id": "3",
+      "fileName": "doc.pdf",
+      "url": "https://x/d",
+      "state": "FAILED",
+      "createdAt": 2
+     }
+    ],
+    "query": "",
+    "sort": "created"
+   },
+   "out": {
+    "indices": [
+     1,
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "migrate downloads index",
+   "op": "migrate",
+   "in": {
+    "kind": "downloads",
+    "raw": "[{\"id\": 5, \"url\": \"u\", \"file\": \"f\", \"mime\": \"m\", \"ts\": 9}, {\"url\": \"noid\"}]"
+   },
+   "out": {
+    "valid": true,
+    "count": 1,
+    "dropped": 1,
+    "changed": true,
+    "list": [
+     {
+      "id": 5,
+      "url": "u",
+      "file": "f",
+      "mime": "m",
+      "ts": 9
+     }
+    ]
+   }
+  },
+  {
+   "name": "migrate downloads index already canonical",
+   "op": "migrate",
+   "in": {
+    "kind": "downloads",
+    "raw": "[{\"id\": 5, \"url\": \"u\", \"file\": \"f\", \"mime\": \"m\", \"ts\": 9}]"
+   },
+   "out": {
+    "valid": true,
+    "count": 1,
+    "dropped": 0,
+    "changed": false
+   }
+  },
+  {
+   "name": "migrate download jobs keeps a RUNNING row as it is",
+   "op": "migrate",
+   "in": {
+    "kind": "dljobs",
+    "raw": "[{\"id\": \"a\", \"state\": \"RUNNING\"}, {\"x\": 1}]"
+   },
+   "out": {
+    "valid": true,
+    "count": 1,
+    "dropped": 1,
+    "changed": true,
+    "list": [
+     {
+      "id": "a",
+      "url": "",
+      "fileName": "",
+      "mime": "",
+      "dir": "",
+      "kind": "http",
+      "state": "RUNNING",
+      "total": -1,
+      "downloaded": 0,
+      "segments": [],
+      "attempts": 0,
+      "nextAttemptAt": 0,
+      "file": "",
+      "saveToSharedStore": false,
+      "createdAt": 0,
+      "finishedAt": 0,
+      "sequential": false,
+      "seed": false
      }
     ]
    }

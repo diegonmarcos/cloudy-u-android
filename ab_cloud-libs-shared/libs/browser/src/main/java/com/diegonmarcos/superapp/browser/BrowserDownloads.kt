@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Environment
 import android.webkit.URLUtil
+import com.diegonmarcos.cloudlib.browsercore.BrowserCore
 import com.diegonmarcos.superapp.browser.download.DlQueue
 import com.diegonmarcos.superapp.browser.download.DlService
 import org.json.JSONArray
@@ -26,6 +27,12 @@ object BrowserDownloadIndex {
             if (!o.has("id")) null
             else BrowserDownload(o.optLong("id"), o.optString("url"), o.optString("file"), o.optString("mime"), o.optLong("ts"))
         }
+    }
+
+    /** #1841 the rows of a core answer (`downloads`). */
+    fun fromArray(arr: JSONArray?): List<BrowserDownload> {
+        arr ?: return emptyList()
+        return (0 until arr.length()).mapNotNull { arr.optJSONObject(it) }.map { BrowserDownload(it.optLong("id"), it.optString("url"), it.optString("file"), it.optString("mime"), it.optLong("ts")) }
     }
 
     /** ponytail: a flat cap; older entries drop off the index (the files stay in Downloads). */
@@ -58,7 +65,16 @@ class BrowserDownloads(context: Context) {
     private val sp = app.getSharedPreferences("browser_downloads", Context.MODE_PRIVATE)
     private val dm get() = app.getSystemService(DownloadManager::class.java)
 
-    fun all(): List<BrowserDownload> = BrowserDownloadIndex.fromJson(sp.getString(KEY, "[]"))
+    /**
+     * #1841 the index is the browser core's (downloads: dl_index_load / dl_index_add); the stored text keeps its prefs file, key and schema,
+     * [BrowserListMigration] normalises it once with a backup. [BrowserDownloadIndex] stays as the readable rules and the parity reference.
+     */
+    private fun raw(): String {
+        BrowserListMigration.ensure(app, "downloads", "browser_downloads", KEY)
+        return sp.getString(KEY, "[]") ?: "[]"
+    }
+
+    fun all(): List<BrowserDownload> = BrowserDownloadIndex.fromArray(BrowserCore.lists("dl_index_load", JSONObject().put("raw", raw())).optJSONArray("downloads"))
 
     /** True the first time only: the browser asks for the notification permission once. */
     fun firstNotificationAsk(): Boolean {
@@ -99,7 +115,9 @@ class BrowserDownloads(context: Context) {
         kind?.takeIf { it.isNotBlank() }?.let { req.setMimeType(it) }
         val id = dm.enqueue(req)
         val d = BrowserDownload(id, url, rel, kind.orEmpty(), System.currentTimeMillis())
-        sp.edit().putString(KEY, BrowserDownloadIndex.toJson(BrowserDownloadIndex.add(all(), d)).toString()).apply()
+        val a = BrowserCore.lists("dl_index_add", JSONObject().put("raw", raw()).put("cap", BrowserDownloadIndex.CAP)
+            .put("download", JSONObject().put("id", d.id).put("url", d.url).put("file", d.file).put("mime", d.mime).put("ts", d.ts)))
+        sp.edit().putString(KEY, a.getString("raw")).apply()
         return d
     }
 

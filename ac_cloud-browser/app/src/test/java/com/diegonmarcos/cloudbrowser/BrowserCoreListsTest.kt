@@ -8,6 +8,14 @@ import com.diegonmarcos.cloudbrowser.sites.WebyTile
 import com.diegonmarcos.cloudlib.browsercore.BrowserCore
 import com.diegonmarcos.superapp.browser.BrowserBookmark
 import com.diegonmarcos.superapp.browser.BrowserBookmarkOps
+import com.diegonmarcos.superapp.browser.BrowserDownload
+import com.diegonmarcos.superapp.browser.BrowserDownloadIndex
+import com.diegonmarcos.superapp.browser.download.DlFormat
+import com.diegonmarcos.superapp.browser.download.DlCodec
+import com.diegonmarcos.superapp.browser.download.DlJob
+import com.diegonmarcos.superapp.browser.download.DlPolicy
+import com.diegonmarcos.superapp.browser.download.DlSegment
+import com.diegonmarcos.superapp.browser.download.DlState
 import com.diegonmarcos.superapp.browser.BrowserFavourites
 import com.diegonmarcos.superapp.browser.BrowserVisit
 import com.diegonmarcos.superapp.browser.FavSeed
@@ -68,6 +76,9 @@ class BrowserCoreListsTest {
         fun want(k: String) = models.getJSONArray(k).let { a -> (0 until a.length()).map { a.getString(it) }.toSet() }
         assertEquals(want("visit"), fields(BrowserVisit::class.java))
         assertEquals(want("bookmark"), fields(BrowserBookmark::class.java))
+        assertEquals(want("dljob"), fields(DlJob::class.java))
+        assertEquals(want("dlpolicy"), fields(DlPolicy::class.java))
+        assertEquals(want("download"), fields(BrowserDownload::class.java))
         // an answer's rows carry exactly those fields
         val h = BrowserCore.lists("history_record", JSONObject().put("raw", "[]").put("url", "u").put("title", "t").put("now", 1)).getJSONArray("visits").getJSONObject(0)
         assertEquals(want("visit"), h.keys().asSequence().toSet())
@@ -179,5 +190,51 @@ class BrowserCoreListsTest {
             l = r.getJSONArray("visits").let { a -> (0 until a.length()).map { a.getJSONObject(it).let { o -> BrowserVisit(o.getString("url"), o.getString("title"), o.getLong("ts")) } } }
             assertEquals("after step $i", want, l)
         }
+    }
+
+    // ── phase 2: downloads ──────────────────────────────────────────────────────────────────────────────────────────────
+
+    @Test fun `the download index matches the old rules`() {
+        for (raw in listOf("[]", "oops", "[{\"id\":5,\"url\":\"u\",\"file\":\"f\",\"mime\":\"m\",\"ts\":9},{\"url\":\"noid\"},3,{\"id\":\"7\"}]")) {
+            assertEquals(raw, BrowserDownloadIndex.fromJson(raw), BrowserDownloadIndex.fromArray(BrowserCore.lists("dl_index_load", JSONObject().put("raw", raw)).optJSONArray("downloads")))
+        }
+        var want = emptyList<BrowserDownload>()
+        var raw = "[]"
+        for (i in 0 until BrowserDownloadIndex.CAP + 5) {
+            val d = BrowserDownload((i % 150).toLong(), "u$i", "f", "m", i.toLong())
+            want = BrowserDownloadIndex.add(want, d)
+            raw = BrowserCore.lists("dl_index_add", JSONObject().put("raw", raw).put("cap", BrowserDownloadIndex.CAP)
+                .put("download", JSONObject().put("id", d.id).put("url", d.url).put("file", d.file).put("mime", d.mime).put("ts", d.ts))).getString("raw")
+        }
+        assertEquals(want, BrowserDownloadIndex.fromJson(raw))
+        for (c in listOf(1, 2, 4, 8, 16, 3)) assertEquals(BrowserDownloadIndex.status(c), BrowserCore.lists("dl_status", JSONObject().put("code", c)).getString("status"))
+    }
+
+    @Test fun `sizes in words match java's own formatting`() {
+        fun old(n: Long): String {
+            if (n < 0) return "?"
+            if (n < 1024) return "$n B"
+            val units = arrayOf("KB", "MB", "GB", "TB")
+            var v = n / 1024.0; var i = 0
+            while (v >= 1024 && i < units.lastIndex) { v /= 1024; i++ }
+            return String.format(java.util.Locale.US, if (v >= 100) "%.0f %s" else "%.1f %s", v, units[i])
+        }
+        val ns = (-2L..6000L).toList() + (1..60).map { it * 1000L * 37 } + (0..40).map { 1L shl it } + (1..40).map { (1L shl it) * 3 + 640 } + listOf(1024L * 1024 * 1024 * 1024 * 1024)
+        for (n in ns) assertEquals("bytes $n", old(n), DlFormat.bytes(n))
+        assertEquals("2.0 KB/s", DlFormat.speed(2048)); assertEquals("--", DlFormat.eta(-1)); assertEquals("1h 1m", DlFormat.eta(3700))
+    }
+
+    @Test fun `a download job survives the core's codec with every field`() {
+        val j = DlJob(id = "a", url = "https://x/f.bin", fileName = "f.bin", mime = "application/octet-stream", dir = "d", kind = "http", userAgent = "ua", referer = "r", cookie = "c=1",
+            checksum = "sum", state = DlState.PAUSED, total = 100, downloaded = 40, etag = "e", lastModified = "lm", acceptRanges = true, segments = listOf(DlSegment(0, 49, 10), DlSegment(50, 99, 0)),
+            attempts = 2, nextAttemptAt = 7, error = "boom", file = "/f", publishedUri = "content://p", saveToSharedStore = true, createdAt = 5, finishedAt = 6,
+            infoHash = "h", selectedFiles = listOf(0, 2), sequential = true, seed = true)
+        val bare = DlJob(id = "b", url = "u", fileName = "n")
+        assertEquals(listOf(j, bare), DlCodec.fromJson(DlCodec.toJson(listOf(j, bare))))
+        val running = j.copy(state = DlState.RUNNING)
+        assertEquals(DlState.QUEUED, DlCodec.fromJson(DlCodec.toJson(listOf(running)), requeue = true).single().state)
+        assertEquals(DlState.RUNNING, DlCodec.fromJson(DlCodec.toJson(listOf(running))).single().state)
+        val p = DlPolicy(parallel = 2, wifiOnly = true, allowMetered = false, speedLimitKbps = 500, segments = 6, sharedStore = true, seed = true, seedRatio = 150, seedMinutes = 30, uploadKbps = 9)
+        assertEquals(p, DlPolicy.fromJson(p.toJson().toString()))
     }
 }
