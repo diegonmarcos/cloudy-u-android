@@ -32,7 +32,7 @@ class TakeoutParsersTest {
         val n = JSONObject(TakeoutTestKit.text("records/Records.json")).getJSONArray("locations").length()
         assertEquals(n, fixes.size)
         val first = fixes.first()
-        assertEquals(52.5163, first["lat"] as Double, 1e-7); assertEquals(13.3777, first["lon"] as Double, 1e-7)
+        assertEquals(52.51627, first["lat"] as Double, 1e-9); assertEquals(13.37767, first["lon"] as Double, 1e-9)
         assertEquals(20.0, first["accuracy"]); assertEquals(34.0, first["altitude"]); assertEquals(3.0, first["vertical_acc"]); assertEquals(0.0, first["speed"]); assertEquals(270.0, first["heading"])
         assertEquals("WIFI", first["g_source"]); assertEquals(-1234567L, first["device_tag"]); assertEquals("takeout-records", first["source"])
         assertTrue((first["activity_json"] as String).contains("IN_VEHICLE")); assertTrue((first["extra_json"] as String).contains("ANDROID"))
