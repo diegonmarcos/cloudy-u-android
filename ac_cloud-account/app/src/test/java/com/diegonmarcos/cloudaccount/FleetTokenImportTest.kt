@@ -49,9 +49,9 @@ class FleetTokenImportTest {
 
     @Test fun `a malformed value is refused and never filed`() {
         val f = Fake()
-        for (bad in listOf("short", "has space inside the token", "x".repeat(600), "   ", 12345)) {
-            assertEquals(if (bad == "   ") Outcome.NOT_DECLARED else Outcome.INVALID, run(bundle(bad), f))
-        }
+        for (bad in listOf("short", "has space inside the token", "x".repeat(600))) assertEquals(Outcome.INVALID, run(bundle(bad), f))
+        // blank or not a string (the vault emits a plain string; a pending object is covered above) = nothing declared
+        for (none in listOf("   ", 12345)) assertEquals(Outcome.NOT_DECLARED, run(bundle(none), f))
         assertEquals(0, f.writes)
     }
 
@@ -89,6 +89,8 @@ class FleetTokenImportTest {
 
     @Test fun `landing files it and only the granted webserver reads it back over the provider`() {
         assertEquals(Outcome.FILED, FleetTokenImport.land(ctx, bundle(t1)))
+        // the test store is not seeded: grant as seed v21 does (the seed itself is pinned by FleetMeshTokenGrantTest)
+        AccountVault(ctx).grants.grant(AppCredentialsContract.PKG_WEBSERVER, AppCredentialsContract.grant(FleetTokenImport.CREDENTIAL))
         val call = { who: String ->
             AccountData.callerResolver = { who }
             Robolectric.buildContentProvider(AccountData.Provider::class.java).create(AccountData.AUTHORITY).get()
