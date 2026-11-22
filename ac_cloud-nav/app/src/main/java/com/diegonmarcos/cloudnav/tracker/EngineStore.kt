@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import com.diegonmarcos.cloudnav.maps.Fix
 import com.diegonmarcos.cloudnav.maps.MapsDb
+import com.diegonmarcos.cloudnav.maps.TlSteps
 
 /** Settings + progress of the engine, in its own SharedPreferences file. */
 class EnginePrefs(ctx: Context) {
@@ -76,6 +77,12 @@ class EngineDb private constructor(ctx: Context) : SQLiteOpenHelper(ctx, "tracke
     override fun onDowngrade(db: SQLiteDatabase, o: Int, n: Int) { /* keep the data */ }
 
     fun addSample(ts: Long, delta: Long, headingDeg: Double?) {
+        // #1851 the slice this sample closes goes to the one store (maps.db) as well
+        if (delta > 0) runCatching {
+            val prev = readableDatabase.rawQuery("SELECT MAX(ts) FROM step_samples", null).use { if (it.moveToFirst() && !it.isNull(0)) it.getLong(0) else 0L }
+            val start = if (prev == 0L) ts - SAMPLE_MS else maxOf(prev, ts - 2 * SAMPLE_MS)
+            MapsDb.get(appCtx).appendStepSlice(TlSteps(start, ts, delta), "counter")
+        }
         writableDatabase.insert("step_samples", null, ContentValues().apply {
             put("ts", ts); put("delta", delta); if (headingDeg != null) put("heading", headingDeg)
         })

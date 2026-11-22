@@ -30,6 +30,7 @@
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <!-- Timeline > Steps reads Health Connect StepsRecord (read only). -->
     <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.health.READ_SLEEP" />
 
     <queries>
         <package android:name="com.google.android.apps.healthdata" />

@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import org.json.JSONObject
 
 /**
  * SQLite-backed store for the GPS tracker. Three tables:
@@ -63,6 +64,7 @@ class MapsDb private constructor(ctx: Context) :
         db.execSQL("CREATE INDEX idx_stops_started_at ON stops(started_at);")
         createTimeline(db)
         createFixes(db)
+        createStore(db)
         db.execSQL(
             """
             CREATE TABLE places_cache (
@@ -76,11 +78,90 @@ class MapsDb private constructor(ctx: Context) :
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 2) createTimeline(db)   // v2 (#1114): the timeline store; filled by TimelineSync from the older tables
+        if (oldVersion < 4) createStore(db)   // v4 (#1851): step slices, daily steps, sleep sessions, day rollups, aggregates
         if (oldVersion < 3) {   // v3 (#1851): the append-only fix log; the tracker's existing points are carried over once
             createFixes(db)
             db.execSQL("INSERT INTO fixes (ts, lat, lon, accuracy, speed, provider) SELECT ts, lat, lon, accuracy, speed, 'legacy-points' FROM points;")
         }
     }
+
+    /** #1851 v4: the rest of the one store. Inputs (step slices, Health Connect daily steps and sleep sessions) and outputs (day rollups, aggregates). */
+    private fun createStore(db: SQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS step_slices (start_ms INTEGER NOT NULL, end_ms INTEGER NOT NULL, count INTEGER NOT NULL, source TEXT NOT NULL, PRIMARY KEY (start_ms, end_ms, source));")
+        db.execSQL("CREATE TABLE IF NOT EXISTS steps_daily (date TEXT PRIMARY KEY, steps INTEGER NOT NULL, source TEXT NOT NULL, updated_ms INTEGER NOT NULL);")
+        db.execSQL("CREATE TABLE IF NOT EXISTS sleep_sessions (start_ms INTEGER PRIMARY KEY, end_ms INTEGER NOT NULL, source TEXT NOT NULL);")
+        db.execSQL("CREATE TABLE IF NOT EXISTS day_rollups (date TEXT PRIMARY KEY, steps INTEGER NOT NULL, distance_m REAL NOT NULL, moving_ms INTEGER NOT NULL, " +
+            "stopped_ms INTEGER NOT NULL, visits INTEGER NOT NULL, sleep_ms INTEGER NOT NULL, by_mode TEXT NOT NULL);")
+        db.execSQL("CREATE TABLE IF NOT EXISTS aggregates (kind TEXT NOT NULL, k TEXT NOT NULL, json TEXT NOT NULL, built_ms INTEGER NOT NULL, PRIMARY KEY (kind, k));")
+    }
+
+    fun appendStepSlice(s: TlSteps, source: String) {
+        writableDatabase.execSQL("INSERT OR IGNORE INTO step_slices (start_ms, end_ms, count, source) VALUES (?, ?, ?, ?);", arrayOf<Any>(s.startMs, s.endMs, s.count, source))
+    }
+
+    fun stepSlices(fromTs: Long, toTs: Long): List<TlSteps> {
+        val out = mutableListOf<TlSteps>()
+        readableDatabase.rawQuery("SELECT start_ms,end_ms,count FROM step_slices WHERE end_ms >= ? AND start_ms <= ? ORDER BY start_ms ASC;",
+            arrayOf(fromTs.toString(), toTs.toString())).use { c -> while (c.moveToNext()) out.add(TlSteps(c.getLong(0), c.getLong(1), c.getLong(2))) }
+        return out
+    }
+
+    /** One day's step total as its source gave it (Health Connect's de-duplicated aggregate, else the phone counter); the latest write wins. */
+    fun putDailySteps(date: String, steps: Long, source: String, nowMs: Long) {
+        writableDatabase.execSQL("INSERT OR REPLACE INTO steps_daily (date, steps, source, updated_ms) VALUES (?, ?, ?, ?);", arrayOf<Any>(date, steps, source, nowMs))
+    }
+
+    /** date (yyyy-MM-dd) to steps for [fromDate]..[toDate] inclusive. */
+    fun dailySteps(fromDate: String, toDate: String): Map<String, Long> {
+        val out = LinkedHashMap<String, Long>()
+        readableDatabase.rawQuery("SELECT date,steps FROM steps_daily WHERE date >= ? AND date <= ? ORDER BY date ASC;", arrayOf(fromDate, toDate))
+            .use { c -> while (c.moveToNext()) out[c.getString(0)] = c.getLong(1) }
+        return out
+    }
+
+    fun dailyStepsSource(date: String): String? =
+        readableDatabase.rawQuery("SELECT source FROM steps_daily WHERE date = ?;", arrayOf(date)).use { if (it.moveToFirst()) it.getString(0) else null }
+
+    fun putSleepSession(startMs: Long, endMs: Long, source: String) {
+        writableDatabase.execSQL("INSERT OR REPLACE INTO sleep_sessions (start_ms, end_ms, source) VALUES (?, ?, ?);", arrayOf<Any>(startMs, endMs, source))
+    }
+
+    fun sleepSessions(fromTs: Long, toTs: Long): List<Pair<Long, Long>> {
+        val out = mutableListOf<Pair<Long, Long>>()
+        readableDatabase.rawQuery("SELECT start_ms,end_ms FROM sleep_sessions WHERE end_ms >= ? AND start_ms <= ? ORDER BY start_ms ASC;",
+            arrayOf(fromTs.toString(), toTs.toString())).use { c -> while (c.moveToNext()) out.add(c.getLong(0) to c.getLong(1)) }
+        return out
+    }
+
+    /** Replaces the rollups of the dates in [rows] (a rebuild of those days). */
+    fun replaceRollups(rows: List<DayRollup>) = runInTransaction {
+        val db = writableDatabase
+        for (r in rows) db.execSQL("INSERT OR REPLACE INTO day_rollups (date, steps, distance_m, moving_ms, stopped_ms, visits, sleep_ms, by_mode) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+            arrayOf<Any>(r.date.toString(), r.steps, r.distanceM, r.movingMs, r.stoppedMs, r.visits, r.sleepMs,
+                JSONObject().also { j -> r.distanceByMode.forEach { (k, v) -> j.put(k, v) } }.toString()))
+    }
+
+    fun rollups(fromDate: String, toDate: String): List<DayRollup> {
+        val out = mutableListOf<DayRollup>()
+        readableDatabase.rawQuery("SELECT date,steps,distance_m,moving_ms,stopped_ms,visits,sleep_ms,by_mode FROM day_rollups WHERE date >= ? AND date <= ? ORDER BY date ASC;",
+            arrayOf(fromDate, toDate)).use { c ->
+            while (c.moveToNext()) {
+                val j = JSONObject(c.getString(7)); val m = LinkedHashMap<String, Double>()
+                j.keys().forEach { k -> m[k] = j.getDouble(k) }
+                out.add(DayRollup(java.time.LocalDate.parse(c.getString(0)), c.getLong(1), c.getDouble(2), c.getLong(3), c.getLong(4), c.getInt(5), c.getLong(6), m))
+            }
+        }
+        return out
+    }
+
+    fun putAggregate(kind: String, key: String, json: String, nowMs: Long) {
+        writableDatabase.execSQL("INSERT OR REPLACE INTO aggregates (kind, k, json, built_ms) VALUES (?, ?, ?, ?);", arrayOf<Any>(kind, key, json, nowMs))
+    }
+
+    /** The persisted aggregate (json, built-at) of [kind]/[key], or null when none was built yet. */
+    fun aggregate(kind: String, key: String): Pair<String, Long>? =
+        readableDatabase.rawQuery("SELECT json,built_ms FROM aggregates WHERE kind = ? AND k = ?;", arrayOf(kind, key))
+            .use { if (it.moveToFirst()) it.getString(0) to it.getLong(1) else null }
 
     /** #1851 every raw fix, appended and never rewritten: time, position, accuracy, speed, provider. The segmentation engine reads only this. */
     private fun createFixes(db: SQLiteDatabase) {
@@ -416,6 +497,7 @@ class MapsDb private constructor(ctx: Context) :
         db.execSQL("DELETE FROM stops;")
         db.execSQL("DELETE FROM timeline_segments;")
         db.execSQL("DELETE FROM fixes;")
+        for (t in listOf("step_slices", "steps_daily", "sleep_sessions", "day_rollups", "aggregates")) db.execSQL("DELETE FROM $t;")
         db.execSQL("DELETE FROM places_cache;")
     }
 
@@ -465,7 +547,7 @@ class MapsDb private constructor(ctx: Context) :
 
     companion object {
         private const val DB_NAME = "maps.db"
-        private const val DB_VERSION = 3
+        private const val DB_VERSION = 4
 
         @Volatile private var instance: MapsDb? = null
         fun get(ctx: Context): MapsDb = instance ?: synchronized(this) {

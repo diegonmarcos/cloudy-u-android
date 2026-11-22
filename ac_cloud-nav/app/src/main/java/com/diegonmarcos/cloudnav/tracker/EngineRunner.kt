@@ -111,6 +111,7 @@ object EngineRunner {
         }
         prefs.state = st
         runCatching { WakeSources.arm(ctx) }   // re-arm the one-shot significant-motion sensor and the geofence at the current STAY
+        runCatching { StepsRepository(ctx).ingestHealth() }   // #1851 Health Connect steps + sleep into the one store
         runCatching { NavTimelineExtra.tick(ctx, now, moving = moving) }   // #1114: the timeline store follows every pass
     }
 

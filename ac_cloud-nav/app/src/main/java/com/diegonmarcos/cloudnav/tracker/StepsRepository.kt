@@ -5,6 +5,7 @@ import android.location.Geocoder
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.request.AggregateGroupByPeriodRequest
 import androidx.health.connect.client.request.AggregateRequest
@@ -30,6 +31,8 @@ import java.util.Locale
 class StepsRepository(private val ctx: Context) {
     companion object {
         val READ_STEPS: Set<String> = setOf(HealthPermission.getReadPermission(StepsRecord::class))
+        /** Optional: sleep sessions sharpen the sleep rule; without this grant the night window alone decides. */
+        val READ_SLEEP: String = HealthPermission.getReadPermission(SleepSessionRecord::class)
         private const val HISTORY_DAYS = 400L
     }
 
@@ -38,6 +41,7 @@ class StepsRepository(private val ctx: Context) {
     suspend fun load(zone: ZoneId = ZoneId.systemDefault()): StepsUi = withContext(Dispatchers.IO) {
         val now = System.currentTimeMillis()
         val dayStart = LocalDate.now(zone).minusDays(StepsModel.CARD_DAYS - 1L).atStartOfDay(zone).toInstant().toEpochMilli()
+        runCatching { ingestHealth(zone) }   // #1851 the store first: Explored > Day reads the same totals
         val fixes = fixes(dayStart, now)
         val stepM = EnginePrefs(ctx).stepLengthM
         val label: (PlaceFix) -> String = { name(it) }
@@ -70,6 +74,31 @@ class StepsRepository(private val ctx: Context) {
         val perm = StepsDiagnostics.permState(hcStatus, emptySet(), READ_STEPS)
         val st = if (perm == PermState.UPDATE_REQUIRED) SourceStatus.HEALTH_CONNECT_UPDATE else SourceStatus.HEALTH_CONNECT_MISSING
         device(st, zone, now, dayStart, fixes, stepM, label, perm)
+    }
+
+    /**
+     * #1851 Health Connect into the one store (maps.db): the day totals of the last [days] days (the de-duplicated aggregate, today from
+     * the local-day aggregate) and the sleep sessions when the sleep read grant is there. Both the Steps page and Explored > Day read the store,
+     * so a day shows the same steps in both. False = nothing read (not installed, not granted, or the read threw): the store keeps what it had.
+     */
+    suspend fun ingestHealth(zone: ZoneId = ZoneId.systemDefault(), days: Long = 31): Boolean = withContext(Dispatchers.IO) {
+        runCatching {
+            if (HealthConnectClient.getSdkStatus(ctx) != HealthConnectClient.SDK_AVAILABLE) return@runCatching false
+            val client = HealthConnectClient.getOrCreate(ctx)
+            val granted = client.permissionController.getGrantedPermissions()
+            if (!granted.containsAll(READ_STEPS)) return@runCatching false
+            val now = System.currentTimeMillis(); val store = MapsDb.get(ctx)
+            val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
+            val daily = hcDaily(client, zone).toMutableMap()
+            daily[today] = hcToday(client, zone, now).steps
+            for ((d, n) in daily) if (!d.isBefore(today.minusDays(days))) store.putDailySteps(d.toString(), n, "hc", now)
+            if (READ_SLEEP in granted) {
+                val from = today.minusDays(days).atStartOfDay(zone).toInstant()
+                client.readRecords(ReadRecordsRequest(SleepSessionRecord::class, TimeRangeFilter.between(from, Instant.ofEpochMilli(now)), pageSize = 1000))
+                    .records.forEach { store.putSleepSession(it.startTime.toEpochMilli(), it.endTime.toEpochMilli(), "hc") }
+            }
+            true
+        }.getOrDefault(false)
     }
 
     /** Today's steps from Health Connect's de-duplicating aggregate over the local day, plus who wrote them and when. */

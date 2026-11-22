@@ -53,7 +53,19 @@ class NavTimelineExtra(private val ctx: Context, private val radio: Boolean = fa
         private const val MAX_ACC_M = 200.0
 
         /** Registers this app's inputs for every timeline run in the process (idempotent). */
-        fun install(ctx: Context) { TimelineSync.extra = NavTimelineExtra(ctx.applicationContext) }
+        fun install(ctx: Context) {
+            TimelineSync.extra = NavTimelineExtra(ctx.applicationContext)
+            TimelineSync.beforeMigrate = { migrateEngine(it) }
+        }
+
+        /** #1851 the engine's own tables move into the one store: every measured fix into `fixes`, every step slice into `step_slices`. Idempotent. */
+        fun migrateEngine(ctx: Context, nowMs: Long = System.currentTimeMillis()) {
+            val engine = EngineDb.get(ctx.applicationContext); val store = com.diegonmarcos.cloudnav.maps.MapsDb.get(ctx.applicationContext)
+            store.runInTransaction {
+                for (f in engine.fixes(0L, nowMs)) if (!f.predicted) store.appendFix(com.diegonmarcos.cloudnav.maps.Fix(f.ts, f.lat, f.lon, f.accuracyM, null, "engine-" + f.source.ifBlank { "net" }))
+                for (s in engine.slices(0L, nowMs)) store.appendStepSlice(TlSteps(s.startMs, s.endMs, s.count), "counter")
+            }
+        }
 
         /** The engine's tick: one-time migration, then the last two days rebuilt, with the radio allowed. */
         fun tick(ctx: Context, now: Long, zone: ZoneId = ZoneId.systemDefault(), moving: Boolean = false) {

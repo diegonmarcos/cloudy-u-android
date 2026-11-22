@@ -78,6 +78,7 @@ class DayFragment : KitComposeFragment() {
 
     private fun compute(app: android.content.Context, date: LocalDate, today: LocalDate): DayUi {
         val now = System.currentTimeMillis()
+        runCatching { kotlinx.coroutines.runBlocking { StepsRepository(app).ingestHealth(zone) } }   // #1851 Health Connect steps and sleep into the store first (compute runs off the main thread)
         val cs = CorrectionStore(app); val corrections = cs.all(); val memory = cs.memory()
         val first = today.minusDays(Trips.HOME_WINDOW_DAYS - 1L)   // 90 days: home detection; the month rankings use the last 30
         val store = TimelineSync.view(app, DayTimeline.dayStart(first, zone) - 12 * 3_600_000L, now)
@@ -98,11 +99,13 @@ class DayFragment : KitComposeFragment() {
         val trips = Trips.group(stats, homeSet)
         val month = dates.takeLast(30).map { d -> DayTimeline.build(store, DayTimeline.dayStart(d, zone), minOf(DayTimeline.dayStart(d.plusDays(1), zone), now), corrections, memory) }
         return DayUi(date, today, dayList, stats, Rankings.places(month), Rankings.cities(month), Rankings.countries(month), false, fixes, trips, homeSet,
-            stepsTotal(app, store, a, b))
+            stepsTotal(app, store, date, a, b))
     }
 
     /** The day's steps from the step counter (recorded by the tracker engine into the store), else n/a and why. */
-    private fun stepsTotal(app: android.content.Context, store: List<com.diegonmarcos.cloudnav.maps.TlSegment>, a: Long, b: Long): StepsTotal {
+    private fun stepsTotal(app: android.content.Context, store: List<com.diegonmarcos.cloudnav.maps.TlSegment>, date: LocalDate, a: Long, b: Long): StepsTotal {
+        // #1851 the day's total as the one store holds it (Health Connect's, the same number Tracker > Steps shows), else the attributed slices
+        com.diegonmarcos.cloudnav.maps.MapsDb.get(app).dailySteps(date.toString(), date.toString())[date.toString()]?.let { return StepsTotal(it, null) }
         val n = TimelineBuilder.stepsIn(TimelineViews.stepSlices(store), a, b)
         if (n > 0) return StepsTotal(n, null)
         val recog = android.os.Build.VERSION.SDK_INT < 29 ||
