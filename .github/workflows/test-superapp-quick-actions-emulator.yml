@@ -187,7 +187,8 @@ jobs:
           skipdlg
           adb shell settings put secure enabled_accessibility_services "$SVC"; adb shell settings put secure accessibility_enabled 1
           a11y() { adb shell settings get secure enabled_accessibility_services | tr -d '\r'; }
-          shoot() { adb exec-out screencap -p > "out/$1.png"; dumpto "out/$1.xml"; }
+          # take a covering ask (Install unknown apps, screensaver, not-responding) down before the shot and the dump
+          shoot() { skipdlg; adb exec-out screencap -p > "out/$1.png"; dumpto "out/$1.xml"; }
           sec() { page panels-security; sleep 8; shoot "$1"; }
           # The page body is missing from a uiautomator dump (tab row + bottom nav only, though the screenshot shows it) while the app's own accessibility
           # entry is enabled: the walk enables it for the Banking round trip. So every dump takes the entry down for the second it needs and puts the same
