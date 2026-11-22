@@ -631,6 +631,20 @@
    "label": "Configs",
    "children": [
     {
+     "id": "build",
+     "label": "Build",
+     "api": [],
+     "mcp": []
+    },
+    {
+     "id": "plugins",
+     "label": "Plugins",
+     "api": [],
+     "mcp": [
+      "plugin.*"
+     ]
+    },
+    {
      "id": "general",
      "label": "General",
      "api": [
@@ -649,20 +663,6 @@
      "label": "About",
      "api": [],
      "mcp": []
-    },
-    {
-     "id": "build",
-     "label": "Build",
-     "api": [],
-     "mcp": []
-    },
-    {
-     "id": "plugins",
-     "label": "Plugins",
-     "api": [],
-     "mcp": [
-      "plugin.*"
-     ]
     }
    ]
   }
