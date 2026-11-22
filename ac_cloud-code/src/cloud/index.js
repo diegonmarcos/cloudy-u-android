@@ -127,7 +127,7 @@ function repoCandidates(relative) {
 async function repoUrl(key, relative) {
 	const set = localStorage.getItem(`cloud-code.${key}`);
 	if (set) return set;
-	return firstExisting(repoCandidates(relative), (u) => fsOperation(u).exists());
+	return firstExisting(repoCandidates(relative), (u) => fsOperation(u).exists(), gitPath(relative));
 }
 
 // ── Backlog: render the ONE existing source, as-is ─────────────────────────

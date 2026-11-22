@@ -63,14 +63,20 @@ export function ageText(savedAt, now) {
 
 // #1855 F3/F4 a repo-relative path lives on ONE of the volumes the Git tab lists (the store's git
 // folder, its legacy mirror, Emulated/Git): the first candidate that exists wins; none exists ->
-// the first candidate (the store), so the "not on this device" reason names the expected place.
-// `exists` is injected (index.js: fsOperation; the tester: fakes); a throwing probe counts as absent.
-export async function firstExisting(candidates, exists) {
+// `fallback` (the legacy mirror cloud-drive clones into, the pre-#1855 default), so the "not on this
+// device" reason names the usual place. `exists` is injected (index.js: fsOperation; the tester:
+// fakes); a probe that throws or takes longer than `timeoutMs` counts as absent, so an unreadable
+// volume never holds the page.
+export async function firstExisting(candidates, exists, fallback = null, timeoutMs = 2500) {
 	const list = (candidates || []).filter(Boolean);
+	const bounded = (url) => Promise.race([
+		Promise.resolve().then(() => exists(url)),
+		new Promise((resolve) => setTimeout(() => resolve(false), timeoutMs)),
+	]);
 	for (const url of list) {
 		try {
-			if (await exists(url)) return url;
+			if (await bounded(url)) return url;
 		} catch { /* unreadable volume: try the next one */ }
 	}
-	return list[0] || null;
+	return fallback || list[0] || null;
 }

@@ -40,9 +40,11 @@ out(!/new WebView|CloudWeb|android\.webkit/.test(index), "no native WebView is c
 const vols = ["store/git/r", "mirror/git/r", "emu/Git/r"];
 out(await m.firstExisting(vols, async (u) => u === "emu/Git/r") === "emu/Git/r", "a clone on Emulated/Git is found");
 out(await m.firstExisting(vols, async (u) => u !== "store/git/r") === "mirror/git/r", "the first existing volume wins, in the Git tab's order");
-out(await m.firstExisting(vols, async () => false) === "store/git/r", "no clone anywhere -> the store path, so the reason names it");
+out(await m.firstExisting(vols, async () => false) === "store/git/r", "no clone and no fallback -> the first volume");
+out(await m.firstExisting(vols, async () => false, "mirror/git/r") === "mirror/git/r", "no clone anywhere -> the fallback (the legacy mirror), so the reason names it");
+out(await m.firstExisting(vols, (u) => u === "store/git/r" ? new Promise(() => {}) : Promise.resolve(u === "emu/Git/r"), null, 50) === "emu/Git/r", "a probe that never answers is timed out, not awaited forever");
 out(await m.firstExisting(vols, async (u) => { if (u === "store/git/r") throw new Error("EACCES"); return u === "emu/Git/r"; }) === "emu/Git/r", "an unreadable volume is skipped, not fatal");
-out(/repoUrl\("backlog\.dir", nav\.backlog\.source_dir\)/.test(index) && /v\.id === "emulated"/.test(index) && /firstExisting\(repoCandidates/.test(index), "Backlog and Docs resolve through every Git volume");
+out(/repoUrl\("backlog\.dir", nav\.backlog\.source_dir\)/.test(index) && /v\.id === "emulated"/.test(index) && /firstExisting\(repoCandidates\(relative\), \(u\) => fsOperation\(u\)\.exists\(\), gitPath\(relative\)\)/.test(index), "Backlog and Docs resolve through every Git volume");
 
 // Rule 16 field parity: everything the page had before #1699 is still there.
 const before = JSON.parse(readFileSync(join(root, "test/fixtures/backlog-fields.before.json"), "utf8"));
