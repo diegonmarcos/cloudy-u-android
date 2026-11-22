@@ -62,7 +62,7 @@ class NavTimelineExtra(private val ctx: Context, private val radio: Boolean = fa
         fun migrateEngine(ctx: Context, nowMs: Long = System.currentTimeMillis()) {
             val engine = EngineDb.get(ctx.applicationContext); val store = com.diegonmarcos.cloudnav.maps.MapsDb.get(ctx.applicationContext)
             store.runInTransaction {
-                for (f in engine.fixes(0L, nowMs)) if (!f.predicted) store.appendFix(com.diegonmarcos.cloudnav.maps.Fix(f.ts, f.lat, f.lon, f.accuracyM, null, "engine-" + f.source.ifBlank { "net" }))
+                for (f in engine.fixes(0L, nowMs)) store.appendFix(com.diegonmarcos.cloudnav.maps.Fix(f.ts, f.lat, f.lon, f.accuracyM, null, "engine-" + f.source.ifBlank { "net" }))
                 for (s in engine.slices(0L, nowMs)) store.appendStepSlice(TlSteps(s.startMs, s.endMs, s.count), "counter")
             }
         }
@@ -73,6 +73,7 @@ class NavTimelineExtra(private val ctx: Context, private val radio: Boolean = fa
             install(app)
             TimelineSync.migrateOnce(app, now)
             TimelineSync.run(app, now, now - 2 * 86_400_000L, zone, NavTimelineExtra(app, radio = true, allowGps = BatteryPolicy.allowGps(moving)))
+            runCatching { AggregatesStore.rebuild(app, now, zone) }   // #1851 Trips / Places / Cities / World / Insights follow every rebuild
         }
     }
 }

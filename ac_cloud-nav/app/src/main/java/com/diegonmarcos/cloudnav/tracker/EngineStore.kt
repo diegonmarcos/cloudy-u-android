@@ -92,8 +92,8 @@ class EngineDb private constructor(ctx: Context) : SQLiteOpenHelper(ctx, "tracke
         writableDatabase.insert("engine_fixes", null, ContentValues().apply {
             put("ts", f.ts); put("lat", f.lat); put("lon", f.lon); put("acc", f.accuracyM); put("kind", kind)
         })
-        // #1851 the shared fix log (maps.db) too: Tracker and Explored read one store; a predicted estimate is not a measurement
-        if (kind != "predicted") runCatching { MapsDb.get(appCtx).appendFix(Fix(f.ts, f.lat, f.lon, f.accuracyM, null, "engine-$kind")) }
+        // #1851 the shared fix log (maps.db) too: Tracker and Explored read one store; 
+        runCatching { MapsDb.get(appCtx).appendFix(Fix(f.ts, f.lat, f.lon, f.accuracyM, null, "engine-$kind")) }   // "engine-predicted" is kept (pages show it) but never segmented
     }
 
     /** Samples as step slices (previous sample .. this one) for the on-device fallback of the Steps page. */

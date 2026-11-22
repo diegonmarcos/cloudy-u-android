@@ -57,14 +57,15 @@ class TrackerDebugApiProvider : ContentProvider() {
         const val GROUP = "tracker"
 
         fun steps(ctx: Context, days: Int, zone: ZoneId = ZoneId.systemDefault()): JSONObject {
-            val ui = runBlocking { StepsRepository(ctx).load(zone) }
+            val ui = runBlocking { StepsRepository(ctx).load(zone) }   // reads Health Connect into the store first
+            val stored = StepsFromStore.read(ctx, ui.today.minusDays(days - 1L), ui.today)   // #1851 the same store Explored > Day reads
             val arr = JSONArray()
             for (i in days - 1 downTo 0) {
                 val d = ui.today.minusDays(i.toLong())
-                arr.put(JSONObject().put("date", d.toString()).put("steps", ui.daily[d] ?: 0L))
+                arr.put(JSONObject().put("date", d.toString()).put("steps", stored[d.toString()] ?: ui.daily[d] ?: 0L))
             }
             return JSONObject()
-                .put("today", ui.daily[ui.today] ?: ui.totals.day)
+                .put("today", stored[ui.today.toString()] ?: ui.daily[ui.today] ?: ui.totals.day)
                 .put("days", arr)
                 .put("source", ui.source.name)
                 .put("status", ui.status.name)

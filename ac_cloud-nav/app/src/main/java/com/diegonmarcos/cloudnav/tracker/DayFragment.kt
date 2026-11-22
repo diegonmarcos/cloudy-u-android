@@ -98,14 +98,16 @@ class DayFragment : KitComposeFragment() {
         val homeSet = HomeStore(app).get()
         val trips = Trips.group(stats, homeSet)
         val month = dates.takeLast(30).map { d -> DayTimeline.build(store, DayTimeline.dayStart(d, zone), minOf(DayTimeline.dayStart(d.plusDays(1), zone), now), corrections, memory) }
-        return DayUi(date, today, dayList, stats, Rankings.places(month), Rankings.cities(month), Rankings.countries(month), false, fixes, trips, homeSet,
+        val places = Rankings.places(month); val cities = Rankings.cities(month); val countries = Rankings.countries(month)
+        runCatching { AggregatesStore.persist(app, now, stats, trips, places, cities, countries) }   // #1851 the aggregates live in the one store
+        return DayUi(date, today, dayList, stats, places, cities, countries, false, fixes, trips, homeSet,
             stepsTotal(app, store, date, a, b))
     }
 
     /** The day's steps from the step counter (recorded by the tracker engine into the store), else n/a and why. */
     private fun stepsTotal(app: android.content.Context, store: List<com.diegonmarcos.cloudnav.maps.TlSegment>, date: LocalDate, a: Long, b: Long): StepsTotal {
         // #1851 the day's total as the one store holds it (Health Connect's, the same number Tracker > Steps shows), else the attributed slices
-        com.diegonmarcos.cloudnav.maps.MapsDb.get(app).dailySteps(date.toString(), date.toString())[date.toString()]?.let { return StepsTotal(it, null) }
+        StepsFromStore.read(app, date, date)[date.toString()]?.let { return StepsTotal(it, null) }
         val n = TimelineBuilder.stepsIn(TimelineViews.stepSlices(store), a, b)
         if (n > 0) return StepsTotal(n, null)
         val recog = android.os.Build.VERSION.SDK_INT < 29 ||

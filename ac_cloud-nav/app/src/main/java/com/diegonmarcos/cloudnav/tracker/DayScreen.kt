@@ -349,8 +349,9 @@ private fun MoveRow(i: Int, m: DaySeg.Move, a: DayActions, zone: ZoneId) {
     val ctx = LocalContext.current
     var menu by remember { mutableStateOf(false) }
     var pick by remember { mutableStateOf(false) }
+    var open by remember { mutableStateOf(false) }   // #1851 a move links to its detail like a stay does
     Column(Modifier.fillMaxWidth().testTag(DayTags.seg(i))) {
-        KitStoreRowLine {
+        KitStoreRowLine(onClick = { open = !open }) {
             Glyph(DayIcons.mode(m.mode), DayFormat.modeColor(m.mode), DayFormat.modeLabel(m.mode))
             Column(Modifier.weight(1f).padding(horizontal = KitStoreRow.gap)) {
                 KitStoreName(DayFormat.modeLabel(m.mode) + "  ·  " + StepsFormat.distance(m.distanceM) + "  ·  " + StepsFormat.time(m.startMs, zone) + "-" + StepsFormat.time(m.endMs, zone), color = p.textPrimary)
@@ -367,6 +368,17 @@ private fun MoveRow(i: Int, m: DaySeg.Move, a: DayActions, zone: ZoneId) {
                     DropdownMenuItem(text = { Text("Delete") }, onClick = { menu = false; a.onDelete(m) })
                 }
             }
+        }
+        if (open) Column(Modifier.fillMaxWidth().testTag(DayTags.detail(i)).background(p.surfaceSelected)) {
+            DetailLine("Mode", DayFormat.modeLabel(m.mode))
+            DetailLine("Start", StepsFormat.time(m.startMs, zone))
+            DetailLine("End", StepsFormat.time(m.endMs, zone))
+            DetailLine("Duration", StepsFormat.duration(m.durationMs))
+            DetailLine("Distance", StepsFormat.distance(m.distanceM))
+            DetailLine("Average speed", "%.1f km/h".format(Locale.US, m.avgSpeedMps * 3.6))
+            DetailLine("Steps", StepsFormat.n(m.steps))
+            DetailLine("From", m.from?.label ?: "n/a")
+            DetailLine("To", m.to?.label ?: "n/a")
         }
     }
     if (pick) AlertDialog(onDismissRequest = { pick = false }, confirmButton = {}, title = { Text("Transport mode") }, text = {

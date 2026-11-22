@@ -50,6 +50,9 @@ data class DayRollup(val date: LocalDate, val steps: Long, val distanceM: Double
  * Sleep is never a property of a whole stay: it is the part of a still stay inside the night window, or the Health Connect sleep session.
  */
 object TimelineEngine {
+    /** The engine's dead-reckoned estimate (not a measurement): stored and shown, never segmented. */
+    const val PREDICTED = "engine-predicted"
+
     private class Run(first: Fix) {
         val fx = arrayListOf(first)
         var lat = first.lat; var lon = first.lon
@@ -60,7 +63,7 @@ object TimelineEngine {
 
     fun segment(fixes: List<Fix>, p: EngineParams = EngineParams(), zone: ZoneId = ZoneId.systemDefault(),
                 hcSleep: List<LongRange> = emptyList()): List<Seg> {
-        val good = fixes.filter { it.accuracyM == null || it.accuracyM <= p.maxAccM }.sortedBy { it.ts }.distinctBy { it.ts }
+        val good = fixes.filter { it.provider != PREDICTED && (it.accuracyM == null || it.accuracyM <= p.maxAccM) }.sortedBy { it.ts }.distinctBy { it.ts }
         if (good.isEmpty()) return emptyList()
         val runs = ArrayList<Run>()
         for (f in good) {

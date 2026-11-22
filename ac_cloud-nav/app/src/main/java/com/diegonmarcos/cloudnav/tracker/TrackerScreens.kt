@@ -17,6 +17,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,6 +40,7 @@ object TrackerTags {
     const val STEPS = "tracker:steps"; const val STEPS_CHART = "tracker:steps:chart"; const val STEPS_GRANT = "tracker:steps:grant"
     const val SLEEP = "tracker:sleep"; const val SLEEP_CHART = "tracker:sleep:chart"
     fun row(i: Int) = "tracker:timeline:row:$i"
+    fun rowDetail(i: Int) = "tracker:timeline:row:$i:detail"
     fun stepsRow(date: String) = "tracker:steps:row:$date"
     fun sleepRow(date: String) = "tracker:sleep:row:$date"
 }
@@ -86,7 +91,8 @@ fun TrackerTimelineScreen(date: LocalDate, today: LocalDate, rows: List<Timeline
         else if (rows.isEmpty()) item { Text("No locations or activities recorded for this day.", color = p.textSecondary) }
         items(rows.size) { i ->
             val r = rows[i]
-            KitCard(Modifier.testTag(TrackerTags.row(i))) {
+            var open by remember { mutableStateOf(false) }   // #1851 each stay and move opens its detail
+            KitCard(Modifier.testTag(TrackerTags.row(i)).clickable { open = !open }) {
                 Row(Modifier.fillMaxWidth()) {
                     Text(r.type + "  " + TrackerFormat.span(r, zone), Modifier.weight(1f), color = if (r.type == "MOVE") p.accent else p.textPrimary, style = MaterialTheme.typography.labelLarge)
                     Text(r.mode, color = p.textSecondary, style = MaterialTheme.typography.labelMedium)
@@ -95,6 +101,11 @@ fun TrackerTimelineScreen(date: LocalDate, today: LocalDate, rows: List<Timeline
                 if (r.address.isNotBlank()) Text(r.address, color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
                 Text(TrackerFormat.coords(r.lat, r.lon), color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
                 if (r.type == "MOVE") Text(TrackerFormat.distance(r.distanceM) + "  ·  " + TrackerFormat.n(r.steps) + " steps", color = p.textPrimary, style = MaterialTheme.typography.bodySmall)
+                if (open) {
+                    Text("Start " + StepsFormat.time(r.startMs, zone) + "  ·  End " + StepsFormat.time(r.endMs, zone) + "  ·  " + StepsFormat.duration(r.endMs - r.startMs),
+                        Modifier.testTag(TrackerTags.rowDetail(i)), color = p.textPrimary, style = MaterialTheme.typography.bodySmall)
+                    Text("Source: the one tracker store (fixes, steps, sleep)", color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
+                }
             }
         }
         item { Box(Modifier.height(16.dp)) }

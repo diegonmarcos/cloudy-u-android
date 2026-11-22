@@ -151,17 +151,13 @@ class StepsRepository(private val ctx: Context) {
         return out
     }
 
-    /** The engine's fixes plus the foreground tracker's GPS points (read-only), oldest first. */
-    internal fun fixes(from: Long, to: Long): List<PlaceFix> {
-        val out = EngineDb.get(ctx).fixes(from, to).toMutableList()
-        runCatching {
-            MapsDb.get(ctx).readableDatabase.rawQuery(
-                "SELECT ts,lat,lon,accuracy FROM points WHERE ts BETWEEN ? AND ? ORDER BY ts", arrayOf(from.toString(), to.toString())).use { c ->
-                while (c.moveToNext()) out += PlaceFix(c.getLong(0), c.getDouble(1), c.getDouble(2), false, if (c.isNull(3)) 0.0 else c.getDouble(3), "gps")
-            }
+    /** #1851 every fix the one store holds (the tracker's, the engine's, migrated history), oldest first; the pages read nothing else. */
+    internal fun fixes(from: Long, to: Long): List<PlaceFix> = runCatching {
+        MapsDb.get(ctx).fixesBetween(from, to).map {
+            val src = if (it.provider == "legacy-points") "gps" else it.provider.removePrefix("engine-")
+            PlaceFix(it.ts, it.lat, it.lon, it.provider == com.diegonmarcos.cloudnav.maps.TimelineEngine.PREDICTED, it.accuracyM ?: 0.0, src)
         }
-        return out.sortedBy { it.ts }
-    }
+    }.getOrDefault(emptyList())
 
     /** The stops the tracker's stop-detector recorded (what Cloud Nav's Stops and Daily pages list), oldest first. */
     internal fun stops(from: Long, to: Long): List<StopFix> = runCatching {
