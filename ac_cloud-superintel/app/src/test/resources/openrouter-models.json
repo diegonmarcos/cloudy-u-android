@@ -1,0 +1,63 @@
+{
+  "data": [
+    {
+      "id": "anthropic/claude-sonnet-4.5",
+      "canonical_slug": "anthropic/claude-sonnet-4.5",
+      "name": "Anthropic: Claude Sonnet 4.5",
+      "created": 1759161676,
+      "description": "Claude Sonnet 4.5 is the newest model in the Sonnet series.",
+      "context_length": 1000000,
+      "architecture": {
+        "modality": "text+image->text",
+        "input_modalities": ["text", "image", "file"],
+        "output_modalities": ["text"],
+        "tokenizer": "Claude",
+        "instruct_type": null
+      },
+      "pricing": {
+        "prompt": "0.000003",
+        "completion": "0.000015",
+        "request": "0",
+        "image": "0.0048",
+        "web_search": "0.01",
+        "internal_reasoning": "0",
+        "input_cache_read": "0.0000003"
+      },
+      "top_provider": {
+        "context_length": 1000000,
+        "max_completion_tokens": 64000,
+        "is_moderated": true
+      },
+      "supported_parameters": ["include_reasoning", "max_tokens", "reasoning", "stop", "temperature", "tool_choice", "tools", "top_p"]
+    },
+    {
+      "id": "meta-llama/llama-3.3-70b-instruct:free",
+      "name": "Meta: Llama 3.3 70B Instruct (free)",
+      "created": 1733400000,
+      "description": "A multilingual instruction-tuned model.",
+      "context_length": 65536,
+      "architecture": { "modality": "text->text", "input_modalities": ["text"], "output_modalities": ["text"], "tokenizer": "Llama3" },
+      "pricing": { "prompt": "0", "completion": "0", "request": "0", "image": "0" },
+      "top_provider": { "context_length": 65536, "max_completion_tokens": null, "is_moderated": false },
+      "supported_parameters": ["max_tokens", "temperature"]
+    },
+    {
+      "id": "openrouter/auto",
+      "name": "Auto Router",
+      "created": 1699000000,
+      "description": "Routes your prompt to the best model.",
+      "context_length": 2000000,
+      "architecture": { "modality": "text->text", "tokenizer": "Router" },
+      "pricing": { "prompt": "-1", "completion": "-1" },
+      "top_provider": { "context_length": null, "max_completion_tokens": null, "is_moderated": false },
+      "supported_parameters": []
+    },
+    {
+      "name": "An entry with no id is skipped",
+      "context_length": 1
+    },
+    {
+      "id": "acme/bare-model"
+    }
+  ]
+}
