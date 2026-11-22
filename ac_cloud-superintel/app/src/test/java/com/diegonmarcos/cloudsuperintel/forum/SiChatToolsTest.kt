@@ -14,6 +14,9 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onNode
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.test.assertIsDisplayed
@@ -122,7 +125,7 @@ class SiChatToolsTest {
 
     /** A node's rectangle in the root, unclipped (a control scrolled out of its row still has its place). */
     private fun rect(tag: String): Rect = compose.onNodeWithTag(tag).fetchSemanticsNode().let { Rect(it.positionInRoot, it.size.toSize()) }
-    /** The left edge of the one divider in toolbar row 1 (the toolbar has four in all: one here, three in row 2). */
+    /** The left edge of the one divider in toolbar row 1 (the toolbar has five in all: one here, four in row 2). */
     private fun row1DividerLeft(): Float {
         val r1 = rect(AiTags.toolbarRow(1))
         return compose.onAllNodesWithTag(AiTags.TOOLBAR_DIVIDER).fetchSemanticsNodes().map { Rect(it.positionInRoot, it.size.toSize()) }.single { it.center.y in r1.top..r1.bottom }.left
@@ -136,7 +139,7 @@ class SiChatToolsTest {
     @Test fun composerCarriesTheWholeAiToolRow() {
         render()
         compose.onNodeWithTag(ForumTags.TOOLS_BAR).assertExists()
-        for (ctl in listOf("plus", "task", "specialist", "agent", "model", "effort", "mode", "skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf", "more")) {
+        for (ctl in listOf("plus", "task", "specialist", "agent", "model", "effort", "mode", "plugins", "perf", "kg_apps", "weby_apps", "kg_infra", "kg_repos", "skills", "kg_store", "hooks", "more")) {
             compose.onNodeWithTag(AiTags.ctl(ctl)).assertExists()
         }
     }
@@ -199,7 +202,7 @@ class SiChatToolsTest {
         compose.onAllNodesWithTag(AiTags.ctl("more")).assertCountEquals(0)
         assertFalse(prefs.getBoolean(row1Key, true)); assertTrue(prefs.getBoolean(row2Key, false))
         compose.onNodeWithTag(AiTags.rowToggle(2)).performClick()
-        for (c in listOf("skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf", "more")) compose.onNodeWithTag(AiTags.ctl(c)).assertExists()
+        for (c in listOf("plugins", "perf", "kg_apps", "weby_apps", "kg_infra", "kg_repos", "skills", "kg_store", "hooks", "more")) compose.onNodeWithTag(AiTags.ctl(c)).assertExists()
     }
 
     @Test fun aRowCollapsedInAPreviousSessionStartsCollapsed() {
@@ -330,9 +333,9 @@ class SiChatToolsTest {
         assertTrue(centerY(AiTags.ctl("plus")) < r1.top)
     }
 
-    @Test fun toolbarRowTwoIsSkillsStoreAppsReposInfraPerfMoreWithThreeDividers() {
+    @Test fun toolbarRowTwoIsPluginsAppsReposSkillsHooksMoreWithFourDividers() {
         render()
-        val ids = listOf("skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf", "more")
+        val ids = listOf("plugins", "perf", "kg_apps", "weby_apps", "kg_infra", "kg_repos", "skills", "kg_store", "hooks", "more")
         val row = ids.map { AiTags.ctl(it) }
         val xs = row.map { left(it) }
         assertEquals(xs.sorted(), xs)
@@ -340,16 +343,17 @@ class SiChatToolsTest {
         for (tag in row) assertTrue(tag, centerY(tag) in r2.top..r2.bottom)
         // Row 2 is a NEW row under row 1.
         assertTrue(r2.top >= bottom(AiTags.toolbarRow(1)) - 1f)
-        // Three visible dividers in row 2 (after Plugins-Skills, after KG-Cloud-apps, after Plugins-Perf), each with real size, plus the one in row 1.
+        // Four visible dividers in row 2 (Plugins | Cloudy Apps, Weby Apps, KG-Cloud-infra | Repos, Skills, KG-Store | Hooks | More), each with real size, plus the one in row 1.
         val dividers = compose.onAllNodesWithTag(AiTags.TOOLBAR_DIVIDER).fetchSemanticsNodes()
-        assertEquals(4, dividers.size)
+        assertEquals(5, dividers.size)
         val inRow2 = dividers.map { Rect(it.positionInRoot, it.size.toSize()) }.filter { it.center.y in r2.top..r2.bottom }.sortedBy { it.left }
-        assertEquals(3, inRow2.size)
+        assertEquals(4, inRow2.size)
         for (d in inRow2) assertTrue(d.width > 0f && d.height > 0f)
         fun x(id: String) = left(AiTags.ctl(id))
-        assertTrue(x("skills") < inRow2[0].left && inRow2[0].left < x("kg_store"))
-        assertTrue(x("kg_apps") < inRow2[1].left && inRow2[1].left < x("kg_repos"))
-        assertTrue(x("perf") < inRow2[2].left && inRow2[2].left < x("more"))
+        assertTrue(x("perf") < inRow2[0].left && inRow2[0].left < x("kg_apps"))
+        assertTrue(x("kg_infra") < inRow2[1].left && inRow2[1].left < x("kg_repos"))
+        assertTrue(x("kg_store") < inRow2[2].left && inRow2[2].left < x("hooks"))
+        assertTrue(x("hooks") < inRow2[3].left && inRow2[3].left < x("more"))
         // The legacy single MCP chip and the old four-bucket chips are gone.
         for (old in listOf("mcp", "mcp_kg", "mcp_user", "mcp_ext", "mcp_infra", "repos")) compose.onAllNodesWithTag(AiTags.ctl(old)).assertCountEquals(0)
     }
@@ -556,10 +560,16 @@ class SiChatToolsTest {
         compose.onAllNodesWithTag(ForumTags.TOOLS_BAR).assertCountEquals(0)
     }
 
-    /** The bottom nav declared in build.json::ui keeps the AI Tools next to the five items it had: nothing was dropped. */
-    @Test fun bottomNavKeepsEveryItemAndTheAiTools() {
-        assertEquals(listOf("notebook", "cgcs", "si", "tools", "ais", "cost"), Data.bottomNav())
-        assertEquals(listOf("tools_models", "tools_pickers", "tools_tasks", "tools_mcp"), Data.pages("tools"))
+    /** The bottom nav declared in build.json::ui (#1854): Models and Context replace Tools and AIs, and Cost is the top-right window. */
+    @Test fun bottomNavIsNotebookCgcsSiModelsContext() {
+        assertEquals(listOf("notebook", "cgcs", "si", "models", "context"), Data.bottomNav())
+        assertEquals(listOf("tools_pickers", "tools_models", "tools_tasks", "apis"), Data.pages("models"))
+    }
+
+    /** #1854 The first chip of the model picker always says "Model", whatever model (Auto Router included) is picked. */
+    @Test fun modelChipAlwaysSaysModel() {
+        render()
+        compose.onNode(hasTestTag(AiTags.ctl("model")) and hasText("Model")).assertExists()
     }
 
     @Test fun layoutHoldsInAColumnAboveABottomBar() {

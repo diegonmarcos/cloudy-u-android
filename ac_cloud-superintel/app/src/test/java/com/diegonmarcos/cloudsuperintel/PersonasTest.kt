@@ -22,7 +22,7 @@ class PersonasTest {
     @Test fun uiPagesAreExactlyThePersonas() {
         assertEquals(all.filter { it.group.isEmpty() }.map { it.id }, Data.pages("si"))
         assertEquals(all.filter { it.group.isNotEmpty() }.map { it.id }, Data.pages("cgcs"))
-        assertEquals(listOf("notebook", "cgcs", "si", "tools", "ais", "cost"), Data.bottomNav())
+        assertEquals(listOf("notebook", "cgcs", "si", "models", "context"), Data.bottomNav())
     }
 
     /** The owner's six CGC groups, in order, each with exactly its experts; the groups in build.json::ui are the personas' `group`s. */
@@ -61,7 +61,7 @@ class PersonasTest {
         val decl = com.diegonmarcos.superapp.ai.AiComposerDecl.parse(java.io.File("../../data/fleet/app/com.diegonmarcos.cloudsuperintel/composer.json").readText(), design)
         assertEquals("cloud-superintel", decl.app)
         assertEquals(
-            listOf("plus", "task", "specialist", "agent", "model", "effort", "mode", "skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf", "more"),
+            listOf("plus", "task", "specialist", "agent", "model", "effort", "mode", "plugins", "perf", "kg_apps", "weby_apps", "kg_infra", "kg_repos", "skills", "kg_store", "hooks", "more"),
             design.orderedLayout(decl.controls).map { it.id },
         )
         assertTrue("the Repos picker offers repositories", decl.repos.isNotEmpty())

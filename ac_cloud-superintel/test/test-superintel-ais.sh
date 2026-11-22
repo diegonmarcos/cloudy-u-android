@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# test-superintel-ais - the AIs and Cost sections of Cloud SuperIntel (#1499), statically.
-#   A1  the bottom nav is Notebook, CGCs, SI, AIs, Cost; AIs has APIs, MCP, Dotfiles, Plugins; Cost has its page; assets/ai/pages.json holds exactly those page ids
+# test-superintel-ais - the API page, the Context section and the Cost window of Cloud SuperIntel (#1499, regrouped by #1854), statically.
+#   A1  the bottom nav is Notebook, CGCs, SI, Models, Context; Models has Agents, Models, Tasks, API; Context has Plugins, MCP-KG, MCP-Tools, Hooks, Skills; Cost is no section (it is the top-right window); assets/ai/pages.json holds exactly those page ids plus `cost`
 #   A2  APIs: the four owner rows in order, every field, SAMPLE labelled, masked tokens, no token field, the real rows and the token only from the private store
 #   A3  no real-secret-shaped value anywhere in the app tree (tokens, keys, bearer, private key blocks)
 #   A4  Cost reads the SAME source as the SuperApp Notify AI badge: libs:ai-usage's AiUsageClient/AiUsageModel, the badge's declared base among Cost's bases,
@@ -29,15 +29,19 @@ kt = os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudsuperintel")
 def sec(i): return next(s for s in bj["ui"]["sections"] if s["id"] == i)
 
 # A1
-if bj["ui"]["bottom_nav"] != ["notebook", "cgcs", "si", "tools", "ais", "cost"]: bad.append("A1 the bottom nav must be Notebook, CGCs, SI, Tools, AIs, Cost")
-if [p["id"] for p in sec("ais")["pages"]] != ["apis", "mcp", "dotfiles", "plugins"]: bad.append("A1 AIs must have APIs, MCP, Dotfiles, Plugins in that order")
-if [p["id"] for p in sec("cost")["pages"]] != ["cost"]: bad.append("A1 Cost must have its one page")
+if bj["ui"]["bottom_nav"] != ["notebook", "cgcs", "si", "models", "context"]: bad.append("A1 the bottom nav must be Notebook, CGCs, SI, Models, Context")
+if [p["id"] for p in sec("models")["pages"]] != ["tools_pickers", "tools_models", "tools_tasks", "apis"]: bad.append("A1 Models must have Agents, Models, Tasks, API in that order")
+if [p["id"] for p in sec("context")["pages"]] != ["plugins", "mcp_kg", "mcp", "hooks", "skills"]: bad.append("A1 Context must have Plugins, MCP-KG, MCP-Tools, Hooks, Skills in that order")
+if any(s["id"] == "cost" for s in bj["ui"]["sections"]): bad.append("A1 Cost is the top-right window, not a section: the Cost section must be gone")
 pages = json.loads(read(os.path.join(ai, "pages.json")))["pages"]
-declared = [p["id"] for i in ("ais", "cost") for p in sec(i)["pages"]]
-if sorted(pages) != sorted(declared): bad.append("A1 pages.json ids %s are not the declared AIs and Cost pages %s" % (sorted(pages), sorted(declared)))
+declared = [p["id"] for p in sec("context")["pages"]] + ["apis", "cost"]
+if sorted(pages) != sorted(declared): bad.append("A1 pages.json ids %s are not the declared Context pages, API and the Cost window %s" % (sorted(pages), sorted(declared)))
 for k, v in pages.items():
-    if v["kind"] not in ("rows", "apis", "cost"): bad.append("A1 page %r has an unknown kind" % k)
-    if not os.path.exists(os.path.join(app, "app/src/main/assets", v["asset"])): bad.append("A1 page %r asset %s is missing" % (k, v["asset"]))
+    if v["kind"] not in ("rows", "apis", "cost", "kg"): bad.append("A1 page %r has an unknown kind" % k)
+    assets = [s["asset"] for s in v.get("sources", [])] if v["kind"] == "rows" else [v.get("asset", "")] if v["kind"] != "kg" else []
+    if v["kind"] != "kg" and (not assets or not all(assets)): bad.append("A1 page %r declares no asset" % k)
+    for a_ in assets:
+        if not os.path.exists(os.path.join(app, "app/src/main/assets", a_)): bad.append("A1 page %r asset %s is missing" % (k, a_))
 
 # A2
 apis = json.loads(read(os.path.join(ai, "apis.json")))
@@ -91,10 +95,11 @@ for f in ("AiData.kt", "Apis.kt", "Cost.kt", "ui/AiScreens.kt", "ui/SiShell.kt")
     t = code(os.path.join(kt, f))
     for name in ("Claude Account", "OpenRouter 1", "Dotfiles", "Plugins", "cloudy-c3-mcp", "settings.project"):
         if name in t: bad.append("A5 %s spells the data name %r: it is data" % (f, name))
-if "pages.json" in code(os.path.join(kt, "Decl.kt")) or re.search(r'PAGE_(APIS|MCP|DOTFILES|PLUGINS|COST)', code(os.path.join(kt, "Decl.kt"))): bad.append("A5 Decl.kt names an AIs or Cost page: they are data")
+if "pages.json" in code(os.path.join(kt, "Decl.kt")) or re.search(r'PAGE_(APIS|MCP|MCP_KG|DOTFILES|PLUGINS|HOOKS|SKILLS|COST)', code(os.path.join(kt, "Decl.kt"))): bad.append("A5 Decl.kt names an AIs or Cost page: they are data")
 
 # A6
 for n in ("mcp", "dotfiles", "plugins"):
+    if not os.path.exists(os.path.join(ai, n + ".json")): continue   # A1 reports a missing page asset
     d = json.loads(read(os.path.join(ai, n + ".json")))
     for g in d["groups"]:
         if g["title"].endswith("Env names"):
@@ -115,7 +120,7 @@ FAILS=0
 ok()  { echo "  PASS: $1"; }
 bad() { echo "  FAIL: $1"; FAILS=$((FAILS + 1)); }
 
-echo "[superintel-ais] AIs and Cost"
+echo "[superintel-ais] Models > API, Context pages and the Cost window"
 out="$(check "$APP")" && ok "A1-A6 hold on the real tree" || { bad "the real tree is red"; echo "$out"; }
 
 # mutations on a scratch copy next to the SuperApp (A4 reads ../aa_cloud-superapp): each rule must go red
@@ -129,9 +134,11 @@ mutant() {   # mutant <name> <shell edit run in the copy> <needle expected in th
 KT=app/src/main/java/com/diegonmarcos/cloudsuperintel
 AI=app/src/main/assets/ai
 PYJ="import json;p='build.json';d=json.load(open(p));"
-mutant "nav order changes"        "python3 -c \"${PYJ}d['ui']['bottom_nav']=['notebook','si','cgcs','ais','cost'];json.dump(d,open(p,'w'))\"" "A1 the bottom nav must be"
-mutant "AIs loses Plugins"        "python3 -c \"${PYJ}[s['pages'].pop() for s in d['ui']['sections'] if s['id']=='ais'];json.dump(d,open(p,'w'))\"" "A1 AIs must have"
-mutant "a page loses its data"    "sed -i '/\"plugins\"/d' $AI/pages.json"                                     "A1 pages.json ids"
+mutant "nav order changes"        "python3 -c \"${PYJ}d['ui']['bottom_nav']=['notebook','si','cgcs','models','context'];json.dump(d,open(p,'w'))\"" "A1 the bottom nav must be"
+mutant "Context loses Skills"     "python3 -c \"${PYJ}[s['pages'].pop() for s in d['ui']['sections'] if s['id']=='context'];json.dump(d,open(p,'w'))\"" "A1 Context must have"
+mutant "Cost returns as a section" "python3 -c \"${PYJ}d['ui']['sections'].append({'id':'cost','label':'Cost','icon':'payments','pages':[]});json.dump(d,open(p,'w'))\"" "A1 Cost is the top-right window"
+mutant "a page loses its data"    "python3 -c \"import json;p='$AI/pages.json';d=json.load(open(p));del d['pages']['hooks'];json.dump(d,open(p,'w'))\"" "A1 pages.json ids"
+mutant "a page asset is missing"  "rm $AI/mcp.json"                                                             "A1 page 'mcp' asset ai/mcp.json is missing"
 mutant "an API row is renamed"    "sed -i 's/OpenRouter 2/OpenRouter 3/' $AI/apis.json"                        "A2 the API rows are not"
 mutant "a token is unmasked"      "sed -i '0,/••••-sample/s//plain/' $AI/apis.json"                            "A2 row .* token is not masked"
 mutant "a token field appears"    "sed -i '0,/\"token_masked\"/s//\"token\": \"x\", \"token_masked\"/' $AI/apis.json" "A2 row .* beyond the masked set"

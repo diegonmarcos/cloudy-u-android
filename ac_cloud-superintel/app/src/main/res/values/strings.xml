@@ -72,4 +72,46 @@
     <string name="forum_emoji">Emoji</string>
     <string name="forum_attach">Attach</string>
     <string name="forum_voice">Voice message</string>
+    <!-- #1854 the top-right Cost, Context and Files windows. -->
+    <string name="win_cost">Cost</string>
+    <string name="win_cost_sub">Claude and OpenRouter side by side: the weekly estimate, the daily and monthly tokens, the usage table.</string>
+    <string name="win_context">Context</string>
+    <string name="win_context_sub">What fills the model\'s window in this chat, slice by slice (sample numbers for now).</string>
+    <string name="win_files">Files</string>
+    <string name="win_files_sub">The files in this chat and the notebook sources it can read (sample rows for now).</string>
+    <string name="win_close">Close</string>
+    <string name="win_sample">sample</string>
+    <string name="win_ctx_window">Window %1$s tokens · in use %2$s (%3$s)</string>
+    <string name="win_ctx_reported">Reported by the backend for the last answer: %1$s tokens</string>
+    <string name="win_ctx_slice">Slice</string>
+    <string name="win_ctx_tokens">Tokens</string>
+    <string name="win_ctx_share">Share</string>
+    <string name="win_files_all">All</string>
+    <string name="win_files_attached">Attached</string>
+    <string name="win_files_generated">Generated</string>
+    <string name="win_files_notebook">Notebook</string>
+    <string name="win_files_none">No files in this view.</string>
+    <!-- #1854 Models > Models: the OpenRouter metadata table inside each Core. -->
+    <string name="or_table_title">%1$s · full OpenRouter metadata (%2$d models)</string>
+    <string name="or_refresh">Refresh</string>
+    <string name="or_refreshing">Refreshing…</string>
+    <string name="or_stamp">Updated %1$s · %2$d models on OpenRouter · refreshed once a day</string>
+    <string name="or_none">No OpenRouter list yet: reading it…</string>
+    <string name="or_none_failed">No OpenRouter list: offline. Tap Refresh to retry.</string>
+    <string name="or_failed_kept">refresh failed, showing the last list</string>
+    <string name="or_baked">baked</string>
+    <string name="or_col_id">id</string>
+    <string name="or_col_name">name</string>
+    <string name="or_col_context">context</string>
+    <string name="or_col_prompt">prompt /1M</string>
+    <string name="or_col_completion">completion /1M</string>
+    <string name="or_col_request">request</string>
+    <string name="or_col_image">image</string>
+    <string name="or_col_modality">modality</string>
+    <string name="or_col_tokenizer">tokenizer</string>
+    <string name="or_col_max_out">max out</string>
+    <string name="or_col_moderated">moderated</string>
+    <string name="or_col_params">supported parameters</string>
+    <string name="or_col_created">created</string>
+    <string name="or_col_description">description</string>
 </resources>

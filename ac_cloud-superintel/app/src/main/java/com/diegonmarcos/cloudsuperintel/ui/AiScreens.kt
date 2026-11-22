@@ -61,17 +61,19 @@ object AiTags {
     const val COST_MONTHLY = "ai_cost_monthly"
 }
 
-/** One page of the AIs or Cost section: its screen is the declared kind (assets/ai/pages.json), its data the declared asset. */
+/** One page of the Context section, the API page or the Cost window: its screen is the declared kind (assets/ai/pages.json), its data the declared asset. */
 @Composable
 fun AiPage(spec: AiPageSpec) {
     val ctx = LocalContext.current.applicationContext
-    val text = remember(spec.asset) { AiData.asset(ctx, spec.asset) }
     KitHost {
         Box(Modifier.fillMaxSize().testTag(AiTags.PAGE)) {
             when (spec.kind) {
-                AiData.KIND_APIS -> ApisPage(text)
-                AiData.KIND_COST -> CostPage(text)
-                else -> RowsPage(remember(text) { AiData.groups(text) })
+                AiData.KIND_APIS -> ApisPage(remember(spec.asset) { AiData.asset(ctx, spec.asset) })
+                AiData.KIND_COST -> CostPage(remember(spec.asset) { AiData.asset(ctx, spec.asset) })
+                // #1854 MCP-KG: the composer's KG homes, read from the shared design.
+                AiData.KIND_KG -> RowsPage(remember { com.diegonmarcos.superapp.ai.AiDesign.load(ctx).let { AiData.kgGroups(it.mcpBuckets, it.kgStoreTabs) } })
+                // #1854 a rows page takes the declared groups of each of its sources, in the order the sources are declared.
+                else -> RowsPage(remember(spec) { spec.sources.flatMap { s -> AiData.groups(AiData.asset(ctx, s.asset), s.groups) } })
             }
         }
     }

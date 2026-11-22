@@ -19,6 +19,16 @@ object Data {
         return (0 until p.length()).map { p.getJSONObject(it).getString("id") }
     }
 
+    /** The page labels build.json::ui declares for one section. */
+    fun labels(section: String): List<String> {
+        val secs = buildJson().getJSONObject("ui").getJSONArray("sections")
+        val s = (0 until secs.length()).map { secs.getJSONObject(it) }.first { it.getString("id") == section }
+        val p = s.getJSONArray("pages")
+        return (0 until p.length()).map { p.getJSONObject(it).getString("label") }
+    }
+
+    fun sectionLabel(section: String): String = section(section).getString("label")
+
     fun bottomNav(): List<String> = buildJson().getJSONObject("ui").getJSONArray("bottom_nav").let { a -> (0 until a.length()).map { a.getString(it) } }
 
     private fun section(id: String): JSONObject {

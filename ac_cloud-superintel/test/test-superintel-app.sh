@@ -6,7 +6,7 @@
 # The chat itself (page, streaming, sessions, Markdown) is libs:ai's and is proven there (AiProtocolTest,
 # AiMarkdownTest). This proves, from the sources alone, that this app only ASSEMBLES it, on the fleet's bars:
 #   B1  every section and page id Decl.kt dispatches on is declared by build.json::ui, and every declared page is dispatched (both ways);
-#       the bottom nav is Notebook, CGCs, SI, AIs, Cost (#1499; the AIs and Cost pages are test-superintel-ais.sh's); the SI page and the CGCs pages are exactly assets/si/personas.json (the router, and the experts with a group), the
+#       the bottom nav is Notebook, CGCs, SI, Models, Context (#1854; the Context pages, the API page and the Cost window are test-superintel-ais.sh's); the SI page and the CGCs pages are exactly assets/si/personas.json (the router, and the experts with a group), the
 #       CGCs section is horizontal_two_rows with exactly the owner's six groups, each group exactly its personas' `group` (both ways)
 #   B2  the shell draws the shared bars: first-row scaffold (Profile -> Cloud Account launcher), second row, bottom nav host,
 #       theme-background; the nav libs are in build.json modules AND in the app's build script
@@ -41,15 +41,16 @@ manifest = read(os.path.join(app, "app/src/main/AndroidManifest.xml"))
 
 # B1
 declared_sections = {s["id"] for s in bj["ui"]["sections"]}
-DATA_SECTIONS = ("si", "cgcs", "ais", "cost")   # their pages are the ids of assets/si/*.json and assets/ai/pages.json (test-superintel-ais.sh), not Kotlin constants
-declared_pages = {p["id"] for s in bj["ui"]["sections"] if s["id"] not in DATA_SECTIONS for p in s["pages"]}
+DATA_SECTIONS = ("si", "cgcs", "context")   # their pages are the ids of assets/si/*.json and assets/ai/pages.json (test-superintel-ais.sh), not Kotlin constants
+data_pages = set(json.loads(read(os.path.join(app, "app/src/main/assets/ai/pages.json")))["pages"])   # the API page (Models) is data too
+declared_pages = {p["id"] for s in bj["ui"]["sections"] if s["id"] not in DATA_SECTIONS for p in s["pages"] if p["id"] not in data_pages}
 named_sections = set(re.findall(r'SECTION_\w+\s*=\s*"([^"]+)"', decl))
 named_pages = set(re.findall(r'PAGE_\w+\s*=\s*"([^"]+)"', decl))
 for x in sorted(named_sections - declared_sections): bad.append("B1 Decl.kt names section %r that build.json::ui does not declare" % x)
 for x in sorted(named_pages - declared_pages): bad.append("B1 Decl.kt names page %r that build.json::ui does not declare" % x)
 for x in sorted(declared_pages - named_pages): bad.append("B1 page %r is declared but Decl.kt has no id for it (the shell would draw nothing)" % x)
 for x in sorted(set(bj["ui"]["bottom_nav"]) - declared_sections): bad.append("B1 bottom_nav id %r is no section" % x)
-if bj["ui"]["bottom_nav"] != ["notebook", "cgcs", "si", "tools", "ais", "cost"]: bad.append("B1 the bottom nav must be Notebook, CGCs, SI, Tools, AIs, Cost, in that order")
+if bj["ui"]["bottom_nav"] != ["notebook", "cgcs", "si", "models", "context"]: bad.append("B1 the bottom nav must be Notebook, CGCs, SI, Models, Context, in that order")
 def ids_of(section): return [p["id"] for s in bj["ui"]["sections"] if s["id"] == section for p in s["pages"]]
 def data(name): return json.loads(read(os.path.join(app, "app/src/main/assets/si", name)))
 personas = data("personas.json")["personas"]
@@ -77,15 +78,17 @@ for need in ("AiChatPage(", "AiSessionsPanel(", "TopBarDrawer", "markdown = true
     if need not in shell: bad.append("B3 SiShell lacks %s" % need)
 if re.search(r"\b(LazyColumn|BasicTextField|OutlinedTextField)\b", shell): bad.append("B3 SiShell draws list or input widgets of its own: the chat is libs:ai's")
 
-# B8 the AI tooling #1563 had dropped must stay (rule 16: never remove): the Tools section on the bottom nav, the sessions rail and the
+# B8 the AI tooling #1563 had dropped must stay (rule 16: never remove): the Models section (was Tools, #1854) on the bottom nav, the sessions rail and the
 # composer's tooling on the SI tab. A regression here is red, so the chat can never again replace the AI tools with a bare composer.
-if "tools" not in bj["ui"]["bottom_nav"]: bad.append("B8 the AI Tools section left the bottom nav")
-if [p["id"] for s in bj["ui"]["sections"] if s["id"] == "tools" for p in s["pages"]] != ["tools_models", "tools_pickers", "tools_tasks", "tools_mcp"]: bad.append("B8 Tools must have Models, Agent & Model, Tasks, MCP")
-for need in ("AiModelCatalogue(", "AiTaskCatalogue(", "AiSettingsPickers(", "AiAttachHost(", "ForumSessions(", "ForumTools(", "sessions = ForumSessions", "tools = ForumTools"):
+if "models" not in bj["ui"]["bottom_nav"]: bad.append("B8 the Models section left the bottom nav")
+if [p["id"] for s in bj["ui"]["sections"] if s["id"] == "models" for p in s["pages"]] != ["tools_pickers", "tools_models", "tools_tasks", "apis"]: bad.append("B8 Models must have Agents, Models, Tasks, API")
+if "ModelsPage(" not in shell or "AiModelCatalogue(" not in code(os.path.join(kt, "ui/ModelsPage.kt")): bad.append("B8 the Models page is not the model catalogue with the OpenRouter table")
+if "windows = windows" not in shell or "siWindows(" not in shell: bad.append("B8 SiShell does not give the composer's top bar the Cost, Context and Files windows")
+for need in ("AiTaskCatalogue(", "AiSettingsPickers(", "AiAttachHost(", "ForumSessions(", "ForumTools(", "sessions = ForumSessions", "tools = ForumTools"):
     if need not in shell: bad.append("B8 SiShell lacks %s (the SI tab lost its sessions rail or AI tooling)" % need)
 comp = json.loads(read(os.path.join(app, "../data/fleet/app/com.diegonmarcos.cloudsuperintel/composer.json")))["controls"]
 # Chat UI restructure: every prior control (plus, task, agent, model, effort, mode, mcp, more) keeps a home; mcp is now KG-Store, KG-Cloud-apps and KG-Cloud-infra.
-want = ["plus", "task", "specialist", "agent", "model", "effort", "mode", "skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf", "more"]
+want = ["plus", "task", "specialist", "agent", "model", "effort", "mode", "plugins", "perf", "kg_apps", "weby_apps", "kg_infra", "kg_repos", "skills", "kg_store", "hooks", "more"]
 for need in want:
     if need not in comp: bad.append("B8 composer.json lost the %s control" % need)
 if "cost" in comp or "usage" in comp: bad.append("B8 Usage & Cost belongs in the top bar, not the toolbar")
@@ -94,10 +97,13 @@ dj = json.loads(read(os.path.join(libai, "src/main/assets/ai/ai-design.json")))
 rows = {c["id"]: c.get("row", 1) for c in dj["composer"]["layout"]["controls"]}
 if [c for c in want if rows.get(c) == 0] != ["plus"]: bad.append("B9 (+) must be the input row's control (row 0)")
 if [c for c in want if rows.get(c) == 1] != ["task", "specialist", "agent", "model", "effort", "mode"]: bad.append("B9 toolbar row 1 must be Task, Specialist, Agent, Model, Effort, Mode")
-if [c for c in want if rows.get(c) == 2] != ["skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf", "more"]: bad.append("B9 toolbar row 2 must be Plugins-Skills, KG-Store, KG-Cloud-apps, KG-Repos, KG-Cloud-infra, Plugins-Perf, More")
+if [c for c in want if rows.get(c) == 2] != ["plugins", "perf", "kg_apps", "weby_apps", "kg_infra", "kg_repos", "skills", "kg_store", "hooks", "more"]: bad.append("B9 toolbar row 2 must be Plugins, Plugins-Perf | Cloudy Apps, Weby Apps, KG-Cloud-infra | Repos, Skills, KG-Store | Hooks | More")
 lay = {c["id"]: c for c in dj["composer"]["layout"]["controls"]}
-if [c for c in want if lay[c].get("divider_before")] != ["agent", "kg_store", "kg_repos", "more"]: bad.append("B9 dividers belong before Agent, KG-Store, KG-Repos and More")
-if [lay[c]["label"] for c in ("skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf")] != ["Plugins-Skills", "KG-Store", "KG-Cloud-apps", "KG-Repos", "KG-Cloud-infra", "Plugins-Perf"]: bad.append("B9 row 2 labels")
+if [c for c in want if lay[c].get("divider_before")] != ["agent", "kg_apps", "kg_repos", "hooks", "more"]: bad.append("B9 dividers belong before Agent, Cloudy Apps, Repos, Hooks and More")
+if [lay[c]["label"] for c in ("plugins", "perf", "kg_apps", "weby_apps", "kg_infra", "kg_repos", "skills", "kg_store", "hooks")] != ["Plugins", "Plugins-Perf", "Cloudy Apps", "Weby Apps", "KG-Cloud-infra", "Repos", "Skills", "KG-Store", "Hooks"]: bad.append("B9 row 2 labels")
+if not (dj["weby_apps"]["items"] and dj["hooks"]["items"]): bad.append("B9 Weby Apps and Hooks must list their items")
+bar_src = read(os.path.join(app, "..", "ab_cloud-libs-shared", "libs", "ai", "src/main/kotlin/com/diegonmarcos/superapp/ai/AiComposerBar.kt"))
+if "fixedLabel = twoRows" not in bar_src: bad.append("B9 the first-row model chip must always be labelled Model (fixedLabel)")
 if [t["id"] for t in dj["kg_store"]["tabs"]] != ["web", "releases", "workspace", "personal", "other"]: bad.append("B9 KG-Store tabs")
 items = {i["id"]: i for g in dj["more"]["groups"] for i in g["items"]}
 if items.get("principles", {}).get("label") != "Cloudy Principals" or items["principles"].get("class") != "skill": bad.append("B9 Principles must be 'Cloudy Principals' under Plugins > Skills")
@@ -187,7 +193,11 @@ mutant "article spelled in Kotlin"     "echo 'val x = Article(\"https://a\", \"t
 mutant "token read creeps in"          "echo 'val x = revealAiKey' >> $KT/SiAi.kt"                             "B4 SiAi.kt matches revealAiKey"
 mutant "gateway not baked"             "sed -i 's/AI_GATEWAY_URL/NOPE/g' $SCRIPT"                              "B4 the app's build script does not bake"
 mutant "account not visible"           "sed -i 's/com.diegonmarcos.cloudaccount/x.y/' app/src/main/AndroidManifest.xml" "B5 the manifest cannot see Cloud Account"
-mutant "Tools leaves the bottom nav"    "python3 -c \"import json;p='build.json';d=json.load(open(p));d['ui']['bottom_nav'].remove('tools');json.dump(d,open(p,'w'))\"" "B8 the AI Tools section left the bottom nav"
+mutant "Models leaves the bottom nav"   "python3 -c \"import json;p='build.json';d=json.load(open(p));d['ui']['bottom_nav'].remove('models');json.dump(d,open(p,'w'))\"" "B8 the Models section left the bottom nav"
+mutant "the Models page loses its table" "sed -i 's/ModelsPage(/ModelsPageX(/' $KT/ui/SiShell.kt" "B8 the Models page is not the model catalogue"
+mutant "the windows are unwired"        "sed -i 's/windows = windows/windows = null/' $KT/ui/SiShell.kt" "B8 SiShell does not give the composer's top bar"
+mutant "the model chip shows a model"   "sed -i 's/fixedLabel = twoRows/fixedLabel = false/' ../ab_cloud-libs-shared/libs/ai/src/main/kotlin/com/diegonmarcos/superapp/ai/AiComposerBar.kt" "B9 the first-row model chip must always"
+mutant "Weby Apps is dropped"           "sed -i 's/\"weby_apps\",//' ../data/fleet/app/com.diegonmarcos.cloudsuperintel/composer.json" "B8 composer.json lost the weby_apps control"
 mutant "the sessions rail is dropped"  "sed -i 's/sessions = ForumSessions/sessions = null \/\/ ForumSessions/' $KT/ui/SiShell.kt" "B8 SiShell lacks sessions = ForumSessions"
 mutant "the composer tooling is dropped" "sed -i 's/tools = ForumTools/tools = null \/\/ ForumTools/' $KT/ui/SiShell.kt" "B8 SiShell lacks tools = ForumTools"
 mutant "the composer loses MCP"        "sed -i 's/\"kg_store\",//' ../data/fleet/app/com.diegonmarcos.cloudsuperintel/composer.json" "B8 composer.json lost the kg_store control"

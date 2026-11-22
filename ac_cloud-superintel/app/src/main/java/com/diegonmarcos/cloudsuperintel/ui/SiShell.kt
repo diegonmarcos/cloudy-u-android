@@ -45,10 +45,10 @@ import com.diegonmarcos.superapp.ai.AiCatalogue
 import com.diegonmarcos.superapp.ai.AiChatState
 import com.diegonmarcos.superapp.ai.AiComposerDecl
 import com.diegonmarcos.superapp.ai.AiDesign
-import com.diegonmarcos.superapp.ai.AiModelCatalogue
 import com.diegonmarcos.superapp.ai.AiTaskCatalogue
 import com.diegonmarcos.superapp.ai.ForumSessions
 import com.diegonmarcos.superapp.ai.ForumTools
+import com.diegonmarcos.superapp.ai.ForumWindows
 import androidx.compose.runtime.mutableIntStateOf
 import com.diegonmarcos.superapp.ai.ForumIcon
 import com.diegonmarcos.superapp.ai.ForumStrings
@@ -136,10 +136,10 @@ fun SiShell() {
     var forumPersona by rememberSaveable { mutableStateOf(siDefault) }
     val chatPersona = if (sec?.id == Decl.SECTION_SI) forumPersona else persona?.id
     val chat = remember(chatPersona) { SiAi.chat(ctx, chatPersona) }
-    // The composer's declaration (the served dataset `composer`, #1547; this default shows while it loads): (+) attach, Task, Specialist, Agent, Model, Effort, Mode, Plugins-Skills, KG-Store, KG-Cloud-apps, KG-Repos, KG-Cloud-infra, Plugins-Perf, More.
-    val composerDecl by produceState(AiComposerDecl("cloud-superintel", listOf("plus", "task", "specialist", "agent", "model", "effort", "mode", "skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf", "more")), ctx) { AiComposerDecl.observe(ctx).collect { if (it != null) value = it } }
-    // The AI Tools pages need the model list and the task list the chat page would have loaded.
-    if (sec?.id == Decl.SECTION_TOOLS) LaunchedEffect(chat) {
+    // The composer's declaration (the served dataset `composer`, #1547; this default shows while it loads): (+) attach, Task, Specialist, Agent, Model, Effort, Mode, then row 2 (#1854): Plugins, Plugins-Perf | Cloudy Apps, Weby Apps, KG-Cloud-infra | Repos, Skills, KG-Store | Hooks | More.
+    val composerDecl by produceState(AiComposerDecl("cloud-superintel", listOf("plus", "task", "specialist", "agent", "model", "effort", "mode", "plugins", "perf", "kg_apps", "weby_apps", "kg_infra", "kg_repos", "skills", "kg_store", "hooks", "more")), ctx) { AiComposerDecl.observe(ctx).collect { if (it != null) value = it } }
+    // The Models pages need the model list and the task list the chat page would have loaded.
+    if (sec?.id == Decl.SECTION_MODELS) LaunchedEffect(chat) {
         if (chat.models.isEmpty()) chat.models = withContext(Dispatchers.IO) { runCatching { chat.host().models() }.getOrDefault(emptyList()) }
         if (chat.tasks.isEmpty()) chat.tasks = withContext(Dispatchers.IO) { runCatching { AiCatalogue.load(ctx).tasks }.getOrDefault(emptyList()).ifEmpty { AiDesign.loadTasks(ctx) } }
     }
@@ -147,13 +147,20 @@ fun SiShell() {
     // The (+) menu's Files, Image and Camera: their Perms rows are libs:perms' (build.json::perms.needs), shown as "Fix in Perms" while missing.
     val attachHost = remember { AiAttachHost(missing = { ids -> rememberPermsMissing(ids).map { it.id } }, fix = { ids -> PermsFixChip(ids, ATTACH_FEATURE) }) }
     fun open(sectionId: String, pageId: String?) { section = sectionId; page = pageId }
-    // #1543 a deep link (the SuperApp AI badge -> Cost): opened once, only when the nav declares that section.
+    // The Cost window (#1854): the top-right icon opens it, and so does the SuperApp's AI badge (below).
+    val windows = remember(aiPages) { siWindows(aiPages[PAGE_COST]) }
+    var costFromLink by remember { mutableStateOf(false) }
+    // #1543 a deep link (the SuperApp AI badge -> Cost): opened once. Cost is the SI window now (#1854); any other target must be a declared section.
     val asked = SiOpen.pending
     androidx.compose.runtime.LaunchedEffect(asked) {
         if (asked != null) {
-            nav.section(asked.section)?.let { s -> open(s.id, asked.page?.takeIf { p -> s.pages.any { it.id == p } }) }
+            if (asked.section == PAGE_COST) { open(Decl.SECTION_SI, siDefault); costFromLink = true }
+            else nav.section(asked.section)?.let { s -> open(s.id, asked.page?.takeIf { p -> s.pages.any { it.id == p } }) }
             SiOpen.pending = null
         }
+    }
+    if (costFromLink) aiPages[PAGE_COST]?.let { spec ->
+        SiWindow(stringResource(R.string.win_cost), stringResource(R.string.win_cost_sub), WindowTags.COST, { costFromLink = false }) { AiPage(spec) }
     }
 
     Box(Modifier.fillMaxSize().themeBackground(dark = true).windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))) {
@@ -183,7 +190,7 @@ fun SiShell() {
                             // SI (the router tab) is the chat surface: the left rail is the user's chat SESSIONS, the personas are a
                             // strip under the header (the router is "General"), and the composer carries the full AI tooling
                             // ((+) attach, Task, Agent, Model, Effort, Mode, MCP, More; model catalogue; image in/out).
-                            Decl.SECTION_SI -> SiForum(ctx, personas, theme, forumPersona, { forumPersona = it }, composerDecl, attachHost, Modifier.imePadding().testTag(SiTags.CHAT))
+                            Decl.SECTION_SI -> SiForum(ctx, personas, theme, forumPersona, { forumPersona = it }, composerDecl, attachHost, windows, Modifier.imePadding().testTag(SiTags.CHAT))
                             // Every CGC expert is the same shared single chat page, each over its own persona.
                             Decl.SECTION_CGCS -> persona?.let { p ->
                                 LaunchedEffect(p.id) { withContext(Dispatchers.IO) { SiAi.tune(ctx, p, chat) } }
@@ -192,14 +199,13 @@ fun SiShell() {
                                     Modifier.imePadding().testTag(SiTags.CHAT), suggestions = p.suggestions, attach = attachHost,
                                 )
                             }
-                            // The AIs and Cost pages are data (assets/ai/pages.json, by page id): the screen kind and the asset, no name here.
+                            // The Context pages and the API page are data (assets/ai/pages.json, by page id): the screen kind and the sources, no name here.
             else -> if (pageId != null && aiPages[pageId] != null) AiPage(aiPages.getValue(pageId)) else when (pageId) {
-                                // The AI Tools section: the model catalogue (tabs, real model lists, OpenRouter search), the agent and model pickers,
-                                // the task catalogue and the MCP servers: the tools the chat composer opens, one tap from the bottom nav.
-                                Decl.PAGE_TOOLS_MODELS -> AiModelCatalogue(chat, theme, modifier = Modifier.fillMaxSize(), onClose = { open(Decl.SECTION_SI, forumPersona) })
+                                // The Models section: the agent and model pickers, the model catalogue by Core (each Core with the full OpenRouter
+                                // metadata table, refreshed daily), the task catalogue and the API accounts: the tools the chat composer opens.
+                                Decl.PAGE_TOOLS_MODELS -> ModelsPage(chat, theme, onClose = { open(Decl.SECTION_SI, forumPersona) }, modifier = Modifier.fillMaxSize())
                                 Decl.PAGE_TOOLS_PICKERS -> TextPage(R.string.tools_pickers_title, stringResource(R.string.tools_pickers_body)) { AiSettingsPickers(chat, theme) }
                                 Decl.PAGE_TOOLS_TASKS -> AiTaskCatalogue(chat, theme, composerDecl, Modifier.fillMaxSize())
-                                Decl.PAGE_TOOLS_MCP -> aiPages["mcp"]?.let { AiPage(it) }
                                 "perms", "agents", "logcat", "xray" -> com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(pageId.orEmpty())
                                 Decl.PAGE_MODELS -> TextPage(R.string.models_title, stringResource(R.string.models_body)) { AiSettingsPickers(chat, theme) }
                                 Decl.PAGE_BACKEND -> TextPage(R.string.backend_title, stringResource(R.string.backend_body) + "\n\n" + stringResource(R.string.backend_gateway, BuildConfig.AI_GATEWAY_URL))
@@ -217,6 +223,9 @@ fun SiShell() {
     }
 }
 
+/** The pages.json key of the Cost window (the SuperApp badge's deep link names it too). */
+private const val PAGE_COST = "cost"
+
 /** The libs:perms feature the attach menu's "Fix in Perms" chip reports. */
 private const val ATTACH_FEATURE = "chat"
 
@@ -230,7 +239,7 @@ private const val ATTACH_FEATURE = "chat"
 @Composable
 private fun SiForum(
     ctx: android.content.Context, personas: List<Persona>, theme: AiTheme, selected: String, onSelect: (String) -> Unit,
-    decl: AiComposerDecl, attachHost: AiAttachHost, modifier: Modifier,
+    decl: AiComposerDecl, attachHost: AiAttachHost, windows: ForumWindows, modifier: Modifier,
 ) {
     val topics = remember(personas) {
         personas.map { p ->
@@ -266,7 +275,7 @@ private fun SiForum(
         onInfo = { chat.page = AiChatState.PAGE_MODELS },
         onMore = {},
         sessions = ForumSessions(list, chat.session.id, onOpen = { chat.open(it) }, onNew = { chat.fresh(); tick++ }, groups = groups),
-        tools = ForumTools(decl, attach = attachHost),
+        tools = ForumTools(decl, attach = attachHost, windows = windows),
     )
 }
 
