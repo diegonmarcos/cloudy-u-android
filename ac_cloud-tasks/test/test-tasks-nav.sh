@@ -101,7 +101,7 @@ check(not os.path.isdir(os.path.join(APP, "app/src/main/res/layout")), "no View 
 # ── the top row ───────────────────────────────────────────────────────────────────────────────────────────
 check(not os.path.exists(os.path.join(SRC, "ui/Chrome.kt")) and not re.search(r"Icons\.\w+\.Menu\b|ModalNavigationDrawer|TopAppBar\s*\(", allsrc), "the app draws no hamburger, drawer or top app bar of its own")
 tasks_screen = strip(read(SRC, "ui/TasksScreen.kt"))
-check("TopBarDrawer {" in tasks_screen and "ProjectsDrawerContent(" in tasks_screen, "the Tasks page fills the bar's drawer with the projects")
+check(("TopBarDrawerWithActions {" in tasks_screen or "TopBarDrawer {" in tasks_screen) and "ProjectsDrawerContent(" in tasks_screen, "the Tasks page fills the bar's drawer with the projects (#1850: under the dropdown's Actions header)")
 check("expanded" in strip(read(SRC, "ui/ProjectsDrawer.kt")) and "emptySet<String>()" in tasks_screen, "projects start collapsed")
 
 # ── the AI panel ──────────────────────────────────────────────────────────────────────────────────────────
