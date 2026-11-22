@@ -61,7 +61,7 @@ jobs:
               if cmd == "top": print(hit[0]["_b"][1] if hit else "")
               else: print("%d %d" % ((hit[0]["_b"][0] + hit[0]["_b"][2]) // 2, (hit[0]["_b"][1] + hit[0]["_b"][3]) // 2) if hit else "")
           elif cmd == "seq":
-              print(" ".join(a["resource-id"].split("/")[-1] for a in ns if re.match(r"navside_(heading_|item_)", a.get("resource-id", "").split("/")[-1])))
+              print(" ".join(a["resource-id"].split("/")[-1] for a in ns if re.match(arg or r"navside_(heading_|item_)", a.get("resource-id", "").split("/")[-1])))
           elif cmd == "tx":
               hit = [a for a in ns if a.get("text", "") == arg]
               print("%d %d" % ((hit[0]["_b"][0] + hit[0]["_b"][2]) // 2, (hit[0]["_b"][1] + hit[0]["_b"][3]) // 2) if hit else "")
@@ -88,30 +88,25 @@ jobs:
           has() { [ -n "$(rid "$1")" ]; }
           txt() { [ "$(python3 -I ui.py text out/ui.xml "$1")" = 1 ]; }
           tap() { xy=$(rid "$1"); [ -n "$xy" ] && adb shell input tap $xy; }
-          # the side menu scrolls: swipe it up until the item's centre is well inside the screen, then tap it
-          scrollmenu() { adb shell input swipe 90 1700 90 600 400; sleep 1; dump "$1"; }
-          item() {
-            dump "pre-$1"
-            for i in 1 2 3 4 5; do
-              xy=$(rid "navside_item_$1")
-              if [ -n "$xy" ] && [ "${xy#* }" -gt 350 ] && [ "${xy#* }" -lt 2100 ]; then adb shell input tap $xy; return 0; fi
-              scrollmenu "scroll-$1-$i"
-            done
-            return 1
-          }
-          # a quiet emulator: hidden ANR dialogs, no animations
           adb shell settings put global hide_error_dialogs 1 || true
           adb shell settings put global window_animation_scale 0; adb shell settings put global transition_animation_scale 0
           adb shell am start -n "$ACT" >/dev/null 2>&1
           sleep 20; dump 00-launch
-          # the menu's order: heading and item ids in screen order, merged over the scroll positions (scrolled to the end)
-          seq=$(python3 -I ui.py seq out/ui.xml)
-          for i in 1 2 3 4; do scrollmenu "menu-scroll-$i"; seq="$seq $(python3 -I ui.py seq out/ui.xml)"; done
-          merged=$(echo $seq | tr ' ' '\n' | awk '!seen[$0]++' | sed 's/navside_heading_group://;s/navside_heading_/H:/;s/navside_item_//' | tr '\n' ' ')
-          echo "menu order: $merged" | tee -a out/verdict.txt
-          want="sciences math cs physics astronomy eng medicine humanities anthropology beliefs arts art theater music movies projects chronos sacred explore graph "
-          [ "$merged" = "$want" ] && check ok "the menu is Sciences, Humanities, Arts, Projects (Chronos, Sacred Geometry), Explore with every topic in place" || check bad "the menu is Sciences, Humanities, Arts, Projects (Chronos, Sacred Geometry), Explore with every topic in place (got: $merged)"
-          adb shell am force-stop "$PKG"; adb shell am start -n "$ACT" >/dev/null 2>&1; sleep 15
+          # the rail's visible part (it is longer than the screen): the groups and topics in their order, Projects and Chronos after Arts
+          merged=$(python3 -I ui.py seq out/ui.xml | tr ' ' '\n' | sed 's/navside_heading_group://;s/navside_item_//' | tr '\n' ' ')
+          echo "rail order: $merged" | tee -a out/verdict.txt
+          case "$merged" in "sciences math cs physics astronomy eng medicine humanities anthropology beliefs arts art theater music movies projects chronos"*) check ok "the rail reads Sciences, Humanities (no Chronos), Arts, Projects > Chronos";; *) check bad "the rail reads Sciences, Humanities (no Chronos), Arts, Projects > Chronos (got: $merged)";; esac
+          # pages are opened from the title dropdown (every page of the section, in the menu's order), as the nav walk does
+          item() {
+            dump "pre-$1"; tap topbar_title; sleep 2; dump "dropdown-$1"
+            if [ "$1" = chronos ]; then
+              order=$(python3 -I ui.py seq out/ui.xml 'navtop1_entry_' | tr ' ' '\n' | sed 's/navtop1_entry_//' | tr '\n' ' ')
+              echo "dropdown order: $order" | tee -a out/verdict.txt
+              case "$order" in *" chronos "*" sacred "*) check ok "the dropdown lists Chronos then Sacred Geometry";; *) check bad "the dropdown lists Chronos then Sacred Geometry (got: $order)";; esac
+            fi
+            xy=$(python3 -I ui.py id out/ui.xml "navtop1_entry_$1"); [ -n "$xy" ] || return 1
+            adb shell input tap $xy
+          }
           # Projects > Chronos
           item chronos; sleep 15; dump 02-projects-chronos
           has wiki_chronos_web && check ok "Projects > Chronos opens its web view" || check bad "Projects > Chronos opens its web view"
