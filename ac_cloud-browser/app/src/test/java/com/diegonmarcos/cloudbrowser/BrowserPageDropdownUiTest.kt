@@ -62,7 +62,8 @@ class BrowserPageDropdownUiTest {
         compose.waitForIdle()
     }
 
-    private fun openTab(i: Int) { compose.onNodeWithTag("browser:menu:tab:$i", useUnmergedTree = true).performClick(); compose.waitForIdle() }
+    // #1856 six tabs: the chip row scrolls sideways, so scroll the chip into view before the tap
+    private fun openTab(i: Int) { compose.onNodeWithTag("browser:menu:tab:$i", useUnmergedTree = true).performScrollTo().performClick(); compose.waitForIdle() }
 
     /** the sheet is tabbed: show the tab of the section [id] is declared in, then tap the row. */
     private fun tap(id: String) {
