@@ -40,7 +40,7 @@ import { pageOfFile } from "./bars";
 import { listAgents, listRepos } from "./seams";
 import { el } from "./dom";
 import { loadIndex, ageText, firstExisting, notOnDevice } from "./backlog-index";
-import { bridge, driveList, driveStatus, urlFromDrive, columnsFor, parentOf, requestClone, filterRepos, searchFiles, changeRows, handOffToDrive } from "./workspace";
+import { bridge, driveList, driveStatus, urlFromDrive, columnsFor, parentOf, requestClone, filterRepos, searchFiles, changeRows, handOffToDrive, driveChanges, driveDiff, groupChanges, changeTotals, diffLines, STATUS_LABEL, requestCommit, requestPush } from "./workspace";
 import { bindTitle, drawer, topBar } from "./chrome";
 import { openProfile } from "./profile";
 import { chatDrawer, renderChat } from "./chat/view";
@@ -569,9 +569,44 @@ async function renderWorkspace(panel) {
 	applyFilter();
 }
 
-// ── Changes (#1855 P3): per-repo status read from Cloud Drive (libs:repo-workspace status(path)); Drive owns git ──
-// The contract carries branch, state, summary and last sync per repo (no per-file list yet), so each repo is one row with those and
-// the actions: open it in the editor, and commit / push, which hand off to Cloud Drive's Sync > Git page for that repository.
+// ── Changes (#1855 P3, P4a): per-repo status and changed files read from Cloud Drive (libs:repo-workspace v2); Drive owns git ──
+// One row per repo (branch, state, summary, last sync) and under it the repo's changed files (changedFiles, staged first); a tap on a
+// file opens its diff (diffView), the actions are: open the repo in the editor, and Commit / Push in Cloud Drive's own Commit screen
+// (requestCommit / requestPush). Staging, commit and push happen there with the user's confirmation, never from this page.
+function fileRow(r, f, panel) {
+	return el("button", { className: "cloud-row cloud-change-file", "data-file": f.relpath, "data-staged": f.staged ? "1" : "0", onclick: () => diffView(panel, r, f) },
+		el("span", { className: `cloud-change-st st-${f.status === "?" ? "u" : f.status}`, title: STATUS_LABEL[f.status] }, f.status),
+		el("span", { className: "cloud-repo-name" }, f.relpath),
+		el("span", { className: "cloud-muted" }, f.staged ? "staged" : "not staged"),
+		el("span", { className: "cloud-change-counts" }, el("span", { className: "cloud-diff-add" }, `+${f.added}`), " ", el("span", { className: "cloud-diff-del" }, `-${f.removed}`)));
+}
+
+async function fillFiles(r, box, panel) {
+	box.replaceChildren(el("span", { className: "cloud-muted" }, "Reading the changed files from Cloud Drive …"));
+	const got = await driveChanges(bridge(), r.path);
+	if (!got.drive) { box.replaceChildren(el("span", { className: "cloud-muted" }, "Cloud Drive could not list the changed files: update Cloud Drive.")); return; }
+	if (!got.files.length) { box.replaceChildren(el("span", { className: "cloud-muted" }, "No changed files.")); return; }
+	const g = groupChanges(got.files);
+	const t = changeTotals(got.files);
+	box.replaceChildren(
+		el("div", { className: "cloud-muted cloud-change-totals" }, `${t.files} file${t.files === 1 ? "" : "s"} changed, +${t.added} -${t.removed}; ${g.staged.length} staged`),
+		...g.staged.map((f) => fileRow(r, f, panel)), ...g.unstaged.map((f) => fileRow(r, f, panel)));
+}
+
+// The diff of one file: syntax-coloured lines, back to the list, open the file in the editor.
+async function diffView(panel, r, f) {
+	const pre = el("pre", { className: "cloud-diff" }, "Reading the diff from Cloud Drive …");
+	panel.replaceChildren(panelHeader("Changes"),
+		el("div", { className: "cloud-row" }, el("button", { className: "cloud-row", onclick: () => renderChanges(panel) }, el("span", { className: "icon arrow_back" }), "Changes"),
+			el("span", { className: "cloud-repo-name" }, `${r.name}/${f.relpath}`), el("span", { className: "cloud-change-counts" }, `${f.status} +${f.added} -${f.removed}`)),
+		el("div", { className: "cloud-ws-actions" },
+			el("button", { className: "cloud-row", "data-verb": "open", disabled: f.status === "D", onclick: () => openFile(`file://${r.path.replace(/\/+$/, "")}/${f.relpath}`).then(() => showTab("editor")) }, el("span", { className: "icon insert_drive_file" }), "Open in editor")),
+		pre);
+	const text = await driveDiff(bridge(), r.path, f.relpath);
+	const lines = diffLines(text);
+	pre.replaceChildren(...(lines.length ? lines.map((l) => el("div", { className: `cloud-diff-line cloud-diff-${l.kind}` }, l.text || " ")) : [el("div", { className: "cloud-muted" }, "(no textual diff)")]));
+}
+
 async function renderChanges(panel) {
 	const body = el("div", { className: "cloud-list cloud-changes" }, "Reading the repositories from Cloud Drive …");
 	panel.replaceChildren(panelHeader("Changes"), body);
@@ -591,21 +626,29 @@ async function renderChanges(panel) {
 		body.replaceChildren(el("p", { className: "cloud-muted" }, "Cloud Drive lists no repositories yet. Clone one with Cloud Drive."));
 		return;
 	}
-	body.replaceChildren(...rows.map((r) => el("div", { className: "cloud-vol", "data-repo": r.name },
-		el("div", { className: "cloud-row" },
-			el("span", { className: "icon git" }), el("span", { className: "cloud-repo-name" }, r.name),
-			el("span", { className: "cloud-repo-info" }, r.branch),
-			el("span", { className: "cloud-change-state" }, [r.changed ? "changed" : "", r.state, r.summary].filter(Boolean).join(" · ") || "status not read yet"),
-			el("span", { className: "cloud-muted" }, r.lastSyncMs ? `last sync ${ageText(r.lastSyncMs, Date.now())}` : "never synced")),
-		el("div", { className: "cloud-ws-actions" },
-			el("button", { className: "cloud-row", onclick: () => { openFolder(`file://${r.path}`, { name: r.name }); showTab("editor"); } }, el("span", { className: "icon folder_open" }), "Open in editor"),
-			...["Commit", "Push"].map((verb) => el("button", {
-				className: "cloud-row", "data-verb": verb.toLowerCase(),
-				onclick: async () => {
-					const got = await handOffToDrive(bridge(), r.name);
-					toast(got.ok ? `Cloud Drive opened on ${r.name}: ${verb.toLowerCase()} there (Sync, Git)` : got.reason || "Cloud Drive did not open");
-				},
-			}, el("span", { className: "icon git" }), `${verb} with Cloud Drive`)))))); 
+	body.replaceChildren(...rows.map((r) => {
+		const files = el("div", { className: "cloud-change-files", "data-files": r.name });
+		const handOff = (verb, ask) => el("button", {
+			className: "cloud-row", "data-verb": verb.toLowerCase(),
+			onclick: async () => {
+				const got = await ask(bridge(), r.path);
+				toast(got.ok ? `Cloud Drive opened on ${r.name}: ${verb.toLowerCase()} there` : got.reason || "Cloud Drive did not open");
+			},
+		}, el("span", { className: "icon git" }), `${verb} in Cloud Drive`);
+		const row = el("div", { className: "cloud-vol", "data-repo": r.name },
+			el("div", { className: "cloud-row" },
+				el("span", { className: "icon git" }), el("span", { className: "cloud-repo-name" }, r.name),
+				el("span", { className: "cloud-repo-info" }, r.branch),
+				el("span", { className: "cloud-change-state" }, [r.changed ? "changed" : "", r.state, r.summary].filter(Boolean).join(" · ") || "status not read yet"),
+				el("span", { className: "cloud-muted" }, r.lastSyncMs ? `last sync ${ageText(r.lastSyncMs, Date.now())}` : "never synced")),
+			el("div", { className: "cloud-ws-actions" },
+				el("button", { className: "cloud-row", onclick: () => { openFolder(`file://${r.path}`, { name: r.name }); showTab("editor"); } }, el("span", { className: "icon folder_open" }), "Open in editor"),
+				el("button", { className: "cloud-row", "data-verb": "files", onclick: () => fillFiles(r, files, panel) }, el("span", { className: "icon compare_arrows" }), "Changed files"),
+				handOff("Commit", requestCommit), handOff("Push", requestPush)),
+			files);
+		if (r.changed) fillFiles(r, files, panel);
+		return row;
+	}));
 }
 
 // ── Agents: the backlog's own agent views, plus the live seam ──────────────

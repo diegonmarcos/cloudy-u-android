@@ -161,3 +161,71 @@ export function changeRows(repos, statuses = {}) {
 // Commit and push belong to Cloud Drive (it owns git): the hand-off opens Drive's Sync > Git page for the repository, the same
 // intent as the clone flow (requestClone), so Code builds no git engine.
 export const handOffToDrive = (b, name) => requestClone(b, name);
+
+// ── #1855 P4a Changes as a review surface (libs:repo-workspace v2): per-file rows, diffs, Drive's own Commit / Push screens ──
+// Still read-only here: staging, commit and push happen in Cloud Drive's screen with the user's confirmation.
+
+export const DIFF_MAX_BYTES = 64 * 1024;
+export const STATUS_LABEL = Object.freeze({ A: "added", M: "modified", D: "deleted", R: "renamed", "?": "untracked" });
+
+async function raced(b, method, args, timeoutMs) {
+	if (!b || typeof b[method] !== "function") return null;
+	try {
+		return await Promise.race([Promise.resolve().then(() => b[method](...args)), new Promise((resolve) => setTimeout(() => resolve(null), timeoutMs))]);
+	} catch {
+		return null;
+	}
+}
+
+// Drive's changed files of one clone: {drive, files}; Drive absent / too old / slow = {drive: false, files: []}.
+export async function driveChanges(b, path, timeoutMs = DRIVE_TIMEOUT_MS * 2) {
+	const got = await raced(b, "changedFiles", [path], timeoutMs);
+	if (!got || got.drive !== true) return { drive: false, files: [] };
+	const files = (Array.isArray(got.files) ? got.files : []).filter((f) => f && f.relpath && STATUS_LABEL[f.status])
+		.map((f) => ({ relpath: String(f.relpath), status: f.status, staged: !!f.staged, added: Number(f.added) || 0, removed: Number(f.removed) || 0 }));
+	return { drive: true, files };
+}
+
+// The bounded unified diff of one file; "" when Drive is absent, too old, slow or the file has no change.
+export async function driveDiff(b, path, relpath, maxBytes = DIFF_MAX_BYTES, timeoutMs = DRIVE_TIMEOUT_MS * 2) {
+	const got = await raced(b, "diff", [path, relpath, maxBytes], timeoutMs);
+	return got && got.drive === true ? String(got.text || "") : "";
+}
+
+// Staged files first, then the rest; by path inside each group.
+export function groupChanges(files) {
+	const by = (a, c) => a.relpath.localeCompare(c.relpath);
+	return { staged: files.filter((f) => f.staged).sort(by), unstaged: files.filter((f) => !f.staged).sort(by) };
+}
+
+export const changeTotals = (files) => ({ files: new Set(files.map((f) => f.relpath)).size, added: files.reduce((n, f) => n + f.added, 0), removed: files.reduce((n, f) => n + f.removed, 0) });
+
+// One unified-diff line -> its syntax class: add / del / hunk / meta / ctx / note (the server's truncation marker).
+export function diffKind(line) {
+	if (line.startsWith("+++") || line.startsWith("---") || line.startsWith("diff ") || line.startsWith("index ")) return "meta";
+	if (line.startsWith("@@")) return "hunk";
+	if (line.startsWith("+")) return "add";
+	if (line.startsWith("-")) return "del";
+	if (line.startsWith("... diff truncated")) return "note";
+	return "ctx";
+}
+
+export function diffLines(text) {
+	const lines = String(text || "").split("\n");
+	if (lines.length && lines[lines.length - 1] === "") lines.pop();
+	return lines.map((t) => ({ kind: diffKind(t), text: t }));
+}
+
+async function handOff(b, method, path) {
+	if (!b || typeof b[method] !== "function") return { ok: false, reason: "Cloud Drive is not installed" };
+	try {
+		const got = await b[method](path);
+		return { ok: !!got?.ok, reason: String(got?.reason || "") };
+	} catch (err) {
+		return { ok: false, reason: String(err?.message || err) };
+	}
+}
+
+// Open Cloud Drive's own Commit screen / its Push step for the clone at `path`; {ok, reason} at once.
+export const requestCommit = (b, path) => handOff(b, "requestCommit", path);
+export const requestPush = (b, path) => handOff(b, "requestPush", path);

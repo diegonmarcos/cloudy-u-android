@@ -20,6 +20,10 @@ import java.util.List;
  *  findRepo(name)       {drive, repos: [the clones of name]}      (empty list = nowhere on this phone)
  *  requestClone(name)   {ok, reason}: opens Drive's clone flow (Sync, Git, the dialog prefilled), returns at once
  *  status(path)         {drive, repo|null}
+ *  changedFiles(path)   {drive, files: [{relpath, status A|M|D|R|?, staged, added, removed}]}      (contract v2, #1855 P4a)
+ *  diff(path, rel, max) {drive, text}: the bounded unified diff of one file (staged part, then worktree part)
+ *  requestCommit(path)  {ok, reason}: opens Drive's own Commit screen for that repository, returns at once
+ *  requestPush(path)    {ok, reason}: opens Drive's Commit screen on its Push step
  *
  * "drive" is true when Drive is installed and bound, so the page can tell "Drive answered: none" from "Drive is absent"
  * and fall back to its own volume probe only in the second case. Binder calls block: they run on the Cordova thread pool.
@@ -47,7 +51,8 @@ public class CloudWorkspacePlugin extends CordovaPlugin {
 
     @Override
     public boolean execute(final String action, final JSONArray args, final CallbackContext cb) {
-        if (!"listRepos".equals(action) && !"findRepo".equals(action) && !"requestClone".equals(action) && !"status".equals(action)) {
+        if (!"listRepos".equals(action) && !"findRepo".equals(action) && !"requestClone".equals(action) && !"status".equals(action)
+            && !"changedFiles".equals(action) && !"diff".equals(action) && !"requestCommit".equals(action) && !"requestPush".equals(action)) {
             return false;
         }
         cordova.getThreadPool().execute(new Runnable() {
@@ -56,7 +61,25 @@ public class CloudWorkspacePlugin extends CordovaPlugin {
                 try {
                     RepoWorkspaceClient c = client();
                     JSONObject out = new JSONObject();
-                    if ("requestClone".equals(action)) {
+                    if ("requestCommit".equals(action) || "requestPush".equals(action)) {
+                        String reason = "requestCommit".equals(action)
+                            ? c.requestCommit(cordova.getActivity(), args.optString(0, ""))
+                            : c.requestPush(cordova.getActivity(), args.optString(0, ""));
+                        out.put("ok", reason.isEmpty()).put("reason", reason);
+                    } else if ("changedFiles".equals(action)) {
+                        boolean drive = c.isConnected();
+                        out.put("drive", drive);
+                        JSONArray files = new JSONArray();
+                        if (drive) for (RepoWorkspace.ChangedFile f : c.changedFiles(args.optString(0, ""))) {
+                            files.put(new JSONObject().put("relpath", f.getRelpath()).put("status", f.getStatus()).put("staged", f.getStaged())
+                                .put("added", f.getAdded()).put("removed", f.getRemoved()));
+                        }
+                        out.put("files", files);
+                    } else if ("diff".equals(action)) {
+                        boolean drive = c.isConnected();
+                        out.put("drive", drive);
+                        out.put("text", drive ? c.diff(args.optString(0, ""), args.optString(1, ""), args.optInt(2, RepoWorkspace.DIFF_DEFAULT_BYTES)) : "");
+                    } else if ("requestClone".equals(action)) {
                         String reason = c.requestClone(cordova.getActivity(), args.optString(0, ""));
                         out.put("ok", reason.isEmpty()).put("reason", reason);
                     } else {

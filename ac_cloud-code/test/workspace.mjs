@@ -93,3 +93,35 @@ for (const t of before.backlog_states) out(index.includes(t), `parity: Backlog s
 	out((await w.handOffToDrive(fake, "cloud-me-pvt-tasks")).ok && calls[0] === "cloud-me-pvt-tasks" && (await w.handOffToDrive(null, "x")).ok === false, "commit and push hand off to Drive's Sync > Git page for that repo (Drive absent = a reason)");
 	out((await w.driveStatus(fake, "/p")).repo.state === "dirty" && (await w.driveStatus(null, "/p")).drive === false && (await w.driveStatus({ status: async () => { throw new Error("x"); } }, "/p")).drive === false && (await w.driveStatus({ status: () => new Promise(() => {}) }, "/p", 20)).drive === false, "status(path) answers Drive's row; absent, failing and slow Drive = drive false");
 }
+
+// ── #1855 P4a contract v2: changed files, diffs, Drive's own Commit / Push screens ──
+{
+	const files = [
+		{ relpath: "b.txt", status: "M", staged: false, added: 2, removed: 1 }, { relpath: "a.txt", status: "A", staged: true, added: 5, removed: 0 },
+		{ relpath: "u.txt", status: "?", staged: false, added: 3 }, { relpath: "bad", status: "X", staged: true }, null, { status: "M" },
+	];
+	const v2 = { changedFiles: async (p) => ({ drive: true, files: p === "/r" ? files : [] }), diff: async (p, rel, max) => ({ drive: true, text: `diff --git a/${rel} b/${rel}\n+x\n`, max }),
+		requestCommit: async (p) => ({ ok: p === "/r", reason: p === "/r" ? "" : "not listed" }), requestPush: async () => ({ ok: true, reason: "" }) };
+	const got = await w.driveChanges(v2, "/r");
+	out(got.drive && got.files.length === 3 && got.files.every((f) => f.relpath && w.STATUS_LABEL[f.status]) && got.files.find((f) => f.relpath === "u.txt").removed === 0, "driveChanges keeps valid rows (relpath, status, staged, counts) and drops malformed ones");
+	out((await w.driveChanges(null, "/r")).drive === false && (await w.driveChanges({ changedFiles: async () => { throw new Error("old drive"); } }, "/r")).drive === false && (await w.driveChanges({ changedFiles: () => new Promise(() => {}) }, "/r", 20)).drive === false, "changedFiles: no bridge, a v1 Drive (throws) and a slow Drive are drive=false, never an exception");
+	const g = w.groupChanges(got.files);
+	out(g.staged.map((f) => f.relpath).join() === "a.txt" && g.unstaged.map((f) => f.relpath).join() === "b.txt,u.txt", "staged files are grouped apart from the rest, by path");
+	const t = w.changeTotals(got.files);
+	out(t.files === 3 && t.added === 10 && t.removed === 1, "totals count files and +/- lines");
+	out((await w.driveDiff(v2, "/r", "a.txt")).startsWith("diff --git a/a.txt") && (await w.driveDiff(null, "/r", "a.txt")) === "" && (await w.driveDiff({ diff: async () => { throw new Error("x"); } }, "/r", "a")) === "", "driveDiff returns the text, and \"\" when Drive is absent or old");
+	out(w.diffKind("+x") === "add" && w.diffKind("-x") === "del" && w.diffKind("@@ -1 +1 @@") === "hunk" && w.diffKind("+++ b/x") === "meta" && w.diffKind("--- a/x") === "meta" && w.diffKind("diff --git a b") === "meta" && w.diffKind(" ctx") === "ctx" && w.diffKind("... diff truncated") === "note", "diff lines are classified for syntax colour");
+	const dl = w.diffLines("--- a/x\n+++ b/x\n@@ -1 +1 @@\n-old\n+new\n");
+	out(dl.length === 5 && dl.map((l) => l.kind).join() === "meta,meta,hunk,del,add" && w.diffLines("").length === 0, "diffLines splits a unified diff, no trailing empty line");
+	const c = await w.requestCommit(v2, "/r");
+	out(c.ok && (await w.requestCommit(v2, "/other")).reason === "not listed" && (await w.requestPush(v2, "/r")).ok, "requestCommit / requestPush hand the path to Drive and relay its refusal");
+	out(/not installed/.test((await w.requestPush(null, "/r")).reason) && (await w.requestCommit({ requestCommit: async () => { throw new Error("old"); } }, "/r")).ok === false, "no bridge or an old Drive: a reason, not an exception");
+	// the native bridge exposes the four v2 calls
+	const plug = read("src/plugins/cloudworkspace/www/cloudworkspace.js");
+	const java = read("src/plugins/cloudworkspace/src/CloudWorkspacePlugin.java");
+	for (const m of ["changedFiles", "diff", "requestCommit", "requestPush"]) out(plug.includes(`${m}: function`) && java.includes(`"${m}".equals(action)`), `the CloudWorkspace plugin exposes ${m}`);
+	for (const m of ["listRepos", "findRepo", "requestClone", "status"]) out(plug.includes(`${m}: function`) && java.includes(`"${m}".equals(action)`), `parity: the v1 call ${m} is kept`);
+	// Changes keeps its P3 fields and adds files + diff + Drive's Commit/Push screens
+	out(/handOff\("Commit", requestCommit\)/.test(index) && /handOff\("Push", requestPush\)/.test(index) && !/handOffToDrive\(bridge/.test(index), "Changes: Commit / Push open Drive's own Commit screen (requestCommit / requestPush), not the clone hand-off");
+	out(/diffView/.test(index) && /cloud-diff-line cloud-diff-\$\{l\.kind\}/.test(index) && /"Open in editor"/.test(index), "Changes: a file opens a syntax-coloured diff with Open in editor");
+}

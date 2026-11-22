@@ -1150,3 +1150,16 @@ body.cloud-collapsed {
   font-size: 12px;
   opacity: 0.8;
 }
+
+// #1855 P4a Changes: per-file rows and the diff view
+.cloud-change-file { display: flex; gap: 8px; align-items: center; width: 100%; text-align: left; }
+.cloud-change-st { width: 1.4em; font-family: monospace; font-weight: bold; &.st-A, &.st-u { color: #81c784; } &.st-D { color: #e57373; } &.st-M, &.st-R { color: #ffd54f; } }
+.cloud-change-counts { margin-left: auto; font-family: monospace; font-size: 12px; }
+.cloud-change-totals { padding: 2px 4px; }
+.cloud-diff { margin: 0; padding: 6px; overflow-x: auto; font-size: 12px; background: #101418; }
+.cloud-diff-line { white-space: pre; font-family: monospace; }
+.cloud-diff-add, .cloud-diff-line.cloud-diff-add { color: #81c784; }
+.cloud-diff-del, .cloud-diff-line.cloud-diff-del { color: #e57373; }
+.cloud-diff-hunk { color: #64b5f6; }
+.cloud-diff-meta { color: #b0bec5; }
+.cloud-diff-note { color: #ffb74d; font-style: italic; }

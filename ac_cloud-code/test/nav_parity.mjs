@@ -74,5 +74,10 @@ for (const v of ["workspace", "changes", "chat", "agents", "browser", "backlog"]
 
 // 7. Workspace keeps the old Git tab (rule 16) and Changes hands commit/push to Drive
 out(/renderGit\(panel, pickerBox, pick\)/.test(index) && /async function renderGit\(panel, into, onPick\)/.test(index), "Workspace hosts the old Git tab's two volume columns (renderGit) as its repo picker");
-out(/handOffToDrive\(bridge\(\), r\.name\)/.test(index) && /Commit/.test(index) && /Push/.test(index) && !/isomorphic-git|libgit2|jgit/i.test(index), "Changes hands commit and push to Cloud Drive; no git engine in Code");
+out(/handOff\("Commit", requestCommit\)/.test(index) && /handOff\("Push", requestPush\)/.test(index) && /Commit/.test(index) && /Push/.test(index) && !/isomorphic-git|libgit2|jgit/i.test(index), "Changes hands commit and push to Cloud Drive; no git engine in Code");
 out(/driveStatus\(bridge\(\), r\.path\)/.test(index), "Changes reads each repo's status from Drive's repo-workspace status(path)");
+
+// 8. #1855 P4a: everything P3's Changes row showed is still shown (rule 16), plus per-file rows, the diff view and Drive's own Commit / Push screens
+for (const t of ["r.branch", "r.state", "r.summary", "r.lastSyncMs", "r.changed", '"never synced"', '"status not read yet"', "Open in editor", "changeRows(drive.repos, statuses)"]) out(index.includes(t), `parity: the Changes row keeps ${t}`);
+out(/driveChanges\(bridge\(\), r\.path\)/.test(index) && /driveDiff\(bridge\(\), r\.path, f\.relpath\)/.test(index) && /diffView\(panel, r, f\)/.test(index), "Changes lists each repo's changed files and a tap opens the file's diff");
+out(/"Open in editor"/.test(index) && /openFile\(`file:\/\/\$\{r\.path/.test(index), "the diff view can open the file in the editor");
