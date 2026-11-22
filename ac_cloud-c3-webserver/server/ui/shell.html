@@ -438,9 +438,9 @@ function renderPages(pg) {
     '<div class="note">Names resolve through this app\'s private DNS (udp ' + esc(pg.dns.host) + ':' + esc(pg.dns.port) + '), only inside our apps. Termux and Nix pages are served by each terminal\'s own my-webserver: if the app is not open its page cannot answer, so Start app wakes it.</div></section>' +
     renderForm(pg.form) + renderUndeclared(pg.undeclared) + '</div>';
 }
-// #1630 the fleet tail after the `|`: Agents, Perms, Logcat, X-Ray App, About. They are the shared native pages of libs:ui-nav-bars (the same
+// #1630 the fleet tail after the `|`: General, Agents, Perms, Logcat, X-Ray App, About. They are the shared native pages of libs:ui-nav-bars (the same
 // strip carries them), opened through the Android bridge: POST /__app__/api/configs-open {page}. The page's own tabs stay before the `|`.
-var CFG_TAIL = [['agents', 'Agents'], ['perms', 'Perms'], ['logcat', 'Logcat'], ['xray', 'X-Ray App'], ['about', 'About']];
+var CFG_TAIL = [['general', 'General'], ['agents', 'Agents'], ['perms', 'Perms'], ['logcat', 'Logcat'], ['xray', 'X-Ray App'], ['about', 'About']];
 function renderCfgTabs(current) {
   return '<div class="seg cfgseg" role="tablist">' + [['about', 'About'], ['engines', 'Engines'], ['links', 'Links']].map(function (t) {
     return '<button role="tab" data-cfg="' + t[0] + '"' + (t[0] === current ? ' class="on" aria-selected="true"' : '') + '>' + t[1] + '</button>';

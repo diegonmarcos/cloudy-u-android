@@ -99,7 +99,7 @@ pub fn set_configs_opener(f: Box<ConfigsOpener>) -> bool {
     CONFIGS_OPENER.set(f).is_ok()
 }
 
-/// #1630 open the native Configs tab `page` (agents, perms, logcat, xray, about) through the installed Android bridge.
+/// #1630 open the native Configs tab `page` (general, agents, perms, logcat, xray, about) through the installed Android bridge.
 pub fn open_configs(page: &str) -> Result<(), String> {
     let f = CONFIGS_OPENER.get().ok_or_else(|| "no Android bridge installed yet".to_string())?;
     f(page)
