@@ -406,21 +406,6 @@
         "background": "theme",
         "pages": [
           {
-            "id": "general",
-            "label": "General",
-            "icon": "settings"
-          },
-          {
-            "id": "perms",
-            "label": "Perms",
-            "icon": "security"
-          },
-          {
-            "id": "about",
-            "label": "About",
-            "icon": "info"
-          },
-          {
             "id": "appearance",
             "label": "Appearance",
             "icon": "palette"
@@ -439,6 +424,21 @@
             "id": "feeds",
             "label": "Feeds",
             "icon": "rss_feed"
+          },
+          {
+            "id": "general",
+            "label": "General",
+            "icon": "settings"
+          },
+          {
+            "id": "perms",
+            "label": "Perms",
+            "icon": "security"
+          },
+          {
+            "id": "about",
+            "label": "About",
+            "icon": "info"
           }
         ]
       }

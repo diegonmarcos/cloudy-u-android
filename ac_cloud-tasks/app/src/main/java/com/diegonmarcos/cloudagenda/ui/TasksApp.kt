@@ -263,7 +263,7 @@ private fun SettingsContent(env: TasksEnv, page: String, themeMode: ThemeMode, o
     val controller = env.controller
     val dark = LocalDarkTheme.current
     when (page) {
-        // #1443 the fleet's shared Configs pages (libs:ui-nav-bars) come first: General | Perms | About.
+        // #1443 the fleet's shared Configs pages (libs:ui-nav-bars) come after the own pages (#1852): General | Perms | About.
         Ids.PAGE_GENERAL, Ids.PAGE_PERMS, Ids.PAGE_ABOUT, "agents", "logcat", "xray" -> Box(Modifier.fillMaxSize().background(ThemeBackground.colors(dark).top).testTag("tasks:configs:page:" + page)) {
             FleetConfigsPageBody(page, dark, onAppConfigs)
         }

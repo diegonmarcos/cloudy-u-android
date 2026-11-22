@@ -55,7 +55,7 @@ class ConfigsFragment : KitComposeFragment() {
 
     @Composable
     override fun Content() {
-        // #1630 {own tabs} | Agents, Perms, Logcat, X-Ray App, About
+        // #1852 {own tabs} | General, Agents, Perms, Logcat, X-Ray App, About
         val pages = remember { com.diegonmarcos.superapp.fleetconfigs.FleetConfigsExtensions.withTail(NavConfig.decl.section("configs")?.pages.orEmpty()) }
         Column(Modifier.fillMaxSize()) {
             AndroidView(
@@ -75,7 +75,7 @@ class ConfigsFragment : KitComposeFragment() {
         "update" -> UpdateConfigFragment()
         "cache" -> CacheConfigFragment()
         "layers" -> LayersConfigFragment()
-        // #1443 General | Perms | About are the fleet's shared pages (libs:ui-nav-bars), first on the strip.
+        // #1443 General | Perms | About are the fleet's shared pages (libs:ui-nav-bars), after the own pages (#1852).
         "general", "perms", "about", "agents", "logcat", "xray" -> FleetConfigsPageFragment.newInstance(id)
         else -> DevControlFragment()
     }

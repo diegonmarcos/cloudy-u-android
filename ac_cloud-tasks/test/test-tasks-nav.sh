@@ -65,7 +65,7 @@ check(re.search(r"home_projects", strip(read(SRC, "data/TasksPrefs.kt"))) and ".
 check("ProjectScopes.filter(" in strip(read(SRC, "ui/TasksApp.kt")) and "env.projectScope" in strip(read(SRC, "ui/TasksApp.kt")), "#1757 Inbox, Backlog, Tasks and Library read the Home selection")
 check([p["id"] for p in sections["tasks"]["pages"]] == ["calendar", "list", "gantt", "kanban", "mindmap", "clock"], "#1456 Tasks has the sub-pages Calendar, List, Gantt, Kanban, Mindmap; #1668 and Clock")
 check("clocktools.ui.FullClock(" in strip(read(SRC, "ui/TasksApp.kt")), "#1668 Tasks > Clock draws libs:clock-tools' FullClock (the shared clock, no copy)")
-check([p["id"] for p in sections["settings"]["pages"]][:3] == ["general", "perms", "about"], "Configs starts General | Perms | About (the fleet pattern)")
+check([p["id"] for p in sections["settings"]["pages"]] == ["appearance", "agent", "inbox", "feeds", "general", "perms", "about"], "#1852 Configs is the own pages first, then General | Perms | About (the fleet pattern; the lib adds Agents, Logcat, X-Ray App)")
 check("FleetConfigsPageBody(" in strip(read(SRC, "ui/TasksApp.kt")), "General | Perms | About are drawn by libs:ui-nav-bars's FleetConfigsPageBody")
 mock = json.load(open(os.path.join(APP, "app/src/debug/assets/mock-tasks.json")))
 check(mock.get("_fake", "").startswith("MOCK DATA - FAKE") and {i["kind"] for i in mock["items"]} == {"inboxes", "backlogs", "tasks", "library", "projects"}, "the mock fixture is declarative JSON, marked fake, with rows for every former tab (Projects is now Home's second page)")

@@ -38,7 +38,7 @@ class NavConfigTest {
         assertEquals(listOf("trips", "maps"), NavConfig.decl.section("explored")?.pages?.map { it.id })
         assertEquals(listOf("timeline", "steps", "sleep"), NavConfig.decl.section("tracker")?.pages?.map { it.id })
         assertEquals(
-            listOf("general", "perms", "about", "tracker", "apis", "update", "cache", "layers", "device"),
+            listOf("tracker", "apis", "update", "cache", "layers", "device", "general", "perms", "about"),
             NavConfig.decl.section("configs")?.pages?.map { it.id },
         )
     }

@@ -362,8 +362,10 @@ class TasksPageTest {
         launch()
         compose.onNodeWithTag(TopBarTags.CONFIGS).performClick()
         compose.waitForIdle()
-        // The fleet Configs pattern: General | Perms | About first, then the app's own pages.
-        for (id in listOf("general", "perms", "about", "appearance", "agent", "inbox", "feeds")) compose.onNodeWithTag(PageTabsTags.tab(id)).assertExists()
+        // The fleet Configs pattern (#1852): the app's own pages first, then General | Agents | Perms | Logcat | X-Ray App | About.
+        for (id in listOf("appearance", "agent", "inbox", "feeds", "general", "perms", "about")) compose.onNodeWithTag(PageTabsTags.tab(id)).assertExists()
+        compose.onNodeWithTag(PageTabsTags.tab("general")).performClick()
+        compose.waitForIdle()
         compose.onNodeWithTag("tasks:configs:page:general").assertIsDisplayed()
         compose.onNodeWithTag(PageTabsTags.tab("appearance")).performClick()
         compose.waitForIdle()

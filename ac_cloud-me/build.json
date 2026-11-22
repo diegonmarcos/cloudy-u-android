@@ -1295,11 +1295,11 @@
         "icon": "ic_nav_configs",
         "toolbar": true,
         "pages": [
+          {"id": "nav", "label": "Navigation", "icon": "navigation"},
+          {"id": "apps", "label": "Apps", "icon": "apps"},
           {"id": "general", "label": "General", "icon": "settings"},
           {"id": "perms", "label": "Perms", "icon": "security"},
-          {"id": "about", "label": "About", "icon": "info"},
-          {"id": "nav", "label": "Navigation", "icon": "navigation"},
-          {"id": "apps", "label": "Apps", "icon": "apps"}
+          {"id": "about", "label": "About", "icon": "info"}
         ]
       }
     ],
