@@ -1349,7 +1349,7 @@ class BrowserHostFragment : Fragment() {
             var rev by androidx.compose.runtime.remember { androidx.compose.runtime.mutableIntStateOf(0) }
             var view by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(bookmarks.viewMode()) }
             BrowserFavScreen(
-                sections = rev.let { BrowserFavourites.sections(bookmarks.all()) }, view = view,
+                sections = rev.let { bookmarks.sections() }, view = view,
                 icon = { u -> faviconFile(u)?.let { f -> android.graphics.BitmapFactory.decodeFile(f.path)?.asImageBitmap() } },
                 onToggleView = { view = BrowserFavourites.toggled(view); bookmarks.setViewMode(view) },
                 onOpen = { close(); navigateTo(it.url) },

@@ -25,8 +25,18 @@ logic around the page and never the page. Nothing here renders, loads or parses 
 - `BrowserCoreParityTest` holds the Kotlin twins to the same cases as `src/tests.rs`;
 - Cargo.lock is generated and committed by the `browser-core-cargo-lock` workflow with its licence inventory entries.
 
+## The list stores (phase 1 of the move: history, bookmarks, Quickmarks, the visit log)
+
+`lists.rs` holds the model (`Visit`, `Bookmark`, Weby's folders and tiles), search and ranking, dedupe, frecency, sort and filter, JSON import
+and export, the seed merge, Weby's Bookmarks (all) merge and the migration, as pure `op(json) -> json` functions (`nativeLists` over JNI,
+`BrowserCore.lists` in Kotlin, `KtLists` in `Lists.kt` as the twin and the fallback). The stored text keeps its SharedPreferences file, key and
+schema (the declared prefs, the fleet-config sync and the scraper still read it); `BrowserListMigration` normalises it once, in place, after
+writing a backup file under `files/browser-core/backup/` and keeping the old text under `<key>_pre_core`. `fixtures/lists-corpus.json` is the
+ONE corpus `cargo test` (`src/tests.rs`) and `BrowserCoreListsTest` (the twin; the core too where JNI loads) are held to, and its `models`
+entry is the field-parity list for `BrowserVisit` / `BrowserBookmark`.
+
 ## Not yet moved
 
-History, bookmarks, settings, site permissions and the download queue still live in the app's SharedPreferences stores, which the fleet
-config migration contract declares; the core's rows table and `download_next` are in place for them, the migration of each store is a
-separate, tested step.
+Settings, site permissions and the download queue still live in the app's SharedPreferences stores, which the fleet config migration
+contract declares; the core's rows table and `download_next` are in place for them, the migration of each store is a separate, tested step
+(phase 2).

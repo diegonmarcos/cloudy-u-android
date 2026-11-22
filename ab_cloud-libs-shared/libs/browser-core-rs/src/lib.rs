@@ -14,6 +14,8 @@
 //!           (history dedupe and cap, the download state machine) are pure functions of this crate
 //!   omnibox the address bar: url-or-search, scheme of a bare host, the search url, and the start-up decision (open url, kept tab,
 //!           restore, grid + "Restore previous tabs" after an unclean end)
+//!   lists   the list stores (#1841): history, bookmarks, Quickmarks, the visit log: model, search and ranking, dedupe, frecency, sort and
+//!           filter, import / export (JSON), migration of the Kotlin on-disk format; pure `op(json) -> json`, one fixture corpus shared with Kotlin
 //!   reader  reader-mode extraction: title and readable paragraphs of an HTML page
 //!
 //! Rendering is Android's WebView: Servo is not production-ready for the general web on Android, so this core owns the logic around the
@@ -24,6 +26,7 @@
 
 pub mod filter;
 pub mod jni_api;
+pub mod lists;
 pub mod omnibox;
 pub mod reader;
 pub mod search;

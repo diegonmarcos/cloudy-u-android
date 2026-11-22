@@ -3,11 +3,15 @@ package com.diegonmarcos.cloudbrowser.sites
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import com.diegonmarcos.cloudlib.browsercore.BrowserCore
 import com.diegonmarcos.superapp.browser.BrowserClearCategories
 import com.diegonmarcos.superapp.browser.BrowserHistory
+import com.diegonmarcos.superapp.browser.BrowserListMigration
 import com.diegonmarcos.superapp.browser.BrowserSitePermissions
 import com.diegonmarcos.superapp.browser.BrowserStorage
 import com.diegonmarcos.superapp.browser.BrowserVisit
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
@@ -21,9 +25,12 @@ class VisitLogStore(context: Context) {
 
     /** Fold the browser's history in and return the log. BLOCKING: off the main thread. */
     fun sync(): List<BrowserVisit> = synchronized(LOCK) {
-        val merged = VisitLog.merge(all(), BrowserHistory(ctx).all())
-        sp.edit().putString(KEY, VisitLog.toJson(merged)).apply()
-        merged
+        // #1841 the merge (no repeated page+time, newest first, capped) is the browser core's: both lists go in as their stored text
+        BrowserListMigration.ensure(ctx, "visitlog", "browser_visit_log", KEY)
+        val r = BrowserCore.lists("visitlog_merge", JSONObject().put("log_raw", sp.getString(KEY, null) ?: "[]").put("history_raw", BrowserHistory(ctx).rawJson()))
+        sp.edit().putString(KEY, r.getString("raw")).apply()
+        val a = r.optJSONArray("visits") ?: JSONArray()
+        (0 until a.length()).mapNotNull { a.optJSONObject(it) }.map { BrowserVisit(it.optString("url"), it.optString("title"), it.optLong("ts")) }
     }
 
     private companion object { const val KEY = "log_json"; val LOCK = Any() }

@@ -300,3 +300,94 @@ fn budget_10k_omnibox_decisions_and_a_100kb_reader_page_under_500_ms() {
     let (_, p) = budget("reader over ~100 KB", Duration::from_millis(500), || reader::extract(&page));
     assert_eq!(p.len(), 800);
 }
+
+// ── #1841 the list stores (history, bookmarks, Quickmarks, visit log): src/lists.rs ───────────────────────────────────────
+
+const LISTS_CORPUS: &str = include_str!("../fixtures/lists-corpus.json");
+
+/// The fixture corpus shared with the Kotlin twin (BrowserCoreListsTest): every key of each case's `out` must equal the answer's.
+#[test]
+fn the_list_corpus_holds_for_every_case() {
+    let corpus: Value = serde_json::from_str(LISTS_CORPUS).unwrap();
+    let cases = corpus["cases"].as_array().unwrap();
+    assert!(cases.len() >= 50, "the corpus shrank to {} cases", cases.len());
+    for c in cases {
+        let name = c["name"].as_str().unwrap();
+        let got = crate::lists::run(c["op"].as_str().unwrap(), &c["in"]).unwrap_or_else(|e| panic!("{name}: {e}"));
+        for (k, want) in c["out"].as_object().unwrap() {
+            assert_eq!(&got[k], want, "{name}: key {k}\n  got {got}");
+        }
+    }
+}
+
+/// The same corpus through the JNI boundary function (what Kotlin receives): `OK\n<json>` with the same content.
+#[test]
+fn the_list_corpus_holds_through_the_boundary() {
+    let corpus: Value = serde_json::from_str(LISTS_CORPUS).unwrap();
+    for c in corpus["cases"].as_array().unwrap() {
+        let name = c["name"].as_str().unwrap();
+        let a = crate::jni_api::guard(|| crate::jni_api::do_lists(c["op"].as_str().unwrap(), &c["in"].to_string()));
+        let body: Value = serde_json::from_str(a.strip_prefix("OK\n").unwrap_or_else(|| panic!("{name}: {a}"))).unwrap();
+        for (k, want) in c["out"].as_object().unwrap() {
+            assert_eq!(&body[k], want, "{name}: key {k}");
+        }
+    }
+    assert!(crate::jni_api::guard(|| crate::jni_api::do_lists("nope", "{}")).starts_with("ERR\tunknown list op nope"));
+}
+
+/// Rule 16: the Rust model carries every field of the Kotlin model (the fixture's `models`, which the Kotlin test checks against
+/// BrowserVisit / BrowserBookmark by reflection).
+#[test]
+fn the_rust_models_carry_every_field_of_the_kotlin_models() {
+    let corpus: Value = serde_json::from_str(LISTS_CORPUS).unwrap();
+    let rust = crate::lists::model_fields();
+    for m in ["visit", "bookmark"] {
+        let mut want: Vec<String> = corpus["models"][m].as_array().unwrap().iter().map(|x| x.as_str().unwrap().to_string()).collect();
+        let mut got: Vec<String> = rust[m].as_array().unwrap().iter().map(|x| x.as_str().unwrap().to_string()).collect();
+        want.sort();
+        got.sort();
+        assert_eq!(got, want, "the {m} model");
+    }
+    // and an answer's rows hold exactly those fields
+    let r = crate::lists::run("bm_add", &json!({"bookmarks": [], "url": "u", "title": "t", "folder": "f", "now": 1})).unwrap();
+    let mut keys: Vec<String> = r["bookmarks"][0].as_object().unwrap().keys().cloned().collect();
+    keys.sort();
+    assert_eq!(keys, vec!["folder".to_string(), "title".to_string(), "ts".to_string(), "url".to_string()]);
+}
+
+#[test]
+fn the_stored_text_the_core_writes_is_the_kotlin_format() {
+    // the same key order the Kotlin stores wrote, so an older app reads it
+    let r = crate::lists::run("history_record", &json!({"raw": "[]", "url": "https://a/", "title": "A", "now": 7})).unwrap();
+    assert_eq!(r["raw"], "[{\"url\":\"https://a/\",\"title\":\"A\",\"ts\":7}]");
+    let r = crate::lists::run("bm_add", &json!({"raw": "[]", "url": "u", "title": "T", "folder": "f", "now": 7})).unwrap();
+    assert_eq!(r["raw"], "[{\"url\":\"u\",\"title\":\"T\",\"folder\":\"f\",\"ts\":7}]");
+    // load(raw) of a store the Kotlin code wrote is unchanged by the core
+    let old = "[{\"url\":\"u1\",\"title\":\"T1\",\"folder\":\"a/b\",\"ts\":3},{\"url\":\"u2\",\"title\":\"T2\",\"folder\":\"\",\"ts\":0}]";
+    let m = crate::lists::run("migrate", &json!({"kind": "bookmarks", "raw": old})).unwrap();
+    assert_eq!(m["raw"], old);
+    assert_eq!(m["changed"], false);
+}
+
+#[test]
+fn budget_list_ops_on_big_lists() {
+    let visits: Vec<Value> = (0..20_000).map(|i| json!({"url": format!("https://site{i}.example/p"), "title": format!("Page {i}"), "ts": i})).collect();
+    let log = json!({"log": visits, "history": (0..500).map(|i| json!({"url": format!("https://site{i}.example/p"), "title": "t", "ts": i + 5})).collect::<Vec<_>>()});
+    let r = budget("visit log merge of 20k + 500", Duration::from_millis(500), || crate::lists::run("visitlog_merge", &log).unwrap());
+    assert_eq!(r["count"], 20_000);
+    let hist = json!({"visits": &visits[..500], "query": "page 49", "sort": "frecency"});
+    let r = budget("500 history rows queried 200 times", Duration::from_millis(500), || {
+        let mut last = Value::Null;
+        for _ in 0..200 {
+            last = crate::lists::run("history_query", &hist).unwrap();
+        }
+        last
+    });
+    assert!(r["count"].as_u64().unwrap() >= 1);
+    let raw = serde_json::to_string(&visits[..500]).unwrap();
+    budget("500 history records", Duration::from_millis(500), || {
+        for i in 0..500 {
+            let _ = crate::lists::run("history_record", &json!({"raw": raw, "url": format!("https://n{i}.example/"), "title": "n", "now": 9_000_000 + i}));
+        }
+    });
+}

@@ -237,6 +237,21 @@ pub fn do_omnibox(op: &str, a: &str, b: &str) -> Result<String, String> {
     }
 }
 
+/// One list-store op (history, bookmarks, Quickmarks, visit log; see lists.rs): arg is the op's json, the answer `OK\n<json>`.
+pub fn do_lists(op: &str, arg: &str) -> Result<String, String> {
+    let a: Value = serde_json::from_str(arg).map_err(|e| format!("lists json: {e}"))?;
+    Ok(crate::lists::run(op, &a)?.to_string())
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_diegonmarcos_cloudlib_browsercore_NativeBridge_nativeLists(mut env: JNIEnv, _c: JClass, op: JString, arg: JString) -> jstring {
+    let text = match (read(&mut env, &op), read(&mut env, &arg)) {
+        (Ok(o), Ok(a)) => guard(|| do_lists(&o, &a)),
+        (Err(e), _) | (_, Err(e)) => format!("ERR\t{}", one_line(&e)),
+    };
+    answer(&mut env, text)
+}
+
 #[no_mangle]
 pub extern "system" fn Java_com_diegonmarcos_cloudlib_browsercore_NativeBridge_nativeOmnibox(
     mut env: JNIEnv,

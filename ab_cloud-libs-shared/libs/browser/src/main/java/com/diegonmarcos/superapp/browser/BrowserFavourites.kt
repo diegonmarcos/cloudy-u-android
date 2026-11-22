@@ -1,5 +1,7 @@
 package com.diegonmarcos.superapp.browser
 
+import com.diegonmarcos.cloudlib.browsercore.BrowserCore
+import org.json.JSONArray
 import org.json.JSONObject
 
 /** One link the app ships as a favourite; [group] becomes the bookmark's folder ("Public", "Private (mesh)"). */
@@ -108,6 +110,25 @@ object BrowserFavourites {
 
     fun groups(sections: List<Pair<String, List<BrowserBookmark>>>, collapsed: Set<String>): List<FavGroup> =
         sections.map { (f, items) -> val c = f in collapsed; FavGroup(f, items.size, c, if (c) emptyList() else items) }
+
+    /**
+     * #1841 the Fav page's narrowing through the browser core (lists.rs `bm_view`; the Kotlin twin when the library is not loaded): the
+     * chip's sections ([byFilter]), then every word of [q] ([filter]). Those two stay as the readable rules and the parity reference.
+     */
+    fun view(sections: List<Pair<String, List<BrowserBookmark>>>, chip: String?, q: String): List<Pair<String, List<BrowserBookmark>>> {
+        if (chip == null && tokens(q).isEmpty()) return sections
+        val a = JSONObject().put("query", q).put("sections", JSONArray().also { arr ->
+            sections.forEach { (f, items) -> arr.put(JSONObject().put("folder", f).put("items", BrowserBookmarkOps.toJson(items))) }
+        })
+        if (chip != null) a.put("chip", chip)
+        return decodeSections(BrowserCore.lists("bm_view", a).optJSONArray("sections"))
+    }
+
+    /** The `sections` of a core answer: `[{folder, items:[bookmark]}]`. */
+    fun decodeSections(arr: JSONArray?): List<Pair<String, List<BrowserBookmark>>> {
+        arr ?: return emptyList()
+        return (0 until arr.length()).mapNotNull { arr.optJSONObject(it) }.map { it.optString("folder") to BrowserBookmarkOps.fromArray(it.optJSONArray("items")) }
+    }
 
     /** A header tap: collapse an open group, open a collapsed one. */
     fun toggle(collapsed: Set<String>, folder: String): Set<String> = if (folder in collapsed) collapsed - folder else collapsed + folder

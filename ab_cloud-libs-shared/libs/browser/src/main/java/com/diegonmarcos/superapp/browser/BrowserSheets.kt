@@ -457,7 +457,7 @@ fun BrowserFavScreen(
     val grid = view == BrowserFavourites.VIEW_GRID
     var q by remember { mutableStateOf("") }
     var chip by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
-    val shown = BrowserFavourites.groups(BrowserFavourites.filter(BrowserFavourites.byFilter(sections, chip), q), collapsed)
+    val shown = BrowserFavourites.groups(BrowserFavourites.view(sections, chip, q), collapsed)
     fun tile(b: BrowserBookmark, size: androidx.compose.ui.unit.Dp): @Composable () -> Unit = {
         val img = icon(b.url)
         Box(Modifier.size(size).background(p.accent.copy(alpha = 0.25f), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {

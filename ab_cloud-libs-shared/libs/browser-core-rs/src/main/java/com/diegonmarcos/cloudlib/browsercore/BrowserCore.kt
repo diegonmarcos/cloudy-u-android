@@ -172,6 +172,22 @@ object BrowserCore {
         return KtMisc.merge(lists)
     }
 
+    // ── the list stores: history, bookmarks, Quickmarks, the visit log (lists.rs / KtLists) ───────────────────────────────
+
+    /**
+     * One list-store op (see lists.rs for the ops and the stored format): the core answers, the Kotlin twin when it is not loaded. A domain
+     * error is in band (`{"error": code}`), never an exception.
+     */
+    fun lists(op: String, arg: JSONObject): JSONObject {
+        val a = arg.toString()
+        viaCore("lists") { decode(NativeBridge.nativeLists(op, a)) }?.let { return JSONObject(it) }
+        return listsTwin(op, arg)
+    }
+
+    /** The Kotlin twin alone: the fallback, and the parity oracle the tests hold the core to. */
+    fun listsTwin(op: String, arg: JSONObject): JSONObject =
+        try { KtLists.run(op, arg) } catch (e: IllegalArgumentException) { JSONObject().put("error", e.message.orEmpty()) }
+
     // ── rows: the stores (history, bookmark, setting, perm, download) ────────────────────────────────────────────────────
 
     class Rows(private val path: String) {

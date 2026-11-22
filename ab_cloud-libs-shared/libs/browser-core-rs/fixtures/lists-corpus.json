@@ -1,0 +1,2214 @@
+{
+ "_doc": "#1841 one corpus for the Rust core (src/tests.rs) and its Kotlin twin (BrowserCoreListsTest): each case runs `op` on `in`; every key of `out` must equal the answer's key (deep, object key order ignored).",
+ "models": {
+  "visit": [
+   "url",
+   "title",
+   "ts"
+  ],
+  "bookmark": [
+   "url",
+   "title",
+   "folder",
+   "ts"
+  ]
+ },
+ "cases": [
+  {
+   "name": "history_load sorts newest first, defaults the title to the url, drops blank rows",
+   "op": "history_load",
+   "in": {
+    "raw": "[{\"url\": \"https://a.example/\", \"title\": \"A\", \"ts\": 5}, {\"url\": \"  \", \"title\": \"blank\", \"ts\": 9}, {\"url\": \"https://b.example/\", \"ts\": 9}, {\"title\": \"no url\"}, 7, {\"url\": \"https://c.example/\", \"title\": \"C\"}]"
+   },
+   "out": {
+    "visits": [
+     {
+      "url": "https://b.example/",
+      "title": "https://b.example/",
+      "ts": 9
+     },
+     {
+      "url": "https://a.example/",
+      "title": "A",
+      "ts": 5
+     },
+     {
+      "url": "https://c.example/",
+      "title": "C",
+      "ts": 0
+     }
+    ],
+    "count": 3
+   }
+  },
+  {
+   "name": "history_load on text that is not a list is empty",
+   "op": "history_load",
+   "in": {
+    "raw": "not json"
+   },
+   "out": {
+    "visits": [],
+    "count": 0
+   }
+  },
+  {
+   "name": "history_load on a json object is empty",
+   "op": "history_load",
+   "in": {
+    "raw": "{}"
+   },
+   "out": {
+    "visits": [],
+    "count": 0
+   }
+  },
+  {
+   "name": "history_load keeps an empty title and reads a numeric string ts",
+   "op": "history_load",
+   "in": {
+    "raw": "[{\"url\": \"u\", \"title\": \"\", \"ts\": \"12\"}]"
+   },
+   "out": {
+    "visits": [
+     {
+      "url": "u",
+      "title": "",
+      "ts": 12
+     }
+    ],
+    "count": 1
+   }
+  },
+  {
+   "name": "history_record moves a revisited url to the top (no duplicate row), blank title becomes the url",
+   "op": "history_record",
+   "in": {
+    "visits": [
+     {
+      "url": "https://x.example/",
+      "title": "X",
+      "ts": 10
+     },
+     {
+      "url": "https://y.example/",
+      "title": "Y",
+      "ts": 5
+     }
+    ],
+    "url": "https://y.example/",
+    "title": " ",
+    "now": 20
+   },
+   "out": {
+    "visits": [
+     {
+      "url": "https://y.example/",
+      "title": "https://y.example/",
+      "ts": 20
+     },
+     {
+      "url": "https://x.example/",
+      "title": "X",
+      "ts": 10
+     }
+    ],
+    "recorded": true
+   }
+  },
+  {
+   "name": "history_record caps the list",
+   "op": "history_record",
+   "in": {
+    "visits": [
+     {
+      "url": "a",
+      "title": "a",
+      "ts": 30
+     },
+     {
+      "url": "b",
+      "title": "b",
+      "ts": 20
+     },
+     {
+      "url": "c",
+      "title": "c",
+      "ts": 10
+     }
+    ],
+    "url": "z",
+    "title": "Z",
+    "now": 40,
+    "cap": 2
+   },
+   "out": {
+    "visits": [
+     {
+      "url": "z",
+      "title": "Z",
+      "ts": 40
+     },
+     {
+      "url": "a",
+      "title": "a",
+      "ts": 30
+     }
+    ],
+    "recorded": true
+   }
+  },
+  {
+   "name": "history_record ignores about:blank and a blank url",
+   "op": "history_record",
+   "in": {
+    "visits": [
+     {
+      "url": "a",
+      "title": "a",
+      "ts": 1
+     },
+     {
+      "url": "b",
+      "title": "b",
+      "ts": 2
+     }
+    ],
+    "url": "about:blank",
+    "title": "t",
+    "now": 9
+   },
+   "out": {
+    "visits": [
+     {
+      "url": "b",
+      "title": "b",
+      "ts": 2
+     },
+     {
+      "url": "a",
+      "title": "a",
+      "ts": 1
+     }
+    ],
+    "recorded": false
+   }
+  },
+  {
+   "name": "history_record on a blank url",
+   "op": "history_record",
+   "in": {
+    "visits": [],
+    "url": "  ",
+    "title": "t",
+    "now": 9
+   },
+   "out": {
+    "visits": [],
+    "recorded": false
+   }
+  },
+  {
+   "name": "history_dedupe keeps the newest row per url",
+   "op": "history_dedupe",
+   "in": {
+    "visits": [
+     {
+      "url": "a",
+      "title": "a",
+      "ts": 1
+     },
+     {
+      "url": "a",
+      "title": "a2",
+      "ts": 3
+     },
+     {
+      "url": "b",
+      "title": "b",
+      "ts": 2
+     }
+    ]
+   },
+   "out": {
+    "visits": [
+     {
+      "url": "a",
+      "title": "a2",
+      "ts": 3
+     },
+     {
+      "url": "b",
+      "title": "b",
+      "ts": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "history_query filters by title or url, trimmed and case-blind, input order kept",
+   "op": "history_query",
+   "in": {
+    "visits": [
+     {
+      "url": "https://rust-lang.org/",
+      "title": "Rust",
+      "ts": 30
+     },
+     {
+      "url": "https://news.example/rust-2",
+      "title": "News about Crabs",
+      "ts": 20
+     },
+     {
+      "url": "https://example.org/",
+      "title": "Example",
+      "ts": 10
+     }
+    ],
+    "query": " RUST "
+   },
+   "out": {
+    "visits": [
+     {
+      "url": "https://rust-lang.org/",
+      "title": "Rust",
+      "ts": 30
+     },
+     {
+      "url": "https://news.example/rust-2",
+      "title": "News about Crabs",
+      "ts": 20
+     }
+    ],
+    "indices": [
+     0,
+     1
+    ],
+    "count": 2
+   }
+  },
+  {
+   "name": "history_query sort title",
+   "op": "history_query",
+   "in": {
+    "visits": [
+     {
+      "url": "https://rust-lang.org/",
+      "title": "Rust",
+      "ts": 30
+     },
+     {
+      "url": "https://news.example/rust-2",
+      "title": "News about Crabs",
+      "ts": 20
+     },
+     {
+      "url": "https://example.org/",
+      "title": "Example",
+      "ts": 10
+     }
+    ],
+    "query": "",
+    "sort": "title"
+   },
+   "out": {
+    "visits": [
+     {
+      "url": "https://example.org/",
+      "title": "Example",
+      "ts": 10
+     },
+     {
+      "url": "https://news.example/rust-2",
+      "title": "News about Crabs",
+      "ts": 20
+     },
+     {
+      "url": "https://rust-lang.org/",
+      "title": "Rust",
+      "ts": 30
+     }
+    ],
+    "indices": [
+     2,
+     1,
+     0
+    ],
+    "count": 3
+   }
+  },
+  {
+   "name": "history_query sort oldest",
+   "op": "history_query",
+   "in": {
+    "visits": [
+     {
+      "url": "https://rust-lang.org/",
+      "title": "Rust",
+      "ts": 30
+     },
+     {
+      "url": "https://news.example/rust-2",
+      "title": "News about Crabs",
+      "ts": 20
+     },
+     {
+      "url": "https://example.org/",
+      "title": "Example",
+      "ts": 10
+     }
+    ],
+    "query": "",
+    "sort": "oldest"
+   },
+   "out": {
+    "indices": [
+     2,
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "history_query sort recent",
+   "op": "history_query",
+   "in": {
+    "visits": [
+     {
+      "url": "https://a.test/",
+      "title": "a",
+      "ts": 10
+     },
+     {
+      "url": "https://b.test/",
+      "title": "b",
+      "ts": 30
+     },
+     {
+      "url": "https://c.test/",
+      "title": "c",
+      "ts": 20
+     }
+    ],
+    "sort": "recent"
+   },
+   "out": {
+    "indices": [
+     1,
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "history_query limit",
+   "op": "history_query",
+   "in": {
+    "visits": [
+     {
+      "url": "https://a.test/",
+      "title": "a",
+      "ts": 10
+     },
+     {
+      "url": "https://b.test/",
+      "title": "b",
+      "ts": 30
+     },
+     {
+      "url": "https://c.test/",
+      "title": "c",
+      "ts": 20
+     }
+    ],
+    "sort": "recent",
+    "limit": 2
+   },
+   "out": {
+    "indices": [
+     1,
+     2
+    ],
+    "count": 2
+   }
+  },
+  {
+   "name": "history_query sort host (www, port, path ignored; newer first on a tie)",
+   "op": "history_query",
+   "in": {
+    "visits": [
+     {
+      "url": "https://www.zeta.test/x",
+      "title": "z",
+      "ts": 1
+     },
+     {
+      "url": "http://alpha.test:8080/p?q=1",
+      "title": "a1",
+      "ts": 2
+     },
+     {
+      "url": "https://alpha.test/",
+      "title": "a2",
+      "ts": 3
+     }
+    ],
+    "sort": "host"
+   },
+   "out": {
+    "indices": [
+     2,
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "history_query sort frecency (recency bands, newer first within a band)",
+   "op": "history_query",
+   "in": {
+    "visits": [
+     {
+      "url": "b",
+      "title": "B",
+      "ts": 28272000000
+     },
+     {
+      "url": "e",
+      "title": "E",
+      "ts": 0
+     },
+     {
+      "url": "a",
+      "title": "A",
+      "ts": 29913600000
+     },
+     {
+      "url": "c",
+      "title": "C",
+      "ts": 12720000000
+     },
+     {
+      "url": "d",
+      "title": "D",
+      "ts": 29827200000
+     }
+    ],
+    "sort": "frecency",
+    "now": 30000000000
+   },
+   "out": {
+    "indices": [
+     2,
+     4,
+     0,
+     3,
+     1
+    ]
+   }
+  },
+  {
+   "name": "history_query ranked: host prefix, then title prefix, then substring",
+   "op": "history_query",
+   "in": {
+    "visits": [
+     {
+      "url": "https://docs.rs/",
+      "title": "Rust docs",
+      "ts": 5
+     },
+     {
+      "url": "https://example.com/rustic",
+      "title": "Shop",
+      "ts": 9
+     },
+     {
+      "url": "https://rust-lang.org/",
+      "title": "Rust Language",
+      "ts": 1
+     }
+    ],
+    "query": "rust",
+    "mode": "ranked"
+   },
+   "out": {
+    "indices": [
+     2,
+     0,
+     1
+    ]
+   }
+  },
+  {
+   "name": "history_query ranked needs every word",
+   "op": "history_query",
+   "in": {
+    "visits": [
+     {
+      "url": "https://docs.rs/",
+      "title": "Rust docs",
+      "ts": 5
+     },
+     {
+      "url": "https://example.com/rustic",
+      "title": "Shop",
+      "ts": 9
+     },
+     {
+      "url": "https://rust-lang.org/",
+      "title": "Rust Language",
+      "ts": 1
+     }
+    ],
+    "query": "rust docs",
+    "mode": "ranked"
+   },
+   "out": {
+    "indices": [
+     0
+    ]
+   }
+  },
+  {
+   "name": "history_export is a versioned document",
+   "op": "history_export",
+   "in": {
+    "visits": [
+     {
+      "url": "a",
+      "title": "A",
+      "ts": 2
+     }
+    ]
+   },
+   "out": {
+    "doc": {
+     "format": "cloud-browser-history",
+     "version": 1,
+     "count": 1,
+     "visits": [
+      {
+       "url": "a",
+       "title": "A",
+       "ts": 2
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "history_import merges: newer wins, new rows added, junk skipped",
+   "op": "history_import",
+   "in": {
+    "visits": [
+     {
+      "url": "a",
+      "title": "A old",
+      "ts": 10
+     },
+     {
+      "url": "b",
+      "title": "B",
+      "ts": 5
+     }
+    ],
+    "doc": {
+     "format": "cloud-browser-history",
+     "version": 1,
+     "visits": [
+      {
+       "url": "a",
+       "title": "A new",
+       "ts": 20
+      },
+      {
+       "url": "c",
+       "title": "C",
+       "ts": 15
+      },
+      {
+       "url": "about:blank"
+      },
+      {
+       "url": " "
+      },
+      3,
+      {
+       "url": "b",
+       "title": "B older",
+       "ts": 1
+      }
+     ]
+    }
+   },
+   "out": {
+    "visits": [
+     {
+      "url": "a",
+      "title": "A new",
+      "ts": 20
+     },
+     {
+      "url": "c",
+      "title": "C",
+      "ts": 15
+     },
+     {
+      "url": "b",
+      "title": "B",
+      "ts": 5
+     }
+    ],
+    "added": 1,
+    "updated": 1,
+    "skipped": 3
+   }
+  },
+  {
+   "name": "history_import reads a bare array text",
+   "op": "history_import",
+   "in": {
+    "visits": [],
+    "text": "[{\"url\": \"a\", \"title\": \"A\", \"ts\": 1}]"
+   },
+   "out": {
+    "visits": [
+     {
+      "url": "a",
+      "title": "A",
+      "ts": 1
+     }
+    ],
+    "added": 1
+   }
+  },
+  {
+   "name": "history_import caps",
+   "op": "history_import",
+   "in": {
+    "visits": [],
+    "cap": 1,
+    "text": "[{\"url\": \"a\", \"title\": \"A\", \"ts\": 1}, {\"url\": \"b\", \"title\": \"B\", \"ts\": 2}]"
+   },
+   "out": {
+    "visits": [
+     {
+      "url": "b",
+      "title": "B",
+      "ts": 2
+     }
+    ],
+    "added": 2
+   }
+  },
+  {
+   "name": "history_import error: not json",
+   "op": "history_import",
+   "in": {
+    "visits": [],
+    "text": "nope"
+   },
+   "out": {
+    "error": "not_json"
+   }
+  },
+  {
+   "name": "history_import error: no list",
+   "op": "history_import",
+   "in": {
+    "visits": [],
+    "doc": {
+     "x": 1
+    }
+   },
+   "out": {
+    "error": "no_list"
+   }
+  },
+  {
+   "name": "history_import error: not a list",
+   "op": "history_import",
+   "in": {
+    "visits": [],
+    "doc": 5
+   },
+   "out": {
+    "error": "not_a_list"
+   }
+  },
+  {
+   "name": "visitlog_merge folds history into the log, no repeated (url, time), newest first, capped",
+   "op": "visitlog_merge",
+   "in": {
+    "log": [
+     {
+      "url": "a",
+      "title": "A",
+      "ts": 3
+     },
+     {
+      "url": "b",
+      "title": "B",
+      "ts": 1
+     }
+    ],
+    "history": [
+     {
+      "url": "a",
+      "title": "A",
+      "ts": 3
+     },
+     {
+      "url": "c",
+      "title": "C",
+      "ts": 2
+     },
+     {
+      "url": "c",
+      "title": "C",
+      "ts": 2
+     }
+    ],
+    "cap": 2
+   },
+   "out": {
+    "visits": [
+     {
+      "url": "a",
+      "title": "A",
+      "ts": 3
+     },
+     {
+      "url": "c",
+      "title": "C",
+      "ts": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "visitlog_merge reads the stored u/t/s text",
+   "op": "visitlog_merge",
+   "in": {
+    "log_raw": "[{\"u\": \"a\", \"t\": \"A\", \"s\": 3}, {\"u\": \"\", \"t\": \"x\", \"s\": 9}]",
+    "history": []
+   },
+   "out": {
+    "visits": [
+     {
+      "url": "a",
+      "title": "A",
+      "ts": 3
+     }
+    ],
+    "count": 1
+   }
+  },
+  {
+   "name": "bm_load keeps the order, defaults the title, drops blank urls",
+   "op": "bm_load",
+   "in": {
+    "raw": "[{\"url\": \"u1\", \"title\": \"T1\", \"folder\": \"a/b\", \"ts\": 3}, {\"url\": \"u2\"}, {\"url\": \"\"}]"
+   },
+   "out": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "T1",
+      "folder": "a/b",
+      "ts": 3
+     },
+     {
+      "url": "u2",
+      "title": "u2",
+      "folder": "",
+      "ts": 0
+     }
+    ],
+    "count": 2
+   }
+  },
+  {
+   "name": "bm_add updates the url in place at the top and normalises the folder",
+   "op": "bm_add",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "T1",
+      "folder": "",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "T2",
+      "folder": "x",
+      "ts": 2
+     }
+    ],
+    "url": "u2",
+    "title": " ",
+    "folder": " a / b//c ",
+    "now": 9
+   },
+   "out": {
+    "bookmarks": [
+     {
+      "url": "u2",
+      "title": "u2",
+      "folder": "a/b/c",
+      "ts": 9
+     },
+     {
+      "url": "u1",
+      "title": "T1",
+      "folder": "",
+      "ts": 1
+     }
+    ]
+   }
+  },
+  {
+   "name": "bm_remove",
+   "op": "bm_remove",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "T1",
+      "folder": "",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "T2",
+      "folder": "x",
+      "ts": 2
+     }
+    ],
+    "url": "u1"
+   },
+   "out": {
+    "bookmarks": [
+     {
+      "url": "u2",
+      "title": "T2",
+      "folder": "x",
+      "ts": 2
+     }
+    ],
+    "count": 1
+   }
+  },
+  {
+   "name": "bm_has yes",
+   "op": "bm_has",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "T1",
+      "folder": "",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "T2",
+      "folder": "x",
+      "ts": 2
+     }
+    ],
+    "url": "u2"
+   },
+   "out": {
+    "has": true
+   }
+  },
+  {
+   "name": "bm_has no",
+   "op": "bm_has",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "T1",
+      "folder": "",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "T2",
+      "folder": "x",
+      "ts": 2
+     }
+    ],
+    "url": "zz"
+   },
+   "out": {
+    "has": false
+   }
+  },
+  {
+   "name": "bm_folders lists every folder with its parents, sorted",
+   "op": "bm_folders",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "1",
+      "title": "",
+      "folder": "b/c",
+      "ts": 0
+     },
+     {
+      "url": "2",
+      "title": "",
+      "folder": "a",
+      "ts": 0
+     },
+     {
+      "url": "3",
+      "title": "",
+      "folder": "",
+      "ts": 0
+     },
+     {
+      "url": "4",
+      "title": "",
+      "folder": "a/x",
+      "ts": 0
+     }
+    ]
+   },
+   "out": {
+    "folders": [
+     "a",
+     "a/x",
+     "b",
+     "b/c"
+    ]
+   }
+  },
+  {
+   "name": "bm_move_folder moves the subtree, not a sibling with the same prefix",
+   "op": "bm_move_folder",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "",
+      "folder": "a",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "",
+      "folder": "a/b",
+      "ts": 2
+     },
+     {
+      "url": "u3",
+      "title": "",
+      "folder": "ab",
+      "ts": 3
+     },
+     {
+      "url": "u4",
+      "title": "",
+      "folder": "",
+      "ts": 4
+     }
+    ],
+    "from": "a",
+    "to": "z/y"
+   },
+   "out": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "",
+      "folder": "z/y",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "",
+      "folder": "z/y/b",
+      "ts": 2
+     },
+     {
+      "url": "u3",
+      "title": "",
+      "folder": "ab",
+      "ts": 3
+     },
+     {
+      "url": "u4",
+      "title": "",
+      "folder": "",
+      "ts": 4
+     }
+    ]
+   }
+  },
+  {
+   "name": "bm_move_folder to the top level",
+   "op": "bm_move_folder",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "",
+      "folder": "a",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "",
+      "folder": "a/b",
+      "ts": 2
+     },
+     {
+      "url": "u3",
+      "title": "",
+      "folder": "ab",
+      "ts": 3
+     },
+     {
+      "url": "u4",
+      "title": "",
+      "folder": "",
+      "ts": 4
+     }
+    ],
+    "from": "a",
+    "to": ""
+   },
+   "out": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "",
+      "folder": "",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "",
+      "folder": "b",
+      "ts": 2
+     },
+     {
+      "url": "u3",
+      "title": "",
+      "folder": "ab",
+      "ts": 3
+     },
+     {
+      "url": "u4",
+      "title": "",
+      "folder": "",
+      "ts": 4
+     }
+    ]
+   }
+  },
+  {
+   "name": "bm_move_folder from the top level is a no-op",
+   "op": "bm_move_folder",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "",
+      "folder": "a",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "",
+      "folder": "a/b",
+      "ts": 2
+     },
+     {
+      "url": "u3",
+      "title": "",
+      "folder": "ab",
+      "ts": 3
+     },
+     {
+      "url": "u4",
+      "title": "",
+      "folder": "",
+      "ts": 4
+     }
+    ],
+    "from": " / ",
+    "to": "q"
+   },
+   "out": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "",
+      "folder": "a",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "",
+      "folder": "a/b",
+      "ts": 2
+     },
+     {
+      "url": "u3",
+      "title": "",
+      "folder": "ab",
+      "ts": 3
+     },
+     {
+      "url": "u4",
+      "title": "",
+      "folder": "",
+      "ts": 4
+     }
+    ]
+   }
+  },
+  {
+   "name": "bm_delete_folder removes the subtree",
+   "op": "bm_delete_folder",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "",
+      "folder": "a",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "",
+      "folder": "a/b",
+      "ts": 2
+     },
+     {
+      "url": "u3",
+      "title": "",
+      "folder": "ab",
+      "ts": 3
+     },
+     {
+      "url": "u4",
+      "title": "",
+      "folder": "",
+      "ts": 4
+     }
+    ],
+    "folder": "a"
+   },
+   "out": {
+    "bookmarks": [
+     {
+      "url": "u3",
+      "title": "",
+      "folder": "ab",
+      "ts": 3
+     },
+     {
+      "url": "u4",
+      "title": "",
+      "folder": "",
+      "ts": 4
+     }
+    ]
+   }
+  },
+  {
+   "name": "bm_delete_folder of the top level removes nothing",
+   "op": "bm_delete_folder",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "",
+      "folder": "a",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "",
+      "folder": "a/b",
+      "ts": 2
+     },
+     {
+      "url": "u3",
+      "title": "",
+      "folder": "ab",
+      "ts": 3
+     },
+     {
+      "url": "u4",
+      "title": "",
+      "folder": "",
+      "ts": 4
+     }
+    ],
+    "folder": ""
+   },
+   "out": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "",
+      "folder": "a",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "",
+      "folder": "a/b",
+      "ts": 2
+     },
+     {
+      "url": "u3",
+      "title": "",
+      "folder": "ab",
+      "ts": 3
+     },
+     {
+      "url": "u4",
+      "title": "",
+      "folder": "",
+      "ts": 4
+     }
+    ]
+   }
+  },
+  {
+   "name": "bm_edit changes title and folder, keeps the time",
+   "op": "bm_edit",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "T1",
+      "folder": "",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "T2",
+      "folder": "x",
+      "ts": 2
+     }
+    ],
+    "url": "u2",
+    "title": "",
+    "folder": "/q/"
+   },
+   "out": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "T1",
+      "folder": "",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "u2",
+      "folder": "q",
+      "ts": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "bm_edit of an unknown url changes nothing",
+   "op": "bm_edit",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "T1",
+      "folder": "",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "T2",
+      "folder": "x",
+      "ts": 2
+     }
+    ],
+    "url": "nope",
+    "title": "x",
+    "folder": "y"
+   },
+   "out": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "T1",
+      "folder": "",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "T2",
+      "folder": "x",
+      "ts": 2
+     }
+    ]
+   }
+  },
+  {
+   "name": "bm_sections: top level first, then folders sorted",
+   "op": "bm_sections",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "T",
+      "folder": "b",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "",
+      "folder": "",
+      "ts": 2
+     },
+     {
+      "url": "u3",
+      "title": "",
+      "folder": "a",
+      "ts": 3
+     },
+     {
+      "url": "u4",
+      "title": "",
+      "folder": "b",
+      "ts": 4
+     }
+    ]
+   },
+   "out": {
+    "sections": [
+     {
+      "folder": "",
+      "items": [
+       {
+        "url": "u2",
+        "title": "",
+        "folder": "",
+        "ts": 2
+       }
+      ]
+     },
+     {
+      "folder": "a",
+      "items": [
+       {
+        "url": "u3",
+        "title": "",
+        "folder": "a",
+        "ts": 3
+       }
+      ]
+     },
+     {
+      "folder": "b",
+      "items": [
+       {
+        "url": "u1",
+        "title": "T",
+        "folder": "b",
+        "ts": 1
+       },
+       {
+        "url": "u4",
+        "title": "",
+        "folder": "b",
+        "ts": 4
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "name": "bm_view narrows by chip, then every word of the query",
+   "op": "bm_view",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "https://gh.io/x",
+      "title": "Repo X",
+      "folder": "GH Pages/Lnktree",
+      "ts": 1
+     },
+     {
+      "url": "https://news.example/",
+      "title": "News",
+      "folder": "Public",
+      "ts": 2
+     },
+     {
+      "url": "https://gh.io/y",
+      "title": "Other",
+      "folder": "GH Pages",
+      "ts": 3
+     }
+    ],
+    "chip": "GH Pages",
+    "query": "x repo"
+   },
+   "out": {
+    "sections": [
+     {
+      "folder": "GH Pages/Lnktree",
+      "items": [
+       {
+        "url": "https://gh.io/x",
+        "title": "Repo X",
+        "folder": "GH Pages/Lnktree",
+        "ts": 1
+       }
+      ]
+     }
+    ],
+    "count": 1
+   }
+  },
+  {
+   "name": "bm_view with no chip and a blank query is every section",
+   "op": "bm_view",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "https://gh.io/x",
+      "title": "Repo X",
+      "folder": "GH Pages/Lnktree",
+      "ts": 1
+     },
+     {
+      "url": "https://news.example/",
+      "title": "News",
+      "folder": "Public",
+      "ts": 2
+     },
+     {
+      "url": "https://gh.io/y",
+      "title": "Other",
+      "folder": "GH Pages",
+      "ts": 3
+     }
+    ]
+   },
+   "out": {
+    "sections": [
+     {
+      "folder": "GH Pages",
+      "items": [
+       {
+        "url": "https://gh.io/y",
+        "title": "Other",
+        "folder": "GH Pages",
+        "ts": 3
+       }
+      ]
+     },
+     {
+      "folder": "GH Pages/Lnktree",
+      "items": [
+       {
+        "url": "https://gh.io/x",
+        "title": "Repo X",
+        "folder": "GH Pages/Lnktree",
+        "ts": 1
+       }
+      ]
+     },
+     {
+      "folder": "Public",
+      "items": [
+       {
+        "url": "https://news.example/",
+        "title": "News",
+        "folder": "Public",
+        "ts": 2
+       }
+      ]
+     }
+    ],
+    "count": 3
+   }
+  },
+  {
+   "name": "bm_view over given sections",
+   "op": "bm_view",
+   "in": {
+    "sections": [
+     {
+      "folder": "f",
+      "items": [
+       {
+        "url": "u1",
+        "title": "Alpha",
+        "folder": "f",
+        "ts": 1
+       },
+       {
+        "url": "u2",
+        "title": "Beta",
+        "folder": "f",
+        "ts": 2
+       }
+      ]
+     },
+     {
+      "folder": "g",
+      "items": [
+       {
+        "url": "u3",
+        "title": "Gamma",
+        "folder": "g",
+        "ts": 3
+       }
+      ]
+     }
+    ],
+    "query": "beta"
+   },
+   "out": {
+    "sections": [
+     {
+      "folder": "f",
+      "items": [
+       {
+        "url": "u2",
+        "title": "Beta",
+        "folder": "f",
+        "ts": 2
+       }
+      ]
+     }
+    ],
+    "count": 1
+   }
+  },
+  {
+   "name": "bm_merge_seed applies each entry once, moves a legacy group, never re-adds a seen one",
+   "op": "bm_merge_seed",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "User T",
+      "folder": "mine",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "Old",
+      "folder": "Legacy",
+      "ts": 2
+     }
+    ],
+    "seed": {
+     "version": 3,
+     "items": [
+      {
+       "title": "S1",
+       "url": "u1",
+       "group": "Public"
+      },
+      {
+       "title": "S2",
+       "url": "u2",
+       "group": "Public"
+      },
+      {
+       "title": "S3",
+       "url": "u3",
+       "group": " Private (mesh) "
+      }
+     ],
+     "legacyGroups": [
+      "Legacy"
+     ]
+    },
+    "seen": [
+     "u1"
+    ],
+    "now": 50,
+    "stored_version": 2
+   },
+   "out": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "User T",
+      "folder": "mine",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "Old",
+      "folder": "Public",
+      "ts": 2
+     },
+     {
+      "url": "u3",
+      "title": "S3",
+      "folder": "Private (mesh)",
+      "ts": 50
+     }
+    ],
+    "seen": [
+     "u1",
+     "u2",
+     "u3"
+    ],
+    "changed": true
+   }
+  },
+  {
+   "name": "bm_merge_seed with everything seen and the version stored is not a write",
+   "op": "bm_merge_seed",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "User T",
+      "folder": "mine",
+      "ts": 1
+     }
+    ],
+    "seed": {
+     "version": 3,
+     "items": [
+      {
+       "title": "S1",
+       "url": "u1",
+       "group": "Public"
+      }
+     ],
+     "legacyGroups": []
+    },
+    "seen": [
+     "u1"
+    ],
+    "now": 50,
+    "stored_version": 3
+   },
+   "out": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "User T",
+      "folder": "mine",
+      "ts": 1
+     }
+    ],
+    "seen": [
+     "u1"
+    ],
+    "changed": false
+   }
+  },
+  {
+   "name": "bm_merge_seed with no items does nothing",
+   "op": "bm_merge_seed",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "User T",
+      "folder": "mine",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "Old",
+      "folder": "Legacy",
+      "ts": 2
+     }
+    ],
+    "seed": {
+     "version": 1,
+     "items": []
+    },
+    "seen": [],
+    "now": 1,
+    "stored_version": 0
+   },
+   "out": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "User T",
+      "folder": "mine",
+      "ts": 1
+     },
+     {
+      "url": "u2",
+      "title": "Old",
+      "folder": "Legacy",
+      "ts": 2
+     }
+    ],
+    "changed": false
+   }
+  },
+  {
+   "name": "bm_export is a versioned document",
+   "op": "bm_export",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "u",
+      "title": "T",
+      "folder": "f",
+      "ts": 1
+     }
+    ]
+   },
+   "out": {
+    "doc": {
+     "format": "cloud-browser-bookmarks",
+     "version": 1,
+     "count": 1,
+     "bookmarks": [
+      {
+       "url": "u",
+       "title": "T",
+       "folder": "f",
+       "ts": 1
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "bm_import: newer replaces, new rows appended with a normalised folder, blank skipped",
+   "op": "bm_import",
+   "in": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "T1",
+      "folder": "",
+      "ts": 5
+     }
+    ],
+    "doc": {
+     "bookmarks": [
+      {
+       "url": "u1",
+       "title": "T1 new",
+       "folder": "a",
+       "ts": 9
+      },
+      {
+       "url": "u2",
+       "title": "T2",
+       "folder": " x/y ",
+       "ts": 3
+      },
+      {
+       "url": ""
+      },
+      {
+       "url": "u1",
+       "title": "T1 stale",
+       "folder": "",
+       "ts": 1
+      }
+     ]
+    }
+   },
+   "out": {
+    "bookmarks": [
+     {
+      "url": "u1",
+      "title": "T1 new",
+      "folder": "a",
+      "ts": 9
+     },
+     {
+      "url": "u2",
+      "title": "T2",
+      "folder": "x/y",
+      "ts": 3
+     }
+    ],
+    "added": 1,
+    "updated": 1,
+    "unchanged": 1,
+    "skipped": 1
+   }
+  },
+  {
+   "name": "bm_import error",
+   "op": "bm_import",
+   "in": {
+    "bookmarks": [],
+    "text": "[oops"
+   },
+   "out": {
+    "error": "not_json"
+   }
+  },
+  {
+   "name": "migrate history: the old reader's quirks become the canonical list",
+   "op": "migrate",
+   "in": {
+    "kind": "history",
+    "raw": "[{\"url\": \"https://a.example/\", \"title\": \"A\", \"ts\": 5}, {\"url\": \"  \", \"title\": \"blank\", \"ts\": 9}, {\"url\": \"https://b.example/\", \"ts\": 9}, {\"title\": \"no url\"}, 7, {\"url\": \"https://c.example/\", \"title\": \"C\"}]"
+   },
+   "out": {
+    "valid": true,
+    "count": 3,
+    "dropped": 3,
+    "changed": true,
+    "list": [
+     {
+      "url": "https://b.example/",
+      "title": "https://b.example/",
+      "ts": 9
+     },
+     {
+      "url": "https://a.example/",
+      "title": "A",
+      "ts": 5
+     },
+     {
+      "url": "https://c.example/",
+      "title": "C",
+      "ts": 0
+     }
+    ]
+   }
+  },
+  {
+   "name": "migrate history already canonical is not a rewrite",
+   "op": "migrate",
+   "in": {
+    "kind": "history",
+    "raw": "[{\"url\": \"u\", \"title\": \"T\", \"ts\": 2}]"
+   },
+   "out": {
+    "valid": true,
+    "count": 1,
+    "dropped": 0,
+    "changed": false
+   }
+  },
+  {
+   "name": "migrate history that is not a list is invalid (kept untouched by the caller)",
+   "op": "migrate",
+   "in": {
+    "kind": "history",
+    "raw": "oops"
+   },
+   "out": {
+    "valid": false,
+    "count": 0,
+    "dropped": 0
+   }
+  },
+  {
+   "name": "migrate bookmarks keeps the order and every field",
+   "op": "migrate",
+   "in": {
+    "kind": "bookmarks",
+    "raw": "[{\"url\": \"u1\", \"title\": \"T1\", \"folder\": \"a/b\", \"ts\": 3}, {\"url\": \"u2\"}, {\"url\": \"\"}]"
+   },
+   "out": {
+    "valid": true,
+    "count": 2,
+    "dropped": 1,
+    "changed": true,
+    "list": [
+     {
+      "url": "u1",
+      "title": "T1",
+      "folder": "a/b",
+      "ts": 3
+     },
+     {
+      "url": "u2",
+      "title": "u2",
+      "folder": "",
+      "ts": 0
+     }
+    ]
+   }
+  },
+  {
+   "name": "migrate bookmarks already canonical",
+   "op": "migrate",
+   "in": {
+    "kind": "bookmarks",
+    "raw": "[{\"url\": \"u1\", \"title\": \"T1\", \"folder\": \"a/b\", \"ts\": 3}]"
+   },
+   "out": {
+    "valid": true,
+    "count": 1,
+    "dropped": 0,
+    "changed": false
+   }
+  },
+  {
+   "name": "migrate quickmarks",
+   "op": "migrate",
+   "in": {
+    "kind": "weby",
+    "raw": "[{\"title\": \"F\", \"tiles\": [{\"id\": \"i\", \"label\": \"L\", \"url\": \" \"}, {\"id\": \"j\", \"label\": \"M\", \"url\": \"https://m/\", \"pkg\": \"com.m\"}, 4], \"folders\": [{\"title\": \"G\"}]}, \"junk\"]"
+   },
+   "out": {
+    "valid": true,
+    "count": 1,
+    "dropped": 1,
+    "changed": true,
+    "list": [
+     {
+      "title": "F",
+      "tiles": [
+       {
+        "id": "i",
+        "label": "L",
+        "url": null
+       },
+       {
+        "id": "j",
+        "label": "M",
+        "url": "https://m/",
+        "pkg": "com.m"
+       }
+      ],
+      "folders": [
+       {
+        "title": "G",
+        "tiles": [],
+        "folders": []
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "name": "migrate visit log",
+   "op": "migrate",
+   "in": {
+    "kind": "visitlog",
+    "raw": "[{\"u\": \"a\", \"t\": \"A\", \"s\": 3}, {\"u\": \"b\"}]"
+   },
+   "out": {
+    "valid": true,
+    "count": 2,
+    "dropped": 0,
+    "changed": true,
+    "list": [
+     {
+      "u": "a",
+      "t": "A",
+      "s": 3
+     },
+     {
+      "u": "b",
+      "t": "b",
+      "s": 0
+     }
+    ]
+   }
+  },
+  {
+   "name": "weby_load of nothing is the seed (null)",
+   "op": "weby_load",
+   "in": {
+    "raw": "oops"
+   },
+   "out": {
+    "folders": null
+   }
+  },
+  {
+   "name": "weby_load reads folders and tiles",
+   "op": "weby_load",
+   "in": {
+    "raw": "[{\"title\": \"F\", \"tiles\": [{\"id\": \"i\", \"label\": \"L\", \"url\": \" \"}, {\"id\": \"j\", \"label\": \"M\", \"url\": \"https://m/\", \"pkg\": \"com.m\"}, 4], \"folders\": [{\"title\": \"G\"}]}, \"junk\"]"
+   },
+   "out": {
+    "folders": [
+     {
+      "title": "F",
+      "tiles": [
+       {
+        "id": "i",
+        "label": "L",
+        "url": null
+       },
+       {
+        "id": "j",
+        "label": "M",
+        "url": "https://m/",
+        "pkg": "com.m"
+       }
+      ],
+      "folders": [
+       {
+        "title": "G",
+        "tiles": [],
+        "folders": []
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "name": "weby_all: browser bookmarks by folder, Quickmarks, then the catalogue",
+   "op": "weby_all",
+   "in": {
+    "quick": [
+     {
+      "title": "Apps",
+      "tiles": [
+       {
+        "id": "p",
+        "label": "P",
+        "url": null
+       }
+      ],
+      "folders": []
+     }
+    ],
+    "browser": [
+     {
+      "url": "https://x.io/a",
+      "title": "X",
+      "folder": ""
+     },
+     {
+      "url": "https://y.io/",
+      "title": " ",
+      "folder": "a/b"
+     }
+    ],
+    "catalogue": [
+     {
+      "title": "Phone apps",
+      "tiles": [
+       {
+        "id": "q",
+        "label": "Q",
+        "url": null,
+        "icon": "ic"
+       }
+      ],
+      "folders": []
+     }
+    ]
+   },
+   "out": {
+    "folders": [
+     {
+      "title": "Browser bookmarks",
+      "tiles": [
+       {
+        "id": "u:https://x.io/a",
+        "label": "X",
+        "url": "https://x.io/a"
+       }
+      ],
+      "folders": [
+       {
+        "title": "a-b",
+        "tiles": [
+         {
+          "id": "u:https://y.io/",
+          "label": "y.io",
+          "url": "https://y.io/"
+         }
+        ],
+        "folders": []
+       }
+      ]
+     },
+     {
+      "title": "Quickmarks",
+      "tiles": [],
+      "folders": [
+       {
+        "title": "Apps",
+        "tiles": [
+         {
+          "id": "p",
+          "label": "P",
+          "url": null
+         }
+        ],
+        "folders": []
+       }
+      ]
+     },
+     {
+      "title": "Phone apps",
+      "tiles": [
+       {
+        "id": "q",
+        "label": "Q",
+        "url": null,
+        "icon": "ic"
+       }
+      ],
+      "folders": []
+     }
+    ]
+   }
+  },
+  {
+   "name": "weby_all with nothing but the catalogue",
+   "op": "weby_all",
+   "in": {
+    "quick": [],
+    "browser": [],
+    "catalogue": [
+     {
+      "title": "Phone apps",
+      "tiles": [
+       {
+        "id": "q",
+        "label": "Q",
+        "url": null,
+        "icon": "ic"
+       }
+      ],
+      "folders": []
+     }
+    ]
+   },
+   "out": {
+    "folders": [
+     {
+      "title": "Phone apps",
+      "tiles": [
+       {
+        "id": "q",
+        "label": "Q",
+        "url": null,
+        "icon": "ic"
+       }
+      ],
+      "folders": []
+     }
+    ]
+   }
+  }
+ ]
+}

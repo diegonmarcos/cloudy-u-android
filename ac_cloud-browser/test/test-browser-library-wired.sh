@@ -32,8 +32,8 @@ def check(root, ok):
     ok("addToHome(url, name, st.icon)" in frag and "showAddToHome(url, wv?.title.orEmpty(), wv?.favicon)" in frag and "IconCompat.createWithBitmap" in frag
        and "IconCompat.createWithResource(ctx, ctx.applicationInfo.icon)" in frag,
        "#1604 the pinned shortcut uses the page's real title + favicon, falling back to the app icon")
-    ok("BrowserBookmarkOps.add(all()" in bm and "BrowserBookmarkOps.moveFolder(all()" in bm and "BrowserBookmarkOps.deleteFolder(all()" in bm,
-       "the store applies the pure (tested) folder rules, not its own")
+    ok('"bm_add"' in bm and '"bm_move_folder"' in bm and '"bm_delete_folder"' in bm and "object BrowserBookmarkOps" in bm,
+       "the store applies the folder rules of the browser core (#1841: Rust, held to the pure BrowserBookmarkOps by BrowserCoreListsTest), not its own")
     ok("fun showHistory(" in frag and "BrowserListScreen(\"History\"" in frag, "history is the Compose list page")
     ok(not __import__("re").search(r"(?<!Horizontal)ScrollView", frag), "the View history page is gone")
     for op in ("bookmarks", "bookmarks/add", "bookmarks/remove", "bookmarks/folders", "bookmarks/folder/rename",

@@ -1,6 +1,7 @@
 package com.diegonmarcos.superapp.browser
 
 import android.content.Context
+import com.diegonmarcos.cloudlib.browsercore.BrowserCore
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -22,23 +23,34 @@ data class BrowserVisit(val url: String, val title: String, val ts: Long)
  */
 class BrowserHistory(context: Context) {
 
-    private val sp = context.applicationContext
-        .getSharedPreferences("browser_history", Context.MODE_PRIVATE)
+    private val ctx = context.applicationContext
+    private val sp = ctx.getSharedPreferences("browser_history", Context.MODE_PRIVATE)
+
+    /**
+     * #1841 the list is the browser core's (libs:browser-core-rs lists.rs: model, dedupe, cap, sort, frecency, search; its Kotlin twin when
+     * the library is not loaded). The stored text keeps its prefs file, key and schema ([BrowserListMigration] normalises it once, keeping a
+     * backup). There is still no exporter here: the core can write and read a history document, this class does not offer it.
+     */
+    fun rawJson(): String {
+        BrowserListMigration.ensure(ctx, "history", PREFS, KEY)
+        return sp.getString(KEY, "[]") ?: "[]"
+    }
+
+    private fun visits(a: JSONObject): List<BrowserVisit> {
+        val arr = a.optJSONArray("visits") ?: JSONArray()
+        return (0 until arr.length()).mapNotNull { arr.optJSONObject(it) }.map { BrowserVisit(it.optString("url"), it.optString("title"), it.optLong("ts")) }
+    }
 
     /** Newest first. */
-    fun all(): List<BrowserVisit> {
-        val raw = sp.getString(KEY, "[]") ?: "[]"
-        val arr = runCatching { JSONArray(raw) }.getOrDefault(JSONArray())
-        val out = ArrayList<BrowserVisit>(arr.length())
-        for (i in 0 until arr.length()) {
-            val o = arr.optJSONObject(i) ?: continue
-            val u = o.optString("url")
-            if (u.isNotBlank()) {
-                out.add(BrowserVisit(u, o.optString("title", u), o.optLong("ts", 0L)))
-            }
-        }
-        return out.sortedByDescending { it.ts }
-    }
+    fun all(): List<BrowserVisit> = visits(BrowserCore.lists("history_load", JSONObject().put("raw", rawJson())))
+
+    /**
+     * The visits whose title or address contain [query] (blank = all), ordered by [sort] ("input" = newest first as stored, "recent",
+     * "oldest", "frecency", "title", "host"); [ranked] = the address bar's ranking instead (best match first).
+     */
+    fun query(query: String, sort: String = "input", limit: Int = Int.MAX_VALUE, ranked: Boolean = false): List<BrowserVisit> =
+        visits(BrowserCore.lists("history_query", JSONObject().put("raw", rawJson()).put("query", query).put("sort", sort)
+            .put("limit", limit).put("mode", if (ranked) "ranked" else "filter").put("now", System.currentTimeMillis())))
 
     /**
      * Record a visit. Re-visiting a URL moves it up rather than adding a
@@ -46,26 +58,23 @@ class BrowserHistory(context: Context) {
      * which is what makes it useful as a suggestion source.
      */
     fun record(url: String, title: String) {
-        if (url.isBlank() || url == "about:blank") return
-        val list = all().filterNot { it.url == url }.toMutableList()
-        list.add(0, BrowserVisit(url, title.ifBlank { url }, System.currentTimeMillis()))
-        save(list.take(CAP))
+        synchronized(LOCK) {
+            val a = BrowserCore.lists("history_record", JSONObject().put("raw", rawJson()).put("url", url).put("title", title)
+                .put("now", System.currentTimeMillis()).put("cap", CAP))
+            if (a.optBoolean("recorded")) save(a.getString("raw"))
+        }
     }
 
-    fun clear() = save(emptyList())
+    fun clear() = synchronized(LOCK) { save("[]") }
 
-    private fun save(visits: List<BrowserVisit>) {
-        val arr = JSONArray()
-        for (v in visits) {
-            arr.put(JSONObject().apply {
-                put("url", v.url); put("title", v.title); put("ts", v.ts)
-            })
-        }
-        sp.edit().putString(KEY, arr.toString()).apply()
+    private fun save(raw: String) {
+        sp.edit().putString(KEY, raw).apply()
     }
 
     companion object {
+        private const val PREFS = "browser_history"
         private const val KEY = "history_json"
+        private val LOCK = Any()
         /** ponytail: a flat cap, not time-based expiry. Add expiry if he asks for it. */
         private const val CAP = 500
     }

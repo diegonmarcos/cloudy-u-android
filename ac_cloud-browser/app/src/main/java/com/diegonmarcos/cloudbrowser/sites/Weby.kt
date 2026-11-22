@@ -1,6 +1,8 @@
 package com.diegonmarcos.cloudbrowser.sites
 
 import android.content.Context
+import com.diegonmarcos.cloudlib.browsercore.BrowserCore
+import com.diegonmarcos.superapp.browser.BrowserListMigration
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -239,12 +241,44 @@ object WebyOps {
     }
 }
 
-/** The bookmarks as the user left them (`weby_bookmarks` prefs: config, they move with the phone); the seed until the first edit. */
+/**
+ * The bookmarks as the user left them (`weby_bookmarks` prefs: config, they move with the phone); the seed until the first edit.
+ * #1841 the folders are read and written by the browser core (lists.rs `weby_load` / `weby_encode`; its Kotlin twin without the library);
+ * the stored text keeps its key and schema, [BrowserListMigration] normalises it once with a backup.
+ */
 class WebyStore(context: Context, private val seed: List<WebyFolder>) {
-    private val sp = context.applicationContext.getSharedPreferences("weby_bookmarks", Context.MODE_PRIVATE)
-    fun load(): List<WebyFolder> = WebyOps.fromJson(sp.getString(KEY, null)) ?: seed
-    fun save(list: List<WebyFolder>) { sp.edit().putString(KEY, WebyOps.toJson(list).toString()).apply() }
+    private val ctx = context.applicationContext
+    private val sp = ctx.getSharedPreferences("weby_bookmarks", Context.MODE_PRIVATE)
+    fun load(): List<WebyFolder> {
+        BrowserListMigration.ensure(ctx, "weby", "weby_bookmarks", KEY)
+        val a = BrowserCore.lists("weby_load", JSONObject().put("raw", sp.getString(KEY, null) ?: return seed)).opt("folders")
+        return if (a is JSONArray) WebyCore.fromCore(a) else seed
+    }
+    fun save(list: List<WebyFolder>) {
+        sp.edit().putString(KEY, BrowserCore.lists("weby_encode", JSONObject().put("folders", WebyCore.toCore(list))).getString("raw")).apply()
+    }
     private companion object { const val KEY = "folders_json" }
+}
+
+/** #1841 Weby's folders as the core's json (every field a tile has, the icon too) and back. */
+object WebyCore {
+    fun toCore(list: List<WebyFolder>): JSONArray = JSONArray().also { a ->
+        list.forEach { f ->
+            a.put(JSONObject().put("title", f.title)
+                .put("tiles", JSONArray().also { t ->
+                    f.tiles.forEach { x -> t.put(JSONObject().put("id", x.id).put("label", x.label).put("url", x.url ?: JSONObject.NULL).also { o -> x.pkg?.let { o.put("pkg", it) }; x.icon?.let { o.put("icon", it) } }) }
+                })
+                .put("folders", toCore(f.folders)))
+        }
+    }
+
+    fun fromCore(a: JSONArray?): List<WebyFolder> = if (a == null) emptyList() else (0 until a.length()).mapNotNull { a.optJSONObject(it) }.map { o ->
+        val t = o.optJSONArray("tiles") ?: JSONArray()
+        WebyFolder(o.optString("title"), (0 until t.length()).mapNotNull { t.optJSONObject(it) }.map { x ->
+            WebyTile(x.optString("id"), x.optString("label"), if (x.isNull("url")) null else x.optString("url").takeIf { u -> u.isNotBlank() },
+                x.optString("pkg").takeIf { p -> p.isNotBlank() }, x.optString("icon").takeIf { p -> p.isNotBlank() })
+        }, fromCore(o.optJSONArray("folders")))
+    }
 }
 
 /** #1842 one SuperApp icon as vector data: the viewport and the path strings of the drawable it was derived from (app/build.gradle bakes them, `ui.cloudy.webapps.icons`). */
@@ -273,7 +307,14 @@ object WebyBookmarks {
     const val QUICK = "Quickmarks"
     const val UNSORTED = "Unsorted"
 
+    /** #1841 the merge is the browser core's (lists.rs `weby_all`; its Kotlin twin without the library): [allRules] below is the readable rule and the parity reference. */
     fun all(quick: List<WebyFolder>, browser: List<Triple<String, String, String>>, catalogue: List<WebyFolder>): List<WebyFolder> {
+        val a = JSONObject().put("quick", WebyCore.toCore(quick)).put("catalogue", WebyCore.toCore(catalogue))
+            .put("browser", JSONArray().also { arr -> browser.forEach { (u, t, f) -> arr.put(JSONObject().put("url", u).put("title", t).put("folder", f)) } })
+        return WebyCore.fromCore(BrowserCore.lists("weby_all", a).optJSONArray("folders"))
+    }
+
+    fun allRules(quick: List<WebyFolder>, browser: List<Triple<String, String, String>>, catalogue: List<WebyFolder>): List<WebyFolder> {
         // browser = (url, title, folder)
         val byFolder = LinkedHashMap<String, MutableList<WebyTile>>()
         browser.forEach { (url, title, folder) ->

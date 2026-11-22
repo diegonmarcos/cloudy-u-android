@@ -37,5 +37,6 @@ internal object NativeBridge {
     @JvmStatic external fun nativeFilterBlocks(handle: Long, requestHost: String, pageHost: String, mainFrame: Boolean): Boolean
     @JvmStatic external fun nativeFilterBlocksUrl(handle: Long, url: String, requestHost: String, pageHost: String, mainFrame: Boolean): Boolean
     @JvmStatic external fun nativeOmnibox(op: String, a: String, b: String): String?
+    @JvmStatic external fun nativeLists(op: String, arg: String): String?
     @JvmStatic external fun nativePanicProbe(): String?
 }

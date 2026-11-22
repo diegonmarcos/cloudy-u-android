@@ -1,6 +1,7 @@
 package com.diegonmarcos.superapp.browser
 
 import android.content.Context
+import com.diegonmarcos.cloudlib.browsercore.BrowserCore
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -47,8 +48,11 @@ object BrowserBookmarkOps {
         list.forEach { arr.put(JSONObject().put("url", it.url).put("title", it.title).put("folder", it.folder).put("ts", it.ts)) }
     }
 
-    fun fromJson(raw: String?): List<BrowserBookmark> {
-        val arr = runCatching { JSONArray(raw ?: "[]") }.getOrDefault(JSONArray())
+    fun fromJson(raw: String?): List<BrowserBookmark> = fromArray(runCatching { JSONArray(raw ?: "[]") }.getOrDefault(JSONArray()))
+
+    /** #1841 the rows of a core answer (`bookmarks`, a section's `items`). */
+    fun fromArray(arr: JSONArray?): List<BrowserBookmark> {
+        arr ?: return emptyList()
         return (0 until arr.length()).mapNotNull { i ->
             val o = arr.optJSONObject(i) ?: return@mapNotNull null
             val u = o.optString("url")
@@ -57,26 +61,59 @@ object BrowserBookmarkOps {
     }
 }
 
-/** #802 bookmarks, persisted in the `browser_bookmarks` prefs (declared, class config: they move to a new phone). */
+/**
+ * #802 bookmarks, persisted in the `browser_bookmarks` prefs (declared, class config: they move to a new phone).
+ * #1841 the list logic (one per URL, folder paths, folder moves and deletes, the seed, sections, filter, import / export) is the browser
+ * core's (libs:browser-core-rs lists.rs; its Kotlin twin KtLists when the library is not loaded): this class reads the stored text, hands it
+ * to one core op and stores what comes back. The text keeps its key and schema; [BrowserListMigration] normalises it once, with a backup.
+ * [BrowserBookmarkOps] above stays as the readable rules and the parity reference.
+ */
 class BrowserBookmarks(context: Context) {
-    private val sp = context.applicationContext.getSharedPreferences("browser_bookmarks", Context.MODE_PRIVATE)
+    private val ctx = context.applicationContext
+    private val sp = ctx.getSharedPreferences("browser_bookmarks", Context.MODE_PRIVATE)
 
-    fun all(): List<BrowserBookmark> = BrowserBookmarkOps.fromJson(sp.getString(KEY, "[]"))
-    fun has(url: String) = all().any { it.url == url }
-    fun add(url: String, title: String, folder: String = "") =
-        save(BrowserBookmarkOps.add(all(), BrowserBookmark(url, title.ifBlank { url }, folder, System.currentTimeMillis())))
-    fun remove(url: String) = save(BrowserBookmarkOps.remove(all(), url))
-    fun folders() = BrowserBookmarkOps.folders(all())
-    fun moveFolder(from: String, to: String) = save(BrowserBookmarkOps.moveFolder(all(), from, to))
-    fun deleteFolder(folder: String) = save(BrowserBookmarkOps.deleteFolder(all(), folder))
+    private fun raw(): String {
+        BrowserListMigration.ensure(ctx, "bookmarks", "browser_bookmarks", KEY)
+        return sp.getString(KEY, "[]") ?: "[]"
+    }
+
+    /** One core op over the stored list. */
+    private fun op(name: String, args: JSONObject.() -> Unit = {}): JSONObject = BrowserCore.lists(name, JSONObject().put("raw", raw()).apply(args))
+
+    fun all(): List<BrowserBookmark> = BrowserBookmarkOps.fromArray(op("bm_load").optJSONArray("bookmarks"))
+    fun has(url: String) = op("bm_has") { put("url", url) }.optBoolean("has")
+    fun add(url: String, title: String, folder: String = "") = save(op("bm_add") { put("url", url).put("title", title).put("folder", folder).put("now", System.currentTimeMillis()) })
+    fun remove(url: String) = save(op("bm_remove") { put("url", url) })
+    fun folders(): List<String> = op("bm_folders").optJSONArray("folders").let { a -> if (a == null) emptyList<String>() else (0 until a.length()).map { a.optString(it) } }
+    fun moveFolder(from: String, to: String) = save(op("bm_move_folder") { put("from", from).put("to", to) })
+    fun deleteFolder(folder: String) = save(op("bm_delete_folder") { put("folder", folder) })
+
+    /** Folder -> bookmarks, the top level first (the Fav page's sections), from the core. */
+    fun sections(): List<Pair<String, List<BrowserBookmark>>> = BrowserFavourites.decodeSections(op("bm_sections").optJSONArray("sections"))
+
+    /** #1841 the bookmarks as a JSON document (format, version, count, bookmarks); [importJson] reads it (or a bare array) back. */
+    fun exportJson(): String = op("bm_export").getJSONObject("doc").toString(2)
+
+    /** Merge a document into the list: a newer row replaces, new rows are added. The counts, or `{"error": code}` (nothing is stored). */
+    fun importJson(text: String): JSONObject {
+        val r = op("bm_import") { put("text", text) }
+        if (!r.has("error")) save(r)
+        return r
+    }
 
     /** #893 apply the app's seed once per entry; what was applied is remembered, so a deleted seed link stays deleted. */
     fun applySeed(seed: FavSeed) {
         if (seed.items.isEmpty()) return
         val seen = sp.getStringSet(SEEN, emptySet()).orEmpty()
-        val (list, nowSeen) = BrowserFavourites.merge(all(), seed, seen, System.currentTimeMillis())
-        if (nowSeen == seen && sp.getInt(SEED_VERSION, 0) >= seed.version) return
-        sp.edit().putString(KEY, BrowserBookmarkOps.toJson(list).toString()).putStringSet(SEEN, nowSeen).putInt(SEED_VERSION, seed.version).apply()
+        val r = op("bm_merge_seed") {
+            put("seed", JSONObject().put("version", seed.version)
+                .put("items", JSONArray().also { a -> seed.items.forEach { a.put(JSONObject().put("title", it.title).put("url", it.url).put("group", it.group)) } })
+                .put("legacyGroups", JSONArray(seed.legacyGroups.toList())))
+            put("seen", JSONArray(seen.toList())).put("now", System.currentTimeMillis()).put("stored_version", sp.getInt(SEED_VERSION, 0))
+        }
+        if (!r.optBoolean("changed")) return
+        val nowSeen = r.optJSONArray("seen").let { a -> if (a == null) emptySet<String>() else (0 until a.length()).map { a.optString(it) }.toSet() }
+        sp.edit().putString(KEY, r.getString("raw")).putStringSet(SEEN, nowSeen).putInt(SEED_VERSION, seed.version).apply()
     }
 
     /** #893 list | grid, persisted. */
@@ -88,13 +125,10 @@ class BrowserBookmarks(context: Context) {
     fun toggleCollapsed(folder: String) { sp.edit().putStringSet(COLLAPSED, BrowserFavourites.toggle(collapsed(), folder)).apply() }
 
     /** #893 long-press ▸ edit / move: the title and folder of the bookmark at [url]. */
-    fun edit(url: String, title: String, folder: String) {
-        val cur = all().firstOrNull { it.url == url } ?: return
-        save(all().map { if (it.url == url) cur.copy(title = title.ifBlank { url }, folder = BrowserBookmarkOps.normFolder(folder)) else it })
-    }
+    fun edit(url: String, title: String, folder: String) = save(op("bm_edit") { put("url", url).put("title", title).put("folder", folder) })
 
-    private fun save(list: List<BrowserBookmark>) {
-        sp.edit().putString(KEY, BrowserBookmarkOps.toJson(list).toString()).apply()
+    private fun save(answer: JSONObject) {
+        sp.edit().putString(KEY, answer.getString("raw")).apply()
     }
 
     private companion object {
