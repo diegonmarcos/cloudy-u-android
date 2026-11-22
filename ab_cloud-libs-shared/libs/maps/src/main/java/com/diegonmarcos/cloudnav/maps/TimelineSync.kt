@@ -50,9 +50,9 @@ object TimelineSync {
         }
         val res = EngineTimeline.build(fixes, slices, daily, hc, labels, nowMs, zone)
         val segs = res.segments.filter { it.endMs >= fromMs }
-        // a full rebuild (the migration) keeps the legacy stop-based stays, moves and unplaced steps of any period the fix log does not cover
-        val legacy = if (fromMs > 0L) emptyList() else TimelineBuilder.build(labels, emptyList(), slices, nowMs, zone)
-            .filter { l -> segs.none { it.startMs < l.endMs && l.startMs < it.endMs } }
+        // every rebuild keeps the legacy stop-based stays, moves and unplaced steps of any period the fix log does not cover
+        val legacy = TimelineBuilder.build(labels, emptyList(), slices, nowMs, zone)
+            .filter { l -> l.endMs >= fromMs && segs.none { it.startMs < l.endMs && l.startMs < it.endMs } }
         db.replaceSegments(fromMs, (segs + legacy).sortedBy { it.startMs })
         val fromDate = java.time.Instant.ofEpochMilli(maxOf(fromMs, 0L)).atZone(zone).toLocalDate()
         db.replaceRollups(res.rollups.filter { fromMs <= 0L || it.date.isAfter(fromDate) })   // the oldest day of a window is only partly rebuilt
