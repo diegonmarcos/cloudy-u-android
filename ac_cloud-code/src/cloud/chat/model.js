@@ -433,8 +433,9 @@ export function toMessages(session, instruction) {
  * /v1/chat/completions with X-Agent-Mode and the agent's More headers; the direct backend:
  * OpenRouter with auth "openrouter" (the plugin adds the token, the page never sees it).
  */
-export function buildRequest({ chat, fleet, storage, agent, model, effort, mode, session, reasoning, health }) {
-	const instruction = permissionInstruction(chat, agent, mode);
+export function buildRequest({ chat, fleet, storage, agent, model, effort, mode, session, reasoning, health, extra = "" }) {
+	// `extra` (#1855 P4b): a repo-bound agent session appends its edit-format instruction; absent, the request is what it always was.
+	const instruction = [permissionInstruction(chat, agent, mode), extra].filter(Boolean).join("\n\n");
 	const body = { messages: toMessages(session, instruction), stream: true };
 	const m = requestModel(agent, model);
 	if (m) body.model = m;

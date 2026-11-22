@@ -13,6 +13,9 @@ import { option, sheet, toggleRow, page, closeOverlay } from "../chrome";
 import * as M from "./model";
 import * as E from "./engine";
 import fsOperation from "fileSystem";
+import { createAgent, FORMAT_INSTRUCTION } from "../agent/ui";
+import { addLog } from "../agent/log";
+import * as AC from "../agent/context";
 
 // nav.json is the tab's own declaration; the gateway and OpenRouter come from the shared AI contract (libs:ai ai.json),
 // copied into targets.gen.json by tools/resolve-targets.py (chat.ai): nothing here restates an endpoint or a path.
@@ -43,6 +46,9 @@ const S = {
 	engine: undefined,
 	// the request id the engine road is streaming (stop() cancels it through SuperIntel instead of the plugin)
 	engineStreaming: null,
+	// the agent loop (#1855 P4b): the host index.js hands over (file system, Drive bridge, network) and the controller built on it
+	host: null,
+	agent: null,
 };
 
 const plugin = () => window.CloudChat;
@@ -167,6 +173,79 @@ let $input;
 let $attach;
 let $controls;
 let $send;
+let $agent;
+let $chips;
+
+/** index.js hands the agent loop its host (file system, Drive bridge, network) once; the loop is built on first use. */
+export function setAgentHost(host) {
+	S.host = host;
+}
+
+function agentCtl() {
+	if (!S.agent && S.host) {
+		S.agent = createAgent(S.host, {
+			session: current,
+			persist,
+			redraw: () => { if ($list) drawMessages(); drawAgent(); },
+			appendInput: (t) => { if ($input) { $input.value = `${$input.value}${$input.value && !/\n$/.test($input.value) ? "\n" : ""}${t}`; $input.dispatchEvent(new Event("input")); } },
+			startSession: startAgentSession,
+			startContext: (s) => AC.startContext(s.ticket, s.repo),
+		});
+	}
+	return S.agent;
+}
+
+/**
+ * Start (or, with keep, bind) an agent session: a chat bound to one repository from the Workspace, optionally from a backlog ticket
+ * (id, subject and description become the first context, put in the composer for the user to read and send; nothing is sent by itself).
+ */
+export function startAgentSession({ repo, ticket = null, keep = false }) {
+	current();
+	let s = S.current;
+	if (!keep || s.messages.length) s = fresh();
+	if (keep && s === S.current && !S.sessions.includes(s)) S.sessions.unshift(s);
+	s.repo = { name: repo.name, path: repo.path, branch: repo.branch || "", volume: repo.volume || "" };
+	addLog(s, "session", `bound to ${repo.name}${repo.branch ? ` (${repo.branch})` : ""}${ticket ? ` from ticket #${ticket.id}` : ""}`);
+	console.log(`cloud-code agent session: repo=${repo.name}${ticket ? ` ticket=#${ticket.id}` : ""}`);
+	if (ticket) {
+		s.ticket = { id: ticket.id, subject: ticket.subject, description: ticket.description };
+		s.title = `#${ticket.id} ${ticket.subject}`.slice(0, 60);
+		s.draft = AC.startContext(s.ticket, s.repo);
+		addLog(s, "context", `ticket #${ticket.id} ${ticket.subject}`);
+	}
+	if (!S.sessions.includes(s)) S.sessions.unshift(s);
+	S.current = s;
+	persist();
+	if (S.panel) { takeDraft(); draw(); }
+	return s;
+}
+
+/** The Backlog's "Start agent session": choose the repository from the Workspace, then start the session from `ticket`. */
+export function startFromTicket(ticket) {
+	return agentCtl()?.bindRepo(ticket);
+}
+
+/** The emulator walk's hook (agent-test-flow.json in the app's own data dir); a no-op without that file. */
+export function runDebugFlow() {
+	return agentCtl()?.debugFlow();
+}
+
+function takeDraft() {
+	const s = S.current;
+	if (s?.draft && $input) {
+		$input.value = s.draft;
+		delete s.draft;
+		$input.dispatchEvent(new Event("input"));
+	}
+}
+
+function drawAgent() {
+	if (!$agent) return;
+	const c = agentCtl();
+	const node = c ? c.panel(current()) : null;
+	$agent.replaceChildren(...(node ? [node] : []));
+	if ($chips && c) $chips.replaceChildren(c.chipsRow());
+}
 
 export async function renderChat(panel, chrome) {
 	await seedFromMirror();
@@ -182,13 +261,16 @@ export async function renderChat(panel, chrome) {
 	});
 	$send = el("button", { className: "cloud-chat-send", title: "Send", onclick: () => (S.streaming ? stop() : send()) }, icon("send"));
 	$controls = el("div", { className: "cloud-chat-controls" });
-	const composer = el("div", { className: "cloud-chat-composer" }, $attach, el("div", { className: "cloud-chat-row" }, $input, $send), $controls);
+	$agent = el("div", { className: "cloud-agent" });
+	$chips = el("div", { className: "cloud-agent-chipbox" });
+	const composer = el("div", { className: "cloud-chat-composer" }, $chips, $attach, el("div", { className: "cloud-chat-row" }, $input, $send), $controls);
 	panel.classList.add("cloud-chat-panel");
 	// The design's sizes as custom properties: cloud.scss restates none of them.
 	for (const [k, v] of Object.entries(design.metrics)) document.documentElement.style.setProperty(`--ai-${k.replaceAll("_", "-")}`, String(v));
 	if (S.collapsed === undefined) S.collapsed = (localStorage.getItem(COLLAPSE_KEY) ?? (design.composer.collapse.default === "collapsed" ? "1" : "0")) === "1";
-	panel.replaceChildren(chrome.bar("AI"), $list, composer);
+	panel.replaceChildren(chrome.bar("AI"), $list, $agent, composer);
 	draw();
+	takeDraft();
 	refreshLive().catch(() => {});
 	refreshEngine().catch(() => {});
 }
@@ -200,6 +282,7 @@ function draw() {
 	if (!S.panel.hidden) S.chrome.bar(a ? a.label : "AI", M.title(s)); // the island belongs to the tab on screen
 	drawMessages();
 	drawControls();
+	drawAgent();
 }
 
 function drawMessages() {
@@ -673,6 +756,7 @@ async function send() {
 	if (!a) return toast("No agent can be reached");
 	if (!S.sessions.includes(s)) S.sessions.unshift(s);
 	s.messages.push({ role: "user", content: text, attachments: S.pending.splice(0) });
+	if (s.repo) addLog(s, "prompt", `${text.length} characters sent to ${a.label}`);
 	$input.value = "";
 	$input.style.height = "auto";
 	await stream(s, a);
@@ -688,7 +772,7 @@ async function retry() {
 function stream(s, a) {
 	let req;
 	try {
-		req = M.buildRequest({ chat, fleet, storage: localStorage, agent: a, model: modelOf(a), effort: s.effort, mode: s.mode, session: s, reasoning: S.reasoning, health: S.health });
+		req = M.buildRequest({ chat, fleet, storage: localStorage, agent: a, model: modelOf(a), effort: s.effort, mode: s.mode, session: s, reasoning: S.reasoning, health: S.health, extra: s.repo ? FORMAT_INSTRUCTION : "" });
 	} catch (e) {
 		s.messages.push({ role: "assistant", content: "", error: String(e?.message || e) });
 		persist();
@@ -735,6 +819,7 @@ function stream(s, a) {
 			s.updated = Date.now();
 			persist();
 			drawMessages();
+			if (s.repo && S.host && !reply.error) agentCtl()?.onReply(s, reply).catch(() => {});
 			resolve();
 		};
 		// The direct road: this app's own gateway / OpenRouter request through the CloudChat plugin (kept, and the fallback of the engine road).

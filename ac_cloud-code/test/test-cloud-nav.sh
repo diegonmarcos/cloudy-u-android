@@ -66,6 +66,68 @@ while IFS= read -r line; do
 done <<< "$ae_out"
 [ "$ae_checks" -ge 60 ] || fail "the aiengine driver made only $ae_checks checks"
 
+# ── #1855 P4b the agentic loop: edit parsing, path validation, the pending-change state machine, the session log, the chips and CI follow-up, proven with mutations ──
+ag_out="$(node "$ROOT/test/agent.mjs" "$ROOT" 2>&1)"
+ag_status=$?
+[ "$ag_status" -eq 0 ] || fail "agent driver crashed (exit $ag_status): $ag_out"
+ag_checks=0
+while IFS= read -r line; do
+  case "$line" in
+    "CHECK ok "*)  ok "${line#CHECK ok }"; ag_checks=$((ag_checks + 1)) ;;
+    "CHECK bad "*) fail "${line#CHECK bad }"; ag_checks=$((ag_checks + 1)) ;;
+  esac
+done <<< "$ag_out"
+[ "$ag_checks" -ge 100 ] || fail "the agent driver made only $ag_checks checks"
+# Each mutation breaks one rule in a COPY of the sources; the driver must then report a failed check.
+ag_root="$(mktemp -d)"
+ag_mutate() { # name file old new
+  rm -rf "$ag_root/copy" && mkdir -p "$ag_root/copy/src" && cp -r "$ROOT/src/cloud" "$ag_root/copy/src/cloud"
+  python3 - "$ag_root/copy/src/cloud/$2" "$3" "$4" <<'PY' || { fail "agent mutation '$1' could not be applied"; return; }
+import sys
+p, old, new = sys.argv[1:4]
+s = open(p).read()
+assert old in s, "mutation target not found: " + old
+open(p, "w").write(s.replace(old, new, 1))
+PY
+  mut_out="$(node "$ROOT/test/agent.mjs" "$ag_root/copy" 2>&1)"
+  if grep -q '^CHECK bad ' <<<"$mut_out"; then ok "agent mutation '$1' is caught"; else fail "agent mutation '$1' was NOT caught: the agent test is blind to it"; fi
+}
+ag_mutate "dot segments allowed" agent/edits.js 'parts.some((p) => p === "." || p === "..")' 'false'
+ag_mutate "absolute paths allowed" agent/edits.js 'if (rel.startsWith("/") ||' 'if ('
+ag_mutate ".git allowed" agent/edits.js 'p.toLowerCase() === ".git"' 'false'
+ag_mutate "backslash allowed" agent/edits.js 'if (rel.includes("\\")) return "backslash in path";' ''
+ag_mutate "root check dropped" agent/edits.js 'if (pathProblem(rel)) return null;' ''
+ag_mutate "relative root accepted" agent/edits.js '!root.startsWith("/") ||' ''
+ag_mutate "size cap off" agent/edits.js 'if (bytes > MAX_FILE_BYTES)' 'if (false)'
+ag_mutate "cap counts characters" agent/edits.js 'const bytes = byteLength(e.newContent);' 'const bytes = e.newContent.length;'
+ag_mutate "edit count cap off" agent/edits.js 'if (out.edits.length >= MAX_EDITS)' 'if (false)'
+ag_mutate "total cap off" agent/edits.js 'if (total + bytes > MAX_TOTAL_BYTES)' 'if (false)'
+ag_mutate "duplicate paths allowed" agent/edits.js 'if (seen.has(key))' 'if (false)'
+ag_mutate "extra keys allowed" agent/edits.js 'if (keys !== "newContent,path")' 'if (false)'
+ag_mutate "two edits blocks allowed" agent/edits.js 'if (blocks.length !== 1)' 'if (blocks.length < 1)'
+ag_mutate "auto-accept" agent/pending.js 'if (to === "accepted" && by !== "user")' 'if (false)'
+ag_mutate "pending jumps to written" agent/pending.js 'pending: ["accepted", "rejected"]' 'pending: ["accepted", "rejected", "written"]'
+ag_mutate "written can be rejected" agent/pending.js 'written: []' 'written: ["rejected"]'
+ag_mutate "rejected can be accepted" agent/pending.js 'rejected: []' 'rejected: ["accepted"]'
+ag_mutate "unchanged can be accepted" agent/pending.js 'if (to === "accepted" && change.unchanged)' 'if (false)'
+ag_mutate "stale check blind" agent/pending.js 'change.baseHash === hash(current)' 'true'
+ag_mutate "diff drops the added lines" agent/pending.js 'ops.push(["+", y[j++]])' 'j++'
+ag_mutate "diff has no hunk header" agent/pending.js 'out.push(`@@ -${ac ? ai : ai - 1},${ac} +${bc ? bi : bi - 1},${bc} @@`);' ''
+ag_mutate "log accepts any kind" agent/log.js 'if (!KINDS.includes(kind)) return null;' ''
+ag_mutate "log unbounded" agent/log.js 'if (session.log.length > MAX_ENTRIES)' 'if (false)'
+ag_mutate "context unbounded" agent/context.js 'const cut = t.length > max;' 'const cut = false;'
+ag_mutate "run url regex loosened" agent/context.js 'm = s.match(/^\d{5,}$/);' 'm = s.match(/^\d+$/);'
+ag_mutate "private repo shows runs" agent/context.js 'if (status === 404 || status === 401)' 'if (false)'
+ag_mutate "slug from any host" agent/context.js 'github\.com[:/]' '[:/]'
+ag_mutate "ticket note drops the run" agent/context.js 'run ? `CI run: ${run.id}' 'false ? `CI run: ${run.id}'
+ag_mutate "UI accepts without the user" agent/ui.js 'move(s.changes[i], "accepted", { by: "user" })' 'move(s.changes[i], "accepted", { by: "agent" })'
+ag_mutate "UI skips the stale check" agent/ui.js 'stillBase(a.change, now)' 'true'
+ag_mutate "UI loses Review in Changes" agent/ui.js '"Review in Changes"' '"Review"'
+ag_mutate "host skips path validation" index.js 'const url = resolveInRoot(rootPath, rel);' 'const url = `file://${rootPath}/${rel}`;'
+ag_mutate "format instruction always sent" chat/view.js 'extra: s.repo ? FORMAT_INSTRUCTION : ""' 'extra: FORMAT_INSTRUCTION'
+ag_mutate "Backlog loses Start agent session" index.js 'startFromTicket(ticket)' 'void ticket'
+rm -rf "$ag_root"
+
 # ── #1855 P3 IDE shell: every pre-P3 tab, sub-page, drawer item and deep-link id still lands (rule 16), proven with mutations ──
 np_out="$(node "$ROOT/test/nav_parity.mjs" "$ROOT" 2>&1)"
 np_status=$?

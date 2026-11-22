@@ -9,6 +9,7 @@
 # #1855 P4a with a Cloud Drive APK (optional 4th argument) installed and a fixture repository holding a modified, a new and an untracked
 # file, the Changes tab lists those files through Drive's repo-workspace v2 (asserted from the page's console line) and is screenshotted,
 # as is the diff of the first file.
+# #1855 P4b it then runs the agentic loop on that fixture (ticket -> session -> canned reply -> pending edit -> accept -> Changes), screenshots included.
 # Usage: emulator-code-backlog.sh APK PACKAGE OUT_DIR [DRIVE_APK]
 set -uo pipefail
 APK="$1"; PKG="$2"; OUT="$3"; DRIVE_APK="${4:-}"; mkdir -p "$OUT"
@@ -139,6 +140,47 @@ if [ -n "$DRIVE_APK" ] && [ -f "$DRIVE_APK" ]; then
     $T adb logcat -d | grep -E "cloud-code changes diff" > "$OUT/console-diff.txt" || true
     if grep -qE "changes-fixture/.* lines=[1-9]" "$OUT/console-diff.txt"; then echo "PASS diff: $(tail -1 "$OUT/console-diff.txt" | cut -c1-200)"; else echo "FAIL diff: no diff view opened from a file row"; rc=1; fi
     shot changes-diff 2
+
+    # #1855 P4b the agentic loop on the same fixture repository: a ticket in a fixture clone of the backlog, then an agent session started
+    # from it (the app's debug hook reads agent-test-flow.json from its own external data dir, which only adb can write: the model reply is
+    # CANNED, no network), a PENDING edit with its diff, Accept (a second flow resumes the session), the file written into the working
+    # tree, and the Changes tab listing it. The same code paths run as for a tap; nothing is committed.
+    TASKS="$CLONE/1___BACKLOG___/1.1.Product-Backlog/tasks/fixture-session"
+    mkdir -p "$OUT/fxtask"
+    printf '{"id":"1999","subject":"Fixture ticket for the agent loop","description":"Add agent-note.txt and note the change in notes.txt.","status":"pending"}\n' > "$OUT/fxtask/1999.json"
+    $T adb shell mkdir -p "$CLONE/1___BACKLOG___/1.1.Product-Backlog/tasks"; $T adb shell mkdir -p "$TASKS"; $T adb push "$OUT/fxtask/1999.json" "$TASKS/1999.json" >/dev/null
+    EXT="/sdcard/Android/data/$PKG/files"
+    python3 - "$OUT" <<'PY'
+import json, sys
+out = sys.argv[1]
+reply = ("<plan>\n1. Create agent-note.txt.\n2. Append a line to notes.txt.\n</plan>\n<edits>\n"
+         + json.dumps([{"path": "agent-note.txt", "newContent": "written by the agent session\n"},
+                       {"path": "notes.txt", "newContent": "alpha\nBETA changed\ngamma\ndelta\nagent was here\n"}])
+         + "\n</edits>")
+json.dump({"repo": "changes-fixture", "ticket_id": "1999", "reply": reply, "accept": False}, open(out + "/flow-propose.json", "w"))
+json.dump({"resume": True, "accept": True}, open(out + "/flow-accept.json", "w"))
+PY
+    agent_flow() { # NAME FLOWFILE: restart the app with the flow dropped in its data dir, open the Agent tab, wait for the hook
+        $T adb shell mkdir -p "$EXT"; $T adb push "$OUT/$2" "$EXT/agent-test-flow.json" >/dev/null || echo "WARN: could not place the flow in $EXT"
+        $T adb shell am force-stop "$PKG"; $T adb logcat -c || true
+        $T adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
+        sleep 25; dismiss; sleep 8
+        tapf 50 92; sleep 3; tapf 50 92; sleep 14
+        $T adb logcat -d | grep -E "cloud-code agent" > "$OUT/console-agent-$1.txt" || true
+    }
+    agent_flow propose flow-propose.json
+    if grep -q "agent session: repo=changes-fixture ticket=#1999" "$OUT/console-agent-propose.txt" && grep -q "agent proposed: agent-note.txt" "$OUT/console-agent-propose.txt" && grep -q "agent proposed: notes.txt" "$OUT/console-agent-propose.txt"; then echo "PASS agent: session from ticket #1999, two edits proposed"; else echo "FAIL agent: no session from the fixture ticket / no proposed edits"; rc=1; fi
+    if $T adb shell test -e /sdcard/CloudDrive/git/changes-fixture/agent-note.txt; then echo "FAIL agent: a file was written before Accept"; rc=1; else echo "PASS agent: nothing written while the edits are pending"; fi
+    shot agent-pending 2
+    agent_flow accept flow-accept.json
+    if grep -q "agent written: agent-note.txt" "$OUT/console-agent-accept.txt" && grep -q "agent written: notes.txt" "$OUT/console-agent-accept.txt"; then echo "PASS agent: accepted edits written"; else echo "FAIL agent: accepted edits were not written"; rc=1; fi
+    $T adb shell cat /sdcard/CloudDrive/git/changes-fixture/agent-note.txt > "$OUT/agent-note.txt" 2>/dev/null || true
+    if grep -q "written by the agent session" "$OUT/agent-note.txt"; then echo "PASS agent: agent-note.txt is on the device with the proposed content"; else echo "FAIL agent: agent-note.txt missing or wrong"; rc=1; fi
+    shot agent-written 2
+    tapf 68 92; sleep 3; tapf 68 92; sleep 12
+    $T adb logcat -d | grep -E "cloud-code changes files" > "$OUT/console-changes-agent.txt" || true
+    if grep -qE "changes-fixture drive=true files=[0-9]+ names=.*agent-note.txt" "$OUT/console-changes-agent.txt"; then echo "PASS agent: Changes lists agent-note.txt"; else echo "FAIL agent: Changes does not list agent-note.txt"; rc=1; fi
+    shot changes-agent 2
 fi
 
 $T adb logcat -d -t 30000 > "$OUT/logcat.txt"; $T adb logcat -d -b crash > "$OUT/logcat-crash.txt" 2>&1 || true

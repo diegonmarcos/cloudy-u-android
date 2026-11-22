@@ -4,6 +4,8 @@ name: "Test -> Cloud Code Backlog page (emulator screenshots: live index, offlin
 # the Backlog page in its three states (1_cicd/src/scripts/emulator-code-backlog.sh). Dispatch only. `run` pins a Ship run
 # (default: latest green ship-cloud-code.yml run on main). #1855 P4a it also installs the Cloud Drive APK of a Ship Drive run
 # (`drive_run`) and screenshots the Changes tab with a fixture repository's changed files and one diff.
+# #1855 P4b it then walks the agentic loop on that fixture: a session from a fixture ticket, a canned model reply (debug hook, no
+# network), a pending edit, Accept, the file written, and the Changes tab listing it.
 
 on:
   workflow_dispatch:

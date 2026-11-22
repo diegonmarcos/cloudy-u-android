@@ -43,7 +43,10 @@ import { loadIndex, ageText, firstExisting, notOnDevice } from "./backlog-index"
 import { bridge, driveList, driveStatus, urlFromDrive, columnsFor, parentOf, requestClone, filterRepos, searchFiles, changeRows, handOffToDrive, driveChanges, driveDiff, groupChanges, changeTotals, diffLines, STATUS_LABEL, requestCommit, requestPush } from "./workspace";
 import { bindTitle, drawer, topBar } from "./chrome";
 import { openProfile } from "./profile";
-import { chatDrawer, renderChat } from "./chat/view";
+import { chatDrawer, renderChat, setAgentHost, startFromTicket, runDebugFlow } from "./chat/view";
+import { locateTicket } from "./agent/context";
+import { resolveInRoot } from "./agent/edits";
+import { getLspDiagnostics } from "cm/lsp/diagnostics";
 
 const LAUNCH_VIEWS = ["myterminal"];
 
@@ -297,7 +300,8 @@ async function renderBacklogView(panel, title, entry, { extra = [], docs = false
 		views: el("button", { className: "cloud-row cloud-backlog-mode", onclick: () => setMode("views") }, "Views"),
 	};
 	const refreshBtn = el("button", { className: "cloud-row cloud-backlog-mode", title: "Refresh from the clone", onclick: () => refreshIndex() }, el("span", { className: "icon refresh" }), "Refresh");
-	const modeBar = el("div", { className: "cloud-backlog-modes" }, modeBtn.index, modeBtn.views, refreshBtn);
+	const agentBtn = el("button", { className: "cloud-row cloud-backlog-mode", "data-verb": "start-agent", title: "Start an agent session from a ticket", onclick: () => startAgentFromBacklog() }, el("span", { className: "icon brain" }), "Start agent session");
+	const modeBar = el("div", { className: "cloud-backlog-modes" }, modeBtn.index, modeBtn.views, refreshBtn, agentBtn);
 	const cachePath = () => `${cordova.file.dataDirectory}${nav.backlog.last_good}`;
 	const indexIo = () => ({
 		readLive: () => fsOperation(docsDir.replace(/\/?$/, "/"), nav.backlog.index).readFile("utf8"),
@@ -367,6 +371,7 @@ async function renderBacklogView(panel, title, entry, { extra = [], docs = false
 		{ id: "edit", label: "Edit this file", icon: "edit", run: () => edit.click() },
 		{ id: "repo", label: "Open the repository", icon: "git", run: () => repo.click() },
 		{ id: "folder", label: "Backlog folder", icon: "folder_open", run: () => change.click() },
+		{ id: "start-agent", label: "Start agent session", icon: "brain", run: () => startAgentFromBacklog() },
 	];
 	if (docs) {
 		items.unshift({ id: "index-refresh", label: "Refresh index", icon: "refresh", run: () => { setMode("index"); refreshIndex(); } },
@@ -584,7 +589,7 @@ function fileRow(r, f, panel) {
 async function fillFiles(r, box, panel) {
 	box.replaceChildren(el("span", { className: "cloud-muted" }, "Reading the changed files from Cloud Drive …"));
 	const got = await driveChanges(bridge(), r.path);
-	console.log(`cloud-code changes files: ${r.name} drive=${got.drive} files=${got.files.length}`);
+	console.log(`cloud-code changes files: ${r.name} drive=${got.drive} files=${got.files.length} names=${got.files.map((f) => f.relpath).join(",")}`);
 	if (!got.drive) { box.replaceChildren(el("span", { className: "cloud-muted" }, "Cloud Drive could not list the changed files: update Cloud Drive.")); return; }
 	if (!got.files.length) { box.replaceChildren(el("span", { className: "cloud-muted" }, "No changed files.")); return; }
 	const g = groupChanges(got.files);
@@ -670,6 +675,90 @@ async function renderAgents(panel) {
 async function renderChatTab(panel) {
 	MENUS[panel.dataset.tab] = () => chatDrawer(drawer);
 	await renderChat(panel, chrome);
+	runDebugFlow()?.catch((err) => console.log(`cloud-code agent debug-flow: failed ${err?.message || err}`));
+}
+
+// ── the agent loop's host (#1855 P4b): what the pure agent modules (src/cloud/agent) use of this device ──
+const dirOf = (url) => url.replace(/\/+$/, "").replace(/\/[^/]*$/, "");
+const agentHost = {
+	exists: (url) => fsOperation(url).exists(),
+	readText: (url) => fsOperation(url).readFile("utf8"),
+	list: async (url) => (await fsOperation(url).lsDir()).map((e) => ({ name: e.name, url: e.url, isDirectory: !!e.isDirectory })),
+	// Writes `rel` under the repository root `rootPath` only: the path is re-validated here, parents are created one by one (never above the root).
+	async writeText(rootPath, rel, text) {
+		const url = resolveInRoot(rootPath, rel);
+		if (!url) throw new Error("path is outside the repository root");
+		const parts = rel.split("/");
+		let parent = `file://${rootPath.replace(/^file:\/\//, "").replace(/\/+$/, "")}`;
+		for (const seg of parts.slice(0, -1)) {
+			if (!(await ensureDir(parent, seg))) throw new Error(`cannot create ${seg}`);
+			parent = `${parent}/${seg}`;
+		}
+		const f = fsOperation(url);
+		if (await f.exists()) await f.writeFile(text);
+		else await fsOperation(parent).createFile(parts[parts.length - 1], text);
+	},
+	repos: () => driveList(bridge()),
+	showTab: (id) => showTab(id),
+	requestCommit: (path) => requestCommit(bridge(), path),
+	openUrl: (url) => browser.open(url),
+	copy: (text) => { try { cordova.plugins.clipboard.copy(text); } catch { navigator.clipboard?.writeText(text); } },
+	prompt: async (title, value) => { const { default: prompt } = await import("dialogs/prompt"); return prompt(title, value, "text"); },
+	selection() {
+		const ed = window.editorManager?.editor;
+		if (!ed) return { name: "", text: "" };
+		const { from, to } = ed.state.selection.main;
+		return { name: window.editorManager.activeFile?.name || "", text: from === to ? "" : ed.state.sliceDoc(from, to) };
+	},
+	problems() {
+		const ed = window.editorManager?.editor;
+		if (!ed) return [];
+		try {
+			return getLspDiagnostics(ed.state).slice(0, 50).map((d) => ({ file: window.editorManager.activeFile?.name || "", line: ed.state.doc.lineAt(Math.min(d.from, ed.state.doc.length)).number, severity: d.severity, message: d.message }));
+		} catch {
+			return [];
+		}
+	},
+	async fetchJson(url) {
+		const ctl = new AbortController();
+		const timer = setTimeout(() => ctl.abort(), 8000);
+		try {
+			const r = await fetch(url, { headers: { accept: "application/vnd.github+json" }, signal: ctl.signal });
+			let json = null;
+			try { json = await r.json(); } catch { /* no body */ }
+			return { status: r.status, json };
+		} finally {
+			clearTimeout(timer);
+		}
+	},
+	async loadTicket(id) {
+		const root = (await repoUrl("docs.dir", nav.docs.root)).replace(/\/?$/, "/");
+		return locateTicket(agentHost.list, (u) => agentHost.readText(u), `${root}${nav.backlog.tasks_dir}`, id);
+	},
+	// the emulator walk's test flow: a JSON file only adb can place in this app's own external data dir; consumed once
+	async debugFlow() {
+		try {
+			const dir = window.cordova?.file?.externalDataDirectory;
+			if (!dir) return null;
+			const f = fsOperation(dir, "agent-test-flow.json");
+			if (!(await f.exists())) return null;
+			const flow = JSON.parse(await f.readFile("utf8"));
+			await f.delete();
+			return flow;
+		} catch {
+			return null;
+		}
+	},
+};
+setAgentHost(agentHost);
+
+// #1855 P4b the Backlog's "Start agent session": a ticket id from the clone, then the repository from the Workspace.
+async function startAgentFromBacklog() {
+	const id = await agentHost.prompt("Ticket id to start an agent session from", "");
+	if (!id) return;
+	const ticket = await agentHost.loadTicket(id);
+	if (!ticket) return toast(`Ticket #${String(id).replace(/\D/g, "")} was not found in the backlog clone (tasks/<session>/<id>.json)`);
+	startFromTicket(ticket);
 }
 
 // ── Browser: local pages in Acode's own browser plugin ─────────────────────

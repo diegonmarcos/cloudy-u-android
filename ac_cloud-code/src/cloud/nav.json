@@ -133,7 +133,8 @@
     "entry": "P-Backlog-sts.md",
     "_doc_index": "#1699 the Backlog page opens on the clone's ROOT index.html (the whole rendered backlog, built by cloud-me-pvt-tasks' own CI), shown in a sandboxed frame with a Refresh action, a last-good copy kept in the app's data directory for offline use, and a visible reason when the clone cannot be read. Every earlier view stays: the 'Views' switch shows the dist/*.md pages (entry above, sub-pages, links, edit, repository, folder) exactly as before. `index` is RELATIVE to the repo root (nav.docs.root); `last_good` is a file in cordova.file.dataDirectory.",
     "index": "index.html",
-    "last_good": "backlog-index.last-good.html"
+    "last_good": "backlog-index.last-good.html",
+    "tasks_dir": "1___BACKLOG___/1.1.Product-Backlog/tasks/"
   },
   "docs": {
     "_doc": "#1589 the Backlog tab's LEFT collapsible child file tree: the on-device clone of cloud-me-pvt-tasks (the Product-Backlog repo cloud-drive keeps in the shared store, #575/#676). `root` is RELATIVE to the store's git folder (shared_root/git_subdir), so no device-absolute path is written here; index.js composes it with gitPath(). It is a secondary tree (components/fileTree), not Acode's sidebar: a .md or .html opens RENDERED in place through the shared markdown/html preview (pages/markdownPreview). The folder is overridable per device (kept in localStorage docs.dir) for when the clone lives elsewhere.",
