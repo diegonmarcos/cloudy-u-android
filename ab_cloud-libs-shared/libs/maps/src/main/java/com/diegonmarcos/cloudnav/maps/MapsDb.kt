@@ -62,6 +62,7 @@ class MapsDb private constructor(ctx: Context) :
         )
         db.execSQL("CREATE INDEX idx_stops_started_at ON stops(started_at);")
         createTimeline(db)
+        createFixes(db)
         db.execSQL(
             """
             CREATE TABLE places_cache (
@@ -75,6 +76,39 @@ class MapsDb private constructor(ctx: Context) :
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 2) createTimeline(db)   // v2 (#1114): the timeline store; filled by TimelineSync from the older tables
+        if (oldVersion < 3) {   // v3 (#1851): the append-only fix log; the tracker's existing points are carried over once
+            createFixes(db)
+            db.execSQL("INSERT INTO fixes (ts, lat, lon, accuracy, speed, provider) SELECT ts, lat, lon, accuracy, speed, 'legacy-points' FROM points;")
+        }
+    }
+
+    /** #1851 every raw fix, appended and never rewritten: time, position, accuracy, speed, provider. The segmentation engine reads only this. */
+    private fun createFixes(db: SQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS fixes (id INTEGER PRIMARY KEY AUTOINCREMENT, ts INTEGER NOT NULL, lat REAL NOT NULL, lon REAL NOT NULL, " +
+            "accuracy REAL, speed REAL, provider TEXT NOT NULL DEFAULT 'gps');")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_fixes_ts ON fixes(ts);")
+    }
+
+    /** Appends one fix (an insert, never an update); a fix already stored for the same time and provider is not doubled. */
+    fun appendFix(f: Fix): Long {
+        val db = writableDatabase
+        db.rawQuery("SELECT 1 FROM fixes WHERE ts = ? AND provider = ? LIMIT 1;", arrayOf(f.ts.toString(), f.provider)).use { if (it.moveToFirst()) return -1L }
+        return db.insert("fixes", null, ContentValues().apply {
+            put("ts", f.ts); put("lat", f.lat); put("lon", f.lon)
+            if (f.accuracyM != null) put("accuracy", f.accuracyM) else putNull("accuracy")
+            if (f.speedMps != null) put("speed", f.speedMps) else putNull("speed")
+            put("provider", f.provider)
+        })
+    }
+
+    fun fixesBetween(fromTs: Long, toTs: Long): List<Fix> {
+        val out = mutableListOf<Fix>()
+        readableDatabase.rawQuery("SELECT ts,lat,lon,accuracy,speed,provider FROM fixes WHERE ts BETWEEN ? AND ? ORDER BY ts ASC;",
+            arrayOf(fromTs.toString(), toTs.toString())).use { c ->
+            while (c.moveToNext()) out.add(Fix(c.getLong(0), c.getDouble(1), c.getDouble(2),
+                if (c.isNull(3)) null else c.getDouble(3), if (c.isNull(4)) null else c.getDouble(4), c.getString(5) ?: "gps"))
+        }
+        return out
     }
 
     private fun createTimeline(db: SQLiteDatabase) {
@@ -381,6 +415,7 @@ class MapsDb private constructor(ctx: Context) :
         db.execSQL("DELETE FROM points;")
         db.execSQL("DELETE FROM stops;")
         db.execSQL("DELETE FROM timeline_segments;")
+        db.execSQL("DELETE FROM fixes;")
         db.execSQL("DELETE FROM places_cache;")
     }
 
@@ -430,7 +465,7 @@ class MapsDb private constructor(ctx: Context) :
 
     companion object {
         private const val DB_NAME = "maps.db"
-        private const val DB_VERSION = 2
+        private const val DB_VERSION = 3
 
         @Volatile private var instance: MapsDb? = null
         fun get(ctx: Context): MapsDb = instance ?: synchronized(this) {

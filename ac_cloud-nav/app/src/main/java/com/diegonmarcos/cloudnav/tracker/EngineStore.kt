@@ -4,6 +4,8 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import com.diegonmarcos.cloudnav.maps.Fix
+import com.diegonmarcos.cloudnav.maps.MapsDb
 
 /** Settings + progress of the engine, in its own SharedPreferences file. */
 class EnginePrefs(ctx: Context) {
@@ -68,6 +70,7 @@ class EnginePrefs(ctx: Context) {
  *   engine_fixes  every location the engine produced: kind gps | cell | predicted, with its accuracy / radius.
  */
 class EngineDb private constructor(ctx: Context) : SQLiteOpenHelper(ctx, "tracker_engine.db", null, VERSION) {
+    private val appCtx = ctx.applicationContext
     override fun onCreate(db: SQLiteDatabase) = upgrade(db, 0, VERSION)
     override fun onUpgrade(db: SQLiteDatabase, o: Int, n: Int) = upgrade(db, o, n)
     override fun onDowngrade(db: SQLiteDatabase, o: Int, n: Int) { /* keep the data */ }
@@ -82,6 +85,8 @@ class EngineDb private constructor(ctx: Context) : SQLiteOpenHelper(ctx, "tracke
         writableDatabase.insert("engine_fixes", null, ContentValues().apply {
             put("ts", f.ts); put("lat", f.lat); put("lon", f.lon); put("acc", f.accuracyM); put("kind", kind)
         })
+        // #1851 the shared fix log (maps.db) too: Tracker and Explored read one store; a predicted estimate is not a measurement
+        if (kind != "predicted") runCatching { MapsDb.get(appCtx).appendFix(Fix(f.ts, f.lat, f.lon, f.accuracyM, null, "engine-$kind")) }
     }
 
     /** Samples as step slices (previous sample .. this one) for the on-device fallback of the Steps page. */

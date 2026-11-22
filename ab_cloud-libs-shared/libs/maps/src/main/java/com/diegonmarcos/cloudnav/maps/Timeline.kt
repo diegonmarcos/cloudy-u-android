@@ -58,6 +58,9 @@ object TimelineBuilder {
     const val MAX_FIX_ACC_M = 200.0
     const val MIN_UNPLACED_STEPS = 20L
     const val UNPLACED_JOIN_MS = 15 * 60_000L
+    /** #1851 an open stop is bounded by evidence: it ends at the first fix beyond [OPEN_RADIUS_M], and goes quiet [OPEN_SILENCE_MS] after its last fix. */
+    const val OPEN_RADIUS_M = 150.0
+    const val OPEN_SILENCE_MS = 6 * 3_600_000L
 
     fun build(stops: List<TlStop>, fixes: List<TlFix>, steps: List<TlSteps>, nowMs: Long, zone: ZoneId): List<TlSegment> {
         val good = fixes.filter { it.accuracyM <= MAX_FIX_ACC_M }.sortedBy { it.ts }
@@ -66,7 +69,7 @@ object TimelineBuilder {
         var cursor = Long.MIN_VALUE
         for (s in stops.sortedBy { it.startMs }) {
             val a = maxOf(s.startMs, cursor)
-            val b = minOf(maxOf(s.endMs ?: nowMs, s.startMs), nowMs)
+            val b = minOf(maxOf(s.endMs ?: closeOpen(s, good, nowMs), s.startMs), nowMs)
             if (b <= a) continue
             clean += s.copy(startMs = a, endMs = b)
             cursor = b
@@ -85,6 +88,18 @@ object TimelineBuilder {
             }
         }
         return (out + unplaced(steps, out, nowMs)).sortedBy { it.startMs }
+    }
+
+    /**
+     * #1851 where a stop with no recorded end really ended. Running it to "now" made one stop out of every day since the last fix
+     * (one 24 h "sleep" at one place per day): it ends at the first fix beyond [OPEN_RADIUS_M], else [OPEN_SILENCE_MS] after the last fix near it.
+     */
+    internal fun closeOpen(s: TlStop, good: List<TlFix>, nowMs: Long): Long {
+        val after = good.filter { it.ts >= s.startMs && it.ts <= nowMs }
+        val left = after.firstOrNull { haversineM(s.lat, s.lon, it.lat, it.lon) > OPEN_RADIUS_M }
+        if (left != null) return left.ts
+        val evidence = after.lastOrNull()?.ts ?: s.startMs
+        return if (nowMs - evidence > OPEN_SILENCE_MS) evidence + OPEN_SILENCE_MS else nowMs
     }
 
     /** Steps no stop or move accounts for (no location was recorded then) stay in the store as place-less MOVEs, so the

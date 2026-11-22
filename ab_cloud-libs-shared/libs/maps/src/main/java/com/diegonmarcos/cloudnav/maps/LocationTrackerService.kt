@@ -284,6 +284,7 @@ class LocationTrackerService : Service() {
             altitude  = if (loc.hasAltitude()) loc.altitude else null,
         )
         db.insertPoint(row)
+        db.appendFix(Fix(row.ts, row.lat, row.lon, row.accuracy?.toDouble(), row.speed?.toDouble(), if (loc.provider == LocationManager.PASSIVE_PROVIDER) "passive" else "fused"))   // #1851 the shared fix log
         trackerPrefs.lastFixLat = row.lat
         trackerPrefs.lastFixLon = row.lon
         trackerPrefs.lastFixTs  = row.ts
