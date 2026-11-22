@@ -97,12 +97,12 @@ class TrackGateTest {
     }
 
     @Test fun `scenario one hour wakeups are bounded by the gate`() {
-        // 60 passive fixes at one-minute spacing from a phone that does not move: nothing is stored beyond the first and one heartbeat
+        // 60 passive fixes at one-minute spacing from a phone that does not move: nothing is stored beyond the first and one still sample per 9 min (#1851)
         var s = GateState(); var kept = 0
         for (i in 0 until 60) {
             val o = TrackGate.offer(s, north((i % 3).toDouble(), t0 + i * 60_000L), t0 + i * 60_000L + 500)
             if (o.accepted) kept++; s = o.state
         }
-        assertTrue("kept $kept", kept <= 3)
+        assertTrue("kept $kept", kept in 2..8)
     }
 }
