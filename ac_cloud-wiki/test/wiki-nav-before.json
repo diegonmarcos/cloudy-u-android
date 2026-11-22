@@ -1,0 +1,172 @@
+{
+  "_doc": "#1857 the Wiki navigation BEFORE the Projects regroup (build.json::ui wiki at commit f61487ff5, with the Chronos pin 3b5c400): every topic, its label and icon, the Chronos nested pages and the group each topic sat in. test/test-wiki-regroup.sh proves each is still declared and reachable after, rule 16: a regroup removes nothing. Frozen: never regenerated.",
+  "groups": [
+    {
+      "id": "sciences",
+      "label": "Sciences",
+      "icon": "insights",
+      "pages": [
+        "math",
+        "cs",
+        "physics",
+        "astronomy",
+        "eng",
+        "medicine"
+      ]
+    },
+    {
+      "id": "humanities",
+      "label": "Humanities",
+      "icon": "groups",
+      "pages": [
+        "anthropology",
+        "beliefs",
+        "chronos"
+      ]
+    },
+    {
+      "id": "arts",
+      "label": "Arts",
+      "icon": "palette",
+      "pages": [
+        "art",
+        "theater",
+        "music",
+        "movies"
+      ]
+    },
+    {
+      "id": "explore",
+      "label": "Explore",
+      "icon": "explore",
+      "pages": [
+        "graph"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "id": "math",
+      "label": "Math",
+      "icon": "calculate"
+    },
+    {
+      "id": "cs",
+      "label": "Computer Science",
+      "icon": "code"
+    },
+    {
+      "id": "physics",
+      "label": "Physics",
+      "icon": "bolt"
+    },
+    {
+      "id": "astronomy",
+      "label": "Astronomy",
+      "icon": "rocket_launch"
+    },
+    {
+      "id": "eng",
+      "label": "Engineering",
+      "icon": "build"
+    },
+    {
+      "id": "medicine",
+      "label": "Medicine",
+      "icon": "monitor_heart"
+    },
+    {
+      "id": "anthropology",
+      "label": "Anthropology",
+      "icon": "groups"
+    },
+    {
+      "id": "beliefs",
+      "label": "Human Belief Systems",
+      "icon": "psychology"
+    },
+    {
+      "id": "chronos",
+      "label": "Chronos",
+      "icon": "timeline",
+      "pages": [
+        {
+          "id": "chronos.lib",
+          "label": "Home",
+          "icon": "timeline",
+          "asset": "Chronos/index.html"
+        },
+        {
+          "id": "chronos.lib.0",
+          "label": "Humansphere - Circadian",
+          "icon": "bedtime",
+          "asset": "Chronos/0.Humansphere-Circadian/index.html"
+        },
+        {
+          "id": "chronos.lib.1",
+          "label": "Earthsphere - Cycles",
+          "icon": "public",
+          "asset": "Chronos/1.Earthsphere-Cycles/index.html"
+        },
+        {
+          "id": "chronos.lib.2",
+          "label": "Milkwaysphere - Orbits",
+          "icon": "language",
+          "asset": "Chronos/2.Milkwaysphere-Orbits/index.html"
+        },
+        {
+          "id": "chronos.lib.3",
+          "label": "Quantum Cycles",
+          "icon": "hub",
+          "asset": "Chronos/3.Quantum-Cycles/index.html",
+          "pages": [
+            {
+              "id": "chronos.lib.3.0",
+              "label": "Quantum Decoherence Cycle",
+              "icon": "schedule",
+              "asset": "Chronos/3.Quantum-Cycles/3.0.Quantum-Decoherence-Cycle/index.html"
+            },
+            {
+              "id": "chronos.lib.3.1",
+              "label": "Quantum Gravity Cycle",
+              "icon": "rocket_launch",
+              "asset": "Chronos/3.Quantum-Cycles/3.1.Quantum-Gravity-Cycle/index.html"
+            }
+          ]
+        },
+        {
+          "id": "chronos.lib.4",
+          "label": "Astronomy - Astrological Sphere",
+          "icon": "auto_awesome",
+          "asset": "Chronos/4.Astronomy-Astrological-sphere/index.html"
+        }
+      ]
+    },
+    {
+      "id": "art",
+      "label": "Art",
+      "icon": "palette"
+    },
+    {
+      "id": "theater",
+      "label": "Theater",
+      "icon": "mood"
+    },
+    {
+      "id": "music",
+      "label": "Music",
+      "icon": "music_note"
+    },
+    {
+      "id": "movies",
+      "label": "Movies",
+      "icon": "video"
+    },
+    {
+      "id": "graph",
+      "label": "Graph",
+      "icon": "hub"
+    }
+  ],
+  "nav_mode": "vertical_side_menu"
+}

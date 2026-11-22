@@ -5,7 +5,7 @@
 #
 # The shell and the rows are the fleet's, the graph is libs:graph-view and the pages are a runtime dataset; this proves, from the sources alone:
 #   W1  the navigation is build.json::ui: NO bottom nav (ui.bottom_nav is empty, nav-shape.json::no_bottom names the app), the default section is `wiki`, a
-#       vertical_side_menu with the thirteen topics and the graph in four groups, in order; the ids Decl.kt names are declared (both ways)
+#       vertical_side_menu with the thirteen topics, the Sacred Geometry project (#1857) and the graph in five groups (Sciences, Humanities, Arts, Projects, Explore), in order; the ids Decl.kt names are declared (both ways)
 #   W2  the dataset data/fleet/app/<package>/wiki.json holds exactly the declared topics (the graph is not a topic), each with at least four pages with unique
 #       ids prefixed by the topic, tags, Markdown, and links that resolve; Engineering has each major field; the manifest serves the dataset to this package
 #   W3  the shell draws the shared bars (first-row scaffold, side-menu layout, theme-background) and NO bottom nav host; the topic page draws the subpage tabs
@@ -44,11 +44,14 @@ if ui["bottom_nav"] != []: bad.append("W1 ui.bottom_nav must be empty: the app h
 if ui["default_section"] != "wiki": bad.append("W1 the default section must be wiki")
 wiki = secs.get("wiki", {})
 if wiki.get("nav_mode") != "vertical_side_menu": bad.append("W1 the wiki section is not vertical_side_menu")
-GROUPS = [("sciences", ["math", "cs", "physics", "astronomy", "eng", "medicine"]), ("humanities", ["anthropology", "beliefs", "chronos"]),
-          ("arts", ["art", "theater", "music", "movies"]), ("explore", ["graph"])]
-if [(g["id"], g["pages"]) for g in wiki.get("groups", [])] != GROUPS: bad.append("W1 the wiki groups are not the four declared, in order")
+GROUPS = [("sciences", ["math", "cs", "physics", "astronomy", "eng", "medicine"]), ("humanities", ["anthropology", "beliefs"]),
+          ("arts", ["art", "theater", "music", "movies"]), ("projects", ["chronos", "sacred"]), ("explore", ["graph"])]
+if [(g["id"], g["pages"]) for g in wiki.get("groups", [])] != GROUPS: bad.append("W1 the wiki groups are not the five declared, in order")
 page_ids = [p["id"] for p in wiki.get("pages", [])]
-if page_ids != [p for _, ps in GROUPS for p in ps]: bad.append("W1 the wiki pages are not the thirteen topics and the graph, in order")
+if page_ids != [p for _, ps in GROUPS for p in ps]: bad.append("W1 the wiki pages are not the thirteen topics, Sacred Geometry and the graph, in group order")
+# #1857 a page carrying `project` is a folder of lib-chronos (Projects > Sacred Geometry): its pages are the repo's files, not a dataset topic
+projects = {p["id"] for p in wiki.get("pages", []) if p.get("project")}
+if projects != {"sacred"}: bad.append("W1 the project pages are %s, not sacred" % sorted(projects))
 named = set(re.findall(r'SECTION_\w+\s*=\s*"([^"]+)"', decl))
 for x in sorted(named - set(secs)): bad.append("W1 Decl.kt names section %r that build.json::ui does not declare" % x)
 for x in sorted(set(secs) - named): bad.append("W1 section %r is declared but Decl.kt has no id for it" % x)
@@ -57,7 +60,7 @@ if not pg or pg.group(1) not in page_ids: bad.append("W1 Decl.kt PAGE_GRAPH is n
 
 # W2
 topics = {t["id"]: t for t in data.get("topics", [])}
-want = [p for p in page_ids if p != "graph"]
+want = [p for p in page_ids if p != "graph" and p not in projects]
 for x in sorted(set(want) - set(topics)): bad.append("W2 topic %r has no pages in wiki.json" % x)
 for x in sorted(set(topics) - set(want)): bad.append("W2 wiki.json holds topic %r, which build.json::ui does not declare" % x)
 ids = [p["id"] for t in topics.values() for p in t.get("pages", [])]
@@ -87,6 +90,10 @@ for sym in ("NavBarTopFirstRowScaffold(", "NavSectionLayout(", "themeBackground(
     if sym not in shell: bad.append("W3 WikiShell does not call %s" % sym)
 if "NavBarBottomHost(" in shell or "BottomNavIsland(" in shell: bad.append("W3 WikiShell draws a bottom nav: the app has none")
 if "NavBarTopSecondRow(" not in pages_kt: bad.append("W3 WikiPage does not draw the subpage tabs with NavBarTopSecondRow(")
+projpage = code(os.path.join(kt, "ui/ProjectPage.kt"))
+if "ChronosSimPage(" not in projpage or "Markdown(" not in projpage or "NavBarTopSecondRow(" not in projpage:
+    bad.append("W3 ProjectPage does not show a project's Markdown (Markdown) and its web page (ChronosSimPage) as tabs")
+if "ProjectPage(" not in pages_kt or ".projects.firstOrNull" not in pages_kt: bad.append("W3 WikiPage does not dispatch a project page (ChronosRepo runtime projects)")
 if "GraphView(" not in pages_kt: bad.append("W3 the graph page does not draw libs:graph-view's GraphView(")
 if "Decl.nav" not in shell: bad.append("W3 WikiShell does not read Decl.nav")
 mods = read(os.path.join(app, "build.json"))
@@ -107,7 +114,7 @@ for dpth, dn, fn in os.walk(os.path.join(app, "app/src/main")):
 
 # W5
 if "android.permission.INTERNET" not in manifest: bad.append("W5 the manifest does not declare INTERNET, which the Chronos runtime clone needs (#1830)")
-_cloners = [f for dp, _, fn in os.walk(os.path.join(app, "app/src/main")) for f in fn if f.endswith(".kt") and "JGitEngine.clone(" in code(os.path.join(dp, f))]
+_cloners = [f for dp, _, fn in os.walk(os.path.join(app, "app/src/main")) for f in fn if f.endswith(".kt") and "GitConnect.clone(" in code(os.path.join(dp, f))]
 if _cloners != ["ChronosRepo.kt"]: bad.append("W5 the runtime clone is not ChronosRepo's alone: %s" % _cloners)
 if "FleetConfigsEntries.open(" not in shell or "FleetConfigsPage.General" not in shell: bad.append("W5 the gear does not open the fleet's Configs (General | Perms | About)")
 
@@ -136,7 +143,10 @@ KT=app/src/main/java/com/diegonmarcos/cloudwiki
 JS="../fleet/app/$PKG/wiki.json"
 mutant "a bottom item appears"       "python3 -c \"import json;p='build.json';d=json.load(open(p));d['ui']['bottom_nav'].append('wiki');json.dump(d,open(p,'w'))\"" "W1 ui.bottom_nav must be empty"
 mutant "side menu becomes a row"     "sed -i 's/vertical_side_menu/horizontal_one_row/' build.json"               "W1 the wiki section is not vertical_side_menu"
-mutant "a group is renamed"          "sed -i 's/\"id\": \"arts\"/\"id\": \"crafts\"/' build.json"                  "W1 the wiki groups are not the four declared"
+mutant "a group is renamed"          "sed -i 's/\"id\": \"arts\"/\"id\": \"crafts\"/' build.json"                  "W1 the wiki groups are not the five declared"
+mutant "Projects is dropped"         "python3 -c \"import json;p='build.json';d=json.load(open(p));w=[s for s in d['ui']['sections'] if s['id']=='wiki'][0];w['groups']=[g for g in w['groups'] if g['id']!='projects'];json.dump(d,open(p,'w'))\"" "W1 the wiki groups are not the five declared"
+mutant "Projects moves before Arts"  "python3 -c \"import json;p='build.json';d=json.load(open(p));g=[s for s in d['ui']['sections'] if s['id']=='wiki'][0]['groups'];g[2],g[3]=g[3],g[2];json.dump(d,open(p,'w'))\"" "W1 the wiki groups are not the five declared"
+mutant "the project page is dropped" "sed -i 's/ProjectPage(project/Foo(project/' $KT/ui/WikiPages.kt"          "W3 WikiPage does not dispatch a project page"
 mutant "a topic loses its pages"     "python3 -c \"import json;p='$JS';d=json.load(open(p));d['topics']=[t for t in d['topics'] if t['id']!='music'];json.dump(d,open(p,'w'))\"" "W2 topic 'music' has no pages"
 mutant "data for an unknown topic"   "python3 -c \"import json;p='$JS';d=json.load(open(p));t=dict(d['topics'][0]);t['id']='toys';d['topics'].append(t);json.dump(d,open(p,'w'))\"" "W2 wiki.json holds topic 'toys'"
 mutant "a topic keeps three pages"   "python3 -c \"import json;p='$JS';d=json.load(open(p));d['topics'][1]['pages']=d['topics'][1]['pages'][:3];json.dump(d,open(p,'w'))\"" "has fewer than four pages"

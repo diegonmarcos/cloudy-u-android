@@ -87,14 +87,17 @@ private class ChronosWebClient(ctx: Context, private val tree: ChronosTree, priv
      * and a page has each pinned CDN URL replaced by its vendored copy, as the build tool does for the baked copy. Null: not a clone path.
      */
     private fun cloneServe(asset: String): WebResourceResponse? {
-        val src = ChronosRepo.cloneSource() ?: return null
+        val root = ChronosRepo.cloneRoot() ?: return null
         val r = ChronosRepo.runtime(app)
-        if (!asset.startsWith(r.sourceDir + "/")) return null
+        // #1857 the Chronos source dir and each project folder (Sacred-geo/) are served from the clone; a project folder the clone lacks
+        // (a clone older than the folder) falls back to the APK's copy instead of a 404
+        val top = (listOf(r.sourceDir) + r.projects.map { it.sourceDir }).firstOrNull { asset.startsWith("$it/") } ?: return null
+        val src = java.io.File(root, top)
         val base = src.canonicalFile
-        var f = java.io.File(base, asset.removePrefix(r.sourceDir + "/")).canonicalFile
+        var f = java.io.File(base, asset.removePrefix("$top/")).canonicalFile
         if (!f.path.startsWith(base.path)) return notFound()
         if (f.isDirectory || (!f.exists() && !f.name.contains('.'))) f = java.io.File(f, "index.html")
-        if (!f.isFile) return notFound()
+        if (!f.isFile) return if (top == r.sourceDir) notFound() else null
         val mime = mime(f.name)
         val bytes = if (mime == "text/html" || mime == "text/css") ChronosRepo.rewrite(f.readText(), r.rewrites).toByteArray() else f.readBytes()
         return WebResourceResponse(mime, if (mime.startsWith("text/") || mime.endsWith("javascript")) "utf-8" else null, ByteArrayInputStream(bytes))

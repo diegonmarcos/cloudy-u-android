@@ -154,6 +154,10 @@ dependencies {
     implementation project(':libs:web-core')
     // #1830 the runtime clone of lib-chronos (ChronosRepo): libs:git-core's JGit engine, read-only, shallow
     implementation project(':libs:git-core')
+    // #1857 the one clone of the fleet's apps (test-git-connect-one.sh): libs:git-ui GitConnect.clone over libs:git-sync's engine
+    implementation project(':libs:git-sync')
+    implementation project(':libs:git-repos')
+    implementation project(':libs:git-ui')
 
     implementation platform('androidx.compose:compose-bom:2025.11.01')
     implementation 'androidx.compose.ui:ui'

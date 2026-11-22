@@ -1,0 +1,143 @@
+name: "Test -> Cloud Wiki Projects (emulator: Projects group after Arts, Projects > Chronos, Projects > Sacred Geometry curriculum and 3D explorer)"
+
+# #1857: install an already built Cloud Wiki x86_64 APK (the artifact of a Ship Cloud Wiki run, input run_id) on an API-34 emulator and walk
+# the regrouped side menu: the groups Sciences, Humanities, Arts, Projects, Explore in that order, Chronos under Projects (not Humanities), then
+# Projects > Chronos (its web view) and Projects > Sacred Geometry (the Markdown curriculum tab, the link to the 3D explorer, the explorer's web view).
+# Each step is a PASS/FAIL row in verdict.txt (uiautomator dump + PNG); any FAIL fails the job. Dispatch only; nothing is published.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Ship Cloud Wiki run whose x86_64 APK artifact is tested"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  wiki-projects:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Download the APK of the Ship run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          mkdir apk-in
+          gh run download "${{ inputs.run_id }}" --repo "$GITHUB_REPOSITORY" --pattern 'Cloud-Wiki-x86_64-*' --dir apk-in
+          apk=$(find apk-in -name '*.apk' | sort | head -1)
+          [ -n "$apk" ] || { echo "::error::no x86_64 APK in run ${{ inputs.run_id }}"; exit 1; }
+          cp "$apk" app-under-test.apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Write the scripts
+        run: |
+          cat > ui.py <<'PY'
+          import html, re, sys
+          # ui.py id   DUMP RID   -> centre "x y" of the node with that resource-id (testTagsAsResourceId), else ""
+          # ui.py top  DUMP RID   -> the top y of that node, else ""
+          # ui.py text DUMP TEXT  -> 1 when a visible node's text or content-desc contains TEXT, else 0
+          def nodes(path):
+              x = open(path, encoding="utf-8", errors="replace").read()
+              for m in re.finditer(r"<node [^>]*>", x):
+                  a = {k: html.unescape(v) for k, v in re.findall(r'([\w-]+)="([^"]*)"', m.group(0))}
+                  b = re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", a.get("bounds", ""))
+                  if b and int(b.group(3)) > int(b.group(1)) and int(b.group(4)) > int(b.group(2)): a["_b"] = tuple(map(int, b.groups())); yield a
+          cmd, path, arg = sys.argv[1:4]
+          ns = list(nodes(path))
+          if cmd in ("id", "top"):
+              hit = [a for a in ns if a.get("resource-id", "").split("/")[-1] == arg]
+              if cmd == "top": print(hit[0]["_b"][1] if hit else "")
+              else: print("%d %d" % ((hit[0]["_b"][0] + hit[0]["_b"][2]) // 2, (hit[0]["_b"][1] + hit[0]["_b"][3]) // 2) if hit else "")
+          elif cmd == "text":
+              print(1 if any(arg in a.get("text", "") or arg in a.get("content-desc", "") for a in ns) else 0)
+          PY
+          cat > walk.sh <<'SH'
+          #!/bin/bash
+          set -u
+          mkdir -p out/shots
+          : > out/verdict.txt
+          fails=0
+          check() { if [ "$1" = ok ]; then echo "PASS $2" | tee -a out/verdict.txt; else echo "FAIL $2" | tee -a out/verdict.txt; fails=$((fails+1)); fi; }
+          adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
+          sleep 30
+          adb install -r -g app-under-test.apk || { echo "::error::adb install failed"; exit 2; }
+          PKG=$(aapt2_pkg=$(ls -d "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1); "$aapt2_pkg" dump packagename app-under-test.apk)
+          ACT=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
+          echo "package=$PKG activity=$ACT"
+          dump() { for t in 1 2 3 4; do adb shell rm -f /sdcard/ui.xml; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > out/ui.xml; grep -q "<hierarchy" out/ui.xml && break; sleep 2; done; cp out/ui.xml "out/$1.xml"; adb exec-out screencap -p > "out/shots/$1.png"; }
+          rid() { python3 -I ui.py id out/ui.xml "$1"; }
+          has() { [ -n "$(rid "$1")" ]; }
+          txt() { [ "$(python3 -I ui.py text out/ui.xml "$1")" = 1 ]; }
+          tap() { xy=$(rid "$1"); [ -n "$xy" ] && adb shell input tap $xy; }
+          # the side menu's items are tapped by their tag; when the menu overlay hides them (expanded state is a saved preference) toggle first
+          item() { dump "pre-$1"; has "navside_item_$1" || { tap navside_toggle; sleep 2; dump "pre-$1-open"; }; tap "navside_item_$1"; }
+          adb shell am start -n "$ACT" >/dev/null 2>&1
+          sleep 20; dump 00-launch
+          # the groups, in order: expand the menu and read the headings' positions
+          has navside_heading_sciences || { tap navside_toggle; sleep 3; dump 01-menu-open; }
+          prev=-1; order=ok
+          for g in sciences humanities arts projects explore; do
+            y=$(python3 -I ui.py top out/ui.xml "navside_heading_$g")
+            if [ -z "$y" ]; then check bad "the side menu shows the group $g"; order=bad; else check ok "the side menu shows the group $g"; [ "$y" -gt "$prev" ] || order=bad; prev=$y; fi
+          done
+          check $order "the groups are Sciences, Humanities, Arts, Projects, Explore in that order"
+          cy=$(python3 -I ui.py top out/ui.xml navside_item_chronos); py=$(python3 -I ui.py top out/ui.xml navside_heading_projects); ey=$(python3 -I ui.py top out/ui.xml navside_heading_explore)
+          sy=$(python3 -I ui.py top out/ui.xml navside_item_sacred)
+          if [ -n "$cy" ] && [ -n "$py" ] && [ -n "$ey" ] && [ "$cy" -gt "$py" ] && [ "$cy" -lt "$ey" ]; then check ok "Chronos sits under Projects"; else check bad "Chronos sits under Projects"; fi
+          if [ -n "$sy" ] && [ -n "$cy" ] && [ "$sy" -gt "$cy" ] && [ "$sy" -lt "${ey:-0}" ]; then check ok "Sacred Geometry sits under Projects after Chronos"; else check bad "Sacred Geometry sits under Projects after Chronos"; fi
+          # Projects > Chronos
+          item chronos; sleep 15; dump 02-projects-chronos
+          has wiki_chronos_web && check ok "Projects > Chronos opens its web view" || check bad "Projects > Chronos opens its web view"
+          txt Chronos && check ok "Projects > Chronos names Chronos on screen" || check bad "Projects > Chronos names Chronos on screen"
+          # Projects > Sacred Geometry: the curriculum tab first, then the explorer through the link
+          item sacred; sleep 8; dump 03-projects-sacred
+          has wiki_project && check ok "Projects > Sacred Geometry opens the project page" || check bad "Projects > Sacred Geometry opens the project page"
+          txt "Curriculum" && txt "3D Explorer" && check ok "the project page has the Curriculum and 3D Explorer tabs" || check bad "the project page has the Curriculum and 3D Explorer tabs"
+          txt "Structured Map of Sacred Geometry" && check ok "the Markdown curriculum (Sacred-geo/topics.md) is rendered" || check bad "the Markdown curriculum (Sacred-geo/topics.md) is rendered"
+          has wiki_project_open && check ok "the curriculum links to the 3D explorer" || check bad "the curriculum links to the 3D explorer"
+          tap wiki_project_open; sleep 20; dump 04-sacred-explorer
+          has wiki_chronos_web && check ok "the 3D explorer opens in the embedded web view" || check bad "the 3D explorer opens in the embedded web view"
+          # the explorer's own page (a WebView exposes its DOM text): proves Sacred-geo/index.html was served, offline-vendored
+          txt "Harmonic Lattice" && check ok "the explorer page is served (Harmonic Lattice)" || check bad "the explorer page is served (Harmonic Lattice)"
+          timeout 60 adb logcat -d -v threadtime "*:E" > out/logcat-errors.txt || true
+          grep -q "FATAL EXCEPTION" out/logcat-errors.txt && check bad "no crash" || check ok "no crash"
+          echo "fails=$fails" | tee -a out/verdict.txt
+          [ "$fails" = 0 ]
+          SH
+          chmod +x walk.sh
+
+      - name: Boot emulator + walk
+        timeout-minutes: 30
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: ./walk.sh
+
+      - name: Upload the evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wiki-projects-evidence
+          path: |
+            out/shots/*.png
+            out/*.xml
+            out/verdict.txt
+            out/logcat-errors.txt
+          if-no-files-found: warn

@@ -46,6 +46,33 @@ class ChronosRepoTest {
         assertTrue(out.contains("'/chronos/vendor/tailwindcss/3.4.17/tailwind.js'"))
     }
 
+    /** #1857 a network hint of a page is dropped, as the build tool drops it from the baked copy; nothing else of the page changes. */
+    @Test fun aPreconnectHintIsDroppedAndNothingElseChanges() {
+        val page = "<head>\n    <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n    <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n" +
+            "    <link rel=\"stylesheet\" href=\"x.css\">\n</head>"
+        assertEquals("<head>\n    <link rel=\"stylesheet\" href=\"x.css\">\n</head>", ChronosRepo.rewrite(page, runtime.rewrites))
+    }
+
+    /** #1857 the project folders of the pin (Sacred-geo/) are in the runtime config and baked, vendored and free of CDN loads. */
+    @Test fun theSacredGeometryProjectIsBakedLikeChronos() {
+        val pin = JSONObject(File("../tools/chronos-pin.json").readText()).getJSONArray("projects")
+        assertEquals(1, pin.length())
+        assertEquals(listOf(ChronosRepo.Project("sacred", "Sacred-geo", "topics.md", "index.html")), runtime.projects)
+        assertEquals(pin.getJSONObject(0).getString("source_dir"), runtime.projects.single().sourceDir)
+        val dir = File("src/main/assets/chronos/Sacred-geo")
+        val md = File(dir, "topics.md").readText()
+        assertTrue(md.startsWith("# Structured Map of Sacred Geometry"))
+        assertTrue("every curriculum block parses", Md.parse(md).size > 20)
+        val html = File(dir, "index.html").readText()
+        assertFalse("the explorer loads nothing from the network", Regex("""(src|href)\s*=\s*["']https?:""").containsMatchIn(html))
+        assertTrue(html.contains("\"/chronos/vendor/three/r128/three.min.js\""))
+        assertTrue(html.contains("\"/chronos/vendor/tailwindcss/3.4.17/tailwind.js\""))
+        assertTrue(File("src/main/assets/chronos/vendor/three/r128/three.min.js").isFile)
+        // the explorer is not a Chronos page: the Chronos tree is unchanged by the project
+        assertTrue(baked.pages.none { it.asset.startsWith("Sacred-geo") })
+        assertEquals(8, baked.pages.size)
+    }
+
     @Test fun theRefreshModes() {
         val m = runtime.modes.associateBy { it.id }
         val h = 3_600_000L
@@ -73,7 +100,7 @@ class ChronosRepoTest {
         val math = NavPage("math", "Math", "functions")
         // the side menu draws the groups, which carry their own copies of the pages
         val section = NavSection("wiki", "Wiki", "menu", pages = listOf(math, chronos),
-            groups = listOf(com.diegonmarcos.superapp.bottomnav.NavGroup("hum", "Humanities", listOf(math, chronos))))
+            groups = listOf(com.diegonmarcos.superapp.bottomnav.NavGroup("projects", "Projects", listOf(math, chronos))))
         val tree = ChronosTree(listOf(
             ChronosPage("chronos.lib", "Home", "timeline", "Chronos/index.html", null, emptyList()),
             ChronosPage("chronos.lib.3", "Quantum Cycles", "hub", "Chronos/3.Q/index.html", null, listOf("chronos.lib.3.1")),
@@ -95,9 +122,10 @@ class ChronosRepoTest {
 
     @Test fun theCloneIsReadOnlyAndServedSafely() {
         val src = File("src/main/java/com/diegonmarcos/cloudwiki/ChronosRepo.kt").readText()
-        assertTrue(src.contains("JGitEngine.clone(r.url, scratch, depth = 1, singleBranch = true, branch = r.ref)"))
+        assertTrue(src.contains("GitConnect.clone(ctx, r.url, scratch, depth = 1, mode = com.diegonmarcos.cloudlib.gitcore.CloneMode(\"chronos\", depth = 1, singleBranch = true))"))
         listOf("commit(", "push(", "stage(", "add()").forEach { assertFalse("the clone is never written to: $it", src.contains(".$it")) }
         assertTrue(src.contains("it.setWritable(false, false)"))
+        assertTrue("a project's text is read, never written", src.contains("fun readText(") && !src.contains("writeText("))
         val page = File("src/main/java/com/diegonmarcos/cloudwiki/ui/ChronosPage.kt").readText()
         assertTrue("never above the clone's source dir", page.contains("if (!f.path.startsWith(base.path)) return notFound()"))
         assertTrue("off-origin still 403", page.contains("if (!onOrigin(u)) return blocked()"))

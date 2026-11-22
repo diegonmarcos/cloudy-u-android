@@ -15,14 +15,15 @@ class WikiTest {
         "anthropology", "math", "cs", "physics", "astronomy", "eng", "medicine", "beliefs", "chronos", "art", "theater", "music", "movies",
     )
 
-    @Test fun thereIsNoBottomNavAndOneSideMenuWithFourGroups() {
+    @Test fun thereIsNoBottomNavAndOneSideMenuWithFiveGroups() {
         assertEquals("vertical_side_menu", Data.navMode())
         assertEquals(emptyList<String>(), Data.bottomNav())
         assertEquals(
             listOf(
                 "sciences" to listOf("math", "cs", "physics", "astronomy", "eng", "medicine"),
-                "humanities" to listOf("anthropology", "beliefs", "chronos"),
+                "humanities" to listOf("anthropology", "beliefs"),
                 "arts" to listOf("art", "theater", "music", "movies"),
+                "projects" to listOf("chronos", "sacred"),
                 "explore" to listOf("graph"),
             ),
             Data.groups(),
@@ -30,13 +31,32 @@ class WikiTest {
     }
 
     @Test fun theTopicTreeIsTheDeclaredTopicsPlusTheGraphAndEveryTopicHasSubpages() {
-        assertEquals((topics + "graph").toSet(), Data.pages().toSet())
+        // #1857 Sacred Geometry is a declared page (a project of the lib-chronos repo), not a dataset topic
+        assertEquals((topics + "sacred" + "graph").toSet(), Data.pages().toSet())
         assertEquals(topics.toSet(), d.topics.map { it.id }.toSet())
         for (t in d.topics) {
             assertTrue("${t.id} has subpages", t.pages.size >= 4)
             assertTrue("${t.id} has an intro", t.intro.length > 40)
             assertTrue("${t.id} page ids are prefixed by the topic", t.pages.all { it.id.startsWith(t.id + ".") && it.topic == t.id })
         }
+    }
+
+    /** #1857 a regroup removes nothing: every topic of the menu before Projects is still reachable from exactly one group (rule 16). */
+    @Test fun everyTopicOfTheMenuBeforeProjectsIsStillReachable() {
+        val before = listOf(
+            "sciences" to listOf("math", "cs", "physics", "astronomy", "eng", "medicine"),
+            "humanities" to listOf("anthropology", "beliefs", "chronos"),
+            "arts" to listOf("art", "theater", "music", "movies"),
+            "explore" to listOf("graph"),
+        )
+        val now = Data.groups().toMap()
+        for ((g, pages) in before) for (p in pages) {
+            val home = if (p == "chronos") "projects" else g
+            assertTrue("$p is reachable from $home", p in now.getValue(home))
+            assertEquals("$p is in exactly one group", 1, now.values.count { p in it })
+        }
+        assertEquals(listOf("sciences", "humanities", "arts", "projects", "explore"), Data.groups().map { it.first })
+        for (t in d.topics) assertTrue("dataset topic ${t.id} is in a group", now.values.any { t.id in it })
     }
 
     @Test fun engineeringHasEachMajorFieldAsASubpage() {
@@ -89,6 +109,8 @@ class WikiTest {
     }
 
     @Test fun markdownHasHeadingsParagraphsBulletsAndInlineLinks() {
+        // a horizontal rule (Sacred-geo/topics.md) is a block break, not a paragraph of dashes
+        assertEquals(2, Md.parse("one\n\n---\n\ntwo").size)
         val blocks = Md.parse("# Title\n\nOne **bold** and *soft* line\ncontinues.\n\n- item [[x.y]]\n- second")
         assertEquals(4, blocks.size)
         assertTrue(blocks[0] is Md.Block.Heading)

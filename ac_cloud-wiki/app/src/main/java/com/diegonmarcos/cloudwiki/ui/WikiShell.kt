@@ -54,13 +54,16 @@ object Tags {
     const val CHRONOS_SOURCE = "wiki_chronos_source"
     const val CHRONOS_MODE = "wiki_chronos_mode"
     const val CHRONOS_REFRESH = "wiki_chronos_refresh"
+    /** #1857 a project page (Sacred Geometry): the column and the link from its Markdown to its web explorer. */
+    const val PROJECT = "wiki_project"
+    const val PROJECT_OPEN = "wiki_project_open"
     fun chip(tag: String): String = "wiki_chip:$tag"
     fun result(id: String): String = "wiki_result:$id"
 }
 
 /**
  * The shell: the shared first row (Profile opens Cloud Account, the gear opens the fleet's Configs General | Perms | About) over ONE collapsed left
- * side menu for every page (libs:ui-nav-bars NavSectionLayout over the `wiki` section, vertical_side_menu, four groups). There is NO bottom nav.
+ * side menu for every page (libs:ui-nav-bars NavSectionLayout over the `wiki` section, vertical_side_menu, five groups: Sciences, Humanities, Arts, Projects, Explore). There is NO bottom nav.
  * Which topics and groups exist is build.json::ui, read through [Decl.nav]; a topic's subpage tabs, the pages and the tags are the runtime dataset
  * wiki (served by Cloud Store), drawn by [WikiPage]. #1789 the Chronos pages of diegonmarcos/lib-chronos are declared as nested pages under
  * Chronos (build.json::ui, the repo's own hierarchy, indented in the side menu and listed in the title dropdown): picking one shows it

@@ -109,6 +109,7 @@ object Md {
             val line = raw.trim()
             when {
                 line.isEmpty() -> flush()
+                line.length >= 3 && line.all { it == '-' } -> flush() // a horizontal rule (topics.md of Sacred-geo) separates blocks
                 line.startsWith("#") -> { flush(); val n = line.takeWhile { it == '#' }.length; out += Block.Heading(n.coerceAtMost(3), spans(line.drop(n).trim())) }
                 line.startsWith("- ") || line.startsWith("* ") -> { flush(); out += Block.Bullet(spans(line.drop(2).trim())) }
                 else -> { if (para.isNotEmpty()) para.append(' '); para.append(line) }

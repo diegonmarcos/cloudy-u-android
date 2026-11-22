@@ -8,6 +8,7 @@
 #   wiki-graph          the force-directed graph of every page
 #   wiki-chronos        #1789 the Chronos section: the root Chronos page (lib-chronos, baked) in its web view
 #   wiki-chronos-menu   the same with the side menu expanded: Chronos and its nested pages in the repo's hierarchy
+#   wiki-sacred         #1857 Projects > Sacred Geometry: the Markdown curriculum of lib-chronos Sacred-geo/
 #   wiki-chronos-deep   a deep simulator page: 3.1 Quantum Gravity Cycle (Chronos > Quantum Cycles > ...), served offline from the APK
 # usage: emulator-wiki-screens.sh <superapp.apk> <wiki.apk> <wiki.json> <outdir>
 set -u
@@ -61,6 +62,9 @@ wiki --es page chronos;                               shot wiki-chronos-topic 15
 dump > "$OUT/wiki-chronos-topic.xml"
 wiki --es page chronos.lib.3.1;                       shot wiki-chronos-deep 20
 dump > "$OUT/wiki-chronos-deep.xml"
+# #1857 Projects > Sacred Geometry: the curriculum (Sacred-geo/topics.md as a wiki page), the walk workflow opens its 3D explorer tab
+wiki --es page sacred;                                shot wiki-sacred 12
+dump > "$OUT/wiki-sacred.xml"
 adb logcat -d | grep -E "chromium|CloudWeb|Console" | tail -200 > "$OUT/wiki-chronos-webview.txt" || true
 
 # the SuperApp's Cloud > Apps page; swipe up until the Projects row (its last tile, Circusverse) is on screen

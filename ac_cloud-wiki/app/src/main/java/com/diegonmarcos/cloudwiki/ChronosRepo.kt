@@ -28,6 +28,9 @@ import java.io.File
 object ChronosRepo {
     data class Mode(val id: String, val label: String, val maxAgeMinutes: Int)
 
+    /** #1857 a project folder of the repo (Sacred-geo/): its wiki page id, folder, Markdown page and web page (tools/chronos-pin.json::projects). */
+    data class Project(val id: String, val sourceDir: String, val markdown: String, val explorer: String)
+
     data class Runtime(
         val repo: String,
         val url: String,
@@ -43,6 +46,7 @@ object ChronosRepo {
         val rewrites: List<Pair<String, String>>,
         val modes: List<Mode>,
         val defaultMode: String,
+        val projects: List<Project> = emptyList(),
     )
 
     /** What the Chronos page shows: the clone's commit and time (null before the first clone), a refresh running, the last error. */
@@ -83,6 +87,16 @@ object ChronosRepo {
         val root = filesDir ?: return null
         if (_state.value.tree == null) return null
         return File(root, "chronos/repo/" + r.sourceDir).takeIf { it.isDirectory }
+    }
+
+    /** The clone's repo root, when a clone is in place (a project folder is under it). */
+    fun cloneRoot(): File? = cloneSource()?.let { s -> filesDir?.let { File(it, "chronos/repo") }?.takeIf { s.isDirectory } }
+
+    /** #1857 a text file of the repo (Sacred-geo/topics.md): the clone's when it has it, else the copy baked into the APK; null when neither. */
+    fun readText(ctx: Context, rel: String): String? {
+        val live = cloneRoot()?.let { File(it, rel) }?.takeIf { it.isFile }
+        if (live != null) return runCatching { live.readText() }.getOrNull()
+        return runCatching { ctx.assets.open(Chronos.ASSETS_DIR + rel).bufferedReader().use { it.readText() } }.getOrNull()
     }
 
     fun mode(ctx: Context): Mode {
@@ -133,7 +147,8 @@ object ChronosRepo {
             val r = runtime(ctx)
             val scratch = scratchDir(ctx).also { it.deleteRecursively(); it.parentFile?.mkdirs() }
             val result = runCatching {
-                com.diegonmarcos.cloudlib.gitcore.JGitEngine.clone(r.url, scratch, depth = 1, singleBranch = true, branch = r.ref).close()
+                // #1857 the fleet's ONE clone (libs:git-ui GitConnect): shallow, single branch (the repo's default, `ref`), no credential
+                com.diegonmarcos.cloudlib.gitui.GitConnect.clone(ctx, r.url, scratch, depth = 1, mode = com.diegonmarcos.cloudlib.gitcore.CloneMode("chronos", depth = 1, singleBranch = true))
                 val sha = org.eclipse.jgit.api.Git.open(scratch).use { g -> g.repository.resolve("HEAD")?.name } ?: error("the clone has no HEAD")
                 val src = File(scratch, r.sourceDir)
                 check(File(src, "index.html").isFile) { "${r.repo}@${sha.take(8)} has no ${r.sourceDir}/index.html" }
@@ -167,9 +182,12 @@ object ChronosRepo {
         dir.walkTopDown().filter { it.isFile }.forEach { it.setWritable(false, false) }
     }
 
+    /** #1857 a network hint (<link rel=preconnect|dns-prefetch>) is dropped, as tools/regen-chronos.py does for the baked copy. */
+    private val HINT = Regex("""[ \t]*<link\b[^>]*\brel\s*=\s*["']?(?:preconnect|dns-prefetch)["']?[^>]*>[ \t]*\r?\n?""", RegexOption.IGNORE_CASE)
+
     /** The page served for a clone file: an HTML page with each pinned CDN URL replaced by its vendored copy (quoted, as the tool does). */
     fun rewrite(text: String, rewrites: List<Pair<String, String>>): String {
-        var t = text
+        var t = HINT.replace(text, "")
         for ((match, served) in rewrites) for (q in listOf("\"", "'")) t = t.replace(q + match + q, q + served + q)
         return t
     }
@@ -282,8 +300,11 @@ object ChronosRepo {
         val modes = refresh.getJSONArray("modes").let { a ->
             (0 until a.length()).map { a.getJSONObject(it).let { m -> Mode(m.getString("id"), m.getString("label"), m.getInt("max_age_minutes")) } }
         }
+        val projects = o.optJSONArray("projects")?.let { a ->
+            (0 until a.length()).map { a.getJSONObject(it).let { x -> Project(x.getString("id"), x.getString("source_dir"), x.getString("markdown"), x.getString("explorer")) } }
+        }.orEmpty()
         return Runtime(o.getString("repo"), o.getString("url"), o.getString("ref"), o.getString("source_dir"), nav.getString("id_prefix"),
             nav.optString("root_label"), nav.optString("title_suffix"),
-            icons, nav.getString("default_icon"), rw, modes, refresh.getString("default"))
+            icons, nav.getString("default_icon"), rw, modes, refresh.getString("default"), projects)
     }
 }

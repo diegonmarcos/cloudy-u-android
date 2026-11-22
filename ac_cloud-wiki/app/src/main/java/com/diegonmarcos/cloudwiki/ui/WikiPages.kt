@@ -53,6 +53,8 @@ import com.diegonmarcos.cloudwiki.Decl
 import com.diegonmarcos.cloudwiki.chronosTabOf
 import com.diegonmarcos.cloudwiki.chronosTabs
 import com.diegonmarcos.cloudwiki.Chronos
+import com.diegonmarcos.cloudwiki.ChronosRepo
+import androidx.compose.ui.platform.LocalContext
 import com.diegonmarcos.superapp.uikit.KitStoreCaption
 import com.diegonmarcos.superapp.uikit.KitStoreDot
 import com.diegonmarcos.superapp.uikit.KitStoreName
@@ -79,6 +81,9 @@ fun WikiPage(data: WikiData?, wiki: NavSection, pageId: String, nav: WikiNav, on
     // #1831 the Chronos topic and its simulators are one page: the era pages and the simulators are its tabs.
     val sim = Decl.chronos.page(pageId)
     if (sim != null || (pageId == Chronos.PARENT && Decl.chronos.root != null)) { ChronosTopic(data, sim, nav, onTopic); return }
+    // #1857 a project of the lib-chronos repo (Sacred Geometry) is shown the same way, from the repo's own files
+    val project = ChronosRepo.runtime(LocalContext.current.applicationContext).projects.firstOrNull { it.id == pageId }
+    if (project != null) { ProjectPage(project, wiki.allPages().firstOrNull { it.id == pageId }?.label ?: project.id); return }
     if (data == null || data.topics.isEmpty()) {
         KitStoreCaption(stringResource(R.string.loading), Modifier.fillMaxWidth().padding(KitStoreRow.padH).testTag(Tags.LOADING), color = p.textSecondary, align = TextAlign.Center)
         return

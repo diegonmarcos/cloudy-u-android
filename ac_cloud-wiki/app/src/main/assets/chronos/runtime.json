@@ -3,9 +3,17 @@
   "repo": "diegonmarcos/lib-chronos",
   "url": "https://github.com/diegonmarcos/lib-chronos.git",
   "ref": "main",
-  "baked_commit": "3b5c40065830c17c67a30acffa224282275d5f23",
+  "baked_commit": "d62ae92e68f38f71675f6e680da2ff65775a415f",
   "source_dir": "Chronos",
   "serve_path": "/chronos/",
+  "projects": [
+    {
+      "id": "sacred",
+      "source_dir": "Sacred-geo",
+      "markdown": "topics.md",
+      "explorer": "index.html"
+    }
+  ],
   "nav": {
     "id_prefix": "chronos.lib",
     "icons": {

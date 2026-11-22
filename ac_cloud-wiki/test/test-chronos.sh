@@ -18,6 +18,9 @@
 #       baked ui.sections and WikiPage dispatches a Chronos page before the dataset check
 #   C6  the app links libs:web-core (build.json modules, app gradle) and webview-guard.json declares the usage
 #   C7  the emulator screenshot script photographs the Chronos section and a deep simulator page
+#   C8  (#1857) the sibling PROJECTS of the repo (Sacred-geo/): baked, vendored, hashed and drift-checked exactly like Chronos/ (C1-C4 run over
+#       them too), declared as a wiki page of the pin's project id carrying `project`, both of their files (Markdown + web page) baked, served
+#       from the runtime clone as well (ChronosPage.cloneServe), shown by ProjectPage and the walk workflow test-wiki-projects-emulator.yml
 # then plants a mutation per offline rule in a scratch copy and requires RED for each.
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -81,6 +84,17 @@ wg = json.loads(read(os.path.join(root, "1_cicd/src/data/webview-guard.json")))
 if not any(u["file"] == "ac_cloud-wiki/app/src/main/java/com/diegonmarcos/cloudwiki/ui/ChronosPage.kt" and u["profile"] == "APP_PAGE" for u in wg["usages"]):
     bad.append("C6 webview-guard.json declares no APP_PAGE usage for ChronosPage.kt")
 
+# C8
+if not pin.get("projects"): bad.append("C8 tools/chronos-pin.json pins no project (Sacred-geo)")
+if "r.projects" not in page or "cloneRoot()" not in page: bad.append("C8 the runtime clone does not serve the project folders (ChronosPage.cloneServe)")
+if "readText(" not in code(os.path.join(kt, "ChronosRepo.kt")) or "cloneRoot()" not in code(os.path.join(kt, "ChronosRepo.kt")): bad.append("C8 ChronosRepo does not read a project's Markdown from the clone")
+wf = os.path.join(root, ".github/workflows/test-wiki-projects-emulator.yml")
+if os.path.isdir(os.path.join(root, ".github/workflows")) and not os.path.isfile(wf): bad.append("C8 the emulator walk workflow test-wiki-projects-emulator.yml is missing")
+elif os.path.isfile(wf):
+    t = read(wf)
+    for need in ("Projects", "Chronos", "Sacred Geometry", "3D Explorer"):
+        if need not in t: bad.append("C8 the walk workflow does not name %r" % need)
+
 # C7
 em = read(os.path.join(app, "test/emulator-wiki-screens.sh"))
 for shot in ("wiki-chronos", "wiki-chronos-deep"):
@@ -105,7 +119,8 @@ else bad "C4 the baked Chronos pages drifted from the pin (or the pin could not 
 # mutations on a scratch copy: each rule must go red
 W="$(mktemp -d)"; trap 'rm -rf "$W"' EXIT
 mutant() {   # mutant <name> <shell edit run in the copy (cwd = copy of the app)> <needle expected in the output>
-  rm -rf "$W/root"; mkdir -p "$W/root/1_cicd/src/data"; cp -r "$APP" "$W/root/app"; cp "$ROOT/1_cicd/src/data/webview-guard.json" "$W/root/1_cicd/src/data/"
+  rm -rf "$W/root"; mkdir -p "$W/root/1_cicd/src/data" "$W/root/.github/workflows"; cp -r "$APP" "$W/root/app"; cp "$ROOT/1_cicd/src/data/webview-guard.json" "$W/root/1_cicd/src/data/"
+  cp "$ROOT/.github/workflows/test-wiki-projects-emulator.yml" "$W/root/.github/workflows/" 2>/dev/null || true
   ( cd "$W/root/app" && eval "$2" )
   if out="$(check "$W/root/app" "$W/root" 2>&1)"; then bad "mutant '$1' stayed green"; elif grep -q -- "$3" <<<"$out"; then ok "mutant '$1' is red ($3)"; else bad "mutant '$1' is red for the wrong reason: $out"; fi
 }
@@ -130,6 +145,14 @@ mutant "the served path moves"      "sed -i 's|SERVE_PATH = \"/chronos/\"|SERVE_
 mutant "chronos waits for the data" "sed -i 's/Decl.chronos.page(/Decl.chronosX(/' $KT/ui/WikiPages.kt"                                     "C5 WikiPage does not show a Chronos page"
 mutant "web-core is unlinked"       "sed -i \"s/implementation project(':libs:web-core')//\" $SCRIPT"                                       "C6 the app's build script does not link libs:web-core"
 mutant "the usage is undeclared"    "python3 -c \"import json;p='../1_cicd/src/data/webview-guard.json';d=json.load(open(p));d['usages']=[u for u in d['usages'] if 'cloudwiki' not in u['file']];json.dump(d,open(p,'w'))\"" "C6 webview-guard.json declares no APP_PAGE usage"
+PJ="import json;p='build.json';d=json.load(open(p));w=[s for s in d['ui']['sections'] if s['id']=='wiki'][0]"
+mutant "the project is undeclared"  "python3 -c \"$PJ;w['pages']=[x for x in w['pages'] if x['id']!='sacred'];json.dump(d,open(p,'w'),indent=2)\"" "C8 build.json::ui wiki has no page 'sacred'"
+mutant "the project names another dir" "python3 -c \"$PJ;[x.update(project='Other') for x in w['pages'] if x['id']=='sacred'];json.dump(d,open(p,'w'),indent=2)\"" "C8 build.json::ui page sacred names project"
+mutant "the project page goes missing" "rm $A/Sacred-geo/index.html"                                                                   "C8 project sacred: Sacred-geo/index.html is not in the APK assets"
+mutant "the project text goes missing" "rm $A/Sacred-geo/topics.md"                                                                    "C8 project sacred: Sacred-geo/topics.md is not in the APK assets"
+mutant "a project page loads a CDN"  "sed -i 's|</head>|<script src=\"https://cdn.example/x.js\"></script></head>|' $A/Sacred-geo/index.html" "C2 Sacred-geo/index.html loads from the network"
+mutant "the clone stops serving projects" "sed -i 's/r.projects.map/r.nothing.map/' $KT/ui/ChronosPage.kt"                            "C8 the runtime clone does not serve the project folders"
+mutant "the walk workflow loses a step" "sed -i 's/Sacred Geometry/Sacred/g' ../.github/workflows/test-wiki-projects-emulator.yml"  "C8 the walk workflow does not name 'Sacred Geometry'"
 mutant "no deep screenshot"         "sed -i 's/shot wiki-chronos-deep/shot wiki-other/' test/emulator-wiki-screens.sh"                      "C7 emulator-wiki-screens.sh does not capture wiki-chronos-deep"
 
 [ "$FAILS" -eq 0 ] && echo "ALL GREEN" || { echo "$FAILS FAILED"; exit 1; }

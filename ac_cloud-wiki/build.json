@@ -137,7 +137,10 @@
         "libs:ui-kit",
         "libs:graph-view",
         "libs:web-core",
-        "libs:git-core"
+        "libs:git-core",
+        "libs:git-sync",
+        "libs:git-repos",
+        "libs:git-ui"
       ]
     },
     "libs:core": {
@@ -219,6 +222,22 @@
       "_doc": "#1830 THE in-process git engine (JGit): Chronos clones diegonmarcos/lib-chronos at run time, shallow and read-only (ChronosRepo), and never commits. Shared by reference, as Cloud Drive links it.",
       "dir": "../ab_cloud-libs-shared/libs/git-core",
       "type": "library"
+    },
+    "libs:git-sync": {
+      "engine": true,
+      "dir": "../ab_cloud-libs-shared/libs/git-sync",
+      "type": "library",
+      "_doc": "#1830 #1857 the ONE clone of the fleet's apps is libs:git-ui GitConnect.clone (test-git-connect-one.sh): ChronosRepo calls it for its read-only shallow clone of a public repo; libs:git-sync and libs:git-repos are its dependencies, shared by reference."
+    },
+    "libs:git-repos": {
+      "dir": "../ab_cloud-libs-shared/libs/git-repos",
+      "type": "library",
+      "_doc": "#1830 #1857 the ONE clone of the fleet's apps is libs:git-ui GitConnect.clone (test-git-connect-one.sh): ChronosRepo calls it for its read-only shallow clone of a public repo; libs:git-sync and libs:git-repos are its dependencies, shared by reference."
+    },
+    "libs:git-ui": {
+      "dir": "../ab_cloud-libs-shared/libs/git-ui",
+      "type": "library",
+      "_doc": "#1830 #1857 the ONE clone of the fleet's apps is libs:git-ui GitConnect.clone (test-git-connect-one.sh): ChronosRepo calls it for its read-only shallow clone of a public repo; libs:git-sync and libs:git-repos are its dependencies, shared by reference."
     }
   },
   "tests": {
@@ -293,6 +312,26 @@
             "icon": "psychology"
           },
           {
+            "id": "art",
+            "label": "Art",
+            "icon": "palette"
+          },
+          {
+            "id": "theater",
+            "label": "Theater",
+            "icon": "mood"
+          },
+          {
+            "id": "music",
+            "label": "Music",
+            "icon": "music_note"
+          },
+          {
+            "id": "movies",
+            "label": "Movies",
+            "icon": "video"
+          },
+          {
             "id": "chronos",
             "label": "Chronos",
             "icon": "timeline",
@@ -350,24 +389,10 @@
             ]
           },
           {
-            "id": "art",
-            "label": "Art",
-            "icon": "palette"
-          },
-          {
-            "id": "theater",
-            "label": "Theater",
-            "icon": "mood"
-          },
-          {
-            "id": "music",
-            "label": "Music",
-            "icon": "music_note"
-          },
-          {
-            "id": "movies",
-            "label": "Movies",
-            "icon": "video"
+            "id": "sacred",
+            "label": "Sacred Geometry",
+            "icon": "token",
+            "project": "Sacred-geo"
           },
           {
             "id": "graph",
@@ -395,8 +420,7 @@
             "icon": "groups",
             "pages": [
               "anthropology",
-              "beliefs",
-              "chronos"
+              "beliefs"
             ]
           },
           {
@@ -408,6 +432,15 @@
               "theater",
               "music",
               "movies"
+            ]
+          },
+          {
+            "id": "projects",
+            "label": "Projects",
+            "icon": "layers",
+            "pages": [
+              "chronos",
+              "sacred"
             ]
           },
           {

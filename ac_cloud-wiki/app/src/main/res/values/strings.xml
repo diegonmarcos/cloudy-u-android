@@ -13,6 +13,10 @@
     <!-- #1830 the Chronos source bar: the app's own read-only clone of lib-chronos -->
     <string name="chronos_source_clone">%1$s/%2$s@%3$s · %4$s</string>
     <string name="chronos_source_baked">%1$s · built-in copy</string>
+    <!-- #1857 a project page of the lib-chronos repo (Sacred Geometry): its Markdown tab, its web explorer tab and the link between them -->
+    <string name="project_topics">Curriculum</string>
+    <string name="project_explorer">3D Explorer</string>
+    <string name="project_open_explorer">Open the 3D explorer</string>
     <string name="chronos_refresh">Refresh</string>
     <string name="chronos_refresh_failed">Refresh failed: %1$s</string>
 </resources>

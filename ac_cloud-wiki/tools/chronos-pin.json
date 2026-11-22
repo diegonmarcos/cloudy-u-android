@@ -1,12 +1,21 @@
 {
-  "_doc": "#1789 THE pin of the Chronos pages Cloud Wiki bakes into the APK. tools/regen-chronos.py reads this file, clones `url` at `commit`, copies every file of `source_dir` into `assets_dir`/<source_dir> (HTML rewritten so every CDN script, stylesheet and font named under `vendor` / `fonts` is answered from `assets_dir`/vendor), and declares one nested page per index.html under build.json::ui wiki > chronos (ids from the directory numbers, labels the pages' own <title>). `--check` regenerates into a scratch dir and fails on any byte of drift; test/test-chronos.sh runs it in the ship workflow. Re-pin: tools/regen-chronos.py --pin <sha|main>, which also re-hashes the vendored files. `sha256` values are written by --pin and verified on every regeneration; never typed.",
+  "_doc": "#1789 THE pin of the Chronos pages Cloud Wiki bakes into the APK. tools/regen-chronos.py reads this file, clones `url` at `commit`, copies every file of `source_dir` (and of each `projects` folder) into `assets_dir`/<source_dir> (HTML rewritten so every CDN script, stylesheet and font named under `vendor` / `fonts` is answered from `assets_dir`/vendor), and declares one nested page per index.html under build.json::ui wiki > chronos (ids from the directory numbers, labels the pages' own <title>). `--check` regenerates into a scratch dir and fails on any byte of drift; test/test-chronos.sh runs it in the ship workflow. Re-pin: tools/regen-chronos.py --pin <sha|main>, which also re-hashes the vendored files. `sha256` values are written by --pin and verified on every regeneration; never typed.",
   "repo": "diegonmarcos/lib-chronos",
   "url": "https://github.com/diegonmarcos/lib-chronos.git",
   "ref": "main",
-  "commit": "3b5c40065830c17c67a30acffa224282275d5f23",
+  "commit": "d62ae92e68f38f71675f6e680da2ff65775a415f",
   "source_dir": "Chronos",
   "assets_dir": "app/src/main/assets/chronos",
   "serve_path": "/chronos/",
+  "projects": [
+    {
+      "id": "sacred",
+      "source_dir": "Sacred-geo",
+      "markdown": "topics.md",
+      "explorer": "index.html"
+    }
+  ],
+  "_doc_projects": "#1857 folders of the same repo that are projects of their own, siblings of source_dir (Projects > Sacred Geometry): baked and vendored exactly like source_dir (same CDN rewrites, same sha256 pins, same runtime clone), served under serve_path, not nested into the Chronos page tree. `markdown` is the project's Markdown page (rendered like a wiki page), `explorer` its web page (the embedded web view). build.json::ui wiki must declare a page `id` carrying `project` = source_dir.",
   "nav": {
     "_doc": "Where the pages are declared: build.json::ui.sections[section].pages[parent].pages (nested, the repo's directory hierarchy). id = id_prefix for the root, id_prefix + '.' + the leading number of the directory (3.0.Quantum-Decoherence-Cycle -> chronos.lib.3.0), else its lower-case slug. icons: per directory relative to source_dir ('' = the root), default_icon for any other; every name is in the libs:ui-icons catalog.",
     "section": "wiki",

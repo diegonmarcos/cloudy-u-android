@@ -1,0 +1,2006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Harmonic Lattice &amp; Quantum Geometry Explorer</title>
+    <!-- Tailwind CSS -->
+    <script src="/chronos/vendor/tailwindcss/3.4.17/tailwind.js"></script>
+    <!-- Three.js r128 -->
+    <script src="/chronos/vendor/three/r128/three.min.js"></script>
+    <!-- Inter Google Font -->
+    <link href="/chronos/vendor/fonts/inter.css" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            box-sizing: border-box;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050814;
+            color: #f8fafc;
+            touch-action: none;
+        }
+        #canvas-container {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background: radial-gradient(circle at 50% 45%, #0f172a 0%, #060918 65%, #02040a 100%);
+        }
+        canvas#three-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+        canvas#three-canvas:active {
+            cursor: grabbing;
+        }
+        /* Custom scrollbar for inspector drawer */
+        .custom-scroll::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 9999px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.45);
+            border-radius: 9999px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(129, 140, 248, 0.75);
+        }
+        /* Subtle glowing pulse for active pills */
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 12px rgba(56, 189, 248, 0.35); }
+            50% { box-shadow: 0 0 22px rgba(129, 140, 248, 0.65); }
+        }
+        .active-concept-glow {
+            animation: pulseGlow 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="select-none">
+
+    <!-- 3D WebGL Viewport Container -->
+    <div id="canvas-container">
+        <canvas id="three-canvas"></canvas>
+    </div>
+
+    <!-- Top Navigation & Controls Header -->
+    <header class="fixed top-0 left-0 right-0 z-20 pointer-events-none p-3 sm:p-4 flex flex-wrap items-center justify-between gap-2">
+        <!-- Brand / Title Badge -->
+        <div class="pointer-events-auto flex items-center gap-3 bg-slate-900/75 backdrop-blur-md border border-slate-700/60 px-3.5 py-2 rounded-2xl shadow-xl">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-400 to-indigo-600 flex items-center justify-center shadow-inner">
+                <!-- Inline SVG Geometric Icon -->
+                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 21 18 3 18"></polygon>
+                    <polygon points="12 22 21 6 3 6"></polygon>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-sm sm:text-base font-semibold tracking-tight text-white leading-tight">Harmonic Lattice Explorer</h1>
+                <p class="text-[11px] text-slate-400 hidden sm:block">3D Geometry &amp; 2D Schematic Breakdown</p>
+            </div>
+        </div>
+
+        <!-- Global Interactive Action Controls -->
+        <div class="pointer-events-auto flex items-center gap-1.5 sm:gap-2">
+            <!-- Toggle 2D Hologram Billboards in 3D Space -->
+            <button id="btn-toggle-2d" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/50 text-cyan-200 text-xs font-medium backdrop-blur-md transition active:scale-95" title="Toggle 2D Image Cards inside 3D Scene">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="3"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <span class="hidden md:inline">2D Plates:</span>
+                <span id="label-2d-state" class="font-semibold">ON</span>
+            </button>
+
+            <!-- Toggle Optional Harmonic Synth Audio -->
+            <button id="btn-toggle-audio" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900/75 hover:bg-slate-800/90 border border-slate-700/60 text-slate-300 text-xs font-medium backdrop-blur-md transition active:scale-95" title="Toggle Harmonic Drone">
+                <svg id="icon-audio-off" class="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <line x1="23" y1="9" x2="17" y2="15"></line>
+                    <line x1="17" y1="9" x2="23" y2="15"></line>
+                </svg>
+                <svg id="icon-audio-on" class="w-4 h-4 text-emerald-400 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                </svg>
+                <span class="hidden sm:inline">Harmonics</span>
+            </button>
+
+            <!-- Reset Camera / Overview Button -->
+            <button id="btn-reset-view" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900/75 hover:bg-slate-800/90 border border-slate-700/60 text-slate-200 text-xs font-medium backdrop-blur-md transition active:scale-95" title="Reset Camera & View All">
+                <svg class="w-4 h-4 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                    <path d="M3 3v5h5"></path>
+                </svg>
+                <span class="hidden sm:inline">Overview</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Floating Side / Bottom Inspector Card (2D Image + Science vs. Esoteric Analysis) -->
+    <aside id="inspector-panel" class="fixed z-20 right-3 left-3 sm:left-auto sm:right-4 bottom-20 sm:bottom-auto sm:top-20 sm:w-96 max-h-[52vh] sm:max-h-[calc(100vh-10.5rem)] flex flex-col bg-slate-900/85 backdrop-blur-xl border border-slate-700/70 rounded-2xl shadow-2xl transition-all duration-300 overflow-hidden">
+        <!-- Inspector Header -->
+        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-800/90 bg-slate-950/40 shrink-0">
+            <div class="flex items-center gap-2 min-w-0">
+                <span id="concept-badge" class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                    Constellation
+                </span>
+                <h2 id="concept-title" class="text-sm sm:text-base font-semibold text-white truncate">
+                    All 6 Concepts
+                </h2>
+            </div>
+            <button id="btn-toggle-drawer" class="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition" title="Collapse or Expand Panel">
+                <svg id="drawer-chevron" class="w-4 h-4 transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Inspector Scrollable Content -->
+        <div id="inspector-body" class="p-4 overflow-y-auto custom-scroll space-y-3.5">
+            <!-- 2D Image Diagram Card -->
+            <div class="relative group rounded-xl overflow-hidden border border-slate-700/80 bg-slate-950 shadow-inner">
+                <div class="flex items-center justify-between px-3 py-1.5 bg-slate-900/90 border-b border-slate-800 text-[11px] text-slate-400">
+                    <span class="font-medium text-slate-300 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-cyan-400 inline-block"></span>
+                        2D Conceptual Schematic
+                    </span>
+                    <button id="btn-expand-2d" class="text-cyan-400 hover:text-cyan-300 font-medium underline underline-offset-2">
+                        Enlarge 2D
+                    </button>
+                </div>
+                <canvas id="preview-2d-canvas" width="640" height="360" class="w-full h-40 sm:h-44 object-contain bg-[#060b19] cursor-pointer"></canvas>
+            </div>
+
+            <!-- Science vs Esoteric Perspective Tabs -->
+            <div class="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-950/80 border border-slate-800">
+                <button id="tab-science" class="py-1.5 px-2.5 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 transition">
+                    Real Science
+                </button>
+                <button id="tab-esoteric" class="py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 border border-transparent transition">
+                    Esoteric Lore
+                </button>
+            </div>
+
+            <!-- Dynamic Description Box -->
+            <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-2">
+                <h3 id="perspective-heading" class="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                    Mathematical &amp; Physical Reality
+                </h3>
+                <p id="perspective-text" class="text-xs sm:text-[13px] leading-relaxed text-slate-300">
+                    Explore all six concepts orbiting together in 3D space. Click any floating 3D sculpture, 2D hologram plate, or bottom selector pill to inspect its geometry and compare scientific facts with New Age mysticism.
+                </p>
+            </div>
+
+            <!-- Interactive Resonance / Animation Frequency Control -->
+            <div class="pt-1 space-y-1.5">
+                <div class="flex justify-between items-center text-[11px] text-slate-400">
+                    <span>Harmonic Oscillation Speed</span>
+                    <span id="speed-value" class="font-mono text-cyan-300">1.0x</span>
+                </div>
+                <input id="slider-speed" type="range" min="0" max="2.5" step="0.1" value="1.0" class="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+            </div>
+
+            <!-- Interaction Hint -->
+            <p class="text-[11px] text-slate-500 text-center pt-1">
+                Drag to orbit &bull; Scroll/Pinch to zoom &bull; Tap any 3D node to focus
+            </p>
+        </div>
+    </aside>
+
+    <!-- Bottom Concept Selector Dock -->
+    <nav class="fixed bottom-3 left-3 right-3 z-20 flex justify-center pointer-events-none">
+        <div class="pointer-events-auto flex items-center gap-1.5 sm:gap-2 p-1.5 rounded-2xl bg-slate-900/85 backdrop-blur-xl border border-slate-700/70 shadow-2xl overflow-x-auto max-w-full custom-scroll">
+            <button data-concept="overview" class="concept-pill active-concept-glow shrink-0 px-3 py-2 rounded-xl text-xs font-semibold bg-cyan-500/25 text-cyan-200 border border-cyan-400/50 transition">
+                All Concepts
+            </button>
+            <button data-concept="lattice8" class="concept-pill shrink-0 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:bg-slate-800/80 border border-transparent transition">
+                1. 8-Lattice
+            </button>
+            <button data-concept="base60" class="concept-pill shrink-0 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:bg-slate-800/80 border border-transparent transition">
+                2. Base-60 Harmonics
+            </button>
+            <button data-concept="c60" class="concept-pill shrink-0 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:bg-slate-800/80 border border-transparent transition">
+                3. C60 Molecule
+            </button>
+            <button data-concept="mitochondria" class="concept-pill shrink-0 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:bg-slate-800/80 border border-transparent transition">
+                4. Mitochondria
+            </button>
+            <button data-concept="grid5d" class="concept-pill shrink-0 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:bg-slate-800/80 border border-transparent transition">
+                5. 5D &amp; Grids
+            </button>
+            <button data-concept="metatron_merkaba" class="concept-pill shrink-0 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:bg-slate-800/80 border border-transparent transition">
+                6. Metatron &amp; Merkaba
+            </button>
+        </div>
+    </nav>
+
+    <!-- Fullscreen 2D Schematic Lightbox Modal -->
+    <div id="modal-2d" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/90 backdrop-blur-lg">
+        <div class="relative w-full max-w-3xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+                <div>
+                    <h3 id="modal-2d-title" class="text-sm sm:text-base font-semibold text-white">2D Schematic Diagram</h3>
+                    <p class="text-xs text-slate-400">Procedurally generated 2D vector-style canvas illustration</p>
+                </div>
+                <button id="btn-close-modal" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-3 sm:p-5 bg-[#040814] flex items-center justify-center">
+                <canvas id="modal-2d-canvas" width="960" height="540" class="w-full h-auto max-h-[70vh] rounded-xl border border-slate-800"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * ============================================================================
+         * HARMONIC LATTICE & QUANTUM GEOMETRY 3D + 2D EXPLORER
+         * Single-file Three.js + Procedural 2D Canvas Diagram Visualization
+         * ============================================================================
+         */
+
+        // Concept Knowledge Base comparing Real Science vs. Esoteric Mysticism
+        const CONCEPTS = {
+            overview: {
+                id: 'overview',
+                badge: 'Constellation',
+                title: 'All 6 Interconnected Concepts',
+                accent: '#38bdf8',
+                scienceHeading: 'Overview: Real Science vs. Buzzword Synthesis',
+                scienceText: 'In real physics, chemistry, and biology, these six concepts belong to distinct disciplines—from Babylonian base-60 arithmetic, C60 carbon cages, and mitochondrial ATP synthesis to 3D/4D isometric polyhedral projections. Tap any node in the 3D ring to inspect its true structure.',
+                esotericHeading: 'Overview: Quantum Mysticism Narrative',
+                esotericText: 'Esoteric social media creators stitch these unrelated concepts together because they share numbers (8 and 60) or hexagonal/tetrahedral symmetry—claiming ancient math, fullerene supplements, and sacred geometry unlock "5D consciousness" and planetary energy grids.'
+            },
+            lattice8: {
+                id: 'lattice8',
+                badge: 'Concept 01',
+                title: '8-Lattice & Star Tetrahedron',
+                accent: '#38bdf8',
+                scienceHeading: 'Real Math: Cubic Vertices & E8 Lattice',
+                scienceText: 'A 3D cube (and inscribed Stella Octangula / dual tetrahedron) has 8 vertices. Separately, in higher-dimensional mathematics, the E8 lattice is an 8-dimensional sphere-packing structure with 240 root vectors (240 ÷ 60 = 4) studied in string theory.',
+                esotericHeading: 'Esoteric Lore: Merkaba & Consciousness Grid',
+                esotericText: 'Depicted in the AI illustration with 8 robed figures surrounding a glowing star tetrahedron, New Age lore calls this an "8-lattice"—an energetic blueprint or dimensional gateway used to anchor spiritual light.'
+            },
+            base60: {
+                id: 'base60',
+                badge: 'Concept 02',
+                title: 'Base-60 Harmonics',
+                accent: '#f59e0b',
+                scienceHeading: 'Real History & Acoustics: Sexagesimal Math',
+                scienceText: 'Ancient Sumerians and Babylonians (~2000 BCE) developed base-60 math because 60 has 12 divisors (1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60). This gave us 60-minute hours, 360° circles, and clean whole-number harmonic frequency ratios.',
+                esotericHeading: 'Esoteric Lore: Cosmic Tuning & Grid Codes',
+                esotericText: 'Mystic videos attach the word "harmonics" to Babylonian clay tablets to suggest ancient priests possessed lost acoustic frequency codes capable of tuning human DNA or planetary ley lines.'
+            },
+            c60: {
+                id: 'c60',
+                badge: 'Concept 03',
+                title: 'C60 (Buckminsterfullerene)',
+                accent: '#a855f7',
+                scienceHeading: 'Real Chemistry: 60-Atom Carbon Cage',
+                scienceText: 'Discovered in 1985 (Nobel Prize 1996), C60 is a real molecule of 60 carbon atoms arranged in 12 pentagons and 20 hexagons (a truncated icosahedron). Materials scientists study it for electronics, photovoltaics, and radical scavenging.',
+                esotericHeading: 'Esoteric Lore: "Quantum" Longevity Elixir',
+                esotericText: 'Wellness influencers link C60 to ancient base-60 math simply because both share the number 60—marketing C60 olive oil supplements as a miracle anti-aging and "quantum coherence" antenna.'
+            },
+            mitochondria: {
+                id: 'mitochondria',
+                badge: 'Concept 04',
+                title: 'Mitochondria Geometry',
+                accent: '#10b981',
+                scienceHeading: 'Real Cell Biology: Cristae & ATP Synthesis',
+                scienceText: 'Mitochondria feature a deeply folded inner membrane called cristae. These intricate geometric folds dramatically increase surface area for electron transport chains and ATP synthase enzymes to generate cellular energy (ATP).',
+                esotericHeading: 'Esoteric Lore: Biological Frequency Antennas',
+                esotericText: 'Esoteric content rebrands natural mitochondrial membrane folding as "sacred geometry," claiming your cells act as fractal resonators that absorb subtle 5D light frequencies.'
+            },
+            grid5d: {
+                id: 'grid5d',
+                badge: 'Concept 05',
+                title: 'The 5D & Grid Hacking',
+                accent: '#f43f5e',
+                scienceHeading: 'Real Geometry: Higher-Dimensional Projection',
+                scienceText: 'In geometry, a 5D hypercube (penteract) has 32 vertices and 80 edges, which we can visualize by projecting shadows into 3D space. In physics, extra spatial dimensions are purely mathematical models in theoretical frameworks.',
+                esotericHeading: 'Esoteric Lore: Ascending & Hacking Reality',
+                esotericText: '"The 5D" refers to a spiritual state of elevated empathy and vibrational frequency, while "Hacking of the Grids" is a metaphor for shifting personal or planetary energy using sound, meditation, and geometry.'
+            },
+            metatron_merkaba: {
+                id: 'metatron_merkaba',
+                badge: 'Concept 06',
+                title: 'Metatron & Merkaba',
+                accent: '#facc15',
+                scienceHeading: 'Real Geometry: Stellated Octahedron & C₆ Projection',
+                scienceText: 'Viewed corner-on along its main diagonal (a six-fold C₆ symmetry axis), a 3D cube and its inscribed stellated octahedron (two interlocking tetrahedra) project into a regular hexagon containing a hexagram. Linking an outer shell to a concentric inner cube also mirrors the 2D orthographic shadow of a 4D hypercube (tesseract).',
+                esotericHeading: 'Esoteric Lore: Metatron’s Cube & Merkaba Vehicle',
+                esotericText: 'In sacred geometry and digital esoteric art, the counter-rotating Star Tetrahedron is called the "Merkaba" (a supposed light-body vehicle), while this four-layer lattice is a wireframe variant of Metatron’s Cube—stripped of its traditional 13 circles and framed as an energetic portal.'
+            }
+        };
+
+        // Application State
+        const state = {
+            activeConcept: 'overview',
+            perspective: 'science', // 'science' or 'esoteric'
+            show2DPlates: true,
+            speedMultiplier: 1.0,
+            drawerCollapsed: false,
+            audioEnabled: false,
+            // Camera spherical coordinates for smooth user orbit & auto-transitions
+            camTheta: 0.35,
+            camPhi: 1.18,
+            camRadius: 16.5,
+            targetCamTheta: 0.35,
+            targetCamPhi: 1.18,
+            targetCamRadius: 16.5,
+            lookAtTarget: new THREE.Vector3(0, 0.3, 0),
+            desiredLookAt: new THREE.Vector3(0, 0.3, 0),
+            isDragging: false,
+            prevMouse: { x: 0, y: 0 },
+            pinchStartDist: 0
+        };
+
+        // Global Three.js references
+        let scene, camera, renderer, raycaster, pointer;
+        let starField;
+        const conceptGroups = {}; // Maps conceptId -> { root, meshGroup, billboard, basePos, update(time) }
+        const clickableMeshes = [];
+
+        // Web Audio API references for optional harmonic drone
+        let audioCtx = null;
+        let masterGain = null;
+
+        /**
+         * ============================================================================
+         * 2D PROCEDURAL DIAGRAM GENERATOR
+         * Renders detailed 2D schematic illustrations onto any HTML5 <canvas>
+         * Used both for the UI Inspector/Modal AND as 3D CanvasTexture plates!
+         * ============================================================================
+         */
+        function drawConcept2D(canvas, conceptId) {
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            const cx = w / 2;
+            const cy = h / 2;
+
+            // Clear & Paint Blueprint Grid Background
+            ctx.clearRect(0, 0, w, h);
+            const bgGrad = ctx.createRadialGradient(cx, cy, 20, cx, cy, w * 0.65);
+            bgGrad.addColorStop(0, '#0f1b38');
+            bgGrad.addColorStop(1, '#040814');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, w, h);
+
+            // Subtle engineering grid lines
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
+            ctx.lineWidth = 1;
+            const step = Math.round(w / 20);
+            for (let x = 0; x <= w; x += step) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, h);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= h; y += step) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(w, y);
+                ctx.stroke();
+            }
+
+            // Outer technical frame border
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(10, 10, w - 20, h - 20);
+
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            if (conceptId === 'overview') {
+                // Draw 6-node interconnected harmonic constellation schematic (Hexagonal Symmetry)
+                const R = Math.min(w, h) * 0.31;
+                const nodes = [
+                    { label: '8-LATTICE', sub: '8 Vertices / E8', color: '#38bdf8' },
+                    { label: 'BASE-60', sub: '60° / 360° Math', color: '#f59e0b' },
+                    { label: 'C60 CAGE', sub: '60 Carbon Atoms', color: '#c084fc' },
+                    { label: 'MITOCHONDRIA', sub: 'Cristae ATP Folds', color: '#34d399' },
+                    { label: '5D GRID', sub: '32-Vertex Shadow', color: '#fb7185' },
+                    { label: 'METATRON', sub: 'C₆ Merkaba Core', color: '#facc15' }
+                ];
+
+                // Outer harmonic circle
+                ctx.beginPath();
+                ctx.arc(cx, cy + 6, R, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+                ctx.setLineDash([6, 6]);
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                const pts = nodes.map((_, i) => {
+                    const a = -Math.PI / 2 + (i * Math.PI * 2) / nodes.length;
+                    return { x: cx + Math.cos(a) * R, y: cy + 6 + Math.sin(a) * R };
+                });
+
+                // Hexagram / All-pairs connections
+                ctx.strokeStyle = 'rgba(129, 140, 248, 0.32)';
+                ctx.lineWidth = 1.4;
+                for (let i = 0; i < pts.length; i++) {
+                    for (let j = i + 1; j < pts.length; j++) {
+                        ctx.beginPath();
+                        ctx.moveTo(pts[i].x, pts[i].y);
+                        ctx.lineTo(pts[j].x, pts[j].y);
+                        ctx.stroke();
+                    }
+                }
+
+                // Center Hub
+                ctx.beginPath();
+                ctx.arc(cx, cy + 6, 28, 0, Math.PI * 2);
+                ctx.fillStyle = '#0f172a';
+                ctx.fill();
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.fillStyle = '#e0f2fe';
+                ctx.font = `700 ${Math.round(w * 0.017)}px Inter, sans-serif`;
+                ctx.fillText('SYNTHESIS', cx, cy + 6);
+
+                // Draw each node
+                pts.forEach((p, idx) => {
+                    const n = nodes[idx];
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 17, 0, Math.PI * 2);
+                    ctx.fillStyle = '#090d1e';
+                    ctx.fill();
+                    ctx.strokeStyle = n.color;
+                    ctx.lineWidth = 2.5;
+                    ctx.stroke();
+
+                    ctx.fillStyle = n.color;
+                    ctx.font = `700 ${Math.round(w * 0.017)}px Inter, sans-serif`;
+                    ctx.fillText(`0${idx + 1}`, p.x, p.y);
+
+                    const isLeft = p.x < cx - 20;
+                    const isRight = p.x > cx + 20;
+                    const offsetX = isLeft ? -14 : (isRight ? 14 : 0);
+                    const labelY = p.y + (p.y < cy ? -26 : 26);
+                    ctx.fillStyle = '#f8fafc';
+                    ctx.font = `700 ${Math.round(w * 0.016)}px Inter, sans-serif`;
+                    ctx.fillText(n.label, p.x + offsetX, labelY);
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = `400 ${Math.round(w * 0.013)}px Inter, sans-serif`;
+                    ctx.fillText(n.sub, p.x + offsetX, labelY + 14);
+                });
+
+            } else if (conceptId === 'lattice8') {
+                // Left side: 2D Star Tetrahedron / Octagram Projection
+                // Right side: 2D E8 Coxeter Ring Projection
+                const leftX = w * 0.31;
+                const rightX = w * 0.70;
+                const r = Math.min(w, h) * 0.28;
+
+                // --- Left: Star Tetrahedron (8-Vertex Dual Triangle) ---
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.3)';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(leftX - r * 0.82, cy - r * 0.82, r * 1.64, r * 1.64);
+
+                // Upward triangle
+                ctx.beginPath();
+                for (let i = 0; i < 3; i++) {
+                    const a = -Math.PI / 2 + (i * Math.PI * 2) / 3;
+                    const px = leftX + Math.cos(a) * r;
+                    const py = cy + Math.sin(a) * r;
+                    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+
+                // Downward triangle
+                ctx.beginPath();
+                for (let i = 0; i < 3; i++) {
+                    const a = Math.PI / 2 + (i * Math.PI * 2) / 3;
+                    const px = leftX + Math.cos(a) * r;
+                    const py = cy + Math.sin(a) * r;
+                    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.strokeStyle = '#818cf8';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+
+                // 8 Cubic Corner Nodes
+                const corners = [
+                    [-1, -1], [1, -1], [1, 1], [-1, 1],
+                    [0, -1.18], [1.18, 0], [0, 1.18], [-1.18, 0]
+                ];
+                corners.forEach(([dx, dy]) => {
+                    ctx.beginPath();
+                    ctx.arc(leftX + dx * r * 0.82, cy + dy * r * 0.82, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#e0f2fe';
+                    ctx.fill();
+                });
+
+                ctx.fillStyle = '#7dd3fc';
+                ctx.font = `700 ${Math.round(w * 0.018)}px Inter, sans-serif`;
+                ctx.fillText('STAR TETRAHEDRON (8 VERTICES)', leftX, h - 30);
+
+                // --- Right: E8 30-Fold Coxeter Projection ---
+                const rings = [r * 0.35, r * 0.62, r * 0.85, r];
+                const outerPts = [];
+                rings.forEach((rad, ri) => {
+                    const count = 30;
+                    for (let i = 0; i < count; i++) {
+                        const a = (i * Math.PI * 2) / count + ri * 0.05;
+                        const px = rightX + Math.cos(a) * rad;
+                        const py = cy + Math.sin(a) * rad;
+                        if (ri === 3) outerPts.push({ x: px, y: py });
+                        ctx.beginPath();
+                        ctx.arc(px, py, 2.2, 0, Math.PI * 2);
+                        ctx.fillStyle = ri % 2 === 0 ? '#38bdf8' : '#a855f7';
+                        ctx.fill();
+                    }
+                });
+                // Connect symmetry chords
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.16)';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < outerPts.length; i++) {
+                    const target = outerPts[(i + 11) % outerPts.length];
+                    ctx.beginPath();
+                    ctx.moveTo(outerPts[i].x, outerPts[i].y);
+                    ctx.lineTo(target.x, target.y);
+                    ctx.stroke();
+                }
+
+                ctx.fillStyle = '#c084fc';
+                ctx.font = `700 ${Math.round(w * 0.018)}px Inter, sans-serif`;
+                ctx.fillText('E8 LATTICE PROJECTION (240 ROOTS)', rightX, h - 30);
+
+            } else if (conceptId === 'base60') {
+                // Left: Sexagesimal 60-Division Babylonian Dial
+                // Right: Harmonic Frequency Ratios (1:1, 3:2, 5:4)
+                const dialX = w * 0.30;
+                const R = Math.min(w, h) * 0.33;
+
+                // Outer and inner dial rings
+                ctx.beginPath();
+                ctx.arc(dialX, cy, R, 0, Math.PI * 2);
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(dialX, cy, R * 0.72, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // 60 radial subdivisions
+                for (let i = 0; i < 60; i++) {
+                    const a = -Math.PI / 2 + (i * Math.PI * 2) / 60;
+                    const isMajor = i % 5 === 0;
+                    const r1 = isMajor ? R * 0.76 : R * 0.88;
+                    const r2 = R;
+                    ctx.beginPath();
+                    ctx.moveTo(dialX + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+                    ctx.lineTo(dialX + Math.cos(a) * r2, cy + Math.sin(a) * r2);
+                    ctx.strokeStyle = isMajor ? '#fbbf24' : 'rgba(251, 191, 36, 0.4)';
+                    ctx.lineWidth = isMajor ? 2 : 1;
+                    ctx.stroke();
+
+                    if (i % 10 === 0) {
+                        const labelVal = i === 0 ? '60' : `${i}`;
+                        const tx = dialX + Math.cos(a) * (R * 0.58);
+                        const ty = cy + Math.sin(a) * (R * 0.58);
+                        ctx.fillStyle = '#fde68a';
+                        ctx.font = `700 ${Math.round(w * 0.018)}px Inter, sans-serif`;
+                        ctx.fillText(labelVal, tx, ty);
+                    }
+                }
+
+                // Inscribed Hexagon (6 x 10 = 60)
+                ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const a = -Math.PI / 2 + (i * Math.PI * 2) / 6;
+                    const px = dialX + Math.cos(a) * (R * 0.72);
+                    const py = cy + Math.sin(a) * (R * 0.72);
+                    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.65)';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                ctx.fillStyle = '#fbbf24';
+                ctx.font = `700 ${Math.round(w * 0.018)}px Inter, sans-serif`;
+                ctx.fillText('BASE-60 SEXAGESIMAL CIRCLE', dialX, h - 26);
+
+                // Right side: Harmonic Waveforms
+                const waveStartX = w * 0.54;
+                const waveW = w * 0.39;
+                const harmonics = [
+                    { mult: 1, label: 'Fundamental (1:1)', color: '#fbbf24', y: h * 0.27 },
+                    { mult: 2, label: 'Octave Harmonic (2:1)', color: '#38bdf8', y: h * 0.50 },
+                    { mult: 3, label: 'Perfect Fifth (3:2)', color: '#34d399', y: h * 0.73 }
+                ];
+
+                harmonics.forEach(hm => {
+                    // Baseline
+                    ctx.beginPath();
+                    ctx.moveTo(waveStartX, hm.y);
+                    ctx.lineTo(waveStartX + waveW, hm.y);
+                    ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+
+                    // Sine wave
+                    ctx.beginPath();
+                    for (let x = 0; x <= waveW; x += 2) {
+                        const t = (x / waveW) * Math.PI * 2 * hm.mult;
+                        const py = hm.y - Math.sin(t) * (h * 0.065);
+                        x === 0 ? ctx.moveTo(waveStartX + x, py) : ctx.lineTo(waveStartX + x, py);
+                    }
+                    ctx.strokeStyle = hm.color;
+                    ctx.lineWidth = 2.5;
+                    ctx.stroke();
+
+                    ctx.fillStyle = hm.color;
+                    ctx.textAlign = 'left';
+                    ctx.font = `600 ${Math.round(w * 0.017)}px Inter, sans-serif`;
+                    ctx.fillText(hm.label, waveStartX, hm.y - h * 0.095);
+                });
+
+            } else if (conceptId === 'c60') {
+                // 2D Schlegel Graph of C60 Buckminsterfullerene
+                const rOuter = Math.min(w, h) * 0.36;
+                const ringsSpec = [
+                    { count: 5, r: rOuter * 0.22, offset: -Math.PI / 2 },
+                    { count: 5, r: rOuter * 0.42, offset: -Math.PI / 2 },
+                    { count: 10, r: rOuter * 0.58, offset: -Math.PI / 2 + Math.PI / 10 },
+                    { count: 10, r: rOuter * 0.74, offset: -Math.PI / 2 },
+                    { count: 15, r: rOuter * 0.88, offset: -Math.PI / 2 + Math.PI / 15 },
+                    { count: 15, r: rOuter * 1.0, offset: -Math.PI / 2 }
+                ];
+
+                const allNodes = [];
+                ringsSpec.forEach(ring => {
+                    const ringNodes = [];
+                    for (let i = 0; i < ring.count; i++) {
+                        const a = ring.offset + (i * Math.PI * 2) / ring.count;
+                        const pt = { x: cx - w * 0.12 + Math.cos(a) * ring.r, y: cy + Math.sin(a) * ring.r };
+                        ringNodes.push(pt);
+                        allNodes.push(pt);
+                    }
+                    // Connect ring perimeter
+                    ctx.beginPath();
+                    ringNodes.forEach((p, idx) => idx === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+                    ctx.closePath();
+                    ctx.strokeStyle = 'rgba(192, 132, 252, 0.7)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                });
+
+                // Connect radial covalent bonds between nearest neighbors
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+                ctx.lineWidth = 1.5;
+                for (let i = 0; i < allNodes.length; i++) {
+                    for (let j = i + 1; j < allNodes.length; j++) {
+                        const dx = allNodes[i].x - allNodes[j].x;
+                        const dy = allNodes[i].y - allNodes[j].y;
+                        const d = Math.hypot(dx, dy);
+                        if (d < rOuter * 0.27) {
+                            ctx.beginPath();
+                            ctx.moveTo(allNodes[i].x, allNodes[i].y);
+                            ctx.lineTo(allNodes[j].x, allNodes[j].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                // Draw all 60 carbon atoms
+                allNodes.forEach(p => {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = '#f3e8ff';
+                    ctx.fill();
+                    ctx.strokeStyle = '#9333ea';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                });
+
+                // Right-side Molecular Spec Callouts
+                const infoX = w * 0.66;
+                ctx.textAlign = 'left';
+                ctx.fillStyle = '#e9d5ff';
+                ctx.font = `700 ${Math.round(w * 0.024)}px Inter, sans-serif`;
+                ctx.fillText('C60 FULLERENE', infoX, h * 0.25);
+
+                const specs = [
+                    '• 60 Carbon Atoms (sp²)',
+                    '• 12 Pentagonal Rings',
+                    '• 20 Hexagonal Rings',
+                    '• 90 Covalent Bonds',
+                    '• Diameter: ~0.71 nm'
+                ];
+                ctx.fillStyle = '#cbd5e1';
+                ctx.font = `500 ${Math.round(w * 0.017)}px Inter, sans-serif`;
+                specs.forEach((line, idx) => {
+                    ctx.fillText(line, infoX, h * 0.36 + idx * (h * 0.085));
+                });
+
+            } else if (conceptId === 'mitochondria') {
+                // Detailed 2D Biological Cross-Section of Mitochondrion
+                const mw = w * 0.68;
+                const mh = h * 0.48;
+                const mx = cx;
+                const my = cy + 6;
+
+                // Outer Membrane Capsule
+                ctx.beginPath();
+                ctx.roundRect(mx - mw / 2, my - mh / 2, mw, mh, mh / 2);
+                ctx.fillStyle = 'rgba(16, 185, 129, 0.12)';
+                ctx.fill();
+                ctx.strokeStyle = '#34d399';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+
+                // Inner Folded Cristae Ribbon
+                ctx.beginPath();
+                const folds = 7;
+                const innerLeft = mx - mw * 0.40;
+                const innerRight = mx + mw * 0.40;
+                const stepX = (innerRight - innerLeft) / folds;
+
+                ctx.moveTo(innerLeft, my);
+                for (let i = 0; i < folds; i++) {
+                    const x0 = innerLeft + i * stepX;
+                    const xMid = x0 + stepX * 0.5;
+                    const x1 = x0 + stepX;
+                    const dir = i % 2 === 0 ? -1 : 1;
+                    const foldDepth = mh * 0.34 * dir;
+                    ctx.bezierCurveTo(x0 + stepX * 0.15, my + foldDepth, xMid - stepX * 0.15, my + foldDepth, xMid, my);
+                    ctx.bezierCurveTo(xMid + stepX * 0.15, my - foldDepth * 0.7, x1 - stepX * 0.15, my - foldDepth * 0.7, x1, my);
+                }
+                ctx.strokeStyle = '#fbbf24';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+
+                // ATP Energy Sparks along Cristae
+                for (let i = 1; i < folds; i++) {
+                    const sx = innerLeft + i * stepX;
+                    const sy = my + (i % 2 === 0 ? -18 : 18);
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#fef08a';
+                    ctx.fill();
+                }
+
+                // Anatomical Callout Labels
+                ctx.font = `700 ${Math.round(w * 0.017)}px Inter, sans-serif`;
+                ctx.fillStyle = '#6ee7b7';
+                ctx.fillText('OUTER MEMBRANE', mx - mw * 0.25, my - mh * 0.63);
+                ctx.fillStyle = '#fcd34d';
+                ctx.fillText('CRISTAE FOLDS (INNER MEMBRANE)', mx + mw * 0.18, my - mh * 0.63);
+                ctx.fillStyle = '#fef08a';
+                ctx.fillText('ATP SYNTHESIS & ELECTRON TRANSPORT', mx, my + mh * 0.67);
+
+            } else if (conceptId === 'grid5d') {
+                // Dimensional Progression (1D -> 2D -> 3D -> 5D Hypercube) + Planetary Grid
+                const stages = [
+                    { label: '2D Square', sub: '4 Vertices', x: w * 0.17 },
+                    { label: '3D Cube', sub: '8 Vertices', x: w * 0.39 },
+                    { label: '5D Penteract', sub: '32 Vertices', x: w * 0.64 }
+                ];
+
+                // 2D Square
+                const s1 = h * 0.14;
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(stages[0].x - s1, cy - s1, s1 * 2, s1 * 2);
+
+                // 3D Cube Projection
+                const s2 = h * 0.13;
+                const off = s2 * 0.55;
+                ctx.strokeStyle = '#a855f7';
+                ctx.strokeRect(stages[1].x - s2 - off * 0.4, cy - s2 - off * 0.4, s2 * 2, s2 * 2);
+                ctx.strokeRect(stages[1].x - s2 + off * 0.6, cy - s2 + off * 0.6, s2 * 2, s2 * 2);
+                [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([dx, dy]) => {
+                    ctx.beginPath();
+                    ctx.moveTo(stages[1].x + dx * s2 - off * 0.4, cy + dy * s2 - off * 0.4);
+                    ctx.lineTo(stages[1].x + dx * s2 + off * 0.6, cy + dy * s2 + off * 0.6);
+                    ctx.stroke();
+                });
+
+                // 5D Penteract Nested Projections
+                const hx = stages[2].x;
+                const rOuter = h * 0.24;
+                const rInner = h * 0.11;
+                const vOuter = [];
+                const vInner = [];
+                for (let i = 0; i < 10; i++) {
+                    const a = (i * Math.PI * 2) / 10;
+                    vOuter.push({ x: hx + Math.cos(a) * rOuter, y: cy + Math.sin(a) * rOuter });
+                    vInner.push({ x: hx + Math.cos(a + 0.31) * rInner, y: cy + Math.sin(a + 0.31) * rInner });
+                }
+                ctx.strokeStyle = '#fb7185';
+                ctx.lineWidth = 1.6;
+                for (let i = 0; i < 10; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(vOuter[i].x, vOuter[i].y);
+                    ctx.lineTo(vOuter[(i + 1) % 10].x, vOuter[(i + 1) % 10].y);
+                    ctx.lineTo(vInner[(i + 1) % 10].x, vInner[(i + 1) % 10].y);
+                    ctx.lineTo(vInner[i].x, vInner[i].y);
+                    ctx.closePath();
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(vOuter[i].x, vOuter[i].y);
+                    ctx.lineTo(vOuter[(i + 3) % 10].x, vOuter[(i + 3) % 10].y);
+                    ctx.stroke();
+                }
+
+                // Labels for dimensional progression
+                stages.forEach(st => {
+                    ctx.fillStyle = '#f8fafc';
+                    ctx.font = `700 ${Math.round(w * 0.017)}px Inter, sans-serif`;
+                    ctx.fillText(st.label, st.x, h - 42);
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = `400 ${Math.round(w * 0.014)}px Inter, sans-serif`;
+                    ctx.fillText(st.sub, st.x, h - 24);
+                });
+
+                // Planetary Grid Sphere on far right
+                const gx = w * 0.86;
+                const gr = h * 0.16;
+                ctx.beginPath();
+                ctx.arc(gx, cy, gr, 0, Math.PI * 2);
+                ctx.strokeStyle = '#34d399';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.ellipse(gx, cy, gr, gr * 0.38, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.ellipse(gx, cy, gr * 0.38, gr, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.fillStyle = '#6ee7b7';
+                ctx.font = `700 ${Math.round(w * 0.015)}px Inter, sans-serif`;
+                ctx.fillText('LEY GRID', gx, h - 34);
+
+            } else if (conceptId === 'metatron_merkaba') {
+                // 4-Layer Nested Wireframe Metatron's Cube & Merkaba (C6 Symmetry Axis)
+                const mx = w * 0.34;
+                const my = cy + 4;
+                const R1 = Math.min(w, h) * 0.37; // Outer Hexagon radius
+                const R2 = R1 * 0.54;             // Inner Isometric Cube radius
+                const R3 = R2 * 0.52;             // Inner Hexagram radius
+
+                // Subtle Iridescent Pastel Glow inside Core (matching digital art aesthetic)
+                const coreGlow = ctx.createRadialGradient(mx, my, 4, mx, my, R1 * 0.72);
+                coreGlow.addColorStop(0, 'rgba(255, 255, 255, 0.55)');
+                coreGlow.addColorStop(0.35, 'rgba(165, 243, 252, 0.28)');
+                coreGlow.addColorStop(0.68, 'rgba(244, 114, 182, 0.18)');
+                coreGlow.addColorStop(1, 'rgba(15, 23, 42, 0)');
+                ctx.fillStyle = coreGlow;
+                ctx.beginPath();
+                ctx.arc(mx, my, R1 * 0.75, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Helper to compute regular upright hexagon vertices (starting at top -PI/2)
+                const getHexPts = (radius) => {
+                    const arr = [];
+                    for (let i = 0; i < 6; i++) {
+                        const a = -Math.PI / 2 + (i * Math.PI) / 3;
+                        arr.push({ x: mx + Math.cos(a) * radius, y: my + Math.sin(a) * radius });
+                    }
+                    return arr;
+                };
+
+                const outerHex = getHexPts(R1);
+                const innerHex = getHexPts(R2);
+                const coreHex = getHexPts(R3);
+
+                // LAYER 2: Connecting Wireframe Chords (Outer Shell -> Inner Cube & 4D Tesseract Struts)
+                ctx.strokeStyle = 'rgba(250, 204, 21, 0.55)';
+                ctx.lineWidth = 1.4;
+                for (let i = 0; i < 6; i++) {
+                    // Radial chord connecting outer vertex to inner vertex
+                    ctx.beginPath();
+                    ctx.moveTo(outerHex[i].x, outerHex[i].y);
+                    ctx.lineTo(innerHex[i].x, innerHex[i].y);
+                    ctx.stroke();
+
+                    // Diagonal lattice chords linking outer vertices to adjacent inner vertices
+                    ctx.beginPath();
+                    ctx.moveTo(outerHex[i].x, outerHex[i].y);
+                    ctx.lineTo(innerHex[(i + 1) % 6].x, innerHex[(i + 1) % 6].y);
+                    ctx.moveTo(outerHex[i].x, outerHex[i].y);
+                    ctx.lineTo(innerHex[(i + 5) % 6].x, innerHex[(i + 5) % 6].y);
+                    ctx.stroke();
+                }
+
+                // LAYER 1: Outer Hexagon & Outer Hexagram (Star Tetrahedron / Merkaba)
+                ctx.beginPath();
+                outerHex.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+                ctx.closePath();
+                ctx.strokeStyle = '#fef08a';
+                ctx.lineWidth = 2.4;
+                ctx.stroke();
+
+                // Outer Upward & Downward Equilateral Triangles
+                [0, 1].forEach(offset => {
+                    ctx.beginPath();
+                    for (let k = 0; k < 3; k++) {
+                        const p = outerHex[(offset + k * 2) % 6];
+                        k === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+                    }
+                    ctx.closePath();
+                    ctx.strokeStyle = offset === 0 ? '#ffffff' : '#7dd3fc';
+                    ctx.lineWidth = 2.1;
+                    ctx.stroke();
+                });
+
+                // LAYER 3: Inner Isometric Cube (Concentric Upright Hexagon + 3 Central Y-Axes)
+                ctx.beginPath();
+                innerHex.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+                ctx.closePath();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2.2;
+                ctx.stroke();
+
+                // Three central cube edges meeting at center (isometric corner-on projection)
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+                ctx.lineWidth = 1.8;
+                [0, 2, 4].forEach(idx => {
+                    ctx.beginPath();
+                    ctx.moveTo(mx, my);
+                    ctx.lineTo(innerHex[idx].x, innerHex[idx].y);
+                    ctx.stroke();
+                });
+
+                // LAYER 4: Inner Hexagram Core (Nested Star Tetrahedron)
+                [0, 1].forEach(offset => {
+                    ctx.beginPath();
+                    for (let k = 0; k < 3; k++) {
+                        const p = coreHex[(offset + k * 2) % 6];
+                        k === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+                    }
+                    ctx.closePath();
+                    ctx.strokeStyle = '#e0f2fe';
+                    ctx.lineWidth = 1.7;
+                    ctx.stroke();
+                });
+
+                // Bright central vertex node
+                ctx.beginPath();
+                ctx.arc(mx, my, 4, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+
+                // Right-Side 4-Layer Architectural Breakdown
+                const infoX = w * 0.62;
+                ctx.textAlign = 'left';
+                ctx.fillStyle = '#fef08a';
+                ctx.font = `700 ${Math.round(w * 0.021)}px Inter, sans-serif`;
+                ctx.fillText('4-LAYER C₆ ARCHITECTURE', infoX, h * 0.22);
+
+                const layersList = [
+                    { title: '1. Outer Hexagon & Hexagram', desc: 'Stellated octahedron (Merkaba)', color: '#fef08a' },
+                    { title: '2. Connecting Wireframe Chords', desc: '4D hypercube (tesseract) shadow', color: '#7dd3fc' },
+                    { title: '3. Inner Isometric Cube', desc: 'Corner-on 3D cube projection', color: '#ffffff' },
+                    { title: '4. Inner Hexagram Core', desc: 'Nested star tetrahedron nucleus', color: '#f472b6' }
+                ];
+
+                layersList.forEach((item, idx) => {
+                    const ly = h * 0.33 + idx * (h * 0.145);
+                    ctx.fillStyle = item.color;
+                    ctx.font = `700 ${Math.round(w * 0.016)}px Inter, sans-serif`;
+                    ctx.fillText(item.title, infoX, ly);
+                    ctx.fillStyle = '#cbd5e1';
+                    ctx.font = `400 ${Math.round(w * 0.014)}px Inter, sans-serif`;
+                    ctx.fillText(item.desc, infoX, ly + 17);
+                });
+            }
+
+            ctx.restore();
+        }
+
+        /**
+         * Creates a 3D floating billboard sprite using a procedurally drawn 2D CanvasTexture
+         */
+        function create2DPlateBillboard(conceptId, titleText) {
+            const texCanvas = document.createElement('canvas');
+            texCanvas.width = 512;
+            texCanvas.height = 310;
+            drawConcept2D(texCanvas, conceptId);
+
+            // Add crisp header banner at top of 3D floating plate
+            const ctx = texCanvas.getContext('2d');
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+            ctx.fillRect(10, 10, texCanvas.width - 20, 34);
+            ctx.fillStyle = '#e0f2fe';
+            ctx.font = '700 17px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`2D SCHEMATIC: ${titleText.toUpperCase()}`, texCanvas.width / 2, 28);
+
+            const texture = new THREE.CanvasTexture(texCanvas);
+            texture.needsUpdate = true;
+
+            const mat = new THREE.SpriteMaterial({
+                map: texture,
+                transparent: true,
+                opacity: 0.94
+            });
+            const sprite = new THREE.Sprite(mat);
+            sprite.scale.set(3.2, 1.94, 1);
+            sprite.position.set(0, 2.35, 0);
+            sprite.userData = { conceptId };
+            return sprite;
+        }
+
+        /**
+         * ============================================================================
+         * 3D PROCEDURAL GEOMETRY BUILDERS FOR EACH CONCEPT
+         * ============================================================================
+         */
+        function buildConceptModels() {
+            const radiusRing = 7.4;
+            const order = ['lattice8', 'base60', 'c60', 'mitochondria', 'grid5d', 'metatron_merkaba'];
+
+            order.forEach((id, index) => {
+                const angle = -Math.PI / 2 + (index * Math.PI * 2) / order.length;
+                const basePos = new THREE.Vector3(
+                    Math.cos(angle) * radiusRing,
+                    0,
+                    Math.sin(angle) * radiusRing
+                );
+
+                const root = new THREE.Group();
+                root.position.copy(basePos);
+
+                const meshGroup = new THREE.Group();
+                root.add(meshGroup);
+
+                // Invisible hit-sphere for easy clicking/tapping on mobile & desktop
+                const hitGeo = new THREE.SphereGeometry(2.1, 12, 12);
+                const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+                const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+                hitMesh.userData = { conceptId: id };
+                root.add(hitMesh);
+                clickableMeshes.push(hitMesh);
+
+                // Floating 2D Image Billboard above each 3D model
+                const billboard = create2DPlateBillboard(id, CONCEPTS[id].title);
+                root.add(billboard);
+                clickableMeshes.push(billboard);
+
+                let updateFn = () => {};
+
+                if (id === 'lattice8') {
+                    // 1. 8-LATTICE: Dual Interlocking Tetrahedra (Stella Octangula) + 8-Vertex Cube Frame
+                    const t1Geo = new THREE.TetrahedronGeometry(1.45, 0);
+                    const t1Mat = new THREE.MeshStandardMaterial({
+                        color: 0x0284c7,
+                        emissive: 0x0ea5e9,
+                        emissiveIntensity: 0.35,
+                        roughness: 0.2,
+                        metalness: 0.7,
+                        transparent: true,
+                        opacity: 0.65
+                    });
+                    const tetra1 = new THREE.Mesh(t1Geo, t1Mat);
+                    const wire1 = new THREE.LineSegments(
+                        new THREE.EdgesGeometry(t1Geo),
+                        new THREE.LineBasicMaterial({ color: 0x7dd3fc })
+                    );
+                    tetra1.add(wire1);
+
+                    const tetra2 = tetra1.clone();
+                    tetra2.rotation.set(Math.PI / 2, Math.PI / 4, 0);
+
+                    // Outer 8-vertex cubic lattice
+                    const cubeGeo = new THREE.BoxGeometry(2.1, 2.1, 2.1);
+                    const cubeEdges = new THREE.LineSegments(
+                        new THREE.EdgesGeometry(cubeGeo),
+                        new THREE.LineBasicMaterial({ color: 0x818cf8, transparent: true, opacity: 0.75 })
+                    );
+
+                    // 8 glowing corner spheres
+                    const nodeGeo = new THREE.SphereGeometry(0.14, 16, 16);
+                    const nodeMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe });
+                    const corners = [
+                        [-1, -1, -1], [-1, -1, 1], [-1, 1, -1], [-1, 1, 1],
+                        [1, -1, -1], [1, -1, 1], [1, 1, -1], [1, 1, 1]
+                    ];
+                    corners.forEach(([x, y, z]) => {
+                        const s = new THREE.Mesh(nodeGeo, nodeMat);
+                        s.position.set(x * 1.05, y * 1.05, z * 1.05);
+                        cubeEdges.add(s);
+                    });
+
+                    meshGroup.add(tetra1, tetra2, cubeEdges);
+
+                    updateFn = (t) => {
+                        tetra1.rotation.y = t * 0.6;
+                        tetra2.rotation.y = -t * 0.6;
+                        cubeEdges.rotation.y = t * 0.25;
+                        cubeEdges.rotation.x = Math.sin(t * 0.4) * 0.2;
+                    };
+
+                } else if (id === 'base60') {
+                    // 2. BASE-60 HARMONICS: 60-Division Sexagesimal Ring + Harmonic Standing Waves
+                    const outerRing = new THREE.Mesh(
+                        new THREE.TorusGeometry(1.55, 0.04, 16, 60),
+                        new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xd97706, emissiveIntensity: 0.5 })
+                    );
+                    outerRing.rotation.x = Math.PI / 2.6;
+
+                    const innerRing = new THREE.Mesh(
+                        new THREE.TorusGeometry(1.05, 0.03, 16, 60),
+                        new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, emissiveIntensity: 0.4 })
+                    );
+                    innerRing.rotation.x = Math.PI / 2.6;
+
+                    // 60 radial harmonic pins around disk
+                    const pins = [];
+                    const pinGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.35, 8);
+                    for (let i = 0; i < 60; i++) {
+                        const a = (i * Math.PI * 2) / 60;
+                        const isMajor = i % 5 === 0;
+                        const pinMat = new THREE.MeshBasicMaterial({
+                            color: isMajor ? 0xfde68a : 0xf59e0b
+                        });
+                        const pin = new THREE.Mesh(pinGeo, pinMat);
+                        const r = isMajor ? 1.32 : 1.42;
+                        pin.position.set(Math.cos(a) * r, 0, Math.sin(a) * r);
+                        if (isMajor) pin.scale.set(1.4, 1.5, 1.4);
+                        outerRing.add(pin);
+                        pins.push({ mesh: pin, angle: a, isMajor });
+                    }
+
+                    meshGroup.add(outerRing, innerRing);
+
+                    updateFn = (t) => {
+                        outerRing.rotation.z = t * 0.35;
+                        innerRing.rotation.z = -t * 0.7;
+                        pins.forEach(p => {
+                            const wave = Math.sin(p.angle * 6 + t * 4) * 0.25;
+                            p.mesh.position.y = wave;
+                        });
+                    };
+
+                } else if (id === 'c60') {
+                    // 3. C60 BUCKMINSTERFULLERENE: Exact 60-Vertex, 90-Edge Truncated Icosahedron
+                    const phi = (1 + Math.sqrt(5)) / 2;
+                    const rawVerts = [];
+                    const signs2 = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+                    const signs3 = [
+                        [-1, -1, -1], [-1, -1, 1], [-1, 1, -1], [-1, 1, 1],
+                        [1, -1, -1], [1, -1, 1], [1, 1, -1], [1, 1, 1]
+                    ];
+
+                    // Even permutations of (0, +-1, +-3*phi) -> 12 vertices
+                    signs2.forEach(([s1, s2]) => {
+                        rawVerts.push(new THREE.Vector3(0, s1 * 1, s2 * 3 * phi));
+                        rawVerts.push(new THREE.Vector3(s1 * 1, s2 * 3 * phi, 0));
+                        rawVerts.push(new THREE.Vector3(s2 * 3 * phi, 0, s1 * 1));
+                    });
+
+                    // Even permutations of (+-1, +-(2+phi), +-2*phi) -> 24 vertices
+                    signs3.forEach(([s1, s2, s3]) => {
+                        rawVerts.push(new THREE.Vector3(s1 * 1, s2 * (2 + phi), s3 * 2 * phi));
+                        rawVerts.push(new THREE.Vector3(s2 * (2 + phi), s3 * 2 * phi, s1 * 1));
+                        rawVerts.push(new THREE.Vector3(s3 * 2 * phi, s1 * 1, s2 * (2 + phi)));
+                    });
+
+                    // Even permutations of (+-phi, +-2, +-(2*phi+1)) -> 24 vertices
+                    signs3.forEach(([s1, s2, s3]) => {
+                        rawVerts.push(new THREE.Vector3(s1 * phi, s2 * 2, s3 * (2 * phi + 1)));
+                        rawVerts.push(new THREE.Vector3(s2 * 2, s3 * (2 * phi + 1), s1 * phi));
+                        rawVerts.push(new THREE.Vector3(s3 * (2 * phi + 1), s1 * phi, s2 * 2));
+                    });
+
+                    const scaleFactor = 0.34;
+                    const atomGeo = new THREE.SphereGeometry(0.085, 12, 12);
+                    const atomMat = new THREE.MeshStandardMaterial({
+                        color: 0xc084fc,
+                        emissive: 0x7e22ce,
+                        emissiveIntensity: 0.45,
+                        roughness: 0.25,
+                        metalness: 0.8
+                    });
+
+                    rawVerts.forEach(v => {
+                        const sphere = new THREE.Mesh(atomGeo, atomMat);
+                        sphere.position.copy(v).multiplyScalar(scaleFactor);
+                        meshGroup.add(sphere);
+                    });
+
+                    // Build exact 90 covalent bonds where unscaled distance == 2.0
+                    const bondPositions = [];
+                    for (let i = 0; i < rawVerts.length; i++) {
+                        for (let j = i + 1; j < rawVerts.length; j++) {
+                            const dist = rawVerts[i].distanceTo(rawVerts[j]);
+                            if (Math.abs(dist - 2.0) < 0.08) {
+                                bondPositions.push(
+                                    rawVerts[i].x * scaleFactor, rawVerts[i].y * scaleFactor, rawVerts[i].z * scaleFactor,
+                                    rawVerts[j].x * scaleFactor, rawVerts[j].y * scaleFactor, rawVerts[j].z * scaleFactor
+                                );
+                            }
+                        }
+                    }
+                    const bondGeo = new THREE.BufferGeometry();
+                    bondGeo.setAttribute('position', new THREE.Float32BufferAttribute(bondPositions, 3));
+                    const bondLines = new THREE.LineSegments(
+                        bondGeo,
+                        new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.85 })
+                    );
+                    meshGroup.add(bondLines);
+
+                    updateFn = (t) => {
+                        meshGroup.rotation.y = t * 0.45;
+                        meshGroup.rotation.x = t * 0.22;
+                    };
+
+                } else if (id === 'mitochondria') {
+                    // 4. MITOCHONDRIA GEOMETRY: Translucent Capsule + Folded Cristae Tube + ATP Energy Nodes
+                    const capsuleGeo = new THREE.CylinderGeometry(0.88, 0.88, 2.1, 24, 1, true);
+                    const capsuleMat = new THREE.MeshStandardMaterial({
+                        color: 0x10b981,
+                        emissive: 0x059669,
+                        emissiveIntensity: 0.25,
+                        transparent: true,
+                        opacity: 0.28,
+                        side: THREE.DoubleSide,
+                        wireframe: false
+                    });
+                    const capsule = new THREE.Mesh(capsuleGeo, capsuleMat);
+                    capsule.rotation.z = Math.PI / 2;
+
+                    // Wireframe contour rings for organelle
+                    const wireCap = new THREE.LineSegments(
+                        new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.9, 0.9, 2.1, 18, 4)),
+                        new THREE.LineBasicMaterial({ color: 0x34d399, transparent: true, opacity: 0.4 })
+                    );
+                    wireCap.rotation.z = Math.PI / 2;
+
+                    // Sinuous folded Cristae ribbon inside
+                    const curvePts = [];
+                    const samples = 60;
+                    for (let i = 0; i <= samples; i++) {
+                        const u = (i / samples) * 2 - 1; // -1 to 1
+                        const x = u * 1.15;
+                        const y = Math.sin(u * Math.PI * 5) * 0.48;
+                        const z = Math.cos(u * Math.PI * 3) * 0.28;
+                        curvePts.push(new THREE.Vector3(x, y, z));
+                    }
+                    const cristaeCurve = new THREE.CatmullRomCurve3(curvePts);
+                    const cristaeGeo = new THREE.TubeGeometry(cristaeCurve, 90, 0.085, 10, false);
+                    const cristaeMat = new THREE.MeshStandardMaterial({
+                        color: 0xfbbf24,
+                        emissive: 0xd97706,
+                        emissiveIntensity: 0.5,
+                        roughness: 0.3
+                    });
+                    const cristaeMesh = new THREE.Mesh(cristaeGeo, cristaeMat);
+
+                    // Orbiting ATP energy sparks
+                    const atpGroup = new THREE.Group();
+                    const sparkGeo = new THREE.SphereGeometry(0.07, 10, 10);
+                    const sparkMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+                    for (let i = 0; i < 12; i++) {
+                        const sp = new THREE.Mesh(sparkGeo, sparkMat);
+                        const pt = cristaeCurve.getPoint(i / 12);
+                        sp.position.copy(pt);
+                        atpGroup.add(sp);
+                    }
+
+                    meshGroup.add(capsule, wireCap, cristaeMesh, atpGroup);
+                    meshGroup.rotation.z = 0.25;
+
+                    updateFn = (t) => {
+                        meshGroup.rotation.y = t * 0.4;
+                        cristaeMesh.scale.y = 1 + Math.sin(t * 2.5) * 0.06;
+                        atpGroup.children.forEach((sp, idx) => {
+                            const prog = ((idx / 12) + t * 0.12) % 1;
+                            const pt = cristaeCurve.getPoint(prog);
+                            sp.position.copy(pt);
+                        });
+                    };
+
+                } else if (id === 'grid5d') {
+                    // 5. THE 5D & GRID HACKING: Live 5D Penteract Hypercube Projection + Geodesic Sphere
+                    const geoSphere = new THREE.LineSegments(
+                        new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(1.55, 1)),
+                        new THREE.LineBasicMaterial({ color: 0x34d399, transparent: true, opacity: 0.28 })
+                    );
+
+                    // Generate all 32 vertices of a 5D Penteract
+                    const verts5D = [];
+                    for (let i = 0; i < 32; i++) {
+                        verts5D.push([
+                            (i & 1) ? 1 : -1,
+                            (i & 2) ? 1 : -1,
+                            (i & 4) ? 1 : -1,
+                            (i & 8) ? 1 : -1,
+                            (i & 16) ? 1 : -1
+                        ]);
+                    }
+                    // 80 edges connecting vertices differing by 1 bit
+                    const edges5D = [];
+                    for (let i = 0; i < 32; i++) {
+                        for (let bit = 0; bit < 5; bit++) {
+                            const j = i ^ (1 << bit);
+                            if (i < j) edges5D.push([i, j]);
+                        }
+                    }
+
+                    const linePositions = new Float32Array(edges5D.length * 6);
+                    const penteractGeo = new THREE.BufferGeometry();
+                    penteractGeo.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+                    const penteractLines = new THREE.LineSegments(
+                        penteractGeo,
+                        new THREE.LineBasicMaterial({ color: 0xfb7185, transparent: true, opacity: 0.9 })
+                    );
+
+                    meshGroup.add(geoSphere, penteractLines);
+
+                    updateFn = (t) => {
+                        geoSphere.rotation.y = -t * 0.25;
+                        const a1 = t * 0.55;
+                        const a2 = t * 0.38;
+                        const c1 = Math.cos(a1), s1 = Math.sin(a1);
+                        const c2 = Math.cos(a2), s2 = Math.sin(a2);
+
+                        const projected3D = verts5D.map(([x, y, z, w, v]) => {
+                            // Rotate in X-W and Y-V 5D planes
+                            const x1 = x * c1 - w * s1;
+                            const w1 = x * s1 + w * c1;
+                            const y1 = y * c2 - v * s2;
+                            const v1 = y * s2 + v * c2;
+
+                            // Project 5D -> 4D -> 3D
+                            const d5 = 3.2 / (3.2 - v1);
+                            const d4 = 3.2 / (3.2 - w1 * d5);
+                            const scale = 0.56 * d4 * d5;
+                            return [x1 * scale, y1 * scale, z * scale];
+                        });
+
+                        const posArr = penteractGeo.attributes.position.array;
+                        edges5D.forEach(([i, j], idx) => {
+                            const pA = projected3D[i];
+                            const pB = projected3D[j];
+                            const base = idx * 6;
+                            posArr[base] = pA[0];
+                            posArr[base + 1] = pA[1];
+                            posArr[base + 2] = pA[2];
+                            posArr[base + 3] = pB[0];
+                            posArr[base + 4] = pB[1];
+                            posArr[base + 5] = pB[2];
+                        });
+                        penteractGeo.attributes.position.needsUpdate = true;
+                    };
+
+                } else if (id === 'metatron_merkaba') {
+                    // 6. METATRON'S CUBE & MERKABA: 4-Layer Nested Star Tetrahedron + Concentric Cubes
+                    // Align cube body diagonal [1, 1, 1] with Z-axis so C6 six-fold symmetry faces outward
+                    const c6Group = new THREE.Group();
+                    const diagAxis = new THREE.Vector3(1, 1, 1).normalize();
+                    const alignQuat = new THREE.Quaternion().setFromUnitVectors(diagAxis, new THREE.Vector3(0, 0, 1));
+                    c6Group.quaternion.copy(alignQuat);
+
+                    // Helper to build a cube-inscribed Merkaba (two interlocking tetrahedra + cube edges)
+                    const createMerkabaShell = (halfSize, colorA, colorB, cubeColor, faceOpacity) => {
+                        const shell = new THREE.Group();
+                        const s = halfSize;
+
+                        // Outer/Inner Cube Wireframe
+                        const cGeo = new THREE.BoxGeometry(s * 2, s * 2, s * 2);
+                        const cWire = new THREE.LineSegments(
+                            new THREE.EdgesGeometry(cGeo),
+                            new THREE.LineBasicMaterial({ color: cubeColor, transparent: true, opacity: 0.85 })
+                        );
+                        shell.add(cWire);
+
+                        // Helper to construct a tetrahedron from 4 cube vertices
+                        const buildTetra = (verts, lineColor, faceColor) => {
+                            const geom = new THREE.BufferGeometry();
+                            const faces = [
+                                verts[0], verts[1], verts[2],
+                                verts[0], verts[2], verts[3],
+                                verts[0], verts[3], verts[1],
+                                verts[1], verts[3], verts[2]
+                            ];
+                            const pos = new Float32Array(faces.length * 3);
+                            faces.forEach((v, idx) => {
+                                pos[idx * 3] = v[0];
+                                pos[idx * 3 + 1] = v[1];
+                                pos[idx * 3 + 2] = v[2];
+                            });
+                            geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+                            geom.computeVertexNormals();
+
+                            const mesh = new THREE.Mesh(
+                                geom,
+                                new THREE.MeshStandardMaterial({
+                                    color: faceColor,
+                                    emissive: faceColor,
+                                    emissiveIntensity: 0.35,
+                                    transparent: true,
+                                    opacity: faceOpacity,
+                                    side: THREE.DoubleSide,
+                                    depthWrite: false
+                                })
+                            );
+                            const edges = new THREE.LineSegments(
+                                new THREE.EdgesGeometry(geom),
+                                new THREE.LineBasicMaterial({ color: lineColor })
+                            );
+                            mesh.add(edges);
+                            return mesh;
+                        };
+
+                        // Even-parity & odd-parity vertices of the cube form the two interlocking tetrahedra
+                        const tetraUp = buildTetra(
+                            [[s, s, s], [s, -s, -s], [-s, s, -s], [-s, -s, s]],
+                            colorA,
+                            colorA
+                        );
+                        const tetraDown = buildTetra(
+                            [[-s, -s, -s], [-s, s, s], [s, -s, s], [s, s, -s]],
+                            colorB,
+                            colorB
+                        );
+
+                        shell.add(tetraUp, tetraDown);
+                        return { shell, tetraUp, tetraDown };
+                    };
+
+                    const outerS = 1.08;
+                    const innerS = 0.56;
+
+                    // Layers 1 & 2: Outer Cube & Outer Merkaba (Star Tetrahedron)
+                    const outerMerkaba = createMerkabaShell(outerS, 0xfef08a, 0x7dd3fc, 0xfde68a, 0.14);
+                    // Layers 3 & 4: Inner Isometric Cube & Inner Hexagram Core
+                    const innerMerkaba = createMerkabaShell(innerS, 0xffffff, 0xf472b6, 0xffffff, 0.24);
+
+                    // Layer 2 Connecting Wireframe Chords (4D Hypercube / Tesseract corner-to-corner struts)
+                    const chordPositions = [];
+                    const signs = [-1, 1];
+                    signs.forEach(sx => {
+                        signs.forEach(sy => {
+                            signs.forEach(sz => {
+                                chordPositions.push(
+                                    sx * outerS, sy * outerS, sz * outerS,
+                                    sx * innerS, sy * innerS, sz * innerS
+                                );
+                            });
+                        });
+                    });
+                    const chordGeo = new THREE.BufferGeometry();
+                    chordGeo.setAttribute('position', new THREE.Float32BufferAttribute(chordPositions, 3));
+                    const chordLines = new THREE.LineSegments(
+                        chordGeo,
+                        new THREE.LineBasicMaterial({ color: 0xbae6fd, transparent: true, opacity: 0.72 })
+                    );
+
+                    // Radiant central core orb
+                    const coreOrb = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.16, 16, 16),
+                        new THREE.MeshBasicMaterial({ color: 0xffffff })
+                    );
+
+                    c6Group.add(outerMerkaba.shell, innerMerkaba.shell, chordLines, coreOrb);
+                    meshGroup.add(c6Group);
+
+                    updateFn = (t) => {
+                        // Counter-rotate outer and inner Merkaba tetrahedra along their C6 symmetry axis [1,1,1]
+                        outerMerkaba.tetraUp.rotation.set(0, 0, 0);
+                        outerMerkaba.tetraUp.rotateOnAxis(diagAxis, t * 0.35);
+                        outerMerkaba.tetraDown.rotation.set(0, 0, 0);
+                        outerMerkaba.tetraDown.rotateOnAxis(diagAxis, -t * 0.35);
+
+                        innerMerkaba.tetraUp.rotation.set(0, 0, 0);
+                        innerMerkaba.tetraUp.rotateOnAxis(diagAxis, -t * 0.65);
+                        innerMerkaba.tetraDown.rotation.set(0, 0, 0);
+                        innerMerkaba.tetraDown.rotateOnAxis(diagAxis, t * 0.65);
+
+                        // Gentle spatial wobble so user perceives 3D depth even before orbiting
+                        meshGroup.rotation.y = Math.sin(t * 0.5) * 0.32;
+                        meshGroup.rotation.x = Math.cos(t * 0.4) * 0.16;
+                    };
+                }
+
+                scene.add(root);
+                conceptGroups[id] = {
+                    id,
+                    root,
+                    meshGroup,
+                    billboard,
+                    basePos,
+                    update: updateFn
+                };
+            });
+
+            // Central Harmonic Connector Ring linking all 5 nodes in Overview
+            const ringGeo = new THREE.RingGeometry(radiusRing - 0.04, radiusRing + 0.04, 120);
+            const ringMat = new THREE.MeshBasicMaterial({
+                color: 0x38bdf8,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.25
+            });
+            const floorRing = new THREE.Mesh(ringGeo, ringMat);
+            floorRing.rotation.x = -Math.PI / 2;
+            floorRing.position.y = -1.6;
+            scene.add(floorRing);
+        }
+
+        /**
+         * Initializes Three.js Scene, Lighting, Starfield, and Event Handlers
+         */
+        function initThree() {
+            const container = document.getElementById('canvas-container');
+            const canvas = document.getElementById('three-canvas');
+
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x050814, 0.022);
+
+            camera = new THREE.PerspectiveCamera(48, container.clientWidth / container.clientHeight, 0.1, 150);
+
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setSize(container.clientWidth, container.clientHeight);
+
+            // Ambient & Colored Point Lighting for Depth
+            const ambient = new THREE.AmbientLight(0x94a3b8, 0.75);
+            scene.add(ambient);
+
+            const keyLight = new THREE.PointLight(0x38bdf8, 1.8, 45);
+            keyLight.position.set(8, 12, 10);
+            scene.add(keyLight);
+
+            const rimLight = new THREE.PointLight(0xa855f7, 1.5, 45);
+            rimLight.position.set(-10, -6, -8);
+            scene.add(rimLight);
+
+            // Subtle Quantum Starfield Background
+            const starCount = 900;
+            const starPos = new Float32Array(starCount * 3);
+            for (let i = 0; i < starCount * 3; i++) {
+                starPos[i] = (Math.random() - 0.5) * 75;
+            }
+            const starGeo = new THREE.BufferGeometry();
+            starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+            const starMat = new THREE.PointsMaterial({
+                color: 0x7dd3fc,
+                size: 0.14,
+                transparent: true,
+                opacity: 0.65
+            });
+            starField = new THREE.Points(starGeo, starMat);
+            scene.add(starField);
+
+            // Raycaster for clicking/tapping 3D concepts
+            raycaster = new THREE.Raycaster();
+            pointer = new THREE.Vector2();
+
+            // Build all 5 concept models & 2D billboards
+            buildConceptModels();
+
+            // Attach interaction listeners
+            setupInteractionEvents(canvas);
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        /**
+         * Responsive Window Resize Handler
+         */
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            if (!container || !camera || !renderer) return;
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        /**
+         * Mouse, Touch, Wheel, and Raycast Selection Listeners
+         */
+        function setupInteractionEvents(canvas) {
+            let downPos = { x: 0, y: 0 };
+
+            // Mouse Down
+            canvas.addEventListener('mousedown', (e) => {
+                state.isDragging = true;
+                state.prevMouse = { x: e.clientX, y: e.clientY };
+                downPos = { x: e.clientX, y: e.clientY };
+            });
+
+            // Mouse Move (Orbit Camera)
+            window.addEventListener('mousemove', (e) => {
+                if (!state.isDragging) return;
+                const dx = e.clientX - state.prevMouse.x;
+                const dy = e.clientY - state.prevMouse.y;
+                state.prevMouse = { x: e.clientX, y: e.clientY };
+
+                state.targetCamTheta -= dx * 0.0065;
+                state.targetCamPhi = Math.max(0.25, Math.min(Math.PI - 0.25, state.targetCamPhi - dy * 0.0065));
+            });
+
+            // Mouse Up (Check for clean click to pick 3D node)
+            window.addEventListener('mouseup', (e) => {
+                if (state.isDragging) {
+                    const moveDist = Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y);
+                    if (moveDist < 6 && e.target === canvas) {
+                        handleCanvasTap(e.clientX, e.clientY);
+                    }
+                }
+                state.isDragging = false;
+            });
+
+            // Mouse Wheel Zoom
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                state.targetCamRadius = Math.max(4.5, Math.min(26, state.targetCamRadius + e.deltaY * 0.01));
+            }, { passive: false });
+
+            // Touch Start (Single-finger orbit + Two-finger pinch zoom)
+            canvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    state.isDragging = true;
+                    state.prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                    downPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                } else if (e.touches.length === 2) {
+                    state.isDragging = false;
+                    state.pinchStartDist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                }
+            }, { passive: true });
+
+            // Touch Move
+            canvas.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && state.isDragging) {
+                    const dx = e.touches[0].clientX - state.prevMouse.x;
+                    const dy = e.touches[0].clientY - state.prevMouse.y;
+                    state.prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+
+                    state.targetCamTheta -= dx * 0.0075;
+                    state.targetCamPhi = Math.max(0.25, Math.min(Math.PI - 0.25, state.targetCamPhi - dy * 0.0075));
+                } else if (e.touches.length === 2) {
+                    const dist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    const delta = state.pinchStartDist - dist;
+                    state.pinchStartDist = dist;
+                    state.targetCamRadius = Math.max(4.5, Math.min(26, state.targetCamRadius + delta * 0.03));
+                }
+            }, { passive: true });
+
+            // Touch End (Tap selection)
+            canvas.addEventListener('touchend', (e) => {
+                if (state.isDragging && e.changedTouches.length === 1) {
+                    const t = e.changedTouches[0];
+                    const moveDist = Math.hypot(t.clientX - downPos.x, t.clientY - downPos.y);
+                    if (moveDist < 10) {
+                        handleCanvasTap(t.clientX, t.clientY);
+                    }
+                }
+                state.isDragging = false;
+            });
+        }
+
+        /**
+         * Raycast onto 3D objects or 2D floating plates when user clicks/taps canvas
+         */
+        function handleCanvasTap(clientX, clientY) {
+            const rect = renderer.domElement.getBoundingClientRect();
+            pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+            pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+            raycaster.setFromCamera(pointer, camera);
+            const hits = raycaster.intersectObjects(clickableMeshes, false);
+            if (hits.length > 0 && hits[0].object.userData.conceptId) {
+                selectConcept(hits[0].object.userData.conceptId);
+            }
+        }
+
+        /**
+         * Selects a concept, updates camera target, bottom pills, and 2D/text Inspector
+         */
+        function selectConcept(conceptId) {
+            state.activeConcept = conceptId;
+            const info = CONCEPTS[conceptId];
+
+            // Update Camera Focus Target
+            if (conceptId === 'overview') {
+                state.desiredLookAt.set(0, 0.3, 0);
+                state.targetCamRadius = 16.5;
+                state.targetCamPhi = 1.15;
+            } else {
+                const grp = conceptGroups[conceptId];
+                state.desiredLookAt.set(grp.basePos.x, 0.65, grp.basePos.z);
+                // Angle camera outward from center toward the selected node
+                const outwardAngle = Math.atan2(grp.basePos.x, grp.basePos.z);
+                state.targetCamTheta = outwardAngle;
+                state.targetCamPhi = 1.25;
+                state.targetCamRadius = 6.4;
+            }
+
+            // Highlight active concept in 3D scene
+            Object.values(conceptGroups).forEach(grp => {
+                const isSelected = conceptId === 'overview' || grp.id === conceptId;
+                grp.billboard.material.opacity = state.show2DPlates ? (isSelected ? 0.96 : 0.25) : 0;
+            });
+
+            // Update Bottom Navigation Pills
+            document.querySelectorAll('.concept-pill').forEach(btn => {
+                const active = btn.dataset.concept === conceptId;
+                if (active) {
+                    btn.className = 'concept-pill active-concept-glow shrink-0 px-3 py-2 rounded-xl text-xs font-semibold bg-cyan-500/25 text-cyan-200 border border-cyan-400/50 transition';
+                } else {
+                    btn.className = 'concept-pill shrink-0 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:bg-slate-800/80 border border-transparent transition';
+                }
+            });
+
+            // Update Inspector Header & 2D Schematic Canvas
+            document.getElementById('concept-badge').textContent = info.badge;
+            document.getElementById('concept-title').textContent = info.title;
+            const previewCanvas = document.getElementById('preview-2d-canvas');
+            drawConcept2D(previewCanvas, conceptId);
+
+            // Refresh Perspective Text
+            renderPerspectiveContent();
+
+            // Update harmonic audio pitch if active
+            updateAudioFrequency(conceptId);
+        }
+
+        /**
+         * Updates the Real Science vs. Esoteric Lore text card
+         */
+        function renderPerspectiveContent() {
+            const info = CONCEPTS[state.activeConcept];
+            const headingEl = document.getElementById('perspective-heading');
+            const textEl = document.getElementById('perspective-text');
+            const tabSci = document.getElementById('tab-science');
+            const tabEso = document.getElementById('tab-esoteric');
+
+            if (state.perspective === 'science') {
+                tabSci.className = 'py-1.5 px-2.5 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 transition';
+                tabEso.className = 'py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 border border-transparent transition';
+                headingEl.className = 'text-xs font-semibold uppercase tracking-wider text-emerald-400';
+                headingEl.textContent = info.scienceHeading;
+                textEl.textContent = info.scienceText;
+            } else {
+                tabEso.className = 'py-1.5 px-2.5 rounded-lg text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/40 transition';
+                tabSci.className = 'py-1.5 px-2.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 border border-transparent transition';
+                headingEl.className = 'text-xs font-semibold uppercase tracking-wider text-purple-400';
+                headingEl.textContent = info.esotericHeading;
+                textEl.textContent = info.esotericText;
+            }
+        }
+
+        /**
+         * Optional Base-60 Harmonic Web Audio Synthesizer (Purely User-Triggered)
+         */
+        let oscPrimary = null;
+        let oscHarmonic = null;
+
+        function toggleHarmonicAudio() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContextClass();
+                masterGain = audioCtx.createGain();
+                masterGain.gain.value = 0.0;
+                masterGain.connect(audioCtx.destination);
+
+                oscPrimary = audioCtx.createOscillator();
+                oscPrimary.type = 'sine';
+                oscPrimary.frequency.value = 120; // Base-60 multiple (120 Hz)
+
+                oscHarmonic = audioCtx.createOscillator();
+                oscHarmonic.type = 'triangle';
+                oscHarmonic.frequency.value = 180; // 3:2 harmonic fifth (180 Hz)
+
+                const subGain = audioCtx.createGain();
+                subGain.gain.value = 0.35;
+
+                oscPrimary.connect(masterGain);
+                oscHarmonic.connect(subGain);
+                subGain.connect(masterGain);
+
+                oscPrimary.start();
+                oscHarmonic.start();
+            }
+
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            state.audioEnabled = !state.audioEnabled;
+            masterGain.gain.setTargetAtTime(state.audioEnabled ? 0.06 : 0.0, audioCtx.currentTime, 0.15);
+
+            document.getElementById('icon-audio-off').classList.toggle('hidden', state.audioEnabled);
+            document.getElementById('icon-audio-on').classList.toggle('hidden', !state.audioEnabled);
+            updateAudioFrequency(state.activeConcept);
+        }
+
+        function updateAudioFrequency(conceptId) {
+            if (!audioCtx || !oscPrimary || !oscHarmonic) return;
+            const ratios = {
+                overview: [120, 180],
+                lattice8: [128, 192],
+                base60: [120, 240],
+                c60: [144, 216],
+                mitochondria: [136.1, 204.15],
+                grid5d: [150, 225],
+                metatron_merkaba: [160, 240]
+            };
+            const [f1, f2] = ratios[conceptId] || [120, 180];
+            oscPrimary.frequency.setTargetAtTime(f1, audioCtx.currentTime, 0.2);
+            oscHarmonic.frequency.setTargetAtTime(f2, audioCtx.currentTime, 0.2);
+        }
+
+        /**
+         * Binds All UI Controls
+         */
+        function bindUIEvents() {
+            // Bottom concept pills
+            document.querySelectorAll('.concept-pill').forEach(btn => {
+                btn.addEventListener('click', () => selectConcept(btn.dataset.concept));
+            });
+
+            // Perspective tabs
+            document.getElementById('tab-science').addEventListener('click', () => {
+                state.perspective = 'science';
+                renderPerspectiveContent();
+            });
+            document.getElementById('tab-esoteric').addEventListener('click', () => {
+                state.perspective = 'esoteric';
+                renderPerspectiveContent();
+            });
+
+            // Toggle 2D Hologram Plates in 3D space
+            document.getElementById('btn-toggle-2d').addEventListener('click', () => {
+                state.show2DPlates = !state.show2DPlates;
+                document.getElementById('label-2d-state').textContent = state.show2DPlates ? 'ON' : 'OFF';
+                Object.values(conceptGroups).forEach(grp => {
+                    grp.billboard.visible = state.show2DPlates;
+                });
+            });
+
+            // Toggle Audio
+            document.getElementById('btn-toggle-audio').addEventListener('click', toggleHarmonicAudio);
+
+            // Reset View / Overview
+            document.getElementById('btn-reset-view').addEventListener('click', () => {
+                selectConcept('overview');
+                state.targetCamTheta = 0.35;
+                state.targetCamPhi = 1.18;
+                state.targetCamRadius = 16.5;
+            });
+
+            // Collapse / Expand Inspector Drawer
+            document.getElementById('btn-toggle-drawer').addEventListener('click', () => {
+                state.drawerCollapsed = !state.drawerCollapsed;
+                const body = document.getElementById('inspector-body');
+                const chevron = document.getElementById('drawer-chevron');
+                body.classList.toggle('hidden', state.drawerCollapsed);
+                chevron.style.transform = state.drawerCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
+            });
+
+            // Speed Slider
+            const slider = document.getElementById('slider-speed');
+            slider.addEventListener('input', (e) => {
+                state.speedMultiplier = parseFloat(e.target.value);
+                document.getElementById('speed-value').textContent = `${state.speedMultiplier.toFixed(1)}x`;
+            });
+
+            // Enlarge 2D Diagram Modal
+            const openModal = () => {
+                const modal = document.getElementById('modal-2d');
+                const modalCanvas = document.getElementById('modal-2d-canvas');
+                const info = CONCEPTS[state.activeConcept];
+                document.getElementById('modal-2d-title').textContent = `${info.title} — 2D Schematic`;
+                drawConcept2D(modalCanvas, state.activeConcept);
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            };
+
+            document.getElementById('btn-expand-2d').addEventListener('click', openModal);
+            document.getElementById('preview-2d-canvas').addEventListener('click', openModal);
+            document.getElementById('btn-close-modal').addEventListener('click', () => {
+                const modal = document.getElementById('modal-2d');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            });
+            document.getElementById('modal-2d').addEventListener('click', (e) => {
+                if (e.target.id === 'modal-2d') {
+                    e.currentTarget.classList.add('hidden');
+                    e.currentTarget.classList.remove('flex');
+                }
+            });
+        }
+
+        /**
+         * Main Animation Loop
+         */
+        let elapsed = 0;
+        let lastFrameTime = performance.now();
+
+        function animate(now = performance.now()) {
+            requestAnimationFrame(animate);
+
+            const dt = Math.min((now - lastFrameTime) / 1000, 0.1);
+            lastFrameTime = now;
+            elapsed += dt * state.speedMultiplier;
+
+            // Gentle automatic camera drift in overview when user is not dragging
+            if (!state.isDragging && state.activeConcept === 'overview' && state.speedMultiplier > 0) {
+                state.targetCamTheta += dt * 0.08 * state.speedMultiplier;
+            }
+
+            // Smooth spherical camera interpolation
+            state.camTheta += (state.targetCamTheta - state.camTheta) * 0.08;
+            state.camPhi += (state.targetCamPhi - state.camPhi) * 0.08;
+            state.camRadius += (state.targetCamRadius - state.camRadius) * 0.08;
+            state.lookAtTarget.lerp(state.desiredLookAt, 0.08);
+
+            const sinPhi = Math.sin(state.camPhi);
+            camera.position.set(
+                state.lookAtTarget.x + state.camRadius * sinPhi * Math.sin(state.camTheta),
+                state.lookAtTarget.y + state.camRadius * Math.cos(state.camPhi),
+                state.lookAtTarget.z + state.camRadius * sinPhi * Math.cos(state.camTheta)
+            );
+            camera.lookAt(state.lookAtTarget);
+
+            // Animate each concept's 3D geometry & gentle floating motion
+            Object.values(conceptGroups).forEach((grp, idx) => {
+                grp.update(elapsed);
+                grp.meshGroup.position.y = Math.sin(elapsed * 1.4 + idx) * 0.14;
+                grp.billboard.position.y = 2.35 + Math.sin(elapsed * 1.4 + idx) * 0.08;
+            });
+
+            if (starField) {
+                starField.rotation.y = elapsed * 0.015;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Start application strictly on window load
+        window.onload = function () {
+            try {
+                initThree();
+                bindUIEvents();
+                selectConcept('overview');
+                animate();
+            } catch (err) {
+                console.error('Initialization error:', err);
+            }
+        };
+    </script>
+</body>
+</html>
