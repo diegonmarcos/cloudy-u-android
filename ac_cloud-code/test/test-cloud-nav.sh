@@ -66,6 +66,55 @@ while IFS= read -r line; do
 done <<< "$ae_out"
 [ "$ae_checks" -ge 60 ] || fail "the aiengine driver made only $ae_checks checks"
 
+# ── #1855 P3 IDE shell: every pre-P3 tab, sub-page, drawer item and deep-link id still lands (rule 16), proven with mutations ──
+np_out="$(node "$ROOT/test/nav_parity.mjs" "$ROOT" 2>&1)"
+np_status=$?
+[ "$np_status" -eq 0 ] || fail "nav parity driver crashed (exit $np_status): $np_out"
+np_checks=0
+while IFS= read -r line; do
+  case "$line" in
+    "CHECK ok "*)  ok "${line#CHECK ok }"; np_checks=$((np_checks + 1)) ;;
+    "CHECK bad "*) fail "${line#CHECK bad }"; np_checks=$((np_checks + 1)) ;;
+  esac
+done <<< "$np_out"
+[ "$np_checks" -ge 60 ] || fail "the nav parity driver made only $np_checks checks"
+# Each mutation drops or misplaces one thing in a COPY of the sources; the parity driver must then report a failed check.
+mut_root="$(mktemp -d)"
+mutate() { # name python-snippet (edits files under $1 = the copy)
+  rm -rf "$mut_root/copy" && mkdir -p "$mut_root/copy/src" && cp -r "$ROOT/src/cloud" "$mut_root/copy/src/cloud" && cp "$ROOT/build.json" "$mut_root/copy/build.json"
+  python3 - "$mut_root/copy" "$2" <<'PY' || { fail "mutation '$1' could not be applied"; return; }
+import json, sys
+root, code = sys.argv[1], sys.argv[2]
+def nav_edit(fn):
+    p = root + "/src/cloud/nav.json"
+    d = json.load(open(p)); fn(d); json.dump(d, open(p, "w"))
+def text_edit(rel, old, new=""):
+    p = root + "/" + rel
+    s = open(p).read()
+    assert old in s, f"{rel}: mutation target not found"
+    open(p, "w").write(s.replace(old, new, 1))
+exec(code)
+PY
+  if node "$ROOT/test/nav_parity.mjs" "$mut_root/copy" 2>&1 | grep -q '^CHECK bad '; then ok "parity mutation '$1' is caught"; else fail "parity mutation '$1' was NOT caught: the parity test is blind to it"; fi
+}
+mutate "git redirect and alias dropped" 'nav_edit(lambda d: (d["redirects"].pop("git"), [t.__setitem__("aliases", []) for t in d["tabs"] if t["id"] == "workspace"]))'
+mutate "agents lands on Models" 'nav_edit(lambda d: d["redirects"].__setitem__("agents", {"tab": "agent", "page": "mdl"}))'
+mutate "ai lands on a bottom page without chat" 'nav_edit(lambda d: d["redirects"].__setitem__("ai", {"tab": "run", "page": "browser"}))'
+mutate "browser redirect to Workspace" 'nav_edit(lambda d: d["redirects"].__setitem__("browser", {"tab": "workspace"}))'
+mutate "Models sub-page dropped" 'nav_edit(lambda d: [t["pages"].pop() for t in d["tabs"] if t["id"] == "agent"])'
+mutate "Effort sub-page dropped" 'nav_edit(lambda d: d["parents"][0]["pages"].pop())'
+mutate "Backlog parent removed" 'nav_edit(lambda d: d.__setitem__("parents", []))'
+mutate "Backlog put on the bottom bar" 'nav_edit(lambda d: (d["tabs"].append(d["parents"].pop())))'
+mutate "Browser page dropped from Run" 'nav_edit(lambda d: [t["pages"].pop(0) for t in d["tabs"] if t["id"] == "run"])'
+mutate "default tab moved" 'nav_edit(lambda d: d.__setitem__("default_tab", "editor"))'
+mutate "git tab drawer item dropped" 'text_edit("src/cloud/index.js", "id: \"rescan\"", "id: \"rescan-x\"")'
+mutate "Backlog drawer item dropped" 'text_edit("src/cloud/index.js", "id: \"docs-folder\"", "id: \"docs-folder-x\"")'
+mutate "sub-page re-render dropped" 'text_edit("src/cloud/index.js", "if (view !== was) return showTab(tabId, pageId);", "")'
+mutate "Changes status read dropped" 'text_edit("src/cloud/index.js", "driveStatus(bridge(), r.path)", "null")'
+mutate "dropdown stops listing parents" 'text_edit("src/cloud/bars.js", "const parents = tabs.filter((t) => t.placement === \"dropdown\");", "const parents = [];")'
+mutate "bottom bar draws every page" 'text_edit("src/cloud/bars-dom.js", "for (const t of bottomTabs(tabs)) {", "for (const t of tabs) {")'
+rm -rf "$mut_root"
+
 # ── #1158 the shared bars (first row, second row, bottom bar, gradient), through the real bars.js ──
 bars_out="$(node "$ROOT/test/cloud_bars.mjs" "$ROOT" 2>&1)"
 status=$?

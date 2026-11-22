@@ -136,18 +136,73 @@
     "libs:perms": {"dir": "../ab_cloud-libs-shared/libs/perms", "type": "library", "_doc": "#1360/#1352 libs:ui-nav-bars' `api` dependency: Configs ▸ General ▸ Perms is libs:perms' AppPermsSection, first run asks every never-asked grant."}
   },
   "ui": {
-    "_doc": "#1158 the nav declaration the fleet's nav-shape guard reads (ui.bottom_nav, sections, default_section). Cloud Code is a Cordova WebView, so the bars are drawn in the page by src/cloud/bars-dom.js from src/cloud/nav.json (which stays the tab and sub-page source: the guard fails when the two disagree, rule W2). The shared Compose libs cannot be hosted in a Cordova page without a second window over the editor (see src/cloud/index.js); nav.json::bars carries the libs' sizes and colours and rule W3 holds them equal to the Kotlin constants. The first row is declared in nav.json::bars.first_row (not ui.top_bar: cloud-android-top-bar-guard holds the Compose AppTopBar; the nav-shape guard's rule W holds this one). AI hands over to the SuperApp (extapp:cloud-superapp/ai), Profile to Cloud Account (extapp:cloud-account), Configs opens Cloud Code's settings page.",
+    "_doc": "#1158 the nav declaration the fleet's nav-shape guard reads (ui.bottom_nav, sections, default_section). Cloud Code is a Cordova WebView, so the bars are drawn in the page by src/cloud/bars-dom.js from src/cloud/nav.json (which stays the tab and sub-page source: the guard fails when the two disagree, rule W2). The shared Compose libs cannot be hosted in a Cordova page without a second window over the editor (see src/cloud/index.js); nav.json::bars carries the libs' sizes and colours and rule W3 holds them equal to the Kotlin constants. The first row is declared in nav.json::bars.first_row (not ui.top_bar: cloud-android-top-bar-guard holds the Compose AppTopBar; the nav-shape guard's rule W holds this one). #1855 P3 the IDE shell: the five bottom pages are ui.bottom_nav; Backlog is a Parent Page (ui.parent_pages), a section that is OFF the bar and reached from the first row's title dropdown (rule W2 holds nav.json parents to it). AI hands over to the SuperApp (extapp:cloud-superapp/ai), Profile to Cloud Account (extapp:cloud-account), Configs opens Cloud Code's settings page.",
     "bottom_nav": [
-      "backlog",
+      "workspace",
       "editor",
-      "git",
-      "ai",
-      "agents",
-      "browser",
-      "myterminal"
+      "agent",
+      "changes",
+      "run"
     ],
-    "default_section": "ai",
+    "default_section": "agent",
+    "parent_pages": [
+      "backlog"
+    ],
     "sections": [
+      {
+        "id": "workspace",
+        "label": "Workspace",
+        "icon": "folder_open"
+      },
+      {
+        "id": "editor",
+        "label": "Editor",
+        "icon": "code"
+      },
+      {
+        "id": "agent",
+        "label": "Agent",
+        "icon": "brain",
+        "pages": [
+          {
+            "id": "chat",
+            "label": "Chat",
+            "icon": "chat_bubble"
+          },
+          {
+            "id": "bat",
+            "label": "Batches",
+            "icon": "documents"
+          },
+          {
+            "id": "mdl",
+            "label": "Models",
+            "icon": "extension"
+          }
+        ]
+      },
+      {
+        "id": "changes",
+        "label": "Changes",
+        "icon": "compare_arrows"
+      },
+      {
+        "id": "run",
+        "label": "Run",
+        "icon": "play_circle_outline",
+        "pages": [
+          {
+            "id": "browser",
+            "label": "Browser",
+            "icon": "public"
+          },
+          {
+            "id": "myterminal",
+            "label": "MyTerminal",
+            "icon": "square-terminal"
+          }
+        ]
+      },
       {
         "id": "backlog",
         "label": "Backlog",
@@ -174,48 +229,6 @@
             "icon": "zap"
           }
         ]
-      },
-      {
-        "id": "editor",
-        "label": "Editor",
-        "icon": "code"
-      },
-      {
-        "id": "git",
-        "label": "Git",
-        "icon": "git"
-      },
-      {
-        "id": "ai",
-        "label": "AI",
-        "icon": "chat_bubble"
-      },
-      {
-        "id": "agents",
-        "label": "Agents",
-        "icon": "brain",
-        "pages": [
-          {
-            "id": "bat",
-            "label": "Batches",
-            "icon": "documents"
-          },
-          {
-            "id": "mdl",
-            "label": "Models",
-            "icon": "extension"
-          }
-        ]
-      },
-      {
-        "id": "browser",
-        "label": "Browser",
-        "icon": "public"
-      },
-      {
-        "id": "myterminal",
-        "label": "MyTerminal",
-        "icon": "square-terminal"
       }
     ]
   },

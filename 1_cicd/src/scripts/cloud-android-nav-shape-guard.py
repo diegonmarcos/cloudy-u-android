@@ -465,7 +465,7 @@ def check_web(root, app, ui, spec, bad):
     """Rules W1-W4 for a held app whose UI is a WebView page (Cordova): it cannot call the Compose bars, so it draws the
     SAME bars from a declaration, and the guard holds that declaration to the libs.
       W1  N1: build.json ui.bottom_nav / sections / default_section
-      W2  the app's own nav JSON lists the same bottom pages, sub-pages and default as build.json ui
+      W2  the app's own nav JSON lists the same bottom pages, Parent Pages, sub-pages and default as build.json ui
       W3  its bar numbers and colours equal the Kotlin constants of the shared libs (web.parity)
       W4  its sources draw the three bars (web.markers)
     """
@@ -484,7 +484,17 @@ def check_web(root, app, ui, spec, bad):
     if nav.get("default_tab") != ui.get("default_section"):
         bad.append(f"W2 {app}: {cfg['nav']} default_tab {nav.get('default_tab')!r} differs from ui.default_section {ui.get('default_section')!r}")
     by_id = {s.get("id"): s for s in sections}
-    for t in tabs:
+    # #1855 P3 Parent Pages: sections OFF the bottom bar, reached from the first row's dropdown. nav.json `parents` and build.json
+    # ui.parent_pages name the same ids, and each is a ui.sections id that is not on the bar (checked like a tab below).
+    parents = nav.get("parents") or []
+    if [t.get("id") for t in parents] != (ui.get("parent_pages") or []):
+        bad.append(f"W2 {app}: {cfg['nav']} parents {[t.get('id') for t in parents]} differ from build.json ui.parent_pages {ui.get('parent_pages') or []}")
+    for t in parents:
+        if t.get("id") in (ui.get("bottom_nav") or []) or t.get("id") not in by_id:
+            bad.append(f"W2 {app}: parent page {t.get('id')} must be a ui.sections id that is not on ui.bottom_nav")
+    if sorted(by_id) != sorted([t.get("id") for t in tabs] + [t.get("id") for t in parents]):
+        bad.append(f"W2 {app}: build.json ui.sections {sorted(by_id)} are not exactly the nav tabs plus parents (every page declared in both, none dropped)")
+    for t in tabs + parents:
         want = [p.get("id") for p in (by_id.get(t.get("id"), {}).get("pages") or [])]
         got = [p.get("id") for p in (t.get("pages") or [])]
         if want != got:

@@ -51,5 +51,5 @@ const before = JSON.parse(readFileSync(join(root, "test/fixtures/backlog-fields.
 for (const id of before.menu_ids) out(new RegExp(`id: "${id}"`).test(index), `parity: drawer item ${id} kept`);
 for (const k of before.nav_backlog_keys) out(k in nav.backlog, `parity: nav.backlog.${k} kept`);
 for (const t of before.snippets) out(index.includes(t), `parity: ${t.slice(0, 60)} kept`);
-const subs = Object.fromEntries(nav.tabs.flatMap((t) => (t.pages || []).map((p) => [p.id, p.file])));
+const subs = Object.fromEntries([...nav.tabs, ...nav.parents].flatMap((t) => (t.pages || []).map((p) => [p.id, p.file])));
 for (const [id, f] of Object.entries(before.sub_pages)) out(subs[id] === f, `parity: sub-page ${id} -> ${f} kept`);

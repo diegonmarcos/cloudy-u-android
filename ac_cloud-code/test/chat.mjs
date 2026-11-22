@@ -151,13 +151,13 @@ out(M.moreFor(chat, claude, health).some((f) => f.id === "login"), "Claude gets 
 out(M.moreFor(chat, direct, health).every((f) => f.agents === "all"), "the direct backend gets only the chat's own functions");
 
 // ── the hamburger lists the ACTIVE page's items ─────────────────────────────
-const tabs = T.buildTabs(nav, nav.tabs.map((t) => t.view));
-const menus = { ai: () => ({ items: M.chatMenu() }), git: () => ({ items: [{ id: "rescan" }] }) };
-const chatItems = T.menuFor({ active: "ai" }, tabs, menus).items.map((i) => i.id);
+const tabs = T.buildTabs(nav, [...nav.tabs, ...nav.parents].flatMap((t) => [t.view, ...(t.pages || []).map((p) => p.view).filter(Boolean)]));
+const menus = { agent: () => ({ items: M.chatMenu() }), workspace: () => ({ items: [{ id: "rescan" }] }) };
+const chatItems = T.menuFor({ active: "agent" }, tabs, menus).items.map((i) => i.id);
 out(JSON.stringify(chatItems) === JSON.stringify(M.chatMenu().map((i) => i.id)), `Chat's drawer is Chat's own items (${chatItems.join(", ")})`);
 for (const need of ["new", "history", "search", "pinned", "export"]) out(chatItems.includes(need), `Chat's drawer has ${need}`);
-out(T.menuFor({ active: "git" }, tabs, menus).items[0].id === "rescan", "Git' drawer is Git's own items (tab id git, formerly repos)");
-out(T.menuFor({ active: "browser" }, tabs, menus).items.length === 0, "a page that registered nothing gets an empty drawer, never another page's");
+out(T.menuFor({ active: "workspace" }, tabs, menus).items[0].id === "rescan", "Workspace' drawer is its own items (tab id workspace, formerly git)");
+out(T.menuFor({ active: "run" }, tabs, menus).items.length === 0, "a page that registered nothing gets an empty drawer, never another page's");
 const index = read("src/cloud/index.js");
 out(/MENUS\[panel\.dataset\.tab\] = \(\) => chatDrawer\(drawer\)/.test(index) && /menuFor\(state, tabs, MENUS\)/.test(index), "index.js registers Chat's drawer and opens the active tab's through menuFor");
 for (const view of ["renderBacklogView", "renderGit", "renderBrowser"]) {

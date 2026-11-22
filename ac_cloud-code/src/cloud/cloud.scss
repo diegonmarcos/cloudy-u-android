@@ -120,6 +120,11 @@ body.cloud-panel-open #quicktools-toggler {
         color: var(--cb-accentOnIsland);
         font-weight: 700;
       }
+
+      // #1855 P3 Parent Pages (Backlog): set off from the open page's own hierarchy
+      &.parent-head {
+        border-top: 1px solid var(--cb-islandBorder);
+      }
     }
   }
 }
@@ -1110,3 +1115,38 @@ body.cloud-collapsed {
 .cloud-backlog-modes .cloud-backlog-mode.active { font-weight: 600; text-decoration: underline; }
 .cloud-backlog-note { font-size: 12px; padding: 0 2px; }
 .cloud-backlog-frame { width: 100%; height: calc(100vh - 220px); min-height: 320px; border: 0; background: #fff; }
+
+// ── #1855 P3 Workspace (repo picker + tree + search) and Changes ──
+.cloud-ws-search {
+  display: flex;
+  gap: 6px;
+  padding: 6px 8px;
+
+  input {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+.cloud-ws-repo {
+  border-top: 1px solid var(--cb-islandBorder);
+  padding: 6px 8px;
+
+  .cloud-ws-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+}
+
+.cloud-ws-results .cloud-row,
+.cloud-changes .cloud-row {
+  width: 100%;
+  text-align: left;
+}
+
+.cloud-change-state {
+  margin-left: auto;
+  font-size: 12px;
+  opacity: 0.8;
+}

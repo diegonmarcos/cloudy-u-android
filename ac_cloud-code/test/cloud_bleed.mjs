@@ -65,7 +65,7 @@ const shot = async (h, panelOpen) => {
 	return (await page.screenshot()).toString("base64");
 };
 const blank = await shot(html("", true), true);
-const tabs = nav.tabs.filter((t) => t.view !== "editor" && t.view !== "myterminal");
+const tabs = [...nav.tabs, ...nav.parents].filter((t) => t.view !== "editor" && t.view !== "myterminal");
 out(tabs.length >= 5, `${tabs.length} panel pages read from nav.json`);
 for (const t of tabs) {
 	const got = await shot(html(TEXT, true), true);

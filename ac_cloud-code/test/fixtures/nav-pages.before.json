@@ -1,0 +1,40 @@
+{
+ "_doc": "#1855 P3 field parity (rule 16): Cloud Code's navigation as of origin/main 4e69b45eb (before the IDE shell): seven bottom tabs backlog, editor, git, ai, agents, browser, myterminal, their sub-pages, the hamburger drawer ids of each page and every id a deep link can name. Every entry must still resolve to a place in the new shell (test/nav_parity.mjs); the test fails when one is dropped or points at the wrong page. Organise only ever adds.",
+ "bottom_tabs": ["backlog", "editor", "git", "ai", "agents", "browser", "myterminal"],
+ "default_tab": "ai",
+ "default_lands": { "tab": "agent", "page": "chat" },
+ "sub_pages": [
+  { "tab": "backlog", "id": "sts", "label": "Status", "icon": "check_circle_outline", "file": "P-Backlog-sts.md" },
+  { "tab": "backlog", "id": "prj", "label": "Project", "icon": "folder", "file": "P-Backlog-prj.md" },
+  { "tab": "backlog", "id": "pry", "label": "Priority", "icon": "priority_high", "file": "P-Backlog-pry.md" },
+  { "tab": "backlog", "id": "eff", "label": "Effort", "icon": "zap", "file": "P-Backlog-eff.md" },
+  { "tab": "agents", "id": "bat", "label": "Batches", "icon": "documents", "file": "P-Backlog-bat.md" },
+  { "tab": "agents", "id": "mdl", "label": "Models", "icon": "extension", "file": "P-Backlog-mdl.md" }
+ ],
+ "_doc_deep_links": "old id -> its new place. placement bottom = a page of the bottom bar, dropdown = a Parent Page in the first row's dropdown; page null = the whole tab (its last or first page).",
+ "deep_links": {
+  "backlog": { "tab": "backlog", "page": null, "placement": "dropdown" },
+  "sts": { "tab": "backlog", "page": "sts", "placement": "dropdown" },
+  "prj": { "tab": "backlog", "page": "prj", "placement": "dropdown" },
+  "pry": { "tab": "backlog", "page": "pry", "placement": "dropdown" },
+  "eff": { "tab": "backlog", "page": "eff", "placement": "dropdown" },
+  "editor": { "tab": "editor", "page": null, "placement": "bottom" },
+  "git": { "tab": "workspace", "page": null, "placement": "bottom" },
+  "repos": { "tab": "workspace", "page": null, "placement": "bottom" },
+  "ai": { "tab": "agent", "page": "chat", "placement": "bottom" },
+  "agents": { "tab": "agent", "page": "bat", "placement": "bottom" },
+  "bat": { "tab": "agent", "page": "bat", "placement": "bottom" },
+  "mdl": { "tab": "agent", "page": "mdl", "placement": "bottom" },
+  "browser": { "tab": "run", "page": "browser", "placement": "bottom" },
+  "myterminal": { "tab": "run", "page": "myterminal", "placement": "bottom" }
+ },
+ "_doc_menus": "the hamburger drawer item ids each old page offered, and the source that registers them",
+ "menus": {
+  "git": { "file": "src/cloud/index.js", "ids": ["rescan"] },
+  "backlog": { "file": "src/cloud/index.js", "ids": ["reload", "entry", "edit", "repo", "folder", "index-refresh", "view-index", "view-views", "docs-reload", "docs-folder"] },
+  "ai": { "file": "src/cloud/chat/model.js", "ids": ["new", "history", "search", "pinned", "export", "rename", "clear"] },
+  "browser": { "file": "src/cloud/index.js", "ids": ["preset"] }
+ },
+ "_doc_first_row": "the first row's right-hand icons and the hamburger stay: ids drawn by bars-dom.js",
+ "first_row_roles": ["menu", "ai", "profile", "configs", "title"]
+}

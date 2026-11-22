@@ -91,6 +91,23 @@ export function titleHierarchy(tab, currentPageId) {
 	];
 }
 
+/**
+ * #1855 P3 the first row's dropdown with the Parent Pages: the open bottom page and its sub-pages (as titleHierarchy), then every
+ * Parent Page (Backlog) with ITS sub-pages, each tagged `group` "tab" or "parent". A Parent Page that is open is listed once, in
+ * the parent group, with the path to the page shown marked; the bottom pages stay one tap away on the bottom bar.
+ * @param {object[]} tabs every page (bottom and dropdown, tabs.js::buildTabs)
+ */
+export function dropdownEntries(tabs, tab, currentPageId) {
+	const parents = tabs.filter((t) => t.placement === "dropdown");
+	const out = [];
+	if (tab && tab.placement !== "dropdown") out.push(...titleHierarchy(tab, currentPageId).map((e) => ({ ...e, group: "tab" })));
+	for (const p of parents) {
+		const open = tab && p.id === tab.id;
+		out.push(...titleHierarchy(p, open ? currentPageId : null).map((e) => ({ ...e, group: "parent", selected: open ? e.selected : false })));
+	}
+	return out;
+}
+
 /** The page whose file is [file] (the backlog dist links change the file in place), or null. */
 export function pageOfFile(tab, file) {
 	const p = pagesOf(tab).find((x) => x.file === file);

@@ -68,10 +68,28 @@ out(/import \{[^}]*urlFromDrive[^}]*\} from "\.\/workspace"/.test(index) && /con
 out(/firstExisting\(repoCandidates\(relative\), \(u\) => fsOperation\(u\)\.exists\(\), gitPath\(relative\)\)/.test(index) && /const set = localStorage\.getItem\(`cloud-code\.\$\{key\}`\);\n\tif \(set\) return set;\n\tconst fromDrive/.test(index), "the menu-set folder still wins and the volume probe stays as the fallback");
 out(/requestClone\(bridge\(\), repoName\)/.test(index) && /"Clone with Cloud Drive"/.test(index) && /cloneWithDriveButton\(nav\.docs\.root\)/.test(index) && /cloneWithDriveButton\(nav\.backlog\.source_dir\.split\("\/"\)\[0\]\)/.test(index), "the Backlog offers 'Clone with Cloud Drive' (the Index and the Views reads)");
 out(nav.docs.root === "cloud-me-pvt-tasks", "the clone request names cloud-me-pvt-tasks");
-out(/const drive = await driveList\(bridge\(\)\);\n\tif \(drive\.drive && drive\.repos\.length\) \{/.test(index) && /parts\.forEach\(\(p\) => fillVolume\(p\.v, p\.body, p\.count, panel\)\)/.test(index), "the Git tab uses Drive's list when Drive answers, its own volume listing otherwise");
+out(/const drive = await driveList\(bridge\(\)\);\n\tif \(drive\.drive && drive\.repos\.length\) \{/.test(index) && /parts\.forEach\(\(p\) => fillVolume\(p\.v, p\.body, p\.count, panel, into, onPick\)\)/.test(index), "the Git tab uses Drive's list when Drive answers, its own volume listing otherwise");
 
 // rule 16 parity: nothing the Git tab and the Backlog had is gone
 out(JSON.stringify(vols.map((v) => v.id)) === JSON.stringify(before.volume_ids) && JSON.stringify(vols.map((v) => v.label)) === JSON.stringify(before.volume_labels), "parity: the two volume columns are declared unchanged");
 for (const f of before.repo_row_fields) out(index.includes(f), `parity: Git repo row keeps ${f}`);
 for (const t of before.snippets) out(index.includes(t), `parity: Git tab keeps ${t.slice(0, 50)}`);
 for (const t of before.backlog_states) out(index.includes(t), `parity: Backlog state keeps ${t.slice(0, 50)}`);
+
+// ── #1855 P3 Workspace search and Changes (pure functions of workspace.js) ──
+{
+	const rs = [{ name: "cloud-me-pvt-tasks", branch: "main", path: "/a/Git/cloud-me-pvt-tasks" }, { name: "notes", branch: "dev", path: "/b/notes" }];
+	out(w.filterRepos(rs, "").length === 2 && w.filterRepos(rs, "TASKS").length === 1 && w.filterRepos(rs, "dev")[0].name === "notes" && w.filterRepos(rs, "/b/").length === 1 && w.filterRepos(rs, "zzz").length === 0, "Workspace search narrows repos by name, branch or path, case-insensitively");
+	const tree = { "r/": [{ name: ".git", url: "r/.git/", isDirectory: true }, { name: "a.md", url: "r/a.md" }, { name: "src", url: "r/src/", isDirectory: true }], "r/src/": [{ name: "A.md", url: "r/src/A.md" }, { name: "deep", url: "r/src/deep/", isDirectory: true }, { name: "x.js", url: "r/src/x.js" }], "r/src/deep/": [{ name: "b.md", url: "r/src/deep/b.md" }] };
+	const ls = async (d) => { if (!tree[d]) throw new Error("denied"); return tree[d]; };
+	const got = await w.searchFiles(ls, "r/", "md");
+	out(got.hits.map((h) => h.url).join() === "r/a.md,r/src/A.md,r/src/deep/b.md" && !got.truncated, "file search walks the repo breadth-first by name, skips .git");
+	out((await w.searchFiles(ls, "r/", "")).hits.length === 0 && (await w.searchFiles(ls, "r/", "md", { maxResults: 1 })).truncated === true && (await w.searchFiles(ls, "r/", "md", { maxVisited: 1 })).truncated === true && (await w.searchFiles(ls, "r/", "md", { maxDepth: 0 })).hits.length === 1, "file search is bounded (results, directories visited, depth) and an empty query finds nothing");
+	out((await w.searchFiles(async () => { throw new Error("x"); }, "r/", "md")).hits.length === 0, "an unreadable directory is skipped, never fatal");
+	const rows = w.changeRows([{ name: "b", path: "/b", volume: "store", state: "", branch: "main" }, { name: "a", path: "/a", volume: "emulated" }, { name: "c", path: "/c", volume: "store" }], { "/a": { state: "clean", branch: "dev" }, "/c": { state: "dirty", summary: "3 changed", lastSyncMs: 5, branch: "main" } });
+	out(rows.map((r) => r.name).join() === "c,a,b" && rows[0].changed && rows[0].summary === "3 changed" && !rows[1].changed && rows[1].branch === "dev", "Changes rows put changed repos first and carry Drive's branch, state, summary and last sync");
+	const calls = [];
+	const fake = { requestClone: async (n) => { calls.push(n); return { ok: true, reason: "" }; }, status: async (p) => ({ drive: true, repo: { name: "x", path: p, state: "dirty" } }) };
+	out((await w.handOffToDrive(fake, "cloud-me-pvt-tasks")).ok && calls[0] === "cloud-me-pvt-tasks" && (await w.handOffToDrive(null, "x")).ok === false, "commit and push hand off to Drive's Sync > Git page for that repo (Drive absent = a reason)");
+	out((await w.driveStatus(fake, "/p")).repo.state === "dirty" && (await w.driveStatus(null, "/p")).drive === false && (await w.driveStatus({ status: async () => { throw new Error("x"); } }, "/p")).drive === false && (await w.driveStatus({ status: () => new Promise(() => {}) }, "/p", 20)).drive === false, "status(path) answers Drive's row; absent, failing and slow Drive = drive false");
+}

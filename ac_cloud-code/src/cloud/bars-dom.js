@@ -10,8 +10,8 @@
 // selected item keeps its name). A bottom name that would not fit its cell is never truncated: then the bar
 // names the selected item only (tabs.js::fitLabels).
 import { el, icon } from "./dom";
-import { cssVars, clearance, collapseStep, isDark, pagesOf, secondRowShown, titleHierarchy } from "./bars";
-import { fitLabels } from "./tabs";
+import { cssVars, clearance, collapseStep, dropdownEntries, isDark, pagesOf, secondRowShown } from "./bars";
+import { bottomTabs, fitLabels } from "./tabs";
 
 const ICONS = { menu: "menu", ai: "wand-sparkles", profile: "account_circle", configs: "more_vert" };
 const IGNORE_SCROLL = "#cloud-top1, #cloud-top2, #cloud-nav, .cloud-dropdown, .cloud-overlay";
@@ -44,7 +44,7 @@ export function mountBars({ nav, tabs, on }) {
 	const $top2 = el("div", { id: "cloud-top2", hidden: true }, $strip);
 	const $nav = el("nav", { id: "cloud-nav", role: "tablist" });
 	const cells = {};
-	for (const t of tabs) {
+	for (const t of bottomTabs(tabs)) {
 		cells[t.id] = el("button", { className: "cloud-tab", role: "tab", "data-tab": t.id, "aria-label": t.label, onclick: () => on.onTab(t.id) },
 			el("span", { className: `icon cloud-tab-icon ${t.icon}` }),
 			el("span", { className: "cloud-tab-label" }, t.label));
@@ -102,8 +102,8 @@ export function mountBars({ nav, tabs, on }) {
 
 	function toggleDropdown() {
 		if (!$drop.hidden) return closeDropdown();
-		$drop.replaceChildren(...titleHierarchy(tab, pageId).map((e) => el("button", {
-			className: `cloud-dropdown-item${e.selected ? " selected" : ""}`, role: "menuitem", "data-entry": e.id,
+		$drop.replaceChildren(...dropdownEntries(tabs, tab, pageId).map((e) => el("button", {
+			className: `cloud-dropdown-item${e.selected ? " selected" : ""}${e.group === "parent" ? " parent" : ""}${e.group === "parent" && e.depth === 0 ? " parent-head" : ""}`, role: "menuitem", "data-entry": e.id, "data-group": e.group,
 			style: `padding-left: ${16 + 16 * e.depth}px`,
 			onclick: () => { closeDropdown(); e.depth === 0 ? on.onTab(e.tabId, null) : on.onPage(e.tabId, e.id); },
 		}, e.label)));

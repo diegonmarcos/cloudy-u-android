@@ -1,7 +1,77 @@
 {
   "_doc": "THE ONE DECLARATION of cloud-code's bottom navigation (#562). tabs.js builds the bar from this list in this order and nothing else restates it: the tester (test/test-cloud-nav.sh) renders the bar through the same tabs.js and reads the order back off the rendered model. `view` selects the renderer in index.js::VIEWS; `icon` is a class of Acode's own icon font (src/res/icons/style.css) and the tester proves each one exists there. The Editor tab is Acode itself (AI, the agent chat, replaced Home and is the default tab: every Home tile was a duplicate of a tab, and its Configs card moved to the top-right Profile & Config page), untouched: selecting it hides every cloud panel and nothing else.",
-  "default_tab": "ai",
+  "default_tab": "agent",
   "tabs": [
+    {
+      "id": "workspace",
+      "label": "Workspace",
+      "icon": "folder_open",
+      "view": "workspace",
+      "aliases": ["git", "repos"]
+    },
+    {
+      "id": "editor",
+      "label": "Editor",
+      "icon": "code",
+      "view": "editor"
+    },
+    {
+      "id": "agent",
+      "label": "Agent",
+      "icon": "brain",
+      "view": "chat",
+      "aliases": ["ai", "chat"],
+      "pages": [
+        {
+          "id": "chat",
+          "label": "Chat",
+          "icon": "chat_bubble",
+          "view": "chat"
+        },
+        {
+          "id": "bat",
+          "label": "Batches",
+          "icon": "documents",
+          "view": "agents",
+          "file": "P-Backlog-bat.md"
+        },
+        {
+          "id": "mdl",
+          "label": "Models",
+          "icon": "extension",
+          "view": "agents",
+          "file": "P-Backlog-mdl.md"
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "label": "Changes",
+      "icon": "compare_arrows",
+      "view": "changes"
+    },
+    {
+      "id": "run",
+      "label": "Run",
+      "icon": "play_circle_outline",
+      "view": "browser",
+      "pages": [
+        {
+          "id": "browser",
+          "label": "Browser",
+          "icon": "public",
+          "view": "browser"
+        },
+        {
+          "id": "myterminal",
+          "label": "MyTerminal",
+          "icon": "square-terminal",
+          "view": "myterminal"
+        }
+      ]
+    }
+  ],
+  "parents": [
     {
       "id": "backlog",
       "label": "Backlog",
@@ -33,59 +103,18 @@
           "file": "P-Backlog-eff.md"
         }
       ]
-    },
-    {
-      "id": "editor",
-      "label": "Editor",
-      "icon": "code",
-      "view": "editor"
-    },
-    {
-      "id": "git",
-      "label": "Git",
-      "icon": "git",
-      "view": "git",
-      "aliases": ["repos"]
-    },
-    {
-      "id": "ai",
-      "label": "AI",
-      "icon": "chat_bubble",
-      "view": "chat"
-    },
-    {
-      "id": "agents",
-      "label": "Agents",
-      "icon": "brain",
-      "view": "agents",
-      "pages": [
-        {
-          "id": "bat",
-          "label": "Batches",
-          "icon": "documents",
-          "file": "P-Backlog-bat.md"
-        },
-        {
-          "id": "mdl",
-          "label": "Models",
-          "icon": "extension",
-          "file": "P-Backlog-mdl.md"
-        }
-      ]
-    },
-    {
-      "id": "browser",
-      "label": "Browser",
-      "icon": "public",
-      "view": "browser"
-    },
-    {
-      "id": "myterminal",
-      "label": "MyTerminal",
-      "icon": "square-terminal",
-      "view": "myterminal"
     }
   ],
+  "_doc_ide": "#1855 P3 THE IDE SHELL (D2). `tabs` is now the five bottom pages: Workspace (repo picker + tree + search; the old Git tab), Editor (Acode untouched), Agent (the old AI chat; Batches and Models, the old Agents tab, are its sub-pages), Changes (per-repo status read from Cloud Drive; commit and push are handed to Drive, which owns git) and Run (Browser preview and MyTerminal, the old two tabs, as its sub-pages). `parents` are Parent Pages that are NOT on the bottom bar: they are reached from the first row's title dropdown (Backlog, with its sub-pages Status, Project, Priority, Effort). Nothing was removed (rule 16): `redirects` maps every pre-P3 tab id onto its new place so a deep link to 'git', 'ai', 'agents', 'browser', 'myterminal' or 'backlog' still lands, and test/test-nav-parity.mjs holds the whole old inventory (fixtures/nav-pages.before.json) to it. A sub-page with its own `view` is rendered by that view inside its tab's panel; a launch view (myterminal) starts the other app and keeps the page.",
+  "redirects": {
+    "git": { "tab": "workspace" },
+    "repos": { "tab": "workspace" },
+    "ai": { "tab": "agent", "page": "chat" },
+    "chat": { "tab": "agent", "page": "chat" },
+    "agents": { "tab": "agent", "page": "bat" },
+    "browser": { "tab": "run", "page": "browser" },
+    "myterminal": { "tab": "run", "page": "myterminal" }
+  },
   "nav": {
     "_doc": "Measured fit (#562): seven tabs is more than any fleet nav. At 360 px CSS width (the narrowest phone the owner's fleet targets) a tab is 51.4 px wide, above the 48 px touch floor, but 'MyTerminal' at 10 px is wider than its tab. So the bar does not truncate: tabs.js::fitLabels measures every label against its own tab on the device, and if ANY label overflows the bar switches to compact mode (icons for all tabs, the label only under the active one). min_viewport_px is the width the tester holds the touch floor to.",
     "height_px": 56,

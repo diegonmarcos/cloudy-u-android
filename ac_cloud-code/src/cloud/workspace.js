@@ -88,3 +88,76 @@ export async function requestClone(b, name) {
 		return { ok: false, reason: String(err?.message || err) };
 	}
 }
+
+// ── #1855 P3 IDE shell: Workspace search and Changes (pure; index.js passes the real Acode file system and bridge) ──
+
+// Drive's status of one clone: {drive, repo|null}. Absent / slow Drive = {drive: false, repo: null}.
+export async function driveStatus(b, path, timeoutMs = DRIVE_TIMEOUT_MS) {
+	if (!b || typeof b.status !== "function") return { drive: false, repo: null };
+	try {
+		const got = await Promise.race([
+			Promise.resolve().then(() => b.status(path)),
+			new Promise((resolve) => setTimeout(() => resolve(null), timeoutMs)),
+		]);
+		if (!got || got.drive !== true) return { drive: false, repo: null };
+		return { drive: true, repo: got.repo && got.repo.name ? got.repo : null };
+	} catch {
+		return { drive: false, repo: null };
+	}
+}
+
+// The Workspace's search box narrows the repo picker: a case-insensitive match on the name, the branch or the path; empty = all.
+export function filterRepos(repos, query) {
+	const q = String(query || "").trim().toLowerCase();
+	if (!q) return [...repos];
+	return repos.filter((r) => [r.name, r.branch, r.path || r.url].some((v) => String(v || "").toLowerCase().includes(q)));
+}
+
+// File-name search under one repository: a bounded breadth-first walk (depth, visited and result caps, .git skipped) over an
+// injected lsDir(url) -> [{name, url, isDirectory}]. A directory that cannot be read is skipped, never fatal.
+export async function searchFiles(lsDir, rootUrl, query, { maxDepth = 6, maxVisited = 800, maxResults = 100 } = {}) {
+	const q = String(query || "").trim().toLowerCase();
+	if (!q) return { hits: [], truncated: false };
+	const hits = [];
+	let visited = 0;
+	let truncated = false;
+	let level = [rootUrl];
+	for (let depth = 0; depth <= maxDepth && level.length; depth++) {
+		const next = [];
+		for (const dir of level) {
+			if (++visited > maxVisited) { truncated = true; return { hits, truncated }; }
+			let entries = [];
+			try { entries = (await lsDir(dir)) || []; } catch { continue; }
+			for (const e of entries) {
+				if (e.name === ".git") continue;
+				if (e.isDirectory) next.push(e.url);
+				else if (e.name.toLowerCase().includes(q)) {
+					hits.push({ name: e.name, url: e.url });
+					if (hits.length >= maxResults) return { hits, truncated: true };
+				}
+			}
+		}
+		level = next;
+	}
+	return { hits, truncated };
+}
+
+const CLEAN_STATES = ["", "clean", "uptodate", "up_to_date", "synced"];
+
+// The Changes page rows: one per repo with Drive's status merged over the listing, changed repos first, then by name.
+// `changed` is true for any state Drive reports other than clean (a repo whose state is not read yet is not called changed).
+export function changeRows(repos, statuses = {}) {
+	return repos.map((r) => {
+		const s = statuses[r.path] || r;
+		const state = String(s.state || "");
+		return {
+			name: r.name, path: r.path, volume: r.volume, branch: s.branch || r.branch || "",
+			state, summary: String(s.summary || ""), lastSyncMs: s.lastSyncMs || r.lastSyncMs || 0,
+			changed: !CLEAN_STATES.includes(state.toLowerCase()),
+		};
+	}).sort((a, b) => (a.changed === b.changed ? a.name.localeCompare(b.name) : a.changed ? -1 : 1));
+}
+
+// Commit and push belong to Cloud Drive (it owns git): the hand-off opens Drive's Sync > Git page for the repository, the same
+// intent as the clone flow (requestClone), so Code builds no git engine.
+export const handOffToDrive = (b, name) => requestClone(b, name);

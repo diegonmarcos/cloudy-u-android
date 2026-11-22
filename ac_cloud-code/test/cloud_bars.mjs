@@ -9,7 +9,9 @@ const out = (ok, text) => console.log(`CHECK ${ok ? "ok" : "bad"} ${text}`);
 const B = await import(`data:text/javascript,${encodeURIComponent(read("src/cloud/bars.js"))}`);
 const nav = JSON.parse(read("src/cloud/nav.json"));
 const bars = nav.bars;
-const tabs = nav.tabs.map((t) => ({ ...t, pages: t.pages || [] }));
+const tabs = nav.tabs.map((t) => ({ ...t, pages: t.pages || [] })); // the five bottom pages
+const parents = nav.parents.map((t) => ({ ...t, pages: t.pages || [], placement: "dropdown" })); // #1855 P3 Parent Pages
+const everyPage = [...tabs.map((t) => ({ ...t, placement: "bottom" })), ...parents];
 const scss = read("src/cloud/cloud.scss");
 const dom = read("src/cloud/bars-dom.js");
 const index = read("src/cloud/index.js");
@@ -47,19 +49,17 @@ out(B.cellsClear(bars, 360, tabs.length, 44), `${tabs.length} cells are ${B.cell
 out(B.barWidth(bars, 1000) === bars.bottom.max_width, "the bar never grows past max_width");
 
 // ── sub-pages and the title dropdown ──
-for (const t of tabs) for (const p of t.pages) {
-	out(!!p.icon && hasIcon(p.icon) && !!p.label && /^P-Backlog-[a-z]+\.md$/.test(p.file), `sub-page ${t.id}/${p.id} has a name, a file and the icon '${p.icon}' (exists in the icon font)`);
+for (const t of everyPage) for (const p of t.pages) {
+	out(!!p.icon && hasIcon(p.icon) && !!p.label && (p.view ? !p.file || /^P-Backlog-[a-z]+\.md$/.test(p.file) : /^P-Backlog-[a-z]+\.md$/.test(p.file)), `sub-page ${t.id}/${p.id} has a name, a file and the icon '${p.icon}' (exists in the icon font)`);
 }
-out(B.secondRowShown(tabs.find((t) => t.id === "backlog")) && B.secondRowShown(tabs.find((t) => t.id === "agents")), "Backlog and Agents show the second row");
-out(["editor", "git", "ai", "browser", "myterminal"].every((id) => !B.secondRowShown(tabs.find((t) => t.id === id))), "a page with fewer than two sub-pages has no second row");
-for (const k of ["backlog", "agents"]) {
-	const t = tabs.find((x) => x.id === k);
-	out(t.pages[0].file === nav[k].entry, `${k}: the first sub-page's file is the tab's entry (${nav[k].entry})`);
-}
-const h = B.titleHierarchy(tabs.find((t) => t.id === "backlog"), "prj");
+out(B.secondRowShown(parents[0]) && B.secondRowShown(tabs.find((t) => t.id === "agent")) && B.secondRowShown(tabs.find((t) => t.id === "run")), "Backlog (Parent Page), Agent and Run show the second row");
+out(["workspace", "editor", "changes"].every((id) => !B.secondRowShown(tabs.find((t) => t.id === id))), "a page with fewer than two sub-pages has no second row");
+out(parents[0].pages[0].file === nav.backlog.entry, `backlog: the first sub-page's file is the tab's entry (${nav.backlog.entry})`);
+out(tabs.find((x) => x.id === "agent").pages.find((p) => p.file).file === nav.agents.entry, `agent: the Batches sub-page's file is the Agents entry (${nav.agents.entry})`);
+const h = B.titleHierarchy(parents[0], "prj");
 out(h.length === 5 && h[0].depth === 0 && h[0].label === "Backlog" && h.slice(1).every((e) => e.depth === 1) && h.filter((e) => e.selected).map((e) => e.id).join() === "prj", "the dropdown lists the bottom page then its sub-pages, the open one marked");
-out(B.titleHierarchy(tabs.find((t) => t.id === "git"), null).length === 1, "a page without sub-pages lists itself");
-out(B.pageOfFile(tabs.find((t) => t.id === "backlog"), "P-Backlog-eff.md") === "eff" && B.pageOfFile(tabs.find((t) => t.id === "backlog"), "x.md") === null, "a followed dist link selects its sub-page");
+out(B.titleHierarchy(tabs.find((t) => t.id === "workspace"), null).length === 1, "a page without sub-pages lists itself");
+out(B.pageOfFile(parents[0], "P-Backlog-eff.md") === "eff" && B.pageOfFile(parents[0], "x.md") === null, "a followed dist link selects its sub-page");
 
 // ── scroll-collapse ──
 const c = bars.collapse;

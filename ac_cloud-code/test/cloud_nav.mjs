@@ -31,9 +31,10 @@ try {
 
 // #562's order is the requirement; the RENDERED labels are what is compared.
 // Chat replaced Home (the owner's request): same place in the bar, its own renderer.
-const required = "Backlog|Editor|Git|AI|Agents|Browser|MyTerminal";
-const rendered = model.map((t) => t.label).join("|");
+const required = "Workspace|Editor|Agent|Changes|Run";
+const rendered = tabs.bottomTabs(model).map((t) => t.label).join("|");
 out(rendered === required, `rendered order ${rendered} (required ${required})`);
+out(model.filter((t) => t.placement === "dropdown").map((t) => t.id).join() === "backlog", "Backlog is a Parent Page in the first row's dropdown, off the bottom bar (#1855 P3)");
 
 // Every icon is a class that exists in Acode's own icon font.
 const css = read("src/res/icons/style.css");
@@ -43,10 +44,10 @@ for (const t of model) {
 }
 
 out(!model.some((t) => t.id === "home" || t.view === "home" || /home/i.test(t.label)), "no Home tab is left in the bar");
-const aiTab = model.find((t) => t.id === "ai");
-out(!!aiTab && aiTab.label === "AI" && aiTab.view === "chat" && views.includes("chat") && model.indexOf(aiTab) === 3, `AI (the agent chat) sits where Home was (4th), with a renderer (${aiTab?.view})`);
-out(nav.default_tab === "ai", `the app opens on the AI tab (default_tab ${nav.default_tab})`);
-out(!model.some((t) => t.label === "Chat"), "no tab is labelled Chat: Chat means Mattermost, which this app does not host");
+const aiTab = model.find((t) => t.id === "agent");
+out(!!aiTab && aiTab.label === "Agent" && aiTab.view === "chat" && views.includes("chat") && model.indexOf(aiTab) === 2 && aiTab.pages[0].id === "chat", `Agent (the AI chat, #1855 P3) is the 3rd bottom page with a renderer (${aiTab?.view})`);
+out(nav.default_tab === "agent", `the app opens on the Agent tab (default_tab ${nav.default_tab})`);
+out(!model.some((t) => t.label === "Chat"), "no tab is labelled Chat: Chat means Mattermost, which this app does not host (the Agent's Chat is a sub-page)");
 out(!model.some((t) => /chatbot|ai chat/i.test(t.label)), "no tab is labelled ChatBot or AI Chat");
 out(!/renderHome|homeStatus/.test(index), "index.js keeps no Home renderer or seam call");
 
@@ -61,11 +62,12 @@ out(tabs.fitLabels([{ labelPx: 40, tabPx: 51 }, { labelPx: 56, tabPx: 51 }]) ===
 const byId = Object.fromEntries(model.map((t) => [t.id, t]));
 const s0 = { active: nav.default_tab, showPanel: null };
 const toBacklog = tabs.select(s0, byId.backlog, ["myterminal"]);
-out(toBacklog.active === "backlog" && toBacklog.showPanel === "backlog", "Backlog shows its panel");
+out(toBacklog.active === "backlog" && toBacklog.showPanel === "backlog", "Backlog (Parent Page) shows its panel");
 const toEditor = tabs.select(toBacklog, byId.editor, ["myterminal"]);
 out(toEditor.active === "editor" && toEditor.showPanel === null, "Editor hides every cloud panel (Acode untouched)");
-const toTerm = tabs.select(toBacklog, byId.myterminal, ["myterminal"]);
-out(toTerm.launch === "myterminal" && toTerm.active === "backlog", "MyTerminal launches out and keeps the current tab");
+const toTerm = tabs.select(toBacklog, byId.run, ["myterminal"], tabs.viewOf(byId.run, "myterminal"));
+out(toTerm.launch === "run" && toTerm.active === "backlog", "Run's MyTerminal page launches out and keeps the current tab");
+out(tabs.select(toBacklog, byId.run, ["myterminal"], tabs.viewOf(byId.run, "browser")).active === "run", "Run's Browser page is a panel, not a launch");
 out(new RegExp(`LAUNCH_VIEWS = \\[\\s*"myterminal"\\s*\\]`).test(index), "index.js treats myterminal as the launch view");
 
 // ONE source (#562): Backlog and Agents are two entry files of the same
@@ -97,7 +99,7 @@ for (const [k, v] of [["backlog.source_dir", nav.backlog?.source_dir], ["repos.r
 out(nav.backlog?.source_dir?.startsWith("cloud-me-pvt-tasks/"), "Backlog reads cloud-me-pvt-tasks FROM the store (the #575 proof case)");
 // #1655 the default path must name the REAL repo (cloud-me-pvt-tasks, #1699), never cloudy-a-docs or cloud-a-docs, and the sub-tab -> file map must match the generated dist names.
 out(nav.backlog.source_dir === "cloud-me-pvt-tasks/1___BACKLOG___/1.1.Product-Backlog/dist/" && nav.docs?.root === "cloud-me-pvt-tasks" && !/-a-docs/.test(navText), "#1655 default backlog path uses the real repo name cloud-me-pvt-tasks");
-const subMap = Object.fromEntries(nav.tabs.flatMap((t) => (t.pages || []).map((p) => [p.id, p.file])));
+const subMap = Object.fromEntries([...nav.tabs, ...nav.parents].flatMap((t) => (t.pages || []).map((p) => [p.id, p.file])));
 out(["sts", "prj", "pry", "eff", "bat", "mdl"].every((k) => subMap[k] === `P-Backlog-${k}.md`) && nav.backlog.entry === subMap.sts, "#1655 sub-tab ids map to the generated dist files (Status->P-Backlog-sts.md, prj/pry/eff/bat/mdl)");
 const resolver = read("tools/resolve-targets.py");
 out(/def shared_root\(app_root, fleet_id\)/.test(resolver) && /"shared_root": shared_root\(app_root, nav\["shared_store"\]\["app"\]\)/.test(resolver), "resolve-targets.py emits shared_root from nav.shared_store.app");
@@ -111,8 +113,8 @@ out(/function sharedRoot\(\) \{\s*return `\$\{cordova\.file\.externalRootDirecto
 out(/function gitPath\(relative\) \{\s*return `\$\{sharedRoot\(\)\}\$\{targets\.git_subdir\}\/\$\{relative\}`;/.test(index), "index.js composes every git-tree path through the store's declared git folder (#676)");
 out(/repoUrl\("backlog\.dir", nav\.backlog\.source_dir\)/.test(index) && /gitPath\(relative\)/.test(index) && /gitPath\(nav\.repos\.root\)/.test(index), "Backlog and Git default to paths under the store's git folder (Backlog also finds a clone on any Git volume, #1855)");
 // Git tab (was Repos): labelled Git, two mounted volumes, repos enumerated per volume in two horizontal columns.
-const gitTab = nav.tabs.find((t) => t.id === "git");
-out(gitTab?.label === "Git" && gitTab.view === "git" && gitTab.aliases?.includes("repos") && !nav.tabs.some((t) => /repos/i.test(t.label)), "the section is labelled Git (id git, old id repos kept as alias)");
+const gitTab = nav.tabs.find((t) => t.id === "workspace");
+out(gitTab?.label === "Workspace" && gitTab.view === "workspace" && gitTab.aliases?.includes("git") && gitTab.aliases?.includes("repos") && !nav.tabs.some((t) => /repos/i.test(t.label)), "the Git tab is Workspace now (old ids git and repos kept as aliases)");
 const vols = nav.repos?.volumes || [];
 out(vols.length === 2 && vols[0].label === "Cloud-Shared-Store/Git" && vols[1].label === "Emulated/Git", "both volumes are declared: Cloud-Shared-Store/Git and Emulated/Git");
 out(/cloud-shared-store/.test(vols[0]?.store_home || "") && /cordova\.file\.externalRootDirectory/.test(index) && vols[1]?.subdir === "Git", "shared-store path resolves under the store home (legacy mirror fallback); emulated = externalRootDirectory + Git");

@@ -1,4 +1,5 @@
-// cloud-code — the 7-tab bottom nav over Acode (#562).
+// cloud-code — the IDE shell over Acode: five bottom pages (Workspace, Editor, Agent, Changes, Run) and the Backlog Parent Page
+// in the first row's dropdown (#562, #1855 P3).
 //
 // WHY THE FLEET'S BARS ARE DRAWN IN THE PAGE AND NOT HOSTED NATIVELY. #565 made ab_cloud-libs-shared
 // libs:bottomnav the one bottom nav for NATIVE apps, and #1154 moved the fleet to the shared Compose
@@ -33,13 +34,13 @@ import FileTree from "components/fileTree";
 import { renderMarkdown } from "pages/markdownPreview/renderer";
 import nav from "./nav.json";
 import targets from "./targets.gen.json";
-import { buildTabs, menuFor, select } from "./tabs";
+import { buildTabs, menuFor, resolveTarget, select, viewOf } from "./tabs";
 import { mountBars } from "./bars-dom";
 import { pageOfFile } from "./bars";
 import { listAgents, listRepos } from "./seams";
 import { el } from "./dom";
 import { loadIndex, ageText, firstExisting, notOnDevice } from "./backlog-index";
-import { bridge, driveList, urlFromDrive, columnsFor, parentOf, requestClone } from "./workspace";
+import { bridge, driveList, driveStatus, urlFromDrive, columnsFor, parentOf, requestClone, filterRepos, searchFiles, changeRows, handOffToDrive } from "./workspace";
 import { bindTitle, drawer, topBar } from "./chrome";
 import { openProfile } from "./profile";
 import { chatDrawer, renderChat } from "./chat/view";
@@ -78,8 +79,14 @@ function pickPage(tabId, pageId) {
 	if (tabId !== state.active) return showTab(tabId, pageId);
 	const t = tabs.find((x) => x.id === tabId);
 	const p = t.pages.find((x) => x.id === pageId);
+	const view = viewOf(t, pageId);
+	// A launch page (MyTerminal) starts the other app and keeps the page shown.
+	if (LAUNCH_VIEWS.includes(view)) return LAUNCH[view]();
+	const was = viewOf(t, PAGE[tabId]);
 	PAGE[tabId] = pageId;
 	bars.setPage(pageId);
+	// A sub-page with its own view (Agent: Chat | Batches | Models) re-renders the panel; the same view loads its file in place.
+	if (view !== was) return showTab(tabId, pageId);
 	if (p && LOADERS[tabId]) LOADERS[tabId](p.file);
 }
 
@@ -418,25 +425,29 @@ async function volumeRoot(v) {
 	}
 }
 
-function repoRow(r, panel) {
-	return el("button", {
+// #1855 P3 [onPick]: the Workspace selects the repo (its tree opens below, with "Open in editor"); without it the row opens the folder in the editor as before.
+function repoRow(r, panel, onPick) {
+	const row = el("button", {
 		className: "cloud-row cloud-repo",
 		title: r.url,
 		onclick: () => {
+			if (onPick) return onPick(r);
 			openFolder(r.url, { name: r.name });
 			showTab("editor");
 		},
 	}, el("span", { className: "icon git" }), el("span", { className: "cloud-repo-name" }, r.name), el("span", { className: "cloud-repo-info" }, r.info || r.branch || ""));
+	row._repo = r;
+	return row;
 }
 
-async function fillVolume(v, body, count, panel) {
+async function fillVolume(v, body, count, panel, into, onPick) {
 	try {
 		const root = await volumeRoot(v);
 		const { items } = await listRepos(root);
 		count.textContent = String(items.length);
 		body.replaceChildren(
 			el("p", { className: "cloud-muted cloud-vol-path" }, root.replace(/^file:\/\//, "")),
-			...(items.length ? items.map((r) => repoRow(r, panel)) : [el("p", { className: "cloud-muted" }, "No repos")]),
+			...(items.length ? items.map((r) => repoRow(r, panel, onPick)) : [el("p", { className: "cloud-muted" }, "No repos")]),
 		);
 	} catch (err) {
 		count.textContent = "!";
@@ -444,18 +455,18 @@ async function fillVolume(v, body, count, panel) {
 			el("p", { className: "cloud-muted" }, `Not available: ${err?.message || err}`),
 			el("button", {
 				className: "cloud-row",
-				onclick: () => system.manageAllFiles(() => renderGit(panel), (e) => toast(String(e))),
+				onclick: () => system.manageAllFiles(() => renderGit(panel, into, onPick), (e) => toast(String(e))),
 			}, el("span", { className: "icon folder_open" }), "Grant all-files access, then retry"),
 		);
 	}
 }
 
 // #1855 P1 one column from Drive's list (repos on that volume, as Drive sees them).
-function fillFromDrive(col, body, count, panel) {
+function fillFromDrive(col, body, count, panel, onPick) {
 	count.textContent = String(col.items.length);
 	body.replaceChildren(
 		el("p", { className: "cloud-muted cloud-vol-path" }, col.items.length ? parentOf(col.items) : "Cloud Drive lists no repos here"),
-		...(col.items.length ? col.items.map((r) => repoRow(r, panel)) : [el("p", { className: "cloud-muted" }, "No repos")]),
+		...(col.items.length ? col.items.map((r) => repoRow(r, panel, onPick)) : [el("p", { className: "cloud-muted" }, "No repos")]),
 	);
 }
 
@@ -463,16 +474,19 @@ function volumeSection(id, label, count, body) {
 	return el("section", { className: "cloud-vol", "data-volume": id }, el("h3", { className: "cloud-vol-head" }, el("span", {}, label), count), body);
 }
 
-async function renderGit(panel) {
+// [into]: the Workspace page hosts the picker (its repo columns) in a box of its own; [onPick] selects a repo there.
+async function renderGit(panel, into, onPick) {
 	const parts = nav.repos.volumes.map((v) => {
 		const count = el("span", { className: "cloud-vol-count" }, "…");
 		const body = el("div", { className: "cloud-list" }, "Scanning …");
 		return { v, count, body, section: volumeSection(v.id, v.label, count, body) };
 	});
 	const holder = el("div", { className: "cloud-vols" }, ...parts.map((p) => p.section));
-	panel.replaceChildren(panelHeader("Git"), holder);
+	if (into) into.replaceChildren(holder);
+	else panel.replaceChildren(panelHeader("Git"), holder);
 	MENUS[panel.dataset.tab] = () => ({ items: [
-		{ id: "rescan", label: "Rescan", icon: "refresh", run: () => renderGit(panel) },
+		{ id: "rescan", label: "Rescan", icon: "refresh", run: () => renderGit(panel, into, onPick) },
+		...(onPick ? WORKSPACE_ITEMS() : []),
 	] });
 	// #1855 P1 Cloud Drive owns git: when it answers with repositories, ITS list is the source (every volume, incl. an
 	// attached drive, in the two columns plus External); no answer (absent, empty, slow) = this tab's own volume listing.
@@ -487,11 +501,111 @@ async function renderGit(panel) {
 				holder.append(made.section);
 				return made;
 			})();
-			fillFromDrive(col, p.body, p.count, panel);
+			fillFromDrive(col, p.body, p.count, panel, onPick);
 		});
 		return;
 	}
-	parts.forEach((p) => fillVolume(p.v, p.body, p.count, panel));
+	parts.forEach((p) => fillVolume(p.v, p.body, p.count, panel, into, onPick));
+}
+
+// ── Workspace (#1855 P3, was the Git tab): the repo picker (Cloud Drive's list over every volume) + the picked repo's tree + search ──
+// Nothing of the Git tab is dropped (rule 16): the two volume columns and every repo row are renderGit's, unchanged; a tap now
+// SELECTS the repo and its tree opens below, where "Open in editor" does what the row's tap did before.
+let WORKSPACE_ITEMS = () => [];
+
+async function renderWorkspace(panel) {
+	const query = el("input", { type: "search", placeholder: "Search repositories and files", "aria-label": "Search the workspace" });
+	const pickerBox = el("div", { className: "cloud-ws-picker" });
+	const repoBox = el("div", { className: "cloud-ws-repo" });
+	repoBox.style.display = "none";
+	const results = el("div", { className: "cloud-ws-results cloud-list" });
+	const treeBox = el("div", { className: "cloud-docs-treebox" });
+	let selected = null;
+	let tree = null;
+	let timer = null;
+	const lsDir = async (dir) => (await fsOperation(dir).lsDir()).map((e) => ({ name: e.name, url: e.url, isDirectory: !!e.isDirectory }));
+	const openFileInEditor = async (url) => {
+		await openFile(url);
+		showTab("editor");
+	};
+
+	const applyFilter = () => {
+		for (const row of pickerBox.querySelectorAll(".cloud-repo")) row.style.display = filterRepos([row._repo], query.value).length ? "" : "none";
+	};
+	async function runSearch() {
+		const q = query.value.trim();
+		results.replaceChildren();
+		if (!selected || q.length < 2) return;
+		const { hits, truncated } = await searchFiles(lsDir, selected.url.replace(/\/?$/, "/"), q);
+		results.replaceChildren(
+			...hits.map((h) => el("button", { className: "cloud-row", title: h.url, onclick: () => openFileInEditor(h.url) }, el("span", { className: "icon insert_drive_file" }), h.name, el("span", { className: "cloud-muted" }, h.url.replace(selected.url, "")))),
+			el("p", { className: "cloud-muted" }, `${hits.length} file${hits.length === 1 ? "" : "s"} named like "${q}" in ${selected.name}${truncated ? " (search limit reached: narrow the name)" : ""}`),
+		);
+	}
+	query.addEventListener("input", () => {
+		applyFilter();
+		clearTimeout(timer);
+		timer = setTimeout(runSearch, 300);
+	});
+
+	function pick(r) {
+		selected = r;
+		if (tree) tree.destroy();
+		repoBox.style.display = "";
+		repoBox.replaceChildren(
+			el("div", { className: "cloud-ws-actions" },
+				el("strong", {}, r.name),
+				el("button", { className: "cloud-row", onclick: () => { openFolder(r.url, { name: r.name }); showTab("editor"); } }, el("span", { className: "icon folder_open" }), "Open in editor"),
+				el("button", { className: "cloud-row", onclick: () => showTab("changes") }, el("span", { className: "icon compare_arrows" }), "Changes")),
+			treeBox,
+		);
+		tree = new FileTree(treeBox, { getEntries: (dirUrl) => fsOperation(dirUrl).lsDir(), onFileClick: openFileInEditor });
+		tree.load(r.url).catch((err) => treeBox.replaceChildren(el("p", { className: "cloud-muted" }, `Cannot read ${r.url}: ${err?.message || err}`)));
+		runSearch();
+	}
+	WORKSPACE_ITEMS = () => (selected ? [{ id: "open-folder", label: `Open ${selected.name} in the editor`, icon: "folder_open", run: () => { openFolder(selected.url, { name: selected.name }); showTab("editor"); } }] : []);
+	panel.replaceChildren(panelHeader("Workspace"), el("div", { className: "cloud-ws-search" }, query), pickerBox, repoBox, results);
+	await renderGit(panel, pickerBox, pick);
+	applyFilter();
+}
+
+// ── Changes (#1855 P3): per-repo status read from Cloud Drive (libs:repo-workspace status(path)); Drive owns git ──
+// The contract carries branch, state, summary and last sync per repo (no per-file list yet), so each repo is one row with those and
+// the actions: open it in the editor, and commit / push, which hand off to Cloud Drive's Sync > Git page for that repository.
+async function renderChanges(panel) {
+	const body = el("div", { className: "cloud-list cloud-changes" }, "Reading the repositories from Cloud Drive …");
+	panel.replaceChildren(panelHeader("Changes"), body);
+	MENUS[panel.dataset.tab] = () => ({ items: [{ id: "refresh", label: "Refresh", icon: "refresh", run: () => renderChanges(panel) }] });
+	const drive = await driveList(bridge());
+	if (!drive.drive) {
+		body.replaceChildren(el("p", { className: "cloud-muted" }, "Cloud Drive owns git and is not installed or not answering: install it to see and commit changes."));
+		return;
+	}
+	const statuses = {};
+	await Promise.all(drive.repos.map(async (r) => {
+		const got = await driveStatus(bridge(), r.path);
+		if (got.repo) statuses[r.path] = got.repo;
+	}));
+	const rows = changeRows(drive.repos, statuses);
+	if (!rows.length) {
+		body.replaceChildren(el("p", { className: "cloud-muted" }, "Cloud Drive lists no repositories yet. Clone one with Cloud Drive."));
+		return;
+	}
+	body.replaceChildren(...rows.map((r) => el("div", { className: "cloud-vol", "data-repo": r.name },
+		el("div", { className: "cloud-row" },
+			el("span", { className: "icon git" }), el("span", { className: "cloud-repo-name" }, r.name),
+			el("span", { className: "cloud-repo-info" }, r.branch),
+			el("span", { className: "cloud-change-state" }, [r.changed ? "changed" : "", r.state, r.summary].filter(Boolean).join(" · ") || "status not read yet"),
+			el("span", { className: "cloud-muted" }, r.lastSyncMs ? `last sync ${ageText(r.lastSyncMs, Date.now())}` : "never synced")),
+		el("div", { className: "cloud-ws-actions" },
+			el("button", { className: "cloud-row", onclick: () => { openFolder(`file://${r.path}`, { name: r.name }); showTab("editor"); } }, el("span", { className: "icon folder_open" }), "Open in editor"),
+			...["Commit", "Push"].map((verb) => el("button", {
+				className: "cloud-row", "data-verb": verb.toLowerCase(),
+				onclick: async () => {
+					const got = await handOffToDrive(bridge(), r.name);
+					toast(got.ok ? `Cloud Drive opened on ${r.name}: ${verb.toLowerCase()} there (Sync, Git)` : got.reason || "Cloud Drive did not open");
+				},
+			}, el("span", { className: "icon git" }), `${verb} with Cloud Drive`)))))); 
 }
 
 // ── Agents: the backlog's own agent views, plus the live seam ──────────────
@@ -540,7 +654,8 @@ function launchMyTerminal() {
 const VIEWS = {
 	editor: null,
 	backlog: renderBacklog,
-	git: renderGit,
+	workspace: renderWorkspace,
+	changes: renderChanges,
 	chat: renderChatTab,
 	agents: renderAgents,
 	browser: renderBrowser,
@@ -555,23 +670,28 @@ const panels = {};
 let bars = null;
 
 function showTab(id, pageId) {
-	const tab = tabs.find((t) => t.id === id || (t.aliases || []).includes(id));
-	const next = select(state, tab, LAUNCH_VIEWS);
+	// #1855 P3 an old id (git, ai, agents, browser, myterminal, a sub-page id) lands on its new place (tabs.js::resolveTarget).
+	const to = resolveTarget(tabs, nav.redirects, id);
+	if (!to) return;
+	const tab = tabs.find((t) => t.id === to.tab);
+	if (pageId === undefined && to.page) pageId = to.page;
+	// undefined keeps the page the tab last showed; null (the dropdown's page itself) goes to its first.
+	const want = pageId !== undefined ? pageId : PAGE[tab.id];
+	const page = want == null ? (tab.pages[0] ? tab.pages[0].id : null) : want;
+	const view = viewOf(tab, page);
+	const next = select(state, tab, LAUNCH_VIEWS, view);
 	if (next.launch) {
-		LAUNCH[tab.view]();
+		LAUNCH[view]();
 		return;
 	}
 	state = next;
-	// undefined keeps the page the tab last showed; null (the dropdown's bottom page) goes to its first.
-	if (pageId !== undefined) PAGE[id] = pageId;
-	if (PAGE[id] == null && tab.pages.length) PAGE[id] = tab.pages[0].id;
-	bars.setTab(tab, PAGE[id]);
+	PAGE[tab.id] = page;
+	bars.setTab(tab, PAGE[tab.id]);
 	for (const [tid, p] of Object.entries(panels)) p.hidden = tid !== state.showPanel;
 	// The editor stays mounted under a panel (its state is kept) but must not paint through it.
 	document.body.classList.toggle("cloud-panel-open", !!state.showPanel);
 	if (state.showPanel) {
-		const view = VIEWS[tab.view];
-		view(panels[tab.id]).catch((err) => toast(String(err?.message || err)));
+		VIEWS[view](panels[tab.id]).catch((err) => toast(String(err?.message || err)));
 	}
 }
 
