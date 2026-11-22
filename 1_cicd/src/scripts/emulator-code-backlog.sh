@@ -6,9 +6,12 @@
 #   offline     the clone removed, the app restarted -> "Offline copy saved" + the reason, the last-good page still shown
 #   unavailable app data cleared and no clone    -> the reason ("not on this device"), no crash
 # #1855 P3 the walk also screenshots the first row's dropdown and the five bottom pages (Workspace, Editor, Agent, Changes, Run).
-# Usage: emulator-code-backlog.sh APK PACKAGE OUT_DIR
+# #1855 P4a with a Cloud Drive APK (optional 4th argument) installed and a fixture repository holding a modified, a new and an untracked
+# file, the Changes tab lists those files through Drive's repo-workspace v2 (asserted from the page's console line) and is screenshotted,
+# as is the diff of the first file.
+# Usage: emulator-code-backlog.sh APK PACKAGE OUT_DIR [DRIVE_APK]
 set -uo pipefail
-APK="$1"; PKG="$2"; OUT="$3"; mkdir -p "$OUT"
+APK="$1"; PKG="$2"; OUT="$3"; DRIVE_APK="${4:-}"; mkdir -p "$OUT"
 T="timeout 120"; rc=0
 CLONE=/sdcard/CloudDrive/git/cloud-me-pvt-tasks
 $T adb wait-for-device
@@ -111,6 +114,32 @@ for pair in "workspace 15" "editor 32" "agent 50" "changes 68" "run 85"; do
     # the first tap after a restart can be taken by the chat composer's focus: tap the cell twice (a tab tapped again stays selected)
     set -- $pair; tapf "$2" 92; sleep 3; tapf "$2" 92; sleep 3; tapf "$2" 92; shot "tab-$1" 4
 done
+
+# #1855 P4a Changes with real files: Drive installed, a git repository with three changes on the store volume
+if [ -n "$DRIVE_APK" ] && [ -f "$DRIVE_APK" ]; then
+    $T adb install -r -g "$DRIVE_APK" || { echo "FAIL install drive"; rc=1; }
+    DPKG="$(${AAPT:-aapt2} dump packagename "$DRIVE_APK" 2>/dev/null || echo com.diegonmarcos.clouddrive)"
+    $T adb shell appops set "$DPKG" MANAGE_EXTERNAL_STORAGE allow
+    FX="$OUT/fxrepo/changes-fixture"; rm -rf "$OUT/fxrepo"; mkdir -p "$FX"
+    ( cd "$FX" && git init -q -b main && git config user.email fx@example.invalid && git config user.name fx \
+        && printf 'alpha\nbeta\ngamma\n' > notes.txt && printf 'keep\n' > gone.txt && git add -A && git commit -q -m base \
+        && printf 'alpha\nBETA changed\ngamma\ndelta\n' > notes.txt && git rm -q gone.txt && printf 'new file\n' > added.txt && git add added.txt \
+        && printf 'scratch\n' > untracked.txt )
+    $T adb shell rm -rf /sdcard/CloudDrive/git/changes-fixture
+    $T adb push "$FX" /sdcard/CloudDrive/git/changes-fixture >/dev/null
+    $T adb shell am force-stop "$PKG"; $T adb logcat -c || true
+    $T adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
+    sleep 25; dismiss; sleep 10
+    tapf 68 92; sleep 3; tapf 68 92; sleep 12
+    $T adb logcat -d | grep -E "cloud-code changes files" > "$OUT/console-changes.txt" || true
+    if grep -qE "changes-fixture drive=true files=[1-9]" "$OUT/console-changes.txt"; then echo "PASS changes: $(grep changes-fixture "$OUT/console-changes.txt" | tail -1 | cut -c1-200)"; else echo "FAIL changes: Drive did not list the fixture's changed files"; rc=1; fi
+    shot changes-files 2
+    # the first file of the first changed repository: a tap on the list's first file row opens its diff (position, the page is web content)
+    for y in 38 42 46 50 54 58 62 66 70; do tapf 50 "$y"; sleep 3; $T adb logcat -d | grep -q "cloud-code changes diff" && break; done
+    $T adb logcat -d | grep -E "cloud-code changes diff" > "$OUT/console-diff.txt" || true
+    if grep -qE "changes-fixture/.* lines=[1-9]" "$OUT/console-diff.txt"; then echo "PASS diff: $(tail -1 "$OUT/console-diff.txt" | cut -c1-200)"; else echo "FAIL diff: no diff view opened from a file row"; rc=1; fi
+    shot changes-diff 2
+fi
 
 $T adb logcat -d -t 30000 > "$OUT/logcat.txt"; $T adb logcat -d -b crash > "$OUT/logcat-crash.txt" 2>&1 || true
 cat "$OUT/logcat.txt" "$OUT/logcat-crash.txt" | grep -E "FATAL EXCEPTION" -A12 | grep -B2 -A12 "$PKG" | head -40 > "$OUT/crash.txt" || true

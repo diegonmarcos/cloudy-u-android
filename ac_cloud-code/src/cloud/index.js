@@ -584,6 +584,7 @@ function fileRow(r, f, panel) {
 async function fillFiles(r, box, panel) {
 	box.replaceChildren(el("span", { className: "cloud-muted" }, "Reading the changed files from Cloud Drive …"));
 	const got = await driveChanges(bridge(), r.path);
+	console.log(`cloud-code changes files: ${r.name} drive=${got.drive} files=${got.files.length}`);
 	if (!got.drive) { box.replaceChildren(el("span", { className: "cloud-muted" }, "Cloud Drive could not list the changed files: update Cloud Drive.")); return; }
 	if (!got.files.length) { box.replaceChildren(el("span", { className: "cloud-muted" }, "No changed files.")); return; }
 	const g = groupChanges(got.files);
@@ -604,6 +605,7 @@ async function diffView(panel, r, f) {
 		pre);
 	const text = await driveDiff(bridge(), r.path, f.relpath);
 	const lines = diffLines(text);
+	console.log(`cloud-code changes diff: ${r.name}/${f.relpath} lines=${lines.length}`);
 	pre.replaceChildren(...(lines.length ? lines.map((l) => el("div", { className: `cloud-diff-line cloud-diff-${l.kind}` }, l.text || " ")) : [el("div", { className: "cloud-muted" }, "(no textual diff)")]));
 }
 
@@ -626,6 +628,7 @@ async function renderChanges(panel) {
 		body.replaceChildren(el("p", { className: "cloud-muted" }, "Cloud Drive lists no repositories yet. Clone one with Cloud Drive."));
 		return;
 	}
+	let autoLoaded = 0; // the files of changed repos, and of the first few whose state Drive has not read yet, load by themselves (each is a git status in Drive)
 	body.replaceChildren(...rows.map((r) => {
 		const files = el("div", { className: "cloud-change-files", "data-files": r.name });
 		const handOff = (verb, ask) => el("button", {
@@ -646,7 +649,7 @@ async function renderChanges(panel) {
 				el("button", { className: "cloud-row", "data-verb": "files", onclick: () => fillFiles(r, files, panel) }, el("span", { className: "icon compare_arrows" }), "Changed files"),
 				handOff("Commit", requestCommit), handOff("Push", requestPush)),
 			files);
-		if (r.changed) fillFiles(r, files, panel);
+		if ((r.changed || !r.state) && autoLoaded < 8) { autoLoaded++; fillFiles(r, files, panel); }
 		return row;
 	}));
 }
