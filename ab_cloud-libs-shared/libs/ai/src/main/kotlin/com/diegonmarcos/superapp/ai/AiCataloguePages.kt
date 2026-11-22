@@ -63,7 +63,11 @@ val AiPublicFetch = CatalogueFetch { url ->
  * [fetch] is the host's network door for the list.
  */
 @Composable
-fun AiModelCatalogue(chat: AiChatState, theme: AiTheme, fetch: CatalogueFetch = AiPublicFetch, modifier: Modifier = Modifier, onClose: (() -> Unit)? = null) {
+fun AiModelCatalogue(
+    chat: AiChatState, theme: AiTheme, fetch: CatalogueFetch = AiPublicFetch, modifier: Modifier = Modifier, onClose: (() -> Unit)? = null,
+    /** #1854 A host's block drawn under a tab's heading, above its rows (SI: the full OpenRouter metadata table of the Core's models); null = none. */
+    tabExtra: (@Composable (tab: String, label: String, entries: List<AiModelEntry>) -> Unit)? = null,
+) {
     val ctx = LocalContext.current
     // Close, Back and a pick end the page: the chat's own page flag, or the host's own way out when it shows the catalogue outside the chat.
     val done = { chat.page = ""; onClose?.invoke(); Unit }
@@ -122,6 +126,7 @@ fun AiModelCatalogue(chat: AiChatState, theme: AiTheme, fetch: CatalogueFetch = 
             val entries = data.entries(tab)
             Text("${data.labels[tab].orEmpty()} · ${entries.size} · ${data.generated}", color = c.text2, style = t.style(t.label), modifier = Modifier.padding(bottom = m.small))
             if (entries.isEmpty()) Text(s.noModelsInTab, color = c.text2, style = t.style(t.small))
+            tabExtra?.invoke(tab, data.labels[tab].orEmpty(), entries)
             var domain: String? = null
             entries.forEach { e ->
                 if (e.domain.isNotEmpty() && e.domain != domain) {

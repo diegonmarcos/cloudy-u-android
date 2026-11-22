@@ -31,6 +31,9 @@ data class AiUsageLine(val label: String, val value: String)
 /** One of the four MCP pickers (ai-design.json mcp.buckets): [control] is its composer control id, [known] the names listed before the gateway does. */
 data class AiMcpBucket(val id: String, val control: String, val label: String, val known: List<String>, val exact: Set<String>, val contains: List<String>, val prefix: List<String>, val default: Boolean)
 
+/** One entry of a read-only list chip (Weby Apps: a public MCP tool; Hooks: a guard hook): [detail] says what it is or does. */
+data class AiListItem(val id: String, val label: String, val detail: String)
+
 /** One item of a KG-Store tab; [kind] = web (the chat's web search), source (a public source), mcp (an MCP server). */
 data class AiKgItem(val id: String, val label: String, val detail: String, val kind: String)
 
@@ -109,6 +112,12 @@ class AiDesign private constructor(private val root: JSONObject) {
         val n = name.lowercase()
         return mcpBuckets.firstOrNull { b -> n in b.exact || b.contains.any { it in n } || b.prefix.any { n.startsWith(it) } } ?: mcpBuckets.firstOrNull { it.default }
     }
+    /** #1854 Weby Apps (ai-design.json weby_apps): the default list of well-known public MCP tools; each is a switch of the MCPs selection. */
+    val webyApps: List<AiListItem> = root.optJSONObject("weby_apps")?.getJSONArray("items")?.objs().orEmpty().map { AiListItem(it.getString("id"), it.getString("label"), it.optString("detail")) }
+
+    /** #1854 Hooks (ai-design.json hooks): the guard hooks the fleet's sessions run, read-only. */
+    val hooks: List<AiListItem> = root.optJSONObject("hooks")?.getJSONArray("items")?.objs().orEmpty().map { AiListItem(it.getString("id"), it.getString("label"), it.optString("detail")) }
+
     val kgStoreTabs: List<AiKgTab> = root.optJSONObject("kg_store")?.optJSONArray("tabs")?.objs().orEmpty().map { t ->
         AiKgTab(
             t.getString("id"), t.getString("label"),

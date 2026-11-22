@@ -278,19 +278,32 @@ class AiComposerTest {
         fun row(r: Int) = design.layout.filter { it.row == r }.map { it.id }
         assertEquals(listOf("plus"), row(0))
         assertEquals(listOf("task", "specialist", "agent", "model", "effort", "mode"), row(1))
-        // Row 2: Plugins-Skills | KG-Store, KG-Cloud-apps | KG-Repos, KG-Cloud-infra, Plugins-Perf | More
-        assertEquals(listOf("skills", "kg_store", "kg_apps", "kg_repos", "kg_infra", "perf", "more"), row(2))
+        // Row 2 (#1854): Plugins, Plugins-Perf | MCP Tools: Cloudy Apps, Weby Apps, KG-Cloud-infra | KG: Repos, Skills, KG-Store | Hooks | More
+        assertEquals(listOf("plugins", "perf", "kg_apps", "weby_apps", "kg_infra", "kg_repos", "skills", "kg_store", "hooks", "more"), row(2))
         assertEquals(
-            listOf("Plugins-Skills", "KG-Store", "KG-Cloud-apps", "KG-Repos", "KG-Cloud-infra", "Plugins-Perf", "More"),
+            listOf("Plugins", "Plugins-Perf", "Cloudy Apps", "Weby Apps", "KG-Cloud-infra", "Repos", "Skills", "KG-Store", "Hooks", "More"),
             design.layout.filter { it.row == 2 }.map { it.label },
         )
-        // Dividers: before Agent in row 1, then after Plugins-Skills, after KG-Cloud-apps, after Plugins-Perf in row 2.
-        assertEquals(listOf("agent", "kg_store", "kg_repos", "more"), design.layout.filter { it.dividerBefore }.map { it.id })
+        // Dividers: before Agent in row 1, then before Cloudy Apps, Repos, Hooks and More in row 2.
+        assertEquals(listOf("agent", "kg_apps", "kg_repos", "hooks", "more"), design.layout.filter { it.dividerBefore }.map { it.id })
         // Every prior control keeps its label and icon in the layout; the single MCP control became KG-Store / KG-Cloud-apps / KG-Cloud-infra.
         for (c in design.controls.filter { it.id != "mcp" }) assertEquals(c, design.layout.first { it.id == c.id }.copy(row = 1, dividerBefore = false))
         assertEquals(listOf("task", "specialist", "mode"), design.orderedLayout(listOf("mode", "specialist", "task", "mcp", "nonsense")).map { it.id })
         assertEquals(design.mcpBuckets.map { it.control }.sorted(), listOf("kg_apps", "kg_infra", "kg_store"))
         assertTrue(design.mcpBuckets.all { b -> design.layout.any { it.id == b.control } })
+    }
+
+    /** #1854 Weby Apps is the default list of well-known public MCP tools; Hooks lists the guard hooks; neither carries an address. */
+    @Test fun webyAppsAndHooksAreDeclaredLists() {
+        assertEquals(13, design.webyApps.size)
+        assertTrue(design.webyApps.map { it.id }.containsAll(listOf("github", "context7", "fetch", "playwright")))
+        assertEquals(design.webyApps.size, design.webyApps.map { it.id }.toSet().size)
+        assertTrue(design.webyApps.all { it.label.isNotBlank() && it.detail.isNotBlank() })
+        assertEquals(9, design.hooks.size)
+        assertTrue(design.hooks.map { it.id }.containsAll(listOf("no-local-gradle.sh", "main-only-push.sh", "ai-usage-post.sh")))
+        assertTrue((design.webyApps + design.hooks).none { "http" in it.detail || "http" in it.id })
+        // Both chips are controls of the two-row layout with their own icon; the model chip keeps its id.
+        for (id in listOf("plugins", "weby_apps", "hooks")) assertTrue(id, design.layout.any { it.id == id && it.icon.isNotBlank() })
     }
 
     @Test fun pluginsAreSkillPluginsOrPerformancePlugins() {

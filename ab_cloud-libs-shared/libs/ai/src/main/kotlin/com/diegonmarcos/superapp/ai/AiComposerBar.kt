@@ -62,6 +62,9 @@ internal fun controlGlyph(id: String): String = when (id) {
     "skills" -> "◆"
     "kg_store" -> "🌎"
     "kg_apps" -> "☁"
+    "weby_apps" -> "🌐"
+    "plugins" -> "🧩"
+    "hooks" -> "🪝"
     "kg_infra" -> "⚙"
     "perf" -> "⚡"
     else -> "•"
@@ -120,12 +123,15 @@ fun AiComposerBar(
             "task" -> TaskControl(chat, theme, design, ctl)
             "specialist" -> SpecialistControl(theme, design, ctl, specialists, specialist, onSpecialist)
             "agent" -> AgentControl(chat, theme, design, ctl)
-            "model" -> ModelControl(chat, theme, design, ctl, onCatalogue)
+            "model" -> ModelControl(chat, theme, design, ctl, onCatalogue, fixedLabel = twoRows)
             "effort" -> EffortControl(chat, theme, design, ctl)
             "mode" -> ModeControl(chat, theme, design, ctl)
             "kg_repos" -> ReposControl(chat, theme, design, ctl, decl.repos)
             "kg_store" -> KgStoreControl(chat, theme, design, ctl)
             "skills", "perf" -> ItemMenu(chat, theme, design, ctl, pickerGroups(design, if (ctl.id == "skills") "skill" else "performance"))
+            "plugins" -> ItemMenu(chat, theme, design, ctl, listOf(AiMoreGroup("plugins", "", design.moreGroups.flatMap { it.items }.filter { it.kind == "plugin" })))
+            "weby_apps" -> WebyAppsControl(chat, theme, design, ctl)
+            "hooks" -> HooksControl(theme, design, ctl)
             "kg_apps", "kg_infra" -> McpBucketControl(chat, theme, design, ctl)
             "mcp" -> McpControl(chat, theme, design, ctl)
             "more" -> MoreControl(chat, theme, design, ctl, shown.map { it.id }.toSet(), usageInTopBar)
@@ -317,11 +323,14 @@ private fun AgentControl(chat: AiChatState, theme: AiTheme, design: AiDesign, ct
     }
 }
 
-/** The Model button: opens the FULL Model Catalogue (AiModelCatalogue), or the host's own page when it passes [onCatalogue]. Greyed while a task is selected. */
+/**
+ * The Model button: opens the FULL Model Catalogue (AiModelCatalogue), or the host's own page when it passes [onCatalogue]. Greyed while a task is selected.
+ * [fixedLabel] (#1854, the two-row bar): the chip always says "Model", whatever model (Auto Router included) is picked; the picked model is in the pill and the context line.
+ */
 @Composable
-private fun ModelControl(chat: AiChatState, theme: AiTheme, design: AiDesign, ctl: AiControl, onCatalogue: (() -> Unit)?) {
+private fun ModelControl(chat: AiChatState, theme: AiTheme, design: AiDesign, ctl: AiControl, onCatalogue: (() -> Unit)?, fixedLabel: Boolean = false) {
     val current = chat.models.firstOrNull { it.id == chat.model }
-    Btn(ctl, theme, design, (current?.name ?: chat.model).substringAfterLast('/'), enabled = !chat.locked) { if (onCatalogue != null) onCatalogue() else chat.page = AiChatState.PAGE_MODELS }
+    Btn(ctl, theme, design, if (fixedLabel) ctl.label else (current?.name ?: chat.model).substringAfterLast('/'), enabled = !chat.locked) { if (onCatalogue != null) onCatalogue() else chat.page = AiChatState.PAGE_MODELS }
 }
 
 @Composable
@@ -437,6 +446,38 @@ private fun ItemMenu(chat: AiChatState, theme: AiTheme, design: AiDesign, ctl: A
             text = { Column(Modifier.verticalScroll(rememberScrollState()).testTag(AiTags.MORE_DIALOG)) { Text(body) } },
             confirmButton = { TextButton({ dialog = null }) { Text(theme.strings.close) } },
         )
+    }
+}
+
+/** #1854 The Weby Apps chip: the default list of well-known public MCP tools (ai-design.json weby_apps), each a switch of the MCPs selection. */
+@Composable
+private fun WebyAppsControl(chat: AiChatState, theme: AiTheme, design: AiDesign, ctl: AiControl) {
+    val c = theme.colors
+    val t = theme.type
+    val on = design.webyApps.count { it.id in chat.mcpOn }
+    Ctl(ctl, theme, design, if (on == 0) ctl.label else "${ctl.label} $on") { _ ->
+        design.webyApps.forEach { w ->
+            DropdownMenuItem(
+                text = { Column { Text(w.label, style = t.style(t.small, FontWeight.SemiBold), color = c.text); Text(w.detail, style = t.style(t.label), color = c.text2) } },
+                trailingIcon = { Switch(w.id in chat.mcpOn, { chat.toggleMcp(w.id) }, colors = SwitchDefaults.colors(checkedTrackColor = c.accent, uncheckedTrackColor = c.field)) },
+                onClick = { chat.toggleMcp(w.id) }, modifier = Modifier.testTag(AiTags.mcp(w.id)),
+            )
+        }
+    }
+}
+
+/** #1854 The Hooks chip: the guard hooks the fleet's sessions run (ai-design.json hooks), read-only. */
+@Composable
+private fun HooksControl(theme: AiTheme, design: AiDesign, ctl: AiControl) {
+    val c = theme.colors
+    val t = theme.type
+    Ctl(ctl, theme, design, ctl.label) { _ ->
+        design.hooks.forEach { h ->
+            DropdownMenuItem(
+                text = { Column { Text(h.label, style = t.style(t.small, FontWeight.SemiBold), color = c.text); Text(h.detail, style = t.style(t.label), color = c.text2) } },
+                onClick = {}, modifier = Modifier.testTag("ai_hook_" + h.id),
+            )
+        }
     }
 }
 

@@ -104,6 +104,18 @@ class ForumTools(
     val attach: AiAttachHost? = null,
     val onAttach: ((String) -> Unit)? = null,
     val catalogueFetch: CatalogueFetch = AiPublicFetch,
+    /** #1854 The host's own windows for the top bar's Cost, Context and Files buttons; null = the shared text dialogs. */
+    val windows: ForumWindows? = null,
+)
+
+/**
+ * #1854 The windows the top bar's Cost (usage), Context and Files buttons open when a host draws its own: each gets the open chat and a
+ * `close`, and draws a full window (a dialog or sheet) itself. A host that passes none keeps the shared text dialogs.
+ */
+class ForumWindows(
+    val usage: @Composable (chat: AiChatState, close: () -> Unit) -> Unit,
+    val context: @Composable (chat: AiChatState, close: () -> Unit) -> Unit,
+    val files: @Composable (chat: AiChatState, close: () -> Unit) -> Unit,
 )
 
 /** The forum's words; English by default, a host passes its own resources. */
@@ -314,7 +326,7 @@ fun AiForumChat(
         Column(Modifier.fillMaxSize()) {
             // With sessions: the full-width top bar is the first row; the sessions rail and thread start right under it.
             if (sessions != null && topic != null) {
-                SessionTopBar(topic, sessions, theme, strings, metrics, icon, onCall, onInfo, onMore) { drawer = true; sessions.onMenu?.invoke() }
+                SessionTopBar(topic, sessions, theme, strings, metrics, icon, onCall, onInfo, onMore, tools?.windows) { drawer = true; sessions.onMenu?.invoke() }
             }
             Row(Modifier.weight(1f).fillMaxWidth().testTag(ForumTags.BODY)) {
                 // On a narrow screen the rail is always visible (Telegram's forum rail); on a tablet it is the first pane.
@@ -451,11 +463,12 @@ internal fun sessionPill(title: String, model: String): String = listOf(title, m
 @Composable
 private fun SessionTopBar(
     topic: ForumTopic, sessions: ForumSessions, theme: AiTheme, strings: ForumStrings, metrics: ForumMetrics, icon: ForumIcon,
-    onCall: (() -> Unit)?, onInfo: (() -> Unit)?, onMore: (() -> Unit)?, onMenu: () -> Unit,
+    onCall: (() -> Unit)?, onInfo: (() -> Unit)?, onMore: (() -> Unit)?, windows: ForumWindows?, onMenu: () -> Unit,
 ) {
     val c = theme.colors
     val m = theme.metrics
     val chat = topic.chat
+    var window by remember { mutableStateOf("") }
     val shape = RoundedCornerShape(bottomStart = metrics.headerRadius, bottomEnd = metrics.headerRadius)
     val pill = RoundedCornerShape(metrics.headerRadius)
     val title = chat.session.title.ifBlank { strings.untitled }
@@ -497,13 +510,13 @@ private fun SessionTopBar(
             }
         }
         TopAction(icon, "usage", strings.usageCost, theme, metrics, ForumTags.USAGE) {
-            dialog = strings.usageCost to chat.host().usage(chat.session.id).joinToString("\n") { "${it.label}: ${it.value}" }.ifBlank { theme.strings.noUsage }
+            if (windows != null) window = "usage" else dialog = strings.usageCost to chat.host().usage(chat.session.id).joinToString("\n") { "${it.label}: ${it.value}" }.ifBlank { theme.strings.noUsage }
         }
         TopAction(icon, "context", strings.contextBreakdown, theme, metrics, ForumTags.CONTEXT) {
-            dialog = strings.contextBreakdown to AiContext.breakdown(chat.session, limit, chat.host().systemPrompt(), chat.attachments).joinToString("\n") { "${it.label}: ${it.value}" }
+            if (windows != null) window = "context" else dialog = strings.contextBreakdown to AiContext.breakdown(chat.session, limit, chat.host().systemPrompt(), chat.attachments).joinToString("\n") { "${it.label}: ${it.value}" }
         }
         TopAction(icon, "files", strings.filesInChat, theme, metrics, ForumTags.FILES) {
-            dialog = strings.filesInChat to AiContext.files(chat.session, chat.attachments).joinToString("\n") { "${it.name} · ${it.mime} · ${it.bytes} B" }.ifBlank { strings.noFiles }
+            if (windows != null) window = "files" else dialog = strings.filesInChat to AiContext.files(chat.session, chat.attachments).joinToString("\n") { "${it.name} · ${it.mime} · ${it.bytes} B" }.ifBlank { strings.noFiles }
         }
         Box {
             TopAction(icon, "more", strings.overflow, theme, metrics, ForumTags.OVERFLOW) { overflow = true }
@@ -513,6 +526,11 @@ private fun SessionTopBar(
                 androidx.compose.material3.DropdownMenuItem(text = { androidx.compose.material3.Text(strings.more) }, onClick = { overflow = false; onMore?.invoke() })
             }
         }
+    }
+    if (windows != null) when (window) {
+        "usage" -> windows.usage(chat) { window = "" }
+        "context" -> windows.context(chat) { window = "" }
+        "files" -> windows.files(chat) { window = "" }
     }
     dialog?.let { (head, body) ->
         androidx.compose.material3.AlertDialog(

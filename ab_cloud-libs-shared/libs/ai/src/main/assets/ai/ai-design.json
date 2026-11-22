@@ -77,7 +77,7 @@
       }
     ],
     "layout": {
-      "_doc": "The two-row layout of the Compose chat (Cloud SuperIntel; AiComposerBar twoRows). Cloud Code and the other apps keep `controls` above, in its order, untouched. `row` 0 = the input row ((+) attachments dropdown), 1 = toolbar row 1 (Task, Specialist | Agent, Model, Effort, Mode), 2 = toolbar row 2 (Plugins-Skills | KG-Store, KG-Cloud-apps | KG-Repos, KG-Cloud-infra, Plugins-Perf | More); `divider_before` draws a visible bar before that control. An id of `controls` takes its label and icon from there; the others declare theirs. KG-Store opens a full tabbed page (kg_store); KG-Cloud-apps and KG-Cloud-infra are MCP pickers (mcp.buckets); KG-Repos picks the repositories exposed to the model. The single `mcp` control has no place here.",
+      "_doc": "The two-row layout of the Compose chat (Cloud SuperIntel; AiComposerBar twoRows). Cloud Code and the other apps keep `controls` above, in its order, untouched. `row` 0 = the input row ((+) attachments dropdown), 1 = toolbar row 1 (Task, Specialist | Agent, Model, Effort, Mode), 2 = toolbar row 2 (#1854: Plugins, Plugins-Perf | MCP Tools: Cloudy Apps, Weby Apps, KG-Cloud-infra | KG: Repos, Skills, KG-Store | Hooks | More); `divider_before` draws a visible bar before that control. An id of `controls` takes its label and icon from there; the others declare theirs. KG-Store opens a full tabbed page (kg_store); Cloudy Apps (kg_apps, formerly KG-Cloud-apps) and KG-Cloud-infra are MCP pickers (mcp.buckets); Weby Apps lists the well-known public MCP tools (webyApps); Plugins toggles every plugin; Hooks lists the c3 guard hooks (hooks); Repos (kg_repos) picks the repositories exposed to the model. The single `mcp` control has no place here.",
       "controls": [
         {
           "id": "plus",
@@ -111,30 +111,29 @@
           "row": 1
         },
         {
-          "id": "skills",
-          "label": "Plugins-Skills",
+          "id": "plugins",
+          "label": "Plugins",
           "icon": "extension",
           "row": 2
         },
         {
-          "id": "kg_store",
-          "label": "KG-Store",
-          "icon": "public",
-          "row": 2,
-          "divider_before": true
-        },
-        {
-          "id": "kg_apps",
-          "label": "KG-Cloud-apps",
-          "icon": "cloud",
+          "id": "perf",
+          "label": "Plugins-Perf",
+          "icon": "speed",
           "row": 2
         },
         {
-          "id": "kg_repos",
-          "label": "KG-Repos",
-          "icon": "folder_open",
+          "id": "kg_apps",
+          "label": "Cloudy Apps",
+          "icon": "cloud",
           "row": 2,
           "divider_before": true
+        },
+        {
+          "id": "weby_apps",
+          "label": "Weby Apps",
+          "icon": "public",
+          "row": 2
         },
         {
           "id": "kg_infra",
@@ -143,10 +142,30 @@
           "row": 2
         },
         {
-          "id": "perf",
-          "label": "Plugins-Perf",
-          "icon": "speed",
+          "id": "kg_repos",
+          "label": "Repos",
+          "icon": "folder_open",
+          "row": 2,
+          "divider_before": true
+        },
+        {
+          "id": "skills",
+          "label": "Skills",
+          "icon": "extension",
           "row": 2
+        },
+        {
+          "id": "kg_store",
+          "label": "KG-Store",
+          "icon": "public",
+          "row": 2
+        },
+        {
+          "id": "hooks",
+          "label": "Hooks",
+          "icon": "bolt",
+          "row": 2,
+          "divider_before": true
         },
         {
           "id": "more",
@@ -446,6 +465,38 @@
   "repos": {
     "_doc": "The Repos picker: which repositories the model may see (an app's list is composer.json::repos). The chosen set rides as a standing instruction, like the MCP sentence; {repos} is the comma-separated names. An empty selection adds nothing.",
     "instruction": "Repositories exposed to you for this session: {repos}. Read code from these only."
+  },
+  "weby_apps": {
+    "_doc": "#1854 The Weby Apps chip: a default list of well-known PUBLIC MCP tools (names and what they do; no address, no key). Each is a switch of the MCPs selection like any server; one the gateway does not list yet is shown here all the same.",
+    "items": [
+      {"id": "github", "label": "GitHub", "detail": "repos, issues, pull requests"},
+      {"id": "context7", "label": "Context7", "detail": "up-to-date library docs"},
+      {"id": "deepwiki", "label": "DeepWiki", "detail": "ask any public repo"},
+      {"id": "fetch", "label": "Fetch", "detail": "read a public web page"},
+      {"id": "brave-search", "label": "Brave Search", "detail": "web and local search"},
+      {"id": "exa", "label": "Exa", "detail": "neural web search"},
+      {"id": "tavily", "label": "Tavily", "detail": "search and extract for agents"},
+      {"id": "firecrawl", "label": "Firecrawl", "detail": "crawl and scrape sites"},
+      {"id": "playwright", "label": "Playwright", "detail": "drive a browser"},
+      {"id": "sequential-thinking", "label": "Sequential Thinking", "detail": "step-by-step reasoning"},
+      {"id": "notion", "label": "Notion", "detail": "pages and databases"},
+      {"id": "linear", "label": "Linear", "detail": "issues and projects"},
+      {"id": "sentry", "label": "Sentry", "detail": "errors and traces"}
+    ]
+  },
+  "hooks": {
+    "_doc": "#1854 The Hooks chip: the c3-infra guard hooks the fleet's Claude sessions run (names and the event they guard; the SOT is cloud-u-linux da_my-ai/data/claude/cloud-marketplace/c3-infra/hooks). Read-only: a hook is changed in the SOT, never here.",
+    "items": [
+      {"id": "no-pkill-pgrep-f.sh", "label": "no-pkill-pgrep-f", "detail": "PreToolUse: blocks the process-kill-by-pattern calls"},
+      {"id": "no-glob-rm-tmp.sh", "label": "no-glob-rm-tmp", "detail": "PreToolUse: blocks glob deletes in /tmp"},
+      {"id": "no-local-gradle.sh", "label": "no-local-gradle", "detail": "PreToolUse: Gradle builds run in CI only"},
+      {"id": "main-only-push.sh", "label": "main-only-push", "detail": "PreToolUse: pushes go to main only"},
+      {"id": "no-branch-create.sh", "label": "no-branch-create", "detail": "PreToolUse: no new branches"},
+      {"id": "no-secrets-commit.sh", "label": "no-secrets-commit", "detail": "PreToolUse: no secret in a commit"},
+      {"id": "no-mass-delete.sh", "label": "no-mass-delete", "detail": "PreToolUse: no mass deletes"},
+      {"id": "ai-usage-beacon.sh", "label": "ai-usage-beacon", "detail": "beacons AI usage"},
+      {"id": "ai-usage-post.sh", "label": "ai-usage-post", "detail": "posts AI usage"}
+    ]
   },
   "kg_store": {
     "_doc": "The KG-Store page (a full page with tabs, like the Model Catalogue): public-web sources the model may use. kind: web = the chat's own web-search switch; source = a public source whose choice rides as a standing instruction ({sources}); mcp = an MCP server (its toggle is the MCPs selection). The last tab lists whatever other internet MCPs the gateway lists.",
