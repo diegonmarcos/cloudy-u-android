@@ -42,7 +42,7 @@ class BrowserDevToolsTest {
         assertEquals(null, cfg.menu.item("back")!!.category)
     }
 
-    @Test fun `dev tools is the last section holding view source and the debugger rows; the JS toggle is a Perms blocker`() {
+    @Test fun `dev tools is the last section holding view source and the debugger rows, the JS toggle is a Perms blocker`() {
         val ids = cfg.menu.sections.map { it.id }
         assertEquals("Dev Tools", cfg.menu.sections.first { it.id == "dev_tools" }.label)
         assertEquals("dev_tools", ids.last())
