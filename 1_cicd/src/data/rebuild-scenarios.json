@@ -413,15 +413,15 @@
       "expect": { "apps": 0, "libs": 1, "rootfs": 0, "ship": 1, "refresh": 0 }
     },
     {
-      "id": "#870 static lib: libs/account (f89b4e580's lib; #1693 Cloud Account is its only app)",
+      "id": "#870 static lib: libs/account (f89b4e580's lib; #1693 Cloud Account, and since #1845 the C3 WebServer's fleet token import)",
       "files": [
         "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/AccountData.kt"
       ],
       "expect": {
-        "apps": 1,
+        "apps": 2,
         "libs": 0,
         "rootfs": 0,
-        "ship": 2,
+        "ship": 3,
         "refresh": 0
       }
     },
