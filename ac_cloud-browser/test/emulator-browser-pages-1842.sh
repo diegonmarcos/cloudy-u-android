@@ -102,12 +102,14 @@ if tap 'Page-Tools' text; then
 import re, sys, xml.etree.ElementTree as ET
 try: root = ET.parse(sys.argv[1]).getroot()
 except Exception: sys.exit(0)
-top = bot = None; x = 100
+top = bot = None; x = 100; screen = 0
 for n in root.iter("node"):
     a, b, c, d = map(int, re.findall(r"\d+", n.get("bounds", "[0,0][0,0]")))
+    screen = max(screen, d)
     if n.get("text") == "Page-Tools" or n.get("content-desc") == "Page-Tools": top = d; x = (a + c) // 2
     if n.get("resource-id", "") == "bottomnav_island": bot = b
-if top is None or bot is None or bot <= top: sys.exit(0)
+if bot is None: bot = screen * 95 // 100   # the island is collapsed while a sheet is open: stay above the screen's foot
+if top is None or bot <= top: sys.exit(0)
 h = bot - top; hi, lo = top + h * 85 // 100, top + h * 30 // 100
 print(x, *((hi, lo) if sys.argv[2] == "up" else (lo, hi)))
 PY
