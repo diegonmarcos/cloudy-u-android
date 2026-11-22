@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -108,7 +109,7 @@ class TakeoutImportTest {
 
                 // the import tab with the buttons that open the system pickers (zip or file, folder)
                 await("wait@102+9", 30_000) { compose.onAllNodesWithTag(DayTags.tab(DayTab.IMPORT)).fetchSemanticsNodes().isNotEmpty() }
-                compose.onNodeWithTag(DayTags.tab(DayTab.IMPORT)).performClick()
+                compose.onNodeWithTag(DayTags.tab(DayTab.IMPORT)).performScrollTo().performClick()
                 await("wait@104+9", 30_000) { compose.onAllNodesWithTag(ImportTags.FILE).fetchSemanticsNodes().isNotEmpty() }
                 assertTrue("the folder picker button is there", compose.onAllNodesWithTag(ImportTags.FOLDER).fetchSemanticsNodes().isNotEmpty())
 
@@ -136,18 +137,18 @@ class TakeoutImportTest {
                 val before1 = counts(db)
 
                 // the pages over it: Day (yesterday), Places, Cities, World
-                compose.onNodeWithTag(DayTags.tab(DayTab.DAY)).performClick()
+                compose.onNodeWithTag(DayTags.tab(DayTab.DAY)).performScrollTo().performClick()
                 await("wait@132+9", 30_000) { compose.onAllNodesWithTag(DayTags.PREV).fetchSemanticsNodes().isNotEmpty() }
                 compose.onNodeWithTag(DayTags.PREV).performClick()
                 await("wait@134+9", 30_000) { compose.onAllNodesWithTag(DayTags.LIST).fetchSemanticsNodes().isNotEmpty() }
                 await("wait@135+9", 30_000) { runCatching { compose.onNodeWithTag(DayTags.LIST).performScrollToNode(hasText("Walk Test Office", substring = true)) }.isSuccess }
                 await("wait@136+9", 30_000) { compose.onAllNodesWithText("Walk Test Office", substring = true).fetchSemanticsNodes().isNotEmpty() }
                 shot("takeout-day")
-                compose.onNodeWithTag(DayTags.tab(DayTab.PLACES)).performClick()
+                compose.onNodeWithTag(DayTags.tab(DayTab.PLACES)).performScrollTo().performClick()
                 await("wait@139+9", 30_000) { compose.onAllNodesWithText("Walk Test Office", substring = true).fetchSemanticsNodes().isNotEmpty() }
-                compose.onNodeWithTag(DayTags.tab(DayTab.CITIES)).performClick()
+                compose.onNodeWithTag(DayTags.tab(DayTab.CITIES)).performScrollTo().performClick()
                 await("wait@141+9", 30_000) { compose.onAllNodesWithText("Berlin", substring = true).fetchSemanticsNodes().isNotEmpty() }
-                compose.onNodeWithTag(DayTags.tab(DayTab.WORLD)).performClick()
+                compose.onNodeWithTag(DayTags.tab(DayTab.WORLD)).performScrollTo().performClick()
                 await("wait@143+9", 30_000) { compose.onAllNodesWithText("Germany", substring = true).fetchSemanticsNodes().isNotEmpty() }
 
                 // the same zip again: nothing doubles
