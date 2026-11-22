@@ -8,6 +8,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
@@ -219,7 +220,8 @@ class TasksPageTest {
         compose.onNodeWithTag(DrawerTags.project(project.id)).performScrollTo().performClick()
         compose.onNodeWithTag(DrawerTags.list(lists[0].id)).assertExists()
         compose.onNodeWithTag(DrawerTags.list(lists[1].id)).assertExists()
-        compose.onNodeWithTag(DrawerTags.list(lists[1].id)).performScrollTo().performClick()
+        // a semantics click, not a touch at the row's centre: the row sits in a bounded scroll that may leave it partly off screen
+        compose.onNodeWithTag(DrawerTags.list(lists[1].id)).performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         compose.waitForIdle()
         assertEquals(lists[1].id, env.controller.selectedListId)
         compose.onNodeWithTag(TasksTags.HEADER).assertIsDisplayed()
