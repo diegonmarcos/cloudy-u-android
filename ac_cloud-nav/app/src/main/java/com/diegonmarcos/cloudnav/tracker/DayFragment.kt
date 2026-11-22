@@ -5,7 +5,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
+import com.diegonmarcos.cloudnav.maps.takeout.ImportController
 import com.diegonmarcos.cloudnav.NavConfig
 import com.diegonmarcos.cloudnav.maps.TimelineBuilder
 import com.diegonmarcos.cloudnav.maps.TimelineSync
@@ -28,6 +30,17 @@ class DayFragment : KitComposeFragment() {
     private var tab by mutableStateOf(DayTab.DAY)
 
     override fun palette(): KitPalette = TrackerInk.palette()
+
+    // #1853 Import tab: the system pickers (no storage permission: the picker hands out a read grant for the chosen zip, file or folder)
+    private val pickFile = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { importFrom(it) } }
+    private val pickFolder = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri -> uri?.let { importFrom(it) } }
+
+    /** Starts the import of a picked zip, JSON file or folder; the Day, Trips, Places, Cities and World views reload when it ends. */
+    fun importFrom(uri: android.net.Uri) {
+        tab = DayTab.IMPORT
+        val act = activity
+        ImportController.start(requireContext(), uri) { act?.runOnUiThread { if (isAdded) load(ui.date) } }
+    }
 
     override fun onResume() { super.onResume(); load(ui.date) }
 
@@ -54,6 +67,9 @@ class DayFragment : KitComposeFragment() {
                 }
             },
             onHome = { HomeStore(requireContext()).set(it); load(ui.date) },
+            onImportFile = { pickFile.launch(arrayOf("*/*")) },
+            onImportFolder = { pickFolder.launch(null) },
+            onImportCancel = { ImportController.cancel() },
             onAddVisit = { a, b, name ->
                 val near = ui.day.filterIsInstance<DaySeg.Stay>().firstOrNull { it.place?.located == true }?.place
                 correct(Edits.addVisit(a, b, name, near))
@@ -80,8 +96,8 @@ class DayFragment : KitComposeFragment() {
         val now = System.currentTimeMillis()
         runCatching { kotlinx.coroutines.runBlocking { StepsRepository(app).ingestHealth(zone) } }   // #1851 Health Connect steps and sleep into the store first (compute runs off the main thread)
         val cs = CorrectionStore(app); val corrections = cs.all(); val memory = cs.memory()
-        val first = today.minusDays(Trips.HOME_WINDOW_DAYS - 1L)   // 90 days: home detection; the month rankings use the last 30
-        val store = TimelineSync.view(app, DayTimeline.dayStart(first, zone) - 12 * 3_600_000L, now)
+        val first = AggregatesStore.windowStart(app, today, zone)   // 90 days (home detection; the month rankings use the last 30), or back to the first imported day (#1853)
+        val store = TimelineSync.view(app, DayTimeline.dayStart(minOf(first, date), zone) - 12 * 3_600_000L, now)
         val a = DayTimeline.dayStart(date, zone); val b = minOf(DayTimeline.dayStart(date.plusDays(1), zone), now)
         // name the unnamed places of the shown day through the open reverse-geocode provider (cached, rate-limited)
         // the day's recorded fixes (engine + foreground tracker), read once per open; no new polling
@@ -93,15 +109,15 @@ class DayFragment : KitComposeFragment() {
         val named = namer.name(raw.map { (it as? DaySeg.Stay)?.place })
         var k = 0
         val dayList = raw.map { s -> if (s is DaySeg.Stay) s.copy(place = named[k++]) else s }.let { l -> DayTimeline.fillLinks(l) }
-        val dates = (0 until Trips.HOME_WINDOW_DAYS).map { first.plusDays(it.toLong()) }
+        val (dates, rankDates) = AggregatesStore.windowDates(first, today)
         val stats = Aggregates.perDay(store, dates, now, zone, corrections, memory)
         val homeSet = HomeStore(app).get()
         val trips = Trips.group(stats, homeSet)
-        val month = dates.takeLast(30).map { d -> DayTimeline.build(store, DayTimeline.dayStart(d, zone), minOf(DayTimeline.dayStart(d.plusDays(1), zone), now), corrections, memory) }
+        val month = rankDates.map { d -> DayTimeline.build(store, DayTimeline.dayStart(d, zone), minOf(DayTimeline.dayStart(d.plusDays(1), zone), now), corrections, memory) }
         val places = Rankings.places(month); val cities = Rankings.cities(month); val countries = Rankings.countries(month)
         runCatching { AggregatesStore.persist(app, now, stats, trips, places, cities, countries) }   // #1851 the aggregates live in the one store
         return DayUi(date, today, dayList, stats, places, cities, countries, false, fixes, trips, homeSet,
-            stepsTotal(app, store, date, a, b))
+            stepsTotal(app, store, date, a, b), if (first.isBefore(today.minusDays(Trips.HOME_WINDOW_DAYS - 1L))) "all recorded and imported history" else "last 30 days")
     }
 
     /** The day's steps from the step counter (recorded by the tracker engine into the store), else n/a and why. */

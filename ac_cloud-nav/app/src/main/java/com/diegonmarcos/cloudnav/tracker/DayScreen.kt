@@ -64,7 +64,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.Locale
 
-enum class DayTab(val label: String) { DAY("Day"), TRIPS("Trips"), PLACES("Places"), CITIES("Cities"), WORLD("World"), INSIGHTS("Insights") }
+enum class DayTab(val label: String) { DAY("Day"), TRIPS("Trips"), PLACES("Places"), CITIES("Cities"), WORLD("World"), INSIGHTS("Insights"), IMPORT("Import") }
 
 object DayTags {
     const val PREV = "day:prev"; const val NEXT = "day:next"; const val PICK = "day:pick"; const val ADD = "day:add"; const val MAP = "day:map"
@@ -85,6 +85,8 @@ data class DayUi(
     val loading: Boolean = false, val fixes: List<PlaceFix> = emptyList(),
     val trips: TripsResult = TripsResult(null, false, emptyList()), val homeOverride: String? = null,
     val steps: StepsTotal = StepsTotal(null, "not read yet"),
+    /** #1853 what the Places / Cities / World rankings span: the last 30 days, or all of an imported history. */
+    val rangeLabel: String = "last 30 days",
 )
 
 class DayActions(
@@ -97,6 +99,8 @@ class DayActions(
     val onResolve: suspend (Place) -> Place = { it },
     /** "Open in map": show the place on Cloud Nav's own map. */
     val onOpenMap: (Place) -> Unit = {},
+    /** #1853 Import tab: the system pickers (a Takeout zip or JSON file; a folder) and cancel. */
+    val onImportFile: () -> Unit = {}, val onImportFolder: () -> Unit = {}, val onImportCancel: () -> Unit = {},
 )
 
 object DayFormat {
@@ -129,9 +133,10 @@ fun DayScreen(ui: DayUi, tab: DayTab, onTab: (DayTab) -> Unit, actions: DayActio
             DayTab.DAY -> DayTabView(ui, actions, zone)
             DayTab.TRIPS -> TripsTabView(ui, actions)
             DayTab.INSIGHTS -> InsightsTabView(ui)
-            DayTab.PLACES -> ListTab("Places", "The places you stayed at, by time spent (last 30 days).", ui.places.map { Triple(it.label, listOfNotNull(it.city, it.country).joinToString(", ") + "  ·  " + it.visits + " visits", DayFormat.hours(it.totalMs)) })
-            DayTab.CITIES -> ListTab("Cities", "Cities by time spent (last 30 days).", ui.cities.map { Triple(it.city, listOfNotNull(it.country).joinToString(", ") + "  ·  " + it.days + " days", DayFormat.hours(it.totalMs)) })
-            DayTab.WORLD -> ListTab("World", "Countries by time spent (last 30 days).", ui.countries.map { Triple(it.country, it.days.toString() + " days", DayFormat.hours(it.totalMs)) })
+            DayTab.IMPORT -> ImportTabView(actions)
+            DayTab.PLACES -> ListTab("Places", "The places you stayed at, by time spent (${ui.rangeLabel}).", ui.places.map { Triple(it.label, listOfNotNull(it.city, it.country).joinToString(", ") + "  ·  " + it.visits + " visits", DayFormat.hours(it.totalMs)) })
+            DayTab.CITIES -> ListTab("Cities", "Cities by time spent (${ui.rangeLabel}).", ui.cities.map { Triple(it.city, listOfNotNull(it.country).joinToString(", ") + "  ·  " + it.days + " days", DayFormat.hours(it.totalMs)) })
+            DayTab.WORLD -> ListTab("World", "Countries by time spent (${ui.rangeLabel}).", ui.countries.map { Triple(it.country, it.days.toString() + " days", DayFormat.hours(it.totalMs)) })
         }
     }
 }

@@ -159,6 +159,7 @@ jobs:
             mkdir -p test-out
             adb pull /data/local/tmp/explored.png test-out/ || true
             for p in daily stops steps; do adb pull /data/local/tmp/tl-$p.png test-out/ || true; done   # #1114: Daily / Stops / Steps over the timeline store
+            for p in takeout-import takeout-day; do adb pull /data/local/tmp/$p.png test-out/ || true; done   # #1853: Explored > Import summary and the imported day
             adb logcat -d > test-out/logcat.txt || true
             adb logcat -d -s ExploredRenderTest:* > test-out/probe.txt || true
             exit $rc

@@ -111,7 +111,8 @@ object DayTimeline {
         if (toMs <= fromMs) return emptyList()
         var cursor = fromMs
         var raw = ArrayList<DaySeg>()
-        for (s in store.sortedBy { it.startMs }) {
+        // #1853 only what touches the day is sorted: years of imported history make the store large and a rebuild walks every day
+        for (s in store.filter { it.endMs > fromMs && it.startMs < toMs }.sortedBy { it.startMs }) {
             val a = maxOf(s.startMs, cursor); val b = minOf(s.endMs, toMs)
             if (b <= a) continue
             val f = (b - a).toDouble() / (s.endMs - s.startMs).coerceAtLeast(1)
@@ -119,7 +120,9 @@ object DayTimeline {
                 val steps = Math.round(s.steps * f)
                 var dist = s.distanceM * f
                 if (dist <= 0.0 && steps > 0) dist = steps * stepM
-                raw += moveOf(a, b, dist, steps, null, null, null)
+                // #1853 an imported move carries Google's own activity type (`mode:<MODE>`); the speed decides only where Google gave none
+                val given = s.locSource?.takeIf { it.startsWith("mode:") }?.let { Mode.parse(it.removePrefix("mode:")) }?.takeIf { it != Mode.UNKNOWN }
+                raw += moveOf(a, b, dist, steps, null, null, given)
             } else raw += DaySeg.Stay(a, b, if (s.kind == TlKind.SLEEP) StayKind.SLEEP else StayKind.IDLE, placeOf(s))
             cursor = b
         }

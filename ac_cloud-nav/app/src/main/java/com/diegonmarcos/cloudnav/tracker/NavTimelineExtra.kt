@@ -56,6 +56,8 @@ class NavTimelineExtra(private val ctx: Context, private val radio: Boolean = fa
         fun install(ctx: Context) {
             TimelineSync.extra = NavTimelineExtra(ctx.applicationContext)
             TimelineSync.beforeMigrate = { migrateEngine(it) }
+            // #1853 once a Google history is imported and its segments rebuilt, Trips / Places / Cities / World / Insights are rebuilt over it
+            com.diegonmarcos.cloudnav.maps.takeout.ImportController.afterImport = { AggregatesStore.rebuild(it, System.currentTimeMillis()) }
         }
 
         /** #1851 the engine's own tables move into the one store: every measured fix into `fixes`, every step slice into `step_slices`. Idempotent. */
