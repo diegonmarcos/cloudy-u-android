@@ -2356,9 +2356,13 @@
       {
        "interface": "IRepoWorkspace",
        "methods": [
+        "changedFiles",
+        "diff",
         "findRepo",
         "listRepos",
         "requestClone",
+        "requestCommit",
+        "requestPush",
         "status",
         "version"
        ]
@@ -2378,6 +2382,23 @@
      "name": "RepoCloneActivity",
      "actions": [
       "com.diegonmarcos.superapp.repoworkspace.CLONE"
+     ],
+     "uris": [],
+     "callers": [
+      "code"
+     ]
+    },
+    {
+     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+     "level": "signature",
+     "source": "ac_cloud-drive/app/src/main/AndroidManifest.xml",
+     "component": ".workspace.RepoCommitActivity",
+     "id": "intent:.workspace.RepoCommitActivity",
+     "kind": "intent",
+     "name": "RepoCommitActivity",
+     "actions": [
+      "com.diegonmarcos.superapp.repoworkspace.COMMIT",
+      "com.diegonmarcos.superapp.repoworkspace.PUSH"
      ],
      "uris": [],
      "callers": [
