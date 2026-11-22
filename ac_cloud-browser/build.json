@@ -1874,7 +1874,7 @@
           "_doc_remote": "scrappers-api's generic crawl over the WireGuard mesh (cloud-u-containers user-data_scrappers-api main.py: POST /scrape/crawl {url, selector}, synchronous, answers {ok, written, summary.matched}; rows stay on the server). The mesh address is the service's declared container port (cloud-infra build-scrappers-api.json: scrappers-api.mesh.diegonmarcos.com :3020 on oci-apps 10.0.0.6); the public route is behind two-factor Authelia, so the phone uses the mesh.",
           "remote": {
             "enabled": true,
-            "endpoint": "http://10.0.0.6:3020/scrape/crawl",
+            "endpoint": "http://cloudy-browser-scrapper-api.mesh.diegonmarcos.com:3020/scrape/crawl",
             "timeout_ms": 60000
           },
           "_doc_fleet": "#1856 the Scrapper tab of the page-tools sheet: the fleet's headless browser and scrapper API run on the CURRENT page URL ({url} in a body). Mesh first (cloud-u-containers: cloudy-browser-headless mesh :3118, WG-only, BROWSER_TOKEN bearer read from the encrypted store key `bearer_key` by the host; cloudy-browser-scrapper-api mesh :3020, its public route is behind two-factor so it is not listed). Headless commands are headless-api v1 (POST /run {steps}); `show` is the step whose result is the answer; the trailing close frees the session. `download` tools stream a file into the app's Downloads folder. FleetScrapper in libs:browser reads this block; a tool here without a menu row (or a row without a tool) fails test-browser-scrapper.sh.",

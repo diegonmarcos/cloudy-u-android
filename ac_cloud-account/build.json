@@ -589,6 +589,28 @@
         "auth": "mtls",
         "policy": "mesh_first",
         "health": "/alive"
+      },
+      {
+        "id": "browser-headless",
+        "kind": "tools",
+        "source": "cloud-u-containers/user-data_cloudy-browser-headless/build.json",
+        "_doc": "#1856 the fleet's headless browser (readable, text, links, html, screenshot, pdf, ocr on a URL), WG-only, gated by its own bearer (BROWSER_TOKEN). Cloud Browser's Scrapper tab runs it on the current page.",
+        "mesh_dns": "cloudy-browser-headless.mesh.diegonmarcos.com",
+        "mesh_port": 3118,
+        "mesh_scheme": "http",
+        "policy": "mesh_only",
+        "health": "/health"
+      },
+      {
+        "id": "scrapper-api",
+        "kind": "tools",
+        "source": "cloud-u-containers/user-data_cloudy-browser-scrapper-api/build.json",
+        "_doc": "#1856 the fleet's scrapper API (POST /scrape/{platform}: crawl, YouTube video and audio), served from Cloud Run through the gcp-idtoken-bridge on the mesh (#1686). Cloud Browser's Scrapper tab and its Web scraper remote crawl.",
+        "mesh_dns": "cloudy-browser-scrapper-api.mesh.diegonmarcos.com",
+        "mesh_port": 3020,
+        "mesh_scheme": "http",
+        "policy": "mesh_only",
+        "health": "/health"
       }
     ],
     "ssh_hosts": [

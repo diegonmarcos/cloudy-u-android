@@ -23,6 +23,10 @@
     </base-config>
 
     <domain-config cleartextTrafficPermitted="true">
+        <!-- BEGIN fleet-mesh-cleartext (generated from ac_cloud-account/build.json::fleet_endpoints by 1_cicd/src/scripts/cloud-android-fleet-nsc.py; do not edit) -->
+        <domain includeSubdomains="false">cloudy-browser-headless.mesh.diegonmarcos.com</domain>
+        <domain includeSubdomains="false">cloudy-browser-scrapper-api.mesh.diegonmarcos.com</domain>
+        <!-- END fleet-mesh-cleartext -->
         <domain includeSubdomains="true">localhost</domain>
         <domain includeSubdomains="true">127.0.0.1</domain>
         <!-- WG mesh — Diego's 10.0.0.x peers per cloud-data mesh.json. -->
