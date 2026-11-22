@@ -43,7 +43,9 @@ dismiss() {
         if grep -qiE 'wireless debugging|Allow .* on this network' "$OUT/cur.xml"; then tap_node "$OUT/cur.xml" '^cancel$|^don.t allow$' || $T adb shell input keyevent KEYCODE_BACK; sleep 2; else break; fi
     done
 }
-grant() { $T adb shell appops set "$PKG" MANAGE_EXTERNAL_STORAGE allow; $T adb shell pm grant "$PKG" android.permission.READ_EXTERNAL_STORAGE 2>/dev/null || true; }
+grant() { $T adb shell appops set "$PKG" MANAGE_EXTERNAL_STORAGE allow; $T adb shell pm grant "$PKG" android.permission.READ_EXTERNAL_STORAGE 2>/dev/null || true
+    # the Workspace's volume scan asks for media access on first use: grant it so the evidence shows the page, not the prompt
+    for p in READ_MEDIA_AUDIO READ_MEDIA_IMAGES READ_MEDIA_VIDEO; do $T adb shell pm grant "$PKG" "android.permission.$p" 2>/dev/null || true; done; }
 tapf() { # X% Y% of the screen
     local wh w h; wh="$($T adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1)"; w="${wh%x*}"; h="${wh#*x}"
     $T adb shell input tap $((w * $1 / 100)) $((h * $2 / 100))
