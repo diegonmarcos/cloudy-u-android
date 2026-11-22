@@ -2340,6 +2340,49 @@
      "level": "signature",
      "source": "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/debugapi/DriveDebugApi.kt",
      "callers": []
+    },
+    {
+     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+     "level": "signature",
+     "source": "ac_cloud-drive/app/src/main/AndroidManifest.xml",
+     "component": ".workspace.RepoWorkspaceService",
+     "id": "service:.workspace.RepoWorkspaceService",
+     "kind": "service",
+     "name": "RepoWorkspaceService",
+     "actions": [
+      "com.diegonmarcos.superapp.repoworkspace.IRepoWorkspace"
+     ],
+     "aidl": [
+      {
+       "interface": "IRepoWorkspace",
+       "methods": [
+        "findRepo",
+        "listRepos",
+        "requestClone",
+        "status",
+        "version"
+       ]
+      }
+     ],
+     "callers": [
+      "code"
+     ]
+    },
+    {
+     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+     "level": "signature",
+     "source": "ac_cloud-drive/app/src/main/AndroidManifest.xml",
+     "component": ".workspace.RepoCloneActivity",
+     "id": "intent:.workspace.RepoCloneActivity",
+     "kind": "intent",
+     "name": "RepoCloneActivity",
+     "actions": [
+      "com.diegonmarcos.superapp.repoworkspace.CLONE"
+     ],
+     "uris": [],
+     "callers": [
+      "code"
+     ]
     }
    ]
   },
@@ -3078,6 +3121,34 @@
     "perms"
    ],
    "endpoints": [
+    {
+     "permission": "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA",
+     "level": "signature",
+     "source": "ac_cloud-superintel/app/src/main/AndroidManifest.xml",
+     "component": ".engine.EngineService",
+     "id": "service:.engine.EngineService",
+     "kind": "service",
+     "name": "EngineService",
+     "actions": [
+      "com.diegonmarcos.superapp.aiengine.IAiEngine"
+     ],
+     "aidl": [
+      {
+       "interface": "IAiEngine",
+       "methods": [
+        "cancel",
+        "chat",
+        "models",
+        "providers",
+        "usage",
+        "version"
+       ]
+      }
+     ],
+     "callers": [
+      "code"
+     ]
+    },
     {
      "permission": null,
      "level": "none",
