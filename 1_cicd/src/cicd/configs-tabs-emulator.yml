@@ -1,7 +1,7 @@
-name: "Test -> Configs strip {own tabs} | Agents, Perms, Logcat, X-Ray App, About (emulator, every fleet app)"
+name: "Test -> Configs strip {own tabs} | General, Agents, Perms, Logcat, X-Ray App, About (emulator, every fleet app)"
 
 # #1443 / #1630 / #1697: open Configs from each app's own entry (the first row's gear) on an emulator and assert the strip ON SCREEN
-# ({own tabs} | Agents, Perms, Logcat, X-Ray App, About), from the APK a Ship run built. 1_cicd/src/scripts/emulator-configs-tabs.sh
+# ({own tabs} | General, Agents, Perms, Logcat, X-Ray App, About), from the APK a Ship run built. 1_cicd/src/scripts/emulator-configs-tabs.sh
 # does the walk. #1697: the static configs-tabs guard passed apps whose gear opened their own page (no strip on the phone), so this
 # walk covers EVERY fleet app (each a[acd]_* with a build.json, minus configs-pages.json::exempt), not a hand-picked six.
 # Dispatch only. `runs` pins a Ship run per app (key = the app directory or its short name); an app not pinned uses the latest

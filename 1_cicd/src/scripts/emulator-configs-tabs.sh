@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # emulator-configs-tabs — #1443 screenshots on a booted emulator of one app's Configs screen: open Configs from the app's
-# own entry (the first row's three dots; Cloud C3's top bar menu), then each tail tab (#1630: {own tabs} | Agents, Perms,
-# Logcat, X-Ray App, About; the strip scrolls), taken from the APK a Ship run built. Exit 1 when a tail tab cannot be
-# reached or the strip is not {own tabs} then the five tail tabs in that order.
+# own entry (the first row's three dots; Cloud C3's top bar menu), then each shared tab (#1852: {own tabs} | General, Agents,
+# Perms, Logcat, X-Ray App, About; the strip scrolls; the General shot is the compact data-dense page), taken from the APK a
+# Ship run built. Exit 1 when a shared tab cannot be reached or the strip is not {own tabs} then the six shared tabs in that order.
 # Usage: emulator-configs-tabs.sh APK PACKAGE NAME OUT_DIR
 set -uo pipefail
 APK="$1"; PKG="$2"; NAME="$3"; OUT="$4"; mkdir -p "$OUT"
@@ -82,7 +82,7 @@ dump cur
 if tap_node "$OUT/cur.xml" 'configs'; then :; elif tap_node "$OUT/cur.xml" 'more options|settings'; then sleep 2; dump cur; tap_node "$OUT/cur.xml" '^configs$' || true; fi
 dismiss
 dump cur
-if ! grep -qE 'text="(Agents|Perms|Logcat|X-Ray App|About)"' "$OUT/cur.xml"; then
+if ! grep -qE 'text="(General|Agents|Perms|Logcat|X-Ray App|About)"' "$OUT/cur.xml"; then
     if tap_node "$OUT/cur.xml" 'configs'; then :; elif tap_node "$OUT/cur.xml" 'more options|settings'; then sleep 2; dump cur; tap_node "$OUT/cur.xml" '^configs$' || true; fi
     dismiss
 fi
@@ -95,7 +95,7 @@ if ! grep -qE 'content-desc="(Logcat|X-Ray App)"' "$OUT/cur.xml"; then
     sleep 5; dismiss
 fi
 shot configs-open 6
-# #1630: every strip is {own tabs} | Agents, Perms, Logcat, X-Ray App, About. The strip scrolls, so the tail can sit
+# #1852: every strip is {own tabs} | General, Agents, Perms, Logcat, X-Ray App, About. The strip scrolls, so the tail can sit
 # off screen: walk it right to left with swipes on the strip row, collecting the labels in on-screen order.
 strip_labels() { # XML -> "y label x" per tab of the Configs strip: the first row of tab nodes under the top bar
     python3 - "$1" <<'PY'
@@ -135,8 +135,8 @@ for i in 1 2 3 4 5 6; do
     $T adb shell input swipe $((W * 8 / 10)) "$ROW_Y" $((W * 2 / 10)) "$ROW_Y" 400; sleep 1; dump "strip-$i"; merge "$OUT/strip-$i.xml"
 done
 echo "strip order: ${order[*]}"
-# tap every tail tab: from the strip's right end, swipe back left until the label is on screen
-for tab in Agents Perms Logcat "X-Ray App" About; do
+# tap every shared tab: from the strip's right end, swipe back left until the label is on screen
+for tab in General Agents Perms Logcat "X-Ray App" About; do
     dismiss; found=0
     for i in 0 1 2 3 4 5 6; do
         dump cur
@@ -148,16 +148,19 @@ for tab in Agents Perms Logcat "X-Ray App" About; do
     # back to the strip's right end for the next one
     [ -n "$ROW_Y" ] && for i in 1 2 3; do $T adb shell input swipe $((W * 8 / 10)) "$ROW_Y" $((W * 2 / 10)) "$ROW_Y" 300; done
 done
-# the strip must end with the five tail tabs in that order, after at least one of the app's own tabs
+# the strip must end with the six shared tabs in that order (an app with tabs of its own has them first, before the divider)
 python3 - "${order[@]}" <<'PY' || rc=1
 import sys
-o = sys.argv[1:]; tail = ["Agents", "Perms", "Logcat", "X-Ray App", "About"]
+o = sys.argv[1:]; tail = ["General", "Agents", "Perms", "Logcat", "X-Ray App", "About"]
 pos = [o.index(t) if t in o else None for t in tail]
-print("tail positions in the strip:", dict(zip(tail, pos)))
-ok = None not in pos and pos == sorted(pos) and any(t != "|" for t in o[:pos[0]]) and pos[-1] == len(o) - 1
+print("shared tab positions in the strip:", dict(zip(tail, pos)))
+# Agents, Logcat and X-Ray App come from opt-in libs (an app may lack one); General, Perms and About are always there
+req = [pos[0], pos[2], pos[5]]
+present = [p for p in pos if p is not None]
+ok = None not in req and present == sorted(present) and pos[5] == len(o) - 1
 sys.exit(0 if ok else 1)
 PY
-[ $? -eq 0 ] || { echo "FAIL $NAME: the Configs strip is not {own tabs} | Agents, Perms, Logcat, X-Ray App, About"; rc=1; }
+[ $? -eq 0 ] || { echo "FAIL $NAME: the Configs strip is not {own tabs} | General, Agents, Perms, Logcat, X-Ray App, About"; rc=1; }
 $T adb logcat -d -t 30000 > "$OUT/$NAME-logcat.txt"; $T adb logcat -d -b crash > "$OUT/$NAME-logcat-crash.txt" 2>&1 || true
 cat "$OUT/$NAME-logcat.txt" "$OUT/$NAME-logcat-crash.txt" | grep -E "FATAL EXCEPTION" -A12 | grep -B2 -A12 "$PKG" | head -40 > "$OUT/$NAME-crash.txt" || true
 [ -s "$OUT/$NAME-crash.txt" ] && { echo "FAIL $NAME: crash in logcat"; rc=1; }

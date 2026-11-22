@@ -1,14 +1,19 @@
 # ─── GENERATED: do not edit — edit 1_cicd/src/scripts/cloud-android-configs-tabs-guard.py ───
 #!/usr/bin/env python3
 """
-cloud-android-configs-tabs-guard — every app's Configs starts General | Perms | About on the top nav (#1439).
+cloud-android-configs-tabs-guard — every app's Configs strip is {own tabs} | General, Agents, Perms, Logcat, X-Ray App, About (#1439, #1852).
 
-DECLARATION  1_cicd/src/data/configs-pages.json::tabs (the required first ids, the lib needles, the pending ledger)
+DECLARATION  1_cicd/src/data/configs-pages.json::tabs (the shared pages, the tail order, the lib needles, the pending ledger)
+
+  #1852 THE ORDER: the app's own tabs first, then a `|` divider, then the shared tabs in exactly this order: General, Agents, Perms,
+      Logcat, X-Ray App, About (tabs.tail.ids). T1 enforces it on every declaration (own tabs, then the shared ids it carries in tail
+      order, General / Perms / About always present, no own tab after a shared one); T7 enforces it on the lib that draws it
+      (TAIL_IDS, the own-first build, the divider) and on every host.
 
   T0  the shared Configs screen of libs:ui-nav-bars draws the tabs: FleetConfigsPage's entries are exactly `first`, in
       that order, and FleetConfigsScreen draws FleetConfigsTabs over them
   T1  an app that declares Configs tabs of its own (configs_pages.top_nav, ui.modes with tab `configs`, or the pages
-      of ui.sections[id=configs]) starts them with `first`; every such declaration of the app agrees
+      of ui.sections[id=configs]) declares {own tabs} then the shared ids in tail order (#1852); every such declaration of the app agrees
   T2  an app with no tabs of its own conforms through the shared screen only while it reaches it (it is not in
       configs_pages.pending)
   T3  an app breaking T1/T2 is named in tabs.pending with a reason; a pending entry for a conforming app is stale;
@@ -17,7 +22,7 @@ DECLARATION  1_cicd/src/data/configs-pages.json::tabs (the required first ids, t
       pages (a `tabs.draw` needle in its non-test sources), so the order cannot be declared in build.json yet drawn by nothing
   T6  (#1470) an app may keep an order its owner chose, but only by name in tabs.app_order with its exact `order` and a reason;
       its declarations must equal that order, so the exception is per app and never loosens another app
-  T7  (#1630) the fleet-default tail: the strip is [General + own tabs] | Agents, Perms, Logcat, X-Ray App, About. The lib holds that
+  T7  (#1630, #1852) the fleet-default tail: the strip is {own tabs} | General, Agents, Perms, Logcat, X-Ray App, About. The lib holds that
       order (FleetConfigsExtensions.TAIL_IDS + stripOrder), and every app that reaches the shared screen links the three
       opt-in libs (libs:fleetconfigs-agents / -logcat / -xray in build.json::modules) or is named in tabs.tail.pending with a
       reason; a pending entry for an app that links all three is stale (delete it in the commit that wires the app)
@@ -56,10 +61,34 @@ def own_tabs(d):
     if modes:
         ids = [m["kind"][len("fleet_"):] if str(m.get("kind", "")).startswith("fleet_") else m.get("id") for m in modes]
         out.append(("ui.modes[tab=configs]", ids))
+    cfgui = ui.get("configs") or (d.get("vault") or {}).get("configs")
+    if isinstance(cfgui, dict) and isinstance(cfgui.get("pages"), list) and cfgui["pages"] and isinstance(cfgui["pages"][0], dict) and cfgui["pages"][0].get("id"):
+        # #1852 a web app that declares its Configs strip in ui.configs.pages (Cloud Notes, vault.configs: own pages, then the shared ones that open the native screen)
+        out.append(("vault.configs.pages", [p.get("id") for p in cfgui["pages"]]))
     for s in ui.get("sections") or []:
         if isinstance(s, dict) and s.get("id") == "configs":
             out.append(("ui.sections[configs].pages", [p.get("id") if isinstance(p, dict) else p for p in s.get("pages") or []]))
+        elif isinstance(s, dict) and s.get("id") == "settings" and "general" in [p.get("id") if isinstance(p, dict) else p for p in s.get("pages") or []]:
+            # #1852 an app that calls its Configs section `settings` (Cloud Tasks) and declares the shared General page in it
+            out.append(("ui.sections[settings].pages", [p.get("id") if isinstance(p, dict) else p for p in s.get("pages") or []]))
     return out
+
+
+def order_problems(ids, shared, tail_ids):
+    """#1852 why a declared strip is not {own tabs} | General, Agents, Perms, Logcat, X-Ray App, About ([] when it is)."""
+    ids = [str(i) for i in ids]
+    why = []
+    at = [i for i, x in enumerate(ids) if x in tail_ids]
+    stray = [x for x in ids[at[0]:] if x not in tail_ids] if at else []
+    if stray:
+        why.append("own tab(s) %s come after a shared tab: the app's own tabs go first, before the `|`" % ", ".join(stray))
+    tail = [x for x in ids if x in tail_ids]
+    if tail != sorted(set(tail), key=tail_ids.index):
+        why.append("the shared tabs are %s, not in the order %s" % ("|".join(tail), "|".join(tail_ids)))
+    gone = [x for x in shared if x not in ids]
+    if gone:
+        why.append("it lacks the shared tab(s) " + ", ".join(gone))
+    return why
 
 
 def app_sources(root, app):
@@ -102,7 +131,8 @@ def main(argv):
     root = os.path.abspath(argv[0] if argv else ".")
     rule_all = json.load(open(os.path.join(root, "1_cicd/src/data/configs-pages.json")))
     rule = rule_all["tabs"]
-    first = rule["first"]
+    first = rule["shared"]
+    tail_ids = (rule.get("tail") or {}).get("ids", [])
     exempt = {k for k in rule_all.get("exempt", {}) if not k.startswith("_")}
     unreached = {k for k in rule_all.get("pending", {}) if not k.startswith("_")}
     pending = {k: v for k, v in rule["pending"].items() if not k.startswith("_")}
@@ -147,8 +177,8 @@ def main(argv):
             if want:
                 if ids != want:
                     why.append("%s is %s, the owner's declared order is %s" % (where, "|".join(map(str, ids)) or "empty", "|".join(want)))
-            elif ids[:len(first)] != first:
-                why.append("%s starts %s" % (where, "|".join(map(str, ids[:len(first)])) or "empty"))
+            else:
+                why += ["%s is %s: %s" % (where, "|".join(map(str, ids)) or "empty", w) for w in order_problems(ids, first, tail_ids)]
         if len({tuple(ids) for _, ids in decls}) > 1:
             why.append("its Configs tab declarations disagree")
         if not decls and app in unreached:
@@ -156,23 +186,27 @@ def main(argv):
         if why:
             broken.append(app)
             if app not in pending:
-                bad.append("T1 %s: Configs does not start %s: %s" % (app, " | ".join(first), "; ".join(why)))
+                bad.append("T1 %s: Configs is not {own tabs} | %s: %s" % (app, ", ".join(tail_ids), "; ".join(why)))
         elif app in pending:
             bad.append("T3 %s: conforms now; delete its entry in configs-pages.json::tabs.pending" % app)
     # T4 the tabs are drawn: an app with Configs tabs of its own reaches the shared pages from its sources
     needles = rule.get("draw", [])
+    web_src = {k: v.get("source") for k, v in (rule.get("tail") or {}).get("web_hosts", {}).items() if not k.startswith("_")}
     for app, d in apps.items():
         if app in exempt or not own_tabs(d):
             continue
-        src = app_order.get(app, {}).get("source")
+        src = app_order.get(app, {}).get("source") or web_src.get(app)
+        if src and "var TABS = [" not in open(os.path.join(root, src), encoding="utf-8", errors="replace").read():
+            src = None   # a web host whose strip is declared in JSON (Cloud Notes): T7 checks its native tail
         if src:  # #1469 a web Configs page: it must draw exactly the declared order (no Kotlin to hold a needle)
+            want_order = app_order.get(app, {}).get("order") or own_tabs(d)[0][1]
             try:
                 text = open(os.path.join(root, src), encoding="utf-8").read()
                 drawn = re.findall(r"^\s*\{ id: '([a-z_]+)', label:", text.split("var TABS = [", 1)[1].split("\n  ];", 1)[0], re.M)
             except (OSError, IndexError):
                 drawn = []
-            if drawn != app_order[app]["order"]:
-                bad.append("T4 %s: %s draws %s, not the declared %s" % (app, src, "|".join(drawn) or "no tabs", "|".join(app_order[app]["order"])))
+            if drawn != want_order:
+                bad.append("T4 %s: %s draws %s, not the declared %s" % (app, src, "|".join(drawn) or "no tabs", "|".join(want_order)))
             continue
         if needles and not any(n in app_sources(root, app) for n in needles):
             bad.append("T4 %s: declares Configs tabs but no source draws the shared pages (%s)" % (app, " | ".join(needles)))

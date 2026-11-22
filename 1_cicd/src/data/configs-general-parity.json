@@ -1,0 +1,293 @@
+{
+  "_doc": "#1852 FIELD PARITY of Configs > General (rule 16): every entry, row, state and action the General page drew before the compact redesign. `fields` are strings the General sources (`files`) must still hold, recorded from the former layout (every needle is present in the tile layout of commit 5daae32a0 and in the compact one). `state` = the live state words the redesign adds, one per section (FleetGeneralState.kt). `forbidden` = what the redesign removed on purpose (the big saturated tiles) and must not come back. Read by 1_cicd/src/scripts/cloud-android-configs-general-parity-guard.py (step of configs-tabs-guard.yml), mutation-tested by 1_cicd/src/scripts/test/configs-general-parity.test.sh.",
+  "files": [
+    "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsPages.kt",
+    "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsUi.kt"
+  ],
+  "state_file": "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetGeneralState.kt",
+  "state": {
+    "perms": "out[\"perms\"] = perms(granted, total)",
+    "update": "out[FleetConfigs.UPDATE_SECTION] = update(",
+    "battery": "out[\"battery\"] = runCatching",
+    "storage": "out[\"storage\"] = storage(dataBytes)",
+    "notifications": "out[\"notifications\"] = runCatching",
+    "ui": "out[\"ui\"] = theme(dark)",
+    "language": "out[\"language\"] = language(ctx)",
+    "app": "out[FleetConfigs.APP_SECTION] = decl.name"
+  },
+  "state_shown": [
+    "states[s.id].orEmpty()",
+    "state = states[s.id].orEmpty()"
+  ],
+  "forbidden": [
+    {
+      "needle": "Modifier.size(56.dp).clip(tile)",
+      "why": "the big anchor tile"
+    },
+    {
+      "needle": "background(c.tabSelected, tile)",
+      "why": "the saturated purple tile fill"
+    },
+    {
+      "needle": "background(c.tabSelected, shape)",
+      "why": "the saturated purple action button fill"
+    }
+  ],
+  "fields": [
+    {
+      "section": "index",
+      "what": "an anchor per declared section",
+      "needle": "FleetConfigsTags.anchor(s.id)"
+    },
+    {
+      "section": "index",
+      "what": "the anchors container tag",
+      "needle": "FleetConfigsTags.ANCHORS"
+    },
+    {
+      "section": "index",
+      "what": "a card per declared section",
+      "needle": "FleetConfigsTags.section(s.id)"
+    },
+    {
+      "section": "index",
+      "what": "the section icon",
+      "needle": "sectionIcon(s.id)"
+    },
+    {
+      "section": "index",
+      "what": "a tap on an anchor scrolls to its section",
+      "needle": "scroll.scrollTo(tops[id] ?: 0)"
+    },
+    {
+      "section": "index",
+      "what": "the section's own note",
+      "needle": "if (s.note.isNotBlank()) Body(s.note, c)"
+    },
+    {
+      "section": "perms",
+      "what": "libs:perms AppPermsSection (the one Perms list, Grant all)",
+      "needle": "com.diegonmarcos.superapp.perms.AppPermsSection("
+    },
+    {
+      "section": "perms",
+      "what": "App info action",
+      "needle": "ActionButton(\"App info\", c, \"fleetcfg_open_perms\""
+    },
+    {
+      "section": "update",
+      "what": "Installed version row",
+      "needle": "KeyValue(\"Installed\""
+    },
+    {
+      "section": "update",
+      "what": "Build row",
+      "needle": "KeyValue(\"Build\""
+    },
+    {
+      "section": "update",
+      "what": "checking state",
+      "needle": "fleetcfg_update_checking"
+    },
+    {
+      "section": "update",
+      "what": "Not checked yet state",
+      "needle": "Not checked yet."
+    },
+    {
+      "section": "update",
+      "what": "No published build state",
+      "needle": "No published build found."
+    },
+    {
+      "section": "update",
+      "what": "up to date state",
+      "needle": "Up to date: the published build is this one"
+    },
+    {
+      "section": "update",
+      "what": "Latest row",
+      "needle": "KeyValue(\"Latest\""
+    },
+    {
+      "section": "update",
+      "what": "newer build state",
+      "needle": "A newer build is published"
+    },
+    {
+      "section": "update",
+      "what": "Check for updates action",
+      "needle": "ActionButton(\"Check for updates\", c, \"fleetcfg_update_check\""
+    },
+    {
+      "section": "update",
+      "what": "Update action (Cloud Store hand-off)",
+      "needle": "ActionButton(\"Update\", c, \"fleetcfg_update_open_store\""
+    },
+    {
+      "section": "update",
+      "what": "Update opens Cloud Store",
+      "needle": "FleetReleases.openStore(ctx, decl)"
+    },
+    {
+      "section": "update",
+      "what": "Release notes heading",
+      "needle": "Text(\"Release notes\""
+    },
+    {
+      "section": "update",
+      "what": "Release notes list",
+      "needle": "ReleaseNotes(st.notes.take(5), c)"
+    },
+    {
+      "section": "update",
+      "what": "Cloud Store note",
+      "needle": "Cloud Store installs the update from the signed APK"
+    },
+    {
+      "section": "battery",
+      "what": "unrestricted state",
+      "needle": "Unrestricted: not battery optimised"
+    },
+    {
+      "section": "battery",
+      "what": "optimised state",
+      "needle": "Battery optimised: Android may stop background work"
+    },
+    {
+      "section": "battery",
+      "what": "background restricted row",
+      "needle": "Background use restricted"
+    },
+    {
+      "section": "battery",
+      "what": "background allowed row",
+      "needle": "Background use allowed"
+    },
+    {
+      "section": "battery",
+      "what": "Battery settings action",
+      "needle": "fleetcfg_open_battery"
+    },
+    {
+      "section": "battery",
+      "what": "Battery settings label",
+      "needle": "Battery settings"
+    },
+    {
+      "section": "battery",
+      "what": "Allow unrestricted battery label",
+      "needle": "Allow unrestricted battery"
+    },
+    {
+      "section": "battery",
+      "what": "the exemption request through libs:perms",
+      "needle": "byId(\"battery_opt\")"
+    },
+    {
+      "section": "storage",
+      "what": "App data row",
+      "needle": "KeyValue(\"App data\""
+    },
+    {
+      "section": "storage",
+      "what": "Cache row",
+      "needle": "KeyValue(\"Cache\""
+    },
+    {
+      "section": "storage",
+      "what": "backup allowed row",
+      "needle": "Android backup allowed"
+    },
+    {
+      "section": "storage",
+      "what": "backup off row",
+      "needle": "Android backup off for this app"
+    },
+    {
+      "section": "storage",
+      "what": "Cloud Account backup note",
+      "needle": "Settings and app state are part of the phone profile Cloud Account backs up to"
+    },
+    {
+      "section": "storage",
+      "what": "All-files access row",
+      "needle": "StatusRow(\"All-files access\""
+    },
+    {
+      "section": "storage",
+      "what": "Allow all-files access action",
+      "needle": "fleetcfg_open_allfiles"
+    },
+    {
+      "section": "storage",
+      "what": "Clear cache action",
+      "needle": "ActionButton(\"Clear cache\", c, \"fleetcfg_clear_cache\""
+    },
+    {
+      "section": "storage",
+      "what": "Clear cache really clears",
+      "needle": "ctx.cacheDir.listFiles()?.forEach { it.deleteRecursively() }"
+    },
+    {
+      "section": "storage",
+      "what": "Storage settings action",
+      "needle": "ActionButton(\"Storage settings\", c, \"fleetcfg_open_storage\""
+    },
+    {
+      "section": "notifications",
+      "what": "allowed state",
+      "needle": "Notifications allowed"
+    },
+    {
+      "section": "notifications",
+      "what": "blocked state",
+      "needle": "Notifications blocked"
+    },
+    {
+      "section": "notifications",
+      "what": "every channel is listed",
+      "needle": "channels.forEach { ch -> StatusRow(ch.name.toString()"
+    },
+    {
+      "section": "notifications",
+      "what": "no channel note",
+      "needle": "No notification channel created yet."
+    },
+    {
+      "section": "notifications",
+      "what": "Notification settings action",
+      "needle": "ActionButton(\"Notification settings\", c, \"fleetcfg_open_notifications\""
+    },
+    {
+      "section": "ui",
+      "what": "the nav UI card (theme, nav mode)",
+      "needle": "\"ui\" -> NavUiConfigCard(dark = dark)"
+    },
+    {
+      "section": "language",
+      "what": "App language row",
+      "needle": "KeyValue(\"App language\""
+    },
+    {
+      "section": "language",
+      "what": "System default fallback",
+      "needle": "System default ("
+    },
+    {
+      "section": "language",
+      "what": "Change language action",
+      "needle": "ActionButton(\"Change language\", c, \"fleetcfg_open_language\""
+    },
+    {
+      "section": "language",
+      "what": "the language intent through libs:perms",
+      "needle": "PermsPages.languageIntent(ctx.packageName)"
+    },
+    {
+      "section": "app",
+      "what": "Open <app> configs action",
+      "needle": "FleetConfigsTags.OPEN_APP_CONFIGS, onAppConfigs"
+    }
+  ]
+}

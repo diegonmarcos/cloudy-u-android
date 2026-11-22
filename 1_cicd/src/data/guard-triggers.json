@@ -147,11 +147,14 @@
       ]
     },
     "configs-tabs-guard.yml": {
-      "_doc": "#1439 every app's Configs starts General | Perms | About: the rule (configs-pages.json::tabs), the guard and its mutation test, every app's build.json (its own Configs tabs) and sources (T4: the tabs are drawn) and the shared Configs screen of libs:ui-nav-bars.",
+      "_doc": "#1439 / #1852 every app's Configs is {own tabs} | General, Agents, Perms, Logcat, X-Ray App, About: the rule (configs-pages.json::tabs), the guard and its mutation test, every app's build.json (its own Configs tabs) and sources (T4: the tabs are drawn), the shared Configs screen of libs:ui-nav-bars, and the General field parity (configs-general-parity.json, its guard and mutation test, FleetConfigsUi.kt, FleetGeneralState.kt).",
       "paths": [
         "1_cicd/src/data/configs-pages.json",
         "1_cicd/src/scripts/cloud-android-configs-tabs-guard.py",
         "1_cicd/src/scripts/test/configs-tabs-guard.test.sh",
+        "1_cicd/src/data/configs-general-parity.json",
+        "1_cicd/src/scripts/cloud-android-configs-general-parity-guard.py",
+        "1_cicd/src/scripts/test/configs-general-parity.test.sh",
         "a[acd]_*/build.json",
         "a[acd]_*/**/*.kt",
         "a[acd]_*/**/*.java",
@@ -166,7 +169,9 @@
         "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsExtensions.kt",
         "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsPages.kt",
         "ac_cloud-c3-webserver/server/ui/shell.html",
-        "ac_cloud-media-center/web/assets/configs.js"
+        "ac_cloud-media-center/web/assets/configs.js",
+        "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsUi.kt",
+        "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetGeneralState.kt"
       ]
     },
     "phone-apps-page-guard.yml": {

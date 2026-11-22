@@ -43,7 +43,7 @@ public fun ConfigsCard(
     title: String, c: ThemeColors, modifier: Modifier = Modifier, icon: ImageVector = Icons.Filled.Tune,
     body: @Composable ColumnScope.() -> Unit,
 ) {
-    SectionCard(title, icon, c, modifier, body)
+    SectionCard(title, icon, c, modifier, body = body)
 }
 
 /** One label / value row. Both cells wrap; [onClick] makes the row a button (e.g. tap to reveal a masked id). */

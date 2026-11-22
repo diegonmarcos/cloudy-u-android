@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# configs-tabs-guard.test — prove the Configs General | Perms | About guard (#1439) passes on the real tree and FAILS,
+# configs-tabs-guard.test — prove the Configs guard ({own tabs} | General, Agents, Perms, Logcat, X-Ray App, About; #1439, #1852) passes on the real tree and FAILS,
 # naming the rule, on each way an app or the shared lib can break the order. python3 and coreutils only; no build.
 set -uo pipefail
 
@@ -22,7 +22,7 @@ out="$(cd "$ROOT" && python3 "$GUARD" .)"; rc=$?
 if [ "$rc" -eq 0 ]; then ok "the real tree passes ($(tail -1 <<<"$out"))"; else fail "the real tree is red"; printf '%s\n' "$out"; fi
 
 mkdir -p "$BASE"
-( cd "$ROOT" && for f in $(for d in a[acd]_*/; do [ -L "${d%/}" ] || [ ! -f "${d}build.json" ] || echo "${d}build.json"; done) $(find a[acd]_* \( -name "build.gradle" -o -name "build.gradle.kts" -o -name "build-extras.gradle" -o -name "settings.gradle" -o -name "settings.gradle.kts" -o -name "*.patch" \) -not -path "*/node_modules/*" -not -path "*/build/*" -not -path "*/src/*") "$DATA" "$LIB" "$EXT" ac_cloud-media-center/web/assets/configs.js $(grep -rlE 'FleetConfigsPageBody\(|FleetGeneralPage\(|FleetConfigsScreen\(|withTail\(|ConfigsTail|FleetConfigsActivity|FleetConfigsEntries|FleetConfigsMenu\(|FleetConfigsButtons\(' --include=*.kt --include=*.java a[acd]_* ab_cloud-libs-shared/libs/writer-ui 2>/dev/null | grep -vE '/(test|androidTest)/'); do mkdir -p "$BASE/$(dirname "$f")"; cp "$f" "$BASE/$f"; done )
+( cd "$ROOT" && for f in $(for d in a[acd]_*/; do [ -L "${d%/}" ] || [ ! -f "${d}build.json" ] || echo "${d}build.json"; done) $(find a[acd]_* \( -name "build.gradle" -o -name "build.gradle.kts" -o -name "build-extras.gradle" -o -name "settings.gradle" -o -name "settings.gradle.kts" -o -name "*.patch" \) -not -path "*/node_modules/*" -not -path "*/build/*" -not -path "*/src/*") "$DATA" "$LIB" "$EXT" ac_cloud-media-center/web/assets/configs.js ac_cloud-code/src/cloud/profile.js $(grep -rlE 'FleetConfigsPageBody\(|FleetGeneralPage\(|FleetConfigsScreen\(|withTail\(|ConfigsTail|FleetConfigsActivity|FleetConfigsEntries|FleetConfigsMenu\(|FleetConfigsButtons\(' --include=*.kt --include=*.java a[acd]_* ab_cloud-libs-shared/libs/writer-ui 2>/dev/null | grep -vE '/(test|androidTest)/'); do mkdir -p "$BASE/$(dirname "$f")"; cp "$f" "$BASE/$f"; done )
 python3 "$GUARD" "$BASE" >/dev/null || fail "the fixture is red before any mutation"
 
 # mutant NAME RULE PYTHON — PYTHON edits the fixture (cwd = fixture) and must change a file; the guard must go red naming RULE.
@@ -39,19 +39,26 @@ J='import json
 def load(p): return json.load(open(p))
 def save(p, d): json.dump(d, open(p, "w"), indent=2)
 '
-mutant "Cloud Me Configs opens on Perms" T1 "$J
+mutant "Cloud Me Configs opens on General again (shared tab before its own)" T1 "$J
 d = load('ac_cloud-me/build.json'); s = [x for x in d['ui']['sections'] if x['id'] == 'configs'][0]
-s['pages'][0], s['pages'][1] = s['pages'][1], s['pages'][0]; save('ac_cloud-me/build.json', d)"
+g = [p for p in s['pages'] if p['id'] == 'general'][0]; s['pages'].remove(g); s['pages'].insert(0, g); save('ac_cloud-me/build.json', d)
+"
+mutant "Cloud Me Configs puts About before Perms" T1 "$J
+d = load('ac_cloud-me/build.json'); s = [x for x in d['ui']['sections'] if x['id'] == 'configs'][0]
+ids = [p['id'] for p in s['pages']]; i, j = ids.index('perms'), ids.index('about'); s['pages'][i], s['pages'][j] = s['pages'][j], s['pages'][i]; save('ac_cloud-me/build.json', d)"
+mutant "Cloud Nav's own Tracker tab after About" T1 "$J
+d = load('ac_cloud-nav/build.json'); s = [x for x in d['ui']['sections'] if x['id'] == 'configs'][0]
+t = [p for p in s['pages'] if p['id'] == 'tracker'][0]; s['pages'].remove(t); s['pages'].append(t); save('ac_cloud-nav/build.json', d)"
 mutant "Cloud Me Configs loses About" T1 "$J
 d = load('ac_cloud-me/build.json'); s = [x for x in d['ui']['sections'] if x['id'] == 'configs'][0]
 s['pages'] = [p for p in s['pages'] if p['id'] != 'about']; save('ac_cloud-me/build.json', d)"
-mutant "Calc Configs mode order" T1 "$J
+mutant "Calc Configs mode order (About before X-Ray App)" T1 "$J
 d = load('ac_cloud-calc/build.json'); m = [x for x in d['ui']['modes'] if x.get('tab') == 'configs']
-i, j = d['ui']['modes'].index(m[1]), d['ui']['modes'].index(m[2]); d['ui']['modes'][i], d['ui']['modes'][j] = m[2], m[1]
+i, j = d['ui']['modes'].index(m[-1]), d['ui']['modes'].index(m[-2]); d['ui']['modes'][i], d['ui']['modes'][j] = m[-2], m[-1]
 save('ac_cloud-calc/build.json', d)"
-mutant "Dialer About back at the end" T1 "$J
-d = load('ac_cloud-dialer/build.json'); t = d['configs_pages']['top_nav']; a = [x for x in t if x['id'] == 'about'][0]
-t.remove(a); t.append(a); save('ac_cloud-dialer/build.json', d)"
+mutant "Dialer General back at the front" T1 "$J
+d = load('ac_cloud-dialer/build.json'); t = d['configs_pages']['top_nav']; a = [x for x in t if x['id'] == 'general'][0]
+t.remove(a); t.insert(0, a); save('ac_cloud-dialer/build.json', d)"
 mutant "two Configs declarations disagree" T1 "$J
 d = load('ac_cloud-me/build.json'); s = [x for x in d['ui']['sections'] if x['id'] == 'configs'][0]
 d['configs_pages']['top_nav'] = s['pages'][:3]; save('ac_cloud-me/build.json', d)"
@@ -71,12 +78,12 @@ d = load('$DATA'); d['tabs']['pending']['ac_cloud-me'] = 'later'; save('$DATA', 
 mutant "Cloud Browser declares the tabs but stops drawing the shared pages" T4 "
 p = 'ac_cloud-browser/app/src/main/java/com/diegonmarcos/cloudbrowser/MainActivity.kt'; s = open(p).read()
 assert 'FleetConfigsPageBody(' in s; open(p, 'w').write(s.replace('FleetConfigsPageBody(', 'SomethingElse('))"
-mutant "Cloud Drive Configs opens on its own page" T1 "$J
+mutant "Cloud Drive Configs opens on General before its own pages" T1 "$J
 d = load('ac_cloud-drive/build.json'); s = [x for x in d['ui']['sections'] if x['id'] == 'configs'][0]
-s['pages'].insert(0, s['pages'].pop(3)); save('ac_cloud-drive/build.json', d)"
+s['pages'].insert(0, s['pages'].pop(5)); save('ac_cloud-drive/build.json', d)"
 mutant "Cloud News falls back to one Configs page" T1 "$J
 d = load('ac_cloud-news/build.json'); s = [x for x in d['ui']['sections'] if x['id'] == 'configs'][0]
-s['pages'] = s['pages'][3:]; save('ac_cloud-news/build.json', d)"
+s['pages'] = s['pages'][:4]; save('ac_cloud-news/build.json', d)"
 mutant "an app folder without a build.json escapes" T5 "
 import os; os.makedirs('ac_cloud-ghost'); open('ac_cloud-ghost/readme.md', 'w').write('x')"
 mutant "Media Center draws General before Apify" T4 "
@@ -87,15 +94,24 @@ i, j = s.index(a), s.index(b); l1 = s[i:s.index('\\n', i) + 1]; l2 = s[j:s.index
 open(p, 'w').write(s.replace(l1 + l2, l2 + l1))"
 mutant "Media Center build.json declares another order" T1 "$J
 d = load('ac_cloud-media-center/build.json'); t = d['configs_pages']['top_nav']; t.reverse(); save('ac_cloud-media-center/build.json', d)"
-mutant "the Media Center exception drops a shared page" T6 "$J
-d = load('$DATA'); o = d['tabs']['app_order']['ac_cloud-media-center']['order']; o.remove('perms'); save('$DATA', d)"
+mutant "an app_order exception drops a shared page" T6 "$J
+d = load('$DATA'); d['tabs']['app_order']['ac_cloud-news'] = {'order': ['media', 'events', 'general'], 'reason': 'x' * 40}; save('$DATA', d)"
 mutant "an app that no longer reaches the shared screen" T1 "$J
-d = load('$DATA'); d['pending']['ac_cloud-tasks'] = 'x' * 40; save('$DATA', d)"
+d = load('$DATA'); d['pending']['ac_cloud-camera'] = 'x' * 40; save('$DATA', d)"
 
 # #1630 the fleet-default tail: Agents, Perms, Logcat, X-Ray App, About after a | (T7)
 mutant "the lib reorders the tail (Logcat before Perms)" T7 "
-p = '$EXT'; s = open(p).read(); a = 'listOf(\"agents\", \"perms\", \"logcat\"'; assert a in s
-open(p, 'w').write(s.replace(a, 'listOf(\"agents\", \"logcat\", \"perms\"'))"
+p = '$EXT'; s = open(p).read(); a = 'listOf(\"general\", \"agents\", \"perms\", \"logcat\"'; assert a in s
+open(p, 'w').write(s.replace(a, 'listOf(\"general\", \"agents\", \"logcat\", \"perms\"'))"
+mutant "the lib moves General to the end of the tail, after About" T7 "
+p = '$EXT'; s = open(p).read(); a = 'listOf(\"general\", \"agents\", \"perms\", \"logcat\", \"xray\", \"about\")'; assert a in s
+open(p, 'w').write(s.replace(a, 'listOf(\"agents\", \"perms\", \"logcat\", \"xray\", \"about\", \"general\")'))"
+mutant "the lib puts the shared tabs before the app's own tabs" T7 "
+p = '$EXT'; s = open(p).read(); a = 'return own + tail'; assert a in s
+open(p, 'w').write(s.replace(a, 'return tail + own'))"
+mutant "the lib draws a divider even when the app has no own tab" T7 "
+p = '$EXT'; s = open(p).read(); a = 'i == 0 && own.isNotEmpty()'; assert a in s
+open(p, 'w').write(s.replace(a, 'i == 0'))"
 mutant "the lib drops the custom X-Ray hook" T7 "
 p = '$EXT'; s = open(p).read(); a = 'public fun registerXrayPage('; assert a in s
 open(p, 'w').write(s.replace(a, 'public fun registerXrayPageGone('))"
@@ -108,6 +124,15 @@ mutant "tail.pending names no app" T7 "$J
 d = load('$DATA'); d['tabs']['tail']['pending']['ac_cloud-nope'] = 'x' * 40; save('$DATA', d)"
 mutant "tail.pending reason too short" T7 "$J
 d = load('$DATA'); d['tabs']['tail']['pending']['ac_cloud-calc'] = 'later'; save('$DATA', d)"
+
+mutant "Cloud Code's Configs page drops its General button" T7 "
+p = 'ac_cloud-code/src/cloud/profile.js'; s = open(p).read(); a = '[\"general\", \"General\"], '; assert a in s
+open(p, 'w').write(s.replace(a, ''))"
+mutant "Cloud Notes' vault Configs puts Perms before Agents" T1 "$J
+d = load('ac_cloud-notes/build.json'); p = d['vault']['configs']['pages']; ids = [x['id'] for x in p]
+i, j = ids.index('agents'), ids.index('perms'); p[i], p[j] = p[j], p[i]; save('ac_cloud-notes/build.json', d)"
+mutant "Cloud Notes' own page after the shared tabs" T1 "$J
+d = load('ac_cloud-notes/build.json'); p = d['vault']['configs']['pages']; x = p.pop(0); p.append(x); save('ac_cloud-notes/build.json', d)"
 
 # #1630 the WebView hosts (Tauri, no Kotlin): the web strip draws the | and the three native pages, or the guard names the app
 mutant "Media Center's web strip loses the | before the tail" T7 "

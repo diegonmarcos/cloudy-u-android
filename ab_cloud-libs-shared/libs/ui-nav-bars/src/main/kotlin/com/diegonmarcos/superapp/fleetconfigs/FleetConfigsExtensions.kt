@@ -12,10 +12,8 @@ import java.util.concurrent.CopyOnWriteArrayList
  * the tab (libs:fleetconfigs-logcat, libs:fleetconfigs-xray). Each such lib registers its tab here from a ContentProvider at
  * process start, exactly as libs:ui-nav-bars publishes its launcher shortcuts, so the app writes nothing in Kotlin.
  *
- * An opted-in tab is drawn on the shared Configs strip BETWEEN Perms and About, giving the full order
- * General | Perms | <opted-in tabs, in registration order> | About. An app that links neither lib shows the three base tabs
- * unchanged, so this never changes what any other app ships — which is why the per-app guard (configs-pages.json::tabs.first)
- * stays General | Perms | About and the fleet is untouched.
+ * An opted-in tab is drawn in the shared tail of the Configs strip (#1852: {own tabs} | General, Agents, Perms, Logcat, X-Ray App,
+ * About). An app that links neither lib shows General, Perms and About only (configs-pages.json::tabs.tail.ids is the rule).
  */
 public data class FleetConfigsTab(
     /** Stable tab id, distinct from every [FleetConfigsPage] id (e.g. "logcat", "xray"). */
@@ -45,8 +43,11 @@ public object FleetConfigsExtensions {
     /** The opted-in tab with [id], or null. */
     public fun byId(id: String): FleetConfigsTab? = tabs.firstOrNull { it.id == id }
 
-    /** #1630 The fleet-default tab ids, in the order they sit AFTER the `|`: Agents, Perms, Logcat, X-Ray App, About. */
-    public val TAIL_IDS: List<String> = listOf("agents", "perms", "logcat", "xray", "about")
+    /**
+     * #1852 THE shared tabs of every app's Configs, in the order they sit AFTER the `|`: General, Agents, Perms, Logcat, X-Ray App, About
+     * (configs-pages.json::tabs.tail.ids; the app's own tabs come first, before the `|`).
+     */
+    public val TAIL_IDS: List<String> = listOf("general", "agents", "perms", "logcat", "xray", "about")
 
     public const val AGENTS_ID: String = "agents"
     public const val XRAY_ID: String = "xray"
@@ -71,29 +72,31 @@ public object FleetConfigsExtensions {
     }
 
     /**
-     * #1630 THE order of the Configs strip: [General + the app's own tabs] | Agents, Perms, Logcat, X-Ray App, About. A tail tab that is
-     * not registered (Agents, Logcat, X-Ray App come from opt-in libs) is simply absent; Perms and About are always there. Any other
-     * registered tab is an app-own tab and sits before the `|`. The first tail page carries `separatorBefore`, the `|` character.
+     * #1852 THE order of the Configs strip: {the app's own tabs} | General, Agents, Perms, Logcat, X-Ray App, About. A tail tab that is
+     * not registered (Agents, Logcat, X-Ray App come from opt-in libs) is simply absent; General, Perms and About are always there. Any other
+     * registered tab is an app-own tab and sits before the `|`. The first tail page carries `separatorBefore`, the `|` character, when
+     * the app has tabs of its own (an app with none starts straight on General: no leading divider).
      */
     public fun stripOrder(extras: List<FleetConfigsTab> = all()): List<com.diegonmarcos.superapp.bottomnav.NavPage> {
         fun page(id: String, label: String, icon: String) = com.diegonmarcos.superapp.bottomnav.NavPage(id, label, icon)
         val own = extras.filter { it.id !in TAIL_IDS }.map { page(it.id, it.label, it.icon) }
         val tail = TAIL_IDS.mapNotNull { id ->
             when (id) {
+                "general" -> page(FleetConfigsPage.General.id, FleetConfigsPage.General.label, FleetConfigsPage.General.icon)
                 "perms" -> page(FleetConfigsPage.Perms.id, FleetConfigsPage.Perms.label, FleetConfigsPage.Perms.icon)
                 "about" -> page(FleetConfigsPage.About.id, FleetConfigsPage.About.label, FleetConfigsPage.About.icon)
                 else -> extras.firstOrNull { it.id == id }?.let { page(it.id, it.label, it.icon) }
             }
         }
-        val head = listOf(page(FleetConfigsPage.General.id, FleetConfigsPage.General.label, FleetConfigsPage.General.icon)) + own
-        return head + tail.mapIndexed { i, p -> if (i == 0) p.copy(separatorBefore = true) else p }
+        return own + tail.mapIndexed { i, p -> if (i == 0 && own.isNotEmpty()) p.copy(separatorBefore = true) else p }
     }
 
     /**
-     * #1630 The same order for a HOST that draws its own Configs strip (Dialer, Drive, News, ...): [host] is the strip the app declares
-     * (its own tabs, plus General / Perms / About wherever it put them). Returns [the host's own tabs and General] | Agents, Perms, Logcat,
-     * X-Ray App, About: the five tail ids leave their declared place and are re-appended in [TAIL_IDS] order, Agents / Logcat / X-Ray App
-     * only when their lib registered them, Perms and About always (the host's own page entry when it has one). The `|` marks the first tail tab.
+     * #1852 The same order for a HOST that draws its own Configs strip (Dialer, Drive, News, ...): [host] is the strip the app declares
+     * (its own tabs, plus General / Perms / About wherever it put them). Returns {the host's own tabs} | General, Agents, Perms, Logcat,
+     * X-Ray App, About: the six tail ids leave their declared place and are re-appended in [TAIL_IDS] order, Agents / Logcat / X-Ray App
+     * only when their lib registered them, General, Perms and About always (the host's own page entry when it has one). The `|` marks the first tail tab
+     * when the host has tabs of its own.
      * A host passes its declared pages through this and draws any tail id with [FleetConfigsPageBody].
      */
     public fun withTail(
@@ -104,12 +107,13 @@ public object FleetConfigsExtensions {
         val own = host.filter { it.id !in TAIL_IDS }.map { it.copy(separatorBefore = false) }
         val tail = TAIL_IDS.mapNotNull { id ->
             host.firstOrNull { it.id == id }?.copy(separatorBefore = false) ?: when (id) {
+                "general" -> page(FleetConfigsPage.General.id, FleetConfigsPage.General.label, FleetConfigsPage.General.icon)
                 "perms" -> page(FleetConfigsPage.Perms.id, FleetConfigsPage.Perms.label, FleetConfigsPage.Perms.icon)
                 "about" -> page(FleetConfigsPage.About.id, FleetConfigsPage.About.label, FleetConfigsPage.About.icon)
                 else -> extras.firstOrNull { it.id == id }?.let { page(it.id, it.label, it.icon) }
             }
         }
-        return own + tail.mapIndexed { i, p -> if (i == 0) p.copy(separatorBefore = true) else p }
+        return own + tail.mapIndexed { i, p -> if (i == 0 && own.isNotEmpty()) p.copy(separatorBefore = true) else p }
     }
 
     /** #1630 True for a tail tab a host never declares (Agents, Logcat, X-Ray App) that is registered: the host keeps it as the selected id and draws [FleetConfigsPageBody]. */

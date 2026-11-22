@@ -14,7 +14,7 @@ class FleetConfigsExtensionsTest {
     @After fun reset() = FleetConfigsExtensions.clearForTest()
 
     @Test fun base_pages_are_general_perms_about_in_order() {
-        // The per-app guard (configs-pages.json::tabs.first) rests on this staying exactly three.
+        // The per-app guard (configs-pages.json::tabs.shared) rests on this staying exactly three.
         assertEquals(listOf("general", "perms", "about"), FleetConfigsPage.entries.map { it.id })
     }
 
@@ -45,31 +45,35 @@ class FleetConfigsExtensionsTest {
         assertTrue(!isFleetConfigsPage("logcat-not-registered-xyz"))
     }
 
-    // #1630 the strip is [General + own tabs] | Agents, Perms, Logcat, X-Ray App, About. FIELD PARITY (rule 16): no tab of the previous
-    // shape (General | Perms | <extras> | About) is lost, whatever an app registers.
+    // #1852 the strip is {own tabs} | General, Agents, Perms, Logcat, X-Ray App, About. FIELD PARITY (rule 16): no tab of the previous
+    // shape ([General + own tabs] | Agents, Perms, Logcat, X-Ray App, About) is lost, whatever an app registers.
     private fun reg(id: String, label: String = id) = FleetConfigsExtensions.register(FleetConfigsTab(id, label, "code") { })
 
-    @Test fun strip_with_no_opt_in_keeps_general_perms_about_with_the_separator_before_perms() {
-        val s = FleetConfigsExtensions.stripOrder()
-        assertEquals(listOf("general", "perms", "about"), s.map { it.id })
-        assertEquals(listOf(false, true, false), s.map { it.separatorBefore })
+    @Test fun the_shared_tail_is_exactly_the_declared_order() {
+        // configs-pages.json::tabs.tail.ids; the guard reads the same list from FleetConfigsExtensions.TAIL_IDS
+        assertEquals(listOf("general", "agents", "perms", "logcat", "xray", "about"), FleetConfigsExtensions.TAIL_IDS)
     }
 
-    @Test fun strip_puts_the_five_defaults_in_exact_order_whatever_the_registration_order() {
+    @Test fun strip_with_no_own_tab_and_no_opt_in_is_general_perms_about_without_a_leading_divider() {
+        val s = FleetConfigsExtensions.stripOrder()
+        assertEquals(listOf("general", "perms", "about"), s.map { it.id })
+        assertEquals(0, s.count { it.separatorBefore })
+    }
+
+    @Test fun strip_puts_the_six_shared_tabs_in_exact_order_whatever_the_registration_order() {
         reg("xray", "X-Ray App"); reg("logcat"); reg("agents")
         val s = FleetConfigsExtensions.stripOrder()
         assertEquals(listOf("general", "agents", "perms", "logcat", "xray", "about"), s.map { it.id })
-        assertEquals(1, s.count { it.separatorBefore })
-        assertEquals("agents", s.first { it.separatorBefore }.id)
+        assertEquals(0, s.count { it.separatorBefore })   // no own tab: nothing to divide from
     }
 
-    @Test fun app_own_tabs_stay_before_the_separator_and_none_is_lost() {
+    @Test fun app_own_tabs_come_first_then_the_divider_then_the_shared_tabs_and_none_is_lost() {
         reg("media"); reg("logcat"); reg("events")
         val s = FleetConfigsExtensions.stripOrder()
-        assertEquals(listOf("general", "media", "events", "perms", "logcat", "about"), s.map { it.id })
-        val oldShape = listOf("general", "perms", "media", "logcat", "events", "about")   // the pre-#1630 strip
+        assertEquals(listOf("media", "events", "general", "perms", "logcat", "about"), s.map { it.id })
+        val oldShape = listOf("general", "media", "events", "perms", "logcat", "about")   // the pre-#1852 strip
         assertTrue(s.map { it.id }.containsAll(oldShape))
-        assertEquals("perms", s.first { it.separatorBefore }.id)
+        assertEquals(listOf("general"), s.filter { it.separatorBefore }.map { it.id })
     }
 
     @Test fun custom_xray_hook_registers_the_tab_when_the_lib_is_not_linked() {
@@ -77,28 +81,35 @@ class FleetConfigsExtensionsTest {
         assertEquals("X-Ray App", FleetConfigsExtensions.byId("xray")?.label)
         assertEquals(listOf("general", "perms", "xray", "about"), FleetConfigsExtensions.stripOrder().map { it.id })
     }
-    // #1630 a host that draws its own strip (Dialer, Drive, News, ...) runs its declared pages through withTail: same order, same `|`.
+    // #1852 a host that draws its own strip (Dialer, Drive, News, ...) runs its declared pages through withTail: same order, same `|`.
     private fun np(id: String) = com.diegonmarcos.superapp.bottomnav.NavPage(id, id.replaceFirstChar { it.uppercase() }, "code")
 
     @Test fun host_strip_gets_the_tail_in_exact_order_and_keeps_every_own_tab() {
         reg("xray", "X-Ray App"); reg("logcat"); reg("agents")
-        val host = listOf("general", "perms", "about", "sim", "status", "usage").map { np(it) }   // Dialer's declared order
+        val host = listOf("general", "perms", "about", "sim", "status", "usage").map { np(it) }   // Dialer's former declared order
         val s = FleetConfigsExtensions.withTail(host)
-        assertEquals(listOf("general", "sim", "status", "usage", "agents", "perms", "logcat", "xray", "about"), s.map { it.id })
-        assertEquals(listOf("agents"), s.filter { it.separatorBefore }.map { it.id })
+        assertEquals(listOf("sim", "status", "usage", "general", "agents", "perms", "logcat", "xray", "about"), s.map { it.id })
+        assertEquals(listOf("general"), s.filter { it.separatorBefore }.map { it.id })
         assertTrue(s.map { it.id }.containsAll(host.map { it.id }))
     }
 
-    @Test fun host_strip_with_the_shared_pages_after_its_own_tabs_still_ends_with_the_tail() {
+    @Test fun host_strip_already_in_the_new_order_is_unchanged() {
         reg("logcat")
         val host = listOf("media", "events", "news", "apify", "general", "perms", "about").map { np(it) }   // News's declared order
         val s = FleetConfigsExtensions.withTail(host)
         assertEquals(listOf("media", "events", "news", "apify", "general", "perms", "logcat", "about"), s.map { it.id })
-        assertEquals("perms", s.first { it.separatorBefore }.id)
+        assertEquals("general", s.first { it.separatorBefore }.id)
     }
 
-    @Test fun host_strip_without_perms_or_about_gets_them_added() {
-        val s = FleetConfigsExtensions.withTail(listOf(np("general"), np("own")))
-        assertEquals(listOf("general", "own", "perms", "about"), s.map { it.id })
+    @Test fun host_strip_without_general_perms_or_about_gets_them_added() {
+        val s = FleetConfigsExtensions.withTail(listOf(np("own")))
+        assertEquals(listOf("own", "general", "perms", "about"), s.map { it.id })
+        assertEquals(listOf("general"), s.filter { it.separatorBefore }.map { it.id })
+    }
+
+    @Test fun host_strip_with_no_own_tab_has_no_divider() {
+        val s = FleetConfigsExtensions.withTail(listOf(np("general"), np("perms"), np("about")))
+        assertEquals(listOf("general", "perms", "about"), s.map { it.id })
+        assertEquals(0, s.count { it.separatorBefore })
     }
 }

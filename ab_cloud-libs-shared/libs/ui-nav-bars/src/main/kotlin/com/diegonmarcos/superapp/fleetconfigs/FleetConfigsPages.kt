@@ -86,6 +86,7 @@ import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -205,38 +206,51 @@ public fun FleetConfigsScreen(
 }
 
 /**
- * Configs > General: ONE page. At the top, a grid of anchors laid out like a launcher's app grid (an icon tile with the
- * section's name under it, four per row); a tap scrolls this same page to that section. The sections are the app's
+ * Configs > General: ONE page, minimalist and data dense (#1852). At the top a compact two-column index of the sections (a small icon, the
+ * section's name and its LIVE state: perms granted/total, battery optimisation, storage used, notifications and channels, UI theme,
+ * language, update state, the app); a tap scrolls this same page to that section. Below, one compact card per section with the same
+ * live state in its header and its rows and actions under it, in the theme's neutral colours. The sections are the app's
  * `configs_pages.general.sections` (Perms, Battery, Storage/backup, Notifications, UI, Language, App) plus Update, which every
  * app gets by default. Each section reads the device's live state for THIS app and opens the system screen that changes it,
- * always through libs:perms (the one place that builds a settings intent).
+ * always through libs:perms (the one place that builds a settings intent). Nothing the former tile layout offered is gone (rule 16;
+ * configs-general-parity.json, guard cloud-android-configs-general-parity-guard.py).
  */
 @Composable
 public fun FleetGeneralPage(
     decl: FleetConfigsDecl, dark: Boolean, c: ThemeColors, onAppConfigs: () -> Unit,
     scroll: ScrollState = rememberScrollState(),
 ) {
+    val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     val tops = remember { mutableStateMapOf<String, Int>() }
     // The system screens these sections open change state outside the app: re-read it while the page is up (cheap getters only).
     var tick by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) { while (true) { delay(1500); tick++ } }
     val sections = decl.general
+    // The storage sizes feed both Storage's rows and its header state, so they are read once here (and again after Clear cache).
+    var cleared by remember { mutableIntStateOf(0) }
+    val sizes by produceState(Pair(-1L, -1L), cleared) {
+        value = withContext(Dispatchers.IO) { Pair(dirSize(File(ctx.applicationInfo.dataDir)), dirSize(ctx.cacheDir) + dirSize(ctx.externalCacheDir)) }
+    }
+    val perms = com.diegonmarcos.superapp.perms.rememberAppPerms(tick)
+    val granted = perms.items.count { it.state == com.diegonmarcos.superapp.perms.PermState.GRANTED }
+    val total = perms.items.count { it.state != com.diegonmarcos.superapp.perms.PermState.NOT_APPLICABLE }
+    val states = remember(tick, dark, sizes, granted, total, decl) { GeneralState.all(ctx, decl, dark, granted, total, sizes.first) }
     Column(
-        Modifier.fillMaxWidth().verticalScroll(scroll).padding(horizontal = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        Modifier.fillMaxWidth().verticalScroll(scroll).padding(horizontal = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         // #1352 a jump, not an animation: the live sections (Perms re-reads every 1.5 s) relayout mid-animation and
         // stopped it half way (Calc's Update/Battery/Storage anchors never reached their section on the emulator).
-        AnchorGrid(sections, c) { id -> scope.launch { scroll.scrollTo(tops[id] ?: 0) } }
+        AnchorGrid(sections, states, c) { id -> scope.launch { scroll.scrollTo(tops[id] ?: 0) } }
         sections.forEach { s ->
-            SectionCard(s.label, sectionIcon(s.id), c, Modifier.testTag(FleetConfigsTags.section(s.id)).onGloballyPositioned { tops[s.id] = it.positionInParent().y.toInt() }) {
+            SectionCard(s.label, sectionIcon(s.id), c, Modifier.testTag(FleetConfigsTags.section(s.id)).onGloballyPositioned { tops[s.id] = it.positionInParent().y.toInt() }, state = states[s.id].orEmpty()) {
                 if (s.note.isNotBlank()) Body(s.note, c)
                 when (s.id) {
                     "perms" -> PermsSection(c, tick)
                     FleetConfigs.UPDATE_SECTION -> UpdateSection(decl, c)
                     "battery" -> BatterySection(c, tick)
-                    "storage" -> StorageSection(c, tick)
+                    "storage" -> StorageSection(c, tick, sizes) { cleared++ }
                     "notifications" -> NotificationsSection(c, tick)
                     "ui" -> NavUiConfigCard(dark = dark)
                     "language" -> LanguageSection(c, tick)
@@ -244,34 +258,32 @@ public fun FleetGeneralPage(
                 }
             }
         }
-        // room so the last section can scroll to the top under the grid
-        Spacer(Modifier.height(320.dp))
+        // room so the last section can scroll to the top under the index
+        Spacer(Modifier.height(240.dp))
     }
 }
 
-/** The anchors: a launcher-style grid, [COLUMNS] tiles per row, each an icon tile with the section's name under it. */
+/** The index of sections: [COLUMNS] compact chips per row, each a small icon, the section's name and its live state, in neutral theme colours. */
 @Composable
-private fun AnchorGrid(sections: List<GeneralSection>, c: ThemeColors, onAnchor: (String) -> Unit) {
+private fun AnchorGrid(sections: List<GeneralSection>, states: Map<String, String>, c: ThemeColors, onAnchor: (String) -> Unit) {
     Column(
-        Modifier.fillMaxWidth().padding(top = 6.dp).testTag(FleetConfigsTags.ANCHORS),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        Modifier.fillMaxWidth().padding(top = 4.dp).testTag(FleetConfigsTags.ANCHORS),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         sections.chunked(COLUMNS).forEach { row ->
-            Row(Modifier.fillMaxWidth()) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 row.forEach { s ->
-                    Column(
-                        Modifier.weight(1f).clip(RoundedCornerShape(14.dp)).clickable(role = Role.Button) { onAnchor(s.id) }
-                            .semantics { contentDescription = s.label }.padding(vertical = 6.dp).testTag(FleetConfigsTags.anchor(s.id)),
-                        horizontalAlignment = Alignment.CenterHorizontally,
+                    val chip = RoundedCornerShape(8.dp)
+                    Row(
+                        Modifier.weight(1f).clip(chip).border(1.dp, c.islandBorder, chip).clickable(role = Role.Button) { onAnchor(s.id) }
+                            .semantics { contentDescription = s.label }.padding(horizontal = 8.dp, vertical = 6.dp).testTag(FleetConfigsTags.anchor(s.id)),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        val tile = RoundedCornerShape(18.dp)
-                        Box(
-                            Modifier.size(56.dp).clip(tile).background(c.tabSelected, tile).border(1.dp, c.islandBorder, tile),
-                            contentAlignment = Alignment.Center,
-                        ) { Icon(sectionIcon(s.id), contentDescription = null, tint = c.onTabSelected, modifier = Modifier.size(28.dp)) }
+                        Icon(sectionIcon(s.id), contentDescription = null, tint = c.inkDim, modifier = Modifier.size(14.dp))
+                        Text(s.label, Modifier.padding(start = 6.dp), color = c.ink, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(
-                            s.label, Modifier.padding(top = 6.dp, start = 2.dp, end = 2.dp), color = c.ink, fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium, maxLines = 2, textAlign = TextAlign.Center, lineHeight = 14.sp,
+                            states[s.id].orEmpty(), Modifier.padding(start = 6.dp).weight(1f), color = c.inkDim, fontSize = 11.sp,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.End,
                         )
                     }
                 }
@@ -281,7 +293,7 @@ private fun AnchorGrid(sections: List<GeneralSection>, c: ThemeColors, onAnchor:
     }
 }
 
-private const val COLUMNS = 4
+private const val COLUMNS = 2
 
 /** #1439 General | Perms | About on the top nav: the shared strip (libs:ui-nav-bars NavBarTopSecondRow), first on every app's Configs. */
 @Composable
@@ -361,18 +373,14 @@ private fun BatterySection(c: ThemeColors, tick: Int) {
 }
 
 @Composable
-private fun StorageSection(c: ThemeColors, tick: Int) {
+private fun StorageSection(c: ThemeColors, tick: Int, sizes: Pair<Long, Long>, onCleared: () -> Unit) {
     val ctx = LocalContext.current
-    var cleared by remember { mutableIntStateOf(0) }
-    val sizes by produceState(Pair(-1L, -1L), cleared) {
-        value = withContext(Dispatchers.IO) { Pair(dirSize(File(ctx.applicationInfo.dataDir)), dirSize(ctx.cacheDir) + dirSize(ctx.externalCacheDir)) }
-    }
     KeyValue("App data", if (sizes.first < 0) "…" else human(sizes.first), c)
     KeyValue("Cache", if (sizes.second < 0) "…" else human(sizes.second), c)
     val backup = (ctx.applicationInfo.flags and ApplicationInfo.FLAG_ALLOW_BACKUP) != 0
     StatusRow(if (backup) "Android backup allowed" else "Android backup off for this app", backup, c)
     Text("Settings and app state are part of the phone profile Cloud Account backs up to, and restores from, the private vault repository.",
-        color = c.inkDim, fontSize = 11.sp)
+        color = c.inkDim, fontSize = 10.sp)
     if (requested(ctx).contains("android.permission.MANAGE_EXTERNAL_STORAGE") && Build.VERSION.SDK_INT >= 30) {
         val all = remember(tick) { runCatching { Environment.isExternalStorageManager() }.getOrDefault(false) }   // a JVM screenshot host has no volume list
         StatusRow("All-files access", all, c)
@@ -380,11 +388,11 @@ private fun StorageSection(c: ThemeColors, tick: Int) {
             com.diegonmarcos.superapp.perms.Perms.catalogue(ctx).byId("all_files")?.let { com.diegonmarcos.superapp.perms.PermsSettings.open(ctx, it) }
         }
     }
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         ActionButton("Clear cache", c, "fleetcfg_clear_cache") {
             ctx.cacheDir.listFiles()?.forEach { it.deleteRecursively() }
             ctx.externalCacheDir?.listFiles()?.forEach { it.deleteRecursively() }
-            cleared++
+            onCleared()
         }
         ActionButton("Storage settings", c, "fleetcfg_open_storage") { com.diegonmarcos.superapp.perms.PermsPages.openAppInfo(ctx, ctx.packageName) }
     }
@@ -396,7 +404,7 @@ private fun NotificationsSection(c: ThemeColors, tick: Int) {
     val on = remember(tick) { NotificationManagerCompat.from(ctx).areNotificationsEnabled() }
     val channels = remember(tick) { (ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notificationChannels }
     StatusRow(if (on) "Notifications allowed" else "Notifications blocked", on, c)
-    if (channels.isEmpty()) Text("No notification channel created yet.", color = c.inkDim, fontSize = 11.sp)
+    if (channels.isEmpty()) Text("No notification channel created yet.", color = c.inkDim, fontSize = 10.sp)
     channels.forEach { ch -> StatusRow(ch.name.toString(), ch.importance != NotificationManager.IMPORTANCE_NONE, c) }
     ActionButton("Notification settings", c, "fleetcfg_open_notifications") {
         com.diegonmarcos.superapp.perms.PermsPages.open(ctx, com.diegonmarcos.superapp.perms.PermsPages.notificationsIntent(ctx.packageName))
@@ -429,7 +437,7 @@ private fun UpdateSection(decl: FleetConfigsDecl, c: ThemeColors) {
     KeyValue("Build", decl.sha.ifBlank { "local" } + if (decl.buildDate.isNotBlank()) "  ·  ${decl.buildDate}" else "", c)
     val st = state
     when {
-        checking -> Text("Checking the Cloud Store release…", color = c.inkDim, fontSize = 12.sp, modifier = Modifier.testTag("fleetcfg_update_checking"))
+        checking -> Text("Checking the Cloud Store release…", color = c.inkDim, fontSize = 11.sp, modifier = Modifier.testTag("fleetcfg_update_checking"))
         st == null -> Text("Not checked yet.", color = c.inkDim, fontSize = 12.sp)
         st.latestSha.isBlank() -> Text(st.error.ifBlank { "No published build found." }, color = c.inkDim, fontSize = 12.sp)
         st.upToDate(decl.sha) -> StatusRow("Up to date: the published build is this one", true, c)
@@ -438,16 +446,16 @@ private fun UpdateSection(decl: FleetConfigsDecl, c: ThemeColors) {
             StatusRow("A newer build is published", false, c)
         }
     }
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         ActionButton("Check for updates", c, "fleetcfg_update_check") {
             if (!checking) { checking = true; scope.launch { state = withContext(Dispatchers.IO) { FleetReleases.load(decl, force = true) }; checking = false } }
         }
         ActionButton("Update", c, "fleetcfg_update_open_store") { FleetReleases.openStore(ctx, decl) }
     }
     if (st != null && st.notes.isNotEmpty()) {
-        Text("Release notes", color = c.ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 4.dp))
+        Text("Release notes", color = c.ink, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 4.dp))
         ReleaseNotes(st.notes.take(5), c)
     }
     Text("Cloud Store installs the update from the signed APK CI publishes on this app's release; nothing is downloaded here.",
-        color = c.inkDim, fontSize = 11.sp)
+        color = c.inkDim, fontSize = 10.sp)
 }

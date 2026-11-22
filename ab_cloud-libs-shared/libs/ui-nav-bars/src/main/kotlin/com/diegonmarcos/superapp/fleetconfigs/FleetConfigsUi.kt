@@ -98,16 +98,18 @@ import java.io.File
 
 // ── building blocks ─────────────────────────────────────────────────────────────────────────────────────────────
 
+/** One General / About card: a compact header (icon, title and, right-aligned, the section's live [state]), then [body]; neutral theme colours. */
 @Composable
-internal fun SectionCard(title: String, icon: ImageVector, c: ThemeColors, modifier: Modifier = Modifier, body: @Composable ColumnScope.() -> Unit) {
-    val shape = RoundedCornerShape(16.dp)
+internal fun SectionCard(title: String, icon: ImageVector, c: ThemeColors, modifier: Modifier = Modifier, state: String = "", body: @Composable ColumnScope.() -> Unit) {
+    val shape = RoundedCornerShape(10.dp)
     Column(
-        modifier.fillMaxWidth().clip(shape).background(c.tabStrip, shape).border(1.dp, c.islandBorder, shape).padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier.fillMaxWidth().clip(shape).background(c.tabStrip, shape).border(1.dp, c.islandBorder, shape).padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, tint = c.accent, modifier = Modifier.size(20.dp))
-            Text(title, Modifier.padding(start = 8.dp).semantics { heading() }, color = c.ink, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Icon(icon, contentDescription = null, tint = c.inkDim, modifier = Modifier.size(15.dp))
+            Text(title, Modifier.padding(start = 6.dp).semantics { heading() }, color = c.ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            if (state.isNotBlank()) Text(state, Modifier.padding(start = 8.dp).weight(1f), color = c.inkDim, fontSize = 11.sp, textAlign = androidx.compose.ui.text.style.TextAlign.End, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
         }
         body()
     }
@@ -115,23 +117,23 @@ internal fun SectionCard(title: String, icon: ImageVector, c: ThemeColors, modif
 
 @Composable
 internal fun Body(text: String, c: ThemeColors) {
-    Text(text.ifBlank { "Not declared." }, color = c.ink, fontSize = 13.sp, lineHeight = 18.sp)
+    Text(text.ifBlank { "Not declared." }, color = c.ink, fontSize = 12.sp, lineHeight = 16.sp)
 }
 
 @Composable
 internal fun KeyValue(k: String, v: String, c: ThemeColors) {
     Row(Modifier.fillMaxWidth()) {
-        Text(k, Modifier.weight(1f), color = c.inkDim, fontSize = 13.sp)
-        if (v.isNotEmpty()) Text(v, color = c.ink, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+        Text(k, Modifier.weight(1f), color = c.inkDim, fontSize = 12.sp)
+        if (v.isNotEmpty()) Text(v, color = c.ink, fontSize = 12.sp, fontWeight = FontWeight.Medium)
     }
 }
 
 @Composable
 internal fun StatusRow(label: String, ok: Boolean, c: ThemeColors) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(8.dp).clip(CircleShape).background(if (ok) c.accent else c.inkDim))
-        Text(label, Modifier.padding(start = 10.dp).weight(1f), color = c.ink, fontSize = 13.sp)
-        Text(if (ok) "On" else "Off", color = if (ok) c.accent else c.inkDim, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        Box(Modifier.size(6.dp).clip(CircleShape).background(if (ok) c.accent else c.inkDim))
+        Text(label, Modifier.padding(start = 8.dp).weight(1f), color = c.ink, fontSize = 12.sp)
+        Text(if (ok) "On" else "Off", color = if (ok) c.accent else c.inkDim, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -141,14 +143,15 @@ internal fun Link(url: String, c: ThemeColors, onClick: () -> Unit) {
         color = c.accent, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
 }
 
+/** A compact outlined action in the theme's neutral ink (no saturated fill): the row's trailing action. */
 @Composable
 internal fun ActionButton(label: String, c: ThemeColors, tag: String, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(12.dp)
+    val shape = RoundedCornerShape(8.dp)
     Text(
         label,
-        Modifier.clip(shape).background(c.tabSelected, shape).clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 9.dp).testTag(tag),
-        color = c.onTabSelected, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+        Modifier.clip(shape).border(1.dp, c.islandBorder, shape).clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 5.dp).testTag(tag),
+        color = c.ink, fontSize = 12.sp, fontWeight = FontWeight.Medium,
     )
 }
 

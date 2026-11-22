@@ -1,5 +1,5 @@
 {
-  "_doc": "THE Configs ▸ General / Configs ▸ About rule of the fleet (#1352, v2), read by 1_cicd/src/scripts/cloud-android-configs-pages-guard.py (step of nav-shape-guard.yml, mutation-tested by 1_cicd/src/scripts/test/configs-pages-guard.test.sh) and by libs/ui-nav-bars/fleet-configs.gradle at build time (perm_why, diagnostics, origin_label). Every app except Cloud SuperApp has two pages under Configs. General is ONE page: at the top a launcher-style grid of anchors (an icon tile with the section's name under it, four per row) scrolling to its sections on the same page: Perms (libs:perms AppPermsSection with a prominent Grant all that walks every missing grant), Update (every app by default: installed version and build, Check for updates against the app's Cloud Store release, latest build, Update handed to Cloud Store, release notes), Battery, Storage/backup, Notifications, UI with the nav mode card, Language, then the app's own Configs. Every settings screen is opened through libs:perms. About is EXTENSIVE: name, icon, tagline, a long description, features, screens, a quick guide, data and privacy (privacy text, the stores from the fleet-config manifest, backups, crash/analytics libs), permissions and why (build.json::perms + perm_why), backend services with private mesh URLs, related fleet apps with Open buttons, version / build sha / build date / package, source repo, licence, origin, upstream and credits, the changelog (the commits of the app's folder), support and debug links, and the Cloud Store and Cloud SuperApp sections with Open buttons. Both are drawn ONCE in libs:ui-nav-bars (package fleetconfigs); an app drawn with Views, a WebView, Tauri or an upstream fork starts FleetConfigsActivity. Each app declares its sections and the hand-written About text in build.json::configs_pages; nothing per app is written in Kotlin.",
+  "_doc": "THE Configs ▸ General / Configs ▸ About rule of the fleet (#1352, v2), read by 1_cicd/src/scripts/cloud-android-configs-pages-guard.py (step of nav-shape-guard.yml, mutation-tested by 1_cicd/src/scripts/test/configs-pages-guard.test.sh) and by libs/ui-nav-bars/fleet-configs.gradle at build time (perm_why, diagnostics, origin_label). Every app except Cloud SuperApp has two pages under Configs. General is ONE page: at the top a compact index of anchors (#1852: a small icon, the section's name and its live state, two per row; no big tiles) scrolling to its sections on the same page: Perms (libs:perms AppPermsSection with a prominent Grant all that walks every missing grant), Update (every app by default: installed version and build, Check for updates against the app's Cloud Store release, latest build, Update handed to Cloud Store, release notes), Battery, Storage/backup, Notifications, UI with the nav mode card, Language, then the app's own Configs. Every settings screen is opened through libs:perms. About is EXTENSIVE: name, icon, tagline, a long description, features, screens, a quick guide, data and privacy (privacy text, the stores from the fleet-config manifest, backups, crash/analytics libs), permissions and why (build.json::perms + perm_why), backend services with private mesh URLs, related fleet apps with Open buttons, version / build sha / build date / package, source repo, licence, origin, upstream and credits, the changelog (the commits of the app's folder), support and debug links, and the Cloud Store and Cloud SuperApp sections with Open buttons. Both are drawn ONCE in libs:ui-nav-bars (package fleetconfigs); an app drawn with Views, a WebView, Tauri or an upstream fork starts FleetConfigsActivity. Each app declares its sections and the hand-written About text in build.json::configs_pages; nothing per app is written in Kotlin.",
   "_doc_rules": "G0 the lib still carries the pages, the grid, the Update section, the extended About, the scaffold entries, the Views/WebView activity, the build-time resolver and the two fleet texts (lib.must_hold); FleetConfigs.REQUIRED_SECTIONS equals general_required; libs:perms carries the asked-store version (perms.ask_store_version) and Grant all's walk. G1 every app (a[acd]_*/build.json) that is not exempt declares configs_pages with general and about. G2 general.sections lists every general_required id once, only ids from general_required + general_optional + general_default. G3 about carries every about_declared field and meets about_min (tagline length, description, features, screens {name, what}, guide steps, privacy, related {app, why} naming real apps, backends {id, why} on a fleet_endpoints service with a mesh_dns, credits for an app whose licences/curated.json kind is in fork_kinds), every grant in build.json::perms has a why (about.perms_why or perm_why), the v1 field `what` is gone, and every about_derived field resolves. G4 the app REACHES the pages (scaffold_call or views_call in its sources) or is named in pending with a reason; a pending app that reaches them is stale. G5 every exempt / pending entry names a real app and has a reason of at least min_reason_chars.",
   "general_required": [
     "perms",
@@ -206,7 +206,7 @@
       {
         "file": "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsPages.kt",
         "needle": "sections.chunked(COLUMNS)",
-        "why": "the anchors are a launcher-style grid"
+        "why": "the anchors are a compact two-column index (icon, name, live state)"
       },
       {
         "file": "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsPages.kt",
@@ -286,8 +286,8 @@
     ]
   },
   "tabs": {
-    "_doc": "#1443 `draw` = the needles one non-test source of an app with Configs tabs of its own must hold (the tabs are drawn, not only declared; T4); `no_build_json` = a[acd]_* folders that are no app (T5). #1439 THE order of every app's Configs: its tabs on the top nav start General | Perms | About (ids `first`), then the app's own pages. An app with no Configs tabs of its own gets them from the shared Configs screen of libs:ui-nav-bars (FleetConfigsScreen draws FleetConfigsTabs over the FleetConfigsPage entries, in that order), so it conforms while it reaches that screen (not in `pending` above). An app that declares Configs tabs of its own (build.json::configs_pages.top_nav, ui.modes entries with tab `configs` where kind fleet_<id> is the shared page <id>, or the pages of ui.sections[id=configs]) must start them with `first`. Read by 1_cicd/src/scripts/cloud-android-configs-tabs-guard.py (workflow configs-tabs-guard.yml), mutation-tested by 1_cicd/src/scripts/test/configs-tabs-guard.test.sh.",
-    "first": [
+    "_doc": "#1852 THE order of every app's Configs strip: the app's OWN tabs first, then a `|` divider, then the shared tabs in exactly this order: General, Agents, Perms, Logcat, X-Ray App, About (`tail.ids`; the lib draws it in FleetConfigsExtensions.stripOrder / withTail, so every app follows from the one list). An app with no tabs of its own gets the shared tabs from the shared Configs screen of libs:ui-nav-bars (FleetConfigsScreen draws FleetConfigsTabs, no leading divider as it has nothing to divide from). An app that declares Configs tabs of its own (build.json::configs_pages.top_nav, ui.modes entries with tab `configs` where kind fleet_<id> is the shared page <id>, or the pages of ui.sections[id=configs]) must declare them in that order: own tabs first, then the shared ids it carries as a subsequence of `tail.ids`, always including `shared` (General, Perms, About; Agents, Logcat and X-Ray App come from the opt-in libs and need no declaration). `shared` = the three pages the lib itself draws (FleetConfigsPage, T0); `draw` = the needles one non-test source of an app with Configs tabs of its own must hold (the tabs are drawn, not only declared; T4); `no_build_json` = a[acd]_* folders that are no app (T5). Read by 1_cicd/src/scripts/cloud-android-configs-tabs-guard.py (workflow configs-tabs-guard.yml), mutation-tested by 1_cicd/src/scripts/test/configs-tabs-guard.test.sh.",
+    "shared": [
       "general",
       "perms",
       "about"
@@ -308,47 +308,16 @@
       "ac_ANDROID_______________________________": "A docs marker folder holding one empty a.md, no app and no build.json."
     },
     "pending": {
-      "_doc": "Apps whose Configs does not start General | Perms | About yet, each with its reason. Delete an entry in the commit that fixes the app (the guard fails a stale one)."
+      "_doc": "Apps whose Configs does not follow {own tabs} | General, Agents, Perms, Logcat, X-Ray App, About yet, each with its reason. Delete an entry in the commit that fixes the app (the guard fails a stale one)."
     },
     "app_order": {
-      "_doc": "#1470 apps whose OWNER chose another Configs order. Per app and explicit, never a pattern: the app's declarations must equal `order` exactly (instead of starting with `first`), every id of `first` must be in it, and `reason` (30+ chars) says why. Every other app keeps the General | Perms | About first rule.",
-      "ac_cloud-news": {
-        "order": [
-          "media",
-          "events",
-          "news",
-          "apify",
-          "general",
-          "perms",
-          "about"
-        ],
-        "reason": "The owner chose Media | Events | News | Apify | General | Perms | About for Cloud News (#1470): its own source groups first, the shared pages after."
-      },
-      "ac_cloud-media-center": {
-        "order": [
-          "music",
-          "videos",
-          "gallery",
-          "books",
-          "feed",
-          "movies",
-          "library",
-          "apify",
-          "general",
-          "agents",
-          "perms",
-          "logcat",
-          "xray",
-          "about"
-        ],
-        "reason": "The owner chose the media areas first, then Apify, then General for Cloud Media Center (#1469), mirroring Cloud News (#1470), and #1630 appends the fleet tail after a `|`: Agents | Perms | Logcat | X-Ray App | About; its Configs is a web page.",
-        "source": "ac_cloud-media-center/web/assets/configs.js"
-      }
+      "_doc": "#1470 / #1852 apps whose OWNER chose another Configs order. Per app and explicit, never a pattern: the app's declarations must equal `order` exactly (instead of following `tail.ids`), every id of `shared` must be in it, and `reason` (30+ chars) says why. None today: since #1852 the fleet order is {own tabs} | General, Agents, Perms, Logcat, X-Ray App, About for every app, which is the order Cloud News (#1470) and Cloud Media Center (#1469) had chosen, so their entries are gone."
     },
     "tail": {
-      "_doc": "#1630 THE Configs strip of every app: [General + the app's own tabs] | Agents, Perms, Logcat, X-Ray App, About. The lib draws the order (FleetConfigsExtensions.stripOrder) over whatever the app registers; Agents, Logcat and X-Ray App come from the opt-in libs `libs`, which an app links in build.json::modules and app/build.gradle (they register themselves, no Kotlin); Perms and About are always drawn. An app may draw its OWN X-Ray App page (render diagnostics etc.) with FleetConfigsExtensions.registerXrayPage { dark -> ... } (the tab keeps its place in the tail). `pending` is the roll-out ledger: an app not yet wired, each with a reason; delete the entry in the commit that wires it (the guard fails a stale one).",
+      "_doc": "#1852 THE shared tabs of every app's Configs strip: {the app's own tabs} | General, Agents, Perms, Logcat, X-Ray App, About. The lib draws the order (FleetConfigsExtensions.stripOrder / withTail) over whatever the app registers; Agents, Logcat and X-Ray App come from the opt-in libs `libs`, which an app links in build.json::modules and app/build.gradle (they register themselves, no Kotlin); General, Perms and About are always drawn. An app may draw its OWN X-Ray App page (render diagnostics etc.) with FleetConfigsExtensions.registerXrayPage { dark -> ... } (the tab keeps its place in the tail). `pending` is the roll-out ledger: an app not yet wired, each with a reason; delete the entry in the commit that wires it (the guard fails a stale one). `divider` = the lib draws the `|` before the first tail tab when the app has tabs of its own (needle `separatorBefore = true` and the `own.isNotEmpty()` condition); `own_first` = the lib puts the own tabs before the tail (needle `return own + tail`).",
       "file": "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsExtensions.kt",
       "ids": [
+        "general",
         "agents",
         "perms",
         "logcat",
@@ -359,7 +328,9 @@
         "public fun stripOrder(",
         "public fun withTail(",
         "separatorBefore = true",
-        "public fun registerXrayPage("
+        "public fun registerXrayPage(",
+        "i == 0 && own.isNotEmpty()",
+        "return own + tail"
       ],
       "libs": [
         "libs:fleetconfigs-agents",
@@ -374,14 +345,14 @@
         "FleetConfigsExtensions.withTail("
       ],
       "mode_hosts": {
-        "_doc": "T8 an app whose strip is its declared modes (Cloud Calc): `file` holds ConfigsTail.KINDS (the five fleet_<id> kinds in tail order), `needle` is the call that orders the strip, and build.json::ui.modes[tab=configs] declares all five kinds.",
+        "_doc": "T8 an app whose strip is its declared modes (Cloud Calc): `file` holds ConfigsTail.KINDS (the six fleet_<id> kinds in tail order), `needle` is the call that orders the strip, and build.json::ui.modes[tab=configs] declares all six kinds.",
         "ac_cloud-calc": {
           "file": "ac_cloud-calc/app/src/main/java/com/diegonmarcos/cloudcalc/ui/CalcShell.kt",
           "needle": "ConfigsTail.order("
         }
       },
       "web_hosts": {
-        "_doc": "#1630 a WebView host (Tauri, no Kotlin): its Configs strip is a web page that draws the five tail tabs after a `|`; Agents, Logcat and X-Ray App (and, in Cloud C3 Webserver, Perms and About) are native pages of libs:ui-nav-bars that the page opens through FleetConfigsActivity (an intent: URI in the media center, POST /__app__/api/configs-open and a JNI startActivity in the c3 webserver). `source` is the page, `needles` the strings it must hold (the separator, the native bridge); build.json::configs_pages.top_nav, when declared, must end with the five ids.",
+        "_doc": "#1630 a WebView host (Tauri, no Kotlin): its Configs strip is a web page that draws the six shared tabs (General, Agents, Perms, Logcat, X-Ray App, About) after a `|`; Agents, Logcat and X-Ray App (and, in Cloud C3 Webserver, Perms and About) are native pages of libs:ui-nav-bars that the page opens through FleetConfigsActivity (an intent: URI in the media center, POST /__app__/api/configs-open and a JNI startActivity in the c3 webserver). `source` is the page, `needles` the strings it must hold (the separator, the native bridge); build.json::configs_pages.top_nav, when declared, must end with the six ids. Cloud Code (Cordova, one own page: Profile & Config) draws the divider and the six tail buttons in profile.js; each opens FleetConfigsActivity on its tab. Cloud Notes (web vault) declares its strip in build.json::vault.configs.pages: its own pages, then the six shared ones, each with a `native` start id that opens the Android shared Configs screen on that tab.",
         "ac_cloud-media-center": {
           "source": "ac_cloud-media-center/web/assets/configs.js",
           "needles": [
@@ -389,6 +360,24 @@
             "native: true",
             "action=com.diegonmarcos.fleetconfigs.OPEN",
             "fleet_configs_page"
+          ]
+        },
+        "ac_cloud-code": {
+          "source": "ac_cloud-code/src/cloud/profile.js",
+          "needles": [
+            "export const FLEET_TAIL = [[\"general\", \"General\"], [\"agents\", \"Agents\"], [\"perms\", \"Perms\"], [\"logcat\", \"Logcat\"], [\"xray\", \"X-Ray App\"], [\"about\", \"About\"]]",
+            "\"|\"",
+            "FleetConfigsActivity",
+            "fleet_configs_page"
+          ]
+        },
+        "ac_cloud-notes": {
+          "source": "ac_cloud-notes/build.json",
+          "needles": [
+            "{\"id\": \"general\", \"label\": \"General\", \"icon\": \"gear\", \"native\": \"general\"}",
+            "\"native\": \"agents\"",
+            "\"native\": \"xray\"",
+            "\"native\": \"about\""
           ]
         }
       },
