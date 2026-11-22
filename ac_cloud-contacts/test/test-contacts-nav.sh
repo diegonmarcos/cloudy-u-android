@@ -51,7 +51,7 @@ ok(all([p.get("id") for p in (secs.get(s) or {}).get("pages") or []] == [s] for 
 ok(all(f'id="tab-{s}"' in html for s in web + ["import", "about"]), "contacts.html has a panel for every section and Configs' own tabs",
    "contacts.html lacks a tab-<id> panel")
 cfg = [p.get("id") for p in (secs.get("configs") or {}).get("pages") or []]
-ok(cfg == ["general", "perms", "about", "import", "channels"], "Configs: General, Perms, About (fleet) then Import, Channels (own)",
+ok(cfg == ["import", "channels", "general", "perms", "about"], "Configs: Import, Channels (own) then General, Perms, About (fleet, #1852)",
    f"Configs pages are {cfg}")
 ok("FleetConfigsExtensions.withTail(" in ma and "FleetConfigsPageBody(" in ma and "isOptInTail(" in ma,
    "the Configs strip is the fleet default ({own} | Agents, Perms, Logcat, X-Ray App, About)", "the Configs strip is not drawn through withTail / FleetConfigsPageBody")

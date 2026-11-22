@@ -134,7 +134,7 @@ class DeclarationsTest {
             pageIds("containers").map { listOf("${it}_topology", "${it}_table") },
             nav().section("containers")!!.pages.map { p -> p.pages.map { it.id } })
         assertEquals(listOf("observability", "health", "dagu", "mesh"), pageIds("observ"))
-        assertEquals("#1443 Configs starts General | Perms | About, then the app's own Build card", listOf("general", "perms", "about", "build", "plugins"), pageIds("configs"))
+        assertEquals("#1852 Configs is the app's own Build card and Plugins, then General | Perms | About", listOf("build", "plugins", "general", "perms", "about"), pageIds("configs"))
     }
 
     @Test

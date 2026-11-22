@@ -637,9 +637,6 @@
         "icon": "ic_settings",
         "_doc": "This app's own settings, NOT in ui.bottom_nav: the top bar's Settings > Configs opens it (libs:bottomnav AppTopBar, ui.top_bar). #1443 Configs starts General | Perms | About (the fleet's shared pages of libs:ui-nav-bars, FleetConfigsPageFragment), then Build, this app's own card (everything it shows is baked by gradle).",
         "pages": [
-          {"id": "general", "label": "General", "icon": "ic_settings"},
-          {"id": "perms", "label": "Perms", "icon": "security"},
-          {"id": "about", "label": "About", "icon": "info"},
           {
             "id": "build",
             "label": "Build",
@@ -650,7 +647,10 @@
             "label": "Plugins",
             "icon": "ic_code",
             "_doc": "#1495 NEW CATEGORY: the plugin.* tools of cloudy-c3-mcp (list, read, write, deploy of the Claude plugin files). Data only: OpsMapFragment maps.hier_plugins."
-          }
+          },
+          {"id": "general", "label": "General", "icon": "ic_settings"},
+          {"id": "perms", "label": "Perms", "icon": "security"},
+          {"id": "about", "label": "About", "icon": "info"}
         ]
       }
     ],

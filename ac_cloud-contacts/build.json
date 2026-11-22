@@ -443,6 +443,16 @@
         "_doc": "#1671 the fleet Configs strip: General, Perms, About (shared) and the app's own Import and Channels (contacts.html); drawn {General, Import, Channels} | Agents, Perms, Logcat, X-Ray App, About.",
         "pages": [
           {
+            "id": "import",
+            "label": "Import",
+            "icon": "file_upload"
+          },
+          {
+            "id": "channels",
+            "label": "Channels",
+            "icon": "hub"
+          },
+          {
             "id": "general",
             "label": "General",
             "icon": "settings"
@@ -456,16 +466,6 @@
             "id": "about",
             "label": "About",
             "icon": "info"
-          },
-          {
-            "id": "import",
-            "label": "Import",
-            "icon": "file_upload"
-          },
-          {
-            "id": "channels",
-            "label": "Channels",
-            "icon": "hub"
           }
         ]
       }

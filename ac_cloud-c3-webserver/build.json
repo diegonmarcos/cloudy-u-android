@@ -181,24 +181,6 @@
         "icon": "settings",
         "pages": [
           {
-            "id": "general",
-            "label": "General",
-            "icon": "settings",
-            "pages": []
-          },
-          {
-            "id": "perms",
-            "label": "Perms",
-            "icon": "verified_user",
-            "pages": []
-          },
-          {
-            "id": "about",
-            "label": "About",
-            "icon": "info",
-            "pages": []
-          },
-          {
             "id": "server",
             "label": "Server",
             "icon": "dns",
@@ -226,6 +208,24 @@
             "id": "fleet_token",
             "label": "Fleet token",
             "icon": "key",
+            "pages": []
+          },
+          {
+            "id": "general",
+            "label": "General",
+            "icon": "settings",
+            "pages": []
+          },
+          {
+            "id": "perms",
+            "label": "Perms",
+            "icon": "verified_user",
+            "pages": []
+          },
+          {
+            "id": "about",
+            "label": "About",
+            "icon": "info",
             "pages": []
           }
         ]
