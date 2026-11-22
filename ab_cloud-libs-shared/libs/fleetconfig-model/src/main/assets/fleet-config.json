@@ -2207,6 +2207,25 @@
         "aa_cloud-superapp"
       ]
     },
+    "banking_mode": {
+      "kind": "prefs",
+      "class": "config",
+      "doc": "Banking Apps Mode's own settings (#1847): skip (items the mode leaves alone), vpn_off (also switch the VPN off), auto (off/offer/apply when a banking app opens) and added_banks (banks the owner added to the declared list). The prior device state the mode captures before it switches things off is DEVICE state (this install's grants and toggles) and lives in bg_policy, never here; auto_applied (the mode applied itself for a bank) is device state too.",
+      "used_by": [
+        "aa_cloud-superapp"
+      ],
+      "keys": {
+        "auto_applied": "device"
+      }
+    },
+    "browser_core_meta": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "Browser core migration markers (map_<prefs>): one boolean per declared browser prefs file saying its typed keys were already coerced and backed up once on this install. Device state: a new phone has to run that check itself over the settings it imports.",
+      "used_by": [
+        "lib-browser"
+      ]
+    },
     "wd_keepalive": {
       "kind": "prefs",
       "class": "config",
@@ -2958,6 +2977,10 @@
       "store": "{pkg}_encrypted_preferences",
       "why": "extension property returns \"${packageName}_encrypted_preferences\""
     },
+    "prefs@ab_cloud-libs-shared/libs/browser/src/main/java/com/diegonmarcos/superapp/browser/BrowserListMigration.kt": {
+      "store": "-",
+      "why": "the migration helper opens whichever declared browser prefs file its caller names (browser_settings, browser_site_permissions, ...; each declared under its own name) and keeps only the browser_core_meta markers declared above"
+    },
     "currentMode.name@ac_cloud-camera/app/src/main/java/cld/camera/CamConfig.kt": {
       "store": "camera_modes",
       "why": "name is the CameraMode enum constant (QR_SCAN, AUTO, FACE_RETOUCH, PORTRAIT, NIGHT, HDR, CAMERA, VIDEO); each mode its own prefs file, all registered above"
@@ -3401,6 +3424,7 @@
         "lib-fleetconfigs-agents",
         "lib-fleetconfigs-logcat",
         "lib-fleetconfigs-xray",
+        "lib-net",
         "lib-perms",
         "lib-shell-broker",
         "lib-shell-client",

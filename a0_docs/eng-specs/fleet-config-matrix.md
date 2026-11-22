@@ -15,7 +15,7 @@ DataStore / Room stores and declared files it cannot move yet.
 
 | app | package | covered | gaps | coverage |
 |---|---|---:|---:|---:|
-| cloud-superapp | `com.diegonmarcos.superapp` | 59 | 0 | 100% |
+| cloud-superapp | `com.diegonmarcos.superapp` | 60 | 0 | 100% |
 | c3-morpheus | `com.diegonmarcos.morpheus` | 5 | 0 | 100% |
 | c3-watchdog | `com.diegonmarcos.watchdog` | 5 | 0 | 100% |
 | c3-watchtower | `com.diegonmarcos.watchtower` | 4 | 0 | 100% |
@@ -58,7 +58,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 5 | 0 | 100% |
 | hardtech-biomed | `com.diegonmarcos.hardtechbiomed` | 5 | 0 | 100% |
-| **fleet** | | **456** | **57** | **88%** |
+| **fleet** | | **457** | **57** | **88%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -74,6 +74,7 @@ Module `aa_cloud-superapp`; libs: lib-adb-grants, lib-adb-readiness, lib-adb-she
 | `apps_mesh` | prefs | config | yes | #793 the Apps Mesh page's chosen chip filter (`filter`): which members the page shows first. A view preference, so it moves with the phone; the probe cache itself is a cacheDir file and never migrates. |
 | `auto_update` | prefs | config (keys: last_check_at→device, last_remote_bytes→device, last_remote_digest→device, unattended_pass→device) | yes | Auto-update toggles (enabled, require_silent/unmetered) are settings; last_check/remote digest/bytes/unattended_pass are state. |
 | `badge_customization` | prefs | config | yes | Per-badge notification toggles (enabled/persistent/options) the user set in the notification center. |
+| `banking_mode` | prefs | config (keys: auto_applied→device) | yes | Banking Apps Mode's own settings (#1847): skip (items the mode leaves alone), vpn_off (also switch the VPN off), auto (off/offer/apply when a banking app opens) and added_banks (banks the owner added to the declared list). The prior device state the mode captures before it switches things off is DEVICE state (this install's grants and toggles) and lives in bg_policy, never here; auto_applied (the mode applied itself for a bank) is device state too. |
 | `battery_history` | prefs | device | no | The old ledger of completed battery sessions/days. Read once by the battery SoT (libs:battery BatteryRepository) to seed battery_sot.db, then cleared; hardware-specific telemetry. |
 | `battery_session` | prefs | device | no | Plug/unplug anchors and charge counters of this battery. In the SuperApp the battery SoT (libs:battery BatteryRepository) imports the unplug anchor and the counted-cycle counters into battery_sot.db once and clears it; Cloud Nav still keeps its own. |
 | `bg_policy` | prefs | config | yes | #1506 Background policy: the chosen intent per app (restrict or allow) and the prior app-ops, bucket and doze state captured before a restrict, so Restore and Super Saving Off put back exactly what was there; also the Super Saving snapshot (ss_snapshot) and its screen-off hook flag. Written on user action only. |
@@ -189,7 +190,7 @@ Module `aa_cloud-superapp`; libs: lib-adb-grants, lib-adb-readiness, lib-adb-she
 | `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 | `filesDir/<KEYSTORE_FILE>` | device | This device's KDE Connect TLS identity keystore; never migrate, re-pair |
 
-Coverage: 59 covered, 0 gaps.
+Coverage: 60 covered, 0 gaps.
 
 ## c3-morpheus — `com.diegonmarcos.morpheus`
 
@@ -389,6 +390,7 @@ Module `ac_cloud-browser`; libs: lib-ai, lib-analytics, lib-autofill, lib-blueto
 | `browser_ac_secrets` | encrypted | device | no | #900 Autocomplete: saved sign-ins and cards. EncryptedSharedPreferences over which every password, card number and code is sealed again (AES-256-GCM, Android Keystore key cloud_browser_ac_v1, record-bound AAD), so it never migrates in the clear: the Keystore key does not leave the phone, and Cloud Vault is the fleet's migration path for secrets. |
 | `browser_autofill` | encrypted | secret | yes | #802 the browser's autofill profile: identity + addresses + card METADATA (label, holder, last4, expiry, type) — never a card number or security code. vault_profile/vault_addresses are the vault bundle's about.profile/about.addresses (cockpit derived_settings, applied by server → runtime); profile is what was imported on the phone. |
 | `browser_bookmarks` | prefs | config | yes | #802 the browser's bookmarks with their folders (bookmarks_json: url, title, folder path, ts). |
+| `browser_core_meta` | prefs | device | no | Browser core migration markers (map_<prefs>): one boolean per declared browser prefs file saying its typed keys were already coerced and backed up once on this install. Device state: a new phone has to run that check itself over the settings it imports. |
 | `browser_downloads` | prefs | device | no | #802 index of the downloads the browser started (DownloadManager ids and file names on THIS phone); the files themselves stay in Downloads. |
 | `browser_fav_feed` | prefs | device | no | Cloud Browser's Favourites feeds: the last good copy of each filter's feed (feed_<filter id>), kept so the list shows at once offline; pure cache, refetched on start. |
 | `browser_history` | prefs | content | no | Browsing history entries the user accumulated. |
@@ -432,7 +434,7 @@ Coverage: 18 covered, 0 gaps.
 
 ## cloud-c3-webserver — `com.diegonmarcos.cloudwebserver`
 
-Module `ac_cloud-c3-webserver`; libs: lib-adb-grants, lib-adb-readiness, lib-adb-shell-core, lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-perms, lib-shell-broker, lib-shell-client, lib-shizuku-adb-debug-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-web-core.
+Module `ac_cloud-c3-webserver`; libs: lib-adb-grants, lib-adb-readiness, lib-adb-shell-core, lib-bottomnav, lib-core, lib-crash, lib-devtools, lib-fleet-data-client, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-net, lib-perms, lib-shell-broker, lib-shell-client, lib-shizuku-adb-debug-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|

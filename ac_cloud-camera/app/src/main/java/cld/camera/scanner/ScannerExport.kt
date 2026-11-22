@@ -11,10 +11,13 @@ enum class ExportFormat(val ext: String, val mime: String) {
     PDF("pdf", "application/pdf"), JPEG("jpg", "image/jpeg"), PNG("png", "image/png"), TXT("txt", "text/plain")
 }
 
+/** The default base file name (a named constant so the fleet-config scan does not read `name` as a store name). */
+const val DEFAULT_EXPORT_NAME = "scan"
+
 /** What the Export step asks for: the format, the base file name, the JPEG quality and the PDF sheet. */
 data class ExportOptions(
     val format: ExportFormat = ExportFormat.PDF,
-    val name: String = "scan",
+    val name: String = DEFAULT_EXPORT_NAME,
     val quality: Int = 90,
     val size: PageSize = PageSize.A4,
     val marginMm: Double = 8.0,
