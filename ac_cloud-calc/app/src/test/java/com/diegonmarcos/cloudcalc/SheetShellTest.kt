@@ -138,8 +138,12 @@ class SheetShellTest {
         compose.onNodeWithTag(DrawerTags.sheet("Sheet1")).assertExists()
         compose.onNodeWithTag(DrawerTags.sheet("Sheet2")).assertExists()
         compose.onNodeWithTag(DrawerTags.NEW_SHEET).assertExists()
-        // #1758 the sheets are the page's own entries; the Sections group (every declared section, nav-walk P6) follows them
-        Declarations.nav.sections.forEach { compose.onNodeWithTag(TopFirstRowTags.entry(it.id)).assertExists() }
+        // #1758 the sheets are the page's own entries; #1850 every declared section is a Parent Page (Configs via Settings / Configs)
+        Declarations.nav.sections.forEach {
+            val id = if (it.id == com.diegonmarcos.superapp.bottomnav.UrlUriIds.CONFIGS) com.diegonmarcos.superapp.bottomnav.UrlUriIds.CONFIGS
+                     else com.diegonmarcos.superapp.bottomnav.UrlUriIds.section(it.id)
+            compose.onNodeWithTag(com.diegonmarcos.superapp.navbartop1.UrlUriTags.entry(id)).assertExists()
+        }
         compose.onNodeWithTag(DrawerTags.sheet("Sheet1")).performClick()
         compose.waitForIdle()
         assertEquals("Sheet1", st.sheet)
