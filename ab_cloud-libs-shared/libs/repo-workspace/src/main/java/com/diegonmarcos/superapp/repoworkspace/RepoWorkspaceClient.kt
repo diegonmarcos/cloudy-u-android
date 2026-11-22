@@ -113,6 +113,40 @@ class RepoWorkspaceClient(context: Context) {
         }.getOrElse { "Cloud Drive did not open: ${it.message}" }
     }
 
+    // ---- v2 (#1855 P4a). Each asks the server's version() first: a v1 Drive has no such method and the call would fail. ----
+
+    private fun reviewServer(): IRepoWorkspace? = bound()?.takeIf { w -> (runCatching { w.version() }.getOrDefault(1)) >= RepoWorkspace.VERSION_REVIEW }
+
+    /** The changed files of the repository folder [path] (one of [listRepos]' paths); empty when Drive is absent, too old or does not know it. */
+    fun changedFiles(path: String): List<RepoWorkspace.ChangedFile> =
+        reviewServer()?.let { w -> runCatching { RepoWorkspace.ChangedFile.decodeAll(w.changedFiles(path)) }.getOrNull() }.orEmpty()
+
+    /** The unified diff of [relpath] (staged part, then worktree part), at most [maxBytes]; "" when there is none. */
+    fun diff(path: String, relpath: String, maxBytes: Int = RepoWorkspace.DIFF_DEFAULT_BYTES): String {
+        if (!RepoWorkspace.validRelPath(relpath)) return ""
+        return reviewServer()?.let { w -> runCatching { w.diff(path, relpath, maxBytes.coerceIn(1, RepoWorkspace.DIFF_MAX_BYTES)) }.getOrNull() }.orEmpty()
+    }
+
+    /** Open Drive's Commit screen for the repository folder [path]. "" = handed over, else a readable reason. [activity] must be foreground. */
+    fun requestCommit(activity: Context, path: String): String = handOff(activity, path, RepoWorkspace.ACTION_COMMIT) { w -> w.requestCommit(path) }
+
+    /** Open Drive's Push screen for the repository folder [path]. "" = handed over, else a readable reason. [activity] must be foreground. */
+    fun requestPush(activity: Context, path: String): String = handOff(activity, path, RepoWorkspace.ACTION_PUSH) { w -> w.requestPush(path) }
+
+    private fun handOff(activity: Context, path: String, action: String, validate: (IRepoWorkspace) -> String): String {
+        if (path.isBlank()) return "not a repository path"
+        val target = resolveServingPackage() ?: return RepoWorkspace.NOT_INSTALLED
+        val w = bound() ?: return "Cloud Drive is not answering"
+        if (runCatching { w.version() }.getOrDefault(1) < RepoWorkspace.VERSION_REVIEW) return RepoWorkspace.TOO_OLD
+        val refused = runCatching { validate(w) }.getOrElse { "Cloud Drive did not answer" }
+        if (refused.isNotEmpty()) return refused
+        return runCatching {
+            activity.startActivity(Intent(action).setPackage(target).putExtra(RepoWorkspace.EXTRA_PATH, path)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            ""
+        }.getOrElse { "Cloud Drive did not open: ${it.message}" }
+    }
+
     companion object {
         private const val TAG = "RepoWorkspaceClient"
         private const val REBIND_MS = 5_000L

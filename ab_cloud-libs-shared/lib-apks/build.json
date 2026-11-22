@@ -246,7 +246,7 @@
       "sound-tags": "Plain-JVM arithmetic of sound identification: WAV decoding, resampling, model windows, label scores.",
       "sysdns": "The fleet's bridge to Android's resolver for binaries and shells that cannot use it directly.",
       "text-tools": "Boundary of the Text tools (Enhance, Translate): the ITextTools binder and its client.",
-      "repo-workspace": "Boundary of Cloud Drive's git workspace: the IRepoWorkspace binder (list, find, clone request, status of the repositories on every volume) and its client.",
+      "repo-workspace": "Boundary of Cloud Drive's git workspace: the IRepoWorkspace binder (list, find, clone request, status of the repositories on every volume; v2: changed files, bounded per-file diffs, hand-offs to Drive's Commit and Push screens) and its client.",
       "ai-engine": "Boundary of Cloud SuperIntel's AI engines: the IAiEngine binder (providers, models, streamed chat, cancel, usage) and its client.",
       "translate": "Translate engine interface and Translator orchestrator (ML-Kit-free).",
       "ui-kit": "The fleet's shared Compose kit: theme, section header, tiles, cards, settings and confirm rows.",

@@ -245,6 +245,23 @@
             </intent-filter>
         </activity>
 
+        <!-- #1855 P4a libs:repo-workspace v2: Drive's own Commit screen (staged / unstaged files, per-file diff, message, Commit, then Push) for a
+             repository folder another app names (extra "path", validated against Drive's listed repositories). Same signature permission as the
+             clone hand-off; the user confirms staging, commit and push in this screen, nothing destructive crosses the binder. -->
+        <activity
+            android:name=".workspace.RepoCommitActivity"
+            android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"
+            android:exported="true"
+            android:excludeFromRecents="false"
+            android:theme="@style/Theme.CloudDrive"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="com.diegonmarcos.superapp.repoworkspace.COMMIT" />
+                <action android:name="com.diegonmarcos.superapp.repoworkspace.PUSH" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <!-- #1375 "Choose an app for the USB device": a USB mass-storage drive (res/xml/device_filter.xml, class 8)
              offers Cloud Drive next to the other file managers. The activity opens Explorer on the drive Android
              mounted, or browses it raw over USB (libaums, FAT32) when Android did not; the USB permission goes

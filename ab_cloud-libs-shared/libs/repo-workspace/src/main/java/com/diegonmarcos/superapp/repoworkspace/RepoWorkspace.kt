@@ -19,7 +19,21 @@ object RepoWorkspace {
     /** Signature-level: the platform refuses any caller not signed with the Cloud key. */
     const val PERMISSION = "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"
 
-    const val VERSION = 1
+    /** v2 (#1855 P4a): the activity intents Drive handles to open its own Commit screen / Push screen for the repository folder [EXTRA_PATH]. */
+    const val ACTION_COMMIT = "com.diegonmarcos.superapp.repoworkspace.COMMIT"
+    const val ACTION_PUSH = "com.diegonmarcos.superapp.repoworkspace.PUSH"
+    const val EXTRA_PATH = "path"
+
+    /** The first contract version that has changedFiles / diff / requestCommit / requestPush. */
+    const val VERSION_REVIEW = 2
+    const val VERSION = 2
+
+    /** The diff size a caller asks for by default, and the most any server returns whatever is asked. */
+    const val DIFF_DEFAULT_BYTES = 64 * 1024
+    const val DIFF_MAX_BYTES = 256 * 1024
+    const val DIFF_TRUNCATED = "... diff truncated"
+
+    const val TOO_OLD = "Cloud Drive is too old for this: update Cloud Drive"
 
     const val NOT_INSTALLED = "Repositories are held by the Cloud Drive app: install Cloud Drive (Sync, Git)"
 
@@ -62,5 +76,44 @@ object RepoWorkspace {
 
             fun decodeAll(rows: Array<String>?): List<RepoInfo> = rows?.mapNotNull { decode(it) }.orEmpty()
         }
+    }
+
+    /** The status letters of [ChangedFile.status]. */
+    const val ST_ADDED = "A"
+    const val ST_MODIFIED = "M"
+    const val ST_DELETED = "D"
+    const val ST_RENAMED = "R"
+    const val ST_UNTRACKED = "?"
+
+    /** One changed file of one repository, the wire row of [IRepoWorkspace.changedFiles] (v2). */
+    data class ChangedFile(
+        val relpath: String,
+        val status: String,
+        val staged: Boolean,
+        val added: Int = 0,
+        val removed: Int = 0,
+    ) {
+        fun encode(): String = listOf(relpath, status, if (staged) "1" else "0", added.toString(), removed.toString())
+            .joinToString("\t") { it.replace('\t', ' ').replace('\n', ' ').replace('\r', ' ') }
+
+        companion object {
+            /** Reads a row without trusting its shape; null when it has no path or an unknown status letter. */
+            fun decode(row: String?): ChangedFile? {
+                val f = row?.split('\t') ?: return null
+                val rel = f.getOrNull(0).orEmpty()
+                val st = f.getOrNull(1).orEmpty()
+                if (rel.isEmpty() || st !in listOf(ST_ADDED, ST_MODIFIED, ST_DELETED, ST_RENAMED, ST_UNTRACKED)) return null
+                return ChangedFile(rel, st, f.getOrNull(2) == "1", f.getOrNull(3)?.toIntOrNull() ?: 0, f.getOrNull(4)?.toIntOrNull() ?: 0)
+            }
+
+            fun decodeAll(rows: Array<String>?): List<ChangedFile> = rows?.mapNotNull { decode(it) }.orEmpty()
+        }
+    }
+
+    /** A repository-relative path a caller may name: not empty, not absolute, no ".." segment, no NUL / control character, bounded. */
+    fun validRelPath(rel: String?): Boolean {
+        val r = rel.orEmpty()
+        return r.isNotEmpty() && r.length <= 1024 && !r.startsWith("/") && !r.contains('\\') &&
+            r.none { it.code < 0x20 } && r.split('/').none { it == ".." || it.isEmpty() }
     }
 }

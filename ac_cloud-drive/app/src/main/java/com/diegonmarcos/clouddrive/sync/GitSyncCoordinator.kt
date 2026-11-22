@@ -587,11 +587,16 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
      */
     fun runOp(repo: ManagedRepo, opId: String, message: String = "") {
         val step = when (opId) {
-            OP_COMMIT -> Step.COMMITTING
+            OP_COMMIT, OP_COMMIT_STAGED -> Step.COMMITTING
             OP_PULL, OP_FORCE_PULL, OP_FETCH -> Step.PULLING
             else -> Step.PUSHING
         }
         single(repo, opId, step) { perform(repo, opId, message, { declaredToken() }, SyncHistory.TRIGGER_MANUAL) }
+    }
+
+    /** #1855 P4a Drive's Commit screen: stage or unstage [paths] of [repo] (the index only; no file content changes). Blocking result off the main thread. */
+    suspend fun setStaged(repo: ManagedRepo, paths: Collection<String>, on: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching { GitEngine(ctx, File(repo.path)).use { e -> if (on) e.stage(paths) else e.unstage(paths) }; reread(repo) }
     }
 
     /** ONE operation on ONE repository, recorded — the shared body of [runOp] and [pullAll]. Blocking. */
@@ -615,6 +620,15 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
                                         repo.authorName.ifBlank { DEFAULT_AUTHOR },
                                         repo.authorEmail.ifBlank { DEFAULT_EMAIL },
                                     )
+                                    GitOpResult(true, "committed ${c.shortSha}")
+                                }
+                            }
+                            // #1855 P4a Drive's Commit screen: ONLY what the user staged there (OP_COMMIT stages everything first).
+                            OP_COMMIT_STAGED -> {
+                                if (message.isBlank()) GitOpResult(false, "commit message is empty")
+                                else if (e.status().staged.isEmpty()) GitOpResult(true, "nothing staged to commit")
+                                else {
+                                    val c = e.commit(message, repo.authorName.ifBlank { DEFAULT_AUTHOR }, repo.authorEmail.ifBlank { DEFAULT_EMAIL })
                                     GitOpResult(true, "committed ${c.shortSha}")
                                 }
                             }
@@ -1510,6 +1524,8 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
         const val OP_FETCH_STATUS = "fetch_status"
         const val OP_PULL = "pull"
         const val OP_COMMIT = "commit"
+        /** #1855 P4a commit exactly the staged files (the Commit screen), with the typed message. */
+        const val OP_COMMIT_STAGED = "commit_staged"
         const val OP_PUSH = "push"
         const val OP_FORCE_PUSH = "force_push"
         const val OP_FORCE_PULL = "force_pull"

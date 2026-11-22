@@ -30,4 +30,11 @@
     <color name="status_light_on">#FF3DDC84</color>
     <color name="status_light_off">#FFF87171</color>
     <color name="status_light_unknown">#FFB0B8C4</color>
+    <!-- #1855 P4a the Commit screen's diff and status colours -->
+    <color name="drive_diff_add">#FF81C784</color>
+    <color name="drive_diff_del">#FFE57373</color>
+    <color name="drive_diff_warn">#FFFFE082</color>
+    <color name="drive_diff_hunk">#FF64B5F6</color>
+    <color name="drive_diff_meta">#FFB0BEC5</color>
+    <color name="drive_diff_bg">#FF101418</color>
 </resources>

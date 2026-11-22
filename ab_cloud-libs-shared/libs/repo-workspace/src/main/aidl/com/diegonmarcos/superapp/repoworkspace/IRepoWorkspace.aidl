@@ -15,11 +15,11 @@ package com.diegonmarcos.superapp.repoworkspace;
  * thread, the CALLER's thread waits. Never call on a main thread.
  *
  * METHOD ORDER IS THE WIRE FORMAT. Transaction codes are assigned by declaration order, so a method may
- * only ever be APPENDED. v1 is these five; contract changes bump version().
+ * only ever be APPENDED. v1 is the first five; v2 (#1855 P4a) appends the last four; contract changes bump version().
  */
 interface IRepoWorkspace {
 
-    /** The contract version this server speaks (1). A client newer than the server asks before using an appended method. */
+    /** The contract version this server speaks (2). A client newer than the server asks before using an appended method. */
     int version();
 
     /** Every repository on every volume Drive knows (the store, Emulated, every attached drive), one row each. */
@@ -38,4 +38,27 @@ interface IRepoWorkspace {
 
     /** The cheap status of the repository folder [path] as one row; empty when Drive does not know that path. */
     String status(in String path);
+
+    // ---- v2 (#1855 P4a): read-only review of the working tree + hand-offs to Drive's own Commit screen. ----
+    // NO DESTRUCTIVE VERB CROSSES THIS BINDER: no stage, no discard, no reset, no commit, no push. Staging, commit and push happen in
+    // Drive's UI with the user's confirmation; requestCommit / requestPush only VALIDATE and the client then opens that screen.
+
+    /**
+     * The changed files of the repository folder [path] (one of listRepos' paths), one row each, tab-separated:
+     * relpath, status (A added, M modified, D deleted, R renamed, ? untracked), staged ("1" = the index side, "0" = the worktree side;
+     * a file changed on both sides has two rows), added lines, removed lines. Empty when Drive does not know the path.
+     */
+    String[] changedFiles(in String path);
+
+    /**
+     * The unified diff of [relpath] in the repository [path] (staged part first, then the worktree part), cut at [maxBytes] on a line
+     * boundary with a trailing "... diff truncated" marker. Empty when the path or file is unknown or has no change. Bounded by the server too.
+     */
+    String diff(in String path, in String relpath, int maxBytes);
+
+    /** Validate "open Drive's Commit screen for [path]": "" = accepted (the caller then starts RepoWorkspace.ACTION_COMMIT), else the reason. */
+    String requestCommit(in String path);
+
+    /** Validate "open Drive's Push screen for [path]": "" = accepted (the caller then starts RepoWorkspace.ACTION_PUSH), else the reason. */
+    String requestPush(in String path);
 }

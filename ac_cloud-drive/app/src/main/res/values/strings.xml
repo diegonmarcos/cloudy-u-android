@@ -878,4 +878,23 @@
     <string name="editor_root_action_open_app">Open app</string>
     <string name="editor_root_action_folder">Grant a folder</string>
     <string name="editor_root_action_retry">Retry</string>
+    <!-- #1855 P4a Drive's Commit screen (repo-workspace COMMIT / PUSH) -->
+    <string name="commit_close">Close</string>
+    <string name="commit_back">Back to files</string>
+    <string name="commit_stage_all">Stage all</string>
+    <string name="commit_unstage_all">Unstage all</string>
+    <string name="commit_message">Commit message</string>
+    <string name="commit_commit">Commit</string>
+    <string name="commit_push">Push (%1$d)</string>
+    <string name="commit_push_confirm">Push</string>
+    <string name="commit_cancel">Cancel</string>
+    <string name="commit_push_title">Push %1$d commit(s)?</string>
+    <string name="commit_push_text">%1$s will be pushed to its remote with Cloud Drive\'s credentials.</string>
+    <string name="commit_summary">%1$d staged, %2$d not staged, %3$d to push</string>
+    <string name="commit_working">(working...)</string>
+    <string name="commit_failed">FAILED:</string>
+    <string name="commit_no_repo">No repository was given.</string>
+    <string name="commit_not_registered">This repository is not on the Git page yet: add it there first.</string>
+    <string name="commit_read_failed">Could not read the repository.</string>
+    <string name="commit_no_diff_text">(no textual diff)</string>
 </resources>
