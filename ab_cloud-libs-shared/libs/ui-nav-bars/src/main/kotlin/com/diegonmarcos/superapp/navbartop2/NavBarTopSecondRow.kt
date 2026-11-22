@@ -155,7 +155,7 @@ internal fun NavPage.holds(id: String): Boolean = this.id == id || pages.any { i
 /**
  * THE second top row of every app (#1154): the sub-pages of the bottom nav's page as small tabs. The free width is
  * shared SpaceEvenly, so one tab sits centred and several have equal gaps between them and to both borders. The
- * selected tab is a rounded rectangle filled with the SuperApp violet ([ThemeColors.tabSelected]); every tab shows its
+ * selected tab is a rounded rectangle with a neutral ink fill and a bold ink label ([SecondRowTone], #1852); every tab shows its
  * name next to its glyph (#1159), and scrolled down only the selected one does. [iconFor] may override a page's glyph; by default it is the page's declared icon (SecondRowIcons).
  */
 @OptIn(ExperimentalComposeUiApi::class)
@@ -251,6 +251,12 @@ public fun NavBarTopSecondRow(
     }
 }
 
+/** #1852 the selected strip tab is neutral: a translucent ink fill and an ink label (bold), never the saturated violet ([ThemeColors.tabSelected] stays the palette token of the other chips). */
+internal object SecondRowTone {
+    fun selectedFill(p: ThemeColors): androidx.compose.ui.graphics.Color = p.ink.copy(alpha = 0.14f)
+    fun selectedInk(p: ThemeColors): androidx.compose.ui.graphics.Color = p.ink
+}
+
 /** One tab of a strip: its icon, its name when [named], the selected one a filled rounded rectangle. Shared by every second-row mode. */
 @Composable
 internal fun SecondRowTab(
@@ -265,11 +271,11 @@ internal fun SecondRowTab(
     iconFor: @Composable (NavPage) -> Painter?,
     onClick: () -> Unit,
 ) {
-    val ink = if (on) palette.onTabSelected else palette.inkDim
+    val ink = if (on) SecondRowTone.selectedInk(palette) else palette.inkDim
     Row(
         Modifier.defaultMinSize(minWidth = SecondRowSpec.TAB_MIN_WIDTH).height(tabHeight)
             .clip(tab)
-            .then(if (on) Modifier.background(palette.tabSelected, tab) else Modifier)
+            .then(if (on) Modifier.background(SecondRowTone.selectedFill(palette), tab) else Modifier)
             .clickable(role = Role.Tab, onClick = onClick)
             .semantics {
                 role = Role.Tab
