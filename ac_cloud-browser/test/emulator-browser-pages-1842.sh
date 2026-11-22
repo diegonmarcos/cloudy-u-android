@@ -92,28 +92,32 @@ sleep 2
 if tap 'Page-Tools' text; then
   shot tools-open
   has 'Scrapper' tools-open && ok "S1 the Tools sheet opens" || bad "S1 no Tools sheet"
-  scroll_sheet() {
-    local xy; xy=$(python3 -I - "$OUT/$1.xml" <<'PY'
+  # the list inside the sheet keeps ONE scroll position across its tabs, and uiautomator reports Compose lists as not scrollable: swipe at fixed
+  # places inside the sheet (the lower part of the screen), up to the end of a tab's list and, first, back to its top
+  WH=$(adb shell wm size | tr -d "\r" | grep -oE "[0-9]+x[0-9]+" | tail -1); WX=${WH%x*}; WY=${WH#*x}
+  sheet_swipe() { if [ "$1" = up ]; then adb shell input swipe $((WX / 2)) $((WY * 88 / 100)) $((WX / 2)) $((WY * 62 / 100)) 300; else adb shell input swipe $((WX / 2)) $((WY * 62 / 100)) $((WX / 2)) $((WY * 88 / 100)) 300; fi; sleep 1; }
+  # the six tab chips scroll sideways: bring the later ones into view by swiping the chip row left (its y is read from a chip's node)
+  chips_left() {
+    dump _chips
+    local y; y=$(python3 -I - "$OUT/_chips.xml" <<'PY'
 import re, sys, xml.etree.ElementTree as ET
 try: root = ET.parse(sys.argv[1]).getroot()
 except Exception: sys.exit(0)
-best = None
 for n in root.iter("node"):
-    if n.get("scrollable") == "true":
-        a, b, c, d = map(int, re.findall(r"\d+", n.get("bounds")))
-        if best is None or (d - b) > (best[3] - best[1]): best = (a, b, c, d)
-if best:
-    a, b, c, d = best; h = d - b
-    print((a + c) // 2, b + h * 3 // 4, (a + c) // 2, b + h // 4)
+    if n.get("text") in ("Nav", "Scrapper", "Reading", "Site Data", "Perms", "Dev Tools"):
+        a, b, c, d = map(int, re.findall(r"\d+", n.get("bounds"))); print((b + d) // 2); break
 PY
 )
-    [ -n "$xy" ] && adb shell input swipe ${xy% * *} ${xy#* * } 500 && sleep 1
+    [ -n "$y" ] && adb shell input swipe $((WX * 85 / 100)) "$y" $((WX * 15 / 100)) "$y" 300 && sleep 1
   }
   for spec in "nav|Nav|Zoom" "scrapper|Scrapper|Readable text|Crawl this page|YouTube: download video|Print" "reading|Reading|Reader mode|Find in page" "sitedata|Site Data|Open Local Folder|Clear cookies for this site" "perms|Perms|Every site permission|Block trackers here|Block images here|Block JavaScript here" "dev|Dev Tools|View source|Console and JS REPL"; do
     IFS='|' read -r key label rows <<< "$spec"; rows=${spec#*|*|}
+    case "$key" in perms|dev) chips_left ;; esac
     tap "^$label\$" text && shot tools-$key || bad "S1 tab $label not reachable"
-    cp "$OUT/tools-$key.xml" "$OUT/tools-$key-all.xml"; prev=$(md5sum < "$OUT/tools-$key.xml"); last=tools-$key
-    for j in 1 2 3 4 5 6; do scroll_sheet "$last"; shot tools-$key-s$j; last=tools-$key-s$j; cat "$OUT/$last.xml" >> "$OUT/tools-$key-all.xml"; cur=$(md5sum < "$OUT/$last.xml"); [ "$cur" = "$prev" ] && break; prev=$cur; done
+    for j in 1 2 3 4; do sheet_swipe down; done           # the top of this tab's list
+    shot tools-$key-top; cp "$OUT/tools-$key-top.xml" "$OUT/tools-$key-all.xml"
+    prev=$(md5sum < "$OUT/tools-$key-top.xml")
+    for j in 1 2 3 4 5 6; do sheet_swipe up; shot tools-$key-s$j; cat "$OUT/tools-$key-s$j.xml" >> "$OUT/tools-$key-all.xml"; cur=$(md5sum < "$OUT/tools-$key-s$j.xml"); [ "$cur" = "$prev" ] && break; prev=$cur; done
     has "$label" tools-$key-all && ok "S1 the tab $label is there" || bad "S1 no $label tab"
     IFS='|' read -ra want <<< "$rows"
     for r in "${want[@]}"; do
