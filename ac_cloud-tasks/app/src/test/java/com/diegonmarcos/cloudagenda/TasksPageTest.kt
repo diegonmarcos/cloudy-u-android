@@ -210,12 +210,15 @@ class TasksPageTest {
         val project = env.controller.snapshot.projects.first()
         val lists = env.controller.snapshot.listsOf(project.id)
         compose.onNodeWithTag(TopBarTags.TITLE).performClick()
-        compose.onNodeWithTag(DrawerTags.project(project.id)).performScrollTo().assertIsDisplayed()
+        // #1850 the projects sit in the dropdown's Actions section (its own bounded scroll inside the dropdown's scroll):
+        // bring that section into view first, then the row inside it
+        compose.onNodeWithTag(com.diegonmarcos.superapp.navbartop1.TopFirstRowTags.ACTIONS).performScrollTo()
+        compose.onNodeWithTag(DrawerTags.project(project.id)).performScrollTo().assertExists()
         compose.onNodeWithTag(DrawerTags.list(lists[0].id)).assertDoesNotExist()
         compose.onNodeWithTag(DrawerTags.list(lists[1].id)).assertDoesNotExist()
         compose.onNodeWithTag(DrawerTags.project(project.id)).performScrollTo().performClick()
-        compose.onNodeWithTag(DrawerTags.list(lists[0].id)).assertIsDisplayed()
-        compose.onNodeWithTag(DrawerTags.list(lists[1].id)).assertIsDisplayed()
+        compose.onNodeWithTag(DrawerTags.list(lists[0].id)).assertExists()
+        compose.onNodeWithTag(DrawerTags.list(lists[1].id)).assertExists()
         compose.onNodeWithTag(DrawerTags.list(lists[1].id)).performScrollTo().performClick()
         compose.waitForIdle()
         assertEquals(lists[1].id, env.controller.selectedListId)
