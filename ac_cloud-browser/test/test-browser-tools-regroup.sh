@@ -82,7 +82,7 @@ def check(root, ok):
         ok(svc["bases"] and all(x.startswith("http://") and ".mesh.diegonmarcos.com" in x for x in svc["bases"][:1]), "F4 service `%s` is mesh first" % sid)
         ok(not any("bearer" in json.dumps(x).lower() and "token" in x.lower() and "=" in x for x in svc["bases"]), "F4 service `%s` holds no secret value" % sid)
     ok(tools.get("fleet_readable", {}).get("service") == "headless" and fleet["services"]["headless"].get("bearer_key"), "F4 headless is bearer-gated by a store KEY name, never a value")
-    ok("in fleet.tools.keys ->" in run and "FleetScrapper.call(" in frag and "FleetScrapper.download(" in frag, "F4 one runAction branch runs the declared tools off the main thread")
+    ok("in fleet.tools.keys ->" in run and "FleetScrapper.runTool(" in frag and "FleetScrapper.download(" in frag, "F4 one runAction branch runs the declared tools off the main thread")
     ok(items["view_source"]["section"] == "dev_tools" and items["view_source"].get("category") is None, "F4 View source moved to Dev Tools")
     ok(items.get("open_local_folder", {}).get("section") == "site_data" and '"open_local_folder" ->' in run and "onOpenLocalFolder" in frag, "F4 Site Data has Open Local Folder, wired to the app")
     act = src.get(APP + "/MainActivity.kt", "")

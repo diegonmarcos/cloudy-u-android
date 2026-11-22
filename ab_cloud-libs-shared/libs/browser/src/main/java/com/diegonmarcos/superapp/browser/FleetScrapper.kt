@@ -84,7 +84,7 @@ object FleetScrapper {
     }
 
     /** Runs a JSON tool; the answer is [display]ed text. Blocking. */
-    fun call(f: Fleet, toolId: String, url: String, secret: (String) -> String?, timeoutMs: Int = 120_000): String {
+    fun runTool(f: Fleet, toolId: String, url: String, secret: (String) -> String?, timeoutMs: Int = 120_000): String {
         val tool = f.tools[toolId] ?: return "Failed: $toolId is not a declared fleet tool"
         return runCatching {
             request(f, tool, url, secret, timeoutMs) { c ->

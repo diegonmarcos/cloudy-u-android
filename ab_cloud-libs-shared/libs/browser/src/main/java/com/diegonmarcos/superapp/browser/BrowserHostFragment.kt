@@ -1882,7 +1882,7 @@ class BrowserHostFragment : Fragment() {
                 val dir = app.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS) ?: app.filesDir
                 val f = java.io.File(dir, name.replace(Regex("[^A-Za-z0-9._-]"), "_"))
                 f.outputStream().use { ins.copyTo(it) }; f.absolutePath
-            } else FleetScrapper.call(fleet, id, url, secret)
+            } else FleetScrapper.runTool(fleet, id, url, secret)
             activity?.runOnUiThread { showSource(title, text) }
         }.start()
         done(JSONObject().put("ok", true).put("id", id).put("started", true))
