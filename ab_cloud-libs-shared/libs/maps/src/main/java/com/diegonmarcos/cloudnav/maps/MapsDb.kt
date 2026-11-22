@@ -78,7 +78,7 @@ class MapsDb private constructor(ctx: Context) :
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 2) createTimeline(db)   // v2 (#1114): the timeline store; filled by TimelineSync from the older tables
-        if (oldVersion < 4) createStore(db)   // v4 (#1851): step slices, daily steps, sleep sessions, day rollups, aggregates
+        if (oldVersion < 5) createStore(db)   // v4/v5 (#1851): step slices (one per closing sample), daily steps, sleep sessions, day rollups, aggregates
         if (oldVersion < 3) {   // v3 (#1851): the append-only fix log; the tracker's existing points are carried over once
             createFixes(db)
             db.execSQL("INSERT INTO fixes (ts, lat, lon, accuracy, speed, provider) SELECT ts, lat, lon, accuracy, speed, 'legacy-points' FROM points;")
@@ -88,6 +88,9 @@ class MapsDb private constructor(ctx: Context) :
     /** #1851 v4: the rest of the one store. Inputs (step slices, Health Connect daily steps and sleep sessions) and outputs (day rollups, aggregates). */
     private fun createStore(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE IF NOT EXISTS step_slices (start_ms INTEGER NOT NULL, end_ms INTEGER NOT NULL, count INTEGER NOT NULL, source TEXT NOT NULL, PRIMARY KEY (start_ms, end_ms, source));")
+        // a slice is identified by the sample that closes it: the mirror and the migration may compute its start differently, never write it twice
+        db.execSQL("DELETE FROM step_slices WHERE rowid NOT IN (SELECT MIN(rowid) FROM step_slices GROUP BY end_ms, source);")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_step_slices_end ON step_slices(end_ms, source);")
         db.execSQL("CREATE TABLE IF NOT EXISTS steps_daily (date TEXT PRIMARY KEY, steps INTEGER NOT NULL, source TEXT NOT NULL, updated_ms INTEGER NOT NULL);")
         db.execSQL("CREATE TABLE IF NOT EXISTS sleep_sessions (start_ms INTEGER PRIMARY KEY, end_ms INTEGER NOT NULL, source TEXT NOT NULL);")
         db.execSQL("CREATE TABLE IF NOT EXISTS day_rollups (date TEXT PRIMARY KEY, steps INTEGER NOT NULL, distance_m REAL NOT NULL, moving_ms INTEGER NOT NULL, " +
@@ -547,7 +550,7 @@ class MapsDb private constructor(ctx: Context) :
 
     companion object {
         private const val DB_NAME = "maps.db"
-        private const val DB_VERSION = 4
+        private const val DB_VERSION = 5
 
         @Volatile private var instance: MapsDb? = null
         fun get(ctx: Context): MapsDb = instance ?: synchronized(this) {
