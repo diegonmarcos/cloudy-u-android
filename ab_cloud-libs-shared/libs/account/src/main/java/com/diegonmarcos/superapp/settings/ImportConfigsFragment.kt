@@ -191,6 +191,7 @@ class ImportConfigsFragment : KitComposeFragment() {
                 if (!store) { report(R.string.import_bundle_read, values, sections.size); return }
                 VaultConnect.Imported.last = sections
                 VaultConnect.Imported.bundle = v.bundle
+                com.diegonmarcos.superapp.profile.FleetTokenImport.land(ctx, v.bundle)
                 report(R.string.import_bundle_landed, values, sections.size)
             }
             is VaultFile.Verdict.Blob -> {

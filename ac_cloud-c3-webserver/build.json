@@ -314,7 +314,13 @@
       "method": "app_credential",
       "credential": "fleet.mesh_token",
       "grant": "cred.fleet.mesh_token",
-      "foreground_only": true
+      "foreground_only": true,
+      "vault_import": {
+        "_doc": "The vault-to-Cloud-Account leg (no paste): the decrypted vault export (VaultConnect, landed by AccountModel.landBundle and the Import page) carries the token at bundle_path; FleetTokenImport (libs:account) files it into the credential above. Cloud Account is a relay and cache, the vault's value wins; this app's FleetTokens.deliver then takes it into its Keystore store on start. The bundle key is emitted by the vault repo's E0_configs/emit.py from vault.key.",
+        "importer": "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/FleetTokenImport.kt",
+        "bundle_path": "fleet.mesh_token",
+        "direction": "vault -> cloud-account (cache) -> this app (owner store, provider)"
+      }
     },
     "store": { "prefs": "fleet_token_vault", "keystore_alias": "c3-fleet-token", "cipher": "AES/GCM/NoPadding" },
     "provider": "{package}.fleettoken",

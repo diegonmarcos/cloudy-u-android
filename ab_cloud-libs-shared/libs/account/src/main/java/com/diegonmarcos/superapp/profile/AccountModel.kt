@@ -288,6 +288,8 @@ class AccountModel(private val ctx: Context, val store: AccountStore) {
             // #766 the vault names the owner's peers too: who / which device answer on every line.
             com.diegonmarcos.cloudlib.auth.UserRegistry.fromVault(bundle)?.let { com.diegonmarcos.cloudlib.auth.UserRegistry.adopt(ctx, it) }
             // #778 the fetch IS the server file S, stored with its source; L starts as S when there is none.
+            // #1835 the fleet mesh token rides the same export: filed into App credentials, so nothing is pasted.
+            FleetTokenImport.land(ctx, bundle)
             get(ctx).landServer(bundle, via)
             return null
         }
