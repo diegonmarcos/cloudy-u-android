@@ -111,5 +111,17 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
+
+        <!-- #1855 P2 libs:ai-engine: SuperIntel SERVES the fleet's AI engines (providers, models, a streamed chat, cancel, usage). Guarded by the
+             CONSTELLATION_DATA signature permission (declared by :libs:ai-engine), so the platform refuses any app not signed with the Cloud key.
+             Requests run here with libs:ai's backends: no client holds or sends an API key (decisions-use guard D5). -->
+        <service
+            android:name=".engine.EngineService"
+            android:permission="com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.diegonmarcos.superapp.aiengine.IAiEngine" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

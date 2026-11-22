@@ -121,7 +121,8 @@
         "libs:ai",
         "libs:ui-kit",
         "libs:ai-usage",
-        "libs:perms"
+        "libs:perms",
+        "libs:ai-engine"
       ]
     },
     "libs:core": {
@@ -156,6 +157,11 @@
     "libs:ai": {
       "_doc": "The fleet's AI chat (libs:ai): the page, the sessions drawer panel (new, rename, delete), the Markdown answers, the streaming and the shared contract. The backend is the fleet agent gateway (my-ai-api, mesh only; its address is baked as BuildConfig.AI_GATEWAY_URL by libs/ai/ai-gateway.gradle); no token is held or read here (decisions-use guard D5).",
       "dir": "../ab_cloud-libs-shared/libs/ai",
+      "type": "library"
+    },
+    "libs:ai-engine": {
+      "_doc": "#1855 P2 the IAiEngine binder (a `contract` lib): this APK SERVES it (EngineService: providers, models, a streamed chat performed with libs:ai's backends, cancel, usage); Cloud Code declares the same module to CALL it. Keys never leave Account / SuperIntel (decisions-use guard D5).",
+      "dir": "../ab_cloud-libs-shared/libs/ai-engine",
       "type": "library"
     },
     "libs:model-catalogue": {
