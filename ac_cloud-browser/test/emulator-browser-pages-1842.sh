@@ -95,7 +95,7 @@ if tap 'Page-Tools' text; then
   # the list inside the sheet keeps ONE scroll position across its tabs, and uiautomator reports Compose lists as not scrollable: swipe at fixed
   # places inside the sheet (the lower part of the screen), up to the end of a tab's list and, first, back to its top
   WH=$(adb shell wm size | tr -d "\r" | grep -oE "[0-9]+x[0-9]+" | tail -1); WX=${WH%x*}; WY=${WH#*x}
-  sheet_swipe() { if [ "$1" = up ]; then adb shell input swipe $((WX / 2)) $((WY * 88 / 100)) $((WX / 2)) $((WY * 62 / 100)) 300; else adb shell input swipe $((WX / 2)) $((WY * 62 / 100)) $((WX / 2)) $((WY * 88 / 100)) 300; fi; sleep 1; }
+  sheet_swipe() { if [ "$1" = up ]; then adb shell input swipe $((WX / 2)) $((WY * 90 / 100)) $((WX / 2)) $((WY * 50 / 100)) 400; else adb shell input swipe $((WX / 2)) $((WY * 50 / 100)) $((WX / 2)) $((WY * 90 / 100)) 400; fi; sleep 1; }
   # the six tab chips scroll sideways: bring the later ones into view by swiping the chip row left (its y is read from a chip's node)
   chips_left() {
     dump _chips
@@ -117,7 +117,8 @@ PY
     for j in 1 2 3 4; do sheet_swipe down; done           # the top of this tab's list
     shot tools-$key-top; cp "$OUT/tools-$key-top.xml" "$OUT/tools-$key-all.xml"
     prev=$(md5sum < "$OUT/tools-$key-top.xml")
-    for j in 1 2 3 4 5 6; do sheet_swipe up; shot tools-$key-s$j; cat "$OUT/tools-$key-s$j.xml" >> "$OUT/tools-$key-all.xml"; cur=$(md5sum < "$OUT/tools-$key-s$j.xml"); [ "$cur" = "$prev" ] && break; prev=$cur; done
+    same=0
+    for j in 1 2 3 4 5 6 7 8; do sheet_swipe up; shot tools-$key-s$j; cat "$OUT/tools-$key-s$j.xml" >> "$OUT/tools-$key-all.xml"; cur=$(md5sum < "$OUT/tools-$key-s$j.xml"); if [ "$cur" = "$prev" ]; then same=$((same + 1)); [ "$same" -ge 2 ] && break; else same=0; fi; prev=$cur; done
     has "$label" tools-$key-all && ok "S1 the tab $label is there" || bad "S1 no $label tab"
     IFS='|' read -ra want <<< "$rows"
     for r in "${want[@]}"; do
