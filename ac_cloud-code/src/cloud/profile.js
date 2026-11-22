@@ -26,11 +26,11 @@ function btn(label, iconName, onclick) {
 	return el("button", { className: "cloud-ctl", onclick }, icon(iconName), el("span", {}, label));
 }
 
-// #1697 Configs is {own page} | Agents, Perms, Logcat, X-Ray App, About: this page is the app's own part; the five fleet tabs open the
+// #1697 / #1852 Configs is {own page} | General, Agents, Perms, Logcat, X-Ray App, About: this page is the app's own part; the six fleet tabs open the
 // native fleet Configs screen (libs:ui-nav-bars FleetConfigsActivity, own package, not exported) on the tapped tab.
 const FLEET_PKG = "com.diegonmarcos.code";
 const FLEET_ACTIVITY = "com.diegonmarcos.superapp.fleetconfigs.FleetConfigsActivity";
-export const FLEET_TAIL = [["agents", "Agents"], ["perms", "Perms"], ["logcat", "Logcat"], ["xray", "X-Ray App"], ["about", "About"]];
+export const FLEET_TAIL = [["general", "General"], ["agents", "Agents"], ["perms", "Perms"], ["logcat", "Logcat"], ["xray", "X-Ray App"], ["about", "About"]];
 
 function openFleetTab(id) {
 	try {
