@@ -5,6 +5,7 @@
 #   live        a clone's root index.html (a public fixture, never the private backlog) -> "read from the clone"
 #   offline     the clone removed, the app restarted -> "Offline copy saved" + the reason, the last-good page still shown
 #   unavailable app data cleared and no clone    -> the reason ("not on this device"), no crash
+# #1855 P3 the walk also screenshots the first row's dropdown and the five bottom pages (Workspace, Editor, Agent, Changes, Run).
 # Usage: emulator-code-backlog.sh APK PACKAGE OUT_DIR
 set -uo pipefail
 APK="$1"; PKG="$2"; OUT="$3"; mkdir -p "$OUT"
@@ -47,7 +48,19 @@ tapf() { # X% Y% of the screen
     local wh w h; wh="$($T adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1)"; w="${wh%x*}"; h="${wh#*x}"
     $T adb shell input tap $((w * $1 / 100)) $((h * $2 / 100))
 }
-launch() { # FIRST=1 on a fresh app data: Acode asks once about update checks (Cancel); then open the Backlog tab (first bar icon)
+# #1855 P3 Backlog is a Parent Page in the first row's title dropdown, not a bottom tab. The dropdown is web content (no accessibility
+# text), so it is reached by position: open it (the title island, top centre), tap one candidate row, and stop once the page has
+# logged its state. Rows above Backlog (the open page's own hierarchy) only change page; a tap outside the dropdown closes it.
+open_backlog() {
+    local y
+    for y in 12 15 18 21 24 27 30 33; do
+        tapf 50 5; sleep 1
+        tapf 50 "$y"; sleep 5
+        if $T adb logcat -d | grep -q "cloud-code backlog index"; then echo "backlog reached through the dropdown (row at ${y}%)"; return 0; fi
+    done
+    echo "WARN: the Backlog page was not reached through the dropdown"; return 1
+}
+launch() { # FIRST=1 on a fresh app data: Acode asks once about update checks (Cancel); then open the Backlog page through the first row's dropdown
     $T adb shell am force-stop "$PKG"; $T adb logcat -c || true
     $T adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
     sleep 25
@@ -56,7 +69,7 @@ launch() { # FIRST=1 on a fresh app data: Acode asks once about update checks (C
     # is empty chat area, so a spare tap does nothing
     dismiss
     if [ "${1:-0}" = 1 ]; then tapf 25 63; sleep 8; tapf 25 63; sleep 3; fi
-    tapf 13 92; sleep 6
+    open_backlog || true
 }
 expect() { # NAME REGEX: the console line the page logged for this state
     $T adb logcat -d | grep -E "cloud-code backlog index" > "$OUT/console-$1.txt" || true
@@ -84,6 +97,13 @@ expect offline 'index: offline'
 $T adb shell pm clear "$PKG" >/dev/null 2>&1; grant
 launch 1; shot unavailable 3
 expect unavailable 'index: unavailable.*No earlier copy'
+
+# #1855 P3 the five bottom pages, one screenshot each (cells of the 5-item bar, centres at 15 / 32 / 50 / 68 / 85 % of the width)
+dropdown_shot() { tapf 50 5; shot first-row-dropdown 2; tapf 50 60; sleep 1; }
+dropdown_shot
+for pair in "workspace 15" "editor 32" "agent 50" "changes 68" "run 85"; do
+    set -- $pair; tapf "$2" 92; shot "tab-$1" 4
+done
 
 $T adb logcat -d -t 30000 > "$OUT/logcat.txt"; $T adb logcat -d -b crash > "$OUT/logcat-crash.txt" 2>&1 || true
 cat "$OUT/logcat.txt" "$OUT/logcat-crash.txt" | grep -E "FATAL EXCEPTION" -A12 | grep -B2 -A12 "$PKG" | head -40 > "$OUT/crash.txt" || true
