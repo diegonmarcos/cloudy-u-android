@@ -13,7 +13,7 @@
     },
     "aa_cloud-superapp": {
       "first_test": "Has 91 shell testers. tests.unit.enabled=false, so its step named 'JVM unit tests (fatal on failure)' executes nothing and goes green \u2014 its own task, not this one.",
-      "shell_testers": 203,
+      "shell_testers": 204,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
@@ -67,11 +67,11 @@
     },
     "ac_cloud-account": {
       "first_test": "#867 NEW APP (the Account page split out of cloud-superapp). Has 1 shell tester (test-account-app.sh): the Account page comes from libs:account with no copy here; one package name and one OPEN action across SuperApp, build.json, manifest and the fleet manifest; the data provider is signature-gated, exported only by this app and only reads; the one-shot copy never overwrites a store SuperApp already holds; SuperApp's Account entry opens this app (extapp:cloud-account) - planted mutations each go red. NOT COVERED: the Account tabs themselves (libs:account and cloud-superapp's account testers cover them), and the copy on a real phone (fill Account in SuperApp, install Cloud Account, confirm configs, profile and the S/R/L files arrive once).",
-      "shell_testers": 18,
+      "shell_testers": 19,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 53,
+      "unit_test_sources": 54,
       "workflow": "ship-cloud-account.yml"
     },
     "ac_cloud-account/web": {

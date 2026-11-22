@@ -1736,7 +1736,7 @@
       {
         "id": "communication",
         "label": "Notify",
-        "icon": "ic_p_inbox",
+        "icon": "notifications",
         "module": null,
         "is_aggregator": true,
         "pages": [
@@ -2723,7 +2723,7 @@
         "_doc": "#1848 Actions: the bottom-nav slot Boards left. A single-page section that IS Quick Actions (config/controls, the one-row Preset | Battery Security UI Network Others All page, #1846): SectionPages routes (actions, quick-actions) to that very strip, so there is one implementation. Boards moved into Notify as its second row; the Boards section stays declared (not in the bottom nav) so page:boards/<id> resolves.",
         "id": "actions",
         "label": "Actions",
-        "icon": "ic_home",
+        "icon": "bolt",
         "module": null,
         "single_page": true,
         "pages": [

@@ -40,6 +40,8 @@ for sid in ('communication', 'boards'):
                     if n.get(f) != fv and (sid, p['id'], f) not in ALLOWED: probs.append('%s/%s.%s changed' % (sid, p['id'], f))
             continue
         if k.startswith('_doc_pages_1672') or k == 'state_pages': continue  # documentation of the old row
+        # #1849 the bottom-nav glyph of Notify moved off the Inboxes tray to the catalog bell (the one named change)
+        if (sid, k) == ('communication', 'icon') and v == 'ic_p_inbox' and new.get(k) == 'notifications': continue
         if new.get(k) != v and not (k.startswith('stack_') and json.dumps(new.get(k)).replace('Persistents', 'Persistent badges') == json.dumps(v)):
             probs.append('%s.%s changed or lost' % (sid, k))
 # the Boards section keeps its five pages in order
