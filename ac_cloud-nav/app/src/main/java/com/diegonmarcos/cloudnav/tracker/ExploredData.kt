@@ -95,14 +95,15 @@ object ExploredExport {
         var prev: Pair<Double, Double>? = null
         fun t(ms: Long) = Instant.ofEpochMilli(ms).atZone(zone).toOffsetDateTime().toString()
         for (r in segs) { val s = r.seg
-            val here = if (s.lat != null && s.lon != null) s.lat to s.lon else null
+            val la = s.lat; val lo = s.lon
+            val here: Pair<Double, Double>? = if (la != null && lo != null) la to lo else null
             if (s.kind == TlKind.MOVE) {
                 val path = ArrayList<Pair<Double, Double>>()
-                prev?.let { path += it }
-                fixes.filter { it.ts > s.startMs && it.ts < s.endMs }.forEach { path += it.lat to it.lon }
-                here?.let { path += it }
+                prev?.let { path.add(it) }
+                fixes.filter { it.ts > s.startMs && it.ts < s.endMs }.forEach { path.add(it.lat to it.lon) }
+                here?.let { path.add(it) }
                 if (path.isEmpty()) { skipped++; continue }
-                if (path.size == 1) path += path[0]
+                if (path.size == 1) path.add(path[0])
                 sb.append("<Placemark><name>").append(esc("Move " + (s.locSource?.removePrefix("mode:") ?: ""))).append("</name><styleUrl>#move</styleUrl>")
                     .append("<TimeSpan><begin>").append(t(s.startMs)).append("</begin><end>").append(t(s.endMs)).append("</end></TimeSpan>")
                     .append("<description>").append(esc("%.0f m, %d steps, %s".format(Locale.US, s.distanceM, s.steps, s.source))).append("</description>")
