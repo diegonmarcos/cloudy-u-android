@@ -42,6 +42,9 @@ test('file types: every extension is claimed once, the five required formats are
   const h = p => ft.handlerFor(decl, p).handler;
   assert.deepEqual(['a/b.md', 'x.canvas', 'c.JSON', 'p.html', 'p.htm', 'd.mmd', 'i.png', 'n.txt', 'z.pdf', 'q.unknown', 'Makefile'].map(h),
     ['markdown', 'canvas', 'json', 'html', 'html', 'mermaid', 'image', 'text', 'unsupported', 'unsupported', 'unsupported']);
+  // an external (Open with) tab is text by construction: a missing or unclaimed extension opens as Markdown, a claimed one keeps its handler
+  assert.deepEqual(['external:DOC-20261123-WA0012', 'external:notes.md', 'external:server.log', 'external:a.conf', 'external:x.pdf', 'external:d.json', 'external:p.html'].map(h),
+    ['markdown', 'markdown', 'text', 'markdown', 'markdown', 'json', 'html']);
   for (const need of ['markdown', 'canvas', 'json', 'html', 'mermaid']) {
     const row = decl.file_types.find(t => t.handler === need);
     assert.ok(row.editable && row.views.length >= 2, need);

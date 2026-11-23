@@ -18,6 +18,13 @@ export const stem = (path: string): string => {
 export function handlerFor(decl: Pick<VaultDecl, 'file_types'>, path: string): FileTypeRow {
   const ext = extOf(path);
   const row = decl.file_types.find(t => t.ext.includes(ext));
+  // An external tab (Open with) only ever carries text: the app half reads it as text before handing it over. Its name is
+  // the sender's display name, which may have no extension (WhatsApp "DOC-20261123-WA0012") or one the vault does not
+  // claim (.log, .conf, .sh), so anything that would land on 'unsupported' opens as Markdown, which shows plain text as is.
+  if (path.startsWith('external:') && (!row || row.handler === 'unsupported')) {
+    const md = decl.file_types.find(t => t.handler === 'markdown');
+    if (md) return md;
+  }
   return (
     row ??
     decl.file_types.find(t => t.handler === 'unsupported') ?? {
