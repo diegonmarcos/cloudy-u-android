@@ -21,6 +21,9 @@
 #   S9  planner: the inline phase reads inlineState (no LIKE scan, no starvation); a metered run fetches a text window of
 #       ~200; calendar parts on any link; IMAP sources in one session per folder; ciphertext sources kept locally and read
 #       first (never anything decrypted); the sync passes run one at a time; the reader's membership is local
+#   S10 WebView pool (3 idle at most, MutableContextWrapper, reset on release: about:blank, tag, settleToken,
+#       reportingEnabled), the FrameLayout wrapper and the GPU layer latch kept per page; the tap-time handoff LRU (never a
+#       decrypted body) feeds the page's snapshot; the 200 ms fade skipped only when the snapshot is ready
 #   P5  rule 16 parity: every email_bodies column, every body DAO query and every registered migration kept
 #   M   mutation-proof: each defence undone in a COPY turns its check red; the real tree is green
 #
@@ -186,6 +189,29 @@ elif which == "S9":
     need(fsb.count("onMailbox(") == 1, "the IMAP batch is not one session")
     fsrc = body(im, "    suspend fun fetchSource(")
     need("if (expectedUidValidity == null) prefetchedSources.remove(sourceKey(credentials, mailboxId, uid))?.let { return it }" in fsrc, "a batched source answers a read that opposes a numbering")
+elif which == "S10":
+    ms = code(read(os.path.join(K, "ui/message/MessageScreen.kt")))
+    fac = ms[ms.find("val webView = ReaderWebViews.pool.acquire(ctx)"):ms.find("update = { frame ->")]
+    need("setLayerType(if (useSoftwareLayer) View.LAYER_TYPE_SOFTWARE else View.LAYER_TYPE_NONE, null)" in fac, "a pooled view skips the GPU layer latch")
+    need("FrameLayout(ctx).apply {" in fac and "webViewClient = client" in fac, "the FrameLayout wrapper or the page's client is gone")
+    need("val ctx = android.content.MutableContextWrapper(base)" in ms and "CloudWeb.configure(BodyWebView(ctx), WebProfile.UNTRUSTED_HTML)" in body(ms, "private object ReaderWebViews {"), "pooled views are not built on a MutableContextWrapper with the untrusted profile")
+    need("ReaderWebViews.pool.release(webView)" in ms and "onRelease = { frame ->" in ms, "views are not returned to the pool")
+    rs = body(ms, "fun reset(view: BodyWebView) {")
+    for l in ('view.loadUrl("about:blank")', "view.tag = null", "view.settleToken = null", "view.reportingEnabled = false", "view.blankPending = true", "it.baseContext = it.baseContext.applicationContext"):
+        need(l in rs, "release does not do " + l)
+    need("if (wv is BodyWebView && wv.blankPending) {" in ms and "ready = { !it.blankPending }," in ms, "a blanking view can be handed out or measured")
+    need("const val MAX_IDLE = 3" in ms, "the pool is not 2-3 views")
+    pool = code(read(os.path.join(K, "ui/message/ReaderViewPool.kt")))
+    need("reset(view)" in body(pool, "fun release(view: T) {"), "a released view is not reset")
+    ho = code(read(os.path.join(D, "mail/ReaderHandoff.kt")))
+    need("fun holdable(body: MessageBody): Boolean = body.crypto == null || body.crypto is MessageCrypto.Locked" in ho and "if (!holdable(hit.body)) return false" in ho, "the handoff can hold a decrypted body")
+    r = code(read(os.path.join(D, "mail/MailRepository.kt")))
+    need("readerHandoff.take(accountId, emailId) ?: LocalReaderStore(localReaderPort).snapshot(accountId, emailId)" in r, "the page does not take the tap's snapshot")
+    ap = code(read(os.path.join(K, "ui/SternaApp.kt")))
+    need(".container.mailRepository.preloadReader(accountId, id)" in ap, "the tap does not start the snapshot")
+    en = ap[ap.find("enterTransition = {"):ap.find("popExitTransition = {")]
+    need(0 <= en.find("if (messageFadeDisabled || !motionEnabled) EnterTransition.None") < en.find("else if (readerSnapshotReady(readerHandoff, targetState.arguments)) EnterTransition.None"), "the fade skip is not after the crash latch")
+    need("else fadeIn(tween(200))" in en, "the fade is gone for a page with no snapshot")
 elif which == "P5":
     ent = code(read(os.path.join(D, "db/EmailBodyEntity.kt")))
     for col in ("val id: String", "val accountId: String", "val bodyJson: String", "val inlineImagesJson: String", "val fetchedAt: Long"):
@@ -213,9 +239,10 @@ declare -A LABEL=(
   [S7]="the fragment is stored with the body, seeds the reader, and is rebuilt lazily on a version change"
   [S8]="neighbours in pager order; VISIBLE rows debounced, capped, metered allowed"
   [S9]="planner: inline state, metered text window, calendar, IMAP batch, local ciphertext, serial passes, local membership"
+  [S10]="WebView pool with reset, FrameLayout and GPU guards kept; tap handoff (no decrypted body); conditional fade"
   [P5]="rule 16 parity: every email_bodies column, body query and migration step kept"
 )
-CHECKS="S5 S6 S7 S8 S9 P5"
+CHECKS="S5 S6 S7 S8 S9 S10 P5"
 
 echo "== the tree =="
 for c in $CHECKS; do
@@ -296,6 +323,17 @@ mutate S9 "$MD/ImapMailService.kt" 'if (expectedUidValidity == null) prefetchedS
 mutate S9 "$MD/MailRepository.kt" 'val raw = runCatching { localRaw ?: fetchRawSource(credentials, email, emailId) }' 'val raw = runCatching { fetchRawSource(credentials, email, emailId) }' "decrypt back on the network"
 mutate S9 "$MD/MailRepository.kt" 'syncSerial.withLock { syncMailCoreSerial(credentials, budgetMs) }' 'syncMailCoreSerial(credentials, budgetMs)' "the core pass races the full sync"
 mutate S9 "app/src/main/kotlin/app/sterna/ui/message/MessageViewModel.kt" 'refreshMailboxIds(local = true)' 'refreshMailboxIds()' "the membership from the server on every open"
+mutate S10 "$UI/MessageScreen.kt" '        view.settleToken = null
+' '' "a reused view keeps the old settle token"
+mutate S10 "$UI/MessageScreen.kt" '        view.tag = null
+' '' "a reused view keeps the old load key (no reload)"
+mutate S10 "$UI/MessageScreen.kt" '                setLayerType(if (useSoftwareLayer) View.LAYER_TYPE_SOFTWARE else View.LAYER_TYPE_NONE, null)
+                webViewClient = client' '                webViewClient = client' "a pooled view skips the GPU layer latch"
+mutate S10 "$UI/ReaderViewPool.kt" '        reset(view)
+' '' "a released view kept without reset"
+mutate S10 "$MD/ReaderHandoff.kt" 'fun holdable(body: MessageBody): Boolean = body.crypto == null || body.crypto is MessageCrypto.Locked' 'fun holdable(body: MessageBody): Boolean = true' "a decrypted body held in the handoff"
+mutate S10 "app/src/main/kotlin/app/sterna/ui/SternaApp.kt" '                else if (readerSnapshotReady(readerHandoff, targetState.arguments)) EnterTransition.None
+                else fadeIn(tween(200))' '                else EnterTransition.None' "the fade dropped for every page"
 mutate P5 "$DBD/EmailBodyEntity.kt" '    val fetchedAt: Long,
 ' '' "the fetchedAt column dropped"
 mutate P5 "$DBD/EmailBodyDao.kt" 'suspend fun pruneForAccount(' 'suspend fun pruneGone(' "a body DAO query removed"

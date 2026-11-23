@@ -4359,6 +4359,9 @@ internal fun deliveredToInHeader(deliveredTo: String?, identityAddresses: List<S
  * never reaches it (#152). Beyond that it adds a scroll callback and layout metrics.
  */
 private class BodyWebView(context: Context) : WebView(context) {
+    /** #1869 step 10: true from a pool release until its `about:blank` has finished (see [ReaderWebViews]). */
+    var blankPending = false
+
     /** Invoked after every internal scroll so the host can collapse the header / reveal the bar. */
     var onScrolled: (() -> Unit)? = null
 
@@ -4709,35 +4712,15 @@ private fun EmailWebView(
     AndroidView(
         modifier = modifier,
         factory = { ctx ->
-            // UNTRUSTED_HTML (#1371): no JS, no storage, no file/content access, never mixed content, remote images
-            // gated (the client below and CloudWeb.remoteImages), pinch zoom; the software latch below still wins
-            val webView = CloudWeb.configure(BodyWebView(ctx), WebProfile.UNTRUSTED_HTML).apply {
+            // #1869 step 10: a pooled body view when one is idle (ReaderWebViews), rebound to this page's context.
+            val webView = ReaderWebViews.pool.acquire(ctx)
+            webView.apply {
                 // Compositing path. The hardware-accelerated GLFunctor lets the WebView tile its own
                 // paint, but on devices whose HWUI/GPU blobs are mismatched it dereferences a null
                 // SkSurface in RenderThread and the app SIGSEGVs the instant a body is drawn. Such
                 // devices are latched onto the software layer by [WebViewLayerGuard]; for a static,
                 // JS-disabled body the software rendering cost is negligible.
                 setLayerType(if (useSoftwareLayer) View.LAYER_TYPE_SOFTWARE else View.LAYER_TYPE_NONE, null)
-                applyFitSettings()
-                // Keep the text READABLE once [FIT_CSS] has squeezed a desktop-authored page into a
-                // phone's width. Without this the two settings above are free to satisfy "it fits" by
-                // scaling the whole page down until the body is unreadable — technically fitting, and
-                // useless. TEXT_AUTOSIZING rescales text against the viewport instead, so narrowing a
-                // 1200px layout costs column width, not legibility. NARROW_COLUMNS/SINGLE_COLUMN are
-                // the deprecated predecessors and are deliberately not used.
-                settings.layoutAlgorithm = WebSettings.LayoutAlgorithm.TEXT_AUTOSIZING
-                // Explicitly deny every path from email markup to the local filesystem, on-device
-                // storage or geolocation. Off by default on modern API levels, but untrusted HTML
-                // email warrants asserting it.
-                settings.setGeolocationEnabled(false)
-                // The way out for content that genuinely cannot fit — a wide invoice table shrunk by
-                // [FIT_CSS] until it is hard to read is only half a fix if he cannot zoom back into
-                // it. Stated explicitly rather than left to the platform default, because the cap
-                // above is what makes it matter. The on-screen +/- buttons stay off (obsolete, and
-                // they overlap the Reply/Forward bar); pinch is the gesture.
-                settings.setSupportZoom(true)
-                settings.builtInZoomControls = true
-                settings.displayZoomControls = false
                 webViewClient = client
             }
             // The WebView is deliberately NOT the AndroidView root: an intermediate FrameLayout changes
@@ -4866,6 +4849,12 @@ private fun EmailWebView(
                 }, HEIGHT_REPORT_BACKSTOP_MS)
             }
         },
+        // #1869 step 10: back to the pool, blanked and reset (ReaderWebViews.reset); the FrameLayout wrapper stays per page.
+        onRelease = { frame ->
+            val webView = frame.getChildAt(0) as? BodyWebView ?: return@AndroidView
+            frame.removeView(webView)
+            ReaderWebViews.pool.release(webView)
+        },
     )
 
     pendingLink?.let { uri ->
@@ -4976,6 +4965,11 @@ private class BlockingWebViewClient : CloudWebClient(WebProfile.UNTRUSTED_HTML) 
 
     override fun onPageFinished(view: WebView?, url: String?) {
         val wv = view ?: return
+        // #1869 step 10: the blank page a pooled view loads on release is no body: nothing to measure or reveal.
+        if (wv is BodyWebView && wv.blankPending) {
+            wv.blankPending = false
+            return
+        }
         // No JS to measure with, so poll the native content height until it stabilises (two consecutive
         // equal readings), then report the final height ONCE. This absorbs the brief reflow as text
         // lays out and inline images decode, so the body is revealed a single time. Caps at ~1 s.
@@ -5043,6 +5037,71 @@ private class BlockingWebViewClient : CloudWebClient(WebProfile.UNTRUSTED_HTML) 
 
     private companion object {
         val SAFE_OPEN_SCHEMES = setOf("http", "https", "mailto", "tel", "sms", "geo")
+    }
+}
+
+/**
+ * #1869 step 10: the reader's WebView pool (2-3 views; see [ReaderViewPool]). Each view is built ONCE on a
+ * [android.content.MutableContextWrapper] with the untrusted profile and the reader's fixed settings; a page acquires one,
+ * sets its compositing layer (the [WebViewLayerGuard] latch) and its client, and puts it in its own FrameLayout wrapper
+ * (#10). On release the page is blanked (`about:blank`) and the per-load state is reset: [BodyWebView.tag] (the load
+ * key), [BodyWebView.settleToken], [BodyWebView.reportingEnabled] and the three callbacks, and the context goes back to
+ * the application's, so an idle view holds no activity.
+ */
+private object ReaderWebViews {
+    const val MAX_IDLE = 3
+
+    val pool = ReaderViewPool<Context, BodyWebView>(
+        max = MAX_IDLE,
+        create = { base ->
+            // On a MutableContextWrapper, so a pooled view can be pointed at each page's context and back at the app's.
+            val ctx = android.content.MutableContextWrapper(base)
+            // UNTRUSTED_HTML (#1371): no JS, no storage, no file/content access, never mixed content, remote images
+            // gated (the client below and CloudWeb.remoteImages), pinch zoom; the software latch below still wins
+            CloudWeb.configure(BodyWebView(ctx), WebProfile.UNTRUSTED_HTML).apply {
+                applyFitSettings()
+                // Keep the text READABLE once [FIT_CSS] has squeezed a desktop-authored page into a
+                // phone's width. Without this the two settings above are free to satisfy "it fits" by
+                // scaling the whole page down until the body is unreadable — technically fitting, and
+                // useless. TEXT_AUTOSIZING rescales text against the viewport instead, so narrowing a
+                // 1200px layout costs column width, not legibility. NARROW_COLUMNS/SINGLE_COLUMN are
+                // the deprecated predecessors and are deliberately not used.
+                settings.layoutAlgorithm = WebSettings.LayoutAlgorithm.TEXT_AUTOSIZING
+                // Explicitly deny every path from email markup to the local filesystem, on-device
+                // storage or geolocation. Off by default on modern API levels, but untrusted HTML
+                // email warrants asserting it.
+                settings.setGeolocationEnabled(false)
+                // The way out for content that genuinely cannot fit — a wide invoice table shrunk by
+                // [FIT_CSS] until it is hard to read is only half a fix if he cannot zoom back into
+                // it. Stated explicitly rather than left to the platform default, because the cap
+                // above is what makes it matter. The on-screen +/- buttons stay off (obsolete, and
+                // they overlap the Reply/Forward bar); pinch is the gesture.
+                settings.setSupportZoom(true)
+                settings.builtInZoomControls = true
+                settings.displayZoomControls = false
+            }
+        },
+        rebind = { view, ctx -> (view.context as? android.content.MutableContextWrapper)?.baseContext = ctx },
+        reset = ::reset,
+        destroy = { it.destroy() },
+        ready = { !it.blankPending },
+    )
+
+    fun reset(view: BodyWebView) {
+        view.stopLoading()
+        // The blank page's own onPageFinished is swallowed ([BlockingWebViewClient]) and clears this, and the pool hands
+        // the view out only after that: a reused view never reports the blank page's height as a body's.
+        view.blankPending = true
+        view.loadUrl("about:blank")
+        view.tag = null
+        view.settleToken = null
+        view.reportingEnabled = false
+        view.onScrolled = null
+        view.onSized = null
+        view.onActivated = null
+        view.scrollTo(0, 0)
+        view.clearHistory()
+        (view.context as? android.content.MutableContextWrapper)?.let { it.baseContext = it.baseContext.applicationContext }
     }
 }
 

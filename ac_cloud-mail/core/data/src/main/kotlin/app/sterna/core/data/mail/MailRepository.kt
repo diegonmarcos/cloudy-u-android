@@ -3138,7 +3138,20 @@ class MailRepository(
      * or the stored body, the list row, the core document if already stored, the snooze. Account id only, no credentials.
      */
     suspend fun readerSnapshot(accountId: String, emailId: String): ReaderSnapshot =
-        LocalReaderStore(localReaderPort).snapshot(accountId, emailId)
+        readerHandoff.take(accountId, emailId) ?: LocalReaderStore(localReaderPort).snapshot(accountId, emailId)
+
+    /** #1869 step 10: the tap-time handoff ([ReaderHandoff]); refuses decrypted bodies. */
+    val readerHandoff = ReaderHandoff()
+
+    /** #1869 step 10: a list row was tapped; read the reader's snapshot NOW, so the page's first frame finds it in memory. */
+    fun preloadReader(accountId: String?, emailId: String) {
+        bgScope.launch {
+            runCatching {
+                val account = accountId ?: accountStore.currentId() ?: return@runCatching
+                readerHandoff.offer(account, emailId, LocalReaderStore(localReaderPort).snapshot(account, emailId))
+            }
+        }
+    }
 
     private val localReaderPort = object : LocalReaderPort {
         override suspend fun decrypted(accountId: String, emailId: String): MessageBody? =

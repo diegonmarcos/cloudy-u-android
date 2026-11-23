@@ -348,6 +348,8 @@ private fun MainNavHost(
     // Devices that SIGSEGV'd inside a message fade (#10) have it latched off. Read once per process.
     val navContext = LocalContext.current
     val messageFadeDisabled = remember { NavFadeGuard.fadeDisabled(navContext) }
+    // #1869 step 10: the tap-time handoff, read by the reader route's fade.
+    val readerHandoff = remember { (navContext.applicationContext as Application).container.mailRepository.readerHandoff }
     // rememberMotionEnabled() is @Composable, so it is captured here and read inside the transition
     // lambdas, which do not run in a composable context.
     val motionEnabled = rememberMotionEnabled()
@@ -379,6 +381,8 @@ private fun MainNavHost(
             }
             InboxScreen(
                 onOpenEmail = { id, accountId, index, fromSearch ->
+                    // #1869 step 10: the reader's local snapshot starts at the tap, before the navigation.
+                    (navContext.applicationContext as Application).container.mailRepository.preloadReader(accountId, id)
                     // Carry the tapped position and its context so the reader pages over the same
                     // entries.
                     val anchor = MessageAnchor(id, accountId, if (fromSearch) "search" else "list", index, null)
@@ -463,7 +467,10 @@ private fun MainNavHost(
             // fade-window crash (#10) or reduced motion is on — symmetrically, so there is no
             // half-animated open/close (#100).
             enterTransition = {
-                if (messageFadeDisabled || !motionEnabled) EnterTransition.None else fadeIn(tween(200))
+                // #1869 step 10: no 200 ms fade over a page whose snapshot the tap already read (it paints at once).
+                if (messageFadeDisabled || !motionEnabled) EnterTransition.None
+                else if (readerSnapshotReady(readerHandoff, targetState.arguments)) EnterTransition.None
+                else fadeIn(tween(200))
             },
             popExitTransition = {
                 if (messageFadeDisabled || !motionEnabled) ExitTransition.None else fadeOut(tween(200))
@@ -781,4 +788,11 @@ internal fun appLabelOf(context: android.content.Context, packageName: String?):
         val pm = context.packageManager
         pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString()
     }.getOrDefault(packageName)
+}
+
+/** #1869 step 10: whether the tap already read the reader's snapshot for the route's message ([ReaderHandoff]). */
+internal fun readerSnapshotReady(handoff: app.sterna.core.data.mail.ReaderHandoff, arguments: android.os.Bundle?): Boolean {
+    val emailId = arguments?.getString("emailId")?.let { Uri.decode(it) } ?: return false
+    val accountId = arguments.getString("accountId")?.let { Uri.decode(it) }?.ifBlank { null }
+    return handoff.ready(accountId, emailId)
 }
