@@ -35,6 +35,7 @@ on:
       - "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetConfigsUi.kt"
       - "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/fleetconfigs/FleetGeneralState.kt"
       - "ac_cloud-c3-webserver/server/ui/shell.html"
+      - "ac_cloud-code/src/cloud/profile.js"
       - "ac_cloud-media-center/web/assets/configs.js"
     # ── end MANAGED-GUARD-TRIGGERS ──
     branches: [main]
