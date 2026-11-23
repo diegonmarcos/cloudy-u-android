@@ -102,7 +102,7 @@ sealed class ImportState {
 }
 
 /**
- * #1853 one import at a time, on its own thread: parse and store ([TakeoutImporter]), then rebuild the segments and rollups
+ * #1853 one import at a time (the thread is the host's: Cloud Nav's foreground service, or [start]'s plain thread): parse and store ([TakeoutImporter]), then rebuild the segments and rollups
  * ([TakeoutRebuild]) and call [afterImport] (Cloud Nav rebuilds its aggregates there). Cancel stops at the next record.
  */
 object ImportController {
@@ -116,12 +116,23 @@ object ImportController {
 
     fun cancel() { cancel = true }
 
-    /** Starts the import of [uri]; false when one is already running. */
+    /** Takes the one import slot for [uri] (state Running at once, so the UI shows it); false when one is already running. */
+    fun claim(uri: Uri): Boolean = synchronized(this) { if (running) false else { state = ImportState.Running(uri.lastPathSegment ?: "", null, "reading"); cancel = false; true } }
+
+    /**
+     * Starts the import of [uri] on a plain thread; false when one is already running. Cloud Nav runs imports in its foreground
+     * service (TakeoutImportService, #1853) and falls back here only when the service cannot be held.
+     */
     fun start(ctx: Context, uri: Uri, zone: ZoneId = ZoneId.systemDefault(), onFinished: () -> Unit = {}): Boolean {
-        synchronized(this) { if (running) return false; state = ImportState.Running(uri.lastPathSegment ?: "", null, "reading"); cancel = false }
+        if (!claim(uri)) return false
+        startClaimed(ctx, uri, zone, onFinished)
+        return true
+    }
+
+    /** The thread half of [start], for a caller that already holds the slot from [claim]. */
+    fun startClaimed(ctx: Context, uri: Uri, zone: ZoneId = ZoneId.systemDefault(), onFinished: () -> Unit = {}) {
         val app = ctx.applicationContext
         Thread({ runSync(app, uri, zone); onFinished() }, "takeout-import").apply { isDaemon = true; start() }
-        return true
     }
 
     /** The whole import on the calling thread (the thread of [start], and the emulator test). */

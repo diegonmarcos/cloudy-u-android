@@ -16,6 +16,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.diegonmarcos.cloudnav.maps.MapsDb
 import com.diegonmarcos.cloudnav.maps.takeout.ImportController
+import com.diegonmarcos.cloudnav.tracker.TakeoutImportService
 import com.diegonmarcos.cloudnav.maps.takeout.ImportState
 import com.diegonmarcos.cloudnav.tracker.AggregatesStore
 import com.diegonmarcos.cloudnav.tracker.DayFragment
@@ -124,10 +125,14 @@ class TakeoutImportTest {
                 assertTrue("the folder picker button is there", compose.onAllNodesWithTag(ImportTags.FOLDER).fetchSemanticsNodes().isNotEmpty())
 
                 // the picker's result: the zip's Uri goes to the screen's import entry
+                val served = TakeoutImportService.started
                 scenario.onActivity { day.importFrom(Uri.fromFile(file)) }
+                // #1853 the import runs in the foreground service (dataSync, progress notification, Cancel), not on a bare thread
+                await("the import is taken by TakeoutImportService", 30_000) { TakeoutImportService.started > served }
                 await("wait@109+9", 120_000) { ImportController.state is ImportState.Done || ImportController.state is ImportState.Failed }
                 val done = ImportController.state
                 assertTrue("import ended well: " + ((done as? ImportState.Failed)?.message ?: ""), done is ImportState.Done)
+                await("the service stops itself when the import ends", 30_000) { !TakeoutImportService.running }
                 val sum = (done as ImportState.Done).summary
                 assertEquals("visits", 2L, sum.visits); assertEquals("activities", 1L, sum.activities); assertEquals("places", 2, sum.places)
                 assertEquals("raw positions", 7L + 9L + 9L, sum.fixes); assertEquals("days", 2, sum.days); assertTrue(sum.failedFiles.isEmpty())
@@ -162,7 +167,9 @@ class TakeoutImportTest {
                 await("wait@143+9", 30_000) { compose.onAllNodesWithText("Germany", substring = true).fetchSemanticsNodes().isNotEmpty() }
 
                 // the same zip again: nothing doubles
+                val served2 = TakeoutImportService.started
                 scenario.onActivity { day.importFrom(Uri.fromFile(file)) }
+                await("the re-import (resume) goes through the service again", 30_000) { TakeoutImportService.started > served2 }
                 await("wait@147+9", 120_000) { ImportController.state is ImportState.Done || ImportController.state is ImportState.Failed }
                 assertTrue(ImportController.state is ImportState.Done)
                 assertEquals("a re-import changes no row count", before1, counts(db))

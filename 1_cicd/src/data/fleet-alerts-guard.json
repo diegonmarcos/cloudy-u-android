@@ -297,6 +297,12 @@
       "why": "#517 The MyHealth data-widget card (steps, resting heart rate, sleep), re-posted through NotifyGate.postCtx. Standing status, not an alert about the fleet."
     },
     {
+      "path": "ac_cloud-nav/app/src/main/java/com/diegonmarcos/cloudnav/tracker/TakeoutImportService.kt",
+      "kind": "foreground_service",
+      "notify_calls": 1,
+      "why": "#1853 the Takeout import foreground service (type dataSync): its ongoing silent progress line (percent, files, positions, Cancel) and, once the import ends or Android's dataSync time limit stops it, the same id's one-line result. A progress indicator for the import the user started, not an alert about the fleet."
+    },
+    {
       "path": "ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/TorrentService.kt",
       "kind": "foreground_service",
       "notify_calls": 1,

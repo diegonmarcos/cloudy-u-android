@@ -35,11 +35,11 @@ class DayFragment : KitComposeFragment() {
     private val pickFile = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { importFrom(it) } }
     private val pickFolder = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri -> uri?.let { importFrom(it) } }
 
-    /** Starts the import of a picked zip, JSON file or folder; the Day, Trips, Places, Cities and World views reload when it ends. */
+    /** Starts the import of a picked zip, JSON file or folder in the foreground service (progress notification, Cancel); the Day, Trips, Places, Cities and World views reload when it ends. */
     fun importFrom(uri: android.net.Uri) {
         tab = DayTab.IMPORT
         val act = activity
-        ImportController.start(requireContext(), uri) { act?.runOnUiThread { if (isAdded) load(ui.date) } }
+        TakeoutImportService.start(requireContext(), uri) { act?.runOnUiThread { if (isAdded) load(ui.date) } }
     }
 
     override fun onResume() { super.onResume(); load(ui.date) }

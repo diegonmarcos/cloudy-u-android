@@ -7,6 +7,7 @@
 #   K4 one store: the import opens no database of its own and keeps no preferences (no new store to declare in fleet-config).
 #   K5 tracked wins: views hide an imported row only under a lower-priority overlap; a tracked rebuild never deletes imports; the tracked engine reads tracked fixes only.
 #   K6 UI + rule 16: the Import tab with both SAF pickers, progress, cancel and summary, and every earlier Day tab is still there.
+#   K8 foreground service (#1853): the import runs in TakeoutImportService (dataSync, onTimeout(startId, fgsType), DataSyncBudget, progress notification with Cancel), declared with its permission; the emulator test asserts the service path.
 #   K7 the checks bite: each planted regression (a whole-file read, a dropped tracked guard, a lost tab, a lost source column) fails.
 set -eu
 HERE="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
@@ -22,7 +23,7 @@ NAV = "ac_cloud-nav/app/src/main/java/com/diegonmarcos/cloudnav/tracker/"
 TESTS = M + "src/test/java/com/diegonmarcos/cloudnav/maps/takeout/"
 FIX = M + "src/test/resources/takeout/"
 FILES = [TK + f for f in ["TakeoutJson.kt", "TakeoutParsers.kt", "TakeoutSchema.kt", "TakeoutImporter.kt", "TakeoutRebuild.kt", "TakeoutAndroid.kt", "TakeoutFieldSpec.kt"]] + \
-        [MAPS + "MapsDb.kt", MAPS + "TimelineSync.kt", NAV + "DayScreen.kt", NAV + "DayFragment.kt", NAV + "TakeoutImportScreen.kt"] + \
+        [MAPS + "MapsDb.kt", MAPS + "TimelineSync.kt", NAV + "DayScreen.kt", NAV + "DayFragment.kt", NAV + "TakeoutImportScreen.kt", NAV + "TakeoutImportService.kt", "ac_cloud-nav/app/src/main/AndroidManifest.xml", "ac_cloud-nav/app/src/androidTest/java/com/diegonmarcos/cloudnav/TakeoutImportTest.kt"] + \
         [TESTS + f for f in ["TakeoutParityTest.kt", "TakeoutImportDbTest.kt", "TakeoutParsersTest.kt", "TakeoutDeriveTest.kt", "TakeoutJsonTest.kt"]] + \
         [FIX + f for f in ["records/Records.json", "semantic/2026/2026_MARCH.json", "timeline/Timeline.json", "android/location-history.json"]]
 fails = []
@@ -50,6 +51,11 @@ def check(top):
     r["k6"] = ('IMPORT("Import")' in ds and "ActivityResultContracts.OpenDocument()" in dfr and "ActivityResultContracts.OpenDocumentTree()" in dfr and "ImportController.cancel()" in dfr
                and all(t in ui for t in ["ImportTags.FILE", "ImportTags.FOLDER", "ImportTags.CANCEL", "ImportTags.SUMMARY", "Days:", "Visits:", "Activities:", "Places:"]))
     r["k6b"] = [t for t in ['DAY("Day")', 'TRIPS("Trips")', 'PLACES("Places")', 'CITIES("Cities")', 'WORLD("World")', 'INSIGHTS("Insights")'] if t not in ds]
+    sv = s.get(NAV + "TakeoutImportService.kt", ""); mf = s.get("ac_cloud-nav/app/src/main/AndroidManifest.xml", ""); et = s.get("ac_cloud-nav/app/src/androidTest/java/com/diegonmarcos/cloudnav/TakeoutImportTest.kt", "")
+    r["k8"] = (re.search(r"override fun onTimeout\(startId: Int, fgsType: Int\)", sv) is not None and "FOREGROUND_SERVICE_TYPE_DATA_SYNC" in sv and "DataSyncBudget.mayHold(" in sv and "DataSyncBudget.begin(" in sv and "DataSyncBudget.end(" in sv
+               and "ACTION_CANCEL" in sv and 'addAction(0, "Cancel"' in sv and "ImportController.runSync(" in sv and "setProgress(" in sv
+               and 'android:name=".tracker.TakeoutImportService"' in mf and 'android:foregroundServiceType="dataSync"' in mf and "android.permission.FOREGROUND_SERVICE_DATA_SYNC" in mf
+               and "TakeoutImportService.start(" in dfr and "ImportController.start(" not in dfr and "TakeoutImportService.started" in et)
     return r
 print("== K1-K6 on the real sources ==")
 r = check(repo)
@@ -59,6 +65,7 @@ ok(r["k3"], "FieldSpec lists the three formats, with fixtures and parity tests (
 ok(not r["k4"], "the import opens no database or preferences of its own (maps.db only)", "a new store in the takeout package: " + ", ".join(r["k4"]))
 ok(r["k5"], "tracked wins: views, tracked rebuild and the tracked engine input", "the tracked-wins rules are incomplete")
 ok(r["k6"] and not r["k6b"], "the Import tab with both pickers, progress, cancel, summary; every earlier Day tab is still there", "the import UI or an earlier tab is gone: " + ", ".join(r["k6b"]))
+ok(r["k8"], "the import runs in the dataSync foreground service: budget gate, onTimeout, progress + Cancel, manifest and permission, emulator test on the service", "the foreground service wiring is incomplete (TakeoutImportService, onTimeout, DataSyncBudget, Cancel, manifest or test)")
 print("== K7: the checks bite ==")
 tmp = tempfile.mkdtemp()
 try:
@@ -76,7 +83,10 @@ try:
     s = mut(TK + "TakeoutSchema.kt", "ALTER TABLE fixes ADD COLUMN source", "ALTER TABLE fixes ADD COLUMN src"); ok(not check(tmp)["k1"], "a lost source column fails K1", "K1 missed the source column"); restore(TK + "TakeoutSchema.kt", s)
     s = mut(TK + "TakeoutImporter.kt", "object TakeoutImporter {", "object TakeoutImporter {\n    val prefs = ctx.getSharedPreferences(\"x\", 0)"); ok(bool(check(tmp)["k4"]), "preferences of its own fail K4", "K4 missed new preferences"); restore(TK + "TakeoutImporter.kt", s)
     s = mut(TK + "TakeoutRebuild.kt", "object TakeoutRebuild {", "object TakeoutRebuild {\n    val db = ctx.openOrCreateDatabase(\"x\", 0, null)"); ok(bool(check(tmp)["k4"]), "a database of its own fails K4", "K4 missed a second database"); restore(TK + "TakeoutRebuild.kt", s)
-    ok(not check(tmp)["k2"] and check(tmp)["k5"] and check(tmp)["k1"] and check(tmp)["k6"], "the pristine copy passes again", "the pristine copy fails")
+    s = mut(NAV + "TakeoutImportService.kt", "override fun onTimeout(startId: Int, fgsType: Int)", "fun onTimeoutGone(startId: Int, fgsType: Int)"); ok(not check(tmp)["k8"], "a service without onTimeout fails K8", "K8 missed a lost onTimeout"); restore(NAV + "TakeoutImportService.kt", s)
+    s = mut("ac_cloud-nav/app/src/main/AndroidManifest.xml", 'android:foregroundServiceType="dataSync"', ''); ok(not check(tmp)["k8"], "an undeclared service type fails K8", "K8 missed the manifest type"); restore("ac_cloud-nav/app/src/main/AndroidManifest.xml", s)
+    s = mut(NAV + "DayFragment.kt", "TakeoutImportService.start(", "ImportController.start("); ok(not check(tmp)["k8"], "an import back on a bare thread fails K8", "K8 missed the thread path"); restore(NAV + "DayFragment.kt", s)
+    ok(not check(tmp)["k2"] and check(tmp)["k5"] and check(tmp)["k1"] and check(tmp)["k6"] and check(tmp)["k8"], "the pristine copy passes again", "the pristine copy fails")
 finally:
     shutil.rmtree(tmp)
 print(f"\n{'FAIL' if fails else 'PASS'}: test-takeout-import ({len(fails)} failing)")
