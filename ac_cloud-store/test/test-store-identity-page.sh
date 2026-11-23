@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Cloud Store > Access > Identity: libs:appstore's FleetIdentityPage (the page SuperApp > Configs > Apps Mesh > Identity draws).
-#   I1 build.json::ui access.pages are exactly mcp, apis, ipc, identity, android, in that order ("Identity" labelled; #1718)
+#   I1 build.json::ui access.pages are exactly mesh, mcp, apis, ipc, identity, android, in that order ("Identity" labelled; #1718)
 #   I2 AccessPage routes PAGE_IDENTITY to IdentityAccessPage, whose Linux identity view is the shared FleetIdentityPage
 #   I3 one FleetIdentityPage in the fleet (no second copy)
 #   I4 build.json::ui._doc names the Identity tab
@@ -22,11 +22,11 @@ check() {  # check <root> -> number of failures
   local BJ="$R/ac_cloud-store/build.json" AP="$R/ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt"
   local FI="$R/ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/FleetIdentity.kt"
   for x in "$BJ" "$AP" "$FI"; do [ -f "$x" ] || { bad "missing ${x#$R/}"; return 1; }; done
-  python3 - "$BJ" <<'PY' && ok "I1 Access = mcp, apis, ipc, identity, android" || bad "I1 Access pages are not mcp, apis, ipc, identity, android in order"
+  python3 - "$BJ" <<'PY' && ok "I1 Access = mesh, mcp, apis, ipc, identity, android" || bad "I1 Access pages are not mesh, mcp, apis, ipc, identity, android in order"
 import json, sys
 s = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'access')
 ids = [p['id'] for p in s['pages']]
-sys.exit(0 if ids == ['mcp', 'apis', 'ipc', 'identity', 'android'] and s['pages'][3]['label'] == 'Identity' else 1)
+sys.exit(0 if ids == ['mesh', 'mcp', 'apis', 'ipc', 'identity', 'android'] and s['pages'][4]['label'] == 'Identity' else 1)
 PY
   grep -q 'const val PAGE_IDENTITY = "identity"' "$AP" && grep -q 'PAGE_IDENTITY -> IdentityAccessPage()' "$AP" && grep -q 'if (view == AccessPages.VIEW_UID) FleetIdentityPage() else DirectAccessPage()' "$AP" \
     && ok "I2 AccessPage routes identity to the shared FleetIdentityPage" || bad "I2 AccessPage does not route identity to FleetIdentityPage"

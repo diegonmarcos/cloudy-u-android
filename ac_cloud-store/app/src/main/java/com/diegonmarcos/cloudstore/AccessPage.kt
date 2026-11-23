@@ -44,6 +44,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.diegonmarcos.superapp.appstore.BuildConfig as StoreBuild
 import com.diegonmarcos.superapp.appstore.StoreDensity
+import com.diegonmarcos.superapp.appstore.AppsMeshFragment
+import androidx.fragment.compose.AndroidFragment
 import com.diegonmarcos.superapp.appstore.FleetIdentityPage
 import com.diegonmarcos.superapp.appstore.IpcMeshPage
 import com.diegonmarcos.superapp.fleetdata.DeviceAccess
@@ -51,7 +53,7 @@ import androidx.compose.ui.platform.testTag
 import com.diegonmarcos.superapp.updater.Fleet
 
 /**
- * Store > Access (#1718): what this phone exposes and who may reach it, in five pages (build.json::ui access.pages: mcp, apis,
+ * Store > Access (#1718): what this phone exposes and who may reach it, in six pages (build.json::ui access.pages: mesh, mcp, apis,
  * ipc, identity, android) MainActivity draws with PageTabs.
  *
  *  - MCP (device): the on-device MCP doors and the tools that come in through each.
@@ -66,12 +68,15 @@ import com.diegonmarcos.superapp.updater.Fleet
  *    privileged plane).
  *
  * MCP, APIs and the gateway half of IPC are drawn from ONE model, libs:fleet-data-client DeviceAccess, the same model Cloud C3
- * Webserver > API draws. Apps Mesh is gone (#1580: one mesh gateway, no per-app mesh endpoints). No pane renders a toggle for a
+ * Webserver > API draws. Apps Mesh stays the first page (the same AppsMeshFragment SuperApp hosts). No pane renders a toggle for a
  * grant it does not control.
  */
 @Composable
 fun AccessPage(page: String) {
     when (AccessPages.resolve(page)) {
+        // Apps Mesh: the SAME AppsMeshFragment SuperApp's Apps Access tile opens (one page, two entry points); its endpoints are on APIs.
+        PAGE_MESH -> AndroidFragment<AppsMeshFragment>(Modifier.fillMaxSize(),
+            arguments = androidx.core.os.bundleOf(AppsMeshFragment.ARG_SHOW_ENDPOINTS to false))
         PAGE_MCP -> DeviceMcpPage()
         PAGE_APIS -> DeviceApisPage()
         PAGE_IPC -> IpcAccessPage()
@@ -80,6 +85,7 @@ fun AccessPage(page: String) {
     }
 }
 
+const val PAGE_MESH = "mesh"
 const val PAGE_MCP = "mcp"
 const val PAGE_APIS = "apis"
 const val PAGE_IPC = "ipc"
@@ -88,8 +94,8 @@ const val PAGE_ANDROID = "android"
 
 /** The Access pages, and where an id that left (a saved tab, an old intent) lands now. */
 object AccessPages {
-    /** mesh: Apps Mesh was retired by #1580, its gateway is on IPC. mcpapi: split into MCP and APIs. cloud: Cloud Perms moved into Identity. */
-    val MOVED = mapOf("mesh" to PAGE_IPC, "mcpapi" to PAGE_APIS, "cloud" to PAGE_IDENTITY)
+    /** mcpapi: split into MCP and APIs. cloud: Cloud Perms moved into Identity. mesh is a page again (#1718 had dropped it; nothing is removed). */
+    val MOVED = mapOf("mcpapi" to PAGE_APIS, "cloud" to PAGE_IDENTITY)
     fun resolve(page: String): String = MOVED[page] ?: page
 
     /** The view each two-view page opens on; a test (or a deep link) sets it before the page composes. */

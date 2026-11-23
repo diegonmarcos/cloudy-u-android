@@ -94,9 +94,9 @@ check() {
   done
   # Apps Mesh left SuperApp's Configs for Store > Access (one Apps Access tile, test-apps-mesh.sh C1): SuperApp routes no apps-mesh page of its own.
   printf '%s' "$sp" | grep -q 'pageId == "apps-mesh"' && bad "SuperApp still routes an apps-mesh page (Apps Mesh is retired, #1580)" || ok "SuperApp routes no apps-mesh page of its own (Apps Mesh is retired, #1580)"
-  # #1718/#1580 Apps Mesh is retired from the Store (one mesh gateway): no page hosts AppsMeshFragment, and an old `mesh` id lands on Access > IPC
-  ! grep -rq 'AppsMeshFragment' "$S/app/src/main/java" && grep -q '"mesh" to PAGE_IPC' "$S/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt" \
-    && ok "the Store hosts no Apps Mesh page; the old mesh id opens Access > IPC" || bad "the Store still hosts Apps Mesh, or the old mesh id lands nowhere"
+  # Apps Mesh is Access's first page (#896.3; #1718 had dropped it): the Store's Access hosts the same AppsMeshFragment, and `mesh` is no moved id
+  grep -q 'AndroidFragment<AppsMeshFragment>' "$S/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt" && ! grep -q '"mesh" to ' "$S/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt" \
+    && ok "the Store's Access hosts Apps Mesh (the same AppsMeshFragment); mesh is not a moved id" || bad "the Store's Access does not host Apps Mesh, or mesh is mapped away"
 
   # 4. one package name, one OPEN action
   local appid pkg action
@@ -161,7 +161,7 @@ PY
   grep -q 'StoreDensity\.' "$S/app/src/main/java/com/diegonmarcos/cloudstore/ConfigsPage.kt" && ok "Cloud Store's screens read StoreDensity" || bad "Cloud Store's Configs page does not read StoreDensity"
   grep -q 'StoreDensity\.T_' "$L/StoreCloudFragment.kt" && grep -q 'StoreDensity\.T_' "$L/StorePhoneFragment.kt" && ok "the Cloud and Phone shelves draw their type from the ramp" || bad "a shelf page does not use the StoreDensity type ramp"
   # 7. #868 the fleet nav pattern: the island's five pages (#896) are build.json::ui.sections, the bar is the shared island
-  python3 - "$S/build.json" "$L/../../../../../assets/appstore-feeds.json" <<'PY' && ok "ui.bottom_nav is EXACTLY cloud, phone, search, torrent, access (five, each a ui.sections id; settings is the section the top bar's Configs opens), Phone's pages are installed|declared, Search's the source subpages search-cloudy|search-android|search-torrent, Feed is not a destination (it is two panels on the Cloud page), Access's mesh|ipc|identity|android|cloud, default Cloud" || bad "build.json ui.bottom_nav/sections/default_section do not declare cloud, phone, search, feed, access (+ the settings section), default cloud"
+  python3 - "$S/build.json" "$L/../../../../../assets/appstore-feeds.json" <<'PY' && ok "ui.bottom_nav is EXACTLY cloud, phone, search, torrent, access (five, each a ui.sections id; settings is the section the top bar's Configs opens), Phone's pages are installed|declared, Search's the source subpages search-cloudy|search-android|search-torrent, Feed is not a destination (it is two panels on the Cloud page), Access's mesh|mcp|apis|ipc|identity|android, default Cloud" || bad "build.json ui.bottom_nav/sections/default_section do not declare cloud, phone, search, feed, access (+ the settings section), default cloud"
 import json, os, sys
 ui = json.load(open(sys.argv[1], encoding='utf-8')).get('ui') or {}
 secs = {s.get('id'): s for s in ui.get('sections') or []}
@@ -170,7 +170,7 @@ assert feeds is None or [f['id'] for f in feeds][:3] == ['commits', 'prs', 'cicd
 pg = lambda i: [p.get('id') for p in secs.get(i, {}).get('pages') or []]
 ok = (ui.get('bottom_nav') == ['cloud', 'phone', 'search', 'torrent', 'access'] and 'feed' not in secs and 'torrent' in secs
       and set(ui['bottom_nav']) <= set(secs) and 'settings' in secs and 'mesh' not in secs and 'perms' not in secs
-      and pg('access') == ['mcp', 'apis', 'ipc', 'identity', 'android']
+      and pg('access') == ['mesh', 'mcp', 'apis', 'ipc', 'identity', 'android']
       and pg('phone') == ['installed', 'declared'] and 'search' in secs and pg('search') == ['search-cloudy', 'search-android', 'search-torrent']
       and ui.get('default_section') == 'cloud')
 sys.exit(0 if ok else 1)
@@ -239,8 +239,7 @@ mutate "package name drifts" super/apps/CloudStoreHandoff.kt 'const val PKG = "c
 mutate "OPEN action dropped" store/app/src/main/AndroidManifest.xml '<action android:name="com.diegonmarcos.cloudstore.OPEN" />' '' || M=$((M+1))
 mutate "Cloud Store gives up the pass" store/app/src/main/java/com/diegonmarcos/cloudstore/App.kt 'runsFleetPass = { true }' 'runsFleetPass = { false }' || M=$((M+1))
 mutate "APIs page dropped from Access" store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt 'PAGE_APIS -> DeviceApisPage()' 'PAGE_APIS -> AndroidPermsPage()' || M=$((M+1))
-mutate "Apps Mesh hosted in the Store again" store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt 'PAGE_MCP -> DeviceMcpPage()' 'PAGE_MCP -> androidx.fragment.compose.AndroidFragment<com.diegonmarcos.superapp.appstore.AppsMeshFragment>()' || M=$((M+1))
-mutate "the old mesh id lands nowhere" store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt '"mesh" to PAGE_IPC, ' '' || M=$((M+1))
+mutate "Access drops the Apps Mesh page" store/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt 'PAGE_MESH -> AndroidFragment<AppsMeshFragment>' 'PAGE_MESH -> DeviceMcpPage()' || M=$((M+1))
 mutate "SuperApp routes its own apps-mesh page again" super/launcher/SectionPages.kt 'sectionId == "config" && pageId == "adb-shell"' 'pageId == "apps-mesh" -> null
         sectionId == "config" && pageId == "adb-shell"' || M=$((M+1))
 mutate "island replaced by a TabRow" store/app/src/main/java/com/diegonmarcos/cloudstore/MainActivity.kt 'NavBarBottomHost(' 'TabRow(' || M=$((M+1))

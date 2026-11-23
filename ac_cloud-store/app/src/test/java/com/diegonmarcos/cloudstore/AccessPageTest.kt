@@ -65,18 +65,18 @@ class AccessPageTest {
 
     /**
      * #1718 every Access page opens in the Store shell with nothing installed and no dataset served (Robolectric has no fleet
-     * data provider): each says why instead of throwing. The ids that left (mesh, mcpapi, cloud) land on the page that took
-     * their content, and no Cloud Perms or Apps Mesh page exists any more.
+     * data provider): each says why instead of throwing. Apps Mesh is the first page (it hosts a fragment, exercised on device). The ids that left (mcpapi, cloud) land on the page that took
+     * their content, and no Cloud Perms page exists any more.
      */
     @Test
     fun `every Access page opens with no dataset served, and the ids that left land on their new page`() {
-        assertEquals(PAGE_IPC, AccessPages.resolve("mesh")); assertEquals(PAGE_APIS, AccessPages.resolve("mcpapi")); assertEquals(PAGE_IDENTITY, AccessPages.resolve("cloud"))
+        assertEquals(PAGE_MESH, AccessPages.resolve("mesh")); assertEquals(PAGE_APIS, AccessPages.resolve("mcpapi")); assertEquals(PAGE_IDENTITY, AccessPages.resolve("cloud"))
         val declared = MainActivity.NAV.section(MainActivity.TAB_ACCESS)!!.pages.map { it.id }
-        assertEquals(listOf(PAGE_MCP, PAGE_APIS, PAGE_IPC, PAGE_IDENTITY, PAGE_ANDROID), declared)
+        assertEquals(listOf(PAGE_MESH, PAGE_MCP, PAGE_APIS, PAGE_IPC, PAGE_IDENTITY, PAGE_ANDROID), declared)
         AccessPages.identityView = AccessPages.VIEW_DIRECT
         var shown by mutableStateOf(declared.first())
         compose.setContent { KitDenseMaterial(darkColorScheme()) { Surface(Modifier.fillMaxSize()) { key(shown) { AccessPage(shown) } } } }
-        for (page in declared + listOf("mesh", "mcpapi", "cloud")) {
+        for (page in declared.filter { it != PAGE_MESH } + listOf("mcpapi", "cloud")) {
             shown = page
             compose.waitForIdle()
             val want = when (AccessPages.resolve(page)) {

@@ -559,7 +559,7 @@ class StoreCloudFragment : KitComposeFragment() {
             tags = FILTER_TAGS)
         FleetList(ctx, list, hasLibSections)
         if (buildTimeLibs.isNotEmpty()) BuildTimeLibs(buildTimeLibs == "ml")
-        if (tabs.getOrNull(tab)?.id == "apps") RetiredSection(ctx)
+        if (tab == 0) RetiredSection(ctx)  // the first declared group (Apps) carries the retired apps; no group id is written here
     }
 
     /**

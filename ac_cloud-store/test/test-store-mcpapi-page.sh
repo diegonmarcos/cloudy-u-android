@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # #1718 Cloud Store > Access > MCP (device) and APIs (they replace #1211's Apps MCP-API page; nothing it listed is lost).
-#   M1 build.json access.pages: mcp ("MCP (device)") first, apis ("APIs") right after it
+#   M1 build.json access.pages: mesh (Apps Mesh) first, then mcp ("MCP (device)"), apis ("APIs") right after it
 #   M2 AccessPage routes PAGE_MCP to DeviceMcpPage and PAGE_APIS to DeviceApisPage (one definition each); the superseded
 #      AppsMcpApiPage is gone, so there is one list of endpoints, not two
 #   M3 assets/apps-mcp-api.json declares the three kinds (mcp, debug, app), the apps group exists in the baked
@@ -29,11 +29,11 @@ check() {
   local BJ="$R/ac_cloud-store/build.json" AP="$R/$CS/AccessPage.kt" PG="$R/$CS/DeviceAccessPages.kt"
   local AS="$R/$LIB/assets/apps-mcp-api.json" FL="$R/aa_cloud-superapp/data/constellation-fleet.json"
   for x in "$BJ" "$AP" "$PG" "$AS" "$FL" "$R/$MODEL" "$R/$DS" "$R/$GEN"; do [ -f "$x" ] || { bad "missing ${x#$R/}"; return 1; }; done
-  python3 -I - "$BJ" <<'PY' && ok "M1 mcp first, apis right after it, labelled MCP (device) and APIs" || bad "M1 Access pages do not start with MCP (device), APIs"
+  python3 -I - "$BJ" <<'PY' && ok "M1 mesh first, then mcp, apis right after it, labelled MCP (device) and APIs" || bad "M1 Access pages do not start with mesh, MCP (device), APIs"
 import json, sys
 s = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'access')
 ids = [p['id'] for p in s['pages']]; lab = {p['id']: p['label'] for p in s['pages']}
-sys.exit(0 if ids[:2] == ['mcp', 'apis'] and lab['mcp'] == 'MCP (device)' and lab['apis'] == 'APIs' and 'mcpapi' not in ids and 'mesh' not in ids and 'cloud' not in ids else 1)
+sys.exit(0 if ids[:3] == ['mesh', 'mcp', 'apis'] and lab['mcp'] == 'MCP (device)' and lab['apis'] == 'APIs' and 'mcpapi' not in ids and 'cloud' not in ids else 1)
 PY
   grep -q 'PAGE_MCP -> DeviceMcpPage()' "$AP" && grep -q 'PAGE_APIS -> DeviceApisPage()' "$AP" && grep -q 'const val PAGE_MCP = "mcp"' "$AP" && grep -q 'const val PAGE_APIS = "apis"' "$AP" \
     && ok "M2 AccessPage routes mcp and apis to the device access pages" || bad "M2 AccessPage does not route mcp / apis"

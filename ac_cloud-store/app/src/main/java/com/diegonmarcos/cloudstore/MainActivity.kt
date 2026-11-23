@@ -187,7 +187,7 @@ class MainActivity : AppCompatActivity() {
             val target = AccessPages.resolve(pg)
             if (NAV.section(TAB_ACCESS)?.pages?.any { it.id == target } == true) choose(TAB_ACCESS, target)
         }
-        // SuperApp's apps-mesh page used to open the Mesh tab. Apps Mesh is retired (#1580: one mesh gateway); the gateway's routes are Access > IPC.
+        // SuperApp's apps-mesh page used to open the Mesh tab; Apps Mesh is Access's first page now.
         if (tab == LEGACY_MESH) { choose(TAB_ACCESS, AccessPages.resolve(LEGACY_MESH)); return TAB_ACCESS }
         // Feed moved into the Cloud page (Commits and CI-CD panels): an intent asking for the old tab opens Cloud.
         if (tab == LEGACY_FEED) return TAB_CLOUD
@@ -197,7 +197,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         /** Intent extra naming the tab to open: [TAB_CLOUD], [TAB_PHONE], [TAB_SEARCH], [TAB_TORRENT] or [TAB_ACCESS]. */
         const val EXTRA_TAB = "tab"
-        /** Intent extra naming one page of the tab (with [TAB_ACCESS]: mcp, apis, ipc, identity or android); unknown = the tab's own choice. */
+        /** Intent extra naming one page of the tab (with [TAB_ACCESS]: mesh, mcp, apis, ipc, identity or android); unknown = the tab's own choice. */
         const val EXTRA_PAGE = "page"
         const val TAB_CLOUD = "cloud"
         const val TAB_PHONE = "phone"
@@ -206,7 +206,7 @@ class MainActivity : AppCompatActivity() {
         /** The old Feed tab: its Commits and CI-CD feeds are panels on the Cloud page now. */
         private const val LEGACY_FEED = "feed"
         const val TAB_ACCESS = "access"
-        /** The old Mesh tab: Apps Mesh is retired (#1580); an intent asking for `mesh` opens Access > IPC, where the one mesh gateway is. */
+        /** The old Mesh tab: an intent asking for `mesh` opens Access > Apps Mesh. */
         private const val LEGACY_MESH = "mesh"
         const val TAB_SETTINGS = "settings"
         /** build.json::ui as baked into BuildConfig: the island's items and the section ids. */
