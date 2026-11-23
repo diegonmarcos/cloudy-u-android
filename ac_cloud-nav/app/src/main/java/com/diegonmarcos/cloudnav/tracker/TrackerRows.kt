@@ -15,6 +15,10 @@ data class TimelineRow(
     val lat: Double?, val lon: Double?,
     val mode: String,        // walk|car|... for MOVE, sleep|idle for STAY
     val distanceM: Long, val steps: Long,
+    /** #1862 the city of the stay (a sleep's city sits under the strip); for a move, where it ended. */
+    val city: String = "",
+    /** #1862 the place has its own name (a named stay), not only a street or city. */
+    val named: Boolean = false,
 )
 
 data class StepsRow(val date: String, val steps: Long)
@@ -34,12 +38,12 @@ object TrackerRows {
                 val loc = s.optJSONObject("location")
                 TimelineRow("STAY", s.getLong("start"), s.getLong("end"),
                     placeTitle(loc).ifBlank { "Unnamed place" }, loc?.str("address") ?: "",
-                    loc?.dbl("lat"), loc?.dbl("lon"), s.str("kind"), 0, 0)
+                    loc?.dbl("lat"), loc?.dbl("lon"), s.str("kind"), 0, 0, loc?.str("city") ?: "", (loc?.str("name") ?: "").isNotBlank())
             } else {
                 val from = s.optJSONObject("from"); val to = s.optJSONObject("to")
                 val title = listOf(placeTitle(from), placeTitle(to)).filter { it.isNotBlank() }.joinToString(" > ")
                 TimelineRow("MOVE", s.getLong("start"), s.getLong("end"), title.ifBlank { "Move" }, to?.str("address") ?: "",
-                    from?.dbl("lat"), from?.dbl("lon"), s.str("mode"), s.optLong("distance_m"), s.optLong("steps"))
+                    from?.dbl("lat"), from?.dbl("lon"), s.str("mode"), s.optLong("distance_m"), s.optLong("steps"), (to ?: from)?.str("city") ?: "")
             }
         }
     }

@@ -291,13 +291,19 @@ object Aggregates {
      */
     fun perDay(store: List<TlSegment>, days: List<LocalDate>, nowMs: Long, zone: ZoneId,
                corrections: List<Correction> = emptyList(), memory: List<Remembered> = emptyList()): List<DayStats> = days.map { d ->
+        dayOf(store, d, nowMs, zone, corrections, memory).first
+    }
+
+    /** #1863 one date: its [DayStats] and its gapless day (what the Places / Cities / World rankings read). [perDay] and the cache share it. */
+    fun dayOf(store: List<TlSegment>, d: LocalDate, nowMs: Long, zone: ZoneId,
+              corrections: List<Correction> = emptyList(), memory: List<Remembered> = emptyList()): Pair<DayStats, List<DaySeg>> {
         val a = DayTimeline.dayStart(d, zone); val e = DayTimeline.dayStart(d.plusDays(1), zone); val b = minOf(e, nowMs)
         val day = DayTimeline.build(store, a, b, corrections, memory)
         val wide = DayTimeline.build(store, a - 12 * 3_600_000L, minOf(e + 12 * 3_600_000L, nowMs), corrections, memory)
         val sleeps = wide.filterIsInstance<DaySeg.Stay>().filter { it.kind == StayKind.SLEEP && it.endMs > a && it.endMs <= e }
         val longest = sleeps.maxByOrNull { it.durationMs }?.place
         val city = longest?.let { it.city ?: it.label }
-        DayStats(d, sleeps.sumOf { minOf(it.durationMs, MAX_SLEEP_MS) }, city, summary(day), longest?.lat, longest?.lon)
+        return DayStats(d, sleeps.sumOf { minOf(it.durationMs, MAX_SLEEP_MS) }, city, summary(day), longest?.lat, longest?.lon) to day
     }
 }
 

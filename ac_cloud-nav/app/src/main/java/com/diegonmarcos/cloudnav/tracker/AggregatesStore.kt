@@ -53,15 +53,38 @@ object AggregatesStore {
         return dates to (if (n > Trips.HOME_WINDOW_DAYS) dates else dates.takeLast(30))
     }
 
-    /** The engine's pass: rebuild every aggregate from the segments the store holds now. */
+    /** #1863 what Explored shows, read from the cache: the digests of every date, folded into Trips, Insights, Places, Cities, World and the tables. */
+    class Explored(val cache: CacheResult, val rank: List<DayDigest>, val trips: TripsResult, val places: List<PlaceTotal>, val cities: List<CityTotal>,
+                   val countries: List<CountryTotal>, val world: List<WorldRow>, val cityTable: List<CityRow>) {
+        val stats: List<DayStats> get() = cache.stats
+    }
+
+    /**
+     * #1863 the cached pass the page, the engine tick and the import share: past dates come from their stored digests (recomputed only
+     * when their checksum moved or they were marked dirty), today is live, and every aggregate is folded from the digests.
+     */
+    fun explore(backend: DigestBackend, store: List<com.diegonmarcos.cloudnav.maps.TlSegment>, first: java.time.LocalDate, today: java.time.LocalDate, nowMs: Long,
+                zone: ZoneId, corrections: List<Correction>, memory: List<Remembered>, home: String?): Explored {
+        val (dates, rankDates) = windowDates(first, today)
+        val r = ExploredCache.refresh(backend, store, dates, nowMs, zone, corrections, memory)
+        val keep = rankDates.toHashSet()
+        val rank = r.digests.filter { it.date in keep }
+        return Explored(r, rank, Trips.group(r.stats, home), ExploredFold.places(rank), ExploredFold.cities(rank), ExploredFold.countries(rank),
+            ExploredFold.world(rank), ExploredFold.cityTable(rank))
+    }
+
+    fun explore(app: Context, store: List<com.diegonmarcos.cloudnav.maps.TlSegment>, first: java.time.LocalDate, today: java.time.LocalDate, nowMs: Long, zone: ZoneId): Explored {
+        val cs = CorrectionStore(app)
+        val e = explore(MapsDbDigestBackend(app), store, first, today, nowMs, zone, cs.all(), cs.memory(), HomeStore(app).get())
+        runCatching { persist(app, nowMs, e.stats, e.trips, e.places, e.cities, e.countries) }   // #1851 the aggregates live in the one store
+        return e
+    }
+
+    /** The engine's pass (and the import's): bring the cache up to date with the segments the store holds now; only changed dates are computed. */
     fun rebuild(app: Context, nowMs: Long, zone: ZoneId = ZoneId.systemDefault()) {
         val today = java.time.Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate()
         val first = windowStart(app, today, zone)
-        val cs = CorrectionStore(app); val corrections = cs.all(); val memory = cs.memory()
         val store = TimelineSync.view(app, DayTimeline.dayStart(first, zone) - 12 * 3_600_000L, nowMs)
-        val (dates, rankDates) = windowDates(first, today)
-        val stats = Aggregates.perDay(store, dates, nowMs, zone, corrections, memory)
-        val month = rankDates.map { d -> DayTimeline.build(store, DayTimeline.dayStart(d, zone), minOf(DayTimeline.dayStart(d.plusDays(1), zone), nowMs), corrections, memory) }
-        persist(app, nowMs, stats, Trips.group(stats, HomeStore(app).get()), Rankings.places(month), Rankings.cities(month), Rankings.countries(month))
+        explore(app, store, first, today, nowMs, zone)
     }
 }
