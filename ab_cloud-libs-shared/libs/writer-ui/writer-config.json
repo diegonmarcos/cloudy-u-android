@@ -157,7 +157,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "z-ai/glm-5.3-flash",
-        "pricing_as_of": "2026-11-22",
+        "pricing_as_of": "2026-11-23",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -203,8 +203,8 @@
               "roleplay",
               "translation"
             ],
-            "prompt": 0.0675,
-            "completion": 0.225,
+            "prompt": 0.09,
+            "completion": 0.3,
             "note": "Sparse 26B (4B active): translation, academia and legal at a small-model price."
           },
           {
@@ -217,7 +217,7 @@
             ],
             "trained_for": [],
             "prompt": 0.08,
-            "completion": 0.45,
+            "completion": 0.16,
             "note": "Ranked for marketing/SEO only; light and predictable on short rewrites."
           },
           {
@@ -231,6 +231,7 @@
               "fp8"
             ],
             "trained_for": [
+              "marketing/seo",
               "roleplay",
               "translation"
             ],
@@ -294,14 +295,13 @@
               "health",
               "legal",
               "marketing",
-              "marketing/seo",
               "programming",
               "roleplay",
               "science",
               "technology",
               "translation"
             ],
-            "prompt": 0.0443,
+            "prompt": 0.0434,
             "completion": 0.3,
             "note": "Ranked in all twelve categories at the second-lowest price here."
           },
@@ -314,8 +314,7 @@
               "fp8"
             ],
             "trained_for": [
-              "legal",
-              "marketing/seo",
+              "academia",
               "programming",
               "roleplay"
             ],
@@ -347,7 +346,7 @@
               "trivia"
             ],
             "prompt": 0.0399,
-            "completion": 0.0784,
+            "completion": 0.074,
             "note": "The provider default: ranked in all twelve categories, and the cheapest all-rounder after DeepSeek."
           },
           {
@@ -372,7 +371,7 @@
           {
             "id": "openai/gpt-4.1-mini",
             "name": "GPT-4.1 mini",
-            "trained_for": [],
+            "trained_for": ["translation"],
             "prompt": 0.4,
             "completion": 1.6,
             "note": "Translation-ranked and closed-weight; steady, conservative English grammar fixes."
@@ -380,7 +379,7 @@
           {
             "id": "google/gemini-2.5-flash",
             "name": "Gemini 2.5 Flash",
-            "trained_for": ["marketing"],
+            "trained_for": [],
             "prompt": 0.3,
             "completion": 2.5,
             "note": "Translation-ranked plus eight more categories, and cheap. Selectable, but no longer any tool's default — see _doc_tool_models."

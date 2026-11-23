@@ -3139,7 +3139,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "google/gemini-2.5-flash",
-        "pricing_as_of": "2026-11-22",
+        "pricing_as_of": "2026-11-23",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -3167,7 +3167,7 @@
             "params_b": 26,
             "quant": ["bf16", "fp4", "fp8", "int4"],
             "trained_for": ["academia", "marketing", "roleplay", "translation"],
-            "prompt": 0.0675, "completion": 0.225,
+            "prompt": 0.09, "completion": 0.3,
             "note": "Sparse 26B (4B active): translation, academia and legal at a small-model price."
           },
           {
@@ -3177,7 +3177,7 @@
             "params_b": 27,
             "quant": ["fp8"],
             "trained_for": [],
-            "prompt": 0.08, "completion": 0.45,
+            "prompt": 0.08, "completion": 0.16,
             "note": "Ranked for marketing/SEO only; light and predictable on short rewrites."
           },
           {
@@ -3186,7 +3186,7 @@
             "open": true,
             "params_b": 31,
             "quant": ["bf16", "fp4", "fp8"],
-            "trained_for": ["roleplay", "translation"],
+            "trained_for": ["marketing/seo", "roleplay", "translation"],
             "prompt": 0.2, "completion": 0.4,
             "note": "Translation-ranked, served at four precisions; more headroom than the 26B."
           },
@@ -3222,8 +3222,8 @@
             "name": "DeepSeek V4 Flash 0731",
             "open": true,
             "quant": ["fp32", "fp4", "fp8", "nvfp4"],
-            "trained_for": ["academia", "finance", "health", "legal", "marketing", "marketing/seo", "programming", "roleplay", "science", "technology", "translation"],
-            "prompt": 0.0443, "completion": 0.3,
+            "trained_for": ["academia", "finance", "health", "legal", "marketing", "programming", "roleplay", "science", "technology", "translation"],
+            "prompt": 0.0434, "completion": 0.3,
             "note": "Ranked in all twelve categories at the second-lowest price here."
           },
           {
@@ -3231,7 +3231,7 @@
             "name": "GLM 5.2",
             "open": true,
             "quant": ["fp4", "fp8"],
-            "trained_for": ["legal", "marketing/seo", "programming", "roleplay"],
+            "trained_for": ["academia", "programming", "roleplay"],
             "prompt": 0.62, "completion": 2.42,
             "note": "Ranked in ten categories including translation; the formal-register GLM."
           },
@@ -3241,7 +3241,7 @@
             "open": true,
             "quant": ["fp4", "fp8", "nvfp4"],
             "trained_for": ["academia", "finance", "health", "legal", "marketing", "marketing/seo", "programming", "roleplay", "science", "technology", "translation", "trivia"],
-            "prompt": 0.0399, "completion": 0.0784,
+            "prompt": 0.0399, "completion": 0.074,
             "note": "Ranked in all twelve categories; the cheapest all-rounder after DeepSeek."
           },
           {
@@ -3262,14 +3262,14 @@
           {
             "id": "openai/gpt-4.1-mini",
             "name": "GPT-4.1 mini",
-            "trained_for": [],
+            "trained_for": ["translation"],
             "prompt": 0.4, "completion": 1.6,
             "note": "Translation-ranked and closed-weight; steady, conservative English grammar fixes."
           },
           {
             "id": "google/gemini-2.5-flash",
             "name": "Gemini 2.5 Flash",
-            "trained_for": ["marketing"],
+            "trained_for": [],
             "prompt": 0.3, "completion": 2.5,
             "note": "The default: translation-ranked plus eight more categories, and still cheap."
           }
