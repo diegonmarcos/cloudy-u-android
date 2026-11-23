@@ -198,7 +198,7 @@ class StudioTest {
         val y = OfflineMix.resample(x, 48000, 44100)
         assertEquals(441, y.size)
         assertEquals(0f, y[0], 1e-6f)
-        assertTrue(y.zipWithNext().all { (a, b) -> b >= a })
+        assertTrue((1 until y.size).all { y[it] >= y[it - 1] })
         assertTrue(OfflineMix.resample(x, 44100, 44100) === x)
     }
 }
