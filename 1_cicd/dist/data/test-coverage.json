@@ -322,7 +322,7 @@
       "shell_testers": 7,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
-      "unit_task_declared": false,
+      "unit_task_declared": true,
       "unit_test_sources": 33,
       "workflow": "ship-cloud-nav.yml"
     },

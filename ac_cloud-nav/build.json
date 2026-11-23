@@ -2538,6 +2538,7 @@
   },
   "tests": {
     "_doc": "#868 what CI runs to prove the nav is the fleet's: test/test-nav-shape.sh pins the declaration, the island host and the strips (and mutates each to prove it bites). Read by cloud-android-test-engine.sh.",
+    "unit": {"_doc": "#1863 the JVM suite in app/src/test (tracker, timeline, Explored cache, Export/Import, segment strips; build.sh test also runs libs:maps). Run by the ship workflow's JVM unit tests step after the toolchain and the vault.", "task": ":app:testDebugUnitTest", "enabled": true},
     "shell": {
       "dir": "test",
       "requires": [
