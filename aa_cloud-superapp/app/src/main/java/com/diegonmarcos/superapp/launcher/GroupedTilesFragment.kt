@@ -181,8 +181,7 @@ internal fun GroupedTilesPage(sectionId: String, click: (String) -> Unit) {
                 }
             }
         }
-        // ── #1840 the shortcuts pinned on this home (from any app's Add to Home Screen, or Cloud Browser's IPC), removable ──
-        if (sectionId == "cloud") item(key = "g:pinned") { com.diegonmarcos.superapp.launcher.pins.PinnedStrip { GroupTitle(it) } }
+        // #1860 home shortcuts are no longer drawn here: they are filed into the Phone page's folders (pins/PinnedFolders).
         // ── Actions, after the declared groups ──
         if (sectionId == "cloud") {
             val actions = GroupedTilesFragment.starActions()

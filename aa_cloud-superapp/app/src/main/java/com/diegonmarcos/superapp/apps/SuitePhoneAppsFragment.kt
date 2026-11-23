@@ -359,7 +359,8 @@ private fun SuitePhonePage(epoch: Int, refresh: () -> Unit) {
     var phoneOpen by remember { mutableStateOf<OpenFolder?>(null) }
     // Below the fold: produced AFTER the first frame — All Apps is a lot of view construction, and Smart Folders
     // is about a thousand blocking package-manager IPCs (#261), so it gets a background thread.
-    val all by produceState<AllApps?>(null, epoch) { value = withContext(Dispatchers.Default) { allApps(ctx, exclude = ourApps) } }
+    val pinVersion = com.diegonmarcos.superapp.launcher.pins.PinnedShortcutStore.changes.intValue
+    val all by produceState<AllApps?>(null, epoch, pinVersion) { value = withContext(Dispatchers.Default) { allApps(ctx, exclude = ourApps) } }
     val smart by produceState<SmartState>(SmartState.Loading, epoch) {
         value = PhoneAppsFragment.loadSmartFolders(ctx, ourApps)?.let { SmartState.Done(it) } ?: SmartState.Failed
     }

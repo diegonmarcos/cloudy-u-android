@@ -87,8 +87,10 @@ class PhoneAppsFragment : KitComposeFragment() {
         val smart by produceState<List<SmartRendered>?>(null, epoch, alphaMode) {
             value = if (alphaMode) null else loadSmartFolders(ctx, emptySet())
         }
-        val all = remember(epoch, alphaMode) { if (alphaMode) null else allApps(ctx) }
-        val alpha = remember(epoch, alphaMode) { if (alphaMode) alphabetic(ctx) else null }
+        // #1860 a pin accepted while the page shows appears at once: the grouping re-reads when the pin store changes.
+        val pinVersion = com.diegonmarcos.superapp.launcher.pins.PinnedShortcutStore.changes.intValue
+        val all = remember(epoch, alphaMode, pinVersion) { if (alphaMode) null else allApps(ctx) }
+        val alpha = remember(epoch, alphaMode, pinVersion) { if (alphaMode) alphabetic(ctx) else null }
         // One LazyColumn per mode. Categories and Alphabetic are different lists, and flipping the mode inside ONE
         // LazyColumn instance sometimes left its previous measured layout in place (Robolectric run 39124977196: the
         // composition had alphaMode=true and the 26 folders built, the tree still showed the Categories layout, and a
@@ -143,7 +145,7 @@ class PhoneAppsFragment : KitComposeFragment() {
          * letter folders are always shown — empty ones render as empty glass squares, per spec.
          */
         internal fun alphabetic(ctx: Context): Pair<List<PhoneFolders.Folder>, Map<String, List<PhoneApp>>> {
-            val apps = snapshot(ctx)
+            val apps = snapshot(ctx) + com.diegonmarcos.superapp.launcher.pins.PinnedFolders.apps(ctx)
             val byLetter = LinkedHashMap<String, MutableList<PhoneApp>>()
             for (c in 'A'..'Z') byLetter[c.toString()] = mutableListOf()
             val hash = mutableListOf<PhoneApp>()

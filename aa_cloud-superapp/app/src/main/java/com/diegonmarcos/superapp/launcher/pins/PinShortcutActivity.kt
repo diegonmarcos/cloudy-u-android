@@ -14,8 +14,8 @@ import java.io.ByteArrayOutputStream
  * #1840 THE SUPERAPP LAUNCHER ACCEPTS PINNED SHORTCUTS. Android routes ShortcutManager.requestPinShortcut (what Cloud Browser's Add to Home
  * Screen, Chrome and every app call) to the DEFAULT home app's activity that answers android.content.pm.action.CONFIRM_PIN_SHORTCUT; with
  * none, the app is told "this launcher cannot pin shortcuts". This is that activity: no screen of its own (a translucent shell), it reads the
- * request with LauncherApps.getPinItemRequest, keeps the shortcut and its icon in [PinnedShortcutStore] (drawn on the home by [PinnedStrip],
- * removable there), then accept()s the request so the system registers the pin. A request that is not a shortcut, or that is no longer valid,
+ * request with LauncherApps.getPinItemRequest, keeps the shortcut and its icon in [PinnedShortcutStore] (filed into the Phone page's folders by
+ * [PinnedFolders], removable there), then accept()s the request so the system registers the pin. A request that is not a shortcut, or that is no longer valid,
  * is ignored.
  */
 class PinShortcutActivity : Activity() {

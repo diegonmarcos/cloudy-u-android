@@ -28,7 +28,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -179,8 +182,13 @@ internal fun allApps(ctx: Context, exclude: Set<String> = emptySet(), only: Set<
     val apps = PhoneAppsFragment.snapshot(ctx).filter { it.packageName !in exclude && (only == null || it.packageName in only) }
     // #1553 The Folders page is the source of truth: a Phone-scope assignment the user made there wins over the baked
     // keyword classification. No override set ⇒ the grouping is unchanged, so the default grid is exactly as before.
+    // #1860 home shortcuts (pins) are filed like apps (same keywords, same overrides) on the Phone surfaces; Cloud's constellation view (only) has none.
+    val pinApps = if (only == null) com.diegonmarcos.superapp.launcher.pins.PinnedShortcutStore.list(ctx) else emptyList()
+    val me = android.os.Process.myUserHandle()
     val grouped = com.diegonmarcos.superapp.launcher.folders.FolderGridBridge.applyOverrides(
-        PhoneAppsFragment.groupedFor(apps, folders, unfiltered = exclude.isEmpty() && only == null),
+        com.diegonmarcos.superapp.launcher.pins.PinnedFolders.merge(
+            PhoneAppsFragment.groupedFor(apps, folders, unfiltered = exclude.isEmpty() && only == null), pinApps, folders,
+        ) { com.diegonmarcos.superapp.launcher.pins.PinnedFolders.toApp(it, com.diegonmarcos.superapp.launcher.pins.PinnedFolders.icon(ctx, it), me) },
         com.diegonmarcos.superapp.launcher.folders.FolderGridBridge.launcherOverrides(ctx),
         folders.map { it.id }.toSet(),
     )
@@ -290,6 +298,19 @@ internal fun PhoneFolderSheet(open: OpenFolder, onDismiss: () -> Unit) {
     val launcherApps = remember { ctx.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps }
     val cols = GridColumns.phone(ctx)
     val iconDp = remember(cols) { expandedIconDp(ctx, cols) }
+    var pinMenu by remember { mutableStateOf<PhoneApp?>(null) }
+    pinMenu?.let { pa ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { pinMenu = null },
+            title = { Text(pa.label) },
+            confirmButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = { com.diegonmarcos.superapp.launcher.pins.PinnedFolders.remove(ctx, pa.packageName); pinMenu = null; onDismiss() },
+                    modifier = Modifier.testTag(com.diegonmarcos.superapp.launcher.pins.PinnedTags.REMOVE),
+                ) { Text("Remove from home") }
+            },
+        )
+    }
     FolderSheetFrame(open.label, onDismiss) {
         for (row in open.apps.chunked(cols)) {
             Row(Modifier.fillMaxWidth()) {
@@ -301,14 +322,18 @@ internal fun PhoneFolderSheet(open: OpenFolder, onDismiss: () -> Unit) {
                             // launched (#156); its tap opens that lib's entry in the in-app Constellation
                             // AppStore instead (#474).
                             val comp = app.activityComponent
-                            if (com.diegonmarcos.superapp.launcher.SelfTile.open(ctx, app.packageName)) Unit
+                            if (com.diegonmarcos.superapp.launcher.pins.PinnedFolders.launch(ctx, app.packageName)) Unit
+                            else if (com.diegonmarcos.superapp.launcher.SelfTile.open(ctx, app.packageName)) Unit
                             else if (comp != null) runCatching { launcherApps.startMainActivity(comp, app.user, null, null) }
                             else openStore(ctx)
                             onDismiss()
                         },
                         onLong = {
                             // Long-press → stock options menu; dismiss the folder so the menu sits on its own backdrop.
-                            Haptics.tap(view); onDismiss(); AppLongPressMenu.show(ctx, app.packageName)
+                            Haptics.tap(view)
+                            // A pin's hold offers Remove from home (no package behind it for the stock options menu).
+                            if (com.diegonmarcos.superapp.launcher.pins.PinnedFolders.isAppKey(app.packageName)) pinMenu = app
+                            else { onDismiss(); AppLongPressMenu.show(ctx, app.packageName) }
                         })
                 }
                 for (k in row.size until cols) Spacer(Modifier.weight(1f))

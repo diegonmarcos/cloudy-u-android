@@ -135,10 +135,21 @@ class FolderRepository(
             val folders = com.diegonmarcos.superapp.apps.PhoneFolders.loadFromBuildConfig()
             if (folders.isEmpty() || apps.isEmpty()) return emptyMap()
             val me = Process.myUserHandle()
+            // #1860 a home shortcut ("pin:<pkg>/<id>") is classified by its label + url host, not by a package.
+            val pins = com.diegonmarcos.superapp.launcher.pins.PinnedShortcutStore.list(ctx)
+                .associateBy { com.diegonmarcos.superapp.launcher.pins.PinnedFolders.appKey(it) }
+            val (pinApps, realApps) = apps.partition { it.pkg in pins }
             val grouped = com.diegonmarcos.superapp.apps.PhoneAppClassifier.groupByFolder(
-                apps.map { com.diegonmarcos.superapp.apps.PhoneApp(it.pkg, null, it.label, null, me) }, folders, ctx)
-            return grouped.flatMap { (fid, list) -> list.map { it.packageName to fid } }.toMap()
+                realApps.map { com.diegonmarcos.superapp.apps.PhoneApp(it.pkg, null, it.label, null, me) }, folders, ctx)
+            return grouped.flatMap { (fid, list) -> list.map { it.packageName to fid } }.toMap() +
+                pinApps.associate { it.pkg to com.diegonmarcos.superapp.launcher.pins.PinnedFolders.classify(pins.getValue(it.pkg), folders) }
         }
+
+        /** #1860 the home shortcuts as Phone-scope entries under their synthetic key. */
+        fun pinApps(ctx: Context): List<FolderApp> = runCatching {
+            com.diegonmarcos.superapp.launcher.pins.PinnedShortcutStore.list(ctx)
+                .map { FolderApp(com.diegonmarcos.superapp.launcher.pins.PinnedFolders.appKey(it), it.label) }
+        }.getOrDefault(emptyList())
 
         /** Phone scope = the installed launchable apps; Cloud scope = the constellation fleet's apps. */
         fun enumerateApps(ctx: Context, scope: FolderScope): List<FolderApp> = when (scope) {
@@ -147,7 +158,7 @@ class FolderRepository(
                 la.getActivityList(null, Process.myUserHandle())
                     .map { FolderApp(it.componentName.packageName, it.label?.toString().orEmpty()) }
                     .distinctBy { it.pkg }
-            }.getOrDefault(emptyList())
+            }.getOrDefault(emptyList()) + pinApps(ctx)
             FolderScope.CLOUD -> runCatching {
                 Fleet.parse(com.diegonmarcos.superapp.appstore.BuildConfig.CONSTELLATION_FLEET_B64)
                     .filter { it.kind == "app" && it.pkg.isNotBlank() }
