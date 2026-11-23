@@ -51,7 +51,8 @@ ABI="$(_json '.upstream.engine.source.abi')"
 [ -n "$ABI" ] || die "build.json::upstream.engine.source.abi is empty"
 
 # ── materialize ───────────────────────────────────────────────────────
-# Gerrit serves neither a sha fetch nor a blob filter, so the ref is fetched
+# Gerrit serves neither a sha fetch nor a blob filter, so the ref (a branch, or
+# an immutable refs/changes/N/M/P patch-set ref once the branch is deleted) is fetched
 # shallow and deepened until the revision is in it. The revision is the
 # assertion; the ref is only how the objects arrive. An existing clone that
 # already holds the revision (the CI cache) is reused without touching Gerrit.
