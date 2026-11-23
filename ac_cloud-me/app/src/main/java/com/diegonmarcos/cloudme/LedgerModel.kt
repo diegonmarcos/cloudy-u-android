@@ -16,7 +16,7 @@ import java.math.RoundingMode
  */
 typealias Rec = Map<String, String>
 
-/** One typed field of a ledger. [type] is text | money | date | choice. */
+/** One typed field of a ledger. [type] is text | money | date | choice | number (plain, e.g. cm or kg) | image (a local photo path). */
 data class LedgerField(val id: String, val label: String, val type: String, val options: List<String>, val required: Boolean)
 
 /** One collection of a ledger block: its records are `LedgerData.rows(collection)`. */
@@ -122,6 +122,7 @@ object LedgerModel {
             when {
                 v.isEmpty() -> if (f.required) put(f.id, "${f.label} is required")
                 f.type == "money" && money(v) == null -> put(f.id, "${f.label} must be a number")
+                f.type == "number" && (money(v)?.signum() ?: -1) < 0 -> put(f.id, "${f.label} must be a number, zero or more")
                 f.type == "date" && !isDate(v) -> put(f.id, "${f.label} must be a date, yyyy-mm-dd")
                 f.type == "choice" && v !in f.options -> put(f.id, "${f.label} must be one of ${f.options.joinToString(", ")}")
             }

@@ -10,6 +10,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -74,6 +75,10 @@ fun LedgerBlock(o: JSONObject) {
     val today = remember { SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date()) }
     fun commit(d: LedgerData) { data = d; LedgerStore.save(ctx, store, d) }
 
+    // #1861 Inventory: every collection of the store is seeded once, so the Storage and Apartment views see all items.
+    val invDefs = remember(store) { if (store == LedgerStore.INV) InventoryViewsData.defs(ctx) else emptyList() }
+    LaunchedEffect(store, invDefs) { if (invDefs.isNotEmpty()) LedgerSeed.applied(data, invDefs).let { if (it !== data) commit(it) } }
+
     o.optString("title").takeIf { it.isNotBlank() }?.let { HCard { HHead(it) } }
     o.optJSONObject("summary")?.let { s ->
         SummaryCard(LedgerReports.summary(defs.flatMap { data.rows(it.collection) }, s.optString("value"), s.optString("monthly")),
@@ -86,6 +91,7 @@ fun LedgerBlock(o: JSONObject) {
         onRemove = { id -> commit(data.removed(def.collection, id)) },
         onEdit = { id, values -> commit(data.replaced(def.collection, id, values)) },
         onMove = if (def.moveTo.isBlank()) null else { id -> commit(data.moved(def.collection, id, def.moveTo, def.moveStamp, today)) })
+    if (invDefs.isNotEmpty()) InventoryViews(invDefs, data, currency) { c, id, values -> commit(data.replaced(c, id, values)) }
 }
 
 /** Achieves > Geo: the counts, the share of the world, first and last visit, then every place by continent and country. */
@@ -158,6 +164,7 @@ private fun CollectionCard(def: LedgerDef, rows: List<Rec>, currency: String, on
                 return@forEach
             }
             Row(Modifier.fillMaxWidth().padding(top = 10.dp).testTag(LedgerTags.row(def.collection, id))) {
+                if (def.fields.any { it.type == "image" }) ItemThumb(def.collection, r)
                 Column(Modifier.weight(1f)) {
                     RecLines(def, r, currency)
                     LedgerSeed.badge(r)?.let { Text(it, color = accent(), fontSize = 11.sp, modifier = Modifier.testTag(LedgerSeed.tag(def.collection, id))) }
@@ -184,9 +191,9 @@ private fun CollectionCard(def: LedgerDef, rows: List<Rec>, currency: String, on
 }
 
 @Composable
-private fun RecLines(def: LedgerDef, r: Rec, currency: String) {
+internal fun RecLines(def: LedgerDef, r: Rec, currency: String) {
     Text(r[def.fields.first().id].orEmpty(), color = ink(), fontSize = 14.sp, fontWeight = FontWeight.Medium)
-    def.fields.drop(1).forEach { f ->
+    def.fields.drop(1).filter { it.type != "image" }.forEach { f ->
         r[f.id]?.let { v -> Text("${f.label}: ${if (f.type == "money") LedgerModel.fmt(LedgerModel.money(v) ?: java.math.BigDecimal.ZERO, currency) else v}", color = dim(), fontSize = 12.sp) }
     }
 }
@@ -199,11 +206,13 @@ internal fun AddForm(def: LedgerDef, initial: Rec, onCancel: () -> Unit, onSave:
         if (f.type == "choice") {
             HText(f.label)
             Choice(f.options.map { it to it }, values[f.id]) { values = values + (f.id to it) }
+        } else if (f.type == "image") {
+            PhotoField(f.label, values[f.id].orEmpty(), initial["category"].orEmpty().ifBlank { values["category"].orEmpty() }, def.collection) { values = values + (f.id to it) }
         } else {
             OutlinedTextField(
                 value = values[f.id].orEmpty(), onValueChange = { values = values + (f.id to it) }, singleLine = true,
                 label = { Text(f.label + if (f.type == "date") " (yyyy-mm-dd)" else "") },
-                keyboardOptions = KeyboardOptions(keyboardType = if (f.type == "money") KeyboardType.Decimal else KeyboardType.Text),
+                keyboardOptions = KeyboardOptions(keyboardType = if (f.type == "money" || f.type == "number") KeyboardType.Decimal else KeyboardType.Text),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = ink(), unfocusedTextColor = ink(), cursorColor = accent(),
                     focusedBorderColor = accent(), unfocusedBorderColor = colorResource(R.color.me_outline),
