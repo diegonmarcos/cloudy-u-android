@@ -167,6 +167,8 @@ private fun TimelineCard(i: Int, r: TimelineRow, zone: ZoneId) {
                     if (mode != null) Icon(painterResource(DayIcons.mode(mode)), DayFormat.modeLabel(mode), Modifier.size(16.dp).testTag(TrackerTags.modeIcon(i)), tint = DayFormat.modeColor(mode))
                     Chip(r.mode, if (mode != null) DayFormat.modeColor(mode) else stateColor(st))
                     Chip(StepsFormat.duration(r.endMs - r.startMs), p.textSecondary)
+                    // polish: a move's average speed beside its duration
+                    if (mode != null && r.endMs > r.startMs && r.distanceM > 0) Chip("%.1f km/h".format(Locale.US, r.distanceM / 1000.0 / ((r.endMs - r.startMs) / 3_600_000.0)), DayFormat.modeColor(mode))
                 }
                 Text(r.title, color = p.textPrimary, style = MaterialTheme.typography.bodyMedium)
                 if (r.address.isNotBlank()) Text(r.address, color = p.textSecondary, style = MaterialTheme.typography.bodySmall)

@@ -121,6 +121,9 @@ fun WeekTabView(ui: DayUi, a: DayActions, zone: ZoneId) {
                             BlockColumn(blocksOf(ui, d, zone), s, e, Modifier.fillMaxSize())
                         }
                         Box(Modifier.padding(top = 2.dp).size(5.dp).clip(CircleShape).background(if (dg?.tracks == true) p.accent else Color.Transparent))
+                        // polish: the sleep city and the day's distance under each column
+                        Text(dg?.stats?.sleepCity ?: "", color = stateColor(SegState.SLEEP), fontSize = 8.sp, maxLines = 1)
+                        Text(dg?.stats?.summary?.totalDistanceM?.takeIf { it > 0 }?.let { TableSort.km(it) } ?: "", color = p.textSecondary, fontSize = 8.sp, maxLines = 1)
                     }
                 }
             }
@@ -179,7 +182,10 @@ fun MonthTabView(ui: DayUi, a: DayActions, zone: ZoneId) {
                         Row(Modifier.weight(1f)) {
                             BlockColumn(blocksOf(ui, d, zone), s, e, Modifier.weight(1f).fillMaxSize())
                         }
-                        dg?.stats?.summary?.totalDistanceM?.takeIf { it > 0 }?.let { Text(TableSort.km(it), color = p.textSecondary, fontSize = 8.sp, maxLines = 1) }
+                        val st = dg?.stats
+                        if (st != null && (st.summary.totalDistanceM > 0 || st.sleepMs > 0))
+                            Text(listOfNotNull(st.summary.totalDistanceM.takeIf { it > 0 }?.let { TableSort.km(it) }, st.sleepMs.takeIf { it > 0 }?.let { "%.0fh".format(Locale.US, it / 3_600_000.0) }).joinToString(" "),
+                                color = p.textSecondary, fontSize = 8.sp, maxLines = 1)
                     }
                 }
             }
