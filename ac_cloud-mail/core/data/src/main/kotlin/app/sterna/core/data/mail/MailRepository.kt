@@ -41,6 +41,7 @@ import app.sterna.core.data.db.EmailDao
 import app.sterna.core.data.db.EmailFtsDao
 import app.sterna.core.data.db.EmailBodyDao
 import app.sterna.core.data.db.EmailBodyEntity
+import app.sterna.core.data.db.EmailPartDao
 import app.sterna.core.data.db.LocalDraftDao
 import app.sterna.core.data.db.LocalDraftEntity
 import app.sterna.core.data.db.LocalDraftState
@@ -986,6 +987,8 @@ class MailRepository(
      * keep the Kotlin sync below. IMAP accounts keep the old path in phase 1.
      */
     private val mailCore: RustMailEngine? = null,
+    /** #1869 v34: the `email_parts` index of stored inline image files (null in tests: files kept, not indexed). */
+    private val emailPartDao: EmailPartDao? = null,
 ) {
     /**
      * Schedules the WorkManager job that delivers an outbox item. Set by the app layer at startup: the data
@@ -3067,6 +3070,11 @@ class MailRepository(
                         email = cacheJson.decodeFromString(Email.serializer(), row.bodyJson),
                         inlineImages = cacheJson.decodeFromString(inlineImagesSerializer, row.inlineImagesJson),
                     )
+                }.let { decoded ->
+                    // #1869 step 6: a ref whose file was evicted reads as missing (refetched); a row stored before v34 is
+                    // upgraded to files in the background, never on the open path.
+                    if (decoded.inlineImages.values.any { it.startsWith("data:") }) upgradeInlineImagesLater(accountId, emailId)
+                    decoded.copy(inlineImages = withContext(Dispatchers.IO) { InlineImageFiles.present(offlineAttachmentsDir, decoded.inlineImages) })
                 }
             },
             purge = { emailBodyDao.deleteById(accountId, emailId) },
@@ -3113,6 +3121,7 @@ class MailRepository(
     /** Drop every cached message body of every account; called once after an upgrade. */
     suspend fun clearCachedBodies() {
         emailBodyDao.deleteAll()
+        runCatching { emailPartDao?.deleteAll() }
     }
 
     private suspend fun ensureInlineImages(
@@ -3138,16 +3147,29 @@ class MailRepository(
         val parts = email.inlineImageParts()
         if (parts.isEmpty()) return emptyMap()
         val map = mutableMapOf<String, String>()
+        // #1869 step 6: plain mail keeps its images as FILES (offline-attachments, the attachments cap) and the map
+        // holds a ref the reader serves by `cid:` interception. Ciphertext never reaches a file: its images stay in memory.
+        val root = offlineAttachmentsDir?.takeIf { cryptoKindOf(email) == null }
+        val indexed = ArrayList<app.sterna.core.data.db.EmailPartEntity>()
         for (part in parts) {
             val cid = part.cid?.trim()?.trim('<', '>')?.takeIf { it.isNotEmpty() } ?: continue
             runCatching {
                 val bytes = downloadAttachment(
                     credentials, part, emailId, DownloadLimits.INLINE_IMAGE_MAX_BYTES,
                 )
-                val base64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
-                map[cid] = "data:${part.type ?: "image/jpeg"};base64,$base64"
+                val type = part.type ?: "image/jpeg"
+                val key = part.blobId ?: part.partId ?: cid
+                val ref = root?.let { withContext(Dispatchers.IO) { InlineImageFiles.write(it, credentials.id, emailId, key, type, bytes) } }
+                if (ref != null) {
+                    map[cid] = ref
+                    indexed += InlineImageFiles.partRow(credentials.id, emailId, key, cid, type, part.name, ref, bytes.size.toLong())
+                } else {
+                    val base64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+                    map[cid] = "data:$type;base64,$base64"
+                }
             }
         }
+        InlineImageFiles.index(emailPartDao, indexed)
         return map
     }
 
@@ -3169,10 +3191,50 @@ class MailRepository(
                 bodyJson = bodyJson,
                 inlineImagesJson = inlineJson,
                 fetchedAt = System.currentTimeMillis(),
+                inlineState = InlineImageFiles.stateOf(email.inlineImageParts().mapNotNull { it.cid?.trim()?.trim('<', '>')?.takeIf(String::isNotEmpty) }, inlineImages),
             ),
         )
         true
     }.getOrDefault(false)
+
+    private val inlineUpgrades = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+
+    /** #1869 step 6, the lazy upgrade of a body stored with base64 images: the images become files (the attachments cap),
+     *  the row is rewritten with refs, so its body bytes shrink. Background, once per row at a time, never ciphertext. */
+    private fun upgradeInlineImagesLater(accountId: String, emailId: String) {
+        val root = offlineAttachmentsDir ?: return
+        val key = "$accountId/$emailId"
+        if (inlineUpgrades.putIfAbsent(key, true) != null) return
+        bgScope.launch {
+            try {
+                runCatching {
+                    val row = emailBodyDao.byId(accountId, emailId) ?: return@runCatching
+                    val email = cacheJson.decodeFromString(Email.serializer(), row.bodyJson)
+                    if (cryptoKindOf(email) != null) return@runCatching
+                    val images = cacheJson.decodeFromString(inlineImagesSerializer, row.inlineImagesJson)
+                    val keys = email.inlineImageParts().associate { (it.cid?.trim()?.trim('<', '>') ?: "") to (it.blobId ?: it.partId) }
+                    val (upgraded, rows) = withContext(Dispatchers.IO) {
+                        InlineImageFiles.upgrade(root, accountId, emailId, images) { cid -> keys[cid] ?: cid }
+                    } ?: return@runCatching
+                    InlineImageFiles.index(emailPartDao, rows)
+                    emailBodyDao.upsert(
+                        EmailBodyEntity(
+                            id = row.id, accountId = row.accountId, bodyJson = row.bodyJson,
+                            inlineImagesJson = cacheJson.encodeToString(inlineImagesSerializer, upgraded),
+                            fetchedAt = row.fetchedAt, fragment = row.fragment, fragmentVersion = row.fragmentVersion,
+                            inlineState = InlineImageFiles.stateOf(keys.keys.filter(String::isNotEmpty), upgraded),
+                        ),
+                    )
+                }
+            } finally {
+                inlineUpgrades.remove(key)
+            }
+        }
+    }
+
+    /** #1869 step 6: [images] with every file ref read back into a `data:` URI, for export and print (self-contained). */
+    suspend fun selfContainedInlineImages(images: Map<String, String>): Map<String, String> =
+        withContext(Dispatchers.IO) { InlineImageFiles.selfContained(offlineAttachmentsDir, images) }
 
     /** The "Keep mail offline for" window (#1763), pushed in by the app layer; 90 days until it says otherwise. */
     @Volatile
@@ -3317,6 +3379,7 @@ class MailRepository(
         drop.chunked(500).forEach { emailBodyDao.deleteIds(accountId, it) }
         val accountDir = offlineAttachmentFile(accountId, "x", EmailBodyPart(blobId = "x"))?.parentFile?.parentFile
         drop.forEach { id -> accountDir?.let { java.io.File(it, id.replace(Regex("[^A-Za-z0-9._-]"), "_")).deleteRecursively() } }
+        runCatching { emailPartDao?.deleteOrphans() }
         drop.size
     }.getOrDefault(0)
 
@@ -6576,6 +6639,7 @@ class MailRepository(
             (old + orphans).forEach { id ->
                 accountDir?.let { java.io.File(it, id.replace(Regex("[^A-Za-z0-9._-]"), "_")).deleteRecursively() }
             }
+            runCatching { emailPartDao?.deleteOrphans() }
             return old.size + orphans.size
         }
     }

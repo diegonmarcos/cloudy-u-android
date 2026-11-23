@@ -77,6 +77,8 @@ internal fun buildPrintDocument(
 internal fun embedInlineImages(html: String, inlineImages: Map<String, String>): String {
     var out = html
     inlineImages.forEach { (cid, dataUri) ->
+        // #1869 step 6: an image stored as a file keeps its `cid:` reference; the reader's WebView serves it.
+        if (app.sterna.core.data.mail.InlineImageFiles.isRef(dataUri)) return@forEach
         out = out.replace("cid:$cid", dataUri).replace("cid:<$cid>", dataUri)
     }
     return out

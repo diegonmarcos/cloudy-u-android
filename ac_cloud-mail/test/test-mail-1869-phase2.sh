@@ -9,6 +9,9 @@
 #
 #   S5  Room v34, additive: email_bodies gains fragment/fragmentVersion/inlineState/bytes, the email_parts table, the
 #       step REGISTERED (the destructive fallback would wipe the outbox and drafts), caps are SUM(bytes)
+#   S6  inline images as FILES in the message's offline-attachments directory (the attachments cap), never for ciphertext;
+#       the reader keeps `cid:` and BlockingWebViewClient serves the file (before the remote gate, volatile state, no
+#       Android types in the resolver); export and print get data: URIs back; old rows upgraded lazily in the background
 #   P5  rule 16 parity: every email_bodies column, every body DAO query and every registered migration kept
 #   M   mutation-proof: each defence undone in a COPY turns its check red; the real tree is green
 #
@@ -71,6 +74,34 @@ if which == "S5":
     need('"b.bytes AS bytes " +' in dao, "the eviction plan does not read the stored size")
     ent = code(read(os.path.join(D, "db/EmailBodyEntity.kt")))
     need("val bytes: Long = storedBodyBytes(bodyJson, inlineImagesJson, fragment)," in ent, "a new row's bytes is not computed from what it stores")
+elif which == "S6":
+    r = code(read(os.path.join(D, "mail/MailRepository.kt")))
+    fi = body(r, "private suspend fun fetchInlineImages(")
+    need("val root = offlineAttachmentsDir?.takeIf { cryptoKindOf(email) == null }" in fi, "inline files are written for ciphertext too")
+    need("InlineImageFiles.write(it, credentials.id, emailId, key, type, bytes)" in fi and "map[cid] = ref" in fi, "inline images are not stored as files")
+    need('map[cid] = "data:$type;base64,$base64"' in fi, "the in-memory fallback (ciphertext, no directory) is gone")
+    cm = body(r, "suspend fun cachedMessage(accountId: String, emailId: String): MessageBody? {")
+    need("upgradeInlineImagesLater(accountId, emailId)" in cm, "old rows are never upgraded")
+    need("InlineImageFiles.present(offlineAttachmentsDir, decoded.inlineImages)" in cm, "an evicted file still reads as present")
+    up = body(r, "private fun upgradeInlineImagesLater(")
+    need("bgScope.launch {" in up and "if (cryptoKindOf(email) != null) return@runCatching" in up, "the upgrade runs on the caller or opens ciphertext")
+    need(r.count("runCatching { emailPartDao?.deleteOrphans() }") >= 2, "an eviction path leaves the parts index behind")
+    f = code(read(os.path.join(D, "mail/InlineImageFiles.kt")))
+    need("if (!file.path.startsWith(base.path + File.separator)) return null" in f, "a ref can leave the offline-attachments root")
+    need('"${safe(accountId)}/${safe(emailId)}/$FILE_PREFIX${safe(partKey)}"' in f, "inline files are not in the message's directory (attachments cap, eviction)")
+    ms = code(read(os.path.join(K, "ui/message/MessageScreen.kt")))
+    si = body(ms, "override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {")
+    need("InlineCid.respond(inlineRoot, inlineImages, cidUrl.schemeSpecificPart)" in si, "the reader does not serve cid: files")
+    need(0 <= si.find("InlineCid.respond(") < si.find("if (!blockRemote) return null"), "cid: files are served only with remote content blocked")
+    need("@Volatile var inlineRoot: java.io.File? = null" in ms and "@Volatile var inlineImages: Map<String, String> = emptyMap()" in ms, "the interception state is not volatile")
+    need("inlineImages = msg.inlineImages," in ms and "client.inlineImages = inlineImages" in ms, "the reader WebView does not get the message's images")
+    need("InlineImageFiles.selfContained(" in body(ms, "LaunchedEffect(printRequested) {"), "print loses file-stored images")
+    ex = code(read(os.path.join(K, "ui/message/MessageExporter.kt")))
+    need("repo.selfContainedInlineImages(msg.inlineImages)" in ex and "buildSelfContainedHtml(exportMsg, labels, selfContained.inlineImages)" in ex, "export loses file-stored images")
+    pd = code(read(os.path.join(K, "ui/message/PrintDocument.kt")))
+    need("if (app.sterna.core.data.mail.InlineImageFiles.isRef(dataUri)) return@forEach" in pd, "a file ref is pasted into the document")
+    ic = code(read(os.path.join(K, "ui/message/InlineCid.kt")))
+    need("import android." not in ic and "InlineImageFiles::isRef" in ic, "the resolver uses Android types or serves non-refs")
 elif which == "P5":
     ent = code(read(os.path.join(D, "db/EmailBodyEntity.kt")))
     for col in ("val id: String", "val accountId: String", "val bodyJson: String", "val inlineImagesJson: String", "val fetchedAt: Long"):
@@ -94,9 +125,10 @@ check() { python3 -c "$CHECK" "$1" "$2"; }
 
 declare -A LABEL=(
   [S5]="Room v34 is additive, registered, and the caps are SUM(bytes)"
+  [S6]="inline images are files served by cid: interception; export, print and old rows kept"
   [P5]="rule 16 parity: every email_bodies column, body query and migration step kept"
 )
-CHECKS="S5 P5"
+CHECKS="S5 S6 P5"
 
 echo "== the tree =="
 for c in $CHECKS; do
@@ -137,6 +169,19 @@ mutate S5 "$DBD/Migrations.kt" '        db.execSQL(EMAIL_PARTS_CREATE_SQL)
 mutate S5 "$DBD/EmailBodyDao.kt" '"SELECT COALESCE(SUM(bytes), 0) FROM email_bodies"' '"SELECT COALESCE(SUM(LENGTH(bodyJson) + LENGTH(inlineImagesJson)), 0) FROM email_bodies"' "the total cap measures body text again"
 mutate S5 "$DBD/EmailBodyDao.kt" '"b.bytes AS bytes " +' '"(LENGTH(b.bodyJson) + LENGTH(b.inlineImagesJson)) AS bytes " +' "the eviction plan measures body text again"
 mutate S5 "$DBD/EmailBodyEntity.kt" 'val bytes: Long = storedBodyBytes(bodyJson, inlineImagesJson, fragment),' 'val bytes: Long = 0,' "new rows count zero against the cap"
+MD=core/data/src/main/kotlin/app/sterna/core/data/mail
+UI=app/src/main/kotlin/app/sterna/ui/message
+mutate S6 "$MD/MailRepository.kt" 'val root = offlineAttachmentsDir?.takeIf { cryptoKindOf(email) == null }' 'val root = offlineAttachmentsDir' "ciphertext images written to disk"
+mutate S6 "$MD/MailRepository.kt" '                    if (decoded.inlineImages.values.any { it.startsWith("data:") }) upgradeInlineImagesLater(accountId, emailId)
+' '' "old rows never upgraded"
+mutate S6 "$MD/InlineImageFiles.kt" '        if (!file.path.startsWith(base.path + File.separator)) return null
+' '' "a ref escapes the root"
+mutate S6 "$UI/MessageScreen.kt" '            InlineCid.respond(inlineRoot, inlineImages, cidUrl.schemeSpecificPart)?.let { (type, stream) ->' '            null?.let { (type: String, stream: java.io.InputStream) ->' "cid: requests not served"
+mutate S6 "$UI/MessageExporter.kt" 'buildSelfContainedHtml(exportMsg, labels, selfContained.inlineImages)' 'buildSelfContainedHtml(exportMsg, labels, msg.inlineImages)' "HTML export without the file images"
+mutate S6 "$UI/PrintDocument.kt" '        if (app.sterna.core.data.mail.InlineImageFiles.isRef(dataUri)) return@forEach
+' '' "a ref pasted as an image source"
+mutate S6 "$MD/MailRepository.kt" '        runCatching { emailPartDao?.deleteOrphans() }
+        drop.size' '        drop.size' "body eviction leaves parts rows"
 mutate P5 "$DBD/EmailBodyEntity.kt" '    val fetchedAt: Long,
 ' '' "the fetchedAt column dropped"
 mutate P5 "$DBD/EmailBodyDao.kt" 'suspend fun pruneForAccount(' 'suspend fun pruneGone(' "a body DAO query removed"

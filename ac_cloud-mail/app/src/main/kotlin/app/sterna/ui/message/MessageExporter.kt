@@ -81,7 +81,9 @@ internal class MessageExporter(private val app: Application, private val repo: M
                     dir.listFiles()?.forEach { it.delete() }
                     shareFile = File(dir, name)
                 }
-                val exportMsg = exportMessageOf(msg, email, subject, app.getString(R.string.message_no_content), repo, creds)
+                // #1869 step 6: inline images stored as files are read back into data: URIs, so the export stays self-contained.
+                val selfContained = msg.copy(inlineImages = repo.selfContainedInlineImages(msg.inlineImages))
+                val exportMsg = exportMessageOf(selfContained, email, subject, app.getString(R.string.message_no_content), repo, creds)
                 val labels = ExportLabels(
                     from = app.getString(R.string.participants_from),
                     to = app.getString(R.string.participants_to),
@@ -105,7 +107,7 @@ internal class MessageExporter(private val app: Application, private val repo: M
                             ExportFormat.ATTACHMENTS_ZIP ->
                                 writeAttachmentsZip(o, exportMsg.parts.filter { !it.inline }, progress, cancelled)
                             ExportFormat.HTML -> o.write(
-                                buildSelfContainedHtml(exportMsg, labels, msg.inlineImages).toByteArray(Charsets.UTF_8),
+                                buildSelfContainedHtml(exportMsg, labels, selfContained.inlineImages).toByteArray(Charsets.UTF_8),
                             )
                             ExportFormat.EML -> writeEml(o, raw!!)
                             ExportFormat.MBOX -> writeMbox(o, listOf(mboxFromLine(msg.header.receivedAt) to raw!!), cancelled)

@@ -1904,7 +1904,11 @@ private fun MessageContent(
             date = formatFull(receivedAt),
         )
         val body = readerBody(full, printNoContent)
-        val doc = buildPrintDocument(header, printLabels, body, msg.inlineImages)
+        // #1869 step 6: the print WebView has no `cid:` interception, so file-stored images go in as data: URIs.
+        val printImages = withContext(Dispatchers.IO) {
+            app.sterna.core.data.mail.InlineImageFiles.selfContained(app.sterna.core.data.mail.InlineImageFiles.rootIn(context.filesDir), msg.inlineImages)
+        }
+        val doc = buildPrintDocument(header, printLabels, body, printImages)
         printDocument(activity, doc, printJobName(header.subject, appName), blockRemote = !showRemote)
     }
     // Decided HERE, once, and handed down already decided — the header renders, it does not judge.
@@ -2371,6 +2375,7 @@ private fun ConversationBody(
                 val html = htmlState.value?.takeIf { it.first == msg.id }?.second
                 if (html != null) EmailWebView(
                     html = html,
+                    inlineImages = msg.inlineImages,
                     blockRemote = blockRemote,
                     stripTracking = stripTracking,
                     confirmLinks = confirmLinks,
@@ -4589,6 +4594,8 @@ private const val RESIZE_PROBE_MS = 50L
 @Composable
 private fun EmailWebView(
     html: String,
+    /** #1869 step 6: the message's inline images; a file ref among them is served on its `cid:` request. */
+    inlineImages: Map<String, String>,
     blockRemote: Boolean,
     stripTracking: Boolean,
     confirmLinks: Boolean,
@@ -4617,6 +4624,8 @@ private fun EmailWebView(
     val useSoftwareLayer = remember(context) { WebViewLayerGuard.useSoftwareLayer(context) }
     val navTransitionActive = LocalNavTransitionActive.current
     val client = remember { BlockingWebViewClient() }
+    client.inlineRoot = remember(context) { app.sterna.core.data.mail.InlineImageFiles.rootIn(context.filesDir) }
+    client.inlineImages = inlineImages
     client.blockRemote = blockRemote
     client.stripTracking = stripTracking
     client.onOpenUrl = { uri ->
@@ -4933,6 +4942,11 @@ private fun restingMetrics(wv: WebView, step: HeightPoll.Report, maxSeen: Int): 
 /** Blocks remote (http/https) resource loads while [blockRemote]; opens links externally. */
 private class BlockingWebViewClient : CloudWebClient(WebProfile.UNTRUSTED_HTML) {
     var blockRemote: Boolean = true
+
+    /** #1869 step 6: the offline-attachments root and this page's inline images. Read on the WebView's IO threads,
+     *  written on Main: volatile, and each is replaced whole (never mutated), so a request sees one consistent value. */
+    @Volatile var inlineRoot: java.io.File? = null
+    @Volatile var inlineImages: Map<String, String> = emptyMap()
     var stripTracking: Boolean = true
 
     /** Reports the final (possibly cleaned) URL to open; the composable decides how. */
@@ -4982,6 +4996,13 @@ private class BlockingWebViewClient : CloudWebClient(WebProfile.UNTRUSTED_HTML) 
     }
 
     override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
+        // #1869 step 6: a `cid:` image stored as a file is served from disk, whatever the remote-content setting.
+        val cidUrl = request?.url
+        if (cidUrl != null && cidUrl.scheme?.lowercase() == "cid") {
+            InlineCid.respond(inlineRoot, inlineImages, cidUrl.schemeSpecificPart)?.let { (type, stream) ->
+                return WebResourceResponse(type, null, stream)
+            }
+        }
         if (!blockRemote) return null
         // Default-deny: only inert, local sources are allowed through. Anything else — http(s),
         // protocol-relative URLs (which arrive with a null/empty scheme), ws, ftp, prefetch — is

@@ -4,6 +4,10 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
 
+/** Shared with the JVM test. */
+const val EMAIL_PARTS_ORPHAN_SWEEP_SQL: String =
+    "DELETE FROM email_parts WHERE NOT EXISTS (SELECT 1 FROM email_bodies b WHERE b.accountId = email_parts.accountId AND b.id = email_parts.emailId)"
+
 /** #1869 v34: the `email_parts` index (attachment metadata, inline image files). */
 @Dao
 interface EmailPartDao {
@@ -13,9 +17,13 @@ interface EmailPartDao {
     @Query("SELECT * FROM email_parts WHERE accountId = :accountId AND emailId = :emailId")
     suspend fun forEmail(accountId: String, emailId: String): List<EmailPartEntity>
 
-    /** The stored part answering `cid:` [cid] in one message; blocking, for `shouldInterceptRequest`'s worker thread. */
+    /** The stored part answering `cid:` [cid] in one message. */
     @Query("SELECT * FROM email_parts WHERE accountId = :accountId AND emailId = :emailId AND cid = :cid LIMIT 1")
-    fun byCidBlocking(accountId: String, emailId: String, cid: String): EmailPartEntity?
+    suspend fun byCid(accountId: String, emailId: String, cid: String): EmailPartEntity?
+
+    /** Rows whose body is gone (evicted, deleted, a cleared cache): every body delete path ends in this sweep. */
+    @Query(EMAIL_PARTS_ORPHAN_SWEEP_SQL)
+    suspend fun deleteOrphans()
 
     /** Inline image bytes on disk, counted against the attachments cap. */
     @Query("SELECT COALESCE(SUM(fileBytes), 0) FROM email_parts WHERE file IS NOT NULL")
