@@ -125,7 +125,11 @@
         "libs:model-catalogue",
         "libs:decisions-link",
         "libs:fleet-data-client",
-        "libs:web-core"
+        "libs:web-core",
+        "libs:canvas-core",
+        "libs:canvas-draw",
+        "libs:canvas-painter",
+        "libs:canvas-play"
       ]
     },
     "libs:core": {
@@ -211,6 +215,26 @@
     "libs:web-core": {
       "_doc": "#1787 THE embedded web view (CloudWeb.create(ctx, WebProfile.APP_PAGE), render-process recovery, WebViewAssetLoader) for Draw > Board, shared BY REFERENCE.",
       "dir": "../ab_cloud-libs-shared/libs/web-core",
+      "type": "library"
+    },
+    "libs:canvas-core": {
+      "_doc": "#1865 what the canvas sections share: the palette (res/values/colors.xml), AppTheme, Folders (the SAF export folder and the share sheet) and ExportNames. canvas-draw, canvas-painter and canvas-play `api` it; the app links it for the window theme, the shell and the Enhancers.",
+      "dir": "../ab_cloud-libs-shared/libs/canvas-core",
+      "type": "library"
+    },
+    "libs:canvas-draw": {
+      "_doc": "#1865 the Draw section (paint model, renderer, PNG, the Draw page and its controller) and its sibling page Board (the Quickdraw web page over libs:web-core), moved out of the app module unchanged.",
+      "dir": "../ab_cloud-libs-shared/libs/canvas-draw",
+      "type": "library"
+    },
+    "libs:canvas-painter": {
+      "_doc": "#1865 the Painter section (the cell-painter web page over libs:web-core and its store), moved out of the app module unchanged.",
+      "dir": "../ab_cloud-libs-shared/libs/canvas-painter",
+      "type": "library"
+    },
+    "libs:canvas-play": {
+      "_doc": "#1865 the Play section (mixer, transport, loop model, voices, the SoundFont backend's Kotlin half, the output, WAV, the Play page and its controller), moved out of the app module unchanged. libcanvasaudio.so and the bundled samples and bank stay in the app module (their pins and licence records name app/src/main/cpp and app/src/main/assets).",
+      "dir": "../ab_cloud-libs-shared/libs/canvas-play",
       "type": "library"
     }
   },

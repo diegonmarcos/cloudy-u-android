@@ -21,7 +21,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
-import com.diegonmarcos.cloudcanvas.R
+import com.diegonmarcos.cloudlib.canvas.core.R
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import com.diegonmarcos.cloudcanvas.CanvasStart
@@ -66,7 +66,7 @@ fun CanvasShell(start: CanvasStart = CanvasStart()) {
     var pages by rememberSaveable { mutableStateOf(mapOf<String, String>().let { m -> start.page?.let { m + (selected to it) } ?: m }) }
     val page = pages[selected]?.takeIf { p -> section.pages.any { it.id == p } } ?: section.pages.firstOrNull()?.id
     val draw = remember { DrawController(ctx.applicationContext) }
-    val play = remember { PlayController(ctx.applicationContext, start.demo) }
+    val play = remember { PlayController(ctx.applicationContext, start.demo, com.diegonmarcos.cloudcanvas.BuildConfig.AUDIO_DEFAULT_ENGINE) }
     val enhance = remember { EnhanceController(ctx.applicationContext, draw) }
     val board = remember { BoardController(ctx.applicationContext).also { it.startTool = start.tool } }
     val painter = remember { PainterController(ctx.applicationContext).also { it.query = start.painter } }
@@ -101,10 +101,10 @@ fun CanvasShell(start: CanvasStart = CanvasStart()) {
                                 Decl.SECTION_PAINTER -> PainterScreen(painter, Modifier.testTag(Tags.PAINTER))
                                 // #1808 nav: Board's own entry shows the same Board page (one controller) as Draw > Board
                                 Decl.SECTION_BOARD -> BoardScreen(board, Modifier.testTag(Tags.BOARD))
-                                Decl.SECTION_PLAY -> PlayScreen(play, start, Modifier.testTag(Tags.PLAY))
+                                Decl.SECTION_PLAY -> PlayScreen(play, start.view, Modifier.testTag(Tags.PLAY))
                                 // #1808 nav: Enhancers, second row Draw Enhancer | Music Enhancer
                                 Decl.SECTION_ENHANCE -> if (page == Decl.PAGE_MUSIC) MusicScreen(Modifier.testTag(Tags.MUSIC)) else EnhanceScreen(enhance, start, Modifier.testTag(Tags.ENHANCE))
-                                else -> if (page == Decl.PAGE_BOARD) BoardScreen(board, Modifier.testTag(Tags.BOARD)) else DrawScreen(draw, start, Modifier.testTag(Tags.DRAW))
+                                else -> if (page == Decl.PAGE_BOARD) BoardScreen(board, Modifier.testTag(Tags.BOARD)) else DrawScreen(draw, start.panel, Modifier.testTag(Tags.DRAW))
                             }
                         }
                     }

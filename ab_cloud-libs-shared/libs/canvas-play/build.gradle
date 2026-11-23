@@ -1,0 +1,47 @@
+// libs:canvas-play (#1865): the Play section of Cloud Canvas, moved out of the app module unchanged: the mixer, transport and loop model
+// (audio/Mixer.kt, audio/Engine.kt), the voices (audio/Synth.kt, audio/Samples.kt, audio/SampleLoader.kt), the SoundFont backend's Kotlin
+// half (audio/SoundFont.kt), the output (audio/AudioOut.kt), the WAV encoder and the Play page with its controller (ui/PlayScreen.kt,
+// ui/PlayController.kt). The native half (libcanvasaudio.so: FluidSynth + Oboe, the pinned fetch and its sha256 checks) and the bundled
+// samples and bank stay where their pins and licence records name them (the app module's cpp/ and assets/); this lib loads the library by
+// name. The default engine is handed in by the shell (build.json::audio.default_engine, baked into the app's BuildConfig).
+
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
+}
+
+android {
+    namespace 'com.diegonmarcos.cloudlib.canvas.play'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    buildFeatures {
+        compose = true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    api platform('androidx.compose:compose-bom:2025.11.01')
+    api 'androidx.compose.ui:ui'
+    api 'androidx.compose.foundation:foundation'
+    api 'androidx.compose.material3:material3'
+    api project(':libs:canvas-core')
+    implementation 'androidx.activity:activity-compose:1.9.3'
+    implementation 'androidx.core:core-ktx:1.15.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+}

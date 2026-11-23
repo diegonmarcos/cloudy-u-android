@@ -97,7 +97,7 @@
     "grabber_diag": {"kind": "prefs", "class": "device", "doc": "#1825 what the Grabber page shows about the accessibility path on THIS phone: when the selection service last connected, the last event and the last launch. Timestamps and short labels only, never selected text; meaningless on another device.", "used_by": ["ac_cloud-keyboard"]},
     "chronos_repo": {"kind": "prefs", "class": "device", "doc": "#1830 Cloud Wiki's runtime clone of lib-chronos: the refresh mode the owner chose (manual, on open, every 6 h, daily), when the clone was last refreshed and the commit it holds. The clone itself lives in the app's files dir and is re-cloned on a new phone.", "used_by": ["ac_cloud-wiki"]},
     "compose_templates": {"kind": "prefs", "class": "content", "doc": "Cloud Mail compose templates the owner saved (name, subject, body), encoded by ComposeTemplateCodec; carried to a new phone with the app's content.", "used_by": ["ac_cloud-mail"]},
-    "canvas_play": {"kind": "prefs", "class": "config", "doc": "Cloud Canvas play mode: the audio engine the owner picked (build.json::audio.default_engine until a pick) and its play settings.", "used_by": ["ac_cloud-canvas"]},
+    "canvas_play": {"kind": "prefs", "class": "config", "doc": "Cloud Canvas play mode: the audio engine the owner picked (build.json::audio.default_engine until a pick) and its play settings.", "used_by": ["lib-canvas-play"]},
     "dev_verifier": {"kind": "prefs", "class": "device", "doc": "libs:perms DevVerifier: the last reading of the developer-options / debugging state on THIS phone (state, until, short detail, when read). A device observation, meaningless on another phone.", "used_by": ["lib-perms"]},
     "grabber": {
       "kind": "prefs",
@@ -2768,7 +2768,7 @@
       "class": "config",
       "doc": "#1780 Cloud Canvas Draw: the recent colours of the colour picker (a comma list of ARGB hex values, most recent first). Part of the app's settings, so it migrates.",
       "used_by": [
-        "ac_cloud-canvas"
+        "lib-canvas-draw"
       ]
     },
     "canvas_folders": {
@@ -2776,7 +2776,7 @@
       "class": "device",
       "doc": "#1780 Cloud Canvas: the export folders (PNG and WAV) the user chose through the Storage Access Framework, as tree Uris. The grant is per phone, so it does not migrate.",
       "used_by": [
-        "ac_cloud-canvas"
+        "lib-canvas-core"
       ]
     },
     "canvas_ai": {
@@ -3609,6 +3609,10 @@
       "libs": [
         "lib-ai",
         "lib-bottomnav",
+        "lib-canvas-core",
+        "lib-canvas-draw",
+        "lib-canvas-painter",
+        "lib-canvas-play",
         "lib-core",
         "lib-crash",
         "lib-decisions-link",

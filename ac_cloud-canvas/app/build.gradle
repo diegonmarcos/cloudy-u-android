@@ -270,6 +270,12 @@ dependencies {
     // #1787 Draw > Board: the fleet's one embedded web view (CloudWeb, WebProfile.APP_PAGE, render-process recovery) and androidx.webkit
     // (WebViewAssetLoader, the web message listener of the board bridge), shared BY REFERENCE.
     implementation project(':libs:web-core')
+    // #1865 the sections, each its own library (the app is the shell that wires them): Draw (+ Board), Painter, Play, and what they share
+    // (the palette, AppTheme, the export folders and names). Their Kotlin keeps the app's packages, so nothing was renamed by the move.
+    implementation project(':libs:canvas-core')
+    implementation project(':libs:canvas-draw')
+    implementation project(':libs:canvas-painter')
+    implementation project(':libs:canvas-play')
     implementation platform('androidx.compose:compose-bom:2025.11.01')
     implementation 'androidx.compose.ui:ui'
     implementation 'androidx.compose.foundation:foundation'

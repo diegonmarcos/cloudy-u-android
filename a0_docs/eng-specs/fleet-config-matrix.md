@@ -615,7 +615,7 @@ Coverage: 11 covered, 0 gaps.
 
 ## cloud-canvas — `com.diegonmarcos.cloudcanvas`
 
-Module `ac_cloud-canvas`; libs: lib-ai, lib-bottomnav, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-web-core.
+Module `ac_cloud-canvas`; libs: lib-ai, lib-bottomnav, lib-canvas-core, lib-canvas-draw, lib-canvas-painter, lib-canvas-play, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|

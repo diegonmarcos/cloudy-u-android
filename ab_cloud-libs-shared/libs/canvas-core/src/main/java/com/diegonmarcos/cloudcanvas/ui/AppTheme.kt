@@ -2,7 +2,7 @@ package com.diegonmarcos.cloudcanvas.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.colorResource
-import com.diegonmarcos.cloudcanvas.R
+import com.diegonmarcos.cloudlib.canvas.core.R
 import com.diegonmarcos.superapp.uikit.CloudKitTheme
 import com.diegonmarcos.superapp.uikit.KitPalette
 

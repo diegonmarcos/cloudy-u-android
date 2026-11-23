@@ -60,8 +60,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.diegonmarcos.cloudcanvas.CanvasStart
-import com.diegonmarcos.cloudcanvas.R
+import com.diegonmarcos.cloudlib.canvas.core.R
 import com.diegonmarcos.cloudcanvas.draw.CanvasPresets
 import com.diegonmarcos.cloudcanvas.draw.DocRenderer
 import com.diegonmarcos.cloudcanvas.draw.Tool
@@ -71,11 +70,11 @@ private val PALETTE = listOf(
     0xFF00ACC1, 0xFF1E88E5, 0xFF5E35B1, 0xFFD81B60, 0xFF6D4C41, 0xFF757575,
 ).map { it.toInt() }
 
-/** The Draw page: a paint app on the Compose canvas (no WebView). Tool rows on top, the canvas, the actions row at the bottom. */
+/** The Draw page: a paint app on the Compose canvas (no WebView). Tool rows on top, the canvas, the actions row at the bottom. [panel] is the launch extra `panel` (layers opens the layers panel), handed down by the shell. */
 @Composable
-fun DrawScreen(ctl: DrawController, start: CanvasStart, modifier: Modifier = Modifier) {
+fun DrawScreen(ctl: DrawController, panel: String?, modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
-    var showLayers by rememberSaveable { mutableStateOf(start.panel == "layers") }
+    var showLayers by rememberSaveable { mutableStateOf(panel == "layers") }
     var showColor by remember { mutableStateOf(false) }
     var showSizes by remember { mutableStateOf(false) }
     val pickFolder = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->

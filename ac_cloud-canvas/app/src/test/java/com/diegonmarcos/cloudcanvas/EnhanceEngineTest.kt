@@ -150,8 +150,9 @@ class EnhanceEngineTest {
     }
 
     @Test fun noSourceReadsTheFleetKey() {
-        val files = File(root(), "app/src/main").walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
-        assertTrue(files.size > 10)
+        // #1865 the app module and every canvas library (the sections moved out of the app)
+        val files = CanvasSources.kotlin()
+        assertTrue(files.size > 30)
         assertTrue(files.none { it.readText().contains("revealAiKey(") || it.readText().contains("TextToolsClient") })
         val gradle = File(root(), "app/build.gradle").readText()
         assertFalse(gradle.contains("':libs:text-tools'"))

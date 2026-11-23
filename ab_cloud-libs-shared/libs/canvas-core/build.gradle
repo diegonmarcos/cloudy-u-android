@@ -1,0 +1,43 @@
+// libs:canvas-core (#1865): what the Cloud Canvas sections share and nothing else: the palette (res/values/colors.xml, read by every
+// section and by the app's window theme), AppTheme (libs:ui-kit's CloudKitTheme over that palette), Folders (the Storage Access Framework
+// export folder per kind and the share sheet) and ExportNames (the export file names). Kotlin packages are the app's own
+// (com.diegonmarcos.cloudcanvas.*): the #1865 split moved files, it renamed nothing.
+
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
+}
+
+android {
+    namespace 'com.diegonmarcos.cloudlib.canvas.core'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    buildFeatures {
+        compose = true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    api platform('androidx.compose:compose-bom:2025.11.01')
+    api 'androidx.compose.ui:ui'
+    api 'androidx.compose.foundation:foundation'
+    api 'androidx.compose.material3:material3'
+    api project(':libs:ui-kit')
+    implementation 'androidx.core:core-ktx:1.15.0'
+}

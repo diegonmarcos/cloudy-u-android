@@ -28,6 +28,9 @@
 #      PAGE_MUSIC; NavShapeTest carries the field-parity tests (T5)
 #   #1808 Painter is inserted right after Draw (T1: Draw | Painter | Play | Draw Enhancer | Music Enhancer); its page (ui/PainterScreen.kt)
 #      is the second allowed WebView under the same rules as Board's (T2); the Painter page itself is tested by test-painter.sh
+#   #1865 the sections live in their own libraries (build.json::modules libs:canvas-*: canvas-core, canvas-draw, canvas-painter,
+#      canvas-play, under ab_cloud-libs-shared/libs): every source rule reads app/src/main AND each canvas library's src/main, so no rule
+#      lost a file to the move (the split itself and its parity are test-canvas-libs.sh)
 # Each rule is then proven red by a planted mutation in a scratch copy.
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -43,6 +46,14 @@ import json, os, re, subprocess, sys
 app, root = sys.argv[1], sys.argv[2]
 bj = json.load(open(os.path.join(app, "build.json")))
 ui = bj["ui"]
+# #1865 the source roots: the app module and every canvas library build.json::modules declares (by its dir)
+mains = [os.path.join(app, "app/src/main")] + [os.path.normpath(os.path.join(app, s["dir"], "src/main")) for n, s in sorted(bj["modules"].items()) if n.startswith("libs:canvas-") and isinstance(s, dict) and s.get("dir")]
+def kt(rel):  # the one source file at java/com/diegonmarcos/cloudcanvas/<rel>, wherever the split put it
+    for m in mains:
+        f = os.path.join(m, "java/com/diegonmarcos/cloudcanvas", rel)
+        if os.path.isfile(f): return f
+    return os.path.join(mains[0], "java/com/diegonmarcos/cloudcanvas", rel)
+def repo_rel(f): return os.path.relpath(f, os.path.dirname(os.path.abspath(app)))  # repo-relative: the app and its libs share one parent
 sec = [s["id"] for s in ui["sections"]]
 if ui["bottom_nav"] != ["draw", "painter", "board", "play", "enhance"]: print("T1 bottom_nav is %r, want draw, painter, board, play, enhance" % ui["bottom_nav"])
 labels = {s["id"]: s.get("label") for s in ui["sections"]}
@@ -64,7 +75,7 @@ elif any(not p.get("label") or not p.get("icon") for p in drawsec[0]["pages"]): 
 src = ""
 board_src = ""
 painter_src = ""
-for r, _, files in os.walk(os.path.join(app, "app/src/main")):
+for r, _, files in (w for m in mains for w in os.walk(m)):
     for f in files:
         if f.endswith(".kt") or f.endswith(".java"):
             t = open(os.path.join(r, f)).read()
@@ -79,13 +90,13 @@ else:
     if re.search(r"(?<![\w.@<])WebView\(\s*(?!\))", nc(board_src)): print("T2 the Board page constructs a bare WebView")
     if "if (isMainFrame)" not in board_src or 'setOf("https://${CloudWeb.ASSET_HOST}")' not in board_src: print("T2 the board bridge is not limited to the asset origin and the main frame")
 wg = open(os.path.join(root, "1_cicd/src/data/webview-guard.json")).read()
-if "ac_cloud-canvas/app/src/main/java/com/diegonmarcos/cloudcanvas/ui/BoardScreen.kt" not in wg: print("T2 BoardScreen.kt is not registered in webview-guard.json")
+if repo_rel(kt("ui/BoardScreen.kt")) not in wg: print("T2 BoardScreen.kt is not registered in webview-guard.json")
 if not painter_src: print("T2 the Painter page (ui/PainterScreen.kt) is missing")
 else:
     if "CloudWeb.create(c, WebProfile.APP_PAGE)" not in painter_src: print("T2 the Painter web view is not built by CloudWeb.create(.., WebProfile.APP_PAGE)")
     if re.search(r"(?<![\w.@<])WebView\(\s*(?!\))", nc(painter_src)): print("T2 the Painter page constructs a bare WebView")
     if "if (isMainFrame)" not in painter_src or 'setOf("https://${CloudWeb.ASSET_HOST}")' not in painter_src: print("T2 the painter bridge is not limited to the asset origin and the main frame")
-if "ac_cloud-canvas/app/src/main/java/com/diegonmarcos/cloudcanvas/ui/PainterScreen.kt" not in wg: print("T2 PainterScreen.kt is not registered in webview-guard.json")
+if repo_rel(kt("ui/PainterScreen.kt")) not in wg: print("T2 PainterScreen.kt is not registered in webview-guard.json")
 man = open(os.path.join(app, "app/src/main/AndroidManifest.xml")).read()
 man_nc = re.sub(r"<!--.*?-->", "", man, flags=re.S)
 for p in ("RECORD_AUDIO", "READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE", "MANAGE_EXTERNAL_STORAGE"):
@@ -153,7 +164,7 @@ cfgp = os.path.join(assets, sfb.get("config_asset", "soundfont/soundfont.json"))
 cfg = json.load(open(cfgp)) if os.path.isfile(cfgp) else {}
 kinds = ["piano", "drums", "synth_sine", "synth_saw", "synth_square", "synth_triangle"]
 if cfg.get("kinds") != kinds or any(k not in cfg.get("presets", {}) or not cfg["presets"][k].get("name") for k in kinds): print("T8 soundfont.json does not map every kind to a named preset")
-synth_kt = open(os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudcanvas/audio/Synth.kt")).read()
+synth_kt = open(kt("audio/Synth.kt")).read()
 pads = re.findall(r"(\w+)\(\"[^\"]+\"\)", synth_kt[synth_kt.index("enum class Drum"):synth_kt.index("}", synth_kt.index("enum class Drum"))])
 if not pads or any(not (35 <= cfg.get("drum_notes", {}).get(pd, 0) <= 81) for pd in pads): print("T8 a drum pad has no General MIDI key in soundfont.json")
 gr = open(os.path.join(app, "app/build.gradle")).read()
@@ -181,6 +192,7 @@ S="$(mktemp -d)"; trap 'rm -rf "$S"' EXIT
 mut() {  # $1 = label, $2 = rule prefix expected, $3.. = python edit of the scratch copy
   local label="$1" want="$2"; shift 2
   rm -rf "$S/app" "$S/root"; mkdir -p "$S/app" "$S/root/licenses" "$S/root/1_cicd/src/data"; cp -r "$APP/build.json" "$APP/app" "$APP/tools" "$APP/vendor" "$S/app/" 2>/dev/null; cp "$APP/build.json" "$S/app/build.json"
+  rm -rf "$S/ab_cloud-libs-shared"; mkdir -p "$S/ab_cloud-libs-shared/libs"; cp -r "$ROOT"/ab_cloud-libs-shared/libs/canvas-* "$S/ab_cloud-libs-shared/libs/"
   cp "$ROOT/licenses/curated.json" "$S/root/licenses/"; cp "$ROOT/1_cicd/src/data/webview-guard.json" "$S/root/1_cicd/src/data/"
   mkdir -p "$S/root/1_cicd/src/cicd"; cp "$ROOT/1_cicd/src/cicd/ship-cloud-canvas.yml" "$ROOT/1_cicd/src/cicd/canvas-soundfont-render.yml" "$S/root/1_cicd/src/cicd/"
   ( cd "$S/app" && "$@" )
@@ -194,13 +206,13 @@ mut "key literal" T4 sh -c 'echo "val k = \"sk-or-v1-0000\"" > app/src/main/java
 mut "wav test removed" T5 sed -i 's/fun wavHeaderAndSamples/fun x/' app/src/test/java/com/diegonmarcos/cloudcanvas/PlayTest.kt
 # #1787
 mut "board page dropped" T1 python3 -I -c 'import json;d=json.load(open("build.json"));d["ui"]["sections"][0]["pages"]=d["ui"]["sections"][0]["pages"][:1];json.dump(d,open("build.json","w"))'
-mut "board built as a bare WebView" T2 sed -i 's/CloudWeb.create(c, WebProfile.APP_PAGE)/WebView(c)/' app/src/main/java/com/diegonmarcos/cloudcanvas/ui/BoardScreen.kt
-mut "bridge open to every frame" T2 sed -i 's/if (isMainFrame) //' app/src/main/java/com/diegonmarcos/cloudcanvas/ui/BoardScreen.kt
+mut "board built as a bare WebView" T2 sed -i 's/CloudWeb.create(c, WebProfile.APP_PAGE)/WebView(c)/' ../ab_cloud-libs-shared/libs/canvas-draw/src/main/java/com/diegonmarcos/cloudcanvas/ui/BoardScreen.kt
+mut "bridge open to every frame" T2 sed -i 's/if (isMainFrame) //' ../ab_cloud-libs-shared/libs/canvas-draw/src/main/java/com/diegonmarcos/cloudcanvas/ui/BoardScreen.kt
 # #1808
 mut "painter moved after play" T1 python3 -I -c 'import json;d=json.load(open("build.json"));b=d["ui"]["bottom_nav"];b.remove("painter");b.insert(2,"painter");json.dump(d,open("build.json","w"))'
-mut "painter built as a bare WebView" T2 sed -i 's/CloudWeb.create(c, WebProfile.APP_PAGE)/WebView(c)/' app/src/main/java/com/diegonmarcos/cloudcanvas/ui/PainterScreen.kt
-mut "painter bridge open to every frame" T2 sed -i 's/if (isMainFrame) //' app/src/main/java/com/diegonmarcos/cloudcanvas/ui/PainterScreen.kt
-mut "painter not registered" T2 sed -i 's#ac_cloud-canvas/app/src/main/java/com/diegonmarcos/cloudcanvas/ui/PainterScreen.kt#ac_cloud-canvas/y.kt#' ../root/1_cicd/src/data/webview-guard.json
+mut "painter built as a bare WebView" T2 sed -i 's/CloudWeb.create(c, WebProfile.APP_PAGE)/WebView(c)/' ../ab_cloud-libs-shared/libs/canvas-painter/src/main/java/com/diegonmarcos/cloudcanvas/ui/PainterScreen.kt
+mut "painter bridge open to every frame" T2 sed -i 's/if (isMainFrame) //' ../ab_cloud-libs-shared/libs/canvas-painter/src/main/java/com/diegonmarcos/cloudcanvas/ui/PainterScreen.kt
+mut "painter not registered" T2 sed -i 's#ab_cloud-libs-shared/libs/canvas-painter/src/main/java/com/diegonmarcos/cloudcanvas/ui/PainterScreen.kt#ac_cloud-canvas/y.kt#' ../root/1_cicd/src/data/webview-guard.json
 # #1808 nav
 mut "board entry dropped" T1 python3 -I -c 'import json;d=json.load(open("build.json"));b=d["ui"]["bottom_nav"];b.remove("board");json.dump(d,open("build.json","w"))'
 mut "board entry shows draw" T1 sed -i 's/Decl.SECTION_BOARD -> BoardScreen(board/Decl.SECTION_BOARD -> DrawScreen(draw/' app/src/main/java/com/diegonmarcos/cloudcanvas/ui/CanvasShell.kt
@@ -214,10 +226,10 @@ mut "a pad lost its GM key" T8 python3 -I -c 'import json;p="app/src/main/assets
 mut "bank compressed" T8 sed -i "s/noCompress 'ogg', 'sf2'/noCompress 'ogg'/" app/build.gradle
 mut "download unverified" T8 sed -i 's/sfDecl.android_zip.sha256/sfDecl.android_zip.url/g' app/build.gradle
 mut "engine credit dropped" T8 python3 -I -c 'import json;d=json.load(open("build.json"));c=d["configs_pages"]["about"];c["credits"]=c["credits"].replace("FluidSynth","Synth");json.dump(d,open("build.json","w"))'
-mut "classic engine removed" T8 sed -i 's/Classic("classic", "Classic")/Other("other", "Other")/' app/src/main/java/com/diegonmarcos/cloudcanvas/audio/SoundFont.kt
+mut "classic engine removed" T8 sed -i 's/Classic("classic", "Classic")/Other("other", "Other")/' ../ab_cloud-libs-shared/libs/canvas-play/src/main/java/com/diegonmarcos/cloudcanvas/audio/SoundFont.kt
 mut "ship without the ndk" T8 sed -i 's/ ndk;29.0.14033849//' ../root/1_cicd/src/cicd/ship-cloud-canvas.yml
 mut "soundfont test removed" T5 sed -i 's/fun everyInstrumentResolvesToAPresetOfTheBank/fun x/' app/src/test/java/com/diegonmarcos/cloudcanvas/SoundFontTest.kt
-mut "board not registered" T2 sed -i 's#ac_cloud-canvas/app/src/main/java/com/diegonmarcos/cloudcanvas/ui/BoardScreen.kt#ac_cloud-canvas/x.kt#' ../root/1_cicd/src/data/webview-guard.json
+mut "board not registered" T2 sed -i 's#ab_cloud-libs-shared/libs/canvas-draw/src/main/java/com/diegonmarcos/cloudcanvas/ui/BoardScreen.kt#ac_cloud-canvas/x.kt#' ../root/1_cicd/src/data/webview-guard.json
 mut "unlicensed sound" T4 sh -c 'printf x > app/src/main/assets/samples/drums/clap_v1.ogg'
 mut "sample missing" T4 rm app/src/main/assets/samples/piano/060_v2.ogg
 mut "licence entry dropped" T4 python3 -I -c 'import json;p="../root/licenses/curated.json";d=json.load(open(p));del d["assets"]["ac_cloud-canvas/app/src/main/assets/samples/piano/021_v1.ogg"];json.dump(d,open(p,"w"))'

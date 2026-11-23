@@ -35,7 +35,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.diegonmarcos.cloudcanvas.CanvasStart
-import com.diegonmarcos.cloudcanvas.R
+import com.diegonmarcos.cloudlib.canvas.core.R
 import com.diegonmarcos.cloudcanvas.enhance.PresetLibrary
 import com.diegonmarcos.superapp.fleetdata.FleetData
 import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsActivity

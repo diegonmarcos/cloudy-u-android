@@ -28,14 +28,14 @@ import com.diegonmarcos.cloudcanvas.draw.ExportNames
  * #1809 which sound plays is [engineKind]: SoundFont (FluidSynth + GeneralUser GS, the default) or Classic (the #1787 samples and
  * synthesized voices), chosen on the page and remembered. Classic also plays while the SoundFont bank loads and if it cannot start.
  */
-class PlayController(private val ctx: Context, demo: Boolean) {
+class PlayController(private val ctx: Context, demo: Boolean, defaultEngine: String) {
     val audio = AudioOut(ctx)
     val engine = MixEngine(audio.sampleRate)
     private val prefs = ctx.getSharedPreferences("canvas_play", Context.MODE_PRIVATE)
     private val decl: SfDecl? = runCatching { SfDecl.load(ctx.assets) }.getOrNull()
 
-    /** The engine the user picked (build.json::audio.default_engine until they pick). */
-    var engineKind by mutableStateOf(EngineKind.of(prefs.getString("engine", null) ?: com.diegonmarcos.cloudcanvas.BuildConfig.AUDIO_DEFAULT_ENGINE))
+    /** The engine the user picked ([defaultEngine], the shell hands build.json::audio.default_engine baked in the app, until they pick). */
+    var engineKind by mutableStateOf(EngineKind.of(prefs.getString("engine", null) ?: defaultEngine))
         private set
     /** The SoundFont engine's state: null while loading, the resolved presets, or why it cannot play. */
     var sfStatus by mutableStateOf<SfStatus?>(null)

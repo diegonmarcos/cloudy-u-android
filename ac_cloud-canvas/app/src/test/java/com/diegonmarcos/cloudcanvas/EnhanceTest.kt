@@ -110,8 +110,10 @@ class EnhanceTest {
 
     @Test fun noSourceLogsOrPrintsAndNoKeyIsEmbedded() {
         val src = File(root(), "app/src/main")
-        val files = src.walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
-        assertTrue(files.size > 10)
+        // #1865 the app module and every canvas library (the sections moved out of the app): no file escapes the scan
+        val files = CanvasSources.kotlin()
+        assertTrue(files.size > 30)
+        assertTrue(files.any { it.path.contains("canvas-play") } && files.any { it.path.contains("canvas-draw") })
         val bad = Regex("""\b(Log\.[dieswv]\(|Timber\.|println\(|print\(|printStackTrace|System\.(out|err))""")
         val offenders = files.filter { f -> f.readLines().any { l -> !l.trim().startsWith("//") && !l.trim().startsWith("*") && bad.containsMatchIn(l) } }.map { it.name }
         assertEquals("no log or print call anywhere (nothing here may ever write a key): $offenders", emptyList<String>(), offenders)

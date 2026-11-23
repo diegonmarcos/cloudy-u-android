@@ -1,0 +1,43 @@
+// libs:canvas-painter (#1865): the Painter section of Cloud Canvas, moved out of the app module unchanged: the cell-painter page
+// (ui/PainterScreen.kt, the vendored three.js page the app ships in assets/painter, built through libs:web-core) and its store
+// (painter/PainterStore.kt: painted cells per shape, colour, mode, scale, layout; atomic save).
+
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
+}
+
+android {
+    namespace 'com.diegonmarcos.cloudlib.canvas.painter'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    buildFeatures {
+        compose = true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    api platform('androidx.compose:compose-bom:2025.11.01')
+    api 'androidx.compose.ui:ui'
+    api 'androidx.compose.foundation:foundation'
+    api 'androidx.compose.material3:material3'
+    api project(':libs:canvas-core')
+    implementation project(':libs:web-core')
+    implementation 'androidx.core:core-ktx:1.15.0'
+}

@@ -50,8 +50,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.diegonmarcos.cloudcanvas.CanvasStart
-import com.diegonmarcos.cloudcanvas.R
+import com.diegonmarcos.cloudlib.canvas.core.R
 import com.diegonmarcos.cloudcanvas.audio.Drum
 import com.diegonmarcos.cloudcanvas.audio.Inst
 import com.diegonmarcos.cloudcanvas.audio.LoopClock
@@ -68,9 +67,9 @@ import kotlinx.coroutines.withContext
 private const val VIEW_INSTRUMENTS = "instruments"
 private const val VIEW_MIXER = "mixer"
 
-/** The Play page: transport, then the instruments (piano, drum pads, synth) or the multitrack mixer. The audio runs while the page is on screen. */
+/** The Play page: transport, then the instruments (piano, drum pads, synth) or the multitrack mixer. The audio runs while the page is on screen. [view] is the launch extra `view` (instruments | mixer), handed down by the shell. */
 @Composable
-fun PlayScreen(ctl: PlayController, start: CanvasStart, modifier: Modifier = Modifier) {
+fun PlayScreen(ctl: PlayController, view: String?, modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
     val s by ctl.engine.session.collectAsState()
     val scope = rememberCoroutineScope()
@@ -83,7 +82,7 @@ fun PlayScreen(ctl: PlayController, start: CanvasStart, modifier: Modifier = Mod
         ctl.start()
         onDispose { ctl.stopAll() }
     }
-    LaunchedEffect(start) { if (start.view == VIEW_MIXER || start.view == VIEW_INSTRUMENTS) ctl.view = start.view }
+    LaunchedEffect(view) { if (view == VIEW_MIXER || view == VIEW_INSTRUMENTS) ctl.view = view }
     LaunchedEffect(Unit) {
         var ticks = 0
         while (true) {

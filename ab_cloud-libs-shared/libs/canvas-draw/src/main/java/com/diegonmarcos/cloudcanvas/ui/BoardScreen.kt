@@ -40,7 +40,7 @@ import androidx.webkit.WebMessageCompat
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
-import com.diegonmarcos.cloudcanvas.R
+import com.diegonmarcos.cloudlib.canvas.core.R
 import com.diegonmarcos.cloudcanvas.board.BoardMeta
 import com.diegonmarcos.cloudcanvas.board.BoardStore
 import com.diegonmarcos.cloudlib.web.CloudWeb
