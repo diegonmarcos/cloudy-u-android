@@ -241,7 +241,7 @@ fun <T> SortableTable(id: String, title: String, sub: String, cols: List<TableCo
 /** A header row kept as an ordinary item (the lazy sticky-header API is experimental in this Compose version). */
 private fun androidx.compose.foundation.lazy.LazyListScope.stickyHeaderCompat(content: @Composable () -> Unit) = item { content() }
 
-/** #1863 Export / Import: export, the Takeout import (unchanged, [ImportTabView]), delete duplicates, delete by dates, delete all, refresh. */
+/** #1863 Export / Import: the Takeout import (unchanged, [ImportTabView], first as before), export, delete duplicates, delete by dates, delete all, refresh. */
 @Composable
 fun ExportImportView(ui: DayUi, a: DayActions, zone: ZoneId) {
     val p = LocalKitPalette.current
@@ -253,6 +253,8 @@ fun ExportImportView(ui: DayUi, a: DayActions, zone: ZoneId) {
     ImportTabView(a, before = {
         item { KitSectionHeader("Export / Import", "Export the store, import a Google history, remove duplicates or a date range, delete everything, or recompute the cache.") }
         ui.dataStatus?.let { s -> item { KitCard { Text(s, Modifier.testTag(ExploredTags.STATUS), color = p.textPrimary, style = MaterialTheme.typography.bodyMedium) } } }
+    }, after = {
+        // the import (unchanged) stays first under the header, where it always was; export and the clean-up actions follow it
         item {
             KitCard(Modifier.testTag(ExploredTags.COUNTS)) {
                 Text("Stored data", color = p.textPrimary, style = MaterialTheme.typography.titleSmall)
@@ -276,7 +278,6 @@ fun ExportImportView(ui: DayUi, a: DayActions, zone: ZoneId) {
                 TextButton(onClick = d.onRestore, modifier = Modifier.testTag(ExploredTags.RESTORE)) { Text("Restore a Cloud Nav JSON export") }
             }
         }
-    }, after = {
         item {
             KitCard {
                 Text("Delete duplicates", color = p.textPrimary, style = MaterialTheme.typography.titleSmall)
