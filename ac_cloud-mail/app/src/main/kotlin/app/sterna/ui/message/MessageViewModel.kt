@@ -76,7 +76,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -316,9 +315,6 @@ private fun Email.markRead(): Email =
  *  dismiss a confirmation she did not want but cannot un-open a page — seeded `false`, a link tapped
  *  in the reader's first frames was fetched straight away, silently. */
 internal const val CONFIRM_LINKS_UNLOADED = true
-
-/** #1837 how long an open waits for the core's raw-message fetch (it runs beside the old path's own fetch) before drawing without it. */
-internal const val CORE_FETCH_WAIT_MS = 2_000L
 
 /**
  * Which failure to open a message earns a sentence of OUR own, and which keeps the text it carries.
@@ -1386,8 +1382,9 @@ class MessageViewModel(application: Application) : AndroidViewModel(application)
                 // The tapped message: cache-first body + its inline images, arriving together so the
                 // WebView renders once, complete. Not marked read here — see [onActiveChanged].
                 val opened = repo.openMessage(credentials, emailId, markRead = false, lazyInlineImages = true)
-                // Both ran together; wait (bounded) so the page is drawn ONCE, from the core's document when it has one.
-                coreFetch?.let { job -> withTimeoutOrNull(CORE_FETCH_WAIT_MS) { job.await() } }?.let { _coreDoc.value = it }
+                // #1869 never awaited: the open path does not wait on the network. A document the core fetch already
+                // brought is used; one still in flight lands in the core store and serves the next open.
+                coreFetch?.let { completedOrNull(it) }?.let { _coreDoc.value = it }
                 // Stamp the owning account: the fetched body never carries one, and downstream
                 // actions route by it.
                 val anchor = opened.email.copy(accountId = opened.email.accountId ?: accountId)
