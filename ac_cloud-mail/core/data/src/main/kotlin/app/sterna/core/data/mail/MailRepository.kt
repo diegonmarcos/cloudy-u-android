@@ -2819,7 +2819,7 @@ class MailRepository(
                 cached = entry.body,
                 rowSeen = seenOrUnknown { emailDao.seenOf(credentials.id, emailId) },
             )
-            if (markRead) bgScope.launch { runCatching { setRead(credentials, emailId, true) } }
+            if (markRead) bgScope.launch { runCatching { markReadQueued(credentials, emailId, true) } }
             return body
         }
         // Offline-first: a stored body is rendered with NO network call; inline images missing from it
@@ -2829,7 +2829,7 @@ class MailRepository(
             if (!lazyInlineImages && cached.email.inlineImageParts().isNotEmpty() && cached.inlineImages.isEmpty()) {
                 bgScope.launch { runCatching { ensureInlineImages(credentials, emailId, cached) } }
             }
-            if (markRead) bgScope.launch { runCatching { setRead(credentials, emailId, true) } }
+            if (markRead) bgScope.launch { runCatching { markReadQueued(credentials, emailId, true) } }
             // A prefetched body can hold ciphertext: route it to the decrypt flow, not to armor.
             cryptoKindOf(cached.email)?.let { kind ->
                 return cached.copy(crypto = MessageCrypto.Locked(kind))
@@ -3561,6 +3561,29 @@ class MailRepository(
         runCatching { emailPartDao?.deleteOrphans() }
         drop.size
     }.getOrDefault(0)
+
+    /** #1869 step 11: the offline read-state queue ([ReadStateQueue]), next to the app's files (memory only in tests). */
+    private val readQueue = ReadStateQueue(offlineAttachmentsDir?.parentFile?.let { java.io.File(it, "pending-read-state.tsv") })
+
+    /**
+     * #1869 step 11: mark [emailId] read/unread LOCALLY at once (the row, the folder's unread counter), queue the change, and
+     * try the server now. Offline, or on any failure, the change stays queued and the next sync pass sends it
+     * ([flushReadQueue]); the reader never waits on the network for it.
+     */
+    suspend fun markReadQueued(credentials: AccountCredentials, emailId: String, seen: Boolean) {
+        markRecentlyMutated(credentials.id, emailId)
+        val wasSeen = emailDao.seenOf(credentials.id, emailId)
+        val mailboxId = emailDao.mailboxOf(credentials.id, emailId)
+        emailDao.setSeen(credentials.id, emailId, seen)
+        adjustFolderUnreadOnRead(credentials.id, mailboxId, wasSeen, seen)
+        readQueue.put(credentials.id, emailId, seen)
+        flushReadQueue(credentials)
+    }
+
+    /** Send [credentials]' queued read states, oldest first, through [setRead] (server first; the local half is then a
+     *  no-op). Stops at the first failure (offline); returns how many the server took. */
+    suspend fun flushReadQueue(credentials: AccountCredentials): Int =
+        readQueue.flush(credentials.id) { entry -> setRead(credentials, entry.emailId, entry.seen) }
 
     suspend fun setRead(credentials: AccountCredentials, emailId: String, seen: Boolean) {
         markRecentlyMutated(credentials.id, emailId)
@@ -6580,7 +6603,11 @@ class MailRepository(
         window: OfflineWindow,
         limit: OfflineAttachmentLimit,
         nowMillis: Long = System.currentTimeMillis(),
-    ): OfflineSyncResult = syncSerial.withLock { OfflineSync(offlinePort(credentials)).run(window, limit, nowMillis) }
+    ): OfflineSyncResult {
+        // #1869 step 11: as in [fullSync], the queued read states first.
+        runCatching { flushReadQueue(credentials) }
+        return syncSerial.withLock { OfflineSync(offlinePort(credentials)).run(window, limit, nowMillis) }
+    }
 
     // ---- Background full sync (#1768) -------------------------------------------------------
 
@@ -6598,6 +6625,8 @@ class MailRepository(
         nowMillis: Long = System.currentTimeMillis(),
     ): FullSyncResult {
         val port = fullSyncPort(credentials, window, limit)
+        // #1869 step 11: read states queued offline go first, before any header sync can read the server's older ones.
+        runCatching { flushReadQueue(credentials) }
         return syncSerial.withLock { FullSync(port, conditions, policy, stopRequested = stopRequested).run(window, nowMillis) }
     }
 

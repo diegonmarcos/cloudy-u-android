@@ -24,6 +24,9 @@
 #   S10 WebView pool (3 idle at most, MutableContextWrapper, reset on release: about:blank, tag, settleToken,
 #       reportingEnabled), the FrameLayout wrapper and the GPU layer latch kept per page; the tap-time handoff LRU (never a
 #       decrypted body) feeds the page's snapshot; the 200 ms fade skipped only when the snapshot is ready
+#   S11 offline read-state queue: the reader marks read/unread locally at once and queues the server change (persisted,
+#       latest wins, bounded); it is sent right away and again at the start of every sync pass, stopping at the first
+#       failure; a toggle queued during a flush is kept
 #   P5  rule 16 parity: every email_bodies column, every body DAO query and every registered migration kept
 #   M   mutation-proof: each defence undone in a COPY turns its check red; the real tree is green
 #
@@ -212,6 +215,24 @@ elif which == "S10":
     en = ap[ap.find("enterTransition = {"):ap.find("popExitTransition = {")]
     need(0 <= en.find("if (messageFadeDisabled || !motionEnabled) EnterTransition.None") < en.find("else if (readerSnapshotReady(readerHandoff, targetState.arguments)) EnterTransition.None"), "the fade skip is not after the crash latch")
     need("else fadeIn(tween(200))" in en, "the fade is gone for a page with no snapshot")
+elif which == "S11":
+    q = code(read(os.path.join(D, "mail/ReadStateQueue.kt")))
+    fl = body(q, "suspend fun flush(accountId: String, send: suspend (Entry) -> Unit): Int {")
+    need("break" in fl and "done(entry)" in fl, "the flush does not stop at the first failure or never clears")
+    need("if (map[k] == entry) {" in body(q, "fun done(entry: Entry) = synchronized(lock) {"), "a toggle queued during a flush is dropped")
+    need("while (map.size > max) map.remove(map.keys.first())" in q, "the queue is unbounded")
+    need("if (!tmp.renameTo(f)) tmp.delete()" in q, "the queue is not persisted atomically")
+    r = code(read(os.path.join(D, "mail/MailRepository.kt")))
+    mk = body(r, "suspend fun markReadQueued(")
+    need(0 <= mk.find("emailDao.setSeen(credentials.id, emailId, seen)") < mk.find("readQueue.put(credentials.id, emailId, seen)") < mk.find("flushReadQueue(credentials)"), "the mark is not local first, queued, then sent")
+    need(r.count("if (markRead) bgScope.launch { runCatching { markReadQueued(credentials, emailId, true) } }") == 2, "an open from the cache marks read server-first again")
+    def before_lock(h):
+        t = r[r.find(h):]
+        return t[:t.find("return syncSerial.withLock {")]
+    need(all("runCatching { flushReadQueue(credentials) }" in before_lock(h) for h in ("suspend fun fullSync(", "suspend fun syncOffline(")), "a sync pass does not send the queue first")
+    vm = code(read(os.path.join(K, "ui/message/MessageViewModel.kt")))
+    need("runCatching { repo.markReadQueued(credentials, current.id, true) }" in vm, "the reader marks read server-first again")
+    need("repo.markReadQueued(c, id, false)" in vm, "mark unread fails offline again")
 elif which == "P5":
     ent = code(read(os.path.join(D, "db/EmailBodyEntity.kt")))
     for col in ("val id: String", "val accountId: String", "val bodyJson: String", "val inlineImagesJson: String", "val fetchedAt: Long"):
@@ -240,9 +261,10 @@ declare -A LABEL=(
   [S8]="neighbours in pager order; VISIBLE rows debounced, capped, metered allowed"
   [S9]="planner: inline state, metered text window, calendar, IMAP batch, local ciphertext, serial passes, local membership"
   [S10]="WebView pool with reset, FrameLayout and GPU guards kept; tap handoff (no decrypted body); conditional fade"
+  [S11]="offline read-state queue: local first, queued, sent now and at every sync pass"
   [P5]="rule 16 parity: every email_bodies column, body query and migration step kept"
 )
-CHECKS="S5 S6 S7 S8 S9 S10 P5"
+CHECKS="S5 S6 S7 S8 S9 S10 S11 P5"
 
 echo "== the tree =="
 for c in $CHECKS; do
@@ -333,6 +355,17 @@ mutate S10 "$UI/ReaderViewPool.kt" '        reset(view)
 ' '' "a released view kept without reset"
 mutate S10 "$MD/ReaderHandoff.kt" 'fun holdable(body: MessageBody): Boolean = body.crypto == null || body.crypto is MessageCrypto.Locked' 'fun holdable(body: MessageBody): Boolean = true' "a decrypted body held in the handoff"
 mutate S10 "app/src/main/kotlin/app/sterna/ui/SternaApp.kt" ' else if (readerSnapshotReady(readerHandoff, targetState.arguments)) EnterTransition.None else fadeIn(tween(200))' ' else EnterTransition.None' "the fade dropped for every page"
+mutate S11 "$MD/ReadStateQueue.kt" '        if (map[k] == entry) {' '        if (true) {' "a toggle during a flush lost"
+mutate S11 "$MD/ReadStateQueue.kt" '            } catch (_: Throwable) {
+                break
+            }' '            } catch (_: Throwable) {
+            }' "an unsent change dropped as sent"
+mutate S11 "$MD/MailRepository.kt" '        readQueue.put(credentials.id, emailId, seen)
+' '' "the change never queued"
+mutate S11 "$MD/MailRepository.kt" '        // #1869 step 11: read states queued offline go first, before any header sync can read the server'"'"'s older ones.
+        runCatching { flushReadQueue(credentials) }
+' '' "the queue never sent by the background pass"
+mutate S11 "app/src/main/kotlin/app/sterna/ui/message/MessageViewModel.kt" 'runCatching { repo.markReadQueued(credentials, current.id, true) }' 'runCatching { repo.setRead(credentials, current.id, true) }' "the reader back to server-first"
 mutate P5 "$DBD/EmailBodyEntity.kt" '    val fetchedAt: Long,
 ' '' "the fetchedAt column dropped"
 mutate P5 "$DBD/EmailBodyDao.kt" 'suspend fun pruneForAccount(' 'suspend fun pruneGone(' "a body DAO query removed"

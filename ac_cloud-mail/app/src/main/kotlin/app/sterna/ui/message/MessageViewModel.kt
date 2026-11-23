@@ -1633,10 +1633,10 @@ class MessageViewModel(application: Application) : AndroidViewModel(application)
         // Reflect the read state immediately so the unread dot clears on settle…
         updateMessage(current.id) { it.copy(header = it.header.markRead(), body = it.body?.markRead()) }
         _state.value = MessageState.Loaded(current.markRead())
-        // …then persist it (server + cache).
+        // …then persist it: the cache at once, the server through the offline queue (#1869 step 11).
         viewModelScope.launch {
             val credentials = credentials() ?: return@launch
-            runCatching { repo.setRead(credentials, current.id, true) }
+            runCatching { repo.markReadQueued(credentials, current.id, true) }
             // Clear the mail's notification now that it's been read (Codeberg #19).
             Notifications.dismiss(getApplication(), credentials.id, credentials.username, listOf(current.id))
         }
@@ -1895,7 +1895,7 @@ class MessageViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun markUnread(onDone: () -> Unit) = act(onDone) { c, id -> repo.setRead(c, id, false) }
+    fun markUnread(onDone: () -> Unit) = act(onDone) { c, id -> repo.markReadQueued(c, id, false) }
     // Archive + delete route through the shared inbox VM so the reader reuses the same count nudge
     // and Undo as swipe/bulk (#23); no local copies.
     fun reportSpam(onDone: () -> Unit) = act(onDone) { c, id -> repo.reportSpam(c, id) }
