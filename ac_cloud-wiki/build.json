@@ -8,7 +8,7 @@
   },
   "name": "cloud-wiki",
   "display_name": "Cloud Wiki",
-  "description": "Cloud Wiki (#1778): a small encyclopedia of Markdown pages. No bottom nav: a collapsed left side menu (libs:ui-nav-bars vertical_side_menu) holds the topics in four groups, Sciences (Math, Computer Science, Physics, Astronomy, Engineering, Medicine), Humanities (Anthropology, Human Belief Systems, Chronos), Arts (Art, Theater, Music, Movies) and Explore (Graph), and each topic has its subpages as top tabs after an Overview tab (Engineering: one subpage per major field). A page is a short, neutral, educational Markdown explanation with tag chips; tapping a chip filters every page by that tag. Graph is an Obsidian-style force-directed graph (libs:graph-view, shared with Cloud Notes) joining pages by their [[links]] and shared tags, with pan, zoom and tap to open. The content is the runtime dataset wiki (data/fleet/app/com.diegonmarcos.cloudwiki/wiki.json) served by Cloud Store, never an APK asset. Configs are the fleet's General | Perms | About. Declares no network permission of its own. #1789 Chronos also holds the interactive simulators of diegonmarcos/lib-chronos: one nested page per Chronos page of the repo, in its hierarchy and with its titles, shown in the fleet web view (libs:web-core, APP_PAGE) and served offline from APK assets (assets/chronos, WebViewAssetLoader on the asset origin; every other request is answered 403). They are baked at build time from a pinned commit (tools/chronos-pin.json, tools/regen-chronos.py, drift-checked by test/test-chronos.sh), the one exception to the runtime dataset.",
+  "description": "Cloud Wiki (#1778, #1867): an encyclopedia of Markdown pages. No bottom nav: a collapsed left side menu (libs:ui-nav-bars vertical_side_menu) under three parents, Modern Science (hubs Sciences: Math, Computer Science, Physics, Astronomy, Engineering, Medicine; Humanities: Anthropology, Human Belief Systems; Arts: Art, Theater, Music, Movies; Explore: Graph), Arcanum Science (the Esoteric Arcanum master taxonomy: A Architecture of Sacred Sciences & Wisdom, B Interactions: Magic & Grimoires, C Esoteric Schools & Traditions, their sections I-V as topics and their leaves as pages, a historical and cultural encyclopedia, not instructions for practice) and Projects (Chronos, Sacred Geometry). A hub page shows its intro and its topics; each topic has its subpages as top tabs after an Overview tab. A page is a short, neutral, educational Markdown explanation with tag chips; tapping a chip filters every page by that tag. Graph is an Obsidian-style force-directed graph (libs:graph-view, shared with Cloud Notes) joining pages by their [[links]] and shared tags, with pan, zoom and tap to open. #1867 THE CONTENT IS THE REPO diegonmarcos/Projects-Library-KG: one numbered folder per node (1.Modern-science/1.0.Science/1.0.0.Math/1.0.0.0.Algebra/index.md, 2.Arcanum-science/..., 3.Projects/3.0.Chronos, 3.Projects/3.1.Sacred-geo), its root wiki.json generated from the tree by the repo's tools/gen-wiki.py. The app clones that repo at run time, read-only, into its own storage (libs:git-ui GitConnect, ChronosRepo; refreshed per the chosen mode, served offline from the clone) and reads the pages from the clone's wiki.json; until the first clone lands it reads the runtime dataset wiki (data/fleet/app/com.diegonmarcos.cloudwiki/wiki.json, the same file at the pin) served by Cloud Store. The Chronos simulators (3.Projects/3.0.Chronos, one nested page per index.html, in its hierarchy and with its titles) and the Sacred Geometry explorer are shown in the fleet web view (libs:web-core, APP_PAGE) from the clone through WebViewAssetLoader on the asset origin (every other request answered 403). The copy baked into the APK at the pin (tools/chronos-pin.json, tools/regen-chronos.py, drift-checked by test/test-chronos.sh) is the OFFLINE SEED served until the first clone; the same tool writes the side menu (ui.sections wiki pages and groups) and the Cloud Store dataset from the repo at the pin. Configs are the fleet's General | Perms | About.",
   "category": "android",
   "android": {
     "application_id": "com.diegonmarcos.cloudwiki",
@@ -258,7 +258,7 @@
     }
   },
   "ui": {
-    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud Wiki. ui.bottom_nav is EMPTY: the app has no bottom nav (owner request, declared in nav-shape.json::no_bottom). The pages are the ONE section `wiki`, default_section, drawn in vertical_side_menu mode (the collapsed rail; libs:ui-nav-bars NavSectionLayout) with four groups. Each topic page has its subpages as top tabs (the runtime dataset wiki.json, topics[id].pages), after an Overview tab; the Graph page draws every page as a node. test-wiki-app.sh holds the topic ids in step with the dataset both ways. #1789 the Chronos page holds NESTED pages (written by tools/regen-chronos.py from lib-chronos at the pin, never typed): one per index.html of the repo's Chronos/ tree, in its hierarchy, label = the page's <title>, `asset` = its file under assets/chronos (Decl.chronos reads it; NavDecl ignores the key). The side menu indents them under Chronos and the title dropdown lists them, so the nav walk covers them; test-chronos.sh C1 holds the declaration equal to the baked tree.",
+    "_doc": "#868 THE nav declaration (libs:bottomnav NavDecl) of Cloud Wiki. ui.bottom_nav is EMPTY: the app has no bottom nav (owner request, declared in nav-shape.json::no_bottom). The pages are the ONE section `wiki`, default_section, drawn in vertical_side_menu mode (the collapsed rail; libs:ui-nav-bars NavSectionLayout). #1867 GENERATED by tools/regen-chronos.py from the content repo's wiki.json `menu` at the pin, never typed: the groups are the repo's three parents (Modern Science, Arcanum Science, Projects); a hub page (Sciences, Humanities, Arts, Explore, A, B, C) holds its topics as nested pages (indented in the side menu, listed in the title dropdown); Chronos and Sacred Geometry (`project` = its folder) sit in Projects. Each topic page has its subpages as top tabs (the dataset's topics[id].pages), after an Overview tab; the Graph page draws every page as a node. test/test-wiki-1867.sh holds this declaration equal to the repo's menu and every page of the previous menu reachable; test-wiki-app.sh holds the topic ids in step with the dataset both ways. #1789 the Chronos page holds NESTED pages (from the repo's 3.Projects/3.0.Chronos at the pin): one per index.html, in its hierarchy, label = the page's name, `asset` = its file under assets/chronos (Decl.chronos reads it; NavDecl ignores the key); test-chronos.sh C1 holds the declaration equal to the baked tree.",
     "bottom_nav": [],
     "default_section": "wiki",
     "configs_ui": [
@@ -272,64 +272,173 @@
         "nav_mode": "vertical_side_menu",
         "pages": [
           {
-            "id": "math",
-            "label": "Math",
-            "icon": "calculate"
+            "id": "sciences",
+            "label": "Sciences",
+            "icon": "insights",
+            "pages": [
+              {
+                "id": "math",
+                "label": "Math",
+                "icon": "calculate"
+              },
+              {
+                "id": "cs",
+                "label": "Computer Science",
+                "icon": "code"
+              },
+              {
+                "id": "physics",
+                "label": "Physics",
+                "icon": "bolt"
+              },
+              {
+                "id": "astronomy",
+                "label": "Astronomy",
+                "icon": "rocket_launch"
+              },
+              {
+                "id": "eng",
+                "label": "Engineering",
+                "icon": "build"
+              },
+              {
+                "id": "medicine",
+                "label": "Medicine",
+                "icon": "monitor_heart"
+              }
+            ]
           },
           {
-            "id": "cs",
-            "label": "Computer Science",
-            "icon": "code"
+            "id": "humanities",
+            "label": "Humanities",
+            "icon": "groups",
+            "pages": [
+              {
+                "id": "anthropology",
+                "label": "Anthropology",
+                "icon": "groups"
+              },
+              {
+                "id": "beliefs",
+                "label": "Human Belief Systems",
+                "icon": "psychology"
+              }
+            ]
           },
           {
-            "id": "physics",
-            "label": "Physics",
-            "icon": "bolt"
+            "id": "arts",
+            "label": "Arts",
+            "icon": "palette",
+            "pages": [
+              {
+                "id": "art",
+                "label": "Art",
+                "icon": "palette"
+              },
+              {
+                "id": "theater",
+                "label": "Theater",
+                "icon": "mood"
+              },
+              {
+                "id": "music",
+                "label": "Music",
+                "icon": "music_note"
+              },
+              {
+                "id": "movies",
+                "label": "Movies",
+                "icon": "video"
+              }
+            ]
           },
           {
-            "id": "astronomy",
-            "label": "Astronomy",
-            "icon": "rocket_launch"
+            "id": "explore",
+            "label": "Explore",
+            "icon": "explore",
+            "pages": [
+              {
+                "id": "graph",
+                "label": "Graph",
+                "icon": "hub"
+              }
+            ]
           },
           {
-            "id": "eng",
-            "label": "Engineering",
-            "icon": "build"
+            "id": "arcanum-a",
+            "label": "Architecture of Sacred Sciences & Wisdom",
+            "icon": "account_tree",
+            "pages": [
+              {
+                "id": "sacred-sciences",
+                "label": "Sacred Sciences & Celestial Mechanics",
+                "icon": "star"
+              },
+              {
+                "id": "harmonics",
+                "label": "Number, Geometry & Harmonic Proportions",
+                "icon": "graphic_eq"
+              },
+              {
+                "id": "symbolic-architecture",
+                "label": "Spatial, Symbolic & Vital Architecture",
+                "icon": "account_balance"
+              }
+            ]
           },
           {
-            "id": "medicine",
-            "label": "Medicine",
-            "icon": "monitor_heart"
+            "id": "arcanum-b",
+            "label": "Interactions: Magic & Grimoires",
+            "icon": "auto_fix_high",
+            "pages": [
+              {
+                "id": "divination",
+                "label": "Divination Systems & Epistemic Arts",
+                "icon": "visibility"
+              },
+              {
+                "id": "alchemy",
+                "label": "Alchemical & Transformative Sciences",
+                "icon": "cached"
+              },
+              {
+                "id": "ceremonial-magic",
+                "label": "Ceremonial Magic, Grimoires & Summoning Disciplines",
+                "icon": "menu_book"
+              },
+              {
+                "id": "folk-magic",
+                "label": "Folk Magic & Witchcraft Traditions",
+                "icon": "home"
+              },
+              {
+                "id": "talismans",
+                "label": "Talismanic & Applied Arcanum",
+                "icon": "key"
+              }
+            ]
           },
           {
-            "id": "anthropology",
-            "label": "Anthropology",
-            "icon": "groups"
-          },
-          {
-            "id": "beliefs",
-            "label": "Human Belief Systems",
-            "icon": "psychology"
-          },
-          {
-            "id": "art",
-            "label": "Art",
-            "icon": "palette"
-          },
-          {
-            "id": "theater",
-            "label": "Theater",
-            "icon": "mood"
-          },
-          {
-            "id": "music",
-            "label": "Music",
-            "icon": "music_note"
-          },
-          {
-            "id": "movies",
-            "label": "Movies",
-            "icon": "video"
+            "id": "arcanum-c",
+            "label": "Esoteric Schools & Traditions",
+            "icon": "history",
+            "pages": [
+              {
+                "id": "western-esoteric",
+                "label": "Western Esoteric Traditions",
+                "icon": "language"
+              },
+              {
+                "id": "eastern-esoteric",
+                "label": "Eastern Esoteric Traditions",
+                "icon": "explore"
+              },
+              {
+                "id": "mystery-schools",
+                "label": "Mystery Schools & Ancient Wisdom",
+                "icon": "lock"
+              }
+            ]
           },
           {
             "id": "chronos",
@@ -340,43 +449,43 @@
                 "id": "chronos.lib",
                 "label": "Home",
                 "icon": "timeline",
-                "asset": "Chronos/index.html"
+                "asset": "3.Projects/3.0.Chronos/index.html"
               },
               {
                 "id": "chronos.lib.0",
                 "label": "Humansphere - Circadian",
                 "icon": "bedtime",
-                "asset": "Chronos/0.Humansphere-Circadian/index.html"
+                "asset": "3.Projects/3.0.Chronos/0.Humansphere-Circadian/index.html"
               },
               {
                 "id": "chronos.lib.1",
                 "label": "Earthsphere - Cycles",
                 "icon": "public",
-                "asset": "Chronos/1.Earthsphere-Cycles/index.html"
+                "asset": "3.Projects/3.0.Chronos/1.Earthsphere-Cycles/index.html"
               },
               {
                 "id": "chronos.lib.2",
                 "label": "Milkwaysphere - Orbits",
                 "icon": "language",
-                "asset": "Chronos/2.Milkwaysphere-Orbits/index.html"
+                "asset": "3.Projects/3.0.Chronos/2.Milkwaysphere-Orbits/index.html"
               },
               {
                 "id": "chronos.lib.3",
                 "label": "Quantum Cycles",
                 "icon": "hub",
-                "asset": "Chronos/3.Quantum-Cycles/index.html",
+                "asset": "3.Projects/3.0.Chronos/3.Quantum-Cycles/index.html",
                 "pages": [
                   {
                     "id": "chronos.lib.3.0",
                     "label": "Quantum Decoherence Cycle",
                     "icon": "schedule",
-                    "asset": "Chronos/3.Quantum-Cycles/3.0.Quantum-Decoherence-Cycle/index.html"
+                    "asset": "3.Projects/3.0.Chronos/3.Quantum-Cycles/3.0.Quantum-Decoherence-Cycle/index.html"
                   },
                   {
                     "id": "chronos.lib.3.1",
                     "label": "Quantum Gravity Cycle",
                     "icon": "rocket_launch",
-                    "asset": "Chronos/3.Quantum-Cycles/3.1.Quantum-Gravity-Cycle/index.html"
+                    "asset": "3.Projects/3.0.Chronos/3.Quantum-Cycles/3.1.Quantum-Gravity-Cycle/index.html"
                   }
                 ]
               },
@@ -384,7 +493,7 @@
                 "id": "chronos.lib.4",
                 "label": "Astronomy - Astrological Sphere",
                 "icon": "auto_awesome",
-                "asset": "Chronos/4.Astronomy-Astrological-sphere/index.html"
+                "asset": "3.Projects/3.0.Chronos/4.Astronomy-Astrological-sphere/index.html"
               }
             ]
           },
@@ -392,46 +501,29 @@
             "id": "sacred",
             "label": "Sacred Geometry",
             "icon": "token",
-            "project": "Sacred-geo"
-          },
-          {
-            "id": "graph",
-            "label": "Graph",
-            "icon": "hub"
+            "project": "3.Projects/3.1.Sacred-geo"
           }
         ],
         "groups": [
           {
-            "id": "sciences",
-            "label": "Sciences",
-            "icon": "insights",
+            "id": "modern",
+            "label": "Modern Science",
+            "icon": "public",
             "pages": [
-              "math",
-              "cs",
-              "physics",
-              "astronomy",
-              "eng",
-              "medicine"
+              "sciences",
+              "humanities",
+              "arts",
+              "explore"
             ]
           },
           {
-            "id": "humanities",
-            "label": "Humanities",
-            "icon": "groups",
+            "id": "arcanum",
+            "label": "Arcanum Science",
+            "icon": "auto_awesome",
             "pages": [
-              "anthropology",
-              "beliefs"
-            ]
-          },
-          {
-            "id": "arts",
-            "label": "Arts",
-            "icon": "palette",
-            "pages": [
-              "art",
-              "theater",
-              "music",
-              "movies"
+              "arcanum-a",
+              "arcanum-b",
+              "arcanum-c"
             ]
           },
           {
@@ -441,14 +533,6 @@
             "pages": [
               "chronos",
               "sacred"
-            ]
-          },
-          {
-            "id": "explore",
-            "label": "Explore",
-            "icon": "explore",
-            "pages": [
-              "graph"
             ]
           }
         ]
@@ -481,16 +565,22 @@
     },
     "about": {
       "tagline": "A small encyclopedia with a graph",
-      "description": "Cloud Wiki is a small encyclopedia of short, neutral, educational pages in thirteen topics. A collapsed side menu groups the topics, each topic has its subpages as top tabs, every page carries tag chips that filter the whole wiki, and the Graph page joins pages by their links and shared tags. The pages are served at runtime by Cloud Store; nothing else is baked into the app but the Chronos simulators, which run offline from the app's own copy of the lib-chronos repository.",
+      "description": "Cloud Wiki is an encyclopedia of short, neutral, educational pages under three parents: Modern Science (sciences, humanities, arts), Arcanum Science (a historical and cultural encyclopedia of esoteric traditions, after the Esoteric Arcanum master taxonomy) and Projects. A collapsed side menu holds the hubs and topics, each topic has its subpages as top tabs, every page carries tag chips that filter the whole wiki, and the Graph page joins pages by their links and shared tags. The pages come from the Projects-Library-KG repository, which the app clones read-only and keeps for offline use; until the first clone Cloud Store serves the same pages, and a copy of the Chronos and Sacred Geometry sites baked into the app is the offline seed.",
       "features": [
-        "Sciences: Math, Computer Science, Physics, Astronomy, Engineering, Medicine",
-        "Humanities: Anthropology, Human Belief Systems, Chronos",
-        "Arts: Art, Theater, Music, Movies",
+        "Modern Science > Sciences: Math, Computer Science, Physics, Astronomy, Engineering, Medicine",
+        "Modern Science > Humanities: Anthropology, Human Belief Systems",
+        "Modern Science > Arts: Art, Theater, Music, Movies",
+        "Modern Science > Explore: Graph (force-directed, pan, zoom, tap to open)",
+        "Arcanum Science: A Architecture of Sacred Sciences & Wisdom, B Interactions: Magic & Grimoires, C Esoteric Schools & Traditions, eleven sections, 79 pages",
+        "Projects: Chronos simulators (interactive, offline, in their own hierarchy) and Sacred Geometry (curriculum and 3D explorer)",
         "Tag chips that filter every page",
-        "Graph: force-directed, pan, zoom, tap to open",
-        "Chronos simulators: every page of the lib-chronos repository, interactive, offline, in its own hierarchy"
+        "Content from the Projects-Library-KG repository, cloned read-only and cached offline"
       ],
       "screens": [
+        {
+          "name": "Hub",
+          "what": "A hub's intro and its topics (Sciences, A. Architecture of Sacred Sciences, ...)."
+        },
         {
           "name": "Topic",
           "what": "Overview and one tab per subpage, Markdown with tag chips."
@@ -509,12 +599,12 @@
         }
       ],
       "guide": [
-        "Open the side menu for a topic.",
+        "Open the side menu: Modern Science, Arcanum Science or Projects, then a hub and a topic.",
         "Pick a subpage tab at the top.",
         "Tap a tag chip to filter, a node in the graph to open its page.",
         "Open Chronos in the side menu, then a simulator below it."
       ],
-      "privacy": "No ads and no third-party trackers. A crash report is saved on the phone and sent only to the phone's own C3 WebServer over loopback; nothing leaves the device unless you share it. The pages are read from Cloud Store's local data provider; the app contacts no server itself.",
+      "privacy": "No ads and no third-party trackers. A crash report is saved on the phone and sent only to the phone's own C3 WebServer over loopback; nothing leaves the device unless you share it. The app downloads the public Projects-Library-KG repository from GitHub (read-only, per the refresh mode on the Chronos page) and otherwise reads the pages from Cloud Store's local data provider.",
       "backends": [],
       "related": [
         {
