@@ -1224,6 +1224,7 @@ class MailRepository(
      * client and the document read back. Null on any failure (logged, tag MailCore): the old reader path runs.
      */
     suspend fun coreReaderFetched(credentials: AccountCredentials, emailId: String): CoreReaderDoc? {
+        NoNetwork.check("coreReaderFetched")
         if (credentials.protocol == MailProtocol.IMAP) return null
         val core = mailCore ?: return null
         if (core.unavailableReason() != null) return null
@@ -3074,6 +3075,39 @@ class MailRepository(
             cached = cached,
             rowSeen = seenOrUnknown { emailDao.seenOf(accountId, emailId) },
         )
+    }
+
+    /**
+     * #1869 the reader's first frame, from local data only, in one IO hop ([LocalReaderStore]): the decrypted memory copy
+     * or the stored body, the list row, the core document if already stored, the snooze. Account id only, no credentials.
+     */
+    suspend fun readerSnapshot(accountId: String, emailId: String): ReaderSnapshot =
+        LocalReaderStore(localReaderPort).snapshot(accountId, emailId)
+
+    private val localReaderPort = object : LocalReaderPort {
+        override suspend fun decrypted(accountId: String, emailId: String): MessageBody? =
+            decryptedCache.get(cryptoKey(accountId, emailId))?.let { entry ->
+                reconcileCachedSeen(cached = entry.body, rowSeen = seenOrUnknown { emailDao.seenOf(accountId, emailId) })
+            }
+
+        override suspend fun storedBody(accountId: String, emailId: String): MessageBody? {
+            val cached = cachedMessage(accountId, emailId) ?: return null
+            // A prefetched body can hold ciphertext: the reader routes it to the decrypt flow (openMessage's rule).
+            return cryptoKindOf(cached.email)?.let { kind -> cached.copy(crypto = MessageCrypto.Locked(kind)) } ?: cached
+        }
+
+        override suspend fun header(accountId: String, emailId: String): Email? = cachedEmail(accountId, emailId)
+
+        override suspend fun storedCoreDoc(accountId: String, emailId: String): CoreReaderDoc? = coreReaderStored(accountId, emailId)
+
+        override suspend fun snoozedUntil(accountId: String, emailId: String): Long? = this@MailRepository.snoozedUntil(accountId, emailId)
+    }
+
+    /** #1869 a message the core store lacks is fetched into it in the BACKGROUND (never awaited by the reader): the next
+     *  open finds its document stored. Fire and forget. */
+    fun queueCoreFetch(credentials: AccountCredentials, emailId: String) {
+        if (credentials.protocol == MailProtocol.IMAP) return
+        bgScope.launch { runCatching { coreReaderFetched(credentials, emailId) } }
     }
 
     /** Drop every cached message body of every account; called once after an upgrade. */
@@ -6222,6 +6256,7 @@ class MailRepository(
     }
 
     private suspend fun connect(credentials: AccountCredentials): Context {
+        NoNetwork.check("connect")
         context?.let { if (it.credentials == credentials && !tokenRefresher.isExpiring(credentials)) return it }
         // A 401 (expired/revoked bearer, or the edge gate refusing it) refreshes the token and the
         // session ONCE; a second refusal surfaces as SignInRequiredException, never a raw HTTP code.

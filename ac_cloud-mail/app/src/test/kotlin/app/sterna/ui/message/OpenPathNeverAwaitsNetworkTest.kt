@@ -38,23 +38,29 @@ class OpenPathNeverAwaitsNetworkTest {
 
     @Test fun `the reader's load never awaits the core fetch, nor any timeout on it`() {
         val vm = src("ui/message/MessageViewModel.kt")
-        assertTrue("the core fetch is read without waiting", "coreFetch?.let { completedOrNull(it) }?.let { _coreDoc.value = it }" in vm)
-        assertFalse("no await on the core fetch", Regex("""coreFetch\??\.(let \{ job -> [^}]*)?await""").containsMatchIn(vm) || "job.await()" in vm)
-        assertFalse("no bounded wait either", "withTimeoutOrNull" in vm || "CORE_FETCH_WAIT_MS" in vm)
+        val load = vm.substringAfter("fun load(emailId: String, accountId: String?, settled: Boolean) {").substringBefore("private suspend fun scanBodyForUnsubscribe(")
+        assertFalse("no core fetch is started on the open path", "coreReaderFetched(" in load)
+        assertTrue("a missing core document is queued for the background instead", "if (storedDoc == null) repo.queueCoreFetch(credentials, emailId)" in load)
+        assertFalse("no await, no bounded wait", ".await()" in load || "withTimeoutOrNull" in vm || "CORE_FETCH_WAIT_MS" in vm)
         assertFalse("completedOrNull stays non-suspending", "suspend fun <T> completedOrNull" in src("ui/message/OpenPath.kt"))
     }
 
-    @Test fun `the open paints local data before anything leaves the device`() {
+    @Test fun `the first frame comes from ONE local snapshot, by account id, before any credentials`() {
         val vm = src("ui/message/MessageViewModel.kt")
-        val load = vm.substringAfter("fun load(emailId: String, accountId: String?, settled: Boolean) {")
-        val stored = load.indexOf("repo.coreReaderStored(")
-        val header = load.indexOf("repo.cachedEmail(")
-        val open = load.indexOf("repo.openMessage(")
-        assertTrue("the core store is read first", stored in 0 until open)
-        assertTrue("the cached header row is painted before the body read", header in 0 until open)
-        assertTrue("the fetch of a missing core document is started in the background", "async { runCatching { repo.coreReaderFetched(c, emailId) }.getOrNull() }" in load)
+        val load = vm.substringAfter("fun load(emailId: String, accountId: String?, settled: Boolean) {").substringBefore("private suspend fun scanBodyForUnsubscribe(")
+        val launch = load.substringAfter("viewModelScope.launch {")
+        val snapshot = launch.indexOf("repo.readerSnapshot(id, emailId)")
+        val firstCredentials = launch.indexOf("credentials()")
+        val open = launch.indexOf("repo.openMessage(")
+        assertTrue("the snapshot is the first read", snapshot >= 0 && snapshot < firstCredentials && snapshot < open)
+        assertTrue("its body is used before any fetch", "val opened = localBody\n                    ?: repo.openMessage(" in launch)
+        assertTrue("the local account is an id, not credentials", "val localAccount = accountId ?: store.currentId()" in launch)
+        val beforeTry = launch.substringBefore("try {")
+        for (call in listOf("credentials()", "openMessage(", "coreReaderFetched(", "mailboxMembership(", "prefetchNeighbours(")) {
+            assertFalse("nothing before the paint names $call", call in beforeTry)
+        }
         val warm = vm.substringAfter("fun warmFromCache(emailId: String, accountId: String?) {").substringBefore("private fun loadInlineImagesLater(")
-        assertTrue("the pager warms pages from the cache", "repo.cachedMessage(credentials.id, emailId)" in warm)
-        assertFalse("and from nothing else", "repo.openMessage(" in warm || "coreReaderFetched(" in warm)
+        assertTrue("the pager warms pages from the cache, by account id", "repo.cachedMessage(localAccount, emailId)" in warm)
+        assertFalse("and from nothing else", "repo.openMessage(" in warm || "coreReaderFetched(" in warm || "credentials()" in warm)
     }
 }

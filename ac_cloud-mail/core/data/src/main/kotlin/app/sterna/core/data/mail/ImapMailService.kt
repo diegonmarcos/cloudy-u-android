@@ -228,6 +228,7 @@ class ImapMailService(
         block: suspend (ImapSession) -> T,
     ): T =
         withContext(Dispatchers.IO) {
+            NoNetwork.check("imap")
             val config = config(credentials.imap ?: error("Account has no IMAP server configured."), credentials)
             val pooled = pool.getOrPut(credentials.id) { Pooled() }
             pooled.mutex.withLock {

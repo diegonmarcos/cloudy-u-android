@@ -8,7 +8,8 @@
 # main thread, inline images were never prefetched, the tern spun over cached rows, and the start sync was not
 # expedited. Each fix below is one line that a later rewrite can undo with every other test green.
 #
-#   I1  the reader never awaits the core fetch (completedOrNull, no withTimeoutOrNull, no CORE_FETCH_WAIT_MS)
+#   I1  the reader's first frame is ONE local snapshot (LocalReaderStore, under the NoNetwork tripwire, account id only,
+#       no credentials before the paint); the core fetch is queued for the background, never awaited
 #   I2  neighbours are prefetched in every folder; outside the Inbox through the raw store, which imports no key
 #   I3  a cached body is decoded on Dispatchers.Default, not on the reader's Main
 #   I4  the full sync has an inline-image phase (unmetered, in the body cap, budget per run) and the port implements it
@@ -65,8 +66,19 @@ def need(cond, msg):
 
 if which == "I1":
     vm = code(read(os.path.join(K, "ui/message/MessageViewModel.kt")))
-    need("coreFetch?.let { completedOrNull(it) }?.let { _coreDoc.value = it }" in vm, "load no longer reads the core fetch without waiting")
-    need("job.await()" not in vm and "withTimeoutOrNull" not in vm, "the reader awaits a fetch again")
+    load = vm[vm.find("fun load(emailId: String, accountId: String?, settled: Boolean) {"):vm.find("private suspend fun scanBodyForUnsubscribe(")]
+    need("if (storedDoc == null) repo.queueCoreFetch(credentials, emailId)" in load, "a missing core document is not queued for the background")
+    need("coreReaderFetched(" not in load, "the open path starts a core fetch again")
+    need(".await()" not in load and "withTimeoutOrNull" not in vm, "the reader awaits a fetch again")
+    need("val snapshot = localAccount?.let { id -> runCatching { repo.readerSnapshot(id, emailId) }.getOrNull() }" in load, "the first frame is not one local snapshot")
+    pre = load[load.find("viewModelScope.launch {"):load.find("try {")]
+    need("credentials()" not in pre and "openMessage(" not in pre, "credentials or a fetch before the paint")
+    ls = code(read(os.path.join(D, "mail/LocalReaderStore.kt")))
+    need("withContext(io + NoNetwork)" in ls, "the snapshot no longer runs under the NoNetwork tripwire")
+    need(not re.search(r"^import app\.sterna\.core\.(imap|jmap\.(?!model\.))", ls, re.M), "LocalReaderStore imports a network client")
+    need("connect(" not in ls, "LocalReaderStore names connect(")
+    r = code(read(os.path.join(D, "mail/MailRepository.kt")))
+    need('NoNetwork.check("connect")' in body(r, "private suspend fun connect(credentials: AccountCredentials): Context {"), "connect() lost the tripwire")
     need("CORE_FETCH_WAIT_MS" not in vm, "the 2 s wait constant is back")
     op = code(read(os.path.join(K, "ui/message/OpenPath.kt")))
     need("internal fun <T> completedOrNull(job: Deferred<T>): T? =" in op, "completedOrNull is gone or became a suspend function")
@@ -204,7 +216,10 @@ OW=app/src/main/kotlin/app/sterna/mail/OfflineSyncWorker.kt
 CW=app/src/main/kotlin/app/sterna/mail/MailCoreSyncWorker.kt
 OC=core/data/src/main/kotlin/app/sterna/core/data/mail/OfflineCache.kt
 SET=app/src/main/kotlin/app/sterna/ui/settings/SettingsScreen.kt
-mutate I1 "$VM" 'coreFetch?.let { completedOrNull(it) }?.let { _coreDoc.value = it }' 'coreFetch?.let { job -> withTimeoutOrNull(2_000L) { job.await() } }?.let { _coreDoc.value = it }' "the 2 s await restored"
+mutate I1 "$VM" 'if (storedDoc == null) repo.queueCoreFetch(credentials, emailId)' 'repo.coreReaderFetched(credentials, emailId)?.let { _coreDoc.value = it }' "the core fetch awaited on the open path again"
+mutate I1 "$REPO" '        NoNetwork.check("connect")
+' '' "connect() without the tripwire"
+mutate I1 "$VM" 'val listEmail = snapshot?.header' 'val listEmail = credentials()?.let { repo.cachedEmail(it.id, emailId) }' "credentials read before the paint"
 mutate I2 "$REPO" 'val raw = mailboxDao.roleForId(credentials.id, mailboxId) != "inbox"' 'if (mailboxDao.roleForId(credentials.id, mailboxId) != "inbox") return@launch
                 val raw = false' "neighbours back to Inbox-only"
 mutate I2 "$REPO" 'if (raw) fetchAndStoreRawBodies(credentials, ids) else fetchAndStoreBodies(credentials, ids)' 'fetchAndStoreBodies(credentials, ids)' "non-Inbox neighbours through the key-importing path"

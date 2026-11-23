@@ -706,7 +706,8 @@ class LoadOnSettleCallSiteTest {
         /** load()'s header-only repaint, anchored on the unique line that opens it. */
         val REPAINT_ERASURE = listOf(
             "listEmail?.let { cached ->",
-            "if (!warm) {",
+            // #1869: nor when the local snapshot holds the body, which paints the page once, below.
+            "if (!warm && localBody == null) {",
             "_messages.value = listOf(ThreadMessage(id = cached.id, header = cached))",
             "_state.value = MessageState.Loaded(cached)",
         )

@@ -10,6 +10,7 @@ import com.diegonmarcos.superapp.image.mlkit.BarcodeScan
 import com.diegonmarcos.superapp.image.mlkit.ImageScanEngine
 import com.diegonmarcos.superapp.image.mlkit.OcrResult
 import app.sterna.core.data.mail.CoreReaderDoc
+import app.sterna.core.data.mail.ReaderSnapshot
 import app.sterna.core.data.mail.MessageCrypto
 import app.sterna.core.data.mail.MessageUnavailableException
 import app.sterna.core.data.mail.requireAttachmentBytes
@@ -1229,8 +1230,9 @@ class MessageViewModel(application: Application) : AndroidViewModel(application)
         // account happens to be current (#92).
         this.accountId = accountId
         viewModelScope.launch {
-            val credentials = credentials() ?: return@launch
-            val cached = runCatching { repo.cachedMessage(credentials.id, emailId) }.getOrNull() ?: return@launch
+            // #1869 the account id is all a local read needs: no credentials (keystore decrypt) per warmed page.
+            val localAccount = accountId ?: store.currentId() ?: return@launch
+            val cached = runCatching { repo.cachedMessage(localAccount, emailId) }.getOrNull() ?: return@launch
             val warmable = MessagePaging.warmable(
                 cryptoKind = repo.cryptoKindOf(cached.email),
                 inlineParts = cached.email.inlineImageParts().size,
@@ -1345,28 +1347,27 @@ class MessageViewModel(application: Application) : AndroidViewModel(application)
         // can be the previous account's.
         _identityAddresses.value = store.identities(accountId).map { it.email }
         viewModelScope.launch {
-            // #1837 the core's reader document, from the store: no network, a millisecond or two, works offline. A message the
-            // prefetch has not reached is fetched in the background below, while the old path opens it.
-            var coreFetch: kotlinx.coroutines.Deferred<CoreReaderDoc?>? = null
-            val storedDoc = runCatching { credentials()?.let { repo.coreReaderStored(it.id, emailId) } }.getOrNull()
-            if (storedDoc != null) {
-                _coreDoc.value = storedDoc
-            } else {
-                coreFetch = credentials()?.let { c -> async { runCatching { repo.coreReaderFetched(c, emailId) }.getOrNull() } }
-            }
+            // #1869 ONE local read for the first frame (LocalReaderStore.snapshot, under the NoNetwork tripwire): the body
+            // (stored, or this process's decrypted copy), the list row, the core's document when it is ALREADY stored, the
+            // snooze. By account id only: no credentials, so no keystore decrypt, before the page is painted.
+            val localAccount = accountId ?: store.currentId()
+            val snapshot = localAccount?.let { id -> runCatching { repo.readerSnapshot(id, emailId) }.getOrNull() }
+            val localBody = (snapshot as? ReaderSnapshot.Hit)?.body
+            // The core's document is used only if it was stored before this open; it is never swapped in after paint.
+            val storedDoc = snapshot?.coreDoc
+            if (storedDoc != null) _coreDoc.value = storedDoc
             // Account-scoped: a snooze belongs to one account's message (issue #31).
-            _snoozedUntil.value = runCatching {
-                credentials()?.let { repo.snoozedUntil(it.id, emailId) }
-            }.getOrNull()
+            _snoozedUntil.value = snapshot?.snoozedUntil
             // Paint the cached header immediately so the screen shows the tapped message at once;
             // the body fills in when the fetch returns. The cached list row carries the folder it is
             // filed under, reliable on both protocols, while the fetched body's mailboxId can be
             // absent over JMAP — so junk detection keys off this.
-            val listEmail = runCatching { credentials()?.let { repo.cachedEmail(it.id, emailId) } }.getOrNull()
+            val listEmail = snapshot?.header
             listEmail?.let { cached ->
                 // HEADER-ONLY (body = null): this repaint drops the WebView just as surely as the
-                // prologue does, so it is skipped when the warm-up already put the real body there.
-                if (!warm) {
+                // prologue does, so it is skipped when the warm-up already put the real body there,
+                // and (#1869) when the snapshot holds the body: the page is then painted ONCE, below.
+                if (!warm && localBody == null) {
                     _messages.value = listOf(ThreadMessage(id = cached.id, header = cached))
                     _state.value = MessageState.Loaded(cached)
                 }
@@ -1378,13 +1379,15 @@ class MessageViewModel(application: Application) : AndroidViewModel(application)
                 _mailboxId.value = cached.mailboxId
             }
             try {
+                // The tapped message: from the snapshot when it holds the body (no network, no credentials before the
+                // paint); a miss is the one case that fetches. Inline images follow the text either way. Not marked
+                // read here — see [onActiveChanged].
+                val opened = localBody
+                    ?: repo.openMessage(credentials() ?: error(getApplication<Application>().getString(R.string.status_no_saved_account)), emailId, markRead = false, lazyInlineImages = true)
+                // Resolved AFTER the paint inputs are in hand: every use below is a background reconcile.
                 val credentials = credentials() ?: error(getApplication<Application>().getString(R.string.status_no_saved_account))
-                // The tapped message: cache-first body + its inline images, arriving together so the
-                // WebView renders once, complete. Not marked read here — see [onActiveChanged].
-                val opened = repo.openMessage(credentials, emailId, markRead = false, lazyInlineImages = true)
-                // #1869 never awaited: the open path does not wait on the network. A document the core fetch already
-                // brought is used; one still in flight lands in the core store and serves the next open.
-                coreFetch?.let { completedOrNull(it) }?.let { _coreDoc.value = it }
+                // A message the core store lacks is fetched into it in the background, never awaited (#1869).
+                if (storedDoc == null) repo.queueCoreFetch(credentials, emailId)
                 // Stamp the owning account: the fetched body never carries one, and downstream
                 // actions route by it.
                 val anchor = opened.email.copy(accountId = opened.email.accountId ?: accountId)
@@ -1503,10 +1506,11 @@ class MessageViewModel(application: Application) : AndroidViewModel(application)
      * The words are a localised `string-array` resource, not a list in Kotlin: which words mean
      * "unsubscribe" is a per-language fact, and the translators already own that file.
      */
-    private fun scanBodyForUnsubscribe(email: Email): UnsubscribeOptions? {
+    private suspend fun scanBodyForUnsubscribe(email: Email): UnsubscribeOptions? {
         val words = getApplication<Application>().resources
             .getStringArray(R.array.unsubscribe_body_words).toList()
-        return UnsubscribeBodyScan.scan(email.htmlContent(), email.textContent(), words)
+        // #1869 off the main thread: a regex walk over a whole newsletter, after the page is painted.
+        return withContext(Dispatchers.Default) { UnsubscribeBodyScan.scan(email.htmlContent(), email.textContent(), words) }
     }
 
     /**
