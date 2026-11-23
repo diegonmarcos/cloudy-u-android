@@ -6,7 +6,7 @@
 #   T1  text/plain, text/*, markdown, csv, xml, html, application/json, application/xml are declared with scheme content AND file
 #   T2  every declared action (VIEW EDIT) and category DEFAULT is on the MIME filter
 #   T3  the generic-type recipe (host *, */*) lists pathPatterns for .txt .md .log .json .csv .conf .yml .xml
-#   T4  no filter takes */* (or octet-stream) without a pathPattern: the app never becomes the default handler for binary types
+#   T4  #1866 (was: no bare */*): exactly one bare */* filter, the any-file one (VIEW+EDIT, content+file, like Drive); octet-stream is never declared
 #   T5  the opening code is wired
 #
 # OWN-SOURCE ONLY. python3, no network, no build.
@@ -28,7 +28,7 @@ def check(c, m):
     if not c: fails += 1
 if not act:
     print("  FAIL  MainActivity is not declared"); sys.exit(1)
-filters = re.findall(r'<intent-filter>(.*?)</intent-filter>', re.sub(r'<!--.*?-->', '', act.group(1), flags=re.S), re.S)
+filters = re.findall(r'<intent-filter\b[^>]*>(.*?)</intent-filter>', re.sub(r'<!--.*?-->', '', act.group(1), flags=re.S), re.S)
 def parse(f):
     return dict(
         actions=set(re.findall(r'<action android:name="android\.intent\.action\.(\w+)"', f)),
@@ -39,8 +39,8 @@ def parse(f):
         pats=re.findall(r'android:pathPattern="([^"]+)"', f),
     )
 fs = [parse(f) for f in filters]
-text = [f for f in fs if "text/*" in f["mimes"]]
-check(len(text) == 1, "one MIME filter carries text/*")
+text = [f for f in fs if "text/plain" in f["mimes"]]
+check(len(text) == 1, "one MIME filter carries the #1642 text types (text/plain)")
 t = text[0] if text else dict(actions=set(), cats=set(), schemes=set(), mimes=set(), pats=[], hosts=set())
 need = {"text/plain", "text/*", "text/markdown", "text/csv", "text/xml", "text/html", "application/json", "application/xml"}
 check(need <= t["mimes"], "T1 MIME types declared" + ("" if need <= t["mimes"] else ": missing %s" % sorted(need - t["mimes"])))
@@ -53,8 +53,9 @@ g = gen[0] if gen else dict(actions=set(), cats=set(), schemes=set(), mimes=set(
 for e in "txt md log json csv conf yml xml".split():
     check(any(p.endswith("\\\\." + e) for p in g["pats"]), "T3 pathPattern for .%s" % e)
 check("*" in g["hosts"] and {"content", "file"} <= g["schemes"] and set(ACTIONS) <= g["actions"] and "DEFAULT" in g["cats"], "T3 recipe has host *, both schemes, actions, DEFAULT")
-bare = [f for f in fs if f["mimes"] & {"*/*", "application/octet-stream"} and not f["pats"]]
-check(not bare, "T4 no filter takes */* or octet-stream without a pathPattern")
+bare = [f for f in fs if "*/*" in f["mimes"] and not f["pats"]]
+check(len(bare) == 1 and {"content", "file"} <= bare[0]["schemes"] and set(ACTIONS) <= bare[0]["actions"], "T4 one bare */* filter (VIEW+EDIT, content+file): the #1866 any-file filter")
+check(not any("application/octet-stream" in f["mimes"] for f in fs), "T4 octet-stream is never declared")
 def src(rel):
     p = os.path.join(root, rel)
     return open(p, encoding="utf-8").read() if os.path.isfile(p) else None

@@ -41,6 +41,8 @@ export interface ExternalPendingOpen {
   size?: number;
   content?: string;
   error?: string;
+  /** #1866 an EDIT on a writable content URI: saveOpenFile writes the tab back to the source */
+  writable?: boolean;
 }
 
 export type ExternalFilePluginType = {
@@ -50,6 +52,8 @@ export type ExternalFilePluginType = {
   /** every non-hidden entry of one folder level, any file type (vault attachments) */
   listFiles(options: { path: string }): Promise<ExternalDirListing>;
   readBinary(options: { path: string }): Promise<ExternalBinaryReadResult>;
+  /** #1866 save an edited Open-with tab back to its content:// source (EDIT intents with a write grant) */
+  saveOpenFile(options: { name: string; text: string }): Promise<void>;
   openSettings(): Promise<void>;
 };
 

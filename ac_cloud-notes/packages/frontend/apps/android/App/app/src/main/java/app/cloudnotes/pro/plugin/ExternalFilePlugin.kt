@@ -54,16 +54,23 @@ class ExternalFilePlugin : Plugin() {
             "application/json", "application/xml", "application/x-yaml", "application/yaml"
         )
 
-        /** True for a type or file name that is text (never octet-stream, images, archives, pdf). */
-        fun isTextOpen(mime: String?, name: String?): Boolean {
-            val m = mime?.substringBefore(';')?.trim()?.lowercase().orEmpty()
-            if (m.startsWith("text/") || m in OPEN_MIME || m.endsWith("+json") || m.endsWith("+xml")) return true
-            if (m.isNotEmpty() && m != "application/octet-stream" && m != "*/*") return false
-            return name?.substringAfterLast('.', "")?.lowercase().orEmpty() in OPEN_EXT
+        /** True for a type or file name that is text (never octet-stream, images, archives, pdf). #1866 decided by [app.cloudnotes.pro.OpenRouter]. */
+        fun isTextOpen(mime: String?, name: String?): Boolean =
+            app.cloudnotes.pro.OpenRouter.route(mime, name) == app.cloudnotes.pro.OpenRoute.TEXT
+
+        /** #1866 intent action the file view sends to hand a prepared note (see [offerNote]) to the editor. */
+        const val ACTION_NEW_NOTE = "app.cloudnotes.pro.action.NEW_NOTE"
+
+        /** #1866 EDIT on a writable content:// URI: the editor saves the tab back to this source, keyed by tab name. */
+        private val writable = java.util.concurrent.ConcurrentHashMap<String, Uri>()
+
+        /** #1866 queue a ready-made note (file view "attach to a new note"); taken by [takePendingOpen] like an opened file. */
+        fun offerNote(name: String, content: String) {
+            pending = PendingOpen(name, content, content.length, null)
         }
 
         /** The text file another app handed this app (VIEW/EDIT), read once, taken by [takePendingOpen]. */
-        class PendingOpen(val name: String, val content: String?, val size: Int, val error: String?)
+        class PendingOpen(val name: String, val content: String?, val size: Int, val error: String?, val writable: Boolean = false)
 
         @Volatile private var pending: PendingOpen? = null
 
@@ -73,6 +80,7 @@ class ExternalFilePlugin : Plugin() {
          */
         fun capture(ctx: Context, intent: Intent?): Boolean {
             val i = intent ?: return false
+            if (i.action == ACTION_NEW_NOTE) return pending != null
             if (i.action != Intent.ACTION_VIEW && i.action != Intent.ACTION_EDIT) return false
             val uri: Uri = i.data ?: return false
             if (uri.scheme != "content" && uri.scheme != "file") return false
@@ -105,7 +113,9 @@ class ExternalFilePlugin : Plugin() {
                 pending = if (buf.size() > MAX_BYTES) {
                     PendingOpen(shown, null, buf.size(), "File is larger than the 10 MiB import limit.")
                 } else {
-                    PendingOpen(shown, buf.toByteArray().toString(Charsets.UTF_8), buf.size(), null)
+                    val canWrite = app.cloudnotes.pro.OpenRouter.canWriteBack(i.action, uri.scheme, i.flags)
+                    if (canWrite) writable[shown] = uri else writable.remove(shown)
+                    PendingOpen(shown, buf.toByteArray().toString(Charsets.UTF_8), buf.size(), null, canWrite)
                 }
                 true
             } catch (e: Exception) {
@@ -343,9 +353,29 @@ class ExternalFilePlugin : Plugin() {
             call.resolve(JSObject().put("present", false))
             return
         }
-        val r = JSObject().put("present", true).put("name", p.name).put("size", p.size)
+        val r = JSObject().put("present", true).put("name", p.name).put("size", p.size).put("writable", p.writable)
         if (p.error != null) r.put("error", p.error) else r.put("content", p.content)
         call.resolve(r)
+    }
+
+    /** #1866 save an edited tab back to the content:// source of an EDIT intent; rejects when that source is not writable. */
+    @PluginMethod
+    fun saveOpenFile(call: PluginCall) {
+        val name = call.getString("name").orEmpty()
+        val text = call.getString("text")
+        val uri = writable[name]
+        if (uri == null || text == null) {
+            call.reject("This file was not opened for editing.", "NOT_WRITABLE")
+            return
+        }
+        try {
+            val out = context.contentResolver.openOutputStream(uri, "wt")
+                ?: throw java.io.IOException("the source refused the write")
+            out.use { it.write(text.toByteArray(Charsets.UTF_8)) }
+            call.resolve()
+        } catch (e: Exception) {
+            call.reject("Cannot save $name (${e.message ?: "unknown error"}).", "WRITE_ERROR")
+        }
     }
 
     /** #1515 All files access is granted in Configs > Perms (libs:perms): the page opens on that row. */

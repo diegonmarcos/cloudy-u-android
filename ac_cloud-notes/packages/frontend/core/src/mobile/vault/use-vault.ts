@@ -44,7 +44,14 @@ import {
   type RecentVault,
   touchRecent,
 } from './recent-vaults';
-import { EXTERNAL_DOC_EVENT, EXTERNAL_PREFIX, isExternalPath, takeExternalDocs } from './external-open';
+import {
+  EXTERNAL_DOC_EVENT,
+  EXTERNAL_PREFIX,
+  isExternalPath,
+  isExternalWritable,
+  saveExternalDoc,
+  takeExternalDocs,
+} from './external-open';
 import { INDEXED_EXT, type VaultIndex } from './vault-index';
 import { parentOf, type VaultEntry, type VaultFS, walkVault } from './vault-fs';
 
@@ -491,13 +498,18 @@ export function useVault(decl: VaultDecl, storage: KeyValueStore) {
   const save = useCallback(
     async (path: string) => {
       const buf = buffersRef.current[path];
-      if (!vault || !buf || buf.text === null || !buf.dirty || isExternalPath(path)) return;
+      if (!vault || !buf || buf.text === null || !buf.dirty) return;
+      // Open with: a file another app handed over stays in memory, except an EDIT on a writable content URI (#1866), saved back to its source
+      const external = isExternalPath(path);
+      if (external && !isExternalWritable(path)) return;
       const text = buf.text;
       try {
-        await vault.fs.writeText(path, text);
+        if (external) await saveExternalDoc(path, text);
+        else await vault.fs.writeText(path, text);
         // typed again while the write ran: the buffer stays dirty and the next autosave writes it
         setBuffers(b => (b[path] && b[path]!.text === text ? { ...b, [path]: { ...b[path]!, dirty: false, error: null } } : b));
         const now = Date.now();
+        if (external) return;
         setFiles(f => f.map(x => (x.path === path ? { ...x, mtime: now, size: text.length } : x)));
         if (INDEXED_EXT.includes(path.slice(path.lastIndexOf('.') + 1).toLowerCase())) {
           texts.current.set(path, text);

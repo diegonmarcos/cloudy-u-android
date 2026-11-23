@@ -100,10 +100,25 @@ class MainActivity : BridgeActivity(), CloudNotesThemePlugin.Callback {
                         null,
                     )
                 }
+            } else {
+                openInFileView(intent)
             }
         } catch (e: Exception) {
             Timber.e(e, "view intent capture failed")
         }
+    }
+
+    // #1866 a VIEW/EDIT of anything that is not text: images, PDF, audio and video open in the viewer, any other binary in the file view.
+    private fun openInFileView(intent: Intent?) {
+        val i = intent ?: return
+        if (i.action != Intent.ACTION_VIEW && i.action != Intent.ACTION_EDIT) return
+        val uri = i.data ?: return
+        if (uri.scheme != "content" && uri.scheme != "file") return
+        startActivity(
+            Intent(this, FileViewActivity::class.java)
+                .setDataAndType(uri, i.type)
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        )
     }
 
     // #1164: the shared nav scaffold (first row, second row, bottom nav, page background, scroll-collapse) is the activity's
