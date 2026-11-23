@@ -483,6 +483,16 @@ private fun MessagePager(
     // available here: it looks right.
     LaunchedEffect(activeMessage?.emailId) { textTools.dismiss() }
     val application = LocalContext.current.applicationContext as android.app.Application
+    // #1869 step 8: on settle, the bodies a swipe reaches next are prefetched in the PAGER's order (2 each side, as
+    // (account, id) pairs): a grouped or unified list pages across folders and accounts, which no folder order follows.
+    LaunchedEffect(settledEntry) {
+        val settled = settledEntry ?: return@LaunchedEffect
+        if (pageCount <= 1) return@LaunchedEffect
+        val near = app.sterna.core.data.mail.pagerPrefetchOrder(pagerState.currentPage, pageCount) { i ->
+            entryAt(i)?.let { (id, account) -> account to id }
+        }
+        application.container.mailRepository.prefetchPagerNeighbours(settled.second to settled.first, near)
+    }
     CompositionLocalProvider(
         LocalTextToolRunner provides textTools,
         LocalReplyAllWith provides { emailId, accountId, text ->

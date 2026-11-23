@@ -242,6 +242,8 @@ import kotlin.math.abs
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.launch
@@ -866,6 +868,20 @@ fun InboxScreen(
                 wasAtTop = atTop
             }
             prevKey = key
+        }
+    }
+
+    // #1869 step 8: the rows on screen get their bodies prefetched (VISIBLE: at most 12, metered links too) once the
+    // list has rested ~150 ms, so a scroll does not fire a request per frame and a tap finds the body on disk.
+    LaunchedEffect(listState, listRows) {
+        snapshotFlow {
+            listState.layoutInfo.visibleItemsInfo.mapNotNull { info ->
+                info.index.takeIf { it < listRows.itemCount }?.let { listRows.peek(it)?.email }?.let { it.accountId to it.id }
+            }
+        }.distinctUntilChanged().collectLatest { rows ->
+            if (rows.isEmpty()) return@collectLatest
+            delay(app.sterna.core.data.mail.PREFETCH_VISIBLE_DEBOUNCE_MS)
+            viewModel.prefetchVisible(rows)
         }
     }
 

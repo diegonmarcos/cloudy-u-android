@@ -3357,6 +3357,9 @@ class MailRepository(
      *  only the Inbox; outside the Inbox the neighbours are stored RAW ([fetchAndStoreRawBodies]), with no key import. */
     fun prefetchNeighbours(credentials: AccountCredentials, emailId: String) {
         if (credentials.protocol == MailProtocol.IMAP) return
+        // #1869 step 8: a pager that already named this message's neighbours in ITS order owns the prefetch; the folder
+        // order below is the fallback for a reader with no pager context (a lone message, a notification).
+        if (pagerAnchors.containsKey("${credentials.id}/$emailId") || pagerAnchors.containsKey("/$emailId")) return
         bgScope.launch {
             try {
                 val mailboxId = emailDao.mailboxOf(credentials.id, emailId) ?: return@launch
@@ -3380,6 +3383,79 @@ class MailRepository(
                 throw c
             } catch (_: Throwable) {
                 // best-effort
+            }
+        }
+    }
+
+    /** #1869 step 8: anchors whose neighbours the pager handed over, most recent last (bounded). */
+    private val pagerAnchors = java.util.Collections.synchronizedMap(
+        object : LinkedHashMap<String, Boolean>(16, 0.75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Boolean>?): Boolean = size > 32
+        },
+    )
+
+    /** #1869 step 8: messages being prefetched right now ("account/id"), so the pager, the visible rows and the folder
+     *  order never fetch one body twice at once. */
+    private val prefetchInFlight = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
+    /**
+     * #1869 step 8: the pager settled on [anchor]; prefetch [neighbours] (account, id) in the PAGER's order, nearest first
+     * ([pagerNeighbours]): a grouped or unified list pages across folders and accounts, which the folder's sortKey order
+     * cannot follow. A null account is the current one.
+     */
+    fun prefetchPagerNeighbours(anchor: Pair<String?, String>, neighbours: List<Pair<String?, String>>) {
+        // Keyed without resolving a null account (a prefs read): "/id" stands for the current account's message.
+        pagerAnchors["${anchor.first.orEmpty()}/${anchor.second}"] = true
+        prefetchMessages(neighbours, PrefetchTrigger.NEIGHBOUR)
+    }
+
+    /** #1869 step 8: the rows on screen (account, id), at most [PREFETCH_VISIBLE_MAX], metered links included. */
+    fun prefetchVisible(rows: List<Pair<String?, String>>) = prefetchMessages(rows.take(PREFETCH_VISIBLE_MAX), PrefetchTrigger.VISIBLE)
+
+    /**
+     * Prefetch the bodies of [messages], in the given order, under [trigger]'s throttle. Per account; JMAP only. As for
+     * the neighbours, the Inbox keeps its pinned path and every other folder is stored RAW, so nothing outside the Inbox
+     * plants a key (ENCRYPTION.md). Fire and forget, never throws.
+     */
+    private fun prefetchMessages(messages: List<Pair<String?, String>>, trigger: PrefetchTrigger) {
+        if (messages.isEmpty()) return
+        bgScope.launch {
+            val current = accountStore.currentId()
+            val byAccount = LinkedHashMap<String, MutableList<String>>()
+            for ((account, id) in messages) {
+                val a = account ?: current ?: continue
+                byAccount.getOrPut(a) { mutableListOf() } += id
+            }
+            for ((accountId, ids) in byAccount) {
+                val taken = ids.filter { prefetchInFlight.add("$accountId/$it") }
+                if (taken.isEmpty()) continue
+                try {
+                    val credentials = accountStore.credentials(accountId) ?: continue
+                    if (credentials.protocol == MailProtocol.IMAP) continue
+                    val inbox = ArrayList<String>()
+                    val raw = ArrayList<String>()
+                    for (id in taken) {
+                        val mailboxId = emailDao.mailboxOf(accountId, id) ?: continue
+                        if (mailboxDao.roleForId(accountId, mailboxId) == "inbox") inbox += id else raw += id
+                    }
+                    val t0 = System.nanoTime()
+                    for ((group, isRaw) in listOf(inbox to false, raw to true)) {
+                        if (group.isEmpty()) continue
+                        val result = BodyPrefetcher(bodyPrefetchPort(credentials, "", isRaw), prefetchConditions, prefetchGate)
+                            .run(trigger, group)
+                        android.util.Log.i(
+                            "MailPrefetch",
+                            "${trigger.name.lowercase()} $accountId raw=$isRaw requested=${result.requested} " +
+                                "skipped=${result.skipped} ms=${(System.nanoTime() - t0) / 1_000_000}",
+                        )
+                    }
+                } catch (c: CancellationException) {
+                    throw c
+                } catch (_: Throwable) {
+                    // best-effort
+                } finally {
+                    taken.forEach { prefetchInFlight.remove("$accountId/$it") }
+                }
             }
         }
     }

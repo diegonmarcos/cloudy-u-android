@@ -419,6 +419,9 @@ class InboxViewModel(
     private val _highlightId = MutableStateFlow<String?>(null)
     val highlightId: StateFlow<String?> = _highlightId.asStateFlow()
 
+    /** #1869 step 8: the rows on screen, (account, id) in list order; their bodies are prefetched (VISIBLE trigger). */
+    fun prefetchVisible(rows: List<Pair<String?, String>>) = repo.prefetchVisible(rows)
+
     /** Stage the just-opened message's row to flash when the user returns to the list. */
     fun onEmailOpened(id: String) {
         pendingHighlightId = id

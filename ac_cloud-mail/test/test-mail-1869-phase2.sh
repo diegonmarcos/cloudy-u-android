@@ -15,6 +15,9 @@
 #   S7  the reader fragment (the one sanitiser policy's answer) is stored with every plain body, under the cursor-window
 #       guard, never for ciphertext; a stored fragment seeds the reader's memo; a version mismatch is rebuilt lazily on
 #       Default one row at a time (never a purge); the app's sanitiser goes through the same memo
+#   S8  neighbours in the PAGER's order (2 each side, (account, id) pairs, nearest first) on settle; the folder order is the
+#       lone-message fallback; PrefetchTrigger.VISIBLE: the rows on screen, debounced 150 ms, at most 12, metered allowed;
+#       raw outside the Inbox (no key import); no body fetched twice at once
 #   P5  rule 16 parity: every email_bodies column, every body DAO query and every registered migration kept
 #   M   mutation-proof: each defence undone in a COPY turns its check red; the real tree is green
 #
@@ -128,6 +131,28 @@ elif which == "S7":
     rbk = code(read(os.path.join(K, "ui/message/ReaderBody.kt")))
     need("private fun sanitiseReceivedHtml(html: String): String = app.sterna.core.data.mail.ReaderFragment.sanitised(html)" in rbk, "the reader does not read the stored fragment memo")
     need("ReaderBody(sanitiseReceivedHtml(it), richHtml = true)" in rbk, "readerBody is no longer the one place markup becomes a fragment")
+elif which == "S8":
+    bp = code(read(os.path.join(D, "mail/BodyPrefetch.kt")))
+    need("enum class PrefetchTrigger { LIST_SYNC, NEIGHBOUR, VISIBLE }" in bp, "no VISIBLE trigger (or a trigger lost)")
+    vis = bp[bp.find("trigger == PrefetchTrigger.VISIBLE -> when {"):]
+    vis = vis[:vis.find("}") + 1]
+    need("c.batterySaver && !c.unmetered -> PrefetchBudget.NONE" in vis and "else -> PrefetchBudget(PREFETCH_VISIBLE_MAX, PREFETCH_VISIBLE_MAX, 1)" in vis, "the VISIBLE throttle changed")
+    need("internal const val PREFETCH_VISIBLE_MAX = 12" in bp and "const val PREFETCH_VISIBLE_DEBOUNCE_MS = 150L" in bp, "the VISIBLE bounds changed")
+    need("if (page + d < pageCount) at(page + d)?.let(::add)" in bp and "if (page - d >= 0) at(page - d)?.let(::add)" in bp, "the pager order is not nearest first, after then before")
+    r = code(read(os.path.join(D, "mail/MailRepository.kt")))
+    nb = body(r, "fun prefetchNeighbours(")
+    need('pagerAnchors.containsKey("${credentials.id}/$emailId")' in nb, "the folder order runs over the pager's")
+    pm = body(r, "private fun prefetchMessages(")
+    need('if (mailboxDao.roleForId(accountId, mailboxId) == "inbox") inbox += id else raw += id' in pm, "a non-Inbox prefetch can import a key")
+    need('val taken = ids.filter { prefetchInFlight.add("$accountId/$it") }' in pm, "a body can be fetched twice at once")
+    need("if (credentials.protocol == MailProtocol.IMAP) continue" in pm, "IMAP enters the JMAP prefetch")
+    need("prefetchMessages(rows.take(PREFETCH_VISIBLE_MAX), PrefetchTrigger.VISIBLE)" in r, "the visible rows are not bounded or not VISIBLE")
+    ms = code(read(os.path.join(K, "ui/message/MessageScreen.kt")))
+    need("application.container.mailRepository.prefetchPagerNeighbours(settled.second to settled.first, near)" in ms, "the pager does not hand its order over")
+    need("app.sterna.core.data.mail.pagerPrefetchOrder(pagerState.currentPage, pageCount) { i ->" in ms, "the pager order is not the pager's")
+    ib = code(read(os.path.join(K, "ui/inbox/InboxScreen.kt")))
+    need("delay(app.sterna.core.data.mail.PREFETCH_VISIBLE_DEBOUNCE_MS)" in ib and "}.distinctUntilChanged().collectLatest { rows ->" in ib, "the visible rows are not debounced")
+    need("viewModel.prefetchVisible(rows)" in ib and "listState.layoutInfo.visibleItemsInfo.mapNotNull { info ->" in ib, "the visible rows are not prefetched")
 elif which == "P5":
     ent = code(read(os.path.join(D, "db/EmailBodyEntity.kt")))
     for col in ("val id: String", "val accountId: String", "val bodyJson: String", "val inlineImagesJson: String", "val fetchedAt: Long"):
@@ -153,9 +178,10 @@ declare -A LABEL=(
   [S5]="Room v34 is additive, registered, and the caps are SUM(bytes)"
   [S6]="inline images are files served by cid: interception; export, print and old rows kept"
   [S7]="the fragment is stored with the body, seeds the reader, and is rebuilt lazily on a version change"
+  [S8]="neighbours in pager order; VISIBLE rows debounced, capped, metered allowed"
   [P5]="rule 16 parity: every email_bodies column, body query and migration step kept"
 )
-CHECKS="S5 S6 S7 P5"
+CHECKS="S5 S6 S7 S8 P5"
 
 echo "== the tree =="
 for c in $CHECKS; do
@@ -217,6 +243,15 @@ mutate S7 "$MD/MailRepository.kt" 'fragment.takeIf { fitsBodyCache(bodyJson, inl
 mutate S7 "$MD/MailRepository.kt" '                        ReaderFragment.remember(decoded.email, row.fragment)' '                        Unit' "the stored fragment never reaches the reader"
 mutate S7 "$MD/MailRepository.kt" '                        rebuildFragmentLater(accountId, emailId)' '                        clearCachedBodies()' "a version change purges every body"
 mutate S7 "$UI/ReaderBody.kt" 'private fun sanitiseReceivedHtml(html: String): String = app.sterna.core.data.mail.ReaderFragment.sanitised(html)' 'private fun sanitiseReceivedHtml(html: String): String = app.sterna.core.data.text.sanitiseReceivedHtml(html)' "the reader sanitises every open again"
+mutate S8 "$MD/BodyPrefetch.kt" 'else -> PrefetchBudget(PREFETCH_VISIBLE_MAX, PREFETCH_VISIBLE_MAX, 1)' 'else -> PrefetchBudget(PREFETCH_PASS_MAX_IDS, PREFETCH_BATCH, 2)' "VISIBLE takes the whole window on a metered link"
+mutate S8 "$MD/BodyPrefetch.kt" '        if (page - d >= 0) at(page - d)?.let(::add)
+' '' "only the pages after are prefetched"
+mutate S8 "$MD/MailRepository.kt" 'if (mailboxDao.roleForId(accountId, mailboxId) == "inbox") inbox += id else raw += id' 'inbox += id' "non-Inbox rows through the key-importing path"
+mutate S8 "$MD/MailRepository.kt" 'val taken = ids.filter { prefetchInFlight.add("$accountId/$it") }' 'val taken = ids' "the same body fetched twice at once"
+mutate S8 "$UI/MessageScreen.kt" '        application.container.mailRepository.prefetchPagerNeighbours(settled.second to settled.first, near)
+' '' "the pager order dropped"
+mutate S8 "app/src/main/kotlin/app/sterna/ui/inbox/InboxScreen.kt" '            delay(app.sterna.core.data.mail.PREFETCH_VISIBLE_DEBOUNCE_MS)
+' '' "a request per scroll frame"
 mutate P5 "$DBD/EmailBodyEntity.kt" '    val fetchedAt: Long,
 ' '' "the fetchedAt column dropped"
 mutate P5 "$DBD/EmailBodyDao.kt" 'suspend fun pruneForAccount(' 'suspend fun pruneGone(' "a body DAO query removed"

@@ -20,8 +20,9 @@ data class PrefetchConditions(val connected: Boolean, val unmetered: Boolean, va
     }
 }
 
-/** Who asked: the list sync (the whole window, newest first) or the reader (the neighbours of the open mail). */
-enum class PrefetchTrigger { LIST_SYNC, NEIGHBOUR }
+/** Who asked: the list sync (the whole window, newest first), the reader (the neighbours of the open mail, in the
+ *  pager's order) or the list on screen (#1869 step 8: the rows the user is looking at). */
+enum class PrefetchTrigger { LIST_SYNC, NEIGHBOUR, VISIBLE }
 
 /** How much one pass may do: at most [maxIds] ids, [batchSize] per Email/get, [concurrency] calls at once. */
 data class PrefetchBudget(val maxIds: Int, val batchSize: Int, val concurrency: Int) {
@@ -48,6 +49,25 @@ internal const val PREFETCH_PASS_MAX_IDS = 2_000
 /** Neighbours prefetched on each side of the open mail. */
 internal const val PREFETCH_NEIGHBOURS_EACH_SIDE = 2
 
+/** #1869 step 8: rows on screen prefetched at most per pass, and how long the list must rest before they are. */
+internal const val PREFETCH_VISIBLE_MAX = 12
+const val PREFETCH_VISIBLE_DEBOUNCE_MS = 150L
+
+/**
+ * #1869 step 8: the [each] entries on each side of [page] in the PAGER's order (what a swipe reaches next), nearest
+ * first, alternating after / before, so a budget cut keeps the closest. [at] answers null for an entry not loaded yet.
+ */
+fun <T : Any> pagerNeighbours(page: Int, pageCount: Int, each: Int, at: (Int) -> T?): List<T> = buildList {
+    for (d in 1..each) {
+        if (page + d < pageCount) at(page + d)?.let(::add)
+        if (page - d >= 0) at(page - d)?.let(::add)
+    }
+}
+
+/** [pagerNeighbours] with the reader's [PREFETCH_NEIGHBOURS_EACH_SIDE]. */
+fun <T : Any> pagerPrefetchOrder(page: Int, pageCount: Int, at: (Int) -> T?): List<T> =
+    pagerNeighbours(page, pageCount, PREFETCH_NEIGHBOURS_EACH_SIDE, at)
+
 /**
  * The throttle. No network: nothing. Battery saver: no list prefetch at all, and the neighbours only on an
  * unmetered link. Metered: the newest [PREFETCH_METERED_MAX_IDS] only, serially. Unmetered (Wi-Fi): the whole
@@ -58,6 +78,12 @@ fun prefetchBudget(c: PrefetchConditions, trigger: PrefetchTrigger): PrefetchBud
     trigger == PrefetchTrigger.NEIGHBOUR -> when {
         c.batterySaver && !c.unmetered -> PrefetchBudget.NONE
         else -> PrefetchBudget(PREFETCH_NEIGHBOURS_EACH_SIDE * 2, PREFETCH_NEIGHBOURS_EACH_SIDE * 2, 1)
+    }
+    // #1869 step 8: what is on screen is fetched on a metered link too (text bodies, one call); battery saver on a
+    // metered link stops it, as it stops the neighbours.
+    trigger == PrefetchTrigger.VISIBLE -> when {
+        c.batterySaver && !c.unmetered -> PrefetchBudget.NONE
+        else -> PrefetchBudget(PREFETCH_VISIBLE_MAX, PREFETCH_VISIBLE_MAX, 1)
     }
     c.batterySaver -> PrefetchBudget.NONE
     !c.unmetered -> PrefetchBudget(PREFETCH_METERED_MAX_IDS, PREFETCH_BATCH, 1)
