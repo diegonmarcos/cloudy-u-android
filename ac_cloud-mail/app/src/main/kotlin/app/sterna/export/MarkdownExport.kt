@@ -164,7 +164,8 @@ private fun blocks(nodes: List<Node>, inPre: Boolean): List<String> {
     val out = mutableListOf<String>()
     val run = StringBuilder()
     fun flush() {
-        var s = run.toString().replace(Regex(" *\\\\\n *"), HARD_BREAK).trim()
+        // A lambda, not a replacement string: in one, the break's backslash would be read as an escape and dropped.
+        var s = run.toString().replace(Regex(" *\\\\\n *")) { HARD_BREAK }.trim()
         // A break at either end of a paragraph is no break at all.
         while (s.startsWith(HARD_BREAK)) s = s.removePrefix(HARD_BREAK).trim()
         while (s.endsWith("\\") && !s.endsWith("\\\\")) s = s.removeSuffix("\\").trim()
