@@ -273,7 +273,8 @@ class ReadReceiptTriggerWiringTest {
      */
     @Test fun `no other file that marks mail read can reach the decision`() {
         val markers = mainSources().filter { file ->
-            codeLines(file).any { "setRead(" in it || "setReadAll(" in it }
+            // #1869 step 11: `markReadQueued(` marks mail read too (locally at once, the server through the offline queue).
+            codeLines(file).any { "setRead(" in it || "setReadAll(" in it || "markReadQueued(" in it }
         }
         assertTrue(
             "no source calls setRead / setReadAll any more — this rule has lost its subject and " +
