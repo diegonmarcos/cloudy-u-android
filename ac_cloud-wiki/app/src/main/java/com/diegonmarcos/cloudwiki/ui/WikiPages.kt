@@ -73,7 +73,7 @@ class WikiNav {
     companion object { const val OVERVIEW = "overview" }
 }
 
-/** One side-menu page: a Chronos page (#1789), the graph, or a topic (its subpage tabs over the Overview or a page). [onTopic] switches the side menu to another topic. */
+/** One side-menu page: a Chronos page (#1789), a project (#1857), a hub (#1867), the graph, or a topic (its subpage tabs over the Overview or a page). [onTopic] switches the side menu to another page. */
 @Composable
 fun WikiPage(data: WikiData?, wiki: NavSection, pageId: String, nav: WikiNav, onTopic: (String) -> Unit) {
     val p = LocalKitPalette.current
@@ -84,6 +84,10 @@ fun WikiPage(data: WikiData?, wiki: NavSection, pageId: String, nav: WikiNav, on
     // #1857 a project of the lib-chronos repo (Sacred Geometry) is shown the same way, from the repo's own files
     val project = ChronosRepo.runtime(LocalContext.current.applicationContext).projects.firstOrNull { it.id == pageId }
     if (project != null) { ProjectPage(project, wiki.allPages().firstOrNull { it.id == pageId }?.label ?: project.id); return }
+    // #1867 a hub of the side menu (Sciences, A. Architecture of Sacred Sciences, ...): its intro and its topics, from the declaration
+    // alone when the dataset has not arrived yet
+    val hub = wiki.allPages().firstOrNull { it.id == pageId }?.takeIf { it.pages.isNotEmpty() }
+    if (hub != null) { HubPage(data, hub, onTopic); return }
     if (data == null || data.topics.isEmpty()) {
         KitStoreCaption(stringResource(R.string.loading), Modifier.fillMaxWidth().padding(KitStoreRow.padH).testTag(Tags.LOADING), color = p.textSecondary, align = TextAlign.Center)
         return
@@ -127,6 +131,35 @@ private fun ChronosTopic(@Suppress("UNUSED_PARAMETER") data: WikiData?, sim: com
             underTopChrome = false,
         )
         if (shown != null) ChronosSimPage(tree, shown, onOpen = onTopic)
+    }
+}
+
+/**
+ * #1867 a hub page: the Markdown intro of its folder (wiki.json `hubs`, the repo's index.md) over one row per topic below it in the side
+ * menu (label, and the number of tabs once the dataset is in); a tap opens the topic. A link in the intro opens its page.
+ */
+@Composable
+private fun HubPage(data: WikiData?, hub: NavPage, onTopic: (String) -> Unit) {
+    val p = LocalKitPalette.current
+    val open: (String) -> Unit = { id -> data?.page(id)?.let { onTopic(it.topic) } }
+    LazyColumn(Modifier.fillMaxSize().testTag(Tags.HUB)) {
+        item(key = "intro") {
+            Column(Modifier.padding(KitStoreRow.padH)) {
+                Text(hub.label, color = p.textPrimary, fontSize = KitStoreRow.title * 1.9f, fontWeight = FontWeight.SemiBold)
+                data?.let { dd -> dd.hub(hub.id)?.intro?.takeIf { it.isNotBlank() }?.let { Markdown(it, dd, open) } }
+            }
+        }
+        items(hub.pages, key = { it.id }) { t ->
+            val topic = data?.topic(t.id)
+            KitStoreRowLine(Modifier.testTag(Tags.result(t.id)), onClick = { onTopic(t.id) }) {
+                KitStoreDot("●", KitStoreRow.UP)
+                Column(Modifier.weight(1f)) {
+                    KitStoreName(t.label, color = p.textPrimary)
+                    if (topic != null) KitStoreCaption(topic.pages.joinToString(" · ") { it.title }, color = p.textSecondary)
+                }
+            }
+            Box(Modifier.fillMaxWidth().height(1.dp).background(KitStoreRow.RULE))
+        }
     }
 }
 

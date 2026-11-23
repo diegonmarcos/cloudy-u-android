@@ -22,6 +22,9 @@ class ChronosRepoTest {
         assertEquals(pin.getString("url"), runtime.url)
         assertEquals(pin.getString("ref"), runtime.ref)
         assertEquals(pin.getString("source_dir"), runtime.sourceDir)
+        // #1867 the content repo's generated wiki.json is what the clone gives the wiki pages
+        assertEquals(pin.getJSONObject("dataset").getString("repo_path"), runtime.dataset)
+        assertEquals("wiki.json", runtime.dataset)
         assertEquals(listOf("manual", "on_open", "every_6h", "daily"), runtime.modes.map { it.id })
         assertEquals("on_open", runtime.defaultMode)
         assertTrue("three.js is answered from the APK", runtime.rewrites.any { it.first.contains("three.js/r128/three.min.js") && it.second.startsWith(Chronos.SERVE_PATH + "vendor/") })
@@ -57,9 +60,9 @@ class ChronosRepoTest {
     @Test fun theSacredGeometryProjectIsBakedLikeChronos() {
         val pin = JSONObject(File("../tools/chronos-pin.json").readText()).getJSONArray("projects")
         assertEquals(1, pin.length())
-        assertEquals(listOf(ChronosRepo.Project("sacred", "Sacred-geo", "topics.md", "index.html")), runtime.projects)
+        assertEquals(listOf(ChronosRepo.Project("sacred", "3.Projects/3.1.Sacred-geo", "topics.md", "index.html")), runtime.projects)
         assertEquals(pin.getJSONObject(0).getString("source_dir"), runtime.projects.single().sourceDir)
-        val dir = File("src/main/assets/chronos/Sacred-geo")
+        val dir = File("src/main/assets/chronos/3.Projects/3.1.Sacred-geo")
         val md = File(dir, "topics.md").readText()
         assertTrue(md.startsWith("# Structured Map of Sacred Geometry"))
         assertTrue("every curriculum block parses", Md.parse(md).size > 20)
@@ -69,7 +72,7 @@ class ChronosRepoTest {
         assertTrue(html.contains("\"/chronos/vendor/tailwindcss/3.4.17/tailwind.js\""))
         assertTrue(File("src/main/assets/chronos/vendor/three/r128/three.min.js").isFile)
         // the explorer is not a Chronos page: the Chronos tree is unchanged by the project
-        assertTrue(baked.pages.none { it.asset.startsWith("Sacred-geo") })
+        assertTrue(baked.pages.none { it.asset.startsWith("3.Projects/3.1.Sacred-geo") })
         assertEquals(8, baked.pages.size)
     }
 

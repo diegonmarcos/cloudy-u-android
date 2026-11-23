@@ -12,7 +12,9 @@ import org.json.JSONObject
 import java.io.File
 
 /**
- * #1830 the Chronos pages at RUN TIME: the app clones diegonmarcos/lib-chronos itself, READ-ONLY, and serves that clone.
+ * #1830 the Chronos pages at RUN TIME: the app clones the content repo itself, READ-ONLY, and serves that clone. #1867 the repo is
+ * diegonmarcos/Projects-Library-KG (runtime.json::repo), whose folder tree is the whole wiki: the clone also gives the pages ([datasetText],
+ * read by [WikiStore]) and the Sacred Geometry project; the Chronos site is its folder 3.Projects/3.0.Chronos (runtime.json::source_dir).
  *
  * Where the repo is, how page ids are derived, which CDN URLs are answered from the APK's vendored copies and the refresh modes are
  * one generated file, assets/chronos/runtime.json (tools/regen-chronos.py writes it from tools/chronos-pin.json; Kotlin spells no URL).
@@ -47,6 +49,8 @@ object ChronosRepo {
         val modes: List<Mode>,
         val defaultMode: String,
         val projects: List<Project> = emptyList(),
+        /** #1867 the repo's generated wiki.json (the wiki's pages, hubs and menu), relative to the repo root; empty = none. */
+        val dataset: String = "",
     )
 
     /** What the Chronos page shows: the clone's commit and time (null before the first clone), a refresh running, the last error. */
@@ -97,6 +101,14 @@ object ChronosRepo {
         val live = cloneRoot()?.let { File(it, rel) }?.takeIf { it.isFile }
         if (live != null) return runCatching { live.readText() }.getOrNull()
         return runCatching { ctx.assets.open(Chronos.ASSETS_DIR + rel).bufferedReader().use { it.readText() } }.getOrNull()
+    }
+
+    /** #1867 the clone's wiki.json (the content of every wiki page), or null before the first clone or when the repo has none. */
+    fun datasetText(): String? {
+        val r = rt ?: return null
+        if (r.dataset.isEmpty()) return null
+        val f = cloneRoot()?.let { File(it, r.dataset) }?.takeIf { it.isFile } ?: return null
+        return runCatching { f.readText() }.getOrNull()
     }
 
     fun mode(ctx: Context): Mode {
@@ -305,6 +317,6 @@ object ChronosRepo {
         }.orEmpty()
         return Runtime(o.getString("repo"), o.getString("url"), o.getString("ref"), o.getString("source_dir"), nav.getString("id_prefix"),
             nav.optString("root_label"), nav.optString("title_suffix"),
-            icons, nav.getString("default_icon"), rw, modes, refresh.getString("default"), projects)
+            icons, nav.getString("default_icon"), rw, modes, refresh.getString("default"), projects, o.optString("dataset"))
     }
 }

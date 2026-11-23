@@ -11,31 +11,48 @@ import org.junit.Test
 /** The topic tree, the tags and the tag filter, the Markdown, against the declared pages and the real dataset. */
 class WikiTest {
     private val d = Data.wiki
-    private val topics = listOf(
+    private val modern = listOf(
         "anthropology", "math", "cs", "physics", "astronomy", "eng", "medicine", "beliefs", "chronos", "art", "theater", "music", "movies",
     )
+    /** #1867 the eleven sections of the Esoteric Arcanum taxonomy (A I-III, B I-V, C I-III), each a topic of Arcanum Science. */
+    private val arcanum = listOf(
+        "sacred-sciences", "harmonics", "symbolic-architecture", "divination", "alchemy", "ceremonial-magic", "folk-magic", "talismans",
+        "western-esoteric", "eastern-esoteric", "mystery-schools",
+    )
+    private val topics = modern + arcanum
+    private val hubs = listOf(
+        "sciences" to listOf("math", "cs", "physics", "astronomy", "eng", "medicine"),
+        "humanities" to listOf("anthropology", "beliefs"),
+        "arts" to listOf("art", "theater", "music", "movies"),
+        "explore" to listOf("graph"),
+        "arcanum-a" to listOf("sacred-sciences", "harmonics", "symbolic-architecture"),
+        "arcanum-b" to listOf("divination", "alchemy", "ceremonial-magic", "folk-magic", "talismans"),
+        "arcanum-c" to listOf("western-esoteric", "eastern-esoteric", "mystery-schools"),
+    )
 
-    @Test fun thereIsNoBottomNavAndOneSideMenuWithFiveGroups() {
+    /** #1867 three parents (the groups): Modern Science and Arcanum Science hold hubs, each hub its topics; Projects holds Chronos and Sacred Geometry. */
+    @Test fun thereIsNoBottomNavAndOneSideMenuWithThreeParents() {
         assertEquals("vertical_side_menu", Data.navMode())
         assertEquals(emptyList<String>(), Data.bottomNav())
         assertEquals(
             listOf(
-                "sciences" to listOf("math", "cs", "physics", "astronomy", "eng", "medicine"),
-                "humanities" to listOf("anthropology", "beliefs"),
-                "arts" to listOf("art", "theater", "music", "movies"),
+                "modern" to listOf("sciences", "humanities", "arts", "explore"),
+                "arcanum" to listOf("arcanum-a", "arcanum-b", "arcanum-c"),
                 "projects" to listOf("chronos", "sacred"),
-                "explore" to listOf("graph"),
             ),
             Data.groups(),
         )
+        assertEquals(hubs, Data.hubs())
     }
 
     @Test fun theTopicTreeIsTheDeclaredTopicsPlusTheGraphAndEveryTopicHasSubpages() {
         // #1857 Sacred Geometry is a declared page (a project of the lib-chronos repo), not a dataset topic
-        assertEquals((topics + "sacred" + "graph").toSet(), Data.pages().toSet())
+        val declared = Data.pages() + Data.hubs().flatMap { it.second }
+        assertEquals((topics + "sacred" + "graph" + hubs.map { it.first }).toSet(), declared.toSet())
         assertEquals(topics.toSet(), d.topics.map { it.id }.toSet())
         for (t in d.topics) {
-            assertTrue("${t.id} has subpages", t.pages.size >= 4)
+            // an Arcanum section holds exactly the taxonomy's leaves (three in A III, B II, B IV)
+            assertTrue("${t.id} has subpages", t.pages.size >= if (t.id in arcanum) 3 else 4)
             assertTrue("${t.id} has an intro", t.intro.length > 40)
             assertTrue("${t.id} page ids are prefixed by the topic", t.pages.all { it.id.startsWith(t.id + ".") && it.topic == t.id })
         }
@@ -49,14 +66,15 @@ class WikiTest {
             "arts" to listOf("art", "theater", "music", "movies"),
             "explore" to listOf("graph"),
         )
-        val now = Data.groups().toMap()
+        // #1867 the former groups are hubs of Modern Science now; a page's home is the hub (or group) that holds it
+        val now = Data.groups().toMap() + Data.hubs().toMap()
         for ((g, pages) in before) for (p in pages) {
             val home = if (p == "chronos") "projects" else g
             assertTrue("$p is reachable from $home", p in now.getValue(home))
-            assertEquals("$p is in exactly one group", 1, now.values.count { p in it })
+            assertEquals("$p is in exactly one group or hub", 1, now.values.count { p in it })
         }
-        assertEquals(listOf("sciences", "humanities", "arts", "projects", "explore"), Data.groups().map { it.first })
-        for (t in d.topics) assertTrue("dataset topic ${t.id} is in a group", now.values.any { t.id in it })
+        assertEquals(listOf("sciences", "humanities", "arts", "explore"), Data.groups().toMap().getValue("modern"))
+        for (t in d.topics) assertEquals("dataset topic ${t.id} is in one group or hub", 1, now.values.count { t.id in it })
     }
 
     @Test fun engineeringHasEachMajorFieldAsASubpage() {
@@ -119,6 +137,21 @@ class WikiTest {
         assertEquals("One ", (para.spans.first() as Md.Span.Text).text)
         assertTrue((para.spans.last() as Md.Span.Text).text.endsWith("line continues."))
         assertEquals(Md.Span.Link("x.y"), (blocks[2] as Md.Block.Bullet).spans.last())
+    }
+
+    /** #1867 the repo's parents and hubs carry their intros (the folders' index.md), and each lists the nodes below it. */
+    @Test fun theHubsOfTheRepoTreeCarryTheirIntrosAndChildren() {
+        for ((h, kids) in hubs) {
+            val hub = d.hub(h)
+            assertTrue("$h is a hub of the dataset", hub != null)
+            assertEquals(kids, hub!!.children)
+            assertTrue("$h has an intro", hub.intro.length > 40)
+        }
+        assertEquals(listOf("sciences", "humanities", "arts", "explore"), d.hub("modern")?.children)
+        assertEquals(listOf("arcanum-a", "arcanum-b", "arcanum-c"), d.hub("arcanum")?.children)
+        val ids = d.pages.map { it.id }.toSet()
+        for (h in d.hubs) for (l in Wiki.links(h.intro)) assertTrue("${h.id} intro links to unknown $l", l in ids)
+        assertTrue(Wiki.parse("""{"topics":[]}""").hubs.isEmpty())
     }
 
     @Test fun anEmptyOrBrokenDatasetParsesToNoTopics() {

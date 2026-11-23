@@ -57,13 +57,17 @@ object Tags {
     /** #1857 a project page (Sacred Geometry): the column and the link from its Markdown to its web explorer. */
     const val PROJECT = "wiki_project"
     const val PROJECT_OPEN = "wiki_project_open"
+    /** #1867 a hub page (Sciences, A. Architecture of Sacred Sciences, ...): its intro and its topics. */
+    const val HUB = "wiki_hub"
     fun chip(tag: String): String = "wiki_chip:$tag"
     fun result(id: String): String = "wiki_result:$id"
 }
 
 /**
  * The shell: the shared first row (Profile opens Cloud Account, the gear opens the fleet's Configs General | Perms | About) over ONE collapsed left
- * side menu for every page (libs:ui-nav-bars NavSectionLayout over the `wiki` section, vertical_side_menu, five groups: Sciences, Humanities, Arts, Projects, Explore). There is NO bottom nav.
+ * side menu for every page (libs:ui-nav-bars NavSectionLayout over the `wiki` section, vertical_side_menu). #1867 three groups, the content repo's
+ * parents: Modern Science (hubs Sciences, Humanities, Arts, Explore), Arcanum Science (hubs A, B, C of the taxonomy) and Projects (Chronos,
+ * Sacred Geometry); a hub is a page holding its topics, indented under it. There is NO bottom nav.
  * Which topics and groups exist is build.json::ui, read through [Decl.nav]; a topic's subpage tabs, the pages and the tags are the runtime dataset
  * wiki (served by Cloud Store), drawn by [WikiPage]. #1789 the Chronos pages of diegonmarcos/lib-chronos are declared as nested pages under
  * Chronos (build.json::ui, the repo's own hierarchy, indented in the side menu and listed in the title dropdown): picking one shows it

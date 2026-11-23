@@ -15,11 +15,18 @@ data class WikiPage(val id: String, val topic: String, val title: String, val ta
 /** A topic: a side-menu page whose [pages] are its top subpage tabs after the Overview tab. [intro] is the Overview's Markdown. */
 data class WikiTopic(val id: String, val label: String, val intro: String, val pages: List<WikiPage>)
 
-data class WikiData(val topics: List<WikiTopic>) {
+/**
+ * #1867 a parent (Modern Science, Arcanum Science, Projects) or a hub (Sciences, A. Architecture of Sacred Sciences, ...) of the repo's
+ * tree: its menu name, the Markdown [intro] of its index.md and the ids of the nodes below it, in order.
+ */
+data class WikiHub(val id: String, val label: String, val intro: String, val children: List<String>)
+
+data class WikiData(val topics: List<WikiTopic>, val hubs: List<WikiHub> = emptyList()) {
     val pages: List<WikiPage> by lazy { topics.flatMap { it.pages } }
     private val byId: Map<String, WikiPage> by lazy { pages.associateBy { it.id } }
     fun page(id: String?): WikiPage? = if (id == null) null else byId[id]
     fun topic(id: String?): WikiTopic? = topics.firstOrNull { it.id == id }
+    fun hub(id: String?): WikiHub? = hubs.firstOrNull { it.id == id }
 }
 
 /** The dataset and what is done with it: parse, tags, the tag filter, the graph. Pure, so the JVM suite covers it. */
@@ -37,7 +44,12 @@ object Wiki {
                 WikiPage(p.getString("id"), tid, p.optString("title"), strings(p.optJSONArray("tags")), p.optString("md"))
             })
         }
-        return WikiData(topics)
+        // #1867 schema 2 (the repo's generated wiki.json) adds the parents and hubs with their intros; schema 1 has none
+        val hubs = objects(root.optJSONArray("hubs")).map { h ->
+            val hid = h.getString("id")
+            WikiHub(hid, h.optString("label", hid), h.optString("intro"), strings(h.optJSONArray("children")))
+        }
+        return WikiData(topics, hubs)
     }
 
     private fun objects(a: JSONArray?): List<JSONObject> = (0 until (a?.length() ?: 0)).mapNotNull { a?.optJSONObject(it) }

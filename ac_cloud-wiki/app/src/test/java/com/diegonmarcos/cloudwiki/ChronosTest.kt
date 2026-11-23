@@ -14,6 +14,8 @@ import java.io.File
 class ChronosTest {
     private val sections = JSONObject(File("../build.json").readText()).getJSONObject("ui").getJSONArray("sections").toString()
     private val tree = Chronos.parse(sections)
+    /** #1867 the Chronos folder of the content repo (tools/chronos-pin.json::source_dir), with its trailing slash. */
+    private val SRC = JSONObject(File("../tools/chronos-pin.json").readText()).getString("source_dir") + "/"
 
     @Test fun theTreeIsTheRepoHierarchyUnderChronos() {
         assertEquals("chronos.lib", tree.root?.id)
@@ -40,26 +42,28 @@ class ChronosTest {
     @Test fun everyDeclaredAssetIsInTheApkAndEveryAssetPageIsDeclared() {
         val root = File("src/main/assets/chronos")
         val onDisk = root.walkTopDown().filter { it.isFile && it.name == "index.html" }.map { it.relativeTo(root).path.replace(File.separatorChar, '/') }
-            .filter { it.startsWith("Chronos/") }.toSortedSet()
+            .filter { it.startsWith(SRC) }.toSortedSet()
         assertEquals(onDisk, tree.pages.map { it.asset }.toSortedSet())
     }
 
     @Test fun noBakedChronosPageIsAPlaceholder() {
-        val pages = File("src/main/assets/chronos/Chronos").walkTopDown().filter { it.extension == "html" }.toList()
+        val pages = File("src/main/assets/chronos/" + SRC).walkTopDown().filter { it.extension == "html" }.toList()
         assertTrue("the baked Chronos pages exist", pages.size >= 8)
         pages.forEach { assertTrue(it.path + " is a placeholder", !it.readText().contains("Simulator pending upload")) }
     }
 
     @Test fun aPageLoadsByItsDirectorySoRelativeLinksResolve() {
-        assertEquals("/chronos/Chronos/", Chronos.path(tree.root!!))
-        assertEquals("/chronos/Chronos/3.Quantum-Cycles/3.0.Quantum-Decoherence-Cycle/", Chronos.path(tree.page("chronos.lib.3.0")!!))
+        assertEquals("/chronos/${SRC}", Chronos.path(tree.root!!))
+        assertEquals("/chronos/${SRC}3.Quantum-Cycles/3.0.Quantum-Decoherence-Cycle/", Chronos.path(tree.page("chronos.lib.3.0")!!))
     }
 
     @Test fun aUrlPathOfTheAssetOriginNamesItsPage() {
-        assertEquals("chronos.lib.3", tree.pageAt("/chronos/Chronos/3.Quantum-Cycles/")?.id)
-        assertEquals("chronos.lib.3", tree.pageAt("/chronos/Chronos/3.Quantum-Cycles/index.html")?.id)
-        assertEquals("chronos.lib.3", tree.pageAt("/chronos/Chronos/3.Quantum-Cycles")?.id)
-        assertEquals("chronos.lib", tree.pageAt("/chronos/Chronos/")?.id)
+        assertEquals("chronos.lib.3", tree.pageAt("/chronos/${SRC}3.Quantum-Cycles/")?.id)
+        assertEquals("chronos.lib.3", tree.pageAt("/chronos/${SRC}3.Quantum-Cycles/index.html")?.id)
+        assertEquals("chronos.lib.3", tree.pageAt("/chronos/${SRC}3.Quantum-Cycles")?.id)
+        assertEquals("chronos.lib", tree.pageAt("/chronos/${SRC}")?.id)
+        // #1867 an era page folder of the Chronos topic (Markdown only, no index.html) is not a simulator
+        assertNull(tree.pageAt("/chronos/${SRC}3.0.0.Prehistory/"))
         assertNull(tree.pageAt("/chronos/vendor/chart.js/4.6.1/chart.umd.min.js"))
         assertNull(tree.pageAt("/assets/Chronos/"))
         assertNull(tree.pageAt(null))
