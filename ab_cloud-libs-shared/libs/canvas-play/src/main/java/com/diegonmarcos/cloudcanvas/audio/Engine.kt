@@ -18,7 +18,19 @@ data class Session(
     val selected: Int = 1,
     val inst: Inst = Inst.Piano,
     val wave: Wave = Wave.Saw,
-)
+    /** #1865 Looping Play: the region of the loop that repeats (null: the whole loop). */
+    val region: LoopRegion? = null,
+    /** #1865 overdub: recording does not stop after one pass; every pass's notes are merged into the track ([LoopRegion.merge]). */
+    val overdub: Boolean = false,
+    /** #1865 the audio tracks (microphone takes) under the instrument tracks; their samples live in [MixEngine.takePcm]. */
+    val audio: List<AudioLane> = emptyList(),
+) {
+    /** The region the transport repeats, snapped inside the loop. */
+    fun loopRegion(): LoopRegion = (region ?: LoopRegion.whole(bars * 4)).clampTo(bars * 4)
+}
+
+/** #1865 one audio track of the arranger: its level, its mute and its takes (positions only; the samples are held by the engine). */
+data class AudioLane(val id: Int, val volume: Float = 0.8f, val muted: Boolean = false, val takes: List<Arrangement.AudioTake> = emptyList())
 
 /**
  * The synth and mixer core. [render] fills a stereo block; it knows no Android class, so the live path (AudioOut) and the WAV export
@@ -52,6 +64,17 @@ class MixEngine(val sampleRate: Int) {
     private var scratch = FloatArray(0)
     private val limiter = MasterLimiter(sampleRate)
 
+    /** #1865 the samples of every microphone take, by take id (mono, at [sampleRate]); written by the recorder, read by the audio thread. */
+    val takePcm = java.util.concurrent.ConcurrentHashMap<Int, FloatArray>()
+    /** #1865 the last [ANALYSIS] frames of the master output (mono), a ring the cymatics view reads through [analysis]. */
+    private val ring = FloatArray(ANALYSIS)
+    @Volatile private var ringAt = 0
+    /** #1865 the last note played by hand (MIDI), for the single-note cymatics; -1 before any. */
+    @Volatile var lastNote: Int = -1
+        private set
+    @Volatile var lastInst: Inst = Inst.Piano
+        private set
+
     // the SoundFont side: the block's MIDI events (offset-sorted before rendering) and the planes the synth renders into
     private val sfEvents = SfEventList()
     private var planes = FloatArray(0)
@@ -69,6 +92,7 @@ class MixEngine(val sampleRate: Int) {
     fun update(f: (Session) -> Session) = session.update(f)
 
     fun noteOn(inst: Inst, wave: Wave, note: Int, vel: Float = 0.9f) {
+        lastNote = note; lastInst = inst
         live.add(LiveNote(true, inst, wave, note, session.value.selected, vel))
     }
 
@@ -103,7 +127,8 @@ class MixEngine(val sampleRate: Int) {
         val backend = sf
         val decl = sfDecl
         blockN = n
-        val clock = LoopClock(s.bpm, s.bars, sampleRate)
+        val region = s.loopRegion()
+        val clock = LoopClock(s.bpm, s.bars, sampleRate, 4, region.startBeat, region.endBeat)
         if (bufLen < n) { bufLen = n; for (i in bufs.indices) bufs[i] = FloatArray(n); scratch = FloatArray(n) }
         for (i in 0 until n) { left[i] = 0f; right[i] = 0f }
         for (b in bufs) java.util.Arrays.fill(b, 0, minOf(n, b.size), 0f)
@@ -121,14 +146,16 @@ class MixEngine(val sampleRate: Int) {
                 val h = held.remove(k)
                 if (h != null) {
                     val len = (clock.frameToBeat(frame - h.startFrame)).coerceIn(0.05, clock.loopBeats.toDouble())
-                    update { cur -> cur.copy(mixer = cur.mixer.addEvent(h.track, NoteEvent(h.startBeat, h.inst, h.note, len, h.vel, h.wave))) }
+                    val ev = NoteEvent(h.startBeat, h.inst, h.note, len, h.vel, h.wave)
+                    update { cur -> cur.copy(mixer = if (cur.overdub) cur.mixer.overdub(h.track, listOf(ev), cur.loopRegion()) else cur.mixer.addEvent(h.track, ev)) }
                 }
             }
         }
         // a drum is a hit, not a held note: it is recorded at once with a fixed length and its pad release then finds nothing held
         held.entries.removeAll { (_, h) ->
             if (h.inst == Inst.Drums) {
-                update { cur -> cur.copy(mixer = cur.mixer.addEvent(h.track, NoteEvent(h.startBeat, h.inst, h.note, 0.25, h.vel, h.wave))) }
+                val ev = NoteEvent(h.startBeat, h.inst, h.note, 0.25, h.vel, h.wave)
+                update { cur -> cur.copy(mixer = if (cur.overdub) cur.mixer.overdub(h.track, listOf(ev), cur.loopRegion()) else cur.mixer.addEvent(h.track, ev)) }
                 true
             } else false
         }
@@ -187,15 +214,32 @@ class MixEngine(val sampleRate: Int) {
                 for (i in 0 until n) { left[i] += planes[pl + i]; right[i] += planes[pr + i] }
             }
         }
+        // #1865 the audio tracks: each microphone take sounds at its loop position, on every pass of the region
+        if (s.playing) for (lane in s.audio) {
+            if (lane.muted || (s.mixer.anySolo)) continue
+            for (take in lane.takes) {
+                val pcm = takePcm[take.id] ?: continue
+                val start = clock.beatToFrame(take.startBeat)
+                val g = lane.volume * 0.7071f
+                for (i in 0 until n) {
+                    val pos = clock.loopPos(frame + i) - start
+                    if (pos >= 0 && pos < pcm.size) { val v = pcm[pos.toInt()] * g; left[i] += v; right[i] += v }
+                }
+            }
+        }
         val click = bufs[0]
         for (i in 0 until n) { left[i] += click[i]; right[i] += click[i] }
         limiter.process(left, right, n)
+        // #1865 the analysis ring (the cymatics view's input): the master, mono, metronome included
+        var at = ringAt
+        for (i in 0 until n) { ring[at] = (left[i] + right[i]) * 0.5f; at = (at + 1) % ANALYSIS }
+        ringAt = at
 
         now += n
         if (s.playing) {
             frame += n
             // a recording lasts one loop pass
-            if (s.recording && recordFrom >= 0 && frame - recordFrom >= clock.loopFrames) {
+            if (s.recording && !s.overdub && recordFrom >= 0 && frame - recordFrom >= clock.regionFrames) {
                 update { it.copy(recording = false) }
                 recordFrom = -1
             }
@@ -249,9 +293,25 @@ class MixEngine(val sampleRate: Int) {
     /** The voices sounding now (live, scheduled and the metronome's). */
     val voiceCount: Int get() = voices.size
 
+    /** #1865 the last [ANALYSIS] master frames, oldest first, copied into [out] (a racy but harmless read: it only feeds a picture). */
+    fun analysis(out: FloatArray) {
+        val at = ringAt
+        for (i in 0 until minOf(out.size, ANALYSIS)) out[i] = ring[(at + i) % ANALYSIS]
+    }
+
+    /** #1865 the loop beat the transport is on (the region applied), for the playhead and a microphone take's start. */
+    fun loopBeat(): Double {
+        val s = session.value
+        val r = s.loopRegion()
+        val c = LoopClock(s.bpm, s.bars, sampleRate, 4, r.startBeat, r.endBeat)
+        return c.frameToBeat(c.loopPos(frame))
+    }
+
     companion object {
         /** The engine's polyphony: the most voices mixed at once. */
         const val MAX_VOICES = 64
+        /** #1865 the analysis ring's length (a power of two: the FFT reads it whole). */
+        const val ANALYSIS = 4096
     }
 
     /** One SoundFont note: its note-on goes out the first time it is mixed (at its frame in the block), its note-off at [release]. */
@@ -361,8 +421,11 @@ class MasterLimiter(sampleRate: Int) {
 object OfflineMix {
     /** [repeats] passes of the loop plus a one second tail, 16-bit interleaved stereo; the metronome is left out. #1809 [sf] plays the
      *  notes when given (the SoundFont engine, a synth of its own at [sampleRate]), else the Classic voices. */
-    fun render(source: Session, sampleRate: Int, repeats: Int = 1, block: Int = 512, sf: SfBackend? = null, decl: SfDecl? = null): ShortArray {
+    fun render(source: Session, sampleRate: Int, repeats: Int = 1, block: Int = 512, sf: SfBackend? = null, decl: SfDecl? = null,
+               takes: Map<Int, FloatArray> = emptyMap(), takesRate: Int = sampleRate): ShortArray {
         val e = MixEngine(sampleRate)
+        // #1865 the microphone takes of the audio tracks, at the export's rate
+        for ((id, pcm) in takes) e.takePcm[id] = resample(pcm, takesRate, sampleRate)
         if (sf != null && decl != null) { e.sfDecl = decl; e.sf = sf }
         e.update { source.copy(playing = true, recording = false, metronome = false) }
         val s = e.session.value
@@ -382,5 +445,17 @@ object OfflineMix {
             done += n
         }
         return out
+    }
+
+    /** #1865 linear resampling of a mono take from [from] Hz to [to] Hz (the same array when the rates match). */
+    fun resample(x: FloatArray, from: Int, to: Int): FloatArray {
+        if (from == to || x.isEmpty() || from <= 0 || to <= 0) return x
+        val n = (x.size.toLong() * to / from).toInt().coerceAtLeast(1)
+        return FloatArray(n) { i ->
+            val p = i.toDouble() * from / to
+            val k = p.toInt().coerceAtMost(x.size - 1)
+            val f = (p - k).toFloat()
+            x[k] + (x[minOf(k + 1, x.size - 1)] - x[k]) * f
+        }
     }
 }
