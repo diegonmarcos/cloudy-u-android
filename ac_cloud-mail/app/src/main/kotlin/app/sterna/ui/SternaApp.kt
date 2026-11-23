@@ -793,6 +793,6 @@ internal fun appLabelOf(context: android.content.Context, packageName: String?):
 /** #1869 step 10: whether the tap already read the reader's snapshot for the route's message ([ReaderHandoff]). */
 internal fun readerSnapshotReady(handoff: app.sterna.core.data.mail.ReaderHandoff, arguments: android.os.Bundle?): Boolean {
     val emailId = arguments?.getString("emailId")?.let { Uri.decode(it) } ?: return false
-    val accountId = arguments.getString("accountId")?.let { Uri.decode(it) }?.ifBlank { null }
+    val accountId = arguments?.getString("accountId")?.let { Uri.decode(it) }?.ifBlank { null }
     return handoff.ready(accountId, emailId)
 }
