@@ -416,9 +416,12 @@
   },
   "perms": {
     "_doc": "#1360 every grant this app needs, by libs:perms catalogue id (needs), and the fleet apps that do work for it with the grants THEY must hold (helpers). The ONE declaration: generated into assets/app-perms.json (cloud-android-perms-guard.py --write), drawn by Configs > General > Perms (libs:perms AppPermsSection) with live state, Grant / Open and Grant all, asked at first run (first_run), and reported as 'Missing permission X - Grant' when an operation fails (PermsGate). perms-guard fails when code uses a gated API or another app's engine that is not declared here, or when the manifest and this list disagree.",
-    "needs": [],
+    "needs": [
+      "microphone"
+    ],
     "helpers": [],
-    "first_run": "libs:perms"
+    "first_run": "libs:perms",
+    "_doc_needs_1865": "#1865 microphone: Play records audio tracks from the microphone (libs:canvas-play MicRecorder). Asked at runtime the first time REC arms an audio track; the instrument tracks still record played notes with no permission."
   },
   "audio": {
     "_doc": "#1809 THE Play sound declaration. Two engines, picked on the Play page and remembered: soundfont (the default: FluidSynth playing a General MIDI SoundFont bank on an Oboe output) and classic (the #1787 engines kept as the fallback: the Salamander Grand Piano and MuldjordKit samples and the synthesized voices of audio/Synth.kt). classic also plays whenever the SoundFont engine cannot start (no native library for the ABI, the bank cannot be loaded). app/build.gradle fetches and packages the pinned engine (soundfont.android_zip, libs) and bakes default_engine; the runtime configuration is assets/soundfont/soundfont.json (soundfont.config_asset), which audio/SoundFont.kt decodes and tools/sf-render/plan.py reads for the CI offline render (canvas-soundfont-render.yml); SoundFontTest proves every instrument resolves to a preset of the bank.",

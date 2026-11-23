@@ -6,7 +6,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.diegonmarcos.cloudcanvas.audio.Arrangement
+import com.diegonmarcos.cloudcanvas.audio.AudioLane
 import com.diegonmarcos.cloudcanvas.audio.AudioOut
+import com.diegonmarcos.cloudcanvas.audio.LoopClock
+import com.diegonmarcos.cloudcanvas.audio.LoopRegion
+import com.diegonmarcos.cloudcanvas.audio.MicRecorder
+import com.diegonmarcos.cloudcanvas.audio.Pitch
+import com.diegonmarcos.cloudcanvas.audio.Spectrum
 import com.diegonmarcos.cloudcanvas.audio.Drum
 import com.diegonmarcos.cloudcanvas.audio.EngineKind
 import com.diegonmarcos.cloudcanvas.audio.FluidSynthBackend
@@ -172,9 +179,108 @@ class PlayController(private val ctx: Context, demo: Boolean, defaultEngine: Str
         // #1809 the export plays through the engine the page plays: a SoundFont synth of its own at 44.1 kHz, or the Classic voices
         val d = decl
         val sfx = if (soundFontPlaying && d != null) FluidSynthBackend.open(ctx.assets, d, 44100).first else null
-        val pcm = try { OfflineMix.render(s, 44100, repeats = 2, sf = sfx, decl = d) } finally { sfx?.close() }
+        val pcm = try { OfflineMix.render(s, 44100, repeats = 2, sf = sfx, decl = d, takes = HashMap(engine.takePcm), takesRate = audio.sampleRate) } finally { sfx?.close() }
         val name = ExportNames.wav(System.currentTimeMillis() / 1000)
         val out = Folders.write(ctx, tree, name, "audio/wav", WavEncoder.encode(pcm, 44100, 2))
         message = if (out != null) "Saved $name" else "The folder could not be written. Pick it again."
+    }
+
+    // ── #1865 the studio: audio tracks, Record, Looping Play, Cymatics ─────────────────────────────────────────────────────────────
+    private var nextTakeId = 1
+    private var mic: MicRecorder? = null
+    private var micStartBeat = 0.0
+    private var micLane = 0
+    /** True while a microphone take is being captured. */
+    var micRecording by mutableStateOf(false)
+        private set
+    /** The panel under the arranger: the piano keyboard, the drum pads, the mixer, the instrument settings or the cymatics view. */
+    var panel by mutableStateOf("keys")
+
+    /** Adds an audio track (a lane for microphone takes) under the instrument tracks and arms it. */
+    fun addAudioTrack(): Int {
+        var id = 0
+        engine.update { s ->
+            id = Arrangement.AUDIO_BASE + (s.audio.maxOfOrNull { it.id - Arrangement.AUDIO_BASE } ?: 0) + 1
+            s.copy(audio = s.audio + AudioLane(id))
+        }
+        armedAudio = id
+        return id
+    }
+
+    /** The audio track REC records into (0: REC records played notes into the selected instrument track). */
+    var armedAudio by mutableIntStateOf(0)
+
+    /** REC: a microphone take on the armed audio track (the caller holds RECORD_AUDIO), or a played-notes pass on the selected track. */
+    fun rec() {
+        if (armedAudio == 0) { engine.record(); return }
+        if (micRecording) { stopTake(); return }
+        val s = engine.session.value
+        val region = s.loopRegion()
+        val frames = LoopClock(s.bpm, s.bars, audio.sampleRate, 4, region.startBeat, region.endBeat).regionFrames
+        val r = MicRecorder(audio.sampleRate, frames.toInt().coerceAtLeast(1))
+        if (!engine.session.value.playing) engine.play()
+        micStartBeat = engine.loopBeat()
+        micLane = armedAudio
+        if (!r.start()) { message = r.error ?: "The microphone could not start"; return }
+        mic = r
+        micRecording = true
+        message = "Recording the microphone on Audio ${armedAudio - Arrangement.AUDIO_BASE}"
+    }
+
+    /** Ends the microphone take and places it on its audio track at the loop beat it started on. */
+    fun stopTake() {
+        val r = mic ?: return
+        val pcm = r.stop()
+        mic = null
+        micRecording = false
+        if (pcm.isEmpty()) { message = r.error ?: "Nothing was recorded"; return }
+        val id = nextTakeId++
+        engine.takePcm[id] = pcm
+        val s = engine.session.value
+        val lenBeats = pcm.size / (audio.sampleRate * 60.0 / s.bpm)
+        val take = Arrangement.AudioTake(id, micLane, micStartBeat, lenBeats, "Take $id")
+        engine.update { cur -> cur.copy(audio = cur.audio.map { if (it.id == micLane) it.copy(takes = it.takes + take) else it }) }
+        message = "Take $id: %.1f beats on Audio %d".format(lenBeats, micLane - Arrangement.AUDIO_BASE)
+    }
+
+    /** The microphone level while a take records (0..1). */
+    val micLevel: Float get() = mic?.level ?: 0f
+
+    fun muteAudio(id: Int, on: Boolean) = engine.update { s -> s.copy(audio = s.audio.map { if (it.id == id) it.copy(muted = on) else it }) }
+    fun audioVolume(id: Int, v: Float) = engine.update { s -> s.copy(audio = s.audio.map { if (it.id == id) it.copy(volume = v.coerceIn(0f, 1f)) else it }) }
+    fun clearAudio(id: Int) {
+        val lane = engine.session.value.audio.firstOrNull { it.id == id } ?: return
+        lane.takes.forEach { engine.takePcm.remove(it.id) }
+        engine.update { s -> s.copy(audio = s.audio.map { if (it.id == id) it.copy(takes = emptyList()) else it }) }
+    }
+
+    /** Looping Play: the region [startBeat, endBeat) repeats; null loops the whole loop again. */
+    fun setRegion(startBeat: Double?, endBeat: Double?) = engine.update { s ->
+        s.copy(region = if (startBeat == null || endBeat == null || endBeat <= startBeat) null else LoopRegion(startBeat, endBeat).clampTo(s.bars * 4))
+    }
+
+    /** Looping Play on: the region plays continuously and REC overdubs every pass; off: back to one-pass recording. */
+    fun loopingPlay(on: Boolean) {
+        engine.update { it.copy(overdub = on, playing = if (on) true else it.playing, recording = if (on) it.recording else false) }
+    }
+
+    private val analysisBuf = FloatArray(MixEngine.ANALYSIS)
+
+    /**
+     * What drives the cymatics plate now: during Looping Play (the transport running) the dominant frequencies of the music being generated
+     * (the master output's spectrum), else the last note played by hand, alone. Empty before anything sounds.
+     */
+    fun cymaticsDrive(): List<Pair<Double, Double>> {
+        val s = engine.session.value
+        if (s.playing) {
+            engine.analysis(analysisBuf)
+            val d = Spectrum.dominant(analysisBuf, audio.sampleRate, 3)
+            if (d.isNotEmpty()) return d
+        }
+        val n = engine.lastNote
+        if (n < 0) return emptyList()
+        // a drum pad's note is its pad index: the plate takes its General MIDI key's pitch
+        val midi = if (engine.lastInst == Inst.Drums) 35 + n else n
+        return listOf(Pitch.freq(midi) to 1.0)
     }
 }

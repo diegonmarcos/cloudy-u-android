@@ -96,7 +96,9 @@
    "helpers": []
   },
   "com.diegonmarcos.cloudcanvas": {
-   "needs": [],
+   "needs": [
+    "microphone"
+   ],
    "first_run": "libs:perms",
    "helpers": []
   },

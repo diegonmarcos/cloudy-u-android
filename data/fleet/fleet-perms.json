@@ -168,6 +168,15 @@
    "helpers": []
   },
   {
+   "app": "ac_cloud-canvas",
+   "package": "com.diegonmarcos.cloudcanvas",
+   "label": "cloud-canvas",
+   "needs": [
+    "microphone"
+   ],
+   "helpers": []
+  },
+  {
    "app": "ac_cloud-chat",
    "package": "com.diegonmarcos.comms.chat",
    "label": "cloud-chat",

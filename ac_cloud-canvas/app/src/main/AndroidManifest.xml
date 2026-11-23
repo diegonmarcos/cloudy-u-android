@@ -2,8 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Network only for the Draw Enhancer's OpenRouter call (the Board page is served from the APK and needs none). No storage or microphone permission: files go through the Storage Access Framework, sounds are bundled samples or synthesized, loops are recorded as notes. Cloud Account is opened by a package-pinned intent. -->
+    <!-- Network only for the Draw Enhancer's OpenRouter call (the Board page is served from the APK and needs none). No storage permission: files go through the Storage Access Framework, sounds are bundled samples or synthesized; #1865 the microphone records Play's audio tracks. Cloud Account is opened by a package-pinned intent. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- #1865 Play records audio tracks from the microphone; asked at runtime when REC arms an audio track (build.json::perms.needs microphone). -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <queries>
         <package android:name="com.diegonmarcos.cloudaccount" />
