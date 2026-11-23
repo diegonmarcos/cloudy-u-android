@@ -3,7 +3,7 @@
 # ║ test-chronos — Cloud Wiki's Chronos pages (#1789)                 ║
 # ╚══════════════════════════════════════════════════════════════════╝
 #
-# The Chronos pages are diegonmarcos/lib-chronos at a pinned commit (tools/chronos-pin.json), baked into assets/chronos by
+# The Chronos pages are the content repo (#1867 diegonmarcos/Projects-Library-KG, folder 3.Projects/3.0.Chronos) at a pinned commit (tools/chronos-pin.json), baked into assets/chronos by
 # tools/regen-chronos.py and declared as nested pages under build.json::ui wiki > chronos. This proves:
 #   C1  THE TREE GUARD: the pages build.json declares are exactly the page tree of the committed assets (one per index.html, the repo's
 #       hierarchy, ids from the directory numbers, labels the pages' own <title>, icons from the pin), and every declared asset exists
@@ -21,6 +21,8 @@
 #   C8  (#1857) the sibling PROJECTS of the repo (Sacred-geo/): baked, vendored, hashed and drift-checked exactly like Chronos/ (C1-C4 run over
 #       them too), declared as a wiki page of the pin's project id carrying `project`, both of their files (Markdown + web page) baked, served
 #       from the runtime clone as well (ChronosPage.cloneServe), shown by ProjectPage and the walk workflow test-wiki-projects-emulator.yml
+#   C9  (#1867) the side menu is the repo's menu: build.json::ui wiki groups and pages are what the committed dataset's `menu` makes
+#       (regen-chronos.py --guard), and the dataset is the repo's wiki.json at the pin byte for byte (C4, --check)
 # then plants a mutation per offline rule in a scratch copy and requires RED for each.
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -47,7 +49,8 @@ if r.returncode != 0 and not any(l.startswith("FAIL ") for l in r.stdout.splitli
     bad.append("C1 regen-chronos.py --guard failed: " + (r.stderr.strip() or r.stdout.strip())[:300])
 
 # C1b: no baked Chronos page is a placeholder
-for dp, _, fs in os.walk(os.path.join(app, "app/src/main/assets/chronos/Chronos")):
+pin_src = json.loads(read(os.path.join(app, "tools/chronos-pin.json")))["source_dir"]
+for dp, _, fs in os.walk(os.path.join(app, "app/src/main/assets/chronos", pin_src)):
     for f in fs:
         if f.endswith(".html") and "Simulator pending upload" in read(os.path.join(dp, f)):
             bad.append("C1 %s is a placeholder (Simulator pending upload)" % os.path.relpath(os.path.join(dp, f), app))
@@ -112,7 +115,7 @@ bad() { echo "  FAIL: $1"; FAILS=$((FAILS + 1)); }
 echo "[chronos] offline rules"
 out="$(check "$APP" "$ROOT")" && ok "C1-C3, C5-C7 hold on the real tree" || { bad "the real tree is red"; echo "$out"; }
 
-echo "[chronos] drift against lib-chronos at the pin (network)"
+echo "[chronos] drift against the content repo at the pin (network)"
 if out="$(python3 "$APP/tools/regen-chronos.py" --check 2>&1)"; then ok "C4 $(tail -1 <<<"$out")"; grep '^::warning::' <<<"$out" || true
 else bad "C4 the baked Chronos pages drifted from the pin (or the pin could not be reached: a check that cannot reach its subject fails)"; echo "$out"; fi
 
@@ -121,6 +124,7 @@ W="$(mktemp -d)"; trap 'rm -rf "$W"' EXIT
 mutant() {   # mutant <name> <shell edit run in the copy (cwd = copy of the app)> <needle expected in the output>
   rm -rf "$W/root"; mkdir -p "$W/root/1_cicd/src/data" "$W/root/.github/workflows"; cp -r "$APP" "$W/root/app"; cp "$ROOT/1_cicd/src/data/webview-guard.json" "$W/root/1_cicd/src/data/"
   cp "$ROOT/.github/workflows/test-wiki-projects-emulator.yml" "$W/root/.github/workflows/" 2>/dev/null || true
+  mkdir -p "$W/root/data/fleet/app" && cp -r "$ROOT/data/fleet/app/com.diegonmarcos.cloudwiki" "$W/root/data/fleet/app/"
   ( cd "$W/root/app" && eval "$2" )
   if out="$(check "$W/root/app" "$W/root" 2>&1)"; then bad "mutant '$1' stayed green"; elif grep -q -- "$3" <<<"$out"; then ok "mutant '$1' is red ($3)"; else bad "mutant '$1' is red for the wrong reason: $out"; fi
 }
@@ -130,12 +134,12 @@ DROP="import json;p='build.json';d=json.load(open(p));c=[x for x in [s for s in 
 mutant "a page is not declared"     "python3 -c \"$DROP;c['pages'].pop();json.dump(d,open(p,'w'),indent=2)\""                   "C1 build.json::ui chronos pages"
 mutant "a label is retyped"         "python3 -c \"$DROP;c['pages'][0]['label']='Chronos';json.dump(d,open(p,'w'),indent=2)\""                "C1 build.json::ui chronos pages carry other labels"
 mutant "the hierarchy is flattened" "python3 -c \"$DROP;q=[x for x in c['pages'] if x.get('pages')][0];c['pages']+=q.pop('pages');json.dump(d,open(p,'w'),indent=2)\"" "C1 build.json::ui chronos pages"
-mutant "a page is a placeholder"    "printf '<title>x</title><p>Simulator pending upload.</p>' > $A/Chronos/1.Earthsphere-Cycles/index.html"  "is a placeholder"
-mutant "a page appears by hand"     "mkdir -p $A/Chronos/5.Extra && printf '<title>Extra</title>' > $A/Chronos/5.Extra/index.html"           "C1 build.json::ui chronos pages"
-mutant "an asset goes missing"      "rm $A/Chronos/2.Milkwaysphere-Orbits/index.html"                                                       "C1"
+mutant "a page is a placeholder"    "printf '<title>x</title><p>Simulator pending upload.</p>' > $A/3.Projects/3.0.Chronos/1.Earthsphere-Cycles/index.html"  "is a placeholder"
+mutant "a page appears by hand"     "mkdir -p $A/3.Projects/3.0.Chronos/5.Extra && printf '<title>Extra</title>' > $A/3.Projects/3.0.Chronos/5.Extra/index.html"           "C1 build.json::ui chronos pages"
+mutant "an asset goes missing"      "rm $A/3.Projects/3.0.Chronos/2.Milkwaysphere-Orbits/index.html"                                                       "C1"
 mutant "a vendored file is edited"  "echo '//x' >> $A/vendor/tailwindcss/3.4.17/tailwind.js"                                              "C2 vendored file vendor/tailwindcss/3.4.17/tailwind.js does not hash"
 mutant "an unpinned vendor file"    "echo x > $A/vendor/extra.js"                                                                          "C2 vendored file vendor/extra.js has no sha256"
-mutant "a page loads a CDN again"   "sed -i 's|</head>|<script src=\"https://cdn.example/x.js\"></script></head>|' $A/Chronos/index.html"   "C2 Chronos/index.html loads from the network"
+mutant "a page loads a CDN again"   "sed -i 's|</head>|<script src=\"https://cdn.example/x.js\"></script></head>|' $A/3.Projects/3.0.Chronos/index.html"   "C2 3.Projects/3.0.Chronos/index.html loads from the network"
 mutant "a packager-ignored dir"     "mkdir -p $A/_hidden && mv $A/vendor/tailwindcss $A/_hidden/"                                       "C2 _hidden/tailwindcss/3.4.17/tailwind.js has a path segment the Android asset packager ignores"
 mutant "the header is dropped"      "echo '# hand-made' > $A/GENERATED.md"                                                                  "C3 GENERATED.md is missing"
 mutant "the web view is hand-built" "sed -i 's/CloudWeb.create(/Foo(/' $KT/ui/ChronosPage.kt"                                               "C5 the Chronos page is not the fleet web view"
@@ -148,11 +152,13 @@ mutant "the usage is undeclared"    "python3 -c \"import json;p='../1_cicd/src/d
 PJ="import json;p='build.json';d=json.load(open(p));w=[s for s in d['ui']['sections'] if s['id']=='wiki'][0]"
 mutant "the project is undeclared"  "python3 -c \"$PJ;w['pages']=[x for x in w['pages'] if x['id']!='sacred'];json.dump(d,open(p,'w'),indent=2)\"" "C8 build.json::ui wiki has no page 'sacred'"
 mutant "the project names another dir" "python3 -c \"$PJ;[x.update(project='Other') for x in w['pages'] if x['id']=='sacred'];json.dump(d,open(p,'w'),indent=2)\"" "C8 build.json::ui page sacred names project"
-mutant "the project page goes missing" "rm $A/Sacred-geo/index.html"                                                                   "C8 project sacred: Sacred-geo/index.html is not in the APK assets"
-mutant "the project text goes missing" "rm $A/Sacred-geo/topics.md"                                                                    "C8 project sacred: Sacred-geo/topics.md is not in the APK assets"
-mutant "a project page loads a CDN"  "sed -i 's|</head>|<script src=\"https://cdn.example/x.js\"></script></head>|' $A/Sacred-geo/index.html" "C2 Sacred-geo/index.html loads from the network"
+mutant "the project page goes missing" "rm $A/3.Projects/3.1.Sacred-geo/index.html"                                                                   "C8 project sacred: 3.Projects/3.1.Sacred-geo/index.html is not in the APK assets"
+mutant "the project text goes missing" "rm $A/3.Projects/3.1.Sacred-geo/topics.md"                                                                    "C8 project sacred: 3.Projects/3.1.Sacred-geo/topics.md is not in the APK assets"
+mutant "a project page loads a CDN"  "sed -i 's|</head>|<script src=\"https://cdn.example/x.js\"></script></head>|' $A/3.Projects/3.1.Sacred-geo/index.html" "C2 3.Projects/3.1.Sacred-geo/index.html loads from the network"
 mutant "the clone stops serving projects" "sed -i 's/r.projects.map/r.nothing.map/' $KT/ui/ChronosPage.kt"                            "C8 the runtime clone does not serve the project folders"
 mutant "the walk workflow loses a step" "sed -i 's/Sacred Geometry/Sacred/g' ../.github/workflows/test-wiki-projects-emulator.yml"  "C8 the walk workflow does not name 'Sacred Geometry'"
+mutant "the menu drifts from the repo" "python3 -c \"$PJ;w['groups'][1]['label']='Occult';json.dump(d,open(p,'w'),indent=2)\""   "C9 build.json::ui wiki groups"
+mutant "a hub loses a topic"        "python3 -c \"$PJ;[x['pages'].pop() for x in w['pages'] if x['id']=='arcanum-a'];json.dump(d,open(p,'w'),indent=2)\"" "C9 build.json::ui wiki pages are not the repo's menu"
 mutant "no deep screenshot"         "sed -i 's/shot wiki-chronos-deep/shot wiki-other/' test/emulator-wiki-screens.sh"                      "C7 emulator-wiki-screens.sh does not capture wiki-chronos-deep"
 
 [ "$FAILS" -eq 0 ] && echo "ALL GREEN" || { echo "$FAILS FAILED"; exit 1; }

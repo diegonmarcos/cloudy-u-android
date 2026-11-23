@@ -1,7 +1,7 @@
-name: "Test -> Cloud Wiki Projects (emulator: Projects group after Arts, Projects > Chronos, Projects > Sacred Geometry curriculum and 3D explorer)"
+name: "Test -> Cloud Wiki Projects (emulator: Modern Science | Arcanum Science | Projects, Projects > Chronos, Projects > Sacred Geometry curriculum and 3D explorer)"
 
 # #1857: install an already built Cloud Wiki x86_64 APK (the artifact of a Ship Cloud Wiki run, input run_id) on an API-34 emulator and walk
-# the regrouped side menu: the groups Sciences, Humanities, Arts, Projects, Explore in that order, Chronos under Projects (not Humanities), then
+# the regrouped side menu: #1867 the parents Modern Science (hubs Sciences, Humanities, Arts, Explore), Arcanum Science and Projects, Chronos under Projects (not Humanities), then
 # Projects > Chronos (its web view) and Projects > Sacred Geometry (the Markdown curriculum tab, the link to the 3D explorer, the explorer's web view).
 # Each step is a PASS/FAIL row in verdict.txt (uiautomator dump + PNG); any FAIL fails the job. Dispatch only; nothing is published.
 
@@ -95,7 +95,8 @@ jobs:
           # the rail's visible part (it is longer than the screen): the groups and topics in their order, Projects and Chronos after Arts
           merged=$(python3 -I ui.py seq out/ui.xml | tr ' ' '\n' | sed 's/navside_heading_group://;s/navside_item_//' | tr '\n' ' ')
           echo "rail order: $merged" | tee -a out/verdict.txt
-          case "$merged" in "sciences math cs physics astronomy eng medicine humanities anthropology beliefs arts art theater music movies projects chronos"*) check ok "the rail reads Sciences, Humanities (no Chronos), Arts, Projects > Chronos";; *) check bad "the rail reads Sciences, Humanities (no Chronos), Arts, Projects > Chronos (got: $merged)";; esac
+          # #1867 the parents are headings, the hubs rows holding their topics: Modern Science > Sciences > Math ... Humanities (no Chronos) ...
+          case "$merged" in "modern sciences math cs physics astronomy eng medicine humanities anthropology beliefs arts art theater music movies"*) check ok "the rail reads Modern Science > Sciences, Humanities (no Chronos), Arts";; *) check bad "the rail reads Modern Science > Sciences, Humanities (no Chronos), Arts (got: $merged)";; esac
           # pages are opened from the title dropdown (every page of the section, in the menu's order), as the nav walk does
           item() {
             dump "pre-$1"; tap topbar_title; sleep 2; dump "dropdown-$1"

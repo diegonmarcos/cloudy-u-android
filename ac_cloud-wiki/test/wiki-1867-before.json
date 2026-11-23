@@ -1,0 +1,1444 @@
+{
+ "_doc": "#1867 Cloud Wiki BEFORE the Modern Science | Arcanum Science | Projects reorganisation (cloudy-u-android 7077c32ae: build.json::ui wiki and data/fleet/app/com.diegonmarcos.cloudwiki/wiki.json, Chronos pin d62ae92e). Every side-menu page with its label and icon (Chronos with its nested simulators), every group, every dataset topic with its label, intro and tabs (page ids in order), every page with its title, tags, links and Markdown. test/test-wiki-1867.sh proves each is still declared and reachable, rule 16. Frozen: never regenerated.",
+ "groups": [
+  {
+   "id": "sciences",
+   "label": "Sciences",
+   "icon": "insights",
+   "pages": [
+    "math",
+    "cs",
+    "physics",
+    "astronomy",
+    "eng",
+    "medicine"
+   ]
+  },
+  {
+   "id": "humanities",
+   "label": "Humanities",
+   "icon": "groups",
+   "pages": [
+    "anthropology",
+    "beliefs"
+   ]
+  },
+  {
+   "id": "arts",
+   "label": "Arts",
+   "icon": "palette",
+   "pages": [
+    "art",
+    "theater",
+    "music",
+    "movies"
+   ]
+  },
+  {
+   "id": "projects",
+   "label": "Projects",
+   "icon": "layers",
+   "pages": [
+    "chronos",
+    "sacred"
+   ]
+  },
+  {
+   "id": "explore",
+   "label": "Explore",
+   "icon": "explore",
+   "pages": [
+    "graph"
+   ]
+  }
+ ],
+ "menu": [
+  {
+   "id": "math",
+   "label": "Math",
+   "icon": "calculate"
+  },
+  {
+   "id": "cs",
+   "label": "Computer Science",
+   "icon": "code"
+  },
+  {
+   "id": "physics",
+   "label": "Physics",
+   "icon": "bolt"
+  },
+  {
+   "id": "astronomy",
+   "label": "Astronomy",
+   "icon": "rocket_launch"
+  },
+  {
+   "id": "eng",
+   "label": "Engineering",
+   "icon": "build"
+  },
+  {
+   "id": "medicine",
+   "label": "Medicine",
+   "icon": "monitor_heart"
+  },
+  {
+   "id": "anthropology",
+   "label": "Anthropology",
+   "icon": "groups"
+  },
+  {
+   "id": "beliefs",
+   "label": "Human Belief Systems",
+   "icon": "psychology"
+  },
+  {
+   "id": "art",
+   "label": "Art",
+   "icon": "palette"
+  },
+  {
+   "id": "theater",
+   "label": "Theater",
+   "icon": "mood"
+  },
+  {
+   "id": "music",
+   "label": "Music",
+   "icon": "music_note"
+  },
+  {
+   "id": "movies",
+   "label": "Movies",
+   "icon": "video"
+  },
+  {
+   "id": "chronos",
+   "label": "Chronos",
+   "icon": "timeline",
+   "pages": [
+    {
+     "id": "chronos.lib",
+     "label": "Home",
+     "icon": "timeline",
+     "asset": "Chronos/index.html"
+    },
+    {
+     "id": "chronos.lib.0",
+     "label": "Humansphere - Circadian",
+     "icon": "bedtime",
+     "asset": "Chronos/0.Humansphere-Circadian/index.html"
+    },
+    {
+     "id": "chronos.lib.1",
+     "label": "Earthsphere - Cycles",
+     "icon": "public",
+     "asset": "Chronos/1.Earthsphere-Cycles/index.html"
+    },
+    {
+     "id": "chronos.lib.2",
+     "label": "Milkwaysphere - Orbits",
+     "icon": "language",
+     "asset": "Chronos/2.Milkwaysphere-Orbits/index.html"
+    },
+    {
+     "id": "chronos.lib.3",
+     "label": "Quantum Cycles",
+     "icon": "hub",
+     "asset": "Chronos/3.Quantum-Cycles/index.html",
+     "pages": [
+      {
+       "id": "chronos.lib.3.0",
+       "label": "Quantum Decoherence Cycle",
+       "icon": "schedule",
+       "asset": "Chronos/3.Quantum-Cycles/3.0.Quantum-Decoherence-Cycle/index.html"
+      },
+      {
+       "id": "chronos.lib.3.1",
+       "label": "Quantum Gravity Cycle",
+       "icon": "rocket_launch",
+       "asset": "Chronos/3.Quantum-Cycles/3.1.Quantum-Gravity-Cycle/index.html"
+      }
+     ]
+    },
+    {
+     "id": "chronos.lib.4",
+     "label": "Astronomy - Astrological Sphere",
+     "icon": "auto_awesome",
+     "asset": "Chronos/4.Astronomy-Astrological-sphere/index.html"
+    }
+   ]
+  },
+  {
+   "id": "sacred",
+   "label": "Sacred Geometry",
+   "icon": "token",
+   "project": "Sacred-geo"
+  },
+  {
+   "id": "graph",
+   "label": "Graph",
+   "icon": "hub"
+  }
+ ],
+ "topics": [
+  {
+   "id": "anthropology",
+   "label": "Anthropology",
+   "intro": "Anthropology studies human beings across time and place: their bodies, languages, cultures and material remains. Its subfields share a comparative, evidence-based approach. See also [[chronos.prehistory]] and [[beliefs.religion-studies]].",
+   "tabs": [
+    "anthropology.cultural",
+    "anthropology.physical",
+    "anthropology.archaeology",
+    "anthropology.linguistic",
+    "anthropology.kinship"
+   ]
+  },
+  {
+   "id": "math",
+   "label": "Math",
+   "intro": "Mathematics is the study of quantity, structure, space and change using precise definitions and proof. It is both a language for the sciences and a field of pure inquiry. See also [[cs.algorithms]] and [[physics.classical]].",
+   "tabs": [
+    "math.algebra",
+    "math.calculus",
+    "math.geometry",
+    "math.number-theory",
+    "math.probability",
+    "math.logic"
+   ]
+  },
+  {
+   "id": "cs",
+   "label": "Computer Science",
+   "intro": "Computer science studies computation, information and the systems that process them. It combines theory, engineering practice and the study of human use. See also [[math.logic]] and [[eng.electrical]].",
+   "tabs": [
+    "cs.algorithms",
+    "cs.theory",
+    "cs.systems",
+    "cs.machine-learning",
+    "cs.nlp",
+    "cs.cryptography",
+    "cs.security"
+   ]
+  },
+  {
+   "id": "physics",
+   "label": "Physics",
+   "intro": "Physics studies matter, energy, space and time and the laws that relate them. Theories are tested by measurement and expressed mostly in mathematics. See also [[math.calculus]] and [[astronomy.cosmology]].",
+   "tabs": [
+    "physics.classical",
+    "physics.thermo",
+    "physics.electromagnetism",
+    "physics.quantum",
+    "physics.relativity",
+    "physics.particles"
+   ]
+  },
+  {
+   "id": "eng",
+   "label": "Engineering",
+   "intro": "Engineering applies science and mathematics to design, build and maintain useful systems under constraints of cost, safety and materials. Each major field below is a subpage. See also [[physics.classical]].",
+   "tabs": [
+    "eng.civil",
+    "eng.mechanical",
+    "eng.electrical",
+    "eng.chemical",
+    "eng.software",
+    "eng.aerospace",
+    "eng.materials",
+    "eng.biomedical",
+    "eng.environmental"
+   ]
+  },
+  {
+   "id": "medicine",
+   "label": "Medicine",
+   "intro": "Medicine is the science and practice of preventing, diagnosing and treating illness. This page is general education, not medical advice. See also [[eng.biomedical]] and [[anthropology.physical]].",
+   "tabs": [
+    "medicine.physiology",
+    "medicine.anatomy",
+    "medicine.genetics",
+    "medicine.epidemiology",
+    "medicine.imaging",
+    "medicine.pharmacology"
+   ]
+  },
+  {
+   "id": "astronomy",
+   "label": "Astronomy",
+   "intro": "Astronomy is the study of objects and phenomena beyond Earth, from planets to the large-scale structure of the universe. See also [[physics.relativity]] and [[chronos.ancient]].",
+   "tabs": [
+    "astronomy.solar-system",
+    "astronomy.stars",
+    "astronomy.galaxies",
+    "astronomy.cosmology",
+    "astronomy.observation"
+   ]
+  },
+  {
+   "id": "art",
+   "label": "Art",
+   "intro": "Art covers works made to be seen, with traditions that differ widely across cultures and periods. Meaning comes from technique, context and interpretation. See also [[anthropology.archaeology]].",
+   "tabs": [
+    "art.visual",
+    "art.sculpture",
+    "art.architecture",
+    "art.photography",
+    "art.movements"
+   ]
+  },
+  {
+   "id": "theater",
+   "label": "Theater",
+   "intro": "Theater is live performance in which actors present a story to an audience in a shared space. It is among the oldest performing arts. See also [[music.opera-and-song]] and [[chronos.ancient]].",
+   "tabs": [
+    "theater.origins",
+    "theater.drama",
+    "theater.acting",
+    "theater.stagecraft",
+    "theater.world-traditions"
+   ]
+  },
+  {
+   "id": "music",
+   "label": "Music",
+   "intro": "Music organises sound in time. It is found in every known culture and serves ritual, entertainment and expression. See also [[physics.electromagnetism]] and [[anthropology.cultural]].",
+   "tabs": [
+    "music.theory",
+    "music.acoustics",
+    "music.western-classical",
+    "music.popular",
+    "music.opera-and-song",
+    "music.technology"
+   ]
+  },
+  {
+   "id": "movies",
+   "label": "Movies",
+   "intro": "Cinema tells stories in moving images and sound. It combines photography, writing, performance and editing. See also [[art.photography]] and [[theater.acting]].",
+   "tabs": [
+    "movies.history",
+    "movies.cinematography",
+    "movies.screenwriting",
+    "movies.editing",
+    "movies.genres"
+   ]
+  },
+  {
+   "id": "beliefs",
+   "label": "Human Belief Systems",
+   "intro": "Human belief systems include religions, philosophies and worldviews that give people ways to understand life, ethics and the world. This subject is described neutrally and without ranking beliefs. See also [[anthropology.cultural]].",
+   "tabs": [
+    "beliefs.religion-studies",
+    "beliefs.world-religions",
+    "beliefs.philosophy",
+    "beliefs.ethics",
+    "beliefs.mythology"
+   ]
+  },
+  {
+   "id": "chronos",
+   "label": "Chronos",
+   "intro": "Chronos is the timeline of human history, from the first tools to the present. Periods are conventions that help organise a continuous story. See also [[anthropology.archaeology]].",
+   "tabs": [
+    "chronos.prehistory",
+    "chronos.ancient",
+    "chronos.medieval",
+    "chronos.early-modern",
+    "chronos.modern"
+   ]
+  }
+ ],
+ "pages": [
+  {
+   "id": "anthropology.cultural",
+   "topic": "anthropology",
+   "title": "Cultural anthropology",
+   "tags": [
+    "culture",
+    "society",
+    "fieldwork"
+   ],
+   "links": [
+    "beliefs.religion-studies",
+    "anthropology.linguistic"
+   ],
+   "md": "Cultural anthropology describes and compares how groups of people organise daily life, kinship, exchange and meaning. Its main method is ethnography: long-term participant observation.\n\n- Key ideas: culture, kinship, ritual, exchange\n- Related: [[beliefs.religion-studies]], [[anthropology.linguistic]]"
+  },
+  {
+   "id": "anthropology.physical",
+   "topic": "anthropology",
+   "title": "Biological anthropology",
+   "tags": [
+    "evolution",
+    "human-biology",
+    "primates"
+   ],
+   "links": [
+    "medicine.genetics",
+    "chronos.prehistory"
+   ],
+   "md": "Biological anthropology examines human evolution, variation and the behaviour of other primates. It draws on genetics, anatomy and the fossil record.\n\n- Related: [[medicine.genetics]], [[chronos.prehistory]]"
+  },
+  {
+   "id": "anthropology.archaeology",
+   "topic": "anthropology",
+   "title": "Archaeology",
+   "tags": [
+    "material-culture",
+    "history",
+    "fieldwork"
+   ],
+   "links": [
+    "chronos.ancient",
+    "anthropology.cultural"
+   ],
+   "md": "Archaeology reconstructs past societies from the objects, buildings and landscapes they left behind. Excavation, dating methods and careful recording of context are central.\n\n- Related: [[chronos.ancient]], [[anthropology.cultural]]"
+  },
+  {
+   "id": "anthropology.linguistic",
+   "topic": "anthropology",
+   "title": "Linguistic anthropology",
+   "tags": [
+    "language",
+    "culture",
+    "society"
+   ],
+   "links": [
+    "cs.nlp"
+   ],
+   "md": "Linguistic anthropology studies language as a social practice: how speech shapes identity, how languages change and how they relate to thought and community.\n\n- Related: [[cs.nlp]]"
+  },
+  {
+   "id": "anthropology.kinship",
+   "topic": "anthropology",
+   "title": "Kinship and social structure",
+   "tags": [
+    "society",
+    "culture",
+    "exchange"
+   ],
+   "links": [],
+   "md": "Kinship systems define who counts as family, who may marry whom and how rights and duties pass between generations. They differ widely between societies and are a classic subject of comparison."
+  },
+  {
+   "id": "math.algebra",
+   "topic": "math",
+   "title": "Algebra",
+   "tags": [
+    "structure",
+    "equations",
+    "abstraction"
+   ],
+   "links": [
+    "math.number-theory",
+    "cs.cryptography"
+   ],
+   "md": "Algebra studies operations and the structures they form, from solving equations to groups, rings and fields. Symbols stand for unknown or arbitrary quantities.\n\n- Related: [[math.number-theory]], [[cs.cryptography]]"
+  },
+  {
+   "id": "math.calculus",
+   "topic": "math",
+   "title": "Calculus",
+   "tags": [
+    "change",
+    "limits",
+    "analysis"
+   ],
+   "links": [
+    "physics.classical",
+    "eng.mechanical"
+   ],
+   "md": "Calculus studies change and accumulation through derivatives and integrals, both defined with limits. It underlies much of physics and engineering.\n\n- Related: [[physics.classical]], [[eng.mechanical]]"
+  },
+  {
+   "id": "math.geometry",
+   "topic": "math",
+   "title": "Geometry",
+   "tags": [
+    "space",
+    "shape",
+    "proof"
+   ],
+   "links": [
+    "astronomy.cosmology",
+    "art.visual"
+   ],
+   "md": "Geometry studies shapes, sizes and the properties of space. It ranges from Euclid's axioms to curved spaces used in relativity.\n\n- Related: [[astronomy.cosmology]], [[art.visual]]"
+  },
+  {
+   "id": "math.number-theory",
+   "topic": "math",
+   "title": "Number theory",
+   "tags": [
+    "integers",
+    "proof",
+    "structure"
+   ],
+   "links": [
+    "cs.cryptography",
+    "math.algebra"
+   ],
+   "md": "Number theory studies the integers, especially primes and divisibility. Once considered purely abstract, it now supports modern cryptography.\n\n- Related: [[cs.cryptography]], [[math.algebra]]"
+  },
+  {
+   "id": "math.probability",
+   "topic": "math",
+   "title": "Probability and statistics",
+   "tags": [
+    "uncertainty",
+    "data",
+    "inference"
+   ],
+   "links": [
+    "medicine.epidemiology",
+    "cs.machine-learning"
+   ],
+   "md": "Probability models uncertainty; statistics uses data to estimate quantities and test claims. Together they support experiments, medicine and machine learning.\n\n- Related: [[medicine.epidemiology]], [[cs.machine-learning]]"
+  },
+  {
+   "id": "math.logic",
+   "topic": "math",
+   "title": "Logic and foundations",
+   "tags": [
+    "proof",
+    "abstraction",
+    "computation"
+   ],
+   "links": [
+    "cs.theory"
+   ],
+   "md": "Logic studies valid reasoning and the foundations on which mathematics is built, including sets and formal proof. It is closely tied to computation.\n\n- Related: [[cs.theory]]"
+  },
+  {
+   "id": "cs.algorithms",
+   "topic": "cs",
+   "title": "Algorithms and data structures",
+   "tags": [
+    "computation",
+    "efficiency",
+    "structure"
+   ],
+   "links": [
+    "cs.theory",
+    "math.number-theory"
+   ],
+   "md": "An algorithm is a finite procedure for solving a problem; data structures organise information so algorithms can use it efficiently. Analysis compares cost as inputs grow.\n\n- Related: [[cs.theory]], [[math.number-theory]]"
+  },
+  {
+   "id": "cs.theory",
+   "topic": "cs",
+   "title": "Theory of computation",
+   "tags": [
+    "computation",
+    "proof",
+    "complexity"
+   ],
+   "links": [
+    "math.logic"
+   ],
+   "md": "The theory of computation asks what can be computed at all and at what cost. It defines models such as Turing machines and classes such as P and NP.\n\n- Related: [[math.logic]]"
+  },
+  {
+   "id": "cs.systems",
+   "topic": "cs",
+   "title": "Operating systems and networks",
+   "tags": [
+    "systems",
+    "networks",
+    "hardware"
+   ],
+   "links": [
+    "eng.electrical",
+    "cs.security"
+   ],
+   "md": "Operating systems manage hardware, memory and processes; networks let machines exchange data using layered protocols such as the internet protocol suite.\n\n- Related: [[eng.electrical]], [[cs.security]]"
+  },
+  {
+   "id": "cs.machine-learning",
+   "topic": "cs",
+   "title": "Machine learning",
+   "tags": [
+    "data",
+    "inference",
+    "models"
+   ],
+   "links": [
+    "math.probability",
+    "cs.nlp"
+   ],
+   "md": "Machine learning builds models that improve from data rather than from explicit rules. Methods range from linear regression to large neural networks.\n\n- Related: [[math.probability]], [[cs.nlp]]"
+  },
+  {
+   "id": "cs.nlp",
+   "topic": "cs",
+   "title": "Natural language processing",
+   "tags": [
+    "language",
+    "models",
+    "data"
+   ],
+   "links": [
+    "anthropology.linguistic",
+    "cs.machine-learning"
+   ],
+   "md": "Natural language processing lets software read, translate and generate human language, combining linguistics with statistical and neural methods.\n\n- Related: [[anthropology.linguistic]], [[cs.machine-learning]]"
+  },
+  {
+   "id": "cs.cryptography",
+   "topic": "cs",
+   "title": "Cryptography",
+   "tags": [
+    "security",
+    "integers",
+    "proof"
+   ],
+   "links": [
+    "math.number-theory",
+    "cs.security"
+   ],
+   "md": "Cryptography protects information with mathematics: encryption keeps data private, signatures prove origin and hashes detect change.\n\n- Related: [[math.number-theory]], [[cs.security]]"
+  },
+  {
+   "id": "cs.security",
+   "topic": "cs",
+   "title": "Security",
+   "tags": [
+    "security",
+    "systems",
+    "networks"
+   ],
+   "links": [
+    "cs.cryptography",
+    "cs.systems"
+   ],
+   "md": "Computer security protects systems and data against misuse. It covers threat modelling, access control, secure design and incident response.\n\n- Related: [[cs.cryptography]], [[cs.systems]]"
+  },
+  {
+   "id": "physics.classical",
+   "topic": "physics",
+   "title": "Classical mechanics",
+   "tags": [
+    "motion",
+    "forces",
+    "energy"
+   ],
+   "links": [
+    "math.calculus",
+    "eng.mechanical"
+   ],
+   "md": "Classical mechanics describes the motion of bodies under forces, from projectiles to planets, using Newton's laws and their later reformulations.\n\n- Related: [[math.calculus]], [[eng.mechanical]]"
+  },
+  {
+   "id": "physics.thermo",
+   "topic": "physics",
+   "title": "Thermodynamics",
+   "tags": [
+    "energy",
+    "heat",
+    "entropy"
+   ],
+   "links": [
+    "eng.chemical",
+    "medicine.physiology"
+   ],
+   "md": "Thermodynamics relates heat, work and energy and introduces entropy, which sets the direction of spontaneous processes.\n\n- Related: [[eng.chemical]], [[medicine.physiology]]"
+  },
+  {
+   "id": "physics.electromagnetism",
+   "topic": "physics",
+   "title": "Electromagnetism",
+   "tags": [
+    "fields",
+    "energy",
+    "waves"
+   ],
+   "links": [
+    "eng.electrical",
+    "astronomy.observation"
+   ],
+   "md": "Electromagnetism unifies electricity, magnetism and light in Maxwell's equations. It underlies circuits, radio and optics.\n\n- Related: [[eng.electrical]], [[astronomy.observation]]"
+  },
+  {
+   "id": "physics.quantum",
+   "topic": "physics",
+   "title": "Quantum mechanics",
+   "tags": [
+    "matter",
+    "probability",
+    "waves"
+   ],
+   "links": [
+    "math.probability",
+    "cs.cryptography"
+   ],
+   "md": "Quantum mechanics describes matter and light at atomic scales, where energy comes in discrete amounts and outcomes are predicted as probabilities.\n\n- Related: [[math.probability]], [[cs.cryptography]]"
+  },
+  {
+   "id": "physics.relativity",
+   "topic": "physics",
+   "title": "Relativity",
+   "tags": [
+    "space",
+    "time",
+    "gravity"
+   ],
+   "links": [
+    "math.geometry",
+    "astronomy.cosmology"
+   ],
+   "md": "Special relativity links space and time for observers in relative motion; general relativity describes gravity as the curvature of spacetime.\n\n- Related: [[math.geometry]], [[astronomy.cosmology]]"
+  },
+  {
+   "id": "physics.particles",
+   "topic": "physics",
+   "title": "Particle and nuclear physics",
+   "tags": [
+    "matter",
+    "fields",
+    "energy"
+   ],
+   "links": [
+    "physics.quantum",
+    "medicine.imaging"
+   ],
+   "md": "Particle physics studies the elementary constituents of matter and their interactions; nuclear physics studies the atomic nucleus, its decay and energy release.\n\n- Related: [[physics.quantum]], [[medicine.imaging]]"
+  },
+  {
+   "id": "eng.civil",
+   "topic": "eng",
+   "title": "Civil engineering",
+   "tags": [
+    "infrastructure",
+    "structures",
+    "design"
+   ],
+   "links": [
+    "physics.classical"
+   ],
+   "md": "Civil engineering designs and maintains the built environment: bridges, buildings, roads, water supply and drainage.\n\n- Related: [[physics.classical]]"
+  },
+  {
+   "id": "eng.mechanical",
+   "topic": "eng",
+   "title": "Mechanical engineering",
+   "tags": [
+    "machines",
+    "motion",
+    "design"
+   ],
+   "links": [
+    "math.calculus",
+    "physics.thermo"
+   ],
+   "md": "Mechanical engineering covers machines, engines, heat transfer and the mechanics of solids and fluids.\n\n- Related: [[math.calculus]], [[physics.thermo]]"
+  },
+  {
+   "id": "eng.electrical",
+   "topic": "eng",
+   "title": "Electrical engineering",
+   "tags": [
+    "circuits",
+    "energy",
+    "signals"
+   ],
+   "links": [
+    "physics.electromagnetism",
+    "cs.systems"
+   ],
+   "md": "Electrical engineering deals with the generation, transmission and use of electricity, and with electronics and signal processing.\n\n- Related: [[physics.electromagnetism]], [[cs.systems]]"
+  },
+  {
+   "id": "eng.chemical",
+   "topic": "eng",
+   "title": "Chemical engineering",
+   "tags": [
+    "processes",
+    "matter",
+    "energy"
+   ],
+   "links": [
+    "physics.thermo"
+   ],
+   "md": "Chemical engineering designs processes that turn raw materials into products at scale, such as fuels, medicines and plastics.\n\n- Related: [[physics.thermo]]"
+  },
+  {
+   "id": "eng.software",
+   "topic": "eng",
+   "title": "Software engineering",
+   "tags": [
+    "software",
+    "design",
+    "systems"
+   ],
+   "links": [
+    "cs.algorithms",
+    "cs.security"
+   ],
+   "md": "Software engineering is the disciplined design, testing and maintenance of software, including requirements, architecture and review.\n\n- Related: [[cs.algorithms]], [[cs.security]]"
+  },
+  {
+   "id": "eng.aerospace",
+   "topic": "eng",
+   "title": "Aerospace engineering",
+   "tags": [
+    "flight",
+    "machines",
+    "design"
+   ],
+   "links": [
+    "astronomy.observation",
+    "physics.classical"
+   ],
+   "md": "Aerospace engineering designs aircraft and spacecraft, combining aerodynamics, propulsion, materials and control.\n\n- Related: [[astronomy.observation]], [[physics.classical]]"
+  },
+  {
+   "id": "eng.materials",
+   "topic": "eng",
+   "title": "Materials engineering",
+   "tags": [
+    "matter",
+    "structures",
+    "processes"
+   ],
+   "links": [
+    "physics.quantum"
+   ],
+   "md": "Materials engineering links the structure of metals, ceramics, polymers and composites to their properties and processing.\n\n- Related: [[physics.quantum]]"
+  },
+  {
+   "id": "eng.biomedical",
+   "topic": "eng",
+   "title": "Biomedical engineering",
+   "tags": [
+    "human-biology",
+    "devices",
+    "design"
+   ],
+   "links": [
+    "medicine.imaging",
+    "medicine.physiology"
+   ],
+   "md": "Biomedical engineering applies engineering to medicine: imaging devices, prosthetics, implants and tissue engineering.\n\n- Related: [[medicine.imaging]], [[medicine.physiology]]"
+  },
+  {
+   "id": "eng.environmental",
+   "topic": "eng",
+   "title": "Environmental engineering",
+   "tags": [
+    "infrastructure",
+    "processes",
+    "society"
+   ],
+   "links": [
+    "eng.civil",
+    "eng.chemical"
+   ],
+   "md": "Environmental engineering protects people and ecosystems through water treatment, waste management and pollution control.\n\n- Related: [[eng.civil]], [[eng.chemical]]"
+  },
+  {
+   "id": "medicine.physiology",
+   "topic": "medicine",
+   "title": "Physiology",
+   "tags": [
+    "human-biology",
+    "body",
+    "energy"
+   ],
+   "links": [
+    "physics.thermo",
+    "medicine.anatomy"
+   ],
+   "md": "Physiology explains how the organ systems of the body work and keep conditions stable, from circulation and breathing to hormones and the nervous system.\n\n- Related: [[physics.thermo]], [[medicine.anatomy]]"
+  },
+  {
+   "id": "medicine.anatomy",
+   "topic": "medicine",
+   "title": "Anatomy",
+   "tags": [
+    "human-biology",
+    "body",
+    "structure"
+   ],
+   "links": [
+    "medicine.imaging"
+   ],
+   "md": "Anatomy describes the structure of the body, from organs and tissues down to cells. Imaging and dissection are its main tools.\n\n- Related: [[medicine.imaging]]"
+  },
+  {
+   "id": "medicine.genetics",
+   "topic": "medicine",
+   "title": "Genetics",
+   "tags": [
+    "inheritance",
+    "human-biology",
+    "data"
+   ],
+   "links": [
+    "anthropology.physical",
+    "math.probability"
+   ],
+   "md": "Genetics studies how traits are inherited through DNA and how variants influence health. Sequencing has made genomes routine data.\n\n- Related: [[anthropology.physical]], [[math.probability]]"
+  },
+  {
+   "id": "medicine.epidemiology",
+   "topic": "medicine",
+   "title": "Epidemiology and public health",
+   "tags": [
+    "data",
+    "society",
+    "inference"
+   ],
+   "links": [
+    "math.probability"
+   ],
+   "md": "Epidemiology studies how disease is distributed in populations and what causes it; public health uses the findings to protect communities.\n\n- Related: [[math.probability]]"
+  },
+  {
+   "id": "medicine.imaging",
+   "topic": "medicine",
+   "title": "Medical imaging",
+   "tags": [
+    "devices",
+    "physics",
+    "body"
+   ],
+   "links": [
+    "physics.particles",
+    "eng.biomedical"
+   ],
+   "md": "Imaging lets clinicians see inside the body without surgery, using X-rays, ultrasound, magnetic resonance and nuclear methods.\n\n- Related: [[physics.particles]], [[eng.biomedical]]"
+  },
+  {
+   "id": "medicine.pharmacology",
+   "topic": "medicine",
+   "title": "Pharmacology",
+   "tags": [
+    "processes",
+    "body",
+    "chemistry"
+   ],
+   "links": [
+    "eng.chemical"
+   ],
+   "md": "Pharmacology studies how drugs act on the body and how the body handles them, which underpins dosing and safety testing.\n\n- Related: [[eng.chemical]]"
+  },
+  {
+   "id": "astronomy.solar-system",
+   "topic": "astronomy",
+   "title": "Solar system",
+   "tags": [
+    "planets",
+    "space",
+    "gravity"
+   ],
+   "links": [
+    "physics.classical"
+   ],
+   "md": "The solar system consists of the Sun, eight planets, their moons and smaller bodies such as asteroids and comets, all bound by the Sun's gravity.\n\n- Related: [[physics.classical]]"
+  },
+  {
+   "id": "astronomy.stars",
+   "topic": "astronomy",
+   "title": "Stars and stellar evolution",
+   "tags": [
+    "stars",
+    "energy",
+    "matter"
+   ],
+   "links": [
+    "physics.particles"
+   ],
+   "md": "Stars shine by nuclear fusion. Their mass decides their lifetime and end state, from white dwarfs to neutron stars and black holes.\n\n- Related: [[physics.particles]]"
+  },
+  {
+   "id": "astronomy.galaxies",
+   "topic": "astronomy",
+   "title": "Galaxies",
+   "tags": [
+    "space",
+    "structure",
+    "gravity"
+   ],
+   "links": [
+    "astronomy.cosmology"
+   ],
+   "md": "Galaxies are vast systems of stars, gas and dark matter. The Milky Way is one of billions in the observable universe.\n\n- Related: [[astronomy.cosmology]]"
+  },
+  {
+   "id": "astronomy.cosmology",
+   "topic": "astronomy",
+   "title": "Cosmology",
+   "tags": [
+    "space",
+    "time",
+    "gravity"
+   ],
+   "links": [
+    "physics.relativity",
+    "math.geometry"
+   ],
+   "md": "Cosmology studies the origin, history and large-scale structure of the universe. The Big Bang model with an expanding space is the standard framework.\n\n- Related: [[physics.relativity]], [[math.geometry]]"
+  },
+  {
+   "id": "astronomy.observation",
+   "topic": "astronomy",
+   "title": "Observational astronomy",
+   "tags": [
+    "devices",
+    "waves",
+    "data"
+   ],
+   "links": [
+    "physics.electromagnetism",
+    "eng.aerospace"
+   ],
+   "md": "Astronomers observe across the electromagnetic spectrum with telescopes on the ground and in space, and increasingly with gravitational waves and neutrinos.\n\n- Related: [[physics.electromagnetism]], [[eng.aerospace]]"
+  },
+  {
+   "id": "art.visual",
+   "topic": "art",
+   "title": "Painting and drawing",
+   "tags": [
+    "visual",
+    "technique",
+    "history"
+   ],
+   "links": [
+    "math.geometry",
+    "art.movements"
+   ],
+   "md": "Painting and drawing build images with line, colour, light and composition. Media range from pigment on cave walls to oil and digital tools.\n\n- Related: [[math.geometry]], [[art.movements]]"
+  },
+  {
+   "id": "art.sculpture",
+   "topic": "art",
+   "title": "Sculpture",
+   "tags": [
+    "visual",
+    "material-culture",
+    "technique"
+   ],
+   "links": [
+    "eng.materials"
+   ],
+   "md": "Sculpture shapes three-dimensional form by carving, modelling or casting in materials such as stone, bronze and clay.\n\n- Related: [[eng.materials]]"
+  },
+  {
+   "id": "art.architecture",
+   "topic": "art",
+   "title": "Architecture",
+   "tags": [
+    "structures",
+    "design",
+    "history"
+   ],
+   "links": [
+    "eng.civil"
+   ],
+   "md": "Architecture is the art and technique of designing buildings and spaces, balancing function, structure and appearance.\n\n- Related: [[eng.civil]]"
+  },
+  {
+   "id": "art.photography",
+   "topic": "art",
+   "title": "Photography",
+   "tags": [
+    "visual",
+    "devices",
+    "technique"
+   ],
+   "links": [
+    "movies.cinematography",
+    "physics.electromagnetism"
+   ],
+   "md": "Photography records light on film or sensors. It became both a documentary tool and an art form.\n\n- Related: [[movies.cinematography]], [[physics.electromagnetism]]"
+  },
+  {
+   "id": "art.movements",
+   "topic": "art",
+   "title": "Art movements",
+   "tags": [
+    "history",
+    "visual",
+    "society"
+   ],
+   "links": [
+    "chronos.modern"
+   ],
+   "md": "An art movement is a group of artists sharing aims and style for a period, such as the Renaissance, Impressionism or Cubism.\n\n- Related: [[chronos.modern]]"
+  },
+  {
+   "id": "theater.origins",
+   "topic": "theater",
+   "title": "Origins of theater",
+   "tags": [
+    "history",
+    "ritual",
+    "performance"
+   ],
+   "links": [
+    "beliefs.religion-studies",
+    "chronos.ancient"
+   ],
+   "md": "Theater grew from ritual and storytelling. Classical Athens developed tragedy and comedy in festivals honouring Dionysus.\n\n- Related: [[beliefs.religion-studies]], [[chronos.ancient]]"
+  },
+  {
+   "id": "theater.drama",
+   "topic": "theater",
+   "title": "Drama and playwriting",
+   "tags": [
+    "literature",
+    "performance",
+    "story"
+   ],
+   "links": [
+    "movies.screenwriting"
+   ],
+   "md": "Dramatic writing builds plot, character and dialogue for performance. Traditions include Greek tragedy, Shakespeare and modern realism.\n\n- Related: [[movies.screenwriting]]"
+  },
+  {
+   "id": "theater.acting",
+   "topic": "theater",
+   "title": "Acting and directing",
+   "tags": [
+    "performance",
+    "technique",
+    "story"
+   ],
+   "links": [
+    "movies.cinematography"
+   ],
+   "md": "Actors embody characters through voice, movement and emotion; directors shape the whole production. Training methods differ between schools.\n\n- Related: [[movies.cinematography]]"
+  },
+  {
+   "id": "theater.stagecraft",
+   "topic": "theater",
+   "title": "Stagecraft",
+   "tags": [
+    "design",
+    "technique",
+    "devices"
+   ],
+   "links": [
+    "eng.electrical"
+   ],
+   "md": "Stagecraft includes set, lighting, sound and costume design, which together create the world of the play.\n\n- Related: [[eng.electrical]]"
+  },
+  {
+   "id": "theater.world-traditions",
+   "topic": "theater",
+   "title": "World theatre traditions",
+   "tags": [
+    "culture",
+    "history",
+    "performance"
+   ],
+   "links": [
+    "anthropology.cultural"
+   ],
+   "md": "Many regions have distinct forms, such as Noh and Kabuki in Japan, Sanskrit drama in India and Chinese opera.\n\n- Related: [[anthropology.cultural]]"
+  },
+  {
+   "id": "music.theory",
+   "topic": "music",
+   "title": "Music theory",
+   "tags": [
+    "structure",
+    "sound",
+    "notation"
+   ],
+   "links": [
+    "math.number-theory",
+    "music.acoustics"
+   ],
+   "md": "Music theory describes how pitch, rhythm, harmony and form work together, and provides notation to write music down.\n\n- Related: [[math.number-theory]], [[music.acoustics]]"
+  },
+  {
+   "id": "music.acoustics",
+   "topic": "music",
+   "title": "Acoustics and instruments",
+   "tags": [
+    "sound",
+    "physics",
+    "devices"
+   ],
+   "links": [
+    "physics.classical"
+   ],
+   "md": "Acoustics explains how vibrating strings, air columns and membranes produce sound. Instrument families follow the way sound is made.\n\n- Related: [[physics.classical]]"
+  },
+  {
+   "id": "music.western-classical",
+   "topic": "music",
+   "title": "Western classical music",
+   "tags": [
+    "history",
+    "structure",
+    "composition"
+   ],
+   "links": [
+    "chronos.modern"
+   ],
+   "md": "Western classical music spans medieval chant to contemporary works, with periods such as Baroque, Classical and Romantic.\n\n- Related: [[chronos.modern]]"
+  },
+  {
+   "id": "music.popular",
+   "topic": "music",
+   "title": "Jazz, rock and popular music",
+   "tags": [
+    "history",
+    "society",
+    "recording"
+   ],
+   "links": [
+    "music.technology"
+   ],
+   "md": "Twentieth-century popular genres grew from folk, blues and jazz traditions and were spread by recording and radio.\n\n- Related: [[music.technology]]"
+  },
+  {
+   "id": "music.opera-and-song",
+   "topic": "music",
+   "title": "Opera and song",
+   "tags": [
+    "performance",
+    "story",
+    "voice"
+   ],
+   "links": [
+    "theater.drama"
+   ],
+   "md": "Opera combines singing, orchestra and staging to tell a story; art song and folk song set poetry to melody.\n\n- Related: [[theater.drama]]"
+  },
+  {
+   "id": "music.technology",
+   "topic": "music",
+   "title": "Recording and music technology",
+   "tags": [
+    "devices",
+    "recording",
+    "signals"
+   ],
+   "links": [
+    "eng.electrical",
+    "cs.algorithms"
+   ],
+   "md": "Recording, synthesis and digital audio changed how music is made and shared, from phonographs to software instruments.\n\n- Related: [[eng.electrical]], [[cs.algorithms]]"
+  },
+  {
+   "id": "movies.history",
+   "topic": "movies",
+   "title": "History of cinema",
+   "tags": [
+    "history",
+    "technology",
+    "society"
+   ],
+   "links": [
+    "chronos.modern"
+   ],
+   "md": "Cinema began in the 1890s with short films, gained sound in the late 1920s and has since moved through colour, television and digital production.\n\n- Related: [[chronos.modern]]"
+  },
+  {
+   "id": "movies.cinematography",
+   "topic": "movies",
+   "title": "Cinematography",
+   "tags": [
+    "visual",
+    "technique",
+    "devices"
+   ],
+   "links": [
+    "art.photography"
+   ],
+   "md": "Cinematography is the art of shaping a film's image through camera, lens, lighting and composition.\n\n- Related: [[art.photography]]"
+  },
+  {
+   "id": "movies.screenwriting",
+   "topic": "movies",
+   "title": "Screenwriting",
+   "tags": [
+    "story",
+    "literature",
+    "structure"
+   ],
+   "links": [
+    "theater.drama"
+   ],
+   "md": "A screenplay sets out scenes, action and dialogue. Common structures divide a film into acts with turning points.\n\n- Related: [[theater.drama]]"
+  },
+  {
+   "id": "movies.editing",
+   "topic": "movies",
+   "title": "Editing and sound",
+   "tags": [
+    "technique",
+    "sound",
+    "story"
+   ],
+   "links": [
+    "music.technology"
+   ],
+   "md": "Editing assembles shots into a sequence and controls rhythm; sound design and score complete the viewing experience.\n\n- Related: [[music.technology]]"
+  },
+  {
+   "id": "movies.genres",
+   "topic": "movies",
+   "title": "Genres and national cinemas",
+   "tags": [
+    "culture",
+    "story",
+    "history"
+   ],
+   "links": [
+    "anthropology.cultural"
+   ],
+   "md": "Genres such as drama, comedy, science fiction and documentary group films by convention; national cinemas reflect local histories and industries.\n\n- Related: [[anthropology.cultural]]"
+  },
+  {
+   "id": "beliefs.religion-studies",
+   "topic": "beliefs",
+   "title": "Study of religion",
+   "tags": [
+    "culture",
+    "society",
+    "ritual"
+   ],
+   "links": [
+    "anthropology.cultural"
+   ],
+   "md": "The academic study of religion compares beliefs, practices and institutions across traditions using history, sociology and anthropology, without judging their truth.\n\n- Related: [[anthropology.cultural]]"
+  },
+  {
+   "id": "beliefs.world-religions",
+   "topic": "beliefs",
+   "title": "Major world religions",
+   "tags": [
+    "culture",
+    "history",
+    "ritual"
+   ],
+   "links": [
+    "chronos.ancient"
+   ],
+   "md": "Major traditions include Buddhism, Christianity, Hinduism, Islam, Judaism and Sikhism, along with many indigenous and local religions, each with its own texts and practices.\n\n- Related: [[chronos.ancient]]"
+  },
+  {
+   "id": "beliefs.philosophy",
+   "topic": "beliefs",
+   "title": "Philosophy",
+   "tags": [
+    "reason",
+    "ethics",
+    "proof"
+   ],
+   "links": [
+    "math.logic"
+   ],
+   "md": "Philosophy examines questions about knowledge, existence, ethics and reason using argument. Branches include metaphysics, epistemology and ethics.\n\n- Related: [[math.logic]]"
+  },
+  {
+   "id": "beliefs.ethics",
+   "topic": "beliefs",
+   "title": "Ethics and secular worldviews",
+   "tags": [
+    "ethics",
+    "society",
+    "reason"
+   ],
+   "links": [
+    "beliefs.philosophy"
+   ],
+   "md": "Ethical traditions and secular worldviews such as humanism ground moral life in reason and shared human concerns rather than religious authority.\n\n- Related: [[beliefs.philosophy]]"
+  },
+  {
+   "id": "beliefs.mythology",
+   "topic": "beliefs",
+   "title": "Mythology",
+   "tags": [
+    "story",
+    "culture",
+    "ritual"
+   ],
+   "links": [
+    "theater.origins"
+   ],
+   "md": "Myths are traditional stories that express a community's view of origins, nature and values. Comparative mythology studies recurring themes.\n\n- Related: [[theater.origins]]"
+  },
+  {
+   "id": "chronos.prehistory",
+   "topic": "chronos",
+   "title": "Prehistory",
+   "tags": [
+    "history",
+    "evolution",
+    "material-culture"
+   ],
+   "links": [
+    "anthropology.physical",
+    "anthropology.archaeology"
+   ],
+   "md": "Prehistory covers the time before writing, from stone tools about 3 million years ago through the spread of Homo sapiens and the start of farming.\n\n- Related: [[anthropology.physical]], [[anthropology.archaeology]]"
+  },
+  {
+   "id": "chronos.ancient",
+   "topic": "chronos",
+   "title": "Ancient world",
+   "tags": [
+    "history",
+    "society",
+    "material-culture"
+   ],
+   "links": [
+    "theater.origins",
+    "beliefs.world-religions"
+   ],
+   "md": "The ancient world saw the first cities and states, in Mesopotamia, Egypt, the Indus valley, China and later Greece and Rome, with the invention of writing.\n\n- Related: [[theater.origins]], [[beliefs.world-religions]]"
+  },
+  {
+   "id": "chronos.medieval",
+   "topic": "chronos",
+   "title": "Middle ages",
+   "tags": [
+    "history",
+    "society",
+    "religion"
+   ],
+   "links": [
+    "beliefs.world-religions"
+   ],
+   "md": "The middle ages, roughly 500 to 1500 CE in Europe, saw feudal states, the growth of universities and wide trade networks linking Europe, Africa and Asia.\n\n- Related: [[beliefs.world-religions]]"
+  },
+  {
+   "id": "chronos.early-modern",
+   "topic": "chronos",
+   "title": "Early modern period",
+   "tags": [
+    "history",
+    "science",
+    "society"
+   ],
+   "links": [
+    "physics.classical",
+    "beliefs.philosophy"
+   ],
+   "md": "From about 1500 to 1800, exploration, printing, the scientific revolution and the Enlightenment reshaped knowledge, trade and politics.\n\n- Related: [[physics.classical]], [[beliefs.philosophy]]"
+  },
+  {
+   "id": "chronos.modern",
+   "topic": "chronos",
+   "title": "Modern era",
+   "tags": [
+    "history",
+    "technology",
+    "society"
+   ],
+   "links": [
+    "eng.electrical",
+    "cs.systems",
+    "movies.history"
+   ],
+   "md": "The modern era brought industrialisation, mass education, world wars, decolonisation and the digital revolution.\n\n- Related: [[eng.electrical]], [[cs.systems]], [[movies.history]]"
+  }
+ ]
+}

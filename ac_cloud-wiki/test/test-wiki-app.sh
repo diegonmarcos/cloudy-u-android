@@ -5,12 +5,15 @@
 #
 # The shell and the rows are the fleet's, the graph is libs:graph-view and the pages are a runtime dataset; this proves, from the sources alone:
 #   W1  the navigation is build.json::ui: NO bottom nav (ui.bottom_nav is empty, nav-shape.json::no_bottom names the app), the default section is `wiki`, a
-#       vertical_side_menu with the thirteen topics, the Sacred Geometry project (#1857) and the graph in five groups (Sciences, Humanities, Arts, Projects, Explore), in order; the ids Decl.kt names are declared (both ways)
-#   W2  the dataset data/fleet/app/<package>/wiki.json holds exactly the declared topics (the graph is not a topic), each with at least four pages with unique
-#       ids prefixed by the topic, tags, Markdown, and links that resolve; Engineering has each major field; the manifest serves the dataset to this package
+#       vertical_side_menu whose groups are #1867's three parents Modern Science (hubs Sciences, Humanities, Arts, Explore), Arcanum Science
+#       (hubs A, B, C) and Projects (Chronos, the Sacred Geometry project), in order; each hub page holds its topics (the thirteen modern topics
+#       and the graph, the eleven Arcanum sections); the ids Decl.kt names are declared (both ways)
+#   W2  the dataset data/fleet/app/<package>/wiki.json holds exactly the declared topics (the graph is not a topic), each with unique page ids prefixed
+#       by the topic, tags, Markdown, and links that resolve (modern topics at least four pages; Arcanum sections the taxonomy's leaves, at least
+#       three); Engineering has each major field; every hub has its intro; the manifest serves the dataset to this package
 #   W3  the shell draws the shared bars (first-row scaffold, side-menu layout, theme-background) and NO bottom nav host; the topic page draws the subpage tabs
 #       with NavBarTopSecondRow; the graph page draws libs:graph-view's GraphView; the app links libs:graph-view and libs:fleet-data-client
-#   W4  the pages are read at runtime (FleetData.observe), no asset holds them, no sp literal, no numeric fontSize, no colour literal in the app's Kotlin
+#   W4  the pages are read at runtime (#1867 the runtime clone's wiki.json first, then FleetData.observe), no asset holds them, no sp literal, no numeric fontSize, no colour literal in the app's Kotlin
 #   W5  network only for the Chronos clone (#1830): INTERNET is declared for it and ChronosRepo is the one place that clones (libs:git-core);
 #       no URL in Kotlin, no hand-made connection, and Configs open the fleet's General | Perms | About
 # then plants a mutation per rule in a scratch copy and requires RED for each.
@@ -44,11 +47,20 @@ if ui["bottom_nav"] != []: bad.append("W1 ui.bottom_nav must be empty: the app h
 if ui["default_section"] != "wiki": bad.append("W1 the default section must be wiki")
 wiki = secs.get("wiki", {})
 if wiki.get("nav_mode") != "vertical_side_menu": bad.append("W1 the wiki section is not vertical_side_menu")
-GROUPS = [("sciences", ["math", "cs", "physics", "astronomy", "eng", "medicine"]), ("humanities", ["anthropology", "beliefs"]),
-          ("arts", ["art", "theater", "music", "movies"]), ("projects", ["chronos", "sacred"]), ("explore", ["graph"])]
-if [(g["id"], g["pages"]) for g in wiki.get("groups", [])] != GROUPS: bad.append("W1 the wiki groups are not the five declared, in order")
-page_ids = [p["id"] for p in wiki.get("pages", [])]
-if page_ids != [p for _, ps in GROUPS for p in ps]: bad.append("W1 the wiki pages are not the thirteen topics, Sacred Geometry and the graph, in group order")
+GROUPS = [("modern", ["sciences", "humanities", "arts", "explore"]), ("arcanum", ["arcanum-a", "arcanum-b", "arcanum-c"]), ("projects", ["chronos", "sacred"])]
+HUBS = {"sciences": ["math", "cs", "physics", "astronomy", "eng", "medicine"], "humanities": ["anthropology", "beliefs"],
+        "arts": ["art", "theater", "music", "movies"], "explore": ["graph"],
+        "arcanum-a": ["sacred-sciences", "harmonics", "symbolic-architecture"],
+        "arcanum-b": ["divination", "alchemy", "ceremonial-magic", "folk-magic", "talismans"],
+        "arcanum-c": ["western-esoteric", "eastern-esoteric", "mystery-schools"]}
+MODERN = [t for h in ("sciences", "humanities", "arts") for t in HUBS[h]]
+if [(g["id"], g["pages"]) for g in wiki.get("groups", [])] != GROUPS: bad.append("W1 the wiki groups are not Modern Science | Arcanum Science | Projects with their hubs, in order")
+top = [p["id"] for p in wiki.get("pages", [])]
+if top != [p for _, ps in GROUPS for p in ps]: bad.append("W1 the wiki pages are not the hubs, Chronos and Sacred Geometry, in group order")
+for p in wiki.get("pages", []):
+    if p["id"] in HUBS and [c["id"] for c in p.get("pages", [])] != HUBS[p["id"]]:
+        bad.append("W1 hub %s holds %s, not %s" % (p["id"], [c["id"] for c in p.get("pages", [])], HUBS[p["id"]]))
+page_ids = top + [c["id"] for p in wiki.get("pages", []) if p["id"] in HUBS for c in p.get("pages", [])]
 # #1857 a page carrying `project` is a folder of lib-chronos (Projects > Sacred Geometry): its pages are the repo's files, not a dataset topic
 projects = {p["id"] for p in wiki.get("pages", []) if p.get("project")}
 if projects != {"sacred"}: bad.append("W1 the project pages are %s, not sacred" % sorted(projects))
@@ -60,18 +72,21 @@ if not pg or pg.group(1) not in page_ids: bad.append("W1 Decl.kt PAGE_GRAPH is n
 
 # W2
 topics = {t["id"]: t for t in data.get("topics", [])}
-want = [p for p in page_ids if p != "graph" and p not in projects]
+want = [p for p in page_ids if p != "graph" and p not in projects and p not in HUBS]
 for x in sorted(set(want) - set(topics)): bad.append("W2 topic %r has no pages in wiki.json" % x)
 for x in sorted(set(topics) - set(want)): bad.append("W2 wiki.json holds topic %r, which build.json::ui does not declare" % x)
 ids = [p["id"] for t in topics.values() for p in t.get("pages", [])]
 if len(ids) != len(set(ids)): bad.append("W2 a page id is used twice")
 for tid, t in topics.items():
-    if len(t.get("pages", [])) < 4: bad.append("W2 topic %s has fewer than four pages" % tid)
+    if len(t.get("pages", [])) < (4 if tid in MODERN or tid == "chronos" else 3): bad.append("W2 topic %s has fewer than %s pages" % (tid, "four" if tid in MODERN else "three"))
     for p in t.get("pages", []):
         if not p["id"].startswith(tid + "."): bad.append("W2 page %s is not prefixed by its topic %s" % (p["id"], tid))
         if not p.get("tags"): bad.append("W2 page %s has no tags" % p["id"])
         if not 80 <= len(p.get("md", "")) <= 700: bad.append("W2 page %s is not a short explanation" % p["id"])
-for tid, t in topics.items():
+hubs = {h["id"]: h for h in data.get("hubs", [])}
+for x in sorted(set(HUBS) | {g for g, _ in GROUPS}):
+    if not hubs.get(x, {}).get("intro"): bad.append("W2 hub %s has no intro in wiki.json" % x)
+for tid, t in list(topics.items()) + [("hub " + h, x) for h, x in hubs.items()]:
     for text in [t.get("intro", "")] + [p.get("md", "") for p in t.get("pages", [])]:
         for l in re.findall(r"\[\[([^\]\s]+)\]\]", text):
             if l not in ids: bad.append("W2 a page of %s links to unknown page %s" % (tid, l))
@@ -102,6 +117,8 @@ for m in ("libs:ui-kit", "libs:graph-view", "libs:fleet-data-client"):
 
 # W4
 if "FleetData.observe(" not in store or "Wiki.DATASET" not in store: bad.append("W4 WikiStore does not read the wiki dataset through FleetData.observe")
+# #1867 the content repo is consumed at run time: the clone's wiki.json first, the Cloud Store dataset until the first clone
+if "ChronosRepo.datasetText()" not in store: bad.append("W4 WikiStore does not read the runtime clone's wiki.json (ChronosRepo.datasetText) first")
 for dpth, dn, fn in os.walk(os.path.join(app, "app/src/main")):
     for f in fn:
         if not f.endswith(".kt"): continue
@@ -143,13 +160,16 @@ KT=app/src/main/java/com/diegonmarcos/cloudwiki
 JS="../fleet/app/$PKG/wiki.json"
 mutant "a bottom item appears"       "python3 -c \"import json;p='build.json';d=json.load(open(p));d['ui']['bottom_nav'].append('wiki');json.dump(d,open(p,'w'))\"" "W1 ui.bottom_nav must be empty"
 mutant "side menu becomes a row"     "sed -i 's/vertical_side_menu/horizontal_one_row/' build.json"               "W1 the wiki section is not vertical_side_menu"
-mutant "a group is renamed"          "sed -i 's/\"id\": \"arts\"/\"id\": \"crafts\"/' build.json"                  "W1 the wiki groups are not the five declared"
-mutant "Projects is dropped"         "python3 -c \"import json;p='build.json';d=json.load(open(p));w=[s for s in d['ui']['sections'] if s['id']=='wiki'][0];w['groups']=[g for g in w['groups'] if g['id']!='projects'];json.dump(d,open(p,'w'))\"" "W1 the wiki groups are not the five declared"
-mutant "Projects moves before Arts"  "python3 -c \"import json;p='build.json';d=json.load(open(p));g=[s for s in d['ui']['sections'] if s['id']=='wiki'][0]['groups'];g[2],g[3]=g[3],g[2];json.dump(d,open(p,'w'))\"" "W1 the wiki groups are not the five declared"
+mutant "a group is renamed"          "sed -i 's/\"id\": \"arcanum\"/\"id\": \"occult\"/' build.json"                  "W1 the wiki groups are not Modern Science"
+mutant "Projects is dropped"         "python3 -c \"import json;p='build.json';d=json.load(open(p));w=[s for s in d['ui']['sections'] if s['id']=='wiki'][0];w['groups']=[g for g in w['groups'] if g['id']!='projects'];json.dump(d,open(p,'w'))\"" "W1 the wiki groups are not Modern Science"
+mutant "Projects moves before Arcanum" "python3 -c \"import json;p='build.json';d=json.load(open(p));g=[s for s in d['ui']['sections'] if s['id']=='wiki'][0]['groups'];g[1],g[2]=g[2],g[1];json.dump(d,open(p,'w'))\"" "W1 the wiki groups are not Modern Science"
+mutant "a hub loses a topic"         "python3 -c \"import json;p='build.json';d=json.load(open(p));w=[s for s in d['ui']['sections'] if s['id']=='wiki'][0];h=[x for x in w['pages'] if x['id']=='arcanum-b'][0];h['pages'].pop();json.dump(d,open(p,'w'))\"" "W1 hub arcanum-b holds"
+mutant "a hub loses its intro"       "python3 -c \"import json;p='$JS';d=json.load(open(p));[h.update(intro='') for h in d['hubs'] if h['id']=='arcanum-c'];json.dump(d,open(p,'w'))\"" "W2 hub arcanum-c has no intro"
 mutant "the project page is dropped" "sed -i 's/ProjectPage(project/Foo(project/' $KT/ui/WikiPages.kt"          "W3 WikiPage does not dispatch a project page"
 mutant "a topic loses its pages"     "python3 -c \"import json;p='$JS';d=json.load(open(p));d['topics']=[t for t in d['topics'] if t['id']!='music'];json.dump(d,open(p,'w'))\"" "W2 topic 'music' has no pages"
 mutant "data for an unknown topic"   "python3 -c \"import json;p='$JS';d=json.load(open(p));t=dict(d['topics'][0]);t['id']='toys';d['topics'].append(t);json.dump(d,open(p,'w'))\"" "W2 wiki.json holds topic 'toys'"
-mutant "a topic keeps three pages"   "python3 -c \"import json;p='$JS';d=json.load(open(p));d['topics'][1]['pages']=d['topics'][1]['pages'][:3];json.dump(d,open(p,'w'))\"" "has fewer than four pages"
+mutant "a topic keeps three pages"   "python3 -c \"import json;p='$JS';d=json.load(open(p));[t.update(pages=t['pages'][:3]) for t in d['topics'] if t['id']=='math'];json.dump(d,open(p,'w'))\"" "W2 topic math has fewer than four pages"
+mutant "an Arcanum section keeps two" "python3 -c \"import json;p='$JS';d=json.load(open(p));[t.update(pages=t['pages'][:2]) for t in d['topics'] if t['id']=='folk-magic'];json.dump(d,open(p,'w'))\"" "W2 topic folk-magic has fewer than three pages"
 mutant "a page loses its tags"       "python3 -c \"import json;p='$JS';d=json.load(open(p));d['topics'][0]['pages'][0]['tags']=[];json.dump(d,open(p,'w'))\"" "has no tags"
 mutant "a link dangles"              "sed -i '0,/\\[\\[math.algebra\\]\\]/s//[[math.nothing]]/' $JS"             "links to unknown page math.nothing"
 mutant "engineering loses a field"   "python3 -c \"import json;p='$JS';d=json.load(open(p));e=[t for t in d['topics'] if t['id']=='eng'][0];e['pages']=[x for x in e['pages'] if x['id']!='eng.civil'];json.dump(d,open(p,'w'))\"" "Engineering lacks the civil subpage"
@@ -160,6 +180,7 @@ mutant "a bottom nav host returns"   "echo 'val b = NavBarBottomHost(1)' >> $KT/
 mutant "tabs drawn by hand"          "sed -i 's/NavBarTopSecondRow(/Foo(/' $KT/ui/WikiPages.kt"                    "W3 WikiPage does not draw the subpage tabs"
 mutant "graph drawn by hand"         "sed -i 's/GraphView(/Foo(/' $KT/ui/WikiPages.kt"                             "W3 the graph page does not draw libs:graph-view"
 mutant "the graph lib is unlinked"   "sed -i 's/libs:graph-view/libs:other/g' build.json"                          "W3 build.json modules lack libs:graph-view"
+mutant "the clone is not read"       "sed -i 's/ChronosRepo.datasetText()/null/' $KT/WikiStore.kt"                 "W4 WikiStore does not read the runtime clone"
 mutant "pages no longer observed"    "sed -i 's/FleetData.observe(/Foo(/' $KT/WikiStore.kt"                        "W4 WikiStore does not read the wiki dataset"
 mutant "an sp literal creeps in"     "echo 'val x = 12.sp' >> $KT/ui/WikiPages.kt"                                 "W4 WikiPages.kt spells an sp literal"
 mutant "a font size number"          "echo 'val y = Foo(fontSize = 13)' >> $KT/ui/WikiPages.kt"                    "W4 WikiPages.kt sets a numeric fontSize"
