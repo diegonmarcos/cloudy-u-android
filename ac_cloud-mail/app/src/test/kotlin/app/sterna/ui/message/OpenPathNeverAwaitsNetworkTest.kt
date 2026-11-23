@@ -55,11 +55,13 @@ class OpenPathNeverAwaitsNetworkTest {
         assertTrue("the snapshot is the first read", snapshot >= 0 && snapshot < firstCredentials && snapshot < open)
         assertTrue("its body is used before any fetch", "val opened = localBody\n                    ?: repo.openMessage(" in launch)
         assertTrue("the local account is an id, not credentials", "val localAccount = accountId ?: store.currentId()" in launch)
-        val beforeTry = launch.substringBefore("try {")
+        val beforeTry = launch.substringBefore("try {").lines().filterNot { it.trim().startsWith("//") }.joinToString("\n")
         for (call in listOf("credentials()", "openMessage(", "coreReaderFetched(", "mailboxMembership(", "prefetchNeighbours(")) {
             assertFalse("nothing before the paint names $call", call in beforeTry)
         }
+        // Code lines only: a comment may NAME credentials() to explain why it is not called.
         val warm = vm.substringAfter("fun warmFromCache(emailId: String, accountId: String?) {").substringBefore("private fun loadInlineImagesLater(")
+            .lines().filterNot { it.trim().startsWith("//") || it.trim().startsWith("*") }.joinToString("\n")
         assertTrue("the pager warms pages from the cache, by account id", "repo.cachedMessage(localAccount, emailId)" in warm)
         assertFalse("and from nothing else", "repo.openMessage(" in warm || "coreReaderFetched(" in warm || "credentials()" in warm)
     }
