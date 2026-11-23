@@ -147,7 +147,9 @@ class StudioTest {
     }
 
     @Test fun cymaticsChangesWithFrequency() {
-        val semis = (21..108).map { Cymatics.pattern(Pitch.freq(it), 32) }
+        // the grid must sample the plate's highest mode above its Nyquist limit (a coarser grid aliases mode n onto grid-1-n); the view draws 96
+        assertTrue(Cymatics.MODES.maxOf { it.first } * 2 + 2 < 64)
+        val semis = (21..108).map { Cymatics.pattern(Pitch.freq(it), 64) }
         for (i in semis.indices) for (j in i + 1 until semis.size) assertFalse("notes ${i + 21} and ${j + 21}", semis[i].contentEquals(semis[j]))
         // within a semitone too: 440 and 450 Hz blend the same two modes differently
         assertFalse(Cymatics.pattern(440.0, 32).contentEquals(Cymatics.pattern(450.0, 32)))
