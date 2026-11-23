@@ -32,6 +32,7 @@ ROOT="$(cd "$HERE/../.." && pwd)"
 
 STORE="$ROOT/ac_cloud-store"
 LIB="$ROOT/ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore"
+KITROW="$ROOT/ab_cloud-libs-shared/libs/ui-kit/src/commonMain/kotlin/com/diegonmarcos/superapp/uikit/KitStoreRow.kt"
 SUPER="$ROOT/aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp"
 LIBAPPS="$ROOT/ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/apps"
 LIBGRADLE="$ROOT/ab_cloud-libs-shared/libs/appstore/build.gradle"
@@ -139,11 +140,18 @@ PY
   # 6. #869 density
   local DN="$L/StoreDensity.kt"
   [ -f "$DN" ] || { bad "StoreDensity.kt (the density declaration) is missing"; return $((fails+1)); }
-  python3 - "$DN" <<'PY' && ok "the density declaration exists and is dense (SCALE and TEXT_SCALE < 1)" || bad "StoreDensity does not declare SCALE/TEXT_SCALE below 1.0"
+  # SCALE / TEXT_SCALE are either literals here or a delegation to the one shared KitStoreRow constant (resolved there).
+  python3 - "$DN" "$KITROW" <<'PY' && ok "the density declaration exists and is dense (SCALE and TEXT_SCALE < 1)" || bad "StoreDensity does not declare SCALE/TEXT_SCALE below 1.0"
 import re, sys
 s = open(sys.argv[1], encoding='utf-8').read()
-v = [float(re.search(r'const val %s = ([0-9.]+)f' % n, s).group(1)) if re.search(r'const val %s = ([0-9.]+)f' % n, s) else 9 for n in ('SCALE', 'TEXT_SCALE')]
-sys.exit(0 if 'object StoreDensity' in s and all(0 < x < 1 for x in v) else 1)
+kit = open(sys.argv[2], encoding='utf-8').read()
+def val(n):
+    m = re.search(r'const val %s = ([0-9.]+)f' % n, s)
+    if m: return float(m.group(1))
+    m = re.search(r'const val %s = (?:[A-Za-z.]*\.)?KitStoreRow\.(\w+)\b' % n, s)
+    k = re.search(r'const val %s = ([0-9.]+)f' % m.group(1), kit) if m else None
+    return float(k.group(1)) if k else 9
+sys.exit(0 if 'object StoreDensity' in s and all(0 < val(n) < 1 for n in ('SCALE', 'TEXT_SCALE')) else 1)
 PY
   local lit=0 f
   for f in "$L"/*.kt "$LA"/*.kt "$MA" "$S"/app/src/main/java/com/diegonmarcos/cloudstore/ConfigsPage.kt "$S"/app/src/main/java/com/diegonmarcos/cloudstore/TorrentPage.kt "$S"/app/src/main/java/com/diegonmarcos/cloudstore/TorrentConfigPage.kt "$S"/app/src/main/java/com/diegonmarcos/cloudstore/AccessPage.kt; do
@@ -191,7 +199,7 @@ PY
   # 9. #896 density: the Store is data-dense, so NO Store tab, chip, page or action button may force a
   # minimum height (a 40dp floor made them huge, 2026-10-07). A control is as tall as its text and padding.
   local mh
-  mh="$(grep -nE 'minHeight|minimumHeight|setMinimumHeight|defaultMinSize|heightIn\(|MIN_TAP|minTap' "$L"/*.kt "$S"/app/src/main/java/com/diegonmarcos/cloudstore/*.kt 2>/dev/null | grep -vE '^[^:]+:[0-9]+:\s*(//|\*|/\*)')"
+  mh="$(grep -nE 'minHeight|minimumHeight|setMinimumHeight|defaultMinSize|heightIn\(|MIN_TAP|minTap' "$L"/*.kt "$S"/app/src/main/java/com/diegonmarcos/cloudstore/*.kt 2>/dev/null | grep -vE '^[^:]+:[0-9]+:\s*(//|\*|/\*)' | awk '!(/heightIn\(max *=/ && !/min *=/)')"  # a max= bound is a ceiling, not a forced minimum
   [ -z "$mh" ] && ok "no Store tab, chip, page or action button sets a minimum height" || bad "a Store control forces a minimum height: $(printf '%s' "$mh" | head -3 | tr '\n' ' ')"
   # ... and the strip's own vertical padding never grows past the pre-#896 step (S8).
   python3 - "$L/StoreBar.kt" <<'PY' && ok "the tab strip's vertical padding is at most the pre-change step (S8)" || bad "the tab strip's vertical padding grew past S8 (or was not found)"
@@ -292,7 +300,11 @@ mutate "a font size literal back in the Phone shelf" lib/StorePhoneFragment.kt '
                     fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))' 'color = Ink.WHITE.ink(), fontSize = 14.sp,
                     fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))' || M=$((M+1))
 mutate "a note size literal back in the mesh" lib/AppsMesh.kt 'size = StoreDensity.T_BODY, color = if (gaps.isEmpty()) GREEN else RED' 'size = 13.sp.value, color = if (gaps.isEmpty()) GREEN else RED' || M=$((M+1))
-mutate "density turned off" lib/StoreDensity.kt 'const val SCALE = 0.7f' 'const val SCALE = 1.0f' || M=$((M+1))
+mutate "density turned off" lib/StoreDensity.kt 'const val SCALE = com.diegonmarcos.superapp.uikit.KitStoreRow.SCALE' 'const val SCALE = 1.0f' || M=$((M+1))
+mutate "text density turned off" lib/StoreDensity.kt 'const val TEXT_SCALE = com.diegonmarcos.superapp.uikit.KitStoreRow.TEXT_SCALE' 'const val TEXT_SCALE = 1.0f' || M=$((M+1))
+mutate "a sheet gets a minimum height next to its max" lib/StoreFeedTable.kt 'heightIn(max = sdp(StoreDensity.SHEET))' 'heightIn(min = 120.dp, max = sdp(StoreDensity.SHEET))' || M=$((M+1))
+mutate "a sheet gets a minimum height only" lib/StoreFeedTable.kt 'heightIn(max = sdp(StoreDensity.SHEET))' 'heightIn(min = sdp(StoreDensity.SHEET))' || M=$((M+1))
+mutate "a size literal back in the grid" lib/StoreGrid.kt 'Arrangement.spacedBy(sdp(StoreDensity.S2))' 'Arrangement.spacedBy(2.dp)' || M=$((M+1))
 mutate "declaration deleted" lib/StoreDensity.kt 'object StoreDensity' 'object Other' || M=$((M+1))
 mutate "Cloud Store hardcodes a dp" store/app/src/main/java/com/diegonmarcos/cloudstore/ConfigsPage.kt 'padding(top = StoreDensity.dpValue(StoreDensity.S8).dp)' 'padding(top = 8.dp)' || M=$((M+1))
 mutate "a helper scales on its own" lib/StoreBar.kt 'internal fun sdp(step: Int): Dp = StoreDensity.dpValue(step).dp' 'internal fun sdp(step: Int): Dp = step.dp' || M=$((M+1))

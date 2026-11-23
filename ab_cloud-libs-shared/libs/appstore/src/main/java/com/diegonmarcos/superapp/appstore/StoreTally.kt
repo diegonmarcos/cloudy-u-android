@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.pm.PackageInfoCompat
 import com.diegonmarcos.superapp.updater.cache.ApkCache
@@ -149,7 +148,7 @@ object StoreTally {
         }
         val t = tally
         Column(modifier.fillMaxWidth().padding(vertical = sdp(StoreDensity.S4))
-            .clip(RoundedCornerShape(4.dp)).background(Ink.CARD.ink())
+            .clip(RoundedCornerShape(sdp(StoreDensity.S4))).background(Ink.CARD.ink())
             .padding(horizontal = sdp(StoreDensity.S8), vertical = sdp(StoreDensity.S4)).testTag(TAG)) {
             Line(t?.installedLine() ?: "Installed …", "$TAG:installed")
             Line(t?.updatesLine() ?: "Updates …", "$TAG:updates")

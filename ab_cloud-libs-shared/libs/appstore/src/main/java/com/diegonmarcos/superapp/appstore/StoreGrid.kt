@@ -114,7 +114,7 @@ object StoreGrid {
     fun TileView(t: Tile, modifier: Modifier, tag: String, imageDp: Int = ICON_DP, onClick: () -> Unit, onLongClick: () -> Unit = onClick, action: (@Composable () -> Unit)? = null) {
         val p = LocalKitPalette.current
         Column(modifier.testTag(tag).clip(RoundedCornerShape(KitDensity.corner)).combinedClickable(onClick = onClick, onLongClick = onLongClick)
-            .padding(KitDensity.small / 2), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            .padding(KitDensity.small / 2), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(sdp(StoreDensity.S2))) {
             TileImage(t, imageDp.dp)
             Text(t.label, color = p.textPrimary, fontSize = KitDensity.caption, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
             if (t.sub.isNotEmpty() && t.sub != t.label) Text(t.sub, color = p.textSecondary, fontSize = KitDensity.caption * 0.85f, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
