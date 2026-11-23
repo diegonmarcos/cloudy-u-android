@@ -7,6 +7,8 @@ import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
@@ -78,6 +80,12 @@ class TakeoutImportTest {
     private fun await(what: String, ms: Long, cond: () -> Boolean) {
         try { compose.waitUntil(ms, cond) } catch (e: androidx.compose.ui.test.ComposeTimeoutException) {
             val st = ImportController.state
+            runCatching {
+                val tree = compose.onRoot(useUnmergedTree = true).printToString(maxDepth = 12)
+                tree.chunked(3000).forEachIndexed { i, c -> android.util.Log.e("TakeoutImportTest", "tree[$i] $c") }
+                val segs = MapsDb.get(InstrumentationRegistry.getInstrumentation().targetContext).segmentsBetween(0L, Long.MAX_VALUE)
+                android.util.Log.e("TakeoutImportTest", "segments: " + segs.joinToString { "${it.kind}:${it.place}:${java.time.Instant.ofEpochMilli(it.startMs)}:${it.source}" })
+            }
             throw AssertionError("timed out at $what; import state=" + (if (st is ImportState.Failed) "failed: " + st.message else st::class.simpleName), e)
         }
     }
