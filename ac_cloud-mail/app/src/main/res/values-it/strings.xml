@@ -237,6 +237,14 @@
     <string name="export_hint_eml">Il sorgente originale esattamente come ricevuto.</string>
     <string name="export_fmt_mbox">Casella (.mbox)</string>
     <string name="export_hint_mbox">Questo messaggio in formato mbox.</string>
+    <string name="export_fmt_md">Markdown (.md)</string>
+    <string name="export_hint_md">Testo formattato: intestazioni, il corpo in Markdown (titoli, elenchi, link, tabelle), allegati per nome.</string>
+    <string name="export_md_attachments">Allegati</string>
+    <string name="menu_section_reply">Rispondi</string>
+    <string name="menu_section_triage">Smista</string>
+    <string name="menu_section_text_tools">Strumenti di testo</string>
+    <string name="menu_section_sender">Mittente</string>
+    <string name="menu_section_more">Altro</string>
     <string name="export_remote_images_note">Le immagini remote non sono incluse.</string>
     <string name="export_save">Salva…</string>
     <string name="export_share">Condividi…</string>

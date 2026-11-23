@@ -237,6 +237,14 @@
     <string name="export_hint_eml">La source originale, telle qu\'elle a été reçue.</string>
     <string name="export_fmt_mbox">Boîte aux lettres (.mbox)</string>
     <string name="export_hint_mbox">Ce message au format mbox.</string>
+    <string name="export_fmt_md">Markdown (.md)</string>
+    <string name="export_hint_md">Texte mis en forme : en-têtes, le corps en Markdown (titres, listes, liens, tableaux), pièces jointes par nom.</string>
+    <string name="export_md_attachments">Pièces jointes</string>
+    <string name="menu_section_reply">Répondre</string>
+    <string name="menu_section_triage">Trier</string>
+    <string name="menu_section_text_tools">Outils de texte</string>
+    <string name="menu_section_sender">Expéditeur</string>
+    <string name="menu_section_more">Plus</string>
     <string name="export_remote_images_note">Les images distantes ne sont pas incluses.</string>
     <string name="export_save">Enregistrer…</string>
     <string name="export_share">Partager…</string>

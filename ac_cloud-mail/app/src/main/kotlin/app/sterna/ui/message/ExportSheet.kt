@@ -63,6 +63,7 @@ private fun formatTitle(f: ExportFormat) = stringResource(
         ExportFormat.HTML -> R.string.export_fmt_html
         ExportFormat.EML -> R.string.export_fmt_eml
         ExportFormat.MBOX -> R.string.export_fmt_mbox
+        ExportFormat.MARKDOWN -> R.string.export_fmt_md
     },
 )
 
@@ -74,6 +75,7 @@ private fun formatHint(f: ExportFormat) = stringResource(
         ExportFormat.HTML -> R.string.export_hint_html
         ExportFormat.EML -> R.string.export_hint_eml
         ExportFormat.MBOX -> R.string.export_hint_mbox
+        ExportFormat.MARKDOWN -> R.string.export_hint_md
     },
 )
 

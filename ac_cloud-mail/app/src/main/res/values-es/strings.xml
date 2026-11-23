@@ -237,6 +237,14 @@
     <string name="export_hint_eml">El código original tal como se recibió.</string>
     <string name="export_fmt_mbox">Buzón (.mbox)</string>
     <string name="export_hint_mbox">Este mensaje en formato mbox.</string>
+    <string name="export_fmt_md">Markdown (.md)</string>
+    <string name="export_hint_md">Texto con formato: encabezados, el cuerpo en Markdown (títulos, listas, enlaces, tablas), adjuntos por nombre.</string>
+    <string name="export_md_attachments">Adjuntos</string>
+    <string name="menu_section_reply">Responder</string>
+    <string name="menu_section_triage">Clasificar</string>
+    <string name="menu_section_text_tools">Herramientas de texto</string>
+    <string name="menu_section_sender">Remitente</string>
+    <string name="menu_section_more">Más</string>
     <string name="export_remote_images_note">Las imágenes remotas no se incluyen.</string>
     <string name="export_save">Guardar…</string>
     <string name="export_share">Compartir…</string>

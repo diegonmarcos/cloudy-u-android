@@ -13,6 +13,7 @@ import app.sterna.export.ExportCancelled
 import app.sterna.export.ExportFormat
 import app.sterna.export.ExportLabels
 import app.sterna.export.ExportProgress
+import app.sterna.export.buildMarkdown
 import app.sterna.export.buildSelfContainedHtml
 import app.sterna.export.exportFileName
 import app.sterna.export.mboxFromLine
@@ -86,6 +87,7 @@ internal class MessageExporter(private val app: Application, private val repo: M
                     to = app.getString(R.string.participants_to),
                     cc = app.getString(R.string.participants_cc),
                     date = app.getString(R.string.compose_forward_date),
+                    attachments = app.getString(R.string.export_md_attachments),
                 )
                 val raw = if (format == ExportFormat.EML || format == ExportFormat.MBOX) repo.rawSource(creds, msg.id) else null
                 val running = currentCoroutineContext()[Job]
@@ -107,6 +109,7 @@ internal class MessageExporter(private val app: Application, private val repo: M
                             )
                             ExportFormat.EML -> writeEml(o, raw!!)
                             ExportFormat.MBOX -> writeMbox(o, listOf(mboxFromLine(msg.header.receivedAt) to raw!!), cancelled)
+                            ExportFormat.MARKDOWN -> o.write(buildMarkdown(exportMsg, labels).toByteArray(Charsets.UTF_8))
                         }
                     }
                 }

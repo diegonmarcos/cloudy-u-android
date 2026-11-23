@@ -29,6 +29,8 @@ class ExportMessage(
     /** The body as an HTML FRAGMENT: the message's sanitised html part when it has one (see readerBody). */
     val bodyHtml: String,
     val parts: List<ExportPart>,
+    /** #1870 the message's own text when it has NO html part: the Markdown export keeps it as it is. */
+    val bodyText: String? = null,
 )
 
 /** Thrown by a builder when the user cancels; the caller deletes the half-written document. */

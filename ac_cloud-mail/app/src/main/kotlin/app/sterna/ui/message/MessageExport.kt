@@ -16,7 +16,7 @@ data class ExportUiState(val format: ExportFormat, val done: Long = 0, val total
 
 /** The formats the sheet lists, in its order; MHTML first because it is the default. */
 internal val EXPORT_FORMATS: List<ExportFormat> = listOf(
-    ExportFormat.MHTML, ExportFormat.ATTACHMENTS_ZIP, ExportFormat.HTML, ExportFormat.EML, ExportFormat.MBOX,
+    ExportFormat.MHTML, ExportFormat.ATTACHMENTS_ZIP, ExportFormat.HTML, ExportFormat.EML, ExportFormat.MBOX, ExportFormat.MARKDOWN,
 )
 
 /** Attachments-only has nothing to export for a message without files. */
@@ -69,5 +69,7 @@ internal fun exportMessageOf(
         messageId = email.messageId.firstOrNull(),
         bodyHtml = readerBody(email, noContent).fragment,
         parts = inline + files,
+        // A text-only message keeps its own text in the Markdown export (#1870), not the escaped HTML the reader paints.
+        bodyText = email.textContent()?.takeIf { email.htmlContent().isNullOrBlank() && it.isNotBlank() },
     )
 }

@@ -237,6 +237,14 @@
     <string name="export_hint_eml">A origem original tal como foi recebida.</string>
     <string name="export_fmt_mbox">Caixa de correio (.mbox)</string>
     <string name="export_hint_mbox">Esta mensagem no formato mbox.</string>
+    <string name="export_fmt_md">Markdown (.md)</string>
+    <string name="export_hint_md">Texto formatado: cabeçalhos, o corpo em Markdown (títulos, listas, ligações, tabelas), anexos por nome.</string>
+    <string name="export_md_attachments">Anexos</string>
+    <string name="menu_section_reply">Responder</string>
+    <string name="menu_section_triage">Triagem</string>
+    <string name="menu_section_text_tools">Ferramentas de texto</string>
+    <string name="menu_section_sender">Remetente</string>
+    <string name="menu_section_more">Mais</string>
     <string name="export_remote_images_note">As imagens remotas não estão incluídas.</string>
     <string name="export_save">Guardar…</string>
     <string name="export_share">Partilhar…</string>

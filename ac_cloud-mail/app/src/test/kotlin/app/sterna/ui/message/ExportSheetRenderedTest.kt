@@ -82,11 +82,11 @@ class ExportSheetRenderedTest {
     @Test fun `the sheet lists every format with MHTML selected by default`() {
         content()
         EXPORT_FORMATS.forEach { compose.onNodeWithTag(exportFormatTag(it)).assertIsDisplayed() }
-        assertEquals(5, EXPORT_FORMATS.size)
+        assertEquals(6, EXPORT_FORMATS.size)
         compose.onNodeWithTag(exportFormatTag(ExportFormat.MHTML)).assertIsSelected()
         listOf(
             "Web archive (.mhtml)", "Attachments only (.zip)", "Page as HTML (.html)",
-            "Email message (.eml)", "Mailbox (.mbox)",
+            "Email message (.eml)", "Mailbox (.mbox)", "Markdown (.md)",
         ).forEach { compose.onNodeWithText(it).assertIsDisplayed() }
         compose.onNodeWithText("Remote images are not included.").assertIsDisplayed()
         compose.onNodeWithTag("export_save").assertIsDisplayed()

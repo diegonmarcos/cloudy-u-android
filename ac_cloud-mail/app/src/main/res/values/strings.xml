@@ -385,6 +385,14 @@
     <string name="export_hint_eml">The original source exactly as received.</string>
     <string name="export_fmt_mbox">Mailbox (.mbox)</string>
     <string name="export_hint_mbox">This message in the mbox format.</string>
+    <string name="export_fmt_md">Markdown (.md)</string>
+    <string name="export_hint_md">Formatted text: headers, the body as Markdown (headings, lists, links, tables), attachments by name.</string>
+    <string name="export_md_attachments">Attachments</string>
+    <string name="menu_section_reply">Reply</string>
+    <string name="menu_section_triage">Triage</string>
+    <string name="menu_section_text_tools">Text tools</string>
+    <string name="menu_section_sender">Sender</string>
+    <string name="menu_section_more">More</string>
     <string name="export_remote_images_note">Remote images are not included.</string>
     <string name="export_save">Save…</string>
     <string name="export_share">Share…</string>

@@ -9,6 +9,7 @@ enum class ExportFormat(val ext: String, val mime: String) {
     HTML("html", "text/html"),
     EML("eml", "message/rfc822"),
     MBOX("mbox", "application/mbox"),
+    MARKDOWN("md", "text/markdown"),
 }
 
 /**

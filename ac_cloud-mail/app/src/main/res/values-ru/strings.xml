@@ -237,6 +237,14 @@
     <string name="export_hint_eml">Исходный текст письма в том виде, в каком он получен.</string>
     <string name="export_fmt_mbox">Почтовый ящик (.mbox)</string>
     <string name="export_hint_mbox">Это письмо в формате mbox.</string>
+    <string name="export_fmt_md">Markdown (.md)</string>
+    <string name="export_hint_md">Форматированный текст: заголовки, тело в Markdown (заголовки, списки, ссылки, таблицы), вложения по именам.</string>
+    <string name="export_md_attachments">Вложения</string>
+    <string name="menu_section_reply">Ответ</string>
+    <string name="menu_section_triage">Разбор</string>
+    <string name="menu_section_text_tools">Текстовые инструменты</string>
+    <string name="menu_section_sender">Отправитель</string>
+    <string name="menu_section_more">Ещё</string>
     <string name="export_remote_images_note">Внешние изображения не включены.</string>
     <string name="export_save">Сохранить…</string>
     <string name="export_share">Поделиться…</string>

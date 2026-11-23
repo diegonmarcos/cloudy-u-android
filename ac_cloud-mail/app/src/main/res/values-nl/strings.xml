@@ -237,6 +237,14 @@
     <string name="export_hint_eml">De oorspronkelijke bron precies zoals ontvangen.</string>
     <string name="export_fmt_mbox">Postvak (.mbox)</string>
     <string name="export_hint_mbox">Dit bericht in mbox-indeling.</string>
+    <string name="export_fmt_md">Markdown (.md)</string>
+    <string name="export_hint_md">Opgemaakte tekst: kopregels, de tekst als Markdown (koppen, lijsten, links, tabellen), bijlagen op naam.</string>
+    <string name="export_md_attachments">Bijlagen</string>
+    <string name="menu_section_reply">Beantwoorden</string>
+    <string name="menu_section_triage">Sorteren</string>
+    <string name="menu_section_text_tools">Teksthulpmiddelen</string>
+    <string name="menu_section_sender">Afzender</string>
+    <string name="menu_section_more">Meer</string>
     <string name="export_remote_images_note">Externe afbeeldingen zijn niet inbegrepen.</string>
     <string name="export_save">Opslaan…</string>
     <string name="export_share">Delen…</string>

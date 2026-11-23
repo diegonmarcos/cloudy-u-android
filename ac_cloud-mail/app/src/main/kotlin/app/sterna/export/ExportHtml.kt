@@ -3,7 +3,14 @@ package app.sterna.export
 import app.sterna.core.data.text.htmlEscape
 
 /** The labels of the header block, localised by the caller. */
-data class ExportLabels(val from: String, val to: String, val cc: String, val date: String)
+data class ExportLabels(
+    val from: String,
+    val to: String,
+    val cc: String,
+    val date: String,
+    /** #1870 the heading of the Markdown export's attachment list. */
+    val attachments: String = "Attachments",
+)
 
 /** The page both the MHTML root part and the self-contained .html share: headers block, rule, body. */
 fun exportDocument(msg: ExportMessage, labels: ExportLabels, bodyFragment: String = msg.bodyHtml): String {
