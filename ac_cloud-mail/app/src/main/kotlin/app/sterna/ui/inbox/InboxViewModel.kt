@@ -846,6 +846,11 @@ class InboxViewModel(
     /** The stretch of refreshing currently on the screen's mind — see [RefreshRun]. */
     private val refreshRun = MutableStateFlow<RefreshRun?>(null)
 
+    /** #1869 whether the stretch on screen answers the reader's own pull or Retry ([RefreshRun.instant]): the tern
+     *  is drawn over cached rows for that alone, a background reconcile draws the sync line ([ternDrawn]). */
+    val refreshByGesture: StateFlow<Boolean> = refreshRun.map { it?.instant == true }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     /** Set by [refreshRequested] and consumed by the very next [refresh], so the reader's own pull
      *  or Retry is drawn with no grace. A one-shot flag, not a parameter on [refresh]: every other
      *  caller would have to spell `instant = false`, and one pasted `true` brings the blink back. */

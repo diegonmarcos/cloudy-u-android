@@ -89,6 +89,8 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import app.sterna.core.jmap.model.EmailBodyPart
@@ -1533,11 +1535,15 @@ fun InboxScreen(
             if (outboxHasFailures) {
                 OutboxFailureBanner(onClick = onOpenOutbox)
             }
+            // #1869 cached rows on screen: the tern answers the pull only, a background reconcile draws a hairline.
+            val refreshGesture by viewModel.refreshByGesture.collectAsStateWithLifecycle()
+            val ternShowing = ternDrawn(ui.showRefreshIndicator, refreshGesture, listRows.itemCount)
+            val syncLineShowing = syncLineDrawn(ui.showRefreshIndicator, refreshGesture, listRows.itemCount)
             PullToRefreshBox(
                 // The DISPLAY, not the truth: fed ui.refreshing the tern lit the instant refresh()
                 // was called, on every folder tap and cold start (#178). ui.refreshing keeps its own
                 // two readers — the centre-empty arm below (#63) and the seed of the state flow.
-                isRefreshing = ui.showRefreshIndicator,
+                isRefreshing = ternShowing,
                 onRefresh = {
                     viewModel.refreshRequested()
                     // Also re-attempt a failed fetch-older append, so the pull gesture
@@ -1549,9 +1555,17 @@ fun InboxScreen(
                 indicator = {
                     TernRefreshIndicator(
                         state = refreshState,
-                        isRefreshing = ui.showRefreshIndicator,
+                        isRefreshing = ternShowing,
                         modifier = Modifier.align(Alignment.TopCenter),
                     )
+                    // Overlaid, never laid out: the rows do not move when it comes and goes.
+                    if (syncLineShowing) {
+                        LinearProgressIndicator(
+                            modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth().height(MailMetrics.hair),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = Color.Transparent,
+                        )
+                    }
                 },
             ) {
                 val searchActive = ui.searching && ui.searchQuery.isNotBlank()

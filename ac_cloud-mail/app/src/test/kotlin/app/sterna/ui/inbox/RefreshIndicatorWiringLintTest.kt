@@ -161,12 +161,33 @@ class RefreshIndicatorWiringLintTest {
     fun `the tern and the pull box are driven by the display, never by the truth`() {
         val text = codeText(INBOX_SCREEN)
 
+        // #1869: the box and the tern read ternShowing, derived from the DISPLAY (never the truth) and narrowed to
+        // the pull gesture or an empty list, so no spinner is drawn over cached rows.
+        assertEquals(
+            "ternShowing must be derived from ui.showRefreshIndicator, the gesture flag and the row count, whole. " +
+                "Fed ui.refreshing it lights the instant refresh() is called (#178); without the gesture or the row " +
+                "count it puts the spinner back over cached rows (#1869).",
+            listOf(
+                "val ternShowing = ternDrawn(ui.showRefreshIndicator, refreshGesture, listRows.itemCount)",
+                "val syncLineShowing = syncLineDrawn(ui.showRefreshIndicator, refreshGesture, listRows.itemCount)",
+            ),
+            codeLines(INBOX_SCREEN).map { it.trim() }.filter { it.startsWith("val ternShowing") || it.startsWith("val syncLineShowing") },
+        )
+        assertEquals(
+            "the gesture flag is the ViewModel's, read from the stretch on screen",
+            listOf("val refreshGesture by viewModel.refreshByGesture.collectAsStateWithLifecycle()"),
+            codeLines(INBOX_SCREEN).map { it.trim() }.filter { it.startsWith("val refreshGesture") },
+        )
+        assertTrue(
+            "the gesture flag is RefreshRun.instant, nothing else",
+            codeText(INBOX_VIEW_MODEL).contains("val refreshByGesture: StateFlow<Boolean> = refreshRun.map { it?.instant == true }"),
+        )
         val pull = argsAt(text, findOnce(text, "PullToRefreshBox"))
         assertTrue(
-            "PullToRefreshBox must be driven by ui.showRefreshIndicator: fed the truth it lights " +
-                "the instant refresh() is called, which IS #178. Compared as a whole named " +
+            "PullToRefreshBox must be driven by ternShowing (the display, narrowed by #1869): fed the truth it " +
+                "lights the instant refresh() is called, which IS #178. Compared as a whole named " +
                 "argument. Its arguments were:\n$pull",
-            pull.contains("isRefreshing = ui.showRefreshIndicator"),
+            pull.contains("isRefreshing = ternShowing"),
         )
         assertTrue(
             "The pull gesture must call refreshRequested(), the only door to an indicator with no " +
@@ -179,7 +200,7 @@ class RefreshIndicatorWiringLintTest {
         assertTrue(
             "TernRefreshIndicator must read the same display field as the box around it. Its " +
                 "arguments were:\n$tern",
-            tern.contains("isRefreshing = ui.showRefreshIndicator"),
+            tern.contains("isRefreshing = ternShowing"),
         )
     }
 
