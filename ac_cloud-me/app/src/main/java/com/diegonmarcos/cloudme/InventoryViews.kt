@@ -173,7 +173,7 @@ private fun Scene3D(boxes: List<SceneBox>, selected: String?, background: Long, 
         val r = cs.maxOf { sqrt((it.first - mx) * (it.first - mx) + (it.second - my) * (it.second - my) + (it.third - mz) * (it.third - mz)) }
         doubleArrayOf(mx, my, mz, max(r, 1.0))
     }
-    fun cam() = Camera(yaw, pitch, zoom * 0.45 * minOf(size.width, size.height) / bounds[3], size.width / 2.0, size.height / 2.0, bounds[0], bounds[1], bounds[2])
+    fun cam() = OrbitCamera(yaw, pitch, zoom * 0.45 * minOf(size.width, size.height) / bounds[3], size.width / 2.0, size.height / 2.0, bounds[0], bounds[1], bounds[2])
     Canvas(Modifier.fillMaxWidth().padding(top = 10.dp).height(320.dp).clip(RoundedCornerShape(8.dp)).background(Color(background))
         .onSizeChanged { size = it }
         .pointerInput(Unit) { detectTransformGestures { _, pan, z, _ -> yaw += pan.x * 0.5; pitch = (pitch + pan.y * 0.4).coerceIn(5.0, 89.0); zoom = (zoom * z).coerceIn(0.3, 6.0) } }
