@@ -79,6 +79,31 @@
             "id": "note",
             "label": "Note",
             "type": "text"
+          },
+          {
+            "id": "photo",
+            "label": "Photo",
+            "type": "image"
+          },
+          {
+            "id": "width_cm",
+            "label": "Width (cm)",
+            "type": "number"
+          },
+          {
+            "id": "depth_cm",
+            "label": "Depth (cm)",
+            "type": "number"
+          },
+          {
+            "id": "height_cm",
+            "label": "Height (cm)",
+            "type": "number"
+          },
+          {
+            "id": "weight_kg",
+            "label": "Weight (kg)",
+            "type": "number"
           }
         ],
         "seed": [
@@ -89,7 +114,11 @@
             "purchased": "2023-10-21",
             "price": "500.00",
             "location": "Flur",
-            "status": "Good"
+            "status": "Good",
+            "width_cm": "60",
+            "depth_cm": "10",
+            "height_cm": "80",
+            "weight_kg": "0.4"
           },
           {
             "name": "Motorcycle helmet",
@@ -99,7 +128,11 @@
             "price": "619.00",
             "location": "Flur",
             "status": "Good",
-            "note": "Replace by 2027"
+            "note": "Replace by 2027",
+            "width_cm": "30",
+            "depth_cm": "30",
+            "height_cm": "30",
+            "weight_kg": "1.4"
           },
           {
             "name": "Motorcycle jacket",
@@ -108,7 +141,11 @@
             "purchased": "2022-04-02",
             "price": "499.00",
             "location": "Flur",
-            "status": "Good"
+            "status": "Good",
+            "width_cm": "60",
+            "depth_cm": "15",
+            "height_cm": "80",
+            "weight_kg": "3.5"
           },
           {
             "name": "Sailing jacket",
@@ -117,7 +154,11 @@
             "purchased": "2023-05-06",
             "price": "279.00",
             "location": "Boat",
-            "status": "Good"
+            "status": "Good",
+            "width_cm": "60",
+            "depth_cm": "12",
+            "height_cm": "80",
+            "weight_kg": "1.2"
           },
           {
             "name": "Running shoes",
@@ -126,7 +167,11 @@
             "purchased": "2026-03-12",
             "price": "170.00",
             "status": "Good",
-            "note": "~400 km"
+            "note": "~400 km",
+            "width_cm": "32",
+            "depth_cm": "12",
+            "height_cm": "14",
+            "weight_kg": "0.6"
           },
           {
             "name": "Suit",
@@ -135,7 +180,11 @@
             "purchased": "2024-09-14",
             "price": "599.00",
             "location": "Schlafzimmer",
-            "status": "Good"
+            "status": "Good",
+            "width_cm": "55",
+            "depth_cm": "10",
+            "height_cm": "110",
+            "weight_kg": "1.8"
           },
           {
             "name": "Clothing budget",

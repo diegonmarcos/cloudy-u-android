@@ -81,6 +81,31 @@
             "id": "note",
             "label": "Note",
             "type": "text"
+          },
+          {
+            "id": "photo",
+            "label": "Photo",
+            "type": "image"
+          },
+          {
+            "id": "width_cm",
+            "label": "Width (cm)",
+            "type": "number"
+          },
+          {
+            "id": "depth_cm",
+            "label": "Depth (cm)",
+            "type": "number"
+          },
+          {
+            "id": "height_cm",
+            "label": "Height (cm)",
+            "type": "number"
+          },
+          {
+            "id": "weight_kg",
+            "label": "Weight (kg)",
+            "type": "number"
           }
         ],
         "seed": [
@@ -102,7 +127,11 @@
             "price": "2499.00",
             "location": "Fahrradkeller",
             "status": "Good",
-            "note": "Frame no. in Hausrat policy; service every spring"
+            "note": "Frame no. in Hausrat policy; service every spring",
+            "width_cm": "180",
+            "depth_cm": "60",
+            "height_cm": "110",
+            "weight_kg": "10"
           },
           {
             "name": "Motorcycle",
@@ -112,7 +141,11 @@
             "price": "7290.00",
             "location": "Tiefgarage Simon-Dach-Str.",
             "status": "Good",
-            "note": "Bought new; 18,400 km"
+            "note": "Bought new; 18,400 km",
+            "width_cm": "210",
+            "depth_cm": "80",
+            "height_cm": "120",
+            "weight_kg": "190"
           },
           {
             "name": "Motorcycle insurance",
@@ -140,7 +173,11 @@
             "price": "61900.00",
             "location": "Stellplatz Schönefeld",
             "status": "Good",
-            "note": "Used, 42,000 km at purchase; Zahnriemen 2027"
+            "note": "Used, 42,000 km at purchase; Zahnriemen 2027",
+            "width_cm": "540",
+            "depth_cm": "205",
+            "height_cm": "260",
+            "weight_kg": "3000"
           },
           {
             "name": "Campervan insurance",
@@ -168,7 +205,11 @@
             "price": "38500.00",
             "location": "Wannsee",
             "status": "Good",
-            "note": "Used 2008 hull; new genoa 2025"
+            "note": "Used 2008 hull; new genoa 2025",
+            "width_cm": "850",
+            "depth_cm": "300",
+            "height_cm": "400",
+            "weight_kg": "4500"
           },
           {
             "name": "Boat berth",

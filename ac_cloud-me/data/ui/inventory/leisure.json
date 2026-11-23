@@ -32,7 +32,8 @@
               "Gym",
               "Club",
               "Climbing",
-              "Events"
+              "Events",
+              "Gear"
             ]
           },
           {
@@ -77,6 +78,31 @@
             "id": "note",
             "label": "Note",
             "type": "text"
+          },
+          {
+            "id": "photo",
+            "label": "Photo",
+            "type": "image"
+          },
+          {
+            "id": "width_cm",
+            "label": "Width (cm)",
+            "type": "number"
+          },
+          {
+            "id": "depth_cm",
+            "label": "Depth (cm)",
+            "type": "number"
+          },
+          {
+            "id": "height_cm",
+            "label": "Height (cm)",
+            "type": "number"
+          },
+          {
+            "id": "weight_kg",
+            "label": "Weight (kg)",
+            "type": "number"
           }
         ],
         "seed": [
@@ -119,6 +145,45 @@
             "location": "Pankow",
             "status": "Active",
             "note": "6 visits left"
+          },
+          {
+            "name": "Stand-up paddle board",
+            "category": "Gear",
+            "brand": "Inflatable SUP 10'6",
+            "purchased": "2023-06-10",
+            "price": "449.00",
+            "location": "Keller",
+            "status": "Good",
+            "width_cm": "320",
+            "depth_cm": "80",
+            "height_cm": "15",
+            "weight_kg": "12"
+          },
+          {
+            "name": "Climbing gear bag",
+            "category": "Climbing",
+            "brand": "Harness, shoes, chalk",
+            "purchased": "2024-03-02",
+            "price": "220.00",
+            "location": "Flur",
+            "status": "Good",
+            "width_cm": "50",
+            "depth_cm": "30",
+            "height_cm": "35",
+            "weight_kg": "5"
+          },
+          {
+            "name": "Yoga mat",
+            "category": "Gear",
+            "brand": "Rolled mat",
+            "purchased": "2022-01-15",
+            "price": "35.00",
+            "location": "Wohnzimmer",
+            "status": "Good",
+            "width_cm": "62",
+            "depth_cm": "15",
+            "height_cm": "15",
+            "weight_kg": "1.2"
           }
         ]
       }

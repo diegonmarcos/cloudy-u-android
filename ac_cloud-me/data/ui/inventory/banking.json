@@ -77,6 +77,31 @@
             "id": "note",
             "label": "Note",
             "type": "text"
+          },
+          {
+            "id": "photo",
+            "label": "Photo",
+            "type": "image"
+          },
+          {
+            "id": "width_cm",
+            "label": "Width (cm)",
+            "type": "number"
+          },
+          {
+            "id": "depth_cm",
+            "label": "Depth (cm)",
+            "type": "number"
+          },
+          {
+            "id": "height_cm",
+            "label": "Height (cm)",
+            "type": "number"
+          },
+          {
+            "id": "weight_kg",
+            "label": "Weight (kg)",
+            "type": "number"
           }
         ],
         "seed": [

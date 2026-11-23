@@ -77,6 +77,31 @@
             "id": "note",
             "label": "Note",
             "type": "text"
+          },
+          {
+            "id": "photo",
+            "label": "Photo",
+            "type": "image"
+          },
+          {
+            "id": "width_cm",
+            "label": "Width (cm)",
+            "type": "number"
+          },
+          {
+            "id": "depth_cm",
+            "label": "Depth (cm)",
+            "type": "number"
+          },
+          {
+            "id": "height_cm",
+            "label": "Height (cm)",
+            "type": "number"
+          },
+          {
+            "id": "weight_kg",
+            "label": "Weight (kg)",
+            "type": "number"
           }
         ],
         "seed": [
@@ -87,7 +112,11 @@
             "purchased": "2021-04-20",
             "price": "899.00",
             "location": "Wohnzimmer",
-            "status": "Good"
+            "status": "Good",
+            "width_cm": "210",
+            "depth_cm": "95",
+            "height_cm": "85",
+            "weight_kg": "45"
           },
           {
             "name": "Bed and mattress",
@@ -96,7 +125,11 @@
             "purchased": "2021-04-12",
             "price": "1149.00",
             "location": "Schlafzimmer",
-            "status": "Good"
+            "status": "Good",
+            "width_cm": "200",
+            "depth_cm": "160",
+            "height_cm": "45",
+            "weight_kg": "60"
           },
           {
             "name": "Washing machine",
@@ -106,7 +139,11 @@
             "price": "649.00",
             "location": "Bad",
             "status": "Good",
-            "note": "Warranty to 2027-02 (MediaMarkt extended)"
+            "note": "Warranty to 2027-02 (MediaMarkt extended)",
+            "width_cm": "60",
+            "depth_cm": "60",
+            "height_cm": "85",
+            "weight_kg": "70"
           },
           {
             "name": "Robot vacuum",
@@ -116,7 +153,11 @@
             "price": "449.00",
             "location": "Flur",
             "status": "Good",
-            "note": "Black Friday"
+            "note": "Black Friday",
+            "width_cm": "35",
+            "depth_cm": "35",
+            "height_cm": "10",
+            "weight_kg": "3.5"
           },
           {
             "name": "Espresso machine",
@@ -126,7 +167,11 @@
             "price": "599.00",
             "location": "Küche",
             "status": "Needs service",
-            "note": "Descale and new gasket due"
+            "note": "Descale and new gasket due",
+            "width_cm": "30",
+            "depth_cm": "35",
+            "height_cm": "35",
+            "weight_kg": "9"
           },
           {
             "name": "Cordless drill",
@@ -135,7 +180,11 @@
             "purchased": "2021-05-02",
             "price": "189.00",
             "location": "Abstellkammer",
-            "status": "Good"
+            "status": "Good",
+            "width_cm": "40",
+            "depth_cm": "30",
+            "height_cm": "12",
+            "weight_kg": "1.7"
           }
         ]
       }

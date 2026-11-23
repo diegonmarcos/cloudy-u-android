@@ -1,0 +1,1127 @@
+{
+ "inv_banking": {
+  "page": "banking",
+  "fields": [
+   "name",
+   "category",
+   "brand",
+   "purchased",
+   "price",
+   "monthly",
+   "location",
+   "status",
+   "note"
+  ],
+  "seed": [
+   {
+    "name": "Girokonto",
+    "category": "Current account",
+    "brand": "DKB Girokonto",
+    "purchased": "2019-11-04",
+    "price": "4200.00",
+    "status": "Active",
+    "note": "Salary account"
+   },
+   {
+    "name": "Tagesgeld",
+    "category": "Savings",
+    "brand": "Trade Republic, 2.0%",
+    "purchased": "2023-10-02",
+    "price": "15000.00",
+    "status": "Active",
+    "note": "Emergency fund (6 months)"
+   },
+   {
+    "name": "ETF depot",
+    "category": "Investments",
+    "brand": "Trade Republic, FTSE All-World",
+    "purchased": "2023-10-02",
+    "price": "28600.00",
+    "status": "Active",
+    "note": "Value as of 2026-10; savings plan below"
+   },
+   {
+    "name": "ETF savings plan",
+    "category": "Investments",
+    "brand": "Vanguard FTSE All-World Acc",
+    "purchased": "2023-10-02",
+    "monthly": "500.00",
+    "status": "Active",
+    "note": "Executed on the 2nd"
+   },
+   {
+    "name": "Credit card",
+    "category": "Card",
+    "brand": "Amex Gold",
+    "purchased": "2022-05-10",
+    "monthly": "12.00",
+    "status": "Active",
+    "note": "144 EUR per year; travel insurance included"
+   }
+  ]
+ },
+ "inv_care": {
+  "page": "care",
+  "fields": [
+   "name",
+   "category",
+   "brand",
+   "purchased",
+   "price",
+   "monthly",
+   "location",
+   "status",
+   "note"
+  ],
+  "seed": [
+   {
+    "name": "Krankenversicherung",
+    "category": "Health insurance",
+    "brand": "TK Techniker Krankenkasse",
+    "purchased": "2020-06-01",
+    "monthly": "468.00",
+    "status": "Active",
+    "note": "Employee share incl. Pflegeversicherung and Zusatzbeitrag"
+   },
+   {
+    "name": "Zahnzusatzversicherung",
+    "category": "Dental",
+    "brand": "Ergo Dental-Schutz",
+    "purchased": "2022-01-01",
+    "monthly": "18.40",
+    "status": "Active",
+    "note": "Covers implants and PZR"
+   },
+   {
+    "name": "Dentist",
+    "category": "Dental",
+    "brand": "Zahnarztpraxis am Boxhagener Platz",
+    "purchased": "2026-04-14",
+    "price": "95.00",
+    "location": "Berlin-Friedrichshain",
+    "status": "Active",
+    "note": "PZR every 6 months; next 2026-11"
+   },
+   {
+    "name": "Glasses",
+    "category": "Optician",
+    "brand": "Fielmann, Zeiss lenses",
+    "purchased": "2024-07-02",
+    "price": "389.00",
+    "status": "Good"
+   },
+   {
+    "name": "Pharmacy",
+    "category": "Pharmacy",
+    "brand": "Apotheke am Ostkreuz",
+    "monthly": "15.00",
+    "location": "Berlin-Friedrichshain",
+    "status": "Active",
+    "note": "Vitamin D, sunscreen"
+   }
+  ]
+ },
+ "inv_clothing": {
+  "page": "clothing",
+  "fields": [
+   "name",
+   "category",
+   "brand",
+   "purchased",
+   "price",
+   "monthly",
+   "location",
+   "status",
+   "note"
+  ],
+  "seed": [
+   {
+    "name": "Rain shell",
+    "category": "Outdoor",
+    "brand": "Arc'teryx Beta AR",
+    "purchased": "2023-10-21",
+    "price": "500.00",
+    "location": "Flur",
+    "status": "Good"
+   },
+   {
+    "name": "Motorcycle helmet",
+    "category": "Motorcycle",
+    "brand": "Shoei NXR2",
+    "purchased": "2022-03-19",
+    "price": "619.00",
+    "location": "Flur",
+    "status": "Good",
+    "note": "Replace by 2027"
+   },
+   {
+    "name": "Motorcycle jacket",
+    "category": "Motorcycle",
+    "brand": "Dainese Super Speed 4",
+    "purchased": "2022-04-02",
+    "price": "499.00",
+    "location": "Flur",
+    "status": "Good"
+   },
+   {
+    "name": "Sailing jacket",
+    "category": "Sailing",
+    "brand": "Musto BR1 Solent",
+    "purchased": "2023-05-06",
+    "price": "279.00",
+    "location": "Boat",
+    "status": "Good"
+   },
+   {
+    "name": "Running shoes",
+    "category": "Sport",
+    "brand": "On Cloudmonster 2",
+    "purchased": "2026-03-12",
+    "price": "170.00",
+    "status": "Good",
+    "note": "~400 km"
+   },
+   {
+    "name": "Suit",
+    "category": "Formal",
+    "brand": "Hugo Boss, navy",
+    "purchased": "2024-09-14",
+    "price": "599.00",
+    "location": "Schlafzimmer",
+    "status": "Good"
+   },
+   {
+    "name": "Clothing budget",
+    "category": "Budget",
+    "monthly": "80.00",
+    "status": "Active",
+    "note": "Everyday clothes"
+   }
+  ]
+ },
+ "inv_contracts": {
+  "page": "contracts",
+  "fields": [
+   "name",
+   "category",
+   "brand",
+   "purchased",
+   "price",
+   "monthly",
+   "location",
+   "status",
+   "note"
+  ],
+  "seed": [
+   {
+    "name": "Mietvertrag",
+    "category": "Housing",
+    "brand": "Hausverwaltung Kiehl & Partner",
+    "purchased": "2021-04-01",
+    "location": "Ordner Wohnen",
+    "status": "Active",
+    "note": "Unbefristet, 3 months notice; Staffelmiete"
+   },
+   {
+    "name": "Telekom Glasfaser",
+    "category": "Telecom",
+    "brand": "Telekom",
+    "purchased": "2024-09-12",
+    "location": "Telekom app",
+    "status": "Active",
+    "note": "Minimum term ended 2026-09-11; 1 month notice"
+   },
+   {
+    "name": "Vattenfall Natur24",
+    "category": "Energy",
+    "brand": "Vattenfall",
+    "purchased": "2024-01-01",
+    "status": "Active",
+    "note": "Cancel by 2026-12-01 to switch for 2027"
+   },
+   {
+    "name": "Fitness membership",
+    "category": "Membership",
+    "brand": "John Reed Fitness",
+    "purchased": "2024-02-01",
+    "status": "Active",
+    "note": "12-month term renews monthly after 2025-01"
+   },
+   {
+    "name": "Liegeplatzvertrag",
+    "category": "Membership",
+    "brand": "Segel-Club Wannsee",
+    "purchased": "2023-05-01",
+    "status": "Active",
+    "note": "Season contract, renew by 31 January"
+   },
+   {
+    "name": "Arbeitsvertrag",
+    "category": "Employment",
+    "brand": "Employer (Berlin)",
+    "purchased": "2020-06-01",
+    "location": "Ordner Arbeit",
+    "status": "Active",
+    "note": "Unbefristet, 3 months notice"
+   }
+  ]
+ },
+ "inv_education": {
+  "page": "education",
+  "fields": [
+   "name",
+   "category",
+   "brand",
+   "purchased",
+   "price",
+   "monthly",
+   "location",
+   "status",
+   "note"
+  ],
+  "seed": [
+   {
+    "name": "Sportbootführerschein See + Binnen",
+    "category": "Licence",
+    "brand": "Segelschule Berlin",
+    "purchased": "2023-02-25",
+    "price": "590.00",
+    "status": "Active",
+    "note": "Required for the boat on the Havel"
+   },
+   {
+    "name": "SKS course",
+    "category": "Course",
+    "brand": "Segelschule Berlin",
+    "purchased": "2026-11-07",
+    "price": "1150.00",
+    "location": "Wannsee",
+    "status": "Active",
+    "note": "Theory starts November"
+   },
+   {
+    "name": "Coursera Plus",
+    "category": "Platform",
+    "brand": "Coursera",
+    "purchased": "2025-08-01",
+    "monthly": "33.25",
+    "status": "Active",
+    "note": "399 EUR per year"
+   },
+   {
+    "name": "Spanish C1 course",
+    "category": "Course",
+    "brand": "VHS Friedrichshain-Kreuzberg",
+    "purchased": "2026-09-08",
+    "price": "196.00",
+    "location": "Berlin-Friedrichshain",
+    "status": "Active",
+    "note": "Tuesdays, until December"
+   },
+   {
+    "name": "Designing Data-Intensive Applications",
+    "category": "Book",
+    "brand": "O'Reilly, 2nd ed.",
+    "purchased": "2026-03-20",
+    "price": "52.00",
+    "location": "Regal",
+    "status": "Good"
+   },
+   {
+    "name": "Kotlin in Action",
+    "category": "Book",
+    "brand": "Manning, 2nd ed.",
+    "purchased": "2024-08-11",
+    "price": "49.00",
+    "location": "Regal",
+    "status": "Good"
+   }
+  ]
+ },
+ "inv_electronics": {
+  "page": "electronics",
+  "fields": [
+   "name",
+   "category",
+   "brand",
+   "purchased",
+   "price",
+   "monthly",
+   "location",
+   "status",
+   "note"
+  ],
+  "seed": [
+   {
+    "name": "Laptop",
+    "category": "Computer",
+    "brand": "MacBook Pro 14 M4 Pro, 48 GB",
+    "purchased": "2025-01-10",
+    "price": "2799.00",
+    "location": "Schreibtisch",
+    "status": "Good",
+    "note": "AppleCare+ to 2028-01"
+   },
+   {
+    "name": "Phone",
+    "category": "Phone",
+    "brand": "Samsung Galaxy A37 5G (SM-A376B)",
+    "purchased": "2026-04-03",
+    "price": "399.00",
+    "status": "Good",
+    "note": "Runs the Cloud constellation"
+   },
+   {
+    "name": "Monitor (left)",
+    "category": "Display",
+    "brand": "Dell UltraSharp U2723QE 27\" 4K",
+    "purchased": "2023-02-20",
+    "price": "579.00",
+    "location": "Schreibtisch",
+    "status": "Good"
+   },
+   {
+    "name": "Monitor (right)",
+    "category": "Display",
+    "brand": "Dell UltraSharp U2723QE 27\" 4K",
+    "purchased": "2023-02-20",
+    "price": "579.00",
+    "location": "Schreibtisch",
+    "status": "Good"
+   },
+   {
+    "name": "NAS",
+    "category": "Storage",
+    "brand": "Synology DS923+, 4 x 8 TB IronWolf (SHR)",
+    "purchased": "2023-02-15",
+    "price": "1420.00",
+    "location": "Abstellkammer",
+    "status": "Good",
+    "note": "Offsite copy to Hetzner Storage Box"
+   },
+   {
+    "name": "Camera",
+    "category": "Camera",
+    "brand": "Sony A7 IV + FE 24-70 mm f/2.8 GM II",
+    "purchased": "2024-06-01",
+    "price": "4190.00",
+    "location": "Schrank",
+    "status": "Good"
+   },
+   {
+    "name": "Drone",
+    "category": "Drone",
+    "brand": "DJI Mini 4 Pro Fly More",
+    "purchased": "2024-04-18",
+    "price": "1099.00",
+    "location": "Campervan",
+    "status": "Good",
+    "note": "EU C0; LBA operator ID registered"
+   },
+   {
+    "name": "Headphones",
+    "category": "Audio",
+    "brand": "Sony WH-1000XM5",
+    "purchased": "2023-11-24",
+    "price": "299.00",
+    "status": "Good"
+   },
+   {
+    "name": "Docking station",
+    "category": "Accessory",
+    "brand": "CalDigit TS4",
+    "purchased": "2023-02-20",
+    "price": "389.00",
+    "location": "Schreibtisch",
+    "status": "Good"
+   }
+  ]
+ },
+ "inv_food": {
+  "page": "food",
+  "fields": [
+   "name",
+   "category",
+   "brand",
+   "purchased",
+   "price",
+   "monthly",
+   "location",
+   "status",
+   "note"
+  ],
+  "seed": [
+   {
+    "name": "Groceries",
+    "category": "Groceries",
+    "brand": "REWE / Bio Company",
+    "monthly": "340.00",
+    "location": "Berlin-Friedrichshain",
+    "status": "Active",
+    "note": "Weekly shop, Saturday"
+   },
+   {
+    "name": "Wochenmarkt",
+    "category": "Market",
+    "brand": "Ökomarkt Boxhagener Platz",
+    "monthly": "90.00",
+    "location": "Boxhagener Platz",
+    "status": "Active",
+    "note": "Saturdays: vegetables, eggs, bread"
+   },
+   {
+    "name": "Coffee beans",
+    "category": "Drinks",
+    "brand": "The Barn, subscription",
+    "purchased": "2024-05-01",
+    "monthly": "34.00",
+    "status": "Active",
+    "note": "2 x 250 g per month"
+   },
+   {
+    "name": "Water filter",
+    "category": "Drinks",
+    "brand": "BRITA Marella + Maxtra Pro",
+    "purchased": "2023-01-08",
+    "price": "29.00",
+    "monthly": "4.50",
+    "location": "Küche",
+    "status": "Active",
+    "note": "Cartridge every month"
+   }
+  ]
+ },
+ "inv_household": {
+  "page": "household",
+  "fields": [
+   "name",
+   "category",
+   "brand",
+   "purchased",
+   "price",
+   "monthly",
+   "location",
+   "status",
+   "note"
+  ],
+  "seed": [
+   {
+    "name": "Sofa",
+    "category": "Furniture",
+    "brand": "IKEA SÖDERHAMN 3er",
+    "purchased": "2021-04-20",
+    "price": "899.00",
+    "location": "Wohnzimmer",
+    "status": "Good"
+   },
+   {
+    "name": "Bed and mattress",
+    "category": "Furniture",
+    "brand": "Emma One 160x200 + Kiefer frame",
+    "purchased": "2021-04-12",
+    "price": "1149.00",
+    "location": "Schlafzimmer",
+    "status": "Good"
+   },
+   {
+    "name": "Washing machine",
+    "category": "Appliance",
+    "brand": "Bosch Serie 6 WGG244A40",
+    "purchased": "2022-02-08",
+    "price": "649.00",
+    "location": "Bad",
+    "status": "Good",
+    "note": "Warranty to 2027-02 (MediaMarkt extended)"
+   },
+   {
+    "name": "Robot vacuum",
+    "category": "Appliance",
+    "brand": "Roborock S8",
+    "purchased": "2024-11-29",
+    "price": "449.00",
+    "location": "Flur",
+    "status": "Good",
+    "note": "Black Friday"
+   },
+   {
+    "name": "Espresso machine",
+    "category": "Kitchen",
+    "brand": "Sage Barista Express",
+    "purchased": "2022-12-24",
+    "price": "599.00",
+    "location": "Küche",
+    "status": "Needs service",
+    "note": "Descale and new gasket due"
+   },
+   {
+    "name": "Cordless drill",
+    "category": "Tools",
+    "brand": "Bosch Professional GSR 18V",
+    "purchased": "2021-05-02",
+    "price": "189.00",
+    "location": "Abstellkammer",
+    "status": "Good"
+   }
+  ]
+ },
+ "inv_housing": {
+  "page": "housing",
+  "fields": [
+   "name",
+   "category",
+   "brand",
+   "purchased",
+   "price",
+   "monthly",
+   "location",
+   "status",
+   "note"
+  ],
+  "seed": [
+   {
+    "name": "Kaltmiete, 2-Zimmer 68 m²",
+    "category": "Rent",
+    "brand": "Hausverwaltung Kiehl & Partner",
+    "purchased": "2021-04-01",
+    "monthly": "1150.00",
+    "location": "Berlin-Friedrichshain, Boxhagener Str.",
+    "status": "Active",
+    "note": "Mietvertrag unbefristet, 3 months notice; Staffelmiete +2% each April"
+   },
+   {
+    "name": "Nebenkosten-Vorauszahlung",
+    "category": "Service charges",
+    "brand": "Hausverwaltung Kiehl & Partner",
+    "purchased": "2021-04-01",
+    "monthly": "185.00",
+    "location": "Berlin-Friedrichshain",
+    "status": "Active",
+    "note": "Heating, water, Müllabfuhr, Hausmeister; Betriebskostenabrechnung every June"
+   },
+   {
+    "name": "Heizkosten-Vorauszahlung",
+    "category": "Service charges",
+    "brand": "Techem (Ablesung)",
+    "purchased": "2021-04-01",
+    "monthly": "70.00",
+    "location": "Berlin-Friedrichshain",
+    "status": "Active",
+    "note": "Fernwärme; 2025 Abrechnung refunded 112 EUR"
+   },
+   {
+    "name": "Mietkaution",
+    "category": "Deposit",
+    "brand": "Mietkautionskonto, Berliner Sparkasse",
+    "purchased": "2021-03-15",
+    "price": "3450.00",
+    "location": "Berliner Sparkasse",
+    "status": "Active",
+    "note": "3 Kaltmieten, paid back on move-out"
+   },
+   {
+    "name": "Hausratversicherung",
+    "category": "Insurance",
+    "brand": "HUK24 Hausrat Classic",
+    "purchased": "2021-04-01",
+    "monthly": "7.90",
+    "location": "Berlin-Friedrichshain",
+    "status": "Active",
+    "note": "Versicherungssumme 65,000 EUR incl. Fahrraddiebstahl"
+   },
+   {
+    "name": "Einbauküche (Ablöse)",
+    "category": "Fixtures",
+    "brand": "Nolte, from previous tenant",
+    "purchased": "2021-04-01",
+    "price": "2200.00",
+    "location": "Berlin-Friedrichshain",
+    "status": "Good",
+    "note": "Bought from Vormieter; stays mine on move-out"
+   }
+  ]
+ },
+ "inv_insurance": {
+  "page": "insurance",
+  "fields": [
+   "name",
+   "category",
+   "brand",
+   "purchased",
+   "price",
+   "monthly",
+   "location",
+   "status",
+   "note"
+  ],
+  "seed": [
+   {
+    "name": "Privathaftpflicht",
+    "category": "Liability",
+    "brand": "HUK24 Privathaftpflicht Plus",
+    "purchased": "2021-04-01",
+    "monthly": "5.40",
+    "status": "Active",
+    "note": "Covers Drohne (C0) and Mietsachschäden"
+   },
+   {
+    "name": "Berufsunfähigkeitsversicherung",
+    "category": "Income protection",
+    "brand": "Alte Leipziger BV10",
+    "purchased": "2020-07-01",
+    "monthly": "84.30",
+    "status": "Active",
+    "note": "BU-Rente 2,000 EUR to age 67"
+   },
+   {
+    "name": "Rechtsschutz",
+    "category": "Legal",
+    "brand": "ARAG Aktiv-Rechtsschutz Komfort",
+    "purchased": "2022-01-01",
+    "monthly": "26.90",
+    "status": "Active",
+    "note": "Privat, Beruf, Wohnen, Verkehr"
+   },
+   {
+    "name": "Auslandsreisekrankenversicherung",
+    "category": "Travel",
+    "brand": "HanseMerkur",
+    "purchased": "2023-01-01",
+    "monthly": "1.25",
+    "status": "Active",
+    "note": "15 EUR per year"
+   },
+   {
+    "name": "ADAC Plus",
+    "category": "Breakdown",
+    "brand": "ADAC Plus-Mitgliedschaft",
+    "purchased": "2022-08-01",
+    "monthly": "11.58",
+    "status": "Active",
+    "note": "139 EUR per year; covers the campervan"
+   }
+  ]
+ },
+ "inv_leisure": {
+  "page": "leisure",
+  "fields": [
+   "name",
+   "category",
+   "brand",
+   "purchased",
+   "price",
+   "monthly",
+   "location",
+   "status",
+   "note"
+  ],
+  "seed": [
+   {
+    "name": "Gym membership",
+    "category": "Gym",
+    "brand": "John Reed Fitness, Berlin-Mitte",
+    "purchased": "2024-02-01",
+    "monthly": "39.90",
+    "location": "Mitte",
+    "status": "Active",
+    "note": "Plus 29 EUR yearly Trainingspauschale"
+   },
+   {
+    "name": "Sailing club membership",
+    "category": "Club",
+    "brand": "Segel-Club Wannsee e.V.",
+    "purchased": "2023-03-15",
+    "monthly": "40.00",
+    "location": "Wannsee",
+    "status": "Active",
+    "note": "480 EUR per year + 4 Arbeitsstunden"
+   },
+   {
+    "name": "Sailing club entrance fee",
+    "category": "Club",
+    "brand": "Segel-Club Wannsee e.V.",
+    "purchased": "2023-03-15",
+    "price": "600.00",
+    "location": "Wannsee",
+    "status": "Active",
+    "note": "One-off Aufnahmegebühr"
+   },
+   {
+    "name": "Bouldering 10-visit card",
+    "category": "Climbing",
+    "brand": "Berta Block",
+    "purchased": "2026-09-04",
+    "price": "125.00",
+    "location": "Pankow",
+    "status": "Active",
+    "note": "6 visits left"
+   }
+  ]
+ },
+ "inv_parking": {
+  "page": "parking",
+  "fields": [
+   "name",
+   "category",
+   "brand",
+   "purchased",
+   "price",
+   "monthly",
+   "location",
+   "status",
+   "note"
+  ],
+  "seed": [
+   {
+    "name": "Tiefgaragen-Stellplatz (motorcycle)",
+    "category": "Garage",
+    "brand": "Private, Simon-Dach-Str.",
+    "purchased": "2022-03-01",
+    "monthly": "55.00",
+    "location": "Berlin-Friedrichshain",
+    "status": "Active",
+    "note": "Shared with a neighbour's scooter"
+   },
+   {
+    "name": "Anwohnerparkausweis Zone 54",
+    "category": "Permit",
+    "brand": "Bezirksamt Friedrichshain-Kreuzberg",
+    "purchased": "2025-02-10",
+    "price": "20.40",
+    "location": "Berlin-Friedrichshain",
+    "status": "Active",
+    "note": "Valid 2 years, renew 2027-02"
+   },
+   {
+    "name": "Campervan Stellplatz",
+    "category": "Storage",
+    "brand": "Wohnmobilstellplatz Schönefeld",
+    "purchased": "2022-08-05",
+    "monthly": "85.00",
+    "location": "Schönefeld",
+    "status": "Active",
+    "note": "Outdoor, gated"
+   },
+   {
+    "name": "Boat winter storage",
+    "category": "Storage",
+    "brand": "Bootswerft Wannsee, Halle 2",
+    "purchased": "2025-10-20",
+    "price": "1180.00",
+    "location": "Wannsee",
+    "status": "Active",
+    "note": "Crane in/out included; Oct to Apr"
+   }
+  ]
+ },
+ "inv_subscriptions": {
+  "page": "subscriptions",
+  "fields": [
+   "name",
+   "category",
+   "brand",
+   "purchased",
+   "price",
+   "monthly",
+   "location",
+   "status",
+   "note"
+  ],
+  "seed": [
+   {
+    "name": "Spotify Premium",
+    "category": "Media",
+    "brand": "Spotify",
+    "purchased": "2018-03-01",
+    "monthly": "11.99",
+    "status": "Active"
+   },
+   {
+    "name": "Netflix Standard",
+    "category": "Media",
+    "brand": "Netflix",
+    "purchased": "2020-04-01",
+    "monthly": "13.99",
+    "status": "Active"
+   },
+   {
+    "name": "iCloud+ 200 GB",
+    "category": "Cloud",
+    "brand": "Apple",
+    "purchased": "2021-09-01",
+    "monthly": "2.99",
+    "status": "Active",
+    "note": "Photos from the phone"
+   },
+   {
+    "name": "Hetzner Storage Box BX11",
+    "category": "Cloud",
+    "brand": "Hetzner",
+    "purchased": "2023-02-15",
+    "monthly": "3.81",
+    "location": "Falkenstein",
+    "status": "Active",
+    "note": "NAS offsite backup target"
+   },
+   {
+    "name": "GitHub Pro",
+    "category": "Software",
+    "brand": "GitHub",
+    "purchased": "2022-01-10",
+    "monthly": "3.70",
+    "status": "Active",
+    "note": "4 USD"
+   },
+   {
+    "name": "Komoot Premium",
+    "category": "Software",
+    "brand": "Komoot",
+    "purchased": "2024-03-01",
+    "monthly": "5.00",
+    "status": "Active",
+    "note": "59.99 EUR per year"
+   },
+   {
+    "name": "Tagesspiegel Plus",
+    "category": "News",
+    "brand": "Der Tagesspiegel",
+    "purchased": "2025-01-15",
+    "monthly": "9.99",
+    "status": "Active"
+   }
+  ]
+ },
+ "inv_taxes": {
+  "page": "taxes",
+  "fields": [
+   "name",
+   "category",
+   "brand",
+   "purchased",
+   "price",
+   "monthly",
+   "location",
+   "status",
+   "note"
+  ],
+  "seed": [
+   {
+    "name": "Lohnsteuer (Einkommensteuer)",
+    "category": "Income tax",
+    "brand": "Finanzamt Friedrichshain-Kreuzberg",
+    "monthly": "1385.00",
+    "status": "Active",
+    "note": "Steuerklasse I, withheld by employer; no Kirchensteuer"
+   },
+   {
+    "name": "Einkommensteuererklärung 2025",
+    "category": "Income tax",
+    "brand": "ELSTER",
+    "purchased": "2026-05-18",
+    "status": "Active",
+    "note": "Filed; refund of 1,240 EUR expected"
+   },
+   {
+    "name": "Kfz-Steuer motorcycle",
+    "category": "Vehicle tax",
+    "brand": "Hauptzollamt, Yamaha MT-07",
+    "purchased": "2022-03-19",
+    "monthly": "4.29",
+    "status": "Active",
+    "note": "51.52 EUR per year, SEPA"
+   },
+   {
+    "name": "Kfz-Steuer campervan",
+    "category": "Vehicle tax",
+    "brand": "Hauptzollamt, VW California",
+    "purchased": "2022-08-05",
+    "monthly": "26.75",
+    "status": "Active",
+    "note": "321 EUR per year, SEPA"
+   },
+   {
+    "name": "Tax software",
+    "category": "Tax advice",
+    "brand": "WISO Steuer 2026",
+    "purchased": "2026-02-03",
+    "price": "34.99",
+    "status": "Active"
+   }
+  ]
+ },
+ "inv_transport": {
+  "page": "transport",
+  "fields": [
+   "name",
+   "category",
+   "brand",
+   "purchased",
+   "price",
+   "monthly",
+   "location",
+   "status",
+   "note"
+  ],
+  "seed": [
+   {
+    "name": "Deutschlandticket",
+    "category": "Public transport",
+    "brand": "BVG Abo",
+    "purchased": "2023-05-01",
+    "monthly": "63.00",
+    "location": "BVG app",
+    "status": "Active",
+    "note": "Monthly cancellable; 63 EUR since Jan 2026"
+   },
+   {
+    "name": "Gravel bike",
+    "category": "Bike",
+    "brand": "Canyon Grail CF SL 7",
+    "purchased": "2023-06-14",
+    "price": "2499.00",
+    "location": "Fahrradkeller",
+    "status": "Good",
+    "note": "Frame no. in Hausrat policy; service every spring"
+   },
+   {
+    "name": "Motorcycle",
+    "category": "Motorcycle",
+    "brand": "Yamaha MT-07 (B-XY 734)",
+    "purchased": "2022-03-19",
+    "price": "7290.00",
+    "location": "Tiefgarage Simon-Dach-Str.",
+    "status": "Good",
+    "note": "Bought new; 18,400 km"
+   },
+   {
+    "name": "Motorcycle insurance",
+    "category": "Insurance",
+    "brand": "HUK-Coburg Haftpflicht + Teilkasko",
+    "purchased": "2022-03-19",
+    "monthly": "24.50",
+    "status": "Active",
+    "note": "SF 4; renews 1 January"
+   },
+   {
+    "name": "Motorcycle HU/TÜV",
+    "category": "Inspection",
+    "brand": "TÜV Süd, Berlin-Lichtenberg",
+    "purchased": "2025-03-12",
+    "price": "143.00",
+    "status": "Active",
+    "note": "Next HU due 2027-03"
+   },
+   {
+    "name": "Campervan",
+    "category": "Campervan",
+    "brand": "VW T6.1 California Ocean 2.0 TDI (B-DM 2210)",
+    "purchased": "2022-08-05",
+    "price": "61900.00",
+    "location": "Stellplatz Schönefeld",
+    "status": "Good",
+    "note": "Used, 42,000 km at purchase; Zahnriemen 2027"
+   },
+   {
+    "name": "Campervan insurance",
+    "category": "Insurance",
+    "brand": "Allianz Vollkasko, 500 SB",
+    "purchased": "2022-08-05",
+    "monthly": "92.00",
+    "status": "Active",
+    "note": "SF 6"
+   },
+   {
+    "name": "Campervan HU/TÜV",
+    "category": "Inspection",
+    "brand": "DEKRA Berlin-Neukölln",
+    "purchased": "2024-08-20",
+    "price": "152.00",
+    "status": "Active",
+    "note": "Next HU due 2026-08: overdue, book"
+   },
+   {
+    "name": "Sailboat",
+    "category": "Boat",
+    "brand": "Bavaria 31 Cruiser 'Ostwind'",
+    "purchased": "2023-04-28",
+    "price": "38500.00",
+    "location": "Wannsee",
+    "status": "Good",
+    "note": "Used 2008 hull; new genoa 2025"
+   },
+   {
+    "name": "Boat berth",
+    "category": "Berth",
+    "brand": "Segel-Club Wannsee Liegeplatz",
+    "purchased": "2023-05-01",
+    "monthly": "165.00",
+    "location": "Wannsee, Steg C 14",
+    "status": "Active",
+    "note": "Season April to October; Winterlager under Parking"
+   },
+   {
+    "name": "Boat insurance",
+    "category": "Insurance",
+    "brand": "Pantaenius Yacht-Kasko + Haftpflicht",
+    "purchased": "2023-04-28",
+    "monthly": "61.00",
+    "status": "Active",
+    "note": "Agreed value 38,500 EUR"
+   }
+  ]
+ },
+ "inv_utilities": {
+  "page": "utilities",
+  "fields": [
+   "name",
+   "category",
+   "brand",
+   "purchased",
+   "price",
+   "monthly",
+   "location",
+   "status",
+   "note"
+  ],
+  "seed": [
+   {
+    "name": "Electricity",
+    "category": "Electricity",
+    "brand": "Vattenfall Natur24, 2,100 kWh/yr",
+    "purchased": "2024-01-01",
+    "monthly": "64.00",
+    "location": "Berlin-Friedrichshain",
+    "status": "Active",
+    "note": "Price guarantee to 2026-12-31"
+   },
+   {
+    "name": "Internet",
+    "category": "Internet",
+    "brand": "Telekom MagentaZuhause XL Glasfaser",
+    "purchased": "2024-09-12",
+    "monthly": "59.95",
+    "location": "Berlin-Friedrichshain",
+    "status": "Active",
+    "note": "24 months to 2026-09: now monthly cancellable"
+   },
+   {
+    "name": "Mobile",
+    "category": "Mobile",
+    "brand": "congstar Allnet Flat L (Telekom)",
+    "purchased": "2023-03-01",
+    "monthly": "25.00",
+    "status": "Active",
+    "note": "40 GB, eSIM"
+   },
+   {
+    "name": "Rundfunkbeitrag",
+    "category": "Broadcasting fee",
+    "brand": "ARD ZDF Deutschlandradio Beitragsservice",
+    "purchased": "2021-04-01",
+    "monthly": "18.36",
+    "location": "Berlin-Friedrichshain",
+    "status": "Active",
+    "note": "Paid quarterly, 55.08 EUR"
+   }
+  ]
+ }
+}

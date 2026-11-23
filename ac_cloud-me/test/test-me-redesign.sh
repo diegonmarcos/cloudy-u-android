@@ -438,17 +438,17 @@ for p in _inv.get("pages", []):
     if len(blks) != 1 or blks[0].get("store") != "inventory_user" or blks[0].get("summary") != {"value": "price", "monthly": "monthly"}:
         bad("inventory", f"inventory/{p['id']} is not one ledger over inventory_user with the price/monthly summary"); continue
     leds = blks[0].get("ledgers", [])
-    if len(leds) != 1 or leds[0].get("collection") != "inv_" + p["id"] or [x["id"] for x in leds[0].get("fields", [])] != _ITEM:
+    if len(leds) != 1 or leds[0].get("collection") != "inv_" + p["id"] or [x["id"] for x in leds[0].get("fields", [])][:len(_ITEM)] != _ITEM:
         bad("inventory", f"inventory/{p['id']} is not one inv_{p['id']} collection with the item fields {_ITEM}"); continue
     fl = {x["id"]: x for x in leds[0]["fields"]}
     seed = leds[0].get("seed") or []
     if not seed: bad("inventory", f"inventory/{p['id']} has no mock seed")
     for r in seed:
-        if not r.get("name") or "id" in r or "mock" in r or set(r) - set(_ITEM):
+        if not r.get("name") or "id" in r or "mock" in r or set(r) - set(_ITEM) - {"width_cm", "depth_cm", "height_cm", "weight_kg"}:
             bad("inventory", f"inventory/{p['id']} seed row {r.get('name')} has no name or undeclared keys (mock is stamped by LedgerSeed)")
         for k, v in r.items():
             ty = fl.get(k, {}).get("type")
-            if (ty == "choice" and v not in fl[k]["options"]) or (ty == "money" and not re.fullmatch(r"\d+\.\d{2}", v)) \
+            if (ty == "choice" and v not in fl[k]["options"]) or (ty == "number" and not re.fullmatch(r"\d+(\.\d+)?", v)) or (ty == "money" and not re.fullmatch(r"\d+\.\d{2}", v)) \
                or (ty == "date" and not re.fullmatch(r"20\d\d-[01]\d-[0-3]\d", v)):
                 bad("inventory", f"inventory/{p['id']} seed row {r['name']}: {k}={v!r} is not a valid {ty}")
 lm, ls = code(os.path.join(MAIN, "java/com/diegonmarcos/cloudme/LedgerModel.kt")), code(os.path.join(MAIN, "java/com/diegonmarcos/cloudme/LedgerScreen.kt"))

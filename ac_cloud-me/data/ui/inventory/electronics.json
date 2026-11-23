@@ -81,6 +81,31 @@
             "id": "note",
             "label": "Note",
             "type": "text"
+          },
+          {
+            "id": "photo",
+            "label": "Photo",
+            "type": "image"
+          },
+          {
+            "id": "width_cm",
+            "label": "Width (cm)",
+            "type": "number"
+          },
+          {
+            "id": "depth_cm",
+            "label": "Depth (cm)",
+            "type": "number"
+          },
+          {
+            "id": "height_cm",
+            "label": "Height (cm)",
+            "type": "number"
+          },
+          {
+            "id": "weight_kg",
+            "label": "Weight (kg)",
+            "type": "number"
           }
         ],
         "seed": [
@@ -92,7 +117,11 @@
             "price": "2799.00",
             "location": "Schreibtisch",
             "status": "Good",
-            "note": "AppleCare+ to 2028-01"
+            "note": "AppleCare+ to 2028-01",
+            "width_cm": "31",
+            "depth_cm": "22",
+            "height_cm": "2",
+            "weight_kg": "1.6"
           },
           {
             "name": "Phone",
@@ -101,7 +130,11 @@
             "purchased": "2026-04-03",
             "price": "399.00",
             "status": "Good",
-            "note": "Runs the Cloud constellation"
+            "note": "Runs the Cloud constellation",
+            "width_cm": "7",
+            "depth_cm": "1",
+            "height_cm": "15",
+            "weight_kg": "0.2"
           },
           {
             "name": "Monitor (left)",
@@ -110,7 +143,11 @@
             "purchased": "2023-02-20",
             "price": "579.00",
             "location": "Schreibtisch",
-            "status": "Good"
+            "status": "Good",
+            "width_cm": "61",
+            "depth_cm": "20",
+            "height_cm": "45",
+            "weight_kg": "5"
           },
           {
             "name": "Monitor (right)",
@@ -119,7 +156,11 @@
             "purchased": "2023-02-20",
             "price": "579.00",
             "location": "Schreibtisch",
-            "status": "Good"
+            "status": "Good",
+            "width_cm": "61",
+            "depth_cm": "20",
+            "height_cm": "45",
+            "weight_kg": "5"
           },
           {
             "name": "NAS",
@@ -129,7 +170,11 @@
             "price": "1420.00",
             "location": "Abstellkammer",
             "status": "Good",
-            "note": "Offsite copy to Hetzner Storage Box"
+            "note": "Offsite copy to Hetzner Storage Box",
+            "width_cm": "20",
+            "depth_cm": "25",
+            "height_cm": "17",
+            "weight_kg": "2.5"
           },
           {
             "name": "Camera",
@@ -138,7 +183,11 @@
             "purchased": "2024-06-01",
             "price": "4190.00",
             "location": "Schrank",
-            "status": "Good"
+            "status": "Good",
+            "width_cm": "14",
+            "depth_cm": "8",
+            "height_cm": "10",
+            "weight_kg": "0.7"
           },
           {
             "name": "Drone",
@@ -148,7 +197,11 @@
             "price": "1099.00",
             "location": "Campervan",
             "status": "Good",
-            "note": "EU C0; LBA operator ID registered"
+            "note": "EU C0; LBA operator ID registered",
+            "width_cm": "30",
+            "depth_cm": "30",
+            "height_cm": "10",
+            "weight_kg": "0.9"
           },
           {
             "name": "Headphones",
@@ -156,7 +209,11 @@
             "brand": "Sony WH-1000XM5",
             "purchased": "2023-11-24",
             "price": "299.00",
-            "status": "Good"
+            "status": "Good",
+            "width_cm": "20",
+            "depth_cm": "8",
+            "height_cm": "22",
+            "weight_kg": "0.3"
           },
           {
             "name": "Docking station",
@@ -165,7 +222,11 @@
             "purchased": "2023-02-20",
             "price": "389.00",
             "location": "Schreibtisch",
-            "status": "Good"
+            "status": "Good",
+            "width_cm": "20",
+            "depth_cm": "8",
+            "height_cm": "4",
+            "weight_kg": "0.4"
           }
         ]
       }
