@@ -107,8 +107,9 @@ class DayFragment : KitComposeFragment() {
         else DayTimeline.build(store, a, b, corrections, memory)
         val namer = PlaceNamer(app)
         val named = namer.name(raw.map { (it as? DaySeg.Stay)?.place })
-        var k = 0
-        val dayList = raw.map { s -> if (s is DaySeg.Stay) s.copy(place = named[k++]) else s }.let { l -> DayTimeline.fillLinks(l) }
+        // #1853 `named` has one entry per row (null for a move), so a stay takes the entry at its own index; a running counter over stays only
+        // handed every stay after the first move the previous row's (null) place, and the day showed "Missing visit" for it
+        val dayList = raw.mapIndexed { i, s -> if (s is DaySeg.Stay) s.copy(place = named[i]) else s }.let { l -> DayTimeline.fillLinks(l) }
         val (dates, rankDates) = AggregatesStore.windowDates(first, today)
         val stats = Aggregates.perDay(store, dates, now, zone, corrections, memory)
         val homeSet = HomeStore(app).get()
