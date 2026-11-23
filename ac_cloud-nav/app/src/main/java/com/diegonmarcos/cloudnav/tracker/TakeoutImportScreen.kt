@@ -48,7 +48,9 @@ class ImportRecord(val name: String, val startedMs: Long, val status: String, va
  * list of earlier imports. Re-importing the same export changes nothing (stable keys).
  */
 @Composable
-fun ImportTabView(a: DayActions) {
+fun ImportTabView(a: DayActions,
+                  /** #1863 the Export / Import page's own cards above and below the import (the import itself is unchanged). */
+                  before: androidx.compose.foundation.lazy.LazyListScope.() -> Unit = {}, after: androidx.compose.foundation.lazy.LazyListScope.() -> Unit = {}) {
     val p = LocalKitPalette.current
     val ctx = LocalContext.current.applicationContext
     var st by remember { mutableStateOf(ImportController.state) }
@@ -65,6 +67,7 @@ fun ImportTabView(a: DayActions) {
     }
     val running = st is ImportState.Running
     LazyColumn(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        before()
         item { KitSectionHeader("Import Google location history", "A Takeout export: Records.json, Semantic Location History, or the Timeline export. A zip, a folder or one JSON file.") }
         item {
             KitCard {
@@ -123,5 +126,6 @@ fun ImportTabView(a: DayActions) {
                 }
             }
         }
+        after()
     }
 }

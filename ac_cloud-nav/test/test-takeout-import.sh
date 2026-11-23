@@ -6,7 +6,7 @@
 #   K3 field parity: FieldSpec lists all three formats, each with a synthetic fixture and a parity test; every format is mapped by a parser.
 #   K4 one store: the import opens no database of its own and keeps no preferences (no new store to declare in fleet-config).
 #   K5 tracked wins: views hide an imported row only under a lower-priority overlap; a tracked rebuild never deletes imports; the tracked engine reads tracked fixes only.
-#   K6 UI + rule 16: the Import tab with both SAF pickers, progress, cancel and summary, and every earlier Day tab is still there.
+#   K6 UI + rule 16: the Import tab (#1863: Export/Import) with both SAF pickers, progress, cancel and summary, and every earlier Day tab is still there.
 #   K8 foreground service (#1853): the import runs in TakeoutImportService (dataSync, onTimeout(startId, fgsType), DataSyncBudget, progress notification with Cancel), declared with its permission; the emulator test asserts the service path.
 #   K7 the checks bite: each planted regression (a whole-file read, a dropped tracked guard, a lost tab, a lost source column) fails.
 set -eu
@@ -48,9 +48,9 @@ def check(top):
     r["k4"] = [f for f in FILES if f.startswith(TK) and re.search(r"openOrCreateDatabase|getSharedPreferences|SQLiteOpenHelper|DataStore", s.get(f, ""))]
     r["k5"] = ("t.prio < s.prio" in sc and "source = 'tracked'" in db and "trackedFixesBetween(wf, nowMs)" in s.get(MAPS + "TimelineSync.kt", "") and "WHERE source = 'tracked'" in sc.replace("fixes WHERE source", "fixes WHERE source"))
     ds = s.get(NAV + "DayScreen.kt", ""); dfr = s.get(NAV + "DayFragment.kt", ""); ui = s.get(NAV + "TakeoutImportScreen.kt", "")
-    r["k6"] = ('IMPORT("Import")' in ds and "ActivityResultContracts.OpenDocument()" in dfr and "ActivityResultContracts.OpenDocumentTree()" in dfr and "ImportController.cancel()" in dfr
+    r["k6"] = ('IMPORT("Export/Import"' in ds and "ActivityResultContracts.OpenDocument()" in dfr and "ActivityResultContracts.OpenDocumentTree()" in dfr and "ImportController.cancel()" in dfr
                and all(t in ui for t in ["ImportTags.FILE", "ImportTags.FOLDER", "ImportTags.CANCEL", "ImportTags.SUMMARY", "Days:", "Visits:", "Activities:", "Places:"]))
-    r["k6b"] = [t for t in ['DAY("Day")', 'TRIPS("Trips")', 'PLACES("Places")', 'CITIES("Cities")', 'WORLD("World")', 'INSIGHTS("Insights")'] if t not in ds]
+    r["k6b"] = [t for t in ['DAY("Day"', 'TRIPS("Trips"', 'PLACES("Places"', 'CITIES("Cities"', 'WORLD("World"', 'INSIGHTS("Insights"'] if t not in ds]
     sv = s.get(NAV + "TakeoutImportService.kt", ""); mf = s.get("ac_cloud-nav/app/src/main/AndroidManifest.xml", ""); et = s.get("ac_cloud-nav/app/src/androidTest/java/com/diegonmarcos/cloudnav/TakeoutImportTest.kt", "")
     r["k8"] = (re.search(r"override fun onTimeout\(startId: Int, fgsType: Int\)", sv) is not None and "FOREGROUND_SERVICE_TYPE_DATA_SYNC" in sv and "DataSyncBudget.mayHold(" in sv and "DataSyncBudget.begin(" in sv and "DataSyncBudget.end(" in sv
                and "ACTION_CANCEL" in sv and 'addAction(0, "Cancel"' in sv and "ImportController.runSync(" in sv and "setProgress(" in sv
@@ -78,7 +78,7 @@ try:
     s = mut(TK + "TakeoutParsers.kt", "val p = JsonPull(reader)", "val whole = reader.readText(); val p = JsonPull(whole.reader())"); ok(bool(check(tmp)["k2"]), "a whole-file read fails K2", "K2 missed a whole-file read"); restore(TK + "TakeoutParsers.kt", s)
     s = mut(MAPS + "MapsDb.kt", "AND source = 'tracked'", ""); ok(not check(tmp)["k5"], "a tracked rebuild that deletes imports fails K5", "K5 missed a delete of imported rows"); restore(MAPS + "MapsDb.kt", s)
     s = mut(TK + "TakeoutSchema.kt", "t.prio < s.prio", "t.prio <= s.prio"); ok(not check(tmp)["k5"], "a view that lets an import hide itself fails K5", "K5 missed a changed priority rule"); restore(TK + "TakeoutSchema.kt", s)
-    s = mut(NAV + "DayScreen.kt", 'INSIGHTS("Insights")', 'INSIGHT("Insights")'); ok(bool(check(tmp)["k6b"]), "a lost Day tab fails K6", "K6 missed a lost tab"); restore(NAV + "DayScreen.kt", s)
+    s = mut(NAV + "DayScreen.kt", 'INSIGHTS("Insights"', 'INSIGHT("Insights")'); ok(bool(check(tmp)["k6b"]), "a lost Day tab fails K6", "K6 missed a lost tab"); restore(NAV + "DayScreen.kt", s)
     s = mut(MAPS + "MapsDb.kt", "DB_VERSION = 6", "DB_VERSION = 5"); ok(not check(tmp)["k1"], "a database left at v5 fails K1", "K1 missed the version"); restore(MAPS + "MapsDb.kt", s)
     s = mut(TK + "TakeoutSchema.kt", "ALTER TABLE fixes ADD COLUMN source", "ALTER TABLE fixes ADD COLUMN src"); ok(not check(tmp)["k1"], "a lost source column fails K1", "K1 missed the source column"); restore(TK + "TakeoutSchema.kt", s)
     s = mut(TK + "TakeoutImporter.kt", "object TakeoutImporter {", "object TakeoutImporter {\n    val prefs = ctx.getSharedPreferences(\"x\", 0)"); ok(bool(check(tmp)["k4"]), "preferences of its own fail K4", "K4 missed new preferences"); restore(TK + "TakeoutImporter.kt", s)

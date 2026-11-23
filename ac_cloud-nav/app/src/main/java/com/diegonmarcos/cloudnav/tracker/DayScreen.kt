@@ -64,7 +64,15 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.Locale
 
-enum class DayTab(val label: String) { DAY("Day"), TRIPS("Trips"), PLACES("Places"), CITIES("Cities"), WORLD("World"), INSIGHTS("Insights"), IMPORT("Import") }
+/**
+ * #1863 the subpages in their order and groups: Day, Week, Month | World, Cities, Places, Trips, Insights | Export/Import. Places (the
+ * per-place ranking) is kept next to Cities (rule 16); Import is the Export/Import page.
+ */
+enum class DayTab(val label: String, val group: Int) {
+    DAY("Day", 0), WEEK("Week", 0), MONTH("Month", 0),
+    WORLD("World", 1), CITIES("Cities", 1), PLACES("Places", 1), TRIPS("Trips", 1), INSIGHTS("Insights", 1),
+    IMPORT("Export/Import", 2)
+}
 
 object DayTags {
     const val PREV = "day:prev"; const val NEXT = "day:next"; const val PICK = "day:pick"; const val ADD = "day:add"; const val MAP = "day:map"
@@ -87,7 +95,14 @@ data class DayUi(
     val steps: StepsTotal = StepsTotal(null, "not read yet"),
     /** #1853 what the Places / Cities / World rankings span: the last 30 days, or all of an imported history. */
     val rangeLabel: String = "last 30 days",
-)
+    /** #1863 the cached per-date digests (calendar blocks, tracks), the World and Cities tables, and the Export/Import page's state. */
+    val digests: List<DayDigest> = emptyList(), val world: List<WorldRow> = emptyList(), val cityTable: List<CityRow> = emptyList(),
+    val cacheLine: String = "", val counts: Map<String, Long> = emptyMap(), val dataStatus: String? = null,
+    val dedupe: DedupePlan? = null, val rangePreview: Pair<Pair<Long, Long>, RangePlan>? = null,
+) {
+    private val byDate: Map<LocalDate, DayDigest> by lazy { digests.associateBy { it.date } }
+    fun digestOf(d: LocalDate): DayDigest? = byDate[d]
+}
 
 class DayActions(
     val onDate: (LocalDate) -> Unit = {}, val onPickDate: () -> Unit = {},
@@ -101,6 +116,8 @@ class DayActions(
     val onOpenMap: (Place) -> Unit = {},
     /** #1853 Import tab: the system pickers (a Takeout zip or JSON file; a folder) and cancel. */
     val onImportFile: () -> Unit = {}, val onImportFolder: () -> Unit = {}, val onImportCancel: () -> Unit = {},
+    /** #1863 a calendar day or a table's last-visit date opens that day; the Export/Import page's actions. */
+    val onOpenDay: (LocalDate) -> Unit = {}, val data: DataActions = DataActions(),
 )
 
 object DayFormat {
@@ -121,22 +138,33 @@ object DayFormat {
 fun DayScreen(ui: DayUi, tab: DayTab, onTab: (DayTab) -> Unit, actions: DayActions, zone: ZoneId = ZoneId.systemDefault()) {
     val p = LocalKitPalette.current
     Column(Modifier.fillMaxSize().background(p.surface)) {
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(5.dp),
+            verticalAlignment = Alignment.CenterVertically) {
             for (t in DayTab.values()) {
+                // a thin divider between the groups (calendar | rankings | data)
+                if (t.ordinal > 0 && DayTab.values()[t.ordinal - 1].group != t.group) Box(Modifier.size(width = 1.dp, height = 22.dp).background(p.textSecondary.copy(alpha = 0.4f)))
                 val on = t == tab
                 Text(t.label, Modifier.testTag(DayTags.tab(t)).clip(CircleShape).background(if (on) p.accent else p.surfaceSelected)
-                    .clickable { onTab(t) }.padding(horizontal = 14.dp, vertical = 7.dp),
+                    .clickable { onTab(t) }.padding(horizontal = 12.dp, vertical = 6.dp),
                     color = if (on) p.surface else p.textPrimary, style = MaterialTheme.typography.labelLarge)
             }
         }
         when (tab) {
             DayTab.DAY -> DayTabView(ui, actions, zone)
+            DayTab.WEEK -> WeekTabView(ui, actions, zone)
+            DayTab.MONTH -> MonthTabView(ui, actions, zone)
             DayTab.TRIPS -> TripsTabView(ui, actions)
-            DayTab.INSIGHTS -> InsightsTabView(ui)
-            DayTab.IMPORT -> ImportTabView(actions)
-            DayTab.PLACES -> ListTab("Places", "The places you stayed at, by time spent (${ui.rangeLabel}).", ui.places.map { Triple(it.label, listOfNotNull(it.city, it.country).joinToString(", ") + "  ·  " + it.visits + " visits", DayFormat.hours(it.totalMs)) })
-            DayTab.CITIES -> ListTab("Cities", "Cities by time spent (${ui.rangeLabel}).", ui.cities.map { Triple(it.city, listOfNotNull(it.country).joinToString(", ") + "  ·  " + it.days + " days", DayFormat.hours(it.totalMs)) })
-            DayTab.WORLD -> ListTab("World", "Countries by time spent (${ui.rangeLabel}).", ui.countries.map { Triple(it.country, it.days.toString() + " days", DayFormat.hours(it.totalMs)) })
+            DayTab.INSIGHTS -> InsightsTabView(ui) { onTab(DayTab.IMPORT); actions.data.onDedupePreview() }
+            DayTab.IMPORT -> ExportImportView(ui, actions, zone)
+            // #1863 sortable tables; every field of the old lists stays (place, city, country, visits, days, time), more columns are added
+            DayTab.PLACES -> SortableTable("places", "Places", "The places you stayed at, by time spent (${ui.rangeLabel}). Tap a header to sort.", TableSort.PLACES, ui.places, "time", null, actions.onOpenDay,
+                listOf("${ui.places.size} places  ·  " + DayFormat.hours(ui.places.sumOf { it.totalMs }) + "  ·  " + ui.places.sumOf { it.visits } + " visits"))
+            DayTab.CITIES -> SortableTable("cities", "Cities", "Cities by time spent (${ui.rangeLabel}): continent and country first. Tap a header to sort, a last visit to open that day.",
+                TableSort.CITIES, ui.cityTable, "time", { it.lastVisit }, actions.onOpenDay,
+                listOf("${ui.cities.size} cities  ·  " + ui.cities.sumOf { it.days } + " city-days  ·  " + DayFormat.hours(ui.cities.sumOf { it.totalMs })))
+            DayTab.WORLD -> SortableTable("world", "World", "Countries by time spent (${ui.rangeLabel}): continent first. Tap a header to sort, a last visit to open that day.",
+                TableSort.WORLD, ui.world, "time", { it.lastVisit }, actions.onOpenDay,
+                listOf("${ui.countries.size} countries  ·  ${ui.world.map { it.continent }.distinct().size} continents  ·  " + ui.countries.sumOf { it.days } + " country-days  ·  " + DayFormat.hours(ui.countries.sumOf { it.totalMs })))
         }
     }
 }
@@ -158,6 +186,7 @@ private fun DayTabView(ui: DayUi, a: DayActions, zone: ZoneId) {
         LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp).testTag(DayTags.LIST), state = listState, verticalArrangement = Arrangement.spacedBy(2.dp)) {
             item { DatePicker(ui, a) }
             item { SummaryBar(DayDetails.bar(ui.day, ui.steps)) { mapDay = true } }
+            item { DayCalendar(ui, zone) }
             item { RouteMap(model, onPin) }
             item { SummaryRow(ui) }
             if (ui.loading && ui.day.isEmpty()) item { Text("Loading...", color = p.textSecondary) }
@@ -185,8 +214,21 @@ private fun DayTabView(ui: DayUi, a: DayActions, zone: ZoneId) {
     if (adding && r != null) AddVisitDialog(r, zone, onDismiss = { adding = false }) { s, e, n -> a.onAddVisit(s, e, n); adding = false }
 }
 
-/** Items above the first segment row of the day list: date picker, summary bar, map, mode chips. */
-private const val HEADER_ITEMS = 4
+/** Items above the first segment row of the day list: date picker, summary bar, day calendar (#1863), map, mode chips. */
+private const val HEADER_ITEMS = 5
+
+/** #1863 the Day page's calendar box: the day's 24 h with one rectangle per segment in its state's colour (the Week / Month boxes' model). */
+@Composable
+private fun DayCalendar(ui: DayUi, zone: ZoneId) {
+    val a = DayTimeline.dayStart(ui.date, zone); val b = DayTimeline.dayStart(ui.date.plusDays(1), zone)
+    val blocks = remember(ui.day) { if (ui.day.isEmpty()) emptyList() else DaySegments.blocks(ui.day, a, minOf(b, maxOf(a, System.currentTimeMillis()))) }
+    val loc = ui.day.filterIsInstance<DaySeg.Stay>().firstOrNull { it.place?.located == true }?.place
+    Column(Modifier.fillMaxWidth().padding(vertical = 4.dp).testTag("day:calendar"), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        DayNightStrip(DaySegments.daylight(ui.date, loc?.lat, loc?.lon, zone), a, b, zone = zone)
+        ActivityStrip(blocks, a, b)
+        StateLegend()
+    }
+}
 
 @Composable
 private fun DatePicker(ui: DayUi, a: DayActions) {
@@ -459,13 +501,23 @@ private fun TripsTabView(ui: DayUi, actions: DayActions) {
 }
 
 @Composable
-private fun InsightsTabView(ui: DayUi) {
+private fun InsightsTabView(ui: DayUi, onDedupe: () -> Unit = {}) {
     val p = LocalKitPalette.current
     val week = ui.stats.takeLast(7)
     val avgSleep = week.filter { it.sleepMs > 0 }.map { it.sleepMs }.average().let { if (it.isNaN()) 0L else it.toLong() }
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item { KitSectionHeader("Insights", "Sleep and walking, per day.") }
         item { Text("Average sleep (7 days): " + DayFormat.hours(avgSleep), Modifier.testTag("day:insight:sleep"), color = p.textPrimary) }
+        // #1863 the totals over every cached day, and the way to the duplicates clean-up
+        item {
+            KitCard {
+                val tracked = ui.digests.count { it.tracks }
+                Text("$tracked days with tracks of ${ui.digests.size}  ·  " + StepsFormat.distance(ui.stats.sumOf { it.summary.totalDistanceM }) + "  ·  " +
+                    ui.stats.sumOf { it.summary.visits } + " visits  ·  " + ui.countries.size + " countries  ·  " + ui.cities.size + " cities", color = p.textPrimary, fontSize = KitStoreRow.caption)
+                if (ui.cacheLine.isNotBlank()) Text("Cache: " + ui.cacheLine, color = p.textSecondary, fontSize = KitStoreRow.caption)
+                TextButton(onClick = onDedupe, modifier = Modifier.testTag("day:insight:dedupe")) { Text("Delete duplicates...") }
+            }
+        }
         item { Bars("Hours slept", week.map { it.date.dayOfMonth.toString() to it.sleepMs / 3_600_000.0 }, "h") }
         item { Bars("Walking distance", week.map { it.date.dayOfMonth.toString() to it.walkM / 1000.0 }, "km") }
     }
@@ -487,26 +539,5 @@ private fun Bars(title: String, v: List<Pair<String, Double>>, unit: String) {
             }
         }
         Text("Per day, $unit", color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
-    }
-}
-
-@Composable
-private fun ListTab(title: String, sub: String, rows: List<Triple<String, String, String>>) {
-    val p = LocalKitPalette.current
-    LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        item { KitSectionHeader(title, sub) }
-        if (rows.isEmpty()) item { Text("Nothing yet.", color = p.textSecondary) }
-        items(rows.size) { i ->
-            val (a, b, c) = rows[i]
-            KitCard {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(a, color = p.textPrimary, style = MaterialTheme.typography.titleSmall)
-                        Text(b, color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
-                    }
-                    Text(c, color = p.accent)
-                }
-            }
-        }
     }
 }

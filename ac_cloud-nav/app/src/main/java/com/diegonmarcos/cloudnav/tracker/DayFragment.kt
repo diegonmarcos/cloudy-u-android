@@ -21,8 +21,9 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * Explored > Trips: the Trip dashboards over THE timeline store (Day first, then Trips, Places, Cities, World, Insights), read through
- * the same [DayTimeline] / [Aggregates] the fleet door serves. Owner corrections go to [CorrectionStore] and the list is rebuilt.
+ * Explored > Trips: the Trip dashboards over THE timeline store (#1863 order: Day, Week, Month | World, Cities, Places, Trips, Insights |
+ * Export/Import), read through the same [DayTimeline] / [Aggregates] the fleet door serves, past days from the [ExploredCache].
+ * Owner corrections go to [CorrectionStore] and the list is rebuilt.
  */
 class DayFragment : KitComposeFragment() {
     private val zone: ZoneId = ZoneId.systemDefault()
@@ -74,11 +75,14 @@ class DayFragment : KitComposeFragment() {
                 val near = ui.day.filterIsInstance<DaySeg.Stay>().firstOrNull { it.place?.located == true }?.place
                 correct(Edits.addVisit(a, b, name, near))
             },
+            onOpenDay = { d -> tab = DayTab.DAY; load(d) },
+            data = dataActions(),
         ), zone)
     }
 
     private fun correct(c: Correction) {
         CorrectionStore(requireContext()).add(c)
+        runCatching { ExploredCache.markDirty(MapsDbDigestBackend(requireContext().applicationContext), c.startMs, c.endMs, zone) }   // #1863 the corrected day is recomputed
         load(ui.date)
     }
 
@@ -88,7 +92,7 @@ class DayFragment : KitComposeFragment() {
             val today = LocalDate.now(zone)
             ui = ui.copy(date = date, today = today, loading = true)
             val next = withContext(Dispatchers.IO) { runCatching { compute(app, date, today) }.getOrNull() }
-            ui = next ?: ui.copy(loading = false)
+            ui = next?.copy(dataStatus = ui.dataStatus, dedupe = ui.dedupe, rangePreview = ui.rangePreview) ?: ui.copy(loading = false)
         }
     }
 
@@ -110,16 +114,81 @@ class DayFragment : KitComposeFragment() {
         // #1853 `named` has one entry per row (null for a move), so a stay takes the entry at its own index; a running counter over stays only
         // handed every stay after the first move the previous row's (null) place, and the day showed "Missing visit" for it
         val dayList = raw.mapIndexed { i, s -> if (s is DaySeg.Stay) s.copy(place = named[i]) else s }.let { l -> DayTimeline.fillLinks(l) }
-        val (dates, rankDates) = AggregatesStore.windowDates(first, today)
-        val stats = Aggregates.perDay(store, dates, now, zone, corrections, memory)
+        // #1863 every past date comes from its cached digest (recomputed only when its inputs changed); today is live; the aggregates fold the digests
+        val ex = AggregatesStore.explore(app, store, first, today, now, zone)
         val homeSet = HomeStore(app).get()
-        val trips = Trips.group(stats, homeSet)
-        val month = rankDates.map { d -> DayTimeline.build(store, DayTimeline.dayStart(d, zone), minOf(DayTimeline.dayStart(d.plusDays(1), zone), now), corrections, memory) }
-        val places = Rankings.places(month); val cities = Rankings.cities(month); val countries = Rankings.countries(month)
-        runCatching { AggregatesStore.persist(app, now, stats, trips, places, cities, countries) }   // #1851 the aggregates live in the one store
-        return DayUi(date, today, dayList, stats, places, cities, countries, false, fixes, trips, homeSet,
-            stepsTotal(app, store, date, a, b), if (first.isBefore(today.minusDays(Trips.HOME_WINDOW_DAYS - 1L))) "all recorded and imported history" else "last 30 days")
+        return DayUi(date, today, dayList, ex.stats, ex.places, ex.cities, ex.countries, false, fixes, ex.trips, homeSet,
+            stepsTotal(app, store, date, a, b), if (first.isBefore(today.minusDays(Trips.HOME_WINDOW_DAYS - 1L))) "all recorded and imported history" else "last 30 days",
+            digests = ex.cache.digests, world = ex.world, cityTable = ex.cityTable,
+            cacheLine = "${ex.cache.reused} days from cache, ${ex.cache.recomputed.size} recomputed, ${ex.cache.live.size} live",
+            counts = runCatching { ExploredStore.counts(app) }.getOrDefault(emptyMap()))
     }
+
+    // --- #1863 Export / Import page ---
+
+    private var pendingExport: Pair<ExportFormat, Pair<Long, Long>?>? = null
+    private val pickExport = registerForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
+        val job = pendingExport; pendingExport = null
+        if (uri != null && job != null) background("Export") { app ->
+            val b = ExploredStore.bundle(app, job.second?.first, job.second?.second, zone)
+            ExploredStore.write(app, uri, if (job.first == ExportFormat.KMZ) ExploredExport.kmz(b, zone) else ExploredExport.toJson(b).toByteArray(Charsets.UTF_8))
+            "Exported ${b.segments.size} segments and ${b.fixes.size} positions as ${job.first.name}"
+        }
+    }
+    private val pickRestore = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) background("Restore") { app ->
+            val text = app.contentResolver.openInputStream(uri)?.use { it.readBytes().toString(Charsets.UTF_8) } ?: error("cannot read the file")
+            "Restored ${ExploredStore.restore(app, text, zone)} rows"
+        }
+    }
+
+    /** Runs [work] off the main thread, shows its line on the Export / Import page and reloads. */
+    private fun background(what: String, work: (android.content.Context) -> String) {
+        val app = requireContext().applicationContext
+        ui = ui.copy(dataStatus = "$what: running...")
+        viewLifecycleOwner.lifecycleScope.launch {
+            val line = withContext(Dispatchers.IO) { runCatching { work(app) }.fold({ it }, { "$what failed: ${it.message}" }) }
+            ui = ui.copy(dataStatus = line)
+            load(ui.date)
+        }
+    }
+
+    private fun dataActions() = DataActions(
+        onExport = { fmt, range ->
+            pendingExport = fmt to range
+            val d = range?.let { java.time.Instant.ofEpochMilli(it.first).atZone(zone).toLocalDate() to java.time.Instant.ofEpochMilli(it.second - 1).atZone(zone).toLocalDate() }
+            pickExport.launch(ExploredExport.fileName(d?.first, d?.second, if (fmt == ExportFormat.KMZ) "kmz" else "json"))
+        },
+        onRestore = { pickRestore.launch(arrayOf("application/json", "*/*")) },
+        onDedupePreview = {
+            val app = requireContext().applicationContext
+            ui = ui.copy(dataStatus = "Looking for duplicates...")
+            viewLifecycleOwner.lifecycleScope.launch {
+                val p = withContext(Dispatchers.IO) { runCatching { ExploredStore.dedupePlan(app, zone) }.getOrNull() }
+                ui = ui.copy(dedupe = p, dataStatus = if (p == null) "Duplicate search failed" else "${p.total} duplicates found")
+            }
+        },
+        onDedupeConfirm = { p -> ui = ui.copy(dedupe = null); background("Delete duplicates") { app -> "Deleted ${ExploredStore.applyDedupe(app, p, zone)} duplicates" } },
+        onDedupeCancel = { ui = ui.copy(dedupe = null) },
+        onRangePreview = { f, t ->
+            val app = requireContext().applicationContext
+            viewLifecycleOwner.lifecycleScope.launch {
+                val p = withContext(Dispatchers.IO) { runCatching { ExploredStore.rangePreview(app, f, t) }.getOrNull() }
+                ui = ui.copy(rangePreview = p?.let { (f to t) to it })
+            }
+        },
+        onRangeConfirm = { f, t -> ui = ui.copy(rangePreview = null); background("Delete by dates") { app -> val p = ExploredStore.deleteRange(app, f, t, zone); "Deleted ${p.deleteIds.size} segments, cut ${p.updates.size}, removed ${p.fixIds.size} positions" } },
+        onRangeCancel = { ui = ui.copy(rangePreview = null) },
+        onPickRange = { cb ->
+            val d = ui.date
+            DatePickerDialog(requireContext(), { _, y, m, day ->
+                val from = LocalDate.of(y, m + 1, day)
+                DatePickerDialog(requireContext(), { _, y2, m2, d2 -> val to = LocalDate.of(y2, m2 + 1, d2); cb(minOf(from, to), maxOf(from, to)) }, y, m, day).show()
+            }, d.year, d.monthValue - 1, d.dayOfMonth).show()
+        },
+        onDeleteAll = { background("Delete all") { app -> ExploredStore.deleteAll(app); "Deleted all location data and the cache" } },
+        onRefresh = { background("Refresh") { app -> ExploredStore.refresh(app, System.currentTimeMillis(), zone); "Recomputed every day from the stored data" } },
+    )
 
     /** The day's steps from the step counter (recorded by the tracker engine into the store), else n/a and why. */
     private fun stepsTotal(app: android.content.Context, store: List<com.diegonmarcos.cloudnav.maps.TlSegment>, date: LocalDate, a: Long, b: Long): StepsTotal {

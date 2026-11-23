@@ -22,8 +22,8 @@ def load(top): return {f: open(os.path.join(top, T, f), errors="ignore").read() 
 FIELDS = {
   "DayScreen.kt": ["Total km", "Total steps", "Time active", "Time stopped", "Map day", "Visits", "Geo code", "Accuracy", "Address", "Arrival",
                    "Departure", "Time spent", "Arrived by", "Visits today", "Data source", "Open in map", "Copy geo code", "Copy full address",
-                   "Edit place", "Split", "Delete", "Edit mode", "Add visit", "Transport mode", 'DAY("Day")', 'TRIPS("Trips")', 'PLACES("Places")',
-                   'CITIES("Cities")', 'WORLD("World")', 'INSIGHTS("Insights")'],
+                   "Edit place", "Split", "Delete", "Edit mode", "Add visit", "Transport mode", 'DAY("Day"', 'TRIPS("Trips"', 'PLACES("Places"',
+                   'CITIES("Cities"', 'WORLD("World"', 'INSIGHTS("Insights"'],
   "TrackerScreens.kt": ["Timeline", "Steps per day", "Sleep per day", "Grant access", "TIMELINE", "SLEEP_CHART"],
 }
 def check(top):
