@@ -12,6 +12,10 @@ const val BODY_CACHE_ID_PREFIX_SQL: String =
 /** DELETE for [EmailBodyDao.deleteAll], shared with its JVM test. */
 const val BODY_CACHE_CLEAR_SQL: String = "DELETE FROM email_bodies"
 
+/** #1869 v34: the body caps add up the stored `bytes` column; shared with the JVM test. */
+const val BODY_BYTES_FOR_ACCOUNT_SQL: String = "SELECT COALESCE(SUM(bytes), 0) FROM email_bodies WHERE accountId = :accountId"
+const val BODY_BYTES_TOTAL_SQL: String = "SELECT COALESCE(SUM(bytes), 0) FROM email_bodies"
+
 /** One cached body as the eviction plan sees it: [sortKey] is the message's receive time (the fetch time when the
  *  list row is gone or undated), [bytes] its stored size. */
 data class BodyCacheRow(val id: String, val sortKey: Long, val bytes: Long)
@@ -23,7 +27,7 @@ interface EmailBodyDao {
     @Query(
         "SELECT b.id AS id, " +
             "COALESCE(NULLIF((SELECT MAX(e.sortKey) FROM emails e WHERE e.accountId = b.accountId AND e.id = b.id), 0), b.fetchedAt) AS sortKey, " +
-            "(LENGTH(b.bodyJson) + LENGTH(b.inlineImagesJson)) AS bytes " +
+            "b.bytes AS bytes " +
             "FROM email_bodies b WHERE b.accountId = :accountId",
     )
     suspend fun bodyRows(accountId: String): List<BodyCacheRow>
@@ -38,11 +42,12 @@ interface EmailBodyDao {
     )
     suspend fun fetchedBefore(accountId: String, cutoff: Long): List<String>
 
-    /** Stored body bytes of one account (the per-account cap of #1763 counts these). */
-    @Query("SELECT COALESCE(SUM(LENGTH(bodyJson) + LENGTH(inlineImagesJson)), 0) FROM email_bodies WHERE accountId = :accountId")
+    /** Stored body bytes of one account (the per-account cap of #1763 counts these). #1869 v34: the stored `bytes`
+     *  column, so the cap reads no body text. */
+    @Query(BODY_BYTES_FOR_ACCOUNT_SQL)
     suspend fun bytesForAccount(accountId: String): Long
 
-    @Query("SELECT COALESCE(SUM(LENGTH(bodyJson) + LENGTH(inlineImagesJson)), 0) FROM email_bodies")
+    @Query(BODY_BYTES_TOTAL_SQL)
     suspend fun totalBytes(): Long
 
     @Upsert

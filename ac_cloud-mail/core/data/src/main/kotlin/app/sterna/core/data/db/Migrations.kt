@@ -433,3 +433,33 @@ val MIGRATION_32_33 = object : Migration(32, 33) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_email_mailboxes_accountId_mailboxId` ON `email_mailboxes` (`accountId`, `mailboxId`)")
     }
 }
+
+/** The v34 `email_parts` table and its index, exactly as Room generates them for [EmailPartEntity]; shared with the JVM test. */
+const val EMAIL_PARTS_CREATE_SQL: String =
+    "CREATE TABLE IF NOT EXISTS `email_parts` (`accountId` TEXT NOT NULL, `emailId` TEXT NOT NULL, `partKey` TEXT NOT NULL, " +
+        "`cid` TEXT, `type` TEXT, `name` TEXT, `size` INTEGER NOT NULL, `inline` INTEGER NOT NULL, `file` TEXT, " +
+        "`fileBytes` INTEGER NOT NULL, PRIMARY KEY(`accountId`, `emailId`, `partKey`))"
+const val EMAIL_PARTS_INDEX_SQL: String =
+    "CREATE INDEX IF NOT EXISTS `index_email_parts_accountId_emailId_cid` ON `email_parts` (`accountId`, `emailId`, `cid`)"
+
+/**
+ * v33 -> v34 (#1869 steps 5-7): `email_bodies` gains `fragment`, `fragmentVersion`, `inlineState` and `bytes`, and the new
+ * `email_parts` table indexes attachment metadata and inline image files.
+ *
+ * ADDITIVE, NEVER DESTRUCTIVE: the database falls back to a destructive rebuild on a missing step, which would wipe the
+ * outbox and the local drafts, so this step is registered in [SternaDatabase.ALL_MIGRATIONS]. No body is rewritten:
+ * `fragment` starts NULL (built lazily), `fragmentVersion` 0 (older than any builder), `inlineState` 0 = UNKNOWN (classified
+ * lazily on the next read or sweep). `bytes` is filled ONCE here with the size the caps measured before (`LENGTH` of the two
+ * JSON columns), so every later cap query is `SUM(bytes)` and reads no body text.
+ */
+val MIGRATION_33_34 = object : Migration(33, 34) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `email_bodies` ADD COLUMN `fragment` TEXT")
+        db.execSQL("ALTER TABLE `email_bodies` ADD COLUMN `fragmentVersion` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `email_bodies` ADD COLUMN `inlineState` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `email_bodies` ADD COLUMN `bytes` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("UPDATE `email_bodies` SET `bytes` = LENGTH(`bodyJson`) + LENGTH(`inlineImagesJson`)")
+        db.execSQL(EMAIL_PARTS_CREATE_SQL)
+        db.execSQL(EMAIL_PARTS_INDEX_SQL)
+    }
+}
