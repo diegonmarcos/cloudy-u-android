@@ -140,7 +140,7 @@ class ExploredCacheTest {
         assertNotEquals(base, ExploredCache.checksum(d.plusDays(1), slice, emptyList(), emptyList(), zone))
     }
 
-    @Test fun `the parity check bites: a dropped stay or a changed digest differs from the full recompute (mutation)`() {
+    @Test fun `the parity check bites, a dropped stay or a changed digest differs from the full recompute (mutation)`() {
         val be = MemoryDigestBackend(); val s = store()
         val r = ExploredCache.refresh(be, s, dates, now, zone)
         val month = fullDays(s)

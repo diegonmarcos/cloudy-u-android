@@ -79,7 +79,7 @@ class ExploredDataTest {
 
     // --- duplicates ---
 
-    @Test fun `duplicates: exact and overlapping copies go, one copy is kept, totals equal a clean import`() {
+    @Test fun `duplicates, exact and overlapping copies go, one copy is kept, totals equal a clean import`() {
         val c = clean()
         val exactCopies = c.map { it.copy(id = it.id + 1000, seg = it.seg.copy(source = "takeout-semantic", ref = "x${it.id}"), prio = 2) }
         val shifted = c.filter { it.seg.kind != TlKind.SLEEP }.map { r ->
