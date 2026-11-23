@@ -2,6 +2,7 @@ package app.sterna.mail
 
 import android.app.Application
 import android.content.Context
+import android.os.Build
 import android.util.Log
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
@@ -10,6 +11,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -71,13 +73,15 @@ class MailCoreSyncWorker(context: Context, params: WorkerParameters) : Coroutine
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(PERIODIC, ExistingPeriodicWorkPolicy.UPDATE, request)
         }
 
-        /** One pass as soon as there is a network: app open. */
+        /** One pass as soon as there is a network: app open. #1869 expedited on Android 12+ (see OfflineSyncWorker.runNow). */
         fun runNow(context: Context) {
-            val request = OneTimeWorkRequestBuilder<MailCoreSyncWorker>()
+            val builder = OneTimeWorkRequestBuilder<MailCoreSyncWorker>()
                 .setConstraints(constraints())
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, BACKOFF_SECONDS, TimeUnit.SECONDS)
-                .build()
-            WorkManager.getInstance(context).enqueueUniqueWork(NOW, ExistingWorkPolicy.KEEP, request)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                builder.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            }
+            WorkManager.getInstance(context).enqueueUniqueWork(NOW, ExistingWorkPolicy.KEEP, builder.build())
         }
 
         /** The rest of a walk a pass's budget did not finish. */

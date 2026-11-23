@@ -33,6 +33,22 @@ class FullSyncWorkerWiringTest {
         assertEquals(15L, FullSyncSchedule.periodMinutes(false))
     }
 
+    @Test fun `#1869 the start runs are expedited on Android 12+, with the constraint an expedited job accepts`() {
+        for (file in listOf("mail/OfflineSyncWorker.kt", "mail/MailCoreSyncWorker.kt")) {
+            val w = src(file)
+            val runNow = w.substringAfter("fun runNow(context: Context) {").substringBefore("\n        }\n")
+            assertTrue("$file: expedited, normal work when out of quota", "builder.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)" in runNow)
+            assertTrue("$file: only from Android 12 (below it expedited work needs getForegroundInfo)", "if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {" in runNow)
+        }
+        val w = src("mail/OfflineSyncWorker.kt")
+        assertTrue("the expedited request carries the network constraint only", ".setConstraints(expeditedConstraints())" in w)
+        val expedited = w.substringAfter("private fun expeditedConstraints()").substringBefore(".build()")
+        assertTrue("network" , "setRequiredNetworkType(NetworkType.CONNECTED)" in expedited)
+        assertTrue("WorkManager rejects battery-not-low on expedited work", "setRequiresBatteryNotLow" !in expedited)
+        assertTrue("the periodic job keeps battery-not-low", "setRequiresBatteryNotLow(true)" in w.substringAfter("private fun constraints()").substringBefore("private fun expeditedConstraints()"))
+        assertTrue("the inline images are logged per pass", "inline=\${it.inlineImages}" in w)
+    }
+
     @Test fun `every trigger of the ticket starts a run`() {
         val push = src("push/PushService.kt")
         assertTrue("a push state change", Regex("""onAccountChanged[\s\S]*?OfflineSyncWorker\.runNow\(this\)""").containsMatchIn(push))

@@ -2,6 +2,7 @@ package app.sterna.mail
 
 import android.app.Application
 import android.content.Context
+import android.os.Build
 import android.util.Log
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
@@ -10,6 +11,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -58,7 +60,7 @@ class OfflineSyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                     Log.i(
                         TAG,
                         "full sync ${credentials.id}: folders=${it.folders} headerPages=${it.headerPages} bodies=${it.bodies} " +
-                            "attachments=${it.attachments} evicted=${it.evicted} errors=${it.errors} stop=${it.stop} pending=${it.morePending}",
+                            "inline=${it.inlineImages} attachments=${it.attachments} evicted=${it.evicted} errors=${it.errors} stop=${it.stop} pending=${it.morePending}",
                     )
                     if (it.errors > 0) failed = true
                     if (it.morePending) pending = true
@@ -87,6 +89,11 @@ class OfflineSyncWorker(context: Context, params: WorkerParameters) : CoroutineW
             .setRequiresBatteryNotLow(true)
             .build()
 
+        /** Expedited work accepts the network constraint only (WorkManager rejects battery-not-low on it). */
+        private fun expeditedConstraints() = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
         /**
          * Idempotent periodic schedule: every 15 minutes without a live push connection, every few hours with one (the push
          * state change then triggers [runNow]). Updated in place when [hasPush] changes.
@@ -100,13 +107,22 @@ class OfflineSyncWorker(context: Context, params: WorkerParameters) : CoroutineW
                 .enqueueUniquePeriodicWork(PERIODIC, ExistingPeriodicWorkPolicy.UPDATE, request)
         }
 
-        /** One run as soon as there is a network: app open, connectivity regain, push state change, app update, setting change. */
+        /**
+         * One run as soon as there is a network: app open, connectivity regain, push state change, app update, setting change.
+         * #1869 expedited on Android 12+ (out of quota it runs as normal work), so the window starts warming at once. An
+         * expedited request may carry the network constraint only; battery saver still ends the run at each step of the
+         * engine ([app.sterna.core.data.mail.FullSync]).
+         */
         fun runNow(context: Context) {
-            val request = OneTimeWorkRequestBuilder<OfflineSyncWorker>()
-                .setConstraints(constraints())
+            val builder = OneTimeWorkRequestBuilder<OfflineSyncWorker>()
+                .setConstraints(expeditedConstraints())
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, FullSyncSchedule.BACKOFF_SECONDS, TimeUnit.SECONDS)
-                .build()
-            WorkManager.getInstance(context).enqueueUniqueWork(NOW, ExistingWorkPolicy.KEEP, request)
+            // Below Android 12 expedited work runs as a foreground service, which needs getForegroundInfo(); the
+            // CoroutineWorker default throws "Not implemented" (the PushFetchWorker rule).
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                builder.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            }
+            WorkManager.getInstance(context).enqueueUniqueWork(NOW, ExistingWorkPolicy.KEEP, builder.build())
         }
 
         /** The next chunk of an unfinished window, queued by a run that spent its budget. */
