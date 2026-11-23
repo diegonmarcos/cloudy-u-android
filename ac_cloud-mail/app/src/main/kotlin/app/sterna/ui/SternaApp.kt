@@ -468,9 +468,7 @@ private fun MainNavHost(
             // half-animated open/close (#100).
             enterTransition = {
                 // #1869 step 10: no 200 ms fade over a page whose snapshot the tap already read (it paints at once).
-                if (messageFadeDisabled || !motionEnabled) EnterTransition.None
-                else if (readerSnapshotReady(readerHandoff, targetState.arguments)) EnterTransition.None
-                else fadeIn(tween(200))
+                if (messageFadeDisabled || !motionEnabled) EnterTransition.None else if (readerSnapshotReady(readerHandoff, targetState.arguments)) EnterTransition.None else fadeIn(tween(200))
             },
             popExitTransition = {
                 if (messageFadeDisabled || !motionEnabled) ExitTransition.None else fadeOut(tween(200))

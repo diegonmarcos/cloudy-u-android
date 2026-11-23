@@ -332,8 +332,7 @@ mutate S10 "$UI/MessageScreen.kt" '                setLayerType(if (useSoftwareL
 mutate S10 "$UI/ReaderViewPool.kt" '        reset(view)
 ' '' "a released view kept without reset"
 mutate S10 "$MD/ReaderHandoff.kt" 'fun holdable(body: MessageBody): Boolean = body.crypto == null || body.crypto is MessageCrypto.Locked' 'fun holdable(body: MessageBody): Boolean = true' "a decrypted body held in the handoff"
-mutate S10 "app/src/main/kotlin/app/sterna/ui/SternaApp.kt" '                else if (readerSnapshotReady(readerHandoff, targetState.arguments)) EnterTransition.None
-                else fadeIn(tween(200))' '                else EnterTransition.None' "the fade dropped for every page"
+mutate S10 "app/src/main/kotlin/app/sterna/ui/SternaApp.kt" ' else if (readerSnapshotReady(readerHandoff, targetState.arguments)) EnterTransition.None else fadeIn(tween(200))' ' else EnterTransition.None' "the fade dropped for every page"
 mutate P5 "$DBD/EmailBodyEntity.kt" '    val fetchedAt: Long,
 ' '' "the fetchedAt column dropped"
 mutate P5 "$DBD/EmailBodyDao.kt" 'suspend fun pruneForAccount(' 'suspend fun pruneGone(' "a body DAO query removed"
