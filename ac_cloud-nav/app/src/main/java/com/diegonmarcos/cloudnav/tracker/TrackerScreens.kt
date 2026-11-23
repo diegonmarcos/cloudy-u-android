@@ -13,6 +13,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.Icon
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -39,6 +46,8 @@ object TrackerTags {
     const val TIMELINE = "tracker:timeline"; const val PREV = "tracker:prev"; const val NEXT = "tracker:next"
     const val STEPS = "tracker:steps"; const val STEPS_CHART = "tracker:steps:chart"; const val STEPS_GRANT = "tracker:steps:grant"
     const val SLEEP = "tracker:sleep"; const val SLEEP_CHART = "tracker:sleep:chart"
+    const val STRIPS = "tracker:timeline:strips"; const val TOTALS = "tracker:timeline:totals"
+    fun modeIcon(i: Int) = "tracker:timeline:row:$i:mode"
     fun row(i: Int) = "tracker:timeline:row:$i"
     fun rowDetail(i: Int) = "tracker:timeline:row:$i:detail"
     fun stepsRow(date: String) = "tracker:steps:row:$date"
@@ -74,11 +83,21 @@ fun SimpleBarChart(bars: List<Float>, labels: List<String>, tag: String, modifie
     }
 }
 
-/** Tracker > Timeline: every STAY / MOVE of one day, as the provider's `tracker/segments` lists them. */
+/**
+ * Tracker > Timeline: every STAY / MOVE of one day, as the provider's `tracker/segments` lists them. #1862: a day/night strip (black to
+ * blue over 24 h, sunrise / sunset from the day's first located place, else a fixed curve), the activity strip of the same scale
+ * (sleep, idle, stay, move, no data; transport icons on moves; the sleep's city under it) with its legend, a totals line, then one
+ * card per row with aligned time columns, state and mode chips and every field the list had (times, place, address, coordinates,
+ * mode, distance, steps; start / end / duration and the source when opened).
+ */
 @Composable
 fun TrackerTimelineScreen(date: LocalDate, today: LocalDate, rows: List<TimelineRow>, loading: Boolean, onPrev: () -> Unit, onNext: () -> Unit, zone: ZoneId = ZoneId.systemDefault()) {
     val p = LocalKitPalette.current
-    LazyColumn(Modifier.fillMaxSize().background(p.surface).padding(horizontal = 16.dp).testTag(TrackerTags.TIMELINE), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    val from = DayTimeline.dayStart(date, zone); val to = DayTimeline.dayStart(date.plusDays(1), zone)
+    val blocks = remember(rows, date) { if (rows.isEmpty()) emptyList() else DaySegments.blocksOfRows(rows, from, to) }
+    val loc = rows.firstOrNull { it.lat != null && it.lon != null }
+    val daylight = remember(date, loc?.lat, loc?.lon) { DaySegments.daylight(date, loc?.lat, loc?.lon, zone) }
+    LazyColumn(Modifier.fillMaxSize().background(p.surface).padding(horizontal = 12.dp).testTag(TrackerTags.TIMELINE), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         item {
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("<", Modifier.testTag(TrackerTags.PREV).clickable(onClick = onPrev).padding(12.dp), color = p.accent, style = MaterialTheme.typography.titleLarge)
@@ -87,28 +106,81 @@ fun TrackerTimelineScreen(date: LocalDate, today: LocalDate, rows: List<Timeline
             }
         }
         item { KitSectionHeader("Timeline", "Every stay and move of the day: times, coordinates, address, mode, distance and steps.") }
+        item {
+            KitCard(Modifier.testTag(TrackerTags.STRIPS)) {
+                DayNightStrip(daylight, from, to, zone = zone)
+                Box(Modifier.height(4.dp))
+                ActivityStrip(blocks, from, to)
+                StateLegend(daylight = true)
+            }
+        }
+        if (rows.isNotEmpty()) item { TimelineTotals(rows, blocks) }
         if (loading && rows.isEmpty()) item { Text("Loading...", color = p.textSecondary) }
         else if (rows.isEmpty()) item { Text("No locations or activities recorded for this day.", color = p.textSecondary) }
-        items(rows.size) { i ->
-            val r = rows[i]
-            var open by remember { mutableStateOf(false) }   // #1851 each stay and move opens its detail
-            KitCard(Modifier.testTag(TrackerTags.row(i)).clickable { open = !open }) {
-                Row(Modifier.fillMaxWidth()) {
-                    Text(r.type + "  " + TrackerFormat.span(r, zone), Modifier.weight(1f), color = if (r.type == "MOVE") p.accent else p.textPrimary, style = MaterialTheme.typography.labelLarge)
-                    Text(r.mode, color = p.textSecondary, style = MaterialTheme.typography.labelMedium)
+        items(rows.size) { i -> TimelineCard(i, rows[i], zone) }
+        item { Box(Modifier.height(16.dp)) }
+    }
+}
+
+/** The day's totals: moving distance, steps, time per state, the sleep city. */
+@Composable
+private fun TimelineTotals(rows: List<TimelineRow>, blocks: List<Block>) {
+    val p = LocalKitPalette.current
+    val moves = rows.filter { it.type == "MOVE" }
+    val per = SegState.values().associateWith { st -> blocks.filter { it.state == st }.sumOf { it.durationMs } }
+    Row(Modifier.fillMaxWidth().testTag(TrackerTags.TOTALS).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Total("Distance", TrackerFormat.distance(moves.sumOf { it.distanceM }), p.textPrimary)
+        Total("Steps", TrackerFormat.n(moves.sumOf { it.steps }), p.textPrimary)
+        Total("Moves", moves.size.toString(), stateColor(SegState.MOVE))
+        Total("Stays", (rows.size - moves.size).toString(), stateColor(SegState.STAY))
+        for (st in listOf(SegState.SLEEP, SegState.IDLE, SegState.STAY, SegState.MOVE)) if ((per[st] ?: 0L) > 0) Total(st.label, StepsFormat.duration(per[st] ?: 0L), stateColor(st))
+        DaySegments.sleepCities(blocks).firstOrNull()?.let { Total("Slept in", it.second, stateColor(SegState.SLEEP)) }
+    }
+}
+
+@Composable
+private fun Total(label: String, value: String, color: androidx.compose.ui.graphics.Color) {
+    val p = LocalKitPalette.current
+    Column(Modifier.clip(MaterialTheme.shapes.small).background(p.surfaceSelected).padding(horizontal = 8.dp, vertical = 5.dp)) {
+        Text(label, color = p.textSecondary, style = MaterialTheme.typography.labelSmall)
+        Text(value, color = color, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+/** One STAY / MOVE: a time column (start over end), a state bar, the chips (type, mode with its icon, duration), place, address, coordinates, distance and steps. */
+@Composable
+private fun TimelineCard(i: Int, r: TimelineRow, zone: ZoneId) {
+    val p = LocalKitPalette.current
+    var open by remember { mutableStateOf(false) }   // #1851 each stay and move opens its detail
+    val st = DaySegments.stateOf(r)
+    val mode = if (r.type == "MOVE") Mode.parse(r.mode) else null
+    KitCard(Modifier.testTag(TrackerTags.row(i)).clickable { open = !open }) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+            Column(Modifier.width(46.dp)) {
+                Text(TrackerFormat.time(r.startMs, zone), color = p.textPrimary, style = MaterialTheme.typography.labelLarge, fontFamily = FontFamily.Monospace)
+                Text(TrackerFormat.time(r.endMs, zone), color = p.textSecondary, style = MaterialTheme.typography.labelMedium, fontFamily = FontFamily.Monospace)
+            }
+            Box(Modifier.width(4.dp).height(44.dp).clip(MaterialTheme.shapes.extraSmall).background(stateColor(st)))
+            Column(Modifier.weight(1f).padding(start = 8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(r.type + "  " + TrackerFormat.span(r, zone), Modifier.weight(1f), color = if (r.type == "MOVE") p.accent else p.textPrimary, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+                    if (mode != null) Icon(painterResource(DayIcons.mode(mode)), DayFormat.modeLabel(mode), Modifier.size(16.dp).testTag(TrackerTags.modeIcon(i)), tint = DayFormat.modeColor(mode))
+                    Chip(r.mode, if (mode != null) DayFormat.modeColor(mode) else stateColor(st))
+                    Chip(StepsFormat.duration(r.endMs - r.startMs), p.textSecondary)
                 }
                 Text(r.title, color = p.textPrimary, style = MaterialTheme.typography.bodyMedium)
                 if (r.address.isNotBlank()) Text(r.address, color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
-                Text(TrackerFormat.coords(r.lat, r.lon), color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
+                Text(TrackerFormat.coords(r.lat, r.lon), color = p.textSecondary, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)
                 if (r.type == "MOVE") Text(TrackerFormat.distance(r.distanceM) + "  ·  " + TrackerFormat.n(r.steps) + " steps", color = p.textPrimary, style = MaterialTheme.typography.bodySmall)
+                if (r.mode == "sleep") Text("Slept in " + r.city.ifBlank { r.title }, color = stateColor(SegState.SLEEP), style = MaterialTheme.typography.bodySmall)
                 if (open) {
                     Text("Start " + StepsFormat.time(r.startMs, zone) + "  ·  End " + StepsFormat.time(r.endMs, zone) + "  ·  " + StepsFormat.duration(r.endMs - r.startMs),
                         Modifier.testTag(TrackerTags.rowDetail(i)), color = p.textPrimary, style = MaterialTheme.typography.bodySmall)
+                    Text("State: " + st.label + (if (r.city.isNotBlank()) "  ·  City: " + r.city else ""), color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
                     Text("Source: the one tracker store (fixes, steps, sleep)", color = p.textSecondary, style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
-        item { Box(Modifier.height(16.dp)) }
     }
 }
 
