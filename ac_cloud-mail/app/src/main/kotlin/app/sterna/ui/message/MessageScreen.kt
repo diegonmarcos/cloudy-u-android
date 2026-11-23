@@ -483,16 +483,6 @@ private fun MessagePager(
     // available here: it looks right.
     LaunchedEffect(activeMessage?.emailId) { textTools.dismiss() }
     val application = LocalContext.current.applicationContext as android.app.Application
-    // #1869 step 8: on settle, the bodies a swipe reaches next are prefetched in the PAGER's order (2 each side, as
-    // (account, id) pairs): a grouped or unified list pages across folders and accounts, which no folder order follows.
-    LaunchedEffect(settledEntry) {
-        val settled = settledEntry ?: return@LaunchedEffect
-        if (pageCount <= 1) return@LaunchedEffect
-        val near = app.sterna.core.data.mail.pagerPrefetchOrder(pagerState.currentPage, pageCount) { i ->
-            entryAt(i)?.let { (id, account) -> account to id }
-        }
-        application.container.mailRepository.prefetchPagerNeighbours(settled.second to settled.first, near)
-    }
     CompositionLocalProvider(
         LocalTextToolRunner provides textTools,
         LocalReplyAllWith provides { emailId, accountId, text ->
@@ -546,6 +536,17 @@ private fun MessagePager(
                     // above stays in place.
                     Box(Modifier.fillMaxSize(), Alignment.Center) { LoadingRing() }
                 } else {
+                    // #1869 step 8: once this page is the settled one, the bodies a swipe reaches next are prefetched in
+                    // the PAGER's order (2 each side, as (account, id) pairs), from THIS page's own index: a grouped or
+                    // unified list pages across folders and accounts, which no folder order follows.
+                    if (pagerKey(entry) == settledKey && pageCount > 1) {
+                        LaunchedEffect(settledKey) {
+                            val near = app.sterna.core.data.mail.pagerPrefetchOrder(page, pageCount) { i ->
+                                entryAt(i)?.let { (id, account) -> account to id }
+                            }
+                            application.container.mailRepository.prefetchPagerNeighbours(entry.second to entry.first, near)
+                        }
+                    }
                     MessagePage(
                         emailId = entry.first,
                         accountId = entry.second,

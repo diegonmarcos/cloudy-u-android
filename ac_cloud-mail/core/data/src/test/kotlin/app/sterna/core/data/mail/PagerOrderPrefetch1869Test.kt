@@ -25,7 +25,8 @@ class PagerOrderPrefetch1869Test {
 
     @Test fun `the pager's ends and pages not loaded yet are skipped`() {
         assertEquals(listOf("b" to "9", "a" to "2"), pagerNeighbours(0, pages.size, 2) { pages.getOrNull(it) })
-        assertEquals(listOf("a" to "4", "a" to "7"), pagerNeighbours(4, pages.size, 2) { pages.getOrNull(it) })
+        assertEquals(listOf("a" to "4", "a" to "7", "a" to "2"), pagerNeighbours(4, pages.size, 2) { pages.getOrNull(it) })
+        assertEquals(listOf("b" to "3", "a" to "7"), pagerNeighbours(5, pages.size, 2) { pages.getOrNull(it) })
         assertEquals(listOf("a" to "2"), pagerNeighbours(1, pages.size, 2) { i -> pages.getOrNull(i)?.takeIf { i == 2 } })
         assertTrue(pagerNeighbours(0, 1, 2) { pages.getOrNull(it) }.isEmpty())
     }

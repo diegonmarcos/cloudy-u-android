@@ -148,8 +148,8 @@ elif which == "S8":
     need("if (credentials.protocol == MailProtocol.IMAP) continue" in pm, "IMAP enters the JMAP prefetch")
     need("prefetchMessages(rows.take(PREFETCH_VISIBLE_MAX), PrefetchTrigger.VISIBLE)" in r, "the visible rows are not bounded or not VISIBLE")
     ms = code(read(os.path.join(K, "ui/message/MessageScreen.kt")))
-    need("application.container.mailRepository.prefetchPagerNeighbours(settled.second to settled.first, near)" in ms, "the pager does not hand its order over")
-    need("app.sterna.core.data.mail.pagerPrefetchOrder(pagerState.currentPage, pageCount) { i ->" in ms, "the pager order is not the pager's")
+    need("application.container.mailRepository.prefetchPagerNeighbours(entry.second to entry.first, near)" in ms, "the pager does not hand its order over")
+    need("app.sterna.core.data.mail.pagerPrefetchOrder(page, pageCount) { i ->" in ms and "if (pagerKey(entry) == settledKey && pageCount > 1) {" in ms, "the pager order is not the settled page's")
     ib = code(read(os.path.join(K, "ui/inbox/InboxScreen.kt")))
     need("delay(app.sterna.core.data.mail.PREFETCH_VISIBLE_DEBOUNCE_MS)" in ib and "}.distinctUntilChanged().collectLatest { rows ->" in ib, "the visible rows are not debounced")
     need("viewModel.prefetchVisible(rows)" in ib and "listState.layoutInfo.visibleItemsInfo.mapNotNull { info ->" in ib, "the visible rows are not prefetched")
@@ -248,7 +248,7 @@ mutate S8 "$MD/BodyPrefetch.kt" '        if (page - d >= 0) at(page - d)?.let(::
 ' '' "only the pages after are prefetched"
 mutate S8 "$MD/MailRepository.kt" 'if (mailboxDao.roleForId(accountId, mailboxId) == "inbox") inbox += id else raw += id' 'inbox += id' "non-Inbox rows through the key-importing path"
 mutate S8 "$MD/MailRepository.kt" 'val taken = ids.filter { prefetchInFlight.add("$accountId/$it") }' 'val taken = ids' "the same body fetched twice at once"
-mutate S8 "$UI/MessageScreen.kt" '        application.container.mailRepository.prefetchPagerNeighbours(settled.second to settled.first, near)
+mutate S8 "$UI/MessageScreen.kt" '                            application.container.mailRepository.prefetchPagerNeighbours(entry.second to entry.first, near)
 ' '' "the pager order dropped"
 mutate S8 "app/src/main/kotlin/app/sterna/ui/inbox/InboxScreen.kt" '            delay(app.sterna.core.data.mail.PREFETCH_VISIBLE_DEBOUNCE_MS)
 ' '' "a request per scroll frame"
