@@ -6672,22 +6672,25 @@ class MailRepository(
         override suspend fun missingInlineImages(limit: Int): List<String> {
             val out = mutableListOf<String>()
             var offset = 0
-            while (out.size < limit && offset < FULL_SYNC_ATTACHMENT_SCAN_MAX) {
+            var rounds = 0
+            // Bounded in ROUNDS too: the offset only moves past rows that stay listed, so a row whose state cannot be written
+            // would otherwise be read again forever.
+            while (out.size < limit && offset < FULL_SYNC_ATTACHMENT_SCAN_MAX && rounds++ < FULL_SYNC_ATTACHMENT_SCAN_MAX / FULL_SYNC_ATTACHMENT_SCAN_PAGE) {
                 val ids = emailBodyDao.idsAwaitingInlineImages(credentials.id, cutoff() ?: Long.MIN_VALUE, FULL_SYNC_ATTACHMENT_SCAN_PAGE, offset)
                 if (ids.isEmpty()) break
                 var stays = 0
                 for (id in ids) {
                     val row = emailBodyDao.byId(credentials.id, id)
                     val email = storedEmail(id)
-                    if (row == null || email == null) continue
+                    if (row == null || email == null) { stays++; continue }
                     val wanted = inlineCids(email)
                     val stored = runCatching { cacheJson.decodeFromString(inlineImagesSerializer, row.inlineImagesJson) }.getOrDefault(emptyMap())
                     val state = when {
                         cryptoKindOf(email) != null || wanted.isEmpty() -> InlineState.NONE
                         else -> InlineImageFiles.stateOf(wanted, InlineImageFiles.present(offlineAttachmentsDir, stored))
                     }
-                    if (state != row.inlineState) runCatching { emailBodyDao.setInlineState(credentials.id, id, state) }
-                    if (state == InlineState.PENDING) stays++
+                    val written = state == row.inlineState || runCatching { emailBodyDao.setInlineState(credentials.id, id, state) }.isSuccess
+                    if (state == InlineState.PENDING || !written) stays++
                     if (cryptoKindOf(email) != null || email.inlineImageParts().isEmpty()) continue
                     if (state != InlineState.PENDING) continue
                     out += id
