@@ -6,7 +6,6 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Typeface
-import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
@@ -26,7 +25,7 @@ import java.security.MessageDigest
 
 /**
  * #1866 Cloud Notes is offered for every file. [OpenRouter] decides: images, PDF, audio and video are shown here (image view,
- * PdfRenderer pages, VideoView for audio and video); any other binary gets the file view (name, size, type, SHA-256, hex preview)
+ * PDF handed to Cloud Drive's reader (the fleet's one PDF engine), VideoView for audio and video); any other binary gets the file view (name, size, type, SHA-256, hex preview)
  * with the actions open as text, attach to a new note, open with another app. Every read is guarded: an unreadable URI or an
  * unknown type shows a message in the view and never crashes.
  */
@@ -35,7 +34,6 @@ class FileViewActivity : Activity() {
     private var mime: String? = null
     private var name: String = "file"
     private var size: Long = -1
-    private val pdfs = ArrayList<Pair<PdfRenderer, ParcelFileDescriptor>>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,8 +59,6 @@ class FileViewActivity : Activity() {
     }
 
     override fun onDestroy() {
-        for ((r, fd) in pdfs) { try { r.close() } catch (_: Exception) {}; try { fd.close() } catch (_: Exception) {} }
-        pdfs.clear()
         super.onDestroy()
     }
 
@@ -101,26 +97,19 @@ class FileViewActivity : Activity() {
         addActions(root, withText = false)
     }
 
+    /**
+     * PDF goes to the fleet's one PDF engine (pdfium behind Cloud Drive's PdfReaderActivity, one-pdf-engine guard): it is reached
+     * through the manifest (ACTION_VIEW application/pdf aimed at Drive), never copied in. Drive missing: the file view offers
+     * Open with another app.
+     */
     private fun showPdf(root: LinearLayout, u: Uri) {
-        try {
-            val fd = contentResolver.openFileDescriptor(u, "r") ?: throw java.io.IOException("cannot open the file")
-            val r = PdfRenderer(fd)
-            pdfs.add(r to fd)
-            val dpm = resources.displayMetrics.widthPixels
-            for (i in 0 until minOf(r.pageCount, 40)) {
-                r.openPage(i).use { p ->
-                    val w = dpm
-                    val h = maxOf(1, (w.toLong() * p.height / maxOf(1, p.width)).toInt())
-                    val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-                    bmp.eraseColor(Color.WHITE)
-                    p.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                    root.addView(ImageView(this).apply { setImageBitmap(bmp); adjustViewBounds = true })
-                }
-            }
-            if (r.pageCount > 40) root.addView(label("Showing the first 40 of ${r.pageCount} pages."))
-        } catch (e: Exception) {
-            root.addView(label("Cannot render the PDF (${e.message ?: "unreadable"}). Use Open with another app."))
-        }
+        val view = Intent(Intent.ACTION_VIEW).setDataAndType(u, "application/pdf")
+            .setPackage(DRIVE_PKG).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        val handed = try {
+            startActivity(view); true   // no resolveActivity: package visibility (API 30+) would hide Drive without a <queries> entry
+        } catch (_: Exception) { false }
+        if (handed) { finish(); return }
+        root.addView(label("PDF opens in Cloud Drive, which is not installed. Use Open with another app."))
         addActions(root, withText = false)
     }
 
@@ -248,4 +237,6 @@ class FileViewActivity : Activity() {
             Toast.makeText(this, "No app can open this file.", Toast.LENGTH_SHORT).show()
         }
     }
+
+    private companion object { const val DRIVE_PKG = "com.diegonmarcos.clouddrive" }
 }
