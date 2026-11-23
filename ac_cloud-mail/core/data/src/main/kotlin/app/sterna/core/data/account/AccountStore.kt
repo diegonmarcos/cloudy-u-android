@@ -162,6 +162,13 @@ class AccountStore(context: Context) {
         .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     private val json = Json { ignoreUnknownKeys = true }
 
+    /**
+     * #1869 decrypted secrets, memory only, keyed by account id AND the exact stored ciphertext: a write stores a new
+     * ciphertext (fresh IV), so a changed, cleared or removed secret can never be answered from here. Before this every
+     * [credentials] call paid an AndroidKeyStore round trip plus an AES-GCM decrypt, several times per opened message.
+     */
+    private val secretMemo = java.util.concurrent.ConcurrentHashMap<String, Pair<String, String>>()
+
     // Tells an empty account list apart from a list that would not decode, and blocks writes in the
     // second case. Declared before [live] because the seeding read below already goes through it.
     // Handed THIS store's parser and writer: a gate given a decoder that never fails never refuses.
@@ -639,6 +646,7 @@ class AccountStore(context: Context) {
     @Synchronized
     fun clear() {
         prefs.edit().clear().apply()
+        secretMemo.clear()
         KeystoreCrypto.deleteKey()
         // The file is legitimately gone, so there is no unreadable blob left to protect: lift the
         // refusal, or a reset from that state could never store an account again.
@@ -1001,12 +1009,13 @@ class AccountStore(context: Context) {
     }
 
     private fun readPassword(id: String): String? {
-        val encrypted = prefs.getString(passwordKey(id), null) ?: return null
+        val encrypted = prefs.getString(passwordKey(id), null) ?: return null.also { secretMemo.remove(id) }
+        secretMemo[id]?.let { (cipher, plain) -> if (cipher == encrypted) return plain }
         val raw = Base64.decode(encrypted, Base64.NO_WRAP)
         // Current format binds the blob to this account id via AAD.
         runCatching {
             String(KeystoreCrypto.decrypt(raw, aadFor(id)), Charsets.UTF_8)
-        }.getOrNull()?.let { return it }
+        }.getOrNull()?.let { secretMemo[id] = encrypted to it; return it }
         // Legacy blob (encrypted before AAD binding): decrypt unbound, then transparently
         // re-write it bound to the account so future reads use the hardened path.
         return runCatching {
