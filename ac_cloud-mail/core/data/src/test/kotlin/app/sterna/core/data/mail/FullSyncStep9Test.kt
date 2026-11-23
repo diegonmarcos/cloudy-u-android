@@ -106,9 +106,9 @@ class FullSyncStep9Test {
         val imap = SourceText.read("core/data/src/main/kotlin/app/sterna/core/data/mail/ImapMailService.kt")
         val batch = imap.substringAfter("suspend fun prefetchSources(").substringBefore("fun dropPrefetchedSources(")
         assertEquals("one session for the whole batch", 1, Regex("onMailbox\\(").findAll(batch).count())
-        val fetch = imap.substringAfter("    suspend fun fetchSource(").substringBefore("    /**")
+        val fetchSource = imap.substringAfter("    suspend fun fetchSource(").substringBefore("    /**")
         assertTrue("a batched source never answers a read that opposes a numbering",
-            fetch.contains("if (expectedUidValidity == null) prefetchedSources.remove(sourceKey(credentials, mailboxId, uid))?.let { return it }"))
+            fetchSource.contains("if (expectedUidValidity == null) prefetchedSources.remove(sourceKey(credentials, mailboxId, uid))?.let { return it }"))
         val vm = SourceText.read("app/src/main/kotlin/app/sterna/ui/message/MessageViewModel.kt")
         assertTrue(vm.contains("refreshMailboxIds(local = true)"))
     }
