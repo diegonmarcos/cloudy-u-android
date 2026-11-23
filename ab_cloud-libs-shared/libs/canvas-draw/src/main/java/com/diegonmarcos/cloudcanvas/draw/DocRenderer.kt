@@ -73,6 +73,8 @@ class DocRenderer {
         fun widthOf(tool: Tool, size: Float): Float = when (tool) {
             Tool.Pencil -> (size * 0.35f).coerceAtLeast(1f)
             Tool.Marker -> size * 1.6f
+            Tool.Airbrush -> size * 2f
+            Tool.Smudge -> size * 1.2f
             else -> size
         }
 
@@ -92,7 +94,12 @@ class DocRenderer {
 
         fun draw(c: Canvas, bmp: Bitmap, op: Op) {
             when (op) {
-                is Op.Stroke -> drawStroke(c, op)
+                is Op.Stroke -> when (op.tool) {
+                    Tool.Airbrush -> drawAirbrush(c, op)
+                    Tool.Ink -> drawInk(c, op)
+                    Tool.Smudge -> drawSmudge(c, bmp, op)
+                    else -> drawStroke(c, op)
+                }
                 is Op.Shape -> {
                     val p = paint(op.color, op.opacity, if (op.filled && op.kind != Tool.Line) Paint.Style.FILL else Paint.Style.STROKE, op.size)
                     val r = RectF(minOf(op.a.x, op.b.x), minOf(op.a.y, op.b.y), maxOf(op.a.x, op.b.x), maxOf(op.a.y, op.b.y))
@@ -125,6 +132,43 @@ class DocRenderer {
                     val t = (bmp.height - dh) / 2f
                     c.drawBitmap(src, null, RectF(l, t, l + dw, t + dh), Paint(Paint.FILTER_BITMAP_FLAG))
                 }
+            }
+        }
+
+        /** #1865 Airbrush: the stroke's deterministic spray of soft dabs ([Brushes.airbrushDabs]), each at a third of the opacity. */
+        private fun drawAirbrush(c: Canvas, op: Op.Stroke) {
+            val p = paint(op.color, op.opacity * 0.35f, Paint.Style.FILL, 1f)
+            for (d in Brushes.airbrushDabs(op.pts, op.size)) c.drawCircle(d.x, d.y, d.r, p)
+        }
+
+        /** #1865 Ink: each segment as wide as its speed allows ([Brushes.inkWidth]), times the pressure. */
+        private fun drawInk(c: Canvas, op: Op.Stroke) {
+            val p = paint(op.color, op.opacity, Paint.Style.STROKE, op.size)
+            if (op.pts.size == 1) {
+                c.drawCircle(op.pts[0].x, op.pts[0].y, maxOf(op.size * op.pts[0].p, 1f) / 2f, Paint(p).apply { style = Paint.Style.FILL })
+                return
+            }
+            for (i in 1 until op.pts.size) {
+                val a = op.pts[i - 1]
+                val b = op.pts[i]
+                val len = Math.hypot((b.x - a.x).toDouble(), (b.y - a.y).toDouble()).toFloat()
+                p.strokeWidth = Brushes.inkWidth(op.size * (a.p + b.p) / 2f, len)
+                c.drawLine(a.x, a.y, b.x, b.y, p)
+            }
+        }
+
+        /** #1865 Smudge: drags the colour under the finger along the stroke (picked up with [Brushes.SMUDGE_PICKUP] per dab). */
+        private fun drawSmudge(c: Canvas, bmp: Bitmap, op: Op.Stroke) {
+            if (op.pts.isEmpty()) return
+            val r = widthOf(Tool.Smudge, op.size) / 2f
+            fun at(pt: Pt): Int = bmp.getPixel(pt.x.toInt().coerceIn(0, bmp.width - 1), pt.y.toInt().coerceIn(0, bmp.height - 1))
+            var carry = at(op.pts[0])
+            val p = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+            for (pt in op.pts) {
+                carry = Brushes.mix(carry, at(pt), Brushes.SMUDGE_PICKUP)
+                p.color = carry
+                p.alpha = (((carry ushr 24) / 255f) * op.opacity.coerceIn(0f, 1f) * 0.6f * 255f + 0.5f).toInt().coerceIn(0, 255)
+                c.drawCircle(pt.x, pt.y, maxOf(r * pt.p, 1f), p)
             }
         }
 

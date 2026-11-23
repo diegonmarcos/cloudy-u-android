@@ -3,9 +3,11 @@ package com.diegonmarcos.cloudcanvas.draw
 /** The tools of the Draw page. Pure model: no Android type is named in this file, so the JVM suite runs it. */
 enum class Tool(val label: String) {
     Brush("Brush"), Pencil("Pencil"), Marker("Marker"), Eraser("Eraser"), Fill("Fill"),
-    Line("Line"), Rect("Rect"), Ellipse("Ellipse"), Text("Text"), Eyedropper("Eyedropper");
+    Line("Line"), Rect("Rect"), Ellipse("Ellipse"), Text("Text"), Eyedropper("Eyedropper"),
+    // #1865 the brush rail's new brushes, appended so every earlier ordinal stays (a saved op keeps its tool)
+    Airbrush("Airbrush"), Ink("Ink"), Smudge("Smudge");
 
-    val isFreehand: Boolean get() = this == Brush || this == Pencil || this == Marker || this == Eraser
+    val isFreehand: Boolean get() = this == Brush || this == Pencil || this == Marker || this == Eraser || this == Airbrush || this == Ink || this == Smudge
     val isShape: Boolean get() = this == Line || this == Rect || this == Ellipse
 }
 

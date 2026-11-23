@@ -41,6 +41,8 @@ dependencies {
     api project(':libs:canvas-core')
     // Board: the fleet's one embedded web view (CloudWeb, WebProfile.APP_PAGE) and androidx.webkit (WebViewAssetLoader, the bridge)
     implementation project(':libs:web-core')
+    // #1865 the floating toolbar and the brush rail glyphs
+    implementation 'androidx.compose.material:material-icons-extended'
     implementation 'androidx.activity:activity-compose:1.9.3'
     implementation 'androidx.core:core-ktx:1.15.0'
 }
