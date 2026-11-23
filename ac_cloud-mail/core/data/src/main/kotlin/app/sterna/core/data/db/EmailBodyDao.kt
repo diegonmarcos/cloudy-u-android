@@ -53,6 +53,14 @@ interface EmailBodyDao {
     @Upsert
     suspend fun upsert(body: EmailBodyEntity)
 
+    /** #1869 step 7: the lazy rebuild of one row's fragment after a [app.sterna.core.data.mail.ReaderFragment.VERSION]
+     *  change; [bytes] is the row's new stored size. One row, never a table rewrite. */
+    @Query(
+        "UPDATE email_bodies SET fragment = :fragment, fragmentVersion = :version, bytes = :bytes " +
+            "WHERE accountId = :accountId AND id = :id",
+    )
+    suspend fun setFragment(accountId: String, id: String, fragment: String?, version: Int, bytes: Long)
+
     // Keyed (accountId, id) (#31): an id alone could match another account's cached body.
     @Query("SELECT * FROM email_bodies WHERE accountId = :accountId AND id = :id LIMIT 1")
     suspend fun byId(accountId: String, id: String): EmailBodyEntity?

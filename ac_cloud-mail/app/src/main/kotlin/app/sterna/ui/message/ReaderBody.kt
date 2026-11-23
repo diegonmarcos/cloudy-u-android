@@ -68,20 +68,8 @@ internal fun linkifyEscaped(escaped: String): String = BARE_URL.replace(escaped)
 /**
  * #1869 the sanitiser runs ONCE per body: the reader, its text tools and the document builder each ask [readerBody] for
  * the same message during one open, and a large newsletter is a long sanitise each time. This file-private name shadows
- * the policy function ([app.sterna.core.data.text.sanitiseReceivedHtml], still the ONE policy) with a small memo keyed by
- * the exact source html, so [readerBody] stays the one place markup becomes a fragment. Pure in, pure out: the memo can
- * only ever answer what the policy answered for the same input.
+ * the policy function ([app.sterna.core.data.text.sanitiseReceivedHtml], still the ONE policy) with the memo of
+ * [app.sterna.core.data.mail.ReaderFragment] keyed by the exact source html (step 7: a fragment stored with the body
+ * seeds it), so [readerBody] stays the one place markup becomes a fragment. Pure in, pure out.
  */
-private fun sanitiseReceivedHtml(html: String): String {
-    synchronized(SANITISED) { SANITISED[html] }?.let { return it }
-    val clean = app.sterna.core.data.text.sanitiseReceivedHtml(html)
-    synchronized(SANITISED) { SANITISED[html] = clean }
-    return clean
-}
-
-/** The last few sanitised bodies (the open message and its pager neighbours), least recently used out first. */
-private val SANITISED = object : LinkedHashMap<String, String>(8, 0.75f, true) {
-    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean = size > SANITISED_MEMO_SIZE
-}
-
-private const val SANITISED_MEMO_SIZE = 4
+private fun sanitiseReceivedHtml(html: String): String = app.sterna.core.data.mail.ReaderFragment.sanitised(html)

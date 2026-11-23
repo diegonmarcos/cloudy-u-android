@@ -12,6 +12,9 @@
 #   S6  inline images as FILES in the message's offline-attachments directory (the attachments cap), never for ciphertext;
 #       the reader keeps `cid:` and BlockingWebViewClient serves the file (before the remote gate, volatile state, no
 #       Android types in the resolver); export and print get data: URIs back; old rows upgraded lazily in the background
+#   S7  the reader fragment (the one sanitiser policy's answer) is stored with every plain body, under the cursor-window
+#       guard, never for ciphertext; a stored fragment seeds the reader's memo; a version mismatch is rebuilt lazily on
+#       Default one row at a time (never a purge); the app's sanitiser goes through the same memo
 #   P5  rule 16 parity: every email_bodies column, every body DAO query and every registered migration kept
 #   M   mutation-proof: each defence undone in a COPY turns its check red; the real tree is green
 #
@@ -102,6 +105,29 @@ elif which == "S6":
     need("if (app.sterna.core.data.mail.InlineImageFiles.isRef(dataUri)) return@forEach" in pd, "a file ref is pasted into the document")
     ic = code(read(os.path.join(K, "ui/message/InlineCid.kt")))
     need("import android." not in ic and "InlineImageFiles::isRef" in ic, "the resolver uses Android types or serves non-refs")
+elif which == "S7":
+    r = code(read(os.path.join(D, "mail/MailRepository.kt")))
+    pb = body(r, "private suspend fun persistBody(")
+    need("val fragment = storedFragmentOf(email, bodyJson, inlineJson)" in pb and "fragment = fragment," in pb, "the fragment is not stored with the body")
+    need("fragmentVersion = ReaderFragment.VERSION," in pb, "the stored fragment carries no version")
+    sf = body(r, "private suspend fun storedFragmentOf(")
+    need("if (cryptoKindOf(email) != null) return null" in sf, "a fragment is made of ciphertext")
+    need("withContext(Dispatchers.Default) { ReaderFragment.build(email) }" in sf, "the fragment is built on the caller's thread")
+    need("fragment.takeIf { fitsBodyCache(bodyJson, inlineJson + it) }" in sf, "the fragment escapes the cursor-window guard")
+    cm = body(r, "suspend fun cachedMessage(accountId: String, emailId: String): MessageBody? {")
+    need("ReaderFragment.remember(decoded.email, row.fragment)" in cm, "a stored fragment does not reach the reader")
+    need("rebuildFragmentLater(accountId, emailId)" in cm, "a version mismatch is never rebuilt")
+    rb = body(r, "private fun rebuildFragmentLater(")
+    need("bgScope.launch {" in rb and "emailBodyDao.setFragment(" in rb, "the rebuild is not a background one-row update")
+    need("deleteAll" not in rb and "deleteById" not in rb and "clearCachedBodies" not in rb, "the rebuild purges")
+    dao = code(read(os.path.join(D, "db/EmailBodyDao.kt")))
+    need('"UPDATE email_bodies SET fragment = :fragment, fragmentVersion = :version, bytes = :bytes " +' in dao and '"WHERE accountId = :accountId AND id = :id",' in dao, "the rebuild is not one row")
+    rf = code(read(os.path.join(D, "mail/ReaderFragment.kt")))
+    need("fun build(email: Email): String? = email.htmlContent()?.takeIf { it.isNotBlank() }?.let(::sanitised)" in rf, "the fragment is not the policy's answer")
+    need("val clean = sanitiseReceivedHtml(html)" in rf, "the memo does not call the one policy")
+    rbk = code(read(os.path.join(K, "ui/message/ReaderBody.kt")))
+    need("private fun sanitiseReceivedHtml(html: String): String = app.sterna.core.data.mail.ReaderFragment.sanitised(html)" in rbk, "the reader does not read the stored fragment memo")
+    need("ReaderBody(sanitiseReceivedHtml(it), richHtml = true)" in rbk, "readerBody is no longer the one place markup becomes a fragment")
 elif which == "P5":
     ent = code(read(os.path.join(D, "db/EmailBodyEntity.kt")))
     for col in ("val id: String", "val accountId: String", "val bodyJson: String", "val inlineImagesJson: String", "val fetchedAt: Long"):
@@ -126,9 +152,10 @@ check() { python3 -c "$CHECK" "$1" "$2"; }
 declare -A LABEL=(
   [S5]="Room v34 is additive, registered, and the caps are SUM(bytes)"
   [S6]="inline images are files served by cid: interception; export, print and old rows kept"
+  [S7]="the fragment is stored with the body, seeds the reader, and is rebuilt lazily on a version change"
   [P5]="rule 16 parity: every email_bodies column, body query and migration step kept"
 )
-CHECKS="S5 S6 P5"
+CHECKS="S5 S6 S7 P5"
 
 echo "== the tree =="
 for c in $CHECKS; do
@@ -182,6 +209,14 @@ mutate S6 "$UI/PrintDocument.kt" '        if (app.sterna.core.data.mail.InlineIm
 ' '' "a ref pasted as an image source"
 mutate S6 "$MD/MailRepository.kt" '        runCatching { emailPartDao?.deleteOrphans() }
         drop.size' '        drop.size' "body eviction leaves parts rows"
+mutate S7 "$MD/MailRepository.kt" '                fragment = fragment,
+' '' "the fragment computed but not stored"
+mutate S7 "$MD/MailRepository.kt" '        if (cryptoKindOf(email) != null) return null
+        val fragment' '        val fragment' "a fragment made of ciphertext"
+mutate S7 "$MD/MailRepository.kt" 'fragment.takeIf { fitsBodyCache(bodyJson, inlineJson + it) }' 'fragment' "the fragment past the cursor window"
+mutate S7 "$MD/MailRepository.kt" '                        ReaderFragment.remember(decoded.email, row.fragment)' '                        Unit' "the stored fragment never reaches the reader"
+mutate S7 "$MD/MailRepository.kt" '                        rebuildFragmentLater(accountId, emailId)' '                        clearCachedBodies()' "a version change purges every body"
+mutate S7 "$UI/ReaderBody.kt" 'private fun sanitiseReceivedHtml(html: String): String = app.sterna.core.data.mail.ReaderFragment.sanitised(html)' 'private fun sanitiseReceivedHtml(html: String): String = app.sterna.core.data.text.sanitiseReceivedHtml(html)' "the reader sanitises every open again"
 mutate P5 "$DBD/EmailBodyEntity.kt" '    val fetchedAt: Long,
 ' '' "the fetchedAt column dropped"
 mutate P5 "$DBD/EmailBodyDao.kt" 'suspend fun pruneForAccount(' 'suspend fun pruneGone(' "a body DAO query removed"

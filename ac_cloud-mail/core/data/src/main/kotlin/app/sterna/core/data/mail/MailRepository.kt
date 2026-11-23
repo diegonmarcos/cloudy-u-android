@@ -3071,6 +3071,15 @@ class MailRepository(
                         inlineImages = cacheJson.decodeFromString(inlineImagesSerializer, row.inlineImagesJson),
                     )
                 }.let { decoded ->
+                    // #1869 step 7: a fragment stored under this builder seeds the reader's memo (no sanitise on open);
+                    // one stored under another version, or none, is rebuilt in the background on Default, never purged.
+                    if (row.fragment != null && row.fragmentVersion == ReaderFragment.VERSION) {
+                        ReaderFragment.remember(decoded.email, row.fragment)
+                    } else if (row.fragmentVersion != ReaderFragment.VERSION && cryptoKindOf(decoded.email) == null &&
+                        !decoded.email.htmlContent().isNullOrBlank()
+                    ) {
+                        rebuildFragmentLater(accountId, emailId)
+                    }
                     // #1869 step 6: a ref whose file was evicted reads as missing (refetched); a row stored before v34 is
                     // upgraded to files in the background, never on the open path.
                     if (decoded.inlineImages.values.any { it.startsWith("data:") }) upgradeInlineImagesLater(accountId, emailId)
@@ -3184,6 +3193,9 @@ class MailRepository(
         val bodyJson = cacheJson.encodeToString(Email.serializer(), email)
         val inlineJson = cacheJson.encodeToString(inlineImagesSerializer, inlineImages)
         if (!fitsBodyCache(bodyJson, inlineJson)) return@runCatching false
+        // #1869 step 7: the reader's fragment is stored with the body (never for ciphertext), under the same cursor-window
+        // guard: a body whose fragment would not fit is stored without one and sanitised at render, as before.
+        val fragment = storedFragmentOf(email, bodyJson, inlineJson)
         emailBodyDao.upsert(
             EmailBodyEntity(
                 id = emailId,
@@ -3191,6 +3203,9 @@ class MailRepository(
                 bodyJson = bodyJson,
                 inlineImagesJson = inlineJson,
                 fetchedAt = System.currentTimeMillis(),
+                fragment = fragment,
+                // Stamped even without a fragment: null under the current version means none can be made (text, too big).
+                fragmentVersion = ReaderFragment.VERSION,
                 inlineState = InlineImageFiles.stateOf(email.inlineImageParts().mapNotNull { it.cid?.trim()?.trim('<', '>')?.takeIf(String::isNotEmpty) }, inlineImages),
             ),
         )
@@ -3198,6 +3213,38 @@ class MailRepository(
     }.getOrDefault(false)
 
     private val inlineUpgrades = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+
+    /** #1869 step 7: [email]'s reader fragment, built on Default, or null for ciphertext, a text-only body, or one that
+     *  would push the row past the cursor window ([fitsBodyCache]). */
+    private suspend fun storedFragmentOf(email: Email, bodyJson: String, inlineJson: String): String? {
+        if (cryptoKindOf(email) != null) return null
+        val fragment = withContext(Dispatchers.Default) { ReaderFragment.build(email) } ?: return null
+        return fragment.takeIf { fitsBodyCache(bodyJson, inlineJson + it) }
+    }
+
+    private val fragmentRebuilds = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+
+    /** #1869 step 7, the lazy rebuild after a [ReaderFragment.VERSION] change: one row, in the background, never a purge. */
+    private fun rebuildFragmentLater(accountId: String, emailId: String) {
+        val key = "$accountId/$emailId"
+        if (fragmentRebuilds.putIfAbsent(key, true) != null) return
+        bgScope.launch {
+            try {
+                runCatching {
+                    val row = emailBodyDao.byId(accountId, emailId) ?: return@runCatching
+                    if (row.fragmentVersion == ReaderFragment.VERSION) return@runCatching
+                    val email = cacheJson.decodeFromString(Email.serializer(), row.bodyJson)
+                    val fragment = storedFragmentOf(email, row.bodyJson, row.inlineImagesJson)
+                    emailBodyDao.setFragment(
+                        accountId, emailId, fragment, ReaderFragment.VERSION,
+                        app.sterna.core.data.db.storedBodyBytes(row.bodyJson, row.inlineImagesJson, fragment),
+                    )
+                }
+            } finally {
+                fragmentRebuilds.remove(key)
+            }
+        }
+    }
 
     /** #1869 step 6, the lazy upgrade of a body stored with base64 images: the images become files (the attachments cap),
      *  the row is rewritten with refs, so its body bytes shrink. Background, once per row at a time, never ciphertext. */
