@@ -47,6 +47,13 @@ internal const val FILL_CEILING_PERCENT = 90
 internal const val FULL_SYNC_ATTACHMENTS_PER_RUN = 200
 internal const val FULL_SYNC_ATTACHMENTS_PER_RUN_METERED = 10
 
+/** #1869 messages whose inline images one unmetered run downloads at most; the rest continue in the next run. */
+internal const val FULL_SYNC_INLINE_PER_RUN = 100
+
+/** May the background sync download inline images right now? Unmetered, connected and not on battery saver: they ride
+ *  with the body (the reader paints them from disk) but are bytes no metered link should spend unasked. */
+fun inlineImagesAllowed(c: PrefetchConditions): Boolean = c.connected && c.unmetered && !c.batterySaver
+
 /** Header pages (100 messages each) one folder backfills per run. A longer window continues in the next run. */
 internal const val FULL_SYNC_PAGES_PER_FOLDER = 20
 
@@ -95,6 +102,13 @@ interface FullSyncPort {
 
     suspend fun fetchAttachment(job: AttachmentJob)
 
+    /** #1869 newest first, at most [limit]: stored, NOT encrypted bodies inside the window that name inline images
+     *  none of which is stored yet. */
+    suspend fun missingInlineImages(limit: Int): List<String> = emptyList()
+
+    /** #1869 download and store the inline images of the stored body [emailId]. */
+    suspend fun fetchInlineImages(emailId: String) {}
+
     suspend fun bodyBytes(): Long
     suspend fun attachmentBytes(): Long
 
@@ -114,11 +128,14 @@ data class FullSyncResult(
     val stop: FullSyncStop,
     /** True when the window is not complete yet and a further run (a continuation) should follow. */
     val morePending: Boolean,
+    /** #1869 messages whose inline images this run stored. */
+    val inlineImages: Int = 0,
 )
 
 /**
  * One run for one account. Order: evict what left the window, headers of every folder (inbox first), bodies of every
- * folder (inbox first, newest first, in batches), then attachments if the policy allows. Every step re-reads
+ * folder (inbox first, newest first, in batches), inline images of the stored bodies (#1869, unmetered), then
+ * attachments if the policy allows. Every step re-reads
  * [conditions]: battery saver switched on mid-run, or the link going away, ends the run safely.
  */
 class FullSync(
@@ -136,6 +153,7 @@ class FullSync(
         var pages = 0
         var bodies = 0
         var attachments = 0
+        var inline = 0
         var errors = 0
         var folderCount = 0
 
@@ -227,6 +245,42 @@ class FullSync(
             }
         }
 
+        // 2b. #1869 Inline images of the stored bodies, newest first, so the reader paints them from disk. Inside the
+        //     body cap (they are stored with the body), unmetered only, a budget per run and a continuation after it.
+        if (stop != FullSyncStop.OFFLINE && stop != FullSyncStop.BATTERY_SAVER && stop != FullSyncStop.STOPPED && stop != FullSyncStop.CAP) {
+            var left = FULL_SYNC_INLINE_PER_RUN
+            val tried = HashSet<String>()
+            inlineLoop@ while (left > 0 && inlineImagesAllowed(conditions())) {
+                if (stopRequested()) { stop = FullSyncStop.STOPPED; break }
+                if ((guarded { port.bodyBytes() } ?: 0L) >= bodyCeiling) { stop = FullSyncStop.CAP; break }
+                val want = minOf(left, PREFETCH_BATCH)
+                val ids = try {
+                    port.missingInlineImages(tried.size + want).filter { it !in tried }.take(want)
+                } catch (c: CancellationException) {
+                    throw c
+                } catch (t: Throwable) {
+                    errors++; break
+                }
+                if (ids.isEmpty()) break
+                for (id in ids) {
+                    if (stopRequested()) { stop = FullSyncStop.STOPPED; break@inlineLoop }
+                    if (!inlineImagesAllowed(conditions())) break@inlineLoop
+                    tried += id
+                    try {
+                        port.fetchInlineImages(id)
+                        inline++
+                    } catch (c: CancellationException) {
+                        throw c
+                    } catch (t: Throwable) {
+                        errors++
+                        log("inline images of $id failed: ${t.message}")
+                    }
+                    left--
+                }
+                if (left <= 0 && (guarded { port.missingInlineImages(tried.size + 1) } ?: emptyList()).any { it !in tried }) pending = true
+            }
+        }
+
         // 3. Attachments, by policy, inside the window and the cap.
         if (stop != FullSyncStop.OFFLINE && stop != FullSyncStop.BATTERY_SAVER && stop != FullSyncStop.STOPPED) {
             var left = if (conditions().unmetered) FULL_SYNC_ATTACHMENTS_PER_RUN else FULL_SYNC_ATTACHMENTS_PER_RUN_METERED
@@ -266,12 +320,16 @@ class FullSync(
 
         // 4. Trim to the caps (what the fill stopped short of by design is untouched).
         val evictedAfter = guarded { port.evict() } ?: 0
-        return finish(folderCount, pages, bodies, attachments, evicted + evictedAfter, errors, stop, pending)
+        return finish(folderCount, pages, bodies, attachments, evicted + evictedAfter, errors, stop, pending, inline)
     }
 
     private fun finish(
         folders: Int, pages: Int, bodies: Int, attachments: Int, evicted: Int, errors: Int, stop: FullSyncStop, pending: Boolean,
-    ) = FullSyncResult(folders, pages, bodies, attachments, evicted, errors, stop, morePending = pending && stop != FullSyncStop.CAP)
+        inline: Int = 0,
+    ) = FullSyncResult(
+        folders, pages, bodies, attachments, evicted, errors, stop,
+        morePending = pending && stop != FullSyncStop.CAP, inlineImages = inline,
+    )
 
     private suspend fun <T> guarded(block: suspend () -> T): T? = try {
         block()

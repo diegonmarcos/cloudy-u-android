@@ -3059,10 +3059,14 @@ class MailRepository(
         val cached = readCachedOrPurge(
             read = {
                 val row = emailBodyDao.byId(accountId, emailId) ?: return@readCachedOrPurge null
-                MessageBody(
-                    email = cacheJson.decodeFromString(Email.serializer(), row.bodyJson),
-                    inlineImages = cacheJson.decodeFromString(inlineImagesSerializer, row.inlineImagesJson),
-                )
+                // #1869 decoded off the caller's thread: the reader calls this on Main, and a large HTML body is
+                // hundreds of KB of JSON.
+                withContext(Dispatchers.Default) {
+                    MessageBody(
+                        email = cacheJson.decodeFromString(Email.serializer(), row.bodyJson),
+                        inlineImages = cacheJson.decodeFromString(inlineImagesSerializer, row.inlineImagesJson),
+                    )
+                }
             },
             purge = { emailBodyDao.deleteById(accountId, emailId) },
         ) ?: return null
@@ -3206,14 +3210,15 @@ class MailRepository(
     }
 
     /** The reader opened [emailId] (#1763): fetch the bodies of the messages just before and after it in its
-     *  folder, so swiping to them opens from disk. Fire-and-forget, throttled, JMAP only. */
+     *  folder, so swiping to them opens from disk. Fire-and-forget, throttled, JMAP only. #1869: every folder, not
+     *  only the Inbox; outside the Inbox the neighbours are stored RAW ([fetchAndStoreRawBodies]), with no key import. */
     fun prefetchNeighbours(credentials: AccountCredentials, emailId: String) {
         if (credentials.protocol == MailProtocol.IMAP) return
         bgScope.launch {
             try {
                 val mailboxId = emailDao.mailboxOf(credentials.id, emailId) ?: return@launch
-                // Inbox only, same rule as the list prefetch (an unopened neighbour must not plant a key).
-                if (mailboxDao.roleForId(credentials.id, mailboxId) != "inbox") return@launch
+                // The Inbox keeps its pinned path; any other folder goes raw, so an unopened neighbour plants no key.
+                val raw = mailboxDao.roleForId(credentials.id, mailboxId) != "inbox"
                 val key = emailDao.sortKeyOf(credentials.id, emailId) ?: return@launch
                 val older = emailDao.olderIds(credentials.id, mailboxId, key, PREFETCH_NEIGHBOURS_EACH_SIDE)
                 val newer = emailDao.newerIds(credentials.id, mailboxId, key, PREFETCH_NEIGHBOURS_EACH_SIDE)
@@ -3221,7 +3226,7 @@ class MailRepository(
                 val ids = newer.zip(older).flatMap { listOf(it.first, it.second) } +
                     newer.drop(older.size) + older.drop(newer.size)
                 val t0 = System.nanoTime()
-                val result = BodyPrefetcher(bodyPrefetchPort(credentials, mailboxId), prefetchConditions, prefetchGate)
+                val result = BodyPrefetcher(bodyPrefetchPort(credentials, mailboxId, raw), prefetchConditions, prefetchGate)
                     .run(PrefetchTrigger.NEIGHBOUR, ids)
                 android.util.Log.i(
                     "MailPrefetch",
@@ -3236,7 +3241,7 @@ class MailRepository(
         }
     }
 
-    private fun bodyPrefetchPort(credentials: AccountCredentials, mailboxId: String): BodyPrefetchPort {
+    private fun bodyPrefetchPort(credentials: AccountCredentials, mailboxId: String, raw: Boolean = false): BodyPrefetchPort {
         return object : BodyPrefetchPort {
             override suspend fun missingNewest(limit: Int): List<String> =
                 emailDao.newestWithoutBody(
@@ -3248,7 +3253,8 @@ class MailRepository(
                 return ids.filter { it !in have }
             }
 
-            override suspend fun fetchAndStore(ids: List<String>) = fetchAndStoreBodies(credentials, ids)
+            override suspend fun fetchAndStore(ids: List<String>) =
+                if (raw) fetchAndStoreRawBodies(credentials, ids) else fetchAndStoreBodies(credentials, ids)
         }
     }
 
@@ -6371,6 +6377,30 @@ class MailRepository(
                 offset += ids.size
             }
             return out
+        }
+
+        // #1869 inline images of the stored bodies; ciphertext is never opened here (ENCRYPTION.md).
+        override suspend fun missingInlineImages(limit: Int): List<String> {
+            val out = mutableListOf<String>()
+            var offset = 0
+            while (out.size < limit && offset < FULL_SYNC_ATTACHMENT_SCAN_MAX) {
+                val ids = emailDao.idsMissingInlineImages(credentials.id, cutoff() ?: Long.MIN_VALUE, FULL_SYNC_ATTACHMENT_SCAN_PAGE, offset)
+                if (ids.isEmpty()) break
+                for (id in ids) {
+                    val email = storedEmail(id) ?: continue
+                    if (cryptoKindOf(email) != null || email.inlineImageParts().isEmpty()) continue
+                    out += id
+                    if (out.size >= limit) return out
+                }
+                offset += ids.size
+            }
+            return out
+        }
+
+        override suspend fun fetchInlineImages(emailId: String) {
+            val cached = cachedMessage(credentials.id, emailId) ?: return
+            if (cryptoKindOf(cached.email) != null) return
+            ensureInlineImages(credentials, emailId, cached)
         }
 
         private fun downloadableParts(email: Email): List<EmailBodyPart> = email.attachments.filter {

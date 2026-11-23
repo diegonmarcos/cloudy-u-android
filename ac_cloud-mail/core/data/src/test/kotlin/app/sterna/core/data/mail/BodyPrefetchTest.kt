@@ -207,7 +207,20 @@ class BodyPrefetchTest {
             "a prefetched body hands the sender's key to OpenKeychain: only the inbox is ever warmed",
             """mailboxDao.roleForId(credentials.id, mailboxId) != "inbox") return""" in bodyOf("prefetchFolderBodies"),
         )
-        assertTrue("""!= "inbox") return@launch""" in bodyOf("prefetchNeighbours"))
+        // #1869: the neighbours are warmed in EVERY folder, but outside the Inbox only through the raw store, which
+        // never imports a key (the #1768 rule). The role decides the path, never whether the folder is warmed.
+        val neighbours = bodyOf("prefetchNeighbours")
+        assertTrue("""val raw = mailboxDao.roleForId(credentials.id, mailboxId) != "inbox"""" in neighbours)
+        assertTrue("bodyPrefetchPort(credentials, mailboxId, raw)" in neighbours)
+        assertFalse("""!= "inbox") return@launch""" in neighbours)
+        val port = bodyOf("bodyPrefetchPort")
+        assertTrue(
+            "a raw port stores raw, the Inbox port keeps the pinned path",
+            "if (raw) fetchAndStoreRawBodies(credentials, ids) else fetchAndStoreBodies(credentials, ids)" in port,
+        )
+        assertTrue("the list prefetch keeps the default (Inbox) port", "bodyPrefetchPort(credentials, mailboxId), prefetchConditions" in bodyOf("prefetchFolderBodies"))
+        val raw = bodyOf("fetchAndStoreRawBodies")
+        assertFalse("the raw store never imports a key", "importAutocryptKey" in raw || "originalSendersOf(" in raw || "pgpEngine" in raw)
     }
 
     @Test fun `the open is timed phase by phase`() {

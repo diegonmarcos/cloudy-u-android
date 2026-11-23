@@ -55,6 +55,18 @@ interface EmailDao {
     @Query("SELECT MIN(sortKey) FROM emails WHERE accountId = :accountId AND mailboxId = :mailboxId")
     suspend fun oldestSortKey(accountId: String, mailboxId: String): Long?
 
+    /**
+     * #1869 ids whose body is stored with NO inline image yet while the body names at least one Content-ID part (a
+     * non-null `cid` is serialised as `"cid":"`), inside the window, newest first. The caller still checks the parts.
+     */
+    @Query(
+        "SELECT e.id FROM emails e WHERE e.accountId = :accountId AND e.sortKey >= :cutoff " +
+            "AND EXISTS (SELECT 1 FROM email_bodies b WHERE b.accountId = e.accountId AND b.id = e.id " +
+            "AND b.inlineImagesJson = '{}' AND b.bodyJson LIKE '%\"cid\":\"%') " +
+            "GROUP BY e.id ORDER BY MAX(e.sortKey) DESC, e.id DESC LIMIT :limit OFFSET :offset",
+    )
+    suspend fun idsMissingInlineImages(accountId: String, cutoff: Long, limit: Int, offset: Int): List<String>
+
     /** Background full sync (#1768): ids with attachments whose body is stored, inside the window, newest first. */
     @Query(
         "SELECT e.id FROM emails e WHERE e.accountId = :accountId AND e.hasAttachment = 1 AND e.sortKey >= :cutoff " +
