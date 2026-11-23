@@ -59,7 +59,7 @@ class PinnedFoldersTest {
     }
 
     @Test fun `a pin key never collides with a real package and is not a legal package name`() {
-        val p = pin("com.netflix.mediaclient", "Netflix", pkg = "com.netflix.mediaclient")
+        val p = pin("com.netflix.mediaclient", "Netflix", "https://www.youtube.com/x", pkg = "com.netflix.mediaclient")
         assertEquals("pin:com.netflix.mediaclient/com.netflix.mediaclient", PinnedFolders.appKey(p))
         assertTrue(PinnedFolders.isAppKey(PinnedFolders.appKey(p)))
         assertFalse(PinnedFolders.isAppKey("com.netflix.mediaclient"))
