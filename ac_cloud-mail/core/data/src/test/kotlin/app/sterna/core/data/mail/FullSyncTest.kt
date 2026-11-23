@@ -179,10 +179,12 @@ class FullSyncTest {
         assertEquals(FullSyncStop.BATTERY_SAVER, r.stop)
     }
 
-    @Test fun `a metered link takes the incremental headers and the newest batch only, with no continuation loop`() = runTest {
+    // #1869 step 9: a metered run now fills a TEXT-only window of FULL_SYNC_METERED_TEXT_PER_RUN (it was one batch of
+    // PREFETCH_METERED_MAX_IDS); 100 missing bodies are all fetched, still with no backfill, no attachments, no chain.
+    @Test fun `a metered link takes the incremental headers and a text-only window, with no continuation loop`() = runTest {
         val port = FakePort(listOf(inbox), mapOf("inbox" to 100), pagesNeeded = 4, attachments = 3)
         val r = engine(port, { metered }).run(OfflineWindow.THREE, now)
-        assertEquals(PREFETCH_METERED_MAX_IDS, r.bodies)
+        assertEquals(minOf(100, FULL_SYNC_METERED_TEXT_PER_RUN), r.bodies)
         assertEquals("no backfill on a metered link", 0, r.headerPages)
         assertFalse("the next period tries again, nothing is chained on mobile data", r.morePending)
         assertEquals("Wi-Fi only default: no attachments on a metered link", 0, r.attachments)

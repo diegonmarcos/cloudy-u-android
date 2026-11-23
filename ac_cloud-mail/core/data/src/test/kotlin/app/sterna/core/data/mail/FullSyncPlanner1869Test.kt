@@ -142,10 +142,10 @@ class FullSyncPlanner1869Test {
         assertFalse(second.morePending)
     }
 
-    @Test fun `a metered run takes the newest batch, no backfill, no inline images, no continuation`() = runTest {
+    @Test fun `a metered run takes a text-only window, no backfill, no inline images, no continuation`() = runTest {
         val port = Port(listOf(inbox), mutableMapOf("inbox" to 100), inlineOf = setOf("inbox-1"), edgeAfterPages = 3)
         val r = engine(port, { metered }).run(OfflineWindow.THREE, now)
-        assertEquals(PREFETCH_METERED_MAX_IDS, r.bodies)
+        assertEquals(minOf(100, FULL_SYNC_METERED_TEXT_PER_RUN), r.bodies)
         assertEquals(0, r.headerPages)
         assertEquals(0, r.inlineImages)
         assertFalse(r.morePending)

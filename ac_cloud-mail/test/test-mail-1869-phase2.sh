@@ -18,6 +18,9 @@
 #   S8  neighbours in the PAGER's order (2 each side, (account, id) pairs, nearest first) on settle; the folder order is the
 #       lone-message fallback; PrefetchTrigger.VISIBLE: the rows on screen, debounced 150 ms, at most 12, metered allowed;
 #       raw outside the Inbox (no key import); no body fetched twice at once
+#   S9  planner: the inline phase reads inlineState (no LIKE scan, no starvation); a metered run fetches a text window of
+#       ~200; calendar parts on any link; IMAP sources in one session per folder; ciphertext sources kept locally and read
+#       first (never anything decrypted); the sync passes run one at a time; the reader's membership is local
 #   P5  rule 16 parity: every email_bodies column, every body DAO query and every registered migration kept
 #   M   mutation-proof: each defence undone in a COPY turns its check red; the real tree is green
 #
@@ -153,6 +156,36 @@ elif which == "S8":
     ib = code(read(os.path.join(K, "ui/inbox/InboxScreen.kt")))
     need("delay(app.sterna.core.data.mail.PREFETCH_VISIBLE_DEBOUNCE_MS)" in ib and "}.distinctUntilChanged().collectLatest { rows ->" in ib, "the visible rows are not debounced")
     need("viewModel.prefetchVisible(rows)" in ib and "listState.layoutInfo.visibleItemsInfo.mapNotNull { info ->" in ib, "the visible rows are not prefetched")
+elif which == "S9":
+    fs = code(read(os.path.join(D, "mail/FullSync.kt")))
+    need("internal const val FULL_SYNC_METERED_TEXT_PER_RUN = 200" in fs and "val budget = fullSyncBodyBudget(c0)" in fs, "no metered text window")
+    need("if (c.connected && !c.batterySaver && !c.unmetered) PrefetchBudget(FULL_SYNC_METERED_TEXT_PER_RUN, PREFETCH_BATCH, 1)" in fs, "the metered window is not serial batches")
+    need("fun inlineImagesAllowed(c: PrefetchConditions): Boolean = c.connected && c.unmetered && !c.batterySaver" in fs, "images leave Wi-Fi only")
+    need("port.missingCalendarParts(FULL_SYNC_CALENDAR_PER_RUN)" in fs and "port.missingCiphertext(FULL_SYNC_CIPHERTEXT_PER_RUN)" in fs, "no calendar or ciphertext phase")
+    r = code(read(os.path.join(D, "mail/MailRepository.kt")))
+    mi = body(r, "override suspend fun missingInlineImages(limit: Int): List<String> {")
+    need("emailBodyDao.idsAwaitingInlineImages(" in mi and "idsMissingInlineImages(" not in mi, "the inline phase scans the body text again")
+    need("InlineState.FAILED_PERMANENT" in body(r, "override suspend fun fetchInlineImages(emailId: String) {"), "an unfetchable image starves the budget")
+    cal = body(r, "override suspend fun missingCalendarParts(limit: Int): List<AttachmentJob> {")
+    need("email.calendarParts()" in cal and "if (cryptoKindOf(email) != null) continue" in cal, "calendar parts not found, or found in ciphertext")
+    raw = body(r, "private suspend fun fetchRawSource(")
+    need("keepLocalCiphertext(credentials.id, emailId, raw)" in raw, "the ciphertext source is not kept")
+    dm = body(r, "suspend fun decryptMessage(")
+    need("val raw = runCatching { localRaw ?: fetchRawSource(credentials, email, emailId) }" in dm, "the decrypt does not read the local ciphertext first")
+    kc = body(r, "private fun keepLocalCiphertext(")
+    need("if (runCatching { MimeParser.detectCrypto(raw) }.getOrNull() == null) return" in kc, "a plain source is written as ciphertext")
+    need("val batched = prefetchImapSources(credentials, ids)" in r and "imap.prefetchSources(credentials, mailboxId, uids)" in r, "IMAP is fetched one session per message")
+    for w in ("syncSerial.withLock { FullSync(", "syncSerial.withLock { syncMailCoreSerial(", "syncSerial.withLock { OfflineSync("):
+        need(w in r, "a sync pass runs beside another: " + w)
+    lm = body(r, "suspend fun localMailboxMembership(")
+    need("emailDao.membershipsOf(accountId, emailId)" in lm and "connect(" not in lm, "the membership is not local")
+    vm = code(read(os.path.join(K, "ui/message/MessageViewModel.kt")))
+    need("refreshMailboxIds(local = true)" in vm, "every open asks the server for the membership")
+    im = code(read(os.path.join(D, "mail/ImapMailService.kt")))
+    fsb = im[im.find("suspend fun prefetchSources("):im.find("fun dropPrefetchedSources(")]
+    need(fsb.count("onMailbox(") == 1, "the IMAP batch is not one session")
+    fsrc = body(im, "    suspend fun fetchSource(")
+    need("if (expectedUidValidity == null) prefetchedSources.remove(sourceKey(credentials, mailboxId, uid))?.let { return it }" in fsrc, "a batched source answers a read that opposes a numbering")
 elif which == "P5":
     ent = code(read(os.path.join(D, "db/EmailBodyEntity.kt")))
     for col in ("val id: String", "val accountId: String", "val bodyJson: String", "val inlineImagesJson: String", "val fetchedAt: Long"):
@@ -179,9 +212,10 @@ declare -A LABEL=(
   [S6]="inline images are files served by cid: interception; export, print and old rows kept"
   [S7]="the fragment is stored with the body, seeds the reader, and is rebuilt lazily on a version change"
   [S8]="neighbours in pager order; VISIBLE rows debounced, capped, metered allowed"
+  [S9]="planner: inline state, metered text window, calendar, IMAP batch, local ciphertext, serial passes, local membership"
   [P5]="rule 16 parity: every email_bodies column, body query and migration step kept"
 )
-CHECKS="S5 S6 S7 S8 P5"
+CHECKS="S5 S6 S7 S8 S9 P5"
 
 echo "== the tree =="
 for c in $CHECKS; do
@@ -252,6 +286,16 @@ mutate S8 "$UI/MessageScreen.kt" '                            application.contai
 ' '' "the pager order dropped"
 mutate S8 "app/src/main/kotlin/app/sterna/ui/inbox/InboxScreen.kt" '            delay(app.sterna.core.data.mail.PREFETCH_VISIBLE_DEBOUNCE_MS)
 ' '' "a request per scroll frame"
+mutate S9 "$MD/FullSync.kt" '        val budget = fullSyncBodyBudget(c0)' '        val budget = prefetchBudget(c0, PrefetchTrigger.LIST_SYNC)' "the metered run back to one batch"
+mutate S9 "$MD/MailRepository.kt" 'emailBodyDao.idsAwaitingInlineImages(' 'emailDao.idsMissingInlineImages(' "the inline phase back to the LIKE scan"
+mutate S9 "$MD/MailRepository.kt" 'if (state == InlineState.COMPLETE) InlineState.COMPLETE else InlineState.FAILED_PERMANENT' 'state' "an unfetchable image retried every run"
+mutate S9 "$MD/MailRepository.kt" '        if (runCatching { MimeParser.detectCrypto(raw) }.getOrNull() == null) return
+' '' "plain sources written to disk"
+mutate S9 "$MD/MailRepository.kt" 'val batched = prefetchImapSources(credentials, ids)' 'val batched = emptyMap<String, List<Long>>()' "IMAP back to one session per message"
+mutate S9 "$MD/ImapMailService.kt" 'if (expectedUidValidity == null) prefetchedSources.remove(' 'if (true) prefetchedSources.remove(' "a batched source past a frozen numbering"
+mutate S9 "$MD/MailRepository.kt" 'val raw = runCatching { localRaw ?: fetchRawSource(credentials, email, emailId) }' 'val raw = runCatching { fetchRawSource(credentials, email, emailId) }' "decrypt back on the network"
+mutate S9 "$MD/MailRepository.kt" 'syncSerial.withLock { syncMailCoreSerial(credentials, budgetMs) }' 'syncMailCoreSerial(credentials, budgetMs)' "the core pass races the full sync"
+mutate S9 "app/src/main/kotlin/app/sterna/ui/message/MessageViewModel.kt" 'refreshMailboxIds(local = true)' 'refreshMailboxIds()' "the membership from the server on every open"
 mutate P5 "$DBD/EmailBodyEntity.kt" '    val fetchedAt: Long,
 ' '' "the fetchedAt column dropped"
 mutate P5 "$DBD/EmailBodyDao.kt" 'suspend fun pruneForAccount(' 'suspend fun pruneGone(' "a body DAO query removed"

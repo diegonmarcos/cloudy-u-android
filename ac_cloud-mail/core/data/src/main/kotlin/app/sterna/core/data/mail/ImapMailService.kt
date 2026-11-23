@@ -722,8 +722,32 @@ class ImapMailService(
         mailboxId: String,
         uid: Long,
         expectedUidValidity: Long? = null,
-    ): String =
-        onMailbox(credentials, mailboxId, expectedUidValidity = expectedUidValidity) { session, _ -> session.fetchSource(uid) }
+    ): String {
+        // #1869 step 9: a source read in this account's batch session a moment ago, unless a numbering is to be opposed.
+        if (expectedUidValidity == null) prefetchedSources.remove(sourceKey(credentials, mailboxId, uid))?.let { return it }
+        return onMailbox(credentials, mailboxId, expectedUidValidity = expectedUidValidity) { session, _ -> session.fetchSource(uid) }
+    }
+
+    /**
+     * #1869 step 9: the raw sources of [uids] of ONE folder read in ONE session (one connection, one SELECT) for the
+     * offline sync's batches, held until [fetchSource] takes each once (a read carrying no frozen numbering only) or
+     * [dropPrefetchedSources] clears what was not taken. A uid the server no longer holds is simply absent.
+     */
+    suspend fun prefetchSources(credentials: AccountCredentials, mailboxId: String, uids: List<Long>): Int =
+        if (uids.isEmpty()) 0
+        else onMailbox(credentials, mailboxId) { session, _ ->
+            var n = 0
+            for (uid in uids) runCatching { session.fetchSource(uid) }.getOrNull()?.let { prefetchedSources[sourceKey(credentials, mailboxId, uid)] = it; n++ }
+            n
+        }
+
+    fun dropPrefetchedSources(credentials: AccountCredentials, mailboxId: String, uids: List<Long>) {
+        uids.forEach { prefetchedSources.remove(sourceKey(credentials, mailboxId, it)) }
+    }
+
+    private val prefetchedSources = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    private fun sourceKey(credentials: AccountCredentials, mailboxId: String, uid: Long) = "${credentials.id}\u0000$mailboxId\u0000$uid"
 
     /**
      * The SERVER's delivery timestamp (`INTERNALDATE`), not `EmailEntity.receivedAt`, which here is

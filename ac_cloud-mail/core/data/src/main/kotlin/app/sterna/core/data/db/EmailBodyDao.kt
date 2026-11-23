@@ -53,6 +53,18 @@ interface EmailBodyDao {
     @Upsert
     suspend fun upsert(body: EmailBodyEntity)
 
+    /** #1869 step 9: the inline phase's work list, driven by `inlineState` (UNKNOWN = 0, PENDING = 2), not by a LIKE scan
+     *  over the body text; inside the window, newest first. */
+    @Query(
+        "SELECT b.id FROM email_bodies b JOIN emails e ON e.accountId = b.accountId AND e.id = b.id " +
+            "WHERE b.accountId = :accountId AND b.inlineState IN (0, 2) AND e.sortKey >= :cutoff " +
+            "GROUP BY b.id ORDER BY MAX(e.sortKey) DESC, b.id DESC LIMIT :limit OFFSET :offset",
+    )
+    suspend fun idsAwaitingInlineImages(accountId: String, cutoff: Long, limit: Int, offset: Int): List<String>
+
+    @Query("UPDATE email_bodies SET inlineState = :state WHERE accountId = :accountId AND id = :id")
+    suspend fun setInlineState(accountId: String, id: String, state: Int)
+
     /** #1869 step 7: the lazy rebuild of one row's fragment after a [app.sterna.core.data.mail.ReaderFragment.VERSION]
      *  change; [bytes] is the row's new stored size. One row, never a table rewrite. */
     @Query(

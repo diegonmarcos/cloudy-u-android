@@ -267,6 +267,10 @@ interface EmailDao {
     @Query("SELECT id, mailboxId FROM emails WHERE accountId = :accountId AND id IN (:ids)")
     suspend fun mailboxesOf(accountId: String, ids: List<String>): List<EmailFiledRow>
 
+    /** #1869 step 9: one message's mailbox set as the core's feed mirrored it, local only (the reader's label surface). */
+    @Query("SELECT mailboxId FROM email_mailboxes WHERE accountId = :accountId AND emailId = :emailId")
+    suspend fun membershipsOf(accountId: String, emailId: String): List<String>
+
     @Query("DELETE FROM email_mailboxes WHERE accountId = :accountId AND emailId IN (:ids)")
     suspend fun clearMemberships(accountId: String, ids: List<String>)
 

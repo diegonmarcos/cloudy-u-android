@@ -722,12 +722,17 @@ class MessageViewModel(application: Application) : AndroidViewModel(application)
     private val _mailboxIds = MutableStateFlow<Set<String>>(emptySet())
     val mailboxIds = _mailboxIds.asStateFlow()
 
-    /** Re-read the membership from the server. Called on load and after every add/remove, because
-     *  the local row holds ONE mailbox id and cannot represent the answer. */
-    fun refreshMailboxIds() {
+    /** Re-read the membership from the server. Called after every add/remove, because the local row
+     *  holds ONE mailbox id and cannot represent the answer. #1869 step 9: on load ([local]) it is read
+     *  from the local store instead (the memberships every list sync mirrors), so an open makes no call. */
+    fun refreshMailboxIds(local: Boolean = false) {
         val id = loadedId ?: return
         viewModelScope.launch {
             val fetched = runCatching {
+                if (local) {
+                    val account = accountId ?: store.currentId() ?: return@runCatching emptySet<String>()
+                    return@runCatching repo.localMailboxMembership(account, id)
+                }
                 val credentials = credentials() ?: return@runCatching emptySet<String>()
                 repo.mailboxMembership(credentials, id)
             }.getOrDefault(emptySet())
@@ -1423,8 +1428,8 @@ class MessageViewModel(application: Application) : AndroidViewModel(application)
                 // what that guess is worth and why its result is only ever "open a page".
                 _unsubscribe.value = UnsubscribeHeader.parse(anchor.listUnsubscribe, anchor.listUnsubscribePost)
                     ?: scanBodyForUnsubscribe(anchor)
-                // The message's own mailbox set, which the cached row cannot hold.
-                refreshMailboxIds()
+                // The message's own mailbox set, which the cached row cannot hold: read locally (#1869 step 9).
+                refreshMailboxIds(local = true)
                 // OpenPGP: reflect the crypto state; a decrypt is attempted once the page settles in
                 // front of the user, not while the pager pre-composes neighbours.
                 when (val c = opened.crypto) {

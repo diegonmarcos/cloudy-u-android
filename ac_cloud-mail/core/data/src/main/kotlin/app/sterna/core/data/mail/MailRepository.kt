@@ -42,6 +42,7 @@ import app.sterna.core.data.db.EmailFtsDao
 import app.sterna.core.data.db.EmailBodyDao
 import app.sterna.core.data.db.EmailBodyEntity
 import app.sterna.core.data.db.EmailPartDao
+import app.sterna.core.data.db.InlineState
 import app.sterna.core.data.db.LocalDraftDao
 import app.sterna.core.data.db.LocalDraftEntity
 import app.sterna.core.data.db.LocalDraftState
@@ -126,6 +127,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -157,6 +159,9 @@ private const val FULL_SYNC_PAGE = 100
 /** How many messages with attachments one attachment scan reads per query, and in total per call. */
 private const val FULL_SYNC_ATTACHMENT_SCAN_PAGE = 100
 private const val FULL_SYNC_ATTACHMENT_SCAN_MAX = 2_000
+
+/** #1869 step 9: the file name of a message's locally kept ciphertext source (in its offline-attachments directory). */
+private const val LOCAL_CIPHERTEXT_NAME = "source-ciphertext.eml"
 
 /** The per-id SetError type meaning the id does not exist in the account (RFC 8620 §5.3). Action
  *  paths receiving it prune the cached row. */
@@ -1250,7 +1255,10 @@ class MailRepository(
      * the app leave the store first. Answers the pass summary, or null when nothing ran: an IMAP account (phase 1 keeps the
      * old path for IMAP), no core in this process, or no Inbox.
      */
-    suspend fun syncMailCore(credentials: AccountCredentials, budgetMs: Long = RustMailEngine.WORKER_BUDGET_MS): String? {
+    suspend fun syncMailCore(credentials: AccountCredentials, budgetMs: Long = RustMailEngine.WORKER_BUDGET_MS): String? =
+        syncSerial.withLock { syncMailCoreSerial(credentials, budgetMs) }
+
+    private suspend fun syncMailCoreSerial(credentials: AccountCredentials, budgetMs: Long): String? {
         if (credentials.protocol == MailProtocol.IMAP) return null
         val core = mailCore ?: return null
         if (core.unavailableReason() != null) return null
@@ -2937,8 +2945,31 @@ class MailRepository(
                 .toString(Charsets.ISO_8859_1)
         }
         rawSourceCache.put(cryptoKey(credentials.id, emailId), raw)
+        keepLocalCiphertext(credentials.id, emailId, raw)
         return raw
     }
+
+    /** #1869 step 9: where a message's raw CIPHERTEXT source is kept: its offline-attachments directory (the attachments
+     *  cap, evicted with the message). Only a source [MimeParser.detectCrypto] calls OpenPGP is ever written. */
+    private fun localCiphertextFile(accountId: String, emailId: String): java.io.File? =
+        offlineAttachmentFile(accountId, emailId, EmailBodyPart(blobId = "x"))?.parentFile?.let { java.io.File(it, LOCAL_CIPHERTEXT_NAME) }
+
+    private fun readLocalCiphertext(accountId: String, emailId: String): String? =
+        localCiphertextFile(accountId, emailId)?.takeIf { it.isFile }?.let { runCatching { it.readText(Charsets.ISO_8859_1) }.getOrNull() }
+
+    private fun keepLocalCiphertext(accountId: String, emailId: String, raw: String) {
+        val file = localCiphertextFile(accountId, emailId) ?: return
+        if (file.isFile) return
+        if (runCatching { MimeParser.detectCrypto(raw) }.getOrNull() == null) return
+        runCatching {
+            file.parentFile?.mkdirs()
+            val tmp = java.io.File(file.path + ".part")
+            tmp.writeText(raw, Charsets.ISO_8859_1)
+            if (!tmp.renameTo(file)) tmp.delete()
+        }
+    }
+
+
 
     /** Decrypt and/or verify an OpenPGP message via [PgpEngine]. Nothing decrypted is persisted;
      *  [PgpResult.UserInteractionRequired] asks the caller to run the PendingIntent and retry. */
@@ -2949,9 +2980,17 @@ class MailRepository(
     ): PgpResult<MessageBody> {
         val pgp = pgpEngine ?: return PgpResult.NotAvailable
         decryptedCache.get(cryptoKey(credentials.id, emailId))?.let { return PgpResult.Success(it.body) }
-        val email = runCatching { openEmail(credentials, emailId, markRead = false) }
+        // #1869 step 9: a stored body (outside the Inbox ciphertext is stored as received) spares the Email/get.
+        // The ciphertext source kept locally (#1869 step 9) spares the network entirely: the envelope comes from the stored
+        // body or the list row.
+        val localRaw = readLocalCiphertext(credentials.id, emailId)
+        val email = runCatching {
+            cachedMessage(credentials.id, emailId)?.email
+                ?: localRaw?.let { cachedEmail(credentials.id, emailId) }
+                ?: openEmail(credentials, emailId, markRead = false)
+        }
             .getOrElse { return PgpResult.Error(it.message ?: "Cannot fetch message") }
-        val raw = runCatching { fetchRawSource(credentials, email, emailId) }
+        val raw = runCatching { localRaw ?: fetchRawSource(credentials, email, emailId) }
             .getOrElse { return PgpResult.Error(it.message ?: "Cannot fetch message source") }
         val envelope = runCatching { MimeParser.detectCrypto(raw) }
             .getOrElse { return PgpResult.Error(it.message ?: "Cannot parse message structure") }
@@ -3132,6 +3171,10 @@ class MailRepository(
         emailBodyDao.deleteAll()
         runCatching { emailPartDao?.deleteAll() }
     }
+
+    /** The Content-IDs [email] names for inline images, as the stored maps key them. */
+    private fun inlineCids(email: Email): List<String> =
+        email.inlineImageParts().mapNotNull { it.cid?.trim()?.trim('<', '>')?.takeIf(String::isNotEmpty) }
 
     private suspend fun ensureInlineImages(
         credentials: AccountCredentials,
@@ -3638,6 +3681,13 @@ class MailRepository(
      *
      * Empty on IMAP, where a message really does live in one folder and there is no set to read.
      */
+    /** #1869 step 9: the message's mailbox set from the LOCAL store, no network: the memberships the core's feed mirrors
+     *  (`email_mailboxes`, reconciled by every list sync) plus the row's own mailbox. Empty on IMAP, like [mailboxMembership]. */
+    suspend fun localMailboxMembership(accountId: String, emailId: String): Set<String> {
+        if (accountStore.account(accountId)?.protocol == MailProtocol.IMAP) return emptySet()
+        return (emailDao.membershipsOf(accountId, emailId) + listOfNotNull(emailDao.mailboxOf(accountId, emailId))).toSet()
+    }
+
     suspend fun mailboxMembership(credentials: AccountCredentials, emailId: String): Set<String> {
         if (credentials.protocol == MailProtocol.IMAP) return emptySet()
         val ctx = connect(credentials)
@@ -6495,13 +6545,29 @@ class MailRepository(
         return bodies + files
     }
 
+    /** #1869 step 9: read the raw sources of [ids] (IMAP) folder by folder, ONE session per folder
+     *  ([ImapMailService.prefetchSources]); the per-message reads that follow take them instead of a session each. */
+    private suspend fun prefetchImapSources(credentials: AccountCredentials, ids: List<String>): Map<String, List<Long>> {
+        val byFolder = LinkedHashMap<String, MutableList<Long>>()
+        for (id in ids) {
+            val (mailboxId, uid) = imapTarget(id) ?: continue
+            byFolder.getOrPut(mailboxId) { mutableListOf() } += uid
+        }
+        for ((mailboxId, uids) in byFolder) runCatching { imap.prefetchSources(credentials, mailboxId, uids) }
+        return byFolder
+    }
+
+    /** #1869 step 9: the full-sync, offline-sync and core passes run ONE at a time (both workers start on app open), so a
+     *  raised budget never doubles the load on one server or races the shared session slot. */
+    private val syncSerial = kotlinx.coroutines.sync.Mutex()
+
     /** Download every message of [credentials] inside [window] for offline reading; evict older ones. */
     suspend fun syncOffline(
         credentials: AccountCredentials,
         window: OfflineWindow,
         limit: OfflineAttachmentLimit,
         nowMillis: Long = System.currentTimeMillis(),
-    ): OfflineSyncResult = OfflineSync(offlinePort(credentials)).run(window, limit, nowMillis)
+    ): OfflineSyncResult = syncSerial.withLock { OfflineSync(offlinePort(credentials)).run(window, limit, nowMillis) }
 
     // ---- Background full sync (#1768) -------------------------------------------------------
 
@@ -6519,7 +6585,7 @@ class MailRepository(
         nowMillis: Long = System.currentTimeMillis(),
     ): FullSyncResult {
         val port = fullSyncPort(credentials, window, limit)
-        return FullSync(port, conditions, policy, stopRequested = stopRequested).run(window, nowMillis)
+        return syncSerial.withLock { FullSync(port, conditions, policy, stopRequested = stopRequested).run(window, nowMillis) }
     }
 
     /** Bytes of downloaded attachments one account holds (Configs shows it per account). */
@@ -6600,16 +6666,96 @@ class MailRepository(
             return out
         }
 
-        // #1869 inline images of the stored bodies; ciphertext is never opened here (ENCRYPTION.md).
+        // #1869 inline images of the stored bodies; ciphertext is never opened here (ENCRYPTION.md). Step 9: the work list is
+        // `inlineState` (no LIKE scan); a row stored before v34 (UNKNOWN) is classified as it is met, and one whose images
+        // could not be stored is FAILED_PERMANENT, so it never starves the per-run budget again (the reader still fetches on open).
         override suspend fun missingInlineImages(limit: Int): List<String> {
             val out = mutableListOf<String>()
             var offset = 0
             while (out.size < limit && offset < FULL_SYNC_ATTACHMENT_SCAN_MAX) {
-                val ids = emailDao.idsMissingInlineImages(credentials.id, cutoff() ?: Long.MIN_VALUE, FULL_SYNC_ATTACHMENT_SCAN_PAGE, offset)
+                val ids = emailBodyDao.idsAwaitingInlineImages(credentials.id, cutoff() ?: Long.MIN_VALUE, FULL_SYNC_ATTACHMENT_SCAN_PAGE, offset)
+                if (ids.isEmpty()) break
+                var stays = 0
+                for (id in ids) {
+                    val row = emailBodyDao.byId(credentials.id, id)
+                    val email = storedEmail(id)
+                    if (row == null || email == null) continue
+                    val wanted = inlineCids(email)
+                    val stored = runCatching { cacheJson.decodeFromString(inlineImagesSerializer, row.inlineImagesJson) }.getOrDefault(emptyMap())
+                    val state = when {
+                        cryptoKindOf(email) != null || wanted.isEmpty() -> InlineState.NONE
+                        else -> InlineImageFiles.stateOf(wanted, InlineImageFiles.present(offlineAttachmentsDir, stored))
+                    }
+                    if (state != row.inlineState) runCatching { emailBodyDao.setInlineState(credentials.id, id, state) }
+                    if (state == InlineState.PENDING) stays++
+                    if (cryptoKindOf(email) != null || email.inlineImageParts().isEmpty()) continue
+                    if (state != InlineState.PENDING) continue
+                    out += id
+                    if (out.size >= limit) return out
+                }
+                // Rows just classified out of the list no longer count in the next page's offset.
+                offset += stays
+                if (stays == 0 && ids.size < FULL_SYNC_ATTACHMENT_SCAN_PAGE) break
+            }
+            return out
+        }
+
+        override suspend fun fetchInlineImages(emailId: String) {
+            val cached = cachedMessage(credentials.id, emailId) ?: return
+            if (cryptoKindOf(cached.email) != null) return
+            val images = ensureInlineImages(credentials, emailId, cached).inlineImages
+            val state = InlineImageFiles.stateOf(inlineCids(cached.email), images)
+            emailBodyDao.setInlineState(credentials.id, emailId, if (state == InlineState.COMPLETE) InlineState.COMPLETE else InlineState.FAILED_PERMANENT)
+        }
+
+        // #1869 step 9: calendar invites of the stored bodies, on any link and whatever the attachment policy (a few KB),
+        // as the offline attachment file the reader's `downloadAttachment` reads first. Never ciphertext.
+        override suspend fun missingCalendarParts(limit: Int): List<AttachmentJob> {
+            val out = mutableListOf<AttachmentJob>()
+            var offset = 0
+            while (out.size < limit && offset < FULL_SYNC_ATTACHMENT_SCAN_MAX) {
+                val ids = emailDao.idsWithAttachmentAndBody(credentials.id, cutoff() ?: Long.MIN_VALUE, FULL_SYNC_ATTACHMENT_SCAN_PAGE, offset)
                 if (ids.isEmpty()) break
                 for (id in ids) {
                     val email = storedEmail(id) ?: continue
-                    if (cryptoKindOf(email) != null || email.inlineImageParts().isEmpty()) continue
+                    if (cryptoKindOf(email) != null) continue
+                    for (part in email.calendarParts()) {
+                        if (part.size > FULL_SYNC_CALENDAR_MAX_BYTES) continue
+                        val file = offlineAttachmentFile(credentials.id, id, part) ?: continue
+                        if (file.isFile) continue
+                        out += AttachmentJob(id, part.blobId ?: part.partId ?: continue, part.size)
+                        if (out.size >= limit) return out
+                    }
+                }
+                offset += ids.size
+            }
+            return out
+        }
+
+        override suspend fun fetchCalendarPart(job: AttachmentJob) {
+            val email = storedEmail(job.emailId) ?: return
+            val part = email.calendarParts().firstOrNull { (it.blobId ?: it.partId) == job.partKey } ?: return
+            val file = offlineAttachmentFile(credentials.id, job.emailId, part) ?: return
+            if (file.isFile) return
+            val bytes = downloadAttachment(credentials, part, job.emailId, FULL_SYNC_CALENDAR_MAX_BYTES)
+            file.parentFile?.mkdirs()
+            val tmp = java.io.File(file.path + ".part")
+            tmp.writeBytes(bytes)
+            if (!tmp.renameTo(file)) tmp.delete()
+        }
+
+        // #1869 step 9: stored ciphertext keeps its raw source locally (as received; nothing decrypted), so a decrypt
+        // reads no network. No key is imported here: the source is only written.
+        override suspend fun missingCiphertext(limit: Int): List<String> {
+            val out = mutableListOf<String>()
+            var offset = 0
+            while (out.size < limit && offset < FULL_SYNC_ATTACHMENT_SCAN_MAX) {
+                val ids = emailDao.idsWithAttachmentAndBody(credentials.id, cutoff() ?: Long.MIN_VALUE, FULL_SYNC_ATTACHMENT_SCAN_PAGE, offset)
+                if (ids.isEmpty()) break
+                for (id in ids) {
+                    val email = storedEmail(id) ?: continue
+                    if (cryptoKindOf(email) == null) continue
+                    if (localCiphertextFile(credentials.id, id)?.isFile != false) continue
                     out += id
                     if (out.size >= limit) return out
                 }
@@ -6618,10 +6764,10 @@ class MailRepository(
             return out
         }
 
-        override suspend fun fetchInlineImages(emailId: String) {
-            val cached = cachedMessage(credentials.id, emailId) ?: return
-            if (cryptoKindOf(cached.email) != null) return
-            ensureInlineImages(credentials, emailId, cached)
+        override suspend fun fetchCiphertext(emailId: String) {
+            val email = storedEmail(emailId) ?: return
+            if (cryptoKindOf(email) == null) return
+            fetchRawSource(credentials, email, emailId)
         }
 
         private fun downloadableParts(email: Email): List<EmailBodyPart> = email.attachments.filter {
@@ -6719,7 +6865,13 @@ class MailRepository(
 
         override suspend fun fetchAndStore(ids: List<String>, attachmentMaxBytes: Long) {
             val stored: List<Email> = if (credentials.protocol == MailProtocol.IMAP) {
-                ids.mapNotNull { id -> runCatching { openMessage(credentials, id, markRead = false).email }.getOrNull() }
+                // #1869 step 9: the sources of a folder's messages in ONE session, then the per-message path as before.
+                val batched = prefetchImapSources(credentials, ids)
+                try {
+                    ids.mapNotNull { id -> runCatching { openMessage(credentials, id, markRead = false).email }.getOrNull() }
+                } finally {
+                    batched.forEach { (mailboxId, uids) -> imap.dropPrefetchedSources(credentials, mailboxId, uids) }
+                }
             } else {
                 val emails = AuthRetry.withRefreshOn401(refresh = { invalidateSession() }) {
                     val ctx = connect(credentials)

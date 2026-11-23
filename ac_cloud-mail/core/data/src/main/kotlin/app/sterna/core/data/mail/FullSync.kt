@@ -54,6 +54,24 @@ internal const val FULL_SYNC_INLINE_PER_RUN = 100
  *  with the body (the reader paints them from disk) but are bytes no metered link should spend unasked. */
 fun inlineImagesAllowed(c: PrefetchConditions): Boolean = c.connected && c.unmetered && !c.batterySaver
 
+/** #1869 step 9: text bodies one METERED run fetches (about 200, serially, batches of [PREFETCH_BATCH]): the whole window
+ *  reaches the phone on mobile data too, text only; inline images and attachments stay Wi-Fi only. */
+internal const val FULL_SYNC_METERED_TEXT_PER_RUN = 200
+
+/** The body budget of one full-sync run: [FULL_SYNC_METERED_TEXT_PER_RUN] on a metered link, the list-sync throttle
+ *  ([prefetchBudget]) otherwise (unmetered: the whole window; battery saver or offline: nothing). */
+fun fullSyncBodyBudget(c: PrefetchConditions): PrefetchBudget =
+    if (c.connected && !c.batterySaver && !c.unmetered) PrefetchBudget(FULL_SYNC_METERED_TEXT_PER_RUN, PREFETCH_BATCH, 1)
+    else prefetchBudget(c, PrefetchTrigger.LIST_SYNC)
+
+/** #1869 step 9: calendar parts (`text/calendar`, an invite) one run stores at most, and the largest one taken. They are
+ *  fetched on ANY link (a few KB each) and whatever the attachment policy, so an invite card renders offline. */
+internal const val FULL_SYNC_CALENDAR_PER_RUN = 50
+internal const val FULL_SYNC_CALENDAR_MAX_BYTES = 512L * 1024
+
+/** #1869 step 9: raw sources of stored ciphertext one run keeps locally (decrypting then needs no network). */
+internal const val FULL_SYNC_CIPHERTEXT_PER_RUN = 50
+
 /** Header pages (100 messages each) one folder backfills per run. A longer window continues in the next run. */
 internal const val FULL_SYNC_PAGES_PER_FOLDER = 20
 
@@ -109,6 +127,17 @@ interface FullSyncPort {
     /** #1869 download and store the inline images of the stored body [emailId]. */
     suspend fun fetchInlineImages(emailId: String) {}
 
+    /** #1869 step 9: calendar parts of stored bodies inside the window not on disk yet, newest first, at most [limit]. */
+    suspend fun missingCalendarParts(limit: Int): List<AttachmentJob> = emptyList()
+
+    suspend fun fetchCalendarPart(job: AttachmentJob) {}
+
+    /** #1869 step 9: stored ciphertext whose raw source is not kept locally yet, newest first, at most [limit]. */
+    suspend fun missingCiphertext(limit: Int): List<String> = emptyList()
+
+    /** Keep the raw source (ciphertext as received, never anything decrypted) of [emailId] locally. */
+    suspend fun fetchCiphertext(emailId: String) {}
+
     suspend fun bodyBytes(): Long
     suspend fun attachmentBytes(): Long
 
@@ -130,6 +159,9 @@ data class FullSyncResult(
     val morePending: Boolean,
     /** #1869 messages whose inline images this run stored. */
     val inlineImages: Int = 0,
+    /** #1869 step 9: calendar parts and ciphertext sources this run stored. */
+    val calendarParts: Int = 0,
+    val ciphertexts: Int = 0,
 )
 
 /**
@@ -169,7 +201,7 @@ class FullSync(
         halted()?.let { return FullSyncResult(0, 0, 0, 0, 0, 0, it, morePending = false) }
 
         val c0 = conditions()
-        val budget = prefetchBudget(c0, PrefetchTrigger.LIST_SYNC)
+        val budget = fullSyncBodyBudget(c0)
         val evicted = guarded { port.evict() } ?: 0
 
         val folders = try {
@@ -281,6 +313,24 @@ class FullSync(
             }
         }
 
+        // 2c. #1869 step 9: calendar parts (any link, any policy: an invite is a few KB) and the raw sources of stored
+        //     ciphertext (decrypt needs no network). Inside the attachments cap, a budget per run each.
+        var calendar = 0
+        var ciphertexts = 0
+        if (stop != FullSyncStop.OFFLINE && stop != FullSyncStop.BATTERY_SAVER && stop != FullSyncStop.STOPPED) {
+            val ceiling = attachmentCapBytes / 100 * FILL_CEILING_PERCENT
+            val jobs = if ((guarded { port.attachmentBytes() } ?: 0L) < ceiling) guarded { port.missingCalendarParts(FULL_SYNC_CALENDAR_PER_RUN) }.orEmpty() else emptyList()
+            for (job in jobs.filter { it.bytes <= FULL_SYNC_CALENDAR_MAX_BYTES }.take(FULL_SYNC_CALENDAR_PER_RUN)) {
+                if (halted() != null) break
+                if (guarded { port.fetchCalendarPart(job) } != null) calendar++ else errors++
+            }
+            val sealed = if ((guarded { port.attachmentBytes() } ?: 0L) < ceiling) guarded { port.missingCiphertext(FULL_SYNC_CIPHERTEXT_PER_RUN) }.orEmpty() else emptyList()
+            for (id in sealed.take(FULL_SYNC_CIPHERTEXT_PER_RUN)) {
+                if (halted() != null) break
+                if (guarded { port.fetchCiphertext(id) } != null) ciphertexts++ else errors++
+            }
+        }
+
         // 3. Attachments, by policy, inside the window and the cap.
         if (stop != FullSyncStop.OFFLINE && stop != FullSyncStop.BATTERY_SAVER && stop != FullSyncStop.STOPPED) {
             var left = if (conditions().unmetered) FULL_SYNC_ATTACHMENTS_PER_RUN else FULL_SYNC_ATTACHMENTS_PER_RUN_METERED
@@ -320,7 +370,9 @@ class FullSync(
 
         // 4. Trim to the caps (what the fill stopped short of by design is untouched).
         val evictedAfter = guarded { port.evict() } ?: 0
-        return finish(folderCount, pages, bodies, attachments, evicted + evictedAfter, errors, stop, pending, inline)
+        return finish(folderCount, pages, bodies, attachments, evicted + evictedAfter, errors, stop, pending, inline).copy(
+            calendarParts = calendar, ciphertexts = ciphertexts,
+        )
     }
 
     private fun finish(
