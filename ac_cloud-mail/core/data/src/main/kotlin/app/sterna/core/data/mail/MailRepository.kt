@@ -3684,7 +3684,7 @@ class MailRepository(
     /** #1869 step 9: the message's mailbox set from the LOCAL store, no network: the memberships the core's feed mirrors
      *  (`email_mailboxes`, reconciled by every list sync) plus the row's own mailbox. Empty on IMAP, like [mailboxMembership]. */
     suspend fun localMailboxMembership(accountId: String, emailId: String): Set<String> {
-        if (accountStore.account(accountId)?.protocol == MailProtocol.IMAP) return emptySet()
+        if (isImapAccount(accountId)) return emptySet()
         return (emailDao.membershipsOf(accountId, emailId) + listOfNotNull(emailDao.mailboxOf(accountId, emailId))).toSet()
     }
 
