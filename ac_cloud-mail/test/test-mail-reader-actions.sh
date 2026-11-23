@@ -107,8 +107,9 @@ has "$UI/message/LabelSheet.kt" 'if (removalNeedsConfirming(tag)) confirming = t
 # The overflow entry is gated on ONE decision, the same one the ViewModel makes for the banner. The
 # bar icon it used to share this with left the bar for Mark unread at #293; the entry and the strip
 # under the sender stayed.
-has "$SCREEN" 'offeredUnsubscribeAction(unsubscribe, unsubscribeState)?.let { action ->' \
-  "U1 the overflow entry is gated on the offer decision"
+has "$SCREEN" 'val unsubscribeOffered = offeredUnsubscribeAction(unsubscribe, unsubscribeState)' \
+  "U1 the overflow entry is gated on the offer decision (read once, #1870 also gates the SENDER title on it)"
+has "$SCREEN" 'unsubscribeOffered?.let { action ->' "U1 ...and the entry is drawn only from that decision"
 has "$VM" 'options?.preferredAction()' "U1 no options means no action means no icon"
 has "$VM" 'UnsubscribeState.Sending, UnsubscribeState.Sent, UnsubscribeState.Queued -> null' \
   "U1 an already-taken way out offers nothing"

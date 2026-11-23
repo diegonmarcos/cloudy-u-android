@@ -5,7 +5,7 @@
 # ╚══════════════════════════════════════════════════════════════════════════╝
 #
 #   R1  no popup: the reader opens no result dialog; Translate and Resume go through runReaderTool
-#   R2  Show Original / Show Translated sits beside Unsubscribe, enabled only once a translation exists
+#   R2  Show Original / Show Translated sits in the TEXT TOOLS section (#1870), enabled only once a translation exists
 #   R3  the translated fragment enters the document builder and is a key of the remembered page
 #   R4  the cache: a table, a REGISTERED migration, a DAO on the database, one key per message+language
 #   R5  auto-translate: off by default, gated by detection; auto-summary: off by default
@@ -39,9 +39,10 @@ PY
 r2() { python3 - "$1" <<'PY'
 import sys
 s = open(sys.argv[1] + "/app/sterna/ui/message/MessageScreen.kt", encoding="utf-8").read()
-u = s.find("viewModel.askUnsubscribe() },"); t = s.find("R.string.message_show_original"); h = s.find("R.string.message_view_headers")
+# #1870: the toggle lives in the overflow's TEXT TOOLS section, after Translate (was: beside Unsubscribe).
+u = s.find("MenuSectionTitle(R.string.menu_section_text_tools)"); t = s.find("R.string.message_show_original"); h = s.find("MenuSectionTitle(R.string.menu_section_sender)")
 bad = []
-if not (0 < u < t < h): bad.append("the toggle is not between Unsubscribe and View headers")
+if not (0 < u < t < h): bad.append("the toggle is not in the TEXT TOOLS section")
 else:
     e = s[t:h]
     if "enabled = translation.exists" not in e: bad.append("the toggle is not disabled until a translation exists")
@@ -133,7 +134,7 @@ run() { # <label> <fn> <msg>
   "$2" "$T/ok" && pass "$3" || fail "$3"
 }
 run R1 r1 "R1 no popup on the reader; one function starts every reading tool"
-run R2 r2 "R2 Show Original / Show Translated beside Unsubscribe, disabled until a translation exists"
+run R2 r2 "R2 Show Original / Show Translated in TEXT TOOLS, disabled until a translation exists"
 run R3 r3 "R3 the translated fragment enters the document and its key"
 run R4 r4 "R4 cache table, registered migration, DAO, one key per message+language"
 run R5 r5 "R5 auto-translate and auto-summary off by default; auto-translate gated by detection"

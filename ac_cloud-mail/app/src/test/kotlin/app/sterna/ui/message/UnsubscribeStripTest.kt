@@ -138,8 +138,9 @@ class UnsubscribeStripTest {
             "UnsubscribeStrip(options, unsubscribeState, onUnsubscribe)" in screen,
         )
         assertTrue(
-            "the overflow entry must still gate on offeredUnsubscribeAction",
-            "offeredUnsubscribeAction(unsubscribe, unsubscribeState)?.let { action ->" in screen,
+            "the overflow entry must still gate on offeredUnsubscribeAction (read once since #1870)",
+            "val unsubscribeOffered = offeredUnsubscribeAction(unsubscribe, unsubscribeState)" in screen &&
+                "unsubscribeOffered?.let { action ->" in screen,
         )
         assertTrue(
             "and the confirmation must still stand between the entry and the request",

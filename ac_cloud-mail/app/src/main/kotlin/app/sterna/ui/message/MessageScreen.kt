@@ -1065,6 +1065,10 @@ private fun MessageActions(
                 )
             }
         } else {
+            // #1870 the overflow in sections, each under a one-word muted title (MenuSectionTitle): REPLY, TRIAGE,
+            // TEXT TOOLS, SENDER, MORE. Every entry is the one it was, with its own condition and enabled logic; only
+            // the order changed (ReaderMenuSectionsTest pins the order and the parity with the list before).
+            MenuSectionTitle(R.string.menu_section_reply)
             // Reply variants (reply-ALL is the toolbar icon now). Plain single reply lives here —
             // still one tap from the same place forward and forward-as-attachment always were, and
             // deliberately first in the menu, since it is the entry someone opens this menu FOR
@@ -1091,83 +1095,11 @@ private fun MessageActions(
                 leadingIcon = { Icon(Icons.Filled.AttachFile, contentDescription = null) },
                 onClick = { menuOpen = false; onReply("forwardAttachment", replyTargetId, accountId) },
             )
-            // Assigned: attach a task (deadline + target date and details) to this mail.
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.task_assign)) },
-                leadingIcon = { Icon(Icons.Filled.AssignmentTurnedIn, contentDescription = null) },
-                onClick = { menuOpen = false; assignOpen = true },
-            )
-            // EVERY function is a NAMED entry in this menu (#293) — the owner's "right menu should
-            // show all functions as LISTS", "LIST NAMES NOT ICONS". The reading actions are ALSO the
-            // icon row under the tags; here they are text, one per row, like everything else. An
-            // icon row inside this menu is exactly what #293 had shipped, and what was reported.
-            //
-            // The text tools are generated from the surface's own declaration, so a tool taken off
-            // TextToolSurface.READ loses its entry with no edit to this screen. Enhance is absent for
-            // the reason it always was: it rewrites a text, and this one is a record of what somebody
-            // else sent.
-            HorizontalDivider()
-            textTools.surface.tools.forEach { tool ->
-                if (tool == TextTool.RESUME && !resumable) return@forEach
-                DropdownMenuItem(
-                    text = { Text(stringResource(tool.label)) },
-                    leadingIcon = { Icon(tool.icon, contentDescription = null) },
-                    enabled = !translation.running && !readerSummary.running,
-                    onClick = {
-                        menuOpen = false
-                        runReaderTool(viewModel, tool, loaded.email, noContent)
-                    },
-                )
-            }
-            // Show images, once, for this message: offered only while images are actually blocked.
-            val imagesOnceOffered = !showRemote
-            if (imagesOnceOffered) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.message_show_images)) },
-                    leadingIcon = { Icon(Icons.Filled.Image, contentDescription = null) },
-                    onClick = { menuOpen = false; viewModel.showImagesOnce() },
-                )
-            }
-            // Copy Code (#438). The reading row's icon and this named entry run the SAME gesture —
-            // extract a two-factor code, copy it, or say none was found — and this menu lists every
-            // function as text, so the code grabber is a text entry here, like everything else.
-            HorizontalDivider()
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.message_copy_code)) },
-                leadingIcon = { Icon(Icons.Filled.ContentCopy, contentDescription = null) },
-                onClick = {
-                    menuOpen = false
-                    copyVerificationCodeOrSayNone(clipboard, context, loaded.email)
-                },
-            )
-            // The per-sender image allowlist. It changes what the NEXT message from this sender does,
-            // which is why it is not also an icon in the reading row under the tags: its meaning —
-            // this sender, every message, from now on — no tooltip can carry.
-            //
-            if (senderEmail != null) {
-                HorizontalDivider()
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            stringResource(
-                                if (senderAllowed) R.string.message_images_stop_sender
-                                else R.string.message_images_always_sender,
-                            ),
-                        )
-                    },
-                    leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null) },
-                    onClick = {
-                        menuOpen = false
-                        viewModel.setImagesAlwaysAllowed(senderEmail, !senderAllowed)
-                    },
-                )
-            }
-
+            MenuSectionTitle(R.string.menu_section_triage)
             // Triage actions. Archive and Delete are HERE rather than on the row: the row's slots
             // went to the actions the owner named, and these two are the only ones on this screen
             // with a faster route already — a swipe on the message list, which is where triage
             // actually happens. Nothing was dropped; see the count note above the row.
-            HorizontalDivider()
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.message_archive)) },
                 leadingIcon = { Icon(Icons.Filled.Archive, contentDescription = null) },
@@ -1213,6 +1145,30 @@ private fun MessageActions(
                 leadingIcon = { Icon(if (flagged) Icons.Filled.Star else Icons.Filled.StarBorder, contentDescription = null) },
                 onClick = { menuOpen = false; viewModel.toggleFlag() },
             )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.message_mark_unread)) },
+                leadingIcon = { Icon(Icons.Filled.MarkEmailUnread, contentDescription = null) },
+                onClick = { menuOpen = false; viewModel.markUnread(onBack) },
+            )
+            // Snoozing is a promise to come back to a message, so it goes further: also gone in Spam
+            // and in the Trash, where nothing is waiting to be dealt with (#82).
+            if (canSnoozeIn(folderRole)) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.message_snooze)) },
+                    leadingIcon = { Icon(Icons.Filled.Schedule, contentDescription = null) },
+                    onClick = { snoozeSubmenu = true },
+                )
+            }
+            // Move to folder (#73): the same action the list's selection bar carries, so a message
+            // can be filed without going back to the list — the way OUT of Trash or Spam. It is also
+            // the bar's second icon (#293); named here too, because this menu lists every function.
+            if (folders.isNotEmpty()) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.inbox_move_to_folder)) },
+                    leadingIcon = { Icon(Icons.AutoMirrored.Filled.DriveFileMove, contentDescription = null) },
+                    onClick = { menuOpen = false; movePicker = true },
+                )
+            }
             // Tags and mailboxes (part five): the label sheet, under the condition its bar icon had —
             // only when the account HAS a mailbox set to edit.
             if (folders.isNotEmpty() && messageMailboxIds.isNotEmpty()) {
@@ -1222,19 +1178,117 @@ private fun MessageActions(
                     onClick = { menuOpen = false; labelSheet = true },
                 )
             }
+            // Assigned: attach a task (deadline + target date and details) to this mail.
             DropdownMenuItem(
-                text = { Text(stringResource(R.string.message_mark_unread)) },
-                leadingIcon = { Icon(Icons.Filled.MarkEmailUnread, contentDescription = null) },
-                onClick = { menuOpen = false; viewModel.markUnread(onBack) },
+                text = { Text(stringResource(R.string.task_assign)) },
+                leadingIcon = { Icon(Icons.Filled.AssignmentTurnedIn, contentDescription = null) },
+                onClick = { menuOpen = false; assignOpen = true },
             )
-            // Move to folder (#73): the same action the list's selection bar carries, so a message
-            // can be filed without going back to the list — the way OUT of Trash or Spam. It is also
-            // the bar's second icon (#293); named here too, because this menu lists every function.
-            if (folders.isNotEmpty()) {
+            MenuSectionTitle(R.string.menu_section_text_tools)
+            // EVERY function is a NAMED entry in this menu (#293) — the owner's "right menu should
+            // show all functions as LISTS", "LIST NAMES NOT ICONS". The reading actions are ALSO the
+            // icon row under the tags; here they are text, one per row, like everything else. An
+            // icon row inside this menu is exactly what #293 had shipped, and what was reported.
+            //
+            // The text tools are generated from the surface's own declaration, so a tool taken off
+            // TextToolSurface.READ loses its entry with no edit to this screen. Enhance is absent for
+            // the reason it always was: it rewrites a text, and this one is a record of what somebody
+            // else sent.
+            val toolEntry: @Composable (TextTool) -> Unit = { tool ->
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.inbox_move_to_folder)) },
-                    leadingIcon = { Icon(Icons.AutoMirrored.Filled.DriveFileMove, contentDescription = null) },
-                    onClick = { menuOpen = false; movePicker = true },
+                    text = { Text(stringResource(tool.label)) },
+                    leadingIcon = { Icon(tool.icon, contentDescription = null) },
+                    enabled = !translation.running && !readerSummary.running,
+                    onClick = {
+                        menuOpen = false
+                        runReaderTool(viewModel, tool, loaded.email, noContent)
+                    },
+                )
+            }
+            // #1870 order: AI Resume (when the surface offers it and the message can be resumed), Copy Code, then the
+            // other READ tools in the surface's own order (Translate), then Show translated.
+            textTools.surface.tools.forEach { tool -> if (tool == TextTool.RESUME && resumable) toolEntry(tool) }
+            // Copy Code (#438). The reading row's icon and this named entry run the SAME gesture —
+            // extract a two-factor code, copy it, or say none was found — and this menu lists every
+            // function as text, so the code grabber is a text entry here, like everything else.
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.message_copy_code)) },
+                leadingIcon = { Icon(Icons.Filled.ContentCopy, contentDescription = null) },
+                onClick = {
+                    menuOpen = false
+                    copyVerificationCodeOrSayNone(clipboard, context, loaded.email)
+                },
+            )
+            textTools.surface.tools.forEach { tool -> if (tool != TextTool.RESUME) toolEntry(tool) }
+            // Show Original / Show Translated: flips the page between the message as it arrived and
+            // its cached in-place translation. Greyed until a translation exists for this text.
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        stringResource(
+                            if (translation.shown) R.string.message_show_original else R.string.message_show_translated,
+                        ),
+                    )
+                },
+                leadingIcon = { Icon(Icons.Filled.Translate, contentDescription = null) },
+                enabled = translation.exists,
+                onClick = { menuOpen = false; viewModel.toggleTranslated() },
+            )
+            val unsubscribeOffered = offeredUnsubscribeAction(unsubscribe, unsubscribeState)
+            if (senderEmail != null || !showRemote || unsubscribeOffered != null || !isOutgoingFolder(folderRole)) {
+                MenuSectionTitle(R.string.menu_section_sender)
+            }
+            // The per-sender image allowlist. It changes what the NEXT message from this sender does,
+            // which is why it is not also an icon in the reading row under the tags: its meaning —
+            // this sender, every message, from now on — no tooltip can carry.
+            //
+            if (senderEmail != null) {
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            stringResource(
+                                if (senderAllowed) R.string.message_images_stop_sender
+                                else R.string.message_images_always_sender,
+                            ),
+                        )
+                    },
+                    leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null) },
+                    onClick = {
+                        menuOpen = false
+                        viewModel.setImagesAlwaysAllowed(senderEmail, !senderAllowed)
+                    },
+                )
+            }
+
+            // Show images, once, for this message: offered only while images are actually blocked.
+            val imagesOnceOffered = !showRemote
+            if (imagesOnceOffered) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.message_show_images)) },
+                    leadingIcon = { Icon(Icons.Filled.Image, contentDescription = null) },
+                    onClick = { menuOpen = false; viewModel.showImagesOnce() },
+                )
+            }
+            // Unsubscribe (RFC 2369 / RFC 8058) — shown only when the message carries a usable way
+            // out AND that way out has not already been taken, so the entry is never a dead end and
+            // never a second request. The same decision drives the banner's button: the two used to
+            // disagree, and going round by the menu sent the POST again. The label says which
+            // gesture it is — "Open page" is a browser and everything a page load implies.
+            unsubscribeOffered?.let { action ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            stringResource(
+                                if (action == UnsubscribeAction.OPEN_PAGE) {
+                                    R.string.message_unsubscribe_open_page
+                                } else {
+                                    R.string.message_unsubscribe
+                                },
+                            ),
+                        )
+                    },
+                    leadingIcon = { Icon(Icons.Filled.Unsubscribe, contentDescription = null) },
+                    onClick = { menuOpen = false; viewModel.askUnsubscribe() },
                 )
             }
             // Spam-reporting acts on incoming mail; in Drafts and Sent the open message is the user's
@@ -1269,51 +1323,7 @@ private fun MessageActions(
                     },
                 )
             }
-            // Snoozing is a promise to come back to a message, so it goes further: also gone in Spam
-            // and in the Trash, where nothing is waiting to be dealt with (#82).
-            if (canSnoozeIn(folderRole)) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.message_snooze)) },
-                    leadingIcon = { Icon(Icons.Filled.Schedule, contentDescription = null) },
-                    onClick = { snoozeSubmenu = true },
-                )
-            }
-            // Unsubscribe (RFC 2369 / RFC 8058) — shown only when the message carries a usable way
-            // out AND that way out has not already been taken, so the entry is never a dead end and
-            // never a second request. The same decision drives the banner's button: the two used to
-            // disagree, and going round by the menu sent the POST again. The label says which
-            // gesture it is — "Open page" is a browser and everything a page load implies.
-            offeredUnsubscribeAction(unsubscribe, unsubscribeState)?.let { action ->
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            stringResource(
-                                if (action == UnsubscribeAction.OPEN_PAGE) {
-                                    R.string.message_unsubscribe_open_page
-                                } else {
-                                    R.string.message_unsubscribe
-                                },
-                            ),
-                        )
-                    },
-                    leadingIcon = { Icon(Icons.Filled.Unsubscribe, contentDescription = null) },
-                    onClick = { menuOpen = false; viewModel.askUnsubscribe() },
-                )
-            }
-            // Show Original / Show Translated: flips the page between the message as it arrived and
-            // its cached in-place translation. Greyed until a translation exists for this text.
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        stringResource(
-                            if (translation.shown) R.string.message_show_original else R.string.message_show_translated,
-                        ),
-                    )
-                },
-                leadingIcon = { Icon(Icons.Filled.Translate, contentDescription = null) },
-                enabled = translation.exists,
-                onClick = { menuOpen = false; viewModel.toggleTranslated() },
-            )
+            MenuSectionTitle(R.string.menu_section_more)
             // Read-only raw-headers view (issue #60). Headers are fetched on demand here, so
             // the normal reader path never pulls them.
             DropdownMenuItem(

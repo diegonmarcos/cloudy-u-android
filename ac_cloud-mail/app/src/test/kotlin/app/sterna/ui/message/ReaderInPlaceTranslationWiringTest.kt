@@ -29,14 +29,15 @@ class ReaderInPlaceTranslationWiringTest {
         assertTrue("Resume is routed to the summary box", "summarise = { viewModel.summariseNow(receivedTextToolSource(email)) }," in screen)
     }
 
-    @Test fun `the toggle sits beside Unsubscribe and is enabled only once a translation exists`() {
-        val unsub = screen.indexOf("viewModel.askUnsubscribe() },")
+    @Test fun `the toggle sits in TEXT TOOLS and is enabled only once a translation exists`() {
+        // #1870: the overflow is sectioned; Show Original / Show Translated closes the TEXT TOOLS section, after Translate.
+        val section = screen.indexOf("MenuSectionTitle(R.string.menu_section_text_tools)")
         val toggle = screen.indexOf("R.string.message_show_original")
-        val headers = screen.indexOf("R.string.message_view_headers")
-        assertTrue("Unsubscribe entry not found", unsub > 0)
-        assertTrue("the Show Original / Show Translated entry must come right after Unsubscribe", toggle > unsub)
-        assertTrue("...and before the next entry (View headers)", toggle < headers)
-        val entry = screen.substring(toggle, headers)
+        val next = screen.indexOf("MenuSectionTitle(R.string.menu_section_sender)")
+        assertTrue("TEXT TOOLS section not found", section > 0)
+        assertTrue("the Show Original / Show Translated entry must be in TEXT TOOLS", toggle > section)
+        assertTrue("...and before the SENDER section", toggle < next)
+        val entry = screen.substring(toggle, next)
         assertTrue("it is disabled until a translation exists", "enabled = translation.exists" in entry)
         assertTrue("it flips the page", "viewModel.toggleTranslated()" in entry)
         assertTrue("it names both states", "R.string.message_show_translated" in entry)
