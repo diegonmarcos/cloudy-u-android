@@ -158,6 +158,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -224,6 +225,8 @@ import androidx.compose.material.icons.filled.AssignmentTurnedIn
 import app.sterna.core.data.settings.AppStyle
 import app.sterna.util.LinkCleaner
 import app.sterna.util.MailDates
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.ByteArrayInputStream
@@ -2326,13 +2329,17 @@ private fun ConversationBody(
                 // screen measurements only — never on the page's scale. Anything a pinch can change
                 // must stay out of this key: it would rebuild the document under the reader's finger,
                 // flash white, send her back to the top and reset the zoom, in a loop.
-                val html = remember(
+                // #1869 built OFF the main thread (the sanitiser and four regex passes over a large newsletter cost
+                // frames); the previous document stays on screen while a new one is built, and the first frame of a
+                // page draws no WebView until its document exists, so it never loads twice.
+                val htmlState = produceState<Pair<String, String>?>(
+                    null,
                     coreDoc,
                     full, msg.inlineImages, emailTheme, topSpacerCss, bottomSpacerCss,
                     noContent, quoteLabel, deceptiveLinkLabel,
                     translatedFragment,
                 ) {
-                    app.sterna.core.data.mail.MailTiming.phase(msg.id, "html-build") {
+                    value = msg.id to withContext(Dispatchers.Default) { app.sterna.core.data.mail.MailTiming.phase(msg.id, "html-build") {
                         // #1837 the core's reader document first (Gmail-like, decoded in the right charset, from the
                         // store); the old document is the fallback, and the reason is logged under the tag MailCore.
                         val fromCore = if (translatedFragment == null && coreDoc != null && coreDoc.emailId == msg.id) {
@@ -2348,9 +2355,11 @@ private fun ConversationBody(
                             noContent, quoteLabel, deceptiveLinkLabel,
                             translatedFragment = translatedFragment,
                         )
-                    }
+                    } }
                 }
-                EmailWebView(
+                // Only this message's document: a slot reused for another message never shows the previous one.
+                val html = htmlState.value?.takeIf { it.first == msg.id }?.second
+                if (html != null) EmailWebView(
                     html = html,
                     blockRemote = blockRemote,
                     stripTracking = stripTracking,
