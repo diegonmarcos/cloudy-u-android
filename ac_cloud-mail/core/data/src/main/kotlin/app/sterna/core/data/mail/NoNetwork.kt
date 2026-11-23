@@ -10,12 +10,15 @@ import kotlin.coroutines.coroutineContext
  * so a regression that puts a fetch on the open path throws at once, in tests and on the device, instead of quietly
  * making the reader wait.
  */
-object NoNetwork : AbstractCoroutineContextElement(NoNetwork), CoroutineContext.Key<NoNetwork> {
+object NoNetwork : AbstractCoroutineContextElement(NoNetworkKey) {
     /** Throws [NetworkOnOpenPathException] when the calling coroutine runs under [NoNetwork]. */
     suspend fun check(what: String) {
-        if (coroutineContext[NoNetwork] != null) throw NetworkOnOpenPathException(what)
+        if (coroutineContext[NoNetworkKey] != null) throw NetworkOnOpenPathException(what)
     }
 }
+
+/** The element's key, its OWN object: an object passing itself as its key reads null during its own construction. */
+object NoNetworkKey : CoroutineContext.Key<NoNetwork>
 
 class NetworkOnOpenPathException(what: String) :
     IllegalStateException("network call '$what' on the reader's open path (#1869: the open path reads local data only)")

@@ -646,7 +646,6 @@ class AccountStore(context: Context) {
     @Synchronized
     fun clear() {
         prefs.edit().clear().apply()
-        secretMemo.clear()
         KeystoreCrypto.deleteKey()
         // The file is legitimately gone, so there is no unreadable blob left to protect: lift the
         // refusal, or a reset from that state could never store an account again.
