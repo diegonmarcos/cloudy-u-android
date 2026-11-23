@@ -136,7 +136,7 @@ if grep -qF 'installed = false' "$FRAGMENT"; then
 else
     bad "nothing constructs a not-installed AppInfo -- placeholders cannot render"
 fi
-for site in 'group.entries.map(::curated)' 'folder.entries.map(::curated)'; do
+for site in 'group.entries.map(::curated)' 'SuitePhoneAppsFragment::fleetLabelOf).map(::curated)'; do
     if grep -qF "$site" "$FRAGMENT"; then
         ok "$site renders every declared entry"
     else

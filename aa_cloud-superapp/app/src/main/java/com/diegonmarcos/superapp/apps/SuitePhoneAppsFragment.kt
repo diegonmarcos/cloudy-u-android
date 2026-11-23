@@ -142,7 +142,7 @@ class SuitePhoneAppsFragment : KitComposeFragment(), BackHandler {
     internal data class Entry(val pkg: String, val label: String)
     /** [iconPkg] (#1764, build.json `icon_pkg`): the Cloud app the folder mirrors; its launcher icon is the folder tile's face when installed.
      *  [iconRes] (#1769, `icon_res`): the drawable of the Cloud tile at the same position, the face when the Cloud app is not installed or has none.
-     *  A folder holds phone apps only; the Cloud app is never a member. */
+     *  The data holds phone apps only; the Cloud app is never a declared member, it is PREPENDED at display (#1864 withCloudApp). */
     internal data class Folder(val label: String, val entries: List<Entry>, val iconPkg: String = "", val iconRes: String = "")
     /** #1764 A web-shortcut tile (build.json `links`): opens [url] in Cloud Browser, else the default browser. [icon] is a drawable name. */
     internal data class Link(val label: String, val url: String, val icon: String)
@@ -234,6 +234,23 @@ class SuitePhoneAppsFragment : KitComposeFragment(), BackHandler {
          *  object {"pkg", "label"}. Both forms stay valid on purpose: the label
          *  is only needed where a placeholder might be drawn, so requiring it
          *  everywhere would be churn for no behaviour. */
+        /** #1864 The entries a folder OPENS with: its own Cloud app ([Folder.iconPkg]) first, then the declared phone apps in their declared order.
+         *  [fleetLabel] maps a package to the fleet's label for it (null = not a fleet package: an alias such as a renamed id is skipped, nothing is prepended).
+         *  Pure. A folder without icon_pkg, or one already listing it, is returned unchanged; nothing declared is ever removed. */
+        internal fun withCloudApp(folder: Folder, fleetLabel: (String) -> String?): List<Entry> {
+            val ip = folder.iconPkg.trim()
+            if (ip.isEmpty() || folder.entries.any { it.pkg == ip }) return folder.entries
+            val label = fleetLabel(ip) ?: return folder.entries
+            return listOf(Entry(ip, label.ifBlank { folder.label })) + folder.entries
+        }
+
+        /** #1864 The fleet label of [pkg] from ui.external_apps, matched on every id the app is known by (as AppInstall.start does); null when not a fleet package. */
+        internal fun fleetLabelOf(pkg: String): String? = runCatching {
+            Sections.externalApps().firstOrNull { app ->
+                pkg == app.hubPackage || pkg == app.altPackage || pkg == app.installPackage || pkg in app.forks.values
+            }?.label
+        }.getOrNull()
+
         internal fun parseEntries(arr: JSONArray?): List<Entry> {
             if (arr == null) return emptyList()
             val out = mutableListOf<Entry>()
@@ -388,7 +405,7 @@ private fun SuitePhonePage(epoch: Int, refresh: () -> Unit) {
             val packageTiles = group.entries.map(::curated)
             // A folder is skipped only when it DECLARES nothing.
             val folderTiles = group.folders.map { folder ->
-                folder to folder.entries.map(::curated)
+                folder to SuitePhoneAppsFragment.withCloudApp(folder, SuitePhoneAppsFragment::fleetLabelOf).map(::curated)
             }.filter { (_, contents) -> contents.isNotEmpty() }
             if (packageTiles.isEmpty() && folderTiles.isEmpty() && group.links.isEmpty()) continue
             anyRendered = true
