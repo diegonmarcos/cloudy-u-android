@@ -60,7 +60,7 @@ object InventoryTags {
 
 /** #1861 Where the inventory pages come from (the declared ledgers of every inventory page) and where photos live. */
 object InventoryViewsData {
-    /** Every inventory page's ledger definitions, read from the bundled data/ui/inventory/*.json. */
+    /** Every inventory page's ledger definitions, read from the bundled the inventory page files in data/ui. */
     fun defs(ctx: Context): List<LedgerDef> = runCatching {
         (ctx.assets.list("inventory") ?: emptyArray()).filter { it.endsWith(".json") }.sorted().flatMap { f ->
             val a = JSONArray(ctx.assets.open("inventory/$f").bufferedReader().use { it.readText() })
