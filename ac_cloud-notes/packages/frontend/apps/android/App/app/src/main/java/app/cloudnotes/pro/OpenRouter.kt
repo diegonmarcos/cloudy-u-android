@@ -81,3 +81,29 @@ object OpenRouter {
         return sb.toString()
     }
 }
+
+/** #1888 pure share-intent routing (JVM tested): what a SEND / SEND_MULTIPLE becomes. */
+enum class ShareRoute { NOTE_FROM_TEXT, STREAMS, NONE }
+
+object ShareRouter {
+    const val SEND = "android.intent.action.SEND"
+    const val SEND_MULTIPLE = "android.intent.action.SEND_MULTIPLE"
+
+    /** Streams win over EXTRA_TEXT (a share with both is a file with a caption); text alone is a new note; nothing is nothing. */
+    fun route(action: String?, streamCount: Int, text: String?): ShareRoute = when {
+        action != SEND && action != SEND_MULTIPLE -> ShareRoute.NONE
+        streamCount > 0 -> ShareRoute.STREAMS
+        !text.isNullOrBlank() -> ShareRoute.NOTE_FROM_TEXT
+        else -> ShareRoute.NONE
+    }
+
+    /** Each stream follows the VIEW table: text to the editor, everything else to the file view. */
+    fun streamRoute(mime: String?, name: String?): OpenRoute = OpenRouter.route(mime, name)
+
+    /** Note name: the subject, else the first non-blank line of the text (at most 60 chars, no path characters), plus .md. */
+    fun noteName(subject: String?, text: String): String {
+        val base = (subject?.takeIf { it.isNotBlank() } ?: text.lineSequence().firstOrNull { it.isNotBlank() } ?: "Shared note").trim()
+        val clean = base.map { if (it.isISOControl() || it in "/\\:*?\"<>|") ' ' else it }.joinToString("").trim().take(60).trim().ifEmpty { "Shared note" }
+        return "$clean.md"
+    }
+}

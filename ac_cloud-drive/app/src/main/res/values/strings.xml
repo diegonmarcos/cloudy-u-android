@@ -5,6 +5,12 @@
 <resources>
     <!-- Label of the PDF-handler intent filter (#458): shown by the system "Open with" chooser. -->
     <string name="open_in_cloud_drive">Open in Cloud Drive</string>
+    <string name="share_to_cloud_drive">Save to…</string>
+    <string name="share_open_with">Open with</string>
+    <string name="share_pick_folder">Choose the Drive folder to save into</string>
+    <string name="share_rename">Save as</string>
+    <string name="share_nothing">Nothing to save: the share carried no file and no text</string>
+    <string name="share_done">Saved %1$d, failed %2$d</string>
     <string name="documents_root_home">Terminal home</string>
 
     <!-- The StatusLight vocabulary — SAME names and words as the superapp's (#570/#573). -->

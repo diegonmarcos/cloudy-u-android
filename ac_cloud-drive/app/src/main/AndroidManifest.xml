@@ -192,6 +192,37 @@
             android:exported="false"
             android:theme="@style/Theme.CloudDrive" />
 
+        <!-- #1888 the share sheet: SEND and SEND_MULTIPLE for any type. ShareReceiverActivity asks for a Drive folder (system folder picker),
+             saves every shared file (or the shared text) there and opens the Files tab on it. -->
+        <activity
+            android:name=".share.ShareReceiverActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:label="@string/share_to_cloud_drive"
+            android:theme="@style/Theme.CloudDrive">
+            <intent-filter android:label="@string/share_to_cloud_drive">
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+        </activity>
+
+        <!-- #1888 the share sheet, second entry: "Open with" opens the shared file(s) in Drive's Editor/viewer (PDF in PdfReaderActivity) with no folder prompt. -->
+        <activity
+            android:name=".share.ShareOpenActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:label="@string/share_open_with"
+            android:theme="@style/Theme.CloudDrive">
+            <intent-filter android:label="@string/share_open_with">
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+        </activity>
+
         <!-- #1115 GET_CONTENT / PICK for any type: a web page's file input and an app's "choose a file"
              list the activities with these filters. PickerActivity forwards to the system picker on
              Drive's root (documents.DriveDocumentsProvider) and returns the chosen document. -->

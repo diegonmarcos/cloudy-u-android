@@ -675,4 +675,13 @@
     <string name="devver_window_body">Open Developer options and choose Indefinitely for Apps from unverified developers.</string>
     <string name="devver_reset_title">Unverified-developers allowance was reset</string>
     <string name="devver_reset_body">Android verifies installs again. Open the row to start the flow again.</string>
+    <!-- #1888 Send to peer (share sheet) -->
+    <string name="share_peer_label">Send to peer</string>
+    <string name="share_peer_nothing">Nothing to send: the share carried no file and no text</string>
+    <string name="share_peer_looking">Looking for paired peers…</string>
+    <string name="share_peer_choose">Send to which peer?</string>
+    <string name="share_peer_none">No paired peer is reachable</string>
+    <string name="share_peer_none_detail">Pair a peer in Peer Control and make sure it is on the mesh, then share again.</string>
+    <string name="share_peer_open">Open Peer Control</string>
+    <string name="share_peer_result">Sent to peer</string>
 </resources>

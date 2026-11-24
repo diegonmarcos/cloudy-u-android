@@ -158,8 +158,10 @@
             tools:targetApi="n">
         </activity>
 
+        <!-- #1888 the share sheet: this app is a file system for Cloud Drive, not a share target, so the upstream SEND receiver is disabled (the activity, its VIEW filter and everything else stay). -->
         <activity-alias
             android:name=".app.api.file.FileShareReceiverActivity"
+            android:enabled="false"
             android:exported="true"
             android:targetActivity=".app.api.file.FileReceiverActivity">
 

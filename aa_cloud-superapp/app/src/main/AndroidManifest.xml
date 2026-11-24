@@ -352,6 +352,22 @@
              process, same SharedPreferences, so Configs → Launcher and
              Configs → One-Hand keep driving the home screen from inside the
              app with no cross-process plumbing. -->
+        <!-- #1888 the share sheet: "Cloud SuperApp / Send to peer" (Peer Control, our KDE Connect). ShareToPeerActivity picks a paired reachable peer and sends the shared files/text. -->
+        <activity
+            android:name=".share.ShareToPeerActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:label="@string/share_peer_label"
+            android:theme="@style/Theme.Superapp">
+            <intent-filter android:label="@string/share_peer_label">
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
         <activity
             android:name=".HomeActivity"
             android:exported="true"

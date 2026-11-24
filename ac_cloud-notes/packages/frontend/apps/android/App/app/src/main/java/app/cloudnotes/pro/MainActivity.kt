@@ -91,7 +91,17 @@ class MainActivity : BridgeActivity(), CloudNotesThemePlugin.Callback {
 
     private fun captureViewIntent(intent: Intent?) {
         try {
-            if (ExternalFilePlugin.capture(this, intent)) {
+            if (intent != null && (intent.action == Intent.ACTION_SEND || intent.action == Intent.ACTION_SEND_MULTIPLE)) {
+                // #1888 the share sheet: text streams and EXTRA_TEXT open in the editor, the rest in the file view
+                val r = ExternalFilePlugin.captureShare(this, intent)
+                if (r.textOpens > 0) {
+                    shell?.host()?.showVault()
+                    repeat(r.textOpens) {
+                        bridge.webView.post { bridge.webView.evaluateJavascript("window.dispatchEvent(new Event('cloud-notes:view-intent'))", null) }
+                    }
+                }
+                r.others.forEach { (u, m) -> openUriInFileView(u, m) }
+            } else if (ExternalFilePlugin.capture(this, intent)) {
                 // #1717 every entry point lands in the vault shell: the file is handed to it as a new tab
                 shell?.host()?.showVault()
                 bridge.webView.post {
@@ -114,9 +124,13 @@ class MainActivity : BridgeActivity(), CloudNotesThemePlugin.Callback {
         if (i.action != Intent.ACTION_VIEW && i.action != Intent.ACTION_EDIT) return
         val uri = i.data ?: return
         if (uri.scheme != "content" && uri.scheme != "file") return
+        openUriInFileView(uri, i.type)
+    }
+
+    private fun openUriInFileView(uri: android.net.Uri, type: String?) {
         startActivity(
             Intent(this, FileViewActivity::class.java)
-                .setDataAndType(uri, i.type)
+                .setDataAndType(uri, type)
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         )
     }

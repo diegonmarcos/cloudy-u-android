@@ -9,4 +9,5 @@
          namespace (app.cloudnotes.pro), never an install identity and never shown. -->
     <string name="package_name">app.cloudnotes.pro</string>
     <string name="custom_url_scheme">app.cloudnotes.pro</string>
+    <string name="share_open_with">Open with</string>
 </resources>

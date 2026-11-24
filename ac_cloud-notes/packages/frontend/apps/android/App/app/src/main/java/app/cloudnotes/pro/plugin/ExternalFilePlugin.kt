@@ -72,7 +72,11 @@ class ExternalFilePlugin : Plugin() {
         /** The text file another app handed this app (VIEW/EDIT), read once, taken by [takePendingOpen]. */
         class PendingOpen(val name: String, val content: String?, val size: Int, val error: String?, val writable: Boolean = false)
 
-        @Volatile private var pending: PendingOpen? = null
+        /** #1888 shares and opens queue: one entry per shared file or text, each taken by one [takePendingOpen]. */
+        private val queue = java.util.concurrent.ConcurrentLinkedQueue<PendingOpen>()
+        private var pending: PendingOpen?
+            get() = queue.peek()
+            set(v) { if (v != null) queue.offer(v) }
 
         /**
          * #1642 reads the content:// / file:// text file of a VIEW/EDIT [intent] into [pending]. True when the
@@ -80,6 +84,7 @@ class ExternalFilePlugin : Plugin() {
          */
         fun capture(ctx: Context, intent: Intent?): Boolean {
             val i = intent ?: return false
+            if (i.action == Intent.ACTION_SEND || i.action == Intent.ACTION_SEND_MULTIPLE) return captureShare(ctx, i).textOpens > 0
             if (i.action == ACTION_NEW_NOTE) return pending != null
             if (i.action != Intent.ACTION_VIEW && i.action != Intent.ACTION_EDIT) return false
             val uri: Uri = i.data ?: return false
@@ -122,6 +127,33 @@ class ExternalFilePlugin : Plugin() {
                 pending = PendingOpen("file", null, 0, "Cannot read the file (${e.message ?: "unknown error"}).")
                 true
             }
+        }
+
+        /** #1888 what a share handed over: text files and notes queued for the editor, other streams for the file view. */
+        class ShareResult(val textOpens: Int, val others: List<Pair<Uri, String?>>)
+
+        /**
+         * #1888 ACTION_SEND / SEND_MULTIPLE: every EXTRA_STREAM goes through the same [capture] path as a VIEW (text opens in the
+         * editor, anything else is returned for the file view); a plain EXTRA_TEXT with no stream becomes a new note.
+         */
+        fun captureShare(ctx: Context, i: Intent): ShareResult {
+            val streams: List<Uri> = if (i.action == Intent.ACTION_SEND_MULTIPLE)
+                (if (android.os.Build.VERSION.SDK_INT >= 33) i.getParcelableArrayListExtra(Intent.EXTRA_STREAM, Uri::class.java) else @Suppress("DEPRECATION") i.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)).orEmpty()
+            else listOfNotNull(if (android.os.Build.VERSION.SDK_INT >= 33) i.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java) else @Suppress("DEPRECATION") i.getParcelableExtra<Uri>(Intent.EXTRA_STREAM))
+            var opened = 0
+            val others = ArrayList<Pair<Uri, String?>>()
+            for (u in streams) {
+                val mime = i.type?.takeIf { !it.endsWith("/*") } ?: ctx.contentResolver.getType(u)
+                val view = Intent(Intent.ACTION_VIEW).setDataAndType(u, mime).addFlags(i.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                if (capture(ctx, view)) opened++ else others.add(u to mime)
+            }
+            val text = i.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()
+            if (streams.isEmpty() && !text.isNullOrBlank()) {
+                val title = i.getStringExtra(Intent.EXTRA_SUBJECT)?.takeIf { it.isNotBlank() }
+                offerNote(app.cloudnotes.pro.ShareRouter.noteName(title, text), text)
+                opened++
+            }
+            return ShareResult(opened, others)
         }
     }
 
@@ -347,8 +379,7 @@ class ExternalFilePlugin : Plugin() {
     /** #1642 the text file another app opened with this app, once; present=false when there is none. */
     @PluginMethod
     fun takePendingOpen(call: PluginCall) {
-        val p = pending
-        pending = null
+        val p = queue.poll()
         if (p == null) {
             call.resolve(JSObject().put("present", false))
             return

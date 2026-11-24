@@ -106,10 +106,10 @@ mutate("dropping image/*", lambda t: t.replace('<data android:mimeType="image/*"
 mutate("dropping application/pdf", lambda t: t.replace('<data android:mimeType="application/pdf" />', ''))
 mutate("dropping the EDIT action of the any-file filter", lambda t: re.sub(r'(<action android:name="android.intent.action.EDIT" />\s*)(?=(?:(?!</intent-filter>).)*<data android:mimeType="\*/\*" />\s*</intent-filter>\s*<!-- DE-CLOUDED)', '', t, flags=re.S))
 mutate("dropping the #1642 text filter", lambda t: t.replace('<data android:mimeType="text/plain" />', ''))
-# a Drive that gains SEND must make the guard demand it of Notes
-d2 = drive.replace('<action android:name="android.intent.action.EDIT" />', '<action android:name="android.intent.action.EDIT" /><action android:name="android.intent.action.SEND" />', 1)
-red = any(not ok for ok, _ in guard(notes, d2))
-print("  %s  M1 Drive gaining SEND turns the guard RED until Notes declares it" % ("PASS" if red else "FAIL"))
+# #1888 Drive declares SEND/SEND_MULTIPLE (the share sheet), so a Notes without them must turn the guard RED
+n2 = notes.replace('<action android:name="android.intent.action.SEND" />', '').replace('<action android:name="android.intent.action.SEND_MULTIPLE" />', '')
+red = n2 != notes and any(not ok for ok, _ in guard(n2, drive))
+print("  %s  M1 Notes without SEND/SEND_MULTIPLE (Drive has them) goes RED" % ("PASS" if red else "FAIL"))
 if not red: fails += 1
 print("RESULT: %s" % ("RED" if fails else "GREEN"))
 sys.exit(1 if fails else 0)
