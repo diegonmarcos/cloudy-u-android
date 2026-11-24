@@ -51,7 +51,8 @@ for fname, text in list(store_files.items()) + [("StoreShelves.kt", shelves_kt)]
     for lit in re.findall(r'"((?:[^"\\]|\\.)*)"', text):
         # #1774 the Phone page's own fourth subpage is named "Games" (like Open source / Non open source); it is that page's label, not a shelf
         # mapping, so that one word is exempt in StorePhoneSearch.kt only (a taxonomy name anywhere else, or any other word there, still fails).
-        if lit in names and not (fname == "StorePhoneSearch.kt" and lit == "Games"): literals.append("%s: %r" % (fname, lit))
+        # #1895 Search's fourth subpage (Cloudy, Phone, Games, Torrent) is likewise named "Games" in StoreSearchPage.kt (pageLabel/pageBlurb): a page label, same exemption.
+        if lit in names and not (fname in ("StorePhoneSearch.kt", "StoreSearchPage.kt") and lit == "Games"): literals.append("%s: %r" % (fname, lit))
 if not literals: ok("none of the %d taxonomy names is written in the store or its adapter" % len(names))
 else: bad("a taxonomy name is hardcoded (a second mapping): " + "; ".join(literals[:6]))
 leak = [f for f, t in store_files.items() if re.search(r"phone_folders|phone_sections|match_keywords", t)]
