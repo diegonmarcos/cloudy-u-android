@@ -1,0 +1,162 @@
+name: "build engines 16k — gh, rclone and unison x86_64 built from the pinned upstream source with 16 KB page alignment"
+
+# WHY (#1881). The x86_64 gh, rclone and unison the fleet ships were sha-pinned UPSTREAM binaries, linked with a
+# 4 KB page size, so the page-size guard (1_cicd/src/data/page-size-guard.json::exempt_libs) had to excuse them.
+# Here the same pinned versions are built from the upstream source tag with every PT_LOAD segment aligned to
+# 16384, checked by this job (a build that misses it fails instead of publishing), and published as NEW release
+# assets of a new immutable release tag (nothing is deleted or overwritten). The pins (gh-binary.json,
+# rclone-binary.json, unison-binary.json) then name each asset by url + sha256.
+#
+# Go (gh, rclone): CGO off, static, link with the Go linker's own -R=16384 rounding quantum; if the produced
+# binary is still not 16 KB aligned the same build is redone with the external linker and
+# -Wl,-z,max-page-size=16384 (cgo on, netgo + osusergo, fully static). Unison: OCaml on Alpine musl, static,
+# -Wl,-z,max-page-size=16384.
+#
+# Manual only: run it when a pinned version changes, never on a push.
+
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: "build revision suffix of the release tag (bump to rebuild the same versions)"
+        default: "r1"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-go:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read the pins
+        run: |
+          echo "GH_VER=$(jq -r .version ab_cloud-libs-shared/libs/gh/data/gh-binary.json)" >> "$GITHUB_ENV"
+          echo "RC_VER=$(jq -r .version ab_cloud-libs-shared/libs/rclone-engine/data/rclone-binary.json)" >> "$GITHUB_ENV"
+
+      - name: Fetch the upstream sources at the pinned tags
+        run: |
+          git clone --depth 1 --branch "v${GH_VER}" https://github.com/cli/cli.git "$RUNNER_TEMP/gh-src"
+          git clone --depth 1 --branch "${RC_VER}" https://github.com/rclone/rclone.git "$RUNNER_TEMP/rclone-src"
+          echo "gh source commit:     $(git -C "$RUNNER_TEMP/gh-src" rev-parse HEAD)"
+          echo "rclone source commit: $(git -C "$RUNNER_TEMP/rclone-src" rev-parse HEAD)"
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{ runner.temp }}/gh-src/go.mod
+          cache: false
+
+      - name: Build gh (x86_64, 16 KB aligned)
+        working-directory: ${{ runner.temp }}/gh-src
+        run: |
+          set -euo pipefail
+          go version
+          LD="-s -w -X github.com/cli/cli/v2/internal/build.Version=v${GH_VER}"
+          bash "$GITHUB_WORKSPACE/1_cicd/src/scripts/build-go-16k.sh" gh "$LD" ./cmd/gh "$RUNNER_TEMP/gh-out/gh"
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{ runner.temp }}/rclone-src/go.mod
+          cache: false
+
+      - name: Build rclone (x86_64, 16 KB aligned)
+        working-directory: ${{ runner.temp }}/rclone-src
+        run: |
+          set -euo pipefail
+          go version
+          LD="-s -X github.com/rclone/rclone/fs.Version=${RC_VER}"
+          bash "$GITHUB_WORKSPACE/1_cicd/src/scripts/build-go-16k.sh" rclone "$LD" . "$RUNNER_TEMP/rclone-out/rclone"
+
+      - name: Package
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          D="gh_${GH_VER}_linux_amd64_16k"
+          mkdir -p "$RUNNER_TEMP/pk/$D/bin"
+          cp "$RUNNER_TEMP/gh-out/gh" "$RUNNER_TEMP/pk/$D/bin/gh"
+          tar -C "$RUNNER_TEMP/pk" -czf "out/gh_${GH_VER}_linux_amd64_16k.tar.gz" "$D"
+          R="rclone-${RC_VER}-linux-amd64-16k"
+          mkdir -p "$RUNNER_TEMP/pk/$R"
+          cp "$RUNNER_TEMP/rclone-out/rclone" "$RUNNER_TEMP/pk/$R/rclone"
+          (cd "$RUNNER_TEMP/pk" && zip -q -r "$GITHUB_WORKSPACE/out/rclone-${RC_VER}-linux-amd64-16k.zip" "$R")
+          cd out
+          sha256sum *
+          sha256sum "$RUNNER_TEMP/gh-out/gh" "$RUNNER_TEMP/rclone-out/rclone"
+          stat -c '%s %n' "$RUNNER_TEMP/gh-out/gh" "$RUNNER_TEMP/rclone-out/rclone"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: go-engines
+          path: out/*
+
+  build-unison:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read the pin
+        id: pin
+        run: |
+          PIN=ab_cloud-libs-shared/libs/rclone-engine/data/unison-binary.json
+          echo "version=$(jq -r .version $PIN)" >> "$GITHUB_OUTPUT"
+          echo "ocaml=$(jq -r .ocaml $PIN)" >> "$GITHUB_OUTPUT"
+
+      - name: Build static unison x86_64 on Alpine (musl), 16 KB aligned
+        env:
+          VER: ${{ steps.pin.outputs.version }}
+          OCAML: ${{ steps.pin.outputs.ocaml }}
+        run: |
+          mkdir -p out
+          docker run --rm -e VER -e OCAML -v "$PWD/out:/out" alpine:3.21 sh -euc '
+            apk add --no-cache build-base ocaml curl tar binutils file
+            test "$(ocamlfind ocamlc -version 2>/dev/null || ocamlc -version)" = "$OCAML" \
+              || { echo "OCaml is $(ocamlc -version), the pin declares $OCAML"; exit 1; }
+            cd /tmp
+            curl -fsSL "https://github.com/bcpierce00/unison/archive/refs/tags/v${VER}.tar.gz" -o src.tgz
+            tar xzf src.tgz
+            cd "unison-${VER}"
+            LDFLAGS="-static -Wl,-z,max-page-size=16384" make
+            strip src/unison
+            ./src/unison -version | grep -q "unison version ${VER} (ocaml ${OCAML})"
+            ! readelf -lW src/unison | grep -q INTERP
+            readelf -lW src/unison | grep LOAD
+            for a in $(readelf -lW src/unison | awk "/LOAD/ { print \$NF }"); do
+              [ "$((a))" -ge 16384 ] || { echo "a PT_LOAD segment is aligned below 16384"; exit 1; }
+            done
+            D="unison-${VER}-linux-x86_64-musl-static-16k"
+            mkdir -p "/out/${D}/bin"
+            cp src/unison "/out/${D}/bin/unison"
+            cp LICENSE "/out/${D}/"
+          '
+          cd out
+          tar czf "unison-${VER}-linux-x86_64-musl-static-16k.tar.gz" "unison-${VER}-linux-x86_64-musl-static-16k"
+          sha256sum "unison-${VER}-linux-x86_64-musl-static-16k.tar.gz" "unison-${VER}-linux-x86_64-musl-static-16k/bin/unison"
+          stat -c '%s %n' "unison-${VER}-linux-x86_64-musl-static-16k/bin/unison"
+          rm -rf "unison-${VER}-linux-x86_64-musl-static-16k"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: unison-engine
+          path: out/*
+
+  publish:
+    needs: [build-go, build-unison]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+
+      - name: Publish the immutable release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REV: ${{ inputs.revision }}
+        run: |
+          ls -l assets
+          gh release create "engines-16k-${REV}" assets/* -R "$GITHUB_REPOSITORY" \
+            --latest=false \
+            --target "$GITHUB_SHA" --title "Engines 16 KB (${REV})" \
+            --notes "gh, rclone and unison x86_64 built from the upstream source tags with 16 KB page alignment by build-engines-16k.yml. Pinned by sha256 in gh-binary.json, rclone-binary.json and unison-binary.json."
