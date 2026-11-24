@@ -12,6 +12,8 @@ enum class TakeoutFormat(val label: String, val sourceTag: String, val rank: Int
     SEMANTIC("Semantic Location History", "takeout-semantic", 2),
     /** The on-device Timeline export (Timeline.json, location-history.json): semanticSegments, rawSignals, userLocationProfile. */
     TIMELINE("Timeline export", "timeline-export", 1),
+    /** #1887 a location history as KML (the Timeline converted to KML: Point visits, Path moves; Cloud Nav's own KMZ export): [TakeoutKml]. */
+    KML("Timeline KML", "timeline-kml", 4),
 }
 
 /** Table names the parsers emit rows for; each maps 1:1 to a maps.db table (TakeoutSchema). */

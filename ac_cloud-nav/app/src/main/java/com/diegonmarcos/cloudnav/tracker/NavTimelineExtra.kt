@@ -58,6 +58,13 @@ class NavTimelineExtra(private val ctx: Context, private val radio: Boolean = fa
             TimelineSync.beforeMigrate = { migrateEngine(it) }
             // #1853 once a Google history is imported and its segments rebuilt, Trips / Places / Cities / World / Insights are rebuilt over it
             com.diegonmarcos.cloudnav.maps.takeout.ImportController.afterImport = { AggregatesStore.rebuild(it, System.currentTimeMillis()) }
+            // #1887 an import without addresses (a Timeline KML or export) is named offline: City, Country and the city's time zone
+            com.diegonmarcos.cloudnav.maps.takeout.ImportController.gazetteer = { NavGazetteer.get(it) }
+        }
+
+        /** #1887 warms Explored at process start on the repository's own low-priority thread, so the first open paints from memory. */
+        fun warm(ctx: Context) {
+            runCatching { ExploredRepository.get(ctx.applicationContext).open(ZoneId.systemDefault(), java.time.LocalDate.now()) }
         }
 
         /** #1851 the engine's own tables move into the one store: every measured fix into `fixes`, every step slice into `step_slices`. Idempotent. */

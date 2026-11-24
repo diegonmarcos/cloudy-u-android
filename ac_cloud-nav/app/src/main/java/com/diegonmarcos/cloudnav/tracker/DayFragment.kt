@@ -24,11 +24,18 @@ import java.time.ZoneId
  * Explored > Trips: the Trip dashboards over THE timeline store (#1863 order: Day, Week, Month | World, Cities, Places, Trips, Insights |
  * Export/Import), read through the same [DayTimeline] / [Aggregates] the fleet door serves, past days from the [ExploredCache].
  * Owner corrections go to [CorrectionStore] and the list is rebuilt.
+ * #1887 the aggregates come from the process-scoped [ExploredRepository] (painted at once from memory, refreshed in the background only
+ * when stale); the Day tab reads one 48 h window ([DayLoad]) and names its places after the first paint; Health Connect is read in the
+ * background at most every [INGEST_EVERY_MS]; the row counts are read when the Export/Import tab opens.
  */
 class DayFragment : KitComposeFragment() {
     private val zone: ZoneId = ZoneId.systemDefault()
     private var ui by mutableStateOf(DayUi(LocalDate.now(), LocalDate.now(), loading = true))
     private var tab by mutableStateOf(DayTab.DAY)
+    private val dayLoads = LatestOnly()
+    /** The date, generation and time the shown day was built for: a resume rebuilds it only when one of them moved. */
+    private var dayKey: Pair<LocalDate, Long>? = null
+    private var dayBuiltMs = 0L
 
     override fun palette(): KitPalette = TrackerInk.palette()
 
@@ -40,14 +47,68 @@ class DayFragment : KitComposeFragment() {
     fun importFrom(uri: android.net.Uri) {
         tab = DayTab.IMPORT
         val act = activity
-        TakeoutImportService.start(requireContext(), uri) { act?.runOnUiThread { if (isAdded) load(ui.date) } }
+        TakeoutImportService.start(requireContext(), uri) { act?.runOnUiThread { if (isAdded) { load(ui.date); loadCounts() } } }
     }
 
-    override fun onResume() { super.onResume(); load(ui.date) }
+    private fun repo() = ExploredRepository.get(requireContext().applicationContext)
+
+    /** #1887 the snapshot's aggregate fields into the page state (the Day's own fields stay). */
+    private fun DayUi.withSnapshot(s: ExploredSnapshot): DayUi {
+        val ex = s.explored
+        return copy(stats = ex.stats, places = ex.places, cities = ex.cities, countries = ex.countries, trips = ex.trips, homeOverride = s.home,
+            rangeLabel = s.rangeLabel, digests = ex.cache.digests, world = ex.world, cityTable = ex.cityTable, cacheLine = s.cacheLine)
+    }
+
+    override fun onViewCreated(view: android.view.View, savedInstanceState: android.os.Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        val r = repo()
+        r.current()?.let { ui = ui.withSnapshot(it) }   // #1887 a re-open or a strip tap paints the snapshot in memory at once
+        viewLifecycleOwner.lifecycleScope.launch { r.state.collect { s -> if (s != null) ui = ui.withSnapshot(s) } }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val today = LocalDate.now(zone)
+        val r = repo()
+        r.open(zone, today)   // #1887 stale-while-revalidate: a refresh starts only when the snapshot is missing, stale or invalidated
+        val live = ui.date == today && System.currentTimeMillis() - dayBuiltMs > LIVE_DAY_MS
+        if (ui.day.isEmpty() || dayKey != (ui.date to r.generation) || live) load(ui.date)
+        ingestLater()
+        if (tab == DayTab.IMPORT) loadCounts()
+    }
+
+    /** #1887 Health Connect steps and sleep into the store, in the background and at most every [INGEST_EVERY_MS] (the engine's tick also ingests). */
+    private fun ingestLater() {
+        val now = System.currentTimeMillis()
+        if (now - lastIngestMs < INGEST_EVERY_MS) return
+        lastIngestMs = now
+        val app = requireContext().applicationContext
+        viewLifecycleOwner.lifecycleScope.launch {
+            val ok = withContext(Dispatchers.IO) { runCatching { StepsRepository(app).ingestHealth(zone) }.getOrDefault(false) }
+            if (ok && ui.date == ui.today) load(ui.date)
+        }
+    }
+
+    /** #1887 the Export/Import page's row counts, read when that page is shown (never on the open path). */
+    private fun loadCounts() {
+        val app = requireContext().applicationContext
+        viewLifecycleOwner.lifecycleScope.launch {
+            val c = withContext(Dispatchers.IO) { runCatching { ExploredStore.counts(app) }.getOrDefault(emptyMap()) }
+            ui = ui.copy(counts = c)
+        }
+    }
+
+    /** #1887 a write changed the store, the corrections or the home: the aggregates refresh in the background, the day reloads. */
+    private fun changed() {
+        val r = repo()
+        r.invalidate()
+        r.open(zone, LocalDate.now(zone))
+        load(ui.date)
+    }
 
     @Composable
     override fun Content() {
-        DayScreen(ui, tab, { tab = it }, DayActions(
+        DayScreen(ui, tab, { tab = it; if (it == DayTab.IMPORT) loadCounts() }, DayActions(
             onDate = { load(it) },
             onPickDate = {
                 val d = ui.date
@@ -67,7 +128,7 @@ class DayFragment : KitComposeFragment() {
                         android.net.Uri.parse("geo:$q?q=$q(" + android.net.Uri.encode(p.label ?: "") + ")")).setPackage(requireContext().packageName))
                 }
             },
-            onHome = { HomeStore(requireContext()).set(it); load(ui.date) },
+            onHome = { HomeStore(requireContext()).set(it); changed() },
             onImportFile = { pickFile.launch(arrayOf("*/*")) },
             onImportFolder = { pickFolder.launch(null) },
             onImportCancel = { ImportController.cancel() },
@@ -81,47 +142,58 @@ class DayFragment : KitComposeFragment() {
     }
 
     private fun correct(c: Correction) {
-        CorrectionStore(requireContext()).add(c)
-        runCatching { ExploredCache.markDirty(MapsDbDigestBackend(requireContext().applicationContext), c.startMs, c.endMs, zone) }   // #1863 the corrected day is recomputed
-        load(ui.date)
-    }
-
-    private fun load(date: LocalDate) {
         val app = requireContext().applicationContext
+        // #1887 the store writes run off the main thread
         viewLifecycleOwner.lifecycleScope.launch {
-            val today = LocalDate.now(zone)
-            ui = ui.copy(date = date, today = today, loading = true)
-            val next = withContext(Dispatchers.IO) { runCatching { compute(app, date, today) }.getOrNull() }
-            ui = next?.copy(dataStatus = ui.dataStatus, dedupe = ui.dedupe, rangePreview = ui.rangePreview) ?: ui.copy(loading = false)
+            withContext(Dispatchers.IO) {
+                CorrectionStore(app).add(c)
+                runCatching { ExploredCache.markDirty(MapsDbDigestBackend(app), c.startMs, c.endMs, zone) }   // #1863 the corrected day is recomputed
+            }
+            changed()
         }
     }
 
-    private fun compute(app: android.content.Context, date: LocalDate, today: LocalDate): DayUi {
+    /** #1887 the shown day: painted from one 48 h window, the latest date only; its unnamed places are named after the paint. */
+    private fun load(date: LocalDate) {
+        val app = requireContext().applicationContext
+        val today = LocalDate.now(zone)
+        val gen = repo().generation
+        ui = ui.copy(date = date, today = today, loading = true)
+        dayLoads.launch(viewLifecycleOwner.lifecycleScope, Dispatchers.IO, { runCatching { compute(app, date, today) }.getOrNull() }) { next ->
+            if (next == null) { ui = ui.copy(loading = false); return@launch }
+            ui = ui.copy(date = date, today = today, day = next.day, fixes = next.fixes, steps = next.steps, sleep = next.sleep, homeOverride = HomeStore(app).get(), loading = false)
+            dayKey = date to gen; dayBuiltMs = System.currentTimeMillis()
+            nameLater(app, date, next.day)
+        }
+    }
+
+    private class DayData(val day: List<DaySeg>, val fixes: List<PlaceFix>, val steps: StepsTotal, val sleep: DaySleep?)
+
+    private fun compute(app: android.content.Context, date: LocalDate, today: LocalDate): DayData {
         val now = System.currentTimeMillis()
-        runCatching { kotlinx.coroutines.runBlocking { StepsRepository(app).ingestHealth(zone) } }   // #1851 Health Connect steps and sleep into the store first (compute runs off the main thread)
         val cs = CorrectionStore(app); val corrections = cs.all(); val memory = cs.memory()
-        val first = AggregatesStore.windowStart(app, today, zone)   // 90 days (home detection; the month rankings use the last 30), or back to the first imported day (#1853)
-        val store = TimelineSync.view(app, DayTimeline.dayStart(minOf(first, date), zone) - 12 * 3_600_000L, now)
         val a = DayTimeline.dayStart(date, zone); val b = minOf(DayTimeline.dayStart(date.plusDays(1), zone), now)
-        // name the unnamed places of the shown day through the open reverse-geocode provider (cached, rate-limited)
+        // #1887 one 48 h window (the day and its 12 h sleep spill either side), never the whole history; no aggregate is folded here
+        val d = DayLoad.day({ f, t -> TimelineSync.view(app, f, t) }, date, now, zone, corrections, memory)
+        val store = d.window
         // the day's recorded fixes (engine + foreground tracker), read once per open; no new polling
         val fixes = runCatching { StepsRepository(app).fixes(a, b) }.getOrDefault(emptyList())
         // the store already holds the stop detector's segments; only a day it recorded nothing for is cut from the raw fixes
-        val raw = if (fixes.isNotEmpty() && store.none { it.endMs > a && it.startMs < b }) FixSegmenter.segment(fixes, a, b, NavConfig.dayRules, zone)
-        else DayTimeline.build(store, a, b, corrections, memory)
-        val namer = PlaceNamer(app)
-        val named = namer.name(raw.map { (it as? DaySeg.Stay)?.place })
-        // #1853 `named` has one entry per row (null for a move), so a stay takes the entry at its own index; a running counter over stays only
-        // handed every stay after the first move the previous row's (null) place, and the day showed "Missing visit" for it
-        val dayList = raw.mapIndexed { i, s -> if (s is DaySeg.Stay) s.copy(place = named[i]) else s }.let { l -> DayTimeline.fillLinks(l) }
-        // #1863 every past date comes from its cached digest (recomputed only when its inputs changed); today is live; the aggregates fold the digests
-        val ex = AggregatesStore.explore(app, store, first, today, now, zone)
-        val homeSet = HomeStore(app).get()
-        return DayUi(date, today, dayList, ex.stats, ex.places, ex.cities, ex.countries, false, fixes, ex.trips, homeSet,
-            stepsTotal(app, store, date, a, b), if (first.isBefore(today.minusDays(Trips.HOME_WINDOW_DAYS - 1L))) "all recorded and imported history" else "last 30 days",
-            digests = ex.cache.digests, world = ex.world, cityTable = ex.cityTable,
-            cacheLine = "${ex.cache.reused} days from cache, ${ex.cache.recomputed.size} recomputed, ${ex.cache.live.size} live",
-            counts = runCatching { ExploredStore.counts(app) }.getOrDefault(emptyMap()))
+        val raw = if (fixes.isNotEmpty() && store.none { it.endMs > a && it.startMs < b }) FixSegmenter.segment(fixes, a, b, NavConfig.dayRules, zone) else d.day
+        val sleep = DaySegments.sleepOf(d.stats, raw, NavGazetteer.get(app), zone)
+        return DayData(DayTimeline.fillLinks(raw), fixes, stepsTotal(app, store, date, a, b), sleep)
+    }
+
+    /** Names the unnamed places of the shown day through the open reverse-geocode provider (cached, rate-limited), after the day is painted. */
+    private fun nameLater(app: android.content.Context, date: LocalDate, day: List<DaySeg>) {
+        if (day.none { it is DaySeg.Stay && it.place?.needsAddress == true }) return
+        viewLifecycleOwner.lifecycleScope.launch {
+            val named = withContext(Dispatchers.IO) { runCatching { PlaceNamer(app).name(day.map { (it as? DaySeg.Stay)?.place }) }.getOrNull() } ?: return@launch
+            if (ui.date != date || ui.day !== day) return@launch   // a newer day is shown
+            // #1853 `named` has one entry per row (null for a move), so a stay takes the entry at its own index; a running counter over stays only
+            // handed every stay after the first move the previous row's (null) place, and the day showed "Missing visit" for it
+            ui = ui.copy(day = day.mapIndexed { i, s -> if (s is DaySeg.Stay) s.copy(place = named[i]) else s }.let { l -> DayTimeline.fillLinks(l) })
+        }
     }
 
     // --- #1863 Export / Import page ---
@@ -149,7 +221,7 @@ class DayFragment : KitComposeFragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             val line = withContext(Dispatchers.IO) { runCatching { work(app) }.fold({ it }, { "$what failed: ${it.message}" }) }
             ui = ui.copy(dataStatus = line)
-            load(ui.date)
+            changed(); loadCounts()
         }
     }
 
@@ -189,6 +261,14 @@ class DayFragment : KitComposeFragment() {
         onDeleteAll = { background("Delete all") { app -> ExploredStore.deleteAll(app); "Deleted all location data and the cache" } },
         onRefresh = { background("Refresh") { app -> ExploredStore.refresh(app, System.currentTimeMillis(), zone); "Recomputed every day from the stored data" } },
     )
+
+    companion object {
+        /** #1887 Health Connect is read at most this often from the page (the engine's tick reads it too). */
+        const val INGEST_EVERY_MS = 10 * 60_000L
+        /** #1887 today's shown day is rebuilt on a resume after this long (its rows still grow). */
+        const val LIVE_DAY_MS = 60_000L
+        @Volatile private var lastIngestMs = 0L
+    }
 
     /** The day's steps from the step counter (recorded by the tracker engine into the store), else n/a and why. */
     private fun stepsTotal(app: android.content.Context, store: List<com.diegonmarcos.cloudnav.maps.TlSegment>, date: LocalDate, a: Long, b: Long): StepsTotal {

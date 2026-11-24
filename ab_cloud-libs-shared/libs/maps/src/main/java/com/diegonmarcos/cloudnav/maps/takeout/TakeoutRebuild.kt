@@ -13,7 +13,7 @@ import java.time.ZoneId
 
 /** Pure pieces of turning imported rows into the segments the pages read. */
 object TakeoutDerive {
-    fun prioOf(source: String): Int = when (source) { TakeoutSchema.SRC_TRACKED -> 0; TakeoutFormat.TIMELINE.sourceTag -> 1; TakeoutFormat.SEMANTIC.sourceTag -> 2; TakeoutFormat.RECORDS.sourceTag -> 3; else -> 4 }
+    fun prioOf(source: String): Int = when (source) { TakeoutSchema.SRC_TRACKED -> 0; TakeoutFormat.TIMELINE.sourceTag -> 1; TakeoutFormat.SEMANTIC.sourceTag -> 2; TakeoutFormat.RECORDS.sourceTag -> 3; TakeoutFormat.KML.sourceTag -> 4; else -> 4 }
 
     /** Google's activity type (any spelling: IN_PASSENGER_VEHICLE, "walking", "in train") to the Day page's mode name; null = let the speed decide. */
     fun mode(type: String?): String? {
@@ -53,16 +53,26 @@ object TakeoutDerive {
         return best
     }
 
-    class VisitRow(val key: String, val format: String, val startMs: Long, val endMs: Long, val lat: Double?, val lon: Double?, val name: String?, val address: String?)
+    /** [offsetMin] is the UTC offset the export gave the start time (the Timeline export and its KML do), null when it gave none. */
+    class VisitRow(val key: String, val format: String, val startMs: Long, val endMs: Long, val lat: Double?, val lon: Double?, val name: String?, val address: String?,
+                   val offsetMin: Long? = null)
     class ActivityRow(val key: String, val format: String, val startMs: Long, val endMs: Long, val startLat: Double?, val startLon: Double?, val endLat: Double?, val endLon: Double?,
                       val distanceM: Double?, val type: String?, val pathJson: String?)
 
-    /** A visit is a stay (three rows when it holds a night: day part, SLEEP, rest; a whole stay is never one sleep). */
-    fun visitSegments(v: VisitRow, zone: ZoneId): List<TlSegment> {
+    /**
+     * A visit is a stay (three rows when it holds a night: day part, SLEEP, rest; a whole stay is never one sleep). #1887 with a [geo]
+     * gazetteer, a visit without an address takes the City and Country of the nearest place, and its night is the place's own local
+     * night (the place's zone, else the export's UTC offset): a sleep on another continent is found on that continent's clock.
+     */
+    fun visitSegments(v: VisitRow, zone: ZoneId, geo: Gazetteer? = null): List<TlSegment> {
         if (v.endMs <= v.startMs) return emptyList()
-        val (city, country) = cityCountry(v.address)
+        val (ac, aco) = cityCountry(v.address)
+        val near = if (geo != null && v.lat != null && v.lon != null) geo.nearest(v.lat, v.lon) else null
+        val city = ac ?: near?.name; val country = aco ?: near?.country
         val place = v.name?.takeIf { it.isNotBlank() } ?: v.address?.substringBefore(',')?.takeIf { it.isNotBlank() }
-        val night = nightOf(v.startMs, v.endMs, zone)
+        val local: ZoneId? = near?.zone?.let { z -> runCatching { ZoneId.of(z) }.getOrNull() }
+            ?: if (geo != null) v.offsetMin?.let { o -> runCatching { java.time.ZoneOffset.ofTotalSeconds((o * 60).toInt()) }.getOrNull() } else null
+        val night = nightOf(v.startMs, v.endMs, local ?: zone)
         val parts = if (night != null) listOf(Triple(v.startMs, night.first, TlKind.STOP), Triple(night.first, night.last, TlKind.SLEEP), Triple(night.last, v.endMs, TlKind.STOP))
         else listOf(Triple(v.startMs, v.endMs, TlKind.STOP))
         return parts.filter { it.second > it.first }.map { (a, b, k) -> TlSegment(k, a, b, v.lat, v.lon, place, 0, 0.0, "import", null, city, country, v.format, v.key) }
@@ -80,6 +90,55 @@ object TakeoutDerive {
         val end = if (a.endLat != null && a.endLon != null) a.endLat to a.endLon else pathPts.lastOrNull()
         val m = mode(a.type)
         return TlSegment(TlKind.MOVE, a.startMs, a.endMs, end?.first, end?.second, null, 0, d, m?.let { "mode:$it" } ?: "import", null, null, null, a.format, a.key)
+    }
+
+    /** #1887 a part of a path shorter than this, left between visits, is dropped (a cut edge, not a journey). */
+    const val MIN_PIECE_MS = 60_000L
+
+    /** Disjoint covered spans (start to end), merged as they are added. */
+    private class Cover {
+        private val iv = java.util.TreeMap<Long, Long>()
+        fun add(a: Long, b: Long) {
+            if (b <= a) return
+            var s = a; var e = b
+            iv.floorEntry(s)?.let { if (it.value >= s) { s = it.key; e = maxOf(e, it.value) } }
+            while (true) { val n = iv.ceilingEntry(s) ?: break; if (n.key > e) break; e = maxOf(e, n.value); iv.remove(n.key) }
+            iv[s] = e
+        }
+        /** The parts of [a, b) nothing covers. */
+        fun free(a: Long, b: Long): List<Pair<Long, Long>> {
+            val out = ArrayList<Pair<Long, Long>>()
+            var c = a
+            iv.floorEntry(a)?.let { if (it.value > c) c = it.value }
+            for ((s, e) in iv.subMap(a, true, b, false)) { if (s > c) out += c to s; if (e > c) c = e }
+            if (c < b) out += c to b
+            return out
+        }
+    }
+
+    /** [s] cut to the parts [cover] leaves free (distance and steps shrink with the time), pieces shorter than [MIN_PIECE_MS] dropped. */
+    private fun cut(s: TlSegment, cover: Cover): List<TlSegment> {
+        val span = (s.endMs - s.startMs).coerceAtLeast(1).toDouble()
+        return cover.free(s.startMs, s.endMs).filter { it.second - it.first >= MIN_PIECE_MS }.map { (a, b) ->
+            if (a == s.startMs && b == s.endMs) s else s.copy(startMs = a, endMs = b, distanceM = s.distanceM * (b - a) / span, steps = Math.round(s.steps * (b - a) / span))
+        }
+    }
+
+    /**
+     * #1887 a Timeline KML holds visits, paths with coordinates and paths without (the export's raw two-hour windows), overlapping each
+     * other. A visit wins; a path with coordinates fills only the time no visit holds; a path without coordinates only the time neither
+     * holds. Rows of every other source pass unchanged.
+     */
+    fun layerKml(segs: List<TlSegment>): List<TlSegment> {
+        val kml = TakeoutFormat.KML.sourceTag
+        val (mine, rest) = segs.partition { it.source == kml }
+        if (mine.isEmpty()) return segs
+        val stays = mine.filter { it.kind != TlKind.MOVE }
+        val cover = Cover().also { c -> stays.forEach { c.add(it.startMs, it.endMs) } }
+        val drawn = mine.filter { it.kind == TlKind.MOVE && it.lat != null }.sortedBy { it.startMs }.flatMap { cut(it, cover) }
+        drawn.forEach { cover.add(it.startMs, it.endMs) }
+        val bare = mine.filter { it.kind == TlKind.MOVE && it.lat == null }.sortedBy { it.startMs }.flatMap { m -> cut(m, cover).also { p -> p.forEach { cover.add(it.startMs, it.endMs) } } }
+        return (rest + stays + drawn + bare).sortedBy { it.startMs }
     }
 
     /** Points of a timelinePath / waypoint / simplifiedRawPath JSON, whichever spelling (point "geo:..", latLng, latE7/lngE7, latitudeE7/longitudeE7). */
@@ -179,10 +238,11 @@ object TakeoutRebuild {
         fun d(x: Any?) = (x as? Number)?.toDouble()
         fun l(x: Any?) = (x as? Number)?.toLong()
         val segs = ArrayList<TlSegment>()
-        for (r in sql.rows("SELECT key,format,start_ms,end_ms,lat,lon,name,address FROM imp_visits WHERE parent_key IS NULL ORDER BY start_ms;"))
-            segs += TakeoutDerive.visitSegments(TakeoutDerive.VisitRow(r[0] as String, r[1] as String, l(r[2])!!, l(r[3])!!, d(r[4]), d(r[5]), r[6] as String?, r[7] as String?), zone)
+        for (r in sql.rows("SELECT key,format,start_ms,end_ms,lat,lon,name,address,start_offset_min FROM imp_visits WHERE parent_key IS NULL ORDER BY start_ms;"))
+            segs += TakeoutDerive.visitSegments(TakeoutDerive.VisitRow(r[0] as String, r[1] as String, l(r[2])!!, l(r[3])!!, d(r[4]), d(r[5]), r[6] as String?, r[7] as String?, l(r[8])), zone, geo)
         for (r in sql.rows("SELECT key,format,start_ms,end_ms,start_lat,start_lon,end_lat,end_lon,distance_m,activity_type,path_json FROM imp_activities ORDER BY start_ms;"))
             TakeoutDerive.activitySegment(TakeoutDerive.ActivityRow(r[0] as String, r[1] as String, l(r[2])!!, l(r[3])!!, d(r[4]), d(r[5]), d(r[6]), d(r[7]), d(r[8]), r[9] as String?, r[10] as String?))?.let { segs += it }
+        val layered = TakeoutDerive.layerKml(segs); segs.clear(); segs.addAll(layered)   // #1887 the KML's visits win over its overlapping paths
         val range = sql.rows("SELECT MIN(ts),MAX(ts) FROM fixes WHERE source <> 'tracked';").firstOrNull()
         if (range != null && range[0] != null && !cancelled()) {
             segs += TakeoutDerive.fromFixes(l(range[0])!!, l(range[1])!!,

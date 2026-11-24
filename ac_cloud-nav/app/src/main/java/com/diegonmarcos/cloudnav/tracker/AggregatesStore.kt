@@ -2,7 +2,6 @@ package com.diegonmarcos.cloudnav.tracker
 
 import android.content.Context
 import com.diegonmarcos.cloudnav.maps.MapsDb
-import com.diegonmarcos.cloudnav.maps.TimelineSync
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.ZoneId
@@ -33,9 +32,12 @@ object AggregatesStore {
         "insights" to DayJson.daily(stats).toString(), "trips" to TripsJson.toJson(trips).toString(),
         "places" to placesJson(places).toString(), "cities" to citiesJson(cities).toString(), "world" to worldJson(countries).toString())
 
+    /** The key a kind's row is stored under (the fleet door reads `trips` / `insights` as [KEY_QUARTER], the rankings as [KEY_MONTH]). */
+    fun keyOf(kind: String): String = if (kind == "trips" || kind == "insights") KEY_QUARTER else KEY_MONTH
+
     fun persist(app: Context, nowMs: Long, stats: List<DayStats>, trips: TripsResult, places: List<PlaceTotal>, cities: List<CityTotal>, countries: List<CountryTotal>) {
         val db = MapsDb.get(app)
-        for ((kind, json) in rows(stats, trips, places, cities, countries)) db.putAggregate(kind, if (kind == "trips" || kind == "insights") KEY_QUARTER else KEY_MONTH, json, nowMs)
+        for ((kind, json) in rows(stats, trips, places, cities, countries)) db.putAggregate(kind, keyOf(kind), json, nowMs)
     }
 
     /** #1853 the aggregates' window: the last [Trips.HOME_WINDOW_DAYS] days, or back to the first imported day once a Google history was imported (at most 25 years). */
@@ -59,18 +61,25 @@ object AggregatesStore {
         val stats: List<DayStats> get() = cache.stats
     }
 
+    /** #1887 every fold of the aggregates in this process (the JVM test proves a Day date change adds none). */
+    @Volatile var exploreCount = 0L
+
     /**
      * #1863 the cached pass the page, the engine tick and the import share: past dates come from their stored digests (recomputed only
      * when their checksum moved or they were marked dirty), today is live, and every aggregate is folded from the digests.
+     * #1887 [cancelled] is asked between dates.
      */
-    /** #1887 every fold of the aggregates in this process (the JVM test proves a Day date change adds none). */
-    @Volatile var exploreCount = 0L
 
     fun explore(backend: DigestBackend, store: List<com.diegonmarcos.cloudnav.maps.TlSegment>, first: java.time.LocalDate, today: java.time.LocalDate, nowMs: Long,
                 zone: ZoneId, corrections: List<Correction>, memory: List<Remembered>, home: String?, cancelled: () -> Boolean = { false }): Explored {
         exploreCount++
         val (dates, rankDates) = windowDates(first, today)
-        val r = ExploredCache.refresh(backend, store, dates, nowMs, zone, corrections, memory)
+        val r = ExploredCache.refresh(backend, store, dates, nowMs, zone, corrections, memory, cancelled = cancelled)
+        return fold(r, rankDates, home)
+    }
+
+    /** #1887 every aggregate folded from digests already at hand (the refresh's, or the stored ones a cold process paints first). */
+    fun fold(r: CacheResult, rankDates: List<java.time.LocalDate>, home: String?): Explored {
         val keep = rankDates.toHashSet()
         val rank = r.digests.filter { it.date in keep }
         return Explored(r, rank, Trips.group(r.stats, home), ExploredFold.places(rank), ExploredFold.cities(rank), ExploredFold.countries(rank),
@@ -84,11 +93,12 @@ object AggregatesStore {
         return e
     }
 
-    /** The engine's pass (and the import's): bring the cache up to date with the segments the store holds now; only changed dates are computed. */
+    /**
+     * The engine's pass (and the import's): bring the cache up to date with the segments the store holds now; only changed dates are
+     * computed. #1887 it runs the page's own single-flight refresh ([ExploredRepository]): one full pass at a time, and its result stays
+     * in memory, so the next open of Explored paints at once.
+     */
     fun rebuild(app: Context, nowMs: Long, zone: ZoneId = ZoneId.systemDefault()) {
-        val today = java.time.Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate()
-        val first = windowStart(app, today, zone)
-        val store = TimelineSync.view(app, DayTimeline.dayStart(first, zone) - 12 * 3_600_000L, nowMs)
-        explore(app, store, first, today, nowMs, zone)
+        ExploredRepository.get(app).rebuild(zone, nowMs)
     }
 }

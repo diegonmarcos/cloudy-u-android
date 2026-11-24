@@ -71,7 +71,7 @@ class TreeSource(private val ctx: Context, private val tree: Uri) : TakeoutSourc
                 while (c.moveToNext()) {
                     val id = c.getString(0); val nm = c.getString(1) ?: continue
                     if (c.getString(2) == DocumentsContract.Document.MIME_TYPE_DIR) dirs += id to "$path$nm/"
-                    else if (nm.endsWith(".json", true)) out += Doc(DocumentsContract.buildDocumentUriUsingTree(tree, id), path + nm, if (c.isNull(3)) 0L else c.getLong(3))
+                    else if (TakeoutImporter.accepts(nm)) out += Doc(DocumentsContract.buildDocumentUriUsingTree(tree, id), path + nm, if (c.isNull(3)) 0L else c.getLong(3))
                 }
                 dirs.forEach { walk(it.first, it.second) }
             }
@@ -111,6 +111,8 @@ object ImportController {
     @Volatile private var cancel = false
     /** The host's hook once segments and rollups are rebuilt: Cloud Nav's aggregates (Trips, Places, Cities, World, Insights). */
     @Volatile var afterImport: ((Context) -> Unit)? = null
+    /** #1887 the host's offline gazetteer: names the imported places that came without an address (a Timeline KML or export: coordinates only). */
+    @Volatile var gazetteer: ((Context) -> Gazetteer?)? = null
 
     val running: Boolean get() = state is ImportState.Running
 
@@ -147,7 +149,8 @@ object ImportController {
             sql.exec("INSERT INTO imports (id, name, started_ms, status) VALUES (?, ?, ?, 'running');", listOf(id, source.label, System.currentTimeMillis()))
             val summary = TakeoutImporter.run(source, sql, id, zone, { p -> state = ImportState.Running(source.label, p, "reading") }, { cancel })
             state = ImportState.Running(source.label, null, "rebuilding")
-            val segs = if (summary.found) TakeoutRebuild.run(sql, zone, cancelled = { false }) else 0
+            val geo = if (summary.found) runCatching { gazetteer?.invoke(app) }.getOrNull() else null
+            val segs = if (summary.found) TakeoutRebuild.run(sql, zone, cancelled = { false }, geo = geo) else 0
             if (summary.found) runCatching { afterImport?.invoke(app) }
             sql.exec("UPDATE imports SET finished_ms=?, status=?, files=?, days=?, visits=?, activities=?, places=?, fixes=?, signals=?, skipped=?, first_ms=?, last_ms=? WHERE id=?;",
                 listOf(System.currentTimeMillis(), if (summary.cancelled) "cancelled" else "done", summary.files, summary.days, summary.visits, summary.activities, summary.places, summary.fixes,

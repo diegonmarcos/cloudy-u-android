@@ -128,17 +128,20 @@ object ExploredCache {
         val out = ArrayList<DayDigest>(dates.size); val recomputed = ArrayList<LocalDate>(); val live = ArrayList<LocalDate>()
         val toPut = LinkedHashMap<LocalDate, String>()
         var reused = 0
-        for (d in dates) {
-            val (a, b) = window(d, zone)
-            val slice = slicer.slice(a, b)
-            val sum = checksum(d, slice, corrections, memory, zone)
-            if (isLive(d, nowMs, zone)) { live += d; out += compute(slice, d, sum, nowMs, zone, corrections, memory); continue }
-            val old = if (d in dirty) null else stored[d]?.let { fromJson(it) }
-            if (old != null && old.sum == sum && old.version == SCHEMA) { out += old; reused++; continue }
-            val dg = compute(slice, d, sum, nowMs, zone, corrections, memory)
-            out += dg; recomputed += d; toPut[d] = toJson(dg).toString()
-        }
-        if (toPut.isNotEmpty()) runCatching { backend.put(toPut) }
+        // #1887 cancellable between dates; what was computed before the cancel is stored, so the next refresh resumes from it
+        try {
+            for (d in dates) {
+                if (cancelled()) throw java.util.concurrent.CancellationException("Explored refresh cancelled")
+                val (a, b) = window(d, zone)
+                val slice = slicer.slice(a, b)
+                val sum = checksum(d, slice, corrections, memory, zone)
+                if (isLive(d, nowMs, zone)) { live += d; out += compute(slice, d, sum, nowMs, zone, corrections, memory); continue }
+                val old = if (d in dirty) null else stored[d]?.let { fromJson(it) }
+                if (old != null && old.sum == sum && old.version == SCHEMA) { out += old; reused++; continue }
+                val dg = compute(slice, d, sum, nowMs, zone, corrections, memory)
+                out += dg; recomputed += d; toPut[d] = toJson(dg).toString()
+            }
+        } finally { if (toPut.isNotEmpty()) runCatching { backend.put(toPut) } }
         return CacheResult(out, recomputed, live, reused)
     }
 

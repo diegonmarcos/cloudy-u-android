@@ -27,6 +27,7 @@ class TrackerDebugApiProvider : ContentProvider() {
     override fun onCreate(): Boolean {
         val app = context?.applicationContext ?: return false
         NavTimelineExtra.install(app)   // before any page or op reads the timeline store
+        NavTimelineExtra.warm(app)      // #1887 Explored's snapshot is built in the background, so the first open paints from memory
         runCatching {
             AppDebugServer.route(GROUP, listOf(
                 AppDebugServer.Op("steps", "days=<1..31, default 7>", "steps today and per day (Health Connect, else this phone's counter) with the source status the Steps page shows"),

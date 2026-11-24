@@ -31,10 +31,14 @@ object Trips {
     private fun norm(c: String?) = c?.trim()?.takeIf { it.isNotEmpty() }
     private fun same(a: String, b: String) = a.equals(b, ignoreCase = true)
 
-    /** Most frequent sleep city of the last [HOME_WINDOW_DAYS] dates up to the newest date given; a tie goes to the more recent. */
+    /**
+     * Most frequent sleep city of the last [HOME_WINDOW_DAYS] dates up to the newest date that has one; a tie goes to the more recent.
+     * #1887 the window ends at the last recorded sleep, not at the last date given: an imported history that ends months before today
+     * still has its home (and so its trips).
+     */
     fun detectHome(days: List<DayStats>): String? {
         val sorted = days.sortedBy { it.date }
-        val last = sorted.lastOrNull()?.date ?: return null
+        val last = sorted.lastOrNull { norm(it.sleepCity) != null }?.date ?: return null
         val inWin = sorted.filter { it.date.isAfter(last.minusDays(HOME_WINDOW_DAYS.toLong())) }
         val counts = LinkedHashMap<String, Int>(); val lastSeen = HashMap<String, LocalDate>()
         for (d in inWin) { val c = norm(d.sleepCity) ?: continue

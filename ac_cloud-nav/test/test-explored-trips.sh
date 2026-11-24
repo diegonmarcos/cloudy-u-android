@@ -2,6 +2,9 @@
 # #1863 Explored > Trips (cache, calendar, tables, Export/Import) and #1862 Tracker > Timeline (strips), statically, with mutations.
 #   E1 cache: the page and the engine / import read Explored through AggregatesStore.explore (ExploredCache: checksum, SCHEMA, live today,
 #      digests in maps.db `aggregates`, no database of its own); no page re-runs Aggregates.perDay / Rankings over every day.
+#      #1887 (gate updated deliberately): the fold runs in the process-scoped ExploredRepository (AggregatesStore.explore over the cache),
+#      the engine / import pass (AggregatesStore.rebuild) runs the repository's single-flight refresh, and the Day tab reads one window
+#      (DayLoad.day) and never folds the aggregates itself.
 #   E2 subpage order: Day, Week, Month | World, Cities, Places, Trips, Insights | Export/Import (groups), each tab drawn.
 #   E3 rule 16 field parity: every field the old Places / Cities / World lists, Trips, Insights and Import showed is still drawn, now in
 #      the sortable tables (continent first on World, continent + country first on Cities) with tappable last-visit dates.
@@ -9,7 +12,8 @@
 #      delete by dates (preview), delete all (two confirmations), refresh; every delete marks the cache dirty.
 #   E5 Timeline: day/night strip, activity strip with legend, transport icons, sleep city, and every old row field (type, times, place,
 #      address, coordinates, mode, distance, steps, start / end / duration, source).
-#   E6 the JVM tests that hold the logic exist (cache, data ops, segments).
+#   E6 the JVM tests that hold the logic exist (cache, data ops, segments; #1887 repository speed, KML import into Explored).
+#   E8 #1887 the Day header leads with the sleep City (Country, Time zone), and the daylight strip follows the sleep city's clock.
 #   E7 the checks bite: a planted mutation of each one fails it.
 set -eu
 HERE="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
@@ -20,8 +24,8 @@ root = sys.argv[1]
 T = "app/src/main/java/com/diegonmarcos/cloudnav/tracker/"
 JT = "app/src/test/java/com/diegonmarcos/cloudnav/tracker/"
 FILES = [T + f for f in ["DayScreen.kt", "DayFragment.kt", "AggregatesStore.kt", "ExploredCache.kt", "ExploredStore.kt", "ExploredData.kt", "ExploredViews.kt",
-                         "DaySegments.kt", "SegmentStrips.kt", "TrackerScreens.kt", "TrackerRows.kt", "TakeoutImportScreen.kt", "NavTimelineExtra.kt"]] + \
-        [JT + f for f in ["ExploredCacheTest.kt", "ExploredDataTest.kt", "DaySegmentsTest.kt"]]
+                         "DaySegments.kt", "SegmentStrips.kt", "TrackerScreens.kt", "TrackerRows.kt", "TakeoutImportScreen.kt", "NavTimelineExtra.kt", "ExploredRepository.kt"]] + \
+        [JT + f for f in ["ExploredCacheTest.kt", "ExploredDataTest.kt", "DaySegmentsTest.kt", "ExploredRepositoryTest.kt", "KmlImportExploredTest.kt"]]
 fails = []
 def ok(c, good, bad):
     print(("  PASS: " + good) if c else ("  FAIL: " + bad))
@@ -47,9 +51,13 @@ def check(top):
     s = load(top); r = {}
     df, ag, ca, ds, dv, dt = g(s, "DayFragment.kt"), g(s, "AggregatesStore.kt"), g(s, "ExploredCache.kt"), g(s, "DayScreen.kt"), g(s, "ExploredViews.kt"), g(s, "ExploredData.kt")
     st, ts, seg, nx = g(s, "ExploredStore.kt"), g(s, "TrackerScreens.kt"), g(s, "DaySegments.kt"), g(s, "NavTimelineExtra.kt")
+    rp = g(s, "ExploredRepository.kt")
     # E1
-    r["e1"] = ("AggregatesStore.explore(" in df and not re.search(r"Aggregates\.perDay\(|Rankings\.(places|cities|countries)\(", df)
-               and re.search(r"fun rebuild\(.*?\n(.*\n){0,6}?\s*explore\(", ag) is not None and "ExploredCache.refresh(" in ag
+    r["e1"] = ("ExploredRepository.get(" in df and "DayLoad.day(" in df and "AggregatesStore.explore(" not in df
+               and not re.search(r"Aggregates\.perDay\(|Rankings\.(places|cities|countries)\(", df)
+               and "AggregatesStore.explore(inputs.backend" in rp and not re.search(r"Aggregates\.perDay\(|Rankings\.(places|cities|countries)\(", rp)
+               and re.search(r"fun rebuild\(.*?\n(.*\n){0,6}?\s*ExploredRepository\.get\(app\)\.rebuild\(", ag) is not None and "ExploredCache.refresh(" in ag
+               and re.search(r"fun explore\(backend: DigestBackend.*?\n(.*\n){0,4}?\s*val r = ExploredCache\.refresh\(", ag) is not None
                and all(t in ca for t in ["const val SCHEMA", "fun checksum(", "fun isLive(", "MessageDigest", "old.sum == sum", "old.version == SCHEMA", "if (isLive(d, nowMs, zone))"])
                and 'SELECT k, json FROM aggregates WHERE kind = ?' in st and not re.search(r"openOrCreateDatabase|SQLiteOpenHelper|getSharedPreferences", st + ca)
                and "AggregatesStore.rebuild(" in nx)
@@ -75,10 +83,17 @@ def check(top):
                and all(t in g(s, "SegmentStrips.kt") for t in ["Brush.horizontalGradient", "DayIcons.mode(b.mode)", "StripTags.sleepCity(i)"])
                and "fun gradient(" in seg and "fun sleepCities(" in seg and "fun modeIcon(" in seg)
     # E6
-    jt = "".join(s.get(JT + f, "") for f in ["ExploredCacheTest.kt", "ExploredDataTest.kt", "DaySegmentsTest.kt"])
+    jt = "".join(s.get(JT + f, "") for f in ["ExploredCacheTest.kt", "ExploredDataTest.kt", "DaySegmentsTest.kt", "ExploredRepositoryTest.kt", "KmlImportExploredTest.kt"])
     r["e6"] = all(t in jt for t in ["`a second open recomputes nothing", "an import recomputes only the dates it touches", "equal a full recompute",
                                      "export JSON round-trips", "KMZ is a zip", "never remove a unique record", "delete by dates removes only that range",
-                                     "refresh (clear then rebuild) equals a full recompute", "tables sort by any column", "cover the 24 h without overlap", "(mutation)"])
+                                     "refresh (clear then rebuild) equals a full recompute", "tables sort by any column", "cover the 24 h without overlap", "(mutation)",
+                                     "`a second open is served from memory", "`concurrent opens share one refresh", "a refresh over unchanged inputs persists nothing",
+                                     "`a cancelled refresh stops within one date", "`only the latest date load is applied", "`a date change reads one 48 h window",
+                                     "World, Cities, Places, Trips and Insights are filled from the KML import", "`the daylight strip follows the sleep city",
+                                     "`the Day header leads with the sleep city"])
+    # E8
+    r["e8"] = ('"City" to (sleep?.city' in ds and "DaySegments.dayLight(ui.date, ui.sleep" in ds and "fun sleepOf(" in seg and "fun dayLight(" in seg
+               and "DayHeader.fields(b, sleep)" in ds and "place: String? = null" in g(s, "SegmentStrips.kt"))
     return r
 
 print("== E1-E6 on the real sources ==")
@@ -89,6 +104,7 @@ ok(not r["e3"] and r["e3b"], "every old field is drawn; World continent first, C
 ok(r["e4"], "Export/Import: JSON, KMZ, restore, import, duplicates, delete by dates, delete all twice, refresh; deletes mark the cache dirty", "an Export/Import action is missing")
 ok(r["e5"], "Timeline: day/night strip, activity strip, legend, transport icons, sleep city", "a Timeline strip part is missing")
 ok(r["e6"], "the JVM tests for cache, data ops and segments are present", "a JVM test is missing")
+ok(r["e8"], "the Day header leads with the sleep City; the daylight strip follows the sleep city's clock", "the Day header City or the sleep-city daylight is missing")
 print("== E7: the checks bite ==")
 tmp = tempfile.mkdtemp()
 try:
@@ -99,7 +115,13 @@ try:
         p = os.path.join(tmp, f); s = open(p).read(); assert a in s, (f, a); open(p, "w").write(s.replace(a, b, 1)); return s
     def restore(f, s): open(os.path.join(tmp, f), "w").write(s)
     cases = [
-        (T + "DayFragment.kt", "AggregatesStore.explore(app, store, first, today, now, zone)", "Aggregates.perDay(store, emptyList(), now, zone).let { AggregatesStore.explore(app, store, first, today, now, zone) }", "e1", "a page re-running perDay fails E1"),
+        (T + "DayFragment.kt", "ExploredRepository.get(requireContext().applicationContext)", "Aggregates.perDay(store, emptyList(), now, zone).let { ExploredRepository.get(requireContext().applicationContext) }", "e1", "a page re-running perDay fails E1"),
+        (T + "DayFragment.kt", "val d = DayLoad.day(", "AggregatesStore.explore(app, store, first, today, now, zone); val d = DayLoad.day(", "e1", "a Day tab that folds the aggregates fails E1"),
+        (T + "ExploredRepository.kt", "AggregatesStore.explore(inputs.backend", "Aggregates.perDay(inputs.backend", "e1", "a repository that bypasses the cache fails E1"),
+        (T + "AggregatesStore.kt", "ExploredRepository.get(app).rebuild(", "explore(app, ", "e1", "an engine pass outside the shared refresh fails E1"),
+        (T + "DayScreen.kt", '"City" to (sleep?.city', '"Town" to (sleep?.city', "e8", "a Day header without City fails E8"),
+        (T + "DayScreen.kt", "DaySegments.dayLight(ui.date, ui.sleep", "DaySegments.dayLight(ui.date, null", "e8", "a daylight strip off the sleep city fails E8"),
+        (JT + "ExploredRepositoryTest.kt", "`a second open is served from memory", "`opens", "e6", "a missing repository JVM test fails E6"),
         (T + "ExploredCache.kt", "old.sum == sum", "true", "e1", "a cache that ignores the checksum fails E1"),
         (T + "ExploredStore.kt", "SELECT k, json FROM aggregates WHERE kind = ?", "SELECT k, json FROM digests WHERE kind = ?", "e1", "digests outside maps.db aggregates fail E1"),
         (T + "DayScreen.kt", 'WEEK("Week", 0), MONTH("Month", 0)', 'MONTH("Month", 0), WEEK("Week", 0)', "e2", "a swapped subpage fails E2"),
@@ -120,7 +142,7 @@ try:
         s = mut(f, a, b); res = check(tmp)[key]
         ok((bool(res) if key == "e3" else not res), label, "E7 missed: " + label); restore(f, s)
     rr = check(tmp)
-    ok(all(rr[k] for k in ["e1", "e2", "e3b", "e4", "e5", "e6"]) and not rr["e3"], "the pristine copy passes again", "the pristine copy fails")
+    ok(all(rr[k] for k in ["e1", "e2", "e3b", "e4", "e5", "e6", "e8"]) and not rr["e3"], "the pristine copy passes again", "the pristine copy fails")
 finally:
     shutil.rmtree(tmp)
 print(f"\n{'FAIL' if fails else 'PASS'}: test-explored-trips ({len(fails)} failing)")

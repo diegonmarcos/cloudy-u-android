@@ -148,13 +148,31 @@ object DaySegments {
         return Daylight(r, s, true, polarDay = r == null && pd)
     }
 
-    /** #1887 seam (the previous behaviour: no sleep place). */
-    fun sleepOf(stats: DayStats?, day: List<DaySeg>, geo: com.diegonmarcos.cloudnav.maps.takeout.Gazetteer?, deviceZone: ZoneId): DaySleep? = null
+    /**
+     * #1887 where the date's sleep happened: the night that ENDS on it ([DayStats.sleepCity], its coordinates), named by the stats or,
+     * when they hold none, by the nearest gazetteer place; the zone is that place's own (the device's when no place is known). Null when
+     * the date has no located or named sleep.
+     */
+    fun sleepOf(stats: DayStats?, day: List<DaySeg>, geo: com.diegonmarcos.cloudnav.maps.takeout.Gazetteer?, deviceZone: ZoneId): DaySleep? {
+        val lat = stats?.sleepLat; val lon = stats?.sleepLon
+        val city = stats?.sleepCity?.takeIf { it.isNotBlank() }
+        if (city == null && (lat == null || lon == null)) return null
+        val near = if (lat != null && lon != null) geo?.nearest(lat, lon) else null
+        val z = near?.zone?.let { runCatching { ZoneId.of(it) }.getOrNull() } ?: deviceZone
+        val country = day.filterIsInstance<DaySeg.Stay>().firstOrNull { it.kind == StayKind.SLEEP && it.place?.country != null }?.place?.country ?: near?.country
+        return DaySleep(city ?: near?.name, country, lat, lon, z)
+    }
 
-    /** #1887 seam (the previous behaviour: the day's first located place, on the device's clock). */
+    /**
+     * #1887 the Day's day/night strip follows the sleep city: its sunrise and sunset, over that city's own 24 h of [date], read on its
+     * clock. Without a sleep place the day's first located place on the device's clock (the previous strip), else the fixed curve.
+     */
     fun dayLight(date: LocalDate, sleep: DaySleep?, day: List<DaySeg>, deviceZone: ZoneId): DayLight {
+        val z = sleep?.zone ?: deviceZone
         val loc = day.filterIsInstance<DaySeg.Stay>().firstOrNull { it.place?.located == true }?.place
-        return DayLight(daylight(date, loc?.lat, loc?.lon, deviceZone), DayTimeline.dayStart(date, deviceZone), DayTimeline.dayStart(date.plusDays(1), deviceZone), deviceZone, null)
+        val lat = if (sleep?.lat != null && sleep.lon != null) sleep.lat else loc?.lat
+        val lon = if (sleep?.lat != null && sleep.lon != null) sleep.lon else loc?.lon
+        return DayLight(daylight(date, lat, lon, z), DayTimeline.dayStart(date, z), DayTimeline.dayStart(date.plusDays(1), z), z, sleep?.city)
     }
 
     /** Sky brightness 0 (night) .. 1 (day) at [ms]: ramps over [TWILIGHT_MS] around sunrise and sunset. */

@@ -51,7 +51,7 @@ class FileSource(override val label: String, override val totalBytes: Long, priv
 /** A folder of an extracted export (plain files; the app's SAF folder source has the same shape). */
 class DirSource(private val root: File) : TakeoutSource {
     override val label = root.name
-    private val files: List<File> by lazy { root.walkTopDown().filter { it.isFile && it.name.endsWith(".json", true) }.sortedBy { it.path }.toList() }
+    private val files: List<File> by lazy { root.walkTopDown().filter { it.isFile && TakeoutImporter.accepts(it.name) }.sortedBy { it.path }.toList() }
     override val totalBytes: Long get() = files.sumOf { it.length() }
     private var read = 0L
     override fun bytesRead() = read
@@ -69,11 +69,28 @@ class ImportSummary(val files: Int, val days: Int, val visits: Long, val activit
 
 /**
  * #1853 the import engine: every .json of the source is streamed through [TakeoutParsers] (the content, not the file name, says which
- * of the three formats it is) into a [TakeoutWriter]. Idempotent: rows carry stable keys, so the same export imported twice leaves the
+ * of the three formats it is; #1887 a .kml / .xml, or any content starting with `<`, through [TakeoutKml]) into a [TakeoutWriter]. Idempotent: rows carry stable keys, so the same export imported twice leaves the
  * same rows. Cancel is checked per record; what was written before it stays and a re-import completes it. The rebuild of segments,
  * rollups and aggregates is the caller's next step ([TakeoutRebuild]).
  */
 object TakeoutImporter {
+    /** #1887 the files an import reads: JSON (the three Google formats) and KML (`.kml`, `.kml.xml`, `.xml`; a KMZ's doc.kml). The content decides the parser. */
+    fun accepts(name: String): Boolean = name.endsWith(".json", true) || name.endsWith(".kml", true) || name.endsWith(".xml", true)
+
+    /** #1887 the stream starts with `<` (after a BOM or blanks): KML, else JSON. The reader is left where it was. */
+    internal fun isXml(r: java.io.BufferedReader): Boolean {
+        r.mark(4096)
+        try {
+            repeat(4096) {
+                val c = r.read()
+                if (c < 0) return false
+                val ch = c.toChar()
+                if (!ch.isWhitespace() && ch != '\uFEFF') return ch == '<'
+            }
+            return false
+        } finally { r.reset() }
+    }
+
     fun run(source: TakeoutSource, sql: SqlExec, importId: Long, zone: ZoneId = ZoneId.systemDefault(), progress: (ImportProgress) -> Unit = {},
             cancelled: () -> Boolean = { false }): ImportSummary {
         val w = TakeoutWriter(sql, importId, zone)
@@ -92,12 +109,13 @@ object TakeoutImporter {
         try {
             for (e in source.entries()) {
                 if (cancelled()) { wasCancelled = true; break }
-                if (!e.name.endsWith(".json", ignoreCase = true)) continue
+                if (source !is FileSource && !accepts(e.name)) continue   // #1887 a single picked file is read whatever its name; its content decides
                 current = e.name; files++
                 try {
                     e.open().use { ins ->
                         val r = InputStreamReader(ins, Charsets.UTF_8).buffered(64 * 1024)
-                        formats += TakeoutParsers.parse(r, w, onProgress = { tick() }, cancelled = cancelled)
+                        formats += if (isXml(r)) TakeoutKml.parse(r, w, onProgress = { tick() }, cancelled = cancelled)
+                        else TakeoutParsers.parse(r, w, onProgress = { tick() }, cancelled = cancelled)
                     }
                 } catch (c: ImportCancelled) { wasCancelled = true; break }
                 catch (x: Exception) { failed += "${e.name}: ${x.message?.take(120)}" }

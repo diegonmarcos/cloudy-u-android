@@ -43,7 +43,7 @@ fun stateColor(s: SegState): Color = Color(s.argb)
 
 /** The black-to-blue day/night bar over 24 h, with sunrise and sunset ticks; "fixed curve" when no location was known. */
 @Composable
-fun DayNightStrip(d: Daylight, from: Long, to: Long, modifier: Modifier = Modifier, zone: java.time.ZoneId = java.time.ZoneId.systemDefault()) {
+fun DayNightStrip(d: Daylight, from: Long, to: Long, modifier: Modifier = Modifier, zone: java.time.ZoneId = java.time.ZoneId.systemDefault(), place: String? = null) {
     val p = LocalKitPalette.current
     val stops = DaySegments.gradient(d, from).map { (f, c) -> f to Color(c) }.toTypedArray()
     Column(modifier.fillMaxWidth().testTag(StripTags.DAYNIGHT)) {
@@ -57,7 +57,7 @@ fun DayNightStrip(d: Daylight, from: Long, to: Long, modifier: Modifier = Modifi
             for (h in listOf("00", "06", "12", "18", "24")) Text(h, Modifier.weight(1f), color = p.textSecondary, fontSize = 9.sp)
         }
         Text("Sunrise " + (d.sunriseMs?.let { StepsFormat.time(it, zone) } ?: "none") + "  ·  Sunset " + (d.sunsetMs?.let { StepsFormat.time(it, zone) } ?: "none") +
-            if (d.known) "" else "  ·  fixed curve (no location)", color = p.textSecondary, fontSize = 10.sp)
+            (if (d.known) "" else "  ·  fixed curve (no location)") + (place?.let { "  ·  $it local time" } ?: ""), color = p.textSecondary, fontSize = 10.sp)   // #1887 the sleep city and its clock
     }
 }
 

@@ -99,6 +99,8 @@ data class DayUi(
     val digests: List<DayDigest> = emptyList(), val world: List<WorldRow> = emptyList(), val cityTable: List<CityRow> = emptyList(),
     val cacheLine: String = "", val counts: Map<String, Long> = emptyMap(), val dataStatus: String? = null,
     val dedupe: DedupePlan? = null, val rangePreview: Pair<Pair<Long, Long>, RangePlan>? = null,
+    /** #1887 where the date's night was slept (the header's City, the daylight strip's city and clock). */
+    val sleep: DaySleep? = null,
 ) {
     private val byDate: Map<LocalDate, DayDigest> by lazy { digests.associateBy { it.date } }
     fun digestOf(d: LocalDate): DayDigest? = byDate[d]
@@ -120,15 +122,31 @@ class DayActions(
     val onOpenDay: (LocalDate) -> Unit = {}, val data: DataActions = DataActions(),
 )
 
-/** #1887 the Day page's metadata header (seam: the previous fields, the summary bar's four). */
+/**
+ * #1887 the Day page's metadata header, at the top of every Day: where the night ending on the date was slept (City, Country, the
+ * city's Time zone), then every field the summary bar showed before, in its order and with its value (rule 16; the JVM test holds
+ * the parity).
+ */
 object DayHeader {
-    fun fields(b: DayBar, sleep: DaySleep?): List<Pair<String, String>> = listOf("Total km" to "%.1f".format(Locale.US, b.distanceM / 1000),
-        "Total steps" to (b.steps.count?.let { StepsFormat.n(it) } ?: "n/a"), "Time active" to StepsFormat.duration(b.activeMs), "Time stopped" to StepsFormat.duration(b.stoppedMs))
+    /** How many of [fields] are the sleep place's (drawn on the first line). */
+    const val PLACE_FIELDS = 3
+
+    fun fields(b: DayBar, sleep: DaySleep?): List<Pair<String, String>> = listOf(
+        "City" to (sleep?.city ?: "n/a"), "Country" to (sleep?.country ?: "n/a"), "Time zone" to (sleep?.zone?.id ?: "n/a"),
+        "Total km" to "%.1f".format(Locale.US, b.distanceM / 1000), "Total steps" to (b.steps.count?.let { StepsFormat.n(it) } ?: "n/a"),
+        "Time active" to StepsFormat.duration(b.activeMs), "Time stopped" to StepsFormat.duration(b.stoppedMs))
 }
 
-/** #1887 the Insights week (seam: the previous behaviour, the last 7 calendar days). */
+/** #1887 the Insights week: the last 7 days, or, when they hold nothing (an imported history that ends before today), the last 7 that do. */
 object InsightsData {
-    fun week(stats: List<DayStats>): List<DayStats> = stats.takeLast(7)
+    private fun has(s: DayStats) = s.sleepMs > 0 || s.summary.visits > 0 || s.summary.totalDistanceM > 0.0
+
+    fun week(stats: List<DayStats>): List<DayStats> {
+        val last = stats.takeLast(7)
+        if (last.any { has(it) }) return last
+        val i = stats.indexOfLast { has(it) }
+        return if (i < 0) last else stats.subList(maxOf(0, i - 6), i + 1)
+    }
 }
 
 object DayFormat {
@@ -196,7 +214,7 @@ private fun DayTabView(ui: DayUi, a: DayActions, zone: ZoneId) {
     Box(Modifier.fillMaxSize()) {
         LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp).testTag(DayTags.LIST), state = listState, verticalArrangement = Arrangement.spacedBy(2.dp)) {
             item { DatePicker(ui, a) }
-            item { SummaryBar(DayDetails.bar(ui.day, ui.steps)) { mapDay = true } }
+            item { SummaryBar(DayDetails.bar(ui.day, ui.steps), ui.sleep) { mapDay = true } }
             item { DayCalendar(ui, zone) }
             item { RouteMap(model, onPin) }
             item { SummaryRow(ui) }
@@ -233,9 +251,10 @@ private const val HEADER_ITEMS = 5
 private fun DayCalendar(ui: DayUi, zone: ZoneId) {
     val a = DayTimeline.dayStart(ui.date, zone); val b = DayTimeline.dayStart(ui.date.plusDays(1), zone)
     val blocks = remember(ui.day) { if (ui.day.isEmpty()) emptyList() else DaySegments.blocks(ui.day, a, minOf(b, maxOf(a, System.currentTimeMillis()))) }
-    val loc = ui.day.filterIsInstance<DaySeg.Stay>().firstOrNull { it.place?.located == true }?.place
+    // #1887 the day/night strip follows the city the night was slept in, on that city's own 24 h and clock
+    val light = remember(ui.date, ui.sleep, ui.day) { DaySegments.dayLight(ui.date, ui.sleep, ui.day, zone) }
     Column(Modifier.fillMaxWidth().padding(vertical = 4.dp).testTag("day:calendar"), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        DayNightStrip(DaySegments.daylight(ui.date, loc?.lat, loc?.lon, zone), a, b, zone = zone)
+        DayNightStrip(light.daylight, light.from, light.to, zone = light.zone, place = light.city?.let { "$it, ${light.zone.id}" })
         ActivityStrip(blocks, a, b)
         StateLegend()
     }
@@ -251,14 +270,14 @@ private fun DatePicker(ui: DayUi, a: DayActions) {
     }
 }
 
-/** Total km, steps, time active and time stopped for the day, plus the "Map day" button. */
+/** #1887 the Day's metadata header: City, Country and Time zone of the night, then total km, steps, time active and time stopped, plus the "Map day" button. */
 @Composable
-private fun SummaryBar(b: DayBar, onMap: () -> Unit) {
+private fun SummaryBar(b: DayBar, sleep: DaySleep?, onMap: () -> Unit) {
     val p = LocalKitPalette.current
+    val fields = DayHeader.fields(b, sleep)
     Column(Modifier.fillMaxWidth().testTag(DayTags.BAR)) {
-        KitStoreRowLine {
-            for ((label, value) in listOf("Total km" to "%.1f".format(Locale.US, b.distanceM / 1000), "Total steps" to (b.steps.count?.let { StepsFormat.n(it) } ?: "n/a"),
-                "Time active" to StepsFormat.duration(b.activeMs), "Time stopped" to StepsFormat.duration(b.stoppedMs))) {
+        for (line in listOf(fields.take(DayHeader.PLACE_FIELDS), fields.drop(DayHeader.PLACE_FIELDS))) KitStoreRowLine {
+            for ((label, value) in line) {
                 Column(Modifier.weight(1f)) {
                     KitStoreCaption(label, color = p.textSecondary)
                     KitStoreName(value, color = p.textPrimary)
@@ -514,11 +533,14 @@ private fun TripsTabView(ui: DayUi, actions: DayActions) {
 @Composable
 private fun InsightsTabView(ui: DayUi, onDedupe: () -> Unit = {}) {
     val p = LocalKitPalette.current
-    val week = ui.stats.takeLast(7)
+    val week = InsightsData.week(ui.stats)   // #1887 the last recorded week when the last 7 days hold nothing
     val avgSleep = week.filter { it.sleepMs > 0 }.map { it.sleepMs }.average().let { if (it.isNaN()) 0L else it.toLong() }
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item { KitSectionHeader("Insights", "Sleep and walking, per day.") }
         item { Text("Average sleep (7 days): " + DayFormat.hours(avgSleep), Modifier.testTag("day:insight:sleep"), color = p.textPrimary) }
+        if (week.isNotEmpty() && week.last().date != ui.stats.lastOrNull()?.date) item {
+            Text("The last 7 days hold nothing: the last recorded week, ${week.first().date} to ${week.last().date}", color = p.textSecondary, fontSize = KitStoreRow.caption)
+        }
         // #1863 the totals over every cached day, and the way to the duplicates clean-up
         item {
             KitCard {

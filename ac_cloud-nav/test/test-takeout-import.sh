@@ -8,6 +8,9 @@
 #   K5 tracked wins: views hide an imported row only under a lower-priority overlap; a tracked rebuild never deletes imports; the tracked engine reads tracked fixes only.
 #   K6 UI + rule 16: the Import tab (#1863: Export/Import) with both SAF pickers, progress, cancel and summary, and every earlier Day tab is still there.
 #   K8 foreground service (#1853): the import runs in TakeoutImportService (dataSync, onTimeout(startId, fgsType), DataSyncBudget, progress notification with Cancel), declared with its permission; the emulator test asserts the service path.
+#   K9 #1887 KML: a .kml / .kml.xml / .xml (a Timeline converted to KML) is read by TakeoutKml (streamed, the content decides: `<` is KML),
+#      its visits win over its overlapping paths (layerKml), places without an address are named by the offline gazetteer, and the
+#      app's JVM test imports the synthetic KML fixture into Explored.
 #   K7 the checks bite: each planted regression (a whole-file read, a dropped tracked guard, a lost tab, a lost source column) fails.
 set -eu
 HERE="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
@@ -22,7 +25,8 @@ MAPS = M + "src/main/java/com/diegonmarcos/cloudnav/maps/"
 NAV = "ac_cloud-nav/app/src/main/java/com/diegonmarcos/cloudnav/tracker/"
 TESTS = M + "src/test/java/com/diegonmarcos/cloudnav/maps/takeout/"
 FIX = M + "src/test/resources/takeout/"
-FILES = [TK + f for f in ["TakeoutJson.kt", "TakeoutParsers.kt", "TakeoutSchema.kt", "TakeoutImporter.kt", "TakeoutRebuild.kt", "TakeoutAndroid.kt", "TakeoutFieldSpec.kt"]] + \
+FILES = [TK + f for f in ["TakeoutJson.kt", "TakeoutParsers.kt", "TakeoutSchema.kt", "TakeoutImporter.kt", "TakeoutRebuild.kt", "TakeoutAndroid.kt", "TakeoutFieldSpec.kt", "TakeoutKml.kt", "Gazetteer.kt"]] + \
+        ["ac_cloud-nav/app/src/test/java/com/diegonmarcos/cloudnav/tracker/KmlImportExploredTest.kt", "ac_cloud-nav/app/src/test/resources/kml/Synthetic.kml.xml", "ac_cloud-nav/app/src/main/assets/geo/gazetteer.tsv"] + \
         [MAPS + "MapsDb.kt", MAPS + "TimelineSync.kt", NAV + "DayScreen.kt", NAV + "DayFragment.kt", NAV + "TakeoutImportScreen.kt", NAV + "TakeoutImportService.kt", "ac_cloud-nav/app/src/main/AndroidManifest.xml", "ac_cloud-nav/app/src/androidTest/java/com/diegonmarcos/cloudnav/TakeoutImportTest.kt"] + \
         [TESTS + f for f in ["TakeoutParityTest.kt", "TakeoutImportDbTest.kt", "TakeoutParsersTest.kt", "TakeoutDeriveTest.kt", "TakeoutJsonTest.kt"]] + \
         [FIX + f for f in ["records/Records.json", "semantic/2026/2026_MARCH.json", "timeline/Timeline.json", "android/location-history.json"]]
@@ -38,7 +42,7 @@ def check(top):
     r["k1"] = ("DB_VERSION = 6" in db and re.search(r"oldVersion < 6\)[^\n]*MIGRATE_V6", db) is not None and "createFixes(db)\n        createStore(db)\n        for (q in TakeoutSchema.MIGRATE_V6)" in db
                and all(t in sc for t in ["ALTER TABLE fixes ADD COLUMN source", "ALTER TABLE timeline_segments ADD COLUMN source", "ALTER TABLE day_rollups ADD COLUMN source", "ALTER TABLE timeline_segments ADD COLUMN prio"])
                and all(("TkTable." + t) in sc for t in ["VISITS", "CANDIDATES", "ACTIVITIES", "SIGNALS", "PROFILE"]) and '"raw_json"' in sc)
-    pk = [s.get(TK + f, "") for f in ["TakeoutJson.kt", "TakeoutParsers.kt", "TakeoutImporter.kt", "TakeoutSchema.kt", "TakeoutRebuild.kt"]]
+    pk = [s.get(TK + f, "") for f in ["TakeoutJson.kt", "TakeoutParsers.kt", "TakeoutImporter.kt", "TakeoutSchema.kt", "TakeoutRebuild.kt", "TakeoutKml.kt"]]
     r["k2"] = [m for t in pk for m in re.findall(r"\.readText\(|\.readBytes\(|\.readLines\(|readAllBytes\(", t)]
     r["k2b"] = "JsonPull(" in s.get(TK + "TakeoutParsers.kt", "") and "readArray" in s.get(TK + "TakeoutParsers.kt", "")
     spec = s.get(TK + "TakeoutFieldSpec.kt", "")
@@ -56,6 +60,13 @@ def check(top):
                and "ACTION_CANCEL" in sv and 'addAction(0, "Cancel"' in sv and "ImportController.runSync(" in sv and "setProgress(" in sv
                and 'android:name=".tracker.TakeoutImportService"' in mf and 'android:foregroundServiceType="dataSync"' in mf and "android.permission.FOREGROUND_SERVICE_DATA_SYNC" in mf
                and "TakeoutImportService.start(" in dfr and "ImportController.start(" not in dfr and "TakeoutImportService.started" in et)
+    im = s.get(TK + "TakeoutImporter.kt", ""); km = s.get(TK + "TakeoutKml.kt", ""); rb = s.get(TK + "TakeoutRebuild.kt", ""); ad = s.get(TK + "TakeoutAndroid.kt", "")
+    kt = s.get("ac_cloud-nav/app/src/test/java/com/diegonmarcos/cloudnav/tracker/KmlImportExploredTest.kt", ""); fx = s.get("ac_cloud-nav/app/src/test/resources/kml/Synthetic.kml.xml", "")
+    r["k9"] = ("TakeoutKml.parse(" in im and "isXml(r)" in im and 'name.endsWith(".kml", true)' in im and "TakeoutImporter.accepts(" in ad and "TakeoutImporter.accepts(" in im
+               and 'KML("Timeline KML", "timeline-kml"' in s.get(TK + "TakeoutParsers.kt", "") and "<Placemark" in km and "Start Time:" in km and "TkTable.VISITS" in km and "TkTable.ACTIVITIES" in km
+               and "TakeoutDerive.layerKml(segs)" in rb and "geo.nearest(" in rb and "gazetteer?.invoke(app)" in ad and "fun nearest(" in s.get(TK + "Gazetteer.kt", "")
+               and "TakeoutImporter.run(FileSource(" in kt and "TakeoutRebuild.run(sql, zone, now, geo = gaz)" in kt and "&lt;b&gt;Start Time:&lt;/b&gt;" in fx and "<LineString>" in fx
+               and "\tAsia/Tokyo" in s.get("ac_cloud-nav/app/src/main/assets/geo/gazetteer.tsv", ""))
     return r
 print("== K1-K6 on the real sources ==")
 r = check(repo)
@@ -66,6 +77,7 @@ ok(not r["k4"], "the import opens no database or preferences of its own (maps.db
 ok(r["k5"], "tracked wins: views, tracked rebuild and the tracked engine input", "the tracked-wins rules are incomplete")
 ok(r["k6"] and not r["k6b"], "the Import tab with both pickers, progress, cancel, summary; every earlier Day tab is still there", "the import UI or an earlier tab is gone: " + ", ".join(r["k6b"]))
 ok(r["k8"], "the import runs in the dataSync foreground service: budget gate, onTimeout, progress + Cancel, manifest and permission, emulator test on the service", "the foreground service wiring is incomplete (TakeoutImportService, onTimeout, DataSyncBudget, Cancel, manifest or test)")
+ok(r["k9"], "KML: the importer reads .kml / .xml through TakeoutKml (streamed), visits win over paths, the gazetteer names places offline, the app imports the fixture into Explored", "the KML import wiring is incomplete (importer, TakeoutKml, layerKml, gazetteer, fixture or test)")
 print("== K7: the checks bite ==")
 tmp = tempfile.mkdtemp()
 try:
@@ -86,7 +98,10 @@ try:
     s = mut(NAV + "TakeoutImportService.kt", "override fun onTimeout(startId: Int, fgsType: Int)", "fun onTimeoutGone(startId: Int, fgsType: Int)"); ok(not check(tmp)["k8"], "a service without onTimeout fails K8", "K8 missed a lost onTimeout"); restore(NAV + "TakeoutImportService.kt", s)
     s = mut("ac_cloud-nav/app/src/main/AndroidManifest.xml", 'android:foregroundServiceType="dataSync"', ''); ok(not check(tmp)["k8"], "an undeclared service type fails K8", "K8 missed the manifest type"); restore("ac_cloud-nav/app/src/main/AndroidManifest.xml", s)
     s = mut(NAV + "DayFragment.kt", "TakeoutImportService.start(", "ImportController.start("); ok(not check(tmp)["k8"], "an import back on a bare thread fails K8", "K8 missed the thread path"); restore(NAV + "DayFragment.kt", s)
-    ok(not check(tmp)["k2"] and check(tmp)["k5"] and check(tmp)["k1"] and check(tmp)["k6"] and check(tmp)["k8"], "the pristine copy passes again", "the pristine copy fails")
+    s = mut(TK + "TakeoutImporter.kt", "TakeoutKml.parse(", "TakeoutParsers.parse("); ok(not check(tmp)["k9"], "an importer that sends KML to the JSON parser fails K9", "K9 missed the KML parser"); restore(TK + "TakeoutImporter.kt", s)
+    s = mut(TK + "TakeoutRebuild.kt", "TakeoutDerive.layerKml(segs)", "segs.toList()"); ok(not check(tmp)["k9"], "a rebuild where paths cover the visits fails K9", "K9 missed the layering"); restore(TK + "TakeoutRebuild.kt", s)
+    s = mut(TK + "TakeoutKml.kt", "buf.append(chunk, 0, n)", "buf.append(reader.readText())"); ok(bool(check(tmp)["k2"]), "a KML read whole fails K2", "K2 missed a whole-file KML read"); restore(TK + "TakeoutKml.kt", s)
+    ok(not check(tmp)["k2"] and check(tmp)["k9"] and check(tmp)["k5"] and check(tmp)["k1"] and check(tmp)["k6"] and check(tmp)["k8"], "the pristine copy passes again", "the pristine copy fails")
 finally:
     shutil.rmtree(tmp)
 print(f"\n{'FAIL' if fails else 'PASS'}: test-takeout-import ({len(fails)} failing)")
