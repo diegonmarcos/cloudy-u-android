@@ -56,4 +56,8 @@ python3 -c 'import json,sys; m=json.load(open(sys.argv[1])); m["apps"].append({"
 out="$(python3 "$GUARD" --assets "$T/base" --manifest "$T/m6.json" 2>&1)" && { bad "T6 a retained entry a row now names → guard stayed green"; echo "$out"; } \
   || { [[ "$out" == *"now referenced"* ]] && ok "T6 a retained entry a row now names (stale excuse) → red" || { bad "T6 red for the wrong reason"; echo "$out"; }; }
 
+{ cat "$T/base"; echo Cloud-Unknown-x86_64.apk.source.old-20003; } > "$T/m7"
+expect 1 "T7 a different unknown .source.old-* orphan (only the named Cloud Search backup is retained) → red" "$T/m7" "Cloud-Unknown-x86_64.apk.source.old-20003"
+grep -q 'Cloud-Search-x86_64.apk.source.old-20003' "$DECL" && ok "T7b the stale Cloud Search backup is retained by name" || bad "T7b retained entry missing"
+
 exit "$fail"
