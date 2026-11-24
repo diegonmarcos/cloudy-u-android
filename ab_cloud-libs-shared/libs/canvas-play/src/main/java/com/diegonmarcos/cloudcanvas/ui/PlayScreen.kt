@@ -80,6 +80,7 @@ import androidx.core.content.ContextCompat
 import com.diegonmarcos.cloudcanvas.audio.Arrangement as Arr
 import com.diegonmarcos.cloudcanvas.audio.Cymatics
 import com.diegonmarcos.cloudlib.cymatics.CymaticsPlate
+import com.diegonmarcos.superapp.perms.PermsLink
 import com.diegonmarcos.cloudcanvas.audio.Pitch
 import com.diegonmarcos.cloudcanvas.audio.Session
 import com.diegonmarcos.cloudcanvas.audio.Drum
@@ -124,13 +125,10 @@ fun PlayScreen(ctl: PlayController, view: String?, modifier: Modifier = Modifier
     val pickFolder = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         if (uri != null) { Folders.remember(ctx, "play", uri); scope.launch { withContext(Dispatchers.Default) { ctl.exportWav(uri) } } }
     }
-    // #1865 RECORD_AUDIO is asked at runtime, the first time REC arms the microphone
-    val askMic = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) ctl.rec() else ctl.message = "Microphone permission is needed to record an audio track. Grant it in Configs > Perms."
-    }
+    // #1865 RECORD_AUDIO is needed the first time REC arms the microphone; the one place that asks is the Permissions page (#1274, libs:perms)
     fun pressRec() {
         val needsMic = ctl.armedAudio != 0 && !ctl.micRecording
-        if (needsMic && ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) askMic.launch(Manifest.permission.RECORD_AUDIO)
+        if (needsMic && ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) { ctl.message = "Microphone permission is needed to record an audio track. Grant it in Configs > Perms."; PermsLink.open(ctx, "canvas-play", listOf("microphone")) }
         else ctl.rec()
     }
     DisposableEffect(Unit) {

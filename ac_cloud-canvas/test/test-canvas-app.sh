@@ -6,7 +6,7 @@
 #      web view only through libs:web-core (CloudWeb.create with WebProfile.APP_PAGE), never a bare WebView(...), and is registered in
 #      1_cicd/src/data/webview-guard.json
 #   T3 permissions: no storage permission in the manifest (files go through SAF); #1865 the microphone is declared (RECORD_AUDIO, Play's audio
-#      tracks), build.json perms.needs is exactly [microphone], and the Play page asks for it at runtime (RequestPermission of RECORD_AUDIO)
+#      tracks), build.json perms.needs is exactly [microphone], and the Play page asks for it at runtime (through PermsLink, the fleet's one asking place)
 #   T4 #1787 the sounds: the only audio assets are the sampled piano (90 files: 30 roots every 3 semitones x 3 layers) and kit (27 files:
 #      9 pieces x 3 layers) under assets/samples, each with a licences/curated.json::assets entry (licence, source_url, attribution), each
 #      directory with its NOTICE.md, all of them under 15 MB; the one network call is the Draw Enhancer's, so INTERNET is declared and
@@ -104,7 +104,7 @@ for p in ("READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE", "MANAGE_EXTERNAL_ST
     if p in man_nc: print("T3 the manifest declares " + p)
 if "android.permission.RECORD_AUDIO" not in man_nc: print("T3 the manifest does not declare RECORD_AUDIO (Play's audio tracks, #1865)")
 if bj["perms"]["needs"] != ["microphone"]: print("T3 perms.needs is not [microphone]: %r" % bj["perms"]["needs"])
-if "ActivityResultContracts.RequestPermission()" not in src or "Manifest.permission.RECORD_AUDIO" not in src: print("T3 the microphone is not requested at runtime")
+if "PermsLink.open(" not in src or "Manifest.permission.RECORD_AUDIO" not in src: print("T3 the microphone is not requested at runtime")
 if "android.permission.INTERNET" not in man_nc: print("T4 the manifest lacks INTERNET (the Enhancer calls OpenRouter)")
 if re.search(r"sk-or-", src): print("T4 an API key literal is in the sources")
 assets = os.path.join(app, "app/src/main/assets")
@@ -205,7 +205,7 @@ mut "bottom nav reordered" T1 python3 -I -c 'import json;d=json.load(open("build
 mut "storage declared" T3 sed -i 's|<application|<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/><application|' app/src/main/AndroidManifest.xml
 mut "microphone undeclared" T3 sed -i 's|android.permission.RECORD_AUDIO|android.permission.VIBRATE|' app/src/main/AndroidManifest.xml
 mut "microphone not in perms" T3 python3 -I -c 'import json;d=json.load(open("build.json"));d["perms"]["needs"]=[];json.dump(d,open("build.json","w"))'
-mut "microphone never asked" T3 sed -i 's/ActivityResultContracts.RequestPermission()/ActivityResultContracts.GetContent()/' ../ab_cloud-libs-shared/libs/canvas-play/src/main/java/com/diegonmarcos/cloudcanvas/ui/PlayScreen.kt
+mut "microphone never asked" T3 sed -i 's/PermsLink.open(/PermsLinkGone.open(/' ../ab_cloud-libs-shared/libs/canvas-play/src/main/java/com/diegonmarcos/cloudcanvas/ui/PlayScreen.kt
 mut "webview used" T2 sh -c 'echo "val w: android.webkit.WebView? = null" > app/src/main/java/com/diegonmarcos/cloudcanvas/Zz.kt; sed -i "s/^/ /" app/src/main/java/com/diegonmarcos/cloudcanvas/Zz.kt'
 mut "internet missing" T4 sed -i 's|android.permission.INTERNET|android.permission.VIBRATE|' app/src/main/AndroidManifest.xml
 mut "key literal" T4 sh -c 'echo "val k = \"sk-or-v1-0000\"" > app/src/main/java/com/diegonmarcos/cloudcanvas/Zk.kt' 

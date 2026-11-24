@@ -43,6 +43,8 @@ dependencies {
     api project(':libs:canvas-core')
     // #1892 the Chladni plate (pattern math and Compose drawing) shared with Cloud Calc's sound meter
     api project(':libs:cymatics')
+    // #1274 the one place that asks for a permission: REC opens the Permissions page on the microphone need
+    implementation project(':libs:perms')
     // #1865 the studio's transport, panel and track glyphs
     implementation 'androidx.compose.material:material-icons-extended'
     implementation 'androidx.activity:activity-compose:1.9.3'
