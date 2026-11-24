@@ -68,12 +68,12 @@ object ShareImport {
     /** The folder to start the picker in: the last tree used when there is one, else none (the picker's own default). */
     fun initialTree(last: String?): String? = last?.takeIf { it.isNotBlank() }
 
-    /** A SAF document id of the external-storage provider as a path: "primary:Download/x" -> /storage/emulated/0/Download/x. Null for any other id. */
-    fun docIdToPath(docId: String): String? {
+    /** A SAF document id of the external-storage provider as a path: "primary:Download/x" -> <primaryRoot>/Download/x (the caller passes Environment.getExternalStorageDirectory()). Null for any other id. */
+    fun docIdToPath(docId: String, primaryRoot: String): String? {
         val vol = docId.substringBefore(':', "")
         if (vol.isEmpty() || !docId.contains(':')) return null
         val rest = docId.substringAfter(':')
-        val root = if (vol == "primary") "/storage/emulated/0" else "/storage/$vol"
+        val root = if (vol == "primary") primaryRoot.trimEnd('/') else "/storage/$vol"
         return if (rest.isEmpty()) root else "$root/$rest"
     }
 }

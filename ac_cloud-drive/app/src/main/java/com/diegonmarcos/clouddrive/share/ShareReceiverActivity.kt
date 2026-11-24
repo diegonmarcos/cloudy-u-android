@@ -91,7 +91,7 @@ class ShareReceiverActivity : ComponentActivity() {
                     while (c.moveToNext()) taken.add(c.getString(0))
                 }
             }
-            val folder = ShareImport.docIdToPath(treeDocId)
+            val folder = ShareImport.docIdToPath(treeDocId, android.os.Environment.getExternalStorageDirectory().absolutePath)
             var first: String? = null
             var ok = 0
             var failed = 0

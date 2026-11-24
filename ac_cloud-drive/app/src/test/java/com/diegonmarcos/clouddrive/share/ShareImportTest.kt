@@ -26,11 +26,12 @@ class ShareImportTest {
     }
 
     @Test fun treeIdsBecomePaths() {
-        assertEquals("/storage/emulated/0/Download/x", ShareImport.docIdToPath("primary:Download/x"))
-        assertEquals("/storage/emulated/0", ShareImport.docIdToPath("primary:"))
-        assertEquals("/storage/1A2B-3C4D/Docs", ShareImport.docIdToPath("1A2B-3C4D:Docs"))
-        assertNull(ShareImport.docIdToPath("raw"))
-        assertNull(ShareImport.docIdToPath(":x"))
+        val p = "/mnt/primary"
+        assertEquals("/mnt/primary/Download/x", ShareImport.docIdToPath("primary:Download/x", p))
+        assertEquals("/mnt/primary", ShareImport.docIdToPath("primary:", p))
+        assertEquals("/storage/1A2B-3C4D/Docs", ShareImport.docIdToPath("1A2B-3C4D:Docs", p))
+        assertNull(ShareImport.docIdToPath("raw", p))
+        assertNull(ShareImport.docIdToPath(":x", p))
     }
 }
 
