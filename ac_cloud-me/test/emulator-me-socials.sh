@@ -18,10 +18,18 @@ launcher() { $T adb shell cmd package resolve-activity --brief -c android.intent
 open_page() { wake; local comp; comp="$(launcher "$1")"; $T adb shell am start -W -n "$comp" -f 0x14000000 --es shortcut_action "$2" >/dev/null; }
 shot() { sleep "${2:-6}"; $T adb exec-out screencap -p > "$OUT/$1.png"; $T adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; $T adb pull /sdcard/ui.xml "$OUT/$1.xml" >/dev/null 2>&1; echo "shot $1"; }
 
-# first start runs Cloud Me's start-up permission walk; come back on top of it
-open_page "$ME" "page:configs/general"; sleep 12; $T adb shell input keyevent KEYCODE_BACK; sleep 2
+# first start runs Cloud Me's start-up permission walk (usage access, overlay, files: the run of 44062126507 and 45491054390 shot its
+# "Apps with usage access" Settings page instead of the tab): grant those appops first, then back out until Cloud Me is on top
+for op in GET_USAGE_STATS SYSTEM_ALERT_WINDOW MANAGE_EXTERNAL_STORAGE REQUEST_INSTALL_PACKAGES; do $T adb shell appops set "$ME" "$op" allow; done
+open_page "$ME" "page:configs/general"; sleep 12
+for i in 1 2 3 4 5 6; do
+    $T adb shell dumpsys window | grep -m1 mCurrentFocus | grep -q "$ME" && break
+    $T adb shell input keyevent KEYCODE_BACK; sleep 2
+done
 open_page "$ME" "page:socials/socials-professional"; shot me-socials-professional 10
 open_page "$ME" "page:socials/socials-personal"; shot me-socials-personal 10
+# the Professional body must hold page text, not only the chrome (#1771: it was blank)
+for t in professional personal; do echo "me-socials-$t text nodes: $(grep -o 'text="[^"]\+"' "$OUT/me-socials-$t.xml" | wc -l)"; done
 
 $T adb shell appops set "$SA" SYSTEM_ALERT_WINDOW deny
 open_page "$SA" "page:cloud/apps"; sleep 10
