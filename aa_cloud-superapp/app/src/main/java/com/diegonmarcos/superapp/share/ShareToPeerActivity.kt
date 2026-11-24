@@ -6,7 +6,7 @@ import android.os.Bundle
 import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
+import androidx.compose.ui.platform.ComposeView
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -52,7 +52,7 @@ class ShareToPeerActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { MaterialTheme { Dialog() } }
+        setContentView(ComposeView(this).apply { setContent { MaterialTheme { Dialog() } } })
         if (savedInstanceState != null) return
         val uris = streams()
         val text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()
