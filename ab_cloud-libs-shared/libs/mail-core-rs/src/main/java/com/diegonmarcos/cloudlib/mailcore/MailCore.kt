@@ -21,6 +21,14 @@ object MailCore {
      */
     @Volatile var enabled: Boolean = true
 
+    /**
+     * OUTGOING mail and the network protocol stay on the Kotlin engine until the on-phone check: [composeEnabled] lets the core
+     * build outgoing messages and [imapEnabled] lets it fetch over IMAP. Both default FALSE; [enabled] keeps governing read, parse
+     * and search as before. A call site engages the core only when its own switch AND [enabled] are on.
+     */
+    @Volatile var composeEnabled: Boolean = false
+    @Volatile var imapEnabled: Boolean = false
+
     /** Null when the core is usable in this process, otherwise why not. */
     fun unavailableReason(): String? = if (!enabled) "the Rust mail core is switched off" else NativeBridge.unavailableReason()
 

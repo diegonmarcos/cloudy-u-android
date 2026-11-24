@@ -2055,11 +2055,11 @@ class MailRepository(
         val hits = searchIndex(query, limit)
         if (hits.isNotEmpty()) return hits
         val core = mailCore?.takeIf { it.unavailableReason() == null } ?: return hits
-        return runCatching {
-            accountStore.accounts().map { it.id }.flatMap { acc ->
-                core.searchIds(acc, query, limit).orEmpty().chunked(500).flatMap { chunk -> emailDao.emailsByIds(acc, chunk).map { it.toEmail() } }
-            }.take(limit)
-        }.getOrDefault(hits)
+        return searchWithCoreFallback(
+            hits, accountStore.accounts().map { it.id }, limit,
+            coreIds = { acc -> core.searchIds(acc, query, limit) },
+            load = { acc, ids -> emailDao.emailsByIds(acc, ids).map { it.toEmail() } },
+        )
     }
 
     private fun ftsMatch(query: String): String? {

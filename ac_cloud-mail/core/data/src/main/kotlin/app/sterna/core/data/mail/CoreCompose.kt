@@ -48,7 +48,7 @@ internal object CoreCompose {
 
     /** The message from the core, or null (switched off, not loaded, not expressible, or any error): the caller builds it in Kotlin. */
     fun tryBuild(m: OutgoingMessage, blind: BlindCopies): String? {
-        if (MailCore.unavailableReason() != null || !eligible(m)) return null
+        if (!MailCore.composeEnabled || MailCore.unavailableReason() != null || !eligible(m)) return null
         return runCatching {
             val answer = MailCore.query(":memory:", request(m, blind)).getOrThrow()
             Json.parse(answer)

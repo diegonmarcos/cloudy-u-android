@@ -38,6 +38,19 @@ class CoreComposeTest {
         assertFalse(CoreCompose.eligible(msg(receipt = true)))
     }
 
+    @Test fun withDefaultSwitchesBuildYieldsTheKotlinBytes() {
+        assertFalse(MailCore.composeEnabled)
+        assertFalse(MailCore.imapEnabled)
+        CoreCompose.install()
+        try {
+            for (m in listOf(msg(), msg(html = "<p>x</p>"))) assertEquals(OutgoingMime.buildInKotlin(m), OutgoingMime.build(m))
+            // Even if the core were loaded: the compose switch alone engages it.
+            assertNull(CoreCompose.tryBuild(msg(), BlindCopies.OMITTED))
+        } finally {
+            OutgoingMime.coreBuilder = null
+        }
+    }
+
     @Test fun withoutTheCoreTheKotlinBuilderAnswersUnchanged() {
         // On the JVM libmail_core.so is not loaded: the core is unavailable and the answer is OutgoingMime's, byte for byte.
         val m = msg(html = "<p>x</p>")

@@ -725,6 +725,10 @@ class ImapMailService(
     ): String {
         // #1869 step 9: a source read in this account's batch session a moment ago, unless a numbering is to be opposed.
         if (expectedUidValidity == null) prefetchedSources.remove(sourceKey(credentials, mailboxId, uid))?.let { return it }
+        // #1837 phase 3: the Rust core's IMAP client, only with MailCore.imapEnabled (default off) and no frozen numbering to oppose.
+        if (expectedUidValidity == null && com.diegonmarcos.cloudlib.mailcore.MailCore.imapEnabled) {
+            CoreImap.fetchSource(config(credentials.imap ?: error("Account has no IMAP server configured."), credentials), mailboxId, uid)?.let { return it }
+        }
         return onMailbox(credentials, mailboxId, expectedUidValidity = expectedUidValidity) { session, _ -> session.fetchSource(uid) }
     }
 

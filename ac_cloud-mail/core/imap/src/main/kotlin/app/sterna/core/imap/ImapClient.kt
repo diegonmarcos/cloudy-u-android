@@ -85,6 +85,19 @@ class ImapClient(
         return session
     }
 
+    /**
+     * A connected socket (TLS wrapped for [MailSecurity.TLS]) with NO greeting read and NO login: the byte pipe the Rust core's IMAP
+     * client speaks over (#1837 phase 3). STARTTLS needs the protocol first, so it is not offered here.
+     */
+    fun openRawSocket(config: MailServerConfig, connectTimeoutMs: Int = 0): Socket {
+        require(config.security != MailSecurity.STARTTLS) { "STARTTLS is negotiated in-protocol" }
+        val plain = Socket()
+        plain.connect(InetSocketAddress(config.host, config.port), connectTimeoutMs.coerceAtLeast(0))
+        return if (config.security == MailSecurity.TLS) {
+            (tlsFactory.createSocket(plain, config.host, config.port, true) as SSLSocket).verifyingHostname()
+        } else plain
+    }
+
     private companion object {
         val tlsFactory: SSLSocketFactory = SSLSocketFactory.getDefault() as SSLSocketFactory
     }
