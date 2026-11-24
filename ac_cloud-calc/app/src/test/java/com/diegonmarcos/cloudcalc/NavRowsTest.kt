@@ -22,8 +22,8 @@ class NavRowsTest {
         val rows = calc.rowGroups()
         assertEquals(listOf("Decimals", "Others"), rows.map { it.label })
         assertEquals(listOf("calc", "latex", "convert", "history"), rows[0].pages.map { it.id })
-        assertEquals(listOf("datetime", "sound", "finance", "graph"), rows[1].pages.map { it.id })
-        assertEquals(listOf("Calc", "LaTeX", "Convert", "History", "Time & Date", "Sound", "Finance", "Graph"), rows.flatMap { it.pages }.map { it.label })
+        assertEquals(listOf("datetime", "sound", "finance", "graph", "ask"), rows[1].pages.map { it.id })
+        assertEquals(listOf("Calc", "LaTeX", "Convert", "History", "Time & Date", "Sound", "Finance", "Graph", "Ask Jev"), rows.flatMap { it.pages }.map { it.label })
         assertTrue("no Tools page is left", calc.pages.none { it.id == "tools" })
         // The baked declaration is the one on disk.
         assertEquals(rows.map { g -> g.pages.map { it.id } }, Declarations.nav.section("calculator")!!.rowGroups().map { g -> g.pages.map { it.id } })
