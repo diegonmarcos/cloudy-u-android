@@ -67,6 +67,10 @@ object LastMediaSession {
         else if (art == null && !sameTrack) artFile(ctx).delete()
     }
 
+    /** #1894 the name of the buds last seen connected, kept in the same store so the idle badge can say "not connected" about them. */
+    fun budsName(ctx: Context): String? = p(ctx).getString("buds", null)
+    fun rememberBuds(ctx: Context, name: String) { if (budsName(ctx) != name) p(ctx).edit().putString("buds", name).apply() }
+
     fun load(ctx: Context): Last? {
         val sp = p(ctx)
         val pkg = sp.getString("pkg", null) ?: return null

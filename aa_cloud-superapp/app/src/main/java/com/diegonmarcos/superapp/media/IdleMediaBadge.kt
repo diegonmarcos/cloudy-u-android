@@ -52,11 +52,12 @@ internal object IdleMediaBadge {
 
     fun label(b: Button): String = when (b) { Button.BUDS -> "Buds"; Button.OPEN_PLAYER -> "Player"; Button.PLAY_LAST -> "Play" }
 
-    /** Android: the connected links now (empty without Bluetooth permission). */
-    fun read(ctx: Context): Model = model(
-        LastMediaSession.load(ctx), runCatching { BtLinks.read(ctx).links }.getOrDefault(emptyList()),
-        ctx.applicationContext.getSharedPreferences("idle_media_badge", Context.MODE_PRIVATE).getString("buds", null),
-    ).also { m -> if (m.buds.connected) ctx.applicationContext.getSharedPreferences("idle_media_badge", Context.MODE_PRIVATE).edit().putString("buds", m.buds.name).apply() }
+    /** Android: the connected links now (empty without Bluetooth permission); the buds' name is remembered in the last-media store. */
+    fun read(ctx: Context): Model {
+        val m = model(LastMediaSession.load(ctx), runCatching { BtLinks.read(ctx).links }.getOrDefault(emptyList()), LastMediaSession.budsName(ctx))
+        if (m.buds.connected) LastMediaSession.rememberBuds(ctx, m.buds.name)
+        return m
+    }
 
     /** Android: do what a button says. Never throws. */
     fun run(ctx: Context, m: Model, b: Button) {
