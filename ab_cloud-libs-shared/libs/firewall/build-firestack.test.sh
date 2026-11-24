@@ -410,6 +410,45 @@ else
     note FAIL "cannot compare bind_packages — $FIRESTACK_CFG or $FIRESTACK_MK is missing"
 fi
 
+# 8. #1881 one Go engine for wg-go + firestack. The mesh facade is bound into the aar, the aar
+#    is linked for 16 KB pages, the page-size guard has NO exemption for either Go .so, and the
+#    runtime switch defaults to the existing engine. Each is a plain text fact about a committed
+#    file, so a refactor that drops one fails here, at review time.
+MESH_GO=ab_cloud-libs-shared/libs/firewall/firestack/intra/mesh/mesh.go
+NETWG=ab_cloud-libs-shared/libs/net-wg
+GOBACKEND=$NETWG/src/main/java/com/wireguard/android/backend/GoBackend.java
+SELECTOR=$NETWG/src/main/java/com/diegonmarcos/superapp/netwg/MeshEngine.kt
+if [ -f "$MESH_GO" ] && grep -q '^package mesh' "$MESH_GO" \
+   && ( for f in TurnOn TurnOff GetSocketV4 GetSocketV6 GetConfig Version; do grep -q "^func $f(" "$MESH_GO" || exit 1; done ); then
+    note ok "mesh facade exports the six libwg-go entry points"
+else
+    note FAIL "intra/mesh/mesh.go is missing or lacks one of TurnOn/TurnOff/GetSocketV4/GetSocketV6/GetConfig/Version"
+fi
+if grep -qE '^CGO_LDFLAGS:=.*-Wl,-z,max-page-size=16384' "$FIRESTACK_MK"; then
+    note ok "firestack Makefile links libgojni.so with max-page-size=16384"
+else
+    note FAIL "firestack Makefile lost -Wl,-z,max-page-size=16384 on CGO_LDFLAGS — the merged engine would be 4 KB-aligned"
+fi
+if grep -q 'PT_LOAD p_align' "$ENGINE" && grep -q 'mesh/Mesh.class' "$ENGINE"; then
+    note ok "engine refuses an aar without the mesh class or with a 4 KB libgojni.so"
+else
+    note FAIL "build-firestack.sh no longer checks the mesh class and libgojni.so alignment before publishing"
+fi
+PSG=1_cicd/src/data/page-size-guard.json
+if [ -f "$PSG" ] && ! jq -e '[.exempt_libs[]? | keys[]] | any(test("libgojni|libwg-go"))' "$PSG" >/dev/null; then
+    note ok "page-size guard has no exemption for libgojni.so / libwg-go.so"
+else
+    note FAIL "$PSG exempts libgojni.so or libwg-go.so — both Go engines must pass 16 KB alignment"
+fi
+if grep -q "name: 'firestack', ext: 'aar'" "$NETWG/build.gradle" \
+   && grep -q 'MeshEngineSelector.choose' "$GOBACKEND" \
+   && grep -q 'loadSharedLibrary(context, "wg-go")' "$GOBACKEND" \
+   && grep -q 'return if (want == FIRESTACK && firestackAvailable) FIRESTACK else WG_GO' "$SELECTOR"; then
+    note ok "net-wg bundles the firestack engine behind a switch that defaults to libwg-go"
+else
+    note FAIL "net-wg switch wiring changed: aar dependency, GoBackend selection, wg-go load, or the wg-go default"
+fi
+
 [ "$fail" -eq 0 ] && echo "PASS — the firestack build resolves nothing; pins are committed and every caller is covered." \
                   || echo "FAIL — see above."
 exit "$fail"

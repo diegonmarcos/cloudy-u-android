@@ -82,6 +82,11 @@ android {
 
 dependencies {
     api project(':libs:net')
+    // #1881 the firestack gomobile engine (libgojni.so, com.celzero.firestack.mesh.Mesh) ships ALONGSIDE
+    // libwg-go.so, behind the runtime switch (default stays libwg-go). Same prebuilt pinned flatDir aar
+    // libs:firewall consumes (fetch-firestack.sh), reached by reflection so a pin that predates the
+    // mesh package still compiles and simply falls back to wg-go.
+    implementation(name: 'firestack', ext: 'aar')
     implementation project(':libs:core')
     implementation 'androidx.core:core-ktx:1.13.1'
     implementation 'androidx.annotation:annotation:1.8.2'

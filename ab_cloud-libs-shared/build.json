@@ -3101,7 +3101,8 @@
       "bind_packages": [
         "github.com/celzero/firestack/intra",
         "github.com/celzero/firestack/intra/backend",
-        "github.com/celzero/firestack/intra/settings"
+        "github.com/celzero/firestack/intra/settings",
+        "github.com/celzero/firestack/intra/mesh"
       ],
       "_doc_bind_packages": "The packages `gomobile bind` exports, MIRRORING firestack Makefile's INTRA_BUILD_CMD; keep in sync on firestack bumps. They are data because build-firestack.sh needs them BEFORE the bind: gomobile resolves its own throwaway per-ABI module with `go list -m all` + `go mod tidy`, both inside the GOPROXY=off build, and the engine can only pre-seed that closure by standing up a replica module that imports these same packages. Getting this list wrong does not fail silently — the engine's offline resolution check fails first."
     },

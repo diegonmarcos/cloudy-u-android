@@ -351,4 +351,31 @@ fi
 printf '%s' "$entries" | grep -q "classes.jar"         || { errlog "firestack: aar has no classes.jar"; exit 1; }
 printf '%s' "$entries" | grep -q "AndroidManifest.xml" || { errlog "firestack: aar has no AndroidManifest.xml"; exit 1; }
 
+# #1881 the aar now carries the mesh engine (com.celzero.firestack.mesh.Mesh) next to
+# libwg-go, so it is the ONE Go binary of two VPN paths. Two things must hold before it can
+# be published: the mesh facade is really bound, and every libgojni.so is linked for 16 KB pages
+# (PT_LOAD p_align >= 16384, the same rule page-size-guard.json enforces on the APK, with no
+# exemption). Checked here so a lost -Wl,-z,max-page-size flag turns THIS workflow red, not a phone.
+python3 -I - "$AAR" <<'PYEOF' || { errlog "firestack: mesh/16 KB check failed on $AAR"; exit 1; }
+import io, struct, sys, zipfile
+z = zipfile.ZipFile(sys.argv[1])
+cj = zipfile.ZipFile(io.BytesIO(z.read("classes.jar")))
+if "com/celzero/firestack/mesh/Mesh.class" not in cj.namelist():
+    sys.exit("aar has no com/celzero/firestack/mesh/Mesh.class (mesh package not bound)")
+sos = [n for n in z.namelist() if n.endswith("/libgojni.so")]
+if not sos:
+    sys.exit("aar has no libgojni.so")
+for n in sos:
+    d = z.read(n)
+    if d[:4] != b"\x7fELF" or d[4] != 2:
+        sys.exit("%s: not a 64-bit ELF" % n)
+    phoff, = struct.unpack_from("<Q", d, 0x20)
+    phentsize, phnum = struct.unpack_from("<HH", d, 0x36)
+    for i in range(phnum):
+        t, _f, _o, _v, _p, _fs, _ms, align = struct.unpack_from("<IIQQQQQQ", d, phoff + i * phentsize)
+        if t == 1 and align < 16384:
+            sys.exit("%s: PT_LOAD p_align %d < 16384" % (n, align))
+    print("firestack: %s PT_LOAD p_align >= 16384" % n)
+PYEOF
+
 log "firestack: → $AAR ($(du -h "$AAR" 2>/dev/null | cut -f1))"

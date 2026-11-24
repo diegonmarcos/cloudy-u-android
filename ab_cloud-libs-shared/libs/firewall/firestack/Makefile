@@ -60,7 +60,7 @@ ANDROID_BUILD_CMD=env GOTOOLCHAIN=local GODEBUG=cgocheck=0 PATH=$(GOBIN):$(PATH)
 ANDROID_DEBUG_BUILD_CMD=env GOTOOLCHAIN=local GODEBUG=cgocheck=0 PATH=$(GOBIN):$(PATH) CGO_LDFLAGS=$(CGO_LDFLAGS_DEBUG) $(GOMOBILE) $(GOBIND) $(ANDROID23_DEBUG) \
 				-overlay=$(BUILD_OVERLAY) -ldflags $(LDFLAGS_DEBUG)
 # exported pkgs
-INTRA_BUILD_CMD=$(IMPORT_PATH)/intra $(IMPORT_PATH)/intra/backend $(IMPORT_PATH)/intra/settings
+INTRA_BUILD_CMD=$(IMPORT_PATH)/intra $(IMPORT_PATH)/intra/backend $(IMPORT_PATH)/intra/settings $(IMPORT_PATH)/intra/mesh
 
 $(BUILDDIR)/intra/tun2socks.aar: $(GOMOBILE) $(BUILD_OVERLAY)
 	mkdir -p $(BUILDDIR)/intra

@@ -12,6 +12,9 @@ import android.os.ParcelFileDescriptor;
 import android.system.OsConstants;
 import android.util.Log;
 
+import com.diegonmarcos.superapp.netwg.FirestackMeshEngine;
+import com.diegonmarcos.superapp.netwg.MeshEngine;
+import com.diegonmarcos.superapp.netwg.MeshEngineSelector;
 import com.wireguard.android.backend.BackendException.Reason;
 import com.wireguard.android.backend.Tunnel.State;
 import com.wireguard.android.util.SharedLibraryLoader;
@@ -56,7 +59,17 @@ public final class GoBackend implements Backend {
      * @param context An Android {@link Context}
      */
     public GoBackend(final Context context) {
-        SharedLibraryLoader.loadSharedLibrary(context, "wg-go");
+        // #1881 runtime engine switch. Default (no flag) loads libwg-go exactly as before;
+        // firestack is used only when asked for AND present, else this stays on wg-go.
+        final String chosen = MeshEngineSelector.choose(context.getFilesDir(), () -> {
+            engine = FirestackMeshEngine.load();
+            return engine != null;
+        });
+        if (!MeshEngineSelector.FIRESTACK.equals(chosen)) {
+            engine = null;
+            SharedLibraryLoader.loadSharedLibrary(context, "wg-go");
+        }
+        Log.i(TAG, "mesh engine: " + chosen);
         this.context = context;
     }
 
@@ -87,6 +100,39 @@ public final class GoBackend implements Backend {
             Log.w(TAG, "protectSocket: " + e);
             return false;
         }
+    }
+
+    /** #1881: the firestack engine when selected, else null (the libwg-go JNI path below). */
+    @Nullable private static volatile MeshEngine engine;
+
+    private static int engineTurnOn(final String ifName, final int tunFd, final String settings) {
+        final MeshEngine e = engine;
+        return e == null ? wgTurnOn(ifName, tunFd, settings) : e.turnOn(ifName, tunFd, settings);
+    }
+
+    private static void engineTurnOff(final int handle) {
+        final MeshEngine e = engine;
+        if (e == null) wgTurnOff(handle); else e.turnOff(handle);
+    }
+
+    private static int engineSocketV4(final int handle) {
+        final MeshEngine e = engine;
+        return e == null ? wgGetSocketV4(handle) : e.socketV4(handle);
+    }
+
+    private static int engineSocketV6(final int handle) {
+        final MeshEngine e = engine;
+        return e == null ? wgGetSocketV6(handle) : e.socketV6(handle);
+    }
+
+    @Nullable private static String engineConfig(final int handle) {
+        final MeshEngine e = engine;
+        return e == null ? wgGetConfig(handle) : e.config(handle);
+    }
+
+    private static String engineVersion() {
+        final MeshEngine e = engine;
+        return e == null ? wgVersion() : e.version();
     }
 
     @Nullable private static native String wgGetConfig(int handle);
@@ -141,7 +187,7 @@ public final class GoBackend implements Backend {
     public String getStatisticsRaw(final Tunnel tunnel) {
         if (tunnel != currentTunnel || currentTunnelHandle == -1)
             return "";
-        final String config = wgGetConfig(currentTunnelHandle);
+        final String config = engineConfig(currentTunnelHandle);
         return config == null ? "" : config;
     }
 
@@ -157,7 +203,7 @@ public final class GoBackend implements Backend {
             return Statistics.parse(null);
         // Parsing lives in Statistics so the AIDL client, which cannot see
         // this class, reads the same text with the same code.
-        return Statistics.parse(wgGetConfig(currentTunnelHandle));
+        return Statistics.parse(engineConfig(currentTunnelHandle));
     }
 
     /**
@@ -167,7 +213,7 @@ public final class GoBackend implements Backend {
      */
     @Override
     public String getVersion() {
-        return wgVersion();
+        return engineVersion();
     }
 
     /**
@@ -332,8 +378,8 @@ public final class GoBackend implements Backend {
             try (final ParcelFileDescriptor tun = builder.establish()) {
                 if (tun == null)
                     throw new BackendException(Reason.TUN_CREATION_ERROR);
-                Log.d(TAG, "Go backend " + wgVersion());
-                currentTunnelHandle = wgTurnOn(tunnel.getName(), tun.detachFd(), goConfig);
+                Log.d(TAG, "Go backend " + engineVersion());
+                currentTunnelHandle = engineTurnOn(tunnel.getName(), tun.detachFd(), goConfig);
             }
             if (currentTunnelHandle < 0)
                 throw new BackendException(Reason.GO_ACTIVATION_ERROR_CODE, currentTunnelHandle);
@@ -341,8 +387,8 @@ public final class GoBackend implements Backend {
             currentTunnel = tunnel;
             currentConfig = config;
 
-            service.protect(wgGetSocketV4(currentTunnelHandle));
-            service.protect(wgGetSocketV6(currentTunnelHandle));
+            service.protect(engineSocketV4(currentTunnelHandle));
+            service.protect(engineSocketV6(currentTunnelHandle));
         } else {
             if (currentTunnelHandle == -1) {
                 Log.w(TAG, "Tunnel already down");
@@ -352,7 +398,7 @@ public final class GoBackend implements Backend {
             currentTunnel = null;
             currentTunnelHandle = -1;
             currentConfig = null;
-            wgTurnOff(handleToClose);
+            engineTurnOff(handleToClose);
             if (!switching) try {
                 vpnService.get(0, TimeUnit.NANOSECONDS).stopSelf();
             } catch (final TimeoutException ignored) { }
@@ -391,7 +437,7 @@ public final class GoBackend implements Backend {
                 final Tunnel tunnel = owner.currentTunnel;
                 if (tunnel != null) {
                     if (owner.currentTunnelHandle != -1)
-                        wgTurnOff(owner.currentTunnelHandle);
+                        engineTurnOff(owner.currentTunnelHandle);
                     owner.currentTunnel = null;
                     owner.currentTunnelHandle = -1;
                     owner.currentConfig = null;
