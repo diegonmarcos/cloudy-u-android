@@ -8,6 +8,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.longClick
 import com.diegonmarcos.cloudcalc.sheet.Area
@@ -155,8 +156,8 @@ class SheetShellTest {
         assertTrue("the old Jev section is gone from the bar", compose.onAllNodesWithTag(BottomNavTags.item("jev")).fetchSemanticsNodes().isEmpty())
         assertTrue("the AI section is gone from the bar", compose.onAllNodesWithTag(BottomNavTags.item("ai")).fetchSemanticsNodes().isEmpty())
         assertTrue("Ask Jev is a Calc page", Declarations.tabsOf("calculator").any { it.id == "ask" })
-        // Ask Jev is the last page of the Others row (the row scrolls), so the test opens it through the state the strip drives.
-        state.tab = "ask"
+        // Ask Jev is the last page of the Others row: a user scrolls the row to it and taps it.
+        compose.onNodeWithTag(PageTabsTags.tab("ask")).performScrollTo().performClick()
         compose.waitForIdle()
         assertEquals("ask", state.tab)
         compose.onNodeWithTag(BottomNavTags.item("toolkit")).performClick()
