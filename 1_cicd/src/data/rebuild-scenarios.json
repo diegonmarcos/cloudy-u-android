@@ -691,15 +691,15 @@
     },
     {
       "id": "libs/ui-kit commonMain (#876: the two wasm pages + the static-lib consumers)",
-      "_doc": "#1652 44 -> 45 apps (ship ceiling 45 -> 46): Cloud Keyboard's Writer tab is libs:writer-ui (7f0fa60c9), which compiles libs:ui-kit, so a kit edit now rebuilds the keyboard too. The count follows the consumers. #1780 45 -> 46 apps (ship ceiling 46 -> 47): the new Cloud Canvas app compiles libs:ui-kit (ac_cloud-canvas/app/build.gradle), a real consumer, not a widened trigger list.",
+      "_doc": "#1652 44 -> 45 apps (ship ceiling 45 -> 46): Cloud Keyboard's Writer tab is libs:writer-ui (7f0fa60c9), which compiles libs:ui-kit, so a kit edit now rebuilds the keyboard too. The count follows the consumers. #1780 45 -> 46 apps (ship ceiling 46 -> 47): the new Cloud Canvas app compiles libs:ui-kit (ac_cloud-canvas/app/build.gradle), a real consumer, not a widened trigger list. #1893 46 -> 47 apps (ship ceiling 47 -> 48): Cloud Calc's Home draws libs:tile-grid (the Cloud page's tile grid, extracted from the SuperApp), whose cards read libs:ui-kit's palette, so Calc compiles libs:ui-kit (ac_cloud-calc/app/build.gradle), a real consumer.",
       "files": [
         "ab_cloud-libs-shared/libs/ui-kit/src/commonMain/kotlin/com/diegonmarcos/superapp/uikit/CloudKit.kt"
       ],
       "expect": {
-        "apps": 46,
+        "apps": 47,
         "libs": 0,
         "rootfs": 0,
-        "ship": 47,
+        "ship": 48,
         "refresh": 0
       }
     }
