@@ -163,6 +163,8 @@ class AccountVault(context: Context) {
         b.optJSONObject("configs")?.let { putAppConfigs(it); done += "configs" }
         b.optJSONObject("secrets")?.optJSONObject("grants")?.let { grants.replace(it); done += "secrets" }
         b.optJSONObject("signatures")?.let { takeSignatures(it); done += "signatures" }
+        // #1807 the vault delivery (credentials only, merged after the sections; a held value is kept)
+        if (b.has(com.diegonmarcos.superapp.profile.DeliveryImport.SECTION)) { com.diegonmarcos.superapp.profile.DeliveryImport.land(ctx, b); done += "delivery" }
         return ImportResult(true, done)
     }
 

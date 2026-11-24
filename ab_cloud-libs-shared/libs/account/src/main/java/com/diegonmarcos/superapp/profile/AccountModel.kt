@@ -290,6 +290,8 @@ class AccountModel(private val ctx: Context, val store: AccountStore) {
             // #778 the fetch IS the server file S, stored with its source; L starts as S when there is none.
             // #1835 the fleet mesh token rides the same export: filed into App credentials, so nothing is pasted.
             FleetTokenImport.land(ctx, bundle)
+            // #1807 the declared vault delivery of app credentials (delivery.appcred.*), a held value kept
+            DeliveryImport.land(ctx, bundle)
             get(ctx).landServer(bundle, via)
             return null
         }
