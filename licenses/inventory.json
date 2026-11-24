@@ -20173,6 +20173,14 @@
    "licence": "LicenseRef-tldraw",
    "licence_source": "licenses/curated.json"
   },
+  "vendored:ac_cloud-nav": {
+   "kind": "vendored",
+   "declared_in": [
+    "ac_cloud-nav/NOTICE.md"
+   ],
+   "licence": "LicenseRef-NoLicenseGranted",
+   "licence_source": "licenses/curated.json"
+  },
   "vendored:ac_cloud-search": {
    "kind": "vendored",
    "declared_in": [
