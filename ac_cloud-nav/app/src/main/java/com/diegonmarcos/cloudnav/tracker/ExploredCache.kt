@@ -121,7 +121,8 @@ object ExploredCache {
      * what was computed (live dates excepted). [dates] in order; the result keeps that order.
      */
     fun refresh(backend: DigestBackend, store: List<TlSegment>, dates: List<LocalDate>, nowMs: Long, zone: ZoneId,
-                corrections: List<Correction> = emptyList(), memory: List<Remembered> = emptyList(), dirty: Set<LocalDate> = emptySet()): CacheResult {
+                corrections: List<Correction> = emptyList(), memory: List<Remembered> = emptyList(), dirty: Set<LocalDate> = emptySet(),
+                cancelled: () -> Boolean = { false }): CacheResult {
         val stored = runCatching { backend.load() }.getOrDefault(emptyMap())
         val slicer = Slicer(store)
         val out = ArrayList<DayDigest>(dates.size); val recomputed = ArrayList<LocalDate>(); val live = ArrayList<LocalDate>()

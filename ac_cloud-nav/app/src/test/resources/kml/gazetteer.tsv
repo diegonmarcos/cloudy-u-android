@@ -1,0 +1,6 @@
+# #1887 invented places for the JVM tests: name, country, lat, lon, zone
+Aldoria	Northland	41.1000	-1.2000	Europe/Madrid
+Brenvik	Northland	41.6000	-0.4000	Europe/Madrid
+Ostrel	Northland	42.5000	1.0000	Europe/Madrid
+Castamar	Southmark	38.2000	15.3000	Europe/Rome
+Dunmore Bay	Eastreach	35.1000	139.2000	Asia/Tokyo

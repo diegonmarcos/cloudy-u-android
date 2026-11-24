@@ -63,8 +63,12 @@ object AggregatesStore {
      * #1863 the cached pass the page, the engine tick and the import share: past dates come from their stored digests (recomputed only
      * when their checksum moved or they were marked dirty), today is live, and every aggregate is folded from the digests.
      */
+    /** #1887 every fold of the aggregates in this process (the JVM test proves a Day date change adds none). */
+    @Volatile var exploreCount = 0L
+
     fun explore(backend: DigestBackend, store: List<com.diegonmarcos.cloudnav.maps.TlSegment>, first: java.time.LocalDate, today: java.time.LocalDate, nowMs: Long,
-                zone: ZoneId, corrections: List<Correction>, memory: List<Remembered>, home: String?): Explored {
+                zone: ZoneId, corrections: List<Correction>, memory: List<Remembered>, home: String?, cancelled: () -> Boolean = { false }): Explored {
+        exploreCount++
         val (dates, rankDates) = windowDates(first, today)
         val r = ExploredCache.refresh(backend, store, dates, nowMs, zone, corrections, memory)
         val keep = rankDates.toHashSet()

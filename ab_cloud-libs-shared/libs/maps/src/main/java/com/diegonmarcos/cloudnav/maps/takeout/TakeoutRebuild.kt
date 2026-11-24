@@ -175,7 +175,7 @@ object TakeoutDerive {
 object TakeoutRebuild {
     private const val INSERT_SEG = "INSERT INTO timeline_segments (kind,start_ms,end_ms,lat,lon,place,steps,distance_m,loc_src,neighborhood,city,country,source,prio,ref) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
 
-    fun run(sql: SqlExec, zone: ZoneId = ZoneId.systemDefault(), nowMs: Long = System.currentTimeMillis(), cancelled: () -> Boolean = { false }): Int {
+    fun run(sql: SqlExec, zone: ZoneId = ZoneId.systemDefault(), nowMs: Long = System.currentTimeMillis(), cancelled: () -> Boolean = { false }, geo: Gazetteer? = null): Int {
         fun d(x: Any?) = (x as? Number)?.toDouble()
         fun l(x: Any?) = (x as? Number)?.toLong()
         val segs = ArrayList<TlSegment>()

@@ -120,6 +120,17 @@ class DayActions(
     val onOpenDay: (LocalDate) -> Unit = {}, val data: DataActions = DataActions(),
 )
 
+/** #1887 the Day page's metadata header (seam: the previous fields, the summary bar's four). */
+object DayHeader {
+    fun fields(b: DayBar, sleep: DaySleep?): List<Pair<String, String>> = listOf("Total km" to "%.1f".format(Locale.US, b.distanceM / 1000),
+        "Total steps" to (b.steps.count?.let { StepsFormat.n(it) } ?: "n/a"), "Time active" to StepsFormat.duration(b.activeMs), "Time stopped" to StepsFormat.duration(b.stoppedMs))
+}
+
+/** #1887 the Insights week (seam: the previous behaviour, the last 7 calendar days). */
+object InsightsData {
+    fun week(stats: List<DayStats>): List<DayStats> = stats.takeLast(7)
+}
+
 object DayFormat {
     fun modeLabel(m: Mode) = if (m == Mode.TRAIN) "Transit" else m.name.lowercase().replaceFirstChar { it.uppercase() }
     fun modeColor(m: Mode): Color = Color(RouteGeo.modeArgb(m))

@@ -29,6 +29,12 @@ data class Block(val startMs: Long, val endMs: Long, val state: SegState, val mo
 /** When the sun rises and sets on a day; [known] = computed from a location, else the fixed 06:00 / 18:00 curve. */
 data class Daylight(val sunriseMs: Long?, val sunsetMs: Long?, val known: Boolean, val polarDay: Boolean = false)
 
+/** #1887 where a day's sleep happened (the night that ENDS on the date, as [DayStats]): its city, country, coordinates and IANA zone. */
+data class DaySleep(val city: String?, val country: String?, val lat: Double?, val lon: Double?, val zone: ZoneId)
+
+/** #1887 the Day page's day/night strip: the [daylight] drawn over [from, to) (that city's own 24 h) on the clock of [zone]. */
+data class DayLight(val daylight: Daylight, val from: Long, val to: Long, val zone: ZoneId, val city: String?)
+
 object DaySegments {
     const val DAY_MS = 86_400_000L
     const val NIGHT_ARGB = 0xFF000000
@@ -140,6 +146,15 @@ object DaySegments {
         }
         val (r, pd) = at(true); val (s, _) = at(false)
         return Daylight(r, s, true, polarDay = r == null && pd)
+    }
+
+    /** #1887 seam (the previous behaviour: no sleep place). */
+    fun sleepOf(stats: DayStats?, day: List<DaySeg>, geo: com.diegonmarcos.cloudnav.maps.takeout.Gazetteer?, deviceZone: ZoneId): DaySleep? = null
+
+    /** #1887 seam (the previous behaviour: the day's first located place, on the device's clock). */
+    fun dayLight(date: LocalDate, sleep: DaySleep?, day: List<DaySeg>, deviceZone: ZoneId): DayLight {
+        val loc = day.filterIsInstance<DaySeg.Stay>().firstOrNull { it.place?.located == true }?.place
+        return DayLight(daylight(date, loc?.lat, loc?.lon, deviceZone), DayTimeline.dayStart(date, deviceZone), DayTimeline.dayStart(date.plusDays(1), deviceZone), deviceZone, null)
     }
 
     /** Sky brightness 0 (night) .. 1 (day) at [ms]: ramps over [TWILIGHT_MS] around sunrise and sunset. */
