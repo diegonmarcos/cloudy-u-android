@@ -134,12 +134,11 @@ jobs:
           tar czf "unison-${VER}-linux-x86_64-musl-static-16k.tar.gz" "unison-${VER}-linux-x86_64-musl-static-16k"
           sha256sum "unison-${VER}-linux-x86_64-musl-static-16k.tar.gz" "unison-${VER}-linux-x86_64-musl-static-16k/bin/unison"
           stat -c '%s %n' "unison-${VER}-linux-x86_64-musl-static-16k/bin/unison"
-          rm -rf "unison-${VER}-linux-x86_64-musl-static-16k"
 
       - uses: actions/upload-artifact@v4
         with:
           name: unison-engine
-          path: out/*
+          path: out/*.tar.gz
 
   publish:
     needs: [build-go, build-unison]
