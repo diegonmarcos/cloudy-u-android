@@ -2058,7 +2058,7 @@ class MailRepository(
         return searchWithCoreFallback(
             hits, accountStore.accounts().map { it.id }, limit,
             coreIds = { acc -> core.searchIds(acc, query, limit) },
-            load = { acc, ids -> emailDao.emailsByIds(acc, ids).map { it.toEmail() } },
+            load = { acc, chunk -> emailDao.emailsByIds(acc, chunk).map { it.toEmail() } },
         )
     }
 
