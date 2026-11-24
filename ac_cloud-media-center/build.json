@@ -301,10 +301,6 @@
           "what": "Documentaries."
         },
         {
-          "name": "Games",
-          "what": "Well-known Android games by category, with Install and Open."
-        },
-        {
           "name": "Library (Configs)",
           "what": "Your synced playlists, boards and video lists; Configs > Library."
         }

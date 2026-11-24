@@ -1,12 +1,12 @@
-/* cloud-media-center — the Games tab (#1765).
+/* cloud-store — Search > Games (#1765; moved here from cloud-media-center, #1895).
  *
  * Two halves, like pages.js. The pure half (parseCatalogue, renderGames, installIntent, openIntent, storeAction) takes values in and gives
- * HTML / URLs out, so test/test-media-center-games.sh drives it under node. The browser half loads the catalogue, asks the Rust side which
- * games are installed and wires Install / Open.
+ * HTML / URLs out, so test/test-store-games.sh drives it under node. The browser half loads the catalogue, asks the app (the CloudGames web
+ * message bridge, GamesPage.kt; it was the Tauri command installed_packages in Media Center) which games are installed and wires Install / Open.
  *
  * THE CATALOGUE IS A RUNTIME DATASET, never bundled: data/fleet/games-catalogue.json in cloudy-u-android (listed in data/fleet/manifest.json,
  * the same framework as #1749's store-phone-recommendations), fetched from raw.githubusercontent.com with revalidation and kept as the
- * last-known-good copy in the webview storage. The icons are the stores' own public listing image URLs, loaded at runtime and cached by the
+ * last-known-good copy in the webview storage (localStorage key cmc_games_v1, kept so a cache of the old name is not lost). The icons are the stores' own public listing image URLs, loaded at runtime and cached by the
  * webview; no third-party artwork is in the APK.
  */
 (function (root) {
@@ -40,7 +40,7 @@
   /* ── what Install / Open do ───────────────────────────────────────────── */
   function openIntent(pkg) { return 'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=' + pkg + ';end'; }
   // Cloud Store's hand-off contract (libs:updater StoreHandoff): action OPEN, extra install_pkg + tab.
-  function storeIntent(pkg) { return 'intent:#Intent;action=com.diegonmarcos.cloudstore.OPEN;package=' + STORE_PKG + ';S.install_pkg=' + pkg + ';S.tab=phone;S.from=com.diegonmarcos.cloudmediacenter;end'; }
+  function storeIntent(pkg) { return 'intent:#Intent;action=com.diegonmarcos.cloudstore.OPEN;package=' + STORE_PKG + ';S.install_pkg=' + pkg + ';S.tab=phone;S.from=com.diegonmarcos.cloudstore;end'; }
   // The store listing: Play through the market:// intent aimed at the Play Store, F-Droid by its listing page (its own app takes the link).
   function listingIntent(g) { return g.source === 'play' ? 'intent://details?id=' + g.pkg + '#Intent;scheme=market;package=com.android.vending;end' : g.store_url; }
   /* The ordered URLs to try for Install: Cloud Store (F-Droid games: Cloud Store installs from the F-Droid index; it has no Play source)
@@ -90,15 +90,33 @@
       return c;
     }).catch(function () { return parseCatalogue(last); });
   }
-  function invoke(cmd, args, rt) { var t = rt || root.__TAURI__; return t && t.core && t.core.invoke ? t.core.invoke(cmd, args) : Promise.reject(new Error('no runtime')); }
+  /* The app bridge: GamesPage.kt registers the web message listener `CloudGames` (main frame of the asset origin only). A request is
+   * {id, op, args}; the reply is {id, result} or {id, error}. `rt` ({ invoke }) lets the node test stand in for the app. */
+  var seq = 0, pending = {}, wired = false;
+  function wire() {
+    var b = root.CloudGames; if (wired || !b) return;
+    wired = true;
+    b.onmessage = function (e) {
+      var m; try { m = JSON.parse(e.data); } catch (x) { return; }
+      var p = pending[m.id]; if (!p) return; delete pending[m.id];
+      if (m.error) p.rej(new Error(String(m.error))); else p.res(m.result);
+    };
+  }
+  function invoke(cmd, args, rt) {
+    if (rt && rt.invoke) return rt.invoke(cmd, args);
+    wire();
+    if (!root.CloudGames || !root.CloudGames.postMessage) return Promise.reject(new Error('no runtime'));
+    return new Promise(function (res, rej) { var id = ++seq; pending[id] = { res: res, rej: rej }; root.CloudGames.postMessage(JSON.stringify({ id: id, op: cmd, args: args || {} })); });
+  }
   function detectInstalled(cat, rt) {
     var pkgs = cat.games.map(function (g) { return g.pkg; }).concat([STORE_PKG]);
     return invoke('installed_packages', { pkgs: pkgs }, rt).then(function (list) { var m = {}; (list || []).forEach(function (p) { m[p] = true; }); return m; }).catch(function () { return null; });
   }
   function openUrl(url) {
-    var t = root.__TAURI__;
-    if (t && t.opener && t.opener.openUrl) return t.opener.openUrl(url);
-    root.open(url, '_blank'); return Promise.resolve();
+    return invoke('open_url', { url: url }).catch(function (e) {
+      if (root.CloudGames) throw e;      // the app refused it (nothing handles the URL): tryUrls goes to the next one
+      root.open(url, '_blank'); return undefined;
+    });
   }
   function tryUrls(urls) { return urls.reduce(function (p, u) { return p.catch(function () { return openUrl(u); }); }, Promise.reject(new Error('start'))); }
 

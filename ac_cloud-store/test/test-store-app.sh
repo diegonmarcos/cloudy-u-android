@@ -179,7 +179,7 @@ pg = lambda i: [p.get('id') for p in secs.get(i, {}).get('pages') or []]
 ok = (ui.get('bottom_nav') == ['cloud', 'phone', 'search', 'torrent', 'access'] and 'feed' not in secs and 'torrent' in secs
       and set(ui['bottom_nav']) <= set(secs) and 'settings' in secs and 'mesh' not in secs and 'perms' not in secs
       and pg('access') == ['mesh', 'mcp', 'apis', 'ipc', 'identity', 'android']
-      and pg('phone') == ['installed', 'declared'] and 'search' in secs and pg('search') == ['search-cloudy', 'search-android', 'search-torrent']
+      and pg('phone') == ['installed', 'declared'] and 'search' in secs and pg('search') == ['search-cloudy', 'search-android', 'search-games', 'search-torrent']
       and ui.get('default_section') == 'cloud')
 sys.exit(0 if ok else 1)
 PY

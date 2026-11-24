@@ -61,7 +61,7 @@ class TorrentPagesTest {
         val ids = nav.sections.map { it.id }
         assertEquals(listOf("cloud", "phone", "search", "torrent", "access"), nav.bottomNav)
         assertFalse("Feed is no destination any more", "feed" in ids)
-        assertEquals(listOf("search-cloudy", "search-android", "search-torrent"), nav.section("search")!!.pages.map { it.id })
+        assertEquals(listOf("search-cloudy", "search-android", "search-games", "search-torrent"), nav.section("search")!!.pages.map { it.id })
         assertEquals("Torrent", nav.section("torrent")!!.label)
         assertTrue("Configs has a Torrent page", nav.section("settings")!!.pages.any { it.id == ConfigsPages.TORRENT })
     }

@@ -16,6 +16,9 @@ object StorePages {
     /** The Fleet Data page as an embeddable pane (authority, host modifier); set by the app that hosts the provider and bundles libs:fleet-data-ui, null elsewhere. */
     @Volatile var fleetDataPane: (@androidx.compose.runtime.Composable (String, androidx.compose.ui.Modifier) -> Unit)? = null
 
+    /** The Games page (#1895: the Cloud Media Center Games tab, moved) as a pane (host modifier); set by the app that bundles its web page (Cloud Store), null elsewhere (SuperApp's embedded Store). */
+    @Volatile var gamesPane: (@androidx.compose.runtime.Composable (androidx.compose.ui.Modifier) -> Unit)? = null
+
     private val current = HashMap<String, String>()
     private val observers = HashMap<String, MutableList<(String) -> Unit>>()
 

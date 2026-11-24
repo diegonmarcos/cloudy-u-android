@@ -266,6 +266,8 @@ dependencies {
     implementation project(':libs:ai')
     // #1600 the BitTorrent engine, the torrent search sources and the download-folder rule: the Torrent destination, Search > Torrent and Configs > Torrent.
     implementation project(':libs:torrent')
+    // #1895 Search > Games: the fleet's one embedded web view (CloudWeb, WebProfile.APP_PAGE, WebViewAssetLoader) and androidx.webkit (the CloudGames web message bridge), shared BY REFERENCE.
+    implementation project(':libs:web-core')
 
     implementation 'androidx.core:core-ktx:1.13.1'
     implementation 'androidx.appcompat:appcompat:1.7.0'

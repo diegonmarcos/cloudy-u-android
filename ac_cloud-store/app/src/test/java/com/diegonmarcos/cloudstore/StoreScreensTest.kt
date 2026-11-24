@@ -134,7 +134,7 @@ class StoreScreensTest(private val section: String, private val shot: String) {
     @Composable private fun PageFor() {
         when ("$section/$page") {
             "cloud/cloud" -> AndroidFragment<StoreCloudFragment>(Modifier.fillMaxSize())
-            "phone/installed", "phone/declared", "search/search-cloudy", "search/search-android", "search/search-torrent" -> AndroidFragment<StorePhoneFragment>(Modifier.fillMaxSize())
+            "phone/installed", "phone/declared", "search/search-cloudy", "search/search-android", "search/search-games", "search/search-torrent" -> AndroidFragment<StorePhoneFragment>(Modifier.fillMaxSize())
             "torrent/torrent" -> TorrentPage()
             // #1718 the five Access pages. MCP, APIs and the gateway half of IPC are drawn from the served dataset itself.
             "access/mcp" -> DeviceMcpPage(model)
@@ -281,7 +281,7 @@ class StoreScreensTest(private val section: String, private val shot: String) {
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}/{1}")
         fun pages(): List<Array<Any>> = listOf(
-            "cloud/cloud", "phone/installed", "phone/declared", "search/search-cloudy", "search/search-android", "search/search-torrent", "torrent/torrent",
+            "cloud/cloud", "phone/installed", "phone/declared", "search/search-cloudy", "search/search-android", "search/search-games", "search/search-torrent", "torrent/torrent",
             "access/mcp", "access/apis", "access/apis-open", "access/ipc", "access/ipc-open", "access/ipc-registry",
             "access/identity", "access/identity-direct", "access/identity-bottom", "access/android",
             "settings/sources", "settings/adb", "settings/ai", "settings/notifications", "settings/torrent", "settings/about",

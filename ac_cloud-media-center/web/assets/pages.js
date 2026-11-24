@@ -18,9 +18,7 @@
     { id: 'movies', label: 'Movies', icon: '◉' },
     { id: 'documentaries', label: 'Docs', icon: '◎' }
   ];
-  // not data pages (no web/data/<id>.json). #1765 the Games tab (assets/games.js, a runtime dataset) takes the bottom-bar slot Library had;
-  // Library (the synced playlists of #1469, assets/media-sync.js) moved into Configs as its Library tab, and library/index.html stays as its full page.
-  var EXTRA = [{ id: 'games', label: 'Games', icon: '🎮' }];
+  // Library (the synced playlists of #1469, assets/media-sync.js) is Configs' Library tab; library/index.html stays as its full page.
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -211,7 +209,7 @@
   };
 
   function tabsHtml(current, prefix) {
-    return PAGES.concat(EXTRA).map(function (p) {
+    return PAGES.map(function (p) {
       return '<a href="' + prefix + p.id + '/index.html"' + (p.id === current ? ' aria-current="page"' : '') + '><span>' + p.icon + '</span>' + esc(p.label) + '</a>';
     }).join('');
   }

@@ -385,7 +385,7 @@
   "ac_cloud-store": {
    "licence": "LicenseRef-NoLicenseGranted",
    "kind": "own",
-   "what": "Cloud Store app (#865, the Store split out of cloud-superapp)",
+   "what": "Cloud Store app (#865, the Store split out of cloud-superapp); Search > Games page (assets/games) is own code moved from cloud-media-center (#1895), no third-party game art or font bundled: the icons are the stores' listing images fetched at runtime",
    "proposed": "PROPOSED (owner decides): PolyForm-Noncommercial-1.0.0"
   },
   "ac_cloud-kg-store": {

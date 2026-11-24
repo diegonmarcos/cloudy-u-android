@@ -4,7 +4,7 @@
 #  2. Parity: every package and every field value of the three old per-page lists (snapshot in libs:appstore src/test/resources) is in it.
 #  3. Icons: every row has a well-formed https icon URL (the live HEAD check is .github/workflows/store-catalogue-icons.yml, dispatchable).
 #  4. Declared: build.json::store_catalogue names the asset, the baseline lists it as a tier-4 seed, the page draws the five chip rows with stable tags.
-#  5. Media Center still reads games-catalogue.json (kept).
+#  5. Cloud Store's Search > Games page reads games-catalogue.json (kept; it moved from Media Center, #1895).
 # Then a planted defect (a dropped package, a blank icon, a bad enum) must turn it red.
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -76,8 +76,8 @@ page = rd("ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/sup
 flt = rd("ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StorePhoneFilter.kt")
 if "StorePhoneFilter.tag(row.id, v.id)" in page and 'fun tag(row: String, value: String) = "store-search:phone-filter:$row:$value"' in flt and "ALL, cat.allLabel" in page: ok("every chip (All first) has the tag store-search:phone-filter:<row>:<value>")
 else: bad("chip tags missing")
-if "games-catalogue" in rd("ac_cloud-media-center/test/test-media-center-games.sh") and os.path.exists(os.path.join(root, "data/fleet/games-catalogue.json")): ok("games-catalogue.json is kept for Cloud Media Center")
-else: bad("games-catalogue.json is gone but Cloud Media Center reads it")
+if "games-catalogue" in rd("ac_cloud-store/app/src/main/assets/games/games.js") and os.path.exists(os.path.join(root, "data/fleet/games-catalogue.json")): ok("games-catalogue.json is kept for Cloud Store's Search > Games page (moved from Cloud Media Center, #1895)")
+else: bad("games-catalogue.json is gone but Cloud Store's Games page reads it")
 print("== mutations ==")
 def mut(name, fn):
     c = copy.deepcopy(cat); fn(c)

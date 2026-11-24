@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -38,10 +39,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import com.diegonmarcos.superapp.apps.PhoneSections
 import com.diegonmarcos.superapp.apps.PhoneTaxonomy
@@ -101,7 +104,9 @@ object StoreSearchPage {
     const val PAGE_ANDROID = "search-android"
     /** Torrent: the host's torrent indexers; a result is downloaded by the torrent engine, not installed. */
     const val PAGE_TORRENT = "search-torrent"
-    val PAGES = listOf(PAGE_CLOUDY, PAGE_ANDROID, PAGE_TORRENT)
+    /** Games (#1895, moved here from Cloud Media Center): the catalogue of well-known Android games by category, with Install and Open. A page of the host app ([StorePages.gamesPane]), not a source search. */
+    const val PAGE_GAMES = "search-games"
+    val PAGES = listOf(PAGE_CLOUDY, PAGE_ANDROID, PAGE_GAMES, PAGE_TORRENT)
 
     /** Which subpage an install-source search source belongs to: only the fleet is Cloudy; the declared list and every other APK source are Phone (non-fleet apps). */
     fun pageOf(sourceId: String): String = if (sourceId == FLEET) PAGE_CLOUDY else PAGE_ANDROID
@@ -109,17 +114,20 @@ object StoreSearchPage {
     /** Where a result goes: Torrent results are downloaded by the torrent engine, the others are installed (or opened) by the APK path. */
     fun handlerOf(page: String): String = if (page == PAGE_TORRENT) "torrent-download" else "install"
 
-    fun pageLabel(page: String): String = when (page) { PAGE_CLOUDY -> "Cloudy"; PAGE_ANDROID -> "Phone"; else -> "Torrent" }
+    fun pageLabel(page: String): String = when (page) { PAGE_CLOUDY -> "Cloudy"; PAGE_ANDROID -> "Phone"; PAGE_GAMES -> "Games"; else -> "Torrent" }
 
     /** What a subpage searches, in a sentence (the pre-query line of Android; Cloudy shows our list, Torrent its sources). */
     fun pageBlurb(page: String): String = when (page) {
         PAGE_CLOUDY -> "Our repo releases: the Cloud constellation apps (the fleet)."
         PAGE_ANDROID -> "Android apps that are not in the fleet: Aurora (Google Play, anonymous), F-Droid, IzzyOnDroid, GitHub and the apps you declared. Results install through the Store's install path."
+        PAGE_GAMES -> "Well-known Android games by category, with Install and Open."
         else -> "Torrent indexers. Results download with the Torrent engine."
     }
 
     /** Compose test tags. */
     const val TAG_PAGES = "store-search:pages"
+    const val TAG_GAMES = "store-search:games"
+    const val TAG_NO_GAMES = "store-search:games:none"
     fun pageTag(page: String) = "store-search:page:$page"
     const val TAG_LANDING = "store-search:landing"
     const val TAG_SHELF = "store-search:shelf:"
@@ -408,7 +416,7 @@ object StoreSearchPage {
             states.clear()
             if (q.isEmpty()) return
             // The Torrent subpage runs its own sources from `asked` (StoreTorrentSearch); the APK sources below are Cloudy and Android.
-            if (sub == PAGE_TORRENT) return
+            if (sub == PAGE_TORRENT || sub == PAGE_GAMES) return
             val c = runCatching { resolveCfg(ctx, cfg) }.getOrElse { landingError = it.message ?: it.javaClass.simpleName; asked = ""; return }
             val d = declState ?: decl(sourcesOf(ctx), c).also { declState = it }
             val gen = generation
@@ -424,11 +432,18 @@ object StoreSearchPage {
                     PAGES.forEach { pg -> Pill(pageLabel(pg), sub == pg, pageTag(pg)) { StorePages.select(SECTION, pg) } }
                 }
             }
-            KitSearchBar(query, { query = it; if (it.isBlank()) { asked = ""; generation++; states.clear() } }, { run() },
+            // Games has its own search field inside its page (the moved Media Center page); the Store's source search does not apply to it.
+            if (sub != PAGE_GAMES) KitSearchBar(query, { query = it; if (it.isBlank()) { asked = ""; generation++; states.clear() } }, { run() },
                 placeholder = ctx.getString(R.string.store_search_hint), clearLabel = ctx.getString(R.string.store_search_clear))
             val full = declState
             // This subpage's sources only; Results sees a declaration narrowed to them, so its counts and groups are the page's.
             val d = full?.let { f -> Decl(f.sources.filter { runsOnPage(it.id, sub, StorePhoneFilter.sources(filter)) }, f.foss) }
+            if (sub == PAGE_GAMES) {
+                val pane = StorePages.gamesPane
+                if (pane != null) pane(Modifier.fillMaxWidth().height((LocalConfiguration.current.screenHeightDp - 230).coerceAtLeast(360).dp).testTag(TAG_GAMES))
+                else KitEmptyState("Games live in Cloud Store", "This app embeds the Store without the Games page. Open Cloud Store, Search, Games.", modifier = Modifier.testTag(TAG_NO_GAMES))
+                return@Column
+            }
             if (sub == PAGE_TORRENT) {
                 StoreTorrentSearch.Content(ctx, asked)
                 return@Column

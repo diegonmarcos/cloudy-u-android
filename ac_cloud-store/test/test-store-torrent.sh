@@ -145,8 +145,8 @@ ok(all(n in names for n in ("TorrentEngineTest.kt", "FakeBackend.kt", "TorrentSe
 
 # S1
 sp = strip(rd(AS + "/StoreSearchPage.kt") or ""); ts = strip(rd(AS + "/StoreTorrentSearch.kt") or ""); th = strip(rd(CS + "/TorrentHost.kt") or "")
-ok(pg("search") == ["search-cloudy", "search-android", "search-torrent"] and all(x in sp for x in ('PAGE_CLOUDY = "search-cloudy"', 'PAGE_ANDROID = "search-android"', 'PAGE_TORRENT = "search-torrent"')),
-   "S1 Search has the Cloudy | Android | Torrent source subpages (build.json pages and StoreSearchPage)", "S1 Search lost a source subpage")
+ok(pg("search") == ["search-cloudy", "search-android", "search-games", "search-torrent"] and all(x in sp for x in ('PAGE_CLOUDY = "search-cloudy"', 'PAGE_ANDROID = "search-android"', 'PAGE_GAMES = "search-games"', 'PAGE_TORRENT = "search-torrent"')),
+   "S1 Search has the Cloudy | Phone | Games | Torrent source subpages (build.json pages and StoreSearchPage)", "S1 Search lost a source subpage")
 ok("pageOf(s.id) != sub" in sp and "StoreTorrentSearch.Content(" in sp and 'if (page == PAGE_TORRENT) "torrent-download" else "install"' in sp,
    "S1 Cloudy and Android results take the install path, Torrent results the torrent handler", "S1 results are not routed by source subpage")
 ok("host.download(" in ts and "engine.addMagnet(magnet)" in th and "addTorrentBytes(" in th and "TorrentIndexers.all" in th,

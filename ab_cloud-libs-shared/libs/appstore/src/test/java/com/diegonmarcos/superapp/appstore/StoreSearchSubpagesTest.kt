@@ -7,12 +7,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
-/** Search > Cloudy | Android | Torrent: which subpage a source belongs to and which handler a result goes to. Pure, no device. */
+/** Search > Cloudy | Phone | Games | Torrent: which subpage a source belongs to and which handler a result goes to. Pure, no device. */
 class StoreSearchSubpagesTest {
-    @Test fun theThreeSourceSubpagesAreCloudyAndroidTorrentInOrder() {
-        assertEquals(listOf("search-cloudy", "search-android", "search-torrent"), StoreSearchPage.PAGES)
+    @Test fun theSourceSubpagesAreCloudyPhoneGamesTorrentInOrder() {
+        assertEquals(listOf("search-cloudy", "search-android", "search-games", "search-torrent"), StoreSearchPage.PAGES)
         assertEquals("search", StoreSearchPage.SECTION)
-        assertEquals(listOf("Cloudy", "Phone", "Torrent"), StoreSearchPage.PAGES.map { StoreSearchPage.pageLabel(it) })
+        assertEquals(listOf("Cloudy", "Phone", "Games", "Torrent"), StoreSearchPage.PAGES.map { StoreSearchPage.pageLabel(it) })
     }
 
     @Test fun cloudyShowsOnlyTheFleetAndEveryOtherSourceIsPhone() {

@@ -129,6 +129,7 @@ public object UiIcons {
         "language" to Icons.Outlined.Language,
         "content_paste" to Icons.Outlined.ContentPaste,
         "android" to Icons.Outlined.Android,
+        "games" to Icons.Outlined.SportsEsports,   // #1895 Store > Search > Games
         "menu_book" to Icons.Outlined.MenuBook,
         "notifications" to Icons.Outlined.Notifications,
         "admin_panel_settings" to Icons.Outlined.AdminPanelSettings,
