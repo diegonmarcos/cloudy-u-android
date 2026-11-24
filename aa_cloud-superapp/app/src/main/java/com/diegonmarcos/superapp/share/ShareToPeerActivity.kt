@@ -1,12 +1,22 @@
 package com.diegonmarcos.superapp.share
 
-import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
 import com.diegonmarcos.superapp.R
 import com.diegonmarcos.superapp.kdeconnect.KdeConnectConfig
 import com.diegonmarcos.superapp.kdeconnect.KdeConnectManager
@@ -32,8 +42,17 @@ class ShareToPeerActivity : ComponentActivity() {
         else -> emptyList()
     }
 
+    /** One dialog at a time: choose a peer, no peer, or the per-item result (Compose). */
+    private sealed class Stage {
+        data class Choose(val ids: List<String>, val labels: List<String>, val items: List<PeerShare.Item>) : Stage()
+        data object None : Stage()
+        data class Result(val text: String) : Stage()
+    }
+    private var stage by mutableStateOf<Stage?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContent { MaterialTheme { Dialog() } }
         if (savedInstanceState != null) return
         val uris = streams()
         val text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()
@@ -57,24 +76,12 @@ class ShareToPeerActivity : ComponentActivity() {
             }
             runOnUiThread {
                 when (val p = PeerShare.pick(reachable.keys.toList())) {
-                    is PeerShare.Pick.None -> noPeer()
+                    is PeerShare.Pick.None -> stage = Stage.None
                     is PeerShare.Pick.Auto -> send(p.id, items, uris)
-                    is PeerShare.Pick.Ask -> AlertDialog.Builder(this).setTitle(R.string.share_peer_choose)
-                        .setItems(p.ids.map { reachable[it] ?: it }.toTypedArray()) { _, i -> send(p.ids[i], items, uris) }
-                        .setOnCancelListener { finish() }.show()
+                    is PeerShare.Pick.Ask -> stage = Stage.Choose(p.ids, p.ids.map { reachable[it] ?: it }, items)
                 }
             }
         }.start()
-    }
-
-    private fun noPeer() {
-        AlertDialog.Builder(this).setTitle(R.string.share_peer_none).setMessage(R.string.share_peer_none_detail)
-            .setPositiveButton(R.string.share_peer_open) { _, _ ->
-                packageManager.getLaunchIntentForPackage(packageName)?.let { startActivity(it) }
-                finish()
-            }
-            .setNegativeButton(android.R.string.cancel) { _, _ -> finish() }
-            .setOnCancelListener { finish() }.show()
     }
 
     private fun name(u: Uri): String = runCatching {
@@ -93,7 +100,32 @@ class ShareToPeerActivity : ComponentActivity() {
                 is PeerShare.Item.Link -> PeerShare.line("link", KdeConnectManager.send(id, SharePlugin.url(item.url)))
             }
         }
-        AlertDialog.Builder(this).setTitle(R.string.share_peer_result).setMessage(lines.joinToString("\n"))
-            .setPositiveButton(android.R.string.ok) { _, _ -> finish() }.setOnCancelListener { finish() }.show()
+        stage = Stage.Result(lines.joinToString("\n"))
+    }
+
+    @Composable
+    private fun Dialog() {
+        when (val st = stage) {
+            null -> {}
+            is Stage.Choose -> AlertDialog(
+                onDismissRequest = { finish() },
+                title = { Text(stringResource(R.string.share_peer_choose)) },
+                text = { Column { st.ids.forEachIndexed { i, id -> TextButton(onClick = { stage = null; send(id, st.items, emptyList()) }) { Text(st.labels[i]) } } } },
+                confirmButton = {},
+            )
+            is Stage.None -> AlertDialog(
+                onDismissRequest = { finish() },
+                title = { Text(stringResource(R.string.share_peer_none)) },
+                text = { Text(stringResource(R.string.share_peer_none_detail)) },
+                confirmButton = { TextButton(onClick = { packageManager.getLaunchIntentForPackage(packageName)?.let { startActivity(it) }; finish() }) { Text(stringResource(R.string.share_peer_open)) } },
+                dismissButton = { TextButton(onClick = { finish() }) { Text(stringResource(android.R.string.cancel)) } },
+            )
+            is Stage.Result -> AlertDialog(
+                onDismissRequest = { finish() },
+                title = { Text(stringResource(R.string.share_peer_result)) },
+                text = { Text(st.text) },
+                confirmButton = { TextButton(onClick = { finish() }) { Text(stringResource(android.R.string.ok)) } },
+            )
+        }
     }
 }

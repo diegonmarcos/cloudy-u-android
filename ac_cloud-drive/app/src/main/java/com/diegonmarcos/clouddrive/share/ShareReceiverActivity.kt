@@ -7,7 +7,18 @@ import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
 import com.diegonmarcos.clouddrive.MainActivity
 import com.diegonmarcos.clouddrive.R
 import com.diegonmarcos.clouddrive.usb.UsbDriveActivity
@@ -24,8 +35,14 @@ class ShareReceiverActivity : ComponentActivity() {
         if (tree == null) finish() else askName(tree)
     }
 
+    /** The rename ask (one shared file) and the per-item result, both Compose dialogs. */
+    private var renameFor by mutableStateOf<Uri?>(null)
+    private var renameText by mutableStateOf("")
+    private var result by mutableStateOf<Triple<String, String, () -> Unit>?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContent { MaterialTheme { Dialogs() } }
         if (savedInstanceState != null) return
         if (ShareImport.plan(intent.action, streams().map { it.toString() }, intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()).isEmpty()) {
             Toast.makeText(this, R.string.share_nothing, Toast.LENGTH_LONG).show()
@@ -44,11 +61,8 @@ class ShareReceiverActivity : ComponentActivity() {
         getSharedPreferences("share_save_to", MODE_PRIVATE).edit().putString("last_tree", tree.toString()).apply()
         val s = streams()
         if (!ShareImport.canRename(s.size)) { importInto(tree, null); return }
-        val input = android.widget.EditText(this).apply { setText(displayName(s[0]) ?: "file"); setSingleLine() }
-        android.app.AlertDialog.Builder(this).setTitle(R.string.share_rename).setView(input)
-            .setPositiveButton(android.R.string.ok) { _, _ -> importInto(tree, input.text.toString()) }
-            .setNegativeButton(android.R.string.cancel) { _, _ -> finish() }
-            .setOnCancelListener { finish() }.show()
+        renameText = displayName(s[0]) ?: "file"
+        renameFor = tree
     }
 
     @Suppress("DEPRECATION")
@@ -103,9 +117,27 @@ class ShareReceiverActivity : ComponentActivity() {
                     if (open != null) startActivity(Intent(this, MainActivity::class.java).putExtra(UsbDriveActivity.EXTRA_OPEN_PATH, open).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP))
                     finish()
                 }
-                android.app.AlertDialog.Builder(this).setTitle(app.getString(R.string.share_done, ok, failed)).setMessage(lines.joinToString("\n"))
-                    .setPositiveButton(android.R.string.ok) { _, _ -> done() }.setOnCancelListener { done() }.show()
+                result = Triple(app.getString(R.string.share_done, ok, failed), lines.joinToString("\n"), done)
             }
         }.start()
+    }
+
+    @androidx.compose.runtime.Composable
+    private fun Dialogs() {
+        val tree = renameFor
+        if (tree != null) AlertDialog(
+            onDismissRequest = { renameFor = null; finish() },
+            title = { Text(stringResource(R.string.share_rename)) },
+            text = { OutlinedTextField(value = renameText, onValueChange = { renameText = it }, singleLine = true) },
+            confirmButton = { TextButton(onClick = { renameFor = null; importInto(tree, renameText) }) { Text(stringResource(android.R.string.ok)) } },
+            dismissButton = { TextButton(onClick = { renameFor = null; finish() }) { Text(stringResource(android.R.string.cancel)) } },
+        )
+        val r = result
+        if (r != null) AlertDialog(
+            onDismissRequest = { result = null; r.third() },
+            title = { Text(r.first) },
+            text = { Column { Text(r.second) } },
+            confirmButton = { TextButton(onClick = { result = null; r.third() }) { Text(stringResource(android.R.string.ok)) } },
+        )
     }
 }
