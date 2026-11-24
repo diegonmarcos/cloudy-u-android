@@ -371,7 +371,9 @@ private fun SuitePhonePage(epoch: Int, refresh: () -> Unit) {
     fun curated(entry: Entry): AppInfo =
         resolve(entry.pkg)
             ?: AppInfo(entry.pkg, entry.label, icon = null, installed = false)
-    val groups = remember(epoch) { SuitePhoneAppsFragment.parseGroups() }
+    // #1889 the user's Quickmark adds and removes laid over the declared groups (the declarations are never edited)
+    val quickVersion = Quickmarks.changes.intValue
+    val groups = remember(epoch, quickVersion) { Quickmarks.apply(SuitePhoneAppsFragment.parseGroups(), Quickmarks.load(ctx)) }
     var open by remember { mutableStateOf<SuiteOpen?>(null) }
     var phoneOpen by remember { mutableStateOf<OpenFolder?>(null) }
     // Below the fold: produced AFTER the first frame — All Apps is a lot of view construction, and Smart Folders
@@ -563,7 +565,7 @@ private fun AppTile(app: AppInfo) {
         val sz = (GridColumns.iconPx((52 * ctx.resources.displayMetrics.density).toInt(),
             (cell.value * ctx.resources.displayMetrics.density).toInt(), (12 * ctx.resources.displayMetrics.density).toInt(),
             (24 * ctx.resources.displayMetrics.density).toInt()) / ctx.resources.displayMetrics.density).dp
-        if (app.installed) AppIcon(app.icon, sz)
+        if (app.installed) Quickmarks.StarBadge(app.pkg, sz) { AppIcon(app.icon, sz) }
         else Icon(painterResource(R.drawable.ic_app_not_installed), contentDescription = null, tint = p.textSecondary, modifier = Modifier.size(sz))
         Text(app.label, color = if (app.installed) p.textPrimary else p.textSecondary, fontSize = 11.sp, maxLines = 1,
             overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
@@ -652,7 +654,7 @@ private fun SuiteFolderSheet(open: SuiteOpen, onDismiss: () -> Unit) {
                 for (app in row) {
                     val desc = if (app.installed) app.label else stringResource(R.string.phone_app_not_installed_tile_hint, app.label)
                     ExpandedAppTile(SuitePhoneAppsFragment.tileTag("sheet:${app.pkg}"),
-                        if (app.installed) app.label else desc, app.icon, app.installed, cols, iconDp, desc, Modifier.weight(1f),
+                        if (app.installed) app.label else desc, app.icon, app.installed, cols, iconDp, desc, Modifier.weight(1f), starPkg = app.pkg,
                         onClick = {
                             if (app.installed) {
                                 if (!SelfTile.open(ctx, app.pkg)) runCatching {

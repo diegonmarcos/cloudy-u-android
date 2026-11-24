@@ -272,7 +272,7 @@ internal fun FolderSheetCard(label: String, content: @Composable () -> Unit) {
 @Composable
 internal fun ExpandedAppTile(
     tag: String, label: String, icon: Drawable?, installed: Boolean, cols: Int, iconDp: Dp,
-    desc: String?, modifier: Modifier = Modifier, onClick: () -> Unit, onLong: (() -> Unit)?,
+    desc: String?, modifier: Modifier = Modifier, starPkg: String? = null, onClick: () -> Unit, onLong: (() -> Unit)?,
 ) {
     val p = LocalKitPalette.current
     Column(modifier
@@ -281,7 +281,7 @@ internal fun ExpandedAppTile(
         .semantics { if (desc != null) contentDescription = desc }
         .testTag(tag),
         horizontalAlignment = Alignment.CenterHorizontally) {
-        if (installed) AppIcon(icon, iconDp)
+        if (installed) { if (starPkg != null) Quickmarks.StarBadge(starPkg, iconDp) { AppIcon(icon, iconDp) } else AppIcon(icon, iconDp) }
         else Icon(painterResource(R.drawable.ic_app_not_installed), contentDescription = null, tint = p.textSecondary,
             modifier = Modifier.size(iconDp))
         Text(label, color = if (installed) p.textPrimary else p.textSecondary, fontSize = GridColumns.labelSp(cols).sp,
@@ -315,7 +315,7 @@ internal fun PhoneFolderSheet(open: OpenFolder, onDismiss: () -> Unit) {
         for (row in open.apps.chunked(cols)) {
             Row(Modifier.fillMaxWidth()) {
                 for (app in row) {
-                    ExpandedAppTile(appTag(app.packageName), app.label, app.icon, true, cols, iconDp, null, Modifier.weight(1f),
+                    ExpandedAppTile(appTag(app.packageName), app.label, app.icon, true, cols, iconDp, null, Modifier.weight(1f), starPkg = app.packageName,
                         onClick = {
                             Haptics.tap(view)
                             // A launchable app fires normally. A LIBRARY has no launcher component and cannot be

@@ -176,6 +176,18 @@ object AppLongPressMenu {
                 requestUpdate(ctx, fleetApp, resolver, pkg, appLabel)
             }
         }
+        // #1889 one entry, its label decided now: Quickmark Remove for a Quickmark (curated or the user's), else Quickmark Add. The app stays in its Phone folder either way.
+        val isQuick = runCatching { com.diegonmarcos.superapp.apps.Quickmarks.isQuickmark(ctx, pkg) }.getOrDefault(false)
+        configs += Row(com.diegonmarcos.superapp.apps.Quickmarks.label(isQuick)) {
+            close()
+            val app = ctx.applicationContext
+            thread(name = "quickmark-toggle-$pkg") {
+                val now = runCatching { com.diegonmarcos.superapp.apps.Quickmarks.toggle(app, pkg, appLabel) }.getOrNull()
+                Handler(Looper.getMainLooper()).post {
+                    Toast.makeText(app, when (now) { true -> "$appLabel added to Quickmarks"; false -> "$appLabel removed from Quickmarks"; null -> "Could not change Quickmarks" }, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
         out += Section("Configs", configs)
 
         // URLs — every row derived by AppUrls from build.json declarations.
