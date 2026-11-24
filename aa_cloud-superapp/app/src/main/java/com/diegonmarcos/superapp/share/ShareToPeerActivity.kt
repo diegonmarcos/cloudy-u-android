@@ -9,7 +9,8 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
+import com.diegonmarcos.superapp.ui.LauncherPalette
+import com.diegonmarcos.superapp.uikit.CloudKitTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -52,7 +53,7 @@ class ShareToPeerActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(ComposeView(this).apply { setContent { MaterialTheme { Dialog() } } })
+        setContentView(ComposeView(this).apply { setContent { CloudKitTheme(LauncherPalette.kit(this@ShareToPeerActivity)) { Dialog() } } })
         if (savedInstanceState != null) return
         val uris = streams()
         val text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()
