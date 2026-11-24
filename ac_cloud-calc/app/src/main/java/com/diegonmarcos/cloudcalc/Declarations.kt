@@ -104,17 +104,19 @@ object Declarations {
     /** The page the first row's AI button opens (#1893: the AI page is gone; Ask Jev, the app's AI helper, is under Calc). */
     const val ASK_TAB = "ask"
 
-    /** #1893 one node of ui.hierarchy: a group (children) and/or a set of pages (tools, ids of ui.sections[].pages). */
+    /** #1893 one node of ui.sections[home].hierarchy: a group (children) and/or a set of pages (tools, ids of ui.sections[].pages). */
     data class HNode(val id: String, val label: String, val icon: String, val pages: List<String>, val children: List<HNode>) {
         /** Every page of this node and below, in tree order. */
         fun allPages(): List<String> = pages + children.flatMap { it.allPages() }
     }
 
-    /** #1893 THE tool hierarchy (ui.hierarchy): what Home draws and the navigation follows. */
-    val hierarchy: List<HNode> by lazy { parseHierarchy(decode(BuildConfig.UI_HIERARCHY_B64)) }
+    /** #1893 THE tool hierarchy (ui.sections[home].hierarchy.nodes): what Home draws and the navigation follows. */
+    val hierarchy: List<HNode> by lazy { hierarchyIn(decode(BuildConfig.UI_SECTIONS_B64)) }
 
-    /** [json] is ui.hierarchy.nodes. */
-    fun parseHierarchy(json: String): List<HNode> = JSONArray(json).objects().map(::hnode)
+    /** [sections] is ui.sections' JSON; the tree is the `home` section's `hierarchy.nodes`. */
+    fun hierarchyIn(sections: String): List<HNode> =
+        JSONArray(sections).objects().firstOrNull { it.optString("id") == "home" }
+            ?.optJSONObject("hierarchy")?.optJSONArray("nodes")?.objects()?.map(::hnode).orEmpty()
     private fun hnode(o: JSONObject): HNode = HNode(
         o.getString("id"), o.getString("label"), o.optString("icon"),
         (o.optJSONArray("pages") ?: JSONArray()).let { a -> (0 until a.length()).map { a.getString(it) } },

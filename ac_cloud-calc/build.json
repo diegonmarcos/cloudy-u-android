@@ -2195,24 +2195,6 @@
     "bottom_nav": ["calculator", "sheet", "home", "measure", "toolkit"],
     "default_section": "calculator",
     "configs_ui": ["nav_ui"],
-    "hierarchy": {
-      "_doc": "#1893 THE tool hierarchy, the tree Home draws and the navigation follows: 1 Calculations (Calc, Sheet), 2 Toolkit (Measure with Sound, Camera, Wireless, Sensors; Tools). A node with `pages` lists ui.sections[].pages ids (a tool each); `section` names the ui.sections entry that holds them. Every page of every section except Home and Configs is listed exactly once (DeclarationsTest). Ask Jev, not named by the order, sits under Calc (the closest parent).",
-      "nodes": [
-        {"id": "calculations", "label": "Calculations", "icon": "calculate", "children": [
-          {"id": "calc", "label": "Calc", "icon": "calculate", "section": "calculator", "pages": ["calc", "latex", "convert", "history", "datetime", "sound", "finance", "graph", "ask"]},
-          {"id": "sheet", "label": "Sheet", "icon": "table_chart", "section": "sheet", "pages": ["sheet"]}
-        ]},
-        {"id": "toolkit", "label": "Toolkit", "icon": "build", "children": [
-          {"id": "measure", "label": "Measure", "icon": "speed", "section": "measure", "children": [
-            {"id": "measure_sound", "label": "Sound", "icon": "mic", "pages": ["sensors"]},
-            {"id": "measure_camera", "label": "Camera", "icon": "camera", "pages": ["camera"]},
-            {"id": "measure_wireless", "label": "Wireless", "icon": "wifi", "pages": ["wifi", "bluetooth", "nfc", "lfrfid"]},
-            {"id": "measure_sensors", "label": "Sensors", "icon": "sensors", "pages": ["phone"]}
-          ]},
-          {"id": "tools", "label": "Tools", "icon": "build", "section": "toolkit", "pages": ["light", "recorder", "tracker", "clock"]}
-        ]}
-      ]
-    },
     "sections": [
       {
         "id": "calculator",
@@ -2252,6 +2234,24 @@
         "id": "home",
         "label": "Home",
         "icon": "home",
+        "hierarchy": {
+          "_doc": "#1893 THE tool hierarchy, the tree Home draws and the navigation follows: 1 Calculations (Calc, Sheet), 2 Toolkit (Measure with Sound, Camera, Wireless, Sensors; Tools). A node with `pages` lists ui.sections[].pages ids (a tool each); `section` names the ui.sections entry that holds them. Every page of every section except Home and Configs is listed exactly once (DeclarationsTest). Ask Jev, not named by the order, sits under Calc (the closest parent).",
+          "nodes": [
+            {"id": "calculations", "label": "Calculations", "icon": "calculate", "children": [
+              {"id": "calc", "label": "Calc", "icon": "calculate", "section": "calculator", "pages": ["calc", "latex", "convert", "history", "datetime", "sound", "finance", "graph", "ask"]},
+              {"id": "sheet", "label": "Sheet", "icon": "table_chart", "section": "sheet", "pages": ["sheet"]}
+            ]},
+            {"id": "toolkit", "label": "Toolkit", "icon": "build", "children": [
+              {"id": "measure", "label": "Measure", "icon": "speed", "section": "measure", "children": [
+                {"id": "measure_sound", "label": "Sound", "icon": "mic", "pages": ["sensors"]},
+                {"id": "measure_camera", "label": "Camera", "icon": "camera", "pages": ["camera"]},
+                {"id": "measure_wireless", "label": "Wireless", "icon": "wifi", "pages": ["wifi", "bluetooth", "nfc", "lfrfid"]},
+                {"id": "measure_sensors", "label": "Sensors", "icon": "sensors", "pages": ["phone"]}
+              ]},
+              {"id": "tools", "label": "Tools", "icon": "build", "section": "toolkit", "pages": ["light", "recorder", "tracker", "clock"]}
+            ]}
+          ]
+        },
         "pages": [
           {
             "id": "home",
@@ -5148,7 +5148,7 @@
         "label": "Home",
         "tab": "home",
         "kind": "home",
-        "_doc": "#1893 Home: every tool of the app as an icon tile, in the sections of ui.hierarchy, drawn by libs:tile-grid (the component Cloud SuperApp's Cloud page uses). It replaced the AI page (owner order); the Ask Jev page stays, under Calc."
+        "_doc": "#1893 Home: every tool of the app as an icon tile, in the sections of ui.sections[home].hierarchy, drawn by libs:tile-grid (the component Cloud SuperApp's Cloud page uses). It replaced the AI page (owner order); the Ask Jev page stays, under Calc."
       },
       {
         "id": "jev",

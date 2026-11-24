@@ -22,7 +22,7 @@ import com.diegonmarcos.superapp.uikit.KitPalette
 private const val HOME_COLUMNS = 4
 
 /**
- * #1893 Home (it took the AI page's slot): every tool of the app as an icon tile, in the sections of build.json::ui.hierarchy
+ * #1893 Home (it took the AI page's slot): every tool of the app as an icon tile, in the sections of build.json::ui.sections[home].hierarchy
  * (1 Calculations, 2 Toolkit; their groups as sub-headings), drawn by libs:tile-grid, the very component Cloud SuperApp's Cloud page
  * uses. A tile opens its page through the section it belongs to.
  */

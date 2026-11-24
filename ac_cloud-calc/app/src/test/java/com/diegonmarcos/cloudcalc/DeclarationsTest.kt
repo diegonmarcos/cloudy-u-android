@@ -212,7 +212,7 @@ class DeclarationsTest {
 
     // ── #1893 Home and the hierarchy ──────────────────────────────────────────
 
-    private val hier = Declarations.parseHierarchy(undoc(ui.getJSONObject("hierarchy").getJSONArray("nodes")).toString())
+    private val hier = Declarations.hierarchyIn(undoc(ui.getJSONArray("sections")).toString())
 
     /** The page set of the app before #1893 (ui.sections of the previous build.json), AI being the one page the owner ordered deleted. */
     private val pagesBefore = listOf(
