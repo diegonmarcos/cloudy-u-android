@@ -38,7 +38,7 @@ def parse(f):
         hosts=set(re.findall(r'android:host="([^"]+)"', f)),
         pats=re.findall(r'android:pathPattern="([^"]+)"', f),
     )
-fs = [parse(f) for f in filters]
+fs = [p for p in map(parse, filters) if not ({"SEND", "SEND_MULTIPLE"} & p["actions"])]  # #1888 the share filters are asserted by the share-sheet guard
 text = [f for f in fs if "text/plain" in f["mimes"]]
 check(len(text) == 1, "one MIME filter carries the #1642 text types (text/plain)")
 t = text[0] if text else dict(actions=set(), cats=set(), schemes=set(), mimes=set(), pats=[], hosts=set())
