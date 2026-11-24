@@ -312,6 +312,7 @@ internal fun BadgeCard(d: BadgeCardData.Data) {
                 overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
         }
         if (d.badge.card.kind == "media") MediaHubLine(d.badge.id)
+        d.idle?.let { IdleMediaRow(d.badge.id, it, hostView) }
         // #1734 the Weather badge's expanded view also carries the day timelines (the same composable the date dropdown draws).
         if (d.badge.id == com.diegonmarcos.superapp.notificationcenter.WeatherBadgeService.BADGE_ID)
             com.diegonmarcos.superapp.daytimelines.DayTimelinesCard(Modifier.padding(top = 10.dp), NotifCard.title, NotifCard.meta)
@@ -447,6 +448,26 @@ private fun MediaHubLine(id: String) {
     if (text.isNotBlank()) Text(text, color = NotifCard.meta, fontSize = NotifCard.metaSp, fontFamily = NotifCard.font,
         maxLines = 1, overflow = TextOverflow.Ellipsis,
         modifier = Modifier.padding(top = 6.dp).testTag(BadgeCardTags.mediaHub(id)))
+}
+
+/** #1894 the idle Media badge: the buds status line and the three buttons (Buds, Player, Play last). */
+@Composable
+private fun IdleMediaRow(id: String, m: com.diegonmarcos.superapp.media.IdleMediaBadge.Model, hostView: android.view.View) {
+    val ctx = LocalContext.current
+    Text(com.diegonmarcos.superapp.media.IdleMediaBadge.budsLine(m.buds), color = NotifCard.meta, fontSize = NotifCard.metaSp,
+        fontFamily = NotifCard.font, maxLines = 1, overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.padding(top = 6.dp).testTag("badge-idle-buds:$id"))
+    Row(Modifier.fillMaxWidth().padding(top = 10.dp).testTag("badge-idle-actions:$id"), horizontalArrangement = Arrangement.SpaceEvenly) {
+        for (b in m.buttons) {
+            val label = com.diegonmarcos.superapp.media.IdleMediaBadge.label(b)
+            val on = b != com.diegonmarcos.superapp.media.IdleMediaBadge.Button.PLAY_LAST || m.playEnabled
+            Text(label, color = NotifCard.title, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font, maxLines = 1,
+                modifier = Modifier.weight(1f).clip(RoundedCornerShape(14.dp)).background(NotifCard.pill)
+                    .semantics { role = Role.Button; contentDescription = label }
+                    .clickable(enabled = on) { Haptics.tap(hostView); com.diegonmarcos.superapp.media.IdleMediaBadge.run(ctx, m, b) }
+                    .padding(horizontal = 8.dp, vertical = 10.dp).testTag("badge-idle:$id:$label"))
+        }
+    }
 }
 
 /** #1672 the fold control at the end of a card's header: a chevron in a circle, like the notification groups'. */

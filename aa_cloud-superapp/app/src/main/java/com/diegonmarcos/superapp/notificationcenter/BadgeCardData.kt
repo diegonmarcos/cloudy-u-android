@@ -40,6 +40,8 @@ object BadgeCardData {
         val subText: String = "",
         /** #1603 Samsung-UI media card: the album art the media notification carries as its large icon, else null. */
         val albumArt: android.graphics.Bitmap? = null,
+        /** #1894 the Media badge while nothing plays: buds status, the three buttons and the last track; null while playing (the badge is then as before). */
+        val idle: com.diegonmarcos.superapp.media.IdleMediaBadge.Model? = null,
     )
 
     /** Test seam: a JVM/Robolectric render has no running services, so it supplies the data a phone would have. */
@@ -97,9 +99,17 @@ object BadgeCardData {
             }
             // #1603 Samsung-UI media card: track as the headline, artist/album under it, the transport progress, and the
             // album art the notification posted as its large icon (the renderer draws it dimmed behind the card).
-            "media" -> data(title.ifBlank { b.label }, text, postedProgress, extraLines).copy(albumArt = mediaArt(ctx, n))
+            "media" -> data(title.ifBlank { b.label }, text, postedProgress, extraLines).copy(albumArt = mediaArt(ctx, n)).let { d ->
+                if (live) d else idleMedia(ctx, d)
+            }
             else -> data(title.ifBlank { b.label }, text, postedProgress, extraLines)
         }
+    }
+
+    /** #1894 not playing: the card keeps showing, with the last track (persisted), the buds status and the three buttons. */
+    internal fun idleMedia(ctx: Context, d: Data): Data {
+        val m = runCatching { com.diegonmarcos.superapp.media.IdleMediaBadge.read(ctx) }.getOrNull() ?: return d
+        return d.copy(headline = m.headline, sub = m.sub, albumArt = m.art, idle = m, note = "")
     }
 
     /** The album art a media notification carries as its large icon, as a Bitmap; null if it has none or it cannot be

@@ -172,6 +172,8 @@ class NowPlayingMonitor(
                 ?: it.getString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE)
         }?.takeIf { it.isNotBlank() }
         currentController = playing
+        // #1894 every change while playing is persisted (package, track, position, art, time) for the idle Media badge
+        if (playing != null) runCatching { LastMediaSession.save(ctx, playing) }
         // Controllable session for the popup: the playing one, else the most
         // recently listed session so a PAUSED player is still reachable.
         // #1635: the same rule the Notify Media badge uses (MediaHub.pickTarget): the user-picked session, else the

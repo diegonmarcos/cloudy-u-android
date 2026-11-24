@@ -21,7 +21,7 @@ object LastMediaSession {
     private const val ART = "last_media_art.png"
     private const val ART_MAX_PX = 512
 
-    data class Last(val pkg: String, val title: String, val artist: String, val positionMs: Long, val durationMs: Long, val art: Bitmap?) {
+    data class Last(val pkg: String, val title: String, val artist: String, val positionMs: Long, val durationMs: Long, val art: Bitmap?, val savedAt: Long = 0L) {
         val fraction: Float get() = if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
     }
 
@@ -52,12 +52,17 @@ object LastMediaSession {
         val artist = (md.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: md.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST)).orEmpty()
         val st = c.playbackState
         val pos = st?.let { positionAt(it.position, it.lastPositionUpdateTime, it.playbackSpeed, it.state == PlaybackState.STATE_PLAYING, SystemClock.elapsedRealtime()) } ?: 0L
-        val sp = p(ctx)
-        val sameTrack = sp.getString("pkg", null) == c.packageName && sp.getString("title", null) == title
-        sp.edit().putString("pkg", c.packageName).putString("title", title).putString("artist", artist)
-            .putLong("pos", pos.coerceAtLeast(0)).putLong("dur", md.getLong(MediaMetadata.METADATA_KEY_DURATION)).apply()
         val art = md.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART) ?: md.getBitmap(MediaMetadata.METADATA_KEY_ART)
             ?: md.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON)
+        write(ctx, c.packageName, title, artist, pos, md.getLong(MediaMetadata.METADATA_KEY_DURATION), art, System.currentTimeMillis())
+    }
+
+    /** #1894 the one writer: package, track, position, art and the time of the write, kept on every change while playing so the idle badge can show them after the player or this app is killed or the phone reboots. */
+    fun write(ctx: Context, pkg: String, title: String, artist: String, pos: Long, dur: Long, art: Bitmap?, nowMs: Long) {
+        val sp = p(ctx)
+        val sameTrack = sp.getString("pkg", null) == pkg && sp.getString("title", null) == title
+        sp.edit().putString("pkg", pkg).putString("title", title).putString("artist", artist)
+            .putLong("pos", pos.coerceAtLeast(0)).putLong("dur", dur).putLong("at", nowMs).commit()
         if (art != null && (!sameTrack || !artFile(ctx).exists())) writeArt(ctx, art)
         else if (art == null && !sameTrack) artFile(ctx).delete()
     }
@@ -69,7 +74,7 @@ object LastMediaSession {
         if (!isHeldSource(pkg)) { runCatching { sp.edit().clear().apply(); artFile(ctx).delete() }; return null }
         val title = sp.getString("title", null) ?: return null
         val art = runCatching { artFile(ctx).takeIf { it.exists() }?.let { BitmapFactory.decodeFile(it.path) } }.getOrNull()
-        return Last(pkg, title, sp.getString("artist", "").orEmpty(), sp.getLong("pos", 0), sp.getLong("dur", 0), art)
+        return Last(pkg, title, sp.getString("artist", "").orEmpty(), sp.getLong("pos", 0), sp.getLong("dur", 0), art, sp.getLong("at", 0))
     }
 
     /** Play again: the app's live session if it has one, else a MEDIA_PLAY button event to its package, else launch it. */
