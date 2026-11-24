@@ -40,7 +40,7 @@ class BrowserCoreWiredUiTest {
     // ── history sort ─────────────────────────────────────────────────────────────────────────────────────────────────
     @Test fun `history has sort buttons that drive the core's query`() {
         val host = src("BrowserHostFragment.kt")
-        assertTrue(host.contains("history.query(q, sort)"))
+        assertTrue(host.contains("history.query(\"\", sort)") && host.contains("BrowserListFilter.visits(q"))
         for (k in listOf("recent", "oldest", "frecency", "title", "host")) assertTrue(k, host.contains("\"$k\" to"))
     }
 

@@ -1351,7 +1351,10 @@ class BrowserHostFragment : Fragment() {
         overlay { close ->
             var q by remember { mutableStateOf("") }
             var sort by remember { mutableStateOf("recent") }   // #1841 the core's history_query sort
-            val visits = remember(q, sort) { if (all.isEmpty()) all else history.query(q, sort) }
+            val visits = remember(q, sort) {
+                val hit = BrowserListFilter.visits(q, all).map { it.url }.toSet()   // the list filter picks, the core's history_query orders
+                if (all.isEmpty()) all else history.query("", sort).filter { it.url in hit }
+            }
             Column(Modifier.fillMaxSize()) {
             SearchFilterField(q) { q = it }
             androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag("browser:history:sort")) {
