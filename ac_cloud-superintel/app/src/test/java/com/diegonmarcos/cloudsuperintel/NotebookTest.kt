@@ -106,7 +106,9 @@ class NotebookTest {
 
     /** #1547 the notebook is served, never an APK asset: what it uses while the dataset loads is the served file's grounding and refusal, field for field (retrieval stays BM25 only until the served copy brings the semantic knobs). */
     @Test fun theDefaultConfigHoldsTheServedGroundingAndRefusal() {
-        assertEquals(cfg.copy(semantic = null), NotebookConfig.DEFAULT)
+        // the generators come out of a JSON object, whose key order is the JVM's, so they are compared by id
+        assertEquals(cfg.generators.sortedBy { it.id }, NotebookConfig.DEFAULT.generators.sortedBy { it.id })
+        assertEquals(cfg.copy(semantic = null, generators = NotebookConfig.DEFAULT.generators), NotebookConfig.DEFAULT)
         assertTrue(NotebookConfig.DEFAULT.groundingSystem.contains(NotebookConfig.DEFAULT.refusal))
         assertEquals(cfg.refusal, Notebook.answer("What is the capital of France?", sources, NotebookConfig.DEFAULT) { _, _ -> error("model called") }.answer)
     }
