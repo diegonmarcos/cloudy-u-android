@@ -46,10 +46,10 @@ abstract class FetchRcloneBinaries extends DefaultTask {
         // "Could not find method fetchPinned() … of type FetchRcloneBinaries").
         for (entryAbi in pinJson.binaries.entrySet()) {
             def abi = entryAbi.key; def pin = entryAbi.value
-            def url = pinJson.url_template.replace('{version}', pinJson.version).replace('{arch}', pin.arch)
+            def url = pin.url ?: pinJson.url_template.replace('{version}', pinJson.version).replace('{arch}', pin.arch)
             def zip = new File(cache, "rclone-${pinJson.version}-${pin.arch}.zip")
             fetchPinned(url, zip, pin.zip_sha256)
-            def entry = pinJson.entry_template.replace('{version}', pinJson.version).replace('{arch}', pin.arch)
+            def entry = pin.entry ?: pinJson.entry_template.replace('{version}', pinJson.version).replace('{arch}', pin.arch)
             def staged = new File(out, "${abi}/${pinJson.jni_name}")
             staged.parentFile.mkdirs()
             def zf = new java.util.zip.ZipFile(zip)

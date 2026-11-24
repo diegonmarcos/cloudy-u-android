@@ -2,6 +2,7 @@
  "_doc": "THE ONE PIN of the Unison binary the sync engines ship (#1084). Cloud Drive's Unison engine is the stateful two-way folder-pair sync that sits next to rclone (cloud/API remotes) and rsync (one-way backup). The binary lives in Cloud-Lib-Rclone-Engine.apk beside librclone.so, as libunison.so, for the reason rclone-binary.json::_doc gives (API 29+ execs only what the installer extracted into nativeLibraryDir). build.gradle (FetchUnisonBinaries) downloads each ABI's tarball ONCE, refuses on a sha256 mismatch of the tarball AND of the extracted binary, and refuses a binary carrying PT_INTERP. Nothing is downloaded at runtime.",
  "_doc_one_version": "ONE exact Unison version and ONE OCaml build, the same on EVERY peer. Unison refuses a client and a server whose versions differ (and an archive written by another version is not trusted), so the phone, the desktop home-manager and every fleet host must run the same release. `version` and `ocaml` here are the single declaration; each peer in `peers` declares its own copy in its own repository and ab_cloud-libs-shared/lib-apks/test/test-unison-pin.sh fails when any copy differs, when a peer file cannot be read, or when a peer is not listed. `ocaml` is what `unison -version` prints in brackets; the build workflow and the guard both read it.",
  "_doc_arm64": "Upstream publishes a static linux build for x86_64 only (an arm64 glibc build would carry PT_INTERP and cannot run under bionic). The arm64 binary is therefore built from the upstream source tag v{version} on Alpine (musl, fully static) by .github/workflows/build-unison-static.yml and published as an immutable release asset of this repository; the tarball's sha256 below pins it, and the workflow fails when the OCaml it finds is not `ocaml`.",
+ "_doc_x86_64_16k": "#1881 The x86_64 binary is also built here now (origin built): the upstream x86_64 static build is linked with 4 KB pages and fails the 16 KB page-size policy. .github/workflows/build-engines-16k.yml builds the same tag with the same OCaml on Alpine musl, static, -Wl,-z,max-page-size=16384, checks every PT_LOAD p_align and publishes the asset on the immutable release engines-16k-r1.",
  "_doc_transport": "Unison reaches a peer over SSH on the WireGuard mesh by `<host>.app` names. An Android app has no ssh binary it may exec, so the engine opens the SSH session in-process (sshj, the library the mounts engine already ships), runs `unison -server` on the peer through it and bridges that channel to a loopback socket; the profile's second root is socket://127.0.0.1:<port>/<path>. Host keys are trusted on first use and refused when they change.",
  "version": "2.53.8",
  "ocaml": "4.14.2",
@@ -18,12 +19,12 @@
    "binary_bytes": 3178496
   },
   "x86_64": {
-   "origin": "upstream",
-   "url": "https://github.com/bcpierce00/unison/releases/download/v2.53.8/unison-2.53.8-ubuntu-22.04-x86_64-static.tar.gz",
-   "dir": "unison-2.53.8-ubuntu-22.04-x86_64-static",
-   "tar_sha256": "bea4d8a8af15f8867ffe5de90b464b9438ae8190057eb8746c1d71e64be99d9e",
-   "binary_sha256": "75af29760ae71f99342c97d7e16ca8c9714163548a3d60ea2f7aa86bc441da22",
-   "binary_bytes": 3212720
+   "origin": "built",
+   "url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/engines-16k-r1/unison-2.53.8-linux-x86_64-musl-static-16k.tar.gz",
+   "dir": "unison-2.53.8-linux-x86_64-musl-static-16k",
+   "tar_sha256": "4f701b8d02f0e65d8379cfc2f5903af82fd3d489a23e4d7b6728887948cd608c",
+   "binary_sha256": "d2d56b4fb348c0983061bb07be4084baea011792601032343f0dab573d8a08ee",
+   "binary_bytes": 3064120
   }
  },
  "peers": [

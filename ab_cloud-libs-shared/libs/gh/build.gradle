@@ -79,10 +79,10 @@ abstract class FetchGhBinaries extends DefaultTask {
         // task, and a closure inside it cannot see the class's own helpers.
         for (entryAbi in pinJson.binaries.entrySet()) {
             def abi = entryAbi.key; def pin = entryAbi.value
-            def url = pinJson.url_template.replace('{version}', pinJson.version).replace('{arch}', pin.arch)
+            def url = pin.url ?: pinJson.url_template.replace('{version}', pinJson.version).replace('{arch}', pin.arch)
             def tar = new File(cache, "gh-${pinJson.version}-${pin.arch}.tar.gz")
             fetchPinned(url, tar, pin.tar_sha256)
-            def entry = pinJson.entry_template.replace('{version}', pinJson.version).replace('{arch}', pin.arch)
+            def entry = pin.entry ?: pinJson.entry_template.replace('{version}', pinJson.version).replace('{arch}', pin.arch)
             def staged = new File(out, "${abi}/${pinJson.jni_name}")
             staged.parentFile.mkdirs()
             extract(tar, entry, staged)

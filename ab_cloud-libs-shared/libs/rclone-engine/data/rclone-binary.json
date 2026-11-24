@@ -16,11 +16,17 @@
     },
     "x86_64": {
       "arch": "amd64",
-      "zip_sha256": "982b5aa772841168f8e380f139e9e787b2a105403e32b94da8676a0e1c0a13ab",
-      "binary_sha256": "f66d8c1d552ad90296a11bc8b46d56a7fa5da1a7fa05e7ca522d95df92c4a4c0",
-      "binary_bytes": 85360802
+      "origin": "built",
+      "source_tag": "v1.75.1",
+      "source_commit": "687d264b689b8c49a67e2e52a8a5e0caa01c04ce",
+      "url": "https://github.com/diegonmarcos/cloudy-u-android/releases/download/engines-16k-r1/rclone-v1.75.1-linux-amd64-16k.zip",
+      "entry": "rclone-v1.75.1-linux-amd64-16k/rclone",
+      "zip_sha256": "febb940a8a9a37f8d3792504a963cefbf3757d4c27ca07bac17d856e735d14b2",
+      "binary_sha256": "786a7d67f1b41566c426b1289aab4b3af73b6a2f94e7b51e8b6edf2c152653df",
+      "binary_bytes": 85278882
     }
   },
+  "_doc_x86_64_16k": "#1881 The x86_64 binary is NOT the upstream release (4 KB-linked, fails the 16 KB page-size policy). It is built from the upstream source tag source_tag (commit source_commit) by .github/workflows/build-engines-16k.yml (CGO off, static, go linker -R=16384, every PT_LOAD p_align 0x4000 checked in that job) and published as an asset of the immutable release engines-16k-r1; url and entry override the url_template and entry_template for this ABI. arm64 stays the upstream release.",
   "_doc_sandbox": "#741 WHAT THE APP SANDBOX DOES NOT GIVE rclone, the same two gaps libs:gh's pin measured for gh (gh-binary.json::_doc_sandbox): this is a linux Go build with cgo off, so its resolver reads an /etc/resolv.conf an app does not have and asks 127.0.0.1:53, where nothing answers, and crypto/x509 finds no CA roots. RcloneExec hands every rclone child libs:sysdns's ResolverProxy as HTTPS_PROXY (the name is resolved by Android's resolver, so by whatever the SuperApp's Configs > Mesh > DNS applies) and Android's CA stores as SSL_CERT_DIR. Unlike gh, any host and any port: the remotes are the user's. idle_close_ms is 0, never cut for quiet: gh's 3s rule exists for a 6s token poll on one kept-alive connection, and on rclone it would cut a download whose server pauses mid-body; a dead kept-alive connection costs rclone a retry (--low-level-retries), not the transfer. KNOWN LIMIT: only HTTPS goes through the proxy. A plain-http remote named by host name, or an sftp/ftp remote, still has no resolver and fails its lookup (it never reaches a different DNS server); remotes named by IP are unaffected.",
   "sandbox": {
     "idle_close_ms": 0
