@@ -320,6 +320,16 @@
     "db_engine": null
   },
   {
+    "name": "c3bot-relay-go",
+    "service": "c3bot-relay-go",
+    "vm": "oci-A1-f_0",
+    "private_dns": "c3bot-relay-go:3129",
+    "port": 3129,
+    "protocol": "http",
+    "category": "sec",
+    "db_engine": null
+  },
+  {
     "name": "disk-janitor",
     "service": "disk-janitor",
     "vm": "oci-A1-f_0",
@@ -435,6 +445,16 @@
     "vm": "gcp-E2-f_0",
     "private_dns": "introspect-proxy.mesh.diegonmarcos.com:4182",
     "port": 4182,
+    "protocol": "http",
+    "category": "sec",
+    "db_engine": null
+  },
+  {
+    "name": "introspect-proxy-go",
+    "service": "introspect-proxy-go",
+    "vm": "gcp-E2-f_0",
+    "private_dns": "introspect-proxy-go:4186",
+    "port": 4186,
     "protocol": "http",
     "category": "sec",
     "db_engine": null
