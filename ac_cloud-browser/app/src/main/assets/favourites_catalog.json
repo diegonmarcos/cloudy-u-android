@@ -305,6 +305,11 @@
       "group": "Cloudy Private/Observability"
     },
     {
+      "name": "c3bot-relay-go",
+      "url": "http://c3bot-relay-go:3129",
+      "group": "Cloudy Private/Other"
+    },
+    {
       "name": "caddy-public",
       "url": "http://caddy-public.mesh.diegonmarcos.com:443",
       "group": "Cloudy Private/Other"
@@ -402,6 +407,11 @@
     {
       "name": "cloudy-cgc-pub-graph-api",
       "url": "http://cloudy-cgc-pub-graph-api:8002",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "introspect-proxy-go",
+      "url": "http://introspect-proxy-go:4186",
       "group": "Cloudy Private/Other"
     },
     {
