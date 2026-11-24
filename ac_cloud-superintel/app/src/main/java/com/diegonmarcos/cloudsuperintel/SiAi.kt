@@ -21,35 +21,55 @@ import org.json.JSONObject
 import java.io.File
 
 /**
- * The chats of the process: one libs:ai chat per persona (assets/si/personas.json), all over the fleet agent gateway
+ * The chats of the process: one libs:ai chat per persona (the served personas dataset), all over the fleet agent gateway
  * (my-ai-api, mesh only; its address is BuildConfig.AI_GATEWAY_URL, baked from the fleet catalogue) and all in ONE
  * sessions file, `<filesDir>/ai-sessions.json`. A persona's system prompt rides every request but is never stored. No
  * token is held or read here (decisions-use guard D5): the gateway holds the fleet keys, and picks Claude, Hermes,
  * Goose, OpenClaw or an OpenRouter model by the agent the page picked.
  */
 object SiAi {
-    private var personas: List<Persona>? = null
+    private var served: Personas.Served? = null
     private val chats = HashMap<String, AiChatState>()
+    private val chatSystems = HashMap<String, String>()   // the system prompt each live chat was built with
     private val tuned = HashSet<String>()
 
-    @Synchronized fun personas(ctx: Context): List<Persona> =
-        personas ?: Personas.parse(ctx.assets.open(Personas.ASSET).bufferedReader().use { it.readText() }).also { personas = it }
+    /** The served personas (#1547, a few ms from the provider's file), else [Personas.DEFAULT] (the SI router alone) while nothing is served. */
+    @Synchronized private fun current(ctx: Context): Personas.Served =
+        served ?: Personas.read(ctx.applicationContext)?.also { served = it } ?: Personas.Served(Personas.DEFAULT, Personas.DEFAULT_ID)
 
-    @Synchronized fun defaultId(ctx: Context): String =
-        JSONObject(ctx.assets.open(Personas.ASSET).bufferedReader().use { it.readText() }).getString("default")
+    @Synchronized fun personas(ctx: Context): List<Persona> = current(ctx).personas
+
+    @Synchronized fun defaultId(ctx: Context): String = current(ctx).default
+
+    /**
+     * Follows the served dataset: emits each time a (new) valid copy arrives. A live chat whose system prompt the new personas change is
+     * dropped (its sessions are in the file; the draft is kept) and rebuilt on the next use, so the router the default built is replaced.
+     */
+    fun observe(ctx: Context): kotlinx.coroutines.flow.Flow<Unit> =
+        kotlinx.coroutines.flow.flow { Personas.observe(ctx.applicationContext).collect { s -> if (s != null) { adopt(s); emit(Unit) } } }
+
+    @Synchronized private fun adopt(s: Personas.Served) {
+        served = s
+        for (p in s.personas) {
+            val old = chats[p.id] ?: continue
+            if (chatSystems[p.id] != Personas.system(p, s.personas)) { drafts[p.id] = old.draft; chats.remove(p.id); chatSystems.remove(p.id); tuned.remove(p.id) }
+        }
+    }
+    private val drafts = HashMap<String, String>()
 
     /** The persona's chat; the router (SI) is the default. */
     @Synchronized fun chat(ctx: Context, persona: String? = null): AiChatState {
         val all = personas(ctx)
         val p = all.firstOrNull { it.id == (persona ?: defaultId(ctx)) } ?: all.first()
         return chats.getOrPut(p.id) {
+            chatSystems[p.id] = Personas.system(p, all)
             val app = ctx.applicationContext
             val cfg = AiConfig.load(app)
             AiChatState(AiStandardHost(
                 cfg, store(app), AiMemoryPrefs(cfg.defaultModel, p.web, p.agent),
                 gateway = AiGatewayBackend(cfg, BuildConfig.AI_GATEWAY_URL), agents = AiAgents.load(app),
                 system = Personas.system(p, all), design = AiDesign.load(app), media = media(app, cfg),
-            )).also { it.chooseMcps(p.mcps.toSet()) }
+            )).also { it.chooseMcps(p.mcps.toSet()); drafts.remove(p.id)?.let { d -> it.draft = d } }
         }
     }
 

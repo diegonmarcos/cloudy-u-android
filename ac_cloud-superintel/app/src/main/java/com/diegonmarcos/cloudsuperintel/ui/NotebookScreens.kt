@@ -65,7 +65,8 @@ object NotebookTags {
 /** The notebooks of the process, in `<filesDir>/notebooks.json`; the open one is [selected]. */
 class NotebookModel(ctx: Context) {
     private val store = NotebookStore(File(ctx.applicationContext.filesDir, "notebooks.json"))
-    val cfg: NotebookConfig = NotebookConfig.parse(ctx.assets.open(NotebookConfig.ASSET).bufferedReader().use { it.readText() })
+    /** The served notebook config (#1547); [NotebookConfig.DEFAULT] while it loads or is not served, replaced when it arrives ([SiShell] collects [NotebookConfig.observe] into it). */
+    var cfg by mutableStateOf(NotebookConfig.DEFAULT)
     var docs by mutableStateOf(store.all())
         private set
     var selected by mutableStateOf<String?>(null)

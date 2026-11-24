@@ -118,7 +118,7 @@ class AskAiActivity : ComponentActivity() {
             total += a.bytes
             val kind = AskAi.route(a.mime)
             if (kind == AskAi.Kind.PDF) {
-                val cfg = NotebookConfig.parse(app.assets.open(NotebookConfig.ASSET).bufferedReader().use { it.readText() })
+                val cfg = NotebookConfig.current(app)
                 val t = FleetRank.shared(cfg)?.pdfText(a.file.readBytes())?.take(AskAi.MAX_TEXT)
                 if (t != null) {
                     val f = File(a.file.parentFile, a.file.nameWithoutExtension + ".txt").also { it.writeText(t) }

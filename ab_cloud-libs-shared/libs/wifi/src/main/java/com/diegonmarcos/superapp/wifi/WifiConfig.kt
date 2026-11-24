@@ -4,7 +4,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * What a host injects (#1263): a JSON object deep-merged over assets/wifi/wifi-config.json. The SuperApp passes build.json
+ * What a host injects (#1263): a JSON object deep-merged over the served `wifi-config` dataset (#1547; the parse defaults while it is not served). The SuperApp passes build.json
  * `wifi_analyzer` (baked into BuildConfig); Cloud Calc passes its own. The lib knows no host.
  */
 data class WifiHostConfig(val overridesJson: String = "{}", val appLabel: String = "")

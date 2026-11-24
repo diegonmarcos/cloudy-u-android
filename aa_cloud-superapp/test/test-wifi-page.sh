@@ -28,15 +28,16 @@ KT="$APP/app/src/main/java/com/diegonmarcos/superapp"
 LIB="$ROOT/ab_cloud-libs-shared/libs/wifi"
 LK="$LIB/src/main/java/com/diegonmarcos/superapp/wifi"
 LA="$LIB/src/main/assets/wifi"
+FL="$ROOT/data/fleet"   # #1547 the analyzer defaults are the served shared dataset wifi-config, not a lib asset
 PK="$ROOT/data/fleet/packs"   # #1547 the OUI table is a downloadable pack, no longer a lib asset
 for f in "$BJ" "$KT/configs/WifiFragment.kt" "$KT/launcher/SectionPages.kt" "$LIB/build.gradle" "$LIB/src/main/AndroidManifest.xml" "$LK/WifiUi.kt" \
-         "$LK/WifiTabs.kt" "$PK/wifi-oui.tsv" "$PK/wifi-oui.json" "$LA/channel-plans.json" "$LA/wifi-config.json" "$LIB/src/main/res/values/strings.xml" "$LIB/src/main/res/values-es/strings.xml"; do
+         "$LK/WifiTabs.kt" "$PK/wifi-oui.tsv" "$PK/wifi-oui.json" "$LA/channel-plans.json" "$FL/wifi-config.json" "$LIB/src/main/res/values/strings.xml" "$LIB/src/main/res/values-es/strings.xml"; do
   [ -f "$f" ] || { echo "  ABORT: no such file: $f"; exit 2; }
 done
 command -v python3 >/dev/null 2>&1 || { echo "  ABORT: python3 missing"; exit 2; }
 
 echo "== W1: the page, its place and its five tabs =="
-check "$(python3 - "$BJ" "$LA/wifi-config.json" <<'PY'
+check "$(python3 - "$BJ" "$FL/wifi-config.json" <<'PY'
 import json, sys
 sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
 pages = sec['pages']; by = {p['id']: p for p in pages}
@@ -113,7 +114,7 @@ for w in 'startScan' 'isScanThrottleEnabled' 'is80211mcResponder' 'is80211azNtbR
 done
 
 echo "== W4: the vocabulary is data =="
-check "$(python3 - "$LA" "$BJ" "$PK" <<'PY'
+check "$(python3 - "$LA" "$BJ" "$PK" "$FL" <<'PY'
 import json, re, sys
 d = sys.argv[1]; probs = []
 keys = [l[:6] for l in open(sys.argv[3] + '/wifi-oui.tsv', encoding='utf-8') if l and l[0] != '#']
@@ -131,7 +132,7 @@ for p in plans['plans']:
         if len(ns) != len(set(ns)): probs.append('%s %s duplicate' % (p['id'], b))
         ok = {'2.4': range(1, 15), '5': range(32, 178), '6': range(1, 234)}[b]
         if any(n not in ok for n in ns): probs.append('%s %s out of range' % (p['id'], b))
-cfg = json.load(open(d + '/wifi-config.json'))
+cfg = json.load(open(sys.argv[4] + '/wifi-config.json'))
 for k in ('rssi', 'smoothing', 'scan', 'ping', 'traceroute', 'port_scan', 'sweep', 'throughput', 'locator', 'heatmap', 'ports', 'nsd_types'):
     if k not in cfg: probs.append('config lacks ' + k)
 if cfg.get('port_scan', {}).get('max_ports', 0) > 4096: probs.append('port scan unbounded')

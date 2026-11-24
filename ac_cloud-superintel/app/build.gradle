@@ -162,6 +162,7 @@ dependencies {
     implementation project(':libs:theme-background')
     // The fleet's AI chat: the page, sessions drawer, Markdown and streaming are the lib's.
     implementation project(':libs:ai')
+    implementation project(':libs:fleet-data-client')   // #1547 the personas and the notebook config are read at RUNTIME from Cloud Store's provider, never baked into the APK
     implementation project(':libs:model-catalogue')
     // #1499 the AIs and Cost pages: the Cloud Store's dense row (libs:ui-kit) and the usage table read the SuperApp's Notify AI badge shares (libs:ai-usage).
     implementation project(':libs:ui-kit')

@@ -76,6 +76,7 @@ import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Send
 import androidx.compose.ui.res.colorResource
+import com.diegonmarcos.cloudsuperintel.NotebookConfig
 import com.diegonmarcos.cloudsuperintel.Persona
 import com.diegonmarcos.superapp.bottomnav.TopBarDrawerWithActions
 import com.diegonmarcos.superapp.bottomnav.rememberAccountLauncher
@@ -117,9 +118,11 @@ fun siAiTheme(): AiTheme = materialAiTheme(
 @Composable
 fun SiShell() {
     val ctx = LocalContext.current.applicationContext
-    val personas = remember { SiAi.personas(ctx) }
-    val siDefault = remember { SiAi.defaultId(ctx) }
+    // #1547 the personas and the notebook's knobs are served datasets: the default router and the default notebook config show while they load.
+    val personas by produceState(SiAi.personas(ctx), ctx) { SiAi.observe(ctx).collect { value = SiAi.personas(ctx) } }
+    val siDefault = SiAi.defaultId(ctx)
     val notebooks = remember { NotebookModel(ctx) }
+    LaunchedEffect(notebooks) { NotebookConfig.observe(ctx).collect { if (it != null) notebooks.cfg = it } }
     val nav = Decl.nav
     val aiPages = remember { AiData.pages(AiData.asset(ctx, AiData.PAGES)) }
     var section by rememberSaveable { mutableStateOf(nav.default()?.id ?: Decl.SECTION_SI) }

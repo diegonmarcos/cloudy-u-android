@@ -1,5 +1,8 @@
 package com.diegonmarcos.cloudsuperintel
 
+import android.content.Context
+import com.diegonmarcos.superapp.fleetdata.FleetData
+import kotlinx.coroutines.flow.Flow
 import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.math.ln
@@ -10,7 +13,7 @@ data class Source(val id: String, val title: String, val kind: String, val text:
 /** One cut of a source: [n] is the source's number in its notebook (1-based, what a citation says). */
 data class Passage(val n: Int, val source: Source, val index: Int, val text: String)
 
-/** The notebook's declared knobs (assets/si/notebook.json). */
+/** The notebook's declared knobs (the runtime dataset `notebook`, #1547: served by Cloud Store from data/fleet/app/<pkg>/notebook.json, never an APK asset). */
 data class NotebookConfig(
     val chunkChars: Int, val overlapChars: Int, val topK: Int, val minCoverage: Double, val k1: Double, val b: Double,
     val refusal: String, val groundingSystem: String, val groundingUser: String,
@@ -31,7 +34,34 @@ data class NotebookConfig(
     )
 
     companion object {
-        const val ASSET = "si/notebook.json"
+        /** The app's own served dataset (`app/<pkg>/notebook`). */
+        const val DATASET = "notebook"
+
+        /**
+         * What the notebook uses while the dataset is loading or not served yet (first run, provider absent): the strict grounding prompt, the
+         * refusal line, the retrieval floors and the studio prompts, so it never answers from memory and never crashes. BM25 only: the
+         * semantic service knobs come with the served copy. A test holds every field here equal to the served file's.
+         */
+        val DEFAULT = NotebookConfig(
+            chunkChars = 900, overlapChars = 150, topK = 6, minCoverage = 0.5, k1 = 1.5, b = 0.75,
+            refusal = "This is not in your sources.",
+            groundingSystem = "You answer ONLY from the numbered passages the user supplies. Rules: use no outside knowledge, not even common knowledge; cite the passage number in square brackets, like [2], after every claim; if the passages do not contain the answer, reply with exactly: This is not in your sources.\nDo not guess, do not extend, do not answer from memory.",
+            groundingUser = "PASSAGES\n{{passages}}\n\nQUESTION\n{{question}}",
+            maxSourceChars = 24000,
+            generatorSystem = "You work ONLY from the sources below. Use no outside knowledge. Cite sources as [n] where n is the source number. If the sources are too thin, say This is not in your sources.",
+            generators = listOf(
+                Generator("summary", "Summary", "Write a concise summary of the sources: the main points as short bullets, each with its [n] citation."),
+                Generator("faq", "FAQ", "Write an FAQ of 5 to 8 questions a reader of these sources would ask, each followed by an answer taken only from the sources, with [n] citations."),
+                Generator("notes", "Study notes", "Write structured study notes: headings, key terms with definitions, and key facts, each fact with its [n] citation."),
+            ),
+            urlMaxChars = 200000, docMime = listOf("text/plain", "text/markdown", "text/html", "text/csv", "application/json"),
+        )
+
+        /** The served config, now and after every update Cloud Store announces; null while nothing valid is served (the caller shows [DEFAULT]). */
+        fun observe(ctx: Context): Flow<NotebookConfig?> = FleetData.observe(ctx, DATASET, own = true) { runCatching { parse(it) }.getOrNull() }
+
+        /** One blocking read of the served config (a few ms), else [DEFAULT]. */
+        fun current(ctx: Context): NotebookConfig = FleetData.get(ctx, DATASET, own = true) { runCatching { parse(it) }.getOrNull() } ?: DEFAULT
         fun parse(text: String): NotebookConfig {
             val r = JSONObject(text)
             val ret = r.getJSONObject("retrieval"); val g = r.getJSONObject("grounding"); val gen = r.getJSONObject("generators")

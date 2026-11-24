@@ -165,7 +165,7 @@ def uiMainMenuB64    = uiMainMenuJson.bytes.encodeBase64().toString()
 def uiSamplesJson    = groovy.json.JsonOutput.toJson(buildJson.ui.page_samples ?: [:])
 def uiSamplesB64     = uiSamplesJson.bytes.encodeBase64().toString()
 // #1263 build.json::wifi_analyzer - the WiFi page's endpoints / thresholds / tool bounds, deep-merged by libs:wifi over its own
-// assets/wifi/wifi-config.json (WifiHostConfig). Small: a plain base64 field.
+// the served wifi-config dataset (WifiHostConfig). Small: a plain base64 field.
 def wifiAnalyzerJson = groovy.json.JsonOutput.toJson(buildJson.wifi_analyzer ?: [:])
 def wifiAnalyzerB64  = wifiAnalyzerJson.bytes.encodeBase64().toString()
 def uiGroupsJson     = groovy.json.JsonOutput.toJson(buildJson.ui.home_groups ?: [])

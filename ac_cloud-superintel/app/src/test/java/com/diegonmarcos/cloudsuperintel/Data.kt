@@ -5,7 +5,7 @@ import java.io.File
 
 /** The real declared data of the app (Gradle runs a module's tests from the module dir), never a copy of it. */
 object Data {
-    fun asset(name: String): String = File("src/main/assets/si/$name").readText()
+    fun asset(name: String): String = File("../../data/fleet/app/com.diegonmarcos.cloudsuperintel/$name").readText()   // #1547 served datasets (personas, notebook), never APK assets
 
     /** An asset of assets/ai (the AIs and Cost pages' data, #1499). */
     fun ai(name: String): String = File("src/main/assets/ai/$name").readText()

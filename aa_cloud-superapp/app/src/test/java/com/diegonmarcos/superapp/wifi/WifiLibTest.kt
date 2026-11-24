@@ -12,8 +12,9 @@ import java.io.File
 /** #1263 libs:wifi: channel math, security parsing, the OUI and channel-plan assets, rating, tracking, throttle, tool parsers, export. */
 class WifiLibTest {
     private val assets = File("../../ab_cloud-libs-shared/libs/wifi/src/main/assets/wifi")
-    private fun asset(n: String) = File(if (n == "oui.tsv") pack else assets, if (n == "oui.tsv") "wifi-oui.tsv" else n).readText()
+    private fun asset(n: String) = File(if (n == "oui.tsv") pack else if (n == "wifi-config.json") fleet else assets, if (n == "oui.tsv") "wifi-oui.tsv" else n).readText()
     private val pack = File("../../data/fleet/packs")   // #1547 the OUI registry is a downloadable pack, not a lib asset
+    private val fleet = File("../../data/fleet")   // #1547 the analyzer defaults are the served shared dataset wifi-config, not a lib asset
 
     private fun ap(bssid: String, ssid: String, freq: Int, rssi: Int, width: Int = 0, cf0: Int = 0, caps: String = "[WPA2-PSK-CCMP][ESS]", now: Long = 1_000_000L): AccessPoint =
         ApTracker().ingest(listOf(RawScan(bssid, ssid, freq, cf0, 0, width, rssi, caps)), now).first()

@@ -1,4 +1,5 @@
 {
+ "schemaVersion": 1,
  "_doc": "#1263 the Wi-Fi analyzer defaults: tabs, thresholds, smoothing, scan throttle, tools and their bounds, discovery service types, port names. A host overrides any key through WifiHostConfig (the SuperApp: build.json wifi_analyzer).",
  "tabs": [
   "scan",

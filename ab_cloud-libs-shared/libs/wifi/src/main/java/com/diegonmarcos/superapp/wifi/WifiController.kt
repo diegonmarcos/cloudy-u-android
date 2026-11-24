@@ -88,6 +88,8 @@ class WifiController(
     val state: StateFlow<WifiState> = _state
 
     private var attached = 0
+    /** True while no tab (or host) is attached: nothing is scanning and the controller can be replaced by one on a fresher config. */
+    fun idle(): Boolean = attached == 0
     private var unlisten: (() -> Unit)? = null
     private var loop: Job? = null
     private var pingJob: Job? = null; private var traceJob: Job? = null; private var portJob: Job? = null

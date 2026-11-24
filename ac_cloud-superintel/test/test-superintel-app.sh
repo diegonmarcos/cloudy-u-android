@@ -6,7 +6,7 @@
 # The chat itself (page, streaming, sessions, Markdown) is libs:ai's and is proven there (AiProtocolTest,
 # AiMarkdownTest). This proves, from the sources alone, that this app only ASSEMBLES it, on the fleet's bars:
 #   B1  every section and page id Decl.kt dispatches on is declared by build.json::ui, and every declared page is dispatched (both ways);
-#       the bottom nav is Notebook, CGCs, SI, Models, Context (#1854; the Context pages, the API page and the Cost window are test-superintel-ais.sh's); the SI page and the CGCs pages are exactly assets/si/personas.json (the router, and the experts with a group), the
+#       the bottom nav is Notebook, CGCs, SI, Models, Context (#1854; the Context pages, the API page and the Cost window are test-superintel-ais.sh's); the SI page and the CGCs pages are exactly the served personas.json (the router, and the experts with a group), the
 #       CGCs section is horizontal_two_rows with exactly the owner's six groups, each group exactly its personas' `group` (both ways)
 #   B2  the shell draws the shared bars: first-row scaffold (Profile -> Cloud Account launcher), second row, bottom nav host,
 #       theme-background; the nav libs are in build.json modules AND in the app's build script
@@ -41,7 +41,7 @@ manifest = read(os.path.join(app, "app/src/main/AndroidManifest.xml"))
 
 # B1
 declared_sections = {s["id"] for s in bj["ui"]["sections"]}
-DATA_SECTIONS = ("si", "cgcs", "context")   # their pages are the ids of assets/si/*.json and assets/ai/pages.json (test-superintel-ais.sh), not Kotlin constants
+DATA_SECTIONS = ("si", "cgcs", "context")   # their pages are the ids of the served personas.json and assets/ai/pages.json (test-superintel-ais.sh), not Kotlin constants
 data_pages = set(json.loads(read(os.path.join(app, "app/src/main/assets/ai/pages.json")))["pages"])   # the API page (Models) is data too
 declared_pages = {p["id"] for s in bj["ui"]["sections"] if s["id"] not in DATA_SECTIONS for p in s["pages"] if p["id"] not in data_pages}
 named_sections = set(re.findall(r'SECTION_\w+\s*=\s*"([^"]+)"', decl))
@@ -52,7 +52,7 @@ for x in sorted(declared_pages - named_pages): bad.append("B1 page %r is declare
 for x in sorted(set(bj["ui"]["bottom_nav"]) - declared_sections): bad.append("B1 bottom_nav id %r is no section" % x)
 if bj["ui"]["bottom_nav"] != ["notebook", "cgcs", "si", "models", "context"]: bad.append("B1 the bottom nav must be Notebook, CGCs, SI, Models, Context, in that order")
 def ids_of(section): return [p["id"] for s in bj["ui"]["sections"] if s["id"] == section for p in s["pages"]]
-def data(name): return json.loads(read(os.path.join(app, "app/src/main/assets/si", name)))
+def data(name): return json.loads(read(os.path.join(app, "../data/fleet/app/com.diegonmarcos.cloudsuperintel", name)))   # #1547 the personas and the notebook knobs are served datasets, not APK assets
 personas = data("personas.json")["personas"]
 if ids_of("si") != [p["id"] for p in personas if not p.get("group")]: bad.append("B1 the SI pages are not exactly the router persona of personas.json")
 if ids_of("cgcs") != [p["id"] for p in personas if p.get("group")]: bad.append("B1 the CGCs pages are not exactly the grouped personas of personas.json")
@@ -146,7 +146,7 @@ for dp, dn, fn in os.walk(os.path.join(app, "app/src/main")):
 # B7
 for gone in ("News.kt", "SiNews.kt", "FleetNews.kt", "ui/NewsScreens.kt"):
     if os.path.exists(os.path.join(kt, gone)): bad.append("B7 %s is still here: the News tab is removed" % gone)
-if os.path.exists(os.path.join(app, "app/src/main/assets/si/news.json")): bad.append("B7 assets/si/news.json is still here")
+if os.path.exists(os.path.join(app, "app/src/main/assets/si/news.json")) or os.path.exists(os.path.join(app, "app/src/main/assets/si/notebook.json")) or os.path.exists(os.path.join(app, "app/src/main/assets/si/personas.json")): bad.append("B7 assets/si/news.json is still here (or the notebook/personas data is baked into the APK again)")
 if re.search(r"NEWS_(MESH|PUBLIC)_URL", script): bad.append("B7 the build script still bakes a news address")
 if "com.diegonmarcos.superapp\"" in manifest: bad.append("B7 the manifest still queries the SuperApp package (only FleetNews read its bearer)")
 if re.search(r'name="(news_|backend_news)', read(os.path.join(app, "app/src/main/res/values/strings.xml"))): bad.append("B7 news strings are left in strings.xml")
@@ -182,13 +182,14 @@ mutant "markdown off"                  "sed -i 's/markdown = true/markdown = fal
 mutant "bottom nav loses CGCs"          "python3 -c \"import json;p='build.json';d=json.load(open(p));d['ui']['bottom_nav']=['notebook','si','cgcs'];json.dump(d,open(p,'w'))\"" "B1 the bottom nav must be"
 mutant "CGCs loses its two rows"       "sed -i 's/horizontal_two_rows/horizontal_one_row/' build.json"        "B1 the CGCs section is not horizontal_two_rows"
 mutant "a CGC group is renamed"        "sed -i 's/\"label\": \"Engineers\"/\"label\": \"Builders\"/' build.json"  "B1 the CGCs groups are not the owner's six"
-mutant "a persona leaves its group"    "sed -i 's/\"group\": \"business\"/\"group\": \"general\"/' app/src/main/assets/si/personas.json"  "B1 CGCs group"
-mutant "persona page not in data"      "sed -i 's/\"id\": \"cto\"/\"id\": \"cto2\"/' app/src/main/assets/si/personas.json"  "B1 the CGCs pages are not exactly"
+mutant "a persona leaves its group"    "sed -i 's/\"group\": \"business\"/\"group\": \"general\"/' ../data/fleet/app/com.diegonmarcos.cloudsuperintel/personas.json"  "B1 CGCs group"
+mutant "persona page not in data"      "sed -i 's/\"id\": \"cto\"/\"id\": \"cto2\"/' ../data/fleet/app/com.diegonmarcos.cloudsuperintel/personas.json"  "B1 the CGCs pages are not exactly"
 mutant "news address creeps back"      "echo 'buildConfigField \"String\", \"NEWS_MESH_URL\", \"x\"' >> $SCRIPT"                    "B7 the build script still bakes a news address"
 mutant "news code creeps back"         "echo 'object SiNews' > $KT/SiNews.kt"                                    "B7 SiNews.kt is still here"
-mutant "news data creeps back"         "echo '{}' > app/src/main/assets/si/news.json"                            "B7 assets/si/news.json is still here"
+mutant "news data creeps back"         "mkdir -p app/src/main/assets/si && echo '{}' > app/src/main/assets/si/news.json"                            "B7 assets/si/news.json is still here"
 mutant "news section creeps back"      "python3 -c \"import json;p='build.json';d=json.load(open(p));d['ui']['sections'].append({'id':'news','label':'News','icon':'rss_feed','pages':[]});json.dump(d,open(p,'w'))\"" "B7 build.json::ui still declares a News section"
-mutant "refusal line dropped"          "sed -i 's/exactly: {{refusal}}/exactly: nothing/' app/src/main/assets/si/notebook.json"  "B6 the notebook declares no refusal"
+mutant "notebook data is baked again"  "mkdir -p app/src/main/assets/si && echo '{}' > app/src/main/assets/si/notebook.json"                        "B7 assets/si/news.json is still here"
+mutant "refusal line dropped"          "sed -i 's/exactly: {{refusal}}/exactly: nothing/' ../data/fleet/app/com.diegonmarcos.cloudsuperintel/notebook.json"  "B6 the notebook declares no refusal"
 mutant "article spelled in Kotlin"     "echo 'val x = Article(\"https://a\", \"t\", \"\", \"\", \"d\")' >> $KT/SiAi.kt"  "B6 SiAi.kt spells a news article"
 mutant "token read creeps in"          "echo 'val x = revealAiKey' >> $KT/SiAi.kt"                             "B4 SiAi.kt matches revealAiKey"
 mutant "gateway not baked"             "sed -i 's/AI_GATEWAY_URL/NOPE/g' $SCRIPT"                              "B4 the app's build script does not bake"

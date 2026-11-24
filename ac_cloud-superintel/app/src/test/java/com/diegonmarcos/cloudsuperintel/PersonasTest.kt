@@ -105,4 +105,11 @@ class PersonasTest {
         val d = org.json.JSONObject(Data.asset("personas.json")).getString("default")
         assertTrue(all.any { it.id == d })
     }
+
+    /** #1547 the personas are served, never an APK asset: the router the app shows while the dataset loads is the served `si` persona, field for field, and is the default id. */
+    @Test fun theDefaultRouterIsTheServedOne() {
+        assertEquals(all.first { it.id == Personas.DEFAULT_ID }, Personas.DEFAULT.single())
+        assertEquals(Personas.DEFAULT_ID, Personas.parseServed(Data.asset("personas.json")).default)
+        assertEquals(all, Personas.parseServed(Data.asset("personas.json")).personas)
+    }
 }
