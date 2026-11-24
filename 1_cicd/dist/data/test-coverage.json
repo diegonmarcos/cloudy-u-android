@@ -17,7 +17,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 305,
+      "unit_test_sources": 306,
       "workflow": "ship-cloud-superapp.yml"
     },
     "ab_cloud-libs-shared/keyboard-engines": {
@@ -215,7 +215,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 135,
+      "unit_test_sources": 136,
       "workflow": "ship-cloud-drive.yml"
     },
     "ac_cloud-drive/web": {
@@ -368,7 +368,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": false,
-      "unit_test_sources": 3,
+      "unit_test_sources": 4,
       "workflow": "ship-cloud-notes.yml"
     },
     "ac_cloud-notes/web": {
