@@ -14,7 +14,7 @@ import kotlin.math.sin
  * node), Graph (node-link of parent and child) and 3D (planetary: each parent a body, its children orbiting it, recursively).
  */
 object HomeIndex {
-    enum class Mode(val id: String, val icon: String) { ListView("list", "checklist"), TableView("table", "table_chart"), GraphView("graph", "hub"), PlanetView("planet", "public") }
+    enum class Mode(val id: String, val icon: String) { Outline("list", "checklist"), Table("table", "table_chart"), Graph("graph", "hub"), Planet("planet", "public") }
 
     /** One Table row: every column the dataset can fill for the node. */
     data class Row(

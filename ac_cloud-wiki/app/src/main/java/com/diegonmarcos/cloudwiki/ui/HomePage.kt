@@ -90,11 +90,11 @@ fun HomePage(data: WikiData?, wiki: NavSection, nav: WikiNav, onTopic: (String) 
     val p = LocalKitPalette.current
     val chronos = Decl.chronos
     val tree = remember(wiki, data, chronos) { LibraryTree.build(wiki, data, chronos, home = false) }
-    var mode by rememberSaveable { mutableStateOf(HomeIndex.Mode.ListView.id) }
+    var mode by rememberSaveable { mutableStateOf(HomeIndex.Mode.Outline.id) }
     val open: (TreeNode) -> Unit = { n -> val pg = n.page; if (pg != null) { n.tab?.let { nav.tabs[pg] = it }; onTopic(pg) } }
     val labels = mapOf(
-        HomeIndex.Mode.ListView to stringResource(R.string.home_list), HomeIndex.Mode.TableView to stringResource(R.string.home_table),
-        HomeIndex.Mode.GraphView to stringResource(R.string.home_graph), HomeIndex.Mode.PlanetView to stringResource(R.string.home_planet),
+        HomeIndex.Mode.Outline to stringResource(R.string.home_list), HomeIndex.Mode.Table to stringResource(R.string.home_table),
+        HomeIndex.Mode.Graph to stringResource(R.string.home_graph), HomeIndex.Mode.Planet to stringResource(R.string.home_planet),
     )
     Column(Modifier.fillMaxSize().testTag(HomeTags.HOME)) {
         NavBarTopSecondRow(
@@ -109,11 +109,11 @@ fun HomePage(data: WikiData?, wiki: NavSection, nav: WikiNav, onTopic: (String) 
             stringResource(R.string.home_summary, tree.nodes.size, tree.roots.size, pages, tree.maxLevel + 1, tree.nodes.sumOf { it.words }),
             Modifier.fillMaxWidth().padding(KitStoreRow.padH, KitStoreRow.tight), color = p.textSecondary,
         )
-        when (HomeIndex.Mode.entries.firstOrNull { it.id == mode } ?: HomeIndex.Mode.ListView) {
-            HomeIndex.Mode.ListView -> IndexList(tree, open)
-            HomeIndex.Mode.TableView -> IndexTable(tree, open)
-            HomeIndex.Mode.GraphView -> IndexGraph(tree, open)
-            HomeIndex.Mode.PlanetView -> IndexPlanet(tree, open)
+        when (HomeIndex.Mode.entries.firstOrNull { it.id == mode } ?: HomeIndex.Mode.Outline) {
+            HomeIndex.Mode.Outline -> IndexList(tree, open)
+            HomeIndex.Mode.Table -> IndexTable(tree, open)
+            HomeIndex.Mode.Graph -> IndexGraph(tree, open)
+            HomeIndex.Mode.Planet -> IndexPlanet(tree, open)
         }
     }
 }
