@@ -112,7 +112,7 @@ private fun MeterLive(mode: Declarations.Mode, meter: Declarations.Meter) {
 
 /**
  * #1892 the Cymatics figure of the meter: the dominant frequency and the strongest partials of the live spectrum pick the plate's modes,
- * the level its amplitude (CymaticsMap, shared plate math in libs:cymatics-core, drawn by libs:cymatics), eased between readings so it
+ * the level its amplitude (CymaticsMap, shared plate math and drawing in libs:cymatics), eased between readings so it
  * does not flicker. Silence is a flat plate.
  */
 @Composable

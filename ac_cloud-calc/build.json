@@ -142,13 +142,8 @@
       "type": "library"
     },
     "libs:cymatics": {
-      "_doc": "#1892 the Chladni plate's Compose drawing, shared BY REFERENCE with Cloud Canvas Play (#1865): the sound meter's Cymatics figure below the frequency graphic. A `gui` lib over libs:cymatics-core.",
+      "_doc": "#1892 the Chladni plate (pattern math + Compose drawing), shared BY REFERENCE with Cloud Canvas Play (#1865): the sound meter's Cymatics figure below the frequency graphic. A `gui` lib.",
       "dir": "../ab_cloud-libs-shared/libs/cymatics",
-      "type": "library"
-    },
-    "libs:cymatics-core": {
-      "_doc": "#1892 the Chladni pattern math (mode numbers from a frequency, the standing-wave amplitude, the weighted blend) as a plain-JVM module, the ONE implementation Cloud Canvas Play and Cloud Calc's meter share; its suite holds the byte parity with the pre-move field.",
-      "dir": "../ab_cloud-libs-shared/libs/cymatics/core",
       "type": "library"
     },
     "libs:clock-tools-core": {

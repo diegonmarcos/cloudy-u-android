@@ -92,7 +92,7 @@
     "canvas-draw":            { "class": "gui",      "why": "#1865 the Draw section of Cloud Canvas (paint model, renderer, PNG, the Draw and Board pages) moved out of the app module." },
     "canvas-painter":         { "class": "gui",      "why": "#1865 the Painter section of Cloud Canvas (the cell-painter page and its store) moved out of the app module." },
     "canvas-play":            { "class": "gui",      "why": "#1865 the Play section of Cloud Canvas (mixer, loop model, instruments, SoundFont backend, WAV, the Play page) moved out of the app module." },
-    "cymatics":               { "class": "gui",      "why": "#1892 the Chladni (cymatics) plate shared by Cloud Canvas Play and Cloud Calc's sound meter: the Compose drawing over libs:cymatics-core (the plain-JVM pattern math, in cymatics/core)." },
+    "cymatics":               { "class": "gui",      "why": "#1892 the Chladni (cymatics) plate shared by Cloud Canvas Play and Cloud Calc's sound meter: the Compose drawing with the plain pattern math (Cymatics.kt) it draws." },
     "gix":                     { "class": "engine",   "why": "Cloud-Lib-Gix (binary engine); no app compiles it." },
     "health":                  { "class": "gui",      "why": "Health dashboards (SuperApp, cloud-me)." },
     "keyboard":                { "class": "gui",      "why": "The IME itself (cloud-keyboard)." },

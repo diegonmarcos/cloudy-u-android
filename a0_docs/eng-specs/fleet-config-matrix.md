@@ -539,7 +539,7 @@ Coverage: 13 covered, 0 gaps.
 
 ## cloud-calc — `com.diegonmarcos.cloudcalc`
 
-Module `ac_cloud-calc`; libs: lib-ai, lib-bluetooth, lib-bottomnav, lib-clock-tools, lib-core, lib-crash, lib-databackend, lib-decisions, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-light, lib-location-client, lib-ml-l-image, lib-ml-l-sound, lib-model-catalogue, lib-nfc, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars, lib-web-core, lib-wifi.
+Module `ac_cloud-calc`; libs: lib-ai, lib-bluetooth, lib-bottomnav, lib-clock-tools, lib-core, lib-crash, lib-cymatics, lib-databackend, lib-decisions, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-light, lib-location-client, lib-ml-l-image, lib-ml-l-sound, lib-model-catalogue, lib-nfc, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars, lib-web-core, lib-wifi.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -615,7 +615,7 @@ Coverage: 11 covered, 0 gaps.
 
 ## cloud-canvas — `com.diegonmarcos.cloudcanvas`
 
-Module `ac_cloud-canvas`; libs: lib-ai, lib-bottomnav, lib-canvas-core, lib-canvas-draw, lib-canvas-painter, lib-canvas-play, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-web-core.
+Module `ac_cloud-canvas`; libs: lib-ai, lib-bottomnav, lib-canvas-core, lib-canvas-draw, lib-canvas-painter, lib-canvas-play, lib-core, lib-crash, lib-cymatics, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-model-catalogue, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|

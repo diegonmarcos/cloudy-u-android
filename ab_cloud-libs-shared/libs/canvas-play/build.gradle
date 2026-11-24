@@ -41,7 +41,7 @@ dependencies {
     api 'androidx.compose.foundation:foundation'
     api 'androidx.compose.material3:material3'
     api project(':libs:canvas-core')
-    // #1892 the Chladni plate (pattern math in libs:cymatics-core, Compose drawing) shared with Cloud Calc's sound meter
+    // #1892 the Chladni plate (pattern math and Compose drawing) shared with Cloud Calc's sound meter
     api project(':libs:cymatics')
     // #1865 the studio's transport, panel and track glyphs
     implementation 'androidx.compose.material:material-icons-extended'

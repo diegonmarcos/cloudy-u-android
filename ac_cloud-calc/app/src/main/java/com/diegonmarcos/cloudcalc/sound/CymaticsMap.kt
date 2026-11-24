@@ -7,7 +7,7 @@ import kotlin.math.ln
 import kotlin.math.pow
 
 /**
- * #1892 the sound meter's Cymatics figure: the live spectrum to the Chladni plate of libs:cymatics-core (the one pattern implementation,
+ * #1892 the sound meter's Cymatics figure: the live spectrum to the Chladni plate of libs:cymatics (the one pattern implementation,
  * shared with Cloud Canvas Play). The dominant frequency and the strongest partials pick the plate's modes (Cymatics.modeOf), the level
  * sets the amplitude, and [Smoother] eases both between readings so the figure follows the sound without flicker. Pure, so the JVM suite
  * checks it: the same spectrum gives the same field, another dominant frequency gives another field, silence gives a flat plate.

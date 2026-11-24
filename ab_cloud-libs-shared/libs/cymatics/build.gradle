@@ -1,5 +1,6 @@
-// libs:cymatics (#1892): the Compose drawing of the Chladni plate (sand on the nodal lines), shared BY REFERENCE by Cloud Canvas Play (#1865)
-// and Cloud Calc's sound meter, over libs:cymatics-core (the plain-JVM pattern math, `api`). One renderer, no copy in either app.
+// libs:cymatics (#1892): the Chladni (cymatics) plate shared BY REFERENCE by Cloud Canvas Play (#1865) and Cloud Calc's sound meter: the
+// pattern math (Cymatics.kt, no Android type: mode numbers from a frequency, the symmetric standing-wave amplitude, the weighted blend;
+// its JVM suite holds byte parity with the pre-move field) and the Compose drawing (CymaticsPlate.kt). One implementation, no copy in either app.
 
 plugins {
     id 'com.android.library'
@@ -35,5 +36,5 @@ dependencies {
     api platform('androidx.compose:compose-bom:2025.11.01')
     api 'androidx.compose.ui:ui'
     api 'androidx.compose.foundation:foundation'
-    api project(':libs:cymatics-core')
+    testImplementation 'junit:junit:4.13.2'
 }

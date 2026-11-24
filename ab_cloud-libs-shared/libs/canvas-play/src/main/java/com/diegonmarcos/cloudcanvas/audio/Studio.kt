@@ -171,7 +171,7 @@ object Arrangement {
 
 /**
  * Cymatics: the Chladni figure of a square plate driven at a frequency (one mode per semitone, blended between two; the same every time for
- * one frequency, symmetric; the sand gathers on the nodal lines). #1892 the math moved, unchanged, to libs:cymatics-core so Cloud Calc's
+ * one frequency, symmetric; the sand gathers on the nodal lines). #1892 the math moved, unchanged, to libs:cymatics so Cloud Calc's
  * sound meter draws the same plate; this object delegates to it, so the call sites and their tests are as before.
  */
 object Cymatics {

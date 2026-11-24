@@ -46,6 +46,8 @@ ctl = rd(L, "canvas-play", J, "ui/PlayController.kt")
 engine = rd(L, "canvas-play", J, "audio/Engine.kt")
 mixer = rd(L, "canvas-play", J, "audio/Mixer.kt")
 studio = rd(L, "canvas-play", J, "audio/Studio.kt")
+# #1892 the plate math lives once in libs:cymatics (Studio.kt's Cymatics delegates to it)
+cym = rd(L, "cymatics", "src/main/java/com/diegonmarcos/cloudlib/cymatics/Cymatics.kt")
 mic = rd(L, "canvas-play", J, "audio/MicRecorder.kt")
 tests = rd(root, "ac_cloud-canvas/app/src/test/java/com/diegonmarcos/cloudcanvas/StudioTest.kt") + rd(root, "ac_cloud-canvas/app/src/test/java/com/diegonmarcos/cloudcanvas/BrushTest.kt")
 # U1
@@ -82,7 +84,7 @@ if "takes = HashMap(engine.takePcm)" not in ctl: print("U4 the WAV export drops 
 # U5
 if "Spectrum.dominant(analysisBuf" not in ctl or "if (s.playing)" not in ctl or "Pitch.freq(midi)" not in ctl: print("U5 the cymatics drive does not follow the music and the played note")
 if "Cymatics.blend(d, grid, t)" not in play or "ctl.cymaticsDrive()" not in play: print("U5 the cymatics view does not draw the plate")
-if "cos(n * PI * x) * cos(m * PI * y) + cos(m * PI * x) * cos(n * PI * y)" not in studio: print("U5 the plate is not the symmetric Chladni sum")
+if "cos(n * PI * x) * cos(m * PI * y) + cos(m * PI * x) * cos(n * PI * y)" not in cym: print("U5 the plate is not the symmetric Chladni sum")
 if "440.0" not in studio or "2.0.pow((midi - 69) / 12.0)" not in studio: print("U5 note to frequency is not A4 = 440 equal temperament")
 # U6
 for name, src in (("audio/Studio.kt", studio), ("draw/Brushes.kt", brushes)):
@@ -105,7 +107,7 @@ S="$(mktemp -d)"; trap 'rm -rf "$S"' EXIT
 mut() {  # $1 = label, $2 = rule prefix expected, $3.. = edit of the scratch copy (run in the scratch repo root)
   local label="$1" want="$2"; shift 2
   rm -rf "$S/r"; mkdir -p "$S/r/ab_cloud-libs-shared/libs" "$S/r/ac_cloud-canvas/app/src"
-  cp -r "$ROOT"/ab_cloud-libs-shared/libs/canvas-* "$S/r/ab_cloud-libs-shared/libs/"; cp -r "$APP/app/src/test" "$S/r/ac_cloud-canvas/app/src/"
+  cp -r "$ROOT"/ab_cloud-libs-shared/libs/canvas-* "$ROOT"/ab_cloud-libs-shared/libs/cymatics "$S/r/ab_cloud-libs-shared/libs/"; cp -r "$APP/app/src/test" "$S/r/ac_cloud-canvas/app/src/"
   ( cd "$S/r" && "$@" )
   if check "$S/r" | grep -q "^$want"; then ok "mutation '$label' is caught ($want)"; else bad "mutation '$label' went undetected"; fi
 }
@@ -129,7 +131,7 @@ mut "region ignored"              U4 sed -i 's/region.startBeat, region.endBeat)
 mut "overdub stops after a pass"  U4 sed -i 's/s.recording \&\& !s.overdub \&\& recordFrom/s.recording \&\& recordFrom/' $P/audio/Engine.kt
 mut "export drops takes"          U4 sed -i 's/takes = HashMap(engine.takePcm), //' $P/ui/PlayController.kt
 mut "cymatics ignores the music"  U5 sed -i 's/Spectrum.dominant(analysisBuf/listOf<Pair<Double,Double>>(); Spectrum.dominant(FloatArray(0)/' $P/ui/PlayController.kt
-mut "antisymmetric plate"         U5 sed -i 's/cos(n \* PI \* x) \* cos(m \* PI \* y) + cos(m \* PI \* x) \* cos(n \* PI \* y)/cos(n * PI * x) * cos(m * PI * y) - cos(m * PI * x) * cos(n * PI * y)/' $P/audio/Studio.kt
+mut "antisymmetric plate"         U5 sed -i 's/cos(n \* PI \* x) \* cos(m \* PI \* y) + cos(m \* PI \* x) \* cos(n \* PI \* y)/cos(n * PI * x) * cos(m * PI * y) - cos(m * PI * x) * cos(n * PI * y)/' ab_cloud-libs-shared/libs/cymatics/src/main/java/com/diegonmarcos/cloudlib/cymatics/Cymatics.kt
 mut "wrong tuning"                U5 sed -i 's/2.0.pow((midi - 69) \/ 12.0)/2.0.pow((midi - 60) \/ 12.0)/' $P/audio/Studio.kt
 mut "studio logic imports android" U6 sed -i 's/^import kotlin.math.PI$/import android.util.Log\nimport kotlin.math.PI/' $P/audio/Studio.kt
 mut "symmetry test removed"       U6 sed -i 's/fun cymaticsIsSymmetric()/fun x()/' $T/StudioTest.kt
