@@ -20,7 +20,7 @@ class MimeParserParityFixturesTest {
         error("parity fixtures not found from ${System.getProperty("user.dir")}")
     }
 
-    private fun collapse(s: String) = s.replace(Regex("<[^>]*>"), " ").trim().split(Regex("\\s+")).joinToString(" ")
+    private fun collapse(s: String) = s.replace(Regex("<[^>]*>"), "").trim().split(Regex("\\s+")).joinToString(" ")
 
     @Test
     fun everyFixtureReadsTheSameInTheKotlinEngine() {

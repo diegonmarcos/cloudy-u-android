@@ -15,7 +15,6 @@ fn collapse(s: &str) -> String {
             '<' => in_tag = true,
             '>' if in_tag => {
                 in_tag = false;
-                out.push(' ');
             }
             _ if !in_tag => out.push(c),
             _ => {}
