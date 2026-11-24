@@ -64,7 +64,7 @@ def check(top):
     kt = s.get("ac_cloud-nav/app/src/test/java/com/diegonmarcos/cloudnav/tracker/KmlImportExploredTest.kt", ""); fx = s.get("ac_cloud-nav/app/src/test/resources/kml/Synthetic.kml.xml", "")
     r["k9"] = ("TakeoutKml.parse(" in im and "isXml(r)" in im and 'name.endsWith(".kml", true)' in im and "TakeoutImporter.accepts(" in ad and "TakeoutImporter.accepts(" in im
                and 'KML("Timeline KML", "timeline-kml"' in s.get(TK + "TakeoutParsers.kt", "") and "<Placemark" in km and "Start Time:" in km and "TkTable.VISITS" in km and "TkTable.ACTIVITIES" in km
-               and "TakeoutDerive.layerKml(segs)" in rb and "geo.nearest(" in rb and "gazetteer?.invoke(app)" in ad and "fun nearest(" in s.get(TK + "Gazetteer.kt", "")
+               and "TakeoutDerive.layerKml(ArrayList(segs))" in rb and "geo.nearest(" in rb and "gazetteer?.invoke(app)" in ad and "fun nearest(" in s.get(TK + "Gazetteer.kt", "")
                and "TakeoutImporter.run(FileSource(" in kt and "TakeoutRebuild.run(sql, zone, now, geo = gaz)" in kt and "&lt;b&gt;Start Time:&lt;/b&gt;" in fx and "<LineString>" in fx
                and "\tAsia/Tokyo" in s.get("ac_cloud-nav/app/src/main/assets/geo/gazetteer.tsv", ""))
     return r
@@ -99,7 +99,7 @@ try:
     s = mut("ac_cloud-nav/app/src/main/AndroidManifest.xml", 'android:foregroundServiceType="dataSync"', ''); ok(not check(tmp)["k8"], "an undeclared service type fails K8", "K8 missed the manifest type"); restore("ac_cloud-nav/app/src/main/AndroidManifest.xml", s)
     s = mut(NAV + "DayFragment.kt", "TakeoutImportService.start(", "ImportController.start("); ok(not check(tmp)["k8"], "an import back on a bare thread fails K8", "K8 missed the thread path"); restore(NAV + "DayFragment.kt", s)
     s = mut(TK + "TakeoutImporter.kt", "TakeoutKml.parse(", "TakeoutParsers.parse("); ok(not check(tmp)["k9"], "an importer that sends KML to the JSON parser fails K9", "K9 missed the KML parser"); restore(TK + "TakeoutImporter.kt", s)
-    s = mut(TK + "TakeoutRebuild.kt", "TakeoutDerive.layerKml(segs)", "segs.toList()"); ok(not check(tmp)["k9"], "a rebuild where paths cover the visits fails K9", "K9 missed the layering"); restore(TK + "TakeoutRebuild.kt", s)
+    s = mut(TK + "TakeoutRebuild.kt", "TakeoutDerive.layerKml(ArrayList(segs))", "segs.toList()"); ok(not check(tmp)["k9"], "a rebuild where paths cover the visits fails K9", "K9 missed the layering"); restore(TK + "TakeoutRebuild.kt", s)
     s = mut(TK + "TakeoutKml.kt", "buf.append(chunk, 0, n)", "buf.append(reader.readText())"); ok(bool(check(tmp)["k2"]), "a KML read whole fails K2", "K2 missed a whole-file KML read"); restore(TK + "TakeoutKml.kt", s)
     ok(not check(tmp)["k2"] and check(tmp)["k9"] and check(tmp)["k5"] and check(tmp)["k1"] and check(tmp)["k6"] and check(tmp)["k8"], "the pristine copy passes again", "the pristine copy fails")
 finally:
