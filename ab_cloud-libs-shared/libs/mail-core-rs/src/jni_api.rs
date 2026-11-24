@@ -105,6 +105,10 @@ pub fn do_query(db: &str, q: &str) -> Result<String, String> {
             let limit = q.get("limit").and_then(Value::as_u64).unwrap_or(100) as usize;
             with_store(db, false, |st| query::search(&st.conn, s(&q, "account")?, s(&q, "text")?, limit))?
         }
+        "compose" => {
+            let c: crate::compose::Compose = serde_json::from_value(q.clone()).map_err(parse)?;
+            json!({ "mime": crate::compose::build(&c) })
+        }
         "reader" => with_store(db, false, |st| query::reader(&st.conn, s(&q, "account")?, s(&q, "id")?))?,
         "wrap" => {
             let o: crate::reader::Opts = serde_json::from_value(q.clone()).map_err(parse)?;

@@ -51,4 +51,24 @@ class MimeParserParityFixturesTest {
         }
         assertEquals("parity failures:\n" + bad.joinToString("\n"), 0, bad.size)
     }
+
+    /** Same facts as mail-core-rs tests/compose_parity.rs, from the Kotlin builder and parser. */
+    @Test
+    fun composeParity() {
+        for (html in listOf(false, true)) for (att in listOf(false, true)) {
+            val m = OutgoingMessage(
+                from = "Alice <alice@example.com>", to = listOf("bob@example.com"),
+                subject = "Reuni\u00f3n: Espa\u00f1a", body = "Ma\u00f1ana en M\u00e1laga, se\u00f1or Mu\u00f1oz.",
+                html = if (html) "<p>Ma\u00f1ana en <b>M\u00e1laga</b>, se\u00f1or Mu\u00f1oz.</p>" else null,
+                messageId = "id-1@example.com", dateMillis = 0L,
+                attachments = if (att) listOf(OutgoingAttachment("nota.pdf", "application/pdf", "PDF-DATA".toByteArray())) else emptyList(),
+            )
+            val raw = OutgoingMime.build(m)
+            val body = MimeParser.parseBody(String(raw.toByteArray(Charsets.UTF_8), Charsets.ISO_8859_1))
+            assertEquals("html=$html att=$att", html, body.html != null)
+            assertTrue("html=$html att=$att: ${body.text} / ${body.html}", collapse(body.html ?: body.text.orEmpty()).contains("Ma\u00f1ana en M\u00e1laga, se\u00f1or Mu\u00f1oz."))
+            assertEquals("Reuni\u00f3n: Espa\u00f1a", MimeParser.decodedHeaderOf(raw, "Subject"))
+            assertEquals("html=$html att=$att", if (att) listOf("nota.pdf" to "application/pdf") else emptyList<Pair<String, String>>(), body.attachments.map { it.name to it.type.lowercase() })
+        }
+    }
 }

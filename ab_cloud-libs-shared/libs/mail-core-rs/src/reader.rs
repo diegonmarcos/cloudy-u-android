@@ -172,7 +172,7 @@ fn inline_cids(html: &str, cids: &HashMap<String, (String, &[u8])>) -> String {
     out
 }
 
-fn base64(b: &[u8]) -> String {
+pub(crate) fn base64(b: &[u8]) -> String {
     const T: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     let mut s = String::with_capacity((b.len() + 2) / 3 * 4);
     for c in b.chunks(3) {

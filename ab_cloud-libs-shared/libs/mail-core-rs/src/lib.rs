@@ -14,6 +14,7 @@
 //! Kotlin (libs:mail-core-rs, MailCore) calls these through [jni_api], which turns every panic and every error into an `ERR`
 //! answer, never a crash. Answers are `OK\n<json>` or `ERR\t<reason>`.
 
+pub mod compose;
 pub mod domain;
 pub mod jmap;
 pub mod jni_api;
