@@ -187,9 +187,11 @@ class BrowserSitePermissions(context: Context) {
  * answered empty, unless it is the page's own site or the main frame. The hosts are the app's
  * content (build.json::ui.browser.tracker_hosts); this class ships no list.
  */
-class BrowserTrackers(hosts: Collection<String>) {
-    // #1841 the host matcher is the browser core's (Rust: libbrowser_core.so, Kotlin twin when it is not loaded): one rule per line
-    private val filter = com.diegonmarcos.cloudlib.browsercore.BrowserCore.Filter(hosts.joinToString("\n"))
+class BrowserTrackers(hosts: Collection<String>, extraLists: List<String> = emptyList()) {
+    // #1841 the host matcher is the browser core's (Rust: libbrowser_core.so, Kotlin twin when it is not loaded): one rule per line;
+    // the declared hosts and any further rule lists are merged by the core (comments and duplicates dropped) into the one rule text
+    private val filter = com.diegonmarcos.cloudlib.browsercore.BrowserCore.Filter(
+        com.diegonmarcos.cloudlib.browsercore.BrowserCore.mergeLists(listOf(hosts.joinToString("\n")) + extraLists))
 
     /** [host] is a tracker host or a subdomain of one. A bare TLD never matches. */
     fun isTracker(host: String): Boolean = filter.isTracker(host)

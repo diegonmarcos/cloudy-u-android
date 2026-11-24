@@ -449,6 +449,8 @@ fun BrowserFavScreen(
     collapsed: Set<String> = emptySet(),
     onToggleGroup: (String) -> Unit = {},
     onOpenUrl: (String) -> Unit = {},
+    onExport: (() -> Unit)? = null,
+    onImport: (() -> Unit)? = null,
 ) {
     val p = LocalKitPalette.current
     var acting by remember { mutableStateOf<BrowserBookmark?>(null) }
@@ -468,6 +470,9 @@ fun BrowserFavScreen(
     Column(Modifier.fillMaxSize().background(p.surface).verticalScroll(rememberScrollState()).padding(horizontal = 8.dp, vertical = 8.dp).testTag("browser:fav")) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Favourites", color = p.textPrimary, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f).padding(start = 4.dp))
+            // #1841 the bookmarks as a JSON document out (Export) and back in (Import, merged)
+            if (onImport != null) TextButton(onImport, modifier = Modifier.testTag("browser:fav:import")) { Text("Import") }
+            if (onExport != null) TextButton(onExport, modifier = Modifier.testTag("browser:fav:export")) { Text("Export") }
             TextButton(onToggleView, modifier = Modifier.testTag("browser:fav:view")) { Text(if (grid) "☰ List" else "▦ Grid") }
         }
         if (filters.isNotEmpty()) Row(

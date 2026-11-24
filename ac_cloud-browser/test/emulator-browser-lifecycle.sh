@@ -5,7 +5,7 @@
 #   L1 three tabs open; the app is switched away from and back: the page area must not be black (screenshots read by png_stats.py)
 #   L2 the WebView renderer process is killed (kill -9 of the sandboxed renderer): the app lives, logcat says renderer-gone then recover,
 #      and the tab is showing a page again (not black)
-#   L3 Page-Tools opens from the tab row (icon content-desc Page-Tools) and shows its sections
+#   L3 Page-Tools opens from the tab row (icon content-desc Page-Tools) and shows its sections (Nav first since #1856)
 #   L4 the app is force-stopped and reopened: the tabs are still there (session restored), not black
 #   P1 Add to Home Screen with Cloud SuperApp as the launcher: the sheet, the result, the shortcut on the SuperApp home (stored + on screen)
 set -u
@@ -44,6 +44,14 @@ PY
   [ -n "$xy" ] && { adb shell input tap $xy; sleep 3; return 0; }
   return 1
 }
+tap_scroll() {   # tap a row of the Tools sheet, swiping the list up until it is composed (Add to home screen sits below the fold)
+  local w h i; read -r w h < <(adb shell wm size | tr -d '\r' | grep -oE '[0-9]+x[0-9]+' | tail -1 | tr x ' ')
+  for i in 1 2 3 4 5; do
+    tap "$1" && return 0
+    adb shell input swipe $((w / 2)) $((h * 62 / 100)) $((w / 2)) $((h * 30 / 100)) 300; sleep 2
+  done
+  return 1
+}
 open_url() { timeout 120 adb shell am start -W -a android.intent.action.VIEW -d "$1" -p "$BPKG" >/dev/null 2>&1; }
 black_check() {   # $1 shot name, $2 label: the page area (below the bars) must not be black
   python3 "$HERE/png_stats.py" "$OUT/$1.png" 0.05 0.25 0.95 0.80 > "$OUT/$1.stats" 2>&1; rc=$?
@@ -77,7 +85,7 @@ if [ -z "$PIDS" ]; then echo "NOTE  L2 no sandboxed renderer process found (rend
 fi
 
 # L3 Page-Tools
-tap 'Page-Tools' && { shot l3-page-tools; grep -q "Actions" "$OUT/l3-page-tools.xml" && ok "L3 Page-Tools sheet shows its sections (l3-page-tools.png)" || bad "L3 Page-Tools opened without its sections"; adb shell input keyevent KEYCODE_BACK; sleep 2; } || bad "L3 no Page-Tools icon (content-desc) on the tab row"
+tap 'Page-Tools' && { shot l3-page-tools; grep -q "text=\"Nav\"" "$OUT/l3-page-tools.xml" && ok "L3 Page-Tools sheet shows its sections (l3-page-tools.png)" || bad "L3 Page-Tools opened without its sections"; adb shell input keyevent KEYCODE_BACK; sleep 2; } || bad "L3 no Page-Tools icon (content-desc) on the tab row"
 
 # L4 restart keeps the tabs
 adb shell am force-stop "$BPKG"; sleep 2; adb shell am start -n "$BPKG/.MainActivity" >/dev/null 2>&1; sleep 10; shot l4-restart
@@ -91,7 +99,7 @@ if [ -n "$SAPK" ]; then
   adb shell am start -n "$BPKG/.MainActivity" >/dev/null 2>&1; sleep 5
   open_url https://example.com/; sleep 10
   tap 'Page-Tools' || true
-  tap 'Add to home screen' || true
+  tap_scroll 'Add to home screen' || true
   shot p1-sheet
   grep -q "Add to Home Screen" "$OUT/p1-sheet.xml" && ok "P1 the add-to-home sheet is showing (p1-sheet.png)" || bad "P1 the add-to-home sheet did not open"
   tap '^Add$' || tap 'Add' || true; sleep 6; shot p1-result

@@ -291,6 +291,22 @@ class BrowserHostFragment : Fragment() {
         toast("Imported ${p.addresses.size} address(es), ${p.cards.size} card(s) (metadata only)")
     }
 
+    /** #1841 Favourites > Export: the bookmarks as one JSON document written where the user picks. */
+    private val exportBookmarks = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        uri ?: return@registerForActivityResult
+        val ok = runCatching { requireContext().contentResolver.openOutputStream(uri)!!.bufferedWriter().use { it.write(bookmarks.exportJson()) } }.isSuccess
+        toast(if (ok) "Bookmarks exported" else "Could not write the file")
+    }
+    /** #1841 Favourites > Import: a document (or a bare array) merged into the list; a newer row replaces, new rows are added. */
+    private var onBookmarksImported: (() -> Unit)? = null
+    private val importBookmarks = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri ?: return@registerForActivityResult
+        val text = runCatching { requireContext().contentResolver.openInputStream(uri)!!.bufferedReader().use { it.readText() } }.getOrNull()
+        val r = text?.let { bookmarks.importJson(it) }
+        toast(if (r == null || r.has("error")) "Nothing importable in that file" else "Bookmarks imported")
+        if (r != null && !r.has("error")) onBookmarksImported?.invoke()
+    }
+
     private sealed class Mode {
         object GRID : Mode()
         /** #886 the tab is held by its stable id: its url changes as the tab navigates. */
@@ -1334,9 +1350,17 @@ class BrowserHostFragment : Fragment() {
         val all = history.all()
         overlay { close ->
             var q by remember { mutableStateOf("") }
-            val visits = remember(q) { BrowserListFilter.visits(q, all) }
+            var sort by remember { mutableStateOf("recent") }   // #1841 the core's history_query sort
+            val visits = remember(q, sort) { if (all.isEmpty()) all else history.query(q, sort) }
             Column(Modifier.fillMaxSize()) {
             SearchFilterField(q) { q = it }
+            androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag("browser:history:sort")) {
+                listOf("recent" to "Recent", "oldest" to "Oldest", "frecency" to "Frequent", "title" to "Title", "host" to "Site").forEach { (k, label) ->
+                    androidx.compose.material3.TextButton({ sort = k }, modifier = Modifier.testTag("browser:history:sort:$k")) {
+                        androidx.compose.material3.Text(if (sort == k) "● $label" else label)
+                    }
+                }
+            }
             Box(Modifier.weight(1f).fillMaxWidth()) {
             BrowserListScreen("History", visits.map { ListRow(it.url, it.title.ifBlank { it.url }, it.url) },
                 empty = "No history yet.", onOpen = { close(); navigateTo(it.id) }, onRemove = null,
@@ -1362,7 +1386,9 @@ class BrowserHostFragment : Fragment() {
                 filters = favSeed.filters,
                 collapsed = rev.let { bookmarks.collapsed() },
                 onToggleGroup = { bookmarks.toggleCollapsed(it); rev++ },
-                onOpenUrl = { close(); navigateTo(it) })
+                onOpenUrl = { close(); navigateTo(it) },
+                onExport = { exportBookmarks.launch("cloud-browser-bookmarks.json") },
+                onImport = { onBookmarksImported = { rev++ }; importBookmarks.launch(arrayOf("application/json", "text/*", "*/*")) })
         }
     }
 
@@ -2703,17 +2729,27 @@ class BrowserHostFragment : Fragment() {
             "reader" -> {
                 wv ?: return needPage()
                 if (readerOn) { readerOn = false; wv.loadUrl(url); done(ok().put("reader", false)) }
-                else BrowserPageActions.reader(wv, config.readerCss) { r ->
-                    readerOn = r != null
-                    readerPending = r != null
-                    done(if (r == null) ok().put("ok", false).put("error", "nothing to extract")
-                        else ok().put("reader", true).put("title", r.optString("title")).put("length", r.optInt("length")))
+                else BrowserPageActions.reader(wv, config.readerCss) { r0 ->
+                    // #1841 when the page script finds nothing, the core's extraction of the page HTML is the reader
+                    if (r0 != null) { readerOn = true; readerPending = true; done(ok().put("reader", true).put("title", r0.optString("title")).put("length", r0.optInt("length"))); return@reader }
+                    BrowserPageActions.run(wv, "(function(){return JSON.stringify({html:document.documentElement.outerHTML.slice(0,${DOM_MAX})});})()") { h ->
+                        val (title, paras) = BrowserCore.reader(h?.optString("html").orEmpty())
+                        if (paras.isEmpty()) { done(ok().put("ok", false).put("error", "nothing to extract")); return@run }
+                        readerOn = true; readerPending = true
+                        wv.loadDataWithBaseURL(url, BrowserPageActions.readerHtml(config.readerCss, title, paras), "text/html", "utf-8", url)
+                        done(ok().put("reader", true).put("title", title).put("length", paras.sumOf { it.length }))
+                    }
                 }
             }
             "reader_extract" -> {
                 wv ?: return needPage()
                 BrowserPageActions.run(wv, BrowserPageActions.script(requireContext(), "reader")) { r ->
-                    done(if (r == null) ok().put("ok", false) else ok().put("title", r.optString("title")).put("length", r.optInt("length")))
+                    if (r != null) { done(ok().put("title", r.optString("title")).put("length", r.optInt("length"))); return@run }
+                    // #1841 the page script found nothing: the core's extraction of the page HTML answers
+                    BrowserPageActions.run(wv, "(function(){return JSON.stringify({html:document.documentElement.outerHTML.slice(0,${DOM_MAX})});})()") { h ->
+                        val (title, paras) = BrowserCore.reader(h?.optString("html").orEmpty())
+                        done(if (paras.isEmpty()) ok().put("ok", false) else ok().put("title", title).put("length", paras.sumOf { it.length }).put("paragraphs", paras.size))
+                    }
                 }
             }
             "page_text" -> {

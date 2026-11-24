@@ -39,6 +39,11 @@ object BrowserPageActions {
         done(r)
     }
 
+    /** #1841 the reader page of the core's extraction: [title] and one paragraph each, escaped, with the app's declared CSS. */
+    fun readerHtml(css: String, title: String, paragraphs: List<String>): String =
+        "<!doctype html><meta name=viewport content='width=device-width'><style>$css</style><h1>${esc(title)}</h1>" +
+            paragraphs.joinToString("") { "<p>${esc(it)}</p>" }
+
     /** Find, answering the match count once the async search finishes. */
     fun find(wv: WebView, q: String, done: (Int) -> Unit) {
         if (q.isBlank()) { wv.clearMatches(); done(0); return }
