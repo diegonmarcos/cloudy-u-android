@@ -45,7 +45,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | cloud-notes | `com.diegonmarcos.cloudnotes` | 7 | 1 | 87% |
 | cloud-office | `com.diegonmarcos.cloudoffice` | 5 | 0 | 100% |
 | cloud-search | `com.diegonmarcos.cloudsearch` | 7 | 4 | 63% |
-| cloud-store | `com.diegonmarcos.cloudstore` | 13 | 0 | 100% |
+| cloud-store | `com.diegonmarcos.cloudstore` | 14 | 0 | 100% |
 | cloud-terminal-termux | `cld.termux` | 12 | 7 | 63% |
 | cloud-vault | `com.diegonmarcos.cloudvault` | 5 | 1 | 83% |
 | cloud-wallet | `com.diegonmarcos.cloudwallet` | 8 | 0 | 100% |
@@ -58,7 +58,7 @@ DataStore / Room stores and declared files it cannot move yet.
 | capital-stack-finterminal | `com.diegonmarcos.capitalfinterm` | 5 | 0 | 100% |
 | hardtech-cad | `com.diegonmarcos.hardtechcad` | 5 | 0 | 100% |
 | hardtech-biomed | `com.diegonmarcos.hardtechbiomed` | 5 | 0 | 100% |
-| **fleet** | | **460** | **58** | **88%** |
+| **fleet** | | **461** | **58** | **88%** |
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
@@ -1319,7 +1319,7 @@ Coverage: 7 covered, 4 gaps — search_agents_state, search_chat_sessions, file:
 
 ## cloud-store — `com.diegonmarcos.cloudstore`
 
-Module `ac_cloud-store`; libs: lib-ai, lib-appstore, lib-bottomnav, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleet-data-provider, lib-fleet-data-ui, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-json-viewer, lib-model-catalogue, lib-perms, lib-shared-store, lib-shell-client, lib-sysdns, lib-theme-background, lib-torrent, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive.
+Module `ac_cloud-store`; libs: lib-ai, lib-appstore, lib-bottomnav, lib-core, lib-crash, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleet-data-provider, lib-fleet-data-ui, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-json-viewer, lib-model-catalogue, lib-perms, lib-shared-store, lib-shell-client, lib-sysdns, lib-theme-background, lib-torrent, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -1341,6 +1341,7 @@ Module `ac_cloud-store`; libs: lib-ai, lib-appstore, lib-bottomnav, lib-core, li
 | `perm_ask_tracker` | prefs | device | no | Set of permissions already asked on this install; permission-asked tracker. #1274 libs:perms PermAskLog shares it with the app's PermAskTracker (one record of what was asked). |
 | `safe_encrypted_prefs_reset` | prefs | device | no | #1106 which encrypted prefs files SafeEncryptedPrefs had to reset (a Keystore master key that no longer matches the file, after a shared-uid migration or a restored backup), so the app can tell the user to sign in again until they acknowledge it. Describes this phone's Keystore, never configuration. |
 | `silent_readiness` | prefs | device | no | #1675 Whether this phone can update fleet apps silently (installer of record, target SDK) and the per-app will-prompt reason last computed: device state, never a setting. |
+| `site_mirror` | prefs | config | yes | #1523 Offline site mirror: the user's pinned-site list (the declared pins until the user changes it); a user setting that follows the user to a new phone, while the cached pages themselves are device-local. |
 | `store_activity` | prefs | device | no | #1517 Store activity panel: whether the panel is expanded and the finished list open; per-install UI state, never migrates. |
 | `store_auto` | prefs | device | no | #804 the auto-update chain's persisted state: phase, queue, per-package result, current package, last error. Lets a chain killed mid-download or mid-install resume on THIS phone; a new phone runs its own. |
 | `store_batch` | prefs | device | no | #804 the last Download all / Update all report served at /api/store/batch, kept across the SuperApp restarting itself. |
@@ -1366,7 +1367,7 @@ Module `ac_cloud-store`; libs: lib-ai, lib-appstore, lib-bottomnav, lib-core, li
 |---|---|---|
 | `filesDir/xray-perf.tsv` | device | #1728 X-Ray App > Performance: the bounded ring buffer of recorded operation runs (wall, thread CPU, items, bytes, GC), persisted so a report survives the process; timings only, never migrated. |
 
-Coverage: 13 covered, 0 gaps.
+Coverage: 14 covered, 0 gaps.
 
 ## cloud-terminal-termux — `cld.termux`
 

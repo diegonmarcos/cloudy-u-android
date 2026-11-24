@@ -4591,7 +4591,8 @@
         "lib-ui-kit",
         "lib-ui-nav-bars",
         "lib-updater",
-        "lib-usb-drive"
+        "lib-usb-drive",
+        "lib-web-core"
       ],
       "items": []
     },

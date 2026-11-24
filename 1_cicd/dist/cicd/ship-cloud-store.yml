@@ -72,6 +72,7 @@ on:
       - "ab_cloud-libs-shared/libs/ui-nav-bars/**"
       - "ab_cloud-libs-shared/libs/updater/**"
       - "ab_cloud-libs-shared/libs/usb-drive/**"
+      - "ab_cloud-libs-shared/libs/web-core/**"
       - "ac_cloud-store/**"
       - "!ab_cloud-libs-shared/libs/**/*.md"
       - "ab_cloud-libs-shared/libs/ai/**/assets/**"
@@ -130,6 +131,8 @@ on:
       - "ab_cloud-libs-shared/libs/updater/**/res/**"
       - "ab_cloud-libs-shared/libs/usb-drive/**/assets/**"
       - "ab_cloud-libs-shared/libs/usb-drive/**/res/**"
+      - "ab_cloud-libs-shared/libs/web-core/**/assets/**"
+      - "ab_cloud-libs-shared/libs/web-core/**/res/**"
       - "!ac_cloud-store/web/**"
       - "!ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
 permissions:
