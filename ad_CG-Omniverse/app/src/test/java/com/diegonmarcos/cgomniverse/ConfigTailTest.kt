@@ -28,7 +28,7 @@ class ConfigTailTest {
 
     @Test fun generalAndAboutAreStillDeclared() {
         val cp = build.getJSONObject("configs_pages")
-        assertTrue(cp.getJSONObject("general").getJSONArray("sections").length() >= 7)
+        assertTrue(cp.getJSONObject("general").getJSONArray("sections").length() >= 6)   // #1890 Perms is its own tab, not a General section
         assertTrue(cp.getJSONObject("about").has("tagline") && cp.getJSONObject("about").has("features"))
     }
 
