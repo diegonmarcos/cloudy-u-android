@@ -13,7 +13,7 @@ import com.diegonmarcos.superapp.network.BtLinks
  * Android parts (reading the Bluetooth link, sending the actions) are [read] and [run]. While something plays the badge is built exactly as
  * before (this model is not used), so nothing is removed.
  */
-internal object IdleMediaBadge {
+object IdleMediaBadge {
     enum class Button { BUDS, OPEN_PLAYER, PLAY_LAST }
 
     data class Buds(val name: String, val connected: Boolean, val batteryText: String)
