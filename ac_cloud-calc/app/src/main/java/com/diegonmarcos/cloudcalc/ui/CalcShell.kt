@@ -179,6 +179,7 @@ object CalcTags {
     const val AI_PAGE = "calc_ai_page"
     const val INPUT = "calc_input"
     const val RESULT = "calc_result"
+    const val METER_CYMATICS = "calc_meter_cymatics"
     const val DISPLAY = "calc_display"
     const val CONVERT_EQ = "calc_convert_eq"
     const val CONVERT_SWAP = "calc_convert_swap"

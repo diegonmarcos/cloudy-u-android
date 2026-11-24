@@ -20,6 +20,8 @@ kotlin {
 }
 
 dependencies {
+    // #1892 the Chladni pattern math the meter's Cymatics figure draws, shared with Cloud Canvas Play (plain JVM)
+    implementation project(':libs:cymatics-core')
     // Android's own org.json at runtime; the real library for the JVM suite and PIT.
     compileOnly 'org.json:json:20240303'
     testImplementation 'org.json:json:20240303'

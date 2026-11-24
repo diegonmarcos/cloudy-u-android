@@ -38,6 +38,7 @@
     "canvas-draw": "ac_cloud-canvas",
     "canvas-painter": "ac_cloud-canvas",
     "canvas-play": "ac_cloud-canvas",
+    "cymatics": "ac_cloud-canvas",
     "health": "aa_cloud-superapp",
     "mail": "aa_cloud-superapp",
     "media": "ac_cloud-keyboard",

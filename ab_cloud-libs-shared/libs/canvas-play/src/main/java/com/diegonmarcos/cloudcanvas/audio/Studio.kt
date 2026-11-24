@@ -170,63 +170,30 @@ object Arrangement {
 }
 
 /**
- * Cymatics: the Chladni figure of a square plate driven at a frequency. The plate's mode (n, m) is picked from the frequency (one mode
- * per semitone, ordered by n^2 + m^2 as the plate's resonances are), and between two semitones the two modes are blended, so the pattern is
- * the same every time for one frequency, different for two different frequencies, and symmetric (mirror in x, in y and across the diagonal).
- * The sand gathers on the nodal lines, where the amplitude is near zero.
+ * Cymatics: the Chladni figure of a square plate driven at a frequency (one mode per semitone, blended between two; the same every time for
+ * one frequency, symmetric; the sand gathers on the nodal lines). #1892 the math moved, unchanged, to libs:cymatics-core so Cloud Calc's
+ * sound meter draws the same plate; this object delegates to it, so the call sites and their tests are as before.
  */
 object Cymatics {
+    private val core = com.diegonmarcos.cloudlib.cymatics.Cymatics
+
     /** The plate modes (n, m) with n > m >= 1, ordered by n^2 + m^2, then n. 128 of them: one per MIDI-range semitone. */
-    val MODES: List<Pair<Int, Int>> = buildList {
-        for (n in 2..40) for (m in 1 until n) add(n to m)
-    }.sortedWith(compareBy<Pair<Int, Int>> { it.first * it.first + it.second * it.second }.thenBy { it.first }).take(128)
+    val MODES: List<Pair<Int, Int>> = core.MODES
 
     /** The mode index (fractional) of a frequency: semitones above A0, clamped to the table. */
-    fun modeIndex(freq: Double): Double = Pitch.semitonesAboveA0(freq).coerceIn(0.0, (MODES.size - 1).toDouble())
+    fun modeIndex(freq: Double): Double = core.modeIndex(freq)
 
-    /** The symmetric Chladni amplitude of mode (n, m) at (x, y) in [-1, 1]^2: cos(n pi x) cos(m pi y) + cos(m pi x) cos(n pi y). */
-    fun amplitude(n: Int, m: Int, x: Double, y: Double): Double =
-        cos(n * PI * x) * cos(m * PI * y) + cos(m * PI * x) * cos(n * PI * y)
+    /** The symmetric Chladni amplitude of mode (n, m) at (x, y) in [-1, 1]^2. */
+    fun amplitude(n: Int, m: Int, x: Double, y: Double): Double = core.amplitude(n, m, x, y)
 
-    /**
-     * The |amplitude| of the plate at [freq] on a [size] x [size] grid (row-major, normalised to 0..1, 0 on a nodal line).
-     * The phase [t] (0..1) animates the plate without moving its nodes: the standing wave only breathes.
-     */
-    fun pattern(freq: Double, size: Int, t: Double = 0.0): FloatArray = blend(listOf(freq to 1.0), size, t)
+    /** The |amplitude| of the plate at [freq] on a [size] x [size] grid (row-major, normalised to 0..1, 0 on a nodal line). */
+    fun pattern(freq: Double, size: Int, t: Double = 0.0): FloatArray = core.pattern(freq, size, t)
 
-    /**
-     * The plate driven by several frequencies at once (Looping Play: the dominant frequencies of the music, weighted by their level):
-     * the weighted sum of each frequency's figure, normalised. Each frequency blends the two modes around its fractional index.
-     */
-    fun blend(freqs: List<Pair<Double, Double>>, size: Int, t: Double = 0.0): FloatArray {
-        val out = FloatArray(size * size)
-        if (size <= 0 || freqs.isEmpty()) return out
-        val breathe = 0.85 + 0.15 * sin(2 * PI * t)
-        val acc = DoubleArray(size * size)
-        for ((f, w) in freqs) {
-            val k = modeIndex(f)
-            val i0 = Math.floor(k).toInt()
-            val i1 = minOf(i0 + 1, MODES.size - 1)
-            val frac = k - i0
-            val (n0, m0) = MODES[i0]
-            val (n1, m1) = MODES[i1]
-            for (r in 0 until size) {
-                val y = if (size == 1) 0.0 else -1.0 + 2.0 * r / (size - 1)
-                for (c in 0 until size) {
-                    val x = if (size == 1) 0.0 else -1.0 + 2.0 * c / (size - 1)
-                    acc[r * size + c] += w * ((1 - frac) * amplitude(n0, m0, x, y) + frac * amplitude(n1, m1, x, y))
-                }
-            }
-        }
-        var max = 0.0
-        for (v in acc) max = maxOf(max, abs(v))
-        if (max <= 0.0) return out
-        for (i in acc.indices) out[i] = (abs(acc[i]) / max * breathe).toFloat()
-        return out
-    }
+    /** The plate driven by several weighted frequencies at once (Looping Play): the normalised weighted sum of each figure. */
+    fun blend(freqs: List<Pair<Double, Double>>, size: Int, t: Double = 0.0): FloatArray = core.blend(freqs, size, t)
 
     /** The grid cells where the sand settles: amplitude under [threshold]. */
-    fun nodes(pattern: FloatArray, threshold: Float = 0.08f): Int = pattern.count { it < threshold }
+    fun nodes(pattern: FloatArray, threshold: Float = 0.08f): Int = core.nodes(pattern, threshold)
 }
 
 /** The dominant frequencies of a block of the generated music: a Hann-windowed FFT and its strongest separated peaks. */

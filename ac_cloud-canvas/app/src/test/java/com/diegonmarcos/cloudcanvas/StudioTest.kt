@@ -157,6 +157,19 @@ class StudioTest {
         assertEquals(Cymatics.MODES.size, Cymatics.MODES.toSet().size)
     }
 
+    /** #1892 parity: the facade the Play page calls gives the field the pre-move implementation did (reference bits captured before the move). */
+    @Test fun cymaticsFieldIsByteIdenticalAfterTheMoveToTheSharedLib() {
+        fun fnv(p: FloatArray): ULong {
+            var h = 0xcbf29ce484222325UL
+            for (f in p) { val b = java.lang.Float.floatToRawIntBits(f); for (i in 0 until 4) { h = h xor ((b ushr (8 * i)) and 0xff).toULong(); h *= 0x100000001b3UL } }
+            return h
+        }
+        assertEquals(0x3428ff27c87fa13dUL, fnv(Cymatics.pattern(440.0, 16)))
+        assertEquals(0x5436c1864398ad35UL, fnv(Cymatics.pattern(110.0, 24)))
+        assertEquals(0x0121191f52615575UL, fnv(Cymatics.pattern(261.6256, 32, 0.25)))
+        assertEquals(0x81816f0b4eaf020dUL, fnv(Cymatics.blend(listOf(220.0 to 1.0, 330.0 to 0.5, 1000.0 to 0.3), 32, 0.6)))
+    }
+
     @Test fun cymaticsOfSeveralFrequenciesBlendsThem() {
         val one = Cymatics.pattern(220.0, 32)
         val mix = Cymatics.blend(listOf(220.0 to 1.0, 330.0 to 0.5), 32)

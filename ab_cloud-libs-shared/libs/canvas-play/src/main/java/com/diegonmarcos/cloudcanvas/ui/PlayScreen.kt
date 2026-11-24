@@ -79,6 +79,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.core.content.ContextCompat
 import com.diegonmarcos.cloudcanvas.audio.Arrangement as Arr
 import com.diegonmarcos.cloudcanvas.audio.Cymatics
+import com.diegonmarcos.cloudlib.cymatics.CymaticsPlate
 import com.diegonmarcos.cloudcanvas.audio.Pitch
 import com.diegonmarcos.cloudcanvas.audio.Session
 import com.diegonmarcos.cloudcanvas.audio.Drum
@@ -366,16 +367,8 @@ private fun CymaticsView(ctl: PlayController, s: Session) {
         }
     }
     Row(Modifier.fillMaxSize().testTag("canvas_play_cymatics")) {
-        Canvas(Modifier.fillMaxHeight().aspectRatio(1f).background(Color(0xFF101418), RoundedCornerShape(8.dp))) {
-            val p = pattern
-            if (p.size == grid * grid) {
-                val cell = size.width / grid
-                for (r in 0 until grid) for (c in 0 until grid) {
-                    val v = p[r * grid + c]
-                    if (v < 0.12f) drawRect(Color(0xFFF5E6C8).copy(alpha = 1f - v / 0.12f * 0.7f), Offset(c * cell, r * cell), Size(cell, cell))
-                }
-            }
-        }
+        // #1892 the plate is the shared renderer (libs:cymatics), the same one Cloud Calc's sound meter draws
+        CymaticsPlate(pattern, grid, Modifier.fillMaxHeight().aspectRatio(1f))
         Column(Modifier.padding(start = 8.dp).verticalScroll(rememberScrollState())) {
             Text("Cymatics", color = ink, fontSize = 14.sp)
             Text(if (s.playing) "Looping Play: the plate follows the music" else "Play a note: the plate shows its standing wave", color = colorResource(R.color.app_text_secondary), fontSize = 11.sp)

@@ -117,6 +117,7 @@
         "libs:clock-tools",
         "jev",
         "sound",
+        "libs:cymatics",
         "tools",
         "libs:decisions-link",
         "libs:decisions",
@@ -138,6 +139,16 @@
     "libs:clock-tools": {
       "_doc": "#1668 THE clock, shared BY REFERENCE with Cloud Tasks (Tasks > Clock) and the SuperApp (the Home bar stopwatch): the Android half (ClockEngine, the foreground service, receivers, RingActivity) and every Clock screen (World clock with #1667's converter, default city and day bars, Alarms, Timers, Stopwatch, Interval, Bedtime). Its manifest merges the clock's components and permissions; this app's own manifest only caps SCHEDULE_EXACT_ALARM at 32 and names CalcClockHost (meta-data com.diegonmarcos.clocktools.HOST), which hands the lib this file's ui.modes[].clock declarations, the mode ids a notification opens, the worldmap/cities catalogue (coordinates for the day bars) and the #1423 map. Alarms: this app's own store and its own non-exported receivers, so an alarm set here rings here only. A `gui` lib.",
       "dir": "../ab_cloud-libs-shared/libs/clock-tools",
+      "type": "library"
+    },
+    "libs:cymatics": {
+      "_doc": "#1892 the Chladni plate's Compose drawing, shared BY REFERENCE with Cloud Canvas Play (#1865): the sound meter's Cymatics figure below the frequency graphic. A `gui` lib over libs:cymatics-core.",
+      "dir": "../ab_cloud-libs-shared/libs/cymatics",
+      "type": "library"
+    },
+    "libs:cymatics-core": {
+      "_doc": "#1892 the Chladni pattern math (mode numbers from a frequency, the standing-wave amplitude, the weighted blend) as a plain-JVM module, the ONE implementation Cloud Canvas Play and Cloud Calc's meter share; its suite holds the byte parity with the pre-move field.",
+      "dir": "../ab_cloud-libs-shared/libs/cymatics/core",
       "type": "library"
     },
     "libs:clock-tools-core": {

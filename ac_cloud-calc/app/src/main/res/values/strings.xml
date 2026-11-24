@@ -23,6 +23,8 @@
     <string name="mic_needed">The sound tools need the microphone. Audio is analysed and discarded; only a History session you save keeps it, in this app\'s own storage.</string>
     <string name="mic_allow">Allow microphone</string>
     <string name="meter_relative">dBFS + calibration offset. A phone microphone is uncalibrated: set the offset against a known source for absolute dB SPL.</string>
+    <string name="meter_cymatics">Cymatics</string>
+    <string name="meter_cymatics_silent">No sound: a flat plate</string>
     <string name="calibration">Calibration offset (dB)</string>
 
     <!-- #772 the Sound tools -->

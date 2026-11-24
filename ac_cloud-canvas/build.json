@@ -129,7 +129,8 @@
         "libs:canvas-core",
         "libs:canvas-draw",
         "libs:canvas-painter",
-        "libs:canvas-play"
+        "libs:canvas-play",
+        "libs:cymatics"
       ]
     },
     "libs:core": {
@@ -230,6 +231,16 @@
     "libs:canvas-painter": {
       "_doc": "#1865 the Painter section (the cell-painter web page over libs:web-core and its store), moved out of the app module unchanged.",
       "dir": "../ab_cloud-libs-shared/libs/canvas-painter",
+      "type": "library"
+    },
+    "libs:cymatics": {
+      "_doc": "#1892 the Chladni plate's Compose drawing, shared BY REFERENCE with Cloud Calc's sound meter; libs:canvas-play `api`s it (its Cymatics panel).",
+      "dir": "../ab_cloud-libs-shared/libs/cymatics",
+      "type": "library"
+    },
+    "libs:cymatics-core": {
+      "_doc": "#1892 the Chladni pattern math (plain JVM), moved unchanged from audio/Studio.kt so Cloud Calc draws the same plate; audio/Studio.kt's Cymatics delegates to it.",
+      "dir": "../ab_cloud-libs-shared/libs/cymatics/core",
       "type": "library"
     },
     "libs:canvas-play": {

@@ -3,7 +3,9 @@ package com.diegonmarcos.cloudcalc.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
@@ -29,6 +32,8 @@ import com.diegonmarcos.cloudcalc.audio.Mic
 import com.diegonmarcos.cloudcalc.audio.SoundDecl
 import com.diegonmarcos.cloudcalc.audio.SoundFlow
 import com.diegonmarcos.cloudcalc.audio.SoundStore
+import com.diegonmarcos.cloudcalc.sound.CymaticsMap
+import com.diegonmarcos.cloudlib.cymatics.CymaticsPlate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.max
@@ -100,5 +105,36 @@ private fun MeterLive(mode: Declarations.Mode, meter: Declarations.Meter) {
             Text("20 Hz", style = MaterialTheme.typography.labelSmall)
             Text("%.0f kHz".format(cfg.sampleRate / 2000.0), style = MaterialTheme.typography.labelSmall)
         }
+        // #1892 below the frequency graphic: the Cymatics figure of the live spectrum (the plate Cloud Canvas Play draws)
+        MeterCymatics(r, cfg.sampleRate)
     }
+}
+
+/**
+ * #1892 the Cymatics figure of the meter: the dominant frequency and the strongest partials of the live spectrum pick the plate's modes,
+ * the level its amplitude (CymaticsMap, shared plate math in libs:cymatics-core, drawn by libs:cymatics), eased between readings so it
+ * does not flicker. Silence is a flat plate.
+ */
+@Composable
+private fun MeterCymatics(r: SoundFlow.Reading?, sampleRate: Int) {
+    val grid = 64
+    val smoother = remember { CymaticsMap.Smoother() }
+    var drive by remember { mutableStateOf(CymaticsMap.SILENT) }
+    var field by remember { mutableStateOf(FloatArray(0)) }
+    LaunchedEffect(r) {
+        val d = smoother.update(if (r == null) CymaticsMap.SILENT else CymaticsMap.drive(r.spectrumDb, sampleRate, r.levelDb))
+        field = withContext(Dispatchers.Default) { CymaticsMap.field(d, grid) }
+        drive = d
+    }
+    Text(stringResource(R.string.meter_cymatics), style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = CalcMetrics.gutter))
+    Box(Modifier.fillMaxWidth().testTag(CalcTags.METER_CYMATICS), contentAlignment = Alignment.Center) {
+        CymaticsPlate(field, grid, Modifier.height(CalcMetrics.spectrumHeight * 2).aspectRatio(1f))
+    }
+    val lead = drive.partials.firstOrNull()
+    Text(
+        if (lead == null) stringResource(R.string.meter_cymatics_silent)
+        else drive.partials.zip(drive.modes()).joinToString("  ·  ") { (p, m) -> "%.0f Hz → %d,%d".format(p.first, m.first, m.second) },
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
