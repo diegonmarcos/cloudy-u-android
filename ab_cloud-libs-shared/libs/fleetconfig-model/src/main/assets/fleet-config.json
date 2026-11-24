@@ -539,6 +539,14 @@
         "ac_cloud-drive"
       ]
     },
+    "share_save_to": {
+      "kind": "prefs",
+      "class": "device",
+      "doc": "Cloud Drive share sheet 'Save to...': the folder tree (a SAF URI grant of this phone) the last share was saved into, offered first next time; it names a folder on this device, so it is not carried to a new phone.",
+      "used_by": [
+        "ac_cloud-drive"
+      ]
+    },
     "cloud-drive-pdf-reader": {
       "kind": "prefs",
       "class": "config",

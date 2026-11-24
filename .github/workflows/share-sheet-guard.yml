@@ -6,6 +6,21 @@ name: "share-sheet guard — Notes/Drive/SuperApp offer their labelled share ent
 
 on:
   push:
+    # ── MANAGED-GUARD-TRIGGERS: injected by cloud-android-guard-triggers.py from 1_cicd/src/data/guard-triggers.json ──
+    paths:
+      - "1_cicd/src/cicd/share-sheet-guard.yml"
+      - "1_cicd/src/scripts/cloud-android-share-sheet-guard.py"
+      - "1_cicd/src/scripts/test/share-sheet-guard.test.sh"
+      - "aa_cloud-superapp/app/src/main/AndroidManifest.xml"
+      - "aa_cloud-superapp/app/src/main/res/values/strings.xml"
+      - "ac_cloud-drive/app/src/main/AndroidManifest.xml"
+      - "ac_cloud-drive/app/src/main/res/values/strings.xml"
+      - "ac_cloud-nix-on-droid/app/src/main/AndroidManifest.xml"
+      - "ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/AndroidManifest.xml"
+      - "ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/res/values/strings.xml"
+      - "ac_cloud-notes/test/test-notes-open-any.sh"
+      - "ac_cloud-termux/app/src/main/AndroidManifest.xml"
+    # ── end MANAGED-GUARD-TRIGGERS ──
     branches: [main]
   pull_request:
   workflow_dispatch:

@@ -265,6 +265,22 @@
         "ac_cloud-drive/data/**",
         "ac_cloud-drive/tools/**"
       ]
+    },
+    "share-sheet-guard.yml": {
+      "_doc": "#1888 reads the share-entry manifests of Notes, Drive, SuperApp and the two terminals.",
+      "paths": [
+        "1_cicd/src/scripts/test/share-sheet-guard.test.sh",
+        "1_cicd/src/scripts/cloud-android-share-sheet-guard.py",
+        "ac_cloud-notes/test/test-notes-open-any.sh",
+        "ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/AndroidManifest.xml",
+        "ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/res/values/strings.xml",
+        "ac_cloud-drive/app/src/main/AndroidManifest.xml",
+        "ac_cloud-drive/app/src/main/res/values/strings.xml",
+        "aa_cloud-superapp/app/src/main/AndroidManifest.xml",
+        "aa_cloud-superapp/app/src/main/res/values/strings.xml",
+        "ac_cloud-termux/app/src/main/AndroidManifest.xml",
+        "ac_cloud-nix-on-droid/app/src/main/AndroidManifest.xml"
+      ]
     }
   }
 }
