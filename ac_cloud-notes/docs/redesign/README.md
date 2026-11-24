@@ -1,7 +1,7 @@
 # Cloud Notes redesign (#1717, #1788): emulator evidence
 
 Screenshots from `notes-emulator.yml` run 44275846182, on the APK of ship run 44272046398 (commit 4f341e1b).
-25 scenes passed, 1 skipped (`vault-md-nested`, a tap target not found). Scenes live in `1_cicd/src/data/nav-walk-apps.json`.
+25 scenes passed, 1 skipped (`vault-md-nested`: the scene tapped the already expanded `notes` folder and collapsed it; fixed, the scene now asserts). Scenes live in `1_cicd/src/data/nav-walk-apps.json`.
 Only our own captures are kept here; no Obsidian assets are copied.
 
 - Icon-only Raw | Edit | View toolbar: `scene_dark_vault-md-view.png`, `scene_dark_vault-md-edit.png`, `scene_dark_vault-md-raw.png`

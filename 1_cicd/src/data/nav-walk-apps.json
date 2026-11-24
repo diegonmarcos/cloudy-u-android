@@ -535,7 +535,7 @@
         {"name": "vault-md-view", "steps": [["wait", 4], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "Home.md"], ["wait", 3]]},
         {"name": "vault-md-raw", "themes": ["dark"], "steps": [["wait", 4], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "Home.md"], ["wait", 3], ["tap", "Raw"], ["wait", 2]]},
         {"name": "vault-md-edit", "steps": [["wait", 4], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "Home.md"], ["wait", 3], ["tap", "Edit"], ["wait", 3]]},
-        {"name": "vault-md-nested", "themes": ["dark"], "steps": [["wait", 4], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "notes"], ["tap", "Ideas.md"], ["wait", 3]]},
+        {"name": "vault-md-nested", "themes": ["dark"], "steps": [["wait", 4], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "Ideas.md"], ["wait", 3]], "assert": true},
         {"name": "vault-json-view", "themes": ["dark"], "steps": [["wait", 4], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "data.json"], ["wait", 3]]},
         {"name": "vault-html-edit", "themes": ["dark"], "steps": [["wait", 4], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "page.html"], ["wait", 3], ["tap", "Edit"], ["wait", 4]]},
         {"name": "vault-canvas-edit", "themes": ["dark"], "steps": [["wait", 4], ["tap", "Toggle left sidebar"], ["wait", 1], ["tap", "board.canvas"], ["wait", 3]]},
