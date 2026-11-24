@@ -35,8 +35,6 @@
       "lib/x86_64/libjnidispatch.so": "prebuilt vosk-android and JNA AARs, 4 KB-linked; needs 16 KB-aligned upstream releases. 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)"
     },
     "ab_cloud-libs-shared/lib-apks": {
-      "lib/arm64-v8a/libwg-go.so": "Go/OCaml engine binaries: the x86_64 builds and wg-go are linked without -Wl,-z,max-page-size=16384 (arm64 ones already are). 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
-      "lib/x86_64/libwg-go.so": "Go/OCaml engine binaries: the x86_64 builds and wg-go are linked without -Wl,-z,max-page-size=16384 (arm64 ones already are). 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
       "lib/x86_64/libgh.so": "Go/OCaml engine binaries: the x86_64 builds and wg-go are linked without -Wl,-z,max-page-size=16384 (arm64 ones already are). 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
       "lib/x86_64/librclone.so": "Go/OCaml engine binaries: the x86_64 builds and wg-go are linked without -Wl,-z,max-page-size=16384 (arm64 ones already are). 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)",
       "lib/x86_64/libunison.so": "Go/OCaml engine binaries: the x86_64 builds and wg-go are linked without -Wl,-z,max-page-size=16384 (arm64 ones already are). 1.1.Product-Backlog task 0172rQF2sCRHaeMtr1E7pzQ8 (16 KB follow-up)"
