@@ -118,6 +118,8 @@
         "jev",
         "sound",
         "libs:cymatics",
+        "libs:tile-grid",
+        "libs:ui-kit",
         "tools",
         "libs:decisions-link",
         "libs:decisions",
@@ -144,6 +146,16 @@
     "libs:cymatics": {
       "_doc": "#1892 the Chladni plate (pattern math + Compose drawing), shared BY REFERENCE with Cloud Canvas Play (#1865): the sound meter's Cymatics figure below the frequency graphic. A `gui` lib.",
       "dir": "../ab_cloud-libs-shared/libs/cymatics",
+      "type": "library"
+    },
+    "libs:tile-grid": {
+      "_doc": "#1893 the sectioned icon-tile grid of Cloud SuperApp's Cloud page (headings, index cards, sizing), extracted from the SuperApp so Cloud Calc's Home draws the same component. A `gui` lib over libs:ui-kit.",
+      "dir": "../ab_cloud-libs-shared/libs/tile-grid",
+      "type": "library"
+    },
+    "libs:ui-kit": {
+      "_doc": "The fleet's Compose kit (CloudKitTheme, KitPalette), shared BY REFERENCE; libs:tile-grid's cards read its palette (#1893 Home).",
+      "dir": "../ab_cloud-libs-shared/libs/ui-kit",
       "type": "library"
     },
     "libs:clock-tools-core": {
@@ -2180,9 +2192,27 @@
   "ui": {
     "_doc": "EVERY list this app renders. app/build.gradle bakes ui.* into BuildConfig as base64 JSON and Declarations.kt decodes it once; no tab id, mode id, key or form is spelled in Kotlin.",
     "_doc_sections": "#868 THE ONE navigation declaration (libs:bottomnav's NavDecl), INVERTED from #770: ui.bottom_nav is the island's section ids in display order, ui.sections[] are Calculator, Measure and Jev, each with `pages` - the ten tabs (what #770 called ui.tabs), drawn as the section's top PageTabs strip - and ui.default_section is where the app opens (its first page). Calculator = the traditional calculators (#767), Measure = sensors and the clock & timers (#768), Jev = natural-language requests routed by a decision model, and its Configs. A page shows the modes whose `tab` is its id, in ui.modes order, as the sub-strip under the page strip. test/test-calc-shell.sh fails on a section with no page, a page with no mode and a mode naming no page.",
-    "bottom_nav": ["calculator", "sheet", "ai", "measure", "toolkit"],
+    "bottom_nav": ["calculator", "sheet", "home", "measure", "toolkit"],
     "default_section": "calculator",
     "configs_ui": ["nav_ui"],
+    "hierarchy": {
+      "_doc": "#1893 THE tool hierarchy, the tree Home draws and the navigation follows: 1 Calculations (Calc, Sheet), 2 Toolkit (Measure with Sound, Camera, Wireless, Sensors; Tools). A node with `pages` lists ui.sections[].pages ids (a tool each); `section` names the ui.sections entry that holds them. Every page of every section except Home and Configs is listed exactly once (DeclarationsTest). Ask Jev, not named by the order, sits under Calc (the closest parent).",
+      "nodes": [
+        {"id": "calculations", "label": "Calculations", "icon": "calculate", "children": [
+          {"id": "calc", "label": "Calc", "icon": "calculate", "section": "calculator", "pages": ["calc", "latex", "convert", "history", "datetime", "sound", "finance", "graph", "ask"]},
+          {"id": "sheet", "label": "Sheet", "icon": "table_chart", "section": "sheet", "pages": ["sheet"]}
+        ]},
+        {"id": "toolkit", "label": "Toolkit", "icon": "build", "children": [
+          {"id": "measure", "label": "Measure", "icon": "speed", "section": "measure", "children": [
+            {"id": "measure_sound", "label": "Sound", "icon": "mic", "pages": ["sensors"]},
+            {"id": "measure_camera", "label": "Camera", "icon": "camera", "pages": ["camera"]},
+            {"id": "measure_wireless", "label": "Wireless", "icon": "wifi", "pages": ["wifi", "bluetooth", "nfc", "lfrfid"]},
+            {"id": "measure_sensors", "label": "Sensors", "icon": "sensors", "pages": ["phone"]}
+          ]},
+          {"id": "tools", "label": "Tools", "icon": "build", "section": "toolkit", "pages": ["light", "recorder", "tracker", "clock"]}
+        ]}
+      ]
+    },
     "sections": [
       {
         "id": "calculator",
@@ -2192,7 +2222,7 @@
         "nav_mode": "horizontal_two_rows",
         "groups": [
           {"id": "decimals", "label": "Decimals", "icon": "calculate", "pages": ["calc", "latex", "convert", "history"]},
-          {"id": "others", "label": "Others", "icon": "apps", "pages": ["datetime", "sound", "finance", "graph"]}
+          {"id": "others", "label": "Others", "icon": "apps", "pages": ["datetime", "sound", "finance", "graph", "ask"]}
         ],
         "pages": [
           {"id": "calc", "label": "Calc", "icon": "calculate"},
@@ -2202,7 +2232,8 @@
           {"id": "datetime", "label": "Time & Date", "icon": "event", "redirect_from": ["tools"]},
           {"id": "sound", "label": "Sound", "icon": "graphic_eq"},
           {"id": "finance", "label": "Finance", "icon": "payments"},
-          {"id": "graph", "label": "Graph", "icon": "chart"}
+          {"id": "graph", "label": "Graph", "icon": "chart"},
+          {"id": "ask", "label": "Ask Jev", "icon": "ask"}
         ]
       },
       {
@@ -2218,19 +2249,14 @@
         ]
       },
       {
-        "id": "ai",
-        "label": "AI",
-        "icon": "auto_awesome",
+        "id": "home",
+        "label": "Home",
+        "icon": "home",
         "pages": [
           {
-            "id": "ai",
-            "label": "AI",
-            "icon": "auto_awesome"
-          },
-          {
-            "id": "ask",
-            "label": "Ask Jev",
-            "icon": "ask"
+            "id": "home",
+            "label": "Home",
+            "icon": "home"
           }
         ]
       },
@@ -2238,6 +2264,12 @@
         "id": "measure",
         "label": "Measure",
         "icon": "speed",
+        "_doc_groups": "#1893 two labelled rows (libs:bottomnav ManyRows, as Calc's Decimals | Others): Measure = Sound, Camera, Sensors; Wireless = Wi-Fi, Bluetooth, NFC, LF-RFID (the hierarchy's Wireless node).",
+        "nav_mode": "horizontal_two_rows",
+        "groups": [
+          {"id": "measure", "label": "Measure", "icon": "speed", "pages": ["sensors", "camera", "phone"]},
+          {"id": "wireless", "label": "Wireless", "icon": "wifi", "pages": ["wifi", "bluetooth", "nfc", "lfrfid"]}
+        ],
         "pages": [
           {
             "id": "sensors",
@@ -2278,7 +2310,7 @@
       },
       {
         "id": "toolkit",
-        "label": "Toolkit",
+        "label": "Tools",
         "icon": "build",
         "pages": [
           {
@@ -5112,11 +5144,11 @@
         "_doc": "The spreadsheet (:sheet module): grid, edit bar, formulas, several sheets, workbook files. Its data is the user's workbooks in app storage, not this declaration."
       },
       {
-        "id": "ai",
-        "label": "AI",
-        "tab": "ai",
-        "kind": "ai",
-        "_doc": "The fleet's AI chat (libs:ai): the agent gateway and OpenRouter, sessions, agent and model pickers. Two tools read and write the Sheet selection."
+        "id": "home",
+        "label": "Home",
+        "tab": "home",
+        "kind": "home",
+        "_doc": "#1893 Home: every tool of the app as an icon tile, in the sections of ui.hierarchy, drawn by libs:tile-grid (the component Cloud SuperApp's Cloud page uses). It replaced the AI page (owner order); the Ask Jev page stays, under Calc."
       },
       {
         "id": "jev",

@@ -69,9 +69,9 @@ class SheetShellTest {
     private val state = CalcState(null)
     private fun launch() = compose.setContent { CalcTheme { CalcShell(NoEngine, state) } }
 
-    @Test fun `the bar is Calc, Sheet, AI, Measure, Toolkit left to right`() {
+    @Test fun `the bar is Calc, Sheet, Home, Measure, Tools left to right`() {
         launch()
-        val ids = listOf("calculator", "sheet", "ai", "measure", "toolkit")
+        val ids = listOf("calculator", "sheet", "home", "measure", "toolkit")
         assertEquals(ids, Declarations.sections.map { it.id })
         val lefts = ids.map { compose.onNodeWithTag(BottomNavTags.item(it)).getBoundsInRoot().left }
         assertEquals("left to right", lefts.sorted(), lefts)
@@ -150,12 +150,11 @@ class SheetShellTest {
         assertTrue(compose.onAllNodesWithTag(TopFirstRowTags.DROPDOWN).fetchSemanticsNodes().isEmpty())
     }
 
-    @Test fun `Ask Jev is the AI section's second page, and the Sheet and AI pages are reachable from the bar`() {
+    @Test fun `Ask Jev is a Calc page, Home replaced the AI page, and every section is reachable from the bar`() {
         launch()
         assertTrue("the old Jev section is gone from the bar", compose.onAllNodesWithTag(BottomNavTags.item("jev")).fetchSemanticsNodes().isEmpty())
-        compose.onNodeWithTag(BottomNavTags.item("ai")).performClick()
-        compose.waitForIdle()
-        assertEquals(listOf("ai", "ask"), Declarations.tabsOf("ai").map { it.id })
+        assertTrue("the AI section is gone from the bar", compose.onAllNodesWithTag(BottomNavTags.item("ai")).fetchSemanticsNodes().isEmpty())
+        assertTrue("Ask Jev is a Calc page", Declarations.tabsOf("calculator").any { it.id == "ask" })
         compose.onNodeWithTag(PageTabsTags.tab("ask")).performClick()
         compose.waitForIdle()
         assertEquals("ask", state.tab)
@@ -166,12 +165,14 @@ class SheetShellTest {
         compose.onNodeWithTag(BottomNavTags.item("sheet")).performClick()
         compose.waitForIdle()
         compose.onNodeWithTag(SheetTags.ROOT).assertExists()
-        compose.onNodeWithTag(BottomNavTags.item("ai")).performClick()
+        compose.onNodeWithTag(BottomNavTags.item("home")).performClick()
         compose.waitForIdle()
-        assertEquals("the AI section comes back to the page last shown in it", "ask", state.tab)
-        compose.onNodeWithTag(PageTabsTags.tab("ai")).performClick()
+        assertEquals("home", state.tab)
+        compose.onNodeWithTag(CalcTags.HOME).assertExists()
+        assertTrue("no AI page", compose.onAllNodesWithTag(CalcTags.AI_PAGE).fetchSemanticsNodes().isEmpty())
+        compose.onNodeWithTag(BottomNavTags.item("calculator")).performClick()
         compose.waitForIdle()
-        compose.onNodeWithTag(CalcTags.AI_PAGE).assertExists()
+        assertEquals("the Calc section comes back to the page last shown in it", "ask", state.tab)
     }
 
     @Test fun `sheet tabs add, rename, duplicate, delete and reorder`() {

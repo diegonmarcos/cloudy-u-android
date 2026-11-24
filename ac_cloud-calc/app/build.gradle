@@ -67,6 +67,9 @@ if (!buildJson.ui?.bottom_nav)
 if (buildJson.ui.sections.any { !(it.pages instanceof List) || it.pages.isEmpty() })
     throw new GradleException("build.json::ui.sections[].pages missing — a section without pages shows nothing (#868)")
 def uiSectionsB64    = b64(buildJson.ui.sections)
+// #1893 the tool hierarchy Home draws (and the tests hold the nav to)
+if (!buildJson.ui?.hierarchy?.nodes) throw new GradleException("build.json::ui.hierarchy.nodes missing — Home would list no tools (#1893)")
+def uiHierarchyB64   = b64(buildJson.ui.hierarchy.nodes.collect { n -> n })
 def uiBottomNav      = buildJson.ui.bottom_nav.join(',')
 def uiDefaultSection = (buildJson.ui.default_section ?: buildJson.ui.bottom_nav[0]).toString()
 // #1406 each mode's own top-level _doc* notes (nested JSON such as options/clock/spec is kept verbatim) are for readers of build.json, not the app: dropped so the constant stays under javac's 64 KB.
@@ -164,6 +167,7 @@ android {
         buildConfigField "String", "LOG_SINK_URL",    "\"${logSinkUrl}\""
         buildConfigField "String", "LOG_SINK_STREAM", "\"${logSinkStream}\""
         buildConfigField "String", "UI_SECTIONS_B64", "\"${uiSectionsB64}\""
+        buildConfigField "String", "UI_HIERARCHY_B64", "\"${uiHierarchyB64}\""
         buildConfigField "String", "UI_BOTTOM_NAV",   "\"${uiBottomNav}\""
         buildConfigField "String", "UI_MODES_B64",    "\"${uiModesB64}\""
         buildConfigField "String", "UI_DEFAULT_SECTION", "\"${uiDefaultSection}\""
@@ -288,6 +292,9 @@ dependencies {
     implementation project(':sound')
     // #1892 the sound meter's Cymatics figure: the plate drawing (libs:cymatics), shared with Cloud Canvas Play
     implementation project(':libs:cymatics')
+    // #1893 Home: the sectioned tile grid of Cloud SuperApp's Cloud page (libs:tile-grid, over libs:ui-kit)
+    implementation project(':libs:tile-grid')
+    implementation project(':libs:ui-kit')
     implementation project(':tools')   // #1377 the Tools maths: calendars, date facts, finance, sound calculators
     // #772 the Decisions client (Http, Decision) the Jev and Sound screens hold; shared with the image engine.
     implementation project(':libs:decisions')

@@ -41,7 +41,7 @@ class DeclarationsTest {
     @Test fun `sections parse, match what gradle baked, and every page sits in one`() {
         val sections = Declarations.sectionsOf(nav)
         assertEquals(sections, Declarations.sections)
-        assertEquals("the island is the declared bottom_nav, at most five", listOf("calculator", "sheet", "ai", "measure", "toolkit"), sections.map { it.id })
+        assertEquals("the island is the declared bottom_nav, at most five", listOf("calculator", "sheet", "home", "measure", "toolkit"), sections.map { it.id })
         assertTrue(sections.size <= 5)
         assertEquals(sections.size, sections.map { it.id }.toSet().size)
         tabs.forEach { t -> assertTrue("tab ${t.id} names section ${t.section}", nav.sections.any { it.id == t.section }) }
@@ -50,8 +50,8 @@ class DeclarationsTest {
         assertEquals(sections.first().id, Declarations.sectionOf("no-such-tab"))
     }
 
-    @Test fun `the bar reads Calc, Sheet, AI, Measure, Toolkit and Configs is the one page off it`() {
-        assertEquals(listOf("Calc", "Sheet", "AI", "Measure", "Toolkit"), Declarations.sections.map { it.label })
+    @Test fun `the bar reads Calc, Sheet, Home, Measure, Tools and Configs is the one page off it`() {
+        assertEquals(listOf("Calc", "Sheet", "Home", "Measure", "Tools"), Declarations.sections.map { it.label })
         val configs = Declarations.configsTab
         assertEquals("configs", configs?.id)
         assertTrue("Configs is not on the bar", Declarations.sections.none { it.id == configs?.section })
@@ -143,7 +143,7 @@ class DeclarationsTest {
     @Test fun `Clock moved from Measure to Toolkit and the new pages' modes carry what their renderers read`() {
         assertEquals(listOf("sensors", "phone", "camera", "wifi", "bluetooth", "nfc", "lfrfid"), Declarations.tabsOf("measure").map { it.id })
         assertEquals(listOf("light", "recorder", "tracker", "clock"), Declarations.tabsOf("toolkit").map { it.id })
-        assertEquals(listOf("ai", "ask"), Declarations.tabsOf("ai").map { it.id })
+        assertEquals(listOf("home"), Declarations.tabsOf("home").map { it.id })
         assertEquals("the clock modes did not move or duplicate", listOf("world", "alarms", "timers", "stopwatch", "interval", "bedtime"), Declarations.modesOf("clock").map { it.id })
         fun spec(id: String) = JSONObject(Declarations.mode(id)!!.spec)
         // the Sensors page: every sensor group has its mode, and every tool mode names real sensors
@@ -208,5 +208,57 @@ class DeclarationsTest {
                 assertTrue("${m.id}: options set $key=$v, which no chip shows", row.any { it.value == v })
             }
         }
+    }
+
+    // ── #1893 Home and the hierarchy ──────────────────────────────────────────
+
+    private val hier = Declarations.parseHierarchy(undoc(ui.getJSONObject("hierarchy").getJSONArray("nodes")).toString())
+
+    /** The page set of the app before #1893 (ui.sections of the previous build.json), AI being the one page the owner ordered deleted. */
+    private val pagesBefore = listOf(
+        "calc", "latex", "convert", "history", "datetime", "sound", "finance", "graph", "sheet", "ai", "ask",
+        "sensors", "phone", "camera", "wifi", "bluetooth", "nfc", "lfrfid", "light", "recorder", "tracker", "clock", "configs",
+    )
+
+    @Test fun `the hierarchy model equals the declared tree and what gradle baked`() {
+        assertEquals(hier, Declarations.hierarchy)
+        assertEquals(listOf("Calculations", "Toolkit"), hier.map { it.label })
+        assertEquals(listOf("Calc", "Sheet"), hier[0].children.map { it.label })
+        assertEquals(listOf("Measure", "Tools"), hier[1].children.map { it.label })
+        assertEquals(listOf("Sound", "Camera", "Wireless", "Sensors"), hier[1].children[0].children.map { it.label })
+        assertEquals(listOf("wifi", "bluetooth", "nfc", "lfrfid"), hier[1].children[0].children[2].pages)
+        assertEquals(listOf("light", "recorder", "tracker", "clock"), hier[1].children[1].pages)
+    }
+
+    @Test fun `Home lists every tool exactly once and nothing else`() {
+        val listed = hier.flatMap { it.allPages() }
+        assertEquals("a tool appears twice on Home", listed.size, listed.toSet().size)
+        val tools = tabs.map { it.id }.filter { it != "home" && it != "configs" }
+        assertEquals(tools.toSet(), listed.toSet())
+        listed.forEach { assertTrue("Home lists $it, which is no page", tabs.any { t -> t.id == it }) }
+    }
+
+    @Test fun `the navigation follows the hierarchy section by section`() {
+        fun walk(n: Declarations.HNode, section: String?, out: MutableList<Pair<String, String>>) {
+            val sec = section ?: ""
+            n.pages.forEach { out += it to sec }
+            n.children.forEach { walk(it, sec, out) }
+        }
+        val declared = mutableListOf<Pair<String, String>>()
+        val sectionOf = mapOf("calc" to "calculator", "sheet" to "sheet", "measure" to "measure", "tools" to "toolkit")
+        hier.forEach { top -> top.children.forEach { c -> walk(c, sectionOf.getValue(c.id), declared) } }
+        declared.forEach { (page, section) -> assertEquals("page $page sits in section $section", section, Declarations.sectionOf(page)) }
+        assertEquals(listOf("sensors", "camera", "phone", "wifi", "bluetooth", "nfc", "lfrfid"), nav.section("measure")!!.rowGroups().flatMap { g -> g.pages.map { it.id } })
+        assertEquals(listOf("Measure", "Wireless"), nav.section("measure")!!.rowGroups().map { it.label })
+    }
+
+    @Test fun `the AI page is gone and every other page of before is still there`() {
+        val now = tabs.map { it.id }.toSet()
+        assertFalse("ai page", "ai" in now)
+        assertTrue("ai section", nav.sections.none { it.id == "ai" })
+        assertTrue("ai mode", modes.none { it.id == "ai" || it.kind == "ai" })
+        assertEquals("the page set minus AI, plus Home", (pagesBefore.toSet() - "ai") + "home", now)
+        assertEquals("Ask Jev renders", "jev", Declarations.modesOf("ask").single().kind)
+        assertEquals("home", Declarations.modesOf("home").single().kind)
     }
 }

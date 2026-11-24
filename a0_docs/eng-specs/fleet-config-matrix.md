@@ -62,7 +62,7 @@ DataStore / Room stores and declared files it cannot move yet.
 
 ## cloud-superapp — `com.diegonmarcos.superapp`
 
-Module `aa_cloud-superapp`; libs: lib-adb-grants, lib-adb-readiness, lib-adb-shell-core, lib-ai-usage, lib-analytics, lib-appstore, lib-auth, lib-battery, lib-bluetooth, lib-bottomnav, lib-chat, lib-clock-tools, lib-core, lib-crash, lib-databackend, lib-datamanager, lib-decisions-link, lib-devtools, lib-firewall, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-xray, lib-health, lib-kde-connect, lib-launcher-apptabs, lib-launcher-onehand, lib-launcher-zoomies, lib-light, lib-mail, lib-net, lib-ops, lib-perms, lib-search, lib-shared-store, lib-shell-broker, lib-shell-client, lib-shizuku-adb-debug-tools, lib-sysdns, lib-text-tools, lib-theme-background, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core, lib-webserver, lib-wifi.
+Module `aa_cloud-superapp`; libs: lib-adb-grants, lib-adb-readiness, lib-adb-shell-core, lib-ai-usage, lib-analytics, lib-appstore, lib-auth, lib-battery, lib-bluetooth, lib-bottomnav, lib-chat, lib-clock-tools, lib-core, lib-crash, lib-databackend, lib-datamanager, lib-decisions-link, lib-devtools, lib-firewall, lib-fleet-data-client, lib-fleet-endpoints, lib-fleet-endpoints-android, lib-fleet-notify, lib-fleetconfig-model, lib-fleetconfigs-xray, lib-health, lib-kde-connect, lib-launcher-apptabs, lib-launcher-onehand, lib-launcher-zoomies, lib-light, lib-mail, lib-net, lib-ops, lib-perms, lib-search, lib-shared-store, lib-shell-broker, lib-shell-client, lib-shizuku-adb-debug-tools, lib-sysdns, lib-text-tools, lib-theme-background, lib-tile-grid, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-updater, lib-usb-drive, lib-web-core, lib-webserver, lib-wifi.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|
@@ -539,7 +539,7 @@ Coverage: 13 covered, 0 gaps.
 
 ## cloud-calc — `com.diegonmarcos.cloudcalc`
 
-Module `ac_cloud-calc`; libs: lib-ai, lib-bluetooth, lib-bottomnav, lib-clock-tools, lib-core, lib-crash, lib-cymatics, lib-databackend, lib-decisions, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-light, lib-location-client, lib-ml-l-image, lib-ml-l-sound, lib-model-catalogue, lib-nfc, lib-perms, lib-theme-background, lib-ui-icons, lib-ui-nav-bars, lib-web-core, lib-wifi.
+Module `ac_cloud-calc`; libs: lib-ai, lib-bluetooth, lib-bottomnav, lib-clock-tools, lib-core, lib-crash, lib-cymatics, lib-databackend, lib-decisions, lib-decisions-link, lib-devtools, lib-fleet-data-client, lib-fleetconfig-model, lib-fleetconfigs-agents, lib-fleetconfigs-logcat, lib-fleetconfigs-xray, lib-light, lib-location-client, lib-ml-l-image, lib-ml-l-sound, lib-model-catalogue, lib-nfc, lib-perms, lib-theme-background, lib-tile-grid, lib-ui-icons, lib-ui-kit, lib-ui-nav-bars, lib-web-core, lib-wifi.
 
 | store | kind | class | migrates | doc |
 |---|---|---|---|---|

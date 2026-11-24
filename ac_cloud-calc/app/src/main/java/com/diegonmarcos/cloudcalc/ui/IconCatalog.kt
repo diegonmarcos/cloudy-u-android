@@ -2,6 +2,7 @@ package com.diegonmarcos.cloudcalc.ui
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.BluetoothSearching
@@ -63,6 +64,7 @@ object IconCatalog {
         "mic" -> Icons.Filled.Mic
         "camera" -> Icons.Filled.PhotoCamera
         "ask" -> Icons.Filled.QuestionAnswer
+        "home" -> Icons.Filled.Home
         "settings" -> Icons.Filled.Settings
         "security" -> Icons.Filled.Security
         "info" -> Icons.Filled.Info

@@ -108,24 +108,6 @@ internal fun TileDivider(tag: String, iconCentreY: Dp, edgeShift: Dp, modifier: 
         .clearAndSetSemantics { testTag = tag })
 }
 
-/** Group heading between tile rows: the declared words, upper-cased. */
-@Composable
-internal fun TileGroupHeader(text: String, modifier: Modifier = Modifier, compact: Boolean = false) {
-    Text(text.uppercase(), color = LocalKitPalette.current.textSecondary, fontSize = 11.sp,
-        letterSpacing = 0.12.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-        modifier = modifier.fillMaxWidth().padding(start = 14.dp, top = if (compact) 6.dp else 14.dp, end = 14.dp,
-            bottom = if (compact) 1.dp else 6.dp))
-}
-
-/** The heading one level BELOW [TileGroupHeader]: indented and a shade quieter. */
-@Composable
-internal fun TileSubgroupHeader(text: String, modifier: Modifier = Modifier, compact: Boolean = false) {
-    Text(text.uppercase(), color = LocalKitPalette.current.textSecondary, fontSize = 10.sp,
-        letterSpacing = 0.10.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-        modifier = modifier.fillMaxWidth().padding(start = 26.dp, top = if (compact) 1.dp else 6.dp, end = 14.dp,
-            bottom = if (compact) 0.dp else 4.dp))
-}
-
 internal fun tileTag(id: String) = "tile:$id"
 internal fun tileIconTag(id: String) = "tileicon:$id"
 

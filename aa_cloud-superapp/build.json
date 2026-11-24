@@ -258,6 +258,7 @@
         "libs:ui-icons",
         "libs:auth",
         "libs:ui-kit",
+        "libs:tile-grid",
         "libs:sysdns"
       ],
       "comment": "Launcher / shell. Hosts navigation to each feature module."
@@ -285,6 +286,14 @@
       "dir": "../ab_cloud-libs-shared/libs/ui-icons",
       "type": "library",
       "_doc": "#1160 the nav icon catalog (name to ImageVector, tinted or brand): every nav glyph of every app, shared BY REFERENCE; libs:bottomnav depends on it."
+    },
+    "libs:tile-grid": {
+      "dir": "../ab_cloud-libs-shared/libs/tile-grid",
+      "type": "library",
+      "depends_on": [
+        "libs:ui-kit"
+      ],
+      "comment": "#1893 the sectioned tile grid of the Cloud page (group and subgroup headings, the index card grid, the sizing arithmetic), extracted from the app module so Cloud Calc's Home draws the same component."
     },
     "libs:ui-kit": {
       "dir": "../ab_cloud-libs-shared/libs/ui-kit",

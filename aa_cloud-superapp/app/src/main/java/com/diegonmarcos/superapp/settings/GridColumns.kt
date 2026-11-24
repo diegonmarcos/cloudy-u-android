@@ -52,19 +52,9 @@ object GridColumns {
 
     // ── Sizing: the same arithmetic the grids use and the 360 dp test asserts ──
 
-    /** Width of one column when [cols] share [availablePx]. */
-    fun cellPx(availablePx: Int, cols: Int): Int = availablePx / cols.coerceAtLeast(1)
-
-    /** The icon edge for a cell: the wanted size, but never more than what is
-     *  left of the cell after its [chromePx] (padding + margins), and never
-     *  below [floorPx]. */
-    fun iconPx(wantPx: Int, cellPx: Int, chromePx: Int, floorPx: Int): Int =
-        minOf(wantPx, cellPx - chromePx).coerceAtLeast(floorPx)
-
-    /** Label size: 11 sp up to 6 columns, 10 sp from 7 on. Labels are always
-     *  single/double line and END-ellipsized, never left to wrap past the cell. */
-    fun labelSp(cols: Int): Float = if (cols >= 7) 10f else 11f
-
-    /** Padding inside a cell: tighter from 7 columns on, so the icon keeps room. */
-    fun cellPadDp(cols: Int): Int = if (cols >= 7) 4 else 8
+    // #1893 the sizing arithmetic lives once in libs:tile-grid (TileSizing), which Cloud Calc's Home draws too.
+    fun cellPx(availablePx: Int, cols: Int): Int = com.diegonmarcos.superapp.launcher.TileSizing.cellPx(availablePx, cols)
+    fun iconPx(wantPx: Int, cellPx: Int, chromePx: Int, floorPx: Int): Int = com.diegonmarcos.superapp.launcher.TileSizing.iconPx(wantPx, cellPx, chromePx, floorPx)
+    fun labelSp(cols: Int): Float = com.diegonmarcos.superapp.launcher.TileSizing.labelSp(cols)
+    fun cellPadDp(cols: Int): Int = com.diegonmarcos.superapp.launcher.TileSizing.cellPadDp(cols)
 }

@@ -1239,6 +1239,8 @@ dependencies {
     // #773 libs:ui-kit: the shared Compose kit (theme over LauncherPalette, tiles, rows, dialogs)
     // and KitComposeFragment, the base a page swaps to when it migrates.
     implementation project(':libs:ui-kit')
+    // #1893 the sectioned tile grid (headers, index cards, sizing) shared with Cloud Calc's Home
+    implementation project(':libs:tile-grid')
     // #587 THE sign-in of the fleet: Configs ▸ Profile ▸ Connect's step 1 hosts the
     // shared Compose surface; providers, endpoints and the artifact fetches live there.
     implementation project(':libs:auth')

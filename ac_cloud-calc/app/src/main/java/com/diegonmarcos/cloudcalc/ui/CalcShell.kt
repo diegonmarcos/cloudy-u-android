@@ -51,7 +51,7 @@ import androidx.activity.compose.BackHandler
 
 /**
  * The shell (#868, INVERTED from #770): the fleet's bottom-nav island carries the sections
- * (Calc, Sheet, AI, Measure, Jev - build.json::ui.bottom_nav), the section's PAGES (what #770 called
+ * (Calc, Sheet, Home, Measure, Tools - build.json::ui.bottom_nav), the section's PAGES (what #770 called
  * tabs, ui.sections[].pages) are the second row, and a page shows its modes (ui.modes
  * whose `tab` is its id) as the sub-strip under it when it has more than one. Above all of it is the
  * fleet's shared first row (#1154, #1157: the breadcrumb title dropdown, AI, Profile, Configs; no hamburger) in
@@ -73,7 +73,7 @@ fun CalcShell(api: CalcApi, state: CalcState) {
                 onNavigate = { e -> state.showSection(e.sectionId); if (e.depth > 0) state.tab = e.id },
                 onAccount = rememberAccountLauncher(),
                 onConfigs = { state.openConfigs() },
-                onAi = { state.showSection(Declarations.AI_SECTION) },
+                onAi = { state.showSection(Declarations.sectionOf(Declarations.ASK_TAB)); state.tab = Declarations.ASK_TAB },
                 dark = true,
             ) {
                 NavBarBottomHost(
@@ -177,6 +177,8 @@ object CalcTags {
     const val STRIP = "calc_mode_strip"
     const val PAGES = "calc_page_strip"
     const val AI_PAGE = "calc_ai_page"
+    const val HOME = "calc_home"
+    fun homeGroup(id: String) = "calc_home_group_$id"
     const val INPUT = "calc_input"
     const val RESULT = "calc_result"
     const val METER_CYMATICS = "calc_meter_cymatics"

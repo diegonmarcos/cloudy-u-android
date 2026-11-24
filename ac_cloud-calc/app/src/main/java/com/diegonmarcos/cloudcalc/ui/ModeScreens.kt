@@ -131,7 +131,7 @@ fun ModeScreen(mode: Declarations.Mode) {
             "interval" -> IntervalScreen()
             "bedtime" -> BedtimeScreen()
             "sheet" -> SheetMode(mode)
-            "ai" -> AiMode(mode)
+            "home" -> HomeMode()
             "jev" -> JevMode(mode)
             "jev_token" -> JevTokenMode(mode)
             "jev_routing" -> JevRoutingMode(mode)

@@ -29,17 +29,7 @@ import com.diegonmarcos.superapp.ai.materialAiTheme
 import org.json.JSONObject
 import java.io.File
 
-/**
- * The AI page: the fleet's AI chat (libs:ai). The page, the Agent and Model pickers, Sessions and the streaming are the
- * lib's; this app supplies the roads out - the fleet agent gateway (picked with an Agent) and OpenRouter with the token
- * the Jev section already holds (the fleet Account's, or the manual override) - and two tools on the Sheet selection.
- */
-@Composable
-fun AiMode(@Suppress("UNUSED_PARAMETER") mode: Declarations.Mode) {
-    val ctx = LocalContext.current.applicationContext
-    val chat = remember { CalcAi.chat(ctx) }
-    AiChatPage(chat, materialAiTheme(), Modifier.imePadding().testTag(CalcTags.AI_PAGE), sessionsList = true)
-}
+// #1893 the AI page itself (AiMode) is deleted on the owner's order and Home takes its slot; the chat state below stays, as does Ask Jev.
 
 /** The one chat of the process. */
 object CalcAi {

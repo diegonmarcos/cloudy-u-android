@@ -39,6 +39,7 @@
     "canvas-painter": "ac_cloud-canvas",
     "canvas-play": "ac_cloud-canvas",
     "cymatics": "ac_cloud-canvas",
+    "tile-grid": "aa_cloud-superapp",
     "health": "aa_cloud-superapp",
     "mail": "aa_cloud-superapp",
     "media": "ac_cloud-keyboard",

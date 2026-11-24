@@ -399,11 +399,11 @@ theme = open(os.path.join(src, "ui", "CalcTheme.kt"), encoding="utf-8").read()
 if not re.search(r"val displayMinHeight: Dp = [1-9]\d*\.dp", theme):
     bad.append("C14 CalcMetrics.displayMinHeight is not a positive dp")
 
-# C15 the declared nav: the island is Calc | Sheet | AI | Measure | Toolkit in that order; Configs is NOT on it - it is the
-# only section off the bar, opened by the shared first row's Configs button (libs:ui-nav-bars); the Sheet and AI
+# C15 the declared nav: the island is Calc | Sheet | Home | Measure | Tools in that order (#1893: Home replaced the AI page); Configs is NOT on it - it is the
+# only section off the bar, opened by the shared first row's Configs button (libs:ui-nav-bars); the Sheet and Home
 # pages each have their renderer; Jev's attachments take the camera and the microphone through the two gates.
-want_bar = ["calculator", "sheet", "ai", "measure", "toolkit"]
-want_label = ["Calc", "Sheet", "AI", "Measure", "Toolkit"]
+want_bar = ["calculator", "sheet", "home", "measure", "toolkit"]
+want_label = ["Calc", "Sheet", "Home", "Measure", "Tools"]
 if bar != want_bar:
     bad.append("C15 ui.bottom_nav must be exactly %s, found %s" % (want_bar, bar))
 labels = [next((x["label"] for x in sections if x["id"] == b), None) for b in bar]
@@ -415,7 +415,7 @@ if len(off) != 1 or [p["id"] for p in off[0].get("pages", [])] != ["configs"]:
 for x in sections:
     if x["id"] in bar and any(p["id"] == "configs" for p in x.get("pages", [])):
         bad.append("C15 section %s still carries the Configs page on the bar" % x["id"])
-for mid, kind in (("sheet", "sheet"), ("ai", "ai")):
+for mid, kind in (("sheet", "sheet"), ("home", "home")):
     if (modes_by_id.get(mid) or {}).get("kind") != kind:
         bad.append("C15 mode %s of kind %s is not declared" % (mid, kind))
 shell = code(os.path.join(src, "ui", "CalcShell.kt"))
@@ -423,7 +423,7 @@ drawer = code(os.path.join(src, "ui", "CalcDrawer.kt"))
 if "top_bar" in bj["ui"]:
     bad.append("C15 build.json::ui.top_bar is back: the first row is the shared NavBarTopFirstRow, which has no declaration of its own")
 for need in ("NavBarTopFirstRowScaffold(", "NavBarBottomHost(", "NavBarTopSecondRows(", "titleHierarchy(", "themeBackground(",
-             "onAccount = rememberAccountLauncher()", "onConfigs = { state.openConfigs() }", "onAi = { state.showSection(Declarations.AI_SECTION) }",
+             "onAccount = rememberAccountLauncher()", "onConfigs = { state.openConfigs() }", "onAi = { state.showSection(Declarations.sectionOf(Declarations.ASK_TAB)); state.tab = Declarations.ASK_TAB }",
              "TopBarDrawerWithActions { close -> CalcDrawer(close) }"):
     if need not in shell:
         bad.append("C15 ui/CalcShell.kt must draw the shared bars: missing %s" % need)

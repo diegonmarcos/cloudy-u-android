@@ -3123,6 +3123,7 @@
         "lib-sysdns",
         "lib-text-tools",
         "lib-theme-background",
+        "lib-tile-grid",
         "lib-ui-icons",
         "lib-ui-kit",
         "lib-ui-nav-bars",
@@ -3517,7 +3518,9 @@
         "lib-nfc",
         "lib-perms",
         "lib-theme-background",
+        "lib-tile-grid",
         "lib-ui-icons",
+        "lib-ui-kit",
         "lib-ui-nav-bars",
         "lib-web-core",
         "lib-wifi"
