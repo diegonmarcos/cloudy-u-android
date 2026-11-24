@@ -227,6 +227,81 @@ impl JniTransport<'_, '_, '_> {
     }
 }
 
+/// The Kotlin byte pipe (`MailCoreImapIo`): write(ByteArray), read(timeoutMs): ByteArray (empty = timed out, null = closed).
+struct JniImapIo<'a, 'local, 'o> {
+    env: &'a mut JNIEnv<'local>,
+    obj: &'a JObject<'o>,
+}
+
+impl JniImapIo<'_, '_, '_> {
+    fn clear(&mut self) {
+        if self.env.exception_check().unwrap_or(false) {
+            let _ = self.env.exception_clear();
+        }
+    }
+}
+
+impl crate::imap::ImapIo for JniImapIo<'_, '_, '_> {
+    fn write(&mut self, bytes: &[u8]) -> Result<(), String> {
+        let r = self.env.with_local_frame(8, |env| {
+            let arr = env.byte_array_from_slice(bytes)?;
+            env.call_method(self.obj, "write", "([B)V", &[JValue::Object(&arr)]).map(|_| ())
+        });
+        match r {
+            Ok(()) => Ok(()),
+            Err(e) => {
+                self.clear();
+                Err(format!("the socket write failed: {e}"))
+            }
+        }
+    }
+
+    fn read(&mut self, timeout_ms: u32) -> Result<Vec<u8>, crate::imap::IoErr> {
+        use crate::imap::IoErr;
+        let r: Result<Option<Vec<u8>>, jni::errors::Error> = self.env.with_local_frame(8, |env| {
+            let v = env.call_method(self.obj, "read", "(I)[B", &[JValue::Int(timeout_ms as i32)])?;
+            let o = v.l()?;
+            if o.is_null() {
+                return Ok(None);
+            }
+            Ok(Some(env.convert_byte_array(JByteArray::from(o))?))
+        });
+        match r {
+            Ok(Some(b)) if b.is_empty() => Err(IoErr::Timeout),
+            Ok(Some(b)) => Ok(b),
+            Ok(None) => Err(IoErr::Closed),
+            Err(e) => {
+                self.clear();
+                Err(IoErr::Other(format!("the socket read failed: {e}")))
+            }
+        }
+    }
+}
+
+/// `{user,password,mailbox,uids|newest}` -> the fetch report as JSON, over the Kotlin byte pipe.
+pub fn do_imap_fetch(args: &str, io: &mut dyn crate::imap::ImapIo) -> Result<String, String> {
+    let a: crate::imap::FetchArgs = serde_json::from_str(args).map_err(|e| format!("imap args: {e}"))?;
+    let r = crate::imap::fetch_mailbox(io, &a)?;
+    serde_json::to_string(&r).map_err(|e| e.to_string())
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_diegonmarcos_cloudlib_mailcore_NativeBridge_nativeImapFetch(
+    mut env: JNIEnv,
+    _c: JClass,
+    args: JString,
+    io: JObject,
+) -> jstring {
+    let text = match read(&mut env, &args) {
+        Ok(a) => {
+            let mut p = JniImapIo { env: &mut env, obj: &io };
+            guard(|| do_imap_fetch(&a, &mut p))
+        }
+        Err(e) => format!("ERR\t{}", one_line(&e)),
+    };
+    answer(&mut env, text)
+}
+
 fn read(env: &mut JNIEnv, s: &JString) -> Result<String, String> {
     env.get_string(s).map(|j| j.into()).map_err(|e| e.to_string())
 }

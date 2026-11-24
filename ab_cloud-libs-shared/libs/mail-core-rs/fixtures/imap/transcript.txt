@@ -1,0 +1,17 @@
+## SELECT
+* 1 EXISTS
+* OK [UIDVALIDITY 42] ok
+* OK [UIDNEXT 8] ok
+{tag} OK [READ-WRITE] selected
+## UID SEARCH
+* SEARCH 7
+{tag} OK done
+## UID FETCH
+* 1 FETCH (UID 7 FLAGS (\Seen) INTERNALDATE "01-Jan-2024 00:00:00 +0000" BODY[] {{LEN}}
+{BODY})
+{tag} OK done
+## LOGIN
+{tag} OK logged in
+## LOGOUT
+* BYE
+{tag} OK bye

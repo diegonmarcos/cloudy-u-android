@@ -177,6 +177,16 @@ class RustMailEngine(
         o["ids"]?.jsonArray?.map { it.jsonPrimitive.content }.orEmpty()
     }
 
+    /** #1837 phase 3: the ids the core's FTS5 index finds for [text] in one account, newest first; null when the core is off or fails. */
+    suspend fun searchIds(localAccountId: String, text: String, limit: Int): List<String>? = withContext(Dispatchers.IO) {
+        if (MailCore.unavailableReason() != null) return@withContext null
+        runCatching {
+            val q = buildJsonObject { put("op", "search"); put("account", localAccountId); put("text", text); put("limit", limit) }
+            JSON.parseToJsonElement(MailCore.query(dbPath, q.toString()).getOrThrow()).jsonObject["rows"]!!.jsonArray
+                .map { it.jsonObject["id"]!!.jsonPrimitive.content }
+        }.onFailure { log("search $localAccountId: core failed, Room index only: ${it.message}") }.getOrNull()
+    }
+
     /** Every row of an account that left the app. */
     suspend fun dropAccount(localAccountId: String) = mutex.withLock {
         withContext(Dispatchers.IO) {

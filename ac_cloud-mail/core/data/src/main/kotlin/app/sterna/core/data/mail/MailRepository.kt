@@ -2043,8 +2043,18 @@ class MailRepository(
     suspend fun searchIndex(query: String, limit: Int = LOCAL_SEARCH_LIMIT): List<Email> {
         val match = ftsMatch(query) ?: return emptyList()
         val accountIds = accountStore.accounts().map { it.id }
-        return emailFtsDao.search(match, NOT_SEARCHED_ROLES, accountIds, accountIds.size, limit)
+        val hits = emailFtsDao.search(match, NOT_SEARCHED_ROLES, accountIds, accountIds.size, limit)
             .map { it.toEmail() }
+        if (hits.isNotEmpty()) return hits
+        // #1837 phase 3: the Room index found nothing: ask the core's FTS5 store (JMAP mail it has synced and the Room index has not
+        // reached), through MailCore.enabled; any failure keeps the empty answer the old path gave.
+        val core = mailCore?.takeIf { it.unavailableReason() == null } ?: return hits
+        return runCatching {
+            accountIds.flatMap { acc ->
+                val ids = core.searchIds(acc, query, limit).orEmpty()
+                if (ids.isEmpty()) emptyList() else emailDao.emailsByIds(acc, ids).map { it.toEmail() }
+            }.take(limit)
+        }.getOrDefault(hits)
     }
 
     private fun ftsMatch(query: String): String? {

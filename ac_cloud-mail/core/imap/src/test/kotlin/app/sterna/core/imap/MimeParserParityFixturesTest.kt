@@ -71,4 +71,30 @@ class MimeParserParityFixturesTest {
             assertEquals("html=$html att=$att", if (att) listOf("nota.pdf" to "application/pdf") else emptyList<Pair<String, String>>(), body.attachments.map { it.name to it.type.lowercase() })
         }
     }
+
+    /** The scripted IMAP transcript the Rust client reads in mail-core-rs tests/imap_fetch.rs: same server answers, same facts. */
+    @Test
+    fun imapTranscript() {
+        val fx = dir().parentFile
+        val eml = String(File(dir(), "latin1-qp.eml").readBytes(), Charsets.ISO_8859_1)
+        val blocks = LinkedHashMap<String, StringBuilder>()
+        var cur: StringBuilder? = null
+        for (l in File(fx, "imap/transcript.txt").readLines()) {
+            if (l.startsWith("## ")) { cur = StringBuilder().also { blocks[l.removePrefix("## ")] = it } } else cur?.append(l)?.append("\r\n")
+        }
+        val server = FakeImapServer { tag, line ->
+            val tpl = blocks.entries.firstOrNull { line.startsWith(it.key) }?.value?.toString()
+            tpl?.replace("{tag}", tag)?.replace("{LEN}", eml.length.toString())?.replace("{BODY}", eml) ?: ok(tag)
+        }
+        server.use {
+            it.session().use { session ->
+                val st = session.select("INBOX")
+                assertEquals(1, st.exists)
+                assertEquals(42L, st.uidValidity)
+                assertEquals(8L, st.uidNext)
+                assertEquals(listOf(7L), session.allUids(10))
+                assertEquals(eml, session.fetchSource(7L))
+            }
+        }
+    }
 }

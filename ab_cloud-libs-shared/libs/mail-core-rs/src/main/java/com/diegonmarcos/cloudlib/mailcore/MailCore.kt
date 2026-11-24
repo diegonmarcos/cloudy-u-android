@@ -38,6 +38,13 @@ object MailCore {
     fun fetchRaw(db: String, argsJson: String, transport: MailCoreTransport): Result<String> =
         call { NativeBridge.nativeFetchRaw(db, argsJson, transport) }
 
+    /**
+     * #1837 phase 3: IMAP fetch through the core over the caller's own socket [io] (TLS stays in Kotlin): LOGIN, SELECT, UID SEARCH,
+     * UID FETCH of [argsJson] (`{"user","password","mailbox","uids":[..]|"newest":n,"timeoutMs"}`). Answers the report JSON
+     * (`exists`, `uidValidity`, `uidNext`, `messages[{uid,flags,internalDate,raw(base64),kind,text}]`).
+     */
+    fun imapFetch(argsJson: String, io: MailCoreImapIo): Result<String> = call { NativeBridge.nativeImapFetch(argsJson, io) }
+
     /** Proves the boundary: answers a failure whose reason starts with "panic:". */
     fun panicProbe(): Result<String> = call { NativeBridge.nativePanicProbe() }
 

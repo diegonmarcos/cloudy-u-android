@@ -16,6 +16,7 @@
 
 pub mod compose;
 pub mod domain;
+pub mod imap;
 pub mod jmap;
 pub mod jni_api;
 pub mod query;

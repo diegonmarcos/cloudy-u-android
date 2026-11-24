@@ -360,7 +360,7 @@ class ImapMailService(
             message,
         )
         if (sentMailbox != null) {
-            runCatching { withSession(credentials) { it.append(sentMailbox, OutgoingMime.build(message), "\\Seen") } }
+            runCatching { withSession(credentials) { it.append(sentMailbox, CoreCompose.build(message), "\\Seen") } }
         }
     }
 
@@ -370,7 +370,7 @@ class ImapMailService(
      */
     suspend fun appendDraft(credentials: AccountCredentials, draftsMailbox: String, message: OutgoingMessage) =
         withSession(credentials, retryOnFailure = false) {
-            it.append(draftsMailbox, OutgoingMime.build(message, BlindCopies.WRITTEN), "\\Draft")
+            it.append(draftsMailbox, CoreCompose.build(message, BlindCopies.WRITTEN), "\\Draft")
         }
 
     /**
