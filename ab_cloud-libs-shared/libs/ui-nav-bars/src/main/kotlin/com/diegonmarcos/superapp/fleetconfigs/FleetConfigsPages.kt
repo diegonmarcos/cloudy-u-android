@@ -207,11 +207,12 @@ public fun FleetConfigsScreen(
 
 /**
  * Configs > General: ONE page, minimalist and data dense (#1852). At the top a compact two-column index of the sections (a small icon, the
- * section's name and its LIVE state: perms granted/total, battery optimisation, storage used, notifications and channels, UI theme,
+ * section's name and its LIVE state: battery optimisation, storage used, notifications and channels, UI theme,
  * language, update state, the app); a tap scrolls this same page to that section. Below, one compact card per section with the same
  * live state in its header and its rows and actions under it, in the theme's neutral colours. The sections are the app's
- * `configs_pages.general.sections` (Perms, Battery, Storage/backup, Notifications, UI, Language, App) plus Update, which every
- * app gets by default. Each section reads the device's live state for THIS app and opens the system screen that changes it,
+ * `configs_pages.general.sections` (Battery, Storage/backup, Notifications, UI, Language, App) plus Update, which every
+ * app gets by default, first. #1890 General never draws a section that has its own Configs tab (Perms, Agents, About, Logcat, X-Ray:
+ * [FleetConfigs.tabOwnedIds]); Perms is the Perms tab. Each section reads the device's live state for THIS app and opens the system screen that changes it,
  * always through libs:perms (the one place that builds a settings intent). Nothing the former tile layout offered is gone (rule 16;
  * configs-general-parity.json, guard cloud-android-configs-general-parity-guard.py).
  */
@@ -247,7 +248,6 @@ public fun FleetGeneralPage(
             SectionCard(s.label, sectionIcon(s.id), c, Modifier.testTag(FleetConfigsTags.section(s.id)).onGloballyPositioned { tops[s.id] = it.positionInParent().y.toInt() }, state = states[s.id].orEmpty()) {
                 if (s.note.isNotBlank()) Body(s.note, c)
                 when (s.id) {
-                    "perms" -> PermsSection(c, tick)
                     FleetConfigs.UPDATE_SECTION -> UpdateSection(decl, c)
                     "battery" -> BatterySection(c, tick)
                     "storage" -> StorageSection(c, tick, sizes) { cleared++ }

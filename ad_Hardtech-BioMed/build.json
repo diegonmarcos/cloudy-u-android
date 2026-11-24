@@ -362,9 +362,6 @@
     "general": {
       "sections": [
         {
-          "id": "perms"
-        },
-        {
           "id": "battery"
         },
         {

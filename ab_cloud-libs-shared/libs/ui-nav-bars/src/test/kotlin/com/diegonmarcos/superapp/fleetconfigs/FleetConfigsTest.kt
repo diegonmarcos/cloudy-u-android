@@ -36,10 +36,10 @@ class FleetConfigsTest {
         val d = FleetConfigs.decode(java.util.Base64.getEncoder().encodeToString(json.toByteArray()))
         assertEquals("Cloud X", d.name)
         assertEquals(7, d.versionCode)
-        assertEquals(listOf("perms", "update", "ui", "app"), d.general.map { it.id })
-        assertEquals("Perms", d.general[0].label)
-        assertEquals("Cloud X", d.general[3].label)
-        assertEquals("n", d.general[2].note)
+        assertEquals(listOf("update", "ui", "app"), d.general.map { it.id })   // #1890 Perms has its own tab
+        assertEquals("Update", d.general[0].label)
+        assertEquals("Cloud X", d.general[2].label)
+        assertEquals("n", d.general[1].note)
         assertEquals("X in short", d.about.tagline)
         assertEquals("Does x.", d.about.description)
         assertEquals(listOf("Home"), d.about.screens.map { it.name })
@@ -55,14 +55,14 @@ class FleetConfigsTest {
     }
 
     @Test fun `no declaration still draws the six required sections and Update`() {
-        val want = listOf("perms", "update") + FleetConfigs.REQUIRED_SECTIONS.drop(1)
+        val want = listOf("update") + FleetConfigs.REQUIRED_SECTIONS
         assertEquals(want, FleetConfigs.decode("").general.map { it.id })
         assertEquals(want, FleetConfigs.decode("not base64!").general.map { it.id })
     }
 
     @Test fun `an app that places Update itself keeps its place`() {
-        val d = FleetConfigs.parse("""{"general":{"sections":[{"id":"ui"},{"id":"update"},{"id":"perms"}]}}""")
-        assertEquals(listOf("ui", "update", "perms"), d.general.map { it.id })
+        val d = FleetConfigs.parse("""{"general":{"sections":[{"id":"ui"},{"id":"update"},{"id":"battery"}]}}""")
+        assertEquals(listOf("ui", "update", "battery"), d.general.map { it.id })
     }
 
     @Test fun `a v1 declaration reads what as the description`() {

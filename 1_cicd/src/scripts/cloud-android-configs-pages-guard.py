@@ -11,7 +11,8 @@ DECLARATION  1_cicd/src/data/configs-pages.json (the required sections and About
       entries, the Views/WebView activity, the build-time resolver, the Cloud Store / Cloud SuperApp texts and
       libs:perms' asked-store version and Grant all walk; FleetConfigs.REQUIRED_SECTIONS == general_required
   G1  every non-exempt app declares configs_pages.general and configs_pages.about
-  G2  general.sections: every required id exactly once, nothing outside required + optional + default
+  G2  general.sections: every required id exactly once, nothing outside required + optional + default, and no id that is a
+      Configs tab of its own (tabs.tail.ids except general: Perms, Agents, About, Logcat, X-Ray; #1890)
   G3  about meets about_min (#1352 v2, About must be extensive): tagline, a long description, features, screens
       {name, what}, guide steps, privacy, related fleet apps {app, why}, backends {id, why} on a fleet_endpoints
       service with a mesh DNS name, credits for a fork (licences kind in fork_kinds); every grant of build.json::perms
@@ -142,6 +143,7 @@ def check(root):
     if os.path.isfile(ep):
         services = {s.get("id"): s for s in ((load(ep).get("fleet_endpoints") or {}).get("services") or [])}
 
+    tab_owned = set(spec["tabs"]["tail"]["ids"]) - {"general"}
     allowed = set(spec["general_required"]) | set(spec.get("general_optional") or []) | set(spec.get("general_default") or [])
     mn = spec["about_min"]
     curated = {}
@@ -164,7 +166,9 @@ def check(root):
             if ids.count(r) != 1:
                 bad.append("G2 %s: configs_pages.general.sections must list %r exactly once (found %d)" % (app, r, ids.count(r)))
         for i in ids:
-            if i not in allowed:
+            if i in tab_owned:
+                bad.append("G2 %s: configs_pages.general.sections names %r, which has its own Configs tab (tabs.tail.ids): General never draws it" % (app, i))
+            elif i not in allowed:
                 bad.append("G2 %s: configs_pages.general.sections names %r, not one of %s" % (app, i, sorted(allowed)))
         if len(ids) != len(set(ids)):
             bad.append("G2 %s: configs_pages.general.sections lists an id twice" % app)

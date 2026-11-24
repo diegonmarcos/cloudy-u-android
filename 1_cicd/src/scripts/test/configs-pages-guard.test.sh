@@ -99,10 +99,14 @@ mutate "an app without About"                  "$APP/build.json" "$(J "del $AB")
 mutate "an app without General"                "$APP/build.json" "$(J "del $CP['general']")" "G1 $APP: build.json has no configs_pages"
 mutate "Cloud SuperApp loses its exemption"    "$DATA" "$(J "del d['exempt']['aa_cloud-superapp']")" "G1 aa_cloud-superapp: build.json has no configs_pages"
 # G2 the General sections
-for sid in perms battery storage notifications ui language; do
+for sid in battery storage notifications ui language; do
     mutate "General without its $sid section"  "$APP/build.json" "$(J "$SEC[:]=[x for x in $SEC if x['id']!='$sid']")" "G2 $APP: configs_pages.general.sections must list '$sid' exactly once"
 done
-mutate "a General section listed twice"        "$APP/build.json" "$(J "$SEC.append({'id':'perms'})")" "G2 $APP: configs_pages.general.sections must list 'perms' exactly once"
+mutate "a General section listed twice"        "$APP/build.json" "$(J "$SEC.append({'id':'battery'})")" "G2 $APP: configs_pages.general.sections must list 'battery' exactly once"
+# #1890 a section whose content has its own Configs tab never goes into General
+for sid in perms agents about xray logcat; do
+    mutate "General naming the $sid tab"       "$APP/build.json" "$(J "$SEC.insert(0,{'id':'$sid'})")" "G2 $APP: configs_pages.general.sections names '$sid', which has its own Configs tab"
+done
 mutate "an unknown General section"            "$APP/build.json" "$(J "$SEC.append({'id':'wifi'})")"  "G2 $APP: configs_pages.general.sections names 'wifi'"
 green  "General with its sections reordered"   "$APP/build.json" "$(J "$SEC.reverse()")"
 green  "General placing the default Update section itself" "$APP/build.json" "$(J "$SEC.append({'id':'update'})")"

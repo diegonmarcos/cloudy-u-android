@@ -21,6 +21,10 @@
   ],
   "forbidden": [
     {
+      "needle": "\"perms\" -> PermsSection(c, tick)",
+      "why": "General draws a Perms section although Perms has its own tab (#1890)"
+    },
+    {
       "needle": "Modifier.size(56.dp).clip(tile)",
       "why": "the big anchor tile"
     },
@@ -68,6 +72,11 @@
       "section": "perms",
       "what": "libs:perms AppPermsSection (the one Perms list, Grant all)",
       "needle": "com.diegonmarcos.superapp.perms.AppPermsSection("
+    },
+    {
+      "section": "perms",
+      "what": "the Perms TAB draws the same section (every row General's Perms drew, #1890)",
+      "needle": "verticalScroll(rememberScrollState()).padding(horizontal = 12.dp)) { PermsSection(c, tick) }"
     },
     {
       "section": "perms",

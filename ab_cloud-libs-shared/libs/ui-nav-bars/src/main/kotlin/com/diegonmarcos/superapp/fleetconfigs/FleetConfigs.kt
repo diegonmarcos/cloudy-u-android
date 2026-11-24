@@ -82,7 +82,7 @@ public data class FleetAgentRow(
 
 public object FleetConfigs {
     /** The sections every General page carries (configs-pages.json::general_required), in this order unless the app reorders them. */
-    public val REQUIRED_SECTIONS: List<String> = listOf("perms", "battery", "storage", "notifications", "ui", "language")
+    public val REQUIRED_SECTIONS: List<String> = listOf("battery", "storage", "notifications", "ui", "language")
 
     /** The one optional section: the app's own Configs pages, opened through the host's Configs. */
     public const val APP_SECTION: String = "app"
@@ -90,7 +90,7 @@ public object FleetConfigs {
     /**
      * The section every app gets by default (configs-pages.json::general_default): installed version and build, Check for
      * updates against the app's Cloud Store release, the latest build, Update (handed to Cloud Store) and the release notes.
-     * Drawn right after Perms unless the app's declaration places it.
+     * Drawn first in General (Perms has its own tab) unless the app's declaration places it.
      */
     public const val UPDATE_SECTION: String = "update"
 
@@ -117,11 +117,20 @@ public object FleetConfigs {
         "Cloud SuperApp is the launcher hub of the fleet: the home screen that opens every Cloud app, the shared panels (communication, " +
             "boards, cloud, phone) and the debug tools (crash reports, logs, the route catalogue of each app)."
 
-    /** [declared] with the default sections added where the app did not place them (Update after Perms). */
+    /**
+     * #1890 The section ids General must never draw: every id that is a tab of the Configs strip other than General itself
+     * (Perms, Agents, About, Logcat, X-Ray App, and any tab an app or lib registered). That content has its own tab, so the rule
+     * is read from the tab list, not from a list of section names.
+     */
+    public fun tabOwnedIds(extras: List<FleetConfigsTab> = FleetConfigsExtensions.all()): Set<String> =
+        (FleetConfigsExtensions.TAIL_IDS + extras.map { it.id }).toSet() - FleetConfigsPage.General.id
+
+    /** [declared] without any section that has its own tab, plus the default sections where the app did not place them (Update first). */
     public fun withDefaults(declared: List<GeneralSection>): List<GeneralSection> {
-        if (declared.any { it.id == UPDATE_SECTION }) return declared
-        val at = declared.indexOfFirst { it.id == "perms" } + 1
-        return declared.toMutableList().apply { add(at, GeneralSection(UPDATE_SECTION, defaultLabel(UPDATE_SECTION), "")) }
+        val owned = tabOwnedIds()
+        val shown = declared.filter { it.id !in owned }
+        if (shown.any { it.id == UPDATE_SECTION }) return shown
+        return listOf(GeneralSection(UPDATE_SECTION, defaultLabel(UPDATE_SECTION), "")) + shown
     }
 
     public const val RELEASES_REPO: String = "diegonmarcos/cloudy-u-android"
