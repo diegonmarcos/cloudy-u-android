@@ -132,6 +132,28 @@ jobs:
           key: firestack-gomodcache-${{ runner.os }}-${{ hashFiles('ab_cloud-libs-shared/libs/firewall/firestack/go.sum') }}
           restore-keys: firestack-gomodcache-${{ runner.os }}-
 
+      # #1881 the mesh facade (libwg-go's six entry points on the firestack engine) has Go tests.
+      # They run BEFORE the bind and publish so a red facade never reaches a pinned aar. Host go
+      # test (linux/amd64), pinned Go from build.json, modules verified against the committed
+      # go.sum (nothing is resolved: go.sum is the pin, -mod=readonly).
+      - name: Go tests for intra/mesh (fatal on failure)
+        env:
+          GOMODCACHE: ${{ github.workspace }}/ab_cloud-libs-shared/.cache/gomodcache
+          GOTOOLCHAIN: local
+          GOFLAGS: -mod=readonly
+        run: |
+          GOVER="$(jq -r '.firestack.build.go_version' ab_cloud-libs-shared/build.json)"
+          GODIR="${{ github.workspace }}/ab_cloud-libs-shared/.cache/golang"
+          mkdir -p "$GODIR"
+          if [ ! -x "$GODIR/go/bin/go" ]; then
+            curl -fLso "$GODIR/go.tgz" "https://go.dev/dl/go${GOVER}.linux-amd64.tar.gz"
+            echo "$(jq -r '.firestack.build.go_sha256_linux_amd64' ab_cloud-libs-shared/build.json)  $GODIR/go.tgz" | sha256sum -c -
+            rm -rf "$GODIR/go"; tar -C "$GODIR" -xzf "$GODIR/go.tgz"
+          fi
+          export PATH="$GODIR/go/bin:$PATH"
+          cd ab_cloud-libs-shared/libs/firewall/firestack
+          go test -count=1 -v ./intra/mesh/
+
       - name: Build every ABI and publish the aars
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -3054,7 +3054,7 @@
       "_doc": "THE AAR IS A PREBUILT ARTIFACT, AND THIS IS WHAT MAKES firestack UNABLE TO BLOCK A SUPERAPP RELEASE. Until 2026-09-10 the APK job compiled this Go library from source before every gradle invocation (build.sh::run_gradle called _ensure_firestack -> build-firestack.sh), so a firestack break was an APK break. It was exercised: 9a0ad74b8 broke the aar build, `Build APK (engine)` died inside it, `Publish to GitHub Releases` was SKIPPED, and the owner's phone served the APK from 2026-09-09 16:35 for a day and a half while ~40 commits of unrelated work — theme fixes, Spanish translations, crash fixes, the control panel — never reached it. Had this pin existed, the APK would have gone on consuming the last good aar while firestack's own build stayed red. PRODUCER: ship-firestack-aar.yml -> libs/firewall/publish-firestack.sh. CONSUMER: libs/firewall/fetch-firestack.sh, which downloads and checksum-verifies and NEVER falls back to a source build.",
       "release_repo": "diegonmarcos/cloudy-u-android",
       "release_tag_prefix": "firestack-aar-",
-      "release_tag": "firestack-aar-20260910.114222",
+      "release_tag": "firestack-aar-20261124.220901",
       "_doc_release_tag": "Published by ship-firestack-aar.yml run 34472605116 at 2026-09-10T11:43:59Z, the first aar built after #203 fixed the gomobile resolution. arm64 7125850 bytes, x86_64 7720583 bytes — 7.6% and 8.2% of GitHub's 100 MB per-blob cap. The two are genuinely different artifacts, not a naming convention: arm64 carries jni/arm64-v8a/libgojni.so and x86_64 carries jni/x86_64/libgojni.so, which is why the checksums below are per ABI. Advance this ONLY together with the matching checksums, and only deliberately — see ._doc and publish-firestack.sh's PIN ADVANCE note.",
       "asset_template": "firestack-{variant}.aar",
       "_doc_immutable_tag": "Each publish gets its OWN tag (prefix + UTC timestamp), never a rolling one. The consumer pins a checksum, so republishing under a reused tag would change the bytes beneath a pin that had not moved and fetch-firestack.sh would rightly refuse them — converting a firestack SUCCESS into an APK failure, which is this same coupling inverted. Immutable tags mean a new aar never disturbs a consumer that has not adopted it.",
@@ -3064,15 +3064,15 @@
       "assets": {
         "": {
           "asset": "firestack-arm64.aar",
-          "sha256": "643a517eee08ff0253cfe9ad6aa035808da96395e4df468bcb7bc115d4d23410"
+          "sha256": "8698d730941cae01063894979e47ef3a8ae68cd619cfae4e25c8233a997ed5b5"
         },
         "arm64": {
           "asset": "firestack-arm64.aar",
-          "sha256": "643a517eee08ff0253cfe9ad6aa035808da96395e4df468bcb7bc115d4d23410"
+          "sha256": "8698d730941cae01063894979e47ef3a8ae68cd619cfae4e25c8233a997ed5b5"
         },
         "x86_64": {
           "asset": "firestack-x86_64.aar",
-          "sha256": "aaed9d071b8e1cb87de77d1546f646f096de8cd6f868a770db6852fc6b4b7caf"
+          "sha256": "a1979a1af5a01a109c7b4dbf63aefe297b16624ac0b2dcfb41354645722b914c"
         }
       }
     },
