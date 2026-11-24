@@ -1,0 +1,23 @@
+From: a@example.org
+Subject: Doc
+Content-Type: multipart/mixed; boundary="M"
+
+--M
+Content-Type: multipart/alternative; boundary="N"
+
+--N
+Content-Type: text/plain; charset=utf-8
+
+See the attached invoice.
+--N
+Content-Type: text/html; charset=utf-8
+
+<p>See the attached <i>invoice</i>.</p>
+--N--
+--M
+Content-Type: application/pdf; name="invoice.pdf"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="invoice.pdf"
+
+UERGLURBVEE=
+--M--

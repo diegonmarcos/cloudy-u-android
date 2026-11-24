@@ -1,0 +1,13 @@
+From: a@example.org
+Subject: Alt
+Content-Type: multipart/alternative; boundary="A"
+
+--A
+Content-Type: text/plain; charset=utf-8
+
+plain version only
+--A
+Content-Type: text/html; charset=utf-8
+
+<p>The <b>rich</b> version</p>
+--A--

@@ -1,0 +1,3 @@
+kind: html
+contains: The rich version
+absent: plain version only

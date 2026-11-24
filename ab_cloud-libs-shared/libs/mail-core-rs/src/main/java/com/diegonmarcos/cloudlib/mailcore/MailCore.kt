@@ -15,8 +15,14 @@ package com.diegonmarcos.cloudlib.mailcore
  * boundary) is a failure with its reason, never a crash; the caller keeps its previous engine for that pass.
  */
 object MailCore {
+    /**
+     * The feature switch (#1837): false makes every caller take its Kotlin engine (the core reports itself unavailable), without
+     * touching the library. On by default; the Kotlin engine stays until the parity fixtures (fixtures/parity) are green in both.
+     */
+    @Volatile var enabled: Boolean = true
+
     /** Null when the core is usable in this process, otherwise why not. */
-    fun unavailableReason(): String? = NativeBridge.unavailableReason()
+    fun unavailableReason(): String? = if (!enabled) "the Rust mail core is switched off" else NativeBridge.unavailableReason()
 
     fun version(): String? = if (unavailableReason() == null) runCatching { NativeBridge.nativeVersion() }.getOrNull() else null
 

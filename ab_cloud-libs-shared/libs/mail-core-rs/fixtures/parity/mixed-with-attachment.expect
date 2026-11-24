@@ -1,0 +1,3 @@
+kind: html
+contains: See the attached invoice.
+attachment: invoice.pdf | application/pdf

@@ -105,6 +105,22 @@ pub fn parse(raw: &[u8]) -> Result<Parsed, String> {
     Ok(Parsed { kind: "text".into(), fragment: text_fragment(&plain), text: plain, remote_images: false, encoding_problem })
 }
 
+/// The file attachments of a raw message as (name, lowercase mime type): the cross-engine parity surface (#1837), the same
+/// facts the Kotlin MimeParser reports as its attachments (inline cid images are not listed).
+pub fn attachments(raw: &[u8]) -> Vec<(String, String)> {
+    let Some(msg) = MessageParser::default().parse(raw) else { return Vec::new() };
+    msg.attachments()
+        .filter(|p| p.content_id().is_none())
+        .map(|p| {
+            let ty = match p.content_type() {
+                Some(ct) => format!("{}/{}", ct.ctype().to_ascii_lowercase(), ct.subtype().unwrap_or("octet-stream").to_ascii_lowercase()),
+                None => "application/octet-stream".to_string(),
+            };
+            (p.attachment_name().unwrap_or("").to_string(), ty)
+        })
+        .collect()
+}
+
 /// Content-ID -> (mime type, bytes) of every inline image part.
 fn collect_cids<'a>(msg: &'a mail_parser::Message<'_>) -> HashMap<String, (String, &'a [u8])> {
     let mut map: HashMap<String, (String, &'a [u8])> = HashMap::new();

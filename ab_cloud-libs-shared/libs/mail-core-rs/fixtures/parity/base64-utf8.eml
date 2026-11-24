@@ -1,0 +1,6 @@
+From: a@example.org
+Subject: B64
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: base64
+
+Qm9uam91ciBsZSBtb25kZSwgY2Fmw6kgw6AgbGEgY3LDqG1lLg==
