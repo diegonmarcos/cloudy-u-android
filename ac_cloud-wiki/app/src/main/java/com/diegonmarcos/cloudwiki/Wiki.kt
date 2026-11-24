@@ -6,14 +6,17 @@ import com.diegonmarcos.superapp.graphview.GraphBuilder
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** One page: Markdown [md] with a short explanation, the [tags] its chips show, filed under [topic]. */
-data class WikiPage(val id: String, val topic: String, val title: String, val tags: List<String>, val md: String) {
+/**
+ * One page: Markdown [md] with a short explanation, the [tags] its chips show, filed under [topic]. #1891 [path] (its folder in the library
+ * repo) and [updated] (when the dataset says it last changed) are what the dataset carries, blank when it does not.
+ */
+data class WikiPage(val id: String, val topic: String, val title: String, val tags: List<String>, val md: String, val path: String = "", val updated: String = "") {
     /** The ids this page links to with `[[topic.slug]]`, in order, without repeats. */
     val links: List<String> get() = Wiki.links(md)
 }
 
 /** A topic: a side-menu page whose [pages] are its top subpage tabs after the Overview tab. [intro] is the Overview's Markdown. */
-data class WikiTopic(val id: String, val label: String, val intro: String, val pages: List<WikiPage>)
+data class WikiTopic(val id: String, val label: String, val intro: String, val pages: List<WikiPage>, val path: String = "")
 
 /**
  * #1867 a parent (Modern Science, Arcanum Science, Projects) or a hub (Sciences, A. Architecture of Sacred Sciences, ...) of the repo's
@@ -41,8 +44,8 @@ object Wiki {
         val topics = objects(root.optJSONArray("topics")).map { t ->
             val tid = t.getString("id")
             WikiTopic(tid, t.optString("label", tid), t.optString("intro"), objects(t.optJSONArray("pages")).map { p ->
-                WikiPage(p.getString("id"), tid, p.optString("title"), strings(p.optJSONArray("tags")), p.optString("md"))
-            })
+                WikiPage(p.getString("id"), tid, p.optString("title"), strings(p.optJSONArray("tags")), p.optString("md"), p.optString("path"), p.optString("updated"))
+            }, t.optString("path"))
         }
         // #1867 schema 2 (the repo's generated wiki.json) adds the parents and hubs with their intros; schema 1 has none
         val hubs = objects(root.optJSONArray("hubs")).map { h ->

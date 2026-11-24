@@ -1,0 +1,351 @@
+{
+ "_doc": "#1891 Cloud Wiki's side menu BEFORE the wiki's own menu and Home (cloudy-u-android 3c4cad674): every row of the libs:ui-nav-bars side menu (sideMenuItems(withChronos(wiki)), group headings as group:<id>), the Chronos simulators (Chronos's tabs) and every dataset page id. LibraryTreeTest proves each is still in the new menu or Home, rule 16. Frozen: never regenerated.",
+ "menu": [
+  {
+   "id": "group:modern",
+   "label": "Modern Science",
+   "depth": 0
+  },
+  {
+   "id": "sciences",
+   "label": "Sciences",
+   "depth": 1
+  },
+  {
+   "id": "math",
+   "label": "Math",
+   "depth": 2
+  },
+  {
+   "id": "cs",
+   "label": "Computer Science",
+   "depth": 2
+  },
+  {
+   "id": "physics",
+   "label": "Physics",
+   "depth": 2
+  },
+  {
+   "id": "astronomy",
+   "label": "Astronomy",
+   "depth": 2
+  },
+  {
+   "id": "eng",
+   "label": "Engineering",
+   "depth": 2
+  },
+  {
+   "id": "medicine",
+   "label": "Medicine",
+   "depth": 2
+  },
+  {
+   "id": "humanities",
+   "label": "Humanities",
+   "depth": 1
+  },
+  {
+   "id": "anthropology",
+   "label": "Anthropology",
+   "depth": 2
+  },
+  {
+   "id": "beliefs",
+   "label": "Human Belief Systems",
+   "depth": 2
+  },
+  {
+   "id": "arts",
+   "label": "Arts",
+   "depth": 1
+  },
+  {
+   "id": "art",
+   "label": "Art",
+   "depth": 2
+  },
+  {
+   "id": "theater",
+   "label": "Theater",
+   "depth": 2
+  },
+  {
+   "id": "music",
+   "label": "Music",
+   "depth": 2
+  },
+  {
+   "id": "movies",
+   "label": "Movies",
+   "depth": 2
+  },
+  {
+   "id": "explore",
+   "label": "Explore",
+   "depth": 1
+  },
+  {
+   "id": "graph",
+   "label": "Graph",
+   "depth": 2
+  },
+  {
+   "id": "group:arcanum",
+   "label": "Arcanum Science",
+   "depth": 0
+  },
+  {
+   "id": "arcanum-a",
+   "label": "Architecture of Sacred Sciences & Wisdom",
+   "depth": 1
+  },
+  {
+   "id": "sacred-sciences",
+   "label": "Sacred Sciences & Celestial Mechanics",
+   "depth": 2
+  },
+  {
+   "id": "harmonics",
+   "label": "Number, Geometry & Harmonic Proportions",
+   "depth": 2
+  },
+  {
+   "id": "symbolic-architecture",
+   "label": "Spatial, Symbolic & Vital Architecture",
+   "depth": 2
+  },
+  {
+   "id": "arcanum-b",
+   "label": "Interactions: Magic & Grimoires",
+   "depth": 1
+  },
+  {
+   "id": "divination",
+   "label": "Divination Systems & Epistemic Arts",
+   "depth": 2
+  },
+  {
+   "id": "alchemy",
+   "label": "Alchemical & Transformative Sciences",
+   "depth": 2
+  },
+  {
+   "id": "ceremonial-magic",
+   "label": "Ceremonial Magic, Grimoires & Summoning Disciplines",
+   "depth": 2
+  },
+  {
+   "id": "folk-magic",
+   "label": "Folk Magic & Witchcraft Traditions",
+   "depth": 2
+  },
+  {
+   "id": "talismans",
+   "label": "Talismanic & Applied Arcanum",
+   "depth": 2
+  },
+  {
+   "id": "arcanum-c",
+   "label": "Esoteric Schools & Traditions",
+   "depth": 1
+  },
+  {
+   "id": "western-esoteric",
+   "label": "Western Esoteric Traditions",
+   "depth": 2
+  },
+  {
+   "id": "eastern-esoteric",
+   "label": "Eastern Esoteric Traditions",
+   "depth": 2
+  },
+  {
+   "id": "mystery-schools",
+   "label": "Mystery Schools & Ancient Wisdom",
+   "depth": 2
+  },
+  {
+   "id": "group:projects",
+   "label": "Projects",
+   "depth": 0
+  },
+  {
+   "id": "chronos",
+   "label": "Chronos",
+   "depth": 1
+  },
+  {
+   "id": "sacred",
+   "label": "Sacred Geometry",
+   "depth": 1
+  }
+ ],
+ "simulators": [
+  "chronos.lib",
+  "chronos.lib.0",
+  "chronos.lib.1",
+  "chronos.lib.2",
+  "chronos.lib.3",
+  "chronos.lib.3.0",
+  "chronos.lib.3.1",
+  "chronos.lib.4"
+ ],
+ "pages": [
+  "math.algebra",
+  "math.calculus",
+  "math.geometry",
+  "math.number-theory",
+  "math.probability",
+  "math.logic",
+  "cs.algorithms",
+  "cs.theory",
+  "cs.systems",
+  "cs.machine-learning",
+  "cs.nlp",
+  "cs.cryptography",
+  "cs.security",
+  "physics.classical",
+  "physics.thermo",
+  "physics.electromagnetism",
+  "physics.quantum",
+  "physics.relativity",
+  "physics.particles",
+  "astronomy.solar-system",
+  "astronomy.stars",
+  "astronomy.galaxies",
+  "astronomy.cosmology",
+  "astronomy.observation",
+  "eng.civil",
+  "eng.mechanical",
+  "eng.electrical",
+  "eng.chemical",
+  "eng.software",
+  "eng.aerospace",
+  "eng.materials",
+  "eng.biomedical",
+  "eng.environmental",
+  "medicine.physiology",
+  "medicine.anatomy",
+  "medicine.genetics",
+  "medicine.epidemiology",
+  "medicine.imaging",
+  "medicine.pharmacology",
+  "anthropology.cultural",
+  "anthropology.physical",
+  "anthropology.archaeology",
+  "anthropology.linguistic",
+  "anthropology.kinship",
+  "beliefs.religion-studies",
+  "beliefs.world-religions",
+  "beliefs.philosophy",
+  "beliefs.ethics",
+  "beliefs.mythology",
+  "art.visual",
+  "art.sculpture",
+  "art.architecture",
+  "art.photography",
+  "art.movements",
+  "theater.origins",
+  "theater.drama",
+  "theater.acting",
+  "theater.stagecraft",
+  "theater.world-traditions",
+  "music.theory",
+  "music.acoustics",
+  "music.western-classical",
+  "music.popular",
+  "music.opera-and-song",
+  "music.technology",
+  "movies.history",
+  "movies.cinematography",
+  "movies.screenwriting",
+  "movies.editing",
+  "movies.genres",
+  "sacred-sciences.astrology",
+  "sacred-sciences.medieval-astronomy",
+  "sacred-sciences.planetary-correspondences",
+  "sacred-sciences.historical-cosmology",
+  "harmonics.numerology",
+  "harmonics.sacred-geometry",
+  "harmonics.sacred-sound",
+  "harmonics.pythagorean-harmony",
+  "symbolic-architecture.sacred-architecture",
+  "symbolic-architecture.symbols-emblems",
+  "symbolic-architecture.esoteric-medicine",
+  "divination.tarot",
+  "divination.i-ching",
+  "divination.runes",
+  "divination.oracles",
+  "divination.palmistry",
+  "divination.scrying",
+  "divination.geomancy",
+  "divination.geomantic-figures",
+  "divination.dream-interpretation",
+  "divination.oneiromancy",
+  "divination.classical-omens",
+  "divination.astrological-divination",
+  "divination.sortilege",
+  "alchemy.spiritual-alchemy",
+  "alchemy.spagyrics",
+  "alchemy.sympathetic-magic",
+  "ceremonial-magic.ceremonial-magic",
+  "ceremonial-magic.grimoires",
+  "ceremonial-magic.solomonic",
+  "ceremonial-magic.enochian",
+  "ceremonial-magic.theurgy",
+  "ceremonial-magic.goetia",
+  "ceremonial-magic.necromancy",
+  "folk-magic.folk-magic",
+  "folk-magic.european-folk-magic",
+  "folk-magic.witchcraft",
+  "talismans.talismans",
+  "talismans.protective-amulets",
+  "talismans.ritual-implements",
+  "talismans.sigaldry",
+  "talismans.artifice",
+  "talismans.wortcunning",
+  "western-esoteric.hermeticism",
+  "western-esoteric.alchemy",
+  "western-esoteric.kabbalah",
+  "western-esoteric.gnosticism",
+  "western-esoteric.neoplatonism",
+  "western-esoteric.rosicrucianism",
+  "western-esoteric.esoteric-christianity",
+  "western-esoteric.christian-mysticism",
+  "western-esoteric.thelema",
+  "western-esoteric.theosophy",
+  "western-esoteric.western-esotericism",
+  "western-esoteric.neoplatonic-commentaries",
+  "western-esoteric.renaissance-magic",
+  "western-esoteric.mystical-symbolism",
+  "eastern-esoteric.sufism",
+  "eastern-esoteric.tantra-vedanta",
+  "eastern-esoteric.taoism",
+  "eastern-esoteric.esoteric-buddhism",
+  "eastern-esoteric.kashmir-shaivism",
+  "eastern-esoteric.sufi-mysticism",
+  "eastern-esoteric.taoist-alchemy",
+  "eastern-esoteric.tantric-manuscripts",
+  "eastern-esoteric.buddhist-cosmology",
+  "mystery-schools.egyptian-mysteries",
+  "mystery-schools.greek-mysteries",
+  "mystery-schools.mesopotamian-wisdom",
+  "mystery-schools.mithraism",
+  "mystery-schools.ancient-persia",
+  "mystery-schools.ancient-rome",
+  "mystery-schools.ancient-india",
+  "mystery-schools.ancient-china",
+  "mystery-schools.mesoamerica",
+  "mystery-schools.eleusinian",
+  "mystery-schools.mesopotamian-religion",
+  "mystery-schools.orphic-hymns",
+  "mystery-schools.ancient-initiation",
+  "chronos.prehistory",
+  "chronos.ancient",
+  "chronos.medieval",
+  "chronos.early-modern",
+  "chronos.modern"
+ ]
+}

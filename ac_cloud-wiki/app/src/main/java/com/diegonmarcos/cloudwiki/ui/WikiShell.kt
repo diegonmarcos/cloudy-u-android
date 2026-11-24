@@ -23,11 +23,20 @@ import androidx.compose.ui.res.stringResource
 import com.diegonmarcos.cloudwiki.Chronos
 import com.diegonmarcos.cloudwiki.ChronosRepo
 import com.diegonmarcos.cloudwiki.Decl
+import com.diegonmarcos.cloudwiki.LibraryTree
+import com.diegonmarcos.cloudwiki.MenuState
+import com.diegonmarcos.cloudwiki.WikiMenu
 import com.diegonmarcos.cloudwiki.withChronos
 import com.diegonmarcos.cloudwiki.R
 import com.diegonmarcos.cloudwiki.WikiStart
 import com.diegonmarcos.cloudwiki.WikiStore
+import com.diegonmarcos.superapp.bottomnav.LocalNavModeStore
+import com.diegonmarcos.superapp.bottomnav.NavUiDecl
+import com.diegonmarcos.superapp.bottomnav.SecondRowMode
+import com.diegonmarcos.superapp.bottomnav.currentNavUi
+import com.diegonmarcos.superapp.bottomnav.effective
 import com.diegonmarcos.superapp.bottomnav.rememberAccountLauncher
+import com.diegonmarcos.superapp.bottomnav.rememberNavModePrefs
 import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsEntries
 import com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPage
 import com.diegonmarcos.superapp.navbartop1.NavBarTopFirstRowScaffold
@@ -72,6 +81,7 @@ object Tags {
  * wiki (served by Cloud Store), drawn by [WikiPage]. #1789 the Chronos pages of diegonmarcos/lib-chronos are declared as nested pages under
  * Chronos (build.json::ui, the repo's own hierarchy, indented in the side menu and listed in the title dropdown): picking one shows it
  * in a web view, baked into the APK ([Decl.chronos], [ChronosSimPage]).
+ * #1891 Home comes first (the index visualiser, [HomePage]); the side menu is the wiki's own [WikiSideLayout] over [LibraryTree].
  */
 @Composable
 fun WikiShell(start: WikiStart = WikiStart()) {
@@ -81,7 +91,9 @@ fun WikiShell(start: WikiStart = WikiStart()) {
     val repo by ChronosRepo.state.collectAsState()
     LaunchedEffect(Unit) { ChronosRepo.refreshIfDue(ctx.applicationContext, opening = false) }
     val declared = Decl.nav.section(Decl.SECTION_WIKI) ?: return
-    val wiki = remember(repo.tree) { withChronos(declared, Decl.chronos) }
+    // #1891 Home first: the index visualiser of the library, a parent of its own ahead of Modern Science, Arcanum Science and Projects
+    val homeLabel = stringResource(R.string.home)
+    val wiki = remember(repo.tree, homeLabel) { LibraryTree.withHome(withChronos(declared, Decl.chronos), homeLabel) }
     var page by rememberSaveable { mutableStateOf(start.page ?: start.tab?.substringBefore('.')) }
     val nav = remember { WikiNav().also { n -> start.tab?.let { t -> n.tabs[t.substringBefore('.')] = t }; n.tags.addAll(start.tags) } }
     // #1831 a simulator page is a tab of the Chronos topic: the side menu marks Chronos, the title names the simulator
@@ -103,15 +115,33 @@ fun WikiShell(start: WikiStart = WikiStart()) {
             onConfigs = { FleetConfigsEntries.open(ctx, FleetConfigsPage.General) },
             dark = true,
         ) {
-            NavSectionLayout(
-                wiki, menuId,
-                onSelect = { page = it.id },
-                modifier = Modifier.fillMaxSize().testTag(Tags.MENU),
-            ) {
+            val body: @Composable () -> Unit = {
                 Box(Modifier.fillMaxSize().testTag(Tags.SHELL)) {
                     WikiPage(data, wiki, pageId, nav, onTopic = { page = it })
                 }
             }
+            // #1891 the declared side menu is the wiki's own (WikiSideLayout: its own scroll and touch area, never collapsed by the page's
+            // scroll, 75% of the width, the Filter / Expand / Collapse / Search bar); a mode the user picked in Configs > UI (one row,
+            // two rows, Clean) stays libs:ui-nav-bars's, as before
+            val store = LocalNavModeStore.current ?: rememberNavModePrefs()
+            val sideMenu = wiki.effective(store).rows == SecondRowMode.SideMenu && NavUiDecl.plan(currentNavUi().mode).secondRow
+            if (sideMenu) {
+                val tree = remember(wiki, data) { LibraryTree.build(wiki, data) }
+                var menu by remember { mutableStateOf(MenuState(expanded = WikiMenu.expandLevels(LibraryTree.build(wiki, null), 2))) }
+                val open = store.sideExpanded() ?: false
+                WikiSideLayout(
+                    tree, menuId, nav.tabs[menuId], menu, onMenu = { menu = it },
+                    open = open, onOpen = { store.setSideExpanded(it) },
+                    onPick = { n -> n.page?.let { pg -> n.tab?.let { nav.tabs[pg] = it }; page = pg; store.setSideExpanded(false) } },
+                    modifier = Modifier.fillMaxSize().testTag(Tags.MENU),
+                    content = body,
+                )
+            } else NavSectionLayout(
+                wiki, menuId,
+                onSelect = { page = it.id },
+                modifier = Modifier.fillMaxSize().testTag(Tags.MENU),
+                content = body,
+            )
         }
     }
 }

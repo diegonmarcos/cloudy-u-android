@@ -19,4 +19,35 @@
     <string name="project_open_explorer">Open the 3D explorer</string>
     <string name="chronos_refresh">Refresh</string>
     <string name="chronos_refresh_failed">Refresh failed: %1$s</string>
+    <!-- #1891 the side menu's top bar and Home, the index visualiser of the library -->
+    <string name="home">Home</string>
+    <string name="menu_title">Library</string>
+    <string name="menu_filter">Filter</string>
+    <string name="menu_expand">Expand</string>
+    <string name="menu_collapse">Collapse</string>
+    <string name="menu_all">All</string>
+    <string name="menu_level_1">1 level</string>
+    <string name="menu_levels">%1$d levels</string>
+    <string name="menu_search">Search titles</string>
+    <string name="menu_matches">%1$d matches</string>
+    <string name="menu_no_match">No title matches.</string>
+    <string name="home_list">List</string>
+    <string name="home_table">Table</string>
+    <string name="home_graph">Graph</string>
+    <string name="home_planet">3D</string>
+    <string name="home_summary">%1$d nodes · %2$d parents · %3$d pages · %4$d levels · %5$d words</string>
+    <string name="home_planet_hint">%1$d bodies. Drag to rotate, pinch to zoom, tap a body to open it.</string>
+    <string name="home_play">Orbit</string>
+    <string name="home_pause">Orbiting</string>
+    <string name="home_reset">Reset view</string>
+    <string name="col_title">Title</string>
+    <string name="col_parent">Parent path</string>
+    <string name="col_level">Level</string>
+    <string name="col_children">Children</string>
+    <string name="col_words">Words</string>
+    <string name="col_size">Size</string>
+    <string name="col_updated">Updated</string>
+    <string name="col_tags">Tags</string>
+    <string name="col_kind">Kind</string>
+    <string name="col_path">Repo folder</string>
 </resources>

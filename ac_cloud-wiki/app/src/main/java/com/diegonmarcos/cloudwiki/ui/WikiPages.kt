@@ -50,6 +50,7 @@ import com.diegonmarcos.superapp.graphview.GEdge
 import com.diegonmarcos.superapp.graphview.GraphView
 import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow
 import com.diegonmarcos.cloudwiki.Decl
+import com.diegonmarcos.cloudwiki.LibraryTree
 import com.diegonmarcos.cloudwiki.chronosTabOf
 import com.diegonmarcos.cloudwiki.chronosTabs
 import com.diegonmarcos.cloudwiki.Chronos
@@ -77,6 +78,8 @@ class WikiNav {
 @Composable
 fun WikiPage(data: WikiData?, wiki: NavSection, pageId: String, nav: WikiNav, onTopic: (String) -> Unit) {
     val p = LocalKitPalette.current
+    // #1891 Home: the index visualiser of the whole library (from the declaration alone until the dataset arrives)
+    if (pageId == LibraryTree.HOME) { HomePage(data, wiki, nav, onTopic); return }
     // #1789 a Chronos page is the repo's (#1830 runtime clone, else baked): it shows whether or not Cloud Store has served the dataset yet.
     // #1831 the Chronos topic and its simulators are one page: the era pages and the simulators are its tabs.
     val sim = Decl.chronos.page(pageId)
