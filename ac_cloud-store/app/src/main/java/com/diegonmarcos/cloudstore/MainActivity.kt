@@ -71,6 +71,8 @@ class MainActivity : AppCompatActivity() {
         StorePages.fleetDataPane = { authority, modifier -> com.diegonmarcos.superapp.fleetdata.ui.FleetDataPage(authority, modifier) }
         // #1895 Search > Games: the Games page moved here from Cloud Media Center (web assets in assets/games, in the fleet web view).
         StorePages.gamesPane = { modifier -> GamesPage.Pane(modifier) }
+        // #1765 a non-fleet F-Droid package handed over (a game) installs through the declared F-Droid ladder.
+        com.diegonmarcos.superapp.appstore.StoreHandoffExternal.register()
         requested = tabFrom(intent)
         // #1675 another fleet app handed Cloud Store (the one installer of record) an install of a fleet package.
         com.diegonmarcos.superapp.updater.install.StoreHandoff.accept(this, intent)

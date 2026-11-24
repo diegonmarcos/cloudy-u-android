@@ -94,6 +94,18 @@ class SilentUpdatesTest {
         assertEquals(StoreHandoff.Action.LEAVE_TO_STORE, StoreHandoff.action(SilentReadiness.Route.HANDOFF, foreground = false))
     }
 
+    @Test fun aNonFleetPackageIsInstalledByTheStoreThroughTheExternalLadder() {
+        assertEquals(StoreHandoff.Handler.EXTERNAL, StoreHandoff.handlerFor(null, hasExternal = true))
+        assertEquals(StoreHandoff.Handler.REFUSE, StoreHandoff.handlerFor(null, hasExternal = false))
+        assertTrue(StoreHandoffExternal.acceptable("org.example.game", 1))
+        assertFalse("a Play-only app has no direct rung", StoreHandoffExternal.acceptable("org.example.game", 0))
+        assertFalse("not a package id", StoreHandoffExternal.acceptable("../evil", 1))
+        val main = repo("ac_cloud-store/app/src/main/java/com/diegonmarcos/cloudstore/MainActivity.kt").readText()
+        assertTrue("Cloud Store registers the external installer", main.contains("StoreHandoffExternal.register()"))
+        val h = repo("ab_cloud-libs-shared/libs/updater/src/main/java/com/diegonmarcos/superapp/updater/install/StoreHandoff.kt").readText()
+        assertFalse("the worker no longer drops a non-fleet package", h.contains("does not install it on request"))
+    }
+
     @Test fun everyInstallPathReachesTheOneChoke() {
         val u = "ab_cloud-libs-shared/libs/updater/src/main/java/com/diegonmarcos/superapp/updater/"
         val installer = repo(u + "install/UpdateInstaller.kt").readText()

@@ -35,7 +35,7 @@ class HandedToStore(val pkg: String, val handedOver: Boolean) : IllegalStateExce
  *  - from the BACKGROUND (a periodic self-update) it installs nothing: Cloud Store's own unattended fleet pass updates it.
  *
  * No broadcast receiver: Cloud Store declares none (#1502, it never wakes for another app), so the hand-off is an activity
- * start the user sees. Only packages in Cloud Store's baked fleet list are installed this way (no URL is accepted).
+ * start the user sees. Fleet packages install through the fleet path; any other package only through [ExternalInstaller] (the declared F-Droid ladder, verified against the signed index). No URL is accepted.
  */
 object StoreHandoff {
     private const val TAG = "Updater/Handoff"
@@ -43,6 +43,24 @@ object StoreHandoff {
     const val EXTRA_INSTALL = "install_pkg"
     const val EXTRA_TAB = "tab"
     const val EXTRA_FROM = "from"
+
+    /**
+     * #1765 Cloud Store's side for a package that is NOT in the fleet list (an F-Droid game a fleet app asked for). The store
+     * module (libs:appstore, which holds the F-Droid index reader and the declared ladders) registers it in Cloud Store's
+     * MainActivity; libs:updater cannot link it. Returns null when installed or queued, else the reason it was refused.
+     */
+    fun interface ExternalInstaller { fun install(ctx: Context, pkg: String): String? }
+
+    @Volatile var external: ExternalInstaller? = null
+
+    /** Pure: which side of Cloud Store installs [pkg] for a hand-off. */
+    fun handlerFor(fleetApp: Fleet.App?, hasExternal: Boolean): Handler = when {
+        fleetApp != null -> Handler.FLEET
+        hasExternal -> Handler.EXTERNAL
+        else -> Handler.REFUSE
+    }
+
+    enum class Handler { FLEET, EXTERNAL, REFUSE }
 
     /** The activity intent. */
     fun intent(selfPkg: String, pkg: String): Intent =
@@ -68,6 +86,7 @@ object StoreHandoff {
     fun handOff(ctx: Context, pkg: String): HandedToStore? = runCatching {
         // Only FLEET packages have Cloud Store as their installer of record; a third-party app the SuperApp's Phone page
         // installs (F-Droid, a vendor URL) is not in Cloud Store's fleet list and stays a local install.
+        // (An explicit install_pkg intent for a non-fleet package, e.g. a game, is served by Cloud Store: see [accept].)
         if (!isFleetPackage(pkg)) return@runCatching null
         when (action(SilentReadiness.route(ctx.packageName, SilentReadiness.storeInstalled(ctx)), isForeground(ctx))) {
             Action.INSTALL_HERE -> null
@@ -124,8 +143,14 @@ class StoreHandoffWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
         if (pkg.isBlank()) return@withContext Result.failure()
         runCatching {
             val app = StoreHandoff.appFor(runCatching { Fleet.parse(BuildConfig.CONSTELLATION_FLEET_B64) }.getOrDefault(emptyList()), pkg)
-            if (app != null) Fleet.install(applicationContext, app)
-            else Log.w("Updater/Handoff", "$pkg is not a fleet package: Cloud Store does not install it on request")
+            val ext = StoreHandoff.external
+            when (StoreHandoff.handlerFor(app, ext != null)) {
+                StoreHandoff.Handler.FLEET -> Fleet.install(applicationContext, app!!)
+                // #1765 a non-fleet package (an F-Droid game): the store's declared F-Droid ladder, signed index + sha256.
+                StoreHandoff.Handler.EXTERNAL -> ext!!.install(applicationContext, pkg)
+                    ?.let { Log.w("Updater/Handoff", "$pkg not installed: $it") }
+                StoreHandoff.Handler.REFUSE -> Log.w("Updater/Handoff", "$pkg is not a fleet package and no external installer is registered")
+            }
         }.onFailure { Log.w("Updater/Handoff", "handed-off install of $pkg failed: ${it.message}") }
         Result.success()
     }
