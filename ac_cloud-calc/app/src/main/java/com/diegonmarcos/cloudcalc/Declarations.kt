@@ -110,6 +110,9 @@ object Declarations {
         fun allPages(): List<String> = pages + children.flatMap { it.allPages() }
     }
 
+    /** #1893 icons per row on Home (ui.tile_columns, the key Cloud SuperApp's Cloud grids read). */
+    val tileColumns: Int get() = BuildConfig.UI_TILE_COLUMNS.coerceAtLeast(1)
+
     /** #1893 THE tool hierarchy (ui.sections[home].hierarchy.nodes): what Home draws and the navigation follows. */
     val hierarchy: List<HNode> by lazy { hierarchyIn(decode(BuildConfig.UI_SECTIONS_B64)) }
 

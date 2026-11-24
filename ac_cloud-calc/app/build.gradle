@@ -70,6 +70,7 @@ def uiSectionsB64    = b64(buildJson.ui.sections)
 // #1893 the tool hierarchy Home draws rides in ui.sections (the `home` section's `hierarchy`), not in a blob of its own
 if (!buildJson.ui.sections.find { it.id == 'home' }?.hierarchy?.nodes) throw new GradleException("build.json::ui.sections[home].hierarchy.nodes missing — Home would list no tools (#1893)")
 def uiBottomNav      = buildJson.ui.bottom_nav.join(',')
+def uiTileColumns = (buildJson.ui.tile_columns as Number)?.intValue() ?: 9
 def uiDefaultSection = (buildJson.ui.default_section ?: buildJson.ui.bottom_nav[0]).toString()
 // #1406 each mode's own top-level _doc* notes (nested JSON such as options/clock/spec is kept verbatim) are for readers of build.json, not the app: dropped so the constant stays under javac's 64 KB.
 def uiModesB64       = b64(buildJson.ui.modes.collect { m -> m.findAll { k, v -> !k.toString().startsWith('_doc') } })
@@ -168,6 +169,7 @@ android {
         buildConfigField "String", "UI_SECTIONS_B64", "\"${uiSectionsB64}\""
         buildConfigField "String", "UI_BOTTOM_NAV",   "\"${uiBottomNav}\""
         buildConfigField "String", "UI_MODES_B64",    "\"${uiModesB64}\""
+        buildConfigField "int", "UI_TILE_COLUMNS", "${uiTileColumns}"
         buildConfigField "String", "UI_DEFAULT_SECTION", "\"${uiDefaultSection}\""
         buildConfigField "String", "DEBUG_API_GROUP", "\"${debugGroup}\""
         buildConfigField "String", "DEBUG_API_CLOCK_GROUP", "\"${clockGroup}\""

@@ -2194,6 +2194,8 @@
     "_doc_sections": "#868 THE ONE navigation declaration (libs:bottomnav's NavDecl), INVERTED from #770: ui.bottom_nav is the island's section ids in display order, ui.sections[] are Calculator, Measure and Jev, each with `pages` - the ten tabs (what #770 called ui.tabs), drawn as the section's top PageTabs strip - and ui.default_section is where the app opens (its first page). Calculator = the traditional calculators (#767), Measure = sensors and the clock & timers (#768), Jev = natural-language requests routed by a decision model, and its Configs. A page shows the modes whose `tab` is its id, in ui.modes order, as the sub-strip under the page strip. test/test-calc-shell.sh fails on a section with no page, a page with no mode and a mode naming no page.",
     "bottom_nav": ["calculator", "sheet", "home", "measure", "toolkit"],
     "default_section": "calculator",
+    "_doc_tile_columns": "#1893 icons per row on Home, the same ui.tile_columns key Cloud SuperApp declares for its Cloud grids (Home draws the SuperApp's launcher tile, icon with its label below).",
+    "tile_columns": 9,
     "configs_ui": ["nav_ui"],
     "sections": [
       {

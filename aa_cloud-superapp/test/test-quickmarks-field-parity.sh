@@ -157,7 +157,7 @@ done
 
 echo "== T6: the renderer learned the double divider =="
 grep -q 'double    = t.optBoolean("double", false)' "$KT/Sections.kt" && ok "Sections.kt parses the \"double\" separator flag" || bad "Sections.kt does not parse \"double\""
-grep -qE 'fun TileDivider\(.*double: Boolean' "$KT/LauncherTiles.kt" && ok "TileDivider takes a double flag" || bad "TileDivider has no double parameter"
+grep -qE 'fun TileDivider\(.*double: Boolean' "$APP/../ab_cloud-libs-shared/libs/tile-grid/src/main/java/com/diegonmarcos/superapp/launcher/CompactTile.kt" && ok "TileDivider takes a double flag" || bad "TileDivider has no double parameter"
 grep -q 'double = it.double' "$KT/GroupedTilesFragment.kt" && ok "TileStrip passes the separator's double flag to TileDivider" || bad "TileStrip does not forward double"
 
 echo; echo "== RESULT: $PASS passed, $FAIL failed =="

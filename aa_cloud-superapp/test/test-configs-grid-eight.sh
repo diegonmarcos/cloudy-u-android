@@ -37,11 +37,11 @@ grep -q 'ConfigsFragment.newInstance(tiles)' "$KT/LauncherNavController.kt" && g
   && ok "Configs is drawn by ConfigsFragment through the Apps TileStrip" || bad "Configs is not drawn through the shared Apps tile strip"
 
 echo "== G3: the separator is inline =="
-# #1069: the separator is the composable TileDivider (LauncherTiles.kt): a thin rule drawn as an OVERLAY on the edge of the
+# #1069: the separator is the composable TileDivider (libs:tile-grid CompactTile.kt): a thin rule drawn as an OVERLAY on the edge of the
 # neighbouring tile (never a row child), so it takes no slot and no width, centred on the icon line, not clickable.
 # #1627: TileDivider gained a `double` flag for the '||' group rule; the SINGLE '|' path is unchanged (1 dp, 0x66 ink),
 # the DOUBLE path is the stronger 2 dp / 0.7f rule. The width and ink are now `if (double) … else …`, so pin both arms.
-sep="$(awk '/^internal fun TileDivider/{f=1} f{print} f&&/^}$/{exit}' "$KT/LauncherTiles.kt")"
+sep="$(awk '/^fun TileDivider/{f=1} f{print} f&&/^}$/{exit}' "$APP/../ab_cloud-libs-shared/libs/tile-grid/src/main/java/com/diegonmarcos/superapp/launcher/CompactTile.kt")"
 echo "$sep" | grep -qE 'size\(w, h\)' && echo "$sep" | grep -qE 'if \(double\) 2\.dp else 1\.dp' && echo "$sep" | grep -qE 'if \(double\) SEP_HEIGHT \+ 4\.dp else SEP_HEIGHT' \
   && ! echo "$sep" | grep -qE 'weight\(|fillMaxWidth|clickable|Text\(' \
   && ok "separator is a thin rule (single 1 dp, double 2 dp; no weight, no fill, no slot, not clickable)" || bad "separator is not wrap_content"

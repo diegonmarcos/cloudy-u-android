@@ -2,6 +2,7 @@ package com.diegonmarcos.cloudcalc
 
 import android.content.ComponentName
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -24,6 +25,7 @@ import com.diegonmarcos.cloudcalc.ui.SheetTags
 import com.diegonmarcos.superapp.bottomnav.BottomNavTags
 import com.diegonmarcos.superapp.bottomnav.PageTabsTags
 import com.diegonmarcos.superapp.navbartop1.TopFirstRowTags
+import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -175,6 +177,37 @@ class SheetShellTest {
         compose.onNodeWithTag(BottomNavTags.item("calculator")).performClick()
         compose.waitForIdle()
         assertEquals("the Calc section comes back to the page last shown in it", "ask", state.tab)
+    }
+
+    @Test fun `Home draws the SuperApp launcher tile, 9 per row, an icon with its label below, every tool once`() {
+        launch()
+        assertEquals(9, Declarations.tileColumns)
+        compose.onNodeWithTag(BottomNavTags.item("home")).performClick()
+        compose.waitForIdle()
+        val tools = Declarations.hierarchy.flatMap { it.allPages() }
+        for (id in tools) {
+            compose.onAllNodesWithTag("tile:$id", useUnmergedTree = true).assertCountEquals(1)
+            compose.onNodeWithTag("tileicon:$id", useUnmergedTree = true).assertExists()
+            compose.onNodeWithTag("tilelabel:$id", useUnmergedTree = true).assertExists()
+            val icon = compose.onNodeWithTag("tileicon:$id", useUnmergedTree = true).getBoundsInRoot()
+            val label = compose.onNodeWithTag("tilelabel:$id", useUnmergedTree = true).getBoundsInRoot()
+            assertTrue("the label of $id is below its icon", label.top >= icon.bottom)
+        }
+        // The Calc group is nine tools: one full row of nine.
+        val calc = Declarations.hierarchy[0].children[0].pages
+        assertEquals(9, calc.size)
+        val b = calc.map { compose.onNodeWithTag("tile:$it", useUnmergedTree = true).getBoundsInRoot() }
+        assertEquals("nine tiles share one row", 1, b.map { it.top }.toSet().size)
+        assertEquals("nine distinct columns", 9, b.map { it.left }.toSet().size)
+        // The very composable of the SuperApp's Cloud page, not the Configs card grid.
+        val home = File("src/main/java/com/diegonmarcos/cloudcalc/ui/HomeScreen.kt").readText()
+        assertTrue("Home draws CompactTileCore", home.contains("CompactTileCore("))
+        assertTrue("Home no longer draws IndexTileGrid", !home.contains("IndexTileGrid("))
+        val superTiles = File("../../aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/launcher/LauncherTiles.kt").readText()
+        assertTrue("the SuperApp tile delegates to the same CompactTileCore", superTiles.contains("CompactTileCore("))
+        assertTrue("one implementation: the lib holds the tile",
+            File("../../ab_cloud-libs-shared/libs/tile-grid/src/main/java/com/diegonmarcos/superapp/launcher/CompactTile.kt").readText().contains("fun CompactTileCore("))
+        assertEquals(9, org.json.JSONObject(File("../build.json").readText()).getJSONObject("ui").getInt("tile_columns"))
     }
 
     @Test fun `sheet tabs add, rename, duplicate, delete and reorder`() {
