@@ -18,7 +18,7 @@ class MediaBadgePlayingParityTest {
     }
 
     @Test fun `a badge built the playing way has no idle block`() {
-        val b = BadgeDeclaration.badges(BadgeServices.declared).first { it.card.kind == "media" }
+        val b = BadgeDeclaration.badges(BadgeServices.declared).first { it.id == "media_now_playing" }
         val d = NotifyFixtures.badge(b)
         assertNull(d.idle)
         assertEquals(true, d.live)

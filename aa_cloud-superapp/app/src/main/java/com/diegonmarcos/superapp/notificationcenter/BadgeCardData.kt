@@ -100,7 +100,7 @@ object BadgeCardData {
             // #1603 Samsung-UI media card: track as the headline, artist/album under it, the transport progress, and the
             // album art the notification posted as its large icon (the renderer draws it dimmed behind the card).
             "media" -> data(title.ifBlank { b.label }, text, postedProgress, extraLines).copy(albumArt = mediaArt(ctx, n)).let { d ->
-                if (live) d else idleMedia(ctx, d)
+                if (n != null) d else idleMedia(ctx, d)
             }
             else -> data(title.ifBlank { b.label }, text, postedProgress, extraLines)
         }
