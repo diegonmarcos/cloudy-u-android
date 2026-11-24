@@ -307,10 +307,22 @@ class SmtpClient {
 
 /** Builds the RFC 5322 message for both SMTP submission and IMAP APPEND. */
 object OutgoingMime {
+    /**
+     * #1837 phase 3: the Rust core's builder, installed by core/data behind MailCore.enabled. Null (the default, and on any
+     * failure or an inexpressible message) leaves this Kotlin builder to answer, byte for byte as before.
+     */
+    @Volatile var coreBuilder: ((OutgoingMessage, BlindCopies) -> String?)? = null
+
             /**
              * [blindCopies] says whether the blind-copy recipients are written as a `Bcc:` header.
              */
     fun build(m: OutgoingMessage, blindCopies: BlindCopies = BlindCopies.OMITTED): String {
+        coreBuilder?.let { core -> runCatching { core(m, blindCopies) }.getOrNull()?.let { return it } }
+        return buildInKotlin(m, blindCopies)
+    }
+
+    /** The Kotlin engine, kept whole: the fallback of [build] and the reference the parity tests compare the core with. */
+    fun buildInKotlin(m: OutgoingMessage, blindCopies: BlindCopies = BlindCopies.OMITTED): String {
         val date = ZonedDateTime.ofInstant(
             java.time.Instant.ofEpochMilli(m.dateMillis),
             java.time.ZoneOffset.UTC,

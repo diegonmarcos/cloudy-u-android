@@ -3114,7 +3114,7 @@ class InboxViewModel(
         crawlJob = viewModelScope.launch {
             val refresh: suspend () -> Unit = {
                 searchState.value.query.takeIf { it.isNotBlank() }?.let { q ->
-                    val local = runCatching { repo.searchIndex(q) }.getOrNull()
+                    val local = runCatching { repo.searchIndexOrCore(q) }.getOrNull()
                     if (local != null && searchState.value.query == q) {
                         searchState.value = searchState.value.copy(
                             results = mergeHits(searchState.value.results.orEmpty(), local),
@@ -3142,7 +3142,7 @@ class InboxViewModel(
             // the answer that didn't run. A locked or damaged FTS table (the ground of #71) dropped
             // every hit only this index finds, in silence, under a count calling itself a total.
             var localComplete = true
-            val local = runCatching { repo.searchIndex(query) }.getOrElse { error ->
+            val local = runCatching { repo.searchIndexOrCore(query) }.getOrElse { error ->
                 if (error is CancellationException) throw error
                 localComplete = false
                 emptyList()

@@ -2043,16 +2043,21 @@ class MailRepository(
     suspend fun searchIndex(query: String, limit: Int = LOCAL_SEARCH_LIMIT): List<Email> {
         val match = ftsMatch(query) ?: return emptyList()
         val accountIds = accountStore.accounts().map { it.id }
-        val hits = emailFtsDao.search(match, NOT_SEARCHED_ROLES, accountIds, accountIds.size, limit)
+        return emailFtsDao.search(match, NOT_SEARCHED_ROLES, accountIds, accountIds.size, limit)
             .map { it.toEmail() }
+    }
+
+    /**
+     * #1837 phase 3: [searchIndex], and when the Room index finds nothing, the core's FTS5 store (JMAP mail it has synced and the
+     * Room index has not reached), through MailCore.enabled. Any core failure keeps [searchIndex]'s answer.
+     */
+    suspend fun searchIndexOrCore(query: String, limit: Int = LOCAL_SEARCH_LIMIT): List<Email> {
+        val hits = searchIndex(query, limit)
         if (hits.isNotEmpty()) return hits
-        // #1837 phase 3: the Room index found nothing: ask the core's FTS5 store (JMAP mail it has synced and the Room index has not
-        // reached), through MailCore.enabled; any failure keeps the empty answer the old path gave.
         val core = mailCore?.takeIf { it.unavailableReason() == null } ?: return hits
         return runCatching {
-            accountIds.flatMap { acc ->
-                val ids = core.searchIds(acc, query, limit).orEmpty()
-                if (ids.isEmpty()) emptyList() else emailDao.emailsByIds(acc, ids).map { it.toEmail() }
+            accountStore.accounts().map { it.id }.flatMap { acc ->
+                core.searchIds(acc, query, limit).orEmpty().chunked(500).flatMap { chunk -> emailDao.emailsByIds(acc, chunk).map { it.toEmail() } }
             }.take(limit)
         }.getOrDefault(hits)
     }

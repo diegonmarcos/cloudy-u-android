@@ -42,7 +42,13 @@ class CoreComposeTest {
         // On the JVM libmail_core.so is not loaded: the core is unavailable and the answer is OutgoingMime's, byte for byte.
         val m = msg(html = "<p>x</p>")
         assertNull(CoreCompose.tryBuild(m, BlindCopies.OMITTED))
-        assertEquals(OutgoingMime.build(m), CoreCompose.build(m))
+        assertEquals(OutgoingMime.buildInKotlin(m), CoreCompose.build(m))
+        CoreCompose.install()
+        try {
+            assertEquals(OutgoingMime.buildInKotlin(m), OutgoingMime.build(m))
+        } finally {
+            OutgoingMime.coreBuilder = null
+        }
         MailCore.enabled = false
         try {
             assertNull(CoreCompose.tryBuild(m, BlindCopies.OMITTED))

@@ -55,8 +55,13 @@ internal object CoreCompose {
         }.onFailure { RustMailEngine.log("compose: core failed, Kotlin builder: ${it.message}") }.getOrNull()
     }
 
+    /** Routes every [OutgoingMime.build] through the core (Kotlin fallback is inside it). Idempotent; called when the app's mail engine is created. */
+    fun install() {
+        OutgoingMime.coreBuilder = { m, blind -> tryBuild(m, blind) }
+    }
+
     /** Core first, Kotlin on any failure. */
-    fun build(m: OutgoingMessage, blind: BlindCopies = BlindCopies.OMITTED): String = tryBuild(m, blind) ?: OutgoingMime.build(m, blind)
+    fun build(m: OutgoingMessage, blind: BlindCopies = BlindCopies.OMITTED): String = tryBuild(m, blind) ?: OutgoingMime.buildInKotlin(m, blind)
 
     private object Json {
         fun parse(answer: String): String =

@@ -430,8 +430,10 @@ class RustMailEngine(
             runCatching { android.util.Log.i("MailCore", message) }
         }
 
-        fun create(context: Context): RustMailEngine =
-            RustMailEngine(java.io.File(context.filesDir, "mail-core/mail.db").path, ProjectionCursors.Prefs(context))
+        fun create(context: Context): RustMailEngine {
+            CoreCompose.install()
+            return RustMailEngine(java.io.File(context.filesDir, "mail-core/mail.db").path, ProjectionCursors.Prefs(context))
+        }
     }
 }
 
