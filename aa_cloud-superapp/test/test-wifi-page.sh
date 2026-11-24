@@ -31,7 +31,7 @@ LA="$LIB/src/main/assets/wifi"
 FL="$ROOT/data/fleet"   # #1547 the analyzer defaults are the served shared dataset wifi-config, not a lib asset
 PK="$ROOT/data/fleet/packs"   # #1547 the OUI table is a downloadable pack, no longer a lib asset
 for f in "$BJ" "$KT/configs/WifiFragment.kt" "$KT/launcher/SectionPages.kt" "$LIB/build.gradle" "$LIB/src/main/AndroidManifest.xml" "$LK/WifiUi.kt" \
-         "$LK/WifiTabs.kt" "$PK/wifi-oui.tsv" "$PK/wifi-oui.json" "$LA/channel-plans.json" "$FL/wifi-config.json" "$LIB/src/main/res/values/strings.xml" "$LIB/src/main/res/values-es/strings.xml"; do
+         "$LK/WifiTabs.kt" "$PK/wifi-oui.tsv" "$PK/wifi-oui.json" "$FL/channel-plans.json" "$FL/wifi-config.json" "$LIB/src/main/res/values/strings.xml" "$LIB/src/main/res/values-es/strings.xml"; do
   [ -f "$f" ] || { echo "  ABORT: no such file: $f"; exit 2; }
 done
 command -v python3 >/dev/null 2>&1 || { echo "  ABORT: python3 missing"; exit 2; }
@@ -121,7 +121,7 @@ keys = [l[:6] for l in open(sys.argv[3] + '/wifi-oui.tsv', encoding='utf-8') if 
 if len(keys) < 30000: probs.append('OUI table has %d entries' % len(keys))
 if keys != sorted(set(keys)): probs.append('OUI keys not sorted / unique')
 if any(not re.fullmatch(r'[0-9A-F]{6}', k) for k in keys): probs.append('OUI key not 6 hex')
-plans = json.load(open(d + '/channel-plans.json'))
+plans = json.load(open(sys.argv[4] + '/channel-plans.json'))
 ids = [p['id'] for p in plans['plans']]
 if plans['default'] not in ids: probs.append('default plan missing')
 cc = [c for p in plans['plans'] for c in p['countries']]
@@ -144,6 +144,13 @@ PY
 )" "OUI = sorted IEEE registry, channel plans valid, config bounds every tool, build.json declares the throughput endpoint"
 grep -rqE '"(F0D1A9|001A11|B827EB)"' "$LK" && bad "a vendor prefix is typed in Kotlin" || ok "no vendor table in Kotlin (packs/wifi-oui.tsv is the only list)"
 grep -rqE 'listOf\((36, 40, 44, 48|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)' "$LK" && bad "a channel list is typed in Kotlin" || ok "no channel plan in Kotlin (channel-plans.json is the only list)"
+
+# #1547 the analyzer's data is served (wifi-config, channel-plans, packs/wifi-oui), never an APK asset: the lib's assets hold no JSON, and the check goes red when one is baked back (mutation)
+baked() { find "$1" -name '*.json' 2>/dev/null | head -1; }
+[ -z "$(baked "$LA")" ] && ok "libs:wifi bakes no JSON asset" || bad "libs:wifi bakes $(baked "$LA") (it is a served dataset)"
+MUT="$(mktemp -d)"; echo '{}' > "$MUT/wifi-config.json"
+[ -n "$(baked "$MUT")" ] && ok "mutant: a baked wifi JSON is caught" || bad "mutant: a baked wifi JSON went unnoticed"
+rm -rf "$MUT"
 
 echo "== W5: permissions =="
 M="$LIB/src/main/AndroidManifest.xml"

@@ -1,4 +1,5 @@
 {
+ "schemaVersion": 1,
  "_doc": "#1263 channel plans per regulatory domain: 20 MHz primary channels a client may see or an AP may use, by band (2.4 / 5 / 6 GHz). dfs = radar detection (DFS) applies; note = a regulatory remark. 6 GHz lists the 20 MHz primaries (US: full 5925-7125 MHz, EU / JP: lower band 5945-6425 MHz LPI). countries map ISO-3166 codes to a plan; an unknown country falls back to WORLD. The best-channel recommendation only ever proposes channels of the chosen plan.",
  "default": "WORLD",
  "plans": [

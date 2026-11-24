@@ -7,7 +7,7 @@ data class ChannelPlan(val id: String, val label: String, val countries: List<St
     fun channels(band: Band): List<PlanChannel> = bands[band].orEmpty()
 }
 
-/** The regulatory channel plans (assets/wifi/channel-plans.json) (#1263): which 20 MHz channels a domain allows, per band, with DFS. */
+/** The regulatory channel plans (the served shared dataset `channel-plans`, #1547; data/fleet/channel-plans.json) (#1263): which 20 MHz channels a domain allows, per band, with DFS. */
 class ChannelPlans(val plans: List<ChannelPlan>, val defaultId: String) {
     fun byId(id: String?): ChannelPlan = plans.firstOrNull { it.id.equals(id, true) } ?: plans.first { it.id == defaultId }
 
@@ -18,6 +18,22 @@ class ChannelPlans(val plans: List<ChannelPlan>, val defaultId: String) {
     }
 
     companion object {
+        /** The shared dataset: the regulatory plans per domain. */
+        const val DATASET = "channel-plans"
+
+        /**
+         * What the analyzer uses while the dataset loads or is not served yet: the WORLD safe common set (2.4 GHz 1-11, 5 GHz 36-48 and DFS 52-64),
+         * built from ranges. A test holds it equal to the served file's WORLD plan.
+         */
+        val DEFAULT = ChannelPlans(
+            listOf(ChannelPlan("WORLD", "World (safe common set)", emptyList(), mapOf(
+                Band.of("2.4") to (1..11).map { PlanChannel(it, false, "") },
+                Band.of("5") to (36..64 step 4).map { PlanChannel(it, it >= 52, "") },
+                Band.of("6") to emptyList(),
+            ))),
+            "WORLD",
+        )
+
         fun parse(text: String): ChannelPlans {
             val o = JSONObject(text)
             val arr = o.getJSONArray("plans")

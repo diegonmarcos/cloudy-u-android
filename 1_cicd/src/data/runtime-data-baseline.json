@@ -11,7 +11,7 @@
   "ac_cloud-tasks/app/src/main/assets/projects.json": "Tier-4 static reference seed (#1757): the sample project Traveling (lodging, transport, events, deletable, flagged sample, seeded once) and the per-project calendar config (mode, lane order). It must be there on first run offline; the user deletes the sample and it is never given back.",
   "ab_cloud-libs-shared/libs/appstore/src/main/assets/store-catalogue.json": "Tier-4 static reference seed (#1791): the Store's own app list (one row per package, each with category, licence, Play Integrity tier, game dimension, source and icon) that every Search > Phone page filters. The pages must list apps offline and on first run, not stay empty while a runtime dataset is unserved (the bug it fixes); the list holds public app metadata and no secret, and the dispatchable icon check keeps its URLs live."
  },
- "json_max": 91,
+ "json_max": 90,
  "gradle_max": 22,
  "b64_max": 304,
  "mock_files": [
@@ -318,10 +318,6 @@
   "ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json": {
    "tier": 2,
    "target": "account fleet/shell-allowlist"
-  },
-  "ab_cloud-libs-shared/libs/wifi/src/main/assets/wifi/channel-plans.json": {
-   "tier": 4,
-   "target": "store pack/channel-plans (downloadable data pack or seed)"
   },
   "ac_c3-morpheus/app/src/main/assets/probes.json": {
    "tier": 2,

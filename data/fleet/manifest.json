@@ -136,6 +136,12 @@
       "consumers": [
         "*"
       ]
+    },
+    "channel-plans": {
+      "tier": 4,
+      "consumers": [
+        "*"
+      ]
     }
   },
   "apps": {
