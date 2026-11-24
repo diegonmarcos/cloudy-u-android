@@ -242,7 +242,7 @@ object TakeoutRebuild {
             segs += TakeoutDerive.visitSegments(TakeoutDerive.VisitRow(r[0] as String, r[1] as String, l(r[2])!!, l(r[3])!!, d(r[4]), d(r[5]), r[6] as String?, r[7] as String?, l(r[8])), zone, geo)
         for (r in sql.rows("SELECT key,format,start_ms,end_ms,start_lat,start_lon,end_lat,end_lon,distance_m,activity_type,path_json FROM imp_activities ORDER BY start_ms;"))
             TakeoutDerive.activitySegment(TakeoutDerive.ActivityRow(r[0] as String, r[1] as String, l(r[2])!!, l(r[3])!!, d(r[4]), d(r[5]), d(r[6]), d(r[7]), d(r[8]), r[9] as String?, r[10] as String?))?.let { segs += it }
-        val layered = TakeoutDerive.layerKml(segs); segs.clear(); segs.addAll(layered)   // #1887 the KML's visits win over its overlapping paths
+        val layered = TakeoutDerive.layerKml(ArrayList(segs)); segs.clear(); segs.addAll(layered)   // #1887 the KML's visits win over its overlapping paths (a copy: layerKml may return its input)
         val range = sql.rows("SELECT MIN(ts),MAX(ts) FROM fixes WHERE source <> 'tracked';").firstOrNull()
         if (range != null && range[0] != null && !cancelled()) {
             segs += TakeoutDerive.fromFixes(l(range[0])!!, l(range[1])!!,
