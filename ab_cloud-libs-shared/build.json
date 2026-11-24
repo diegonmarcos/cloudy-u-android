@@ -3139,7 +3139,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "google/gemini-2.5-flash",
-        "pricing_as_of": "2026-11-23",
+        "pricing_as_of": "2026-11-24",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -3148,7 +3148,7 @@
             "params_b": 8,
             "quant": ["fp8", "bf16"],
             "trained_for": [],
-            "prompt": 0.02, "completion": 0.04,
+            "prompt": 0.05, "completion": 0.08,
             "note": "Cheapest and smallest row; translation-ranked, best for short fixes."
           },
           {
@@ -3222,8 +3222,8 @@
             "name": "DeepSeek V4 Flash 0731",
             "open": true,
             "quant": ["fp32", "fp4", "fp8", "nvfp4"],
-            "trained_for": ["academia", "finance", "health", "legal", "marketing", "programming", "roleplay", "science", "technology", "translation"],
-            "prompt": 0.0434, "completion": 0.3,
+            "trained_for": ["academia", "finance", "health", "marketing", "marketing/seo", "programming", "roleplay", "science", "technology", "translation", "trivia"],
+            "prompt": 0.0456, "completion": 0.3,
             "note": "Ranked in all twelve categories at the second-lowest price here."
           },
           {
@@ -3231,7 +3231,7 @@
             "name": "GLM 5.2",
             "open": true,
             "quant": ["fp4", "fp8"],
-            "trained_for": ["academia", "programming", "roleplay"],
+            "trained_for": ["academia", "legal", "programming", "roleplay"],
             "prompt": 0.62, "completion": 2.42,
             "note": "Ranked in ten categories including translation; the formal-register GLM."
           },
@@ -3241,14 +3241,14 @@
             "open": true,
             "quant": ["fp4", "fp8", "nvfp4"],
             "trained_for": ["academia", "finance", "health", "legal", "marketing", "marketing/seo", "programming", "roleplay", "science", "technology", "translation", "trivia"],
-            "prompt": 0.0399, "completion": 0.074,
+            "prompt": 0.15, "completion": 0.5,
             "note": "Ranked in all twelve categories; the cheapest all-rounder after DeepSeek."
           },
           {
             "id": "moonshotai/kimi-k2-0905",
             "name": "Kimi K2 0905",
             "open": true,
-            "quant": ["fp8"],
+            "quant": [],
             "prompt": 0.6, "completion": 2.5,
             "note": "Priciest open row; a single fp8 endpoint, aimed at long-context rewriting."
           },
