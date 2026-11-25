@@ -266,7 +266,7 @@ class DeclarationsTest {
     private fun leafProblems(t: List<Declarations.HomeGroup>): List<String> {
         val drawn = t.flatMap { it.leaves() }.map { it.id }
         val want = declaredLeaves()
-        return want.filter { w -> drawn.count { it == w } != 1 }.map { "leaf $w not exactly once" } + drawn.filter { it !in want }.map { "undeclared leaf $it" }
+        return want.filter { w -> drawn.count { it == w } != 1 }.map { "leaf $it not exactly once" } + drawn.filter { it !in want }.map { "undeclared leaf $it" }
     }
 
     /** Problems of [t] against the Home before #1909: every old tile (page id, label) is still a tile, a heading or a mode-tile's page. */
