@@ -49,7 +49,7 @@ check() {
   ok()  { echo "  PASS: $1"; }
   bad() { echo "  FAIL: $1"; fails=$((fails+1)); }
   local LAY="$R/$APPSREL/PhoneTaxonomyLayout.kt" SUG="$R/$STOREREL/StoreSuggest.kt" PAGE="$R/$STOREREL/StoreSearchPage.kt"
-  local SA="$R/$SAREL" ASSET="$R/$LIBREL/assets/appstore-install-sources.json" BJ="$R/aa_cloud-superapp/build.json"
+  local SA="$R/$SAREL" ASSET="$R/fleet-private-data/appstore-install-sources.json" BJ="$R/aa_cloud-superapp/build.json"
   for f in "$LAY" "$SUG" "$PAGE" "$SA" "$ASSET" "$BJ" "$R/ac_cloud-store/build.json"; do [ -f "$f" ] || { bad "missing ${f#$R/}"; return 99; }; done
   local work; work="$(mktemp -d)"
 
@@ -198,6 +198,7 @@ mutate() {  # <name> <file-rel> <from> <to>
   mkdir -p "$box/ab_cloud-libs-shared/libs" "$box/$(dirname "$SAREL")" "$box/aa_cloud-superapp" "$box/ac_cloud-store"
   cp -r "$ROOT/ab_cloud-libs-shared/libs/appstore" "$box/ab_cloud-libs-shared/libs/"
   rm -rf "$box/ab_cloud-libs-shared/libs/appstore/build"
+  mkdir -p "$box/fleet-private-data"; cp "$ROOT/fleet-private-data/appstore-install-sources.json" "$box/fleet-private-data/"   # #1566 fleet-private: CI materialises it
   cp "$ROOT/$SAREL" "$box/$SAREL"; cp "$ROOT/aa_cloud-superapp/build.json" "$box/aa_cloud-superapp/"; cp "$ROOT/ac_cloud-store/build.json" "$box/ac_cloud-store/"
   python3 - "$box/$rel" "$from" "$to" <<'PY' || { echo "  MUTATION NOT PLANTED: $name"; rm -rf "$box"; return 1; }
 import sys
@@ -217,8 +218,8 @@ mutate "the landing suggests search hits" $S/StoreSearchPage.kt 'for ((pkg, labe
 mutate "a shelf's row stops scrolling sideways" $S/StoreSearchPage.kt 'LazyRow(Modifier.fillMaxWidth().testTag(TAG_SHELF_ROW + shelf.folderId),' 'Column(Modifier.fillMaxWidth().testTag(TAG_SHELF_ROW + shelf.folderId),' || M=$((M+1))
 mutate "result rows stop using StoreRow" $S/StoreSearchPage.kt 'StoreRow.Card(Modifier.fillMaxWidth()' 'Column(Modifier.fillMaxWidth()' || M=$((M+1))
 mutate "Search opens its own connection" $S/StoreSearchPage.kt 'val body = SourceResolver.getBody(url) ?: return emptyList()' 'val body = java.net.URL(url).openConnection().getInputStream().reader().readText()' || M=$((M+1))
-mutate "a search source with no searcher" $LIBREL/assets/appstore-install-sources.json '"id": "github"' '"id": "gitlab"' || M=$((M+1))
-mutate "izzy loses its pin" $LIBREL/assets/appstore-install-sources.json '"cert_sha256": "3bf0d6ab' '"cert_sha256": "3bf0' || M=$((M+1))
+mutate "a search source with no searcher" fleet-private-data/appstore-install-sources.json '"id": "github"' '"id": "gitlab"' || M=$((M+1))
+mutate "izzy loses its pin" fleet-private-data/appstore-install-sources.json '"cert_sha256": "3bf0d6ab' '"cert_sha256": "3bf0' || M=$((M+1))
 if [ -n "$KC" ]; then
   mutate "empty sub-categories are shown" $S/StoreSuggest.kt 'val shown = folders.filter { !byFolder[it.id].isNullOrEmpty() }' 'val shown = folders.also { f -> f.forEach { byFolder.getOrPut(it.id) { mutableListOf() } } }' || M=$((M+1))
   mutate "unclaimed folders listed first" $A/PhoneTaxonomyLayout.kt 'return if (other.isEmpty()) out else out + Group(null, "", other.toList())' 'return if (other.isEmpty()) out else listOf(Group<F>(null, "", other.toList())) + out' || M=$((M+1))

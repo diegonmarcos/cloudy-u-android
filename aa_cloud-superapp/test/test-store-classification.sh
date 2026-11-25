@@ -157,7 +157,7 @@ if re.search(r"\bStoreStages\.(download|install|clear)\(", cloud) and "FleetInst
         and not re.search(r"\bFleet\.commit\(", stages):
     ok("StoreCloudFragment updates through StoreStages, whose Install is FleetInstall.install")
 else: bad("StoreCloudFragment's stages do not reach the installer through FleetInstall.install")
-assets = os.path.join(store_dir, "../../../../../assets/appstore-install-sources.json")
+assets = os.path.join(os.environ.get("FLEET_PRIVATE_DIR") or os.path.join(store_dir, "../" * 10 + "fleet-private-data"), "appstore-install-sources.json")   # #1566 fleet-private: CI materialises it
 src = json.loads(read(assets))
 keys = sorted(src["sources"])
 if not keys: bad("the install-source map declares no store")

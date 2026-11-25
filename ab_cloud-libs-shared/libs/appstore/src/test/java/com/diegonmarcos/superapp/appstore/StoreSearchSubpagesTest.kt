@@ -19,7 +19,7 @@ class StoreSearchSubpagesTest {
         assertEquals("search-cloudy", StoreSearchPage.pageOf(StoreSearchPage.FLEET))
         // #1749: the declared (non-fleet) list moved from Cloudy to Phone; Cloudy is the fleet alone.
         for (id in listOf(StoreSearchPage.DECLARED, "fdroid", "izzy", StoreSearchPage.GITHUB, StoreSearchPage.PLAY)) assertEquals(id, "search-android", StoreSearchPage.pageOf(id))
-        val map = JSONObject(File("src/main/assets/appstore-install-sources.json").readText())
+        val map = JSONObject(File(System.getenv("FLEET_PRIVATE_DIR") ?: "../../../fleet-private-data", "appstore-install-sources.json").readText())
         val ids = map.getJSONObject("search").getJSONArray("sources").let { a -> (0 until a.length()).map { a.getJSONObject(it).getString("id") } }
         assertEquals("Cloudy searches the fleet and nothing else", listOf(StoreSearchPage.FLEET), ids.filter { StoreSearchPage.pageOf(it) == "search-cloudy" })
     }
@@ -31,7 +31,7 @@ class StoreSearchSubpagesTest {
     }
 
     @Test fun everyDeclaredAndroidSourceOfTheInstallMapLandsOnAPageThatHasASearcher() {
-        val map = JSONObject(File("src/main/assets/appstore-install-sources.json").readText())
+        val map = JSONObject(File(System.getenv("FLEET_PRIVATE_DIR") ?: "../../../fleet-private-data", "appstore-install-sources.json").readText())
         val ids = map.getJSONObject("search").getJSONArray("sources").let { a -> (0 until a.length()).map { a.getJSONObject(it).getString("id") } }
         assertTrue("the install-source map declares search sources", ids.isNotEmpty())
         // Aurora's source (Google Play, anonymous) and F-Droid are Android; the fleet is Cloudy: both pages have something to search.

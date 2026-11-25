@@ -1,5 +1,6 @@
 package com.diegonmarcos.superapp.appstore
 
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
@@ -30,10 +31,20 @@ object PhoneAppActions {
      *  [disabledReason] non-null = drawn disabled, and tapping shows why. */
     class Action(val kind: Kind, val label: String, val intent: Intent?, val disabledReason: String?)
 
+    /**
+     * #1566 the one install-source map names stores, endpoints and pinned signing certs: a fleet-private tier-2 dataset (the last-known-good
+     * copy of Cloud Account's private route), never an APK asset. [SOURCES_ASSET] is only where the UNIT TESTS put the CI-materialised copy
+     * (test assets); an APK carries none, so a phone that has not been served yet answers null here.
+     */
+    const val DATASET = "fleet/appstore-install-sources"
     const val SOURCES_ASSET = "appstore-install-sources.json"
 
-    fun sources(ctx: Context): JSONObject =
-        ctx.assets.open(SOURCES_ASSET).use { JSONObject(it.readBytes().decodeToString()) }
+    fun sourcesOrNull(ctx: Context): JSONObject? =
+        runCatching { FleetData.get(ctx.applicationContext, DATASET) { JSONObject(it) } }.getOrNull()
+            ?: runCatching { ctx.assets.open(SOURCES_ASSET).use { JSONObject(it.readBytes().decodeToString()) } }.getOrNull()
+
+    /** The map, or an exception naming that it is not served yet (callers that cannot draw without it run this inside runCatching). */
+    fun sources(ctx: Context): JSONObject = sourcesOrNull(ctx) ?: error("$DATASET is not served yet")
 
     /** #571 the external-app ladders, from the SAME asset: one map, one file. */
     fun resolver(sources: JSONObject): SourceResolver.Config = SourceResolver.config(sources)

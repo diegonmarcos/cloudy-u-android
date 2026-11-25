@@ -4,6 +4,7 @@
     "bg-policy": "fleet-private-data/bg-policy.json",
     "super-saving": "fleet-private-data/super-saving.json",
     "apps-mcp-api": "fleet-private-data/apps-mcp-api.json",
-    "appstore-feeds": "fleet-private-data/appstore-feeds.json"
+    "appstore-feeds": "fleet-private-data/appstore-feeds.json",
+    "appstore-install-sources": "fleet-private-data/appstore-install-sources.json"
   }
 }

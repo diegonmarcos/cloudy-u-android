@@ -1043,6 +1043,8 @@ android {
         main { java.srcDir(gradle.ext.adbOwnerSide ? 'src/owner/java' : 'src/client/java') }
         // the suites of the owner-only code (the ADB Shell page, the broker allowlists, the keeper / plane hosts) live in src/owner/test
         test { if (gradle.ext.adbOwnerSide) java.srcDir('src/owner/test/java') }
+        // #1566 the fleet-private datasets CI materialises (fleet-private-data/): the unit tests read them as assets, an APK carries none
+        test { assets.srcDir("${projectDir}/../../fleet-private-data") }
     }
 
     // Stable signing — required for the in-app updater to install update APKs.

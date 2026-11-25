@@ -170,7 +170,7 @@ class SetupRunbook(private val ctx: Context) {
         val inv = workingProfile()?.optJSONObject("apps") ?: return null
         val wanted = AppInventory.parse(inv.toString())
         val installed = wanted.map { it.pkg }.filter { FleetSetup.installed(ctx, it) }.toSet()
-        return AppInventory.plan(wanted, installed, AppInventory.fleetPackages(), PhoneAppActions.sources(ctx))
+        return AppInventory.plan(wanted, installed, AppInventory.fleetPackages(), PhoneAppActions.sourcesOrNull(ctx) ?: return null)
     }
 
     private fun checkApps(): State {

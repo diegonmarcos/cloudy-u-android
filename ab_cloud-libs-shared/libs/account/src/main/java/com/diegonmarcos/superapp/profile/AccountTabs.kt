@@ -190,7 +190,7 @@ private fun DeclaredApps(bundle: org.json.JSONObject?, route: String, openStore:
     val p = LocalKitPalette.current
     val devices = bundle?.optJSONObject("apps")?.optJSONObject("devices")
     val fleet = com.diegonmarcos.superapp.appstore.AppInventory.fleetPackages()
-    val sources = remember { com.diegonmarcos.superapp.appstore.PhoneAppActions.sources(ctx) }
+    val sources = remember { com.diegonmarcos.superapp.appstore.PhoneAppActions.sourcesOrNull(ctx) }   // #1566 null = not served yet
     var listed = 0
     if (bundle != null) devices?.keys()?.forEach { id ->
         val apps = VaultCockpit.appsListed(bundle, id, fleet)
@@ -200,7 +200,7 @@ private fun DeclaredApps(bundle: org.json.JSONObject?, route: String, openStore:
         Text(ctx.getString(R.string.infos_apps_device, id, apps.size, here.count { it }), color = p.textPrimary)
         apps.forEachIndexed { i, a ->
             Text(ctx.getString(if (here[i]) R.string.infos_apps_row_installed else R.string.infos_apps_row_missing,
-                a.label, a.pkg, VaultCockpit.storeLabel(sources, a) ?: ctx.getString(R.string.infos_apps_no_store)),
+                a.label, a.pkg, sources?.let { VaultCockpit.storeLabel(it, a) } ?: ctx.getString(R.string.infos_apps_no_store)),
                 color = if (here[i]) p.accent else p.textSecondary, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
         }
         // #570 the declared set → the Store's import plan (StoreImport), the same path as a picked

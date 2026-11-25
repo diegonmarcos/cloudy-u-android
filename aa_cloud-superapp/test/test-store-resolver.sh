@@ -37,7 +37,7 @@ set -u
 APP="$(cd "$(dirname "$0")/.." && pwd)"
 ROOT="$(cd "$APP/.." && pwd)"
 LIB="$ROOT/ab_cloud-libs-shared/libs/appstore/src/main"
-MAP="$LIB/assets/appstore-install-sources.json"
+MAP="${FLEET_PRIVATE_DIR:-$ROOT/fleet-private-data}/appstore-install-sources.json"   # #1566 fleet-private: CI materialises it
 
 python3 - "$APP" "$LIB" "$MAP" <<'PY'
 import json, os, re, sys, glob, copy

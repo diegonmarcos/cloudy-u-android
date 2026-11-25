@@ -32,7 +32,7 @@ set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
 
-REL_MAP="ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-install-sources.json"
+REL_MAP="fleet-private-data/appstore-install-sources.json"
 REL_LIST="a0_tasks/upstream-apps-s21.json"
 REL_FETCH="ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/PlayAnonFetcher.kt"
 REL_KT1="ab_cloud-libs-shared/libs/appstore/src/main/java"

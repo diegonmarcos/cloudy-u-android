@@ -84,7 +84,7 @@ for needle, what in (("PhoneAppActions.installerOf(ctx, pkg)", "origin_store is 
     else: bad("AppInventory: " + what + " - missing " + needle)
 if "PhoneAppActions.sources(app)" in phone: ok("the import reads the map shipped in assets")
 else: bad("the import does not read PhoneAppActions.sources")
-src = json.loads(read(os.path.join(lib, "assets/appstore-install-sources.json")))
+src = json.loads(read(os.path.join(os.environ.get("FLEET_PRIVATE_DIR") or os.path.join(lib, "../../../../../fleet-private-data"), "appstore-install-sources.json")))   # #1566 fleet-private: CI materialises it
 installers = sorted(src["sources"])
 dup = ["%s: %s" % (f, k) for f, t in kt.items() for k in installers if '"%s"' % k in t]
 dup += [f for f, t in kt.items() if '"deeplink"' in t and f != "PhoneAppActions.kt"]

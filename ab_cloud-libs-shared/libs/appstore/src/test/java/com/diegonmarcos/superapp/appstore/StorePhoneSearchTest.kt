@@ -24,7 +24,7 @@ class StorePhoneSearchTest {
 
     // ── parity: nothing of the single Phone page was removed ───────────
     @Test fun everyPhoneSourceStillRunsOnSomeSubpageAndNoneIsInvented() {
-        val map = JSONObject(File(repoFile("ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-install-sources.json").path).readText())
+        val map = JSONObject(File(System.getenv("FLEET_PRIVATE_DIR") ?: "../../../fleet-private-data", "appstore-install-sources.json").readText())
         val arr = map.getJSONObject("search").getJSONArray("sources")
         val ids = (0 until arr.length()).map { arr.getJSONObject(it).getString("id") }.filter { StoreSearchPage.pageOf(it) == StoreSearchPage.PAGE_ANDROID }
         assertEquals(phoneSources.toSet(), ids.toSet())
