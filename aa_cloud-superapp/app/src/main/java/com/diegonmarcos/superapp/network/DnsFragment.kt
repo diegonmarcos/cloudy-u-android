@@ -59,6 +59,10 @@ import java.util.Date
  *     differ. When the engine that owns the VPN slot (Cloud-Lib-Net-Wg) has no
  *     VPN consent, one tap asks for it, raises the tunnel and checks again.
  *     Plus the last successful lookup and a Test lookup naming the upstream.
+ *     (#1899) Under it, the reachability test by IP ([DnsReach]): the declared
+ *     public sites reached at their fixed addresses with no name resolved, on
+ *     the normal path and on a socket bound outside the VPN, so a DNS failure
+ *     is told from a network failure.
  *  4. Bridges and 5. DNS servers (#794) — every fleet member's path to an
  *     answer with its terminal bridge, and every known server probed now;
  *     both rendered from [DnsOverview.collect], the body of
@@ -119,6 +123,8 @@ internal class DnsModel(
     var statusOk by mutableStateOf(true)
     var needsConsent by mutableStateOf(false)
     var results by mutableStateOf("${decl.testPublic} · ${decl.testMesh}")
+    var reach by mutableStateOf(DnsReach.planText(decl.reach))
+    var reachOk by mutableStateOf(true)
     var bridges by mutableStateOf("Scan to ask every app.")
     var servers by mutableStateOf("Scan to probe them.")
 
@@ -257,6 +263,21 @@ internal class DnsModel(
         }
     }
 
+    /** #1899 Every declared target by IP on both paths, held against Android's resolver answering the
+     *  test names (the mesh name only while the mesh is up: it cannot resolve without it). */
+    fun testReach() {
+        reach = "Connecting by IP…"
+        background({
+            runCatching {
+                val names = listOf(decl.testPublic) + (if (FleetDns.meshUp(ctx)) listOf(decl.testMesh) else emptyList())
+                DnsReach.run(ctx, decl.reach, names)
+            }
+        }) { r ->
+            r.fold({ reach = DnsReach.text(it); reachOk = it.verdict.ok },
+                   { e -> reach = "Reachability test failed: ${e.javaClass.simpleName}: ${e.message}"; reachOk = false })
+        }
+    }
+
     fun testLookup() {
         results = "Resolving…"
         background({
@@ -334,6 +355,11 @@ private fun DnsPage(m: DnsModel) {
             }
             ConfigButton("Test lookup") { m.testLookup() }
             ConfigReadout(m.results)
+            // #1899 the same question with no DNS in it: the declared sites by fixed IP, inside the VPN and direct
+            ConfigButton("Test reachability by IP") { m.testReach() }
+            ConfigCaption("No name is resolved: each site is reached at its fixed address (a TLS handshake checked against its certificate name, and a TCP connect), on the normal path every fleet app uses and on a socket bound outside the VPN. Reachable by IP while lookups fail means DNS is the only issue; unreachable by IP means the network or the VPN.")
+            ConfigReadout(m.reach, modifier = Modifier.testTag("dns:reach"),
+                plate = if (m.reachOk) Color(0x33000000) else Color(0x55DC2626))
 
             // ── 4. Bridges · 5. DNS servers ─────────────────────────────────
             ConfigHeader("Bridges")

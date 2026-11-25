@@ -31,6 +31,15 @@
 #       /api/sysdns/state (the terminals' SystemDnsBridge counters) and, for a
 #       bridge holder, its crash reports (#791). Every D7 rule is
 #       mutation-proved: each mutant is checked to have APPLIED, then to FAIL.
+#   D8  #1899 the reachability test by IP sits under Test lookup and nothing
+#       the page drew before it is gone: ui.dns.page_fields lists every
+#       earlier header, button, read-out and input as the source text that
+#       draws it, and each must still be in DnsFragment (field parity). The
+#       three sites are declared by address with the name their certificate is
+#       checked against, a TLS check on 443 and a TCP check on 53; DnsReach
+#       refuses a name as a target, verifies the certificate against the name,
+#       and runs each check on the normal path and on a socket bound outside
+#       the VPN. Mutation-proved the same way as D7.
 #
 # WHAT each preset puts on the VPN (Private-only has no fallback, split DNS for
 # mesh names, fail-loud without a fleet resolver) is asserted by
@@ -152,6 +161,7 @@ d = json.load(open(sys.argv[1]))['ui']['dns']
 addrs = {a for p in d['presets'] for k in ('servers', 'fallback') for a in p.get(k, [])}
 addrs |= {h for p in d['presets'] for h in p.get('tls_hostnames', [])}
 addrs |= set(d.get('android_private_dns', {}).get('hostname_suggestions', []))
+addrs |= {t[k] for t in d.get('reachability', {}).get('targets', []) for k in ('ip', 'tls_name')}  # 1899
 hits = []
 for f in pathlib.Path(sys.argv[2]).rglob('*.kt'):
     t = f.read_text(errors='replace')
@@ -336,6 +346,106 @@ txapi|s.replace('CloudDnsBridge.state()', 'null')
 nxapp|s.replace('if (dnsBridge != null) return dnsBridge.stateJson();', '')
 ut|s.replace('@Test fun onlyMissingConsentAsksForConsent()', 'fun onlyMissingConsentAsksForConsent()')
 bj|s.replace('"how": "plain DNS over UDP', '"why": "plain DNS over UDP')
+MUTANTS
+
+echo "== D8: #1899 reachability by IP under Test lookup, nothing removed =="
+REACH="$SRC/network/DnsReach.kt"
+RUT="$APP/app/src/test/java/com/diegonmarcos/superapp/network/DnsReachTest.kt"
+for f in "$REACH" "$RUT"; do
+  [ -f "$f" ] || { echo "ERROR: missing $f — a check over nothing passes" >&2; exit 2; }
+done
+# d8 role=path ...: exit 0 = every rule holds; 1 = a rule broke (each named on stdout).
+d8() {
+  python3 - "$@" <<'PY'
+import json, sys
+f = dict(a.split('=', 1) for a in sys.argv[1:])
+def code(role):
+    out = []
+    for l in open(f[role], encoding='utf-8'):
+        t = l.strip()
+        if t.startswith(('//', '*', '/*')): continue
+        out.append(l)
+    return ''.join(out)
+frag, reach, ut, dns = code('frag'), code('reach'), code('rut'), code('dns')
+d = json.load(open(f['bj']))['ui']['dns']
+pr = []
+# field parity: everything the page drew before the new section
+fields = d.get('page_fields') or []
+if len(fields) < 22: pr.append('bj: ui.dns.page_fields lists %d fields, the page had 22 before the reachability test' % len(fields))
+for x in fields:
+    if x not in frag: pr.append('frag: a field the page had is gone: %s' % x)
+for x in ('ConfigHeader("Android Private DNS")', 'ConfigHeader("Fleet DNS")', 'ConfigHeader("Status")', 'ConfigHeader("Bridges")', 'ConfigHeader("DNS servers")',
+          'ConfigButton("Test lookup") { m.testLookup() }', 'ConfigReadout(m.results)', 'ConfigButton("Scan bridges and servers") { m.scan() }'):
+    if x not in fields: pr.append('bj: ui.dns.page_fields no longer guards %s' % x)
+# the new section: after Test lookup's read-out, before Bridges
+order = ['ConfigButton("Test lookup") { m.testLookup() }', 'ConfigReadout(m.results)', 'ConfigButton("Test reachability by IP") { m.testReach() }',
+         'ConfigReadout(m.reach, modifier = Modifier.testTag("dns:reach")', 'ConfigHeader("Bridges")']
+at = [frag.find(x) for x in order]
+if -1 in at: pr.append('frag: the reachability section is incomplete: %s' % [x for x, i in zip(order, at) if i < 0])
+elif at != sorted(at): pr.append('frag: the reachability test is not between Test lookup and Bridges')
+for text, why in (('DnsReach.run(ctx, decl.reach, names)', 'the page no longer runs the declared targets'),
+                  ('reachOk = it.verdict.ok', 'the verdict no longer reaches the read-out plate'),
+                  ('plate = if (m.reachOk) Color(0x33000000) else Color(0x55DC2626)', 'a failing verdict is no longer red')):
+    if text not in frag: pr.append('frag: ' + why)
+if 'reach = DnsReach.parse(o.optJSONObject("reachability"))' not in dns: pr.append('dns: the targets are not read from ui.dns.reachability')
+# the declaration: the three sites by address, with the certificate name; TLS on 443 and TCP on 53
+r = d.get('reachability') or {}
+got = sorted((t.get('ip'), t.get('tls_name')) for t in r.get('targets', []))
+want = sorted([('1.1.1.1', 'one.one.one.one'), ('8.8.8.8', 'dns.google'), ('9.9.9.9', 'dns.quad9.net')])
+if got != want: pr.append('bj: ui.dns.reachability.targets = %r' % got)
+checks = sorted((c.get('port'), bool(c.get('tls'))) for c in r.get('checks', []))
+if checks != [(53, False), (443, True)]: pr.append('bj: ui.dns.reachability.checks = %r, not TLS on 443 and TCP on 53' % checks)
+if not 500 <= int(r.get('connect_timeout_ms', 0)) <= 15000: pr.append('bj: connect_timeout_ms is missing or out of range')
+# the engine
+for text, why in (('require(isIpLiteral(t.ip))', 'a name is accepted as a target (it would need DNS)'),
+                  ('require(isIpLiteral(target.ip))', 'a check may look a name up'),
+                  ('p.serverNames = listOf(SNIHostName(name))', 'the SNI is not the declared name'),
+                  ('p.endpointIdentificationAlgorithm = "HTTPS"', 'the handshake no longer identifies the endpoint'),
+                  ('if (!HttpsURLConnection.getDefaultHostnameVerifier().verify(name, it.session))', 'the certificate is not checked against the declared name'),
+                  ('probe(t, c, PATH_VPN, d.timeoutMs, nets, null)', 'the normal-path run is gone'),
+                  ('probe(t, c, PATH_DIRECT, d.timeoutMs, nets) { s -> n.bindSocket(s) }', 'the direct run is not bound outside the VPN'),
+                  ('!c.hasTransport(NetworkCapabilities.TRANSPORT_VPN) && c.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)', 'the direct network may be the VPN'),
+                  ('local = s.localAddress?.hostAddress', 'the carrying path is no longer read from the connected socket'),
+                  ('InetAddress.getAllByName(name)', 'the names are not asked of Android\'s resolver')):
+    if text not in reach: pr.append('reach: ' + why)
+for t in ('theShippedDeclarationNamesTheThreeSitesByIpWithATlsNameEach', 'theTargetsAreReadFromTheDeclarationInOrder', 'aTargetThatIsANameIsRefusedBecauseItWouldNeedDns',
+          'theVerdictCoversEveryCombinationOfIpReachabilityAndNameLookups', 'thePathComparisonCoversEveryCombinationOfTheTwoPaths',
+          'theVerdictOfARunIsTheNormalPathHeldAgainstTheNames', 'aCheckConnectsByAddressAndATlsCheckIsNotMetByABareTcpAccept', 'aNameIsNeverLookedUpByACheck',
+          'theReadOutShowsVerdictPathsNamesAndEveryRowWithItsFourFields'):
+    if '@Test fun %s()' % t not in ut: pr.append('rut: DnsReachTest.%s is gone' % t)
+print('\n'.join(pr))
+sys.exit(1 if pr else 0)
+PY
+}
+R8=(frag="$FRAG" reach="$REACH" rut="$RUT" dns="$DNS" bj="$BJ")
+if out="$(d8 "${R8[@]}")"; then
+  ok "#1899 every earlier field of the page is still drawn, the reachability test sits between Test lookup and Bridges, three sites by address, TLS 443 + TCP 53, both paths, tests"
+else
+  bad "#1899:"; printf '%s\n' "$out" | sed 's/^/      /'
+fi
+while IFS='|' read -r role expr; do
+  [ -n "$role" ] || continue
+  src=""; for r in "${R8[@]}"; do [ "${r%%=*}" = "$role" ] && src="${r#*=}"; done
+  mut="$TMP/d8.$role.$RANDOM"
+  python3 -c "import sys; s=open(sys.argv[1], encoding='utf-8').read(); open(sys.argv[2], 'w', encoding='utf-8').write($expr)" "$src" "$mut"
+  if cmp -s "$src" "$mut"; then bad "D8-mutation did not apply — $role: ${expr:0:80}"; continue; fi
+  args=(); for r in "${R8[@]}"; do [ "${r%%=*}" = "$role" ] && args+=("$role=$mut") || args+=("$r"); done
+  if d8 "${args[@]}" >/dev/null; then bad "D8-mutation NOT caught — $role: ${expr:0:80}"; else ok "D8-mutation caught — $role: ${expr:0:70}"; fi
+done <<'MUTANTS'
+frag|s.replace('            ConfigReadout(m.results)\n', '')
+frag|s.replace('            ConfigHeader("DNS servers")\n', '')
+frag|s.replace('ConfigButton("Apply to Android") { m.applyAndroid() }', '')
+frag|s.replace('            ConfigReadout(m.bridges)\n', '')
+frag|s.replace('ConfigButton("Test reachability by IP") { m.testReach() }', '')
+frag|s.replace('reachOk = it.verdict.ok', 'reachOk = true')
+bj|s.replace('        "ConfigReadout(m.servers)",\n', '')
+bj|s.replace('"ip": "9.9.9.9"', '"ip": "dns.quad9.net"')
+bj|s.replace('{ "id": "tcp53", "label": "TCP", "port": 53, "tls": false }', '{ "id": "tcp53", "label": "TCP", "port": 80, "tls": false }')
+reach|s.replace('if (!HttpsURLConnection.getDefaultHostnameVerifier().verify(name, it.session))', 'if (false)')
+reach|s.replace('{ s -> n.bindSocket(s) }', '{ }')
+reach|s.replace('require(isIpLiteral(t.ip))', 'require(true)')
+rut|s.replace('@Test fun theVerdictCoversEveryCombinationOfIpReachabilityAndNameLookups()', 'fun theVerdictCoversEveryCombinationOfIpReachabilityAndNameLookups()')
+dns|s.replace('reach = DnsReach.parse(o.optJSONObject("reachability")),', '')
 MUTANTS
 
 echo "== RESULT(#740/#751 fleet dns): $PASS passed, $FAIL failed =="

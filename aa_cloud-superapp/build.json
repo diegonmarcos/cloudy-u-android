@@ -8618,6 +8618,44 @@
       "mesh_zones": ["app", "db", "diegonmarcos.com"],
       "test_names": { "public": "github.com", "mesh": "maddy.mesh.diegonmarcos.com" },
       "lookup_timeout_ms": 2500,
+      "_doc_reachability": "#1899 The DNS page's reachability test BY IP, under Test lookup: it never resolves a name, so it tells a DNS failure from a network failure. Every `targets` entry is a well-known public site reached at its fixed address `ip` (an IP literal: network/DnsReach.kt refuses a name here, because a name would need the very resolver under test); `tls_name` is the SNI sent and the name the certificate is checked against. Every `checks` entry is run against every target: `tls: true` is a TCP connect followed by a TLS handshake with certificate and hostname verification, `tls: false` is the TCP connect alone (port 53 is opened, no DNS query is sent, so this is not a resolver of the app's own). Each check runs twice: on the normal socket path every fleet app uses (inside the VPN while one is up) and on a socket bound to the non-VPN network (the same bind FleetDnsBridge uses for its underlying routes; VpnService.protect is not available here because the engine app Cloud-Lib-Net-Wg owns the VPN, not this process). `connect_timeout_ms` bounds the connect and the handshake of one check. The verdict (DnsReach.verdict) holds the normal path's result against Android's resolver answering `test_names`: IPs reachable and lookups failing = DNS is the only issue; IPs unreachable = network/VPN issue, not DNS; mixed = partial. No address or name of this block is a Kotlin literal (test-fleet-dns.sh D4, D8).",
+      "reachability": {
+        "connect_timeout_ms": 4000,
+        "checks": [
+          { "id": "tls", "label": "TLS", "port": 443, "tls": true },
+          { "id": "tcp53", "label": "TCP", "port": 53, "tls": false }
+        ],
+        "targets": [
+          { "id": "cloudflare", "label": "Cloudflare", "ip": "1.1.1.1", "tls_name": "one.one.one.one" },
+          { "id": "google", "label": "Google", "ip": "8.8.8.8", "tls_name": "dns.google" },
+          { "id": "quad9", "label": "Quad9", "ip": "9.9.9.9", "tls_name": "dns.quad9.net" }
+        ]
+      },
+      "_doc_page_fields": "#1899 FIELD PARITY of the DNS page (owner rule 16): every header, button, read-out and input network/DnsFragment.kt drew before the reachability test was added, as the exact source text that draws it. test-fleet-dns.sh D8 fails when one of them is gone from the page (mutation-proved), and holds the new section between Test lookup and Bridges. A field removed on purpose is removed here in the same commit, with the reason in the commit message.",
+      "page_fields": [
+        "ConfigHeader(\"Android Private DNS\")",
+        "ConfigCaption(m.androidText)",
+        "ConfigRadioRow(label, selected = m.androidMode == modeId, tag = modeId)",
+        "Modifier.testTag(\"dns:host\")",
+        "ConfigButton(\"Apply to Android\")",
+        "ConfigHeader(\"Fleet DNS\")",
+        "ConfigCaption(\"Applied once, at the VPN every fleet app resolves through",
+        "selected = p.id == m.presetId, enabled = p.available, tag = p.id,",
+        "ConfigCaption(\"Fallbacks, in the order you tick them: \"",
+        "enabled = f.available, tag = fid) { on -> m.toggleFallback(fid, on) }",
+        "ConfigHeader(\"Status\")",
+        "ConfigReadout(m.statusText,",
+        "ConfigButton(\"Allow the VPN for ",
+        "ConfigButton(\"Test lookup\") { m.testLookup() }",
+        "ConfigReadout(m.results)",
+        "ConfigHeader(\"Bridges\")",
+        "ConfigCaption(\"How each fleet app resolves, as that app reports it",
+        "ConfigReadout(m.bridges)",
+        "ConfigHeader(\"DNS servers\")",
+        "ConfigCaption(\"Every server the presets, the mesh and Android name",
+        "ConfigReadout(m.servers)",
+        "ConfigButton(\"Scan bridges and servers\") { m.scan() }"
+      ],
       "_doc_self_resolvers": "#794 Fleet code that talks DNS ITSELF instead of asking Android's resolver, so the preset in force does not decide where those lookups go. Each entry is inside a tree 1_cicd/src/data/dns-resolver-guard.json allows (that guard fails the build on any other), and the DNS page's Bridges list flags the app `pkg` names with `what` and `how`. Everything else in the fleet resolves through Android: Kotlin/Java code directly, terminal shells through their 127.0.0.1 SystemDnsBridge, bundled binaries through libs:sysdns ResolverProxy.",
       "self_resolvers": [
         {

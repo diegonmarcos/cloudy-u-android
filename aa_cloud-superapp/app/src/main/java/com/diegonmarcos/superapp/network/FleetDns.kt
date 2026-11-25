@@ -78,6 +78,8 @@ object FleetDns {
         val privatePresetsRequire: String = "",
         val presets: List<Preset>,
         val selfResolvers: List<SelfResolver> = emptyList(),
+        /** #1899 the reachability test by IP (ui.dns.reachability): its targets, checks and timeout. */
+        val reach: DnsReach.Decl = DnsReach.Decl(),
     ) {
         fun preset(id: String?): Preset? = presets.firstOrNull { it.id == id }
         fun modeLabel(mode: String?): String = androidModes.firstOrNull { it.first == mode }?.second ?: (mode ?: "unset")
@@ -135,6 +137,7 @@ object FleetDns {
             selfResolvers = (0 until sr.length()).map {
                 val r = sr.getJSONObject(it); SelfResolver(r.getString("pkg"), r.getString("what"), r.getString("how"))
             },
+            reach = DnsReach.parse(o.optJSONObject("reachability")),
         )
     }
 
