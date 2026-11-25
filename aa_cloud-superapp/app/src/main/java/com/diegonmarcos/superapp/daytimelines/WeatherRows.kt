@@ -26,10 +26,20 @@ object WeatherRows {
         Triple("temp", "Temp: min / max", "Feels like: min / max"),
         Triple("humid_wind", "Humidity: min / max", "Wind: min / max"),
         Triple("precip_uv", "Precipitation: probability / amount", "UV index"),
-        Triple("pressure_dew", "Pressure: min / max", "Dew point: min / max"),
+        Triple("pressure_dew", "Pressure: min / max", "Dew point: min~max (comfort)"),
         Triple("phase_zodiac", "Moon phase", "Sun zodiac / Moon zodiac"),
         Triple("update_place", "Last update: time", "Location"),
     )
+
+    /** #1922 dew point comfort bands: (lower bound in C, inclusive; label), ascending and contiguous. The category comes from the day's MAX dew point. */
+    val DEW_BANDS: List<Pair<Double, String>> = listOf(
+        Double.NEGATIVE_INFINITY to "Dry and crisp",
+        10.0 to "Comfortable",
+        16.0 to "Noticeably humid",
+        21.0 to "Muggy and oppressive",
+    )
+
+    fun dewCategory(maxDewC: Double): String = DEW_BANDS.last { maxDewC >= it.first }.second
 
     private val HHMM = DateTimeFormatter.ofPattern("HH:mm", Locale.US)
 
@@ -81,7 +91,7 @@ object WeatherRows {
             "precip_uv" to Pair(pair(n(prob.maxOrNull())?.plus("%"), n(mm.takeIf { it.isNotEmpty() }?.sum(), "%.1f")?.plus(" mm")),
                 n(uv.maxOrNull(), "%.1f") ?: EM),
             "pressure_dew" to Pair(pair(n(press.minOrNull())?.plus(" hPa"), n(press.maxOrNull())?.plus(" hPa")),
-                pair(n(dew.minOrNull())?.plus("°"), n(dew.maxOrNull())?.plus("°"))),
+                dew.takeIf { it.isNotEmpty() }?.let { "${n(it.min())}°~${n(it.max())}° (${dewCategory(it.max())})" } ?: EM),
             "phase_zodiac" to Pair(moon?.phase?.let { "${it.name} ${(it.illumination * 100).roundToInt()}%" } ?: EM,
                 pair(sunSign?.let { "${it.glyph} ${it.name}" }, moon?.sign?.let { "${it.glyph} ${it.name}" })),
             "update_place" to Pair(if (snap == null || ageMs == null) EM else hm(snap.nowMs - ageMs) ?: EM,

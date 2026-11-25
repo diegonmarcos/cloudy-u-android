@@ -48,7 +48,7 @@ class WeatherRowsTest : KitPageHarness() {
             "Temp: min / max" to "Feels like: min / max",
             "Humidity: min / max" to "Wind: min / max",
             "Precipitation: probability / amount" to "UV index",
-            "Pressure: min / max" to "Dew point: min / max",
+            "Pressure: min / max" to "Dew point: min~max (comfort)",
             "Moon phase" to "Sun zodiac / Moon zodiac",
             "Last update: time" to "Location",
         )
@@ -73,11 +73,16 @@ class WeatherRowsTest : KitPageHarness() {
         assertEquals("1000 hPa / 1023 hPa", r.getValue("pressure_dew").left.value)
         // Magnus-Tetens per hour from 10..33 C and 40..63 % rh, then today's min / max
         val dews = full.map { WeatherRows.dewPoint(it.tempC, it.humidityPct)!! }
-        assertEquals("${Math.round(dews.min())}° / ${Math.round(dews.max())}°", r.getValue("pressure_dew").right.value)
+        assertEquals("${Math.round(dews.min())}°~${Math.round(dews.max())}° (${WeatherRows.dewCategory(dews.max())})", r.getValue("pressure_dew").right.value)
         val given = WeatherRows.rows(snap(full.mapIndexed { i, h -> h.copy(dewC = if (i == 0) -3.4 else 5.0) })).associateBy { it.id }
-        assertEquals("-3° / 5°", given.getValue("pressure_dew").right.value) // dew_point_temperature wins over Magnus
-        assertEquals("— / —", WeatherRows.rows(snap(full.map { it.copy(humidityPct = null) })).first { it.id == "pressure_dew" }.right.value)
+        assertEquals("-3°~5° (Dry and crisp)", given.getValue("pressure_dew").right.value) // dew_point_temperature wins over Magnus
+        assertEquals("—", WeatherRows.rows(snap(full.map { it.copy(humidityPct = null) })).first { it.id == "pressure_dew" }.right.value)
         assertEquals("— / —", WeatherRows.rows(snap(full.map { it.copy(pressureHpa = null) })).first { it.id == "pressure_dew" }.left.value)
+        for ((v, c) in listOf(9.9 to "Dry and crisp", 10.0 to "Comfortable", 15.9 to "Comfortable", 16.0 to "Noticeably humid",
+            20.9 to "Noticeably humid", 21.0 to "Muggy and oppressive", -4.3 to "Dry and crisp", 15.0 to "Comfortable"))
+            assertEquals(v.toString(), c, WeatherRows.dewCategory(v))
+        val owner = WeatherRows.rows(snap(full.mapIndexed { i, h -> h.copy(dewC = if (i == 0) 12.0 else 15.0) })).first { it.id == "pressure_dew" }
+        assertEquals("12°~15° (Comfortable)", owner.right.value)
         assertEquals(-4.3, WeatherRows.dewPoint(0.0, 73.0)!!, 0.1) // Berlin, the owner's worked example
         assertEquals(20.0, WeatherRows.dewPoint(20.0, 100.0)!!, 1e-9)
         assertEquals(null, WeatherRows.dewPoint(22.0, null))
