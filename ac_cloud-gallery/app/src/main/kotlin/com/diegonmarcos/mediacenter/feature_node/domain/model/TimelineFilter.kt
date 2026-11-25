@@ -114,9 +114,9 @@ fun bucketOf(relativePath: String): String = relativePath.trim('/').substringAft
 
 /** Select All / Unselect All of the folder list: selecting every listed folder, or none (no folder restriction). */
 object FolderSelection {
-    fun selectAll(available: Collection<String>): Set<String> = available.toSet()
+    fun selectAll(available: List<String>): Set<String> = available.toSet()
     fun unselectAll(): Set<String> = emptySet()
-    fun isAllSelected(selected: Set<String>, available: Collection<String>): Boolean =
+    fun isAllSelected(selected: Set<String>, available: List<String>): Boolean =
         available.isNotEmpty() && available.all { a -> selected.any { it.equals(a, ignoreCase = true) } }
 }
 

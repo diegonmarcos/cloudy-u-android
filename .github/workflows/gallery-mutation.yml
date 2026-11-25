@@ -24,7 +24,7 @@ jobs:
           case "${{ matrix.name }}" in
             source-app-media)      sed -i 's/it == "data" || it == "media"/it == "data"/' $M/feature_node/domain/model/StorageSource.kt ;;
             source-primary-volume) sed -i 's/private const val PRIMARY_VOLUME = "external_primary"/private const val PRIMARY_VOLUME = "none"/' $M/feature_node/domain/model/StorageSource.kt ;;
-            select-all)            sed -i 's/fun selectAll(available: Collection<String>): Set<String> = available.toSet()/fun selectAll(available: Collection<String>): Set<String> = emptySet()/' $M/feature_node/domain/model/TimelineFilter.kt ;;
+            select-all)            sed -i 's/fun selectAll(available: List<String>): Set<String> = available.toSet()/fun selectAll(available: List<String>): Set<String> = emptySet()/' $M/feature_node/domain/model/TimelineFilter.kt ;;
             alias-route)           sed -i 's/"timeline_screen" to Screen.TimelineScreen.route/"timeline_screen_x" to Screen.TimelineScreen.route/' $M/shell/GalleryTabs.kt ;;
             group-order)           sed -i 's/MediaKind.entries.mapNotNull/MediaKind.entries.reversed().mapNotNull/' $M/feature_node/domain/model/MediaKind.kt ;;
             group-count)           sed -i 's/"${kind.label} (${items.size})"/"${kind.label} (${items.size + 1})"/' $M/feature_node/domain/model/MediaKind.kt ;;
