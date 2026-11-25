@@ -4,6 +4,10 @@ import android.content.Context
 import android.net.Uri
 import com.diegonmarcos.superapp.ai.AiKgTab
 import com.diegonmarcos.superapp.ai.AiMcpBucket
+import com.diegonmarcos.superapp.fleetdata.FleetData
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import org.json.JSONObject
 
 /** One dense row and one titled group of them, as the derived assets (ai/mcp.json, dotfiles.json, plugins.json) declare them. */
@@ -21,13 +25,16 @@ data class AiPageSpec(val kind: String, val asset: String, val sources: List<AiS
 
 /** The AIs and Cost pages are data: Kotlin names no page, group, row or label (#1499). */
 object AiData {
-    const val PAGES = "ai/pages.json"
+    /** #1562 the page declaration and the two derived row assets are served datasets of Cloud Store (own = true), never APK assets. */
+    const val PAGES = "pages"
+    private val SERVED = mapOf("ai/mcp.json" to "mcp", "ai/plugins.json" to "plugins")
     const val KIND_ROWS = "rows"
     const val KIND_APIS = "apis"
     const val KIND_COST = "cost"
     const val KIND_KG = "kg"
 
     fun pages(text: String): Map<String, AiPageSpec> {
+        if (text.isBlank()) return emptyMap()
         val o = JSONObject(text).getJSONObject("pages")
         return o.keys().asSequence().associateWith { k -> o.getJSONObject(k).let { AiPageSpec(it.getString("kind"), it.optString("asset"), sources(it)) } }
     }
@@ -42,6 +49,7 @@ object AiData {
 
     /** The groups of an asset, only those whose title fully matches one of [only] (empty = all), in the asset's order. */
     fun groups(text: String, only: List<String> = emptyList()): List<AiGroup> {
+        if (text.isBlank()) return emptyList()   // not served yet: an empty page, never a crash
         val a = JSONObject(text).getJSONArray("groups")
         val keep = only.map { Regex(it) }
         return (0 until a.length()).map { a.getJSONObject(it) }.filter { g -> keep.isEmpty() || keep.any { it.matches(g.getString("title")) } }.map { g ->
@@ -59,7 +67,16 @@ object AiData {
         buckets.map { b -> AiGroup(b.label, b.known.map { AiRow(it, "known server of the " + b.label + " picker", "") }) } +
             AiGroup("KG-Store sources (not servers)", tabs.flatMap { t -> t.items.filter { it.kind != "mcp" }.map { AiRow(it.label, t.label + " · " + it.detail, it.kind) } })
 
-    fun asset(ctx: Context, name: String): String = ctx.assets.open(name).bufferedReader().use { it.readText() }
+    /** An APK asset (apis, cost, dotfiles), or the served dataset of a moved one ("" until Cloud Store serves it). */
+    fun asset(ctx: Context, name: String): String =
+        SERVED[name]?.let { FleetData.get(ctx, it, own = true) { t -> t } ?: "" } ?: ctx.assets.open(name).bufferedReader().use { it.readText() }
+
+    /** The served page declaration now (empty while loading), and again whenever Cloud Store syncs it. */
+    fun readPages(ctx: Context): Map<String, AiPageSpec> = FleetData.get(ctx, PAGES, own = true) { pages(it) } ?: emptyMap()
+    fun observePages(ctx: Context): Flow<Map<String, AiPageSpec>?> = FleetData.observe(ctx, PAGES, own = true) { runCatching { pages(it) }.getOrNull() }
+
+    /** Fires whenever one of the served row datasets (mcp, plugins) changes, so a rows page redraws. */
+    fun observeRows(ctx: Context): Flow<Unit> = merge(*SERVED.values.map { ds -> FleetData.observe(ctx, ds, own = true) { it }.map { } }.toTypedArray())
 }
 
 /**

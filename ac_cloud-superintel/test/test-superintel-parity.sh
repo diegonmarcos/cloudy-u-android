@@ -29,12 +29,13 @@ def code(p):
     return "\n".join(re.sub(r"(?<![:\"])//.*$", "", l) for l in t.splitlines())
 bj = json.loads(read(os.path.join(app, "build.json")))
 ai = os.path.join(app, "app/src/main/assets/ai")
+fl = os.path.join(app, "../data/fleet/app/com.diegonmarcos.cloudsuperintel")   # #1562 pages, mcp and plugins are served datasets
 kt = os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudsuperintel")
 lib = os.path.join(app, "..", "ab_cloud-libs-shared", "libs", "ai", "src", "main")
 sections = {s["id"]: s for s in bj["ui"]["sections"]}
 def pages(sec): return [p["id"] for p in sections.get(sec, {"pages": []})["pages"]]
 def labels(sec): return [p["label"] for p in sections.get(sec, {"pages": []})["pages"]]
-pj = json.loads(read(os.path.join(ai, "pages.json")))["pages"]
+pj = json.loads(read(os.path.join(fl, "pages.json")))["pages"]
 
 # P1 old page -> new place (the section and page id that now hold it, and the label it carries)
 OLD_TO_NEW = {
@@ -59,7 +60,7 @@ dot_pages = [k for k, v in pj.items() if v["kind"] == "rows" and any(s["asset"] 
 if sorted(dot_pages) != ["hooks", "plugins", "skills"]: bad.append("P1 the former Dotfiles groups must be split over Plugins, Hooks and Skills, got %s" % sorted(dot_pages))
 
 # P2 every group of the derived assets is on exactly one page
-def groups(asset): return [g for g in json.loads(read(os.path.join(ai, asset)))["groups"]]
+def groups(asset): return [g for g in json.loads(read(os.path.join(fl if asset in ("mcp.json", "plugins.json") else ai, asset)))["groups"]]
 shown = {}
 for key, v in pj.items():
     if v["kind"] != "rows": continue
@@ -138,7 +139,7 @@ if "tabExtra?.invoke(tab" not in lp: bad.append("P5 the catalogue does not draw 
 
 # P6 MCP-KG = the composer's KG homes, read from the shared design (no baked copy), so the page and the chips cannot drift
 if pj.get("mcp_kg") != {"kind": "kg"}: bad.append("P6 MCP-KG must be the kg page (the composer's KG homes)")
-if os.path.exists(os.path.join(ai, "mcp-kg.json")): bad.append("P6 mcp-kg.json is a baked copy of the design: the page reads libs:ai's design")
+if os.path.exists(os.path.join(ai, "mcp-kg.json")) or os.path.exists(os.path.join(fl, "mcp-kg.json")): bad.append("P6 mcp-kg.json is a baked copy of the design: the page reads libs:ai's design")
 for need in ("fun kgGroups(buckets: List<AiMcpBucket>, tabs: List<AiKgTab>)", "b.known.map", "it.kind != \"mcp\""):
     if need not in aidata: bad.append("P6 AiData.kgGroups lost %s" % need)
 if "AiData.kgGroups(it.mcpBuckets, it.kgStoreTabs)" not in screens: bad.append("P6 the kg page does not read the composer's buckets and KG-Store tabs")
@@ -167,9 +168,10 @@ mutant() {   # mutant <name> <shell edit run in the copy> <needle expected in th
 }
 KT=app/src/main/java/com/diegonmarcos/cloudsuperintel
 AI=app/src/main/assets/ai
+FL=../data/fleet/app/com.diegonmarcos.cloudsuperintel
 LIB=../ab_cloud-libs-shared/libs/ai/src/main
 PYJ="import json;p='build.json';d=json.load(open(p));"
-PYP="import json;p='$AI/pages.json';d=json.load(open(p));"
+PYP="import json;p='$FL/pages.json';d=json.load(open(p));"
 mutant "Cost returns to the bar"     "python3 -c \"${PYJ}d['ui']['bottom_nav'].append('cost');d['ui']['sections'].append({'id':'cost','label':'Cost','icon':'payments','pages':[]});json.dump(d,open(p,'w'))\"" "P1 Cost must leave the bottom nav"
 mutant "MCP stays in Models"         "python3 -c \"${PYJ}[s['pages'].append({'id':'tools_mcp','label':'MCP','icon':'hub','pages':[]}) for s in d['ui']['sections'] if s['id']=='models'];json.dump(d,open(p,'w'))\"" "P1 the MCP page must have left Models"
 mutant "API page is lost"            "python3 -c \"${PYJ}[s['pages'].pop() for s in d['ui']['sections'] if s['id']=='models'];json.dump(d,open(p,'w'))\"" "P1 old page apis has no home"

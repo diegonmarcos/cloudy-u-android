@@ -41,8 +41,8 @@ manifest = read(os.path.join(app, "app/src/main/AndroidManifest.xml"))
 
 # B1
 declared_sections = {s["id"] for s in bj["ui"]["sections"]}
-DATA_SECTIONS = ("si", "cgcs", "context")   # their pages are the ids of the served personas.json and assets/ai/pages.json (test-superintel-ais.sh), not Kotlin constants
-data_pages = set(json.loads(read(os.path.join(app, "app/src/main/assets/ai/pages.json")))["pages"])   # the API page (Models) is data too
+DATA_SECTIONS = ("si", "cgcs", "context")   # their pages are the ids of the served personas.json and the served pages.json (test-superintel-ais.sh), not Kotlin constants
+data_pages = set(json.loads(read(os.path.join(app, "../data/fleet/app/com.diegonmarcos.cloudsuperintel/pages.json")))["pages"])   # the API page (Models) is data too
 declared_pages = {p["id"] for s in bj["ui"]["sections"] if s["id"] not in DATA_SECTIONS for p in s["pages"] if p["id"] not in data_pages}
 named_sections = set(re.findall(r'SECTION_\w+\s*=\s*"([^"]+)"', decl))
 named_pages = set(re.findall(r'PAGE_\w+\s*=\s*"([^"]+)"', decl))

@@ -124,7 +124,8 @@ fun SiShell() {
     val notebooks = remember { NotebookModel(ctx) }
     LaunchedEffect(notebooks) { NotebookConfig.observe(ctx).collect { if (it != null) notebooks.cfg = it } }
     val nav = Decl.nav
-    val aiPages = remember { AiData.pages(AiData.asset(ctx, AiData.PAGES)) }
+    // #1562 the page declaration is a served dataset: no Context page until it is served (never a crash), then it appears.
+    val aiPages by produceState(AiData.readPages(ctx), ctx) { AiData.observePages(ctx).collect { if (it != null) value = it } }
     var section by rememberSaveable { mutableStateOf(nav.default()?.id ?: Decl.SECTION_SI) }
     var page by rememberSaveable { mutableStateOf<String?>(null) }
     // #1630 Settings (the app's Configs) ends with the fleet-default tail: {own tabs} | Agents, Perms, Logcat, X-Ray App, About.

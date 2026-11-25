@@ -101,3 +101,31 @@ class AiPagesTest {
         assertTrue("c3-infra" in g.getValue("Enabled plugins (SOT)"))
     }
 }
+
+/** #1562 pages, mcp and plugins are served datasets of Cloud Store: no APK asset, read through FleetData, listed in the manifest, schemaVersion set. */
+class AiServedDatasetsTest {
+    private val names = listOf("pages", "mcp", "plugins")
+    private fun read(p: String) = java.io.File(p).readText()
+
+    @Test fun noAssetIsLeftInTheApk() = names.forEach {
+        assertTrue("$it.json is still an APK asset", !java.io.File("src/main/assets/ai/$it.json").exists())
+    }
+
+    @Test fun theServedFilesParseAndCarryASchemaVersion() = names.forEach {
+        assertEquals(1, org.json.JSONObject(Data.ai("$it.json")).getInt("schemaVersion"))
+    }
+
+    @Test fun theManifestListsThem() {
+        val listed = org.json.JSONObject(read("../../data/fleet/manifest.json")).getJSONObject("apps").getJSONArray("com.diegonmarcos.cloudsuperintel")
+        val ids = (0 until listed.length()).map { listed.getString(it) }
+        names.forEach { assertTrue("$it is not in the manifest", it in ids) }
+    }
+
+    @Test fun theReaderIsTheServedOneAndNotServedIsEmpty() {
+        val src = read("src/main/java/com/diegonmarcos/cloudsuperintel/AiData.kt")
+        assertTrue(src.contains("FleetData.get(ctx, it, own = true)") && src.contains("FleetData.get(ctx, PAGES, own = true)"))
+        assertTrue(!src.contains("ctx.assets.open(\"ai/pages.json\")"))
+        assertTrue(AiData.pages("").isEmpty())
+        assertTrue(AiData.groups("").isEmpty())
+    }
+}

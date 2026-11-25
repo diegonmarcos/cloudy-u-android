@@ -160,7 +160,10 @@
     "com.diegonmarcos.cloudsuperintel": [
       "composer",
       "notebook",
-      "personas"
+      "personas",
+      "pages",
+      "mcp",
+      "plugins"
     ],
     "com.diegonmarcos.cloudsearch": [
       "composer"

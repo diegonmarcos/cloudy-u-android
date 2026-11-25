@@ -1,4 +1,5 @@
 {
+ "schemaVersion": 1,
  "_doc": "Derived by tools/derive-ai-data.py from the cloudy-u-linux SOT da_my-ai/data/claude (names and counts only, no secrets). Never edit by hand.",
  "groups": [
   {

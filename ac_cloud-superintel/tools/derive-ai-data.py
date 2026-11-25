@@ -8,6 +8,7 @@ import glob, json, os, re, sys
 sot = sys.argv[1]
 check = "--check" in sys.argv
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../app/src/main/assets/ai")
+served = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../data/fleet/app/com.diegonmarcos.cloudsuperintel")   # #1562 mcp and plugins are served datasets (data/fleet), dotfiles stays an asset
 digest_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../app/src/test/resources/mcp-sot.json")
 J = lambda p: json.load(open(os.path.join(sot, p)))
 row = lambda title, caption="", end="": {"title": title, "caption": caption, "end": end}
@@ -94,8 +95,8 @@ else:
     os.makedirs(os.path.dirname(digest_path), exist_ok=True)
     open(digest_path, "w").write(dtext)
 for name, groups in (("mcp", mcp), ("dotfiles", dot), ("plugins", plug)):
-    text = json.dumps({"_doc": DOC, "groups": groups}, indent=1, ensure_ascii=False) + "\n"
-    path = os.path.join(out, name + ".json")
+    text = json.dumps({"schemaVersion": 1, "_doc": DOC, "groups": groups} if name in ("mcp", "plugins") else {"_doc": DOC, "groups": groups}, indent=1, ensure_ascii=False) + "\n"
+    path = os.path.join(served if name in ("mcp", "plugins") else out, name + ".json")
     if check:
         if not os.path.exists(path) or open(path).read() != text: print("DIFF " + name); bad = 1
     else:

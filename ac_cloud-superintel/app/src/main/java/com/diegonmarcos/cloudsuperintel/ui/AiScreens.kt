@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -65,6 +66,8 @@ object AiTags {
 @Composable
 fun AiPage(spec: AiPageSpec) {
     val ctx = LocalContext.current.applicationContext
+    // #1562 mcp.json and plugins.json are served datasets: the rows redraw when Cloud Store syncs them.
+    val served by produceState(0, ctx) { AiData.observeRows(ctx).collect { value += 1 } }
     KitHost {
         Box(Modifier.fillMaxSize().testTag(AiTags.PAGE)) {
             when (spec.kind) {
@@ -73,7 +76,7 @@ fun AiPage(spec: AiPageSpec) {
                 // #1854 MCP-KG: the composer's KG homes, read from the shared design.
                 AiData.KIND_KG -> RowsPage(remember { com.diegonmarcos.superapp.ai.AiDesign.load(ctx).let { AiData.kgGroups(it.mcpBuckets, it.kgStoreTabs) } })
                 // #1854 a rows page takes the declared groups of each of its sources, in the order the sources are declared.
-                else -> RowsPage(remember(spec) { spec.sources.flatMap { s -> AiData.groups(AiData.asset(ctx, s.asset), s.groups) } })
+                else -> RowsPage(remember(spec, served) { spec.sources.flatMap { s -> AiData.groups(AiData.asset(ctx, s.asset), s.groups) } })
             }
         }
     }

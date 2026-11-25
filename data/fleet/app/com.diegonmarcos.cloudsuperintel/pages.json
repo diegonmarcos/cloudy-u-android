@@ -1,4 +1,5 @@
 {
+ "schemaVersion": 1,
  "_doc": "#1499 / #1854 The data behind the Context pages and the Cost window, by page id (build.json::ui sections models, context; `cost` is the top-right Cost window, not a nav page): the kind picks the screen (rows = grouped dense rows, apis = the API accounts and keys, cost = Claude and OpenRouter side by side, kg = the composer's KG homes read from libs:ai's design: the MCP-KG page). A `rows` page lists `sources`: an asset and the group titles (regexes, full match) it takes from it, so one derived asset can be split over several pages and every group is shown on exactly one (test-superintel-parity.sh proves it). test-superintel-ais.sh holds the ids in step with build.json::ui, both ways.",
  "pages": {
   "apis": {
