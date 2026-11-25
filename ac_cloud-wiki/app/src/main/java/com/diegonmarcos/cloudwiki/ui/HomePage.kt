@@ -43,6 +43,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
+import com.diegonmarcos.superapp.graphview.GraphCamera
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
@@ -268,7 +269,10 @@ private fun IndexPlanet(tree: WikiTree, open: (TreeNode) -> Unit) {
                 drawCircle(col.copy(alpha = 0.25f), radius = r * 1.6f, center = Offset(sx.toFloat(), sy.toFloat()))
                 drawCircle(col, radius = r, center = Offset(sx.toFloat(), sy.toFloat()))
                 if (b.level <= 1 || r > 7f) {
-                    drawText(measurer, b.label, topLeft = Offset(sx.toFloat() + r + 3f, sy.toFloat() - 7f), style = label, maxLines = 1, softWrap = false)
+                    // #1921 a label starting at or past the canvas edge leaves negative room and drawText throws: skip it
+                    GraphCamera.labelOrigin(Offset(sx.toFloat(), sy.toFloat()), r, size.width, size.height)?.let { at ->
+                        drawText(measurer, b.label, topLeft = at, style = label, maxLines = 1, softWrap = false)
+                    }
                 }
             }
         }
