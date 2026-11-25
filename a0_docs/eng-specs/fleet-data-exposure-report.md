@@ -56,3 +56,10 @@ Private-topology pattern hits (mesh `10.x` / CGNAT `100.64/10` addresses, `.mesh
    Provisioning path (no cost, no owner device action): generate an ed25519 key pair, add the public half as a read-only deploy key on `cloud-me-pvt-configs`, and add the private half (base64) to that sops file with the CI age key (`SOPS_AGE_KEY`, used by `cloudy-t-infra/.github/actions/fetch-vault`). The Ship deploy then renders it into the container `.env`.
 2. Git history: no purge (no credential was ever found; tier-1 data is public by design).
 3. Firebase key restriction check (low, owner console).
+
+## 4. Status 2026-11-25 (re-measured)
+
+- Public tier 3 and 4 data moved out of the APKs and into `data/fleet` (served by Cloud Store from raw.githubusercontent.com, public by design): the guard (`runtime-data-guard.yml`) fails if `data/fleet/manifest.json` lists a tier 1 or 2 dataset, so personal and fleet-private data cannot land there.
+- Still baked and **fleet-private (tier 2), exposed in the public repo**, 13 files, all awaiting the private c3-api route: `bg-policy`, `super-saving`, `ai` (libs:ai), `apps-mcp-api`, `appstore-feeds`, `appstore-install-sources`, `decisions`, `fleet-config`, `perms-catalogue`, `shell-allowlist`, `probes`, SuperIntel `apis` and `cost` (the last two hold labels and endpoint names only). Tier 1 (5 files) stays public by design.
+- Probes (anonymous, from this session): `raw.githubusercontent.com/diegonmarcos/cloudy-u-android/main/data/fleet/manifest.json` answers 200 (intended); `.../cloud-me-pvt-configs/main/README.md` answers 404 (the private repo is not reachable anonymously).
+- Remediation of the 13 files stays blocked on one step: `FLEET_DATA_SSH_KEY_B64` must reach the c3-api sops file; `sops-set.yml` in cloudy-t-infra cannot read `cloud-me-pvt-vault` with the job `GITHUB_TOKEN` (run 43396743680). It needs a vault-read token or a run context with vault access. Moving the files before the route can serve them would break the apps, so they stay until the route is live.
