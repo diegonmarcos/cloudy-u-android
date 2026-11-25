@@ -99,6 +99,9 @@ jobs:
           repository: diegonmarcos/cloud-me-pvt-vault
           token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
           path: .vault
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
       - name: Install jq and zstd
         run: sudo apt-get update -y && sudo apt-get install -y jq zstd
       - name: Install sops (pinned, sha256-checked, fails at the download)
@@ -190,6 +193,9 @@ jobs:
           repository: diegonmarcos/cloud-me-pvt-vault
           token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
           path: .vault
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
       - name: Install jq and zstd
         run: sudo apt-get update -y && sudo apt-get install -y jq zstd
       - name: Install sops (pinned, sha256-checked, fails at the download)

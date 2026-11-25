@@ -402,6 +402,9 @@ jobs:
           repository: diegonmarcos/cloud-me-pvt-vault
           token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
           path: .vault
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
 
       - name: Install jq
         if: steps.gate.outputs.skip != 'true'

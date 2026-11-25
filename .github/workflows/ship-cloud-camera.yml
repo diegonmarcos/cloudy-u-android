@@ -66,8 +66,8 @@ on:
       - "ab_cloud-libs-shared/libs/fleetconfigs-logcat/**"
       - "ab_cloud-libs-shared/libs/fleetconfigs-xray/**"
       - "ab_cloud-libs-shared/libs/location-client/**"
-      - "ab_cloud-libs-shared/libs/ml-l-image/**"
       - "ab_cloud-libs-shared/libs/ml-l-image-ocr/**"
+      - "ab_cloud-libs-shared/libs/ml-l-image/**"
       - "ab_cloud-libs-shared/libs/ml-l-sound/**"
       - "ab_cloud-libs-shared/libs/ml-l-vision-mlkit/**"
       - "ab_cloud-libs-shared/libs/pdf/**"
@@ -99,10 +99,10 @@ on:
       - "ab_cloud-libs-shared/libs/fleetconfigs-xray/**/res/**"
       - "ab_cloud-libs-shared/libs/location-client/**/assets/**"
       - "ab_cloud-libs-shared/libs/location-client/**/res/**"
-      - "ab_cloud-libs-shared/libs/ml-l-image/**/assets/**"
-      - "ab_cloud-libs-shared/libs/ml-l-image/**/res/**"
       - "ab_cloud-libs-shared/libs/ml-l-image-ocr/**/assets/**"
       - "ab_cloud-libs-shared/libs/ml-l-image-ocr/**/res/**"
+      - "ab_cloud-libs-shared/libs/ml-l-image/**/assets/**"
+      - "ab_cloud-libs-shared/libs/ml-l-image/**/res/**"
       - "ab_cloud-libs-shared/libs/ml-l-sound/**/assets/**"
       - "ab_cloud-libs-shared/libs/ml-l-sound/**/res/**"
       - "ab_cloud-libs-shared/libs/ml-l-vision-mlkit/**/assets/**"
@@ -237,6 +237,9 @@ jobs:
           repository: diegonmarcos/cloud-me-pvt-vault
           token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
           path: .vault
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
 
       - name: Install jq
         if: steps.gate.outputs.skip != 'true'

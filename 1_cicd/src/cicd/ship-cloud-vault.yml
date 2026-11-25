@@ -206,6 +206,9 @@ jobs:
           repository: diegonmarcos/cloud-me-pvt-vault
           token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
           path: .vault
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
 
       - name: Install jq
         if: steps.gate.outputs.skip != 'true'
@@ -422,6 +425,9 @@ jobs:
           repository: diegonmarcos/cloud-me-pvt-vault
           token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
           path: .vault
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
 
       # The fork signs with the same sops-encrypted shared key as the WebView
       # job — sops must be on PATH before build-fork's signing step (an early

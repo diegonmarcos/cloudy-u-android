@@ -90,6 +90,15 @@
         "1_cicd/src/templates/**"
       ]
     },
+    "vault-checkout-ref-guard.yml": {
+      "_doc": "Every workflow source and template that checks out the vault, and the tester.",
+      "paths": [
+        "1_cicd/src/actions/**",
+        "1_cicd/src/cicd/**",
+        "1_cicd/src/scripts/test/vault-checkout-ref.test.sh",
+        "1_cicd/src/templates/**"
+      ]
+    },
     "licence-guard.yml": {
       "_doc": "The two app trees licence-boundaries.json names, and that declaration.",
       "paths": [

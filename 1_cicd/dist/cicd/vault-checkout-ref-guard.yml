@@ -1,0 +1,40 @@
+name: "vault-checkout-ref guard — every vault checkout names its ref"
+
+# WHY THIS EXISTS. actions/checkout without `ref` asks the REST API for the
+# default branch, using the personal vault token, against the user's shared
+# 5,000/hour quota. Ship runs failed at "Checkout vault" with "API rate limit
+# exceeded". Every vault checkout now sets ref, fetch-depth and
+# persist-credentials; the tester fails on any that does not.
+#
+# NO PATH FILTER beyond the managed one: the subject is every workflow source.
+
+on:
+  push:
+    # ── MANAGED-GUARD-TRIGGERS: injected by cloud-android-guard-triggers.py from 1_cicd/src/data/guard-triggers.json ──
+    paths:
+      - "1_cicd/src/actions/**"
+      - "1_cicd/src/cicd/**"
+      - "1_cicd/src/cicd/vault-checkout-ref-guard.yml"
+      - "1_cicd/src/scripts/test/vault-checkout-ref.test.sh"
+      - "1_cicd/src/templates/**"
+    # ── end MANAGED-GUARD-TRIGGERS ──
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# ── MANAGED-GUARD-CONCURRENCY: injected by cloud-android-guard-triggers.py ──
+concurrency:
+  group: vault-checkout-ref-guard-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+# ── end MANAGED-GUARD-CONCURRENCY ──
+
+jobs:
+  tester:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Every vault checkout has an explicit ref
+        run: bash 1_cicd/src/scripts/test/vault-checkout-ref.test.sh
