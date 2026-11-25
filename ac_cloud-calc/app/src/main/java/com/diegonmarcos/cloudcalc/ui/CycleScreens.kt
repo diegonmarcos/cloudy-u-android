@@ -37,7 +37,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
+import com.diegonmarcos.superapp.uikit.safeDrawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -121,7 +121,7 @@ private fun Strip(cycle: Cycles.Cycle, pos: Cycles.Pos, zoom: Zoom, onPick: (Int
                     val text = listOf(seg.label, seg.label.take(3), seg.label.take(1)).firstOrNull { t ->
                         measurer.measure(t, labelStyle).size.width + 6 < w
                     }
-                    if (text != null) drawText(measurer, text, Offset(x + 3f, 2f), labelStyle)
+                    if (text != null) safeDrawText(measurer, text, Offset(x + 3f, 2f), labelStyle)
                 }
                 val hx = pos.offset * dayPx
                 drawRect(colors.primary, Offset(hx, 0f), Size(dayPx.coerceAtLeast(3f), h))

@@ -51,7 +51,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.drawText
+import com.diegonmarcos.superapp.uikit.safeDrawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -439,7 +439,7 @@ fun RulerMode(mode: Declarations.Mode) {
                 val len = when { n % perMajor == 0 -> 44.dp.toPx(); n % perMid == 0 -> 30.dp.toPx(); else -> 18.dp.toPx() }
                 drawLine(ink, Offset(0f, y), Offset(len, y), strokeWidth = CalcMetrics.hairline.toPx())
                 if (n % perMajor == 0 && n > 0) {
-                    drawText(measurer, (n / perMajor).toString(), Offset(len + 6.dp.toPx(), y - 7.dp.toPx()), style = labelStyle)
+                    safeDrawText(measurer, (n / perMajor).toString(), Offset(len + 6.dp.toPx(), y - 7.dp.toPx()), style = labelStyle)
                 }
                 n++
             }

@@ -39,3 +39,8 @@ jobs:
         run: |
           bash 1_cicd/src/scripts/test/safe-prefs-guard.test.sh
           python3 1_cicd/src/scripts/cloud-android-safe-prefs-guard.py .
+
+      - name: No unbounded Compose drawText(measurer, ...) (the Cloud Wiki maxWidth crash of #1921)
+        run: |
+          bash 1_cicd/src/scripts/test/draw-text-guard.test.sh
+          python3 1_cicd/src/scripts/cloud-android-draw-text-guard.py .
