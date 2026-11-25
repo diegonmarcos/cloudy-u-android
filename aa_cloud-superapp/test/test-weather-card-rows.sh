@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tester (#1907): the Persistent Weather card draws NOTHING between its title and the graphic, then the six declared rows
+# Tester (#1907): the Persistent Weather card draws NOTHING between its title and the graphic, then the seven declared rows
 # (two columns) below it, in order, with the declared labels; what left the gap lives in the detail view (nothing dropped).
 # Static contract over the sources (the render is pinned by WeatherRowsTest); each check is proven red by a mutation of a copy.
 set -u
@@ -13,9 +13,9 @@ import os, re, sys
 app = sys.argv[1]; D = "app/src/main/java/com/diegonmarcos/superapp"
 rd = lambda p: open(os.path.join(app, D, p)).read()
 rows, card, tl = rd("daytimelines/WeatherRows.kt"), rd("launcher/BadgeCards.kt"), rd("daytimelines/DayTimelinesCard.kt")
-want = [("sun_moon", "Sun: Dawn / Sunrise / Sunset / Dusk", "Moon: Rise / Set"), ("temp", "Temp: max / min", "Feels like: max / min"),
-        ("humid_wind", "Humidity: max / min", "Wind: max / min"), ("precip_uv", "Precipitation: probability / amount", "UV index"),
-        ("phase_zodiac", "Moon phase", "Sun zodiac / Moon zodiac"), ("update_place", "Last update: time", "Location")]
+want = [("sun_moon", "Sun: Dawn / Sunrise / Sunset / Dusk", "Moon: Rise / Set"), ("temp", "Temp: min / max", "Feels like: min / max"),
+        ("humid_wind", "Humidity: min / max", "Wind: min / max"), ("precip_uv", "Precipitation: probability / amount", "UV index"),
+        ("pressure_dew", "Pressure: min / max", "Dew point"), ("phase_zodiac", "Moon phase", "Sun zodiac / Moon zodiac"), ("update_place", "Last update: time", "Location")]
 got = re.findall(r'Triple\("([a-z_]+)", "([^"]*)", "([^"]*)"\)', rows)
 if got != want: print("W1 rows/labels/order differ from the ticket: %s" % got)
 i = {k: card.find(k) for k in ("testTag(BadgeCardTags.title(", "if (!weather) {", "Text(d.headline", "if (weather)", "WeatherRowsBlock(d.badge.id, snap)", "WeatherDetail(d)")}
@@ -36,8 +36,12 @@ mut() { rm -rf "$T/app"; mkdir -p "$T/app/$D/daytimelines" "$T/app/$D/launcher"
   python3 -c "$3" "$T/app/$D/$2"; r=$(check "$T/app"); if [ -n "$r" ]; then ok "mutation red: $1"; else bad "mutation stayed green: $1"; fi; }
 R=daytimelines/WeatherRows.kt; B=launcher/BadgeCards.kt; C=daytimelines/DayTimelinesCard.kt
 rep() { echo "import sys;p=sys.argv[1];s=open(p).read();assert '$1' in s;open(p,'w').write(s.replace('$1','$2',1))"; }
-mut "a label renamed" $R "$(rep 'Temp: max / min' 'Temperature')"
+mut "a label renamed" $R "$(rep 'Temp: min / max' 'Temperature')"
 mut "two rows swapped" $R "import sys;p=sys.argv[1];s=open(p).read();a=s.index('        Triple(\"temp\"');b=s.index('        Triple(\"humid_wind\"');c=s.index('        Triple(\"precip_uv\"');open(p,'w').write(s[:a]+s[b:c]+s[a:b]+s[c:])"
+mut "max / min order restored" $R "$(rep 'Temp: min / max' 'Temp: max / min')"
+mut "wind pair back to max / min" $R "$(rep 'Wind: min / max' 'Wind: max / min')"
+mut "pressure row dropped" $R "$(rep '        Triple("pressure_dew", "Pressure: min / max", "Dew point"),' '')"
+mut "pressure row moved before precipitation" $R "import sys;p=sys.argv[1];s=open(p).read();a=s.index('        Triple(\"precip_uv\"');b=s.index('        Triple(\"pressure_dew\"');c=s.index('        Triple(\"phase_zodiac\"');open(p,'w').write(s[:a]+s[b:c]+s[a:b]+s[c:])"
 mut "a row dropped" $R "$(rep '        Triple("update_place", "Last update: time", "Location"),' '')"
 mut "headline drawn between title and graphic again" $B "$(rep 'if (!weather) {' 'if (true) {')"
 mut "rows drawn before the graphic" $C "$(rep 'footer?.invoke(snap)' '')"

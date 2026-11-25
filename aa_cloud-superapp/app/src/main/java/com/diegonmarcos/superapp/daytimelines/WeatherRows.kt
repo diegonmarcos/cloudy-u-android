@@ -5,10 +5,11 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.exp
+import kotlin.math.ln
 import kotlin.math.roundToInt
 
 /**
- * #1907 the Persistent Weather card's rows UNDER the graphic: six rows, two columns, nothing else. PURE (no Android):
+ * #1907 the Persistent Weather card's rows UNDER the graphic: seven rows, two columns, nothing else. PURE (no Android):
  * the labels are declared data ([LAYOUT], the one place that says what each row is called and in what order), the values
  * come from the day model (sun, moon, signs), the MET hours (temperature, humidity, wind, precipitation, UV) and the
  * data status (last update). A missing value is an em dash ([EM]), never a crash.
@@ -22,9 +23,10 @@ object WeatherRows {
     /** Declared layout: row id to (left label, right label). Order = render order. Pinned by WeatherRowsTest. */
     val LAYOUT: List<Triple<String, String, String>> = listOf(
         Triple("sun_moon", "Sun: Dawn / Sunrise / Sunset / Dusk", "Moon: Rise / Set"),
-        Triple("temp", "Temp: max / min", "Feels like: max / min"),
-        Triple("humid_wind", "Humidity: max / min", "Wind: max / min"),
+        Triple("temp", "Temp: min / max", "Feels like: min / max"),
+        Triple("humid_wind", "Humidity: min / max", "Wind: min / max"),
         Triple("precip_uv", "Precipitation: probability / amount", "UV index"),
+        Triple("pressure_dew", "Pressure: min / max", "Dew point"),
         Triple("phase_zodiac", "Moon phase", "Sun zodiac / Moon zodiac"),
         Triple("update_place", "Last update: time", "Location"),
     )
@@ -38,10 +40,17 @@ object WeatherRows {
         return tC + 0.33 * e - 0.70 * windMs - 4.00
     }
 
+    /** Magnus dew point (C) from temperature and relative humidity; null without humidity. */
+    fun dewPoint(tC: Double, humidityPct: Double?): Double? {
+        if (humidityPct == null || humidityPct <= 0.0) return null
+        val g = ln(humidityPct / 100.0) + 17.62 * tC / (243.12 + tC)
+        return 243.12 * g / (17.62 - g)
+    }
+
     private fun n(v: Double?, f: String = "%.0f") = v?.let { String.format(Locale.US, f, it) }
     private fun pair(a: String?, b: String?) = "${a ?: EM} / ${b ?: EM}"
 
-    /** [snap] null (nothing loaded yet) gives all six rows with dashes. */
+    /** [snap] null (nothing loaded yet) gives all seven rows with dashes. */
     fun rows(snap: DayRepo.Snapshot?): List<Row> {
         val m = snap?.model
         val zone = m?.let { runCatching { ZoneId.of(it.zoneId) }.getOrNull() } ?: ZoneId.systemDefault()
@@ -55,6 +64,10 @@ object WeatherRows {
         val prob = today.mapNotNull { it.precipPct }
         val mm = today.mapNotNull { it.precipMm }
         val uv = today.mapNotNull { it.uv }
+        val press = today.mapNotNull { it.pressureHpa }
+        val nowH = snap?.let { it.nowMs / 3_600_000L }
+        val cur = today.minByOrNull { Math.abs(it.epochHour - (nowH ?: it.epochHour)) }
+        val dew = cur?.let { it.dewC ?: dewPoint(it.tempC, it.humidityPct) }
         val sun = m?.sun
         val moon = m?.moon
         val sunSign = m?.sky?.firstOrNull { it.id == "sun" }?.sign
@@ -63,12 +76,14 @@ object WeatherRows {
             "sun_moon" to Pair(
                 listOf(sun?.dawn, sun?.sunrise, sun?.sunset, sun?.dusk).joinToString(" / ") { hm(it) ?: EM },
                 pair(hm(moon?.riseMs), hm(moon?.setMs))),
-            "temp" to Pair(pair(n(temps.maxOrNull())?.plus("°"), n(temps.minOrNull())?.plus("°")),
-                pair(n(feels.maxOrNull())?.plus("°"), n(feels.minOrNull())?.plus("°"))),
-            "humid_wind" to Pair(pair(n(hum.maxOrNull())?.plus("%"), n(hum.minOrNull())?.plus("%")),
-                pair(n(wind.maxOrNull())?.plus(" km/h"), n(wind.minOrNull())?.plus(" km/h"))),
+            "temp" to Pair(pair(n(temps.minOrNull())?.plus("°"), n(temps.maxOrNull())?.plus("°")),
+                pair(n(feels.minOrNull())?.plus("°"), n(feels.maxOrNull())?.plus("°"))),
+            "humid_wind" to Pair(pair(n(hum.minOrNull())?.plus("%"), n(hum.maxOrNull())?.plus("%")),
+                pair(n(wind.minOrNull())?.plus(" km/h"), n(wind.maxOrNull())?.plus(" km/h"))),
             "precip_uv" to Pair(pair(n(prob.maxOrNull())?.plus("%"), n(mm.takeIf { it.isNotEmpty() }?.sum(), "%.1f")?.plus(" mm")),
                 n(uv.maxOrNull(), "%.1f") ?: EM),
+            "pressure_dew" to Pair(pair(n(press.minOrNull())?.plus(" hPa"), n(press.maxOrNull())?.plus(" hPa")),
+                n(dew)?.plus("°") ?: EM),
             "phase_zodiac" to Pair(moon?.phase?.let { "${it.name} ${(it.illumination * 100).roundToInt()}%" } ?: EM,
                 pair(sunSign?.let { "${it.glyph} ${it.name}" }, moon?.sign?.let { "${it.glyph} ${it.name}" })),
             "update_place" to Pair(if (snap == null || ageMs == null) EM else hm(snap.nowMs - ageMs) ?: EM,

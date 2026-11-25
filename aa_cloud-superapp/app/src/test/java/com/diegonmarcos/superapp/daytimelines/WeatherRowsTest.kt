@@ -22,7 +22,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * #1907 the Persistent Weather card: NOTHING between the title and the graphic, then exactly six rows (two columns) below it,
+ * #1907 the Persistent Weather card: NOTHING between the title and the graphic, then exactly seven rows (two columns) below it,
  * in the ticket's order and with its labels; a missing value is an em dash. Mutations of this contract are proven red by
  * test/test-weather-card-rows.sh.
  */
@@ -39,21 +39,22 @@ class WeatherRowsTest : KitPageHarness() {
 
     private val full = (0 until 24).map {
         Hour(startHour + it, 10.0 + it, "fair_day", humidityPct = 40.0 + it, windMs = 2.0 + it / 23.0 * 3.0, uv = if (it == 13) 7.46 else 0.0,
-            precipPct = if (it == 15) 60.0 else 10.0, precipMm = if (it == 15) 1.5 else 0.2)
+            precipPct = if (it == 15) 60.0 else 10.0, precipMm = if (it == 15) 1.5 else 0.2, pressureHpa = 1000.0 + it)
     }
 
     @Test fun `labels and order are the declared six rows`() {
         val want = listOf(
             "Sun: Dawn / Sunrise / Sunset / Dusk" to "Moon: Rise / Set",
-            "Temp: max / min" to "Feels like: max / min",
-            "Humidity: max / min" to "Wind: max / min",
+            "Temp: min / max" to "Feels like: min / max",
+            "Humidity: min / max" to "Wind: min / max",
             "Precipitation: probability / amount" to "UV index",
+            "Pressure: min / max" to "Dew point",
             "Moon phase" to "Sun zodiac / Moon zodiac",
             "Last update: time" to "Location",
         )
         for (s in listOf(null, snap(full), snap(emptyList())))
             assertEquals(want, WeatherRows.rows(s).map { it.left.label to it.right.label })
-        assertEquals(6, WeatherRows.LAYOUT.size)
+        assertEquals(7, WeatherRows.LAYOUT.size)
     }
 
     @Test fun `values come from the forecast and the astronomy, a missing one is an em dash`() {
@@ -62,13 +63,21 @@ class WeatherRowsTest : KitPageHarness() {
         assertEquals(4, sun.size); assertTrue(sun.toString(), sun.none { it == WeatherRows.EM })
         assertTrue(sun.zipWithNext().all { (a, b) -> a < b })
         assertEquals(2, r.getValue("sun_moon").right.value.split(" / ").size)
-        assertEquals("33° / 10°", r.getValue("temp").left.value)
+        assertEquals("10° / 33°", r.getValue("temp").left.value)
         val feels = r.getValue("temp").right.value.split(" / ")
-        assertTrue(feels.toString(), feels.none { it == WeatherRows.EM } && feels[0].removeSuffix("°").toInt() > feels[1].removeSuffix("°").toInt())
-        assertEquals("63% / 40%", r.getValue("humid_wind").left.value)
-        assertEquals("18 km/h / 7 km/h", r.getValue("humid_wind").right.value)
+        assertTrue(feels.toString(), feels.none { it == WeatherRows.EM } && feels[0].removeSuffix("°").toInt() < feels[1].removeSuffix("°").toInt())
+        assertEquals("40% / 63%", r.getValue("humid_wind").left.value)
+        assertEquals("7 km/h / 18 km/h", r.getValue("humid_wind").right.value)
         assertEquals("60% / 6.1 mm", r.getValue("precip_uv").left.value)
         assertEquals("7.5", r.getValue("precip_uv").right.value)
+        assertEquals("1000 hPa / 1023 hPa", r.getValue("pressure_dew").left.value)
+        assertEquals("12°", r.getValue("pressure_dew").right.value) // Magnus at noon: 22 C, 52 %
+        val given = WeatherRows.rows(snap(full.map { it.copy(dewC = 3.4) })).associateBy { it.id }
+        assertEquals("3°", given.getValue("pressure_dew").right.value) // dew_point_temperature wins over Magnus
+        assertEquals(WeatherRows.EM, WeatherRows.rows(snap(full.map { it.copy(humidityPct = null) })).first { it.id == "pressure_dew" }.right.value)
+        assertEquals("— / —", WeatherRows.rows(snap(full.map { it.copy(pressureHpa = null) })).first { it.id == "pressure_dew" }.left.value)
+        assertEquals(11.7, WeatherRows.dewPoint(22.0, 52.0)!!, 0.1)
+        assertEquals(null, WeatherRows.dewPoint(22.0, null))
         assertTrue(r.getValue("phase_zodiac").left.value.endsWith("%"))
         assertEquals(2, r.getValue("phase_zodiac").right.value.split(" / ").size)
         assertEquals("12:00", r.getValue("update_place").left.value)
@@ -79,13 +88,14 @@ class WeatherRowsTest : KitPageHarness() {
         assertEquals(null, WeatherRows.feelsLike(20.0, null, 1.0))
     }
 
-    @Test fun `no data at all gives six rows of dashes and never throws`() {
+    @Test fun `no data at all gives seven rows of dashes and never throws`() {
         for (s in listOf(null, snap(emptyList(), DataStatus(DataStatus.Kind.NONE, 0L, "offline")))) {
             val r = WeatherRows.rows(s).associateBy { it.id }
-            assertEquals(6, r.size)
-            for (id in listOf("temp", "humid_wind")) for (c in listOf(r.getValue(id).left, r.getValue(id).right))
+            assertEquals(7, r.size)
+            for (id in listOf("temp", "humid_wind", "pressure_dew")) for (c in listOf(r.getValue(id).left, r.getValue(id).right))
                 assertTrue(c.value, c.value.split(" / ").all { it == WeatherRows.EM || it.startsWith(WeatherRows.EM) })
             assertEquals(WeatherRows.EM, r.getValue("precip_uv").right.value)
+            assertEquals(WeatherRows.EM, r.getValue("pressure_dew").right.value)
             assertEquals(WeatherRows.EM, r.getValue("update_place").left.value)
         }
         assertEquals(WeatherRows.EM, WeatherRows.rows(null).first { it.id == "update_place" }.right.value)
@@ -115,11 +125,11 @@ class WeatherRowsTest : KitPageHarness() {
         assertTrue("between title and graphic: " + between.map { it.config.toString() }, between.isEmpty())
         for (t in listOf("HEADLINE-1907", "SUBLINE-1907", "HOURLY-1907", "INFOLINE-1907"))
             assertEquals(t, 0, compose.onAllNodesWithText(t, useUnmergedTree = true).fetchSemanticsNodes().size)
-        // The six rows, below the graphic, in the declared order, with the declared labels.
+        // The seven rows, below the graphic, in the declared order, with the declared labels.
         val tops = WeatherRows.LAYOUT.map { top(BadgeCardTags.weatherRow(id, it.first)) }
         assertTrue("rows below the graphic", tops.all { it > top(DayTimelinesTags.CARD) })
         assertEquals("rows in order", tops.sorted(), tops)
-        assertEquals(6, tops.toSet().size)
+        assertEquals(7, tops.toSet().size)
         for ((_, l, r) in WeatherRows.LAYOUT) for (t in listOf(l, r))
             assertEquals(t, 1, compose.onAllNodesWithText(t, useUnmergedTree = true).fetchSemanticsNodes().size)
     }

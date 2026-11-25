@@ -15,6 +15,8 @@ data class Hour(
     /** #1907 the rest of the MET hour, for the weather rows under the graphic; null = the source gave none. */
     val humidityPct: Double? = null, val windMs: Double? = null, val uv: Double? = null,
     val precipPct: Double? = null, val precipMm: Double? = null,
+    /** #1922 sea-level pressure (hPa) and dew point (C) of the MET hour; null = the source gave none. */
+    val pressureHpa: Double? = null, val dewC: Double? = null,
 )
 
 /** A colour stop of a bar: [frac] 0..1 along the local day, [argb] an ARGB int. */

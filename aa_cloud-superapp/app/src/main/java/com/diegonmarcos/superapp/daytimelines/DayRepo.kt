@@ -62,7 +62,8 @@ object DayRepo {
             fun d(o: JSONObject?, k: String): Double? = o?.takeIf { it.has(k) && !it.isNull(k) }?.optDouble(k)?.takeIf { !it.isNaN() }
             val blk = listOf("next_1_hours", "next_6_hours").firstNotNullOfOrNull { k -> data.optJSONObject(k)?.optJSONObject("details") }
             out += Hour(t.epochSecond / 3600L, temp, sym, d(det, "relative_humidity"), d(det, "wind_speed"),
-                d(det, "ultraviolet_index_clear_sky"), d(blk, "probability_of_precipitation"), d(blk, "precipitation_amount"))
+                d(det, "ultraviolet_index_clear_sky"), d(blk, "probability_of_precipitation"), d(blk, "precipitation_amount"),
+                d(det, "air_pressure_at_sea_level"), d(det, "dew_point_temperature"))
         }
         out
     }.getOrDefault(emptyList())
@@ -70,7 +71,8 @@ object DayRepo {
     fun encode(c: Cache): String = JSONObject().put("v", 1).put("saved", c.savedMs).put("lat", c.lat).put("lon", c.lon)
         .put("hours", JSONArray().also { a -> c.hours.forEach { a.put(JSONArray().put(it.epochHour).put(it.tempC).put(it.symbol ?: JSONObject.NULL)
             .put(it.humidityPct ?: JSONObject.NULL).put(it.windMs ?: JSONObject.NULL).put(it.uv ?: JSONObject.NULL)
-            .put(it.precipPct ?: JSONObject.NULL).put(it.precipMm ?: JSONObject.NULL)) } })
+            .put(it.precipPct ?: JSONObject.NULL).put(it.precipMm ?: JSONObject.NULL)
+            .put(it.pressureHpa ?: JSONObject.NULL).put(it.dewC ?: JSONObject.NULL)) } })
         .toString()
 
     fun decode(json: String?): Cache? = runCatching {
@@ -79,7 +81,7 @@ object DayRepo {
         val hs = (0 until a.length()).map { i ->
             val r = a.getJSONArray(i)
             fun d(i: Int): Double? = if (r.length() <= i || r.isNull(i)) null else r.getDouble(i)
-            Hour(r.getLong(0), r.getDouble(1), if (r.isNull(2)) null else r.getString(2), d(3), d(4), d(5), d(6), d(7))
+            Hour(r.getLong(0), r.getDouble(1), if (r.isNull(2)) null else r.getString(2), d(3), d(4), d(5), d(6), d(7), d(8), d(9))
         }
         Cache(o.getLong("saved"), o.getDouble("lat"), o.getDouble("lon"), hs)
     }.getOrNull()

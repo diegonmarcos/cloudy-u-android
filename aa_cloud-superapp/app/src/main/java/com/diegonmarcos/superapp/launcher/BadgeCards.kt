@@ -334,7 +334,7 @@ internal fun BadgeCard(d: BadgeCardData.Data) {
     }
 }
 
-/** #1907 the six Weather rows under the graphic: two columns, the label small over the value. */
+/** #1907 the seven Weather rows under the graphic: two columns, the label small over the value. */
 @Composable
 private fun WeatherRowsBlock(id: String, snap: com.diegonmarcos.superapp.daytimelines.DayRepo.Snapshot?) {
     val rows = remember(snap) { com.diegonmarcos.superapp.daytimelines.WeatherRows.rows(snap) }
