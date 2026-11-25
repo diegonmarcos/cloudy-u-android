@@ -22,12 +22,12 @@ pk = lambda x: x if isinstance(x, str) else x['pkg']
 phone = [s for s in bj['sections'] if s['id'] == 'phone'][0]['phone_app_groups']
 cloud = [s for s in bj['sections'] if s['id'] == 'cloud'][0]['tile_groups']
 folders = bj['phone_folders']; secs = bj['phone_sections']
-ORDER = ['Data', 'Communication', 'Primary', 'Me', 'Services · City', 'Services · Leisure', 'AGI', 'Setup', 'Projects']  # #1916 MOVED: Data first, Projects after Setup (was #1769 Projects right after Me, #1902 Services split)
+ORDER = ['Primary', 'Communication', 'Data', 'Me', 'Services · City', 'Services · Leisure', 'AGI', 'Setup', 'Projects']  # #1916 MOVED: Data first, Projects after Setup (was #1769 Projects right after Me, #1902 Services split)
 
 print('== G: group order (Phone and Cloud quickmarks) ==')
 check([g['title'] for g in phone] == ORDER, 'Phone quickmark groups are %s (got %s)' % (ORDER, [g['title'] for g in phone]))
 check([g['title'] for g in cloud] == ORDER, 'Cloud quickmark groups are %s (got %s)' % (ORDER, [g['title'] for g in cloud]))
-check([s['title'] for s in secs] == ['Tools · Data', 'Tools · Communication', 'Tools · Primary', 'Tools · Me', 'Services · City', 'Services · Leisure', 'AGI', 'Setup', 'Projects'],  # #1916 MOVED
+check([s['title'] for s in secs] == ['Tools · Primary', 'Tools · Communication', 'Tools · Data', 'Tools · Me', 'Services · City', 'Services · Leisure', 'AGI', 'Setup', 'Projects'],  # #1916 MOVED
       'All Apps sections follow the same order: %s' % [s['title'] for s in secs])
 
 print('== P: field parity against the previous layout ==')

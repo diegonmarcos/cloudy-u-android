@@ -3074,6 +3074,94 @@
         ],
         "tile_groups": [
           {
+            "_doc": "#1916 Primary: Navigation, Camera, Canvas, Keyboard, Calc (no dividers). Drive, Browser and Wallet MOVED to Data; the two Primary dividers dissolved with them. Glyph is declared data (`glyph`, drawn before the title by GroupedTilesFragment.GroupTitle). Pinned by test-primary-tools-order.sh, test-quickmarks-field-parity.sh and test-group-glyphs-1916.sh.",
+            "title": "Primary",
+            "glyph": "□",
+            "tiles": [
+              {
+                "_doc": "Navigation — hands off to the dedicated Cloud-Nav app (ac_cloud-nav). libs:maps (MapLibre tracker + timeline + MyTrips) was MOVED out of the SuperApp into Cloud-Nav, so this tile no longer routes to an in-app section. target=extapp:cloud-nav → MainActivity.launchExternalApp opens com.diegonmarcos.cloudnav if installed, else downloads + installs ui.external_apps[id=cloud-nav].install_apk_url (Cloud-Nav.apk). icon ic_nav (ic_maps left with libs:maps). For the system Google Maps launcher use action:app://com.google.android.apps.maps from anywhere else.",
+                "id": "maps",
+                "label": "Navigation",
+                "icon": "ic_nav",
+                "target": "extapp:cloud-nav"
+              },
+              {
+                "_doc": "Camera — the fleet's OWN camera (ac_cloud-camera, applicationId cld.camera, our signed build of GrapheneOS Camera), not a third-party one. The owner asked for it 'as last' in this row on 2026-09-10, and LAST HERE IS ARRAY POSITION: GroupedTilesFragment walks group.tiles in declared order and applies no sort of any kind, so appending is what makes it last and reordering this array is the only way to move it. There is no `order` field to set and none is wanted — a second way to express position is a second thing to disagree with the first. target=extapp:cloud-camera → MainActivity.launchExternalApp opens cld.camera if installed, else downloads + installs ui.external_apps[id=cloud-camera].install_apk_url. icon ic_camera is its own drawable rather than ic_photos, which the Gallery tile already carries; Sections.iconResFor falls back to ic_link_tile without complaining when a name resolves to nothing, so a shared or misspelt icon is a silent defect and test-camera-tiles.sh pins the file's existence.",
+                "id": "camera",
+                "label": "Camera",
+                "icon": "ic_camera",
+                "target": "extapp:cloud-camera"
+              },
+              {
+                "_doc": "Canvas — hands off to the standalone Cloud Canvas app (ac_cloud-canvas, com.diegonmarcos.cloudcanvas, #1780): a paint app (Draw) and a music mixer (Play). The owner placed it IMMEDIATELY AFTER Camera in this row; array position is render position (GroupedTilesFragment applies no sort). Opens its own app through ui.external_apps (extapp:cloud-canvas); the glyph ic_canvas is generated from ac_cloud-canvas/build.json::launcher_icon.",
+                "id": "canvas",
+                "label": "Canvas",
+                "icon": "ic_canvas",
+                "target": "extapp:cloud-canvas"
+              },
+              {
+                "_doc": "Keyboard — hands off to the standalone Cloud-Keyboard app (ac_cloud-keyboard, com.diegonmarcos.cloudkeyboard). Same target as the Configs ▸ Keyboard entry: extapp:cloud-keyboard → MainActivity.launchExternalApp opens Cloud-Keyboard's SettingsActivity if installed, else downloads + installs ui.external_apps[id=cloud-keyboard].install_apk_url. The keyboard is a first-class Cloud app like Browser/Wallet/Vault, so it belongs in Tools Primary and not only behind Configs.",
+                "id": "keyboard",
+                "label": "Keyboard",
+                "icon": "ic_keyboard",
+                "target": "extapp:cloud-keyboard"
+              },
+              {
+                "_doc": "Calc — hands off to the standalone Cloud Calc app (ac_cloud-calc, com.diegonmarcos.cloudcalc, read from ITS android.application_id and app/build.gradle namespace). #772: the owner asked for it IMMEDIATELY BEFORE Writer in this row, and GroupedTilesFragment walks group.tiles in declared order with no sort, so array position is that placement and test-calc-tile.sh pins it as 'the tile right after calc is writer'. Same shape as Writer: target=extapp:cloud-calc → launchExternalApp opens the package if installed, else installs ui.external_apps[id=cloud-calc].install_apk_url (ABI-resolved through the fleet assets map). icon ic_calc is Cloud Calc's own launcher foreground, cropped to its art like ic_writer.",
+                "id": "calc",
+                "label": "Calc",
+                "icon": "ic_calc",
+                "target": "extapp:cloud-calc"
+              }
+            ]
+          },
+          {
+            "title": "Communication",
+            "glyph": "○",
+            "tiles": [
+              {
+                "id": "mail",
+                "label": "Mail",
+                "icon": "ic_mail",
+                "target": "extapp:cloud-mail"
+              },
+              {
+                "id": "mattermost",
+                "label": "Chat",
+                "icon": "ic_p_chat_mattermost",
+                "target": "extapp:cloud-chat"
+              },
+              {
+                "id": "element",
+                "label": "Messenger",
+                "icon": "ic_p_chat_matrix",
+                "target": "extapp:cloud-matrix",
+                "_doc": "Opens the standalone Cloud-Matrix app (ac_cloud-matrix, com.diegonmarcos.comms.matrix) via extapp:cloud-matrix — installed → launches; absent → install via Configs ▸ Constellation. The Cloud-Comms hub is decommissioned; the matrix fork is now its own constellation app. Replaces the old app://im.vector.app launcher."
+              },
+              {
+                "id": "dialer",
+                "label": "Dialer",
+                "icon": "ic_p_dialer",
+                "target": "extapp:cloud-dialer",
+                "_doc": "Opens the standalone Cloud-Dialer app (ac_cloud-dialer, com.diegonmarcos.comms.dialer, Fossify Phone) via extapp:cloud-dialer — installed → launches; absent → install via Configs ▸ Constellation. Its own constellation app now that the Cloud-Comms hub is decommissioned; same extapp mechanism as Mail / Chat / Messenger above."
+              },
+              {
+                "_doc": "C3-Bot is a BOT, not an AI assistant, and the icon said otherwise. It shared ic_ai_chat with the three genuine AI tiles above it (Chat GPT / Claude / Gemini), so the one tile in this group that opens a Telegram automation read as a fourth chatbot. ic_robot is the glyph the rest of the fleet already uses for automation — Morpheus and the three Dagu tiles in ui.sections[13] carry it. Resolution is Sections.iconResFor's literal getIdentifier(name, \"drawable\", pkg) hit on res/drawable/ic_robot.xml; there is no icon allow-list, and a name that resolves to nothing does NOT fail the build — it silently falls back to ic_link_tile, which is why test-tile-icons-resolve.sh checks every ui icon against the drawable set rather than this one value.",
+                "id": "c3-bot",
+                "label": "C3-Bot",
+                "icon": "ic_robot",
+                "target": "intent://resolve?domain=Cloud_bot_C3_Infra_bot#Intent;scheme=tg;package=org.telegram.messenger;S.browser_fallback_url=https%3A%2F%2Ft.me%2FCloud_bot_C3_Infra_bot;end"
+              },
+              {
+                "_doc": "Opens the standalone Cloud-Contacts app (ac_cloud-contacts, com.diegonmarcos.cloudcontacts, native multi-channel people hub) via extapp:cloud-contacts — installed → launches; absent → install via Configs ▸ Constellation. Replaces the old Google Contacts launcher.",
+                "id": "contacts",
+                "label": "Contacts",
+                "icon": "ic_p_sol_personal",
+                "target": "extapp:cloud-contacts"
+              }
+            ]
+          },
+          {
             "_doc": "#1916 Data: Drive, Browser, Gallery, Notes | Me, Tasks, Vault, Wallet | Office ('|' = single separator tile). Drive, Browser and Wallet MOVED in from Primary; Notes, Tasks, Office, Gallery, Me and Vault keep their tiles and ids. Pinned by test-quickmarks-field-parity.sh and test-group-glyphs-1916.sh.",
             "title": "Data",
             "glyph": "△",
@@ -3155,96 +3243,9 @@
             ]
           },
           {
-            "title": "Communication",
-            "glyph": "○",
-            "tiles": [
-              {
-                "id": "mail",
-                "label": "Mail",
-                "icon": "ic_mail",
-                "target": "extapp:cloud-mail"
-              },
-              {
-                "id": "mattermost",
-                "label": "Chat",
-                "icon": "ic_p_chat_mattermost",
-                "target": "extapp:cloud-chat"
-              },
-              {
-                "id": "element",
-                "label": "Messenger",
-                "icon": "ic_p_chat_matrix",
-                "target": "extapp:cloud-matrix",
-                "_doc": "Opens the standalone Cloud-Matrix app (ac_cloud-matrix, com.diegonmarcos.comms.matrix) via extapp:cloud-matrix — installed → launches; absent → install via Configs ▸ Constellation. The Cloud-Comms hub is decommissioned; the matrix fork is now its own constellation app. Replaces the old app://im.vector.app launcher."
-              },
-              {
-                "id": "dialer",
-                "label": "Dialer",
-                "icon": "ic_p_dialer",
-                "target": "extapp:cloud-dialer",
-                "_doc": "Opens the standalone Cloud-Dialer app (ac_cloud-dialer, com.diegonmarcos.comms.dialer, Fossify Phone) via extapp:cloud-dialer — installed → launches; absent → install via Configs ▸ Constellation. Its own constellation app now that the Cloud-Comms hub is decommissioned; same extapp mechanism as Mail / Chat / Messenger above."
-              },
-              {
-                "_doc": "C3-Bot is a BOT, not an AI assistant, and the icon said otherwise. It shared ic_ai_chat with the three genuine AI tiles above it (Chat GPT / Claude / Gemini), so the one tile in this group that opens a Telegram automation read as a fourth chatbot. ic_robot is the glyph the rest of the fleet already uses for automation — Morpheus and the three Dagu tiles in ui.sections[13] carry it. Resolution is Sections.iconResFor's literal getIdentifier(name, \"drawable\", pkg) hit on res/drawable/ic_robot.xml; there is no icon allow-list, and a name that resolves to nothing does NOT fail the build — it silently falls back to ic_link_tile, which is why test-tile-icons-resolve.sh checks every ui icon against the drawable set rather than this one value.",
-                "id": "c3-bot",
-                "label": "C3-Bot",
-                "icon": "ic_robot",
-                "target": "intent://resolve?domain=Cloud_bot_C3_Infra_bot#Intent;scheme=tg;package=org.telegram.messenger;S.browser_fallback_url=https%3A%2F%2Ft.me%2FCloud_bot_C3_Infra_bot;end"
-              },
-              {
-                "_doc": "Opens the standalone Cloud-Contacts app (ac_cloud-contacts, com.diegonmarcos.cloudcontacts, native multi-channel people hub) via extapp:cloud-contacts — installed → launches; absent → install via Configs ▸ Constellation. Replaces the old Google Contacts launcher.",
-                "id": "contacts",
-                "label": "Contacts",
-                "icon": "ic_p_sol_personal",
-                "target": "extapp:cloud-contacts"
-              }
-            ]
-          },
-          {
-            "_doc": "#1916 Primary: Navigation, Camera, Canvas, Keyboard, Calc (no dividers). Drive, Browser and Wallet MOVED to Data; the two Primary dividers dissolved with them. Glyph is declared data (`glyph`, drawn before the title by GroupedTilesFragment.GroupTitle). Pinned by test-primary-tools-order.sh, test-quickmarks-field-parity.sh and test-group-glyphs-1916.sh.",
-            "title": "Primary",
-            "glyph": "□",
-            "tiles": [
-              {
-                "_doc": "Navigation — hands off to the dedicated Cloud-Nav app (ac_cloud-nav). libs:maps (MapLibre tracker + timeline + MyTrips) was MOVED out of the SuperApp into Cloud-Nav, so this tile no longer routes to an in-app section. target=extapp:cloud-nav → MainActivity.launchExternalApp opens com.diegonmarcos.cloudnav if installed, else downloads + installs ui.external_apps[id=cloud-nav].install_apk_url (Cloud-Nav.apk). icon ic_nav (ic_maps left with libs:maps). For the system Google Maps launcher use action:app://com.google.android.apps.maps from anywhere else.",
-                "id": "maps",
-                "label": "Navigation",
-                "icon": "ic_nav",
-                "target": "extapp:cloud-nav"
-              },
-              {
-                "_doc": "Camera — the fleet's OWN camera (ac_cloud-camera, applicationId cld.camera, our signed build of GrapheneOS Camera), not a third-party one. The owner asked for it 'as last' in this row on 2026-09-10, and LAST HERE IS ARRAY POSITION: GroupedTilesFragment walks group.tiles in declared order and applies no sort of any kind, so appending is what makes it last and reordering this array is the only way to move it. There is no `order` field to set and none is wanted — a second way to express position is a second thing to disagree with the first. target=extapp:cloud-camera → MainActivity.launchExternalApp opens cld.camera if installed, else downloads + installs ui.external_apps[id=cloud-camera].install_apk_url. icon ic_camera is its own drawable rather than ic_photos, which the Gallery tile already carries; Sections.iconResFor falls back to ic_link_tile without complaining when a name resolves to nothing, so a shared or misspelt icon is a silent defect and test-camera-tiles.sh pins the file's existence.",
-                "id": "camera",
-                "label": "Camera",
-                "icon": "ic_camera",
-                "target": "extapp:cloud-camera"
-              },
-              {
-                "_doc": "Canvas — hands off to the standalone Cloud Canvas app (ac_cloud-canvas, com.diegonmarcos.cloudcanvas, #1780): a paint app (Draw) and a music mixer (Play). The owner placed it IMMEDIATELY AFTER Camera in this row; array position is render position (GroupedTilesFragment applies no sort). Opens its own app through ui.external_apps (extapp:cloud-canvas); the glyph ic_canvas is generated from ac_cloud-canvas/build.json::launcher_icon.",
-                "id": "canvas",
-                "label": "Canvas",
-                "icon": "ic_canvas",
-                "target": "extapp:cloud-canvas"
-              },
-              {
-                "_doc": "Keyboard — hands off to the standalone Cloud-Keyboard app (ac_cloud-keyboard, com.diegonmarcos.cloudkeyboard). Same target as the Configs ▸ Keyboard entry: extapp:cloud-keyboard → MainActivity.launchExternalApp opens Cloud-Keyboard's SettingsActivity if installed, else downloads + installs ui.external_apps[id=cloud-keyboard].install_apk_url. The keyboard is a first-class Cloud app like Browser/Wallet/Vault, so it belongs in Tools Primary and not only behind Configs.",
-                "id": "keyboard",
-                "label": "Keyboard",
-                "icon": "ic_keyboard",
-                "target": "extapp:cloud-keyboard"
-              },
-              {
-                "_doc": "Calc — hands off to the standalone Cloud Calc app (ac_cloud-calc, com.diegonmarcos.cloudcalc, read from ITS android.application_id and app/build.gradle namespace). #772: the owner asked for it IMMEDIATELY BEFORE Writer in this row, and GroupedTilesFragment walks group.tiles in declared order with no sort, so array position is that placement and test-calc-tile.sh pins it as 'the tile right after calc is writer'. Same shape as Writer: target=extapp:cloud-calc → launchExternalApp opens the package if installed, else installs ui.external_apps[id=cloud-calc].install_apk_url (ABI-resolved through the fleet assets map). icon ic_calc is Cloud Calc's own launcher foreground, cropped to its art like ic_writer.",
-                "id": "calc",
-                "label": "Calc",
-                "icon": "ic_calc",
-                "target": "extapp:cloud-calc"
-              }
-            ]
-          },
-          {
             "_doc": "#1903 Me row, reading exactly Lnktree | Me-Pers Me-Prof Me-Prj | Me-Invent. Me-Buro Me-LLC (Me-Health became Me-Pers and opens Cloud Me Pers, Experienc. became Me-Prof and opens Prof, Socials became Me-Prj and opens Proj; tile ids unchanged; the Profile tile left the row and stays in Setup, tile configs-profile). Earlier: Me — the personal-administration row, in the owner's order: Me | Me-Health Experiences Tasks | Me-Inventory Me-Buro Me-LLC | Profile ('|' = group separators, like the AGI row). Account moved to the end behind a third rule (#1362, was first since #1167); the Me app leads; each Me-* tile deep-links into the matching Cloud-Me section. MySocials and MyTrips left the row; Me-Study and Me-Achieves became Experiences and RoadMap. Pinned by test-me-account-tile.sh.",
             "title": "Me",
+            "glyph": "△",
             "tiles": [
               {
                 "id": "me",
@@ -3768,6 +3769,162 @@
         ],
         "phone_app_groups": [
         {
+          "_doc_1916": "#1916 Primary quickmarks: Nav, Camera, Canvas, Keyboard, Calc. Drive, Browser and Wallet MOVED to Data (same folders, same packages). Group order: Data, Communication, Primary, Me, Services City, Services Leisure, AGI, Setup, Projects.",
+          "title": "Primary",
+          "_doc_samsung_camera": "com.sec.android.app.camera is a QUICKMARK, which is what the owner asked for on 2026-09-10 and what two earlier attempts missed. Both of them read 'phone/apps/Tools Primary' as the identically-named grouping on the OTHER phone page: ui.phone_sections[prefix='='] 'Tools · Primary', the auto-classified All-apps taxonomy, whose members are ui.phone_folders and which no hand-written list feeds. This list is the curated one, read by SuitePhoneAppsFragment out of BuildConfig.UI_SUITE_PHONE_GROUPS_B64, and it is the only one an owner can add a shortcut to. Nothing is shared between the two, so a package in one says nothing about the other and a test that only asks 'is the string in build.json' cannot tell them apart. THIS IS AN ADDITION, NOT A MOVE: the same package is also a keyword of ui.phone_folders[prod_utils] and stays there, because All-apps classifies everything installed and Quickmarks is a shortlist — an app on both pages is the normal case, exactly as _doc_acode_is_in_two_places already records for Acode. APPENDED because the owner named no position: SuitePhoneAppsFragment maps this array in declared order and chunks it into rows with no sort anywhere, so array position IS render position. It is last of eight rather than last of seven because miDNI landed in this same list first, from a different request; with UI_PHONE_GRID_COLUMNS = 6 that puts the camera in row two, second tile, and moving it is a one-line reorder here.",
+          "_doc_subtypes_1756": "#1756 Phone quickmarks hold ONE tile per All Apps subtype (subtype = the Cloud app the phone app competes with), in the All Apps subtype order of the group's section. The tile is the app already in the previous quickmarks for that role, else the most obvious installed app; a subtype with no phone app is skipped. When two of the previous quickmark apps fall in one subtype both are kept (Mail, Chat, Messenger, Drive, Notes, AI, Terminal, Code, Store, News). The Projects group is unchanged. The full per-subtype lists live in All Apps. Pinned by test-quickmarks-categories-1756.sh.",
+          "packages": [],
+          "folders": [
+            {
+              "label": "Nav",
+              "icon_pkg": "com.diegonmarcos.cloudnav",
+              "packages": [
+                {
+                  "pkg": "com.google.android.apps.maps",
+                  "label": "Maps"
+                },
+                {
+                  "pkg": "app.organicmaps",
+                  "label": "Organic Maps"
+                }
+              ],
+              "icon_res": "ic_nav"
+            },
+            {
+              "label": "Camera",
+              "icon_pkg": "cld.camera",
+              "packages": [
+                {
+                  "pkg": "com.sec.android.app.camera",
+                  "label": "Camera"
+                }
+              ],
+              "icon_res": "ic_camera"
+            },
+            {
+              "label": "Canvas",
+              "icon_pkg": "com.diegonmarcos.cloudcanvas",
+              "packages": [
+                {
+                  "pkg": "com.adsk.sketchbook",
+                  "label": "SketchBook"
+                },
+                {
+                  "pkg": "com.imageline.FLM",
+                  "label": "FL Studio Mobile"
+                }
+              ],
+              "icon_res": "ic_canvas"
+            },
+            {
+              "label": "Keyboard",
+              "icon_pkg": "com.diegonmarcos.cloudkeyboard",
+              "packages": [
+                {
+                  "pkg": "com.google.android.inputmethod.latin",
+                  "label": "Gboard"
+                }
+              ],
+              "icon_res": "ic_keyboard"
+            },
+            {
+              "label": "Calc",
+              "icon_pkg": "com.diegonmarcos.cloudcalc",
+              "packages": [
+                {
+                  "pkg": "com.sec.android.app.popupcalculator",
+                  "label": "Calculator"
+                },
+                {
+                  "pkg": "com.sec.android.app.clockpackage",
+                  "label": "Clock"
+                },
+                {
+                  "pkg": "com.google.android.apps.translate",
+                  "label": "Translate"
+                }
+              ],
+              "icon_res": "ic_calc"
+            }
+          ]
+        },
+        {
+          "title": "Communication",
+          "_doc_mail_client": "app.sterna is Sterna Mail (codeberg.org/emon/sterna-mail), the UPSTREAM build — deliberately the upstream and not our cloud-mail rebrand, so this row shows the vanilla client alongside the third-party inboxes. It replaced eu.faircode.email (FairMail) and rs.ltt.android (ltt.rs), both dropped 2026-09-09. It is also what the owner's 'Sternal Mail' means: STERNA, not Stalwart. The fleet does run a Stalwart mail STORE (mail-stalwart.diegonmarcos.com, oci-mail) and that is a server with no Android client of its own, so the only Android app the phrase can name is the one already sitting in this group.",
+          "_doc_whatsapp": "'Whatsapp Bussines' is read as the SINGLE app WhatsApp Business (com.whatsapp.w4b), not as WhatsApp plus WhatsApp Business. w4b was already the only WhatsApp id in this group before this edit, consumer com.whatsapp is not declared anywhere in this file, and the owner's other visible rows are one app each.",
+          "_doc_dropped": "org.fossify.phone (Fossify Phone) was a visible tile here and is not in the owner's list, so it is gone from this group. It keeps its All-apps classification in ui.phone_folders[prod_phone] — dropping a Quickmark never unclassifies an app.",
+          "packages": [],
+          "folders": [
+            {
+              "label": "Mail",
+              "icon_pkg": "com.diegonmarcos.comms.mail",
+              "packages": [
+                {
+                  "pkg": "com.google.android.gm",
+                  "label": "Gmail"
+                }
+              ],
+              "icon_res": "ic_mail"
+            },
+            {
+              "label": "Chat",
+              "icon_pkg": "com.diegonmarcos.comms.chat",
+              "packages": [
+                {
+                  "pkg": "com.Slack",
+                  "label": "Slack"
+                }
+              ],
+              "icon_res": "ic_p_chat_mattermost"
+            },
+            {
+              "label": "Messenger",
+              "icon_pkg": "com.diegonmarcos.comms.matrix",
+              "packages": [
+                {
+                  "pkg": "com.whatsapp.w4b",
+                  "label": "WhatsApp Business"
+                },
+                {
+                  "pkg": "org.telegram.messenger",
+                  "label": "Telegram"
+                },
+                {
+                  "pkg": "org.thoughtcrime.securesms",
+                  "label": "Signal"
+                },
+                {
+                  "pkg": "com.google.android.apps.tachyon",
+                  "label": "Google Meet"
+                }
+              ],
+              "icon_res": "ic_p_chat_matrix"
+            },
+            {
+              "label": "Dialer",
+              "icon_pkg": "com.diegonmarcos.comms.dialer",
+              "packages": [
+                {
+                  "pkg": "com.samsung.android.dialer",
+                  "label": "Samsung Phone"
+                }
+              ],
+              "icon_res": "ic_p_dialer"
+            },
+            {
+              "label": "Contacts",
+              "icon_pkg": "com.diegonmarcos.cloudcontacts",
+              "packages": [
+                {
+                  "pkg": "com.google.android.contacts",
+                  "label": "Google Contacts"
+                }
+              ],
+              "icon_res": "ic_p_sol_personal"
+            }
+          ]
+        },
+        {
           "_doc_1916": "#1916 Data quickmarks: Drive, Browser, Gallery, Notes, Agenda (Tasks), Vault, Wallet, Office. Drive, Browser and Wallet MOVED in from Primary; the Me tile is a Cloud tile with no phone folder.",
           "title": "Data",
           "_doc_readings": "Three of the owner's names needed resolving to a package. 'MS Notes' is Microsoft OneNote (com.microsoft.office.onenote, already classified in phone_folders[prod_docs]). 'Xplorer' is X-plore File Manager (com.lonelycatgames.Xplore, already in phone_folders[prod_storage]). 'Google Password' RESOLVES TO NO PACKAGE AT ALL and is recorded in sections[id=phone].quickmark_never_installable — see _doc_google_password below.",
@@ -3902,162 +4059,6 @@
                 }
               ],
               "icon_res": "ic_sheets"
-            }
-          ]
-        },
-        {
-          "title": "Communication",
-          "_doc_mail_client": "app.sterna is Sterna Mail (codeberg.org/emon/sterna-mail), the UPSTREAM build — deliberately the upstream and not our cloud-mail rebrand, so this row shows the vanilla client alongside the third-party inboxes. It replaced eu.faircode.email (FairMail) and rs.ltt.android (ltt.rs), both dropped 2026-09-09. It is also what the owner's 'Sternal Mail' means: STERNA, not Stalwart. The fleet does run a Stalwart mail STORE (mail-stalwart.diegonmarcos.com, oci-mail) and that is a server with no Android client of its own, so the only Android app the phrase can name is the one already sitting in this group.",
-          "_doc_whatsapp": "'Whatsapp Bussines' is read as the SINGLE app WhatsApp Business (com.whatsapp.w4b), not as WhatsApp plus WhatsApp Business. w4b was already the only WhatsApp id in this group before this edit, consumer com.whatsapp is not declared anywhere in this file, and the owner's other visible rows are one app each.",
-          "_doc_dropped": "org.fossify.phone (Fossify Phone) was a visible tile here and is not in the owner's list, so it is gone from this group. It keeps its All-apps classification in ui.phone_folders[prod_phone] — dropping a Quickmark never unclassifies an app.",
-          "packages": [],
-          "folders": [
-            {
-              "label": "Mail",
-              "icon_pkg": "com.diegonmarcos.comms.mail",
-              "packages": [
-                {
-                  "pkg": "com.google.android.gm",
-                  "label": "Gmail"
-                }
-              ],
-              "icon_res": "ic_mail"
-            },
-            {
-              "label": "Chat",
-              "icon_pkg": "com.diegonmarcos.comms.chat",
-              "packages": [
-                {
-                  "pkg": "com.Slack",
-                  "label": "Slack"
-                }
-              ],
-              "icon_res": "ic_p_chat_mattermost"
-            },
-            {
-              "label": "Messenger",
-              "icon_pkg": "com.diegonmarcos.comms.matrix",
-              "packages": [
-                {
-                  "pkg": "com.whatsapp.w4b",
-                  "label": "WhatsApp Business"
-                },
-                {
-                  "pkg": "org.telegram.messenger",
-                  "label": "Telegram"
-                },
-                {
-                  "pkg": "org.thoughtcrime.securesms",
-                  "label": "Signal"
-                },
-                {
-                  "pkg": "com.google.android.apps.tachyon",
-                  "label": "Google Meet"
-                }
-              ],
-              "icon_res": "ic_p_chat_matrix"
-            },
-            {
-              "label": "Dialer",
-              "icon_pkg": "com.diegonmarcos.comms.dialer",
-              "packages": [
-                {
-                  "pkg": "com.samsung.android.dialer",
-                  "label": "Samsung Phone"
-                }
-              ],
-              "icon_res": "ic_p_dialer"
-            },
-            {
-              "label": "Contacts",
-              "icon_pkg": "com.diegonmarcos.cloudcontacts",
-              "packages": [
-                {
-                  "pkg": "com.google.android.contacts",
-                  "label": "Google Contacts"
-                }
-              ],
-              "icon_res": "ic_p_sol_personal"
-            }
-          ]
-        },
-        {
-          "_doc_1916": "#1916 Primary quickmarks: Nav, Camera, Canvas, Keyboard, Calc. Drive, Browser and Wallet MOVED to Data (same folders, same packages). Group order: Data, Communication, Primary, Me, Services City, Services Leisure, AGI, Setup, Projects.",
-          "title": "Primary",
-          "_doc_samsung_camera": "com.sec.android.app.camera is a QUICKMARK, which is what the owner asked for on 2026-09-10 and what two earlier attempts missed. Both of them read 'phone/apps/Tools Primary' as the identically-named grouping on the OTHER phone page: ui.phone_sections[prefix='='] 'Tools · Primary', the auto-classified All-apps taxonomy, whose members are ui.phone_folders and which no hand-written list feeds. This list is the curated one, read by SuitePhoneAppsFragment out of BuildConfig.UI_SUITE_PHONE_GROUPS_B64, and it is the only one an owner can add a shortcut to. Nothing is shared between the two, so a package in one says nothing about the other and a test that only asks 'is the string in build.json' cannot tell them apart. THIS IS AN ADDITION, NOT A MOVE: the same package is also a keyword of ui.phone_folders[prod_utils] and stays there, because All-apps classifies everything installed and Quickmarks is a shortlist — an app on both pages is the normal case, exactly as _doc_acode_is_in_two_places already records for Acode. APPENDED because the owner named no position: SuitePhoneAppsFragment maps this array in declared order and chunks it into rows with no sort anywhere, so array position IS render position. It is last of eight rather than last of seven because miDNI landed in this same list first, from a different request; with UI_PHONE_GRID_COLUMNS = 6 that puts the camera in row two, second tile, and moving it is a one-line reorder here.",
-          "_doc_subtypes_1756": "#1756 Phone quickmarks hold ONE tile per All Apps subtype (subtype = the Cloud app the phone app competes with), in the All Apps subtype order of the group's section. The tile is the app already in the previous quickmarks for that role, else the most obvious installed app; a subtype with no phone app is skipped. When two of the previous quickmark apps fall in one subtype both are kept (Mail, Chat, Messenger, Drive, Notes, AI, Terminal, Code, Store, News). The Projects group is unchanged. The full per-subtype lists live in All Apps. Pinned by test-quickmarks-categories-1756.sh.",
-          "packages": [],
-          "folders": [
-            {
-              "label": "Nav",
-              "icon_pkg": "com.diegonmarcos.cloudnav",
-              "packages": [
-                {
-                  "pkg": "com.google.android.apps.maps",
-                  "label": "Maps"
-                },
-                {
-                  "pkg": "app.organicmaps",
-                  "label": "Organic Maps"
-                }
-              ],
-              "icon_res": "ic_nav"
-            },
-            {
-              "label": "Camera",
-              "icon_pkg": "cld.camera",
-              "packages": [
-                {
-                  "pkg": "com.sec.android.app.camera",
-                  "label": "Camera"
-                }
-              ],
-              "icon_res": "ic_camera"
-            },
-            {
-              "label": "Canvas",
-              "icon_pkg": "com.diegonmarcos.cloudcanvas",
-              "packages": [
-                {
-                  "pkg": "com.adsk.sketchbook",
-                  "label": "SketchBook"
-                },
-                {
-                  "pkg": "com.imageline.FLM",
-                  "label": "FL Studio Mobile"
-                }
-              ],
-              "icon_res": "ic_canvas"
-            },
-            {
-              "label": "Keyboard",
-              "icon_pkg": "com.diegonmarcos.cloudkeyboard",
-              "packages": [
-                {
-                  "pkg": "com.google.android.inputmethod.latin",
-                  "label": "Gboard"
-                }
-              ],
-              "icon_res": "ic_keyboard"
-            },
-            {
-              "label": "Calc",
-              "icon_pkg": "com.diegonmarcos.cloudcalc",
-              "packages": [
-                {
-                  "pkg": "com.sec.android.app.popupcalculator",
-                  "label": "Calculator"
-                },
-                {
-                  "pkg": "com.sec.android.app.clockpackage",
-                  "label": "Clock"
-                },
-                {
-                  "pkg": "com.google.android.apps.translate",
-                  "label": "Translate"
-                }
-              ],
-              "icon_res": "ic_calc"
             }
           ]
         },
@@ -7337,138 +7338,77 @@
     "_doc_phone_folders": "Every launchable app is routed to exactly one folder by PhoneAppClassifier: folders are walked in `order`, and the first keyword that matches wins, so a lower order beats a higher one. Keyword forms: (1) `pkg:com.foo.bar` exact packageName; (2) `pkg^com.foo.` packageName.startsWith; (3) `lbl:name` exact case-insensitive label; (4) `lbl~frag` label contains (min 3 chars); (5) a bare string matches anywhere in \"packageName label\" (min 4 chars) — sweeping and collision-prone, so it is used sparingly. Every app installed at the 2026-09-07 rebuild is pinned with an exact `pkg:` rule, which is why the folder lists read as inventories; `pkg^` rules only cover families that will keep growing (our own com.diegonmarcos.cloudlib.*, com.termux.*, VPN vendors). An app no keyword claimed then goes through the METADATA pass before any sink: `match_metadata`, declared beside `match_keywords`, routes on what Android itself publishes about the package, so a newly installed app is placed without a keyword edit. Three rule forms: `cat:game` matches ApplicationInfo.category by the platform constant name lowercased (game, audio, video, image, social, news, maps, productivity, accessibility); `intent:android.intent.category.APP_EMAIL` matches a launcher intent category the package resolves for, i.e. a role the platform grants it; `perm:android.permission.BODY_SENSORS` matches a permission declared in its manifest. Precedence inside the pass is by SIGNAL STRENGTH, not by `order` — category (the app states its own genre) beats intent (the platform grants it a role) beats permission (we infer from what it asks for), and `order` only breaks ties within one signal; otherwise a storage permission on a game would beat cat:game purely because Storage sorts earlier. Keywords always win over metadata: the keyword lists are curated and correct, metadata only keeps an un-curated app off the sink pile. Two sinks, neither with any rules: `others` (order 990, sink=true) catches everything both passes missed and is the triage queue — an app landing there means it needs a rule; `misc` (order 980) is the manual exile, give it explicit keywords to push something there on purpose. Neither carries a section prefix, so both render last under the Other subhead. The `match_keywords` lists cover THIRD-PARTY packages only: a keyword for one of our own constellation apps is derived at load time from ui.external_apps[].folder and must not be written here as well, or the identity would have two copies again and they could disagree. Manufacturer (Google / Samsung / non-Play-Store) is metadata for Smart Folders (see phone_smart_folders below) — NOT a primary grouping criterion. Order is a three-digit string, one hundred-block per section in phone_sections order, folders alphabetical by label inside the block (110, 120, ...); it drives both render order and match precedence, so a new folder takes the next free number in its block. #1756 REORGANISED: folders were re-blocked per the new sections in hundred-blocks (Primary 1xx, Communication 2xx, Data 3xx, Me 4xx, Services 5xx, AGI 6xx, Projects 7xx, Setup 8xx). Merges: svc_travel into svc_mobility (label Mobility & Travel); svc_jobs is Jobs & Business; svc_home stays Home & Housing and moved to Me, the listing apps (ImmoScout, WG-Gesucht) moved to the new svc_realestate (Services); svc_gov, svc_telecom, svc_health moved to Me. New folders: svc_realestate, svc_search, svc_kgstore (claimed by their Cloud apps through ui.external_apps[].folder) and proj_lnktree. Misfiled and uncategorised packages are pinned with exact pkg: rules (see test-quickmarks-categories-1756.sh and test/data/previous-layout-1756.json for the previous layout this was proven against). #1902 RE-BLOCKED: one hundred-block per section in phone_sections order, nine sections (Primary 1xx, Communication 2xx, Data 3xx, Me 4xx, Projects 5xx, Services · City 6xx, Services · Leisure 7xx, AGI 8xx, Setup 9xx; the sinks misc 980 and others 990 come after; test-phone-taxonomy-prefixes.sh T7 pins it). Social (media_social) moved from Communication to Leisure, Search and KG Store to the AGI tail. The Services · City (+) and Services · Leisure (%) folders and the AGI tail (*Search, *KG Store) follow ui.services_order (orders 610..645 City, 710..730 Leisure, then Search 840 and KG Store 850, reassigned from it at build time); svc_mobility is City Mobility, svc_transports and svc_hotels took the intercity and accommodation entries, svc_healthcare is the new +Health; hlth_outdoor merged into svc_health (~Health Trackers).",
     "phone_folders": [
       {
-        "id": "prod_storage",
+        "id": "prod_maps",
         "order": "110",
-        "label": ".Drive",
+        "label": "=Nav",
         "match_keywords": [
-          "pkg:com.google.android.apps.docs",
-          "pkg:com.google.android.apps.subscriptions.red",
-          "pkg:com.microsoft.skydrive",
-          "pkg:com.alphainventor.filemanager",
-          "pkg:com.amaze.filemanager",
-          "pkg:com.app.applistbackup",
-          "pkg:com.ghisler.android.TotalCommander",
-          "pkg:com.ghostsq.commander",
-          "pkg:com.lonelycatgames.Xplore",
-          "pkg:com.mobisystems.fileman",
-          "pkg:com.rarlab.rar",
-          "pkg:com.sec.android.app.myfiles",
-          "pkg:com.smlnskgmail.jaman.hashchecker",
-          "pkg:com.viscouspot.gitsync",
-          "pkg:dk.tacit.android.foldersync.lite",
-          "pkg:me.zhanghai.android.files",
-          "pkg:pl.solidexplorer2",
-          "pkg:me.proton.android.drive",
-          "pkg:com.google.android.apps.nbu.files"
+          "pkg:aplicacion.tiempo",
+          "pkg:com.google.android.apps.maps",
+          "pkg:app.organicmaps",
+          "pkg:com.google.earth",
+          "pkg:com.mapswithme.maps.pro",
+          "pkg:cz.ackee.ventusky"
         ],
         "match_metadata": [
-          "intent:android.intent.category.APP_FILES",
-          "perm:android.permission.MANAGE_EXTERNAL_STORAGE"
+          "cat:maps",
+          "intent:android.intent.category.APP_MAPS",
+          "intent:android.intent.category.APP_WEATHER"
         ]
       },
       {
-        "id": "prod_web",
+        "id": "prod_camera",
         "order": "120",
-        "label": ".Browser",
+        "label": "=Camera",
         "match_keywords": [
-          "pkg:com.android.chrome",
-          "pkg:com.brave.browser",
-          "pkg:com.duckduckgo.mobile.android",
-          "pkg:io.raindrop.raindropio"
-        ],
-        "match_metadata": [
-          "intent:android.intent.category.APP_BROWSER"
+          "pkg:com.sec.android.app.camera",
+          "pkg:pl.mobimax.cameraopus"
         ]
       },
       {
-        "id": "data_gallery",
+        "id": "prod_canvas",
         "order": "130",
-        "label": ".Gallery",
+        "label": "=Canvas",
         "match_keywords": [
-          "pkg:com.google.android.apps.photos",
-          "pkg:com.sec.android.gallery3d",
-          "pkg:com.musicvideo.photoeditor.squarefit"
-        ],
-        "match_metadata": [
-          "cat:image",
-          "intent:android.intent.category.APP_GALLERY"
+          "pkg:com.adsk.sketchbook",
+          "pkg:com.imageline.FLM"
         ]
       },
       {
-        "id": "prod_docs",
+        "id": "sys_keyboards",
         "order": "140",
-        "label": ".Notes",
+        "label": "=Keyboard",
         "match_keywords": [
-          "pkg:com.adeeteya.markdown_editor",
-          "pkg:com.google.android.keep",
-          "pkg:com.journable.app",
-          "pkg:com.microsoft.lists.public",
-          "pkg:com.microsoft.office.onenote",
-          "pkg:com.samsung.android.app.notes",
-          "pkg:jp.sblo.pandora.jota.plus",
-          "pkg:md.obsidian",
-          "pkg:org.chromium.webapk.a64d263d6f7d935c4_v2",
-          "pkg:app.affine.pro"
+          "pkg:ch.icoaching.typewise",
+          "pkg:com.gingersoftware.android.keyboard",
+          "pkg:com.google.android.inputmethod.latin",
+          "pkg:com.grammarly.android.keyboard",
+          "pkg:juloo.keyboard2"
         ]
       },
       {
-        "id": "prod_plan",
+        "id": "prod_calc",
         "order": "150",
-        "label": ".Agenda",
+        "label": "=Calc",
         "match_keywords": [
-          "pkg:co.mangotechnologies.clickup",
-          "pkg:com.gianlu.timeless",
-          "pkg:com.google.android.apps.tasks",
-          "pkg:com.google.android.calendar",
-          "pkg:com.microsoft.todos",
-          "pkg:com.samsung.android.app.reminder",
-          "pkg:com.samsung.android.calendar",
-          "pkg:com.toggl.giskard",
-          "pkg:com.trello",
-          "pkg:me.clockify.android",
-          "pkg:todolist.scheduleplanner.dailyplanner.todo.reminders"
+          "pkg:com.google.android.calculator",
+          "pkg:com.sec.android.app.popupcalculator"
         ],
         "match_metadata": [
-          "intent:android.intent.category.APP_CALENDAR"
+          "intent:android.intent.category.APP_CALCULATOR"
         ]
       },
       {
-        "id": "data_vault",
+        "id": "prod_utils",
         "order": "160",
-        "label": ".Vault",
+        "label": "=Utilities",
         "match_keywords": [
-          "pkg:com.samsung.android.samsungpass",
-          "pkg:com.x8bit.bitwarden",
-          "pkg:com.beemdevelopment.aegis",
-          "pkg:com.azure.authenticator",
-          "pkg:com.google.android.apps.authenticator2",
-          "pkg:com.google.android.apps.credentialmanager",
-          "pkg:com.samsung.knox.securefolder",
-          "pkg^com.bitwarden.",
-          "pkg^com.kunzisoft.keepass"
-        ]
-      },
-      {
-        "id": "prod_wallet",
-        "order": "170",
-        "label": ".Wallet",
-        "match_keywords": [
-          "pkg:com.google.android.apps.walletnfcrel"
-        ]
-      },
-      {
-        "id": "prod_office",
-        "order": "180",
-        "label": ".Office",
-        "match_keywords": [
-          "pkg:com.collabora.libreoffice",
-          "pkg:com.google.android.apps.docs.editors.docs",
-          "pkg:com.google.android.apps.docs.editors.sheets",
-          "pkg:com.google.android.apps.docs.editors.slides",
-          "pkg:com.adobe.reader"
-        ],
-        "match_metadata": [
-          "cat:productivity"
+          "pkg:com.diotek.sec.lookup.dictionary",
+          "pkg:com.google.android.apps.translate",
+          "pkg:com.google.audio.hearing.visualization.accessibility.scribe",
+          "pkg:com.persapps.multitimer",
+          "pkg:com.samsung.android.ardrawing",
+          "pkg:com.sec.android.app.clockpackage",
+          "pkg:com.sec.android.app.voicenote"
         ]
       },
       {
@@ -7549,77 +7489,138 @@
         ]
       },
       {
-        "id": "prod_maps",
+        "id": "prod_storage",
         "order": "310",
-        "label": "=Nav",
+        "label": ".Drive",
         "match_keywords": [
-          "pkg:aplicacion.tiempo",
-          "pkg:com.google.android.apps.maps",
-          "pkg:app.organicmaps",
-          "pkg:com.google.earth",
-          "pkg:com.mapswithme.maps.pro",
-          "pkg:cz.ackee.ventusky"
+          "pkg:com.google.android.apps.docs",
+          "pkg:com.google.android.apps.subscriptions.red",
+          "pkg:com.microsoft.skydrive",
+          "pkg:com.alphainventor.filemanager",
+          "pkg:com.amaze.filemanager",
+          "pkg:com.app.applistbackup",
+          "pkg:com.ghisler.android.TotalCommander",
+          "pkg:com.ghostsq.commander",
+          "pkg:com.lonelycatgames.Xplore",
+          "pkg:com.mobisystems.fileman",
+          "pkg:com.rarlab.rar",
+          "pkg:com.sec.android.app.myfiles",
+          "pkg:com.smlnskgmail.jaman.hashchecker",
+          "pkg:com.viscouspot.gitsync",
+          "pkg:dk.tacit.android.foldersync.lite",
+          "pkg:me.zhanghai.android.files",
+          "pkg:pl.solidexplorer2",
+          "pkg:me.proton.android.drive",
+          "pkg:com.google.android.apps.nbu.files"
         ],
         "match_metadata": [
-          "cat:maps",
-          "intent:android.intent.category.APP_MAPS",
-          "intent:android.intent.category.APP_WEATHER"
+          "intent:android.intent.category.APP_FILES",
+          "perm:android.permission.MANAGE_EXTERNAL_STORAGE"
         ]
       },
       {
-        "id": "prod_camera",
+        "id": "prod_web",
         "order": "320",
-        "label": "=Camera",
+        "label": ".Browser",
         "match_keywords": [
-          "pkg:com.sec.android.app.camera",
-          "pkg:pl.mobimax.cameraopus"
-        ]
-      },
-      {
-        "id": "prod_canvas",
-        "order": "330",
-        "label": "=Canvas",
-        "match_keywords": [
-          "pkg:com.adsk.sketchbook",
-          "pkg:com.imageline.FLM"
-        ]
-      },
-      {
-        "id": "sys_keyboards",
-        "order": "340",
-        "label": "=Keyboard",
-        "match_keywords": [
-          "pkg:ch.icoaching.typewise",
-          "pkg:com.gingersoftware.android.keyboard",
-          "pkg:com.google.android.inputmethod.latin",
-          "pkg:com.grammarly.android.keyboard",
-          "pkg:juloo.keyboard2"
-        ]
-      },
-      {
-        "id": "prod_calc",
-        "order": "350",
-        "label": "=Calc",
-        "match_keywords": [
-          "pkg:com.google.android.calculator",
-          "pkg:com.sec.android.app.popupcalculator"
+          "pkg:com.android.chrome",
+          "pkg:com.brave.browser",
+          "pkg:com.duckduckgo.mobile.android",
+          "pkg:io.raindrop.raindropio"
         ],
         "match_metadata": [
-          "intent:android.intent.category.APP_CALCULATOR"
+          "intent:android.intent.category.APP_BROWSER"
         ]
       },
       {
-        "id": "prod_utils",
-        "order": "360",
-        "label": "=Utilities",
+        "id": "data_gallery",
+        "order": "330",
+        "label": ".Gallery",
         "match_keywords": [
-          "pkg:com.diotek.sec.lookup.dictionary",
-          "pkg:com.google.android.apps.translate",
-          "pkg:com.google.audio.hearing.visualization.accessibility.scribe",
-          "pkg:com.persapps.multitimer",
-          "pkg:com.samsung.android.ardrawing",
-          "pkg:com.sec.android.app.clockpackage",
-          "pkg:com.sec.android.app.voicenote"
+          "pkg:com.google.android.apps.photos",
+          "pkg:com.sec.android.gallery3d",
+          "pkg:com.musicvideo.photoeditor.squarefit"
+        ],
+        "match_metadata": [
+          "cat:image",
+          "intent:android.intent.category.APP_GALLERY"
+        ]
+      },
+      {
+        "id": "prod_docs",
+        "order": "340",
+        "label": ".Notes",
+        "match_keywords": [
+          "pkg:com.adeeteya.markdown_editor",
+          "pkg:com.google.android.keep",
+          "pkg:com.journable.app",
+          "pkg:com.microsoft.lists.public",
+          "pkg:com.microsoft.office.onenote",
+          "pkg:com.samsung.android.app.notes",
+          "pkg:jp.sblo.pandora.jota.plus",
+          "pkg:md.obsidian",
+          "pkg:org.chromium.webapk.a64d263d6f7d935c4_v2",
+          "pkg:app.affine.pro"
+        ]
+      },
+      {
+        "id": "prod_plan",
+        "order": "350",
+        "label": ".Agenda",
+        "match_keywords": [
+          "pkg:co.mangotechnologies.clickup",
+          "pkg:com.gianlu.timeless",
+          "pkg:com.google.android.apps.tasks",
+          "pkg:com.google.android.calendar",
+          "pkg:com.microsoft.todos",
+          "pkg:com.samsung.android.app.reminder",
+          "pkg:com.samsung.android.calendar",
+          "pkg:com.toggl.giskard",
+          "pkg:com.trello",
+          "pkg:me.clockify.android",
+          "pkg:todolist.scheduleplanner.dailyplanner.todo.reminders"
+        ],
+        "match_metadata": [
+          "intent:android.intent.category.APP_CALENDAR"
+        ]
+      },
+      {
+        "id": "data_vault",
+        "order": "360",
+        "label": ".Vault",
+        "match_keywords": [
+          "pkg:com.samsung.android.samsungpass",
+          "pkg:com.x8bit.bitwarden",
+          "pkg:com.beemdevelopment.aegis",
+          "pkg:com.azure.authenticator",
+          "pkg:com.google.android.apps.authenticator2",
+          "pkg:com.google.android.apps.credentialmanager",
+          "pkg:com.samsung.knox.securefolder",
+          "pkg^com.bitwarden.",
+          "pkg^com.kunzisoft.keepass"
+        ]
+      },
+      {
+        "id": "prod_wallet",
+        "order": "370",
+        "label": ".Wallet",
+        "match_keywords": [
+          "pkg:com.google.android.apps.walletnfcrel"
+        ]
+      },
+      {
+        "id": "prod_office",
+        "order": "380",
+        "label": ".Office",
+        "match_keywords": [
+          "pkg:com.collabora.libreoffice",
+          "pkg:com.google.android.apps.docs.editors.docs",
+          "pkg:com.google.android.apps.docs.editors.sheets",
+          "pkg:com.google.android.apps.docs.editors.slides",
+          "pkg:com.adobe.reader"
+        ],
+        "match_metadata": [
+          "cat:productivity"
         ]
       },
       {
@@ -8187,16 +8188,16 @@
     "_doc_phone_sections": "Top-level section headers in the Home Apps/Phone tab and Cloud apps listing, ONE category system shared with the Quickmarks groups (#1756). Folders are bucketed under a section by their label's first character: Tools · Primary (=), Tools · Communication (@), Tools · Data (.), Tools · Me (~), Projects (#), Services · City (+), Services · Leisure (%), AGI (*), Setup (_). Order = render order = the Quickmarks group order Primary, Communication, Data, Me, Projects, Services · City, Services · Leisure, AGI, Setup. #1902: Services is split in two sections, City and Leisure, and Social (media_social) moved from Tools · Communication to Services · Leisure; Search and KG Store ended AGI (labels *Search, *KG Store, ids unchanged). A folder whose label starts with none of those prefixes belongs to no section and renders last (the Others and Misc sinks). The split is Service vs Tool: a SERVICE is a client for one external provider you hold an account, contract or booking with (Search, Events, Shopping, Mobility & Travel, Jobs & Business, Real Estate, Money, KG Store, Games). DECISIONS: Games (media_games, was under Me) moved to Services, every app in it stays; Money stays in Services (one folder, no duplicate in Me): a bank or broker app is a client of one provider you hold an account with, and the owner listed Money under Services; Real Estate (housing SEARCH: ImmoScout, WG-Gesucht) stays in Services while Home & Housing (building access, neighbours, self-storage: the paperwork side) goes to Me; a TOOL operates on your own data or device. Tools · Primary: Maps & Weather, Utilities, Web. Tools · Communication: Chat, Mail, Phone & Contacts, Social, News & Reading. Tools · Data: Calendar & Tasks, Docs & Notes, Storage. Tools · Me: Gov & ID, Telecom, Health, Home & Housing (the Buro paperwork: ids, carrier accounts, health admin and trackers, access/neighbours/storage), Outdoor & Sport, Nutrition, Learning, i.e. everything personal. Every section is a set of subtype folders; no app sits loose outside a folder. AGI: AI and Terminals. Projects: Lnktree, our four project apps (Omniverse, FinTerm, CAD, BioMed). Setup absorbs the former System section (Dev, Diagnostics, Keyboards, Network, Security, Settings, Stores). Retired prefixes: '-' Buro and '>' Media and '*' Health ('*' is now AGI); the former Services · Others '+' is now Services. Folder ids are stable keys and did not change when the labels did, except svc_travel, which merged into svc_mobility (Mobility & Travel). Empty sections are silently skipped. PROJECTS IS A SECTION HERE since #1756: the earlier ban (2026-09-10) was about a Projects section holding a folder named Projects; the section now holds the Lnktree folder, and the Projects quickmark group is unchanged. #1916 ORDER: Data, Communication, Primary, Me, Services · City, Services · Leisure, AGI, Setup, Projects (Projects moved after Setup); Data = Drive, Browser, Gallery, Notes, Agenda, Vault, Wallet, Office and Primary = Nav, Camera, Canvas, Keyboard, Calc, Utilities (Browser and Wallet changed prefix = to . with ids prod_web and prod_wallet unchanged); folder orders are re-blocked to the new section positions (Data 1xx, Communication 2xx, Primary 3xx, Me 4xx, City 5xx, Leisure 6xx, AGI 7xx, Setup 8xx, Projects 9xx; sinks 980/990).",
     "phone_sections": [
       {
-        "title": "Tools · Data",
-        "prefix": "."
+        "title": "Tools · Primary",
+        "prefix": "="
       },
       {
         "title": "Tools · Communication",
         "prefix": "@"
       },
       {
-        "title": "Tools · Primary",
-        "prefix": "="
+        "title": "Tools · Data",
+        "prefix": "."
       },
       {
         "title": "Tools · Me",

@@ -45,7 +45,7 @@ class FolderCoverageTest {
         val folders = FolderTables.parseFolders(dataset("data/fleet/launcher-folders/cloud.json"))
         val sections = folders.map { it.section }.distinct()
         val expected = listOf(
-            "Data", "Communication", "Primary", "Me",
+            "Primary", "Communication", "Data", "Me",  // #1927 moved: Primary and Data swapped
             "Services \u00b7 City", "Services \u00b7 Leisure", "AGI", "Setup", "Projects",  // #1916 moved: Data first, Projects after Setup
         )
         assertEquals("every declared section is present, in order", expected, sections)

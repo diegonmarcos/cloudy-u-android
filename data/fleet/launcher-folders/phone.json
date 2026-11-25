@@ -3,60 +3,46 @@
   "_doc": "#1553 TABLE 1 - Phone-scope folder HIERARCHY for Configs > Launcher > Folders. The ids/labels/order are the launcher's own phone taxonomy (aa_cloud-superapp/build.json::ui.phone_folders, baked into PhoneFolders/PhoneAppClassifier), grouped here into sections so the page reads as sections -> folders. The ids match the grid's folder ids 1:1 so a user re-assignment on this page (a Phone-scope override) moves the app in the launcher grid via FolderGridBridge. The 'others' sink is synthesised at runtime and is never declared. Third-party installed apps that match no folder fall to Others until assigned - by design. #1902: the Services (+ City, % Leisure) folders and the AGI tail follow ui.services_order (Services · City = Money | Shopping Health Real Estate Jobs & Business | City Mobility Transports Hotels; Services · Leisure = News | Events Media Center Social Games; AGI ends Search KG Store); ~Health and ~Outdoor & Sport are one ~Health Trackers (svc_health).",
   "folders": [
     {
-      "section": "Tools · Data",
-      "id": "prod_storage",
-      "label": ".Drive",
+      "section": "Tools · Primary",
+      "id": "prod_maps",
+      "label": "=Nav",
       "icon": "",
       "order": 110
     },
     {
-      "section": "Tools · Data",
-      "id": "prod_web",
-      "label": ".Browser",
+      "section": "Tools · Primary",
+      "id": "prod_camera",
+      "label": "=Camera",
       "icon": "",
       "order": 120
     },
     {
-      "section": "Tools · Data",
-      "id": "data_gallery",
-      "label": ".Gallery",
+      "section": "Tools · Primary",
+      "id": "prod_canvas",
+      "label": "=Canvas",
       "icon": "",
       "order": 130
     },
     {
-      "section": "Tools · Data",
-      "id": "prod_docs",
-      "label": ".Notes",
+      "section": "Tools · Primary",
+      "id": "sys_keyboards",
+      "label": "=Keyboard",
       "icon": "",
       "order": 140
     },
     {
-      "section": "Tools · Data",
-      "id": "prod_plan",
-      "label": ".Agenda",
+      "section": "Tools · Primary",
+      "id": "prod_calc",
+      "label": "=Calc",
       "icon": "",
       "order": 150
     },
     {
-      "section": "Tools · Data",
-      "id": "data_vault",
-      "label": ".Vault",
+      "section": "Tools · Primary",
+      "id": "prod_utils",
+      "label": "=Utilities",
       "icon": "",
       "order": 160
-    },
-    {
-      "section": "Tools · Data",
-      "id": "prod_wallet",
-      "label": ".Wallet",
-      "icon": "",
-      "order": 170
-    },
-    {
-      "section": "Tools · Data",
-      "id": "prod_office",
-      "label": ".Office",
-      "icon": "",
-      "order": 180
     },
     {
       "section": "Tools · Communication",
@@ -94,46 +80,60 @@
       "order": 250
     },
     {
-      "section": "Tools · Primary",
-      "id": "prod_maps",
-      "label": "=Nav",
+      "section": "Tools · Data",
+      "id": "prod_storage",
+      "label": ".Drive",
       "icon": "",
       "order": 310
     },
     {
-      "section": "Tools · Primary",
-      "id": "prod_camera",
-      "label": "=Camera",
+      "section": "Tools · Data",
+      "id": "prod_web",
+      "label": ".Browser",
       "icon": "",
       "order": 320
     },
     {
-      "section": "Tools · Primary",
-      "id": "prod_canvas",
-      "label": "=Canvas",
+      "section": "Tools · Data",
+      "id": "data_gallery",
+      "label": ".Gallery",
       "icon": "",
       "order": 330
     },
     {
-      "section": "Tools · Primary",
-      "id": "sys_keyboards",
-      "label": "=Keyboard",
+      "section": "Tools · Data",
+      "id": "prod_docs",
+      "label": ".Notes",
       "icon": "",
       "order": 340
     },
     {
-      "section": "Tools · Primary",
-      "id": "prod_calc",
-      "label": "=Calc",
+      "section": "Tools · Data",
+      "id": "prod_plan",
+      "label": ".Agenda",
       "icon": "",
       "order": 350
     },
     {
-      "section": "Tools · Primary",
-      "id": "prod_utils",
-      "label": "=Utilities",
+      "section": "Tools · Data",
+      "id": "data_vault",
+      "label": ".Vault",
       "icon": "",
       "order": 360
+    },
+    {
+      "section": "Tools · Data",
+      "id": "prod_wallet",
+      "label": ".Wallet",
+      "icon": "",
+      "order": 370
+    },
+    {
+      "section": "Tools · Data",
+      "id": "prod_office",
+      "label": ".Office",
+      "icon": "",
+      "order": 380
     },
     {
       "section": "Tools · Me",

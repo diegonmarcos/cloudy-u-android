@@ -20,15 +20,15 @@ CL = json.load(open(root + '/data/fleet/launcher-folders/cloud.json'))
 KT = open(A + 'app/src/main/java/com/diegonmarcos/superapp/launcher/GroupedTilesFragment.kt').read()
 SC = open(A + 'app/src/main/java/com/diegonmarcos/superapp/launcher/Sections.kt').read()
 CITY, LEIS = 'Services · City', 'Services · Leisure'
-ORDER = ['Data', 'Communication', 'Primary', 'Me', CITY, LEIS, 'AGI', 'Setup', 'Projects']
-GLYPH = {'Data': '△', 'Communication': '○', 'Primary': '□', CITY: '○', LEIS: '○', 'AGI': '⬡'}
+ORDER = ['Primary', 'Communication', 'Data', 'Me', CITY, LEIS, 'AGI', 'Setup', 'Projects']
+GLYPH = {'Data': '△', 'Communication': '○', 'Primary': '□', 'Me': '△', CITY: '○', LEIS: '○', 'AGI': '⬡'}
 CLOUD_DATA = ['Drive', 'Browser', 'Gallery', 'Notes', '|', 'Me', 'Tasks', 'Vault', 'Wallet', '|', 'Office']
 CLOUD_PRIMARY = ['Navigation', 'Camera', 'Canvas', 'Keyboard', 'Calc']
 PHONE_DATA = ['Drive', 'Browser', 'Gallery', 'Notes', 'Agenda', 'Vault', 'Wallet', 'Office']
 PHONE_PRIMARY = ['Nav', 'Camera', 'Canvas', 'Keyboard', 'Calc']
 ALL_DATA = ['prod_storage', 'prod_web', 'data_gallery', 'prod_docs', 'prod_plan', 'data_vault', 'prod_wallet', 'prod_office']
 ALL_PRIMARY = ['prod_maps', 'prod_camera', 'prod_canvas', 'sys_keyboards', 'prod_calc', 'prod_utils']
-SEC_ORDER = ['Tools · Data', 'Tools · Communication', 'Tools · Primary', 'Tools · Me', CITY, LEIS, 'AGI', 'Setup', 'Projects']
+SEC_ORDER = ['Tools · Primary', 'Tools · Communication', 'Tools · Data', 'Tools · Me', CITY, LEIS, 'AGI', 'Setup', 'Projects']
 sec = lambda bj, i: [s for s in bj['ui']['sections'] if s['id'] == i][0]
 
 def surface(name, bj, ph, cl, kt=KT, sc=SC):
@@ -38,7 +38,7 @@ def surface(name, bj, ph, cl, kt=KT, sc=SC):
         if [g['title'] for g in tg] != ORDER: f.append('Cloud group order %s' % [g['title'] for g in tg])
         for t, g in GLYPH.items():
             if by[t].get('glyph') != g: f.append('Cloud group %s glyph %r, want %r' % (t, by[t].get('glyph'), g))
-        for t in ('Me', 'Projects', 'Setup'):
+        for t in ('Projects', 'Setup'):
             if by[t].get('glyph'): f.append('Cloud group %s must carry no glyph' % t)
         if [t['label'] for t in by['Data']['tiles']] != CLOUD_DATA: f.append('Cloud Data row %s' % [t['label'] for t in by['Data']['tiles']])
         if [t['label'] for t in by['Primary']['tiles']] != CLOUD_PRIMARY: f.append('Cloud Primary row %s' % [t['label'] for t in by['Primary']['tiles']])
@@ -105,7 +105,12 @@ def mut(name, s, fn, **kw):
 grp = lambda bj, t: [g for g in sec(bj, 'cloud')['tile_groups'] if g['title'] == t][0]
 mut('a glyph removed from Data', 'G1', lambda bj, ph, cl: grp(bj, 'Data').pop('glyph'))
 mut('the AGI glyph changed', 'G1', lambda bj, ph, cl: grp(bj, 'AGI').__setitem__('glyph', '△'))
-mut('Me gets a glyph', 'G1', lambda bj, ph, cl: grp(bj, 'Me').__setitem__('glyph', '○'))
+mut('Me loses its glyph (#1927)', 'G1', lambda bj, ph, cl: grp(bj, 'Me').pop('glyph'))
+mut('Me glyph changed (#1927)', 'G1', lambda bj, ph, cl: grp(bj, 'Me').__setitem__('glyph', '○'))
+mut('Primary and Data swapped back (#1927)', 'G1', lambda bj, ph, cl: sec(bj, 'cloud')['tile_groups'].insert(0, sec(bj, 'cloud')['tile_groups'].pop(2)))
+mut('Phone Primary and Data swapped back (#1927)', 'G3', lambda bj, ph, cl: sec(bj, 'phone')['phone_app_groups'].insert(0, sec(bj, 'phone')['phone_app_groups'].pop(2)))
+mut('All Apps Primary and Data sections swapped back (#1927)', 'G4', lambda bj, ph, cl: bj['ui']['phone_sections'].insert(0, bj['ui']['phone_sections'].pop(2)))
+mut('Cloud smart folders Data first again (#1927)', 'G5', lambda bj, ph, cl: cl['folders'].insert(0, [cl['folders'].pop(i) for i, x in enumerate(cl['folders']) if x['section'] == 'Data'][0]))
 mut('Wallet back in Primary', 'G1', lambda bj, ph, cl: (grp(bj, 'Primary')['tiles'].append([t for t in grp(bj, 'Data')['tiles'] if t['label'] == 'Wallet'][0]), grp(bj, 'Data')['tiles'].remove([t for t in grp(bj, 'Data')['tiles'] if t['label'] == 'Wallet'][0])))
 mut('Projects back before Me', 'G1', lambda bj, ph, cl: sec(bj, 'cloud')['tile_groups'].insert(3, sec(bj, 'cloud')['tile_groups'].pop(-1)))
 mut('Calc leads Primary', 'G1', lambda bj, ph, cl: grp(bj, 'Primary')['tiles'].insert(0, grp(bj, 'Primary')['tiles'].pop(-1)))

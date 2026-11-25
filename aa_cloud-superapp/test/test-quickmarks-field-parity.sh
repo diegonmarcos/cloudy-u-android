@@ -3,7 +3,7 @@
 # Rule 16 — a reorder/rename/redefine DROPS NOTHING. This pins the pre-#1627/#1628 surface and proves every
 # app/page it carried is still present after the reorg, while asserting the new order, renames and dividers.
 #
-#   T1  #1627 group order + renames: the cloud tile_groups read Data, Communication, Primary, Me,
+#   T1  #1627 group order + renames: the cloud tile_groups read Primary, Communication, Data, Me (#1927 MOVED, was Data, Communication, Primary, Me),
 #       Services · City, Services · Leisure, AGI, Setup, Projects (#1916, was Primary, Communication, Data, Me, Projects, ... Setup); 'Tools Primary' and 'Data Apps' are gone.
 #   T2  #1627 field parity: every app the old 'Tools Primary' ∪ 'Data Apps' launched is still launched by the
 #       new Primary ∪ Data (nothing dropped; Drive moved Data->Primary, Vault moved Primary->Data, Me added).
@@ -34,7 +34,7 @@ def emit(t, msg): out.append("%s\t%s" % (t, msg))
 
 # T1
 titles = [g.get("title") for g in tg]
-want = ["Data", "Communication", "Primary", "Me", "Services · City", "Services · Leisure", "AGI", "Setup", "Projects"]  # #1902 Services is City + Leisure; #1916 Data first, Projects after Setup (a MOVE)
+want = ["Primary", "Communication", "Data", "Me", "Services · City", "Services · Leisure", "AGI", "Setup", "Projects"]  # #1902 Services is City + Leisure; #1916 Data first, Projects after Setup (a MOVE)
 if titles != want:
     emit("T1", "group order is %r, want %r" % (titles, want))
 for gone in ("Tools Primary", "Data Apps"):
@@ -146,7 +146,7 @@ for t in T1 T2 T3 T4 T5; do
   lines="$(printf '%s\n' "$RES" | awk -F'\t' -v k="$t" '$1==k{print $2}')"
   if [ -z "$lines" ]; then
     case "$t" in
-      T1) ok "T1: #1916 group order Data, Communication, Primary, Me, Services · City, Services · Leisure, AGI, Setup, Projects (moved from #1756/#1902 order); old titles gone" ;;
+      T1) ok "T1: #1927 group order Primary, Communication, Data, Me, Services · City, Services · Leisure, AGI, Setup, Projects (moved from #1756/#1902 order); old titles gone" ;;
       T2) ok "T2: #1627 field parity — every app the old Tools Primary ∪ Data Apps launched is still in Primary ∪ Data" ;;
       T3) ok "T3: #1627 Communication is unchanged (six tiles, same ids and targets)" ;;
       T4) ok "T4: #1627 dividers — single '|' and DOUBLE '||' placed per owner order, separators only" ;;
