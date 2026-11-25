@@ -166,9 +166,92 @@ object FleetDns {
      * own servers apply while the mesh is down ([meshDownServers]). Mirror with no fleet resolver
      * stays empty (Android's own); a private preset with none still throws.
      */
-    fun vpnServers(d: Decl, presetId: String?, fallbacks: List<String>, fleetResolvers: List<String>): List<String> {
+    fun vpnServers(d: Decl, presetId: String?, fallbacks: List<String>, fleetResolvers: List<String>, meshHealthy: Boolean = true): List<String> {
         val own = presetServers(d, presetId, fallbacks, fleetResolvers) // validates the kind; a private preset with no fleet resolver throws
-        return (if (fleetResolvers.isNotEmpty()) fleetResolvers else own).distinct()
+        // #1924 A Public preset IS its declared list (never a mesh address: with the hub down the fleet resolver answered
+        // SERVFAIL for every name while 1.1.1.1 / 8.8.8.8 were reachable inside the VPN). A Private preset carries the fleet
+        // resolvers while they are healthy and its fallbacks (the mesh-down list) once they are not.
+        return when (effective(d, presetId).kind) {
+            KIND_PUBLIC -> own
+            KIND_PRIVATE -> if (meshHealthy) fleetResolvers else meshDownServers(d, presetId, fallbacks, fleetResolvers)
+            else -> if (fleetResolvers.isNotEmpty()) fleetResolvers else own
+        }.distinct()
+    }
+
+    /**
+     * #1924 The ordered upstreams for one lookup of [name]. Mesh names go to the fleet resolver (nothing else can answer
+     * them); everything else goes to the preset's own servers, and a Private preset asks the fleet resolver first only while
+     * [meshHealthy], its fallbacks first otherwise. The bridge walks this list, so SERVFAIL / REFUSED / a timeout from the
+     * fleet resolver moves on to the next entry at once.
+     */
+    fun queryPlan(d: Decl, name: String, meshUp: Boolean, meshHealthy: Boolean, presetId: String?, fallbacks: List<String>,
+                  chosen: Boolean, fleet: List<String>): List<String> {
+        if (!meshUp) return if (chosen) meshDownServers(d, presetId, fallbacks, fleet) else emptyList()
+        if (fleet.isNotEmpty() && isMeshName(d, name)) return fleet
+        val own = presetServers(d, presetId, fallbacks, fleet)
+        return when (effective(d, presetId).kind) {
+            KIND_PRIVATE -> { val fb = own.filter { it !in fleet }; if (meshHealthy) fleet + fb else fb + fleet }
+            KIND_PUBLIC -> own
+            else -> if (fleet.isNotEmpty()) fleet else own
+        }.distinct()
+    }
+
+    /** #1924 SERVFAIL (2), REFUSED (5) or no answer at all (null = timeout) from the mesh resolver means it is unhealthy. */
+    fun meshFailure(rcode: Int?): Boolean = rcode == null || rcode == 2 || rcode == 5
+
+    /**
+     * #1924 Health of the mesh resolver as the lookups see it. [report] flips [healthy] at once (the bridge's routes read it);
+     * the VPN's advertised DNS is re-applied through [onSettled] only after the verdict has held for [debounceMs], so a flapping
+     * resolver does not rebuild the VPN on every query.
+     */
+    class MeshHealth(private val debounceMs: Long = 3_000, private val onSettled: (Boolean) -> Unit = {}) {
+        @Volatile var healthy = true; private set
+        @Volatile var reason = "no lookup yet"; private set
+        /** What the VPN was last configured for. */
+        @Volatile var applied = true; private set
+        private var pending: java.util.concurrent.ScheduledFuture<*>? = null
+        private val timer = java.util.concurrent.Executors.newSingleThreadScheduledExecutor { r -> Thread(r, "fleet-dns-health").apply { isDaemon = true } }
+        @Synchronized fun report(ok: Boolean, why: String) {
+            healthy = ok; reason = why
+            pending?.cancel(false)
+            pending = if (ok == applied) null else timer.schedule(Runnable {
+                synchronized(this) { if (healthy != applied) { applied = healthy; runCatching { onSettled(applied) } } }
+            }, debounceMs, java.util.concurrent.TimeUnit.MILLISECONDS)
+        }
+        fun verdict(): String = if (healthy) "healthy" else "UNHEALTHY"
+        fun text(): String = "Mesh resolver: ${verdict()} — $reason"
+    }
+
+    @Volatile private var appCtx: Context? = null
+    val health = MeshHealth { _ -> appCtx?.let { reapplyVpnDns(it) } }
+
+    /** Re-apply the tunnel config when the preset's advertised DNS differs between healthy and unhealthy. */
+    private fun reapplyVpnDns(ctx: Context) {
+        val p = Prefs(ctx); val fleet = fleetResolvers(ctx)
+        val a = runCatching { vpnServers(decl, p.preset, p.fallbacks, fleet, true) to vpnServers(decl, p.preset, p.fallbacks, fleet, false) }.getOrNull() ?: return
+        if (a.first == a.second || !meshUp(ctx)) return
+        runCatching { WgState.backend(ctx).setState(WgState.tunnel, Tunnel.State.UP, WgState.prefs(ctx).toTunnelConfig()) }
+            .onFailure { android.util.Log.w("FleetDns", "re-apply after mesh health change failed", it) }
+    }
+
+    private val probeStarted = java.util.concurrent.atomic.AtomicBoolean(false)
+
+    /** Wire the bridge's mesh-route outcomes to [health], and probe the fleet resolver while the mesh is up so recovery is seen too. */
+    fun installHealth(ctx: Context) {
+        appCtx = ctx.applicationContext
+        FleetDnsBridge.meshObserver = { ok -> health.report(ok, if (ok) "answered the last lookup" else "SERVFAIL, REFUSED or timeout on the last lookup") }
+        if (!probeStarted.compareAndSet(false, true)) return
+        val t = java.util.concurrent.Executors.newSingleThreadScheduledExecutor { r -> Thread(r, "fleet-dns-probe").apply { isDaemon = true } }
+        t.scheduleWithFixedDelay({
+            runCatching {
+                if (!meshUp(ctx)) return@runCatching
+                val fleet = fleetResolvers(ctx)
+                if (fleet.isEmpty()) return@runCatching
+                val r = fleet.map { s -> runCatching { query(s, decl.testPublic, decl.timeoutMs) }.fold({ it }, { "timeout" }) }
+                val ok = r.any { !it.startsWith("rcode") && it != "timeout" }
+                health.report(ok, if (ok) "probe: ${decl.testPublic} answered" else "probe: ${r.joinToString(", ")}")
+            }
+        }, 20, 20, java.util.concurrent.TimeUnit.SECONDS)
     }
 
     /** #1797 The servers in [actual] that are not fleet resolvers: each one can answer a mesh name with a public NXDOMAIN. */
@@ -278,7 +361,7 @@ object FleetDns {
     /** What the tunnel carries right now for this phone's choice. */
     fun vpnServers(ctx: Context, fleetDnsCsv: String): List<String> {
         val p = Prefs(ctx)
-        return vpnServers(decl, p.preset, p.fallbacks, splitServers(fleetDnsCsv))
+        return vpnServers(decl, p.preset, p.fallbacks, splitServers(fleetDnsCsv), health.healthy)
     }
 
     /**
@@ -307,9 +390,10 @@ object FleetDns {
      * underlying network, then the uid's default.
      */
     fun bridgeRoutes(ctx: Context, name: String): List<FleetDnsBridge.Route> {
+        installHealth(ctx)
         val p = Prefs(ctx); val up = meshUp(ctx); val fleet = fleetResolvers(ctx)
         val label = effective(decl, p.preset).label
-        val servers = upstreamsFor(decl, name, up, promised(decl, p.preset, p.fallbacks, p.chosen, fleet, up), fleet)
+        val servers = queryPlan(decl, name, up, health.healthy, p.preset, p.fallbacks, p.chosen, fleet)
         val android = FleetDnsBridge.Route("Android system resolver ($label)")
         return when {
             servers.isEmpty() -> FleetDnsBridge.mirror(label)
@@ -319,9 +403,9 @@ object FleetDns {
             // tunnel was never used for the fleet's own names. It stays only as the last
             // resort of a preset that allows fallbacks.
             up && fleet.isNotEmpty() && isMeshName(decl, name) ->
-                servers.map { FleetDnsBridge.Route("$label $it", listOf(it)) } +
+                servers.map { FleetDnsBridge.Route("$label $it", listOf(it), mesh = true) } +
                     (if (effective(decl, p.preset).fallbackAllowed) listOf(android) else emptyList())
-            else -> listOf(android) + servers.map { FleetDnsBridge.Route("$label $it", listOf(it)) }
+            else -> listOf(android) + servers.map { FleetDnsBridge.Route("$label $it", listOf(it), mesh = it in fleet) }
         }
     }
 
@@ -335,8 +419,8 @@ object FleetDns {
      * once showed the engine's state here and so called a preset that could
      * not start "Android's own (mirror)" while the radio said Public open.
      */
-    fun promised(d: Decl, presetId: String?, fallbacks: List<String>, chosen: Boolean, fleet: List<String>, meshUp: Boolean): List<String> = when {
-        meshUp -> vpnServers(d, presetId, fallbacks, fleet)
+    fun promised(d: Decl, presetId: String?, fallbacks: List<String>, chosen: Boolean, fleet: List<String>, meshUp: Boolean, meshHealthy: Boolean = true): List<String> = when {
+        meshUp -> vpnServers(d, presetId, fallbacks, fleet, meshHealthy)
         chosen -> meshDownServers(d, presetId, fallbacks, fleet)
         else -> emptyList()
     }
@@ -359,13 +443,13 @@ object FleetDns {
      */
     fun verdict(
         d: Decl, presetId: String?, fallbacks: List<String>, chosen: Boolean, fleet: List<String>,
-        meshUp: Boolean, idle: String, android: AndroidDns, engine: String,
+        meshUp: Boolean, idle: String, android: AndroidDns, engine: String, meshHealthy: Boolean = true,
     ): Verdict {
         val p = effective(d, presetId)
         val actual = android.activeServers
         val needsConsent = !meshUp && chosen && p.kind != KIND_MIRROR &&
             idle.contains(BackendException.Reason.VPN_NOT_AUTHORIZED.name)
-        val want = runCatching { promised(d, presetId, fallbacks, chosen, fleet, meshUp) }.getOrElse {
+        val want = runCatching { promised(d, presetId, fallbacks, chosen, fleet, meshUp, meshHealthy) }.getOrElse {
             return Verdict(false, needsConsent, emptyList(), actual, "${p.label} cannot be applied: ${it.message}")
         }
         val now = actual.joinToString(", ").ifEmpty { "none" }
@@ -381,7 +465,7 @@ object FleetDns {
                 bad("Android's Private DNS (${d.modeLabel(android.mode)}) is in use on the VPN: every lookup goes over DoT to a " +
                     "validated public server before the fleet resolver is asked — ${p.label} is bypassed. " +
                     "The device tuning sets it to ${d.modeLabel(d.privatePresetsRequire)}.")
-            meshUp && fleet.isNotEmpty() && android.onVpn && nonFleet(actual, fleet).isNotEmpty() ->
+            meshUp && fleet.isNotEmpty() && android.onVpn && want.all { it in fleet } && nonFleet(actual, fleet).isNotEmpty() ->
                 bad("${p.label} is NOT in effect: with the mesh up Android also holds ${nonFleet(actual, fleet).joinToString(", ")}, " +
                     "which answers mesh names NXDOMAIN; Android asks whichever server it prefers, so private names fail. " +
                     "Reconnect so the tunnel carries the fleet resolvers only (${fleet.joinToString(", ")}).")
@@ -435,7 +519,7 @@ object FleetDns {
         val up = meshUp(ctx)
         val idle = WgState.backend(ctx).idleStatus()
         val a = readAndroid(ctx)
-        return Live(up, idle, a, verdict(decl, p.preset, p.fallbacks, p.chosen, fleetResolvers(ctx), up, idle, a, engineLabel(ctx)))
+        return Live(up, idle, a, verdict(decl, p.preset, p.fallbacks, p.chosen, fleetResolvers(ctx), up, idle, a, engineLabel(ctx), health.healthy))
     }
 
     /** Dedupe key of the one alert this raises: re-raising replaces it, a good verdict withdraws it. */

@@ -50,7 +50,15 @@ import java.util.concurrent.TimeUnit
  */
 object FleetDnsBridge {
     /** One way to an answer: [servers] empty = Android's resolver on [network] (null = the uid's default). */
-    class Route(val label: String, val servers: List<String> = emptyList(), val network: Network? = null)
+    class Route(val label: String, val servers: List<String> = emptyList(), val network: Network? = null,
+                /** #1924 true = the servers are the fleet (mesh) resolver: every answer or miss is reported to [meshObserver]. */
+                val mesh: Boolean = false)
+
+    /** #1924 Called with false for a mesh route that gave no definitive answer (SERVFAIL, REFUSED, timeout), true when it answered. */
+    @Volatile var meshObserver: ((healthy: Boolean) -> Unit)? = null
+
+    /** #1924 One plain-DNS exchange with [server]; replaceable so a test can stand fake resolvers in (null / throw = timeout). */
+    @Volatile var exchange: (q: ByteArray, server: String, network: Network?) -> ByteArray? = { q, s, n -> forward(q, s, n) }
 
     /** The host's plan for a name, in order. Default: [mirror]. */
     @Volatile var routes: (name: String) -> List<Route> = { mirror() }
@@ -148,7 +156,8 @@ object FleetDnsBridge {
     /** #899 Drop the cached answers for [name]: the address it gave did not connect, so the next lookup must ask again. */
     fun forget(name: String) { cache.keys.removeAll { it.substringBeforeLast('/').equals(name.trimEnd('.'), ignoreCase = true) } }
 
-    private fun walk(q: ByteArray): ByteArray? {
+    /** The walk over [routes] for one query (public so FleetDnsBridgeTest can drive it with fake resolvers). */
+    fun walk(q: ByteArray): ByteArray? {
         val name = DnsWire.name(q)
         val key = "$name/${DnsWire.qtype(q)}"
         cache[key]?.let { c -> if (c.until > System.currentTimeMillis()) { cached++; return c.answer } else cache.remove(key) }
@@ -180,7 +189,8 @@ object FleetDnsBridge {
             return runCatching {
                 if (r.servers.isEmpty()) android(q, r.network)
                 // in order; a SERVFAIL / REFUSED from one server moves on to the next (#900)
-                else r.servers.firstNotNullOfOrNull { s -> runCatching { forward(q, s, r.network) }.getOrNull()?.takeIf { DnsWire.rcode(it) in DEFINITIVE } }
+                else r.servers.firstNotNullOfOrNull { s -> runCatching { exchange(q, s, r.network) }.getOrNull()?.takeIf { DnsWire.rcode(it) in DEFINITIVE } }
+                    .also { a -> if (r.mesh) runCatching { meshObserver?.invoke(a != null) } }
             }.getOrNull()
         } finally { inFlight.release() }
     }

@@ -213,7 +213,8 @@ internal class DnsModel(
             val v = live.verdict
             statusText = buildString {
                 append("Preset: ${p.label}${if (prefs.chosen) "" else " (default, not chosen here)"}\nCloud Mesh: ${if (live.meshUp) "up" else "down"}\n")
-                append("Preset promises: ${v.promised.joinToString(" → ").ifEmpty { "Android's own (mirror)" }}\n")
+                append("Preset servers in use: ${v.promised.joinToString(" → ").ifEmpty { "Android's own (mirror)" }}\n")
+                append("${FleetDns.health.text()}\n")
                 append("Android resolves with: ${v.actual.joinToString(", ").ifEmpty { "—" }}${if (live.android.onVpn) " (VPN)" else " (network)"}\n")
                 append(if (v.ok) "✓ ${v.why}" else "✗ ${v.why}")
                 append("\nWithout the mesh: ${idleLabel(live.idle)}")
@@ -283,15 +284,16 @@ internal class DnsModel(
         background({
             val up = FleetDns.meshUp(ctx)
             val fleet = FleetDns.fleetResolvers(ctx)
-            val plan = runCatching { FleetDns.promised(decl, prefs.preset, prefs.fallbacks, prefs.chosen, fleet, up) }
             listOf(decl.testPublic, decl.testMesh).filter { it.isNotEmpty() }.map { name ->
+                val plan = runCatching { FleetDns.queryPlan(decl, name, up, FleetDns.health.healthy, prefs.preset, prefs.fallbacks, prefs.chosen, fleet) }
                 // #874 the same lookup the Store's downloader makes: through the bridge.
                 val sys = runCatching { FleetDnsBridge.resolve(name).joinToString(", ") { it.hostAddress ?: "" } + " via ${FleetDnsBridge.lastRoute}" }
                     .getOrElse { "FAILED (${it.javaClass.simpleName}: ${it.message})" }
-                val routed = plan.fold({ servers ->
-                    val ups = FleetDns.upstreamsFor(decl, name, up, servers, fleet)
+                val routed = plan.fold({ ups ->
+                    // #1924 SERVFAIL / REFUSED / timeout is a miss: the next server of the plan is asked
                     if (ups.isEmpty()) null else ups.firstNotNullOfOrNull { s ->
-                        runCatching { "${FleetDns.query(s, name, decl.timeoutMs)} via $s" }.getOrNull()
+                        runCatching { FleetDns.query(s, name, decl.timeoutMs) }.getOrNull()
+                            ?.takeIf { !it.startsWith("rcode") }?.let { "$it via $s" }
                     } ?: "FAILED — no upstream answered (${ups.joinToString(", ")})"
                 }, { "FAILED — ${it.message}" })
                 Triple(name, sys, routed)

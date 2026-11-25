@@ -72,9 +72,9 @@ class MeshStatus1797ShotTest : KitPageHarness() {
     @Test fun `after - the fleet resolvers only, every mesh passes`() {
         val fleet = FleetDns.splitServers("10.0.0.1, 10.1.0.1")
         // what the fixed tunnel carries for the reported preset: FleetDns.vpnServers, the code the phone runs
-        val carried = FleetDns.vpnServers(FleetDns.decl, "public_open", emptyList(), fleet)
+        val carried = FleetDns.vpnServers(FleetDns.decl, "private_only", emptyList(), fleet)
         assertEquals(fleet, carried)
-        val line = "Public open: " + carried.joinToString(", ") + " via VPN"
+        val line = "Private only: " + carried.joinToString(", ") + " via VPN"
         val s = phone(line, C3MeshProbeTest.FakeMeshIo(wire(), { n -> listOf(if (n.startsWith("maddy")) "10.0.0.3" else "10.0.0.6") }))
         val r = s.meshProfile!!
         for (row in r.rows) assertEquals(row.cell(C3MeshProbe.OVERALL).detail, true, row.cell(C3MeshProbe.OVERALL).ok)

@@ -44,12 +44,61 @@ class FleetDnsTest {
         for (p in publics) {
             assertTrue("${p.id} declares no primary", p.servers.isNotEmpty())
             assertTrue("${p.id} declares no fallback", p.fallback.isNotEmpty())
-            // #1797 mesh up: the fleet resolvers ONLY (Android does not ask in order, a public NXDOMAIN won)
-            assertEquals(p.id, FLEET, servers(p.id))
-            assertTrue(p.id, FleetDns.nonFleet(servers(p.id), FLEET).isEmpty())
+            // #1924 a public preset IS its declared list on the VPN, mesh up or not: never a mesh address
+            assertEquals(p.id, (p.servers + p.fallback).distinct(), servers(p.id))
+            assertTrue(p.id, servers(p.id).none { it in FLEET })
             // mesh down: the preset's own servers, primary then fallback
             assertEquals(p.id, (p.servers + p.fallback).distinct(), down(p.id))
         }
+    }
+
+    /** #1924 the owner's phone: Public open advertised 10.0.0.1/10.1.0.1 while the hub was down. */
+    @Test fun publicOpenIsExactlyCloudflareAndGoogleAndNeverAMeshAddress() {
+        val p = d.preset("public_open")!!
+        val want = listOf("1.1.1.1", "1.0.0.1", "8.8.8.8", "8.8.4.4", "2606:4700:4700::1111", "2001:4860:4860::8888")
+        assertEquals(want.toSet(), servers("public_open", fleet = listOf("10.0.0.1", "10.1.0.1")).toSet())
+        assertTrue(servers("public_open", fleet = listOf("10.0.0.1", "10.1.0.1")).none { it.startsWith("10.") })
+        for (healthy in listOf(true, false)) assertEquals(want.toSet(),
+            FleetDns.vpnServers(d, "public_open", emptyList(), listOf("10.0.0.1", "10.1.0.1"), healthy).toSet())
+        // mutation: a mesh IP injected into the declaration is caught by the same assertion
+        val bad = d.copy(presets = d.presets.map { if (it.id == p.id) it.copy(servers = it.servers + "10.0.0.1") else it })
+        val got = FleetDns.vpnServers(bad, "public_open", emptyList(), listOf("10.0.0.1", "10.1.0.1"))
+        assertTrue("mutation must be visible", got.any { it.startsWith("10.") })
+    }
+
+    @Test fun privateWithFallbacksSwitchesItsAdvertisedDnsWithMeshHealth() {
+        val fb = listOf("public_open")
+        assertEquals(FLEET, FleetDns.vpnServers(d, privateFb.id, fb, FLEET, true))
+        val pub = d.preset("public_open")!!
+        assertEquals((pub.servers + pub.fallback).distinct(), FleetDns.vpnServers(d, privateFb.id, fb, FLEET, false))
+    }
+
+    @Test fun queryPlanSplitsMeshNamesAndOrdersByHealth() {
+        val fb = listOf("public_open"); val pub = d.preset("public_open")!!; val own = (pub.servers + pub.fallback).distinct()
+        fun plan(id: String, name: String, healthy: Boolean) = FleetDns.queryPlan(d, name, true, healthy, id, fb, true, FLEET)
+        assertEquals(FLEET, plan("public_open", "x.mesh.diegonmarcos.com", true))
+        assertEquals(own, plan("public_open", "github.com", true))
+        assertEquals(own, plan("public_open", "github.com", false))
+        assertEquals(FLEET + own, plan(privateFb.id, "github.com", true))
+        assertEquals(own + FLEET, plan(privateFb.id, "github.com", false))
+        assertEquals(FLEET, plan(privateOnly.id, "github.com", false))
+        assertEquals(own, FleetDns.queryPlan(d, "github.com", false, true, "public_open", fb, true, FLEET))
+    }
+
+    @Test fun servfailRefusedAndTimeoutAreMeshFailures() {
+        assertTrue(FleetDns.meshFailure(2)); assertTrue(FleetDns.meshFailure(5)); assertTrue(FleetDns.meshFailure(null))
+        assertFalse(FleetDns.meshFailure(0)); assertFalse(FleetDns.meshFailure(3))
+    }
+
+    @Test fun healthFlipsAtOnceAndReappliesOnlyAfterTheDebounce() {
+        val calls = java.util.concurrent.CopyOnWriteArrayList<Boolean>()
+        val h = FleetDns.MeshHealth(debounceMs = 150) { calls += it }
+        h.report(false, "x"); assertFalse(h.healthy)
+        h.report(true, "y"); h.report(false, "z") // flapping inside the window: one settle only
+        Thread.sleep(80); assertTrue("not before the debounce", calls.isEmpty())
+        Thread.sleep(400); assertEquals(listOf(false), calls.toList())
+        assertTrue(h.text(), h.text().contains("UNHEALTHY"))
+        h.report(true, "back"); Thread.sleep(400); assertEquals(listOf(false, true), calls.toList())
     }
 
     @Test fun mirrorPutsOnlyTheFleetResolversOnTheVpn() {
@@ -245,10 +294,10 @@ class FleetDnsTest {
         assertFalse(verdict(privateOnly.id, false, true, "STANDBY", android(NET, false)).ok)
         // #1797 a public preset with the mesh up promises the fleet resolvers only, so it is only in effect carrying them
         val pubUp = verdict(pub, true, true, "UP", android(servers(pub), true))
-        assertTrue(pubUp.why, pubUp.ok); assertEquals(FLEET, pubUp.promised)
-        assertFalse("public servers alone no longer satisfy the promise", verdict(pub, true, true, "UP", android(down(pub), true)).ok)
+        assertTrue(pubUp.why, pubUp.ok); assertEquals(down(pub), pubUp.promised)
+        assertFalse("mesh resolvers on a public preset are not in effect", verdict(pub, true, true, "UP", android(FLEET, true)).ok)
         // #1797 the phone's reported state: fleet resolvers FIRST but public ones beside them is NOT in effect, and says why
-        val mixed = verdict(pub, true, true, "UP", android(FLEET + down(pub), true))
+        val mixed = verdict(privateOnly.id, true, true, "UP", android(FLEET + down(pub), true))
         assertFalse(mixed.why, mixed.ok)
         assertTrue(mixed.why, "NXDOMAIN" in mixed.why && down(pub).first() in mixed.why)
     }
