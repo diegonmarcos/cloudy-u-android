@@ -2,6 +2,101 @@
   "_doc": "Phone > WebApps (#1466): the web version of each phone app declared in build.json ui.sections[phone].phone_app_groups (same packages, same groups; test-phone-webapps.sh keeps them equal). `url` = the app's https web address, opened in the embedded browser (libs:web-core CloudWeb); null = no known web version, the tile is drawn GREYED and disabled. Data, not code: add a line to add an app. cloudy-h-webapps-mob generates its phone-apps/ source from this file (scripts/gen-phone-apps.mjs, drift-checked).",
   "groups": [
     {
+      "title": "Primary",
+      "apps": [
+        {
+          "pkg": "com.google.android.apps.maps",
+          "label": "Maps",
+          "url": "https://maps.google.com"
+        },
+        {
+          "pkg": "app.organicmaps",
+          "label": "Organic Maps",
+          "url": null
+        },
+        {
+          "pkg": "com.sec.android.app.camera",
+          "label": "Camera",
+          "url": null
+        },
+        {
+          "pkg": "com.adsk.sketchbook",
+          "label": "SketchBook",
+          "url": null
+        },
+        {
+          "pkg": "com.imageline.FLM",
+          "label": "FL Studio Mobile",
+          "url": null
+        },
+        {
+          "pkg": "com.google.android.inputmethod.latin",
+          "label": "Gboard",
+          "url": null
+        },
+        {
+          "pkg": "com.sec.android.app.popupcalculator",
+          "label": "Calculator",
+          "url": null
+        },
+        {
+          "pkg": "com.sec.android.app.clockpackage",
+          "label": "Clock",
+          "url": null
+        },
+        {
+          "pkg": "com.google.android.apps.translate",
+          "label": "Translate",
+          "url": "https://translate.google.com"
+        }
+      ]
+    },
+    {
+      "title": "Communication",
+      "apps": [
+        {
+          "pkg": "com.google.android.gm",
+          "label": "Gmail",
+          "url": "https://mail.google.com"
+        },
+        {
+          "pkg": "com.Slack",
+          "label": "Slack",
+          "url": "https://app.slack.com"
+        },
+        {
+          "pkg": "com.whatsapp.w4b",
+          "label": "WhatsApp Business",
+          "url": "https://web.whatsapp.com"
+        },
+        {
+          "pkg": "org.telegram.messenger",
+          "label": "Telegram",
+          "url": "https://web.telegram.org"
+        },
+        {
+          "pkg": "org.thoughtcrime.securesms",
+          "label": "Signal",
+          "url": null
+        },
+        {
+          "pkg": "com.google.android.apps.tachyon",
+          "label": "Google Meet",
+          "url": null
+        },
+        {
+          "pkg": "com.samsung.android.dialer",
+          "label": "Samsung Phone",
+          "url": null
+        },
+        {
+          "pkg": "com.google.android.contacts",
+          "label": "Google Contacts",
+          "url": "https://contacts.google.com"
+        }
+      ]
+    },
+    {
       "title": "Data",
       "apps": [
         {
@@ -93,101 +188,6 @@
           "pkg": "com.adobe.reader",
           "label": "Adobe Acrobat",
           "url": null
-        }
-      ]
-    },
-    {
-      "title": "Communication",
-      "apps": [
-        {
-          "pkg": "com.google.android.gm",
-          "label": "Gmail",
-          "url": "https://mail.google.com"
-        },
-        {
-          "pkg": "com.Slack",
-          "label": "Slack",
-          "url": "https://app.slack.com"
-        },
-        {
-          "pkg": "com.whatsapp.w4b",
-          "label": "WhatsApp Business",
-          "url": "https://web.whatsapp.com"
-        },
-        {
-          "pkg": "org.telegram.messenger",
-          "label": "Telegram",
-          "url": "https://web.telegram.org"
-        },
-        {
-          "pkg": "org.thoughtcrime.securesms",
-          "label": "Signal",
-          "url": null
-        },
-        {
-          "pkg": "com.google.android.apps.tachyon",
-          "label": "Google Meet",
-          "url": null
-        },
-        {
-          "pkg": "com.samsung.android.dialer",
-          "label": "Samsung Phone",
-          "url": null
-        },
-        {
-          "pkg": "com.google.android.contacts",
-          "label": "Google Contacts",
-          "url": "https://contacts.google.com"
-        }
-      ]
-    },
-    {
-      "title": "Primary",
-      "apps": [
-        {
-          "pkg": "com.google.android.apps.maps",
-          "label": "Maps",
-          "url": "https://maps.google.com"
-        },
-        {
-          "pkg": "app.organicmaps",
-          "label": "Organic Maps",
-          "url": null
-        },
-        {
-          "pkg": "com.sec.android.app.camera",
-          "label": "Camera",
-          "url": null
-        },
-        {
-          "pkg": "com.adsk.sketchbook",
-          "label": "SketchBook",
-          "url": null
-        },
-        {
-          "pkg": "com.imageline.FLM",
-          "label": "FL Studio Mobile",
-          "url": null
-        },
-        {
-          "pkg": "com.google.android.inputmethod.latin",
-          "label": "Gboard",
-          "url": null
-        },
-        {
-          "pkg": "com.sec.android.app.popupcalculator",
-          "label": "Calculator",
-          "url": null
-        },
-        {
-          "pkg": "com.sec.android.app.clockpackage",
-          "label": "Clock",
-          "url": null
-        },
-        {
-          "pkg": "com.google.android.apps.translate",
-          "label": "Translate",
-          "url": "https://translate.google.com"
         }
       ]
     },
