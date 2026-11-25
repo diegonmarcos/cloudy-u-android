@@ -177,7 +177,7 @@ object MeshProber {
             literal && carrier != null -> "${s.host} ⊂ ${carrier.cfg.name.ifBlank { "peer" }} allowed ${carrier.cfg.allowedIps}"
             literal && s.via == C3MeshProbe.VIA_TUNNEL -> "${s.host}: no peer's allowed IPs cover it"
             literal -> "${s.host}: literal address, no lookup, the OS route"
-            s.host.endsWith(".mesh.diegonmarcos.com") -> "mesh namespace name, answered by the fleet resolver"
+            s.group == "private" -> "mesh namespace name, answered by the fleet resolver"
             else -> "public name, answered by Android's resolver"
         }
         val peer = when {

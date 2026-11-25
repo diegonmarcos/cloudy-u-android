@@ -107,3 +107,5 @@ aa_cloud-superapp/build.json	ui.mesh_page.meshes.*.name	link	the mesh name the C
 aa_cloud-superapp/build.json	ui.mesh_page.meshes.*.service_url	link	the service the Cloud-mesh Status page probes over each mesh (#1797); a reachability probe, not an app request
 ac_cloud-c3-webserver/build.json	vpn.meshes.*.name	link	#1845 the private name each mesh resolver must answer in the Webserver Home VPN table (DNS probe), the same list as the SuperApp mesh_page; a probe, not an app request
 ac_cloud-c3-webserver/build.json	vpn.meshes.*.service_url	link	#1845 the service the Webserver Home VPN table probes over each mesh (TCP + HTTP answer), the same list as the SuperApp mesh_page; a probe, not an app request
+aa_cloud-superapp/build.json	ui.mesh_page.prober.private_names.*.host	link	#1900 the private mesh names the VPN page's Prober matrix probes (DNS, TCP, HTTPS status); a probe, not an app request
+aa_cloud-superapp/build.json	ui.mesh_page.prober.public_urls.*.url	link	#1900 the public URLs the VPN page's Prober matrix probes (DNS, TCP, HTTPS status); a probe, not an app request

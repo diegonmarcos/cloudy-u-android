@@ -8773,14 +8773,14 @@
         { "id": "profiler", "label": "Profiler", "rows": ["meshes", "profiler", "reachability", "transport"] },
         { "id": "prober", "label": "Prober", "rows": ["prober", "log"] }
       ],
-      "_doc_prober": "#1900 What the Prober matrix probes (network/mesh/MeshProber.kt; nothing is a Kotlin literal). Each row is profiled first (interface, DNS, route, mesh peer, fallback), then probed, and its status is the probe's. A private_names (mesh namespace, never a public TLD, rules/addressing.md; vault is the vaultwarden container, mail the maddy one; the `reach_hosts` and each mesh's service are probed too), B public_urls, C every WireGuard peer (handshake, endpoint, allowed IPs, keepalive), D the fallback ladder (Direct UDP, Pinned IP, DoH, TLS-443 relay: the engine's Test fallbacks), E IPv4 and F IPv6 (each mesh hub's :53 through the tunnel, plus `ip_targets`: well-known sites by fixed IP, no DNS; the DNS page's reachability targets join the IPv4 list). Each probe has its own timeout (`timeout_ms`, a hung probe becomes a FAIL row) and runs on its own thread, `parallel` at a time.",
+      "_doc_prober": "#1900 What the Prober matrix probes (network/mesh/MeshProber.kt; nothing is a Kotlin literal). Each row is profiled first (interface, DNS, route, mesh peer, fallback), then probed, and its status is the probe's. A private_names (mesh namespace, never a public TLD, rules/addressing.md; vault is the vaultwarden container, mail the stalwart one (fleet_endpoints jmap); the `reach_hosts` and each mesh's service are probed too), B public_urls, C every WireGuard peer (handshake, endpoint, allowed IPs, keepalive), D the fallback ladder (Direct UDP, Pinned IP, DoH, TLS-443 relay: the engine's Test fallbacks), E IPv4 and F IPv6 (each mesh hub's :53 through the tunnel, plus `ip_targets`: well-known sites by fixed IP, no DNS; the DNS page's reachability targets join the IPv4 list). Each probe has its own timeout (`timeout_ms`, a hung probe becomes a FAIL row) and runs on its own thread, `parallel` at a time.",
       "prober": {
         "timeout_ms": 4000,
         "parallel": 6,
         "private_names": [
           { "id": "vault", "label": "Vault", "host": "vaultwarden.mesh.diegonmarcos.com" },
           { "id": "caddy", "label": "Caddy", "host": "caddy.mesh.diegonmarcos.com" },
-          { "id": "mail", "label": "Mail", "host": "maddy.mesh.diegonmarcos.com" },
+          { "id": "mail", "label": "Mail", "host": "stalwart.mesh.diegonmarcos.com" },
           { "id": "c3-infra-mcp", "label": "C3 Infra MCP", "host": "c3-infra-mcp.mesh.diegonmarcos.com" }
         ],
         "public_urls": [

@@ -69,7 +69,7 @@ class MeshProber1900Test {
         val rows = s.prober
         assertEquals(MeshProber.GROUPS, MeshProber.GROUPS.filter { g -> rows.any { it.spec.group == g } })
         val hosts = rows.filter { it.spec.group == "private" }.map { it.spec.host }
-        for (h in listOf("vaultwarden", "caddy", "maddy", "c3-infra-mcp")) assertTrue("$h.mesh is probed", hosts.any { it.startsWith("$h.mesh.") })
+        for (h in listOf("vaultwarden", "caddy", "maddy", "c3-infra-mcp")) assertTrue("$h.mesh is probed", hosts.any { it.startsWith("$h.mesh.") || (h == "maddy" && it.startsWith("stalwart.mesh.")) })
         for (h in decl.reachHosts) assertTrue("existing mesh name $h", h in hosts)
         assertTrue("every private name is in the mesh namespace, never a public TLD", hosts.all { it.endsWith(".mesh.diegonmarcos.com") })
         assertTrue(rows.any { it.spec.group == "public" })
