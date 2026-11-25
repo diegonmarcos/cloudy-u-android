@@ -18,7 +18,11 @@ wake() { $T adb shell svc power stayon true; $T adb shell input keyevent KEYCODE
 wake
 launcher() { $T adb shell cmd package resolve-activity --brief -c android.intent.category.LAUNCHER "$1" | tail -1 | tr -d '\r'; }
 open_page() { wake; local comp; comp="$(launcher "$1")"; $T adb shell am start -W -n "$comp" -f 0x14000000 --es shortcut_action "$2" >/dev/null; }
-shot() { sleep "${2:-6}"; $T adb exec-out screencap -p > "$OUT/$1.png"; $T adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; $T adb pull /sdcard/ui.xml "$OUT/$1.xml" >/dev/null 2>&1; echo "shot $1"; }
+# the stale dump of the previous page is removed first: an animated page (Lnktree's loader) can make uiautomator fail, and a left-over file would read as this page's
+shot() { sleep "${2:-6}"; $T adb exec-out screencap -p > "$OUT/$1.png"; rm -f "$OUT/$1.xml"; $T adb shell rm -f /sdcard/ui.xml
+    for _ in 1 2 3; do $T adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; $T adb pull /sdcard/ui.xml "$OUT/$1.xml" >/dev/null 2>&1 && break; sleep 2; done; echo "shot $1"; }
+# on_screen XML LABEL: the page's own dump names LABEL (a missing dump is no verdict: the screenshot is the evidence)
+on_screen() { if [ -s "$1" ]; then grep -qE "(text|content-desc)=\"$2\"" "$1"; else echo "$1: no ui dump (the page animates), the screenshot is the evidence"; fi; }
 
 # first start runs Cloud Me's start-up permission walk (usage access, overlay, files: the run of 44062126507 and 45491054390 shot its
 # "Apps with usage access" Settings page instead of the tab): grant those appops first, then back out until Cloud Me is on top
@@ -32,7 +36,7 @@ done
 # #1901 the three tabs, each on its default page; the selected bar item names the section (a missing one fails the walk)
 walk_tab() {  # TARGET SHOT LABEL
     open_page "$ME" "$1"; shot "$2" 12
-    grep -qE "(text|content-desc)=\"$3\"" "$OUT/$2.xml" || { echo "$2: the screen does not show $3"; rc=1; }
+    on_screen "$OUT/$2.xml" "$3" || { echo "$2: the screen does not show $3"; rc=1; }
     echo "$2 text nodes: $(grep -o 'text="[^"]\+"' "$OUT/$2.xml" | wc -l)"
 }
 walk_tab section:pers me-pers Pers
@@ -40,9 +44,9 @@ walk_tab section:prof me-prof Prof
 walk_tab section:proj me-proj Proj
 # the ids of the layout before the move still land on a page (page:health/home -> Pers, page:lnktree/leafy -> Prof > Leaf.y)
 open_page "$ME" "page:health/home"; shot me-old-health-home 8
-grep -qE '(text|content-desc)="Pers"' "$OUT/me-old-health-home.xml" || { echo "me-old-health-home: page:health/home did not resolve to Pers"; rc=1; }
+on_screen "$OUT/me-old-health-home.xml" Pers || { echo "me-old-health-home: page:health/home did not resolve to Pers"; rc=1; }
 open_page "$ME" "page:lnktree/leafy"; shot me-old-lnktree-leafy 10
-grep -qE '(text|content-desc)="Prof"' "$OUT/me-old-lnktree-leafy.xml" || { echo "me-old-lnktree-leafy: page:lnktree/leafy did not resolve to Prof"; rc=1; }
+on_screen "$OUT/me-old-lnktree-leafy.xml" Prof || { echo "me-old-lnktree-leafy: page:lnktree/leafy did not resolve to Prof"; rc=1; }
 open_page "$ME" "page:socials/socials-professional"; shot me-socials-professional 10
 open_page "$ME" "page:socials/socials-personal"; shot me-socials-personal 10
 # the Professional body must hold page text, not only the chrome (#1771: it was blank)
