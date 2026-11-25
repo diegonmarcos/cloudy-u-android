@@ -21,7 +21,7 @@ import com.diegonmarcos.superapp.R
  * honour but cannot right now (engine absent, no key) is disabled with that reason. None is silent.
  */
 @Composable
-fun MeshControlsPage(store: MeshStore, modifier: Modifier = Modifier, embedded: Boolean = false) {
+fun MeshControlsPage(store: MeshStore, modifier: Modifier = Modifier, embedded: Boolean = false, sub: MeshDecl.Subpage? = null) {
     val page = store.decl.page("controls")
     val seeds = remember0 { MeshDecl.seeds() }
     Column(
@@ -29,7 +29,7 @@ fun MeshControlsPage(store: MeshStore, modifier: Modifier = Modifier, embedded: 
             .padding(MeshDensity.dp(MeshDensity.S8)),
     ) {
         var group = ""
-        for (c in page?.controls.orEmpty()) {
+        for (c in page?.controls.orEmpty().filter { sub == null || sub.shows(it.id) }) {   // #1928 a subpage draws only the controls it lists
             if (c.group != group) { group = c.group; if (group.isNotBlank()) MHeader(declLabel("group", group, group)) }
             ControlRow(store, c, seeds)
         }

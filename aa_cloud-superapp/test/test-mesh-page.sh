@@ -198,7 +198,7 @@ def check(root):
         if c not in {x["id"] for x in controls}: P.append("T10 control %s was removed (it is in previous_controls)" % c)
         elif c not in reach: P.append("T10 control %s is declared but no tab reaches it" % c)
     for c in controls:
-        if c["id"] not in prev and not c["id"].startswith(("cf_", "vpn_", "status_", "reach_", "log_level")): P.append("T10 control %s is new and neither Cloudflare nor the #1120 Status VPN row: list it in previous_controls only if it is old" % c["id"])
+        if c["id"] not in prev and not c["id"].startswith(("cf_", "vpn_", "status_", "reach_", "log_level", "section_", "log_export", "dns_fleet_link")): P.append("T10 control %s is new and neither Cloudflare nor the #1120 Status VPN row nor a #1928 addition (section Copy / Export, Log export, DNS link): list it in previous_controls only if it is old" % c["id"])
     cf = decl.get("cloudflare", {})
     if "waiting_on" not in cf.get("one", {}) or "team" not in cf.get("one", {}): P.append("T10 cloudflare.one lacks team / waiting_on")
 

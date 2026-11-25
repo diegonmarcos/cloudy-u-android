@@ -4,6 +4,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.stringResource
+import com.diegonmarcos.superapp.R
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -41,10 +46,17 @@ fun MeshScreen(store: MeshStore, modifier: Modifier = Modifier, ticker: Boolean 
     val open = store.decl.tab(store.tab)
     Column(modifier.fillMaxSize().testTag("mesh:screen")) {
         PageTabs(tabs, store.tab, onSelect = { store.tab = it.id }, underTopChrome = false, flushTop = true)
+        // #1928 the second strip: the open tab's subpages (a tab with a single subpage has no strip)
+        open?.takeIf { it.subpages.size > 1 }?.let { t ->
+            val subs = t.subpages.map { NavPage(it.id, declLabel("sub", it.id, it.label), t.icon) }
+            PageTabs(subs, store.subOf(t.id)?.id, onSelect = { store.sub[t.id] = it.id }, underTopChrome = false, flushTop = true)
+        }
         MeshNotice(store)
+        val sp = store.subOf(store.tab)
         Column(Modifier.weight(1f).fillMaxWidth().testTag(MeshTags.tab(store.tab)).verticalScroll(rememberScrollState())) {
             if (open == null) MText(store.tab, Modifier.padding(MeshDensity.dp(MeshDensity.S8)), muted = true)
-            open?.sections?.forEachIndexed { i, id ->
+            if (sp != null) MeshSubpage(sp, store)
+            else open?.sections?.forEachIndexed { i, id ->
                 val label = store.decl.page(id)?.label ?: id
                 if (i > 0) MHeader(declLabel("page", id, label), Modifier.padding(horizontal = MeshDensity.dp(MeshDensity.S8)))
                 MeshSection(id, store)
@@ -53,15 +65,44 @@ fun MeshScreen(store: MeshStore, modifier: Modifier = Modifier, ticker: Boolean 
     }
 }
 
-/** One declared section, drawn as a block of its tab's scroll. */
+/**
+ * #1928 One subpage: its "Updated" time and, when it declares a `report`, Copy / Export of its part of the status dump, then the
+ * sections it names (each shows only what the subpage lists).
+ */
 @Composable
-fun MeshSection(id: String, store: MeshStore) {
+private fun MeshSubpage(sp: MeshDecl.Subpage, store: MeshStore) {
+    Column(Modifier.testTag(MeshTags.sub(sp.id))) {
+        if (sp.stamp.isNotBlank() || sp.report.isNotEmpty()) {
+            val at = store.stampMs(sp.stamp)
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = MeshDensity.dp(MeshDensity.S8), vertical = MeshDensity.dp(MeshDensity.S4)),
+                horizontalArrangement = Arrangement.spacedBy(MeshDensity.dp(MeshDensity.S6)), verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (sp.stamp.isNotBlank()) MText(
+                    stringResource(R.string.mesh_updated, if (at == 0L) stringResource(R.string.mesh_updated_never) else MeshFormat.clock(at)),
+                    Modifier.weight(1f).testTag(MeshTags.stamp(sp.id)), size = MeshDensity.T_CAPTION, mono = true, muted = true,
+                )
+                if (sp.report.isNotEmpty()) for (cid in listOf("section_copy", "section_export")) store.decl.control(cid)?.let { c ->
+                    MButton(declLabel("ctl", c.id, c.label), { store.run(c.engine, sp.id) }, Modifier.testTag(MeshTags.control(c.id)))
+                }
+            }
+        }
+        sp.sections.forEachIndexed { i, id ->
+            if (i > 0) MHeader(declLabel("page", id, store.decl.page(id)?.label ?: id), Modifier.padding(horizontal = MeshDensity.dp(MeshDensity.S8)))
+            MeshSection(id, store, sp)
+        }
+    }
+}
+
+/** One declared section, drawn as a block of its tab's scroll; [sub] (#1928) narrows it to what one subpage lists. */
+@Composable
+fun MeshSection(id: String, store: MeshStore, sub: MeshDecl.Subpage? = null) {
     when (id) {
-        "status" -> MeshStatusPage(store, embedded = true)
+        "status" -> MeshStatusPage(store, embedded = true, sub = sub)
         "peers" -> MeshPeersPage(store, embedded = true)
-        "profiles" -> MeshProfilesPage(store, embedded = true)
+        "profiles" -> MeshProfilesPage(store, embedded = true, sub = sub)
         "routes" -> MeshRoutesPage(store, embedded = true)
-        "controls" -> MeshControlsPage(store, embedded = true)
+        "controls" -> MeshControlsPage(store, embedded = true, sub = sub)
         "log" -> MeshLogPage(store, embedded = true)
         else -> MText(id, Modifier.padding(MeshDensity.dp(MeshDensity.S8)), muted = true)
     }

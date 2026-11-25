@@ -20,7 +20,7 @@ import com.diegonmarcos.superapp.R
  * [StatusRow] draws one by id, and an id it has no drawing for says so on the page rather than vanishing.
  */
 @Composable
-fun MeshStatusPage(store: MeshStore, modifier: Modifier = Modifier, embedded: Boolean = false) {
+fun MeshStatusPage(store: MeshStore, modifier: Modifier = Modifier, embedded: Boolean = false, sub: MeshDecl.Subpage? = null) {
     val s = store.snapshot
     val rows = store.decl.page("status")?.rows.orEmpty()
     Column(
@@ -30,6 +30,8 @@ fun MeshStatusPage(store: MeshStore, modifier: Modifier = Modifier, embedded: Bo
         if (s == null) MText(stringResource(R.string.mesh_reading), muted = true)
         else if (store.decl.sections.isEmpty()) for (id in rows) StatusRow(id, store, s)
         else for (sec in store.decl.sections) {
+            // #1928 a Status subpage (Overview, Interface, Peers, Probes) draws just its own section
+            if (sub != null && sub.statusSection.isNotBlank() && sec.id != sub.statusSection) continue
             // #1900 Status (the current state, once), Profiler (measured results), Prober (run controls and raw per-probe detail)
             MeshSectionTitle(sec.id, sec.label)
             for (id in sec.rows) StatusRow(id, store, s)
@@ -148,6 +150,8 @@ private fun StatusRow(id: String, store: MeshStore, s: MeshSnapshot) {
             MHeader(stringResource(R.string.mesh_row_dns))
             KvRow(stringResource(R.string.mesh_k_dns), cfg.dnsInEffect.ifBlank { "-" }, tag = tag)
             KvRow(stringResource(R.string.mesh_k_fleet_dns), cfg.dns.ifBlank { "-" })
+            // #1928 the servers Android really resolves with now (the active network's link), beside the fleet's configured ones
+            KvRow(stringResource(R.string.mesh_k_dns_servers), store.dnsServers.joinToString(", ").ifBlank { "-" }, tag = "mesh:dns:servers")
         }
         "profile" -> {
             MHeader(stringResource(R.string.mesh_row_profile))

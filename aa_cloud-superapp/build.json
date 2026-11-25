@@ -8762,11 +8762,12 @@
       ],
       "_doc_mtu_probe_sizes": "#1797 IP packet sizes (bytes) of the profiler's MTU probe: EDNS0-padded DNS queries to the first mesh's resolver through the tunnel; the largest answered size is reported beside the interface MTU.",
       "mtu_probe_sizes": [576, 1200, 1280, 1340, 1380, 1420],
-      "_doc_status_sections": "#1900 The Status page is three sections, so each datum is drawn once: Status (the current state: lights, tunnel, interface, peers with every handshake / traffic / latency field, DNS, Cloudflare), Profiler (measured results: the per-mesh table, Cloud C3's profiler, Reachability, the fallback path) and Prober (the run controls and the raw per-probe detail: the A..F matrix and the complete Log). Every id of the status page's `rows` is in exactly one section (MeshDeclTest, MeshStatusParityTest); `rows` stays the flat declared order the earlier tests hold. A row moves between sections here, never out of the page.",
+      "_doc_status_sections": "#1928 The Status tab is five subpages (tabs[status].subpages): Overview, Interface, Peers, Routes, Probes. These four status sections are the ones that draw rows (Routes is the routes page); every id of the status page's `rows` is in exactly one, so no row is cut and none is drawn twice (MeshStatusSections1900Test, MeshSubpages1928Test, test-mesh-subpages-1928.sh). Before #1928 (#1900) the page was three sections, Status / Profiler / Prober, and it is kept below for the record. #1900 The Status page is three sections, so each datum is drawn once: Status (the current state: lights, tunnel, interface, peers with every handshake / traffic / latency field, DNS, Cloudflare), Profiler (measured results: the per-mesh table, Cloud C3's profiler, Reachability, the fallback path) and Prober (the run controls and the raw per-probe detail: the A..F matrix and the complete Log). Every id of the status page's `rows` is in exactly one section (MeshDeclTest, MeshStatusParityTest); `rows` stays the flat declared order the earlier tests hold. A row moves between sections here, never out of the page.",
       "status_sections": [
-        { "id": "status", "label": "Status", "rows": ["lights", "state", "vpn", "export", "profile", "interface", "pubkey", "endpoint", "peers", "handshake", "traffic", "latency", "dns", "cloudflare"] },
-        { "id": "profiler", "label": "Profiler", "rows": ["meshes", "profiler", "reachability", "transport"] },
-        { "id": "prober", "label": "Prober", "rows": ["prober", "log"] }
+        { "id": "overview", "label": "Overview", "rows": ["lights", "state", "vpn", "meshes", "export"] },
+        { "id": "interface", "label": "Interface", "rows": ["profile", "interface", "pubkey", "transport", "endpoint", "dns", "cloudflare"] },
+        { "id": "peers", "label": "Peers", "rows": ["peers", "handshake", "traffic", "latency"] },
+        { "id": "probes", "label": "Probes", "rows": ["profiler", "reachability", "prober", "log"] }
       ],
       "_doc_prober": "#1900 What the Prober matrix probes (network/mesh/MeshProber.kt; nothing is a Kotlin literal). Each row is profiled first (interface, DNS, route, mesh peer, fallback), then probed, and its status is the probe's. A private_names (mesh namespace, never a public TLD, rules/addressing.md; vault is the vaultwarden container, mail the stalwart one (fleet_endpoints jmap); the `reach_hosts` and each mesh's service are probed too), B public_urls, C every WireGuard peer (handshake, endpoint, allowed IPs, keepalive), D the fallback ladder (Direct UDP, Pinned IP, DoH, TLS-443 relay: the engine's Test fallbacks), E IPv4 and F IPv6 (each mesh hub's :53 through the tunnel, plus `ip_targets`: well-known sites by fixed IP, no DNS; the DNS page's reachability targets join the IPv4 list). Each probe has its own timeout (`timeout_ms`, a hung probe becomes a FAIL row) and runs on its own thread, `parallel` at a time.",
       "prober": {
@@ -8797,10 +8798,27 @@
       "default_tab": "status",
       "_doc_tabs": "#1074 The strip: three TABS over the sections in `pages` (a section is a former page; its controls and rows are declared there, once). Status = every config in effect (state, interface, endpoint, transport, handshakes, traffic, latency, DNS, active profile, the Cloudflare transport) then the routes and the peers; Profile = the profile table where one is chosen (with the Cloudflare WARP / One cards), then ALL former Controls (tunnel connect/reconnect, start-up, DNS preset, MTU, keepalive, identity, key, fallbacks); Logs = the journal. A section lives in exactly one tab; test-mesh-page.sh and MeshDeclTest hold that every section is reachable.",
       "tabs": [
-        { "id": "status",  "label": "Status",  "icon": "ic_wg", "sections": ["status", "routes", "peers"] },
-        { "id": "profile", "label": "Profile", "icon": "ic_wg", "sections": ["profiles", "controls"] },
-        { "id": "logs",    "label": "Logs",    "icon": "ic_wg", "sections": ["log"] }
+        { "id": "status",  "label": "Status",  "icon": "ic_wg", "sections": ["status", "routes", "peers"], "subpages": [
+          { "id": "overview", "label": "Overview", "sections": ["status"], "status_section": "overview", "stamp": "snapshot", "report": ["Tunnel", "Meshes"] },
+          { "id": "interface", "label": "Interface", "sections": ["status"], "status_section": "interface", "stamp": "snapshot", "report": ["Interface", "DNS", "Transport"] },
+          { "id": "peers", "label": "Peers", "sections": ["status", "peers"], "status_section": "peers", "stamp": "snapshot", "report": ["Peers", "Traffic"], "controls": ["peer_sort", "peer_add", "peer_remove", "peer_copy"] },
+          { "id": "routes", "label": "Routes", "sections": ["routes"], "stamp": "snapshot", "report": ["Routes"], "controls": ["route_filter", "excluded_apps"] },
+          { "id": "probes", "label": "Probes", "sections": ["status"], "status_section": "probes", "stamp": "probes", "report": ["Reachability", "Prober", "Log"] }
+        ] },
+        { "id": "profile", "label": "Profile", "icon": "ic_wg", "sections": ["profiles", "controls"], "subpages": [
+          { "id": "profiles", "label": "Profiles", "sections": ["profiles"], "controls": ["provider", "profile_select", "profile_diff"] },
+          { "id": "import_export", "label": "Import-Export", "sections": ["profiles"], "controls": ["profile_import_clipboard", "profile_import_vault", "conf_import", "profile_export_text", "profile_export_qr", "profile_export_folder", "conf_export"] },
+          { "id": "tunnel", "label": "Tunnel", "sections": ["controls"], "controls": ["tunnel_name", "address", "listen_port", "private_key", "generate_key", "mtu", "keepalive"] },
+          { "id": "connection", "label": "Connection", "sections": ["controls"], "controls": ["connect", "reconnect", "auto_boot", "auto_wifi", "auto_mobile", "kill_switch", "vpn_settings"] },
+          { "id": "dns_transport", "label": "DNS & Transport", "sections": ["controls"], "controls": ["dns_preset", "dns_fleet_link", "transport_mode", "relay_key", "test_fallbacks"] },
+          { "id": "cloudflare", "label": "Cloudflare", "sections": ["profiles"], "controls": ["cf_warp_register", "cf_warp_forget", "cf_one_enrol"] }
+        ] },
+        { "id": "logs",    "label": "Logs",    "icon": "ic_wg", "sections": ["log"], "subpages": [
+          { "id": "log", "label": "Log", "sections": ["log"], "stamp": "log", "controls": ["log_level", "log_copy", "log_clear", "log_export"] }
+        ] }
       ],
+      "_doc_subpages": "#1928 Each tab is a strip of SUBPAGES (tabs[].subpages; drawn only when a tab has more than one). A subpage draws the `sections` (ids of `pages`) it names, showing only the controls it lists in `controls` and, for a Status one, only the status section `status_section`. Every control of previous_controls is listed by exactly one subpage and every row of pages[status].previous_rows is in exactly one status section (MeshSubpages1928Test, test-mesh-subpages-1928.sh). `stamp` names what the subpage's 'Updated' time reads (snapshot, probes, log); `report` names the `==` headings of the status dump the subpage's Copy / Export carries. `aliases` maps a former page id to the subpage that now holds it (tab/subpage), so an old route still opens the right place.",
+      "aliases": { "status": "status/overview", "peers": "status/peers", "routes": "status/routes", "profiles": "profile/profiles", "controls": "profile/connection", "log": "logs/log" },
       "_doc_startup": "#1120 ROOT CAUSE of the greyed-out Start-up switches (Profile tab): auto_boot / auto_wifi / auto_mobile / kill_switch were declared with an `unsupported` text and no engine call (kill_switch only a read-only one), so ControlRow drew them disabled for ever - nothing in the app could act on them. They now act: network/MeshIntent.kt keeps the owner's intent (connected until Disconnect, default ON) and the three conditions (all default ON), network/MeshSupervisorRunner.kt reconnects on network change / tunnel drop / process start / reboot while the intent holds, and the kill switch (Android lockdown) and the Status page's Always-on VPN switch are changed through the privileged shell channel (AlwaysOnVpn.kt, `settings put secure always_on_vpn_app|always_on_vpn_lockdown`); with no channel armed the switch says why and opens Android's VPN settings.",
       "_doc_previous_controls": "#1074 THE GUARD: every control id the page had before the three-tab reorganisation. Each must still be declared in `pages` AND be reachable from a tab (MeshDeclTest, test-mesh-page.sh T10), so a control cannot silently disappear in a later reshuffle. A control removed on purpose is removed here in the same commit, with the reason in the commit message. New controls are not listed (they are guarded by their own tests).",
       "previous_controls": ["peer_sort", "peer_add", "peer_remove", "peer_copy", "provider", "profile_select", "profile_import_clipboard", "profile_import_vault", "profile_diff", "profile_export_text", "profile_export_qr", "profile_export_folder", "conf_import", "conf_export", "route_filter", "excluded_apps", "connect", "reconnect", "auto_boot", "auto_wifi", "auto_mobile", "kill_switch", "vpn_settings", "dns_preset", "mtu", "keepalive", "tunnel_name", "address", "listen_port", "private_key", "generate_key", "transport_mode", "relay_key", "test_fallbacks", "log_copy", "log_clear"],
@@ -8860,6 +8878,8 @@
           ],
           "controls": [
             { "id": "status_copy_all", "kind": "action", "label": "Copy all", "engine": "clipboard.all" },
+            { "id": "section_copy", "kind": "action", "label": "Copy this section", "engine": "section.copy" },
+            { "id": "section_export", "kind": "action", "label": "Export this section", "engine": "section.export" },
             { "id": "status_export_all", "kind": "action", "label": "Export all", "engine": "export.all" },
             { "id": "status_export_md", "kind": "action", "label": "Export to Md", "engine": "export.md" },
             { "id": "reach_run", "kind": "action", "label": "Run again", "engine": "reach.run" },
@@ -9098,6 +9118,13 @@
               "engine": "fleetdns.preset"
             },
             {
+              "id": "dns_fleet_link",
+              "kind": "action",
+              "group": "network",
+              "label": "Open Configs > Network > DNS",
+              "engine": "nav.configsDns"
+            },
+            {
               "id": "mtu",
               "kind": "number",
               "group": "network",
@@ -9208,6 +9235,12 @@
               "kind": "action",
               "label": "Clear",
               "engine": "log.clear"
+            },
+            {
+              "id": "log_export",
+              "kind": "action",
+              "label": "Export",
+              "engine": "log.export"
             }
           ]
         }

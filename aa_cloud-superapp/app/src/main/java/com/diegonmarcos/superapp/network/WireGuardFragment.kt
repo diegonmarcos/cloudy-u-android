@@ -43,7 +43,7 @@ class WireGuardFragment : KitComposeFragment() {
         MeshStore(AndroidMeshPort(requireContext()), MeshDecl.baked, host,
             journalFile = com.diegonmarcos.superapp.network.mesh.MeshEventLog.file(requireContext()),
             autoProbe = true).also { s ->
-            arguments?.getString(ARG_PAGE)?.let { a -> (s.decl.tab(a) ?: s.decl.tabOf(a))?.let { s.tab = it.id } }
+            arguments?.getString(ARG_PAGE)?.let { a -> s.open(a) }   // #1928 a tab, a subpage, a former page id or a section
         }
     }
 
@@ -131,6 +131,7 @@ class WireGuardFragment : KitComposeFragment() {
 
         override fun openVpnSettings() = startActivity(Intent(Settings.ACTION_VPN_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         override fun openAccount() { (activity as? ShellActivity)?.nav?.openSectionPage("config", "profile") }
+        override fun openConfigsDns() { (activity as? ShellActivity)?.nav?.openSectionPage("config", "dns") }
         /** A Custom Tab by its intent contract (the extra below), without the androidx.browser dependency. */
         override fun openCustomTab(url: String) {
             val i = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

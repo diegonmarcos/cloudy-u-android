@@ -65,6 +65,9 @@ object MeshTags {
     fun page(id: String) = "mesh:page:$id"
     fun tab(id: String) = "mesh:tab:$id"
     fun control(id: String) = "mesh:ctl:$id"
+    /** #1928 A subpage's body, and its "Updated" line. */
+    fun sub(id: String) = "mesh:sub:$id"
+    fun stamp(id: String) = "mesh:stamp:$id"
     fun row(id: String) = "mesh:row:$id"
     fun peer(i: Int) = "mesh:peer:$i"
     const val NOTICE = "mesh:notice"

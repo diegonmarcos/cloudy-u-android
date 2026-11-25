@@ -29,7 +29,7 @@ fun MeshLogPage(store: MeshStore, modifier: Modifier = Modifier, embedded: Boole
             .padding(MeshDensity.dp(MeshDensity.S8)),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(MeshDensity.dp(MeshDensity.S6))) {
-            for (id in listOf("log_copy", "log_clear")) page?.control(id)?.let { c ->
+            for (id in listOf("log_copy", "log_clear", "log_export")) page?.control(id)?.let { c ->
                 MButton(declLabel("ctl", c.id, c.label), { store.run(c.engine) }, Modifier.testTag(MeshTags.control(c.id)), enabled = all.isNotEmpty())
             }
         }

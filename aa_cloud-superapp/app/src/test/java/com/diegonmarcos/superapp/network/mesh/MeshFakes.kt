@@ -48,6 +48,9 @@ class FakePort(
     override fun setAlwaysOn(on: Boolean) = rec("alwayson=$on").also { aoOn = on }
     override fun setLockdown(on: Boolean) = rec("lockdown=$on").also { lockdownOn = on }
     override fun supervisorNote() = note
+    /** #1928 The servers Android resolves with, settable to replay a phone. */
+    var dnsServers = listOf("10.0.0.1", "fd0c:1d00::1")
+    override fun dnsServers() = dnsServers
     override fun connect() = rec("connect").also { up = true; intentP = intentP.copy(wanted = true) }
     override fun disconnect() = rec("disconnect").also { up = false; intentP = intentP.copy(wanted = false) }
     override fun reconnect() = rec("reconnect").also { up = true; intentP = intentP.copy(wanted = true) }
@@ -105,6 +108,7 @@ class FakeHost : MeshHost {
     override fun paste() = clip
     override fun openVpnSettings() { events += "vpn" }
     override fun openAccount() { events += "account" }
+    override fun openConfigsDns() { events += "configsDns" }
     override fun importConf() { events += "importConf" }
     override fun exportConf() { events += "exportConf" }
     override fun exportProfiles() { events += "exportProfiles" }

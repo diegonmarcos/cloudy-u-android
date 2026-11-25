@@ -28,7 +28,7 @@ class MeshScreensShotTest : KitPageHarness() {
 
     private fun show(port: FakePort, tab: String): MeshStore {
         val store = MeshStore(port, decl, FakeHost(), exec = { it.run() })
-        store.tab = tab
+        store.open(tab)   // #1928 "controls" opens the Profile tab on Connection
         store.poll()
         showKit { MeshScreen(store, ticker = false) }
         return store
@@ -54,13 +54,13 @@ class MeshScreensShotTest : KitPageHarness() {
     }
 
     @Test fun `Profile with the Start-up switches usable`() {
-        show(FakePort(up = true).also { it.channel = true }, "profile")
+        show(FakePort(up = true).also { it.channel = true }, "controls")
         compose.onNodeWithTag(MeshTags.control("auto_boot")).performScrollTo().assertExists()
         snap("mesh-profile-startup.png")
     }
 
     @Test fun `Profile start-up with no privileged channel - kill switch says why`() {
-        show(FakePort(up = true), "profile")
+        show(FakePort(up = true), "controls")
         compose.onNodeWithTag(MeshTags.control("kill_switch")).performScrollTo().assertExists()
         snap("mesh-profile-startup-no-channel.png")
     }

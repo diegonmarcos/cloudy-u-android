@@ -132,6 +132,11 @@ class AndroidMeshPort(context: Context) : MeshPort {
     override fun setAlwaysOn(on: Boolean): String = try { AlwaysOnVpn.write(ctx, on) } finally { aoView = null }
     override fun setLockdown(on: Boolean): String = try { AlwaysOnVpn.writeLockdown(ctx, on) } finally { aoView = null }
     override fun supervisorNote(): String = MeshSupervisorRunner.lastNote(ctx)
+    /** #1928 The servers of the active network's link: the tunnel's own while it is up, else the Wi-Fi / mobile ones. */
+    override fun dnsServers(): List<String> = runCatching {
+        val cm = ctx.getSystemService(android.net.ConnectivityManager::class.java)
+        cm.getLinkProperties(cm.activeNetwork)?.dnsServers?.mapNotNull { it.hostAddress }.orEmpty()
+    }.getOrDefault(emptyList())
     override fun consentIntent(): Intent? = runCatching { backend.consentIntent() }.getOrNull()
 
     // ── tunnel state ──

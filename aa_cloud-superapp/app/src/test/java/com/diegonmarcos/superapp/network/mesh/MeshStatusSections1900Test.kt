@@ -68,19 +68,19 @@ class MeshStatusSections1900Test : KitPageHarness() {
 
     // ── 1. every row, in exactly one section ──
 
-    @Test fun `the three sections hold every previous row exactly once`() {
+    @Test fun `the four sections hold every previous row exactly once`() {
         val page = decl.page("status")!!
-        assertEquals(listOf("status", "profiler", "prober"), decl.sections.map { it.id })
+        assertEquals(listOf("overview", "interface", "peers", "probes"), decl.sections.map { it.id })   // #1928 MOVED: Status / Profiler / Prober became Overview / Interface / Peers / Probes
         assertEquals(emptyList<String>(), problems(PREVIOUS_ROWS, page.rows, decl.sections))
-        assertTrue("the Prober row is declared", "prober" in page.rows && "prober" in decl.sections.last().rows)
-        assertEquals("the lights open the Status section", "lights", decl.sections.first().rows.first())
+        assertTrue("the Prober row is declared", "prober" in page.rows && "prober" in decl.sections.last().rows && decl.sections.last().id == "probes")
+        assertEquals("the lights open the Overview section", "lights", decl.sections.first().rows.first())
     }
 
     @Test fun `mutation - a row dropped from a section, drawn twice, or left out of the declaration turns the parity red`() {
         val page = decl.page("status")!!
-        val dropped = decl.sections.map { if (it.id == "status") it.copy(rows = it.rows - "dns") else it }
+        val dropped = decl.sections.map { if (it.id == "interface") it.copy(rows = it.rows - "dns") else it }
         assertTrue(problems(PREVIOUS_ROWS, page.rows, dropped).any { "dns" in it })
-        val twice = decl.sections.map { if (it.id == "prober") it.copy(rows = it.rows + "handshake") else it }
+        val twice = decl.sections.map { if (it.id == "probes") it.copy(rows = it.rows + "handshake") else it }
         assertTrue(problems(PREVIOUS_ROWS, page.rows, twice).any { "handshake" in it && "twice" in it })
         assertTrue(problems(PREVIOUS_ROWS + "ghost", page.rows, decl.sections).any { "ghost" in it })
         assertTrue(problems(PREVIOUS_ROWS - "log", page.rows, decl.sections.map { it.copy(rows = it.rows - "log") }).isNotEmpty())

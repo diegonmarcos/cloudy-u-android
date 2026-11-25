@@ -29,7 +29,7 @@ class MeshVpnControlsTest : KitPageHarness() {
 
     private fun show(port: FakePort, host: FakeHost = FakeHost(), tab: String = "status"): MeshStore {
         val store = MeshStore(port, decl, host, exec = { it.run() })
-        store.tab = tab
+        store.open(tab)   // #1928 "controls" is the former Controls page: it opens the Profile tab on Connection
         store.poll()
         showKit { MeshScreen(store, ticker = false) }
         return store
@@ -112,7 +112,7 @@ class MeshVpnControlsTest : KitPageHarness() {
 
     @Test fun `ROOT CAUSE - on the Profile tab no Start-up switch is disabled, and each acts`() {
         val port = FakePort(up = true).also { it.channel = true }
-        val store = show(port, tab = "profile")
+        val store = show(port, tab = "controls")
         for (id in listOf("auto_boot", "auto_wifi", "auto_mobile", "kill_switch")) {
             compose.onNodeWithTag(MeshTags.control(id)).performScrollTo().assertIsEnabled()
         }
@@ -127,12 +127,12 @@ class MeshVpnControlsTest : KitPageHarness() {
     }
 
     @Test fun `the Start-up switches show ON by default`() {
-        val store = show(FakePort(up = true), tab = "profile")
+        val store = show(FakePort(up = true), tab = "controls")
         assertEquals(MeshIntent.Policy(), store.intent)
     }
 
     @Test fun `kill switch without a channel stays tappable, says why and opens Android's VPN settings`() {
-        val host = FakeHost(); val port = FakePort(up = true); val store = show(port, host, tab = "profile")
+        val host = FakeHost(); val port = FakePort(up = true); val store = show(port, host, tab = "controls")
         compose.onNodeWithTag(MeshTags.control("kill_switch")).performScrollTo().assertIsEnabled().assertTextContains("No privileged shell", substring = true)
         compose.onNodeWithTag(MeshTags.control("kill_switch")).performClick()
         compose.waitForIdle()
@@ -142,7 +142,7 @@ class MeshVpnControlsTest : KitPageHarness() {
 
     @Test fun `without the engine the Start-up switches still work - they are the app's own, not the engine's`() {
         val port = FakePort(engine = false)
-        show(port, tab = "profile")
+        show(port, tab = "controls")
         compose.onNodeWithTag(MeshTags.control("auto_boot")).performScrollTo().assertIsEnabled().performClick()
         compose.waitForIdle()
         assertEquals(listOf("startup.boot=false"), port.calls)

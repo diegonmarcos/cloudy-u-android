@@ -35,13 +35,16 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
  * a row copies or draws as a QR is the declared TEMPLATE, whose PrivateKey line is empty.
  */
 @Composable
-fun MeshProfilesPage(store: MeshStore, modifier: Modifier = Modifier, embedded: Boolean = false) {
+fun MeshProfilesPage(store: MeshStore, modifier: Modifier = Modifier, embedded: Boolean = false, sub: MeshDecl.Subpage? = null) {
     val page = store.decl.page("profiles")
+    // #1928 a subpage (Profiles, Import-Export, Cloudflare) draws only the controls it lists; the whole page when [sub] is null
+    fun on(id: String) = sub == null || sub.shows(id)
+    val rows = on("profile_select") || on("profile_diff") || on("profile_import_clipboard") || on("profile_import_vault") || on("profile_export_text") || on("profile_export_qr")
     Column(
         modifier.pageBody(embedded).testTag(MeshTags.page("profiles"))
             .padding(MeshDensity.dp(MeshDensity.S8)),
     ) {
-        page?.control("provider")?.let { c ->
+        page?.control("provider")?.takeIf { on(it.id) }?.let { c ->
             ChoiceLine(
                 declLabel("ctl", c.id, c.label),
                 c.choices.map { it to declLabel("opt", it, it) },
@@ -51,21 +54,25 @@ fun MeshProfilesPage(store: MeshStore, modifier: Modifier = Modifier, embedded: 
             )
             Reason(stringResource(R.string.mesh_provider_text))
         }
-        MHeader(stringResource(R.string.mesh_profiles_mesh))
-        if (WireGuardProfiles.mesh.isEmpty()) MText(stringResource(R.string.mesh_profiles_none), size = MeshDensity.T_META, muted = true)
-        WireGuardProfiles.mesh.forEach { ProfileRow(store, it) }
-        MHeader(stringResource(R.string.mesh_profiles_external))
-        WireGuardProfiles.external.forEach { ProfileRow(store, it) }
-        CloudflareBlock(store)
-        MHeader(stringResource(R.string.mesh_profiles_io))
-        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(MeshDensity.dp(MeshDensity.S6))) {
-            for (id in listOf("conf_import", "conf_export", "profile_export_folder")) {
-                page?.control(id)?.let { c ->
-                    MButton(declLabel("ctl", c.id, c.label), { store.run(c.engine) }, Modifier.testTag(MeshTags.control(c.id)))
+        if (rows) {
+            MHeader(stringResource(R.string.mesh_profiles_mesh))
+            if (WireGuardProfiles.mesh.isEmpty()) MText(stringResource(R.string.mesh_profiles_none), size = MeshDensity.T_META, muted = true)
+            WireGuardProfiles.mesh.forEach { ProfileRow(store, it, sub) }
+            MHeader(stringResource(R.string.mesh_profiles_external))
+            WireGuardProfiles.external.forEach { ProfileRow(store, it, sub) }
+        }
+        if (on("cf_warp_register") || on("cf_warp_forget") || on("cf_one_enrol")) CloudflareBlock(store)
+        if (on("conf_import") || on("conf_export") || on("profile_export_folder")) {
+            MHeader(stringResource(R.string.mesh_profiles_io))
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(MeshDensity.dp(MeshDensity.S6))) {
+                for (id in listOf("conf_import", "conf_export", "profile_export_folder")) {
+                    page?.control(id)?.let { c ->
+                        MButton(declLabel("ctl", c.id, c.label), { store.run(c.engine) }, Modifier.testTag(MeshTags.control(c.id)))
+                    }
                 }
             }
+            Reason(stringResource(R.string.mesh_export_text))
         }
-        Reason(stringResource(R.string.mesh_export_text))
     }
     if (store.confirmCloud) {
         KitConfirmDialog(
@@ -110,8 +117,9 @@ private fun CloudflareBlock(store: MeshStore) {
 }
 
 @Composable
-private fun ProfileRow(store: MeshStore, profile: WireGuardProfiles.Profile) {
+private fun ProfileRow(store: MeshStore, profile: WireGuardProfiles.Profile, sub: MeshDecl.Subpage? = null) {
     val page = store.decl.page("profiles")
+    fun on(id: String) = sub == null || sub.shows(id)
     val key = store.storedKey(store.profiles, profile.id)
     val active = store.snapshot?.cfg?.activeProfile?.substringAfterLast('/') == profile.fileName.removeSuffix(".conf")
     val state = stringResource(if (active) R.string.mesh_p_active else if (key != null) R.string.mesh_p_stored else R.string.mesh_p_template)
@@ -127,28 +135,28 @@ private fun ProfileRow(store: MeshStore, profile: WireGuardProfiles.Profile) {
             Modifier.horizontalScroll(rememberScrollState()).padding(top = MeshDensity.dp(MeshDensity.S2)),
             horizontalArrangement = Arrangement.spacedBy(MeshDensity.dp(MeshDensity.S4)),
         ) {
-            page?.control("profile_select")?.let { c ->
+            page?.control("profile_select")?.takeIf { on(it.id) }?.let { c ->
                 MButton(declLabel("ctl", c.id, c.label), { store.run(c.engine, profile.id) }, Modifier.testTag(MeshTags.control(c.id) + ":" + profile.id), enabled = usable && !active, emphasised = !active)
             }
-            page?.control("profile_import_clipboard")?.let { c ->
+            page?.control("profile_import_clipboard")?.takeIf { on(it.id) }?.let { c ->
                 MButton(declLabel("ctl", c.id, c.label), { store.run(c.engine, profile.id) }, Modifier.testTag(MeshTags.control(c.id) + ":" + profile.id))
             }
-            page?.control("profile_import_vault")?.let { c ->
+            page?.control("profile_import_vault")?.takeIf { on(it.id) }?.let { c ->
                 MButton(declLabel("ctl", c.id, c.label), { store.run(c.engine, profile.id) }, Modifier.testTag(MeshTags.control(c.id) + ":" + profile.id))
             }
-            page?.control("profile_diff")?.let { c ->
+            page?.control("profile_diff")?.takeIf { on(it.id) }?.let { c ->
                 MButton(declLabel("ctl", c.id, c.label), { store.run(c.engine, profile.id) }, Modifier.testTag(MeshTags.control(c.id) + ":" + profile.id), emphasised = store.diffFor == profile.id)
             }
-            page?.control("profile_export_text")?.let { c ->
+            page?.control("profile_export_text")?.takeIf { on(it.id) }?.let { c ->
                 MButton(declLabel("ctl", c.id, c.label), { store.run(c.engine, profile.id) }, Modifier.testTag(MeshTags.control(c.id) + ":" + profile.id))
             }
-            page?.control("profile_export_qr")?.let { c ->
+            page?.control("profile_export_qr")?.takeIf { on(it.id) }?.let { c ->
                 MButton(declLabel("ctl", c.id, c.label), { store.run(c.engine, profile.id) }, Modifier.testTag(MeshTags.control(c.id) + ":" + profile.id), emphasised = store.qrFor == profile.id)
             }
         }
-        if (!usable) Reason(stringResource(R.string.mesh_need_key))
-        if (store.diffFor == profile.id) DiffPanel(store, profile.id, key?.let { store.profiles[it] })
-        if (store.qrFor == profile.id) store.profileText(profile.id)?.let { MeshQr(qrPayload(it)) }
+        if (!usable && on("profile_select")) Reason(stringResource(R.string.mesh_need_key))
+        if (store.diffFor == profile.id && on("profile_diff")) DiffPanel(store, profile.id, key?.let { store.profiles[it] })
+        if (store.qrFor == profile.id && on("profile_export_qr")) store.profileText(profile.id)?.let { MeshQr(qrPayload(it)) }
     }
 }
 

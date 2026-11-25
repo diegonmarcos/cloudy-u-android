@@ -39,6 +39,8 @@ interface MeshPort {
     fun setLockdown(on: Boolean): String
     /** The supervisor's last sentence: "reconnected", "retrying shortly", "disconnected by you ...". */
     fun supervisorNote(): String
+    /** #1928 The DNS servers Android resolves with now (the active network's; the tunnel's while it is up); empty when unknown. */
+    fun dnsServers(): List<String> = emptyList()
 
     // ── tunnel state (WgState.backend.setState) ──
     fun connect(): String
@@ -120,6 +122,8 @@ interface MeshHost {
     fun paste(): String
     fun openVpnSettings()
     fun openAccount()
+    /** #1928 Open Configs > Network > DNS (the full Fleet DNS page). */
+    fun openConfigsDns() {}
     fun importConf()
     fun exportConf()
     fun exportProfiles()

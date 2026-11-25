@@ -47,6 +47,11 @@ class MeshStore(
     var snapshot by mutableStateOf<MeshSnapshot?>(null)
     /** The open tab of the strip (#1074: Status / Profile / Logs). */
     var tab by mutableStateOf(if (decl.tabs.isEmpty()) "" else decl.startTab.id)
+    /** #1928 The open subpage of each tab (tab id -> subpage id); a tab not in the map shows its first. */
+    val sub = mutableStateMapOf<String, String>()
+    /** #1928 The DNS servers Android resolves with now, and when Reachability last ran. */
+    var dnsServers by mutableStateOf<List<String>>(emptyList())
+    var reachAtMs by mutableStateOf(0L)
     /** #1074 Cloudflare WARP / One: what is registered and whether One is waiting on the Zero Trust apply. */
     var cf by mutableStateOf(CfView())
     var notice by mutableStateOf("")
@@ -76,6 +81,27 @@ class MeshStore(
     var probes by mutableStateOf<List<ProbeLine>>(emptyList())
     /** #1797 When the last Test fallbacks ran (epoch ms; 0 = not yet): the lights show it beside each step. */
     var probesAtMs by mutableStateOf(0L)
+    /** #1928 The subpage of tab [tabId] that is open: the chosen one, else the first; null when the tab declares none. */
+    fun subOf(tabId: String): MeshDecl.Subpage? = decl.tab(tabId)?.let { t -> t.subpage(sub[tabId]) ?: t.subpages.firstOrNull() }
+
+    /** #1928 Open [target] (a tab, a subpage, a former page id, a section): its tab and the subpage that holds it. */
+    fun open(target: String) {
+        val (t, s) = decl.resolve(target) ?: return
+        tab = t.id
+        if (s != null) sub[t.id] = s.id
+    }
+
+    /** #1928 When the data of a subpage was last read (epoch ms; 0 = not yet): [stamp] is the subpage's declared `stamp`. */
+    fun stampMs(stamp: String): Long = when (stamp) {
+        "snapshot" -> snapshot?.atMs ?: 0L
+        "probes" -> maxOf(probesAtMs, proberAtMs, reachAtMs, meshProfile?.atMs ?: 0L)
+        "log" -> journal.list().lastOrNull()?.atMs ?: 0L
+        else -> 0L
+    }
+
+    /** #1928 The status dump cut to subpage [id]'s declared `report` sections. */
+    fun sectionText(id: String): String =
+        MeshReport.pick(reportText(), decl.tabs.flatMap { it.subpages }.firstOrNull { it.id == id }?.report.orEmpty())
     /** A declared profile id whose diff / QR is open. */
     var diffFor by mutableStateOf<String?>(null)
     var qrFor by mutableStateOf<String?>(null)
@@ -170,6 +196,7 @@ class MeshStore(
             hasRelayKey = port.hasRelayKey()
             cf = runCatching { port.cloudflare() }.getOrDefault(cf)
             if (dnsChoices.isEmpty()) dnsChoices = port.dnsChoices()
+            dnsServers = port.dnsServers()
         }
     }
 
@@ -235,6 +262,7 @@ class MeshStore(
         "startup.wifi" to { arg, _ -> perform("start-up") { port.setStartup("wifi", arg == "on") } },
         "startup.mobile" to { arg, _ -> perform("start-up") { port.setStartup("mobile", arg == "on") } },
         "nav.vpnSettings" to { _, _ -> host.openVpnSettings(); notice = "VPN settings opened" },
+        "nav.configsDns" to { _, _ -> host.openConfigsDns(); notice = "Configs > Network > DNS opened" },
         "nav.account" to { _, _ -> host.openAccount(); notice = "Account opened: Runtime > Apply all re-imports the vault's profiles" },
         "prefs.mtu" to { a, _ -> perform("MTU") { port.setMtu(a) } },
         "prefs.keepalive" to { a, _ -> perform("keepalive") { port.setKeepalive(a) } },
@@ -290,6 +318,10 @@ class MeshStore(
         "view.statusLog" to { a, _ -> view["status_log_open"] = a },
         "clipboard.all" to { _, _ -> host.copy("mesh status", reportText()); notice = "whole status copied (private keys are never included)" },
         "export.all" to { _, _ -> host.exportText("cloud-mesh-status.txt", reportText()) },
+        // #1928 one subpage's part of the status dump (arg = the subpage id), and the journal as a file
+        "section.copy" to { a, _ -> host.copy("mesh $a", sectionText(a)); notice = "section $a copied (private keys are never included)" },
+        "section.export" to { a, _ -> host.exportText("cloud-mesh-$a.txt", sectionText(a)) },
+        "log.export" to { _, _ -> host.exportText("cloud-mesh-log.txt", MeshReport.redact(journal.text())) },
         // #1845 the same whole status as a Markdown file (headings per section, the rows fenced)
         "export.md" to { _, _ -> host.exportMarkdown("cloud-mesh-status.md", MeshReport.markdown(reportText())) },
         "log.level" to { a, _ -> logLevel = if (a in setOf("all", "warn", "error")) a else "all"; journalRev++ },
@@ -339,7 +371,7 @@ class MeshStore(
     private fun reachNow(): String {
         check(decl.reachHosts.isNotEmpty()) { "no mesh URLs are declared" }
         val r = MeshReach.run(decl.reachHosts, reachIo, nowMs = clock)
-        reach = r
+        reach = r; reachAtMs = clock()
         for (x in r) journal.add(LogEvent(clock(), if (x.ok) "reach" else "warn", MeshReach.text(listOf(x))))
         return "${r.count { it.ok }} of ${r.size} reachable"
     }
@@ -423,7 +455,8 @@ class MeshStore(
     fun cancelProber() { proberEpoch.incrementAndGet() }
 
     /** #1153 The whole Status page as text (Copy all / Export all); #1797 adds the per-mesh table and the profile. */
-    fun reportText(): String = MeshReport.build(snapshot, dnsPreset, provider, transport, probes, reach, journal.list(), clock(), profile = meshProfile, prober = prober)
+    fun reportText(): String = MeshReport.build(snapshot, dnsPreset, provider, transport, probes, reach, journal.list(), clock(), profile = meshProfile, prober = prober,
+        dnsServers = dnsServers, routeLines = MeshReport.routeLines(snapshot?.cfg?.peers.orEmpty(), decl.nat64Marker))
 
     /** The Cloud preset after the owner confirmed replacing their settings. */
     fun confirmCloudPreset() { confirmCloud = false; perform("provider") { port.applyCloudPreset() } }

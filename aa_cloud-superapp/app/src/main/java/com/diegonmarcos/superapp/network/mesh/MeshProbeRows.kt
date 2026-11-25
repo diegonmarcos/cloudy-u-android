@@ -204,17 +204,18 @@ internal fun MeshPeersRow(store: MeshStore, s: MeshSnapshot, tag: String) {
         val name = p.cfg.name.ifBlank { stringResource(R.string.mesh_peer_n, i + 1) }
         Column(Modifier.testTag(if (i == 0) tag else "mesh:peerrow:$i").padding(vertical = MeshDensity.dp(MeshDensity.S2))) {
             MText(name, size = MeshDensity.T_BODY, bold = true)
-            for ((k, v) in peerFields(p, s)) KvRow(declLabel("pf", k, k), v, tag = "mesh:peerrow:$i:$k",
+            for ((k, v) in peerFields(p, s, store.transport?.path.orEmpty())) KvRow(declLabel("pf", k, k), v, tag = "mesh:peerrow:$i:$k",
                 onCopy = if (k == "public_key" && p.cfg.publicKey.isNotBlank()) { { store.host.copy("public key", p.cfg.publicKey) } } else null)
         }
     }
 }
 
 /** #1797 Every field of one peer, in the order Status shows them; the parity test reads this same list. */
-fun peerFields(p: PeerLive, s: MeshSnapshot): List<Pair<String, String>> = listOf(
+fun peerFields(p: PeerLive, s: MeshSnapshot, path: String = ""): List<Pair<String, String>> = listOf(
     "handshake" to (if (!s.engineInstalled) "unknown" else if (!s.up) "-" else p.handshakeAgeS?.let { MeshFormat.age(it) + " ago" } ?: "none yet"),
     "health" to p.health.name,
     "endpoint" to p.cfg.endpoint.ifBlank { "-" },
+    "endpoint_in_use" to MeshEndpoint.inUse(p.cfg.endpoint, path),
     "allowed_ips" to p.cfg.allowedIps.ifBlank { "-" },
     "rx" to "${MeshFormat.bytes(p.rx)} (${p.rx} B) ${MeshFormat.rate(p.rxRate)}",
     "tx" to "${MeshFormat.bytes(p.tx)} (${p.tx} B) ${MeshFormat.rate(p.txRate)}",

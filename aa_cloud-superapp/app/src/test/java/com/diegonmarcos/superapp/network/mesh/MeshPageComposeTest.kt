@@ -41,7 +41,13 @@ class MeshPageComposeTest : KitPageHarness() {
     }
 
     private fun open(store: MeshStore, id: String) {
-        compose.runOnUiThread { store.tab = decl.tabOf(id)?.id ?: id }
+        compose.runOnUiThread { store.open(id) }   // #1928 a tab, a subpage, a former page id or a section
+        compose.waitForIdle()
+    }
+
+    /** #1928 Open subpage [sub] of tab [tab] and let it compose. */
+    private fun openSub(store: MeshStore, tab: String, sub: String) {
+        compose.runOnUiThread { store.tab = tab; store.sub[tab] = sub }
         compose.waitForIdle()
     }
 
@@ -53,7 +59,12 @@ class MeshPageComposeTest : KitPageHarness() {
             compose.runOnUiThread { store.tab = t.id }
             compose.waitForIdle()
             compose.onNodeWithTag(MeshTags.tab(t.id)).assertExists()
-            for (s in t.sections) compose.onNodeWithTag(MeshTags.page(s)).assertExists()
+            // #1928 a tab draws its subpages one at a time: each shows its body, and the pages it names
+            for (sp in t.subpages) {
+                openSub(store, t.id, sp.id)
+                compose.onNodeWithTag(MeshTags.sub(sp.id)).assertExists()
+                for (s in sp.sections) compose.onNodeWithTag(MeshTags.page(s)).assertExists()
+            }
         }
     }
 
@@ -65,24 +76,34 @@ class MeshPageComposeTest : KitPageHarness() {
         compose.onNodeWithTag(MeshTags.page("log")).assertExists()
     }
 
-    @Test fun `profile draws the profile table first, then the controls, with the Cloudflare cards`() {
+    @Test fun `profile has the six subpages, each drawing its own controls, with the Cloudflare cards`() {
         val store = showStore()
-        compose.runOnUiThread { store.tab = "profile" }
-        compose.waitForIdle()
+        assertEquals(listOf("profiles", "import_export", "tunnel", "connection", "dns_transport", "cloudflare"), decl.tab("profile")!!.subpages.map { it.id })
+        for (sp in decl.tab("profile")!!.subpages) {
+            openSub(store, "profile", sp.id)
+            // a subpage's controls are on screen (a per-profile control is tagged <control>:<profile id>)
+            for (id in sp.controls) assertTrue("$id is not drawn on ${sp.id}", compose.onAllNodes(
+                androidx.compose.ui.test.SemanticsMatcher("tag $id") { n -> n.config.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.TestTag)?.let { it == MeshTags.control(id) || it.startsWith(MeshTags.control(id) + ":") } == true }
+            ).fetchSemanticsNodes().isNotEmpty())
+        }
+        openSub(store, "profile", "cloudflare")
         compose.onNodeWithTag("mesh:cf:warp").assertExists()
         compose.onNodeWithTag("mesh:cf:one").assertExists()
         compose.onNodeWithTag("mesh:cf:one:state").assertTextContains("waiting on Zero Trust apply", substring = true)
         compose.onNodeWithTag(MeshTags.control("cf_one_enrol")).assertIsNotEnabled()
         compose.onNodeWithTag(MeshTags.control("cf_warp_register")).assertExists()
-        for (c in decl.page("controls")!!.controls) compose.onNodeWithTag(MeshTags.control(c.id)).assertExists()
     }
 
-    @Test fun `status draws every declared row from the engine's reading`() {
+    @Test fun `status draws every declared row from the engine's reading, across its subpages`() {
         val store = showStore()
-        for (row in decl.page("status")!!.rows) compose.onNodeWithTag(MeshTags.row(row)).assertExists()
         compose.onNodeWithText("CONNECTED", substring = true).assertExists()
+        for (sp in decl.tab("status")!!.subpages.filter { it.statusSection.isNotBlank() }) {
+            openSub(store, "status", sp.id)
+            for (row in decl.sections.first { it.id == sp.statusSection }.rows) compose.onNodeWithTag(MeshTags.row(row)).assertExists()
+        }
+        openSub(store, "status", "interface")
         compose.onNodeWithTag(MeshTags.row("pubkey")).assertTextContains("PUBKEY", substring = true)
-        store.hashCode()
+        compose.onNodeWithTag("mesh:dns:servers").assertTextContains("10.0.0.1", substring = true)   // #1928 the servers in use
     }
 
     @Test fun `status without the engine says it cannot tell`() {
@@ -123,12 +144,14 @@ class MeshPageComposeTest : KitPageHarness() {
 
     @Test fun `every control the engine cannot honour is on screen with its reason`() {
         val store = showStore()
-        open(store, "controls")
-        for (c in decl.page("controls")!!.controls.filter { !it.honoured }) {
-            compose.onNodeWithTag(MeshTags.control(c.id)).performScrollTo().assertIsDisplayed()
-            compose.onNodeWithText(c.unsupported, substring = true).assertExists()
+        for (sp in decl.tab("profile")!!.subpages.filter { "controls" in it.sections }) {
+            openSub(store, "profile", sp.id)
+            for (c in decl.page("controls")!!.controls.filter { it.id in sp.controls && !it.honoured }) {
+                compose.onNodeWithTag(MeshTags.control(c.id)).performScrollTo().assertIsDisplayed()
+                compose.onNodeWithText(c.unsupported, substring = true).assertExists()
+            }
+            for (c in decl.page("controls")!!.controls.filter { it.id in sp.controls }) compose.onNodeWithTag(MeshTags.control(c.id)).assertExists()
         }
-        for (c in decl.page("controls")!!.controls) compose.onNodeWithTag(MeshTags.control(c.id)).assertExists()
         store.hashCode()
     }
 
@@ -161,10 +184,12 @@ class MeshPageComposeTest : KitPageHarness() {
         compose.onNodeWithTag(MeshTags.page("peers")).assertExists()
     }
 
-    @Test fun `a route into a former Controls page opens the Profile tab`() {
+    @Test fun `a route into a former Controls page opens the Profile tab on Connection (#1928 alias)`() {
         show(WireGuardFragment.newInstance("controls"))
         compose.onNodeWithTag(MeshTags.tab("profile")).assertExists()
+        compose.onNodeWithTag(MeshTags.sub("connection")).assertExists()
         compose.onNodeWithTag(MeshTags.page("controls")).assertExists()
+        compose.onNodeWithTag(MeshTags.control("connect")).assertExists()
     }
 
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.onAllNodesWithTextCount(t: String) =
@@ -175,6 +200,7 @@ class MeshPageComposeTest : KitPageHarness() {
         compose.onNodeWithTag(MeshTags.control("status_copy_all")).assertExists()
         compose.onNodeWithTag(MeshTags.control("status_export_all")).assertExists()
         compose.onNodeWithTag(MeshTags.control("status_export_md")).assertExists()   // #1845
+        openSub(store, "status", "probes")
         compose.onNodeWithTag(MeshTags.control("reach_run")).assertExists()
         open(store, "peers")
         compose.onNodeWithTag("mesh:topology").performScrollTo().assertExists()
