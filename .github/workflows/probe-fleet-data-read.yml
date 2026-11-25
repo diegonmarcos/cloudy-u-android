@@ -1,0 +1,20 @@
+name: probe-fleet-data-read
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout private fleet data
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-configs
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .fleet-private
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: fleet-data
+      - run: ls .fleet-private/fleet-data/2/fleet | head -30
