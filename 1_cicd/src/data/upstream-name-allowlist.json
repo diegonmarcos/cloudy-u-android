@@ -98,7 +98,8 @@
         "a0_docs/eng-specs/store-upstream-sources.md",
         "ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-install-sources.json",
         "aa_cloud-superapp/build.json",
-        "aa_cloud-superapp/test/data/apps-inventory-1756.json"
+        "aa_cloud-superapp/test/data/apps-inventory-1756.json",
+        "aa_cloud-superapp/test/data/launcher-surfaces-before-1902.json"
       ],
       "patterns": [
         "app\\.affine\\.pro"

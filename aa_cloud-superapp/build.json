@@ -3515,7 +3515,7 @@
                 "_doc": "#1902 Social (Services · Leisure): opens the phone social-apps folder (All Apps ui.phone_folders id media_social). target `page:phone/apps#folder:media_social` is the existing `page:<section>/<page>#<anchor>` grammar: the Phone > Apps page consumes the pending anchor and opens that folder sheet (SuitePhoneAppsFragment). Me > Socials (myroadmap) is the Cloud Me page and stays in Me.",
                 "id": "social",
                 "label": "Social",
-                "icon": "ic_heart",
+                "icon": "ic_sparkles",
                 "target": "page:phone/apps#folder:media_social"
               },
               {
@@ -4418,8 +4418,8 @@
             },
             {
               "label": "Social",
-              "_doc": "#1902 Services · Leisure > Social OPENS the All Apps folder media_social (ui.phone_folders, the phone social apps) instead of listing a second copy of them: `opens_folder` is the folder id, the same sheet a tap on that All Apps folder opens (SuitePhoneAppsFragment.openAllAppsFolder). It declares no packages of its own; the face is the same ic_heart as the Cloud Social tile at this position.",
-              "icon_res": "ic_heart",
+              "_doc": "#1902 Services · Leisure > Social OPENS the All Apps folder media_social (ui.phone_folders, the phone social apps) instead of listing a second copy of them: `opens_folder` is the folder id, the same sheet a tap on that All Apps folder opens (SuitePhoneAppsFragment.openAllAppsFolder). It declares no packages of its own; the face is the same ic_sparkles as the Cloud Social tile at this position.",
+              "icon_res": "ic_sparkles",
               "opens_folder": "media_social",
               "packages": []
             },
