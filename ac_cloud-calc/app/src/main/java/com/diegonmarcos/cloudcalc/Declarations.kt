@@ -116,6 +116,33 @@ object Declarations {
     /** #1893 THE tool hierarchy (ui.sections[home].hierarchy.nodes): what Home draws and the navigation follows. */
     val hierarchy: List<HNode> by lazy { hierarchyIn(decode(BuildConfig.UI_SECTIONS_B64)) }
 
+    /** #1909 one entry of the Home tree: a [HomeGroup] (a heading) or a [HomeLeaf] (a tile). */
+    sealed interface HomeItem { val label: String }
+    data class HomeGroup(val id: String, override val label: String, val items: List<HomeItem>) : HomeItem {
+        /** Every tile below this group, in tree order. */
+        fun leaves(): List<HomeLeaf> = items.flatMap { if (it is HomeGroup) it.leaves() else listOf(it as HomeLeaf) }
+    }
+    /** A tile: [id] is the page id for a one-mode page, "page:mode" for a mode of a several-mode page; [mode] null = the page itself. */
+    data class HomeLeaf(val id: String, override val label: String, val icon: String, val page: String, val mode: String?) : HomeItem
+
+    /** #1909 the Home tree, derived from the hierarchy and the pages/modes declarations: one group per node, a page with several modes is a group of one tile per mode, no hand list. */
+    val homeTree: List<HomeGroup> by lazy { homeTreeOf(hierarchy, tabs, modes) }
+
+    fun homeTreeOf(nodes: List<HNode>, tabs: List<Tab>, modes: List<Mode>): List<HomeGroup> = nodes.map { n ->
+        HomeGroup(n.id, n.label, n.pages.flatMap { pageItems(it, n, tabs, modes) } + homeTreeOf(n.children, tabs, modes))
+    }
+
+    private fun pageItems(page: String, node: HNode, tabs: List<Tab>, modes: List<Mode>): List<HomeItem> {
+        val t = tabs.first { it.id == page }
+        val ms = modes.filter { it.tab == page }
+        fun leaf(m: Mode) = HomeLeaf("$page:${m.id}", m.label, m.icon.ifEmpty { t.icon }, page, m.id)
+        return when {
+            ms.size <= 1 -> listOf(HomeLeaf(page, t.label, t.icon, page, null))
+            node.pages.size == 1 && t.label == node.label -> ms.map(::leaf)
+            else -> listOf(HomeGroup("page_$page", t.label, ms.map(::leaf)))
+        }
+    }
+
     /** [sections] is ui.sections' JSON; the tree is the `home` section's `hierarchy.nodes`. */
     fun hierarchyIn(sections: String): List<HNode> =
         JSONArray(sections).objects().firstOrNull { it.optString("id") == "home" }

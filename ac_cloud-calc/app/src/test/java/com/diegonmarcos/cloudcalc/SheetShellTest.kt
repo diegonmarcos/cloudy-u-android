@@ -184,7 +184,7 @@ class SheetShellTest {
         assertEquals(9, Declarations.tileColumns)
         compose.onNodeWithTag(BottomNavTags.item("home")).performClick()
         compose.waitForIdle()
-        val tools = Declarations.hierarchy.flatMap { it.allPages() }
+        val tools = Declarations.homeTree.flatMap { it.leaves() }.map { it.id }
         for (id in tools) {
             compose.onAllNodesWithTag("tile:$id", useUnmergedTree = true).assertCountEquals(1)
             compose.onNodeWithTag("tileicon:$id", useUnmergedTree = true).assertExists()
@@ -193,12 +193,12 @@ class SheetShellTest {
             val label = compose.onNodeWithTag("tilelabel:$id", useUnmergedTree = true).getBoundsInRoot()
             assertTrue("the label of $id is below its icon", label.top >= icon.bottom)
         }
-        // The Calc group is nine tools: one full row of nine.
-        val calc = Declarations.hierarchy[0].children[0].pages
-        assertEquals(9, calc.size)
+        // #1909 Calc > Decimals > Calc: five mode tiles share one row, in distinct columns.
+        val calc = Declarations.homeTree[0].leaves().filter { it.page == "calc" }.map { it.id }
+        assertEquals(5, calc.size)
         val b = calc.map { compose.onNodeWithTag("tile:$it", useUnmergedTree = true).getBoundsInRoot() }
-        assertEquals("nine tiles share one row", 1, b.map { it.top }.toSet().size)
-        assertEquals("nine distinct columns", 9, b.map { it.left }.toSet().size)
+        assertEquals("the tiles share one row", 1, b.map { it.top }.toSet().size)
+        assertEquals("distinct columns", 5, b.map { it.left }.toSet().size)
         // The very composable of the SuperApp's Cloud page, not the Configs card grid.
         val home = File("src/main/java/com/diegonmarcos/cloudcalc/ui/HomeScreen.kt").readText()
         assertTrue("Home draws CompactTileCore", home.contains("CompactTileCore("))

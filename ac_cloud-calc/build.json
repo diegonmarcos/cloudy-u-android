@@ -2237,10 +2237,13 @@
         "label": "Home",
         "icon": "home",
         "hierarchy": {
-          "_doc": "#1893 THE tool hierarchy, the tree Home draws and the navigation follows: 1 Calculations (Calc, Sheet), 2 Toolkit (Measure with Sound, Camera, Wireless, Sensors; Tools). A node with `pages` lists ui.sections[].pages ids (a tool each); `section` names the ui.sections entry that holds them. Every page of every section except Home and Configs is listed exactly once (DeclarationsTest). Ask Jev, not named by the order, sits under Calc (the closest parent).",
+          "_doc": "#1893 THE tool hierarchy, the tree Home draws and the navigation follows: 1 Calculations (Calc, Sheet), 2 Toolkit (Measure with Sound, Camera, Wireless, Sensors; Tools). A node with `pages` lists ui.sections[].pages ids (a tool each); `section` names the ui.sections entry that holds them. Every page of every section except Home and Configs is listed exactly once (DeclarationsTest). Ask Jev, not named by the order, sits under Calc (the closest parent). #1909 Calc is split Decimals | Others as the Calc section's own groups (DeclarationsTest pins the equality); Home expands every page with several modes into its own sub-group of one tile per mode (Declarations.homeTreeOf), a page with one mode stays one tile, and a node whose single page carries the node's label shows that page's modes directly (Measure > Sound lists its five).",
           "nodes": [
             {"id": "calculations", "label": "Calculations", "icon": "calculate", "children": [
-              {"id": "calc", "label": "Calc", "icon": "calculate", "section": "calculator", "pages": ["calc", "latex", "convert", "history", "datetime", "sound", "finance", "graph", "ask"]},
+              {"id": "calc", "label": "Calc", "icon": "calculate", "section": "calculator", "children": [
+                {"id": "calc_decimals", "label": "Decimals", "icon": "calculate", "pages": ["calc", "latex", "convert", "history"]},
+                {"id": "calc_others", "label": "Others", "icon": "apps", "pages": ["datetime", "sound", "finance", "graph", "ask"]}
+              ]},
               {"id": "sheet", "label": "Sheet", "icon": "table_chart", "section": "sheet", "pages": ["sheet"]}
             ]},
             {"id": "toolkit", "label": "Toolkit", "icon": "build", "children": [

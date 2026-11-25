@@ -252,6 +252,87 @@ class DeclarationsTest {
         assertEquals(listOf("Measure", "Wireless"), nav.section("measure")!!.rowGroups().map { it.label })
     }
 
+    // ── #1909 the nested Home tree ───────────────────────────────────────────
+
+    private val tree = Declarations.homeTreeOf(hier, tabs, modes)
+
+    /** The declared leaf set: every mode of a several-mode page, the page itself for a one-mode page; Home and Configs are no tools. */
+    private fun declaredLeaves(): List<String> = tabs.map { it.id }.filter { it != "home" && it != "configs" }.flatMap { p ->
+        val ms = modes.filter { it.tab == p }
+        if (ms.size <= 1) listOf(p) else ms.map { "$p:${it.id}" }
+    }
+
+    /** Problems of [t] against the declarations: a declared leaf missing or drawn twice, a leaf nobody declared. */
+    private fun leafProblems(t: List<Declarations.HomeGroup>): List<String> {
+        val drawn = t.flatMap { it.leaves() }.map { it.id }
+        val want = declaredLeaves()
+        return want.filter { w -> drawn.count { it == w } != 1 }.map { "leaf $w not exactly once" } + drawn.filter { it !in want }.map { "undeclared leaf $it" }
+    }
+
+    /** Problems of [t] against the Home before #1909: every old tile (page id, label) is still a tile, a heading or a mode-tile's page. */
+    private fun parityProblems(t: List<Declarations.HomeGroup>): List<String> {
+        val old = listOf(
+            "calc" to "Calc", "latex" to "LaTeX", "convert" to "Convert", "history" to "History", "datetime" to "Time & Date", "sound" to "Sound",
+            "finance" to "Finance", "graph" to "Graph", "ask" to "Ask Jev", "sheet" to "Sheet", "sensors" to "Sound", "camera" to "Camera",
+            "wifi" to "WiFi", "bluetooth" to "Bluetooth", "nfc" to "NFC", "lfrfid" to "LF-RFID-Tags", "phone" to "Sensors",
+            "light" to "Light", "recorder" to "Voice Recorder", "tracker" to "Tracker", "clock" to "Clock",
+        )
+        val leaves = t.flatMap { it.leaves() }
+        fun heads(g: Declarations.HomeGroup): List<String> = listOf(g.label) + g.items.filterIsInstance<Declarations.HomeGroup>().flatMap(::heads)
+        val words = leaves.map { it.label } + t.flatMap(::heads)
+        return old.filter { (page, label) -> leaves.none { it.page == page } || label !in words }.map { "old tile $it lost" }
+    }
+
+    private fun walk(g: Declarations.HomeGroup, depth: Int, out: MutableList<Pair<String, Int>>) {
+        out += g.id to depth
+        g.items.filterIsInstance<Declarations.HomeGroup>().forEach { walk(it, depth + 1, out) }
+    }
+
+    @Test fun `every declared leaf page appears exactly once on Home`() {
+        assertEquals(emptyList<String>(), leafProblems(tree))
+        assertEquals(5, tree[1].leaves().count { it.page == "sensors" })
+        assertEquals(setOf("sx_motion", "sx_position", "sx_environment", "sx_activity", "sx_device", "sx_all", "sx_compass", "sx_seismo", "sx_metal", "sx_ruler", "sx_protractor"),
+            tree[1].leaves().filter { it.page == "phone" }.map { it.mode }.toSet())
+        assertEquals(Declarations.homeTree, tree)
+    }
+
+    @Test fun `no tile of the old Home is lost, same pages and same labels`() {
+        assertEquals(emptyList<String>(), parityProblems(tree))
+    }
+
+    @Test fun `Calc is split Decimals and Others as the Calc section's own groups, down to the last app`() {
+        val calc = tree[0].items.filterIsInstance<Declarations.HomeGroup>().first { it.label == "Calc" }
+        val groups = calc.items.filterIsInstance<Declarations.HomeGroup>()
+        assertEquals(listOf("Decimals", "Others"), groups.map { it.label })
+        val declared = nav.section("calculator")!!.rowGroups()
+        assertEquals(declared.map { it.label }, groups.map { it.label })
+        assertEquals(declared.map { g -> g.pages.map { it.id } }, groups.map { g -> g.leaves().map { it.page }.distinct() })
+        // Decimals > Calc > its five modes: the tree reaches the last app.
+        val decCalc = groups[0].items.filterIsInstance<Declarations.HomeGroup>().first { it.label == "Calc" }
+        assertEquals(listOf("standard", "scientific", "programmer", "cas", "physics"), decCalc.leaves().map { it.mode })
+    }
+
+    @Test fun `each level sits one step deeper than its parent`() {
+        val out = mutableListOf<Pair<String, Int>>()
+        tree.forEach { walk(it, 0, out) }
+        val d = out.toMap()
+        assertEquals(0, d["toolkit"]); assertEquals(1, d["measure"]); assertEquals(2, d["measure_wireless"]); assertEquals(3, d["page_wifi"])
+        assertEquals(0, d["calculations"]); assertEquals(1, d["calc"]); assertEquals(2, d["calc_decimals"]); assertEquals(3, d["page_calc"])
+        val home = File("src/main/java/com/diegonmarcos/cloudcalc/ui/HomeScreen.kt").readText()
+        assertTrue("one indent step per depth", home.contains("INDENT * depth") && home.contains("INDENT * (depth + 1)"))
+    }
+
+    @Test fun `mutations of the tree turn the checks red`() {
+        fun drop(g: Declarations.HomeGroup): Declarations.HomeGroup =
+            g.copy(items = g.items.drop(1).map { if (it is Declarations.HomeGroup) drop(it) else it })
+        assertTrue("a dropped tile must be caught", leafProblems(tree.map(::drop)).isNotEmpty())
+        assertTrue("a dropped tile must be caught as a lost old tile", parityProblems(listOf(tree[1].copy(items = emptyList()))).isNotEmpty())
+        val dup = tree.map { g -> g.copy(items = g.items + g.leaves().first()) }
+        assertTrue("a duplicated tile must be caught", leafProblems(dup).isNotEmpty())
+        assertTrue("an invented tile must be caught", leafProblems(tree + Declarations.HomeGroup("x", "X", listOf(Declarations.HomeLeaf("ghost", "Ghost", "", "calc", null)))).isNotEmpty())
+        assertTrue("the real tree is green", leafProblems(tree).isEmpty() && parityProblems(tree).isEmpty())
+    }
+
     @Test fun `the AI page is gone and every other page of before is still there`() {
         val now = tabs.map { it.id }.toSet()
         assertFalse("ai page", "ai" in now)
