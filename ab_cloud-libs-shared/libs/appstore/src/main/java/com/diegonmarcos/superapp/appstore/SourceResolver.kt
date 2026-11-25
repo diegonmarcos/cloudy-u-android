@@ -15,7 +15,7 @@ import java.net.URL
 
 /**
  * #571 WE ARE THE STORE — the ORDERED install sources of an external app, read
- * from the `resolver` block of the one install-source map ([PhoneAppActions.SOURCES_ASSET]).
+ * from the `resolver` block of the one install-source map ([PhoneAppActions.SOURCES_FILE]).
  *
  * Three rungs, always in this order: the vendor's own direct-APK endpoint, the
  * official F-Droid repo ([FDroidIndex]: signed index, per-version sha256), and

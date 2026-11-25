@@ -50,6 +50,7 @@ import org.robolectric.annotation.Config
 @Config(sdk = [34], application = Application::class)
 class StorePhoneAppsTest : KitPageHarness() {
 
+    init { FleetPrivateFixtures.installSources() }   // #1566 the install-source map is a fleet-private dataset
     private val ctx: Context = ApplicationProvider.getApplicationContext()
     private val pm get() = ctx.packageManager
 

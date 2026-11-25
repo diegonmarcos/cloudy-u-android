@@ -23,7 +23,7 @@ import java.util.Date
  *
  * ONE TAB PER DECLARED FEED, and nothing in this file names a repository, an
  * endpoint, a JSON field or a status word. All of that is
- * assets/appstore-feeds.json, the same way [PhoneAppActions.SOURCES_ASSET]
+ * assets/appstore-feeds.json, the same way [PhoneAppActions.SOURCES_FILE]
  * owns the install sources: a third feed is an entry there and no edit here.
  * That is also what makes the derivation testable — [labels] can be handed a
  * declaration a test invented, and has to draw it.
@@ -40,9 +40,9 @@ import java.util.Date
  */
 object FeedViewer {
 
-    /** #1566 the feed declaration names the repositories the Cloud page reads: a fleet-private tier-2 dataset served by Cloud Account's private route; [FEEDS_ASSET] is only where the unit tests put the CI-materialised copy. */
+    /** #1566 the feed declaration names the repositories the Cloud page reads: a fleet-private tier-2 dataset served by Cloud Account's private route; [FEEDS_FILE] is its name in the private repo and in CI's fleet-private-data. */
     const val DATASET = "fleet/appstore-feeds"
-    const val FEEDS_ASSET = "appstore-feeds.json"
+    const val FEEDS_FILE = "appstore-feeds.json"
 
     /** How one url's body is read into rows: which array, and the templates.
      *  The fleet git-proxy (#841) answers a REDUCED shape (`.commits[]` with a
@@ -102,8 +102,7 @@ object FeedViewer {
     /** Every declared feed, in declared order. An unreadable or absent asset is
      *  NO feeds and therefore no tabs — never a half-built one. */
     fun feeds(ctx: Context): List<Feed> = runCatching {
-        parse(runCatching { FleetData.get(ctx.applicationContext, DATASET) { JSONObject(it) } }.getOrNull()
-            ?: JSONObject(ctx.assets.open(FEEDS_ASSET).use { it.readBytes().decodeToString() }))
+        parse(FleetData.get(ctx.applicationContext, DATASET) { JSONObject(it) } ?: return@runCatching emptyList())
     }.getOrDefault(emptyList())
 
     /** Split from [feeds] so a test can hand it a declaration of its own

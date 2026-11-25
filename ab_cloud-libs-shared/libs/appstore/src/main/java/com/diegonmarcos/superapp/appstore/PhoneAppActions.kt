@@ -19,7 +19,7 @@ import org.json.JSONObject
  * exists for an app the Cloud fleet publishes.
  *
  * The origin button comes from the REAL installer (getInstallSourceInfo) looked
- * up in the one declared map, [SOURCES_ASSET]. Ours -> the host's Store ▸ Cloud
+ * up in the one declared map, [SOURCES_FILE]. Ours -> the host's Store ▸ Cloud
  * page, where we update it; a foreign store -> that store's own page for the
  * app; anything else -> App info.
  */
@@ -33,15 +33,15 @@ object PhoneAppActions {
 
     /**
      * #1566 the one install-source map names stores, endpoints and pinned signing certs: a fleet-private tier-2 dataset (the last-known-good
-     * copy of Cloud Account's private route), never an APK asset. [SOURCES_ASSET] is only where the UNIT TESTS put the CI-materialised copy
-     * (test assets); an APK carries none, so a phone that has not been served yet answers null here.
+     * copy of Cloud Account's private route), never an APK asset. [SOURCES_FILE] is its name in the private repo and in CI's fleet-private-data;
+     * [testSources] is where a UNIT TEST puts that materialised copy (production never sets it). A phone that has not been served yet gets null.
      */
     const val DATASET = "fleet/appstore-install-sources"
-    const val SOURCES_ASSET = "appstore-install-sources.json"
+    const val SOURCES_FILE = "appstore-install-sources.json"
+    @Volatile var testSources: JSONObject? = null
 
     fun sourcesOrNull(ctx: Context): JSONObject? =
-        runCatching { FleetData.get(ctx.applicationContext, DATASET) { JSONObject(it) } }.getOrNull()
-            ?: runCatching { ctx.assets.open(SOURCES_ASSET).use { JSONObject(it.readBytes().decodeToString()) } }.getOrNull()
+        testSources ?: runCatching { FleetData.get(ctx.applicationContext, DATASET) { JSONObject(it) } }.getOrNull()
 
     /** The map, or an exception naming that it is not served yet (callers that cannot draw without it run this inside runCatching). */
     fun sources(ctx: Context): JSONObject = sourcesOrNull(ctx) ?: error("$DATASET is not served yet")

@@ -140,7 +140,7 @@ doc = json.loads(read(mapf))
 # see the same rule in test-store-phone-bar.sh. A pinned name would let a second
 # resolver in as resolver2.json; this will not, and it no longer trips over a
 # declaration that installs nothing (#642's read-only feed reader).
-maps = sorted(os.path.basename(p) for p in glob.glob(os.path.join(lib, "assets/*.json"))
+maps = sorted(os.path.basename(p) for p in glob.glob(os.path.join(os.path.dirname(mapf), "*.json"))   # #1566 the private datasets directory
               if {"sources", "resolver"} & set(json.loads(read(p))))
 if maps == ["appstore-install-sources.json"]: ok("the resolver lives inside the ONE #564 map (%s)" % maps[0])
 else: bad("a second asset map: %s" % maps)
