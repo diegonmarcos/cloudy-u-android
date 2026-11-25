@@ -53,23 +53,7 @@ jobs:
       - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
         uses: ./.github/actions/gradle-cache-hygiene
       # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
-      - name: Checkout vault (shared Android signing key, read by app/build.gradle at configuration)
-        uses: actions/checkout@v4
-        with:
-          repository: diegonmarcos/cloud-me-pvt-vault
-          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
-          path: .vault
-      - name: Install jq
-        run: sudo apt-get update -y && sudo apt-get install -y jq
-      - name: Install ORAS + sops (pinned)
-        uses: ./.github/actions/install-pinned-tools
-        with:
-          tools: oras sops
       - name: JVM unit tests (RED expected)
-        env:
-          BYPASS_NIX: "1"
-          VAULT_DIR: ${{ github.workspace }}/.vault
-          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
         run: |
           if sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR"; then
             echo "BLIND: the suite stayed green under mutation ${{ matrix.name }}"; exit 1
