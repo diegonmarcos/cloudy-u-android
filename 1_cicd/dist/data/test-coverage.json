@@ -107,7 +107,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 23,
+      "unit_test_sources": 25,
       "workflow": "ship-cloud-c3.yml"
     },
     "ac_cloud-c3-webserver": {
