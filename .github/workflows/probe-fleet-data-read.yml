@@ -1,6 +1,8 @@
 name: probe-fleet-data-read
 on:
   workflow_dispatch:
+  push:
+    paths: [".github/workflows/probe-fleet-data-read.yml"]
 permissions:
   contents: read
 jobs:
