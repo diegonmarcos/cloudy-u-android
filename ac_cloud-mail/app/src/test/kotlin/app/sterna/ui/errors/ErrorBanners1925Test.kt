@@ -54,7 +54,7 @@ class ErrorBanners1925Test {
     @Test fun syncFailureIsRecordedWithOperationAndAccount() {
         val vm = src("ui/inbox/InboxViewModel.kt")
         assertEquals(2, Regex("ErrorLog\\.shared\\.record\\(\"sync\", currentAccountLabel\\(\\)").findAll(vm).count())
-        val repo = listOf("core/data/src/main/kotlin/app/sterna/core/data/mail/MailRepository.kt", "ac_cloud-mail/core/data/src/main/kotlin/app/sterna/core/data/mail/MailRepository.kt")
+        val repo = listOf("../core/data/src/main/kotlin/app/sterna/core/data/mail/MailRepository.kt", "core/data/src/main/kotlin/app/sterna/core/data/mail/MailRepository.kt", "ac_cloud-mail/core/data/src/main/kotlin/app/sterna/core/data/mail/MailRepository.kt")
             .map(::File).first { it.exists() }.readText()
         assertTrue("ErrorLog.shared.record(\"send\"" in repo)
     }
