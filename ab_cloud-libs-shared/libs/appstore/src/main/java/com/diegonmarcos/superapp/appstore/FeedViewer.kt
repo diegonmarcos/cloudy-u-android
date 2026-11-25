@@ -43,6 +43,8 @@ object FeedViewer {
     /** #1566 the feed declaration names the repositories the Cloud page reads: a fleet-private tier-2 dataset served by Cloud Account's private route; [FEEDS_FILE] is its name in the private repo and in CI's fleet-private-data. */
     const val DATASET = "fleet/appstore-feeds"
     const val FEEDS_FILE = "appstore-feeds.json"
+    /** UNIT TESTS ONLY: the CI-materialised declaration a test puts where the reader looks first; production never sets it. */
+    @Volatile var testDecl: JSONObject? = null
 
     /** How one url's body is read into rows: which array, and the templates.
      *  The fleet git-proxy (#841) answers a REDUCED shape (`.commits[]` with a
@@ -102,7 +104,7 @@ object FeedViewer {
     /** Every declared feed, in declared order. An unreadable or absent asset is
      *  NO feeds and therefore no tabs — never a half-built one. */
     fun feeds(ctx: Context): List<Feed> = runCatching {
-        parse(FleetData.get(ctx.applicationContext, DATASET) { JSONObject(it) } ?: return@runCatching emptyList())
+        parse(testDecl ?: FleetData.get(ctx.applicationContext, DATASET) { JSONObject(it) } ?: return@runCatching emptyList())
     }.getOrDefault(emptyList())
 
     /** Split from [feeds] so a test can hand it a declaration of its own
