@@ -75,7 +75,8 @@
         "libs:autofill",
         "libs:account-ui",
         "libs:fleet-endpoints-android",
-        "libs:json-canvas"
+        "libs:json-canvas",
+        "libs:git-sync"
       ]
     },
     "libs:core": {

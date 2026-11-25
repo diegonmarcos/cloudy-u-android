@@ -31,7 +31,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.diegonmarcos.cloudlib.gitsync.GitCredentialStore
 import com.diegonmarcos.cloudlib.gitui.GitConnect
+import com.diegonmarcos.cloudlib.gitui.GitConnectRules
 import com.diegonmarcos.cloudlib.gitui.GitConnectSpec
 import com.diegonmarcos.superapp.accountui.AccountUiHost
 import com.diegonmarcos.superapp.jsoncanvas.CanvasLabels
@@ -87,16 +89,18 @@ object RepoFetch {
         } finally { c.disconnect() }
     }.getOrElse { Reply(null, null, "${it.javaClass.simpleName}: ${it.message.orEmpty().take(160)}") }
 
-    private fun connect(ctx: Context, ref: RepoViews.Ref) = GitConnect(ctx, GitConnectSpec("gitconnect:${ref.owner}/${ref.repo}", ref.repo, ref.owner, ref.repo, ref.branch, emptyList()),
-        hostToken = { c -> runCatching { AccountUiHost.current.ghToken(c) ?: AccountUiHost.current.appCredential(c, "git.github_token") }.getOrNull() })
+    private fun spec(ref: RepoViews.Ref) = GitConnectSpec("gitconnect:${ref.owner}/${ref.repo}", ref.repo, ref.owner, ref.repo, ref.branch, emptyList())
+
+    /** The token for [ref]: the host sign-in, the credential filed as git.github_token, else the one Configs > Repos stored for this repo (GitCredentialStore, the id GitConnect uses). */
+    private fun token(ctx: Context, ref: RepoViews.Ref): String? = runCatching { AccountUiHost.current.ghToken(ctx) ?: AccountUiHost.current.appCredential(ctx, "git.github_token") }.getOrNull()?.takeIf { it.isNotBlank() }
+        ?: runCatching { GitCredentialStore(ctx.applicationContext).secret(GitConnectRules.credentialId(spec(ref))) }.getOrNull()
 
     fun fetch(ctx: Context, ref: RepoViews.Ref, file: String): Result {
         val rawUrl = ref.rawUrl(file)
         val first = get(rawUrl, null, "text/plain")
         first.body?.let { return Result.Ok(it) }
         if (first.status !in listOf(401, 403, 404)) return Result.Fail(RepoViews.Failure(rawUrl, first.status, first.error, authTried = false, tokenHeld = false))
-        val gc = runCatching { connect(ctx, ref) }.getOrNull()
-        val token = runCatching { gc?.accessToken() }.getOrNull()?.takeIf { it.isNotBlank() }
+        val token = token(ctx, ref)
         if (token != null) {
             val apiUrl = ref.apiUrl(file)
             val second = get(apiUrl, token, "application/vnd.github.raw")
@@ -104,7 +108,7 @@ object RepoFetch {
             return Result.Fail(RepoViews.Failure(apiUrl, second.status, second.error, authTried = true, tokenHeld = true))
         }
         val path = if (ref.dir.isEmpty()) file else "${ref.dir}/$file"
-        runCatching { if (gc != null && gc.isCloned()) gc.read(path) else null }.getOrNull()?.let { return Result.Ok(it) }
+        runCatching { GitConnect(ctx, spec(ref)).let { if (it.isCloned()) it.read(path) else null } }.getOrNull()?.let { return Result.Ok(it) }
         return Result.Fail(RepoViews.Failure(rawUrl, first.status, first.error, authTried = false, tokenHeld = false))
     }
 }
