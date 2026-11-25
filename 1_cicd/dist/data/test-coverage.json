@@ -319,7 +319,7 @@
     },
     "ac_cloud-nav": {
       "first_test": "Assert the Google/OSM module split in settings.gradle matches build.json::modules \u2014 a module in one and not the other builds an APK missing a map provider.",
-      "shell_testers": 7,
+      "shell_testers": 8,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
