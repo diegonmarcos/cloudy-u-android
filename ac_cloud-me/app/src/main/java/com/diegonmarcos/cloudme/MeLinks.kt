@@ -7,8 +7,8 @@ import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Surface
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -60,13 +60,15 @@ fun MeLinkedWeb(block: JSONObject, sectionId: String, pageId: String, modifier: 
     var menu by remember { mutableStateOf(false) }
     Box(modifier) {
         WebPage(block, Modifier, pageId = pageId)
-        Row(Modifier.align(Alignment.BottomEnd).padding(12.dp)) {
-            FilledTonalButton(onClick = { MeLinks.open(ctx, link) }) { Text("Open $label") }
-            Box {
-                TextButton(onClick = { menu = true }) { Text("Links") }
-                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                    for (e in MeLinks.menuFor(all, sectionId)) DropdownMenuItem(text = { Text(e.label) }, onClick = { menu = false; MeLinks.open(ctx, e.url) })
+        Column(Modifier.align(Alignment.BottomEnd).padding(12.dp), horizontalAlignment = Alignment.End) {
+            if (menu) Surface(tonalElevation = 6.dp, shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)) {
+                Column {
+                    for (e in MeLinks.menuFor(all, sectionId)) TextButton(onClick = { menu = false; MeLinks.open(ctx, e.url) }) { Text(e.label) }
                 }
+            }
+            Row {
+                FilledTonalButton(onClick = { MeLinks.open(ctx, link) }) { Text("Open $label") }
+                TextButton(onClick = { menu = !menu }) { Text("Links") }
             }
         }
     }
