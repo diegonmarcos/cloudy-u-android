@@ -40,9 +40,9 @@ class WebyServicesRowTest {
         assertEquals(listOf("News", "Media Center", "Social"), l.destinations.map { it.label })
     }
 
-    @Test fun `Social opens the phone social-apps folder (#1902)`() {
+    @Test fun `Social opens the mySocials web page (#1904)`() {
         val social = Sections.byId("cloud")!!.tileGroups.single { it.title == leisure }.tiles.single { it.label == "Social" }
-        assertEquals("page:phone/apps#folder:media_social", social.target)
+        assertEquals("https://diegonmarcos.github.io/mySocials/", social.target)
     }
 
     @Test fun `AGI reads SI AI | Code Tools | MyTerminal Terminal | Search KG Store`() =

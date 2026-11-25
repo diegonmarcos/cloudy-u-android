@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
@@ -155,7 +154,7 @@ object Quickmarks {
     fun StarBadge(pkg: String, size: Dp, content: @Composable () -> Unit) {
         Box(Modifier.size(size)) {
             content()
-            if (starred(pkg)) Text("★", color = Color(0xFFFFC83D), fontSize = 12.sp,
+            if (starred(pkg)) Text("☆", color = androidx.compose.ui.res.colorResource(com.diegonmarcos.superapp.R.color.star_silver), fontSize = 12.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Thin,
                 modifier = Modifier.align(Alignment.TopEnd).offset(x = 2.dp, y = (-2).dp).testTag("quickmark:star:$pkg"))
         }
     }

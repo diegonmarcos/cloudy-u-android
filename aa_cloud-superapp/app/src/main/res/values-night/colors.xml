@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- #1904 silver star on dark -->
+    <color name="star_silver">#FFC0C4CC</color>
+</resources>

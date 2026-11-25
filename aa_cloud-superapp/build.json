@@ -3512,11 +3512,11 @@
                 "target": "extapp:cloud-media-center"
               },
               {
-                "_doc": "#1902 Social (Services · Leisure): opens the phone social-apps folder (All Apps ui.phone_folders id media_social). target `page:phone/apps#folder:media_social` is the existing `page:<section>/<page>#<anchor>` grammar: the Phone > Apps page consumes the pending anchor and opens that folder sheet (SuitePhoneAppsFragment). Me > Socials (myroadmap) is the Cloud Me page and stays in Me.",
+                "_doc": "#1904 Social (Services · Leisure): a web link to the mySocials page, opened through the standard in-app web page mechanism (an https target goes to WebPageFragment via ShellActivity.openEmbeddedBrowser; github.io is a public host). The URL is declared here, not in Kotlin. Before #1904 (#1902) it opened the phone social-apps folder; the Phone quickmark Social (phone_app_groups, opens_folder media_social) is unchanged. Me > Socials (myroadmap) is the Cloud Me page and stays in Me.",
                 "id": "social",
                 "label": "Social",
                 "icon": "ic_sparkles",
-                "target": "page:phone/apps#folder:media_social"
+                "target": "https://diegonmarcos.github.io/mySocials/"
               },
               {
                 "_doc": "#1806 declared placeholder (coming_soon): Games is not an app yet (the All Apps Games folder media_games holds the phone games). Drawn gray, no target, no tap, no fleet package or ui.external_apps entry; becomes a real extapp tile when the app exists.",

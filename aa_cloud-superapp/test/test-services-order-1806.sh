@@ -62,7 +62,7 @@ def run(bj, ds, fav):
         want_row = ' | '.join(' '.join(cats[k]['label'] for k in g) for g in sec['groups'])
         got = ' '.join('|' if t.get('separator') else t['label'] for t in tiles)
         check(got == ('| ' if sec.get('tail') else '') + want_row, "a '|' divider between groups of %s: %s" % (s, want_row))
-    check([t.get('target') for t in cg[LEIS] if t['id'] == 'social'] == ['page:phone/apps#folder:' + cats['social']['folder']], 'the Cloud Social tile opens the phone social-apps folder (page:phone/apps#folder:media_social)')
+    check([t.get('target') for t in cg[LEIS] if t['id'] == 'social'] == ['https://diegonmarcos.github.io/mySocials/'], 'the Cloud Social tile opens the mySocials web page (#1904)')
     check([t['label'] for t in cg['AGI']][:8] == ['SI', 'AI', '|', 'Code', 'Tools', '|', 'MyTerm.', 'Terminal'], 'the AGI tiles already there keep their place before the tail')
     print('== P: Phone Services quickmarks ==')
     for sec in secs:

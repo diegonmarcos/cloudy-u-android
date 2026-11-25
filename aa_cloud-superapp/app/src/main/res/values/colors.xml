@@ -4,6 +4,9 @@
      the tile id is used to pick a slot, so the same tile keeps the same
      colour across launches. -->
 <resources>
+    <!-- #1904 the Phone Starred (Quickmark) star: one neutral silver theme colour, drawn as a thin outline star; values-night holds the dark variant. -->
+    <color name="star_silver">#FF8A8F98</color>
+
     <color name="tile_blue_bg">#FFE3F2FD</color>
     <color name="tile_blue_fg">#FF1565C0</color>
 

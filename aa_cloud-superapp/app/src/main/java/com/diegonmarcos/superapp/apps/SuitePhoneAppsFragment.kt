@@ -382,10 +382,7 @@ private fun SuitePhonePage(epoch: Int, refresh: () -> Unit) {
     // is about a thousand blocking package-manager IPCs (#261), so it gets a background thread.
     val pinVersion = com.diegonmarcos.superapp.launcher.pins.PinnedShortcutStore.changes.intValue
     val all by produceState<AllApps?>(null, epoch, pinVersion) { value = withContext(Dispatchers.Default) { allApps(ctx, exclude = ourApps) } }
-    // #1902 a Cloud tile can open this page AT one All Apps folder: `page:phone/apps#folder:<folderId>` (the one-shot StackAnchors request).
-    // Read once at birth (consumePending clears it); the folder sheet opens as a tap on the folder would, as soon as All Apps is produced.
-    val wantFolder = remember { com.diegonmarcos.superapp.launcher.StackAnchors.consumePending("phone/apps")?.takeIf { it.startsWith("folder:") }?.removePrefix("folder:") }
-    // The same sheet a tap on that All Apps folder opens; a quickmark folder declaring `opens_folder` (Services · Leisure's Social) calls it too.
+    // The same sheet a tap on an All Apps folder opens; a quickmark folder declaring `opens_folder` (Phone quickmark Social) calls it.
     fun openAllAppsFolder(id: String) {
         val data = all ?: return
         val prefixes = PhoneSections.loadFromBuildConfig().map { it.prefix }
@@ -393,7 +390,6 @@ private fun SuitePhonePage(epoch: Int, refresh: () -> Unit) {
             phoneOpen = OpenFolder(PhoneTaxonomyLayout.displayLabel(f.label, prefixes), data.grouped[f.id].orEmpty())
         }
     }
-    androidx.compose.runtime.LaunchedEffect(all) { if (all != null && wantFolder != null) openAllAppsFolder(wantFolder) }
     val smart by produceState<SmartState>(SmartState.Loading, epoch) {
         value = PhoneAppsFragment.loadSmartFolders(ctx, ourApps)?.let { SmartState.Done(it) } ?: SmartState.Failed
     }

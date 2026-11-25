@@ -92,7 +92,7 @@ def surface(name, bj, ph, cl):
         if [g['title'] for g in S['cloud']['tile_groups']] != ['Primary', 'Communication', 'Data', 'Me', 'Projects', CITY, LEIS, 'AGI', 'Setup']: f.append('Cloud quickmark groups are not the nine sections')
         if [g['title'] for g in S['phone']['phone_app_groups']] != ['Primary', 'Communication', 'Data', 'Me', 'Projects', CITY, LEIS, 'AGI', 'Setup']: f.append('Phone quickmark groups are not the nine sections')
         cs = [t for g in S['cloud']['tile_groups'] if g['title'] == LEIS for t in g['tiles'] if t['id'] == 'social']
-        if not cs or cs[0]['target'] != 'page:phone/apps#folder:media_social': f.append('Cloud Leisure has no Social tile opening media_social')
+        if not cs or cs[0]['target'] != 'https://diegonmarcos.github.io/mySocials/': f.append('Cloud Leisure has no Social tile opening the mySocials URL (#1904)')
         ps = [x for g in S['phone']['phone_app_groups'] if g['title'] == LEIS for x in g['folders'] if x['label'] == 'Social']
         if not ps or ps[0].get('opens_folder') != 'media_social': f.append('Phone Leisure has no Social quickmark opening media_social')
         sections = []
@@ -132,6 +132,7 @@ mut('a folder leaves the Configs phone dataset', 'S1', lambda bj, ph, cl: ph['fo
 mut('a folder loses its section prefix', 'S1', lambda bj, ph, cl: [x.__setitem__('label', x['label'][1:]) for x in bj['ui']['phone_folders'] if x['id'] == 'svc_search'])
 mut('a Cloud tile removed', 'S2', lambda bj, ph, cl: [g['tiles'].pop(0) for g in sec(bj, 'cloud')['tile_groups'] if g['title'] == CITY])
 mut('a Cloud tile retargeted', 'S2', lambda bj, ph, cl: [t.__setitem__('target', 'extapp:cloud-news') for g in sec(bj, 'cloud')['tile_groups'] for t in g['tiles'] if t['id'] == 'shopping'])
+mut('the Cloud Social tile loses the mySocials URL (#1904)', 'N', lambda bj, ph, cl: [t.__setitem__('target', 'extapp:cloud-news') for g in sec(bj, 'cloud')['tile_groups'] for t in g['tiles'] if t['id'] == 'social'])
 mut('Search leaves the Cloud tiles', 'S2', lambda bj, ph, cl: [g['tiles'].remove(t) for g in sec(bj, 'cloud')['tile_groups'] for t in list(g['tiles']) if t['id'] == 'search'])
 mut('a Phone quickmark folder removed', 'S3', lambda bj, ph, cl: [g['folders'].remove(fo) for g in sec(bj, 'phone')['phone_app_groups'] for fo in list(g.get('folders', [])) if fo['label'] == 'Hotels'])
 mut('a Phone quickmark package removed', 'S3', lambda bj, ph, cl: [fo['packages'].pop() for g in sec(bj, 'phone')['phone_app_groups'] for fo in g.get('folders', []) if fo['label'] == 'Money'])
