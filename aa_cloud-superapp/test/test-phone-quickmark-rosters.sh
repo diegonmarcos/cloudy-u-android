@@ -101,7 +101,7 @@ echo "== T1: each respecified section is a Quickmarks group, found by TITLE and 
 # #249 inserts groups into this same array, so every index after an insertion
 # point shifts. Title is the only stable handle, and it is only a handle while
 # it is unique.
-for title in "AGI" "Communication" "Data" "Services"; do
+for title in "AGI" "Communication" "Data" "Services · City" "Services · Leisure"; do
     n="$(jq -r --arg t "$title" "$QUICKMARKS"'[] | select(.title == $t) | .title' "$BUILD_JSON" | wc -l)"
     if [ "$n" -eq 1 ]; then
         ok "exactly one Quickmarks group is titled '$title'"
@@ -134,9 +134,10 @@ else
     bad "fleet package(s) curated outside their own folder's icon_pkg: $(echo "$OURS" | tr '\n' ' ')"
 fi
 
-echo "== T4: Communication holds the inbox apps; LinkedIn, Google News and Feedly moved to Services =="
+echo "== T4: Communication holds the inbox apps; LinkedIn, Google News and Feedly moved to Services (#1902: City and Leisure) =="
 expect_in "Communication" "Communication" com.google.android.gm com.Slack com.whatsapp.w4b com.instagram.android ch.protonmail.android app.sterna com.mattermost.rn com.beeper.android org.telegram.messenger com.google.android.contacts
-expect_in "Services" "Services" com.linkedin.android com.google.android.apps.magazines com.devhd.feedly com.aspiro.tidal
+expect_in "Services · City" "Services · City" com.linkedin.android
+expect_in "Services · Leisure" "Services · Leisure" com.google.android.apps.magazines com.devhd.feedly com.aspiro.tidal
 
 echo "== T5: Data holds the owner's list =="
 expect_in "Data" "Data" com.google.android.calendar com.microsoft.office.onenote com.google.android.apps.photos md.obsidian com.x8bit.bitwarden
@@ -147,7 +148,7 @@ echo "== T6: every curated entry in these sections can caption a placeholder =="
 # A not-installed tile has no launcher label to borrow, so it draws the label
 # declared beside the package. An entry written as a bare string has none, and
 # its placeholder would caption itself with a raw package id.
-for title in "AGI" "Communication" "Data" "Services"; do
+for title in "AGI" "Communication" "Data" "Services · City" "Services · Leisure"; do
     BARE="$(jq -r --arg t "$title" "$QUICKMARKS"'[] | select(.title == $t)
             | (.packages[]?, (.folders[]?.packages[]?))
             | select(type == "string")' "$BUILD_JSON")" \

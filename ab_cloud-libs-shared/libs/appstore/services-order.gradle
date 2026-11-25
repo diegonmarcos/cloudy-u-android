@@ -1,13 +1,15 @@
-// applyServicesOrder(ui) — #1806 THE Services order, declared ONCE in build.json::ui.services_order, applied to
-// every surface that lists Services before it is baked:
-//   * sections[cloud].tile_groups[Services].tiles   — the Cloud row; a '|' separator between groups
-//   * sections[phone].phone_app_groups[Services]    — the Phone quickmark folders
-//   * ui.phone_folders (+ Services folders)         — the All Apps folders: their `order` values are reassigned
-//                                                     in the declared order (the same set of numbers, so no
-//                                                     other section's precedence moves)
+// applyServicesOrder(ui) — #1806/#1902 THE Services order, declared ONCE in build.json::ui.services_order, applied to
+// every surface that lists Services before it is baked. `sections` names each section (`title`, All Apps label `prefix`,
+// its `groups`; a `tail` section is the end of a section that has other tiles, AGI's Search | KG Store):
+//   * sections[cloud].tile_groups[<section title>].tiles — the Cloud rows; a '|' separator between groups
+//   * sections[phone].phone_app_groups[<section title>]  — the Phone quickmark folders (a tail's folders follow the ones there)
+//   * ui.phone_folders (the declared folders)            — the All Apps folders: their `order` values are reassigned
+//                                                          in the declared order (the same set of numbers, so no
+//                                                          other section's precedence moves)
 // `categories.<key>` names the entry on each surface (cloud_tile id, quickmark label, folder id). An entry on a
 // surface that no category names fails the build: a new Services tile or folder must be declared in the order first.
-// Nothing is dropped: every entry that was on a surface is on it after, only the sequence changes.
+// Nothing is dropped: every entry that was on a surface is on it after, only the sequence changes. A folder whose label
+// does not start with its section's prefix fails the build (the labels and the sections cannot drift apart).
 // A build.json without ui.services_order (an app that does not declare the taxonomy) passes through untouched.
 // Use it as
 //     apply from: '<relative path>/libs/appstore/services-order.gradle'
@@ -16,66 +18,82 @@
 ext.applyServicesOrder = { ui ->
     def so = ui?.services_order
     if (so == null) return ui
-    def groups = so.groups
+    def secs = so.sections
     def cats = so.categories
-    if (!(groups instanceof List) || groups.isEmpty() || !(cats instanceof Map))
-        throw new GradleException("build.json::ui.services_order needs `groups` (list of lists) and `categories` (map)")
+    if (!(secs instanceof List) || secs.isEmpty() || !(cats instanceof Map))
+        throw new GradleException("build.json::ui.services_order needs `sections` (list of {title, prefix, groups}) and `categories` (map)")
     def keys = []
-    groups.each { g -> g.each { k ->
-        if (!cats.containsKey(k)) throw new GradleException("ui.services_order: group key '${k}' has no categories entry")
-        if (keys.contains(k)) throw new GradleException("ui.services_order: key '${k}' is listed twice")
-        keys << k
-    } }
     def groupOf = [:]
-    groups.eachWithIndex { g, gi -> g.each { k -> groupOf[k] = gi } }
+    def sectionOf = [:]
+    secs.each { s ->
+        s.groups.eachWithIndex { g, gi -> g.each { k ->
+            if (!cats.containsKey(k)) throw new GradleException("ui.services_order: group key '${k}' has no categories entry")
+            if (keys.contains(k)) throw new GradleException("ui.services_order: key '${k}' is listed twice")
+            keys << k
+            groupOf[k] = gi
+            sectionOf[k] = s
+        } }
+    }
+    if (!(cats.keySet() as List).every { keys.contains(it) }) throw new GradleException("ui.services_order: categories ${cats.keySet().findAll { !keys.contains(it) }} are named by no section")
 
-    // Cloud row
-    def cloud = ui.sections?.find { it.id == 'cloud' }?.tile_groups?.find { it.title == 'Services' }
-    if (cloud != null) {
+    // Cloud rows, one tile group per section
+    secs.each { s ->
+        def cloud = ui.sections?.find { it.id == 'cloud' }?.tile_groups?.find { it.title == s.title }
+        if (cloud == null) return
+        def skeys = s.groups.flatten()
+        def named = skeys.collect { cats[it].cloud_tile }.findAll { it }
         def tiles = cloud.tiles
-        def seps = tiles.findAll { it.separator }
         def byId = [:]
         tiles.findAll { !it.separator }.each { t -> byId[t.id] = t }
-        def placed = []
-        def out = []
-        def lastGroup = -1
-        def sepAt = 0
-        keys.each { k ->
-            def tid = cats[k].cloud_tile
-            def t = tid ? byId[tid] : null
-            if (t == null) return
-            if (lastGroup >= 0 && groupOf[k] != lastGroup) {
-                if (sepAt >= seps.size()) throw new GradleException("ui.services_order: the Cloud Services row declares ${seps.size()} separator tiles, the order needs more")
-                out << seps[sepAt++]
-            }
-            out << t
-            placed << tid
-            lastGroup = groupOf[k]
+        def rest = tiles.findAll { !named.contains(it.id) }
+        if (!s.tail) {
+            def stray = rest.findAll { !it.separator }.collect { it.id }
+            if (stray) throw new GradleException("ui.services_order: Cloud ${s.title} tiles ${stray} are not named by any category")
         }
-        def stray = byId.keySet().findAll { !placed.contains(it) }
-        if (stray) throw new GradleException("ui.services_order: Cloud Services tiles ${stray} are not named by any category")
+        // the dividers that sat at the end of the tiles already there are the tail's own
+        def lead = rest.collect { it }
+        def seps = []
+        if (s.tail) { while (lead && lead.last().separator) seps.add(0, lead.remove(lead.size() - 1)) } else { seps = lead.findAll { it.separator }; lead = [] }
+        def need = s.tail ? s.groups.size() : s.groups.size() - 1
+        if (seps.size() < need) throw new GradleException("ui.services_order: the Cloud ${s.title} row declares ${seps.size()} separator tiles, the order needs ${need}")
+        def out = []
+        out.addAll(lead)
+        def sepAt = 0
+        s.groups.eachWithIndex { g, gi ->
+            def gt = g.collect { cats[it].cloud_tile }.findAll { it && byId[it] }.collect { byId[it] }
+            if (gt.isEmpty()) return
+            if (out || s.tail) out << seps[sepAt++]
+            out.addAll(gt)
+        }
         out.addAll(seps.drop(sepAt))  // an unused divider is kept, never dropped
         tiles.clear(); tiles.addAll(out)
     }
 
-    // Phone quickmarks
-    def phone = ui.sections?.find { it.id == 'phone' }?.phone_app_groups?.find { it.title == 'Services' }
-    if (phone?.folders != null) {
+    // Phone quickmarks, one group per section
+    secs.each { s ->
+        def phone = ui.sections?.find { it.id == 'phone' }?.phone_app_groups?.find { it.title == s.title }
+        if (phone?.folders == null) return
         def rank = [:]
-        keys.eachWithIndex { k, i -> if (cats[k].quickmark) rank[cats[k].quickmark] = i }
-        def stray = phone.folders.findAll { !rank.containsKey(it.label) }.collect { it.label }
-        if (stray) throw new GradleException("ui.services_order: Phone Services quickmark folders ${stray} are not named by any category")
-        def sorted = phone.folders.sort(false) { rank[it.label] }
-        phone.folders.clear(); phone.folders.addAll(sorted)
+        s.groups.flatten().each { k -> if (cats[k].quickmark) rank[cats[k].quickmark] = keys.indexOf(k) }
+        def lead = s.tail ? phone.folders.findAll { !rank.containsKey(it.label) } : []
+        def stray = s.tail ? [] : phone.folders.findAll { !rank.containsKey(it.label) }.collect { it.label }
+        if (stray) throw new GradleException("ui.services_order: Phone ${s.title} quickmark folders ${stray} are not named by any category")
+        def sorted = phone.folders.findAll { rank.containsKey(it.label) }.sort(false) { rank[it.label] }
+        phone.folders.clear(); phone.folders.addAll(lead); phone.folders.addAll(sorted)
     }
 
     // All Apps folders
     if (ui.phone_folders != null) {
         def folderIds = keys.collect { cats[it].folder }.findAll { it }
         def svc = ui.phone_folders.findAll { folderIds.contains(it.id) }
-        def prefix = svc ? svc[0].label?.take(1) : null
-        def stray = ui.phone_folders.findAll { prefix != null && it.label?.startsWith(prefix) && !folderIds.contains(it.id) }.collect { it.id }
-        if (stray) throw new GradleException("ui.services_order: All Apps folders ${stray} carry the Services prefix but no category names them")
+        keys.each { k ->
+            def f = ui.phone_folders.find { it.id == cats[k].folder }
+            if (f != null && !f.label?.startsWith(sectionOf[k].prefix))
+                throw new GradleException("ui.services_order: All Apps folder ${f.id} is labelled '${f.label}', its section ${sectionOf[k].title} needs the prefix '${sectionOf[k].prefix}'")
+        }
+        def prefixes = secs.findAll { !it.tail }.collect { it.prefix }
+        def stray = ui.phone_folders.findAll { f -> prefixes.any { f.label?.startsWith(it) } && !folderIds.contains(f.id) }.collect { it.id }
+        if (stray) throw new GradleException("ui.services_order: All Apps folders ${stray} carry a Services prefix but no category names them")
         def pool = svc.collect { it.order.toString() as int }.sort()
         def inOrder = folderIds.collect { fid -> svc.find { it.id == fid } }.findAll { it != null }
         inOrder.eachWithIndex { f, i -> f.order = pool[i].toString() }

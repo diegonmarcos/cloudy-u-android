@@ -45,13 +45,14 @@ class FolderCoverageTest {
         val folders = FolderTables.parseFolders(dataset("data/fleet/launcher-folders/cloud.json"))
         val sections = folders.map { it.section }.distinct()
         val expected = listOf(
-            "Services & Buro", "Communication", "Media", "Productivity", "Tools",
-            "Navigation", "Finance", "CAD/3D", "Web", "System & Fleet",
+            "Primary", "Communication", "Data", "Me", "Projects",
+            "Services \u00b7 City", "Services \u00b7 Leisure", "AGI", "Setup",
         )
         assertEquals("every declared section is present, in order", expected, sections)
         assertTrue("the taxonomy is comprehensive (>= 30 folders)", folders.size >= 30)
-        // Owner's shape example: section "Services & Buro" contains a folder "Gov & ID".
-        assertTrue(folders.any { it.section == "Services & Buro" && it.label == "Gov & ID" })
+        // #1902 the sections are the Quickmarks sections: "Me" contains the folder "Gov & ID", Services \u00b7 Leisure holds Social.
+        assertTrue(folders.any { it.section == "Me" && it.label == "Gov & ID" })
+        assertTrue(folders.any { it.section == "Services \u00b7 Leisure" && it.label == "Social" })
     }
 
     @Test fun `C2 EVERY cloud app is allocated to a declared folder — nothing lands in Others`() {

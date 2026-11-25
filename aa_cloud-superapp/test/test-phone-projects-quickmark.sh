@@ -52,7 +52,7 @@ q '.ui.sections | length' >/dev/null
 
 PHONE_GROUPS='.ui.sections[] | select(.id == "phone") | .phone_app_groups'
 
-echo "== Q1: Projects sits at index 4, between Me and Services (#1769 order) =="
+echo "== Q1: Projects sits at index 4, between Me and Services · City (#1769 order, #1902 Services split) =="
 # THE ASSERTION THAT WOULD HAVE CAUGHT THE SHIPPED DEFECT. The index is read
 # from the array rather than searched for by title, and both neighbours are
 # named, because the owner specified a POSITION and not an existence: a group
@@ -69,9 +69,9 @@ AFTER="$(q "[$PHONE_GROUPS | .[].title] | .[5] // \"\"")"
 [ "$BEFORE" = "Me" ] \
     && ok "the group before Projects is 'Me'" \
     || bad "the group before Projects is '${BEFORE:-NOTHING}', expected 'Me'"
-[ "$AFTER" = "Services" ] \
-    && ok "the group after Projects is 'Services'" \
-    || bad "the group after Projects is '${AFTER:-NOTHING}', expected 'Services'"
+[ "$AFTER" = "Services · City" ] \
+    && ok "the group after Projects is 'Services · City'" \
+    || bad "the group after Projects is '${AFTER:-NOTHING}', expected 'Services · City'"
 LAST="$(q "[$PHONE_GROUPS | .[].title] | last")"
 [ "$LAST" = "Setup" ] \
     && ok "'Setup' is still the last group" \
@@ -110,7 +110,7 @@ MOVED="$(q "[$PHONE_GROUPS | .[] | (.packages[]?, (.folders[]?.packages[]?)) | s
     && ok "#1764: ClickUp, FatSecret, Todaii German and NomadMania kept in their real groups (#1769: Google Fit is a duplicate of Samsung Health, dropped from Quickmarks, still in All Apps)" \
     || bad "#1764: $MOVED of the five former Projects apps are in a group, expected 4"
 
-echo "== Q4: the Money folder is inside the Services group (#1764, was Projects) and holds the bank apps =="
+echo "== Q4: the Money folder is inside the Services · City group (#1764, was Projects; #1902 split) and holds the bank apps =="
 # DERIVED, never a second hand-written list. This file's own answer to "which
 # packages are the bank apps" is the -Money folder in ui.phone_folders, so the
 # expected set is read from there -- exact `pkg:` rules only, because the
@@ -118,7 +118,7 @@ echo "== Q4: the Money folder is inside the Services group (#1764, was Projects)
 # classifier pattern is not something a tile can launch. Writing the twelve ids
 # out here again would give the assertion its own copy of the answer, and two
 # copies of an answer are two things that can disagree.
-MONEY_TILES="$(q "[$PHONE_GROUPS | .[] | select(.title == \"Services\") | (.folders // [])[] | select(.label == \"Money\") | .packages[] | if type == \"string\" then . else .pkg end] | sort | join(\" \")")"
+MONEY_TILES="$(q "[$PHONE_GROUPS | .[] | select(.title == \"Services · City\") | (.folders // [])[] | select(.label == \"Money\") | .packages[] | if type == \"string\" then . else .pkg end] | sort | join(\" \")")"
 MONEY_DECLARED="$(q '[.ui.phone_folders[] | select(.id == "svc_money" or .id == "prod_wallet") | .match_keywords[] | select(startswith("pkg:")) | .[4:]] | sort | join(" ")')"
 if [ -z "$MONEY_DECLARED" ]; then
     bad "ui.phone_folders has no svc_money folder to derive the bank-app list from"
@@ -159,7 +159,7 @@ done < <(q '
   | ( [ $root.ui.phone_folders[] | . as $f | (.match_keywords // [])[]
         | select(startswith("pkg:")) | { key: .[4:], value: $f.id } ] | from_entries ) as $pins
   | $root.ui.sections[] | select(.id == "phone") | .phone_app_groups[]
-  | select(.title == "Services" or .title == "Primary")
+  | select(.title == "Services · City" or .title == "Services · Leisure" or .title == "Primary")
   | .title as $group
   | ( (.packages[]? | { where: $group, entry: . }),
       ((.folders // [])[] | .label as $folder | .packages[] | { where: ($group + " > " + $folder), entry: . }) )

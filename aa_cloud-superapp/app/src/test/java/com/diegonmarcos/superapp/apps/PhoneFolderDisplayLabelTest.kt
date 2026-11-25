@@ -8,7 +8,7 @@ import org.junit.Test
  * (it is the section key PhoneTaxonomyLayout.bucket groups by).
  */
 class PhoneFolderDisplayLabelTest {
-    private val prefixes = listOf("=", "@", ".", "~", "+", "*", "#", "_")
+    private val prefixes = listOf("=", "@", ".", "~", "+", "%", "*", "#", "_")
 
     @Test fun stripsEverySectionPrefix() {
         assertEquals("Browser", PhoneTaxonomyLayout.displayLabel("=Browser", prefixes))
@@ -16,6 +16,7 @@ class PhoneFolderDisplayLabelTest {
         assertEquals("Drive", PhoneTaxonomyLayout.displayLabel(".Drive", prefixes))
         assertEquals("Dev", PhoneTaxonomyLayout.displayLabel("_Dev", prefixes))
         assertEquals("Search", PhoneTaxonomyLayout.displayLabel("+Search", prefixes))
+        assertEquals("Social", PhoneTaxonomyLayout.displayLabel("%Social", prefixes))  // #1902 Services \u00b7 Leisure
     }
 
     @Test fun stripsOnlyTheLeadingCharacter() {

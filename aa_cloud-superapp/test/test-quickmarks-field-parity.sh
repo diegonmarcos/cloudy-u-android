@@ -34,7 +34,7 @@ def emit(t, msg): out.append("%s\t%s" % (t, msg))
 
 # T1
 titles = [g.get("title") for g in tg]
-want = ["Primary", "Communication", "Data", "Me", "Projects", "Services", "AGI", "Setup"]
+want = ["Primary", "Communication", "Data", "Me", "Projects", "Services · City", "Services · Leisure", "AGI", "Setup"]  # #1902 Services is City + Leisure
 if titles != want:
     emit("T1", "group order is %r, want %r" % (titles, want))
 for gone in ("Tools Primary", "Data Apps"):
@@ -54,7 +54,8 @@ PRE_PRIMARY_DATA = {
 now = set()
 if "Primary" in by: now |= set(apptargets(by["Primary"]))
 if "Data" in by: now |= set(apptargets(by["Data"]))
-if "Services" in by: now |= set(apptargets(by["Services"]))  # #1764 Media Center moved from Data to Services
+for _svc in ("Services · City", "Services · Leisure"):
+    if _svc in by: now |= set(apptargets(by[_svc]))  # #1764 Media Center moved from Data to Services (#1902: Leisure)
 # #1736 the Writer tile left the list; its deep link must survive as the Keyboard app menu's declared action (rule 16).
 kb_actions = {a.get("target") for e in d["ui"].get("external_apps", []) if e.get("id") == "cloud-keyboard" for a in e.get("actions", [])}
 if "extapp:cloud-keyboard#page:writer" not in kb_actions:
@@ -144,7 +145,7 @@ for t in T1 T2 T3 T4 T5; do
   lines="$(printf '%s\n' "$RES" | awk -F'\t' -v k="$t" '$1==k{print $2}')"
   if [ -z "$lines" ]; then
     case "$t" in
-      T1) ok "T1: #1627 group order Primary, Communication, Data, Me, Services, AGI, Projects, Setup (#1756) (#1755, was Configs); old titles gone" ;;
+      T1) ok "T1: #1627 group order Primary, Communication, Data, Me, Projects, Services · City, Services · Leisure, AGI, Setup (#1756, #1902) (#1755, was Configs); old titles gone" ;;
       T2) ok "T2: #1627 field parity — every app the old Tools Primary ∪ Data Apps launched is still in Primary ∪ Data" ;;
       T3) ok "T3: #1627 Communication is unchanged (six tiles, same ids and targets)" ;;
       T4) ok "T4: #1627 dividers — single '|' and DOUBLE '||' placed per owner order, separators only" ;;

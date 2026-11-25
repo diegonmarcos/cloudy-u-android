@@ -15,6 +15,7 @@ reads one declaration:
   phone_section    aa_cloud-superapp/build.json::ui.phone_sections whose title starts with the filter's `section` (the
                    Store's Phone > Apps taxonomy); sub-folder = each folder of those sections (ui.phone_folders), links =
                    the site of every app the folder declares (pkg:<id> -> the package's reverse-domain host)
+                   (#1902: the Services chip also takes the AGI-tail folders ui.services_order names, Search and KG Store)
 
 Rows are {name, url, group} with group "<filter label>/<sub-folder>"; the file ships as an app asset that libs:browser
 reads beside the baked seed (FavSeed.withCatalog).
@@ -72,10 +73,12 @@ def phone_rows(superapp_ui, section):
     prefixes = [s["prefix"] for s in superapp_ui["phone_sections"] if s["title"].startswith(section)]
     if not prefixes:
         raise ValueError("no phone_sections title starts with %r" % section)
+    # #1902 Search and KG Store end AGI on the phone, but they are still Services (ui.services_order names them): the Services chip keeps their sites
+    extra = {c["folder"] for c in (superapp_ui.get("services_order") or {}).get("categories", {}).values() if c.get("folder")} if section == "Services" else set()
     out = []
     for f in superapp_ui["phone_folders"]:
         label = f["label"]
-        if not label or label[0] not in prefixes:
+        if not label or (label[0] not in prefixes and f["id"] not in extra):
             continue
         sub, seen = label[1:].strip(), set()
         for kw in f.get("match_keywords", []):
@@ -123,7 +126,7 @@ def derive(bj, read):
         filters.append(entry)
         # #1806 the Services sub-folders follow ui.services_order (declared once in the SuperApp build.json); every other sub-folder stays alphabetical
         so = sa.get("services_order") or {}
-        rank = {so["categories"][k]["label"]: i for i, k in enumerate(k for g in so.get("groups", []) for k in g)} if kind == "phone_section" and so else {}
+        rank = {so["categories"][k]["label"]: i for i, k in enumerate(k for s in so.get("sections", []) for g in s["groups"] for k in g)} if kind == "phone_section" and so else {}
         for name, url, sub in sorted(rows, key=lambda r: (rank.get(r[2], len(rank)), r[2].lower(), r[0].lower())):
             # a link is listed once per chip, except the Phone > Apps chips: every folder keeps its own sites (Search and Wallet both keep google.com), so those dedupe inside one folder only
             key = (url, sub, label) if kind == "phone_section" else url

@@ -143,7 +143,8 @@ class SuitePhoneAppsFragment : KitComposeFragment(), BackHandler {
     /** [iconPkg] (#1764, build.json `icon_pkg`): the Cloud app the folder mirrors; its launcher icon is the folder tile's face when installed.
      *  [iconRes] (#1769, `icon_res`): the drawable of the Cloud tile at the same position, the face when the Cloud app is not installed or has none.
      *  The data holds phone apps only; the Cloud app is never a declared member, it is PREPENDED at display (#1864 withCloudApp). */
-    internal data class Folder(val label: String, val entries: List<Entry>, val iconPkg: String = "", val iconRes: String = "")
+    /** [opensFolder] (#1902, build.json `opens_folder`): the id of an All Apps folder (ui.phone_folders) this tile OPENS, instead of listing apps of its own: Services · Leisure's Social opens media_social. A folder with it needs no `packages`. */
+    internal data class Folder(val label: String, val entries: List<Entry>, val iconPkg: String = "", val iconRes: String = "", val opensFolder: String = "")
     /** #1764 A web-shortcut tile (build.json `links`): opens [url] in Cloud Browser, else the default browser. [icon] is a drawable name. */
     internal data class Link(val label: String, val url: String, val icon: String)
     internal data class Group(
@@ -210,7 +211,8 @@ class SuitePhoneAppsFragment : KitComposeFragment(), BackHandler {
                         val fLabel = fo.optString("label")
                         if (fLabel.isBlank()) continue
                         val fEntries = parseEntries(fo.optJSONArray("packages"))
-                        if (fEntries.isNotEmpty()) folderList.add(Folder(fLabel, fEntries, fo.optString("icon_pkg").trim(), fo.optString("icon_res").trim()))
+                        val opens = fo.optString("opens_folder").trim()
+                        if (fEntries.isNotEmpty() || opens.isNotEmpty()) folderList.add(Folder(fLabel, fEntries, fo.optString("icon_pkg").trim(), fo.optString("icon_res").trim(), opens))
                     }
                 }
                 val linkList = mutableListOf<Link>()
@@ -380,6 +382,18 @@ private fun SuitePhonePage(epoch: Int, refresh: () -> Unit) {
     // is about a thousand blocking package-manager IPCs (#261), so it gets a background thread.
     val pinVersion = com.diegonmarcos.superapp.launcher.pins.PinnedShortcutStore.changes.intValue
     val all by produceState<AllApps?>(null, epoch, pinVersion) { value = withContext(Dispatchers.Default) { allApps(ctx, exclude = ourApps) } }
+    // #1902 a Cloud tile can open this page AT one All Apps folder: `page:phone/apps#folder:<folderId>` (the one-shot StackAnchors request).
+    // Read once at birth (consumePending clears it); the folder sheet opens as a tap on the folder would, as soon as All Apps is produced.
+    val wantFolder = remember { com.diegonmarcos.superapp.launcher.StackAnchors.consumePending("phone/apps")?.takeIf { it.startsWith("folder:") }?.removePrefix("folder:") }
+    // The same sheet a tap on that All Apps folder opens; a quickmark folder declaring `opens_folder` (Services · Leisure's Social) calls it too.
+    fun openAllAppsFolder(id: String) {
+        val data = all ?: return
+        val prefixes = PhoneSections.loadFromBuildConfig().map { it.prefix }
+        data.sections.asSequence().flatMap { it.folders.asSequence() }.firstOrNull { it.id == id }?.let { f ->
+            phoneOpen = OpenFolder(PhoneTaxonomyLayout.displayLabel(f.label, prefixes), data.grouped[f.id].orEmpty())
+        }
+    }
+    androidx.compose.runtime.LaunchedEffect(all) { if (all != null && wantFolder != null) openAllAppsFolder(wantFolder) }
     val smart by produceState<SmartState>(SmartState.Loading, epoch) {
         value = PhoneAppsFragment.loadSmartFolders(ctx, ourApps)?.let { SmartState.Done(it) } ?: SmartState.Failed
     }
@@ -408,7 +422,7 @@ private fun SuitePhonePage(epoch: Int, refresh: () -> Unit) {
             // A folder is skipped only when it DECLARES nothing.
             val folderTiles = group.folders.map { folder ->
                 folder to SuitePhoneAppsFragment.withCloudApp(folder, SuitePhoneAppsFragment::fleetLabelOf).map(::curated)
-            }.filter { (_, contents) -> contents.isNotEmpty() }
+            }.filter { (folder, contents) -> contents.isNotEmpty() || folder.opensFolder.isNotEmpty() }
             if (packageTiles.isEmpty() && folderTiles.isEmpty() && group.links.isEmpty()) continue
             anyRendered = true
             item(key = "g:${group.title}") {
@@ -420,7 +434,9 @@ private fun SuitePhonePage(epoch: Int, refresh: () -> Unit) {
                         for (l in group.links) item(key = "l:${l.label}") { LinkTile(l) }
                         for (a in packageTiles) item(key = "t:${a.pkg}") { AppTile(a) }
                         for ((folder, contents) in folderTiles) item(key = "f:${folder.label}") {
-                            FolderTile(folder.label, contents, folder.iconPkg.takeIf { it.isNotBlank() }?.let { resolve(it) }, folder.iconRes) { open = SuiteOpen(folder.label, contents) }
+                            FolderTile(folder.label, contents, folder.iconPkg.takeIf { it.isNotBlank() }?.let { resolve(it) }, folder.iconRes) {
+                                if (folder.opensFolder.isNotEmpty()) openAllAppsFolder(folder.opensFolder) else open = SuiteOpen(folder.label, contents)
+                            }
                         }
                     }
                 }

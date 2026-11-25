@@ -286,13 +286,138 @@
       "apps": []
     },
     {
-      "title": "Services",
+      "title": "Services · City",
       "apps": [
         {
-          "pkg": "com.google.android.googlequicksearchbox",
-          "label": "Google",
-          "url": "https://www.google.com"
+          "pkg": "es.bancosantander.apps",
+          "label": "Santander",
+          "url": "https://www.bancosantander.es"
         },
+        {
+          "pkg": "com.revolut.revolut",
+          "label": "Revolut",
+          "url": "https://app.revolut.com"
+        },
+        {
+          "pkg": "com.paypal.android.p2pmobile",
+          "label": "PayPal",
+          "url": "https://www.paypal.com"
+        },
+        {
+          "pkg": "com.binance.dev",
+          "label": "Binance",
+          "url": "https://www.binance.com"
+        },
+        {
+          "pkg": "com.btg.pactual.digital.mobile",
+          "label": "BTG Pactual",
+          "url": "https://www.btgpactual.com"
+        },
+        {
+          "pkg": "com.fusionmedia.investing",
+          "label": "Investing.com",
+          "url": "https://www.investing.com"
+        },
+        {
+          "pkg": "com.xe.currency",
+          "label": "XE Currency",
+          "url": "https://www.xe.com"
+        },
+        {
+          "pkg": "com.amazon.mShop.android.shopping",
+          "label": "Amazon",
+          "url": "https://www.amazon.com"
+        },
+        {
+          "pkg": "de.dhl.paket",
+          "label": "DHL Paket",
+          "url": null
+        },
+        {
+          "pkg": "com.ebay.kleinanzeigen",
+          "label": "Kleinanzeigen",
+          "url": null
+        },
+        {
+          "pkg": "com.urbansportsclub",
+          "label": "Urban Sports Club",
+          "url": "https://urbansportsclub.com"
+        },
+        {
+          "pkg": "com.medantapatient.app",
+          "label": "Medanta",
+          "url": "https://www.medanta.org"
+        },
+        {
+          "pkg": "com.downdogapp",
+          "label": "Down Dog",
+          "url": "https://www.downdogapp.com"
+        },
+        {
+          "pkg": "com.motosumo.app",
+          "label": "Motosumo",
+          "url": "https://motosumo.com"
+        },
+        {
+          "pkg": "de.is24.android",
+          "label": "ImmoScout24",
+          "url": "https://www.immobilienscout24.de"
+        },
+        {
+          "pkg": "com.wggesucht.android",
+          "label": "WG-Gesucht",
+          "url": null
+        },
+        {
+          "pkg": "com.indeed.android.jobsearch",
+          "label": "Indeed",
+          "url": "https://www.indeed.com"
+        },
+        {
+          "pkg": "com.ubercab",
+          "label": "Uber",
+          "url": "https://www.uber.com"
+        },
+        {
+          "pkg": "com.trafi.whitelabel.bvg",
+          "label": "BVG Fahrinfo",
+          "url": null
+        },
+        {
+          "pkg": "com.thetrainline",
+          "label": "Trainline",
+          "url": null
+        },
+        {
+          "pkg": "com.ryanair.cheapflights",
+          "label": "Ryanair",
+          "url": null
+        },
+        {
+          "pkg": "com.rome2rio.www.rome2rio",
+          "label": "Rome2Rio",
+          "url": null
+        },
+        {
+          "pkg": "com.comuto",
+          "label": "BlaBlaCar",
+          "url": null
+        },
+        {
+          "pkg": "com.nomadmania.presentation",
+          "label": "NomadMania",
+          "url": "https://nomadmania.com"
+        },
+        {
+          "pkg": "com.booking",
+          "label": "Booking.com",
+          "url": null
+        }
+      ]
+    },
+    {
+      "title": "Services · Leisure",
+      "apps": [
         {
           "pkg": "com.google.android.apps.magazines",
           "label": "Google News",
@@ -342,131 +467,6 @@
           "pkg": "com.werewolfapps.online",
           "label": "Werewolf Online",
           "url": null
-        },
-        {
-          "pkg": "com.amazon.mShop.android.shopping",
-          "label": "Amazon",
-          "url": "https://www.amazon.com"
-        },
-        {
-          "pkg": "de.dhl.paket",
-          "label": "DHL Paket",
-          "url": null
-        },
-        {
-          "pkg": "com.ebay.kleinanzeigen",
-          "label": "Kleinanzeigen",
-          "url": null
-        },
-        {
-          "pkg": "com.indeed.android.jobsearch",
-          "label": "Indeed",
-          "url": "https://www.indeed.com"
-        },
-        {
-          "pkg": "de.is24.android",
-          "label": "ImmoScout24",
-          "url": "https://www.immobilienscout24.de"
-        },
-        {
-          "pkg": "com.wggesucht.android",
-          "label": "WG-Gesucht",
-          "url": null
-        },
-        {
-          "pkg": "com.urbansportsclub",
-          "label": "Urban Sports Club",
-          "url": "https://urbansportsclub.com"
-        },
-        {
-          "pkg": "com.medantapatient.app",
-          "label": "Medanta",
-          "url": "https://www.medanta.org"
-        },
-        {
-          "pkg": "com.downdogapp",
-          "label": "Down Dog",
-          "url": "https://www.downdogapp.com"
-        },
-        {
-          "pkg": "com.motosumo.app",
-          "label": "Motosumo",
-          "url": "https://motosumo.com"
-        },
-        {
-          "pkg": "es.bancosantander.apps",
-          "label": "Santander",
-          "url": "https://www.bancosantander.es"
-        },
-        {
-          "pkg": "com.revolut.revolut",
-          "label": "Revolut",
-          "url": "https://app.revolut.com"
-        },
-        {
-          "pkg": "com.paypal.android.p2pmobile",
-          "label": "PayPal",
-          "url": "https://www.paypal.com"
-        },
-        {
-          "pkg": "com.binance.dev",
-          "label": "Binance",
-          "url": "https://www.binance.com"
-        },
-        {
-          "pkg": "com.btg.pactual.digital.mobile",
-          "label": "BTG Pactual",
-          "url": "https://www.btgpactual.com"
-        },
-        {
-          "pkg": "com.fusionmedia.investing",
-          "label": "Investing.com",
-          "url": "https://www.investing.com"
-        },
-        {
-          "pkg": "com.xe.currency",
-          "label": "XE Currency",
-          "url": "https://www.xe.com"
-        },
-        {
-          "pkg": "com.booking",
-          "label": "Booking.com",
-          "url": null
-        },
-        {
-          "pkg": "com.thetrainline",
-          "label": "Trainline",
-          "url": null
-        },
-        {
-          "pkg": "com.ryanair.cheapflights",
-          "label": "Ryanair",
-          "url": null
-        },
-        {
-          "pkg": "com.rome2rio.www.rome2rio",
-          "label": "Rome2Rio",
-          "url": null
-        },
-        {
-          "pkg": "com.comuto",
-          "label": "BlaBlaCar",
-          "url": null
-        },
-        {
-          "pkg": "com.nomadmania.presentation",
-          "label": "NomadMania",
-          "url": "https://nomadmania.com"
-        },
-        {
-          "pkg": "com.ubercab",
-          "label": "Uber",
-          "url": "https://www.uber.com"
-        },
-        {
-          "pkg": "com.trafi.whitelabel.bvg",
-          "label": "BVG Fahrinfo",
-          "url": null
         }
       ]
     },
@@ -497,6 +497,11 @@
           "pkg": "com.termux",
           "label": "Termux",
           "url": null
+        },
+        {
+          "pkg": "com.google.android.googlequicksearchbox",
+          "label": "Google",
+          "url": "https://www.google.com"
         }
       ]
     },

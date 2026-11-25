@@ -785,9 +785,10 @@
       "_doc_favourites_v3": "#1422 VERSION 3: the seed is ONE derived file, app/src/main/assets/favourites_catalog.json (`catalog`, an asset: too big for BuildConfig), written by tools/gen-favourites-catalog.py from the registries (`filters[].from`: GitHub Pages list, SuperApp services_public / services_private filed under the SuperApp Cloud dashboard categories, the cloud-webserver serving endpoint, the SuperApp phone_sections / phone_folders taxonomy the Store's Phone > Apps reads). Each filter is a chip under the Favourites title; an item's group is '<chip label>/<sub-folder>'. A `legacy_groups` bookmark the seed also carries moves to its new group once. test/test-browser-favourites-catalog.sh fails when the committed file is stale.",
       "favourites": {
         "_doc_version_5": "#1806 version 5: the SuperApp Services and Me folders were reorganised (Mobility & Travel split into Hotels, Transports and City Mobility; Health (service-type) is new under Services; Tools Health and Outdoor & Sport are one Health Trackers). The three retired folders are legacy groups, so a seeded bookmark still in one moves to its new group; a user's own folder stays.",
-        "version": 5,
+        "_doc_version_6": "#1902 version 6: the SuperApp Social folder moved from Tools · Communication to Services · Leisure (Services/Social), and Search and KG Store ended AGI (the Services chip still lists their sites). Tools/Social is a legacy group, so a seeded bookmark still in it moves to Services/Social.",
+        "version": 6,
         "catalog": "app/src/main/assets/favourites_catalog.json",
-        "legacy_groups": ["Public", "Private (mesh)", "GitHub Pages", "Services/Mobility & Travel", "Tools/Health", "Tools/Outdoor & Sport"],
+        "legacy_groups": ["Public", "Private (mesh)", "GitHub Pages", "Services/Mobility & Travel", "Tools/Health", "Tools/Outdoor & Sport", "Tools/Social"],
         "filters": [
           { "id": "gh_pages", "label": "GH Pages", "from": "pages_hub", "feed": "https://raw.githubusercontent.com/diegonmarcos/_front-html___/main/pages.json" },
           { "id": "cloudy_public", "label": "Cloudy Public", "from": "services_public" },

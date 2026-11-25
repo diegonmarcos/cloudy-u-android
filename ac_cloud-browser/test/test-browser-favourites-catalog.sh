@@ -59,7 +59,9 @@ def check(root, ok):
     ui = j(root, "aa_cloud-superapp/build.json")["ui"]
     for chip in ("Services", "Tools"):
         pre = {s["prefix"] for s in ui["phone_sections"] if s["title"].startswith(chip)}
-        want = {f["label"][1:].strip() for f in ui["phone_folders"] if f["label"][:1] in pre and any(k.startswith("pkg:") for k in f["match_keywords"])}
+        # #1902 the Services chip also takes the AGI-tail folders ui.services_order names (Search, KG Store): they are still Services entries
+        extra = {c["folder"] for c in ui["services_order"]["categories"].values()} if chip == "Services" else set()
+        want = {f["label"][1:].strip() for f in ui["phone_folders"] if (f["label"][:1] in pre or f["id"] in extra) and any(k.startswith("pkg:") for k in f["match_keywords"])}
         got = {i["group"].split("/", 1)[1] for i in grp(chip)}
         ok(pre and got == want, "C2 %s = the Phone > Apps folders of the %s sections" % (chip, chip), "%s vs %s" % (sorted(got)[:4], sorted(want)[:4]))
     ws = [f for f in cat["filters"] if f["label"] == "Webserver"]

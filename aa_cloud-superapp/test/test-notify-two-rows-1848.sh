@@ -42,7 +42,8 @@ for sid in ('communication', 'boards'):
         if k.startswith('_doc_pages_1672') or k == 'state_pages': continue  # documentation of the old row
         # #1849 the bottom-nav glyph of Notify moved off the Inboxes tray to the catalog bell (the one named change)
         if (sid, k) == ('communication', 'icon') and v == 'ic_p_inbox' and new.get(k) == 'notifications': continue
-        if new.get(k) != v and not (k.startswith('stack_') and json.dumps(new.get(k)).replace('Persistents', 'Persistent badges') == json.dumps(v)):
+        # #1902 the Services filter option is the SET of the two Services section prefixes ('+' City and '%' Leisure): id and default '+' read '+%' now (the one named change)
+        if new.get(k) != v and not (k.startswith('stack_') and json.dumps(new.get(k)).replace('Persistents', 'Persistent badges') == json.dumps(v)) and json.dumps(new.get(k)).replace('"+%"', '"+"') != json.dumps(v):
             probs.append('%s.%s changed or lost' % (sid, k))
 # the Boards section keeps its five pages in order
 if [p['id'] for p in secs['boards']['pages']] != [p['id'] for p in base['boards']['pages']]: probs.append('boards pages changed')

@@ -70,29 +70,30 @@ check(len(agi) == 1, "exactly one AGI tile group under ui.sections (found %d)" %
 if len(agi) != 1: print("-- %d passed, %d failed" % (passed, failed)); sys.exit(1)
 tiles = agi[0]["tiles"]
 
-print("== T0: AGI sits right after the Services row, which sits right after Me (#1473) ==")
+print("== T0: AGI sits right after the Services rows (City, Leisure), which sit right after Projects (#1473, #1902) ==")
 cloud = [s for s in bj["ui"]["sections"] if s.get("id") == "cloud"][0]
 titles = [g.get("title") for g in cloud.get("tile_groups", [])]
-check("AGI" in titles and "Services" in titles and "Me" in titles and titles.index("AGI") == titles.index("Services") + 1 and titles.index("Services") == titles.index("Projects") + 1 and titles.index("Projects") == titles.index("Me") + 1,
-      "#1769 Projects sits right after Me, Services after Projects and AGI after Services (%s)" % titles)
+C_, L_ = "Services \u00b7 City", "Services \u00b7 Leisure"
+check(all(x in titles for x in ("AGI", C_, L_, "Projects", "Me")) and titles.index("AGI") == titles.index(L_) + 1 and titles.index(L_) == titles.index(C_) + 1 and titles.index(C_) == titles.index("Projects") + 1 and titles.index("Projects") == titles.index("Me") + 1,
+      "#1769 Projects sits right after Me, Services \u00b7 City after Projects, Services \u00b7 Leisure after City and AGI after Leisure (%s)" % titles)
 
-print("== T1: the AGI row is SI AI | Code Tools | MyTerminal Terminal (#1162, #1207, #1476), '|' being the group separators ==")
+print("== T1: the AGI row is SI AI | Code Tools | MyTerminal Terminal | Search KG Store (#1162, #1207, #1476, #1902), '|' being the group separators ==")
 got = [t.get("label") for t in tiles]
-want = ["SI", "AI", "|", "Code", "Tools", "|", "MyTerm.", "Terminal"]
+want = ["SI", "AI", "|", "Code", "Tools", "|", "MyTerm.", "Terminal", "|", "Search", "KG Store"]
 check(got == want, "AGI captions are %s (want %s)" % (got, want))
 ids = [t.get("id") for t in tiles]
-check([i for i in ids if not str(i).startswith("agi-sep-")] == ["si", "ai-chat", "code", "tools-small-llms", "drive", "ai-tmx"], "AGI tile ids are %s" % ids)
-check([t.get("label") for t in tiles if t.get("separator")] == ["|", "|"] and all(t.get("label") == "|" for t in tiles if t.get("separator")),
-      "the two separators are declared separator:true tiles captioned '|' (GroupedTilesFragment draws a bare character)")
-check(not any(t.get("label") in ("Search", "KG Store") for t in tiles), "Search and KG Store are not in AGI (they are Services)")
+check([i for i in ids if not str(i).startswith("agi-sep-")] == ["si", "ai-chat", "code", "tools-small-llms", "drive", "ai-tmx", "search", "kg-store"], "AGI tile ids are %s" % ids)
+check([t.get("label") for t in tiles if t.get("separator")] == ["|", "|", "|"] and all(t.get("label") == "|" for t in tiles if t.get("separator")),
+      "the three separators are declared separator:true tiles captioned '|' (GroupedTilesFragment draws a bare character)")
+check([t.get("label") for t in tiles[-2:]] == ["Search", "KG Store"] and tiles[-3].get("separator") is True, "Search and KG Store end AGI after a divider (#1902: they left Services)")
 check(not any(t.get("label") in ("B-LLM", "S-LLM") or t.get("id") in ("b-llm", "s-llm") for t in tiles),
       "no B-LLM or S-LLM tile is left in AGI")
 check(not any(isinstance(t.get("tiles"), list) for t in tiles), "no AGI tile is a folder")
 check((by_label := {t.get("label"): t for t in tiles}).get("Tools", {}).get("target") == "extapp:cloud-tools-small-llms",
       "the Tools tile launches extapp:cloud-tools-small-llms")
 by = {t.get("label"): t for t in tiles}
-weby = [t for g in cloud["tile_groups"] if g.get("title") == "Services" for t in g["tiles"]]
-by.update({t.get("label"): t for t in weby if not t.get("separator")})  # Search and KG Store live in Services since #1476
+weby = [t for g in cloud["tile_groups"] if str(g.get("title")).startswith("Services") for t in g["tiles"]]
+by.update({t.get("label"): t for t in weby if not t.get("separator")})  # Services tiles; Search and KG Store end AGI since #1902 (they were Services since #1476)
 chat = by.get("AI", {})
 check(chat.get("id") == "ai-chat" and chat.get("icon") == "ic_ai_chat"
       and chat.get("target", "").startswith("intent://resolve?domain=Cloud_agent_claude_bot#Intent;scheme=tg;"),

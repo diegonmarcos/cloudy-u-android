@@ -57,7 +57,7 @@ object NtfyCatalog {
      * The phone-taxonomy SECTION PREFIX this cloud publisher belongs to —
      * the same one-character vocabulary `ui.phone_sections` declares, so the
      * Notify tabs can narrow a cloud stream by the categories they were
-     * built from ("_" Setup, "@" Communication, "." Data, "=" Primary, "~" Me, "+" Services, "*" AGI, "#" Projects).
+     * built from ("_" Setup, "@" Communication, "." Data, "=" Primary, "~" Me, "+" Services · City, "%" Services · Leisure, "*" AGI, "#" Projects).
      *
      * Cloud messages carry no package and therefore no classifier can be run
      * on them: a topic or an in-app producer name is all there is. Without

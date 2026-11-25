@@ -1,5 +1,5 @@
 {
- "_doc": "#1769 capability -> phone app per Phone Quickmarks folder: the smallest set of phone apps that together replace what the Cloud app does, one per capability. suggested=true: not a quickmark before, offered as a missing-app tile (greyed, Install). #1806 Mobility & Travel split into Hotels, Transports and City Mobility (rows re-homed, none dropped); Games and Health are new Services folders.",
+ "_doc": "#1769 capability -> phone app per Phone Quickmarks folder: the smallest set of phone apps that together replace what the Cloud app does, one per capability. suggested=true: not a quickmark before, offered as a missing-app tile (greyed, Install). #1806 Mobility & Travel split into Hotels, Transports and City Mobility (rows re-homed, none dropped); Games and Health are new Services folders. #1902 Services · Leisure > Social opens the All Apps folder media_social (opens_folder) and holds no phone apps of its own, so it has no capability rows.",
  "folders": {
   "Drive": [
    {
@@ -718,6 +718,7 @@
     "label": "Motosumo",
     "suggested": true
    }
-  ]
+  ],
+  "Social": []
  }
 }

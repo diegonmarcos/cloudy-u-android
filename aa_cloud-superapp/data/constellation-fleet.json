@@ -18,8 +18,9 @@
 {"id":"data","label":"Data","members":["notes","tasks","office","gallery","vault"]},
 {"id":"me","label":"Me","members":["me"]},
 {"id":"projects","label":"Projects","members":["wiki","aa_cloud-superapp","cg-omniverse","capital-stack-finterminal","hardtech-biomed","hardtech-cad"]},
-{"id":"services","label":"Services","members":["search","news","media-center","shopping","kg-store"]},
-{"id":"agi","label":"AGI","members":["superintel","code","tools-small-llms","myterminal","nix-on-droid","termux"]},
+{"id":"services-city","label":"Services · City","members":["shopping"]},
+{"id":"services-leisure","label":"Services · Leisure","members":["news","media-center"]},
+{"id":"agi","label":"AGI","members":["superintel","code","tools-small-llms","myterminal","nix-on-droid","search","kg-store","termux"]},
 {"id":"setup","label":"Setup","members":["store","account","c3","c3-webserver","morpheus","watchtower","watchdog"]}
 ],
 "apps":[

@@ -1,0 +1,2166 @@
+{
+ "_doc": "#1902 the pre-change snapshot of the four launcher surfaces (taken from main before the Services City/Leisure split), so test-launcher-surfaces-parity-1902.sh can prove nothing was dropped: every All Apps folder and its keywords, every Cloud quickmark tile (separators are layout, not fields), every Phone quickmark folder and package, every Cloud Smart Folder. Regrouping and renaming sections is allowed; losing an entry is not.",
+ "phone_all_apps": {
+  "sections": [
+   "Tools · Primary",
+   "Tools · Communication",
+   "Tools · Data",
+   "Tools · Me",
+   "Projects",
+   "Services",
+   "AGI",
+   "Setup"
+  ],
+  "folders": [
+   {
+    "id": "prod_web",
+    "label": "=Browser",
+    "order": 110,
+    "keywords": [
+     "pkg:com.android.chrome",
+     "pkg:com.brave.browser",
+     "pkg:com.duckduckgo.mobile.android",
+     "pkg:io.raindrop.raindropio"
+    ],
+    "metadata": [
+     "intent:android.intent.category.APP_BROWSER"
+    ]
+   },
+   {
+    "id": "prod_maps",
+    "label": "=Nav",
+    "order": 120,
+    "keywords": [
+     "pkg:aplicacion.tiempo",
+     "pkg:com.google.android.apps.maps",
+     "pkg:app.organicmaps",
+     "pkg:com.google.earth",
+     "pkg:com.mapswithme.maps.pro",
+     "pkg:cz.ackee.ventusky"
+    ],
+    "metadata": [
+     "cat:maps",
+     "intent:android.intent.category.APP_MAPS",
+     "intent:android.intent.category.APP_WEATHER"
+    ]
+   },
+   {
+    "id": "prod_calc",
+    "label": "=Calc",
+    "order": 130,
+    "keywords": [
+     "pkg:com.google.android.calculator",
+     "pkg:com.sec.android.app.popupcalculator"
+    ],
+    "metadata": [
+     "intent:android.intent.category.APP_CALCULATOR"
+    ]
+   },
+   {
+    "id": "prod_camera",
+    "label": "=Camera",
+    "order": 140,
+    "keywords": [
+     "pkg:com.sec.android.app.camera",
+     "pkg:pl.mobimax.cameraopus"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "prod_canvas",
+    "label": "=Canvas",
+    "order": 145,
+    "keywords": [
+     "pkg:com.adsk.sketchbook",
+     "pkg:com.imageline.FLM"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "sys_keyboards",
+    "label": "=Keyboard",
+    "order": 150,
+    "keywords": [
+     "pkg:ch.icoaching.typewise",
+     "pkg:com.gingersoftware.android.keyboard",
+     "pkg:com.google.android.inputmethod.latin",
+     "pkg:com.grammarly.android.keyboard",
+     "pkg:juloo.keyboard2"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "prod_wallet",
+    "label": "=Wallet",
+    "order": 160,
+    "keywords": [
+     "pkg:com.google.android.apps.walletnfcrel"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "prod_utils",
+    "label": "=Utilities",
+    "order": 170,
+    "keywords": [
+     "pkg:com.diotek.sec.lookup.dictionary",
+     "pkg:com.google.android.apps.translate",
+     "pkg:com.google.audio.hearing.visualization.accessibility.scribe",
+     "pkg:com.persapps.multitimer",
+     "pkg:com.samsung.android.ardrawing",
+     "pkg:com.sec.android.app.clockpackage",
+     "pkg:com.sec.android.app.voicenote"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "prod_mail",
+    "label": "@Mail",
+    "order": 210,
+    "keywords": [
+     "pkg:app.sterna",
+     "pkg:ch.protonmail.android",
+     "pkg:com.fsck.k9",
+     "pkg:com.google.android.gm",
+     "pkg:com.mailtemi.email",
+     "pkg:com.microsoft.office.outlook",
+     "pkg:com.samsung.android.email.provider",
+     "pkg:email.clean.android",
+     "pkg:eu.faircode.email",
+     "pkg:rs.ltt.android"
+    ],
+    "metadata": [
+     "intent:android.intent.category.APP_EMAIL"
+    ]
+   },
+   {
+    "id": "prod_chat",
+    "label": "@Chat",
+    "order": 220,
+    "keywords": [
+     "pkg:chat.rocket.android",
+     "pkg:com.Slack",
+     "pkg:com.beeper.android",
+     "pkg:com.mattermost.rn",
+     "pkg:com.mattermost.rnbeta",
+     "pkg:im.vector.app",
+     "pkg:io.heckel.ntfy"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "prod_messenger",
+    "label": "@Messenger",
+    "order": 230,
+    "keywords": [
+     "pkg:org.thoughtcrime.securesms",
+     "pkg:com.whatsapp",
+     "pkg:com.whatsapp.w4b",
+     "pkg:org.telegram.messenger",
+     "pkg:com.viber.voip",
+     "pkg:com.facebook.orca",
+     "pkg:com.garmin.android.apps.messenger",
+     "pkg:com.google.android.apps.tachyon",
+     "pkg:com.trianguloy.openInWhatsapp"
+    ],
+    "metadata": [
+     "intent:android.intent.category.APP_MESSAGING"
+    ]
+   },
+   {
+    "id": "prod_phone",
+    "label": "@Dialer",
+    "order": 240,
+    "keywords": [
+     "pkg:com.google.android.apps.messaging",
+     "pkg:com.samsung.android.dialer",
+     "pkg:com.samsung.android.messaging",
+     "pkg:org.fossify.phone"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "prod_contacts",
+    "label": "@Contacts",
+    "order": 250,
+    "keywords": [
+     "pkg:com.google.android.contacts",
+     "pkg:com.samsung.android.app.contacts",
+     "pkg:com.diegonmarcos.comms.contacts"
+    ],
+    "metadata": [
+     "intent:android.intent.category.APP_CONTACTS"
+    ]
+   },
+   {
+    "id": "media_social",
+    "label": "@Social",
+    "order": 260,
+    "keywords": [
+     "pkg:com.badoo.mobile",
+     "pkg:com.bereal.ft",
+     "pkg:com.bumble.app",
+     "pkg:com.instagram.android",
+     "pkg:com.instagram.barcelona",
+     "pkg:com.pinterest",
+     "pkg:com.tinder",
+     "pkg:co.hinge.app",
+     "pkg:com.facebook.katana"
+    ],
+    "metadata": [
+     "cat:social"
+    ]
+   },
+   {
+    "id": "prod_storage",
+    "label": ".Drive",
+    "order": 310,
+    "keywords": [
+     "pkg:com.google.android.apps.docs",
+     "pkg:com.google.android.apps.subscriptions.red",
+     "pkg:com.microsoft.skydrive",
+     "pkg:com.alphainventor.filemanager",
+     "pkg:com.amaze.filemanager",
+     "pkg:com.app.applistbackup",
+     "pkg:com.ghisler.android.TotalCommander",
+     "pkg:com.ghostsq.commander",
+     "pkg:com.lonelycatgames.Xplore",
+     "pkg:com.mobisystems.fileman",
+     "pkg:com.rarlab.rar",
+     "pkg:com.sec.android.app.myfiles",
+     "pkg:com.smlnskgmail.jaman.hashchecker",
+     "pkg:com.viscouspot.gitsync",
+     "pkg:dk.tacit.android.foldersync.lite",
+     "pkg:me.zhanghai.android.files",
+     "pkg:pl.solidexplorer2",
+     "pkg:me.proton.android.drive",
+     "pkg:com.google.android.apps.nbu.files"
+    ],
+    "metadata": [
+     "intent:android.intent.category.APP_FILES",
+     "perm:android.permission.MANAGE_EXTERNAL_STORAGE"
+    ]
+   },
+   {
+    "id": "prod_docs",
+    "label": ".Notes",
+    "order": 320,
+    "keywords": [
+     "pkg:com.adeeteya.markdown_editor",
+     "pkg:com.google.android.keep",
+     "pkg:com.journable.app",
+     "pkg:com.microsoft.lists.public",
+     "pkg:com.microsoft.office.onenote",
+     "pkg:com.samsung.android.app.notes",
+     "pkg:jp.sblo.pandora.jota.plus",
+     "pkg:md.obsidian",
+     "pkg:org.chromium.webapk.a64d263d6f7d935c4_v2",
+     "pkg:app.affine.pro"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "prod_plan",
+    "label": ".Agenda",
+    "order": 330,
+    "keywords": [
+     "pkg:co.mangotechnologies.clickup",
+     "pkg:com.gianlu.timeless",
+     "pkg:com.google.android.apps.tasks",
+     "pkg:com.google.android.calendar",
+     "pkg:com.microsoft.todos",
+     "pkg:com.samsung.android.app.reminder",
+     "pkg:com.samsung.android.calendar",
+     "pkg:com.toggl.giskard",
+     "pkg:com.trello",
+     "pkg:me.clockify.android",
+     "pkg:todolist.scheduleplanner.dailyplanner.todo.reminders"
+    ],
+    "metadata": [
+     "intent:android.intent.category.APP_CALENDAR"
+    ]
+   },
+   {
+    "id": "prod_office",
+    "label": ".Office",
+    "order": 340,
+    "keywords": [
+     "pkg:com.collabora.libreoffice",
+     "pkg:com.google.android.apps.docs.editors.docs",
+     "pkg:com.google.android.apps.docs.editors.sheets",
+     "pkg:com.google.android.apps.docs.editors.slides",
+     "pkg:com.adobe.reader"
+    ],
+    "metadata": [
+     "cat:productivity"
+    ]
+   },
+   {
+    "id": "data_gallery",
+    "label": ".Gallery",
+    "order": 350,
+    "keywords": [
+     "pkg:com.google.android.apps.photos",
+     "pkg:com.sec.android.gallery3d",
+     "pkg:com.musicvideo.photoeditor.squarefit"
+    ],
+    "metadata": [
+     "cat:image",
+     "intent:android.intent.category.APP_GALLERY"
+    ]
+   },
+   {
+    "id": "data_vault",
+    "label": ".Vault",
+    "order": 370,
+    "keywords": [
+     "pkg:com.samsung.android.samsungpass",
+     "pkg:com.x8bit.bitwarden",
+     "pkg:com.beemdevelopment.aegis",
+     "pkg:com.azure.authenticator",
+     "pkg:com.google.android.apps.authenticator2",
+     "pkg:com.google.android.apps.credentialmanager",
+     "pkg:com.samsung.knox.securefolder",
+     "pkg^com.bitwarden.",
+     "pkg^com.kunzisoft.keepass"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "me_me",
+    "label": "~Me",
+    "order": 410,
+    "keywords": [],
+    "metadata": []
+   },
+   {
+    "id": "svc_health",
+    "label": "~Health Trackers",
+    "order": 420,
+    "keywords": [
+     "pkg:com.google.android.apps.fitness",
+     "pkg:com.fitbit.FitbitMobile",
+     "pkg:com.sec.android.app.shealth",
+     "pkg:com.oplayer.orunningplus",
+     "pkg:com.alltrails.alltrails",
+     "pkg:com.garmin.android.apps.connectmobile",
+     "pkg:com.garmin.android.apps.dive",
+     "pkg:com.garmin.android.apps.explore",
+     "pkg:com.garmin.connectiq",
+     "pkg:com.outdooractive.Outdooractive",
+     "pkg:com.strava",
+     "pkg:com.urbandroid.sleep",
+     "pkg:com.wikiloc.wikilocandroid",
+     "pkg:de.komoot.android",
+     "pkg:io.vicoach"
+    ],
+    "metadata": [
+     "perm:android.permission.ACTIVITY_RECOGNITION",
+     "perm:android.permission.BODY_SENSORS"
+    ]
+   },
+   {
+    "id": "svc_gov",
+    "label": "~Gov & ID",
+    "order": 430,
+    "keywords": [
+     "pkg:br.com.vidaas.sp",
+     "pkg:br.gov.economia.receita.rfb",
+     "pkg:br.gov.meugovbr",
+     "pkg:cat.atm.cartera",
+     "pkg:com.dgt.midgt",
+     "pkg:com.governikus.ausweisapp2",
+     "pkg:de.deutschepost.postident",
+     "pkg:es.aeat.pin24h",
+     "pkg:es.correos.app",
+     "pkg:es.fnmtrcm.ceres.certificadoDigitalFNMT",
+     "pkg:es.gob.interior.policia.midni",
+     "pkg:nl.jool.isic",
+     "pkg^br.gov.",
+     "pkg:br.jus.tse.eleitoral.etitulo"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "svc_telecom",
+    "label": "~Telecom",
+    "order": 440,
+    "keywords": [
+     "pkg:com.affinityclick.alosim",
+     "pkg:com.esim.numero",
+     "pkg:com.mobillium.airalo",
+     "pkg:com.saily.android",
+     "pkg:com.spanishcoders.pepephone",
+     "pkg:de.congstar.meincongstar",
+     "pkg:net.esim.twa"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "svc_home",
+    "label": "~Home & Housing",
+    "order": 450,
+    "keywords": [
+     "pkg:com.sensorberg.oneaccess",
+     "pkg:de.nebenan.app",
+     "pkg:com.shurgard.selfstorage"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "hlth_nutrition",
+    "label": "~Nutrition",
+    "order": 470,
+    "keywords": [
+     "pkg:com.fatsecret.android"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "hlth_learning",
+    "label": "~Learning",
+    "order": 480,
+    "keywords": [
+     "pkg:air.nn.mobile.app.main",
+     "pkg:com.duocards.app",
+     "pkg:com.fluentflix.fluentu",
+     "pkg:com.flutterflow.kards",
+     "pkg:com.hueber.huebermedia",
+     "pkg:com.lubosmikusiak.articuli.derdiedas",
+     "pkg:com.memrise.android.memrisecompanion",
+     "pkg:mobi.eup.easygerman",
+     "pkg:com.rype.go",
+     "pkg:com.simonandschuster.pimsleur.unified.android",
+     "pkg:com.softissimo.reverso.context",
+     "pkg:com.ted.android",
+     "pkg:de.digionline.webweavera2",
+     "pkg:net.wordbit.deen"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "proj_superapp",
+    "label": "#SuperApp",
+    "order": 510,
+    "keywords": [
+     "pkg:com.diegonmarcos.superapp"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "proj_omniverse",
+    "label": "#Omniverse",
+    "order": 520,
+    "keywords": [],
+    "metadata": []
+   },
+   {
+    "id": "proj_finterm",
+    "label": "#FinTerm",
+    "order": 530,
+    "keywords": [],
+    "metadata": []
+   },
+   {
+    "id": "proj_cad",
+    "label": "#CAD",
+    "order": 540,
+    "keywords": [],
+    "metadata": []
+   },
+   {
+    "id": "proj_biomed",
+    "label": "#BioMed",
+    "order": 550,
+    "keywords": [],
+    "metadata": []
+   },
+   {
+    "id": "svc_search",
+    "label": "+Search",
+    "order": 610,
+    "keywords": [
+     "pkg:com.google.android.googlequicksearchbox"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "hlth_news",
+    "label": "+News",
+    "order": 615,
+    "keywords": [
+     "pkg:com.checkitt",
+     "pkg:com.devhd.feedly",
+     "pkg:com.flyersoft.moonreader",
+     "pkg:com.google.android.apps.magazines",
+     "pkg:com.rama.mako",
+     "pkg:com.samsung.android.app.spage",
+     "pkg:com.substack.app"
+    ],
+    "metadata": [
+     "cat:news"
+    ]
+   },
+   {
+    "id": "svc_events",
+    "label": "+Events",
+    "order": 620,
+    "keywords": [
+     "pkg:com.codekarussell.rausgegangen",
+     "pkg:com.linearshift.broadcastoslo",
+     "pkg:fm.dice",
+     "pkg:net.residentadvisor.raguide",
+     "pkg:com.meetup",
+     "pkg:de.eventim.mobile.app.Android"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "media_video",
+    "label": "+Media Center",
+    "order": 625,
+    "keywords": [
+     "pkg:com.amazon.avod.thirdpartyclient",
+     "pkg:com.google.android.videos",
+     "pkg:com.google.android.youtube",
+     "pkg:com.netflix.mediaclient",
+     "pkg:com.wbd.stream",
+     "pkg:tv.arte.plus7",
+     "pkg:at.zuggabecka.radiofm4",
+     "pkg:com.aspiro.tidal",
+     "pkg:com.earthflare.android.radioparadisewidget.gpv2",
+     "pkg:com.google.android.apps.youtube.music",
+     "pkg:com.shazam.android",
+     "pkg:com.spotify.music",
+     "pkg:com.ultimateguitar.tabs",
+     "pkg:de.deutschlandfunk.dlfaudiothek",
+     "pkg:ott.alanwatts",
+     "pkg:cn.com.aftershokz.app",
+     "pkg:com.oceanwing.soundcore",
+     "pkg:com.mi.earphone"
+    ],
+    "metadata": [
+     "cat:video",
+     "cat:audio",
+     "intent:android.intent.category.APP_MUSIC"
+    ]
+   },
+   {
+    "id": "media_games",
+    "label": "+Games",
+    "order": 630,
+    "keywords": [
+     "pkg:com.epicgames.portal",
+     "pkg:com.playdead.limbo.egs.full",
+     "pkg:com.samsung.android.game.gamehome",
+     "pkg:com.werewolfapps.online",
+     "pkg:org.faudroids.werewolf"
+    ],
+    "metadata": [
+     "cat:game"
+    ]
+   },
+   {
+    "id": "svc_shopping",
+    "label": "+Shopping",
+    "order": 635,
+    "keywords": [
+     "pkg:com.amazon.mShop.android.shopping",
+     "pkg:com.app.tgtg",
+     "pkg:com.backmarket",
+     "pkg:com.ebay.kleinanzeigen",
+     "pkg:com.wallapop",
+     "pkg:vivino.web.app",
+     "pkg:com.dhl.exp.dhlmobile",
+     "pkg:de.dhl.paket"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "svc_jobs",
+    "label": "+Jobs & Business",
+    "order": 640,
+    "keywords": [
+     "pkg:com.linkedin.android",
+     "pkg:com.otta.otta",
+     "pkg:com.indeed.android.jobsearch"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "svc_realestate",
+    "label": "+Real Estate",
+    "order": 645,
+    "keywords": [
+     "pkg:de.is24.android",
+     "pkg:com.wggesucht.android"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "svc_healthcare",
+    "label": "+Health",
+    "order": 650,
+    "keywords": [
+     "pkg:com.medantapatient.app",
+     "pkg:com.urbansportsclub",
+     "pkg:com.downdogapp",
+     "pkg:com.motosumo.app",
+     "pkg:com.bodybike.bbsmartplus"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "svc_money",
+    "label": "+Money",
+    "order": 655,
+    "keywords": [
+     "pkg:com.binance.dev",
+     "pkg:com.bitpanda.bitpanda",
+     "pkg:com.btg.pactual.banking",
+     "pkg:com.btg.pactual.digital.mobile",
+     "pkg:com.btg.pactual.homebroker.mobile",
+     "pkg:com.fusionmedia.investing",
+     "pkg:com.paypal.android.p2pmobile",
+     "pkg:com.revolut.revolut",
+     "pkg:com.transferwise.android",
+     "pkg:com.xe.currency",
+     "pkg:es.bancosantander.apps",
+     "pkg^com.btg.pactual.",
+     "pkg:com.imaginecurve.curve.prd",
+     "pkg:com.starfinanz.smob.android.sfinanzstatus",
+     "pkg:de.number26.android"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "svc_hotels",
+    "label": "+Hotels",
+    "order": 660,
+    "keywords": [
+     "pkg:app.campy",
+     "pkg:com.airbnb.android",
+     "pkg:com.alohacamp.release",
+     "pkg:com.booking",
+     "pkg:com.hostel_hop_inc.hostel_hop_mobile",
+     "pkg:com.hostelworld.app",
+     "pkg:com.workaway.app",
+     "pkg:dk.shelter.app",
+     "pkg:fr.tramb.park4night",
+     "pkg:travel.goki.app"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "svc_transports",
+    "label": "+Transports",
+    "order": 665,
+    "keywords": [
+     "pkg:be.greifmatthias.wakaship",
+     "pkg:com.comuto",
+     "pkg:com.getbybus.mobile",
+     "pkg:com.goeuro.rosie",
+     "pkg:com.kautra.android.autobusubilietai",
+     "pkg:com.mo2o.alsa",
+     "pkg:com.nomadmania.presentation",
+     "pkg:com.rome2rio.www.rome2rio",
+     "pkg:com.ryanair.cheapflights",
+     "pkg:com.skiplagged",
+     "pkg:com.thetrainline",
+     "pkg:com.wizzair.WizzAirApp",
+     "pkg:de.flixbus.app",
+     "pkg:de.hafas.android.db",
+     "pkg:eu.infobus.app",
+     "pkg:net.skyscanner.android.main"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "svc_mobility",
+    "label": "+City Mobility",
+    "order": 670,
+    "keywords": [
+     "pkg:cat.atm.tmobilitat",
+     "pkg:com.donkeyrepublic.bike.android",
+     "pkg:com.geomobile.tmbmobile",
+     "pkg:com.ridedott.rider",
+     "pkg:com.trafi.android.tr",
+     "pkg:com.trafi.whitelabel.bvg",
+     "pkg:com.ubercab",
+     "pkg:de.eos.uptrade.android.fahrinfo.berlin",
+     "pkg:ee.mtakso.client",
+     "pkg:no.ruter.reise",
+     "pkg:ride.app",
+     "pkg:taxi.android.client",
+     "pkg:de.bvg.ticket"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "svc_kgstore",
+    "label": "+KG Store",
+    "order": 675,
+    "keywords": [],
+    "metadata": []
+   },
+   {
+    "id": "prod_ai",
+    "label": "*AI",
+    "order": 710,
+    "keywords": [
+     "pkg:ai.perplexity.app.android",
+     "pkg:ai.perplexity.comet",
+     "pkg:ai.x.grok",
+     "pkg:com.anthropic.claude",
+     "pkg:com.deepseek.chat",
+     "pkg:com.facebook.stella",
+     "pkg:com.google.android.apps.bard",
+     "pkg:com.google.android.apps.googleassistant",
+     "pkg:com.google.android.apps.labs.language.tailwind",
+     "pkg:com.microsoft.copilot",
+     "pkg:com.samsung.android.bixby.agent",
+     "pkg:com.synthesia.synthesia",
+     "pkg:org.chromium.webapk.afdfe84a0acbbed2f_v2",
+     "pkg:xyz.chatboxapp.chatbox"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "prod_code",
+    "label": "*Code",
+    "order": 720,
+    "keywords": [
+     "pkg:com.foxdebug.acode",
+     "pkg:com.rhmsoft.edit",
+     "pkg:com.github.android"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "prod_terminals",
+    "label": "*Terminal",
+    "order": 730,
+    "keywords": [
+     "pkg:cld.termux.nix.boot",
+     "pkg:com.termux",
+     "pkg:com.termux.api",
+     "pkg:com.termux.nix",
+     "pkg:com.termux.nix.boot",
+     "pkg^cld.termux.",
+     "pkg^com.termux."
+    ],
+    "metadata": []
+   },
+   {
+    "id": "agi_tools",
+    "label": "*Tools",
+    "order": 740,
+    "keywords": [],
+    "metadata": []
+   },
+   {
+    "id": "sys_stores",
+    "label": "_Store",
+    "order": 810,
+    "keywords": [
+     "pkg:com.android.vending",
+     "pkg:com.sec.android.app.samsungapps",
+     "pkg:com.uptodown",
+     "pkg:org.fdroid.fdroid",
+     "pkg^com.aurora.adroid",
+     "pkg^com.aurora.store",
+     "pkg^org.fdroid.",
+     "pkg:com.aurora.store"
+    ],
+    "metadata": [
+     "intent:android.intent.category.APP_MARKET",
+     "perm:android.permission.REQUEST_INSTALL_PACKAGES"
+    ]
+   },
+   {
+    "id": "sys_account",
+    "label": "_Account",
+    "order": 820,
+    "keywords": [],
+    "metadata": []
+   },
+   {
+    "id": "sys_dev",
+    "label": "_C3 & Dev",
+    "order": 830,
+    "keywords": [
+     "pkg:com.arlosoft.macrodroid",
+     "pkg:com.diegonmarcos.cloudkeyboardlibs",
+     "pkg^com.diegonmarcos.ide.",
+     "pkg:com.google.android.apps.enterprise.cpanel",
+     "pkg:com.google.android.apps.giant",
+     "pkg:com.lbe.parallel.intl",
+     "pkg:com.truedevelopersstudio.automatictap.autoclicker",
+     "pkg:moe.shizuku.privileged.api",
+     "pkg^com.diegonmarcos.cloudlib."
+    ],
+    "metadata": []
+   },
+   {
+    "id": "sys_diag",
+    "label": "_Diagnostics",
+    "order": 840,
+    "keywords": [
+     "pkg:com.digibites.accubattery",
+     "pkg:com.frequencygenerator.dogwhistle",
+     "pkg:com.insideinc.gcpu",
+     "pkg:com.jmaciak.dogwhistle",
+     "pkg:com.luxdelux.frequencygenerator",
+     "pkg:com.noise.sound.meter.decibel",
+     "pkg:com.skypaw.decibel",
+     "pkg:io.japp.blackscreen",
+     "pkg:me.biplobsd.rsm",
+     "pkg:org.intoorbit.spectrum",
+     "pkg:no.nordicsemi.android.mcp"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "sys_network",
+    "label": "_Network",
+    "order": 850,
+    "keywords": [
+     "pkg:com.devolutions.remotedesktopmanager",
+     "pkg:com.ghisler.tcplugins.SFTP",
+     "pkg:com.mobidia.android.mdm",
+     "pkg:com.phlox.simpleserver",
+     "pkg:com.ubnt.usurvey",
+     "pkg:net.techet.netanalyzerlite.an",
+     "pkg:org.kde.kdeconnect_tp",
+     "pkg:com.cloudflare.cloudflareoneagent",
+     "pkg:com.cloudflare.onedotonedotonedotone"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "sys_security",
+    "label": "_Security",
+    "order": 860,
+    "keywords": [
+     "pkg:ch.protonvpn.android",
+     "pkg:com.opera.max.global",
+     "pkg:com.wireguard.android",
+     "pkg:eu.faircode.netguard",
+     "pkg^com.expressvpn.",
+     "pkg^com.nordvpn.",
+     "pkg^com.protonvpn.",
+     "pkg^io.tailscale.",
+     "pkg^me.proton.",
+     "pkg^net.mullvad.",
+     "pkg^net.openvpn.",
+     "pkg^org.torproject.",
+     "pkg:com.samsung.android.app.find"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "sys_settings",
+    "label": "_Settings",
+    "order": 870,
+    "keywords": [
+     "pkg:com.android.settings",
+     "pkg:com.binarysmith.webclipwidget.ad",
+     "pkg:com.rsupport.rs.activity.rsupport.aas2",
+     "pkg:com.samsung.android.app.routines",
+     "pkg:com.samsung.android.app.watchmanager",
+     "pkg:com.samsung.android.lool",
+     "pkg:com.samsung.android.mdx",
+     "pkg:com.samsung.android.oneconnect",
+     "pkg:com.sec.android.easyMover",
+     "pkg:com.teslacoilsw.launcher",
+     "pkg:pub.hanks.appfolderwidget",
+     "pkg^com.samsung.android.app.aodservice",
+     "pkg^com.samsung.android.sidegesturepad",
+     "pkg^com.samsung.android.themecenter",
+     "pkg^com.samsung.android.themestore",
+     "pkg:com.samsung.android.goodlock"
+    ],
+    "metadata": []
+   },
+   {
+    "id": "misc",
+    "label": "Misc",
+    "order": 910,
+    "keywords": [],
+    "metadata": []
+   },
+   {
+    "id": "others",
+    "label": "Others",
+    "order": 930,
+    "keywords": [],
+    "metadata": []
+   }
+  ]
+ },
+ "phone_dataset": [
+  {
+   "id": "prod_web",
+   "label": "=Browser",
+   "section": "Tools · Primary",
+   "order": 110
+  },
+  {
+   "id": "prod_maps",
+   "label": "=Nav",
+   "section": "Tools · Primary",
+   "order": 120
+  },
+  {
+   "id": "prod_calc",
+   "label": "=Calc",
+   "section": "Tools · Primary",
+   "order": 130
+  },
+  {
+   "id": "prod_camera",
+   "label": "=Camera",
+   "section": "Tools · Primary",
+   "order": 140
+  },
+  {
+   "id": "prod_canvas",
+   "label": "=Canvas",
+   "section": "Tools · Primary",
+   "order": 145
+  },
+  {
+   "id": "sys_keyboards",
+   "label": "=Keyboard",
+   "section": "Tools · Primary",
+   "order": 150
+  },
+  {
+   "id": "prod_wallet",
+   "label": "=Wallet",
+   "section": "Tools · Primary",
+   "order": 160
+  },
+  {
+   "id": "prod_utils",
+   "label": "=Utilities",
+   "section": "Tools · Primary",
+   "order": 170
+  },
+  {
+   "id": "prod_mail",
+   "label": "@Mail",
+   "section": "Tools · Communication",
+   "order": 210
+  },
+  {
+   "id": "prod_chat",
+   "label": "@Chat",
+   "section": "Tools · Communication",
+   "order": 220
+  },
+  {
+   "id": "prod_messenger",
+   "label": "@Messenger",
+   "section": "Tools · Communication",
+   "order": 230
+  },
+  {
+   "id": "prod_phone",
+   "label": "@Dialer",
+   "section": "Tools · Communication",
+   "order": 240
+  },
+  {
+   "id": "prod_contacts",
+   "label": "@Contacts",
+   "section": "Tools · Communication",
+   "order": 250
+  },
+  {
+   "id": "media_social",
+   "label": "@Social",
+   "section": "Tools · Communication",
+   "order": 260
+  },
+  {
+   "id": "prod_storage",
+   "label": ".Drive",
+   "section": "Tools · Data",
+   "order": 310
+  },
+  {
+   "id": "prod_docs",
+   "label": ".Notes",
+   "section": "Tools · Data",
+   "order": 320
+  },
+  {
+   "id": "prod_plan",
+   "label": ".Agenda",
+   "section": "Tools · Data",
+   "order": 330
+  },
+  {
+   "id": "prod_office",
+   "label": ".Office",
+   "section": "Tools · Data",
+   "order": 340
+  },
+  {
+   "id": "data_gallery",
+   "label": ".Gallery",
+   "section": "Tools · Data",
+   "order": 350
+  },
+  {
+   "id": "data_vault",
+   "label": ".Vault",
+   "section": "Tools · Data",
+   "order": 370
+  },
+  {
+   "id": "me_me",
+   "label": "~Me",
+   "section": "Tools · Me",
+   "order": 410
+  },
+  {
+   "id": "svc_health",
+   "label": "~Health Trackers",
+   "section": "Tools · Me",
+   "order": 420
+  },
+  {
+   "id": "svc_gov",
+   "label": "~Gov & ID",
+   "section": "Tools · Me",
+   "order": 430
+  },
+  {
+   "id": "svc_telecom",
+   "label": "~Telecom",
+   "section": "Tools · Me",
+   "order": 440
+  },
+  {
+   "id": "svc_home",
+   "label": "~Home & Housing",
+   "section": "Tools · Me",
+   "order": 450
+  },
+  {
+   "id": "hlth_nutrition",
+   "label": "~Nutrition",
+   "section": "Tools · Me",
+   "order": 470
+  },
+  {
+   "id": "hlth_learning",
+   "label": "~Learning",
+   "section": "Tools · Me",
+   "order": 480
+  },
+  {
+   "id": "proj_superapp",
+   "label": "#SuperApp",
+   "section": "Projects",
+   "order": 510
+  },
+  {
+   "id": "proj_omniverse",
+   "label": "#Omniverse",
+   "section": "Projects",
+   "order": 520
+  },
+  {
+   "id": "proj_finterm",
+   "label": "#FinTerm",
+   "section": "Projects",
+   "order": 530
+  },
+  {
+   "id": "proj_cad",
+   "label": "#CAD",
+   "section": "Projects",
+   "order": 540
+  },
+  {
+   "id": "proj_biomed",
+   "label": "#BioMed",
+   "section": "Projects",
+   "order": 550
+  },
+  {
+   "id": "svc_search",
+   "label": "+Search",
+   "section": "Services",
+   "order": 610
+  },
+  {
+   "id": "hlth_news",
+   "label": "+News",
+   "section": "Services",
+   "order": 615
+  },
+  {
+   "id": "svc_events",
+   "label": "+Events",
+   "section": "Services",
+   "order": 620
+  },
+  {
+   "id": "media_video",
+   "label": "+Media Center",
+   "section": "Services",
+   "order": 625
+  },
+  {
+   "id": "media_games",
+   "label": "+Games",
+   "section": "Services",
+   "order": 630
+  },
+  {
+   "id": "svc_shopping",
+   "label": "+Shopping",
+   "section": "Services",
+   "order": 635
+  },
+  {
+   "id": "svc_jobs",
+   "label": "+Jobs & Business",
+   "section": "Services",
+   "order": 640
+  },
+  {
+   "id": "svc_realestate",
+   "label": "+Real Estate",
+   "section": "Services",
+   "order": 645
+  },
+  {
+   "id": "svc_healthcare",
+   "label": "+Health",
+   "section": "Services",
+   "order": 650
+  },
+  {
+   "id": "svc_money",
+   "label": "+Money",
+   "section": "Services",
+   "order": 655
+  },
+  {
+   "id": "svc_hotels",
+   "label": "+Hotels",
+   "section": "Services",
+   "order": 660
+  },
+  {
+   "id": "svc_transports",
+   "label": "+Transports",
+   "section": "Services",
+   "order": 665
+  },
+  {
+   "id": "svc_mobility",
+   "label": "+City Mobility",
+   "section": "Services",
+   "order": 670
+  },
+  {
+   "id": "svc_kgstore",
+   "label": "+KG Store",
+   "section": "Services",
+   "order": 675
+  },
+  {
+   "id": "prod_ai",
+   "label": "*AI",
+   "section": "AGI",
+   "order": 710
+  },
+  {
+   "id": "prod_code",
+   "label": "*Code",
+   "section": "AGI",
+   "order": 720
+  },
+  {
+   "id": "prod_terminals",
+   "label": "*Terminal",
+   "section": "AGI",
+   "order": 730
+  },
+  {
+   "id": "agi_tools",
+   "label": "*Tools",
+   "section": "AGI",
+   "order": 740
+  },
+  {
+   "id": "sys_stores",
+   "label": "_Store",
+   "section": "Setup",
+   "order": 810
+  },
+  {
+   "id": "sys_account",
+   "label": "_Account",
+   "section": "Setup",
+   "order": 820
+  },
+  {
+   "id": "sys_dev",
+   "label": "_C3 & Dev",
+   "section": "Setup",
+   "order": 830
+  },
+  {
+   "id": "sys_diag",
+   "label": "_Diagnostics",
+   "section": "Setup",
+   "order": 840
+  },
+  {
+   "id": "sys_network",
+   "label": "_Network",
+   "section": "Setup",
+   "order": 850
+  },
+  {
+   "id": "sys_security",
+   "label": "_Security",
+   "section": "Setup",
+   "order": 860
+  },
+  {
+   "id": "sys_settings",
+   "label": "_Settings",
+   "section": "Setup",
+   "order": 870
+  },
+  {
+   "id": "misc",
+   "label": "Misc",
+   "section": "Others",
+   "order": 910
+  }
+ ],
+ "cloud_quickmarks": {
+  "Primary": [
+   {
+    "id": "drive-conn",
+    "label": "Drive",
+    "icon": "ic_drive",
+    "target": "extapp:cloud-drive",
+    "coming_soon": null
+   },
+   {
+    "id": "browser",
+    "label": "Browser",
+    "icon": "ic_world",
+    "target": "extapp:cloud-browser",
+    "coming_soon": null
+   },
+   {
+    "id": "calc",
+    "label": "Calc",
+    "icon": "ic_calc",
+    "target": "extapp:cloud-calc",
+    "coming_soon": null
+   },
+   {
+    "id": "maps",
+    "label": "Navigation",
+    "icon": "ic_nav",
+    "target": "extapp:cloud-nav",
+    "coming_soon": null
+   },
+   {
+    "id": "camera",
+    "label": "Camera",
+    "icon": "ic_camera",
+    "target": "extapp:cloud-camera",
+    "coming_soon": null
+   },
+   {
+    "id": "canvas",
+    "label": "Canvas",
+    "icon": "ic_canvas",
+    "target": "extapp:cloud-canvas",
+    "coming_soon": null
+   },
+   {
+    "id": "keyboard",
+    "label": "Keyboard",
+    "icon": "ic_keyboard",
+    "target": "extapp:cloud-keyboard",
+    "coming_soon": null
+   },
+   {
+    "id": "wallet",
+    "label": "Wallet",
+    "icon": "ic_wallet",
+    "target": "extapp:cloud-wallet",
+    "coming_soon": null
+   }
+  ],
+  "Communication": [
+   {
+    "id": "mail",
+    "label": "Mail",
+    "icon": "ic_mail",
+    "target": "extapp:cloud-mail",
+    "coming_soon": null
+   },
+   {
+    "id": "mattermost",
+    "label": "Chat",
+    "icon": "ic_p_chat_mattermost",
+    "target": "extapp:cloud-chat",
+    "coming_soon": null
+   },
+   {
+    "id": "element",
+    "label": "Messenger",
+    "icon": "ic_p_chat_matrix",
+    "target": "extapp:cloud-matrix",
+    "coming_soon": null
+   },
+   {
+    "id": "dialer",
+    "label": "Dialer",
+    "icon": "ic_p_dialer",
+    "target": "extapp:cloud-dialer",
+    "coming_soon": null
+   },
+   {
+    "id": "c3-bot",
+    "label": "C3-Bot",
+    "icon": "ic_robot",
+    "target": "intent://resolve?domain=Cloud_bot_C3_Infra_bot#Intent;scheme=tg;package=org.telegram.messenger;S.browser_fallback_url=https%3A%2F%2Ft.me%2FCloud_bot_C3_Infra_bot;end",
+    "coming_soon": null
+   },
+   {
+    "id": "contacts",
+    "label": "Contacts",
+    "icon": "ic_p_sol_personal",
+    "target": "extapp:cloud-contacts",
+    "coming_soon": null
+   }
+  ],
+  "Data": [
+   {
+    "id": "notes",
+    "label": "Notes",
+    "icon": "ic_notes",
+    "target": "extapp:cloud-notes",
+    "coming_soon": null
+   },
+   {
+    "id": "calendar",
+    "label": "Tasks",
+    "icon": "ic_calendar",
+    "target": "extapp:cloud-tasks",
+    "coming_soon": null
+   },
+   {
+    "id": "sheets",
+    "label": "Office",
+    "icon": "ic_sheets",
+    "target": "extapp:cloud-office",
+    "coming_soon": null
+   },
+   {
+    "id": "gallery",
+    "label": "Gallery",
+    "icon": "ic_photos",
+    "target": "extapp:cloud-gallery",
+    "coming_soon": null
+   },
+   {
+    "id": "data-me",
+    "label": "Me",
+    "icon": "ic_vcard",
+    "target": "extapp:cloud-me",
+    "coming_soon": null
+   },
+   {
+    "id": "vault",
+    "label": "Vault",
+    "icon": "ic_vault",
+    "target": "extapp:cloud-vault",
+    "coming_soon": null
+   }
+  ],
+  "Me": [
+   {
+    "id": "me",
+    "label": "Lnktree",
+    "icon": "ic_vcard",
+    "target": "extapp:cloud-me",
+    "coming_soon": null
+   },
+   {
+    "id": "myhealth",
+    "label": "Me-Health",
+    "icon": "ic_heart",
+    "target": "extapp:cloud-me#page:health/home",
+    "coming_soon": null
+   },
+   {
+    "id": "myexperiences",
+    "label": "Experienc.",
+    "icon": "ic_file_stack",
+    "target": "extapp:cloud-me#page:experiences/work",
+    "coming_soon": null
+   },
+   {
+    "id": "myroadmap",
+    "label": "Socials",
+    "icon": "ic_tree",
+    "target": "extapp:cloud-me#page:socials/socials-professional",
+    "coming_soon": null
+   },
+   {
+    "id": "myduties",
+    "label": "Me-Invent.",
+    "icon": "ic_check_all",
+    "target": "extapp:cloud-me#page:tasks/backlogs",
+    "coming_soon": null
+   },
+   {
+    "id": "myburo",
+    "label": "Me-Buro",
+    "icon": "ic_p_folder",
+    "target": "extapp:cloud-me#page:buro/ids",
+    "coming_soon": null
+   },
+   {
+    "id": "myllc",
+    "label": "Me-LLC",
+    "icon": "ic_p_llc",
+    "target": "extapp:cloud-me#page:llc/employed",
+    "coming_soon": null
+   },
+   {
+    "id": "tools-account",
+    "label": "Profile",
+    "icon": "ic_p_identities",
+    "target": "extapp:cloud-me#page:profile/profile",
+    "coming_soon": null
+   }
+  ],
+  "Projects": [
+   {
+    "id": "wiki",
+    "label": "Wiki",
+    "icon": "ic_wiki",
+    "target": "extapp:cloud-wiki",
+    "coming_soon": null
+   },
+   {
+    "id": "cloud-superapp",
+    "label": "SuperApp",
+    "icon": "ic_superapp_d",
+    "target": "app://com.diegonmarcos.superapp",
+    "coming_soon": null
+   },
+   {
+    "id": "omniverse",
+    "label": "Omniverse",
+    "icon": "ic_p_sol_other",
+    "target": "extapp:cg-omniverse",
+    "coming_soon": null
+   },
+   {
+    "id": "finterm",
+    "label": "FinTerm",
+    "icon": "ic_p_markets_terminal",
+    "target": "extapp:capital-stack-finterminal",
+    "coming_soon": null
+   },
+   {
+    "id": "biomed",
+    "label": "BioMed",
+    "icon": "ic_p_sol_tools",
+    "target": "extapp:hardtech-biomed",
+    "coming_soon": null
+   },
+   {
+    "id": "cad",
+    "label": "CAD",
+    "icon": "ic_p_sol_pro",
+    "target": "extapp:hardtech-cad",
+    "coming_soon": null
+   },
+   {
+    "id": "circusverse",
+    "label": "Circusverse",
+    "icon": "ic_p_sol_cloud",
+    "target": null,
+    "coming_soon": true
+   }
+  ],
+  "Services": [
+   {
+    "id": "search",
+    "label": "Search",
+    "icon": "ic_cloud_search",
+    "target": "extapp:cloud-search",
+    "coming_soon": null
+   },
+   {
+    "id": "news",
+    "label": "News",
+    "icon": "ic_rss",
+    "target": "extapp:cloud-news",
+    "coming_soon": null
+   },
+   {
+    "id": "events",
+    "label": "Events",
+    "icon": "ic_p_cal_month",
+    "target": null,
+    "coming_soon": true
+   },
+   {
+    "id": "mediacenter",
+    "label": "Media Center",
+    "icon": "ic_music",
+    "target": "extapp:cloud-media-center",
+    "coming_soon": null
+   },
+   {
+    "id": "games",
+    "label": "Games",
+    "icon": "ic_device_gamepad",
+    "target": null,
+    "coming_soon": true
+   },
+   {
+    "id": "shopping",
+    "label": "Shopping",
+    "icon": "ic_shopping",
+    "target": "extapp:cloud-shopping",
+    "coming_soon": null
+   },
+   {
+    "id": "jobs",
+    "label": "Jobs & Business",
+    "icon": "ic_suite",
+    "target": null,
+    "coming_soon": true
+   },
+   {
+    "id": "real-estate",
+    "label": "Real Estate",
+    "icon": "ic_map_pin",
+    "target": null,
+    "coming_soon": true
+   },
+   {
+    "id": "svc-health",
+    "label": "Health",
+    "icon": "ic_monitor_heart",
+    "target": null,
+    "coming_soon": true
+   },
+   {
+    "id": "money",
+    "label": "Money",
+    "icon": "ic_storefront",
+    "target": null,
+    "coming_soon": true
+   },
+   {
+    "id": "hotels",
+    "label": "Hotels",
+    "icon": "ic_hotel",
+    "target": null,
+    "coming_soon": true
+   },
+   {
+    "id": "mobility",
+    "label": "Transports",
+    "icon": "ic_ctl_airplane",
+    "target": null,
+    "coming_soon": true
+   },
+   {
+    "id": "city-mobility",
+    "label": "City Mobility",
+    "icon": "ic_city_bus",
+    "target": null,
+    "coming_soon": true
+   },
+   {
+    "id": "kg-store",
+    "label": "KG Store",
+    "icon": "ic_kgs",
+    "target": "extapp:cloud-kg-store",
+    "coming_soon": null
+   }
+  ],
+  "AGI": [
+   {
+    "id": "si",
+    "label": "SI",
+    "icon": "ic_si",
+    "target": "extapp:cloud-superintel",
+    "coming_soon": null
+   },
+   {
+    "id": "ai-chat",
+    "label": "AI",
+    "icon": "ic_ai_chat",
+    "target": "intent://resolve?domain=Cloud_agent_claude_bot#Intent;scheme=tg;package=org.telegram.messenger;S.browser_fallback_url=https%3A%2F%2Ft.me%2FCloud_agent_claude_bot;end",
+    "coming_soon": null
+   },
+   {
+    "id": "code",
+    "label": "Code",
+    "icon": "ic_ide",
+    "target": "extapp:cloud-code",
+    "coming_soon": null
+   },
+   {
+    "id": "tools-small-llms",
+    "label": "Tools",
+    "icon": "ic_tools_small_llms",
+    "target": "extapp:cloud-tools-small-llms",
+    "coming_soon": null
+   },
+   {
+    "id": "drive",
+    "label": "MyTerm.",
+    "icon": "ic_code",
+    "target": "extapp:cloud-myterminal",
+    "coming_soon": null
+   },
+   {
+    "id": "ai-tmx",
+    "label": "Terminal",
+    "icon": "ic_terminal",
+    "target": "extapp:cloud-terminal-nix",
+    "coming_soon": null
+   }
+  ],
+  "Setup": [
+   {
+    "id": "configs-controls",
+    "label": "Quick Actions",
+    "icon": "ic_home",
+    "target": "page:config/controls",
+    "coming_soon": null
+   },
+   {
+    "id": "configs-ui",
+    "label": "UI",
+    "icon": "ic_ctl_brightness",
+    "target": "page:config/panels-ui",
+    "coming_soon": null
+   },
+   {
+    "id": "configs-ng-firewall",
+    "label": "NG Firewall",
+    "icon": "ic_act_shield",
+    "target": "page:config/ng-firewall",
+    "coming_soon": null
+   },
+   {
+    "id": "configs-store",
+    "label": "Store",
+    "icon": "ic_refresh",
+    "target": "extapp:cloud-store",
+    "coming_soon": null
+   },
+   {
+    "id": "configs-account",
+    "label": "Account",
+    "icon": "ic_p_accounts",
+    "target": "extapp:cloud-account",
+    "coming_soon": null
+   },
+   {
+    "id": "c3",
+    "label": "C3",
+    "icon": "ic_cloud_control",
+    "target": "extapp:cloud-c3",
+    "coming_soon": null
+   },
+   {
+    "id": "configs-profile",
+    "label": "Profile",
+    "icon": "ic_person",
+    "target": "extapp:cloud-account",
+    "coming_soon": null
+   },
+   {
+    "id": "configs-about",
+    "label": "About",
+    "icon": "ic_info",
+    "target": "page:config/app-about",
+    "coming_soon": null
+   }
+  ]
+ },
+ "phone_quickmarks": {
+  "Primary": {
+   "packages": [],
+   "links": [],
+   "folders": {
+    "Drive": [
+     "com.google.android.apps.docs",
+     "com.sec.android.app.myfiles",
+     "com.rarlab.rar",
+     "com.viscouspot.gitsync"
+    ],
+    "Browser": [
+     "com.brave.browser"
+    ],
+    "Calc": [
+     "com.sec.android.app.popupcalculator",
+     "com.sec.android.app.clockpackage",
+     "com.google.android.apps.translate"
+    ],
+    "Nav": [
+     "com.google.android.apps.maps",
+     "app.organicmaps"
+    ],
+    "Camera": [
+     "com.sec.android.app.camera"
+    ],
+    "Canvas": [
+     "com.adsk.sketchbook",
+     "com.imageline.FLM"
+    ],
+    "Keyboard": [
+     "com.google.android.inputmethod.latin"
+    ],
+    "Wallet": [
+     "com.google.android.apps.walletnfcrel"
+    ]
+   }
+  },
+  "Communication": {
+   "packages": [],
+   "links": [],
+   "folders": {
+    "Mail": [
+     "com.google.android.gm"
+    ],
+    "Chat": [
+     "com.Slack"
+    ],
+    "Messenger": [
+     "com.whatsapp.w4b",
+     "org.telegram.messenger",
+     "org.thoughtcrime.securesms",
+     "com.google.android.apps.tachyon"
+    ],
+    "Dialer": [
+     "com.samsung.android.dialer"
+    ],
+    "Contacts": [
+     "com.google.android.contacts"
+    ]
+   }
+  },
+  "Data": {
+   "packages": [],
+   "links": [],
+   "folders": {
+    "Notes": [
+     "md.obsidian",
+     "com.rhmsoft.edit"
+    ],
+    "Agenda": [
+     "com.google.android.calendar",
+     "com.google.android.apps.tasks",
+     "co.mangotechnologies.clickup"
+    ],
+    "Office": [
+     "com.google.android.apps.docs.editors.docs",
+     "com.google.android.apps.docs.editors.sheets",
+     "com.google.android.apps.docs.editors.slides",
+     "com.adobe.reader"
+    ],
+    "Gallery": [
+     "com.google.android.apps.photos"
+    ],
+    "Vault": [
+     "com.x8bit.bitwarden",
+     "com.beemdevelopment.aegis"
+    ]
+   }
+  },
+  "Me": {
+   "packages": [],
+   "links": [],
+   "folders": {
+    "Me-Health": [
+     "com.sec.android.app.shealth",
+     "com.strava",
+     "com.fatsecret.android",
+     "com.urbandroid.sleep",
+     "com.garmin.android.apps.connectmobile"
+    ],
+    "Experiences": [
+     "com.memrise.android.memrisecompanion",
+     "mobi.eup.easygerman"
+    ],
+    "Socials": [
+     "com.instagram.android",
+     "com.instagram.barcelona",
+     "com.facebook.katana",
+     "com.linkedin.android",
+     "com.pinterest",
+     "com.bereal.ft",
+     "com.tinder",
+     "com.bumble.app",
+     "co.hinge.app"
+    ],
+    "Me-Buro": [
+     "es.gob.interior.policia.midni"
+    ]
+   }
+  },
+  "Projects": {
+   "packages": [],
+   "links": [
+    "Linktree"
+   ],
+   "folders": {}
+  },
+  "Services": {
+   "packages": [],
+   "links": [],
+   "folders": {
+    "Search": [
+     "com.google.android.googlequicksearchbox"
+    ],
+    "News": [
+     "com.google.android.apps.magazines",
+     "com.devhd.feedly"
+    ],
+    "Events": [
+     "de.eventim.mobile.app.Android",
+     "com.codekarussell.rausgegangen",
+     "com.meetup"
+    ],
+    "Media Center": [
+     "com.spotify.music",
+     "com.google.android.youtube",
+     "com.amazon.avod.thirdpartyclient",
+     "com.shazam.android"
+    ],
+    "Games": [
+     "com.werewolfapps.online"
+    ],
+    "Shopping": [
+     "com.amazon.mShop.android.shopping",
+     "de.dhl.paket",
+     "com.ebay.kleinanzeigen"
+    ],
+    "Jobs & Business": [
+     "com.indeed.android.jobsearch"
+    ],
+    "Real Estate": [
+     "de.is24.android",
+     "com.wggesucht.android"
+    ],
+    "Health": [
+     "com.urbansportsclub",
+     "com.medantapatient.app",
+     "com.downdogapp",
+     "com.motosumo.app"
+    ],
+    "Money": [
+     "es.bancosantander.apps",
+     "com.revolut.revolut",
+     "com.paypal.android.p2pmobile",
+     "com.binance.dev",
+     "com.btg.pactual.digital.mobile",
+     "com.fusionmedia.investing",
+     "com.xe.currency"
+    ],
+    "Hotels": [
+     "com.booking"
+    ],
+    "Transports": [
+     "com.thetrainline",
+     "com.ryanair.cheapflights",
+     "com.rome2rio.www.rome2rio",
+     "com.comuto",
+     "com.nomadmania.presentation"
+    ],
+    "City Mobility": [
+     "com.ubercab",
+     "com.trafi.whitelabel.bvg"
+    ]
+   }
+  },
+  "AGI": {
+   "packages": [],
+   "links": [],
+   "folders": {
+    "AI": [
+     "com.anthropic.claude",
+     "ai.perplexity.app.android"
+    ],
+    "Code": [
+     "com.foxdebug.acode",
+     "com.github.android"
+    ],
+    "Terminal": [
+     "com.termux"
+    ]
+   }
+  },
+  "Setup": {
+   "packages": [],
+   "links": [],
+   "folders": {
+    "Quick Actions": [
+     "com.android.settings",
+     "com.samsung.android.oneconnect"
+    ],
+    "UI": [
+     "com.samsung.android.goodlock"
+    ],
+    "NG Firewall": [
+     "eu.faircode.netguard",
+     "com.wireguard.android"
+    ],
+    "Store": [
+     "com.android.vending",
+     "org.fdroid.fdroid"
+    ],
+    "C3": [
+     "moe.shizuku.privileged.api",
+     "org.kde.kdeconnect_tp",
+     "com.mobidia.android.mdm",
+     "com.ubnt.usurvey"
+    ],
+    "About": [
+     "com.digibites.accubattery"
+    ]
+   }
+  }
+ },
+ "cloud_smart_folders": [
+  {
+   "id": "gov",
+   "label": "Gov & ID",
+   "section": "Services & Buro",
+   "icon": "ic_folder_gov"
+  },
+  {
+   "id": "finance",
+   "label": "Finance",
+   "section": "Services & Buro",
+   "icon": "ic_folder_finance"
+  },
+  {
+   "id": "health",
+   "label": "Health",
+   "section": "Services & Buro",
+   "icon": "ic_folder_health"
+  },
+  {
+   "id": "travel",
+   "label": "Travel",
+   "section": "Services & Buro",
+   "icon": "ic_folder_travel"
+  },
+  {
+   "id": "shopping",
+   "label": "Shopping",
+   "section": "Services & Buro",
+   "icon": "ic_folder_shopping"
+  },
+  {
+   "id": "buro",
+   "label": "Buro",
+   "section": "Services & Buro",
+   "icon": "ic_folder_buro"
+  },
+  {
+   "id": "mail",
+   "label": "Mail",
+   "section": "Communication",
+   "icon": "ic_folder_mail"
+  },
+  {
+   "id": "dialer",
+   "label": "Dialer",
+   "section": "Communication",
+   "icon": "ic_folder_dialer"
+  },
+  {
+   "id": "messages",
+   "label": "Messages",
+   "section": "Communication",
+   "icon": "ic_folder_messages"
+  },
+  {
+   "id": "contacts",
+   "label": "Contacts",
+   "section": "Communication",
+   "icon": "ic_folder_contacts"
+  },
+  {
+   "id": "social",
+   "label": "Social",
+   "section": "Communication",
+   "icon": "ic_folder_social"
+  },
+  {
+   "id": "news",
+   "label": "News",
+   "section": "Media",
+   "icon": "ic_folder_news"
+  },
+  {
+   "id": "music",
+   "label": "Music",
+   "section": "Media",
+   "icon": "ic_folder_music"
+  },
+  {
+   "id": "video",
+   "label": "Video",
+   "section": "Media",
+   "icon": "ic_folder_video"
+  },
+  {
+   "id": "gallery",
+   "label": "Gallery",
+   "section": "Media",
+   "icon": "ic_folder_gallery"
+  },
+  {
+   "id": "camera",
+   "label": "Camera",
+   "section": "Media",
+   "icon": "ic_folder_camera"
+  },
+  {
+   "id": "tasks",
+   "label": "Tasks",
+   "section": "Productivity",
+   "icon": "ic_folder_tasks"
+  },
+  {
+   "id": "notes",
+   "label": "Notes",
+   "section": "Productivity",
+   "icon": "ic_folder_notes"
+  },
+  {
+   "id": "calendar",
+   "label": "Calendar",
+   "section": "Productivity",
+   "icon": "ic_folder_calendar"
+  },
+  {
+   "id": "writer",
+   "label": "Writer",
+   "section": "Productivity",
+   "icon": "ic_folder_writer"
+  },
+  {
+   "id": "drive",
+   "label": "Drive",
+   "section": "Productivity",
+   "icon": "ic_folder_drive"
+  },
+  {
+   "id": "calc",
+   "label": "Calc",
+   "section": "Tools",
+   "icon": "ic_folder_calc"
+  },
+  {
+   "id": "tools",
+   "label": "Tools",
+   "section": "Tools",
+   "icon": "ic_folder_tools"
+  },
+  {
+   "id": "terminal",
+   "label": "Terminal",
+   "section": "Tools",
+   "icon": "ic_folder_terminal"
+  },
+  {
+   "id": "scanner",
+   "label": "Scanner",
+   "section": "Tools",
+   "icon": "ic_folder_scanner"
+  },
+  {
+   "id": "nav",
+   "label": "Nav",
+   "section": "Navigation",
+   "icon": "ic_folder_nav"
+  },
+  {
+   "id": "maps",
+   "label": "Maps",
+   "section": "Navigation",
+   "icon": "ic_folder_maps"
+  },
+  {
+   "id": "finterm",
+   "label": "FinTerm",
+   "section": "Finance",
+   "icon": "ic_folder_finterm"
+  },
+  {
+   "id": "wallet",
+   "label": "Wallet",
+   "section": "Finance",
+   "icon": "ic_folder_wallet"
+  },
+  {
+   "id": "cad",
+   "label": "CAD",
+   "section": "CAD/3D",
+   "icon": "ic_folder_cad"
+  },
+  {
+   "id": "omniverse",
+   "label": "Omniverse",
+   "section": "CAD/3D",
+   "icon": "ic_folder_omniverse"
+  },
+  {
+   "id": "web",
+   "label": "Browser",
+   "section": "Web",
+   "icon": "ic_folder_web"
+  },
+  {
+   "id": "system",
+   "label": "System",
+   "section": "System & Fleet",
+   "icon": "ic_folder_system"
+  },
+  {
+   "id": "fleet",
+   "label": "C3 Fleet",
+   "section": "System & Fleet",
+   "icon": "ic_folder_fleet"
+  },
+  {
+   "id": "intel",
+   "label": "SuperIntel",
+   "section": "System & Fleet",
+   "icon": "ic_folder_intel"
+  }
+ ]
+}

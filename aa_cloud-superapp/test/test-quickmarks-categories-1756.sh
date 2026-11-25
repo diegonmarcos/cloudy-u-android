@@ -22,12 +22,12 @@ pk = lambda x: x if isinstance(x, str) else x['pkg']
 phone = [s for s in bj['sections'] if s['id'] == 'phone'][0]['phone_app_groups']
 cloud = [s for s in bj['sections'] if s['id'] == 'cloud'][0]['tile_groups']
 folders = bj['phone_folders']; secs = bj['phone_sections']
-ORDER = ['Primary', 'Communication', 'Data', 'Me', 'Projects', 'Services', 'AGI', 'Setup']  # #1769 Projects right after Me
+ORDER = ['Primary', 'Communication', 'Data', 'Me', 'Projects', 'Services · City', 'Services · Leisure', 'AGI', 'Setup']  # #1769 Projects right after Me, #1902 Services split in City and Leisure
 
 print('== G: group order (Phone and Cloud quickmarks) ==')
 check([g['title'] for g in phone] == ORDER, 'Phone quickmark groups are %s (got %s)' % (ORDER, [g['title'] for g in phone]))
 check([g['title'] for g in cloud] == ORDER, 'Cloud quickmark groups are %s (got %s)' % (ORDER, [g['title'] for g in cloud]))
-check([s['title'] for s in secs] == ['Tools · Primary', 'Tools · Communication', 'Tools · Data', 'Tools · Me', 'Projects', 'Services', 'AGI', 'Setup'],
+check([s['title'] for s in secs] == ['Tools · Primary', 'Tools · Communication', 'Tools · Data', 'Tools · Me', 'Projects', 'Services · City', 'Services · Leisure', 'AGI', 'Setup'],
       'All Apps sections follow the same order: %s' % [s['title'] for s in secs])
 
 print('== P: field parity against the previous layout ==')
@@ -69,11 +69,12 @@ orders = [int(x['order']) for x in folders]
 check(orders == sorted(orders) and len(set(orders)) == len(orders), 'folder orders are unique and ascending (render order = section order)')
 want = {
  '=': ['Browser', 'Nav', 'Calc', 'Camera', 'Canvas', 'Keyboard', 'Wallet', 'Utilities'],
- '@': ['Mail', 'Chat', 'Messenger', 'Dialer', 'Contacts', 'Social'],
+ '@': ['Mail', 'Chat', 'Messenger', 'Dialer', 'Contacts'],  # #1902 Social moved to Services · Leisure
  '.': ['Drive', 'Notes', 'Agenda', 'Office', 'Gallery', 'Vault'],
  '~': ['Me', 'Health Trackers', 'Gov & ID', 'Telecom', 'Home & Housing', 'Nutrition', 'Learning'],  # #1806 Health + Outdoor & Sport = Health Trackers
- '+': ['Search', 'News', 'Events', 'Media Center', 'Games', 'Shopping', 'Jobs & Business', 'Real Estate', 'Health', 'Money', 'Hotels', 'Transports', 'City Mobility', 'KG Store'],  # #1806 ui.services_order
- '*': ['AI', 'Code', 'Terminal', 'Tools'], '#': ['SuperApp', 'Omniverse', 'FinTerm', 'CAD', 'BioMed'],
+ '+': ['Money', 'Shopping', 'Health', 'Real Estate', 'Jobs & Business', 'City Mobility', 'Transports', 'Hotels'],  # #1902 ui.services_order, Services · City
+ '%': ['News', 'Events', 'Media Center', 'Social', 'Games'],  # #1902 Services · Leisure
+ '*': ['AI', 'Code', 'Tools', 'Terminal', 'Search', 'KG Store'],  # #1902 Search and KG Store end AGI '#': ['SuperApp', 'Omniverse', 'FinTerm', 'CAD', 'BioMed'],
  '_': ['Store', 'Account', 'C3 & Dev', 'Diagnostics', 'Network', 'Security', 'Settings'],
 }
 for pre, labs in want.items():
@@ -116,7 +117,7 @@ check(not [a for a in inv if a['category'] is None and len(claims.get(a['package
 
 print('== Q: Phone quickmarks hold one tile per subtype, in All Apps order ==')
 sub_of = {f['id']: (f['label'][0], f['label'][1:]) for f in folders}
-GROUP = {'=': 'Primary', '@': 'Communication', '.': 'Data', '~': 'Me', '+': 'Services', '*': 'AGI', '#': 'Projects', '_': 'Setup'}
+GROUP = {'=': 'Primary', '@': 'Communication', '.': 'Data', '~': 'Me', '+': 'Services · City', '%': 'Services · Leisure', '*': 'AGI', '#': 'Projects', '_': 'Setup'}
 fold_order = {f['id']: int(f['order']) for f in folders}
 def cls(p):
     for f in sorted(folders, key=lambda x: int(x['order'])):
@@ -135,8 +136,9 @@ WANT_FOLDERS = {
  'Communication': ['Mail', 'Chat', 'Messenger', 'Dialer', 'Contacts'],
  'Data': ['Notes', 'Agenda', 'Office', 'Gallery', 'Vault'],
  'Me': ['Me-Health', 'Experiences', 'Socials', 'Me-Buro'],
- 'Services': ['Search', 'News', 'Events', 'Media Center', 'Games', 'Shopping', 'Jobs & Business', 'Real Estate', 'Health', 'Money', 'Hotels', 'Transports', 'City Mobility'],  # #1806
- 'AGI': ['AI', 'Code', 'Terminal'],
+ 'Services · City': ['Money', 'Shopping', 'Health', 'Real Estate', 'Jobs & Business', 'City Mobility', 'Transports', 'Hotels'],  # #1902 (#1806 order)
+ 'Services · Leisure': ['News', 'Events', 'Media Center', 'Social', 'Games'],  # #1902 Social opens the media_social All Apps folder
+ 'AGI': ['AI', 'Code', 'Terminal', 'Search'],  # #1902 Search ends AGI
  'Setup': ['Quick Actions', 'UI', 'NG Firewall', 'Store', 'C3', 'About'],
 }
 _me_labels = [t.get('label') for g_ in cloud if g_['title'] == 'Me' for t in g_['tiles']]
@@ -166,7 +168,8 @@ for g in phone:
         # #1769 a folder holds PHONE apps only: a fleet package is allowed as icon_pkg (the face), never as a member.
         own = [t['pkg'] for t in f['packages'] if is_fleet(t['pkg'])]
         check(not own, '%s / %s: no fleet (Cloud) app is a member (#1769)%s' % (g['title'], f['label'], ' FOUND %s' % own if own else ''))
-        check(f['packages'], '%s / %s: still holds phone apps' % (g['title'], f['label']))
+        # #1902 a folder holds phone apps, or OPENS a declared All Apps folder (`opens_folder`: Services · Leisure's Social opens media_social) and then declares none of its own
+        check(f['packages'] or (f.get('opens_folder') in {x['id'] for x in folders} and not f['packages']), '%s / %s: still holds phone apps or opens a declared All Apps folder' % (g['title'], f['label']))
         # #1769 every folder wears a Cloud icon: the Cloud app's launcher icon (icon_pkg) and/or the drawable of the Cloud tile at that position (icon_res).
         check(ip in fleet_pkgs or f.get('icon_res') in cloud_icons, '%s / %s has a Cloud-icon face (icon_pkg %s, icon_res %s)' % (g['title'], f['label'], ip, f.get('icon_res')))
         check(f.get('icon_res') in cloud_icons, '%s / %s icon_res is a Cloud tile drawable' % (g['title'], f['label']))

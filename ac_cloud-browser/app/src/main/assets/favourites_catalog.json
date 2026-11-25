@@ -455,9 +455,344 @@
       "group": "Cloudy Private/Security"
     },
     {
-      "name": "google.com",
-      "url": "https://google.com/",
-      "group": "Services/Search"
+      "name": "bancosantander.es",
+      "url": "https://bancosantander.es/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "binance.com",
+      "url": "https://binance.com/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "bitpanda.com",
+      "url": "https://bitpanda.com/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "btg.com",
+      "url": "https://btg.com/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "fusionmedia.com",
+      "url": "https://fusionmedia.com/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "imaginecurve.com",
+      "url": "https://imaginecurve.com/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "number26.de",
+      "url": "https://number26.de/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "paypal.com",
+      "url": "https://paypal.com/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "revolut.com",
+      "url": "https://revolut.com/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "starfinanz.com",
+      "url": "https://starfinanz.com/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "transferwise.com",
+      "url": "https://transferwise.com/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "xe.com",
+      "url": "https://xe.com/",
+      "group": "Services/Money"
+    },
+    {
+      "name": "amazon.com",
+      "url": "https://amazon.com/",
+      "group": "Services/Shopping"
+    },
+    {
+      "name": "app.com",
+      "url": "https://app.com/",
+      "group": "Services/Shopping"
+    },
+    {
+      "name": "backmarket.com",
+      "url": "https://backmarket.com/",
+      "group": "Services/Shopping"
+    },
+    {
+      "name": "dhl.com",
+      "url": "https://dhl.com/",
+      "group": "Services/Shopping"
+    },
+    {
+      "name": "dhl.de",
+      "url": "https://dhl.de/",
+      "group": "Services/Shopping"
+    },
+    {
+      "name": "ebay.com",
+      "url": "https://ebay.com/",
+      "group": "Services/Shopping"
+    },
+    {
+      "name": "wallapop.com",
+      "url": "https://wallapop.com/",
+      "group": "Services/Shopping"
+    },
+    {
+      "name": "web.vivino",
+      "url": "https://web.vivino/",
+      "group": "Services/Shopping"
+    },
+    {
+      "name": "bodybike.com",
+      "url": "https://bodybike.com/",
+      "group": "Services/Health"
+    },
+    {
+      "name": "downdogapp.com",
+      "url": "https://downdogapp.com/",
+      "group": "Services/Health"
+    },
+    {
+      "name": "medantapatient.com",
+      "url": "https://medantapatient.com/",
+      "group": "Services/Health"
+    },
+    {
+      "name": "motosumo.com",
+      "url": "https://motosumo.com/",
+      "group": "Services/Health"
+    },
+    {
+      "name": "urbansportsclub.com",
+      "url": "https://urbansportsclub.com/",
+      "group": "Services/Health"
+    },
+    {
+      "name": "is24.de",
+      "url": "https://is24.de/",
+      "group": "Services/Real Estate"
+    },
+    {
+      "name": "wggesucht.com",
+      "url": "https://wggesucht.com/",
+      "group": "Services/Real Estate"
+    },
+    {
+      "name": "indeed.com",
+      "url": "https://indeed.com/",
+      "group": "Services/Jobs & Business"
+    },
+    {
+      "name": "linkedin.com",
+      "url": "https://linkedin.com/",
+      "group": "Services/Jobs & Business"
+    },
+    {
+      "name": "otta.com",
+      "url": "https://otta.com/",
+      "group": "Services/Jobs & Business"
+    },
+    {
+      "name": "android.taxi",
+      "url": "https://android.taxi/",
+      "group": "Services/City Mobility"
+    },
+    {
+      "name": "app.ride",
+      "url": "https://app.ride/",
+      "group": "Services/City Mobility"
+    },
+    {
+      "name": "atm.cat",
+      "url": "https://atm.cat/",
+      "group": "Services/City Mobility"
+    },
+    {
+      "name": "bvg.de",
+      "url": "https://bvg.de/",
+      "group": "Services/City Mobility"
+    },
+    {
+      "name": "donkeyrepublic.com",
+      "url": "https://donkeyrepublic.com/",
+      "group": "Services/City Mobility"
+    },
+    {
+      "name": "eos.de",
+      "url": "https://eos.de/",
+      "group": "Services/City Mobility"
+    },
+    {
+      "name": "geomobile.com",
+      "url": "https://geomobile.com/",
+      "group": "Services/City Mobility"
+    },
+    {
+      "name": "mtakso.ee",
+      "url": "https://mtakso.ee/",
+      "group": "Services/City Mobility"
+    },
+    {
+      "name": "ridedott.com",
+      "url": "https://ridedott.com/",
+      "group": "Services/City Mobility"
+    },
+    {
+      "name": "ruter.no",
+      "url": "https://ruter.no/",
+      "group": "Services/City Mobility"
+    },
+    {
+      "name": "trafi.com",
+      "url": "https://trafi.com/",
+      "group": "Services/City Mobility"
+    },
+    {
+      "name": "ubercab.com",
+      "url": "https://ubercab.com/",
+      "group": "Services/City Mobility"
+    },
+    {
+      "name": "comuto.com",
+      "url": "https://comuto.com/",
+      "group": "Services/Transports"
+    },
+    {
+      "name": "flixbus.de",
+      "url": "https://flixbus.de/",
+      "group": "Services/Transports"
+    },
+    {
+      "name": "getbybus.com",
+      "url": "https://getbybus.com/",
+      "group": "Services/Transports"
+    },
+    {
+      "name": "goeuro.com",
+      "url": "https://goeuro.com/",
+      "group": "Services/Transports"
+    },
+    {
+      "name": "greifmatthias.be",
+      "url": "https://greifmatthias.be/",
+      "group": "Services/Transports"
+    },
+    {
+      "name": "hafas.de",
+      "url": "https://hafas.de/",
+      "group": "Services/Transports"
+    },
+    {
+      "name": "infobus.eu",
+      "url": "https://infobus.eu/",
+      "group": "Services/Transports"
+    },
+    {
+      "name": "kautra.com",
+      "url": "https://kautra.com/",
+      "group": "Services/Transports"
+    },
+    {
+      "name": "mo2o.com",
+      "url": "https://mo2o.com/",
+      "group": "Services/Transports"
+    },
+    {
+      "name": "nomadmania.com",
+      "url": "https://nomadmania.com/",
+      "group": "Services/Transports"
+    },
+    {
+      "name": "rome2rio.com",
+      "url": "https://rome2rio.com/",
+      "group": "Services/Transports"
+    },
+    {
+      "name": "ryanair.com",
+      "url": "https://ryanair.com/",
+      "group": "Services/Transports"
+    },
+    {
+      "name": "skiplagged.com",
+      "url": "https://skiplagged.com/",
+      "group": "Services/Transports"
+    },
+    {
+      "name": "skyscanner.net",
+      "url": "https://skyscanner.net/",
+      "group": "Services/Transports"
+    },
+    {
+      "name": "thetrainline.com",
+      "url": "https://thetrainline.com/",
+      "group": "Services/Transports"
+    },
+    {
+      "name": "wizzair.com",
+      "url": "https://wizzair.com/",
+      "group": "Services/Transports"
+    },
+    {
+      "name": "airbnb.com",
+      "url": "https://airbnb.com/",
+      "group": "Services/Hotels"
+    },
+    {
+      "name": "alohacamp.com",
+      "url": "https://alohacamp.com/",
+      "group": "Services/Hotels"
+    },
+    {
+      "name": "booking.com",
+      "url": "https://booking.com/",
+      "group": "Services/Hotels"
+    },
+    {
+      "name": "campy.app",
+      "url": "https://campy.app/",
+      "group": "Services/Hotels"
+    },
+    {
+      "name": "goki.travel",
+      "url": "https://goki.travel/",
+      "group": "Services/Hotels"
+    },
+    {
+      "name": "hostel_hop_inc.com",
+      "url": "https://hostel_hop_inc.com/",
+      "group": "Services/Hotels"
+    },
+    {
+      "name": "hostelworld.com",
+      "url": "https://hostelworld.com/",
+      "group": "Services/Hotels"
+    },
+    {
+      "name": "shelter.dk",
+      "url": "https://shelter.dk/",
+      "group": "Services/Hotels"
+    },
+    {
+      "name": "tramb.fr",
+      "url": "https://tramb.fr/",
+      "group": "Services/Hotels"
+    },
+    {
+      "name": "workaway.com",
+      "url": "https://workaway.com/",
+      "group": "Services/Hotels"
     },
     {
       "name": "checkitt.com",
@@ -605,6 +940,46 @@
       "group": "Services/Media Center"
     },
     {
+      "name": "badoo.com",
+      "url": "https://badoo.com/",
+      "group": "Services/Social"
+    },
+    {
+      "name": "bereal.com",
+      "url": "https://bereal.com/",
+      "group": "Services/Social"
+    },
+    {
+      "name": "bumble.com",
+      "url": "https://bumble.com/",
+      "group": "Services/Social"
+    },
+    {
+      "name": "facebook.com",
+      "url": "https://facebook.com/",
+      "group": "Services/Social"
+    },
+    {
+      "name": "hinge.co",
+      "url": "https://hinge.co/",
+      "group": "Services/Social"
+    },
+    {
+      "name": "instagram.com",
+      "url": "https://instagram.com/",
+      "group": "Services/Social"
+    },
+    {
+      "name": "pinterest.com",
+      "url": "https://pinterest.com/",
+      "group": "Services/Social"
+    },
+    {
+      "name": "tinder.com",
+      "url": "https://tinder.com/",
+      "group": "Services/Social"
+    },
+    {
       "name": "epicgames.com",
       "url": "https://epicgames.com/",
       "group": "Services/Games"
@@ -630,344 +1005,9 @@
       "group": "Services/Games"
     },
     {
-      "name": "amazon.com",
-      "url": "https://amazon.com/",
-      "group": "Services/Shopping"
-    },
-    {
-      "name": "app.com",
-      "url": "https://app.com/",
-      "group": "Services/Shopping"
-    },
-    {
-      "name": "backmarket.com",
-      "url": "https://backmarket.com/",
-      "group": "Services/Shopping"
-    },
-    {
-      "name": "dhl.com",
-      "url": "https://dhl.com/",
-      "group": "Services/Shopping"
-    },
-    {
-      "name": "dhl.de",
-      "url": "https://dhl.de/",
-      "group": "Services/Shopping"
-    },
-    {
-      "name": "ebay.com",
-      "url": "https://ebay.com/",
-      "group": "Services/Shopping"
-    },
-    {
-      "name": "wallapop.com",
-      "url": "https://wallapop.com/",
-      "group": "Services/Shopping"
-    },
-    {
-      "name": "web.vivino",
-      "url": "https://web.vivino/",
-      "group": "Services/Shopping"
-    },
-    {
-      "name": "indeed.com",
-      "url": "https://indeed.com/",
-      "group": "Services/Jobs & Business"
-    },
-    {
-      "name": "linkedin.com",
-      "url": "https://linkedin.com/",
-      "group": "Services/Jobs & Business"
-    },
-    {
-      "name": "otta.com",
-      "url": "https://otta.com/",
-      "group": "Services/Jobs & Business"
-    },
-    {
-      "name": "is24.de",
-      "url": "https://is24.de/",
-      "group": "Services/Real Estate"
-    },
-    {
-      "name": "wggesucht.com",
-      "url": "https://wggesucht.com/",
-      "group": "Services/Real Estate"
-    },
-    {
-      "name": "bodybike.com",
-      "url": "https://bodybike.com/",
-      "group": "Services/Health"
-    },
-    {
-      "name": "downdogapp.com",
-      "url": "https://downdogapp.com/",
-      "group": "Services/Health"
-    },
-    {
-      "name": "medantapatient.com",
-      "url": "https://medantapatient.com/",
-      "group": "Services/Health"
-    },
-    {
-      "name": "motosumo.com",
-      "url": "https://motosumo.com/",
-      "group": "Services/Health"
-    },
-    {
-      "name": "urbansportsclub.com",
-      "url": "https://urbansportsclub.com/",
-      "group": "Services/Health"
-    },
-    {
-      "name": "bancosantander.es",
-      "url": "https://bancosantander.es/",
-      "group": "Services/Money"
-    },
-    {
-      "name": "binance.com",
-      "url": "https://binance.com/",
-      "group": "Services/Money"
-    },
-    {
-      "name": "bitpanda.com",
-      "url": "https://bitpanda.com/",
-      "group": "Services/Money"
-    },
-    {
-      "name": "btg.com",
-      "url": "https://btg.com/",
-      "group": "Services/Money"
-    },
-    {
-      "name": "fusionmedia.com",
-      "url": "https://fusionmedia.com/",
-      "group": "Services/Money"
-    },
-    {
-      "name": "imaginecurve.com",
-      "url": "https://imaginecurve.com/",
-      "group": "Services/Money"
-    },
-    {
-      "name": "number26.de",
-      "url": "https://number26.de/",
-      "group": "Services/Money"
-    },
-    {
-      "name": "paypal.com",
-      "url": "https://paypal.com/",
-      "group": "Services/Money"
-    },
-    {
-      "name": "revolut.com",
-      "url": "https://revolut.com/",
-      "group": "Services/Money"
-    },
-    {
-      "name": "starfinanz.com",
-      "url": "https://starfinanz.com/",
-      "group": "Services/Money"
-    },
-    {
-      "name": "transferwise.com",
-      "url": "https://transferwise.com/",
-      "group": "Services/Money"
-    },
-    {
-      "name": "xe.com",
-      "url": "https://xe.com/",
-      "group": "Services/Money"
-    },
-    {
-      "name": "airbnb.com",
-      "url": "https://airbnb.com/",
-      "group": "Services/Hotels"
-    },
-    {
-      "name": "alohacamp.com",
-      "url": "https://alohacamp.com/",
-      "group": "Services/Hotels"
-    },
-    {
-      "name": "booking.com",
-      "url": "https://booking.com/",
-      "group": "Services/Hotels"
-    },
-    {
-      "name": "campy.app",
-      "url": "https://campy.app/",
-      "group": "Services/Hotels"
-    },
-    {
-      "name": "goki.travel",
-      "url": "https://goki.travel/",
-      "group": "Services/Hotels"
-    },
-    {
-      "name": "hostel_hop_inc.com",
-      "url": "https://hostel_hop_inc.com/",
-      "group": "Services/Hotels"
-    },
-    {
-      "name": "hostelworld.com",
-      "url": "https://hostelworld.com/",
-      "group": "Services/Hotels"
-    },
-    {
-      "name": "shelter.dk",
-      "url": "https://shelter.dk/",
-      "group": "Services/Hotels"
-    },
-    {
-      "name": "tramb.fr",
-      "url": "https://tramb.fr/",
-      "group": "Services/Hotels"
-    },
-    {
-      "name": "workaway.com",
-      "url": "https://workaway.com/",
-      "group": "Services/Hotels"
-    },
-    {
-      "name": "comuto.com",
-      "url": "https://comuto.com/",
-      "group": "Services/Transports"
-    },
-    {
-      "name": "flixbus.de",
-      "url": "https://flixbus.de/",
-      "group": "Services/Transports"
-    },
-    {
-      "name": "getbybus.com",
-      "url": "https://getbybus.com/",
-      "group": "Services/Transports"
-    },
-    {
-      "name": "goeuro.com",
-      "url": "https://goeuro.com/",
-      "group": "Services/Transports"
-    },
-    {
-      "name": "greifmatthias.be",
-      "url": "https://greifmatthias.be/",
-      "group": "Services/Transports"
-    },
-    {
-      "name": "hafas.de",
-      "url": "https://hafas.de/",
-      "group": "Services/Transports"
-    },
-    {
-      "name": "infobus.eu",
-      "url": "https://infobus.eu/",
-      "group": "Services/Transports"
-    },
-    {
-      "name": "kautra.com",
-      "url": "https://kautra.com/",
-      "group": "Services/Transports"
-    },
-    {
-      "name": "mo2o.com",
-      "url": "https://mo2o.com/",
-      "group": "Services/Transports"
-    },
-    {
-      "name": "nomadmania.com",
-      "url": "https://nomadmania.com/",
-      "group": "Services/Transports"
-    },
-    {
-      "name": "rome2rio.com",
-      "url": "https://rome2rio.com/",
-      "group": "Services/Transports"
-    },
-    {
-      "name": "ryanair.com",
-      "url": "https://ryanair.com/",
-      "group": "Services/Transports"
-    },
-    {
-      "name": "skiplagged.com",
-      "url": "https://skiplagged.com/",
-      "group": "Services/Transports"
-    },
-    {
-      "name": "skyscanner.net",
-      "url": "https://skyscanner.net/",
-      "group": "Services/Transports"
-    },
-    {
-      "name": "thetrainline.com",
-      "url": "https://thetrainline.com/",
-      "group": "Services/Transports"
-    },
-    {
-      "name": "wizzair.com",
-      "url": "https://wizzair.com/",
-      "group": "Services/Transports"
-    },
-    {
-      "name": "android.taxi",
-      "url": "https://android.taxi/",
-      "group": "Services/City Mobility"
-    },
-    {
-      "name": "app.ride",
-      "url": "https://app.ride/",
-      "group": "Services/City Mobility"
-    },
-    {
-      "name": "atm.cat",
-      "url": "https://atm.cat/",
-      "group": "Services/City Mobility"
-    },
-    {
-      "name": "bvg.de",
-      "url": "https://bvg.de/",
-      "group": "Services/City Mobility"
-    },
-    {
-      "name": "donkeyrepublic.com",
-      "url": "https://donkeyrepublic.com/",
-      "group": "Services/City Mobility"
-    },
-    {
-      "name": "eos.de",
-      "url": "https://eos.de/",
-      "group": "Services/City Mobility"
-    },
-    {
-      "name": "geomobile.com",
-      "url": "https://geomobile.com/",
-      "group": "Services/City Mobility"
-    },
-    {
-      "name": "mtakso.ee",
-      "url": "https://mtakso.ee/",
-      "group": "Services/City Mobility"
-    },
-    {
-      "name": "ridedott.com",
-      "url": "https://ridedott.com/",
-      "group": "Services/City Mobility"
-    },
-    {
-      "name": "ruter.no",
-      "url": "https://ruter.no/",
-      "group": "Services/City Mobility"
-    },
-    {
-      "name": "trafi.com",
-      "url": "https://trafi.com/",
-      "group": "Services/City Mobility"
-    },
-    {
-      "name": "ubercab.com",
-      "url": "https://ubercab.com/",
-      "group": "Services/City Mobility"
+      "name": "google.com",
+      "url": "https://google.com/",
+      "group": "Services/Search"
     },
     {
       "name": "clockify.me",
@@ -1633,46 +1673,6 @@
       "name": "google.com",
       "url": "https://google.com/",
       "group": "Tools/Office"
-    },
-    {
-      "name": "badoo.com",
-      "url": "https://badoo.com/",
-      "group": "Tools/Social"
-    },
-    {
-      "name": "bereal.com",
-      "url": "https://bereal.com/",
-      "group": "Tools/Social"
-    },
-    {
-      "name": "bumble.com",
-      "url": "https://bumble.com/",
-      "group": "Tools/Social"
-    },
-    {
-      "name": "facebook.com",
-      "url": "https://facebook.com/",
-      "group": "Tools/Social"
-    },
-    {
-      "name": "hinge.co",
-      "url": "https://hinge.co/",
-      "group": "Tools/Social"
-    },
-    {
-      "name": "instagram.com",
-      "url": "https://instagram.com/",
-      "group": "Tools/Social"
-    },
-    {
-      "name": "pinterest.com",
-      "url": "https://pinterest.com/",
-      "group": "Tools/Social"
-    },
-    {
-      "name": "tinder.com",
-      "url": "https://tinder.com/",
-      "group": "Tools/Social"
     },
     {
       "name": "affinityclick.com",
