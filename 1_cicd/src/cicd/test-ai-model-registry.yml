@@ -61,6 +61,10 @@ jobs:
         with:
           # Enough history for the scheduled refresh to rebase its commit onto a main that moved.
           fetch-depth: 50
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
 
       # THE SCHEDULE REFRESHES, THE TESTER JUDGES. OpenRouter re-prices by the hour, so a
       # check that demanded the baked values equal the live ones was red most mornings and

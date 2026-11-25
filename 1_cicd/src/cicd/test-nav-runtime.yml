@@ -77,6 +77,10 @@ jobs:
       matrix: ${{ steps.m.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: The walker's driver holds offline (#1760 deep dropdown, lingering dropdown, an app's own Configs screen)
         run: bash 1_cicd/src/scripts/test/nav-walk-driver.test.sh
       - name: The walked apps are exactly the apps ChromeScrollGuardTest holds
@@ -117,6 +121,10 @@ jobs:
       matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
 
       - name: Get the APK under test (this commit's Ship run, else the release)
         env:

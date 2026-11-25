@@ -70,6 +70,10 @@ jobs:
       designs: ${{ steps.list.outputs.designs }}
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: Install jq
         run: sudo apt-get update -y && sudo apt-get install -y jq
       - id: list
@@ -90,6 +94,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
 
       # Every application's testers, and — for the 24 that have none — the
       # COVERAGE-GAP line naming exactly what this run did NOT check. Until this

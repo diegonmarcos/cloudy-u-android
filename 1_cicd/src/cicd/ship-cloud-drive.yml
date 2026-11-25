@@ -227,6 +227,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
 
       # ── #1729 THE RUST CORE (libs:drive-core-rs): toolchain read from build.json::native_core.toolchain, then its own suite ──
       # Same pattern as the Cloud C3 Webserver's core: cargo + the NDK clang, one .so per ABI, loaded by JNI.

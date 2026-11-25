@@ -84,6 +84,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
 
       # Which library APKs' source moved, decided BEFORE any toolchain is set
       # up. build.sh gates each asset on its own module (plus the modules that

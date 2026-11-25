@@ -44,6 +44,10 @@ jobs:
         mutant: [baseline, load-undeclared, set-soon, set-undeclared, soon-engine, ops-soon, ops-clip-id, ops-null, ops-tint, ops-morph-zero, ops-clamp, spec-unwired, spec-default, ai-label, ai-cat-label, ai-nearest, ai-soon, ai-wrap, ai-prose, ai-distance, ai-nokey, ai-http, ai-bearer, ai-prompt-soon, ai-leak]
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: Plant the mutant
         env:
           M: ${{ matrix.mutant }}
@@ -142,6 +146,10 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: Get the x86_64 APK
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

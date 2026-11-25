@@ -34,6 +34,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: Every by-name resource lookup in a shrinking module has a keep rule
         run: python3 1_cicd/src/scripts/cloud-android-shrink-keep-guard.py
       - name: The guard still fails with Cloud Notes' keep file removed

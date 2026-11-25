@@ -25,6 +25,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: No push/login/release outside the publish module (beyond the shrinking baseline)
         run: python3 1_cicd/src/scripts/cloud-android-publish-module-guard.py
       - name: The guard still fails when a hand-rolled push comes back

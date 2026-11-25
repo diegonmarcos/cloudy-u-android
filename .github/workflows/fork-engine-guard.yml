@@ -58,6 +58,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: Hub-vs-hub-less branching resolves from build.json, never from the app name
         run: bash 1_cicd/src/scripts/test/test-fork-engine-helpers.sh
       - name: A fork key with a hyphen still resolves in every engine's jq lookups

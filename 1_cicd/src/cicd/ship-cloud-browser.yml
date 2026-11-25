@@ -168,6 +168,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
 
       # ── #1841 THE RUST BROWSER CORE (libs:browser-core-rs): toolchain read from build.json::native_core.toolchain, then its own suite ──
       # Same pattern as Cloud Mail's core (#1837): cargo + the NDK clang (linker and C compiler: the bundled SQLite), one .so per ABI,

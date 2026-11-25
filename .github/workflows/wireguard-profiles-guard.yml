@@ -67,6 +67,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: The phone's exportable profiles match the published dist
         run: python3 1_cicd/src/scripts/cloud-android-wireguard-profiles-guard.py check
       - name: build.json's wireguard block is exactly what the deriver would produce

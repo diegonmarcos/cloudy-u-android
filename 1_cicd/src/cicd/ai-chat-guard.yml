@@ -34,6 +34,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
 
       # The tester runs FIRST: it draws a second chat in an app six ways, empties the owner two ways and
       # removes every app, requires the guard to fail (or refuse) each time, then requires a pass on the

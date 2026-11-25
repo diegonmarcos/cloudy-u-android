@@ -138,6 +138,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
 
       # ── #1837 THE RUST MAIL CORE (libs:mail-core-rs): toolchain read from build.json::native_core.toolchain, then its own suite ──
       # Same pattern as Cloud Drive's core (#1729): cargo + the NDK clang (linker and C compiler: the bundled SQLite), one .so per

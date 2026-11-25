@@ -50,6 +50,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: commonMain and the web roots name no Android, and the ratchet holds
         run: python3 1_cicd/src/scripts/cloud-android-wasm-purity-guard.py
       - name: The guard still fails on each way commonMain can stop being wasm-pure

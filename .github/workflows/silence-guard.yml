@@ -60,6 +60,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: No listed action can end without telling the owner why
         run: python3 1_cicd/src/scripts/cloud-android-silence-guard.py
       - name: The guard still fails when an exit goes silent

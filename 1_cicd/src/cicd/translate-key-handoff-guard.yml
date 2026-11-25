@@ -58,6 +58,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
 
       # The runner has no Kotlin compiler. Nix supplies it the same way every
       # other tool in this repo is supplied, rather than an apt-get that drifts

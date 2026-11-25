@@ -58,6 +58,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: The Quickmarks rows are one scrollable line and Smart Folders is lazy
         run: python3 1_cicd/src/scripts/cloud-android-phone-apps-page-guard.py
       - name: The guard still fails when the page goes back to wrapping or blocking

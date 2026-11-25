@@ -47,6 +47,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
 
       # Publish-if-changed, exactly as the APK workflows do it: the identity is the git
       # trees of the inputs listed here (the watched ones, plus the fleet manifest the

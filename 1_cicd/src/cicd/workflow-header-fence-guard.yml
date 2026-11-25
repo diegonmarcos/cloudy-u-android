@@ -49,5 +49,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: A re-worded paths header strands nothing; authored prose survives; regeneration is idempotent
         run: bash 1_cicd/src/scripts/test/test-workflow-header-fence.test.sh

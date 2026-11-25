@@ -34,6 +34,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: repos.sot.json copies match the build.json pin
         run: |
           fix='FIX: bash ac_cloud-drive/tools/sync-repos-sot.sh && git add -A ac_cloud-drive ab_cloud-libs-shared && git commit && git push'

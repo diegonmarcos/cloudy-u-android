@@ -43,6 +43,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: No debug route acknowledges work it did not start
         run: python3 1_cicd/src/scripts/cloud-android-update-ack-guard.py
       - name: The guard still fails when the acknowledgement goes back to being a guess

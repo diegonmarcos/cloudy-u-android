@@ -46,6 +46,10 @@ jobs:
         mutant: ${{ fromJSON(inputs.mutants != '' && inputs.mutants || '["baseline","type-map","dim-mixed","vr-yes-flat","vr-no-glass","chip-any","group-all","toggle-one","all-clears","is-all","default-all","tabs-default","tabs-open-focus","tabs-open-select","tabs-close-neighbour","tabs-close-keep","tabs-persist-selected","tabs-persist-all","catalogue-floor796","catalogue-floor796-entry","tabs-declared-first","tabs-seed-once","tabs-seed-order","tabs-restore-legacy","pin-miss-live","pin-document-live","pin-refresh-live","pin-copy-newest","pin-record-volatile","pin-scene-parts","pin-scene-wait","render-seen-step","render-seen-alarm","cache-variants-bound","cache-blob-whole","cache-newest","cache-one-writer"]') }}
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: Plant the mutant
         env:
           M: ${{ matrix.mutant }}
@@ -176,6 +180,10 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: Get the x86_64 APK
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

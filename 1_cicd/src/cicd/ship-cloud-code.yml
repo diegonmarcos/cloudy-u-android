@@ -137,6 +137,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
 
       # test/cloud_bleed.mjs drives headless Chromium (the editor-text-bleeds-through-pages regression
       # test, #1193). Pinned here; the tester FAILS in CI when the browser is missing, it never skips.

@@ -290,6 +290,17 @@
         "ac_cloud-termux/app/src/main/AndroidManifest.xml",
         "ac_cloud-nix-on-droid/app/src/main/AndroidManifest.xml"
       ]
+    },
+    "fleet-private-guard.yml": {
+      "_doc": "Every workflow source and template, the action, the path map, the materialiser and the tester.",
+      "paths": [
+        "1_cicd/src/actions/**",
+        "1_cicd/src/cicd/**",
+        "1_cicd/src/data/fleet-private-paths.json",
+        "1_cicd/src/scripts/cloud-android-fleet-private-materialise.sh",
+        "1_cicd/src/scripts/test/fleet-private-materialise.test.sh",
+        "1_cicd/src/templates/**"
+      ]
     }
   }
 }

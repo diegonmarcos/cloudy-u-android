@@ -1,0 +1,44 @@
+name: "fleet-private guard — fleet-private datasets are materialised by CI, never public"
+
+# #1566. The tier-2 datasets live in cloud-me-pvt-configs. Every build and test
+# job checks them out (ANDROID_SIGNING_VAULT_TOKEN) into gitignored paths before
+# anything reads them. The tester fails on a checkout without that step, on a
+# dataset that is tracked or not ignored, and on a materialiser that does not
+# fail loud on a missing dataset.
+
+on:
+  push:
+    # ── MANAGED-GUARD-TRIGGERS: injected by cloud-android-guard-triggers.py from 1_cicd/src/data/guard-triggers.json ──
+    paths:
+      - "1_cicd/src/actions/**"
+      - "1_cicd/src/cicd/**"
+      - "1_cicd/src/cicd/fleet-private-guard.yml"
+      - "1_cicd/src/data/fleet-private-paths.json"
+      - "1_cicd/src/scripts/cloud-android-fleet-private-materialise.sh"
+      - "1_cicd/src/scripts/test/fleet-private-materialise.test.sh"
+      - "1_cicd/src/templates/**"
+    # ── end MANAGED-GUARD-TRIGGERS ──
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# ── MANAGED-GUARD-CONCURRENCY: injected by cloud-android-guard-triggers.py ──
+concurrency:
+  group: fleet-private-guard-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+# ── end MANAGED-GUARD-CONCURRENCY ──
+
+jobs:
+  tester:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+      - name: Fleet-private datasets are materialised, not public
+        run: bash 1_cicd/src/scripts/test/fleet-private-materialise.test.sh

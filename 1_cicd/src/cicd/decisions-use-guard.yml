@@ -31,6 +31,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
 
       # The tester runs FIRST: it breaks each rule on a copy of the real files and requires the guard to
       # fail naming it, then requires a pass on the unbroken copy. A gate whose red path is unproven reads

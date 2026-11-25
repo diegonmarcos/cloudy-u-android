@@ -1,0 +1,25 @@
+name: fleet-private
+description: Materialise the fleet-private datasets (cloud-me-pvt-configs/fleet-data) into the paths the build and the testers read (#1566)
+
+inputs:
+  token:
+    description: Token that can read the private configs repository (ANDROID_SIGNING_VAULT_TOKEN)
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout private fleet data
+      uses: actions/checkout@v4
+      with:
+        repository: diegonmarcos/cloud-me-pvt-configs
+        token: ${{ inputs.token }}
+        path: .fleet-private
+        ref: main
+        fetch-depth: 1
+        persist-credentials: false
+        sparse-checkout: fleet-data
+
+    - name: Materialise into the build paths
+      shell: bash
+      run: sh 1_cicd/dist/scripts/cloud-android-fleet-private-materialise.sh "$GITHUB_WORKSPACE"

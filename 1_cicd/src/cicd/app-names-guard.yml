@@ -37,6 +37,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: Every application's name follows the pattern on every surface
         run: bash aa_cloud-superapp/test/test-app-names-pattern.sh
       - name: The tester still fails when an old name is put back

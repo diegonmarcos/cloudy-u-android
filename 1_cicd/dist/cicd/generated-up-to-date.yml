@@ -51,6 +51,10 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
 
       # The generator reads a sibling repository when one is present, to refresh
       # the Claude agent dotfiles from their source of truth. A runner has no

@@ -39,6 +39,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       # The self-check inside re-proves the race on this runner and drives the
       # rule over planted fixtures in both directions before it reads the tree.
       - name: No tester pipes into grep -q while pipefail is on

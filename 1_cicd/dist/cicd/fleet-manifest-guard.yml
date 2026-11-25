@@ -37,6 +37,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: Every :libs:updater consumer resolves a populated fleet manifest
         run: python3 1_cicd/src/scripts/cloud-android-fleet-manifest-guard.py
       - name: The guard still fails when the empty-fleet defect is put back

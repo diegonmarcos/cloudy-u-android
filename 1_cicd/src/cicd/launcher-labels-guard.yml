@@ -31,6 +31,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: Every launcher label is Cloud + Title Case words, from one declaration
         run: bash aa_cloud-superapp/test/test-launcher-labels.sh
       - name: The tester still fails when a slug label is put back

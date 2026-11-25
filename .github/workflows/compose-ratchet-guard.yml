@@ -35,6 +35,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: No app or lib gained View-based UI, and progress is written down
         run: python3 1_cicd/src/scripts/cloud-android-compose-ratchet.py
       - name: The ratchet still fails on new View UI and on an untightened baseline

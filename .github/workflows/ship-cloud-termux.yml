@@ -123,6 +123,10 @@ jobs:
       stamp: ${{ steps.stamp.outputs.stamp }}
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - id: stamp
         # #1783 P5: the SOURCE commit time, not the wall clock (same commit, same version code)
         run: echo "stamp=$(TZ=UTC git show -s --date=format-local:'%Y%m%d.%H%M%S' --format=%cd HEAD)" >> "$GITHUB_OUTPUT"
@@ -139,6 +143,10 @@ jobs:
       matrix: ${{ steps.plan.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - id: plan
         run: |
           m="$(jq -c --slurpfile r "$WORK_DIR/rootfs/rootfs.json" \
@@ -157,6 +165,10 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: Tools the builder and tester call
         run: sudo apt-get update -y && sudo apt-get install -y --no-install-recommends zstd binutils file
       - name: Build the rootfs from rootfs.json + the fleet tool belt
@@ -197,6 +209,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
 
       # Every application's testers, and — for the 24 that have none — the
       # COVERAGE-GAP line naming exactly what this run did NOT check. Until this
@@ -440,6 +456,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - uses: actions/download-artifact@v4
         with:
           pattern: cloud-terminal-*-${{ github.sha }}
