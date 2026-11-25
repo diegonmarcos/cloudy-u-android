@@ -302,7 +302,7 @@ echo "== T9: #660 a tab that is not a TYPE OF APK is not on the type line =="
 # CI-CD and Perms narrow nothing: the feeds' declared endpoints carry no type,
 # and the Perms tab walks the whole fleet. So they get their own line, and WHICH
 # line a tab sits on is which declaration it came from - never a list here.
-FEEDS_ASSET="$LIBS/appstore/src/main/assets/appstore-feeds.json"
+FEEDS_ASSET="${FLEET_PRIVATE_DIR:-$ROOT/fleet-private-data}/appstore-feeds.json"   # #1566 fleet-private: CI materialises it
 [ -f "$FEEDS_ASSET" ] || { echo "ERROR: missing $FEEDS_ASSET" >&2; exit 2; }
 
 # (a) The two lines must not be concatenated back into one. This is the exact

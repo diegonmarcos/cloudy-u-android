@@ -34,7 +34,7 @@ TLK="$TL/src/main/java/com/diegonmarcos/superapp/torrent"
 FILES="ac_cloud-store/build.json ac_cloud-store/app/build.gradle ac_cloud-store/build.gradle ac_cloud-store/app/src/main/AndroidManifest.xml
 $CS/MainActivity.kt $CS/TorrentPage.kt $CS/TorrentConfigPage.kt $CS/TorrentHost.kt $CS/ConfigsPage.kt $CS/App.kt
 $AS/StoreCloudFragment.kt $AS/StoreFeedPanels.kt $AS/StoreSearchPage.kt $AS/StoreTorrentSearch.kt $AS/StoreTorrentHost.kt
-ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-feeds.json
+fleet-private-data/appstore-feeds.json
 $TL/build.gradle $TL/src/main/AndroidManifest.xml $TLK/TorrentEngine.kt $TLK/TorrentModels.kt $TLK/TorrentPaths.kt $TLK/TorrentSearch.kt $TLK/LibtorrentBackend.kt
 aa_cloud-superapp/data/lib-consumers.json .github/workflows/ship-cloud-store.yml 1_cicd/src/data/lib-classes.json 1_cicd/src/data/lib-categories.json"
 
@@ -82,7 +82,7 @@ bar, pan, tally = cf.find("StoreBar.Bar("), cf.find("StoreFeedPanels.Buttons"), 
 ok(0 <= bar < pan < tally and "StoreFeedPanels.Page(" in cf and "FeedViewer" not in cf,
    "F1 the Cloud page draws the Commits and CI-CD buttons with its action buttons (StoreBar.Bar), above the status row, and opens each as a page of its own",
    "F1 the feed buttons are not between the action buttons and the status row, or open no page")
-feeds_s = rd("ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-feeds.json")
+feeds_s = rd("fleet-private-data/appstore-feeds.json")
 fids = [f["id"] for f in json.loads(feeds_s)["feeds"]] if feeds_s else []
 ok(fids[:2] == ["commits", "cicd"] and "FeedViewer.feeds(" in fp and "FeedViewer.load(" in fp and "FeedViewer.explain(" in fp and "StoreSourcePrefs.enabled(" in fp,
    "F1 the panels are the declared feeds (Commits, CI-CD), read with FeedViewer, switchable in Sources, a failure explained",

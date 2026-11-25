@@ -11,7 +11,7 @@ import java.io.File
  * #642 The Commits / PRs / CI-CD tables: the Entry → columns mapping and the pure sort (Time always secondary), group
  * (All / By Repo) and filter logic over it. No device — [StoreFeedTable] holds no Android. */
 class StoreFeedTableTest {
-    private val feeds = FeedViewer.parse(JSONObject(File("src/main/assets/appstore-feeds.json").readText())).associateBy { it.id }
+    private val feeds = FeedViewer.parse(JSONObject(File(System.getenv("FLEET_PRIVATE_DIR") ?: "../../../fleet-private-data", "appstore-feeds.json").readText())).associateBy { it.id }
     private val commits = feeds.getValue("commits")
     private val prs = feeds.getValue("prs")
     private val cicd = feeds.getValue("cicd")

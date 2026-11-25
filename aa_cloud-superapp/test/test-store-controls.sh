@@ -15,7 +15,7 @@ APP="$(cd "$(dirname "$0")/.." && pwd)"
 ROOT="$(cd "$APP/.." && pwd)"
 STORE="$ROOT/ab_cloud-libs-shared/libs/appstore/src/main"
 DECL="$ROOT/data/fleet/appstore-controls.json"   # #1562 a served dataset, not an APK asset
-FEEDS="$STORE/assets/appstore-feeds.json"
+FEEDS="${FLEET_PRIVATE_DIR:-$ROOT/fleet-private-data}/appstore-feeds.json"   # #1566 fleet-private: CI materialises it
 PAGE="$STORE/java/com/diegonmarcos/superapp/appstore/StoreCloudFragment.kt"
 CTRL="$STORE/java/com/diegonmarcos/superapp/appstore/StoreControls.kt"
 PASS=0; FAIL=0

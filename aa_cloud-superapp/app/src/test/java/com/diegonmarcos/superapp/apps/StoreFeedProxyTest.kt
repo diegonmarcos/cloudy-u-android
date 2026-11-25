@@ -59,10 +59,12 @@ class StoreFeedProxyTest {
         return ss
     }
 
+    /** #1566 the declaration is a fleet-private dataset: the copy CI materialises into fleet-private-data (FLEET_PRIVATE_DIR overrides). */
     private fun shipped(): JSONObject = JSONObject(File(listOf(
-        "../../ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-feeds.json",
-        "ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-feeds.json",
-        "../ab_cloud-libs-shared/libs/appstore/src/main/assets/appstore-feeds.json",
+        System.getenv("FLEET_PRIVATE_DIR").orEmpty() + "/appstore-feeds.json",
+        "../../fleet-private-data/appstore-feeds.json",
+        "fleet-private-data/appstore-feeds.json",
+        "../fleet-private-data/appstore-feeds.json",
     ).first { File(it).exists() }).readText())
 
     /** The shipped declaration with both legs repointed at [port], so the

@@ -198,7 +198,7 @@ if scanned < 20: bad("scanned only %d files under %s — wrong LIBS?" % (scanned
 elif not hits: ok("%d files scanned; no literal points at the mesh" % scanned)
 else: bad("mesh-only host on the Store's path: %s" % "; ".join(hits[:5]))
 
-feeds = json.loads(read(os.path.join(libs, "appstore/src/main/assets/appstore-feeds.json")))["feeds"]
+feeds = json.loads(read(os.path.join(os.environ.get("FLEET_PRIVATE_DIR") or os.path.join(libs, "../../fleet-private-data"), "appstore-feeds.json")))["feeds"]
 priv = ["%s: %s" % (f.get("id", f.get("label")), mesh_only(host_of(f["url"]))) for f in feeds if mesh_only(host_of(f["url"]))]
 if feeds and not priv: ok("#668 feeds: every public `url` stays public (only the optional proxy may be fleet)")
 else: bad("a feed's public url is mesh-only or no feeds declared: %s" % priv)

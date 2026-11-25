@@ -8,7 +8,7 @@ import java.io.File
 
 /** The Cloud page's Commits and CI-CD panels: the declared feeds they are built from, and their tally lines. Pure, no device. */
 class StoreFeedPanelsTest {
-    private val feeds = FeedViewer.parse(JSONObject(File("src/main/assets/appstore-feeds.json").readText()))
+    private val feeds = FeedViewer.parse(JSONObject(File(System.getenv("FLEET_PRIVATE_DIR") ?: "../../../fleet-private-data", "appstore-feeds.json").readText()))
 
     @Test fun thePanelsAreTheDeclaredCommitsAndCicdFeedsInOrder() {
         assertEquals(listOf("commits", "prs", "cicd"), feeds.map { it.id })

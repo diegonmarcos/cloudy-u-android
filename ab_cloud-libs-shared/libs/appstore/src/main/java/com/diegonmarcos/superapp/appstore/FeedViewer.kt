@@ -1,5 +1,6 @@
 package com.diegonmarcos.superapp.appstore
 
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -39,6 +40,8 @@ import java.util.Date
  */
 object FeedViewer {
 
+    /** #1566 the feed declaration names the repositories the Cloud page reads: a fleet-private tier-2 dataset served by Cloud Account's private route; [FEEDS_ASSET] is only where the unit tests put the CI-materialised copy. */
+    const val DATASET = "fleet/appstore-feeds"
     const val FEEDS_ASSET = "appstore-feeds.json"
 
     /** How one url's body is read into rows: which array, and the templates.
@@ -99,7 +102,8 @@ object FeedViewer {
     /** Every declared feed, in declared order. An unreadable or absent asset is
      *  NO feeds and therefore no tabs — never a half-built one. */
     fun feeds(ctx: Context): List<Feed> = runCatching {
-        parse(JSONObject(ctx.assets.open(FEEDS_ASSET).use { it.readBytes().decodeToString() }))
+        parse(runCatching { FleetData.get(ctx.applicationContext, DATASET) { JSONObject(it) } }.getOrNull()
+            ?: JSONObject(ctx.assets.open(FEEDS_ASSET).use { it.readBytes().decodeToString() }))
     }.getOrDefault(emptyList())
 
     /** Split from [feeds] so a test can hand it a declaration of its own
