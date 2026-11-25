@@ -305,6 +305,16 @@
       "group": "Cloudy Private/Observability"
     },
     {
+      "name": "c3-execd",
+      "url": "http://c3-execd:4187",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "c3-public-go-api",
+      "url": "http://c3-public-go-api:8097",
+      "group": "Cloudy Private/Other"
+    },
+    {
       "name": "c3bot-relay-go",
       "url": "http://c3bot-relay-go:3129",
       "group": "Cloudy Private/Other"
@@ -322,6 +332,11 @@
     {
       "name": "capital-stack-news-gdelt-api",
       "url": "http://capital-stack-news-gdelt-api:3019",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "capital-stack-news-gdelt-go-api",
+      "url": "http://capital-stack-news-gdelt-go-api:3142",
       "group": "Cloudy Private/Other"
     },
     {
@@ -355,6 +370,11 @@
       "group": "Cloudy Private/Other"
     },
     {
+      "name": "cloud-me-go-api",
+      "url": "http://cloud-me-go-api:8134",
+      "group": "Cloudy Private/Other"
+    },
+    {
       "name": "cloud-vault-mcp",
       "url": "http://vault-mcp.mesh.diegonmarcos.com:3111",
       "group": "Cloudy Private/Other"
@@ -385,8 +405,23 @@
       "group": "Cloudy Private/Other"
     },
     {
+      "name": "cloudy-ai-tokens-go-api",
+      "url": "http://cloudy-ai-tokens-go-api:4188",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "cloudy-all-go-mcp",
+      "url": "http://cloudy-all-go-mcp:3140",
+      "group": "Cloudy Private/Other"
+    },
+    {
       "name": "cloudy-auth-cloudflare-api",
       "url": "http://cloudy-auth-cloudflare-api:4182",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "cloudy-auth-cloudflare-go-api",
+      "url": "http://cloudy-auth-cloudflare-go-api:4282",
       "group": "Cloudy Private/Other"
     },
     {
@@ -395,8 +430,18 @@
       "group": "Cloudy Private/Other"
     },
     {
+      "name": "cloudy-auth-email-go-api",
+      "url": "http://cloudy-auth-email-go-api:4283",
+      "group": "Cloudy Private/Other"
+    },
+    {
       "name": "cloudy-auth-github-api",
       "url": "http://cloudy-auth-github-api:4181",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "cloudy-auth-github-go-api",
+      "url": "http://cloudy-auth-github-go-api:4281",
       "group": "Cloudy Private/Other"
     },
     {
@@ -405,8 +450,18 @@
       "group": "Cloudy Private/Other"
     },
     {
+      "name": "cloudy-auth-google-go-api",
+      "url": "http://cloudy-auth-google-go-api:4280",
+      "group": "Cloudy Private/Other"
+    },
+    {
       "name": "cloudy-cgc-pub-graph-api",
       "url": "http://cloudy-cgc-pub-graph-api:8002",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "cloudy-drive-git-proxy-go-api",
+      "url": "http://cloudy-drive-git-proxy-go-api:8133",
       "group": "Cloudy Private/Other"
     },
     {
@@ -420,8 +475,38 @@
       "group": "Cloudy Private/Other"
     },
     {
+      "name": "jev-sidecar-go",
+      "url": "http://jev-sidecar-go:3143",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "mattermost-bots-go",
+      "url": "http://mattermost-bots-go:8897",
+      "group": "Cloudy Private/Other"
+    },
+    {
       "name": "mcp-oauth",
       "url": "http://mcp-oauth.mesh.diegonmarcos.com:4183",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "mcp-oauth-go",
+      "url": "http://mcp-oauth-go:4189",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "ntfy-go-notify-broker",
+      "url": "http://ntfy-go-notify-broker:8193",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "ntfy-go-rss-gateway",
+      "url": "http://ntfy-go-rss-gateway:8191",
+      "group": "Cloudy Private/Other"
+    },
+    {
+      "name": "ntfy-go-topic-scanner",
+      "url": "http://ntfy-go-topic-scanner:8192",
       "group": "Cloudy Private/Other"
     },
     {
