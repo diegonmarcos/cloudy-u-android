@@ -74,7 +74,8 @@
         "libs:ui-kit",
         "libs:autofill",
         "libs:account-ui",
-        "libs:fleet-endpoints-android"
+        "libs:fleet-endpoints-android",
+        "libs:json-canvas"
       ]
     },
     "libs:core": {
@@ -167,6 +168,11 @@
     "libs:account-ui": {
       "_doc": "#1439 Personal Info + Configs profile pages shared by Cloud Account and Cloud Me (structure and sources in its account-ui.json), shared BY REFERENCE.",
       "dir": "../ab_cloud-libs-shared/libs/account-ui",
+      "type": "library"
+    },
+    "libs:json-canvas": {
+      "_doc": "#1932 the JSON Canvas 1.0 (Obsidian) parser, geometry and Compose renderer plus Markdown-light, shared BY REFERENCE: Proj > repo > README.canvas and README.md draw through it.",
+      "dir": "../ab_cloud-libs-shared/libs/json-canvas",
       "type": "library"
     },
     "libs:git-ui": {

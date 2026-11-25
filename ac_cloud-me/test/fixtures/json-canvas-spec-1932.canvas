@@ -1,0 +1,15 @@
+{
+  "nodes": [
+    {"id": "g1", "type": "group", "x": -40, "y": -40, "width": 760, "height": 420, "label": "Hub", "color": "4", "future_field": {"a": 1}},
+    {"id": "t1", "type": "text", "x": 0, "y": 0, "width": 260, "height": 120, "text": "# Title\n\n**bold** and [a link](https://example.com)\n\n- one\n- two", "color": "1"},
+    {"id": "f1", "type": "file", "x": 340, "y": 0, "width": 260, "height": 120, "file": "docs/README.md", "subpath": "#intro", "color": "#ff8800"},
+    {"id": "l1", "type": "link", "x": 0, "y": 220, "width": 260, "height": 100, "url": "https://github.com/diegonmarcos/cloudy-u-android"},
+    {"id": "t2", "type": "text", "x": 340, "y": 220, "width": 260, "height": 100, "text": "plain"}
+  ],
+  "edges": [
+    {"id": "e1", "fromNode": "t1", "fromSide": "right", "toNode": "f1", "toSide": "left", "label": "reads", "color": "5"},
+    {"id": "e2", "fromNode": "t1", "toNode": "l1", "fromEnd": "arrow", "toEnd": "none"},
+    {"id": "e3", "fromNode": "l1", "fromSide": "right", "toNode": "t2", "toSide": "left"}
+  ],
+  "metadata": {"unknown": true}
+}

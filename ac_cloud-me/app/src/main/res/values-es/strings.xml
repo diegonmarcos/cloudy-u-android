@@ -11,4 +11,28 @@
     <string name="section_lnktree">Lnktree</string>
     <string name="external_app_missing">%1$s no está instalada. Instálala desde la tienda para abrir esto.</string>
     <string name="tasks_open_external">Abrir en %1$s</string>
+    <!-- #1932 Proj > entrada de repositorio: el selector de vistas, los estados de carga y el visor de JSON Canvas -->
+    <string name="repo_view_gh">GH Repo Page</string>
+    <string name="repo_view_md">README.md</string>
+    <string name="repo_view_html">README.html</string>
+    <string name="repo_view_canvas">README.canvas</string>
+    <string name="repo_view_loading">Cargando %1$s</string>
+    <string name="repo_view_failed_title">No se pudo mostrar %1$s</string>
+    <string name="repo_view_detail_url">URL: %1$s</string>
+    <string name="repo_view_detail_status">Estado HTTP: %1$d</string>
+    <string name="repo_view_detail_error">Error: %1$s</string>
+    <string name="repo_view_kind_notfound">No se encontró el archivo, ni siquiera con la credencial de GitHub de este teléfono. Puede que aún no exista en este repositorio.</string>
+    <string name="repo_view_kind_private">No se encontró el archivo o requiere iniciar sesión. Puede que aún no exista, o que el repositorio sea privado: este teléfono no tiene credencial de GitHub para él. Falta la vía de credencial: conecta este repositorio en Configs &gt; Repos (guarda un token) o inicia sesión en GitHub desde Cloud Account.</string>
+    <string name="repo_view_kind_refused">GitHub rechazó la credencial de este teléfono para este repositorio. Renuévala en Configs &gt; Repos.</string>
+    <string name="repo_view_kind_server">GitHub respondió con un error del servidor. Inténtalo de nuevo en un momento.</string>
+    <string name="repo_view_kind_network">La solicitud no se completó (sin red, tiempo agotado o límite de peticiones). Revisa la conexión e inténtalo de nuevo.</string>
+    <string name="repo_view_retry">Reintentar</string>
+    <string name="repo_view_bad_canvas">Este archivo no es un JSON Canvas válido: %1$s</string>
+    <string name="canvas_fit">Ajustar</string>
+    <string name="canvas_open">Abrir</string>
+    <string name="canvas_close">Cerrar</string>
+    <string name="canvas_file">Archivo</string>
+    <string name="canvas_link">Enlace</string>
+    <string name="canvas_group">Grupo</string>
+    <string name="canvas_empty">Este lienzo no tiene nodos.</string>
 </resources>

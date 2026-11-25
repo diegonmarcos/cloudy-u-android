@@ -22,4 +22,28 @@
     <string name="section_lnktree">Lnktree</string>
     <string name="external_app_missing">%1$s is not installed. Install it from the Store to open this.</string>
     <string name="tasks_open_external">Open in %1$s</string>
+    <!-- #1932 Proj > repo entry: the view selector, the fetch states and the JSON Canvas viewer -->
+    <string name="repo_view_gh">GH Repo Page</string>
+    <string name="repo_view_md">README.md</string>
+    <string name="repo_view_html">README.html</string>
+    <string name="repo_view_canvas">README.canvas</string>
+    <string name="repo_view_loading">Loading %1$s</string>
+    <string name="repo_view_failed_title">%1$s could not be shown</string>
+    <string name="repo_view_detail_url">URL: %1$s</string>
+    <string name="repo_view_detail_status">HTTP status: %1$d</string>
+    <string name="repo_view_detail_error">Error: %1$s</string>
+    <string name="repo_view_kind_notfound">The file was not found, even with the GitHub credential held on this phone. It may not exist in this repo yet.</string>
+    <string name="repo_view_kind_private">The file was not found or needs sign-in. It may not exist yet, or the repo is private: no GitHub credential is held on this phone for it. The missing credential path: connect this repo under Configs &gt; Repos (it stores a token), or sign in to GitHub through Cloud Account.</string>
+    <string name="repo_view_kind_refused">GitHub refused the credential held on this phone for this repo. Renew it under Configs &gt; Repos.</string>
+    <string name="repo_view_kind_server">GitHub answered with a server error. Try again in a moment.</string>
+    <string name="repo_view_kind_network">The request did not complete (no network, a timeout or a rate limit). Check the connection and try again.</string>
+    <string name="repo_view_retry">Retry</string>
+    <string name="repo_view_bad_canvas">This file is not a valid JSON Canvas: %1$s</string>
+    <string name="canvas_fit">Fit</string>
+    <string name="canvas_open">Open</string>
+    <string name="canvas_close">Close</string>
+    <string name="canvas_file">File</string>
+    <string name="canvas_link">Link</string>
+    <string name="canvas_group">Group</string>
+    <string name="canvas_empty">This canvas has no nodes.</string>
 </resources>

@@ -67,6 +67,8 @@ class GitConnect(
     /** The host's token (the gh engine) first, else the one stored encrypted by [saveToken]. */
     private fun token(): String? = hostToken(ctx)?.takeIf { it.isNotBlank() } ?: runCatching { store.secret(GitConnectRules.credentialId(spec)) }.getOrNull()
     fun hasToken(): Boolean = !token().isNullOrBlank()
+    /** #1932 the token this connection holds (host sign-in first, else the stored one), for a one-request read of a private repo's file (Cloud Me's repo viewer); never log it. */
+    fun accessToken(): String? = token()
     fun saveToken(t: String) = store.setSecret(GitConnectRules.credentialId(spec), t.trim())
     fun forgetToken() = store.clear(GitConnectRules.credentialId(spec))
     fun isCloned(): Boolean = GitEngine.isRepository(dir)

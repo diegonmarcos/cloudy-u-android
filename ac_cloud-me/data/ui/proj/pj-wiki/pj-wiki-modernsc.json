@@ -4,6 +4,7 @@
     "id": "web",
     "url": "https://github.com/diegonmarcos/lib-chronos/tree/main/1.Modern-science",
     "_doc": "#1914 Proj > Wiki > ModernSc: the project's site (or its GitHub repo page when it has none), embedded by its https URL from the declared table me-links.json (derived from _front-html___ repos-pages.json and the registry by data/regen-me-links.py).",
-    "link": "https://github.com/diegonmarcos/lib-chronos/tree/main/1.Modern-science"
+    "link": "https://github.com/diegonmarcos/lib-chronos/tree/main/1.Modern-science",
+    "views": ["gh", "md", "html", "canvas"]
   }
 ]
