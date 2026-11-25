@@ -5,12 +5,18 @@ import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import android.app.Application
 
 /**
  * #1906 every social account and company on Pers and Prof has its real link. The table data/links/me-links.json is generated from the SoT
  * (data/regen-me-links.py; `sot_url` is the SoT value at generation), this test fails when an entry lacks a link, differs from its SoT
  * snapshot, or when a page file's `link` differs from the table. test/test-me-links.sh proves each check red by mutation.
  */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34], application = Application::class)
 class MeLinksTest {
     private val entries = JSONObject(BuroLlcTestData.text("data/links/me-links.json")).getJSONArray("entries").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
 
