@@ -101,12 +101,10 @@ class MapsExploredFragment : KitComposeFragment() {
             // with several distinct places shows several pins → PLACES renders many
             // more pins than CITY.
             places = groupByPlaceFromStops(stops)
-            capitals = runCatching {
-                val o = org.json.JSONObject(ctx.assets.open("geo/capitals.json").bufferedReader().use { it.readText() })
-                o.keys().asSequence().associateWith { k -> val a = o.getJSONArray(k); doubleArrayOf(a.getDouble(0), a.getDouble(1)) }
-            }.getOrDefault(emptyMap())
             true
         }
+        // #1547 the capitals are a served dataset: pins sit at the cities' centroid until it arrives, then move to the capitals.
+        androidx.compose.runtime.LaunchedEffect(ctx) { MapsGeoData.observeCapitals(ctx).collect { if (it != null) { capitals = it; recomputePins(false) } } }
 
         Box(Modifier.fillMaxSize()) {
             // worldView: global overview — start showing the whole world, not the

@@ -142,6 +142,18 @@
       "consumers": [
         "*"
       ]
+    },
+    "geo-capitals": {
+      "tier": 4,
+      "consumers": [
+        "*"
+      ]
+    },
+    "geo-region-members": {
+      "tier": 4,
+      "consumers": [
+        "*"
+      ]
     }
   },
   "apps": {

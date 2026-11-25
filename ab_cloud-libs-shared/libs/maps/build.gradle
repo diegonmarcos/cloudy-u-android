@@ -97,6 +97,7 @@ android {
 dependencies {
     implementation project(':libs:perms')   // #1274 PermsLink: the host's Permissions page asks, not this lib
     implementation project(':libs:core')
+    implementation project(':libs:fleet-data-client')   // #1547 the capitals and region members are served at runtime, never APK assets
     // #868 the page-tab strip (PageTabsView): the Timeline host's Explored | Daily | Stops row.
     implementation project(':libs:bottomnav')
     // #1154 MapsPageStrip draws the fleet's second row (the Timeline host and Configs strips).

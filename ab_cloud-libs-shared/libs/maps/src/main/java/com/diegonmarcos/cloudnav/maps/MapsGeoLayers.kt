@@ -195,14 +195,8 @@ class MapsGeoLayers(private val ctx: Context, private val frag: MapsMapFragment)
         }
     }
 
-    private fun readMembers(): List<RegionMembers> = runCatching {
-        val arr = JSONArray(ctx.assets.open("geo/region-members.json").bufferedReader().use { it.readText() })
-        (0 until arr.length()).map { i ->
-            val o = arr.getJSONObject(i)
-            val cs = o.getJSONArray("countries")
-            RegionMembers(o.getString("subregion"), (0 until cs.length()).map { cs.getString(it) }.toSet())
-        }
-    }.getOrDefault(emptyList())
+    /** The served subregion members (#1547), else none (nothing painted visited). */
+    private fun readMembers(): List<RegionMembers> = MapsGeoData.members(ctx)
 
     data class RegionMembers(val subregion: String, val countries: Set<String>)
 

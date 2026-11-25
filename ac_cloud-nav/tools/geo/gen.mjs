@@ -33,6 +33,8 @@ const DIR = dirname(fileURLToPath(import.meta.url));
 const CACHE = join(DIR, '.cache');
 const OUT = join(DIR, '..', '..', 'libs', 'maps', 'src', 'main', 'assets', 'geo');
 mkdirSync(CACHE, { recursive: true });
+// #1547 capitals and region-members are served datasets (data/fleet, shared, schemaVersion 1), not maps assets.
+const FLEET = join(DIR, '..', '..', '..', 'data', 'fleet');
 mkdirSync(OUT, { recursive: true });
 
 const FRONT_TRAVEL = '/home/diego/git/front-diegonmarcos/b-MyData/mymaps-mytrips/public/travel-data.json';
@@ -76,7 +78,7 @@ for (const r of civ.tree)
   for (const c of r.civilizations)
     for (const s of c.subregions)
       members.push({ subregion: s.name, region: r.region, civ: c.name, countries: s.countries });
-writeFileSync(join(OUT, 'region-members.json'), JSON.stringify(members));
+writeFileSync(join(FLEET, 'geo-region-members.json'), JSON.stringify({ schemaVersion: 1, members }) + '\n');
 
 // ── 1. countries.geojson ───────────────────────────────────────────────────
 const countries = join(OUT, 'countries.geojson');
@@ -149,12 +151,12 @@ for (const t of travel.trips) {
 }
 writeFileSync(join(OUT, 'cities.geojson'), JSON.stringify({ type: 'FeatureCollection', features: [...cityMap.values()] }));
 
-// ── 6. capitals.json — country → [lat, lon] (COUNTRY-mode pin sits here) ─────
+// ── 6. data/fleet/geo-capitals.json — country → [lat, lon] (COUNTRY-mode pin sits here) ─────
 const capitals = {};
 for (const t of travel.trips) {
   const c = t.countryCapital;
   if (t.country && c && c.lat != null && c.lng != null && !(t.country in capitals)) capitals[t.country] = [c.lat, c.lng];
 }
-writeFileSync(join(OUT, 'capitals.json'), JSON.stringify(capitals));
+writeFileSync(join(FLEET, 'geo-capitals.json'), JSON.stringify({ schemaVersion: 1, capitals }) + '\n');
 
 process.stderr.write(`\nDONE. nomad regions=${nomadFeatures.length}, cities=${cityMap.size}\n`);
