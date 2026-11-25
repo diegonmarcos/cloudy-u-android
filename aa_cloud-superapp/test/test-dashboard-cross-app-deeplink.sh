@@ -184,7 +184,7 @@ TARGETS = {
     "biomed": "extapp:hardtech-biomed",
     "myhealth":    "extapp:cloud-me#page:pers/pers-profiles",   # #1903 Me-Pers
     "myexperiences": "extapp:cloud-me#page:prof/prof-profiles",   # #1903 Me-Prof
-    "myroadmap":   "extapp:cloud-me#page:proj/lnktree-site",      # #1903 Me-Prj
+    "myroadmap":   "extapp:cloud-me#page:proj/pj-home",      # #1931 Me-Prj lands on Cloud Me Proj Home (was the stale proj/lnktree-site)
     "myduties":    "extapp:cloud-me#page:tasks/backlogs",
     "myburo":      "extapp:cloud-me#page:buro/ids",
     "myllc":       "extapp:cloud-me#page:llc/employed",

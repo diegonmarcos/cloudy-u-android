@@ -206,12 +206,13 @@ for st, pl in want_pick.items():
 print('== C: Cloud quickmark icons are unchanged from origin/main ==')
 snap = json.load(open(A + 'test/data/cloud-tile-icons-1756.json'))['tiles']
 now = {t['id']: t.get('icon') for g in cloud for t in g['tiles'] if not t.get('separator')}
+ICON_SWAP = {'me': 'ic_tree', 'myroadmap': 'ic_vcard'}   # #1931 Lnktree and Me-Prj swapped icons
 MOVED = {'tools-account': 'configs-profile', 'configs-controls': 'configs-launcher', 'configs-ui': 'configs-launcher'}   # #1929 Quick Actions and UI merged into Launcher;   # #1903 the Profile tile left the Me row; it is reachable in Setup (Profile | About), a rename of its place, not a removal
 for tid, o in snap.items():
     if tid not in now and MOVED.get(tid) in now: continue
     if tid not in now: check(False, 'Cloud tile %s is gone' % tid)
-    elif now[tid] != o['icon']: check(False, 'Cloud tile %s icon changed %s -> %s' % (tid, o['icon'], now[tid]))
-check(all(now.get(tid) == o['icon'] for tid, o in snap.items() if tid not in MOVED), 'all %d Cloud tile icons are identical to origin/main' % len(snap))
+    elif now[tid] != ICON_SWAP.get(tid, o['icon']): check(False, 'Cloud tile %s icon changed %s -> %s' % (tid, o['icon'], now[tid]))
+check(all(now.get(tid) == ICON_SWAP.get(tid, o['icon']) for tid, o in snap.items() if tid not in MOVED), 'all %d Cloud tile icons are identical to origin/main' % len(snap))
 # #1778 the Projects row reads Wiki | SuperApp, Omniverse | FinTerm, BioMed, CAD | Circusverse: Wiki and Circusverse are new, Circusverse is a greyed-out
 # coming_soon tile (no target, no fleet app), and every tile that was there keeps its icon (checked above).
 proj = [g for g in cloud if g['title'] == 'Projects'][0]['tiles']

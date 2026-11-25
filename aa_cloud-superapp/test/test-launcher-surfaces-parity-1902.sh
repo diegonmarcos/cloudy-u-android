@@ -29,7 +29,8 @@ SNAP = json.load(open(A + 'test/data/launcher-surfaces-before-1902.json'))
 pk = lambda x: x if isinstance(x, str) else x['pkg']
 # #1903 the Me row renames (old -> new), never removals: the three page tiles keep id and icon (label and target are the new Cloud Me pages), the Profile tile and
 # its rule moved to Setup (configs-profile), the three phone Me folders carry the same new names.
-ME_TILE = {'myhealth': ('Me-Pers', 'extapp:cloud-me#page:pers/pers-profiles'), 'myexperiences': ('Me-Prof', 'extapp:cloud-me#page:prof/prof-profiles'), 'myroadmap': ('Me-Prj', 'extapp:cloud-me#page:proj/lnktree-site')}
+ME_TILE = {'myhealth': ('Me-Pers', 'extapp:cloud-me#page:pers/pers-profiles'), 'myexperiences': ('Me-Prof', 'extapp:cloud-me#page:prof/prof-profiles'), 'myroadmap': ('Me-Prj', 'extapp:cloud-me#page:proj/pj-home')}
+ICON_SWAP = {'me': 'ic_tree', 'myroadmap': 'ic_vcard'}   # #1931 the Lnktree and Me-Prj tiles swapped icons (a move)
 ME_MOVED = {'tools-account': 'configs-profile'}
 ME_FOLDER = {'Me-Health': 'Me-Pers', 'Experiences': 'Me-Prof', 'Socials': 'Me-Prj'}
 CITY, LEIS = 'Services · City', 'Services · Leisure'
@@ -75,10 +76,10 @@ def surface(name, bj, ph, cl):
                     f.append('Cloud %s tile %s is gone' % (gt, old['id'])); continue
                 if gt == 'Me':   # #1903 renames: the id and the icon stay, the label and target are the new ones
                     if old['id'] in ME_TILE:
-                        if n.get('icon') != old['icon'] or (n.get('label'), n.get('target')) != ME_TILE[old['id']]: f.append('Cloud Me tile %s is not renamed to %s with icon %s' % (old['id'], ME_TILE[old['id']], old['icon']))
+                        if n.get('icon') != ICON_SWAP.get(old['id'], old['icon']) or (n.get('label'), n.get('target')) != ME_TILE[old['id']]: f.append('Cloud Me tile %s is not renamed to %s with icon %s' % (old['id'], ME_TILE[old['id']], old['icon']))
                     else:
                         for k in ('label', 'icon', 'target'):
-                            if n.get(k) != old[k]: f.append('Cloud Me tile %s changed %s: %r -> %r' % (old['id'], k, old[k], n.get(k)))
+                            if n.get(k) != (ICON_SWAP.get(old['id'], old[k]) if k == 'icon' else old[k]): f.append('Cloud Me tile %s changed %s: %r -> %r' % (old['id'], k, old[k], n.get(k)))
                     continue
                 for k in ('label', 'icon', 'target', 'coming_soon'):
                     if n.get(k) != old[k]: f.append('Cloud tile %s changed %s: %r -> %r' % (old['id'], k, old[k], n.get(k)))
