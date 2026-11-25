@@ -27,10 +27,10 @@ class BuroLlcDeclTest {
     @Test fun `the bar is Pers Prof Proj Inventory Buro LLC and House, Work, RoadMap, Duties and the Lnktree section are gone`() {
         val ui = JSONObject(BuroLlcTestData.text("build.json")).getJSONObject("ui")
         val bar = ui.getJSONArray("bottom_nav").let { a -> (0 until a.length()).map { a.getString(it) } }
-        assertEquals(listOf("pers", "prof", "proj", "inventory", "buro", "llc"), bar)
-        assertEquals(listOf("Pers", "Prof", "Proj", "Inventory", "Buro", "LLC"), bar.map { sections.getValue(it).getString("label") })
+        assertEquals(listOf("pers", "prof", "proj", "lnktree", "inventory", "buro", "llc"), bar)
+        assertEquals(listOf("Pers", "Prof", "Proj", "Lnktree", "Inventory", "Buro", "LLC"), bar.map { sections.getValue(it).getString("label") })
         assertFalse("house" in sections); assertFalse("work" in sections); assertFalse("roadmap" in sections); assertFalse("duties" in sections)
-        for (gone in listOf("health", "experiences", "socials", "lnktree")) assertFalse("$gone is a section of the layout before #1901", gone in sections)
+        for (gone in listOf("health", "experiences", "socials")) assertFalse("$gone is a section of the layout before #1901", gone in sections)
         assertEquals("proj", ui.getString("default_section"))
         assertEquals(listOf("lnktree-site", "area-unix", "area-cg", "area-capital", "area-hardtech", "area-lecole42", "area-front"), ids(sections.getValue("proj").getJSONArray("pages")))
         assertEquals(listOf("roadmaps", "backlogs"), ids(sections.getValue("tasks").getJSONArray("pages")))

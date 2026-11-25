@@ -47,8 +47,8 @@ def strings(o):
         for v in o: yield from strings(v)
 
 # ---- N1 nav order
-want_ids = ["pers", "prof", "proj", "inventory", "buro", "llc"]
-want_labels = ["Pers", "Prof", "Proj", "Inventory", "Buro", "LLC"]
+want_ids = ["pers", "prof", "proj", "lnktree", "inventory", "buro", "llc"]
+want_labels = ["Pers", "Prof", "Proj", "Lnktree", "Inventory", "Buro", "LLC"]
 if ui.get("bottom_nav") != want_ids:
     bad("nav-order", f"ui.bottom_nav is {ui.get('bottom_nav')}, wanted {want_ids}")
 if [secs[i]["label"] for i in ui.get("bottom_nav", []) if i in secs] != want_labels:
@@ -215,8 +215,9 @@ for gone in ("house", "work"):
     if os.path.isdir(os.path.join(app, "data/ui", gone)):
         bad("pages", f"data/ui/{gone} is back")
 # #1901 the Lnktree section is gone: Prof = Profiles | Leaf.y, Nexus.z, Stark.x; Pers holds Profiles, Health, Astro, DD, Personal Archives; Proj = Lnktree | the areas
-if "lnktree" in secs or "lnktree" in ui.get("bottom_nav", []):
-    bad("pages", "the Lnktree section is declared again (its pages live in Pers, Prof and Proj)")
+_lt = secs.get("lnktree", {})   # #1901 correction: the Lnktree bottom-nav entry is restored with its sixteen pages (lt- prefix, N12)
+if "lnktree" not in ui.get("bottom_nav", []) or [p["id"] for p in _lt.get("pages", [])] != ["lt-" + x for x in ["professional", "leafy", "nexus", "stark", "personal", "social", "health", "dd", "astro", "lnktree-site", "area-unix", "area-cg", "area-capital", "area-hardtech", "area-lecole42", "area-front"]]:
+    bad("pages", "the Lnktree bottom-nav entry with its sixteen pages is missing")
 _pf = secs.get("prof", {})
 if [p["id"] for p in _pf.get("pages", [])] != ["prof-profiles", "leafy", "nexus", "stark"] or \
    [p["id"] for p in (_pf.get("pages") or [{}])[0].get("pages", [])] != ["professional", "work", "study"] or \
@@ -227,8 +228,8 @@ if [p["id"] for p in _pj.get("pages", [])] != ["lnktree-site", "area-unix", "are
     bad("pages", "Proj pages are not Lnktree, Unix, CG, Capital, HardTech, 42, Projects")
 if _pj.get("nav_mode") != "horizontal_two_rows" or {g["id"]: g["pages"] for g in _pj.get("groups", [])} != {"lnktree": ["lnktree-site"], "proj": ["area-unix", "area-cg", "area-capital", "area-hardtech", "area-lecole42", "area-front"]}:
     bad("pages", "Proj is not the two rows Lnktree / Proj")
-if ui.get("default_section") != "proj" or (_pj.get("pages") or [{}])[0].get("id") != "lnktree-site":
-    bad("pages", "the app does not open on Proj > Lnktree")
+if ui.get("default_section") != "lnktree" or (_pj.get("pages") or [{}])[0].get("id") != "lnktree-site":
+    bad("pages", "the app does not open on Lnktree, or Proj does not open on its Lnktree page")
 _pr = {p["id"]: p for p in _sub.get("pers-profiles", {}).get("pages", [])}
 if list(_pr) != ["personal", "instagram", "social"]:
     bad("pages", "Pers > Profiles is not Personal, Instagram, Social")

@@ -335,18 +335,18 @@
       "pers",
       "prof",
       "proj",
+      "lnktree",
       "inventory",
       "buro",
       "llc"
     ],
-    "default_section": "proj",
+    "default_section": "lnktree",
     "renamed": {
       "_doc": "#1901 the old section and page ids of the Cloud Me layout before Health became Pers, Experiences Prof and Socials Proj (and the Lnktree section was spread over Pers, Prof and Proj). LegacyRoutes reads it after its own table, so a deep link (page:<old section>/<old page>, e.g. the SuperApp's Me row), a shortcut or a saved state written against the old ids still lands on the page that now holds that content. `pages` maps \"<old section>/<old page>\" to \"<section>/<page>\" (the page is a leaf or a container; every page of the old tree is listed, test-nav-reorg.sh proves it against test/fixtures/nav-baseline-1901.json); `sections` maps an old section id alone (or one whose page is not listed) to the section that took its place. Professional and Personal were two copies of the same LinkedIn and Instagram pages (Lnktree and Socials): both ids point at the one page that now holds them.",
       "sections": {
         "health": "pers",
         "experiences": "prof",
-        "socials": "proj",
-        "lnktree": "proj"
+        "socials": "proj"
       },
       "pages": {
         "health/tracked": "pers/tracked",
@@ -382,22 +382,22 @@
         "experiences/by50": "pers/by50",
         "socials/socials-professional": "prof/professional",
         "socials/socials-personal": "pers/instagram",
-        "lnktree/professional": "prof/professional",
-        "lnktree/leafy": "prof/leafy",
-        "lnktree/nexus": "prof/nexus",
-        "lnktree/stark": "prof/stark",
-        "lnktree/personal": "pers/instagram",
-        "lnktree/social": "pers/social",
-        "lnktree/health": "pers/health-profile",
-        "lnktree/dd": "pers/dd",
-        "lnktree/astro": "pers/astro",
-        "lnktree/lnktree-site": "proj/lnktree-site",
-        "lnktree/area-unix": "proj/area-unix",
-        "lnktree/area-cg": "proj/area-cg",
-        "lnktree/area-capital": "proj/area-capital",
-        "lnktree/area-hardtech": "proj/area-hardtech",
-        "lnktree/area-lecole42": "proj/area-lecole42",
-        "lnktree/area-front": "proj/area-front"
+        "lnktree/professional": "lnktree/lt-professional",
+        "lnktree/leafy": "lnktree/lt-leafy",
+        "lnktree/nexus": "lnktree/lt-nexus",
+        "lnktree/stark": "lnktree/lt-stark",
+        "lnktree/personal": "lnktree/lt-personal",
+        "lnktree/social": "lnktree/lt-social",
+        "lnktree/health": "lnktree/lt-health",
+        "lnktree/dd": "lnktree/lt-dd",
+        "lnktree/astro": "lnktree/lt-astro",
+        "lnktree/lnktree-site": "lnktree/lt-lnktree-site",
+        "lnktree/area-unix": "lnktree/lt-area-unix",
+        "lnktree/area-cg": "lnktree/lt-area-cg",
+        "lnktree/area-capital": "lnktree/lt-area-capital",
+        "lnktree/area-hardtech": "lnktree/lt-area-hardtech",
+        "lnktree/area-lecole42": "lnktree/lt-area-lecole42",
+        "lnktree/area-front": "lnktree/lt-area-front"
       }
     },
     "configs_ui": ["nav_ui"],
@@ -911,6 +911,137 @@
         ]
       },
 
+      {
+        "_doc": "#1901 correction: Lnktree stays its own bottom-nav entry, restored as it was before the reorganisation (the app opens here, ui.default_section): the same three rows Prof / Pers / Proj and the same sixteen pages, each page the same embedded site or registry tree as the page of the same name in Pers, Prof and Proj (those are the reorganised copies). Page ids carry the prefix lt- because a page id names ONE page in the whole app (nav-shape N12); ui.renamed sends every old lnktree/<page> id to its lt- page, so deep links resolve here as they did. Page content: data/ui/lnktree/lt-<page>.json. The area chips' labels are declared here (they are the registry area names of the outline).",
+        "id": "lnktree",
+        "nav_mode": "horizontal_two_rows",
+        "label": "Lnktree",
+        "icon": "ic_nav_me",
+        "groups": [
+          {
+            "id": "prof",
+            "label": "Prof",
+            "icon": "badge",
+            "pages": [
+              "lt-professional",
+              "lt-leafy",
+              "lt-nexus",
+              "lt-stark"
+            ]
+          },
+          {
+            "id": "pers",
+            "label": "Pers",
+            "icon": "person",
+            "pages": [
+              "lt-personal",
+              "lt-social",
+              "lt-health",
+              "lt-dd",
+              "lt-astro",
+              "lt-lnktree-site"
+            ]
+          },
+          {
+            "id": "proj",
+            "label": "Proj",
+            "icon": "account_tree",
+            "pages": [
+              "lt-area-unix",
+              "lt-area-cg",
+              "lt-area-capital",
+              "lt-area-hardtech",
+              "lt-area-lecole42",
+              "lt-area-front"
+            ]
+          }
+        ],
+        "pages": [
+          {
+            "id": "lt-professional",
+            "label": "Professional",
+            "icon": "ic_nav_me"
+          },
+          {
+            "id": "lt-leafy",
+            "label": "Leaf.y",
+            "icon": "ic_world",
+            "separator_before": true
+          },
+          {
+            "id": "lt-nexus",
+            "label": "Nexus.z",
+            "icon": "ic_world"
+          },
+          {
+            "id": "lt-stark",
+            "label": "Stark.x",
+            "icon": "ic_world"
+          },
+          {
+            "id": "lt-personal",
+            "label": "Personal",
+            "icon": "ic_p_identities"
+          },
+          {
+            "id": "lt-social",
+            "label": "Social",
+            "icon": "ic_p_identities"
+          },
+          {
+            "id": "lt-health",
+            "label": "Health",
+            "icon": "ic_nav_health",
+            "separator_before": true
+          },
+          {
+            "id": "lt-dd",
+            "label": "DD",
+            "icon": "ic_nav_buro"
+          },
+          {
+            "id": "lt-astro",
+            "label": "Astro",
+            "icon": "ic_world"
+          },
+          {
+            "id": "lt-lnktree-site",
+            "label": "Lnktree",
+            "icon": "ic_link_tile",
+            "separator_before": true
+          },
+          {
+            "id": "lt-area-unix",
+            "label": "Unix",
+            "icon": "terminal"
+          },
+          {
+            "id": "lt-area-cg",
+            "label": "CG",
+            "icon": "palette"
+          },
+          {
+            "id": "lt-area-capital",
+            "label": "Capital",
+            "icon": "payments"
+          },
+          {
+            "id": "lt-area-hardtech",
+            "label": "HardTech",
+            "icon": "memory"
+          },
+          {
+            "id": "lt-area-lecole42",
+            "label": "42",
+            "icon": "menu_book"
+          },
+          {
+            "id": "lt-area-front",
+            "label": "Projects",
+            "icon": "rocket_launch"
+          }
+        ]
+      },
       {
         "_doc": "#1367 Inventory: what the owner has and what it costs, in the slot Duties held. Three rows (horizontal_two_rows groups; `separator_before` draws the \"|\" inside a row, the same as Lnktree): City = Housing, Household, Transport, Parking; Buro = Utilities, Taxes, Insurance, Contracts, Banking, Subscriptions; Lifestyle = Leisure | Food, Care | Clothing, Electronics | Education. Every page is one `ledger` block over the inventory_user store (a declared fleet-config config store, so the backup and the new-phone migration carry it) with the same item fields (name, category, brand/model, purchased, price, monthly, location, status, note) and a `summary` header (count, value, monthly recurring; LedgerReports.summary). Each collection declares a `seed` of MOCK records (marked mock) that LedgerSeed copies into the store ONCE, on the first load that has not seen that collection; after that the records are the owner's to edit or delete and a seed is never applied again.",
         "id": "inventory",

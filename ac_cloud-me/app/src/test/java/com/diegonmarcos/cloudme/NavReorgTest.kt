@@ -30,11 +30,14 @@ class NavReorgTest {
 
     // ---- the navigation tree
 
-    @Test fun `the bar is Pers Prof Proj Inventory Buro LLC and the app opens on Proj`() {
-        assertEquals(listOf("Pers", "Prof", "Proj", "Inventory", "Buro", "LLC"), Sections.bottom().map { it.label })
-        assertEquals(listOf("pers", "prof", "proj", "inventory", "buro", "llc"), Sections.bottom().map { it.id })
-        assertEquals("proj", Sections.default()?.id)
-        for (gone in listOf("health", "experiences", "socials", "lnktree")) assertEquals("$gone moved, it is no section", null, Sections.byId(gone))
+    @Test fun `the bar is Pers Prof Proj Lnktree Inventory Buro LLC and the app opens on Lnktree`() {
+        assertEquals(listOf("Pers", "Prof", "Proj", "Lnktree", "Inventory", "Buro", "LLC"), Sections.bottom().map { it.label })
+        assertEquals(listOf("pers", "prof", "proj", "lnktree", "inventory", "buro", "llc"), Sections.bottom().map { it.id })
+        assertEquals("lnktree", Sections.default()?.id)
+        // #1901 correction: the Lnktree bottom-nav entry is not removed, it keeps its sixteen pages
+        assertEquals(16, Sections.byId("lnktree")!!.pages.size)
+        assertEquals("lt-professional", leafOf("lnktree", null))
+        for (gone in listOf("health", "experiences", "socials")) assertEquals("$gone moved, it is no section", null, Sections.byId(gone))
     }
 
     @Test fun `Pers is Profiles Health Astro DD Personal Archives with Health holding the whole former Health section`() {
@@ -85,7 +88,7 @@ class NavReorgTest {
             if (Sections.byId(old) == null) moved++
             assertNotNull("$key -> $s/$p: the page is gone", section!!.page(p))
         }
-        assertEquals("the baseline holds the 19 + 12 + 2 + 16 pages of the four moved sections", 49, moved)
+        assertEquals("the baseline holds the 19 + 12 + 2 pages of the three moved sections", 33, moved)
         for (old in listOf("health", "experiences", "socials", "lnktree", "me", "study", "achieves")) {
             val (s, _) = LegacyRoutes.resolve(old, null)
             assertNotNull("$old -> $s: the section is gone", Sections.byId(s))
@@ -99,13 +102,12 @@ class NavReorgTest {
             ("experiences" to "work") to ("prof" to "work"), ("experiences" to "cv") to ("prof" to "cv"), ("experiences" to "achieves") to ("pers" to "achieves"),
             ("experiences" to "geo") to ("pers" to "geo"), ("experiences" to "by50") to ("pers" to "by50"),
             ("socials" to "socials-professional") to ("prof" to "professional"), ("socials" to "socials-personal") to ("pers" to "instagram"),
-            ("lnktree" to "professional") to ("prof" to "professional"), ("lnktree" to "personal") to ("pers" to "instagram"),
-            ("lnktree" to "leafy") to ("prof" to "leafy"), ("lnktree" to "nexus") to ("prof" to "nexus"), ("lnktree" to "stark") to ("prof" to "stark"),
-            ("lnktree" to "social") to ("pers" to "social"), ("lnktree" to "health") to ("pers" to "health-profile"), ("lnktree" to "dd") to ("pers" to "dd"),
-            ("lnktree" to "astro") to ("pers" to "astro"), ("lnktree" to "lnktree-site") to ("proj" to "lnktree-site"), ("lnktree" to "area-unix") to ("proj" to "area-unix"),
-            ("lnktree" to null) to ("proj" to null), ("socials" to null) to ("proj" to null),
+            ("lnktree" to "professional") to ("lnktree" to "lt-professional"), ("lnktree" to "personal") to ("lnktree" to "lt-personal"),
+            ("lnktree" to "leafy") to ("lnktree" to "lt-leafy"), ("lnktree" to "dd") to ("lnktree" to "lt-dd"), ("lnktree" to "health") to ("lnktree" to "lt-health"),
+            ("lnktree" to "lnktree-site") to ("lnktree" to "lt-lnktree-site"), ("lnktree" to "area-unix") to ("lnktree" to "lt-area-unix"),
+            ("lnktree" to null) to ("lnktree" to null), ("socials" to null) to ("proj" to null),
             // ids of the layouts before the previous one chain through both tables
-            ("me" to "leafy") to ("prof" to "leafy"), ("me" to "lnktree") to ("proj" to "lnktree-site"), ("study" to "cv") to ("prof" to "cv"),
+            ("me" to "leafy") to ("lnktree" to "lt-leafy"), ("me" to "lnktree") to ("lnktree" to "lt-lnktree-site"), ("study" to "cv") to ("prof" to "cv"),
             ("achieves" to "personal") to ("pers" to "growth"),
         )
         for ((old, to) in want) assertEquals("${old.first}/${old.second}", to, LegacyRoutes.resolve(old.first, old.second))
@@ -138,7 +140,7 @@ class NavReorgTest {
             Triple("prof", "leafy", "https://diegonmarcos.github.io/leafy/"), Triple("prof", "nexus", "https://diegonmarcos.github.io/nexus/"),
             Triple("prof", "stark", "https://diegonmarcos.github.io/stark/"),
             Triple("pers", "personal", "https://diegonmarcos.com/"), Triple("pers", "instagram", "mysocials/instagram-diegocnmarcos_.html"),
-            Triple("pers", "astro", "https://diegonmarcos.github.io/myAstro/"), Triple("proj", "lnktree-site", "https://linktree.diegonmarcos.com/"),
+            Triple("pers", "astro", "https://diegonmarcos.github.io/myAstro/"), Triple("proj", "lnktree-site", "https://linktree.diegonmarcos.com/"), Triple("lnktree", "lt-lnktree-site", "https://linktree.diegonmarcos.com/"),
         )
         for ((section, page, url) in want) {
             val chain = Sections.byId(section)!!.path(page).map { it.id }
@@ -154,7 +156,7 @@ class NavReorgTest {
             val chain = Sections.byId(s)!!.path(p).map { it.id }
             LnktreePages.fromStack(p, JSONArray(BuroLlcTestData.text("data/ui/$s/${chain.joinToString("/")}.json")), cfg)
         }
-        assertEquals(setOf("leafy", "nexus", "stark", "personal", "astro", "lnktree-site"), cached.map { it.id }.toSet())
+        assertEquals(setOf("leafy", "nexus", "stark", "personal", "astro", "lnktree-site", "lt-lnktree-site"), cached.map { it.id }.toSet())
         assertEquals(listOf("pers", "prof", "proj"), cfg.cachedSections())
     }
 }

@@ -19,9 +19,9 @@ object LegacyRoutes {
         "house" to "buro/assets",
         "me/tasks" to "tasks/backlogs",
         // #1299 the section took the name Lnktree, so its embedded linktree site page is lnktree-site (a page id equal
-        // to its section id draws two title-menu entries with one tag). #1901 the Lnktree page is Proj's first page, Proj's default.
-        "me/lnktree" to "proj/lnktree-site",
-        "lnktree/lnktree" to "proj/lnktree-site",
+        // to its section id draws two title-menu entries with one tag). #1901 Lnktree is a bar section again, its pages carry the lt- prefix (page ids are unique in the app).
+        "me/lnktree" to "lnktree/lt-lnktree-site",
+        "lnktree/lnktree" to "lnktree/lt-lnktree-site",
         "buro/summary" to "buro/ids",
         "buro/docs" to "buro/assets",
         "buro/fin" to "buro/cashflow",

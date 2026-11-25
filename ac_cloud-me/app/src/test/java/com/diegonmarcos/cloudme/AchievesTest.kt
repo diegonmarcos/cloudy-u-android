@@ -144,8 +144,8 @@ class AchievesTest {
 
     @Test fun `the bar is Pers Prof Proj Inventory then the rest, Pers holds Personal Archives and Prof holds Work and Study`() {
         val bar = ui.getJSONArray("bottom_nav").let { a -> (0 until a.length()).map { a.getString(it) } }
-        assertEquals(listOf("pers", "prof", "proj", "inventory", "buro", "llc"), bar)
-        assertTrue(sections.none { it.getString("id") in setOf("study", "achieves", "experiences", "health", "socials", "lnktree") })
+        assertEquals(listOf("pers", "prof", "proj", "lnktree", "inventory", "buro", "llc"), bar)
+        assertTrue(sections.none { it.getString("id") in setOf("study", "achieves", "experiences", "health", "socials") })
         assertEquals(listOf("pers-profiles", "health", "astro", "dd", "achieves"), sub(experiences).map { it.getString("id") })
         assertEquals(listOf("Profiles", "Health", "Astro", "DD", "Personal Archives"), sub(experiences).map { it.getString("label") })
         val profiles = sub(prof)[0]

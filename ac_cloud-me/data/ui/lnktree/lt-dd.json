@@ -1,0 +1,9 @@
+[
+  {
+    "kind": "fragment",
+    "id": "web",
+    "url": "mysocials/dd.html",
+    "inject": "dd",
+    "_doc": "Shareholder due-diligence dossier: the page itself (public SCHEMA only, cloud-me-profiles b_Profiles/mySocials/dd.html). The owner's values are imported from the private store (cloud-me-data-pvt, profiles/dd.data.json) into the on-device store profile_dd_user and injected into the WebView by WebPage after load; they are never in this repo. Private stack only."
+  }
+]

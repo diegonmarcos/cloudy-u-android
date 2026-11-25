@@ -132,7 +132,7 @@ class MeTabsTest {
     @Test
     fun `the bar reads Pers, Prof, Proj, Inventory, Buro, LLC`() {
         assertEquals(
-            listOf("Pers", "Prof", "Proj", "Inventory", "Buro", "LLC"),
+            listOf("Pers", "Prof", "Proj", "Lnktree", "Inventory", "Buro", "LLC"),
             Sections.bottom().map { it.label },
         )
         assertTrue("a launch section is back on the bar", Sections.bottom().none { it.target.isNotBlank() })

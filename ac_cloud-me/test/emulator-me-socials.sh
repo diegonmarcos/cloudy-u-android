@@ -67,6 +67,7 @@ for i in 1 2 3 4 5; do $T adb shell input tap $((W*61/100)) $((H*58/100)); sleep
 shot superapp-cloud-apps 3
 # the Me row (Lnktree first, Socials fifth) sits at ~80% height; scroll the page so it is fully in view
 $T adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*40/100)) 500; shot superapp-cloud-apps-me-row 3
+walk_tab section:lnktree me-lnktree Lnktree
 walk_tab section:proj me-proj Proj
 $T adb logcat -d > "$OUT/logcat.txt"
 ls -la "$OUT"

@@ -43,10 +43,15 @@ def sub(section, *chain):
     return cur
 
 # ---- N1 the declared tree
-if ui.get("bottom_nav") != ["pers", "prof", "proj", "inventory", "buro", "llc"] or \
-   [secs[i]["label"] for i in ui.get("bottom_nav", []) if i in secs] != ["Pers", "Prof", "Proj", "Inventory", "Buro", "LLC"]:
-    bad("tree", f"the bar is {ui.get('bottom_nav')}, wanted Pers | Prof | Proj | Inventory | Buro | LLC")
-for gone in ("health", "experiences", "socials", "lnktree"):
+if ui.get("bottom_nav") != ["pers", "prof", "proj", "lnktree", "inventory", "buro", "llc"] or \
+   [secs[i]["label"] for i in ui.get("bottom_nav", []) if i in secs] != ["Pers", "Prof", "Proj", "Lnktree", "Inventory", "Buro", "LLC"]:
+    bad("tree", f"the bar is {ui.get('bottom_nav')}, wanted Pers | Prof | Proj | Lnktree | Inventory | Buro | LLC (the Lnktree entry is NOT removed)")
+LT = ["professional", "leafy", "nexus", "stark", "personal", "social", "health", "dd", "astro", "lnktree-site", "area-unix", "area-cg", "area-capital", "area-hardtech", "area-lecole42", "area-front"]
+if [p["id"] for p in secs.get("lnktree", {}).get("pages", [])] != ["lt-" + x for x in LT] or secs.get("lnktree", {}).get("nav_mode") != "horizontal_two_rows" or \
+   [g["id"] for g in secs.get("lnktree", {}).get("groups", [])] != ["prof", "pers", "proj"] or (secs.get("lnktree", {}).get("pages") or [{}])[0].get("id") != "lt-professional":
+    bad("tree", "the Lnktree bottom-nav section does not hold its sixteen pages in the three rows Prof / Pers / Proj")
+if ui.get("default_section") != "lnktree": bad("tree", "the app does not open on the Lnktree entry")
+for gone in ("health", "experiences", "socials"):
     if gone in secs: bad("tree", f"{gone} is a section again: it moved (ui.renamed keeps its ids working)")
 def labels(ps): return [(p["id"], p["label"]) for p in ps]
 if labels(secs.get("pers", {}).get("pages", [])) != [("pers-profiles", "Profiles"), ("health", "Health"), ("astro", "Astro"), ("dd", "DD"), ("achieves", "Personal Archives")]:
@@ -71,8 +76,8 @@ if [p["id"] for p in secs.get("proj", {}).get("pages", [])] != ["lnktree-site", 
     bad("tree", "Proj is not Lnktree | Unix, CG, Capital, Hardtech, 42, Projects")
 if {g["id"]: g["pages"] for g in secs.get("proj", {}).get("groups", [])} != {"lnktree": ["lnktree-site"], "proj": ["area-unix", "area-cg", "area-capital", "area-hardtech", "area-lecole42", "area-front"]}:
     bad("tree", "Proj is not the rows Lnktree / Proj")
-if (secs.get("proj", {}).get("pages") or [{}])[0].get("id") != "lnktree-site" or ui.get("default_section") != "proj":
-    bad("tree", "Lnktree is not Proj's first and default page, or Proj is not the section the app opens on")
+if (secs.get("proj", {}).get("pages") or [{}])[0].get("id") != "lnktree-site":
+    bad("tree", "Lnktree is not Proj's first and default page")
 if "lnktree-site" in [p["id"] for p in secs.get("pers", {}).get("pages", [])] or "lnktree-site" in ids(secs.get("pers", {}).get("pages")):
     bad("tree", "the Lnktree tile is still under Pers (it moved to Proj)")
 if ui.get("repo_tree", {}).get("group") not in {g["id"] for g in secs.get("proj", {}).get("groups", [])}:
@@ -98,7 +103,7 @@ def norm(leaf):
     return f'{m.group(1)}="{m.group(2)}:{s}' + (f"/{p}" if p else "") + '"'
 
 RELABELED = {  # the owner's renames of #1901, and the two pages whose name the move gave to another page
-    "experiences/achieves": "Personal Archives", "lnktree/health": "Record", "lnktree/personal": "Instagram", "socials/socials-personal": "Instagram",
+    "experiences/achieves": "Personal Archives", "socials/socials-personal": "Instagram",
 }
 for key, b in sorted(base["pages"].items()):
     sec, pid = key.split("/", 1)
@@ -121,6 +126,18 @@ for key, b in sorted(base["pages"].items()):
         if n not in t["targets"]: bad("parity", f"{key} -> {ns}/{np}: the tile target {tg} is gone")
     if b["label"] and t["label"] != RELABELED.get(key, b["label"]):
         bad("parity", f"{key} -> {ns}/{np}: the label {b['label']!r} became {t['label']!r}")
+# the Lnktree bottom-nav pages (restored, lt- ids) also live on as the reorganised pages of Pers, Prof and Proj: those hold every baseline field too
+ALSO = {"professional": "prof/professional", "leafy": "prof/leafy", "nexus": "prof/nexus", "stark": "prof/stark", "personal": "pers/instagram", "social": "pers/social",
+        "health": "pers/health-profile", "dd": "pers/dd", "astro": "pers/astro", "lnktree-site": "proj/lnktree-site",
+        **{f"area-{a}": f"proj/area-{a}" for a in ("unix", "cg", "capital", "hardtech", "lecole42", "area-front"[5:])}}
+for pid, to in ALSO.items():
+    b = base["pages"].get(f"lnktree/{pid}")
+    t = now["pages"].get(to)
+    if b is None or t is None:
+        bad("parity", f"lnktree/{pid} is also expected at {to}: one of them is gone"); continue
+    have = {norm(x) for x in t["leaves"]}
+    for leaf in b["leaves"]:
+        if norm(leaf) not in have: bad("parity", f"lnktree/{pid} -> {to}: the field {leaf[:110]} is gone")
 # every section's own data (Health's metric taxonomy, the Achieves migration ...) is still declared, on the section that took it over
 allextras = {x for s in now["sections"] for x in s["extras"]}
 for s in base["sections"]:
@@ -130,7 +147,7 @@ for s in base["sections"]:
 for i in base["bottom_nav"]:
     if resolve(i, None)[0] not in ui.get("bottom_nav", []): bad("parity", f"the old bar section {i} resolves to {resolve(i, None)[0]}, which is not on the bar")
 # a moved page carries its content once: every old page file exists once more (no file is left behind in a retired folder)
-for gone in ("health", "experiences", "socials", "lnktree"):
+for gone in ("health", "experiences", "socials"):
     if os.path.isdir(os.path.join(app, "data/ui", gone)): bad("parity", f"data/ui/{gone} is back (a copy, not a move)")
 
 # ---- N3 the rename map
@@ -140,6 +157,7 @@ for old, to in ren.get("pages", {}).items():
 for old, to in ren.get("sections", {}).items():
     if to not in secs: bad("renamed", f"ui.renamed.sections[{old}] names {to}, which is not a section")
     if old in secs: bad("renamed", f"ui.renamed.sections[{old}] is a live section")
+if "lnktree" in ren.get("sections", {}): bad("renamed", "ui.renamed.sections still sends lnktree away (it is a bar section again)")
 for key in base["pages"]:
     if key.split("/", 1)[0] not in secs and key not in ren.get("pages", {}):   # a page of a section that is gone needs its entry; the live sections' ids are unchanged
         bad("renamed", f"ui.renamed.pages has no entry for the old page {key}")
@@ -166,6 +184,8 @@ SITES = {  # tile -> (page file, the url it embeds)
     "Pers > Profiles > Instagram": ("data/ui/pers/pers-profiles/instagram.json", "mysocials/instagram-diegocnmarcos_.html"),
     "Pers > Astro": ("data/ui/pers/astro.json", "https://diegonmarcos.github.io/myAstro/"),
     "Proj > Lnktree": ("data/ui/proj/lnktree-site.json", "https://linktree.diegonmarcos.com/"),
+    "Lnktree (bottom nav) > Lnktree": ("data/ui/lnktree/lt-lnktree-site.json", "https://linktree.diegonmarcos.com/"),
+    "Lnktree (bottom nav) > Leaf.y": ("data/ui/lnktree/lt-leafy.json", "https://diegonmarcos.github.io/leafy/"),
 }
 for tile, (f, url) in SITES.items():
     try: blocks = json.load(open(os.path.join(app, f), encoding="utf-8"))
@@ -234,7 +254,7 @@ mutant parity "a moved page is left behind as a copy in the old folder" "mkdir -
 mutant parity "a page is silently relabelled" "$J \"$BJ;[q.update(label='Moods') for p in S['pers']['pages'] if p['id']=='health' for t in p['pages'] if t['id']=='trackers' for q in t['pages'] if q['id']=='hr'];$W_\""
 mutant parity "Work leaves Prof for nowhere" "rm data/ui/prof/prof-profiles/work.json; $J \"$BJ;[p['pages'].pop(1) for p in S['prof']['pages'] if p['id']=='prof-profiles'];$W_\""
 # renamed
-mutant renamed "an old page has no rename entry" "$J \"$BJ;U['renamed']['pages'].pop('lnktree/dd');$W_\""
+mutant renamed "an old page has no rename entry" "$J \"$BJ;U['renamed']['pages'].pop('health/home');$W_\""
 mutant renamed "a rename names a page that does not exist" "$J \"$BJ;U['renamed']['pages']['health/home']='pers/nope';$W_\""
 mutant renamed "the section alias is gone" "$J \"$BJ;U['renamed']['sections'].pop('health');$W_\""
 mutant renamed "a rename sends a page to a section that is not declared" "$J \"$BJ;U['renamed']['sections']['socials']='social';$W_\""
@@ -250,7 +270,12 @@ mutant tree "the Lnktree tile is back under Pers" "$J \"$BJ;S['pers']['pages'].a
 mutant tree "Prof loses its companies group" "$J \"$BJ;S['prof']['groups']=S['prof']['groups'][:1];$W_\""
 mutant tree "Personal Archives is called Achieves again" "$J \"$BJ;[p.update(label='Personal Achieves') for p in S['pers']['pages'] if p['id']=='achieves'];$W_\""
 mutant tree "Health holds Plan before Trackers" "$J \"$BJ;[p['pages'].reverse() for p in S['pers']['pages'] if p['id']=='health'];$W_\""
-mutant tree "the Lnktree section is declared again" "$J \"$BJ;U['sections'].append({'id':'lnktree','label':'Lnktree','pages':[]});$W_\""
+mutant tree "the Lnktree bottom-nav entry is removed from the bar" "$J \"$BJ;U['bottom_nav'].remove('lnktree');$W_\""
+mutant tree "the Lnktree section loses a page" "$J \"$BJ;S['lnktree']['pages'].pop();$W_\""
+mutant tree "the Lnktree section is removed" "$J \"$BJ;U['bottom_nav'].remove('lnktree');U['sections']=[s for s in U['sections'] if s['id']!='lnktree'];U['default_section']='proj';$W_\""
+mutant tree "the app stops opening on Lnktree" "$J \"$BJ;U['default_section']='proj';$W_\""
+mutant urls "the Lnktree bottom-nav page loses its default URL" "sed -i 's#https://linktree.diegonmarcos.com/#https://example.com/#' data/ui/lnktree/lt-lnktree-site.json"
+mutant parity "a Lnktree bottom-nav page file is emptied" "echo '[]' > data/ui/lnktree/lt-dd.json"
 mutant tree "the page cache covers only Proj" "$J \"$BJ;U['lnktree_cache']['sections']=['proj'];$W_\""
 # urls
 mutant urls "Pers > Personal opens another site" "sed -i 's#https://diegonmarcos.com/#https://example.com/#' data/ui/pers/pers-profiles/personal.json"

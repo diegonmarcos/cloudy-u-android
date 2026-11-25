@@ -174,7 +174,7 @@ class RepoTreeTest {
     }
 
     @Test fun `Proj opens on Lnktree, Profile is only the avatar page and the old routes still open Lnktree`() {
-        assertEquals("proj", ui.getString("default_section"))
+        assertEquals("lnktree", ui.getString("default_section"))   // #1901 correction: the app opens on the restored Lnktree entry
         assertEquals("Proj", lnktree.getString("label"))
         assertEquals("lnktree-site", lnktree.getJSONArray("pages").objects().first().getString("id"))
         fun labels(o: JSONObject): List<String> = listOf(o.optString("label")) + o.optJSONArray("pages").objects().flatMap(::labels)
@@ -183,11 +183,11 @@ class RepoTreeTest {
         val all = ui.getJSONArray("sections").objects().filter { it.getString("id") != "profile" }.flatMap(::labels)
         assertFalse("no other section or page is labelled Profile: $all", all.any { it == "Profile" })
         assertEquals("profile", ui.getJSONArray("settings").getString(0))
-        assertEquals("prof" to "leafy", LegacyRoutes.resolve("me", "leafy"))
-        assertEquals("proj" to null, LegacyRoutes.resolve("me", null))
+        assertEquals("lnktree" to "lt-leafy", LegacyRoutes.resolve("me", "leafy"))
+        assertEquals("lnktree" to null, LegacyRoutes.resolve("me", null))
         assertEquals("tasks" to "backlogs", LegacyRoutes.resolve("me", "tasks"))
-        assertEquals("proj" to "lnktree-site", LegacyRoutes.resolve("me", "lnktree"))
-        assertEquals("proj" to "lnktree-site", LegacyRoutes.resolve("lnktree", "lnktree-site"))
+        assertEquals("lnktree" to "lt-lnktree-site", LegacyRoutes.resolve("me", "lnktree"))
+        assertEquals("lnktree" to "lt-lnktree-site", LegacyRoutes.resolve("lnktree", "lnktree-site"))
         // a page id never equals a section id (two title-menu entries, one tag)
         val sectionIds = ui.getJSONArray("sections").objects().map { it.getString("id") }.toSet()
         fun pageIds(o: JSONObject): List<String> = o.optJSONArray("pages").objects().flatMap { listOf(it.getString("id")) + pageIds(it) }

@@ -1,0 +1,8 @@
+[
+  {
+    "kind": "fragment",
+    "id": "repo_tree",
+    "area": "6",
+    "_doc": "#1298 Lnktree > Proj > Front: registry area 6 as a collapsible tree (projects, families, repos) from repos.outline.json."
+  }
+]

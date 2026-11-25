@@ -1,0 +1,9 @@
+[
+  {
+    "kind": "fragment",
+    "id": "web",
+    "url": "mysocials/health.html",
+    "inject": "health",
+    "_doc": "Health record: the page itself (public SCHEMA only, cloud-me-profiles b_Profiles/mySocials/health.html). The owner's values are imported from the private store (cloud-me-data-pvt, profiles/health.data.json) into the on-device store profile_health_user and injected into the WebView by WebPage after load; they are never in this repo. Private stack only."
+  }
+]

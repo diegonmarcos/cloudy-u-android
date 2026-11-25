@@ -7,9 +7,9 @@ launcher for everything the *person* runs: paperwork and money, what is due,
 the public profile, travel, study — and health.
 
 ```
-┌──────┬──────┬──────┬───────────┬──────┬─────┐
-│ Pers │ Prof │ Proj │ Inventory │ Buro │ LLC │   ← bottom nav (#1901)
-└──────┴──────┴──────┴───────────┴──────┴─────┘
+┌──────┬──────┬──────┬─────────┬───────────┬──────┬─────┐
+│ Pers │ Prof │ Proj │ Lnktree │ Inventory │ Buro │ LLC │   ← bottom nav (#1901; Lnktree stays its own entry)
+└──────┴──────┴──────┴─────────┴───────────┴──────┴─────┘
   Pers = Profiles (Personal, Instagram, Social) | Health (Trackers, Plan, Record) | Astro | DD | Personal Archives (Geo, Endurance, Personal Growth, Community, By 30/40/50)
   Prof = Profiles (Professional, Work, Study: CV, Roadmap) | Leaf.y, Nexus.z, Stark.x
   Proj = Lnktree | Unix, CG, Capital, HardTech, 42, Projects      (opens on Lnktree)
