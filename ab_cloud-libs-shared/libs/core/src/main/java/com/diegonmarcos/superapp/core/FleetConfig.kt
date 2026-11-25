@@ -38,7 +38,11 @@ object FleetConfig {
 
     /** 2 = the manifest travels with the call ([KEY_MANIFEST]); 1 = each app carried a copy. */
     const val CONTRACT = 2
-    const val ASSET = "fleet-config.json"
+    /** #1566 the manifest is a fleet-private served dataset (Cloud Account's private route), never an APK asset. */
+    const val DATASET = "fleet/fleet-config"
+
+    /** UNIT TESTS ONLY: the CI-materialised manifest text; production never sets it. */
+    @Volatile var testManifest: String? = null
     const val AUTHORITY_SUFFIX = ".fleetconfig"
     const val PERMISSION = "com.diegonmarcos.cloud.permission.CONSTELLATION_DATA"
 
@@ -59,12 +63,10 @@ object FleetConfig {
 
     fun authority(pkg: String) = pkg + AUTHORITY_SUFFIX
 
-    /** The manifest text this APK carries in its assets (the SuperApp), or null. Never parsed here. */
-    fun manifestText(ctx: Context): String? = try {
-        ctx.applicationContext.assets.open(ASSET).bufferedReader().use { it.readText() }
-    } catch (e: java.io.FileNotFoundException) {
-        null
-    }
+    /** The served manifest text (fleet/fleet-config, last-known-good), or null while nothing is served. Never parsed here. */
+    fun manifestText(ctx: Context): String? = testManifest ?: runCatching {
+        com.diegonmarcos.superapp.fleetdata.FleetData.get(ctx.applicationContext, DATASET) { it }
+    }.getOrNull()
 
     /** This app's store file: a plain one directly, an encrypted one through its cipher. Never
      *  creates a file unless [create]: an absent plain store reads as null, an absent encrypted

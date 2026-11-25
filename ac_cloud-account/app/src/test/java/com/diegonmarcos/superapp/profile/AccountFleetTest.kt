@@ -25,7 +25,7 @@ import org.robolectric.annotation.Config
 class AccountFleetTest {
 
     private val ctx: Application get() = ApplicationProvider.getApplicationContext()
-    private val m: FleetPolicy.Manifest by lazy { FleetPolicy.manifest(ctx) }
+    private val m: FleetPolicy.Manifest by lazy { FleetPolicy.testManifest = java.io.File("../../fleet-private-data/fleet-config.json").readText(); FleetPolicy.manifest(ctx) }
     private val S = AccountDrift.SEP
 
     private val export = JSONObject().put("schema_version", 1).put("stores", JSONObject()

@@ -45,9 +45,8 @@ class FleetMigrationTest {
      *  engine APK, which carries it (libs:fleetconfig-model); empty when the engine is absent,
      *  and then every test is skipped by [snapshot]. */
     private val manifest: String by lazy {
-        runCatching {
-            ctx.createPackageContext(ENGINE, 0).assets.open(FleetConfig.ASSET).bufferedReader().use { it.readText() }
-        }.getOrDefault("{}")
+        // #1566 the manifest is a served fleet-private dataset (fleet/fleet-config), no longer an asset of the engine APK
+        runCatching { FleetConfig.manifestText(ctx) }.getOrNull() ?: "{}"
     }
 
     /** cloud-nav's declared schema_version, or null when the manifest does not declare it. */

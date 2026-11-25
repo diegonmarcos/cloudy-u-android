@@ -1,7 +1,7 @@
 {
   "_doc": "#783 FLEET CONFIG scan policy, read by 1_cicd/src/scripts/cloud-android-fleet-config-guard.py (fleet-config-guard.yml, every push). The declarations themselves live in ONE place, `manifest` below (#796/#855: libs:fleetconfig-model's assets/fleet-config.json, merged into the SuperApp and Cloud-Lib-Fleetconfig, handed to each app's libs:core provider with every export/import call -- no longer shipped inside every fleet app, so an edit here rebuilds one APK, not 33); this file only says how to find stores in source. The guard fails when the code keeps state in a store the manifest does not declare and classify.",
   "_rule": "every SharedPreferences / EncryptedSharedPreferences / DataStore / Room store in an app or lib tree is declared in the fleet manifest (libs:fleetconfig-model assets/fleet-config.json) with a class and a doc",
-  "manifest": "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json",
+  "manifest": "fleet-private-data/fleet-config.json",
   "roster": "aa_cloud-superapp/data/constellation-fleet.json",
   "lib_consumers": "aa_cloud-superapp/data/lib-consumers.json",
   "app_prefixes": [

@@ -71,6 +71,11 @@
       "_doc": "#873 libs:core `api`s this module (the setup provider every app serves, describe / export / apply / status); listed so settings.gradle resolves the path and the ship workflow's path triggers see it, not linked in the app's own gradle.",
       "dir": "../ab_cloud-libs-shared/libs/fleetconfig-model",
       "type": "library"
+    },
+    "libs:fleet-data-client": {
+      "_doc": "#1566 libs:core and libs:fleetconfig-model read the fleet-config manifest through this client (a fleet-private served dataset); listed so settings.gradle resolves the path and the ship workflow's path triggers see it, not linked in the app's own gradle.",
+      "dir": "../ab_cloud-libs-shared/libs/fleet-data-client",
+      "type": "library"
     }
   },
   "signing": {

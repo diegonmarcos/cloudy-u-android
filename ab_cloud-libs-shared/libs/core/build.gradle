@@ -94,6 +94,7 @@ dependencies {
     // there is no cycle; it carries the baked fleet-config.json, hashed (never watched) by the
     // rebuild-isolation rule for manifests.
     api project(':libs:fleetconfig-model')
+    implementation project(':libs:fleet-data-client')   // #1566 fleet-config manifest is served at runtime (FleetConfig.manifestText)
 
     // #1122 the crash-safe default (persist-first report, the phone's local C3 sink, the generic crash screen)
     // lives in its own module, installed from CoreInitProvider below. crash depends on nothing here (no cycle).

@@ -55,7 +55,7 @@ JSON
   python3 - "$POLICY" "$T/policy.json" <<'PY'
 import json, sys
 c = json.load(open(sys.argv[1]))
-c["manifest"] = "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
+c["manifest"] = "fleet-private-data/fleet-config.json"
 c["provider_source"] = "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/java/x/SetupProvider.kt"
 c["register_roots"] = ["ac_cloud-b"]
 c["exempt"] = {}; c["unserved"] = {}

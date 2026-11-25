@@ -1,6 +1,7 @@
 package com.diegonmarcos.superapp.fleetconfig
 
 import android.content.Context
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import android.content.SharedPreferences
 import android.util.Log
 import org.json.JSONArray
@@ -32,7 +33,8 @@ object FleetPolicy {
 
     /** The app-to-app wire contract (libs:core FleetConfig.CONTRACT says the same number). */
     const val CONTRACT = 2
-    const val ASSET = "fleet-config.json"
+    /** #1566 the manifest is a fleet-private served dataset (Cloud Account's private route), never an APK asset. */
+    const val DATASET = "fleet/fleet-config"
     const val KEY_ERROR = "error"
     const val TYPES = "_types"
 
@@ -222,21 +224,20 @@ object FleetPolicy {
 
     @Volatile private var cached: Manifest? = null
 
-    /** The manifest this APK carries in its own assets (this module's, merged into the SuperApp and the engine), or null when the build
-     *  carries none. A manifest that is present but malformed still throws: that is a broken
-     *  build, not an absent declaration. */
-    fun manifestOrNull(ctx: Context): Manifest? = cached ?: synchronized(this) {
-        cached ?: try {
-            Manifest(JSONObject(ctx.applicationContext.assets.open(ASSET).bufferedReader().use { it.readText() }))
-                .also { cached = it }
-        } catch (e: java.io.FileNotFoundException) {
-            null
-        }
+    /** UNIT TESTS ONLY: the CI-materialised manifest text, put where the reader looks first; production never sets it. */
+    @Volatile var testManifest: String? = null
+
+    /** The manifest answered while nothing is served: no store, no app, nothing migrates (so nothing is exported or described). */
+    val EMPTY: Manifest by lazy { Manifest(JSONObject()) }
+
+    /** The served manifest (last-known-good while the provider is away; held for the process), or null while nothing is served. A copy that
+     *  is present but malformed still throws: that is a broken dataset, not an absent declaration. */
+    fun manifestOrNull(ctx: Context): Manifest? = testManifest?.let { Manifest(JSONObject(it)) } ?: cached ?: synchronized(this) {
+        cached ?: FleetData.get(ctx.applicationContext, DATASET) { Manifest(JSONObject(it)) }?.also { cached = it }
     }
 
-    /** The manifest this APK carries. Only the SuperApp may assume one. */
-    fun manifest(ctx: Context): Manifest = manifestOrNull(ctx)
-        ?: throw IllegalStateException("${ctx.packageName} carries no $ASSET: since #796 only the SuperApp does, and every other app is handed one per call")
+    /** The manifest, or [EMPTY] while it is not served (never a crash: nothing migrates until the dataset arrives). */
+    fun manifest(ctx: Context): Manifest = manifestOrNull(ctx) ?: EMPTY
 
     // ── helpers ──────────────────────────────────────────────────────────
 

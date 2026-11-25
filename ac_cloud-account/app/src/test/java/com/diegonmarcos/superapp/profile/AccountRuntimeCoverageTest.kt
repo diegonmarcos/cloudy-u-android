@@ -54,8 +54,8 @@ class AccountRuntimeCoverageTest {
         assertTrue("#789 cloud-drive reports now", drive.runtime.reports)
         assertEquals("git-sync-credentials", drive.runtime.store)
         assertTrue("the store it reads is a declared fleet-config secret store",
-            FleetPolicy.manifest(androidx.test.core.app.ApplicationProvider
-                .getApplicationContext()).stores[drive.runtime.store]?.cls == "secret")
+            run { FleetPolicy.testManifest = java.io.File("../../fleet-private-data/fleet-config.json").readText(); FleetPolicy.manifest(androidx.test.core.app.ApplicationProvider
+                .getApplicationContext()) }.stores[drive.runtime.store]?.cls == "secret")
     }
 
     @Test fun `789 cloud-drive's token - presence and fingerprint in the detail, never the value`() {

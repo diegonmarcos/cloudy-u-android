@@ -54,6 +54,7 @@ dependencies {
     compileOnly 'androidx.security:security-crypto:1.1.0'
     // #1106 the one safe way to open an EncryptedSharedPreferences file (never throws on a mismatched Keystore key).
     implementation project(':libs:crash')
+    implementation project(':libs:fleet-data-client')   // #1566 the manifest is a fleet-private dataset served at runtime
 
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'androidx.test:core:1.6.1'

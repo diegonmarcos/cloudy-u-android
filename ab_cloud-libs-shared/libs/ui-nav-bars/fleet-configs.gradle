@@ -74,7 +74,7 @@ ext.fleetConfigsB64 = { ->
     about.perms = (perms.needs ?: []).collect { permUse(it, '') } +
         (perms.helpers ?: []).collectMany { h -> (h.needs ?: []).collect { permUse(it, h.label ?: h.pkg ?: '') } }
     // data stores: the app's entry in the fleet-config manifest (libs:fleetconfig-model), the new-phone migration list
-    def fcFile = new File(repoRoot, 'ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json')
+    def fcFile = new File(repoRoot, 'fleet-private-data/fleet-config.json')
     def fcApp = fcFile.isFile() ? (slurp.parse(fcFile).apps ?: [:]).values().find { it.module == appDir } : null
     about.stores = (fcApp?.items ?: []).collect { [id: it.id ?: '', path: it.path ?: '', class: it['class'] ?: '', doc: it.doc ?: ''] }
     // crash / analytics libraries the app links (its module graph), with what each sends where (configs-pages.json::diagnostics)

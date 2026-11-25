@@ -38,7 +38,7 @@ import org.robolectric.annotation.Config
 class FleetConfigTest {
 
     private val ctx: Application get() = ApplicationProvider.getApplicationContext()
-    private val m: FleetPolicy.Manifest by lazy { FleetPolicy.manifest(ctx) }
+    private val m: FleetPolicy.Manifest by lazy { FleetPolicy.testManifest = java.io.File("../../fleet-private-data/fleet-config.json").readText(); FleetPolicy.manifest(ctx) }
 
     private fun phone(name: String) = FleetPolicy.Opener { _, file, create ->
         val p = ctx.getSharedPreferences("${name}__${file.replace('/', '_')}", Context.MODE_PRIVATE)

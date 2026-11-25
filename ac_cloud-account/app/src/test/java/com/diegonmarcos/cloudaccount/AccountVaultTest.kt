@@ -54,6 +54,7 @@ class AccountVaultTest {
         ConfigsPrefs.factory = null
         AccountData.callerResolver = { c -> c.packageManager.getPackagesForUid(android.os.Binder.getCallingUid())?.firstOrNull() ?: c.packageName }
         SetupStores.authorizer = SetupStores.defaultAuthorizer
+        FleetPolicy.testManifest = java.io.File("../../fleet-private-data/fleet-config.json").readText()
         SetupProvider.manifestSource = { FleetPolicy.manifestOrNull(it) }
     }
 

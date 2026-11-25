@@ -1,6 +1,6 @@
 {
   "_doc": "#873 FLEET SETUP policy, read by 1_cicd/src/scripts/cloud-android-fleet-setup-guard.py (fleet-setup-guard.yml, every push). Every app that fleet-config.json declares migrating (config/secret) stores for must link the setup provider (`<package>.fleetsetup`, libs:fleetconfig-model SetupProvider, merged in through libs:core) and every such store must have a handler: prefs / encrypted are served by the default; any other kind registers one (SetupStores.register) or is listed under `unserved` with the reason. The declarations themselves live in the manifest; this file only holds what the guard cannot derive: the exemptions and the stores awaiting a handler.",
-  "manifest": "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json",
+  "manifest": "fleet-private-data/fleet-config.json",
   "model_manifest": "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/AndroidManifest.xml",
   "provider_source": "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/java/com/diegonmarcos/superapp/fleetconfig/SetupProvider.kt",
   "core_gradle": "ab_cloud-libs-shared/libs/core/build.gradle",

@@ -46,6 +46,7 @@ class SetupProviderTest {
     }
 
     @After fun tearDown() {
+        FleetPolicy.testManifest = java.io.File("../../../fleet-private-data/fleet-config.json").readText()
         SetupProvider.manifestSource = { FleetPolicy.manifestOrNull(it) }
         SetupStores.authorizer = SetupStores.defaultAuthorizer
         SetupStores.unregister("sample_ds")
