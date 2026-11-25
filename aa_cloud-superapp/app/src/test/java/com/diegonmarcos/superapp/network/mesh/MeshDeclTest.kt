@@ -90,7 +90,7 @@ class MeshDeclTest {
         val cids = d.page("status")!!.controls.map { it.id }
         assertEquals(listOf("status_copy_all", "status_export_all", "status_export_md", "reach_run"), cids.take(4))
         assertEquals(listOf("vpn_connect", "vpn_disconnect", "vpn_reconnect", "vpn_always_on"), cids.takeLast(4))
-        assertEquals(setOf("reach_meshes_run", "status_profiler_copy", "status_profiler_export", "status_log_open"), (cids - cids.take(4).toSet() - cids.takeLast(4).toSet()).toSet())
+        assertEquals(setOf("reach_meshes_run", "status_profiler_copy", "status_profiler_export", "status_log_open", "status_prober_run", "status_prober_cancel"), (cids - cids.take(4).toSet() - cids.takeLast(4).toSet()).toSet())
         assertEquals("alwayson.set", d.control("vpn_always_on")!!.engine)
         assertEquals("switch", d.control("vpn_always_on")!!.kind)
     }

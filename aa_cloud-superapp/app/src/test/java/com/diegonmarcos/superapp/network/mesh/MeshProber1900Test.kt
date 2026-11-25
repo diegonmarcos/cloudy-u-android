@@ -194,7 +194,7 @@ class MeshProber1900Test {
         val old = C3MeshProbe.SystemIo.binder
         C3MeshProbe.SystemIo.binder = rec
         try {
-            ServerSocket(0, 1, java.net.InetAddress.getByName("127.0.0.1")).use { srv ->
+            ServerSocket(0, 50, java.net.InetAddress.getByName("127.0.0.1")).use { srv ->
                 val from = C3MeshProbe.SystemIo.tcpFrom("127.0.0.1", srv.localPort, 1000, C3MeshProbe.VIA_TUNNEL)
                 assertEquals(listOf(C3MeshProbe.VIA_TUNNEL), rec.vias.toList())
                 assertEquals("127.0.0.1", from)
