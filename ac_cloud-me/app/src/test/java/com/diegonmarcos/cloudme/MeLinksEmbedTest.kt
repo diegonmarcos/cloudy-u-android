@@ -50,7 +50,8 @@ class MeLinksEmbedTest {
     @Test fun `the Open button and the Links panel are gone`() {
         val ss = BuroLlcTestData.text("app/src/main/java/com/diegonmarcos/cloudme/SectionScreen.kt")
         assertFalse(ss.contains("MeLinkedWeb"))
-        assertTrue(ss.contains("\"web\" -> WebPage(single, modifier, pageId = page.id)"))
+        // #1932 the "web" page is still the bare WebPage for every entry that is not a repo with declared views; a repo entry hosts the viewer, whose GH view is that same WebPage
+        assertTrue(ss.contains("\"web\" ->") && ss.contains("else WebPage(single, modifier, pageId = page.id)"))
         val k = BuroLlcTestData.text("app/src/main/java/com/diegonmarcos/cloudme/MeLinks.kt")
         for (gone in listOf("Open \$", "\"Links\"", "FilledTonalButton", "ACTION_VIEW", "MeLinkedWeb")) assertFalse(gone, k.contains(gone))
     }
