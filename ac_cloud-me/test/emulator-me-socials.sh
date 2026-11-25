@@ -70,7 +70,7 @@ $T adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*40/100)) 500; shot
 walk_tab section:proj me-proj Proj
 open_page "$ME" "page:proj/pj-home"; shot me-proj-home 8   # #1914 the icon grid of every group and leaf
 # #1918 the Home grid wears the emoji of Linktree and the banners of its categories; Repos (the bundled repos tree) loads in the page WebView
-grep -q "🐧" "$OUT/me-proj-home.xml" 2>/dev/null || { echo "me-proj-home: the Linktree emoji is not on the Proj tabs"; rc=1; }
+python3 -c "import html,sys;sys.exit(0 if '\U0001F427' in html.unescape(open(sys.argv[1],errors='ignore').read()) else 1)" "$OUT/me-proj-home.xml" 2>/dev/null || { echo "me-proj-home: the Linktree emoji is not on the Proj tabs"; rc=1; }
 $T adb shell am force-stop "$ME" </dev/null; $T adb logcat -c </dev/null
 open_page "$ME" "page:proj/pj-repos" </dev/null; shot me-proj-repos 12 </dev/null
 $T adb logcat -d -s CloudMeWeb:V < /dev/null > "$OUT/tab-proj-repos.log"
@@ -80,7 +80,8 @@ grep -q "MAINFRAME_OK page=pj-repos " "$OUT/tab-proj-repos.log" && echo "proj-re
 TABLES="$(dirname "$0")/../data/web/me-links.json"
 python3 - "$TABLES" > "$OUT/.tabs" <<'PY'
 import json, sys
-for e in json.load(open(sys.argv[1]))["entries"]:
+# the Lnktree site (a heavy animated page) is walked last: a lost emulator then costs no other tab
+for e in sorted(json.load(open(sys.argv[1]))["entries"], key=lambda e: e["section"] == "lnktree"):
     if "path" in e: print(e["section"], e["path"][-1], e["url"], e["id"])
 PY
 [ -s "$OUT/.tabs" ] || { echo "no tabs in me-links.json"; rc=1; }
