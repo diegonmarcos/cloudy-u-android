@@ -92,7 +92,7 @@ elif grep -q 'safePkg' <<<"$CMD" && grep -q 'safeComp' <<<"$CMD"; then ok "T9 sh
 else bad "T9 BgCmd does not validate names"; fi
 
 # T10
-SSJ="$APP/app/src/main/assets/super-saving.json"
+SSJ="${FLEET_PRIVATE_DIR:-$APP/../fleet-private-data}/super-saving.json"   # #1566 fleet-private: CI materialises it
 R="$(python3 - "$APP/build.json" "$SSJ" "$SRC" <<'PY'
 import json, sys, glob
 bj = json.load(open(sys.argv[1])); ss = json.load(open(sys.argv[2]))

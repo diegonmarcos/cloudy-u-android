@@ -11,7 +11,7 @@ import java.io.File
 /** #1506 Super Saving Battery Mode: the declared order, the snapshot/restore round trip, the allowlist, the ADB-missing degradation, the audit. */
 class SuperSavingTest {
 
-    private val decl = File("src/main/assets/super-saving.json").readText()
+    private val decl = File(System.getenv("FLEET_PRIVATE_DIR") ?: "../../fleet-private-data", "super-saving.json").readText()
     private val steps = SsDecl.parse(decl)
     private val cfg = BgFakeDevice.cfg()
 

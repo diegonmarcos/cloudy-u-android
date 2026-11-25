@@ -12,6 +12,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.diegonmarcos.superapp.R
 import com.diegonmarcos.superapp.adbside.AdbSide
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import com.diegonmarcos.superapp.settings.LauncherModes
 import com.diegonmarcos.superapp.settings.LauncherSettingsPrefs
 import com.diegonmarcos.superapp.settings.LauncherThemes
@@ -28,9 +29,10 @@ import org.json.JSONObject
  */
 object SuperSavingRuntime {
     const val ENGINE = "super_saving"
-    private const val DECL = "super-saving.json"
+    /** #1566 the step declaration names the device settings and shell toggles Super Saving drives: a fleet-private dataset (last-known-good copy of Cloud Account's route); null = not served yet, so the mode does nothing. */
+    const val DATASET = "fleet/super-saving"
 
-    private fun decl(ctx: Context) = ctx.applicationContext.assets.open(DECL).bufferedReader().use { it.readText() }
+    private fun decl(ctx: Context): String? = runCatching { FleetData.get(ctx.applicationContext, DATASET) { it } }.getOrNull()
 
     /**
      * #1720 On = this is THE picked mode ([PresetState], the single state source of Presets). The restore journal is the
@@ -65,7 +67,7 @@ object SuperSavingRuntime {
      * its launcher switches (one journaled step) and continues with the `steps` it declares in build.json::ui.launcher_modes.
      */
     fun stepsOf(app: Context, mode: LauncherModes.Mode): List<SsStep> =
-        if (mode.engine == ENGINE) SsDecl.parse(decl(app))
+        if (mode.engine == ENGINE) decl(app)?.let { SsDecl.parse(it) }.orEmpty()   // not served = no steps (engine() answers null first)
         else buildList {
             if (mode.toggles.isNotEmpty()) add(SsStep(STEP_LAUNCHER, "Launcher switches (${mode.toggles.size})", "launcher_toggles", false, false,
                 JSONObject().put("toggles", JSONObject(mode.togglesJson.ifEmpty { "{}" }))))
@@ -76,6 +78,7 @@ object SuperSavingRuntime {
     fun engine(ctx: Context, modeId: String, shell: BgShell?, journalKey: String = SuperSaving.K_SNAP): SuperSaving? = runCatching {
         val app = ctx.applicationContext
         val mode = LauncherModes.load().firstOrNull { it.id == modeId } ?: return null
+        if (mode.engine == ENGINE && decl(app) == null) return null   // #1566 not served yet: no mode runs on an empty declaration
         val cfg = BgHost.config(app) ?: return null
         SuperSaving(stepsOf(app, mode), shell, host(app), BgHost.engine(app, shell, cfg), cfg, BgPrefsKv(app), { BgAudit.append(app, it) },
             modeId = modeId, label = mode.label, tag = if (mode.engine == ENGINE) "super-saving" else "mode-$modeId", journalKey = journalKey)
@@ -108,7 +111,7 @@ object SuperSavingRuntime {
      */
     fun syncIndicator(ctx: Context, note: String = "") {
         val app = ctx.applicationContext
-        if (active(app)) runCatching { SsIndicator.post(app, SsDecl.indicator(decl(app)), note) } else SsIndicator.cancel(app)
+        if (active(app)) runCatching { SsIndicator.post(app, SsDecl.indicator(decl(app) ?: return@runCatching), note) } else SsIndicator.cancel(app)
     }
 
     /** App start: the screen-off hook and the indicator come back with the process when the mode is on (a reboot clears the notification). */

@@ -23,7 +23,8 @@
 set -uo pipefail
 APP="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="$APP/app/src/main/java/com/diegonmarcos/superapp"
-BJ="$APP/build.json"; SSJ="$APP/app/src/main/assets/super-saving.json"; MAN="$APP/app/src/main/AndroidManifest.xml"
+BJ="$APP/build.json"; SSJ="${FLEET_PRIVATE_DIR:-$APP/../fleet-private-data}/super-saving.json"   # #1566 fleet-private: CI materialises it
+MAN="$APP/app/src/main/AndroidManifest.xml"
 PAR="$APP/app/src/test/resources/parity/presets-modes-1720-parity.json"
 PRE="$SRC/settings/LauncherPresetsFragment.kt"; PM="$SRC/settings/PresetModes.kt"; RT="$SRC/bgpolicy/SuperSavingRuntime.kt"
 pass=0; fail=0

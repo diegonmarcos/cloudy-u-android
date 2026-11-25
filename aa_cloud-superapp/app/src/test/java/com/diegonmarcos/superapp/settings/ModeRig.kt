@@ -89,7 +89,7 @@ internal class ModeRig(vararg apps: String = arrayOf("com.a", "com.b", "com.dieg
         val decl: Map<String, JSONObject> = (0 until modes.length()).map { modes.getJSONObject(it) }.associateBy { it.getString("id") }
         /** The modes that run through the ADB shell. #1847 Banking Apps Mode declares `no_shell`: it needs none, and BankingModeTest owns it. */
         val ids: List<String> = decl.filterValues { !it.optBoolean("no_shell", false) }.keys.toList()
-        private val asset = File("src/main/assets/super-saving.json").readText()
+        private val asset = File(System.getenv("FLEET_PRIVATE_DIR") ?: "../../fleet-private-data", "super-saving.json").readText()
         private val cfg = BgFakeDevice.cfg()
 
         /** The steps of a declared mode, built the way SuperSavingRuntime.stepsOf builds them. */
