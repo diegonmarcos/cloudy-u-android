@@ -41,7 +41,7 @@ walk_tab() {  # TARGET SHOT LABEL
 }
 walk_tab section:pers me-pers Pers
 walk_tab section:prof me-prof Prof
-walk_tab section:proj me-proj Proj
+# Proj opens on Lnktree, whose animated loader makes uiautomator and the software-rendered emulator slow (a first run lost the emulator there): it is walked last, so no other evidence depends on it
 # the ids of the layout before the move still land on a page (page:health/home -> Pers, page:lnktree/leafy -> Prof > Leaf.y)
 open_page "$ME" "page:health/home"; shot me-old-health-home 8
 on_screen "$OUT/me-old-health-home.xml" Pers || { echo "me-old-health-home: page:health/home did not resolve to Pers"; rc=1; }
@@ -67,6 +67,7 @@ for i in 1 2 3 4 5; do $T adb shell input tap $((W*61/100)) $((H*58/100)); sleep
 shot superapp-cloud-apps 3
 # the Me row (Lnktree first, Socials fifth) sits at ~80% height; scroll the page so it is fully in view
 $T adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*40/100)) 500; shot superapp-cloud-apps-me-row 3
+walk_tab section:proj me-proj Proj
 $T adb logcat -d > "$OUT/logcat.txt"
 ls -la "$OUT"
 exit $rc
