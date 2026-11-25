@@ -83,14 +83,23 @@ while read -r sec page url id <&3; do
     $T adb shell am force-stop "$ME" </dev/null   # a fresh process: the page loads (and logs) again even when it is the one already on top
     $T adb logcat -c </dev/null
     open_page "$ME" "page:$sec/$page" </dev/null; shot "me-tab-$id" 12 </dev/null
-    $T adb logcat -d -s CloudMeWeb:V < /dev/null > "$OUT/tab-$id.log"
+    # a heavy page (Warehouse's 3D) finishes late and the image check runs 8 s after the finish: poll the log up to 90 s for both lines
+    for _ in $(seq 1 18); do
+        $T adb logcat -d -s CloudMeWeb:V < /dev/null > "$OUT/tab-$id.log"
+        grep -q IMG_CHECK "$OUT/tab-$id.log" && break
+        grep -q MAINFRAME_ERROR "$OUT/tab-$id.log" && break
+        sleep 5
+    done
+    # the page loaded when its own id reports a finished main frame; a redirect (LinkedIn's auth wall) changes the final url, which is printed
     if grep -q MAINFRAME_ERROR "$OUT/tab-$id.log"; then echo "$id: main frame error: $(grep -m1 MAINFRAME_ERROR "$OUT/tab-$id.log")"; rc=1
     elif grep -q "title=Web page not available" "$OUT/tab-$id.log"; then echo "$id: error page title"; rc=1
-    elif ! grep -q "MAINFRAME_OK page=$page url=$url" "$OUT/tab-$id.log"; then echo "$id: the page did not load $url ($(tail -1 "$OUT/tab-$id.log"))"; rc=1
-    else echo "$id: loaded $url"; fi
-    # #1913 no broken image: WebPage logs IMG_CHECK page=<id> images_broken="<images> <broken> <first broken src>" (naturalWidth 0 on a finished img)
+    elif ! grep -q "MAINFRAME_OK page=$page " "$OUT/tab-$id.log"; then echo "$id: the page did not load $url ($(tail -1 "$OUT/tab-$id.log"))"; rc=1
+    else echo "$id: loaded $url as $(grep -m1 -o "MAINFRAME_OK page=$page url=[^ ]*" "$OUT/tab-$id.log")"; fi
+    # #1913 no broken image on our own pages: WebPage logs IMG_CHECK page=<id> images_broken="<images> <broken> <first broken src>" (naturalWidth 0 on a finished img).
+    # A third-party site (github.com, linkedin.com) is checked for the error page only: its tracking pixels and avatars are not ours to fix.
+    case "$url" in https://diegonmarcos.*|https://*.diegonmarcos.com/*|https://linktree.diegonmarcos.com/*)
     if ! grep -q IMG_CHECK "$OUT/tab-$id.log"; then echo "$id: no IMG_CHECK line (the page was not checked for images)"; rc=1
-    elif ! grep -q 'images_broken="[0-9]* 0 ' "$OUT/tab-$id.log"; then echo "$id: broken images: $(grep -m1 IMG_CHECK "$OUT/tab-$id.log")"; rc=1; fi
+    elif ! grep -q 'images_broken="[0-9]* 0 ' "$OUT/tab-$id.log"; then echo "$id: broken images: $(grep -m1 IMG_CHECK "$OUT/tab-$id.log")"; rc=1; fi ;; esac
     if grep -q "Web page not available" "$OUT/me-tab-$id.xml" 2>/dev/null; then echo "$id: the screen shows Web page not available"; rc=1; fi
 done 3< "$OUT/.tabs"   # fd 3: adb inside the loop must not eat the tab list from stdin
 $T adb logcat -d > "$OUT/logcat.txt"

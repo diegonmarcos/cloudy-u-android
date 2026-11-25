@@ -174,7 +174,8 @@ class LnktreeCacheStore(val root: File, private val clock: () -> Long = System::
         val files = (root.walkTopDown().filter { it.isFile && it.name.endsWith(".meta") }.toList())
         fun size(m: File) = m.length() + File(m.parentFile, m.nameWithoutExtension + ".body").length()
         var total = files.sumOf(::size)
-        for (m in files.sortedBy { it.lastModified() }) {
+        // #1911 the mtimes are read ONCE: concurrent page loads touch the files while they sort, and a comparator reading lastModified() live broke TimSort's contract (crashed Proj > Cloudy)
+        for (m in files.map { it to it.lastModified() }.sortedBy { it.second }.map { it.first }) {
             if (total <= maxBytes) break
             total -= size(m)
             File(m.parentFile, m.nameWithoutExtension + ".body").delete(); m.delete()
