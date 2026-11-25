@@ -197,7 +197,7 @@ class MediaProxy(private val ctx: Context) {
             ?: md?.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST) ?: ""
         val playing = c.playbackState?.state == PlaybackState.STATE_PLAYING
         val key = "$title|$artist|$playing"
-        if (key == lastKey) return // no change → don't re-post (avoid flicker)
+        if (key == lastKey && NotifyGate.inShade(nm(), null, NOTIF_MEDIA)) return // no change → don't re-post (avoid flicker)
         lastKey = key
         val art = md?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
             ?: md?.getBitmap(MediaMetadata.METADATA_KEY_ART)
@@ -212,7 +212,7 @@ class MediaProxy(private val ctx: Context) {
             // #515: declared, not derived from `playing`. See [persistent].
             .setOngoing(persistent() || playing)
             .apply { if (persistent() || playing) setDeleteIntent(pi(REPOST)) }
-            .let { NotifyGroups.attach(ctx, it, BADGE_ID) } // #777 group G3
+            .let { NotifyGroups.attach(ctx, it, BADGE_ID, summary = false) } // #777 group G3; #1923 the summary follows the child
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
         if (art != null) b.setLargeIcon(art)
         BadgeModel.add(b, listOf(
@@ -230,7 +230,7 @@ class MediaProxy(private val ctx: Context) {
         b.setStyle(
             androidx.media.app.NotificationCompat.MediaStyle().setShowActionsInCompactView(0, 1, 2),
         )
-        runCatching { NotifyGate.post(nm(), null, NOTIF_MEDIA, b.build()) }
+        postChild(b)
     }
 
     /**
@@ -244,7 +244,7 @@ class MediaProxy(private val ctx: Context) {
         val last = LastMediaSession.load(ctx)
         val actions = launcherActions(last?.pkg)
         val key = "idle|${last?.pkg}|${last?.title}|${actions.joinToString(",") { it.id }}"
-        if (key == lastKey) return
+        if (key == lastKey && NotifyGate.inShade(nm(), null, NOTIF_MEDIA)) return
         lastKey = key
         val b = NotificationCompat.Builder(ctx, MEDIA_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_notify)
@@ -255,14 +255,26 @@ class MediaProxy(private val ctx: Context) {
             .setOnlyAlertOnce(true)
             .setOngoing(persistent())
             .setDeleteIntent(pi(REPOST))
-            .let { NotifyGroups.attach(ctx, it, BADGE_ID) }
+            .let { NotifyGroups.attach(ctx, it, BADGE_ID, summary = false) } // #1923 the summary follows the child
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
         last?.art?.let { b.setLargeIcon(it) }
         // #1923: Play last, Tidal, Spotify and the Buds app (installed ones only); MediaStyle shows up to 5 actions, 3 compact.
         // Without a known player the plain Play (nothing else to resume) stays, as before.
         BadgeModel.add(b, if (actions.isEmpty()) listOf(BadgeModel.Action("play", android.R.drawable.ic_media_play, "Play", pi("media:playpause"))) else actions)
         b.setStyle(androidx.media.app.NotificationCompat.MediaStyle().setShowActionsInCompactView(*MediaLaunchers.compact(maxOf(actions.size, 1))))
-        runCatching { NotifyGate.post(nm(), null, NOTIF_MEDIA, b.build()) }
+        postChild(b)
+    }
+
+    /**
+     * #1923 the Media child goes out FIRST and is re-posted whenever it is not in the shade (the plain post dropped an unchanged
+     * card as a duplicate even after the platform lost it); only then does the group summary follow, and a summary left
+     * without a child is cancelled shortly after. Never a bare "Media" summary row with the actions nowhere.
+     */
+    private fun postChild(b: NotificationCompat.Builder) {
+        val posted = runCatching { NotifyGate.postKept(nm(), null, NOTIF_MEDIA, b.build()) }.isSuccess
+        val g = NotifyGroups.groupOf(BADGE_ID)
+        if (posted && g != null) NotifyGroups.postSummary(ctx, g)
+        mainHandler.postDelayed({ NotifyGroups.pruneEmpty(ctx, BADGE_ID) }, 1500)
     }
 
     fun cancel() {

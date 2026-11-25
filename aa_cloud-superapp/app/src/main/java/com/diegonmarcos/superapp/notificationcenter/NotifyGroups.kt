@@ -112,9 +112,9 @@ object NotifyGroups {
      * here, because a summary decided from `activeNotifications` after the
      * child's notify() races the platform's own enqueue.
      */
-    fun attach(ctx: Context, b: NotificationCompat.Builder, badgeId: String): NotificationCompat.Builder {
+    fun attach(ctx: Context, b: NotificationCompat.Builder, badgeId: String, summary: Boolean = true): NotificationCompat.Builder {
         val g = groupOf(badgeId) ?: return b
-        if (!g.alerts) postSummary(ctx, g)
+        if (summary && !g.alerts) postSummary(ctx, g)
         return b.setGroup(key(g)).setSortKey("%02d".format(memberSortIndex(g, badgeId)))
     }
 
@@ -155,6 +155,16 @@ object NotifyGroups {
                 .setOnlyAlertOnce(true)
                 .build())
         }
+    }
+
+    /** #1923 never an empty summary: when no child of [badgeId]'s group is posted, the summary goes too. */
+    fun pruneEmpty(ctx: Context, badgeId: String) {
+        val g = groupOf(badgeId) ?: return
+        val k = key(g)
+        val any = runCatching {
+            nm(ctx).activeNotifications.any { it.notification.group == k && it.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0 }
+        }.getOrDefault(true)
+        if (!any) cancelSummary(ctx, g)
     }
 
     fun cancelSummary(ctx: Context, g: Group) = runCatching { NotifyGate.invalidate(g.id, SUMMARY_ID); nm(ctx).cancel(g.id, SUMMARY_ID) }
