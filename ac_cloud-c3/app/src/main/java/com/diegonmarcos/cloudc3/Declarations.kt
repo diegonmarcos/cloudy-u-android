@@ -137,6 +137,10 @@ object Declarations {
 
     /** data/ops_maps.json (#1480): the Ops maps, and the wg-mesh snapshot (data/mesh.json) the Network map reads. */
     val opsMaps: JsonObject by lazy { element(decode(BuildConfig.OPS_MAPS_B64)) as? JsonObject ?: JsonObject(emptyMap()) }
+    /** data/mail_stack.json (#1926): the Ops > Mail tables and the two declared topologies with their probe bindings. */
+    val mailStack: com.diegonmarcos.cloudc3.pages.MailStack.Decl by lazy {
+        com.diegonmarcos.cloudc3.pages.MailStack.parseDecl(decode(BuildConfig.MAIL_STACK_B64))
+    }
     val meshJson: JsonObject by lazy { element(decode(BuildConfig.MESH_JSON_B64)) as? JsonObject ?: JsonObject(emptyMap()) }
 
     /** data/container_projects.json: which project each container belongs to (Containers sub-pages). */

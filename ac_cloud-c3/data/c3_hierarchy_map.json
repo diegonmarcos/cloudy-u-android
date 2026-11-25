@@ -208,6 +208,20 @@
     "devops.build.secrets_status"
    ]
   },
+  "ops/mail/tables": {
+   "api": [
+    "/mail/*"
+   ],
+   "mcp": []
+  },
+  "ops/mail/topology_inbound": {
+   "api": [],
+   "mcp": []
+  },
+  "ops/mail/topology_outbound": {
+   "api": [],
+   "mcp": []
+  },
   "ops/mail/map": {
    "api": [],
    "mcp": [

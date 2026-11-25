@@ -1,0 +1,1307 @@
+{
+ "_doc": "#1926 THE DECLARATION of Cloud C3 > Ops > Mail > Tables, Topology-Inbound and Topology-Outbound. `tables`: each section with its columns (key = the field of a row served by cloudy-c3-api GET /mail/stack tables.<id>, or of the declared source named in `source`) and the filter columns offered; a key the API does not serve prints as 'not served', never as a blank. `topologies`: the graph (nodes with x/y in a world grid, edges with a direction from->to) and the PROBE BINDINGS: every node and edge lists probe ids served in /mail/stack probes[]; its colour is the worst served state (grey when none is served). One generic canvas (MailTopologyCanvas) renders any topology of this file; names of hosts live here and in the API, never in Kotlin. Edit this file by hand: MailStackTest pins the tables, the node and edge parity and the probe bindings.",
+ "api_path": "/mail/stack",
+ "stale_after_minutes": 360,
+ "node_w": 168,
+ "node_h": 72,
+ "tables": [
+  {
+   "id": "dns",
+   "title": "DNS records (live)",
+   "source": "api",
+   "filters": [
+    "type",
+    "state"
+   ],
+   "columns": [
+    {
+     "key": "domain",
+     "label": "Domain"
+    },
+    {
+     "key": "type",
+     "label": "Type"
+    },
+    {
+     "key": "selector",
+     "label": "Selector"
+    },
+    {
+     "key": "name",
+     "label": "Name"
+    },
+    {
+     "key": "value",
+     "label": "Value"
+    },
+    {
+     "key": "state",
+     "label": "State"
+    },
+    {
+     "key": "note",
+     "label": "Note"
+    },
+    {
+     "key": "checked_at",
+     "label": "Checked"
+    }
+   ]
+  },
+  {
+   "id": "dns_declared",
+   "title": "DNS records (declared zone)",
+   "source": "declared",
+   "filters": [
+    "type",
+    "group"
+   ],
+   "columns": [
+    {
+     "key": "domain",
+     "label": "Domain"
+    },
+    {
+     "key": "group",
+     "label": "Group"
+    },
+    {
+     "key": "type",
+     "label": "Type"
+    },
+    {
+     "key": "name",
+     "label": "Name"
+    },
+    {
+     "key": "content",
+     "label": "Content"
+    },
+    {
+     "key": "ttl",
+     "label": "TTL"
+    },
+    {
+     "key": "priority",
+     "label": "Priority"
+    },
+    {
+     "key": "comment",
+     "label": "Comment"
+    }
+   ]
+  },
+  {
+   "id": "inbound",
+   "title": "Inbound path",
+   "source": "api",
+   "filters": [
+    "state"
+   ],
+   "columns": [
+    {
+     "key": "step",
+     "label": "Step"
+    },
+    {
+     "key": "name",
+     "label": "Hop"
+    },
+    {
+     "key": "state",
+     "label": "State"
+    },
+    {
+     "key": "detail",
+     "label": "Detail"
+    },
+    {
+     "key": "latency_ms",
+     "label": "Latency ms"
+    },
+    {
+     "key": "checked_at",
+     "label": "Checked"
+    }
+   ]
+  },
+  {
+   "id": "outbound",
+   "title": "Outbound path",
+   "source": "api",
+   "filters": [
+    "state"
+   ],
+   "columns": [
+    {
+     "key": "step",
+     "label": "Step"
+    },
+    {
+     "key": "name",
+     "label": "Hop"
+    },
+    {
+     "key": "state",
+     "label": "State"
+    },
+    {
+     "key": "detail",
+     "label": "Detail"
+    },
+    {
+     "key": "latency_ms",
+     "label": "Latency ms"
+    },
+    {
+     "key": "checked_at",
+     "label": "Checked"
+    }
+   ]
+  },
+  {
+   "id": "hosts_declared",
+   "title": "Mail hosts (declared)",
+   "source": "declared",
+   "filters": [
+    "vm"
+   ],
+   "columns": [
+    {
+     "key": "service",
+     "label": "Service"
+    },
+    {
+     "key": "host",
+     "label": "Host"
+    },
+    {
+     "key": "vm",
+     "label": "VM"
+    }
+   ]
+  },
+  {
+   "id": "relays_declared",
+   "title": "Relays and MX (declared)",
+   "source": "declared",
+   "filters": [
+    "kind"
+   ],
+   "columns": [
+    {
+     "key": "kind",
+     "label": "Kind"
+    },
+    {
+     "key": "name",
+     "label": "Name"
+    },
+    {
+     "key": "address",
+     "label": "Address"
+    },
+    {
+     "key": "port",
+     "label": "Port"
+    },
+    {
+     "key": "default",
+     "label": "Default"
+    },
+    {
+     "key": "desc",
+     "label": "Description"
+    }
+   ]
+  },
+  {
+   "id": "accounts",
+   "title": "Accounts and domains",
+   "source": "api",
+   "filters": [
+    "kind",
+    "state"
+   ],
+   "columns": [
+    {
+     "key": "kind",
+     "label": "Kind"
+    },
+    {
+     "key": "name",
+     "label": "Name"
+    },
+    {
+     "key": "value",
+     "label": "Value"
+    },
+    {
+     "key": "state",
+     "label": "State"
+    },
+    {
+     "key": "detail",
+     "label": "Detail"
+    }
+   ]
+  },
+  {
+   "id": "mailboxes",
+   "title": "Mailboxes and quotas",
+   "source": "api",
+   "filters": [
+    "state"
+   ],
+   "columns": [
+    {
+     "key": "name",
+     "label": "Name"
+    },
+    {
+     "key": "value",
+     "label": "Value"
+    },
+    {
+     "key": "state",
+     "label": "State"
+    },
+    {
+     "key": "detail",
+     "label": "Detail"
+    }
+   ]
+  },
+  {
+   "id": "ports",
+   "title": "Ports",
+   "source": "api",
+   "filters": [
+    "state",
+    "host"
+   ],
+   "columns": [
+    {
+     "key": "host",
+     "label": "Host"
+    },
+    {
+     "key": "port",
+     "label": "Port"
+    },
+    {
+     "key": "role",
+     "label": "Role"
+    },
+    {
+     "key": "state",
+     "label": "State"
+    },
+    {
+     "key": "latency_ms",
+     "label": "Latency ms"
+    },
+    {
+     "key": "detail",
+     "label": "Detail"
+    }
+   ]
+  },
+  {
+   "id": "tls",
+   "title": "TLS certificates and expiry",
+   "source": "api",
+   "filters": [
+    "state",
+    "host"
+   ],
+   "columns": [
+    {
+     "key": "host",
+     "label": "Host"
+    },
+    {
+     "key": "port",
+     "label": "Port"
+    },
+    {
+     "key": "role",
+     "label": "Role"
+    },
+    {
+     "key": "state",
+     "label": "State"
+    },
+    {
+     "key": "not_after",
+     "label": "Not after"
+    },
+    {
+     "key": "days_left",
+     "label": "Days left"
+    },
+    {
+     "key": "issuer",
+     "label": "Issuer"
+    },
+    {
+     "key": "latency_ms",
+     "label": "Latency ms"
+    },
+    {
+     "key": "detail",
+     "label": "Detail"
+    }
+   ]
+  },
+  {
+   "id": "health",
+   "title": "Containers, VMs and hosts",
+   "source": "api",
+   "filters": [
+    "scope",
+    "state"
+   ],
+   "columns": [
+    {
+     "key": "scope",
+     "label": "Scope"
+    },
+    {
+     "key": "name",
+     "label": "Name"
+    },
+    {
+     "key": "state",
+     "label": "State"
+    },
+    {
+     "key": "detail",
+     "label": "Detail"
+    },
+    {
+     "key": "latency_ms",
+     "label": "Latency ms"
+    },
+    {
+     "key": "checked_at",
+     "label": "Checked"
+    }
+   ]
+  },
+  {
+   "id": "queues",
+   "title": "Queues",
+   "source": "api",
+   "filters": [
+    "state"
+   ],
+   "columns": [
+    {
+     "key": "name",
+     "label": "Queue"
+    },
+    {
+     "key": "depth",
+     "label": "Depth"
+    },
+    {
+     "key": "ceiling",
+     "label": "Ceiling"
+    },
+    {
+     "key": "state",
+     "label": "State"
+    },
+    {
+     "key": "detail",
+     "label": "Detail"
+    }
+   ]
+  },
+  {
+   "id": "freshness",
+   "title": "Delivery and ingest freshness",
+   "source": "api",
+   "filters": [
+    "state"
+   ],
+   "columns": [
+    {
+     "key": "name",
+     "label": "Signal"
+    },
+    {
+     "key": "state",
+     "label": "State"
+    },
+    {
+     "key": "age",
+     "label": "Age"
+    },
+    {
+     "key": "detail",
+     "label": "Detail"
+    },
+    {
+     "key": "checked_at",
+     "label": "Checked"
+    }
+   ]
+  },
+  {
+   "id": "pullers",
+   "title": "Pullers per source",
+   "source": "api",
+   "filters": [
+    "state"
+   ],
+   "columns": [
+    {
+     "key": "source",
+     "label": "Source"
+    },
+    {
+     "key": "state",
+     "label": "State"
+    },
+    {
+     "key": "detail",
+     "label": "Detail"
+    },
+    {
+     "key": "last_check",
+     "label": "Last check"
+    }
+   ]
+  },
+  {
+   "id": "failures",
+   "title": "Recent failures",
+   "source": "api",
+   "filters": [
+    "phase",
+    "severity"
+   ],
+   "columns": [
+    {
+     "key": "phase",
+     "label": "Phase"
+    },
+    {
+     "key": "name",
+     "label": "Check"
+    },
+    {
+     "key": "severity",
+     "label": "Severity"
+    },
+    {
+     "key": "error",
+     "label": "Error"
+    },
+    {
+     "key": "detail",
+     "label": "Detail"
+    },
+    {
+     "key": "checked_at",
+     "label": "Checked"
+    }
+   ]
+  },
+  {
+   "id": "tests",
+   "title": "Test results",
+   "source": "api",
+   "filters": [
+    "state"
+   ],
+   "columns": [
+    {
+     "key": "test",
+     "label": "Test"
+    },
+    {
+     "key": "state",
+     "label": "State"
+    },
+    {
+     "key": "passed",
+     "label": "Passed"
+    },
+    {
+     "key": "failed",
+     "label": "Failed"
+    },
+    {
+     "key": "detail",
+     "label": "Detail"
+    },
+    {
+     "key": "checked_at",
+     "label": "Checked"
+    }
+   ]
+  }
+ ],
+ "topologies": {
+  "inbound": {
+   "title": "Inbound",
+   "nodes": [
+    {
+     "id": "sender",
+     "label": "Sender (Internet)",
+     "kind": "external",
+     "x": 0,
+     "y": 160,
+     "role": "Any remote MTA delivering to the domain. Outside the fleet: never probed.",
+     "host": "",
+     "vm": "",
+     "container": "",
+     "ports": [
+      25
+     ],
+     "tls": [],
+     "probes": [],
+     "queue_probe": "",
+     "logs": []
+    },
+    {
+     "id": "dns_mx",
+     "label": "DNS / MX",
+     "kind": "dns",
+     "x": 230,
+     "y": 160,
+     "role": "Public MX, SPF, DKIM, DMARC, MTA-STS and TLS-RPT records the sender and the receiver consult.",
+     "host": "Cloudflare DNS",
+     "vm": "",
+     "container": "",
+     "ports": [
+      53
+     ],
+     "tls": [],
+     "probes": [
+      "live.dns_mx",
+      "dns.mx",
+      "dns.mx_record",
+      "live.dns_spf",
+      "live.dns_dmarc",
+      "live.dns_mta_sts",
+      "live.dns_tls_rpt"
+     ],
+     "queue_probe": "",
+     "logs": []
+    },
+    {
+     "id": "cf_edge",
+     "label": "Cloudflare Email Routing + Worker",
+     "kind": "edge",
+     "x": 460,
+     "y": 160,
+     "role": "Accepts :25 on route1-3.mx.cloudflare.net and hands the message to the email-forwarder Worker, which posts it over HTTPS (GCP blocks TCP/25).",
+     "host": "route1.mx.cloudflare.net",
+     "vm": "Cloudflare",
+     "container": "email-forwarder worker",
+     "ports": [
+      25,
+      443
+     ],
+     "tls": [],
+     "probes": [
+      "in.cf_mx",
+      "edge.cf_worker",
+      "live.port.route1.mx.cloudflare.net.25",
+      "live.port.route2.mx.cloudflare.net.25",
+      "live.port.route3.mx.cloudflare.net.25"
+     ],
+     "queue_probe": "",
+     "logs": []
+    },
+    {
+     "id": "relay",
+     "label": "http-to-smtp-proxy-api",
+     "kind": "relay",
+     "x": 690,
+     "y": 160,
+     "role": "Bridge from the Worker's JSON over bearer to SMTP towards maddy.",
+     "host": "api.diegonmarcos.com/http-to-smtp-proxy-api",
+     "vm": "gcp-proxy",
+     "container": "http-to-smtp-proxy-api",
+     "ports": [
+      8090,
+      443
+     ],
+     "tls": [
+      "api.diegonmarcos.com"
+     ],
+     "probes": [
+      "in.proxy_https",
+      "in.proxy_dns",
+      "in.proxy_port",
+      "vm.gcp_proxy"
+     ],
+     "queue_probe": "",
+     "logs": [
+      "gcp-proxy/http-to-smtp-proxy-api"
+     ]
+    },
+    {
+     "id": "maddy",
+     "label": "maddy MX",
+     "kind": "mx",
+     "x": 920,
+     "y": 160,
+     "role": "The mail server (MX): SMTP :25 in, local IMAP store, dual-writes into Stalwart.",
+     "host": "mail.diegonmarcos.com",
+     "vm": "oci-mail (oci-E2-f_0)",
+     "container": "maddy",
+     "ports": [
+      25,
+      465,
+      993
+     ],
+     "tls": [
+      "mail.diegonmarcos.com"
+     ],
+     "probes": [
+      "in.maddy_smtp",
+      "in.maddy_imap",
+      "container.maddy",
+      "tls.imap_wg",
+      "tls.smtps_wg",
+      "store.maddy_imap",
+      "host.disk",
+      "host.memory",
+      "host.load",
+      "vm.oci_mail"
+     ],
+     "queue_probe": "",
+     "logs": [
+      "oci-E2-f_0/maddy"
+     ]
+    },
+    {
+     "id": "queue",
+     "label": "Dual-write queue",
+     "kind": "queue",
+     "x": 1150,
+     "y": 160,
+     "role": "Durable on-disk queue /data/queue-stalwart of messages written to maddy but not yet mirrored into Stalwart (ceiling 25).",
+     "host": "10.0.0.3:2025",
+     "vm": "oci-mail (oci-E2-f_0)",
+     "container": "maddy",
+     "ports": [
+      2025
+     ],
+     "tls": [],
+     "probes": [
+      "in.relay_2025",
+      "queue.stalwart_backlog"
+     ],
+     "queue_probe": "queue.stalwart_backlog",
+     "logs": [
+      "oci-E2-f_0/maddy"
+     ]
+    },
+    {
+     "id": "stalwart",
+     "label": "Stalwart store",
+     "kind": "store",
+     "x": 1380,
+     "y": 160,
+     "role": "The store the mail clients read: IMAP :2993, JMAP :2443, ManageSieve :6190.",
+     "host": "jmap.diegonmarcos.com",
+     "vm": "oci-apps (oci-A1-f_0)",
+     "container": "stalwart",
+     "ports": [
+      2993,
+      2443,
+      6190
+     ],
+     "tls": [
+      "jmap.diegonmarcos.com"
+     ],
+     "probes": [
+      "in.stalwart_imap",
+      "store.stalwart_imap",
+      "container.stalwart",
+      "vm.oci_apps"
+     ],
+     "queue_probe": "",
+     "logs": [
+      "oci-A1-f_0/stalwart"
+     ]
+    },
+    {
+     "id": "sorter",
+     "label": "Sieve / sorter",
+     "kind": "filter",
+     "x": 1380,
+     "y": 340,
+     "role": "stalwart-sorter files delivered mail into folders by rule.",
+     "host": "stalwart-sorter",
+     "vm": "oci-apps (oci-A1-f_0)",
+     "container": "stalwart-sorter",
+     "ports": [],
+     "tls": [],
+     "probes": [
+      "container.stalwart-sorter"
+     ],
+     "queue_probe": "",
+     "logs": [
+      "oci-A1-f_0/stalwart-sorter"
+     ]
+    },
+    {
+     "id": "clients",
+     "label": "JMAP / IMAP clients",
+     "kind": "client",
+     "x": 1610,
+     "y": 60,
+     "role": "Mail clients over the :443 SNI mux (IMAP) and JMAP discovery well-known URLs.",
+     "host": "imap.diegonmarcos.com, jmap.diegonmarcos.com",
+     "vm": "gcp-proxy (Caddy L4)",
+     "container": "caddy",
+     "ports": [
+      443,
+      993
+     ],
+     "tls": [
+      "imap.diegonmarcos.com",
+      "jmap.diegonmarcos.com"
+     ],
+     "probes": [
+      "in.jmap_discovery",
+      "l4.imap_993",
+      "l4.caddy",
+      "l4.caddy_gcp",
+      "direct.imap_wg",
+      "live.tls.imap.diegonmarcos.com",
+      "live.tls.jmap.diegonmarcos.com",
+      "live.port.imap.diegonmarcos.com.443"
+     ],
+     "queue_probe": "",
+     "logs": []
+    },
+    {
+     "id": "webmail",
+     "label": "cloud-webmail",
+     "kind": "client",
+     "x": 1610,
+     "y": 260,
+     "role": "The web client over JMAP.",
+     "host": "webmail.diegonmarcos.com",
+     "vm": "oci-apps (oci-A1-f_0)",
+     "container": "cloud-webmail",
+     "ports": [
+      3000,
+      443
+     ],
+     "tls": [
+      "webmail.diegonmarcos.com"
+     ],
+     "probes": [
+      "web.webmail_https",
+      "web.webmail_internal",
+      "web.webmail_route",
+      "web.oidc_webmail",
+      "live.tls.webmail.diegonmarcos.com"
+     ],
+     "queue_probe": "",
+     "logs": [
+      "oci-A1-f_0/cloud-webmail"
+     ]
+    },
+    {
+     "id": "puller",
+     "label": "mail-puller",
+     "kind": "puller",
+     "x": 690,
+     "y": 340,
+     "role": "IMAP-IDLE from external providers into maddy over SMTP submission 465.",
+     "host": "mail-puller.diegonmarcos.com",
+     "vm": "oci-mail (oci-E2-f_0)",
+     "container": "mail-puller",
+     "ports": [
+      465
+     ],
+     "tls": [],
+     "probes": [
+      "container.mail-puller",
+      "puller.status"
+     ],
+     "queue_probe": "",
+     "logs": [
+      "oci-E2-f_0/mail-puller"
+     ]
+    }
+   ],
+   "edges": [
+    {
+     "id": "e_sender_dns",
+     "from": "sender",
+     "to": "dns_mx",
+     "label": "MX lookup",
+     "probes": [],
+     "dashed": false
+    },
+    {
+     "id": "e_dns_cf",
+     "from": "dns_mx",
+     "to": "cf_edge",
+     "label": "MX route1-3",
+     "probes": [
+      "live.dns_mx",
+      "dns.mx"
+     ],
+     "dashed": false
+    },
+    {
+     "id": "e_cf_relay",
+     "from": "cf_edge",
+     "to": "relay",
+     "label": "Worker JSON over bearer",
+     "probes": [
+      "edge.cf_worker",
+      "in.proxy_https"
+     ],
+     "dashed": false
+    },
+    {
+     "id": "e_relay_maddy",
+     "from": "relay",
+     "to": "maddy",
+     "label": "SMTP :25 over WG",
+     "probes": [
+      "in.proxy_port",
+      "in.maddy_smtp"
+     ],
+     "dashed": false
+    },
+    {
+     "id": "e_maddy_queue",
+     "from": "maddy",
+     "to": "queue",
+     "label": "dual-write",
+     "probes": [
+      "in.relay_2025"
+     ],
+     "dashed": false
+    },
+    {
+     "id": "e_queue_store",
+     "from": "queue",
+     "to": "stalwart",
+     "label": "SMTP :2025",
+     "probes": [
+      "queue.stalwart_backlog",
+      "in.stalwart_imap"
+     ],
+     "dashed": false
+    },
+    {
+     "id": "e_store_sorter",
+     "from": "stalwart",
+     "to": "sorter",
+     "label": "sieve rules",
+     "probes": [
+      "container.stalwart-sorter"
+     ],
+     "dashed": false
+    },
+    {
+     "id": "e_store_clients",
+     "from": "stalwart",
+     "to": "clients",
+     "label": "JMAP / IMAP",
+     "probes": [
+      "in.jmap_discovery",
+      "l4.imap_993"
+     ],
+     "dashed": false
+    },
+    {
+     "id": "e_store_webmail",
+     "from": "stalwart",
+     "to": "webmail",
+     "label": "JMAP",
+     "probes": [
+      "web.webmail_internal"
+     ],
+     "dashed": false
+    },
+    {
+     "id": "e_puller_maddy",
+     "from": "puller",
+     "to": "maddy",
+     "label": "SMTP 465",
+     "probes": [
+      "container.mail-puller",
+      "puller.status"
+     ],
+     "dashed": false
+    }
+   ]
+  },
+  "outbound": {
+   "title": "Outbound",
+   "nodes": [
+    {
+     "id": "client",
+     "label": "Mail client / cloud-webmail",
+     "kind": "client",
+     "x": 0,
+     "y": 160,
+     "role": "Composes and submits mail (webmail identity me@, or any SMTP client).",
+     "host": "webmail.diegonmarcos.com, smtps.diegonmarcos.com",
+     "vm": "oci-apps (oci-A1-f_0)",
+     "container": "cloud-webmail",
+     "ports": [
+      443,
+      465
+     ],
+     "tls": [
+      "webmail.diegonmarcos.com"
+     ],
+     "probes": [
+      "web.webmail_https",
+      "live.tls.webmail.diegonmarcos.com"
+     ],
+     "queue_probe": "",
+     "logs": [
+      "oci-A1-f_0/cloud-webmail"
+     ]
+    },
+    {
+     "id": "submission",
+     "label": "Submission (maddy :465)",
+     "kind": "submission",
+     "x": 230,
+     "y": 160,
+     "role": "SMTPS submission, reached over the :443 SNI mux (smtps.) and on the mesh at 10.0.0.3:465.",
+     "host": "smtps.diegonmarcos.com",
+     "vm": "oci-mail (oci-E2-f_0)",
+     "container": "maddy",
+     "ports": [
+      465,
+      443
+     ],
+     "tls": [
+      "smtps.diegonmarcos.com"
+     ],
+     "probes": [
+      "out.maddy_submission",
+      "tls.smtps_wg",
+      "l4.smtps_465",
+      "direct.smtp_wg",
+      "live.tls.smtps.diegonmarcos.com",
+      "live.port.smtps.diegonmarcos.com.443"
+     ],
+     "queue_probe": "",
+     "logs": [
+      "oci-E2-f_0/maddy"
+     ]
+    },
+    {
+     "id": "signer",
+     "label": "DKIM signer",
+     "kind": "signer",
+     "x": 460,
+     "y": 160,
+     "role": "maddy signs outbound mail with DKIM selector `default`; the public key is the TXT record default._domainkey.",
+     "host": "default._domainkey.diegonmarcos.com",
+     "vm": "oci-mail (oci-E2-f_0)",
+     "container": "maddy",
+     "ports": [],
+     "tls": [],
+     "probes": [
+      "dns.dkim",
+      "dns.dkim_record",
+      "live.dns_dkim",
+      "drift.config"
+     ],
+     "queue_probe": "",
+     "logs": [
+      "oci-E2-f_0/maddy"
+     ]
+    },
+    {
+     "id": "queue",
+     "label": "Outbound queue (maddy)",
+     "kind": "queue",
+     "x": 690,
+     "y": 160,
+     "role": "maddy's outbound queue; the report does not serve its depth yet, so this block stays grey until it does.",
+     "host": "maddy queue",
+     "vm": "oci-mail (oci-E2-f_0)",
+     "container": "maddy",
+     "ports": [],
+     "tls": [],
+     "probes": [
+      "queue.maddy_outbound"
+     ],
+     "queue_probe": "queue.maddy_outbound",
+     "logs": [
+      "oci-E2-f_0/maddy"
+     ]
+    },
+    {
+     "id": "oci_relay",
+     "label": "OCI Email Delivery relay",
+     "kind": "relay",
+     "x": 920,
+     "y": 20,
+     "role": "Default route: smtp.email.eu-marseille-1.oci.oraclecloud.com:587.",
+     "host": "smtp.email.eu-marseille-1.oci.oraclecloud.com",
+     "vm": "OCI (managed)",
+     "container": "",
+     "ports": [
+      587
+     ],
+     "tls": [],
+     "probes": [
+      "out.oci_relay"
+     ],
+     "queue_probe": "",
+     "logs": []
+    },
+    {
+     "id": "aws_relay",
+     "label": "AWS SES relay (fallback)",
+     "kind": "relay",
+     "x": 920,
+     "y": 130,
+     "role": "Fallback route email-smtp.us-east-1.amazonaws.com:587.",
+     "host": "email-smtp.us-east-1.amazonaws.com",
+     "vm": "AWS (managed)",
+     "container": "",
+     "ports": [
+      587
+     ],
+     "tls": [],
+     "probes": [
+      "out.aws_relay"
+     ],
+     "queue_probe": "",
+     "logs": []
+    },
+    {
+     "id": "resend",
+     "label": "Resend API",
+     "kind": "relay",
+     "x": 920,
+     "y": 240,
+     "role": "Email API identity (config in cloudy-t-infra vps_resend); the health run sends through it and reads its status.",
+     "host": "api.resend.com",
+     "vm": "Resend (managed)",
+     "container": "",
+     "ports": [
+      443
+     ],
+     "tls": [],
+     "probes": [
+      "send.resend"
+     ],
+     "queue_probe": "",
+     "logs": []
+    },
+    {
+     "id": "bridge",
+     "label": "http-to-smtp bridge",
+     "kind": "relay",
+     "x": 920,
+     "y": 350,
+     "role": "GCP blocks outbound TCP/25: the Cloudflare Worker and this bridge carry SMTP over HTTPS.",
+     "host": "api.diegonmarcos.com/http-to-smtp-proxy-api",
+     "vm": "gcp-proxy",
+     "container": "http-to-smtp-proxy-api",
+     "ports": [
+      8090,
+      443
+     ],
+     "tls": [
+      "api.diegonmarcos.com"
+     ],
+     "probes": [
+      "in.proxy_port",
+      "deliver.proxy_logs",
+      "edge.cf_worker",
+      "vm.gcp_proxy"
+     ],
+     "queue_probe": "",
+     "logs": [
+      "gcp-proxy/http-to-smtp-proxy-api"
+     ]
+    },
+    {
+     "id": "auth_dns",
+     "label": "Sender authentication DNS",
+     "kind": "dns",
+     "x": 690,
+     "y": 350,
+     "role": "SPF, DMARC, MTA-STS, TLS-RPT and PTR records the recipient's MX checks.",
+     "host": "Cloudflare DNS",
+     "vm": "",
+     "container": "",
+     "ports": [
+      53
+     ],
+     "tls": [],
+     "probes": [
+      "live.dns_spf",
+      "live.dns_dmarc",
+      "live.dns_mta_sts",
+      "live.dns_tls_rpt",
+      "live.dns_ptr",
+      "dns.spf",
+      "dns.dmarc"
+     ],
+     "queue_probe": "",
+     "logs": []
+    },
+    {
+     "id": "recipient",
+     "label": "Recipient MX (Internet)",
+     "kind": "external",
+     "x": 1170,
+     "y": 160,
+     "role": "The remote domain's mail server. Outside the fleet: never probed.",
+     "host": "",
+     "vm": "",
+     "container": "",
+     "ports": [
+      25
+     ],
+     "tls": [],
+     "probes": [],
+     "queue_probe": "",
+     "logs": []
+    }
+   ],
+   "edges": [
+    {
+     "id": "o_client_sub",
+     "from": "client",
+     "to": "submission",
+     "label": "SMTPS :465",
+     "probes": [
+      "out.maddy_submission",
+      "tls.smtps_wg"
+     ],
+     "dashed": false
+    },
+    {
+     "id": "o_sub_sign",
+     "from": "submission",
+     "to": "signer",
+     "label": "sign",
+     "probes": [],
+     "dashed": false
+    },
+    {
+     "id": "o_sign_queue",
+     "from": "signer",
+     "to": "queue",
+     "label": "queue",
+     "probes": [
+      "dns.dkim"
+     ],
+     "dashed": false
+    },
+    {
+     "id": "o_queue_oci",
+     "from": "queue",
+     "to": "oci_relay",
+     "label": "default route",
+     "probes": [
+      "out.oci_relay"
+     ],
+     "dashed": false
+    },
+    {
+     "id": "o_queue_aws",
+     "from": "queue",
+     "to": "aws_relay",
+     "label": "fallback",
+     "probes": [
+      "out.aws_relay"
+     ],
+     "dashed": true
+    },
+    {
+     "id": "o_queue_resend",
+     "from": "queue",
+     "to": "resend",
+     "label": "API identity",
+     "probes": [
+      "send.resend"
+     ],
+     "dashed": true
+    },
+    {
+     "id": "o_queue_bridge",
+     "from": "queue",
+     "to": "bridge",
+     "label": "JSON over bearer",
+     "probes": [
+      "in.proxy_port",
+      "edge.cf_worker"
+     ],
+     "dashed": true
+    },
+    {
+     "id": "o_oci_rcpt",
+     "from": "oci_relay",
+     "to": "recipient",
+     "label": "SMTP :25",
+     "probes": [
+      "out.oci_relay"
+     ],
+     "dashed": false
+    },
+    {
+     "id": "o_aws_rcpt",
+     "from": "aws_relay",
+     "to": "recipient",
+     "label": "SMTP :25",
+     "probes": [
+      "out.aws_relay"
+     ],
+     "dashed": true
+    },
+    {
+     "id": "o_resend_rcpt",
+     "from": "resend",
+     "to": "recipient",
+     "label": "SMTP :25",
+     "probes": [
+      "send.resend"
+     ],
+     "dashed": true
+    },
+    {
+     "id": "o_bridge_rcpt",
+     "from": "bridge",
+     "to": "recipient",
+     "label": "SMTP :25",
+     "probes": [
+      "deliver.proxy_logs"
+     ],
+     "dashed": true
+    },
+    {
+     "id": "o_auth_rcpt",
+     "from": "auth_dns",
+     "to": "recipient",
+     "label": "verified by recipient",
+     "probes": [
+      "live.dns_spf",
+      "live.dns_dmarc"
+     ],
+     "dashed": true
+    }
+   ]
+  }
+ }
+}

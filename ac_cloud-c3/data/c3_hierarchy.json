@@ -401,6 +401,26 @@
      "label": "Mail",
      "children": [
       {
+       "id": "tables",
+       "label": "Tables",
+       "api": [
+        "/mail/*"
+       ],
+       "mcp": []
+      },
+      {
+       "id": "topology_inbound",
+       "label": "Topology-Inbound",
+       "api": [],
+       "mcp": []
+      },
+      {
+       "id": "topology_outbound",
+       "label": "Topology-Outbound",
+       "api": [],
+       "mcp": []
+      },
+      {
        "id": "map",
        "label": "Mail",
        "api": [],

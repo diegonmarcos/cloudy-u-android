@@ -98,6 +98,18 @@ cloud_me_table 5 Container
 agents 5 Agents
 CPAGES
 
+# #1926 Ops > Mail: Tables | Topology-Inbound | Topology-Outbound | Mail (the older map, kept), one screenshot each
+while read -r page wait labels; do
+  [ -z "$page" ] && continue
+  open_page "$page"; shot "m-$page" "$wait"
+  for l in ${labels//,/ }; do has "m-$page" "${l//_/ }" || bad "m-$page: label '${l//_/ }' missing"; done
+done <<'MPAGES'
+mail_tables 8 Tables,Topology-Inbound,Topology-Outbound
+mail_topology_inbound 8 Topology-Inbound
+mail_topology_outbound 8 Topology-Outbound
+mail_map 6 Tables
+MPAGES
+
 adb logcat -d -t 3000 > "$OUT/logcat.txt" 2>/dev/null || true
 grep -E "FATAL EXCEPTION|AndroidRuntime" -A15 "$OUT/logcat.txt" | grep -B2 -A15 "$PKG" | head -80 > "$OUT/crash.txt" || true
 [ -s "$OUT/crash.txt" ] && bad "a crash in logcat (crash.txt)"

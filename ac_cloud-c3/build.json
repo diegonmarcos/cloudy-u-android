@@ -503,9 +503,28 @@
             "icon": "mail",
             "pages": [
               {
+                "id": "mail_tables",
+                "label": "Tables",
+                "icon": "mail",
+                "_doc": "#1926 Every data point of the mail stack in filterable, searchable tables (DNS, inbound and outbound path, accounts, mailboxes, ports, TLS expiry, health, queues, freshness, pullers, failures, tests). Declared in data/mail_stack.json, filled by cloudy-c3-api GET /mail/stack; a field the API does not serve prints as not served."
+              },
+              {
+                "id": "mail_topology_inbound",
+                "label": "Topology-Inbound",
+                "icon": "mail",
+                "_doc": "#1926 The inbound path as a canvas map (data/mail_stack.json topologies.inbound), drawn by the one generic MailTopologyCanvas."
+              },
+              {
+                "id": "mail_topology_outbound",
+                "label": "Topology-Outbound",
+                "icon": "mail",
+                "_doc": "#1926 The outbound path as a canvas map (data/mail_stack.json topologies.outbound), drawn by the one generic MailTopologyCanvas."
+              },
+              {
                 "id": "mail_map",
                 "label": "Mail",
-                "icon": "mail"
+                "icon": "mail",
+                "_doc": "The Mail map of data/ops_maps.json (#1480), unchanged: kept reachable as the fourth subpage (#1926, rule 16)."
               }
             ]
           },
