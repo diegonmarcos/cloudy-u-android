@@ -387,7 +387,7 @@ object Sections {
     }
 
     /** A themed sub-group of an aggregator section's tile list. */
-    data class TileGroup(val title: String, val tiles: List<AggTile>) {
+    data class TileGroup(val title: String, val tiles: List<AggTile>, val glyph: String = "") {
         /** [tiles] minus the separators — the ones that actually go somewhere.
          *  Only a renderer laying this group out as a ROW wants [tiles]; every
          *  other reader is asking "what can be opened from here", and a rule
@@ -868,6 +868,7 @@ object Sections {
                     out.add(TileGroup(
                         title = g.optString("title", ""),
                         tiles = parseTilesInline(g.optJSONArray("tiles")),
+                        glyph = g.optString("glyph", ""),
                     ))
                 }
                 return out

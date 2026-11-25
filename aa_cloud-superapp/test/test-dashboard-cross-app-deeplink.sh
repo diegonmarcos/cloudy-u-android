@@ -293,8 +293,9 @@ assert g["Me"] == ["Lnktree", "|", "Me-Pers", "Me-Prof", "Me-Prj", "|", "Me-Inve
 assert g["Setup"][-2:] == ["Profile", "About"], g["Setup"]  # #1903 the Profile tile left Me and is still reachable in Setup (Profile | About)
 # #1627 renamed 'Tools Primary'->'Primary' and 'Data Apps'->'Data'; Drive moved Data->Primary, Vault moved Primary->Data,
 # and a second Me tile (data-me) was added to Data. Primary now ends Writer, '||', Wallet; Account stays out of Primary.
-assert g["Primary"][-2:] == ["||", "Wallet"] and "Account" not in g["Primary"] and "Vault" not in g["Primary"], g["Primary"]
-assert "Vault" in g["Data"] and "Me" in g["Data"], g["Data"]  # #1627 Vault and a Me tile close the Data row (after '||')
+# #1916 MOVED: Primary ends Calc (Navigation, Camera, Canvas, Keyboard, Calc); Wallet moved to Data (Drive Browser Gallery Notes | Me Tasks Vault Wallet | Office).
+assert g["Primary"][-1] == "Calc" and "Wallet" not in g["Primary"] and "Account" not in g["Primary"] and "Vault" not in g["Primary"], g["Primary"]
+assert "Vault" in g["Data"] and "Me" in g["Data"] and "Wallet" in g["Data"] and g["Data"].index("Wallet") == g["Data"].index("Vault") + 1, g["Data"]
 assert "Me" not in g["Primary"], g["Primary"]
 assert "Account" in g["Setup"], "Account must stay in Setup (was Configs, #1755; intentional duplicate)"
 ids = [t["id"] for x in cloud["tile_groups"] for t in x["tiles"] if t.get("id")]

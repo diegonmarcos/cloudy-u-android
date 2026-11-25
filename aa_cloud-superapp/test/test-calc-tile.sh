@@ -22,7 +22,9 @@ echo "== T1: Calc sits in Cloud ▸ Primary (renamed from 'Tools Primary', #1627
 eq "one tile with id 'calc' in that group" "$(jq -r "[$GROUP | .tiles[] | select(.id == \"calc\")] | length" "$BJ")" "1"
 IDS="$(jq -r "[$GROUP | .tiles[].id] | join(\",\")" "$BJ")"
 NEXT="$(jq -r "[$GROUP | .tiles[].id] as \$t | (\$t | index(\"calc\")) as \$i | if \$i == null then \"\" else \$t[\$i+1] end" "$BJ")"
-eq "the tile right after calc is maps/Navigation (#1627 order: $IDS)" "$NEXT" "maps"
+# #1916 MOVED: Calc now ends Primary (Navigation, Camera, Canvas, Keyboard, Calc): nothing follows it, Keyboard precedes it.
+eq "calc is the last tile of Primary, right after keyboard (#1916 order: $IDS)" "$NEXT" "null"
+eq "the tile right before calc is keyboard (#1916)" "$(jq -r "[$GROUP | .tiles[].id] as \$t | (\$t | index(\"calc\")) as \$i | \$t[\$i-1]" "$BJ")" "keyboard"
 eq "its target hands off to the app" "$(jq -r "$GROUP | .tiles[] | select(.id == \"calc\") | .target" "$BJ")" "extapp:cloud-calc"
 eq "the PHONE page's Primary was not touched" \
    "$(jq -r '[.ui.sections[] | select(.id == "phone") | .phone_app_groups[] | select(.title == "Primary") | .packages[] | tostring | select(test("cloudcalc"))] | length' "$BJ")" "0"

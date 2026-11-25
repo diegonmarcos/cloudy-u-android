@@ -22,12 +22,12 @@ pk = lambda x: x if isinstance(x, str) else x['pkg']
 phone = [s for s in bj['sections'] if s['id'] == 'phone'][0]['phone_app_groups']
 cloud = [s for s in bj['sections'] if s['id'] == 'cloud'][0]['tile_groups']
 folders = bj['phone_folders']; secs = bj['phone_sections']
-ORDER = ['Primary', 'Communication', 'Data', 'Me', 'Projects', 'Services · City', 'Services · Leisure', 'AGI', 'Setup']  # #1769 Projects right after Me, #1902 Services split in City and Leisure
+ORDER = ['Data', 'Communication', 'Primary', 'Me', 'Services · City', 'Services · Leisure', 'AGI', 'Setup', 'Projects']  # #1916 MOVED: Data first, Projects after Setup (was #1769 Projects right after Me, #1902 Services split)
 
 print('== G: group order (Phone and Cloud quickmarks) ==')
 check([g['title'] for g in phone] == ORDER, 'Phone quickmark groups are %s (got %s)' % (ORDER, [g['title'] for g in phone]))
 check([g['title'] for g in cloud] == ORDER, 'Cloud quickmark groups are %s (got %s)' % (ORDER, [g['title'] for g in cloud]))
-check([s['title'] for s in secs] == ['Tools · Primary', 'Tools · Communication', 'Tools · Data', 'Tools · Me', 'Projects', 'Services · City', 'Services · Leisure', 'AGI', 'Setup'],
+check([s['title'] for s in secs] == ['Tools · Data', 'Tools · Communication', 'Tools · Primary', 'Tools · Me', 'Services · City', 'Services · Leisure', 'AGI', 'Setup', 'Projects'],  # #1916 MOVED
       'All Apps sections follow the same order: %s' % [s['title'] for s in secs])
 
 print('== P: field parity against the previous layout ==')
@@ -68,9 +68,9 @@ check(sorted(x['order'] for x in folders) == [x['order'] for x in folders] or Tr
 orders = [int(x['order']) for x in folders]
 check(orders == sorted(orders) and len(set(orders)) == len(orders), 'folder orders are unique and ascending (render order = section order)')
 want = {
- '=': ['Browser', 'Nav', 'Calc', 'Camera', 'Canvas', 'Keyboard', 'Wallet', 'Utilities'],
+ '=': ['Nav', 'Camera', 'Canvas', 'Keyboard', 'Calc', 'Utilities'],  # #1916 MOVED: Browser and Wallet to '.'
  '@': ['Mail', 'Chat', 'Messenger', 'Dialer', 'Contacts'],  # #1902 Social moved to Services · Leisure
- '.': ['Drive', 'Notes', 'Agenda', 'Office', 'Gallery', 'Vault'],
+ '.': ['Drive', 'Browser', 'Gallery', 'Notes', 'Agenda', 'Vault', 'Wallet', 'Office'],  # #1916
  '~': ['Me', 'Health Trackers', 'Gov & ID', 'Telecom', 'Home & Housing', 'Nutrition', 'Learning'],  # #1806 Health + Outdoor & Sport = Health Trackers
  '+': ['Money', 'Shopping', 'Health', 'Real Estate', 'Jobs & Business', 'City Mobility', 'Transports', 'Hotels'],  # #1902 ui.services_order, Services · City
  '%': ['News', 'Events', 'Media Center', 'Social', 'Games'],  # #1902 Services · Leisure
@@ -132,9 +132,9 @@ for g in phone:
         continue
     check(not g['packages'] and g.get('folders'), '%s holds folders only (#1764): one folder per Cloud app tile' % g['title'])
 WANT_FOLDERS = {
- 'Primary': ['Drive', 'Browser', 'Calc', 'Nav', 'Camera', 'Canvas', 'Keyboard', 'Wallet'],
+ 'Primary': ['Nav', 'Camera', 'Canvas', 'Keyboard', 'Calc'],  # #1916 MOVED: Drive, Browser, Wallet to Data
  'Communication': ['Mail', 'Chat', 'Messenger', 'Dialer', 'Contacts'],
- 'Data': ['Notes', 'Agenda', 'Office', 'Gallery', 'Vault'],
+ 'Data': ['Drive', 'Browser', 'Gallery', 'Notes', 'Agenda', 'Vault', 'Wallet', 'Office'],  # #1916
  'Me': ['Me-Pers', 'Me-Prof', 'Me-Prj', 'Me-Buro'],   # #1903 (were Me-Health, Experiences, Socials)
  'Services · City': ['Money', 'Shopping', 'Health', 'Real Estate', 'Jobs & Business', 'City Mobility', 'Transports', 'Hotels'],  # #1902 (#1806 order)
  'Services · Leisure': ['News', 'Events', 'Media Center', 'Social', 'Games'],  # #1902 Social opens the media_social All Apps folder

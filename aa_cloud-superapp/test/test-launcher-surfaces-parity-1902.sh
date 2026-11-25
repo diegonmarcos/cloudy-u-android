@@ -13,6 +13,7 @@
 #   S4  Cloud Smart Folders (data/fleet/launcher-folders/cloud.json): every folder id is still declared with its label and icon.
 #   N   the new entries exist: Services · City / Services · Leisure sections with their own prefixes, Social in Leisure on the
 #       Cloud and Phone quickmarks and on the cloud smart folders.
+# #1916: the nine sections are now ordered Data, Communication, Primary, Me, City, Leisure, AGI, Setup, Projects (a MOVE; the N checks pin it).
 # Static, no device.
 set -u
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -108,8 +109,8 @@ def surface(name, bj, ph, cl):
         if fo['media_social']['label'] != sp.get(LEIS, '?') + 'Social': f.append('media_social is not a Leisure folder')
         for x in ('svc_search', 'svc_kgstore'):
             if not fo[x]['label'].startswith(sp['AGI']): f.append('%s is not an AGI folder' % x)
-        if [g['title'] for g in S['cloud']['tile_groups']] != ['Primary', 'Communication', 'Data', 'Me', 'Projects', CITY, LEIS, 'AGI', 'Setup']: f.append('Cloud quickmark groups are not the nine sections')
-        if [g['title'] for g in S['phone']['phone_app_groups']] != ['Primary', 'Communication', 'Data', 'Me', 'Projects', CITY, LEIS, 'AGI', 'Setup']: f.append('Phone quickmark groups are not the nine sections')
+        if [g['title'] for g in S['cloud']['tile_groups']] != ['Data', 'Communication', 'Primary', 'Me', CITY, LEIS, 'AGI', 'Setup', 'Projects']: f.append('Cloud quickmark groups are not the nine sections')
+        if [g['title'] for g in S['phone']['phone_app_groups']] != ['Data', 'Communication', 'Primary', 'Me', CITY, LEIS, 'AGI', 'Setup', 'Projects']: f.append('Phone quickmark groups are not the nine sections')
         cs = [t for g in S['cloud']['tile_groups'] if g['title'] == LEIS for t in g['tiles'] if t['id'] == 'social']
         if not cs or cs[0]['target'] != 'https://diegonmarcos.github.io/mySocials/': f.append('Cloud Leisure has no Social tile opening the mySocials URL (#1904)')
         ps = [x for g in S['phone']['phone_app_groups'] if g['title'] == LEIS for x in g['folders'] if x['label'] == 'Social']
@@ -117,7 +118,7 @@ def surface(name, bj, ph, cl):
         sections = []
         for x in cl['folders']:
             if x['section'] not in sections: sections.append(x['section'])
-        if sections != ['Primary', 'Communication', 'Data', 'Me', 'Projects', CITY, LEIS, 'AGI', 'Setup']: f.append('Cloud smart folder sections are %s' % sections)
+        if sections != ['Data', 'Communication', 'Primary', 'Me', CITY, LEIS, 'AGI', 'Setup', 'Projects']: f.append('Cloud smart folder sections are %s' % sections)
         if [x['section'] for x in cl['folders'] if x['id'] == 'social'] != [LEIS]: f.append('Cloud smart folder Social is not in Leisure')
     return f
 

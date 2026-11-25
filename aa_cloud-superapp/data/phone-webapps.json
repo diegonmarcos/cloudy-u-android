@@ -2,7 +2,7 @@
   "_doc": "Phone > WebApps (#1466): the web version of each phone app declared in build.json ui.sections[phone].phone_app_groups (same packages, same groups; test-phone-webapps.sh keeps them equal). `url` = the app's https web address, opened in the embedded browser (libs:web-core CloudWeb); null = no known web version, the tile is drawn GREYED and disabled. Data, not code: add a line to add an app. cloudy-h-webapps-mob generates its phone-apps/ source from this file (scripts/gen-phone-apps.mjs, drift-checked).",
   "groups": [
     {
-      "title": "Primary",
+      "title": "Data",
       "apps": [
         {
           "pkg": "com.google.android.apps.docs",
@@ -30,54 +30,69 @@
           "url": null
         },
         {
-          "pkg": "com.sec.android.app.popupcalculator",
-          "label": "Calculator",
+          "pkg": "com.google.android.apps.photos",
+          "label": "Google Photos",
+          "url": "https://photos.google.com"
+        },
+        {
+          "pkg": "md.obsidian",
+          "label": "Obsidian",
           "url": null
         },
         {
-          "pkg": "com.sec.android.app.clockpackage",
-          "label": "Clock",
+          "pkg": "com.rhmsoft.edit",
+          "label": "QuickEdit",
           "url": null
         },
         {
-          "pkg": "com.google.android.apps.translate",
-          "label": "Translate",
-          "url": "https://translate.google.com"
+          "pkg": "com.google.android.calendar",
+          "label": "Google Calendar",
+          "url": "https://calendar.google.com"
         },
         {
-          "pkg": "com.google.android.apps.maps",
-          "label": "Maps",
-          "url": "https://maps.google.com"
-        },
-        {
-          "pkg": "app.organicmaps",
-          "label": "Organic Maps",
+          "pkg": "com.google.android.apps.tasks",
+          "label": "Google Tasks",
           "url": null
         },
         {
-          "pkg": "com.sec.android.app.camera",
-          "label": "Camera",
-          "url": null
+          "pkg": "co.mangotechnologies.clickup",
+          "label": "ClickUp",
+          "url": "https://app.clickup.com"
         },
         {
-          "pkg": "com.adsk.sketchbook",
-          "label": "SketchBook",
-          "url": null
+          "pkg": "com.x8bit.bitwarden",
+          "label": "Bitwarden",
+          "url": "https://vault.bitwarden.com"
         },
         {
-          "pkg": "com.imageline.FLM",
-          "label": "FL Studio Mobile",
-          "url": null
-        },
-        {
-          "pkg": "com.google.android.inputmethod.latin",
-          "label": "Gboard",
+          "pkg": "com.beemdevelopment.aegis",
+          "label": "Aegis",
           "url": null
         },
         {
           "pkg": "com.google.android.apps.walletnfcrel",
           "label": "Google Wallet",
           "url": "https://wallet.google.com"
+        },
+        {
+          "pkg": "com.google.android.apps.docs.editors.docs",
+          "label": "Google Docs",
+          "url": "https://docs.google.com"
+        },
+        {
+          "pkg": "com.google.android.apps.docs.editors.sheets",
+          "label": "Google Sheets",
+          "url": null
+        },
+        {
+          "pkg": "com.google.android.apps.docs.editors.slides",
+          "label": "Google Slides",
+          "url": "https://docs.google.com/presentation"
+        },
+        {
+          "pkg": "com.adobe.reader",
+          "label": "Adobe Acrobat",
+          "url": null
         }
       ]
     },
@@ -127,67 +142,52 @@
       ]
     },
     {
-      "title": "Data",
+      "title": "Primary",
       "apps": [
         {
-          "pkg": "md.obsidian",
-          "label": "Obsidian",
+          "pkg": "com.google.android.apps.maps",
+          "label": "Maps",
+          "url": "https://maps.google.com"
+        },
+        {
+          "pkg": "app.organicmaps",
+          "label": "Organic Maps",
           "url": null
         },
         {
-          "pkg": "com.rhmsoft.edit",
-          "label": "QuickEdit",
+          "pkg": "com.sec.android.app.camera",
+          "label": "Camera",
           "url": null
         },
         {
-          "pkg": "com.google.android.calendar",
-          "label": "Google Calendar",
-          "url": "https://calendar.google.com"
-        },
-        {
-          "pkg": "com.google.android.apps.tasks",
-          "label": "Google Tasks",
+          "pkg": "com.adsk.sketchbook",
+          "label": "SketchBook",
           "url": null
         },
         {
-          "pkg": "co.mangotechnologies.clickup",
-          "label": "ClickUp",
-          "url": "https://app.clickup.com"
-        },
-        {
-          "pkg": "com.google.android.apps.docs.editors.docs",
-          "label": "Google Docs",
-          "url": "https://docs.google.com"
-        },
-        {
-          "pkg": "com.google.android.apps.docs.editors.sheets",
-          "label": "Google Sheets",
+          "pkg": "com.imageline.FLM",
+          "label": "FL Studio Mobile",
           "url": null
         },
         {
-          "pkg": "com.google.android.apps.docs.editors.slides",
-          "label": "Google Slides",
-          "url": "https://docs.google.com/presentation"
-        },
-        {
-          "pkg": "com.adobe.reader",
-          "label": "Adobe Acrobat",
+          "pkg": "com.google.android.inputmethod.latin",
+          "label": "Gboard",
           "url": null
         },
         {
-          "pkg": "com.google.android.apps.photos",
-          "label": "Google Photos",
-          "url": "https://photos.google.com"
-        },
-        {
-          "pkg": "com.x8bit.bitwarden",
-          "label": "Bitwarden",
-          "url": "https://vault.bitwarden.com"
-        },
-        {
-          "pkg": "com.beemdevelopment.aegis",
-          "label": "Aegis",
+          "pkg": "com.sec.android.app.popupcalculator",
+          "label": "Calculator",
           "url": null
+        },
+        {
+          "pkg": "com.sec.android.app.clockpackage",
+          "label": "Clock",
+          "url": null
+        },
+        {
+          "pkg": "com.google.android.apps.translate",
+          "label": "Translate",
+          "url": "https://translate.google.com"
         }
       ]
     },
@@ -280,10 +280,6 @@
           "url": null
         }
       ]
-    },
-    {
-      "title": "Projects",
-      "apps": []
     },
     {
       "title": "Services · City",
@@ -569,6 +565,10 @@
           "url": null
         }
       ]
+    },
+    {
+      "title": "Projects",
+      "apps": []
     }
   ]
 }

@@ -13,15 +13,15 @@
 {"id":"os","label":"OS","members":["lib-rootfs-nixdroid","lib-rootfs-termux","ae-tool_termux-boot"]}
 ],
 "app_categories":[
-{"id":"primary","label":"Primary","members":["drive","browser","calc","nav","camera","canvas","keyboard","wallet"]},
+{"id":"data","label":"Data","members":["drive","browser","gallery","notes","tasks","vault","wallet","office"]},
 {"id":"communication","label":"Communication","members":["mail","chat","matrix","dialer","contacts"]},
-{"id":"data","label":"Data","members":["notes","tasks","office","gallery","vault"]},
+{"id":"primary","label":"Primary","members":["nav","camera","canvas","keyboard","calc"]},
 {"id":"me","label":"Me","members":["me"]},
-{"id":"projects","label":"Projects","members":["wiki","aa_cloud-superapp","cg-omniverse","capital-stack-finterminal","hardtech-biomed","hardtech-cad"]},
 {"id":"services-city","label":"Services · City","members":["shopping"]},
 {"id":"services-leisure","label":"Services · Leisure","members":["news","media-center"]},
 {"id":"agi","label":"AGI","members":["superintel","code","tools-small-llms","myterminal","nix-on-droid","search","kg-store","termux"]},
-{"id":"setup","label":"Setup","members":["store","account","c3","c3-webserver","morpheus","watchtower","watchdog"]}
+{"id":"setup","label":"Setup","members":["store","account","c3","c3-webserver","morpheus","watchtower","watchdog"]},
+{"id":"projects","label":"Projects","members":["wiki","aa_cloud-superapp","cg-omniverse","capital-stack-finterminal","hardtech-biomed","hardtech-cad"]}
 ],
 "apps":[
 {"id":"aa_cloud-superapp","label":"cloud-superapp","display_name":"Cloud SuperApp","package":"com.diegonmarcos.superapp","alt_id":null,"registry":"ghcr.io","namespace":"diegonmarcos","image":"cloud-superapp","tag":"latest","asset":"Cloud-SuperApp.apk","release_url":"https://github.com/diegonmarcos/cloudy-u-android/releases/download/latest/Cloud-SuperApp.apk","repo_url":"https://github.com/diegonmarcos/cloudy-u-android/tree/main/aa_cloud-superapp","ghcr_page":"https://github.com/diegonmarcos/cloudy-u-android/pkgs/container/cloud-superapp","blocked":false,"kind":"app","version_name":"0.1.1-dev","version_code":23,"engines":[{"binding":"feed","fleet":"lib-feed","action":"{package}.ENGINE","min_contract":1},{"binding":"cal","fleet":"lib-cal","action":"{package}.ENGINE","min_contract":1}],"libs":["lib-web-core","lib-core","lib-updater","lib-mail","lib-net","lib-ops","lib-chat","lib-health","lib-launcher-apptabs","lib-kde-connect","lib-shizuku-adb-debug-tools","lib-shell-broker","lib-adb-readiness","lib-adb-grants","lib-adb-shell-core","lib-firewall","lib-battery","lib-light","lib-bluetooth","lib-wifi","lib-clock-tools","lib-perms","lib-fleetconfigs-xray","lib-ui-nav-bars","lib-theme-background","lib-datamanager","lib-launcher-onehand","lib-launcher-zoomies","lib-bottomnav","lib-ui-icons","lib-auth","lib-ui-kit","lib-tile-grid","lib-sysdns"],"assets":{"arm64-v8a":"Cloud-SuperApp.apk","armeabi-v7a":"Cloud-SuperApp.apk","x86_64":"Cloud-SuperApp-x86_64.apk","x86":"Cloud-SuperApp-x86_64.apk"},"group":"apps"},

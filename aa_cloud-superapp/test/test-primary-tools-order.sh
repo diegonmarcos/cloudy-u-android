@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Tester (#1155, relabelled #1627): Cloud > Apps > Primary (renamed from 'Tools Primary') reads, in this order
+# #1916 MOVED: Primary now reads Navigation, Camera, Canvas, Keyboard, Calc (no dividers); Drive, Browser and Wallet moved to Data.
+# Tester (#1155, relabelled #1627): Cloud > Apps > Primary (renamed from 'Tools Primary') read, in this order
 # with dividers, Drive, Browser | Calc, Navigation, Camera, Keyboard, Writer || Wallet - declared in build.json
 # (array position is render position; '|' = single separator tile, '||' = double separator tile). #1627 moved
 # Drive in (from Data) and Vault out (to Data); the single '|' sits after Browser, the DOUBLE '||' after Writer.
@@ -20,14 +21,15 @@ eq "no Cloud group is still titled 'Tools Primary'" "$(jq -r '[.ui.sections[] | 
 
 echo "== T1: the full row (tiles + dividers), in the owner's order =="
 GOT="$(jq -r "$GROUP | [.tiles[].label] | join(\",\")" "$BJ")"
-eq "full tile row incl. dividers" "$GOT" "Drive,Browser,|,Calc,Navigation,Camera,Canvas,Keyboard,||,Wallet"
+eq "full tile row incl. dividers" "$GOT" "Navigation,Camera,Canvas,Keyboard,Calc"
 APPS="$(jq -r "$GROUP | [.tiles[] | select(.separator != true) | .label] | join(\",\")" "$BJ")"
-eq "the seven tools, dividers removed" "$APPS" "Drive,Browser,Calc,Navigation,Camera,Canvas,Keyboard,Wallet"
-eq "single '|' divider sits after Browser" "$(jq -r "$GROUP | ([.tiles[].label] | index(\"|\")) as \$i | \"\(.tiles[\$i-1].label)>\(.tiles[\$i].separator)\"" "$BJ")" "Browser>true"
-eq "DOUBLE '||' divider sits after Keyboard, double:true" "$(jq -r "$GROUP | ([.tiles[].label] | index(\"||\")) as \$i | \"\(.tiles[\$i-1].label)>\(.tiles[\$i].double)\"" "$BJ")" "Keyboard>true"
-eq "exactly one Wallet tile, still an app hand-off" "$(jq -r "$GROUP | [.tiles[] | select(.label == \"Wallet\") | .target] | join(\",\")" "$BJ")" "extapp:cloud-wallet"
-eq "Drive leads the row, launching the Drive APK (moved from Data, #1627)" "$(jq -r "$GROUP | \"\(.tiles[0].label)>\(.tiles[0].target)\"" "$BJ")" "Drive>extapp:cloud-drive"
-eq "Vault left this row for Data (#1627)" "$(jq -r "$GROUP | [.tiles[] | select(.label == \"Vault\")] | length" "$BJ")" "0"
+eq "the five tools, no dividers (#1916)" "$APPS" "Navigation,Camera,Canvas,Keyboard,Calc"
+eq "Primary has no divider tile left (#1916: they moved with Drive, Browser, Wallet)" "$(jq -r "$GROUP | [.tiles[] | select(.separator == true)] | length" "$BJ")" "0"
+DATA='.ui.sections[] | select(.id == "cloud") | .tile_groups[] | select(.title == "Data")'
+eq "Wallet moved to Data, still an app hand-off (#1916)" "$(jq -r "$DATA | [.tiles[] | select(.label == \"Wallet\") | .target] | join(\",\")" "$BJ")" "extapp:cloud-wallet"
+eq "Data leads with Drive, launching the Drive APK (#1916, moved from Primary)" "$(jq -r "$DATA | \"\(.tiles[0].label)>\(.tiles[0].target)\"" "$BJ")" "Drive>extapp:cloud-drive"
+eq "Browser moved to Data (#1916)" "$(jq -r "$DATA | [.tiles[] | select(.label == \"Browser\") | .target] | join(\",\")" "$BJ")" "extapp:cloud-browser"
+eq "Vault is not in this row (it is in Data)" "$(jq -r "$GROUP | [.tiles[] | select(.label == \"Vault\")] | length" "$BJ")" "0"
 [ -f "$ROOT/ac_cloud-wallet/build.json" ] && ok "the Wallet app exists in the fleet (ac_cloud-wallet)" || bad "ac_cloud-wallet is gone: Wallet needs a documented unavailable state"
 
 echo "== T2: the order is declared, not sorted by the renderer =="

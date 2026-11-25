@@ -74,8 +74,9 @@ print("== T0: AGI sits right after the Services rows (City, Leisure), which sit 
 cloud = [s for s in bj["ui"]["sections"] if s.get("id") == "cloud"][0]
 titles = [g.get("title") for g in cloud.get("tile_groups", [])]
 C_, L_ = "Services \u00b7 City", "Services \u00b7 Leisure"
-check(all(x in titles for x in ("AGI", C_, L_, "Projects", "Me")) and titles.index("AGI") == titles.index(L_) + 1 and titles.index(L_) == titles.index(C_) + 1 and titles.index(C_) == titles.index("Projects") + 1 and titles.index("Projects") == titles.index("Me") + 1,
-      "#1769 Projects sits right after Me, Services \u00b7 City after Projects, Services \u00b7 Leisure after City and AGI after Leisure (%s)" % titles)
+# #1916 MOVED: Projects went after Setup (was right after Me); City now follows Me directly.
+check(all(x in titles for x in ("AGI", C_, L_, "Projects", "Me", "Setup")) and titles.index("AGI") == titles.index(L_) + 1 and titles.index(L_) == titles.index(C_) + 1 and titles.index(C_) == titles.index("Me") + 1 and titles.index("Projects") == titles.index("Setup") + 1,
+      "#1916 Services \u00b7 City sits right after Me, Services \u00b7 Leisure after City, AGI after Leisure, Projects right after Setup (%s)" % titles)
 
 print("== T1: the AGI row is SI AI | Code Tools | MyTerminal Terminal | Search KG Store (#1162, #1207, #1476, #1902), '|' being the group separators ==")
 got = [t.get("label") for t in tiles]

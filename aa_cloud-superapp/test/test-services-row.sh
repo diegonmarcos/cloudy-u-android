@@ -10,7 +10,7 @@ command -v jq >/dev/null 2>&1 || { echo "ERROR: jq required" >&2; exit 2; }
 check() {
   local bj="$1" fleet="$2" G='.ui.sections[] | select(.id == "cloud") | .tile_groups[]'
   local C="$G | select(.title == \"Services · City\")" L="$G | select(.title == \"Services · Leisure\")" A="$G | select(.title == \"AGI\")"
-  eq "group order Me, Projects, Services · City, Services · Leisure, AGI (#1769, #1902)" "$(jq -r "[$G | .title] | join(\",\")" "$bj" | grep -o 'Me,Projects,Services · City,Services · Leisure,AGI')" "Me,Projects,Services · City,Services · Leisure,AGI"
+  eq "group order Me, Services · City, Services · Leisure, AGI, Setup, Projects (#1916 MOVED Projects after Setup; was #1769, #1902)" "$(jq -r "[$G | .title] | join(\",\")" "$bj" | grep -o 'Me,Services · City,Services · Leisure,AGI,Setup,Projects')" "Me,Services · City,Services · Leisure,AGI,Setup,Projects"
   eq "no group keeps the old title Services (split in City and Leisure, #1902)" "$(jq -r "[$G | select(.title == \"Services\")] | length" "$bj")" "0"
   eq "no group keeps the old title Weby Services (no Markets)" "$(jq -r "[$G | select(.title == \"Weby Services\")] | length" "$bj")" "0"
   eq "no group keeps the old title Weby Services & Markets (now Services, #1756)" "$(jq -r "[$G | select(.title == \"Weby Services & Markets\")] | length" "$bj")" "0"

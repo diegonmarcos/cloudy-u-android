@@ -111,7 +111,8 @@ echo "== T1: Camera sits at the owner's declared place in Cloud ▸ Apps ▸ Pri
 # Account, the intentional duplicate, left this row for the Me group (test-me-account-tile.sh).
 # #1627 renamed the group to 'Primary' and set the order Drive, Browser | Calc, Navigation, Camera, Keyboard,
 # Writer || Wallet ('|' single separator, '||' double separator); Drive moved in from Data, Vault out to Data.
-WANT_ROW="Drive,Browser,|,Calc,Navigation,Camera,Canvas,Keyboard,||,Wallet"
+# #1916 MOVED: Drive, Browser and Wallet went to Data with their dividers; Primary reads Navigation, Camera, Canvas, Keyboard, Calc.
+WANT_ROW="Navigation,Camera,Canvas,Keyboard,Calc"
 GOT_ROW="$(jq -r '
   .ui.sections[] | select(.id == "cloud")
   | .tile_groups[] | select(.title == "Primary")
@@ -308,9 +309,15 @@ echo "== T10: adding the camera dropped none of the packages already curated =="
 # to this same list by another change in flight, so pinning the exact contents
 # would fail on somebody else's correct work. What must not happen is a
 # rewrite that loses an entry the owner put there.
-for pkg in com.brave.browser \
-           com.google.android.apps.maps \
-           com.google.android.apps.walletnfcrel \
+# #1916 MOVED: com.brave.browser and the Google Wallet package moved to the Data group; they are asserted there below.
+DATA_CURATED="$(jq -r --arg t "Data" "[ $QUICKMARK_PKGS ] | join(\",\")" "$BJ")"
+for pkg in com.brave.browser com.google.android.apps.walletnfcrel; do
+  case ",$DATA_CURATED," in
+    *",$pkg,"*) ok "$pkg is curated in 'Data' (moved from '$QUICKMARK_GROUP', #1916)" ;;
+    *)          bad "$pkg left '$QUICKMARK_GROUP' and is not in the Data quickmarks group" ;;
+  esac
+done
+for pkg in com.google.android.apps.maps \
            com.google.android.apps.translate \
            com.sec.android.app.clockpackage \
            com.sec.android.app.popupcalculator; do

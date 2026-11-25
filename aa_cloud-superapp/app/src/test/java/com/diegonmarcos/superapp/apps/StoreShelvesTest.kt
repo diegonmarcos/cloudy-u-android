@@ -61,12 +61,12 @@ class StoreShelvesTest {
 
     @Test
     fun `shelves sort in the taxonomy's declared order`() {
-        // Communication precedes Data in ui.phone_sections (#1756), so a
-        // store sorted by Shelf.order draws Communication first — the same
-        // order All Apps draws them in.
+        // Data precedes Communication in ui.phone_sections (#1916, moved: it was the
+        // other way round since #1756), so a store sorted by Shelf.order draws Data
+        // first — the same order All Apps draws them in.
         val data = shelves.getValue(drive).order
         val comms = shelves.getValue(whatsapp).order
-        assertTrue("Communication order '$comms' does not sort before Data order '$data'", comms < data)
+        assertTrue("Data order '$data' does not sort before Communication order '$comms'", data < comms)
     }
 
     @Test

@@ -99,7 +99,7 @@ class MeshStatusSections1900Test : KitPageHarness() {
         assertEquals(emptyList<String>(), missing(expected, ::shows))
         // the mutation: the same check against a page that lost one value reports it
         val lost = expected.first()
-        assertEquals(listOf(lost), missing(expected) { it != lost }.distinct())
+        assertEquals(listOf(lost), missing(expected) { it != lost })
         // the aggregates the rows keep
         assertTrue(shows(MeshFormat.latency(s0.hubLatencyMs)))
     }

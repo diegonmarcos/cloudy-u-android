@@ -176,7 +176,7 @@ internal fun GroupedTilesPage(sectionId: String, click: (String) -> Unit) {
         groups.forEachIndexed { gi, g ->
             item(key = "g:$gi") {
                 Column {
-                    GroupTitle(g.title)
+                    GroupTitle(g.title, g.glyph)
                     TileStrip(g.tiles, click, { folder = it }, menu = menu)
                 }
             }
@@ -216,8 +216,9 @@ internal fun GroupedTilesPage(sectionId: String, click: (String) -> Unit) {
 }
 
 @Composable
-internal fun GroupTitle(text: String) {
-    Text(text, color = LocalKitPalette.current.textPrimary, style = MaterialTheme.typography.titleSmall,
+internal fun GroupTitle(text: String, glyph: String = "") {
+    // #1916 the glyph is declared data (tile_groups[].glyph) and drawn before the title; the test tag stays the bare title.
+    Text(if (glyph.isEmpty()) text else "$glyph $text", color = LocalKitPalette.current.textPrimary, style = MaterialTheme.typography.titleSmall,
         modifier = Modifier.fillMaxWidth().padding(start = 4.dp, top = 12.dp, bottom = 4.dp).testTag(GroupedTilesFragment.groupTag(text)))
 }
 

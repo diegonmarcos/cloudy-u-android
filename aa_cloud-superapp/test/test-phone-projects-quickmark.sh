@@ -52,30 +52,30 @@ q '.ui.sections | length' >/dev/null
 
 PHONE_GROUPS='.ui.sections[] | select(.id == "phone") | .phone_app_groups'
 
-echo "== Q1: Projects sits at index 4, between Me and Services · City (#1769 order, #1902 Services split) =="
+echo "== Q1: Projects sits at index 8, the last group, after Setup (#1916 MOVED from index 4 between Me and Services · City) =="
 # THE ASSERTION THAT WOULD HAVE CAUGHT THE SHIPPED DEFECT. The index is read
 # from the array rather than searched for by title, and both neighbours are
 # named, because the owner specified a POSITION and not an existence: a group
 # that exists at the wrong index is the same page with the wrong answer on it.
 TITLES="$(q "[$PHONE_GROUPS | .[].title] | @tsv")"
 INDEX_OF_PROJECTS="$(q "[$PHONE_GROUPS | .[].title] | index(\"Projects\") // -1")"
-if [ "$INDEX_OF_PROJECTS" = "4" ]; then
-    ok "phone_app_groups[4] is 'Projects'"
+if [ "$INDEX_OF_PROJECTS" = "8" ]; then
+    ok "phone_app_groups[8] is 'Projects'"
 else
-    bad "'Projects' is at phone_app_groups[$INDEX_OF_PROJECTS], expected 4 — groups are: $TITLES"
+    bad "'Projects' is at phone_app_groups[$INDEX_OF_PROJECTS], expected 8 — groups are: $TITLES"
 fi
-BEFORE="$(q "[$PHONE_GROUPS | .[].title] | .[3] // \"\"")"
-AFTER="$(q "[$PHONE_GROUPS | .[].title] | .[5] // \"\"")"
-[ "$BEFORE" = "Me" ] \
-    && ok "the group before Projects is 'Me'" \
-    || bad "the group before Projects is '${BEFORE:-NOTHING}', expected 'Me'"
-[ "$AFTER" = "Services · City" ] \
-    && ok "the group after Projects is 'Services · City'" \
-    || bad "the group after Projects is '${AFTER:-NOTHING}', expected 'Services · City'"
+BEFORE="$(q "[$PHONE_GROUPS | .[].title] | .[7] // \"\"")"
+AFTER="$(q "[$PHONE_GROUPS | .[].title] | .[9] // \"\"")"
+[ "$BEFORE" = "Setup" ] \
+    && ok "the group before Projects is 'Setup'" \
+    || bad "the group before Projects is '${BEFORE:-NOTHING}', expected 'Setup'"
+[ -z "$AFTER" ] \
+    && ok "no group follows Projects" \
+    || bad "the group after Projects is '$AFTER', expected none"
 LAST="$(q "[$PHONE_GROUPS | .[].title] | last")"
-[ "$LAST" = "Setup" ] \
-    && ok "'Setup' is still the last group" \
-    || bad "the last group is '$LAST', expected 'Setup' — Projects was inserted past the end"
+[ "$LAST" = "Projects" ] \
+    && ok "'Projects' is the last group (#1916), right after Setup" \
+    || bad "the last group is '$LAST', expected 'Projects'"
 
 echo "== Q2: Projects is on QUICKMARKS and on no other surface =="
 # The negative half, and the one the shipped defect needed. Guarding only the

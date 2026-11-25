@@ -45,8 +45,8 @@ class FolderCoverageTest {
         val folders = FolderTables.parseFolders(dataset("data/fleet/launcher-folders/cloud.json"))
         val sections = folders.map { it.section }.distinct()
         val expected = listOf(
-            "Primary", "Communication", "Data", "Me", "Projects",
-            "Services \u00b7 City", "Services \u00b7 Leisure", "AGI", "Setup",
+            "Data", "Communication", "Primary", "Me",
+            "Services \u00b7 City", "Services \u00b7 Leisure", "AGI", "Setup", "Projects",  // #1916 moved: Data first, Projects after Setup
         )
         assertEquals("every declared section is present, in order", expected, sections)
         assertTrue("the taxonomy is comprehensive (>= 30 folders)", folders.size >= 30)

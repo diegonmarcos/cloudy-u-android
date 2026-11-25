@@ -3,13 +3,13 @@
 # Rule 16 — a reorder/rename/redefine DROPS NOTHING. This pins the pre-#1627/#1628 surface and proves every
 # app/page it carried is still present after the reorg, while asserting the new order, renames and dividers.
 #
-#   T1  #1627 group order + renames: the cloud tile_groups read Primary, Communication, Data, Me,
-#       Services, AGI, Projects, Setup (#1756); 'Tools Primary' and 'Data Apps' are gone.
+#   T1  #1627 group order + renames: the cloud tile_groups read Data, Communication, Primary, Me,
+#       Services · City, Services · Leisure, AGI, Setup, Projects (#1916, was Primary, Communication, Data, Me, Projects, ... Setup); 'Tools Primary' and 'Data Apps' are gone.
 #   T2  #1627 field parity: every app the old 'Tools Primary' ∪ 'Data Apps' launched is still launched by the
 #       new Primary ∪ Data (nothing dropped; Drive moved Data->Primary, Vault moved Primary->Data, Me added).
 #   T3  #1627 Communication is byte-for-byte unchanged (the six tiles, same ids and targets, same order).
-#   T4  #1627 dividers: Primary = Drive, Browser | Calc, Navigation, Camera, Canvas (#1780), Keyboard, Writer || Wallet and
-#       Data = Note(s), Tasks, Office | Gallery, Media Center || Me, Vault, with single '|' (separator:true) and
+#   T4  #1916 (MOVED from #1627): Primary = Navigation, Camera, Canvas, Keyboard, Calc and
+#       Data = Drive, Browser, Gallery, Notes | Me, Tasks, Vault, Wallet | Office, with single '|' (separator:true) and
 #       DOUBLE '||' (separator:true + double:true) tiles, neither carrying a target.
 #   T5  #1755 Configs row = Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About, every
 #       tile on a real page/app id, and the five #1611 tiles (Quick Actions, Watchdog, Account, C3, Store) retained.
@@ -34,7 +34,7 @@ def emit(t, msg): out.append("%s\t%s" % (t, msg))
 
 # T1
 titles = [g.get("title") for g in tg]
-want = ["Primary", "Communication", "Data", "Me", "Projects", "Services · City", "Services · Leisure", "AGI", "Setup"]  # #1902 Services is City + Leisure
+want = ["Data", "Communication", "Primary", "Me", "Services · City", "Services · Leisure", "AGI", "Setup", "Projects"]  # #1902 Services is City + Leisure; #1916 Data first, Projects after Setup (a MOVE)
 if titles != want:
     emit("T1", "group order is %r, want %r" % (titles, want))
 for gone in ("Tools Primary", "Data Apps"):
@@ -84,11 +84,11 @@ else:
 def row(group): return [(t.get("label"), t.get("separator", False), t.get("double", False), t.get("target", "")) for t in by[group]["tiles"]]
 if "Primary" in by:
     labels = [l for l, s, dbl, tg_ in row("Primary")]
-    if labels != ["Drive", "Browser", "|", "Calc", "Navigation", "Camera", "Canvas", "Keyboard", "||", "Wallet"]:
+    if labels != ["Navigation", "Camera", "Canvas", "Keyboard", "Calc"]:  # #1916 MOVED: Drive, Browser, Wallet to Data; the two Primary dividers went with them
         emit("T4", "Primary row = %r" % labels)
 if "Data" in by:
     labels = [l for l, s, dbl, tg_ in row("Data")]
-    if labels != ["Notes", "Tasks", "Office", "|", "Gallery", "||", "Me", "Vault"]:
+    if labels != ["Drive", "Browser", "Gallery", "Notes", "|", "Me", "Tasks", "Vault", "Wallet", "|", "Office"]:  # #1916
         emit("T4", "Data row = %r" % labels)
 for grp in ("Primary", "Data"):
     if grp not in by: continue
@@ -101,8 +101,9 @@ for grp in ("Primary", "Data"):
             emit("T4", "%s divider %r carries a target %r" % (grp, l, tgt))
     singles = sum(1 for l, s, dbl, _ in row(grp) if l == "|")
     doubles = sum(1 for l, s, dbl, _ in row(grp) if l == "||")
-    if (singles, doubles) != (1, 1):
-        emit("T4", "%s has %d single + %d double dividers, want 1 + 1" % (grp, singles, doubles))
+    want_sd = {"Primary": (0, 0), "Data": (2, 0)}[grp]  # #1916 moved: Data carries two single dividers, Primary none
+    if (singles, doubles) != want_sd:
+        emit("T4", "%s has %d single + %d double dividers, want %d + %d" % ((grp, singles, doubles) + want_sd))
 
 # T5 — #1628 Configs row
 if "Setup" in by:
@@ -145,7 +146,7 @@ for t in T1 T2 T3 T4 T5; do
   lines="$(printf '%s\n' "$RES" | awk -F'\t' -v k="$t" '$1==k{print $2}')"
   if [ -z "$lines" ]; then
     case "$t" in
-      T1) ok "T1: #1627 group order Primary, Communication, Data, Me, Projects, Services · City, Services · Leisure, AGI, Setup (#1756, #1902) (#1755, was Configs); old titles gone" ;;
+      T1) ok "T1: #1916 group order Data, Communication, Primary, Me, Services · City, Services · Leisure, AGI, Setup, Projects (moved from #1756/#1902 order); old titles gone" ;;
       T2) ok "T2: #1627 field parity — every app the old Tools Primary ∪ Data Apps launched is still in Primary ∪ Data" ;;
       T3) ok "T3: #1627 Communication is unchanged (six tiles, same ids and targets)" ;;
       T4) ok "T4: #1627 dividers — single '|' and DOUBLE '||' placed per owner order, separators only" ;;

@@ -104,13 +104,9 @@ primary = next((g for s, g in all_groups
 if primary is None:
     emit("T1", "Cloud ▸ Apps ▸ Primary (renamed from 'Tools Primary', #1627) no longer exists")
 else:
-    ptiles = primary.get("tiles", [])
-    first = ptiles[0] if ptiles else {}
-    if first.get("id") != "drive-conn":
-        emit("T1", "Primary leads with %r, not the drive-conn tile (#1627 Drive moved here from Data)" % first.get("id"))
-    if first.get("target") != "extapp:cloud-drive":
-        emit("T1", "the leading Drive tile targets %r — it must launch the extracted "
-                   "APK as extapp:cloud-drive" % first.get("target"))
+    # #1916 MOVED: Drive left Primary again and leads Data (Drive, Browser, Gallery, Notes | ...).
+    if any(t.get("id") == "drive-conn" for t in primary.get("tiles", [])):
+        emit("T1", "the drive-conn tile is still in Primary - #1916 moved it to Data")
 if data_apps is None:
     emit("T1", "Cloud ▸ Apps ▸ Data (renamed from 'Data Apps', #1627) no longer exists — the T4 row check is vacuous")
     tiles = []
@@ -118,8 +114,12 @@ else:
     tiles = data_apps.get("tiles", [])
     if not tiles:
         emit("T1", "Data declares no tiles")
-    if any(t.get("id") == "drive-conn" for t in tiles):
-        emit("T1", "the drive-conn tile is still in Data — #1627 moved it to Primary")
+    first = tiles[0] if tiles else {}
+    if first.get("id") != "drive-conn":
+        emit("T1", "Data leads with %r, not the drive-conn tile (#1916 Drive moved here from Primary)" % first.get("id"))
+    if first.get("target") != "extapp:cloud-drive":
+        emit("T1", "the leading Drive tile targets %r — it must launch the extracted "
+                   "APK as extapp:cloud-drive" % first.get("target"))
 
 # The AGI `drive` tile is a different thing (MyTerminal files) and must not have been
 # swept up by the rename.
@@ -249,7 +249,7 @@ for label in T1 T2 T3 T4 T5 T6 T7; do
   lines="$(printf '%s\n' "$RESULT" | awk -F'\t' -v t="$label" '$1==t {print $2}')"
   if [ -z "$lines" ]; then
     case "$label" in
-      T1) ok "T1: Primary leads with the Drive tile launching extapp:cloud-drive (#1627 moved it from Data), and Data no longer carries it" ;;
+      T1) ok "T1: Data leads with the Drive tile launching extapp:cloud-drive (#1916 moved it from Primary), and Primary no longer carries it" ;;
       T2) ok "T2: the Drive section, its data, its fragment and its BuildConfig field are all gone" ;;
       T3) ok "T3: extapp:cloud-drive resolves to a real external app with a tagged APK url" ;;
       T4) ok "T4: every Data tile carries a target routeTarget has a branch for" ;;
