@@ -270,7 +270,7 @@ private fun IndexPlanet(tree: WikiTree, open: (TreeNode) -> Unit) {
                 drawCircle(col, radius = r, center = Offset(sx.toFloat(), sy.toFloat()))
                 if (b.level <= 1 || r > 7f) {
                     // #1921 a label starting at or past the canvas edge leaves negative room and drawText throws: skip it
-                    GraphCamera.labelOrigin(Offset(sx.toFloat(), sy.toFloat()), r, size.width, size.height)?.let { at ->
+                    GraphCamera.labelOrigin(Offset(sx.toFloat(), sy.toFloat()), r, this.size.width, this.size.height)?.let { at ->
                         drawText(measurer, b.label, topLeft = at, style = label, maxLines = 1, softWrap = false)
                     }
                 }
