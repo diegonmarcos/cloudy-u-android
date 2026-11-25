@@ -26,7 +26,9 @@ class RepoTreeTest {
     private val outline = RepoOutline.parse(outlineText)
     private val config = RepoTreeConfig.parse(ui.getJSONObject("repo_tree"))
     /** #1901 the Lnktree section became Proj: its first row is the Lnktree page, its second the Proj areas. */
-    private val lnktree = ui.getJSONArray("sections").objects().first { it.getString("id") == "proj" }
+    // #1914 Proj became Home and its groups: the registry area trees stay on the Lnktree bottom-nav section (Proj row, lt- ids)
+    private val lnktree = ui.getJSONArray("sections").objects().first { it.getString("id") == "lnktree" }
+    private val projSection = ui.getJSONArray("sections").objects().first { it.getString("id") == "proj" }
 
     private fun strings(a: JSONArray?) = if (a == null) emptyList() else (0 until a.length()).map { a.getString(it) }
     private fun node(roots: List<RepoNode>, label: String) = roots.first { it.label == label }
@@ -130,19 +132,19 @@ class RepoTreeTest {
 
     @Test fun `the Proj row sits below Pers and its areas are the registry areas in registry order`() {
         val groups = lnktree.getJSONArray("groups").objects()
-        assertEquals(listOf("lnktree", "proj"), groups.map { it.getString("id") })
+        assertEquals(listOf("lnktree", "prof", "pers", "proj"), groups.map { it.getString("id") })
         val proj = groups.last()
         assertEquals("Proj", proj.getString("label"))
         assertEquals(config.group, proj.getString("id"))
         val rowPages = strings(proj.getJSONArray("pages"))
-        assertEquals("every Proj chip is a declared area and nothing else", config.areas.map { it.first }, rowPages)
+        assertEquals("every Proj chip is a declared area and nothing else", config.areas.map { "lt-" + it.first }, rowPages)
         assertEquals("the Proj areas == the registry areas flagged show_in lnktree, in registry order",
             outline.filter { RepoTreeConfig.SURFACE in it.showIn }.map { it.code }, config.areas.map { it.second })
         assertEquals(listOf("1", "2", "3", "4", "5", "6"), config.areas.map { it.second })
-        val baked = Sections.byId("proj")!!
+        val baked = Sections.byId("lnktree")!!
         for ((page, code) in config.areas) {
-            assertEquals("chip $page reads its area's registry name", outline.first { it.code == code }.label, baked.page(page)!!.label)
-            val block = JSONArray(BuroLlcTestData.text("data/ui/proj/$page.json")).getJSONObject(0)
+            assertEquals("chip $page reads its area's registry name", outline.first { it.code == code }.label, baked.page("lt-$page")!!.label)
+            val block = JSONArray(BuroLlcTestData.text("data/ui/lnktree/lt-$page.json")).getJSONObject(0)
             assertEquals("fragment", block.getString("kind")); assertEquals("repo_tree", block.getString("id"))
             assertEquals(code, block.getString("area"))
         }
@@ -155,11 +157,11 @@ class RepoTreeTest {
             assertEquals("an area entry is page + registry code only", setOf("page", "code"), a.keys().asSequence().toSet())
         val pages = lnktree.getJSONArray("pages").objects().associateBy { it.getString("id") }
         for ((page, _) in config.areas)
-            assertFalse("page $page declares no label of its own (the build reads it from the outline)", pages.getValue(page).has("label"))
-        val baked = Sections.byId("proj")!!
+            assertFalse("page $page declares no label of its own (the build reads it from the outline)", pages.getValue("lt-" + page).has("label"))
+        val baked = Sections.byId("lnktree")!!
         for ((page, code) in config.areas) {
             val area = outline.first { it.code == code }
-            assertEquals("chip $page == registry area $code name", area.label, baked.page(page)!!.label)
+            assertEquals("chip $page == registry area $code name", area.label, baked.page("lt-$page")!!.label)
         }
     }
 
@@ -168,15 +170,16 @@ class RepoTreeTest {
         // Proj is a bar section, so each area page is a walked page.
         val walker = BuroLlcTestData.text("1_cicd/src/scripts/cloud-android-nav-walk.py")
         assertTrue(walker.contains("bottom_nav")); assertTrue(walker.contains("pages_of"))
-        assertTrue("proj" in strings(ui.getJSONArray("bottom_nav")))
+        assertTrue("proj" in strings(ui.getJSONArray("bottom_nav"))); assertTrue("lnktree" in strings(ui.getJSONArray("bottom_nav")))
         val walked = lnktree.getJSONArray("pages").objects().map { it.getString("id") }
-        assertTrue(walked.containsAll(config.areas.map { it.first }))
+        assertTrue(walked.containsAll(config.areas.map { "lt-" + it.first }))
     }
 
     @Test fun `Proj opens on Lnktree, Profile is only the avatar page and the old routes still open Lnktree`() {
         assertEquals("lnktree", ui.getString("default_section"))   // #1901 correction: the app opens on the restored Lnktree entry
-        assertEquals("Proj", lnktree.getString("label"))
-        assertEquals("lnktree-site", lnktree.getJSONArray("pages").objects().first().getString("id"))
+        assertEquals("Proj", projSection.getString("label"))
+        assertEquals("pj-home", projSection.getJSONArray("pages").objects().first().getString("id"))
+        assertEquals("lt-lnktree-site", lnktree.getJSONArray("pages").objects().first().getString("id"))
         fun labels(o: JSONObject): List<String> = listOf(o.optString("label")) + o.optJSONArray("pages").objects().flatMap(::labels)
         // #1439 the one Profile is the avatar's section (libs:account-ui); no page is labelled Profile again. #1901 asked for the subpage
         // "Profiles" in Pers and in Prof (the plural, a group of profile pages, not the avatar's Profile), so only the singular stays banned.

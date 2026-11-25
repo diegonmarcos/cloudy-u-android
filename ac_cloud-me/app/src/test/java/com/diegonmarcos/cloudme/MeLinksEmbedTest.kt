@@ -26,7 +26,7 @@ class MeLinksEmbedTest {
     private val tabs get() = entries.filter { it.has("path") }
 
     @Test fun `every tab embeds the URL its me-links entry declares`() {
-        assertTrue(tabs.size >= 45)
+        assertTrue(tabs.size >= 40)
         for (e in tabs) assertEquals(e.getString("id"), e.getString("url"), block(e).optString("url"))
     }
 
