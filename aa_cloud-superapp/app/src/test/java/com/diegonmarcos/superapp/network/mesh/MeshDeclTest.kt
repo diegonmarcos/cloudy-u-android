@@ -88,9 +88,9 @@ class MeshDeclTest {
         assertTrue(rows.indexOf("export") < rows.indexOf("interface"))
         // every #1120 / #1153 control, in its order, then the #1797 additions and the #1928 per-section Copy / Export
         val cids = d.page("status")!!.controls.map { it.id }
-        assertEquals(listOf("status_copy_all", "status_export_all", "status_export_md", "reach_run"), cids.take(4))
+        assertEquals(listOf("status_copy_all", "section_copy", "section_export", "status_export_all"), cids.take(4))
         assertEquals(listOf("vpn_connect", "vpn_disconnect", "vpn_reconnect", "vpn_always_on"), cids.takeLast(4))
-        assertEquals(setOf("section_copy", "section_export", "reach_meshes_run", "status_profiler_copy", "status_profiler_export", "status_log_open", "status_prober_run", "status_prober_cancel"), (cids - cids.take(4).toSet() - cids.takeLast(4).toSet()).toSet())
+        assertEquals(setOf("status_export_md", "reach_run", "reach_meshes_run", "status_profiler_copy", "status_profiler_export", "status_log_open", "status_prober_run", "status_prober_cancel"), (cids - cids.take(4).toSet() - cids.takeLast(4).toSet()).toSet())
         assertEquals("alwayson.set", d.control("vpn_always_on")!!.engine)
         assertEquals("switch", d.control("vpn_always_on")!!.kind)
     }
