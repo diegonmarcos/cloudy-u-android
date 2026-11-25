@@ -86,7 +86,7 @@ class ShellTopInsetStaticGuardTest {
     @Test fun `S4b the shared libs' pages do not either`() {
         val libs = File(app, "../../ab_cloud-libs-shared/libs")
         if (!libs.isDirectory) return   // a checkout without the shared libs: the app-side scan above still ran
-        val own = setOf("bottomnav", "keyboard", "ui-nav-bars", "ui-nav-bars", "ui-nav-bars", "theme-background")   // bottomnav and its #1154 split (the nav, the second row) draw the row and the nav; the keyboard is not a page
+        val own = setOf("bottomnav", "keyboard", "ui-nav-bars", "ui-nav-bars", "ui-nav-bars", "theme-background", "scanner")   // scanner: #1908 its own full-screen activity (setContent, never a page in the shell container) clears the system bars itself; bottomnav and its #1154 split (the nav, the second row) draw the row and the nav; the keyboard is not a page
         val hits = libs.listFiles().orEmpty().filter { it.isDirectory && it.name !in own }.flatMap { lib ->
             File(lib, "src").walkTopDown().filter { it.isFile && it.extension == "kt" && !it.path.contains("/test/") && !it.path.contains("/androidTest/") }
                 .filter { LIB_BANNED.containsMatchIn(text(it)) }.map { it.relativeTo(libs).path }.toList()
