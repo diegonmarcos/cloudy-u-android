@@ -58,13 +58,19 @@ object DayRepo {
             val sym = listOf("next_1_hours", "next_6_hours", "next_12_hours").firstNotNullOfOrNull { k ->
                 data.optJSONObject(k)?.optJSONObject("summary")?.optString("symbol_code")?.takeIf { it.isNotBlank() }
             }
-            out += Hour(t.epochSecond / 3600L, temp, sym)
+            val det = data.getJSONObject("instant").getJSONObject("details")
+            fun d(o: JSONObject?, k: String): Double? = o?.takeIf { it.has(k) && !it.isNull(k) }?.optDouble(k)?.takeIf { !it.isNaN() }
+            val blk = listOf("next_1_hours", "next_6_hours").firstNotNullOfOrNull { k -> data.optJSONObject(k)?.optJSONObject("details") }
+            out += Hour(t.epochSecond / 3600L, temp, sym, d(det, "relative_humidity"), d(det, "wind_speed"),
+                d(det, "ultraviolet_index_clear_sky"), d(blk, "probability_of_precipitation"), d(blk, "precipitation_amount"))
         }
         out
     }.getOrDefault(emptyList())
 
     fun encode(c: Cache): String = JSONObject().put("v", 1).put("saved", c.savedMs).put("lat", c.lat).put("lon", c.lon)
-        .put("hours", JSONArray().also { a -> c.hours.forEach { a.put(JSONArray().put(it.epochHour).put(it.tempC).put(it.symbol ?: JSONObject.NULL)) } })
+        .put("hours", JSONArray().also { a -> c.hours.forEach { a.put(JSONArray().put(it.epochHour).put(it.tempC).put(it.symbol ?: JSONObject.NULL)
+            .put(it.humidityPct ?: JSONObject.NULL).put(it.windMs ?: JSONObject.NULL).put(it.uv ?: JSONObject.NULL)
+            .put(it.precipPct ?: JSONObject.NULL).put(it.precipMm ?: JSONObject.NULL)) } })
         .toString()
 
     fun decode(json: String?): Cache? = runCatching {
@@ -72,7 +78,8 @@ object DayRepo {
         val a = o.getJSONArray("hours")
         val hs = (0 until a.length()).map { i ->
             val r = a.getJSONArray(i)
-            Hour(r.getLong(0), r.getDouble(1), if (r.isNull(2)) null else r.getString(2))
+            fun d(i: Int): Double? = if (r.length() <= i || r.isNull(i)) null else r.getDouble(i)
+            Hour(r.getLong(0), r.getDouble(1), if (r.isNull(2)) null else r.getString(2), d(3), d(4), d(5), d(6), d(7))
         }
         Cache(o.getLong("saved"), o.getDouble("lat"), o.getDouble("lon"), hs)
     }.getOrNull()
@@ -130,7 +137,9 @@ object DayRepo {
 
     // ------------------------------------------------------------ Android glue
 
-    data class Snapshot(val model: DayModel, val status: DataStatus, val locationNote: String?)
+    data class Snapshot(val model: DayModel, val status: DataStatus, val locationNote: String?,
+        /** #1907 the hours behind the model and the clock they were read at (the weather rows' source). */
+        val hours: List<Hour> = emptyList(), val nowMs: Long = 0L)
 
     private class PrefsStore(private val s: WeatherFixStore) : Store {
         override fun load(): String? = s.loadTimelines()
@@ -157,7 +166,7 @@ object DayRepo {
         else runCatching { resolve(nowMs, city.lat, city.lon, PrefsStore(ws), seed, allowFetch, ::httpFetch) }
             .getOrElse { Resolved(emptyList(), DataStatus(DataStatus.Kind.NONE, 0L, "error: ${it.javaClass.simpleName}")) }
         val model = DayTimelines.build(Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate(), zone, city.name, city.lat, city.lon, res.hours, nowMs)
-        return Snapshot(model, res.status, note)
+        return Snapshot(model, res.status, note, res.hours, nowMs)
     }
 
     private fun httpFetch(lat: Double, lon: Double): String? {

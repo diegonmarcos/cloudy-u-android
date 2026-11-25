@@ -10,7 +10,12 @@ import java.util.Locale
 import kotlin.math.roundToInt
 
 /** One forecast hour from the fleet weather source (MET Norway): [epochHour] = UTC hours since 1970, [symbol] = its symbol_code or null. */
-data class Hour(val epochHour: Long, val tempC: Double, val symbol: String?)
+data class Hour(
+    val epochHour: Long, val tempC: Double, val symbol: String?,
+    /** #1907 the rest of the MET hour, for the weather rows under the graphic; null = the source gave none. */
+    val humidityPct: Double? = null, val windMs: Double? = null, val uv: Double? = null,
+    val precipPct: Double? = null, val precipMm: Double? = null,
+)
 
 /** A colour stop of a bar: [frac] 0..1 along the local day, [argb] an ARGB int. */
 data class Stop(val frac: Float, val argb: Int)

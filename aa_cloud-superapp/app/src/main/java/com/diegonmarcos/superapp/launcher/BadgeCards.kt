@@ -78,6 +78,11 @@ internal object BadgeCardTags {
     fun toggle(id: String) = "badge-card-toggle:$id"
     fun collapsed(id: String) = "badge-card-collapsed:$id"
     fun expanded(id: String) = "badge-card-expanded:$id"
+    /** #1907 the app-name row (the card's title) and the Weather card's rows / detail view. */
+    fun title(id: String) = "badge-card-title:$id"
+    fun weatherRow(id: String, rowId: String) = "badge-card-weather-row:$id:$rowId"
+    fun weatherDetailToggle(id: String) = "badge-card-weather-detail-toggle:$id"
+    fun weatherDetail(id: String) = "badge-card-weather-detail:$id"
     /** #1672 one ongoing line of a badge in the All page's summary. */
     fun summary(id: String) = "badge-summary:$id"
     const val SUMMARY = "badge-summary"
@@ -243,6 +248,7 @@ internal fun BadgeCard(d: BadgeCardData.Data) {
     if (collapsed) { CollapsedBadgeCard(d, accent, icon, flip); return }
     // #1603 Samsung-UI media card: the album art, dimmed, fills the card behind the transport; a scrim keeps the text
     // readable. Only for the media kind, and only when the posted notification carried art — otherwise a plain surface.
+    val weather = d.badge.id == com.diegonmarcos.superapp.notificationcenter.WeatherBadgeService.BADGE_ID
     val art = if (d.badge.card.kind == "media") d.albumArt?.asImageBitmap() else null
     Box(
         Modifier.fillMaxWidth().clip(NotifCard.shape).background(if (art != null) Color(0xFF15151A) else NotifCard.surface)
@@ -259,7 +265,7 @@ internal fun BadgeCard(d: BadgeCardData.Data) {
         Column(Modifier.fillMaxWidth().padding(start = NotifCard.pad, end = NotifCard.pad, top = 12.dp, bottom = 14.dp)
             .testTag(BadgeCardTags.expanded(d.badge.id))) {
         // The app-name row of a One UI notification: small tinted icon, name, state, no controls.
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.testTag(BadgeCardTags.title(d.badge.id))) {
             Icon(painterResource(icon), null, tint = accent, modifier = Modifier.size(NotifCard.headerIcon))
             Text(d.appName, color = NotifCard.title, fontSize = NotifCard.nameSp, fontWeight = FontWeight.Medium,
                 fontFamily = NotifCard.font, maxLines = 1, overflow = TextOverflow.Ellipsis,
@@ -270,6 +276,9 @@ internal fun BadgeCard(d: BadgeCardData.Data) {
             Box(Modifier.size(8.dp).clip(CircleShape).background(if (d.live) accent else NotifCard.pill))
             CollapseChevron(d.badge.id, expanded = true, onClick = flip)
         }
+        // #1907 the Weather card draws NOTHING between its title and the graphic: the value, the sub line, the hourly lines
+        // and the progress live in its detail view ([WeatherDetail]) under the rows.
+        if (!weather) {
         // The live value, large; the supporting line under it.
         Text(d.headline, color = NotifCard.title, fontSize = 26.sp, fontWeight = FontWeight.SemiBold,
             fontFamily = NotifCard.font, maxLines = 1, overflow = TextOverflow.Ellipsis,
@@ -311,12 +320,61 @@ internal fun BadgeCard(d: BadgeCardData.Data) {
             Text(l.value, color = if (l.alert) BADGE_ALERT else NotifCard.body, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font, maxLines = 1,
                 overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
         }
+        }
         if (d.badge.card.kind == "media") MediaHubLine(d.badge.id)
         d.idle?.let { IdleMediaRow(d.badge.id, it, hostView) }
         // #1734 the Weather badge's expanded view also carries the day timelines (the same composable the date dropdown draws).
-        if (d.badge.id == com.diegonmarcos.superapp.notificationcenter.WeatherBadgeService.BADGE_ID)
-            com.diegonmarcos.superapp.daytimelines.DayTimelinesCard(Modifier.padding(top = 10.dp), NotifCard.title, NotifCard.meta)
+        if (weather)
+            com.diegonmarcos.superapp.daytimelines.DayTimelinesCard(Modifier.padding(top = 6.dp), NotifCard.title, NotifCard.meta) { snap ->
+                WeatherRowsBlock(d.badge.id, snap)
+                WeatherDetail(d)
+            }
         ActionRow(d, accent, hostView)
+        }
+    }
+}
+
+/** #1907 the six Weather rows under the graphic: two columns, the label small over the value. */
+@Composable
+private fun WeatherRowsBlock(id: String, snap: com.diegonmarcos.superapp.daytimelines.DayRepo.Snapshot?) {
+    val rows = remember(snap) { com.diegonmarcos.superapp.daytimelines.WeatherRows.rows(snap) }
+    Column(Modifier.fillMaxWidth().padding(top = 8.dp)) {
+        for (r in rows) Row(Modifier.fillMaxWidth().padding(top = 6.dp).testTag(BadgeCardTags.weatherRow(id, r.id))) {
+            for (c in listOf(r.left, r.right)) Column(Modifier.weight(1f).padding(end = 6.dp)) {
+                Text(c.label, color = NotifCard.meta, fontSize = NotifCard.metaSp, fontFamily = NotifCard.font)
+                Text(c.value, color = NotifCard.title, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font)
+            }
+        }
+    }
+}
+
+/**
+ * #1907 the detail view of the Weather card: what used to sit between the title and the graphic (the headline value with
+ * its place, the day's range line, the info line, the progress and the hour-by-hour readings). Closed by default; open when
+ * the card has a button (a missing position: the sentence that explains the button lives here). Nothing is dropped.
+ */
+@Composable
+private fun WeatherDetail(d: BadgeCardData.Data) {
+    var open by androidx.compose.runtime.remember(d.badge.id) { androidx.compose.runtime.mutableStateOf(d.actions.isNotEmpty()) }
+    Text((if (open) "▾ " else "▸ ") + "Details", color = NotifCard.meta, fontSize = NotifCard.metaSp, fontFamily = NotifCard.font,
+        modifier = Modifier.padding(top = 8.dp).clickable { open = !open }.testTag(BadgeCardTags.weatherDetailToggle(d.badge.id)))
+    if (!open) return
+    Column(Modifier.fillMaxWidth().padding(top = 4.dp).testTag(BadgeCardTags.weatherDetail(d.badge.id))) {
+        Text(d.headline, color = NotifCard.title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, fontFamily = NotifCard.font,
+            maxLines = 2, overflow = TextOverflow.Ellipsis)
+        val sub = d.sub.ifBlank { d.note }
+        if (sub.isNotBlank()) Text(sub, color = NotifCard.body, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font, modifier = Modifier.padding(top = 2.dp))
+        if (d.subText.isNotBlank() && !d.subText.startsWith("Cloud SA - ")) Text(d.subText, color = NotifCard.meta,
+            fontSize = NotifCard.metaSp, fontFamily = NotifCard.font, modifier = Modifier.padding(top = 2.dp))
+        d.progress?.let { p ->
+            Box(Modifier.padding(top = 6.dp).fillMaxWidth().height(6.dp).clip(CircleShape).background(NotifCard.pill)) {
+                Box(Modifier.fillMaxWidth(p.coerceIn(0.02f, 1f)).height(6.dp).clip(CircleShape).background(NotifCard.body))
+            }
+        }
+        for (l in d.lines) Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
+            if (l.label.isNotBlank()) Text(l.label, color = NotifCard.meta, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font,
+                modifier = Modifier.padding(end = 10.dp))
+            Text(l.value, color = NotifCard.body, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font, modifier = Modifier.weight(1f))
         }
     }
 }

@@ -79,7 +79,8 @@ object DayTimelinesTags {
  * It paints at once from what is on the phone (no network), then refreshes; a failed refresh keeps the cache and says how old it is.
  */
 @Composable
-fun DayTimelinesCard(modifier: Modifier = Modifier, textColor: Color = Color.White, dimColor: Color = Color(0x99FFFFFF)) {
+fun DayTimelinesCard(modifier: Modifier = Modifier, textColor: Color = Color.White, dimColor: Color = Color(0x99FFFFFF),
+    footer: (@Composable (DayRepo.Snapshot?) -> Unit)? = null) {
     val ctx = LocalContext.current
     var snap by remember { mutableStateOf<DayRepo.Snapshot?>(null) }
     var nowMs by remember { mutableStateOf(System.currentTimeMillis()) }
@@ -90,7 +91,7 @@ fun DayTimelinesCard(modifier: Modifier = Modifier, textColor: Color = Color.Whi
     LaunchedEffect(Unit) {
         while (true) { delay(LowPowerMode.scaled(60_000L)); nowMs = System.currentTimeMillis() }
     }
-    DayTimelinesBody(snap, nowMs, modifier, textColor, dimColor)
+    DayTimelinesBody(snap, nowMs, modifier, textColor, dimColor, footer)
 }
 
 private val MONO = FontFamily.Monospace
@@ -105,11 +106,13 @@ private val BAR = 6.dp
 @Composable
 internal fun DayTimelinesBody(
     snap: DayRepo.Snapshot?, nowMs: Long, modifier: Modifier = Modifier, textColor: Color = Color.White, dimColor: Color = Color(0x99FFFFFF),
+    footer: (@Composable (DayRepo.Snapshot?) -> Unit)? = null,
 ) {
     var json by remember { mutableStateOf(false) }
     Column(modifier.fillMaxWidth().clickable { json = !json }.testTag(DayTimelinesTags.CARD)) {
         if (snap == null) {
             Text("Day timelines: loading", color = dimColor, fontSize = 11.sp, fontFamily = MONO, modifier = Modifier.testTag(DayTimelinesTags.STATUS))
+            footer?.invoke(null)
         } else {
             val m = snap.model
             Row(Modifier.fillMaxWidth().testTag(DayTimelinesTags.HEADER), verticalAlignment = Alignment.CenterVertically) {
@@ -130,6 +133,7 @@ internal fun DayTimelinesBody(
                 Axis(dimColor)
                 LegendRow(m.legend, textColor)
             }
+            footer?.invoke(snap)
             val notes = listOfNotNull(snap.status.line(), snap.locationNote).joinToString(" | ")
             Text(notes, color = if (snap.status.kind == DataStatus.Kind.LIVE && snap.locationNote == null) dimColor else AMBER, fontSize = 10.sp,
                 fontFamily = MONO, modifier = Modifier.padding(top = 4.dp).testTag(DayTimelinesTags.STATUS))
