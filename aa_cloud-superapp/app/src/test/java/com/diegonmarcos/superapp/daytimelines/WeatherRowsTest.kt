@@ -48,7 +48,7 @@ class WeatherRowsTest : KitPageHarness() {
             "Temp: min / max" to "Feels like: min / max",
             "Humidity: min / max" to "Wind: min / max",
             "Precipitation: probability / amount" to "UV index",
-            "Pressure: min / max" to "Dew point",
+            "Pressure: min / max" to "Dew point: min / max",
             "Moon phase" to "Sun zodiac / Moon zodiac",
             "Last update: time" to "Location",
         )
@@ -71,12 +71,15 @@ class WeatherRowsTest : KitPageHarness() {
         assertEquals("60% / 6.1 mm", r.getValue("precip_uv").left.value)
         assertEquals("7.5", r.getValue("precip_uv").right.value)
         assertEquals("1000 hPa / 1023 hPa", r.getValue("pressure_dew").left.value)
-        assertEquals("12°", r.getValue("pressure_dew").right.value) // Magnus at noon: 22 C, 52 %
-        val given = WeatherRows.rows(snap(full.map { it.copy(dewC = 3.4) })).associateBy { it.id }
-        assertEquals("3°", given.getValue("pressure_dew").right.value) // dew_point_temperature wins over Magnus
-        assertEquals(WeatherRows.EM, WeatherRows.rows(snap(full.map { it.copy(humidityPct = null) })).first { it.id == "pressure_dew" }.right.value)
+        // Magnus-Tetens per hour from 10..33 C and 40..63 % rh, then today's min / max
+        val dews = full.map { WeatherRows.dewPoint(it.tempC, it.humidityPct)!! }
+        assertEquals("${Math.round(dews.min())}° / ${Math.round(dews.max())}°", r.getValue("pressure_dew").right.value)
+        val given = WeatherRows.rows(snap(full.mapIndexed { i, h -> h.copy(dewC = if (i == 0) -3.4 else 5.0) })).associateBy { it.id }
+        assertEquals("-3° / 5°", given.getValue("pressure_dew").right.value) // dew_point_temperature wins over Magnus
+        assertEquals("— / —", WeatherRows.rows(snap(full.map { it.copy(humidityPct = null) })).first { it.id == "pressure_dew" }.right.value)
         assertEquals("— / —", WeatherRows.rows(snap(full.map { it.copy(pressureHpa = null) })).first { it.id == "pressure_dew" }.left.value)
-        assertEquals(11.7, WeatherRows.dewPoint(22.0, 52.0)!!, 0.1)
+        assertEquals(-4.3, WeatherRows.dewPoint(0.0, 73.0)!!, 0.1) // Berlin, the owner's worked example
+        assertEquals(20.0, WeatherRows.dewPoint(20.0, 100.0)!!, 1e-9)
         assertEquals(null, WeatherRows.dewPoint(22.0, null))
         assertTrue(r.getValue("phase_zodiac").left.value.endsWith("%"))
         assertEquals(2, r.getValue("phase_zodiac").right.value.split(" / ").size)
