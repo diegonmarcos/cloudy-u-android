@@ -67,7 +67,6 @@ for i in 1 2 3 4 5; do $T adb shell input tap $((W*61/100)) $((H*58/100)); sleep
 shot superapp-cloud-apps 3
 # the Me row (Lnktree first, Socials fifth) sits at ~80% height; scroll the page so it is fully in view
 $T adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*40/100)) 500; shot superapp-cloud-apps-me-row 3
-walk_tab section:lnktree me-lnktree Lnktree
 walk_tab section:proj me-proj Proj
 open_page "$ME" "page:proj/pj-home"; shot me-proj-home 8   # #1914 the icon grid of every group and leaf
 # #1918 the Home grid wears the emoji of Linktree and the banners of its categories; Repos (the bundled repos tree) loads in the page WebView
@@ -108,6 +107,8 @@ while read -r sec page url id <&3; do
     elif ! grep -q 'images_broken="[0-9]* 0 ' "$OUT/tab-$id.log"; then echo "$id: broken images: $(grep -m1 IMG_CHECK "$OUT/tab-$id.log")"; rc=1; fi ;; esac
     if grep -q "Web page not available" "$OUT/me-tab-$id.xml" 2>/dev/null; then echo "$id: the screen shows Web page not available"; rc=1; fi
 done 3< "$OUT/.tabs"   # fd 3: adb inside the loop must not eat the tab list from stdin
+# Lnktree (the remote site, an animated loader) lost the emulator when it was walked before the other pages (run 45655595371): it is the last page walked
+walk_tab section:lnktree me-lnktree Lnktree
 $T adb logcat -d > "$OUT/logcat.txt"
 ls -la "$OUT"
 exit $rc
