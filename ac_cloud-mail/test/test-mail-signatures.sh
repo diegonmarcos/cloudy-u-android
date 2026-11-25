@@ -37,7 +37,7 @@ SETTINGS="$UI/settings/SettingsScreen.kt"
 TRANSFER="$DATA/account/SignatureTransfer.kt"
 HANDLER="$APP/app/src/main/kotlin/app/sterna/fleet/SignaturesSetupHandler.kt"
 APPLICATION="$APP/app/src/main/kotlin/app/sterna/SternaApplication.kt"
-MANIFEST="$APP/../ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
+MANIFEST="$APP/../fleet-private-data/fleet-config.json"
 RES="$APP/app/src/main/res"
 PASS=0; FAIL=0
 ok()  { PASS=$((PASS+1)); echo "  ok: $1"; }

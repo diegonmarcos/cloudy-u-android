@@ -25,7 +25,7 @@ LIB="$ROOT/ab_cloud-libs-shared/libs/browser/src/main"
 JS="$LIB/assets/browser/web_hardware.js"
 CONTRACT="$ROOT/ab_cloud-libs-shared/libs/browser/contract/web-hardware-contract.json"
 KT="$LIB/java/com/diegonmarcos/superapp/browser"
-FLEET="$ROOT/ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
+FLEET="$ROOT/fleet-private-data/fleet-config.json"
 PASS=0; FAIL=0
 ok()  { PASS=$((PASS+1)); echo "  PASS: $1"; }
 bad() { FAIL=$((FAIL+1)); echo "  FAIL: $1"; }

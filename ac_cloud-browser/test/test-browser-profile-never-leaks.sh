@@ -54,7 +54,7 @@ main("profile never leaks", check, [
     ("the profile route answers unmasked", API, "BrowserProfileStore(app).load().masked()", "BrowserProfileStore(app).load().toJson()", "unmasked load()"),
     ("an importer keeps the full number", LIBP + "BrowserProfile.kt", 'last4(c.s("number"))', 'c.s("number")', "fromBitwardenJson reduces"),
     ("a log line prints the profile", LIBP + "BrowserProfileStore.kt", "    fun clear() =", '    fun dump() = android.util.Log.d("x", "profile=" + load())\n    fun clear() =', "no log line"),
-    ("the store stops being encrypted", "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json", '"kind": "encrypted",\n      "class": "secret",\n      "doc": "#802 the browser', '"kind": "prefs",\n      "class": "secret",\n      "doc": "#802 the browser', "encrypted + secret"),
+    ("the store stops being encrypted", "fleet-private-data/fleet-config.json", '"kind": "encrypted",\n      "class": "secret",\n      "doc": "#802 the browser', '"kind": "prefs",\n      "class": "secret",\n      "doc": "#802 the browser', "encrypted + secret"),
     ("fill over the API writes", API, '"profile/fill" -> BrowserBus.call("fill_dry")', '"profile/fill" -> BrowserBus.call("fill_profile")', "is dry"),
 ])
 PYEOF

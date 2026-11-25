@@ -253,7 +253,7 @@ _m = _exp.get("migration") or {}
 if _m.get("store") != "experiences_user" or set(_m.get("legacy", {})) != {"done", "todo"} or \
    any(t not in ACH_TABS for t in list(_m.get("by_value", {}).values()) + [_m.get("default")]):
     bad("pages", "ui.sections[pers].migration does not move the old done/todo records to declared tabs")
-_fc = json.load(open(os.path.join(libs, "fleetconfig-model/src/main/assets/fleet-config.json"), encoding="utf-8"))
+_fc = json.load(open(os.path.join(libs, "../../fleet-private-data/fleet-config.json"), encoding="utf-8"))
 _st = _fc.get("stores", {}).get("experiences_user")
 if not _st or "ac_cloud-me" not in _st.get("used_by", []) or _st.get("class") != "config":
     bad("pages", "experiences_user is not a declared config store of ac_cloud-me (the backup would miss it)")
@@ -313,7 +313,7 @@ for sid, want in want_groups.items():
 # Buro and LLC user data: every ledger block names a declared store, typed fields, and only known report ids
 known_reports = {"budget_vs_actual", "accounts_vs_cashflow", "portfolio", "income"}
 stores = {"buro": "buro_user", "llc": "llc_user"}
-fc = json.load(open(os.path.join(libs, "fleetconfig-model/src/main/assets/fleet-config.json"), encoding="utf-8"))
+fc = json.load(open(os.path.join(libs, "../../fleet-private-data/fleet-config.json"), encoding="utf-8"))
 for sid, store in stores.items():
     st = fc.get("stores", {}).get(store)
     if not st or "ac_cloud-me" not in st.get("used_by", []) or st.get("class") != "config":
@@ -509,9 +509,9 @@ echo "== mutations: each check must go red on its own break =="
 W="$(mktemp -d)"; trap 'rm -rf "$W"' EXIT
 mkdir -p "$W/base/ac_cloud-me" "$W/base/ab_cloud-libs-shared/libs/bottomnav/src"
 for l in ui-nav-bars; do mkdir -p "$W/base/ab_cloud-libs-shared/libs/$l/src"; cp -r "$APP/../ab_cloud-libs-shared/libs/$l/src/main" "$W/base/ab_cloud-libs-shared/libs/$l/src/"; done
-mkdir -p "$W/base/ab_cloud-libs-shared/libs/ui-icons/src" "$W/base/ab_cloud-libs-shared/libs/fleetconfig-model/src/main"
+mkdir -p "$W/base/ab_cloud-libs-shared/libs/ui-icons/src" "$W/base/fleet-private-data"
 cp -r "$APP/../ab_cloud-libs-shared/libs/ui-icons/src/main" "$W/base/ab_cloud-libs-shared/libs/ui-icons/src/"
-cp -r "$APP/../ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets" "$W/base/ab_cloud-libs-shared/libs/fleetconfig-model/src/main/"
+cp "$APP/../fleet-private-data/fleet-config.json" "$W/base/fleet-private-data/"   # #1566 fleet-private: CI materialises it
 cp -r "$APP/build.json" "$APP/app" "$APP/data" "$W/base/ac_cloud-me/" 2>/dev/null
 rm -rf "$W/base/ac_cloud-me/app/build"
 cp -r "$APP/../ab_cloud-libs-shared/libs/bottomnav/src/commonMain" "$APP/../ab_cloud-libs-shared/libs/bottomnav/src/main" "$W/base/ab_cloud-libs-shared/libs/bottomnav/src/"
@@ -550,7 +550,7 @@ mutant inventory "a seed status is not an option" "sed -i '0,/\"status\": \"Good
 mutant inventory "a seed row pre-stamps mock" "python3 -c \"import json;p='data/ui/inventory/food.json';d=json.load(open(p));d[1]['ledgers'][0]['seed'][0]['mock']='1';json.dump(d,open(p,'w'))\""
 mutant inventory "an inventory page has no summary" "python3 -c \"import json;p='data/ui/inventory/care.json';d=json.load(open(p));d[1].pop('summary');json.dump(d,open(p,'w'))\""
 mutant inventory "an inventory page writes to the buro store" "sed -i 's/\"store\": \"inventory_user\"/\"store\": \"buro_user\"/' data/ui/inventory/banking.json"
-mutant inventory "inventory_user undeclared in fleet-config" "sed -i 's/\"inventory_user\"/\"inventory_gone\"/' ../ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
+mutant inventory "inventory_user undeclared in fleet-config" "sed -i 's/\"inventory_user\"/\"inventory_gone\"/' ../fleet-private-data/fleet-config.json"
 mutant inventory "the seed is re-applied every load (no marker)" "sed -i 's/def.collection in done/false/' app/src/main/java/com/diegonmarcos/cloudme/LedgerSeed.kt"
 mutant inventory "the seed tops up a collection the owner already filled" "sed -i 's/if (out.rows(def.collection).isEmpty()) for/for/' app/src/main/java/com/diegonmarcos/cloudme/LedgerSeed.kt"
 mutant inventory "the seed is applied but not saved" "sed -i 's/if (it !== d) LedgerStore.save(ctx, store, it)/Unit/' app/src/main/java/com/diegonmarcos/cloudme/LedgerScreen.kt"
@@ -560,7 +560,7 @@ mutant pages "a Buro page leaves its group" "python3 -c \"import json;d=json.loa
 mutant pages "an LLC group icon is not a ui-icons name" "sed -i 's/\"icon\": \"payments\"/\"icon\": \"no_such_icon\"/' build.json"
 mutant pages "a Buro ledger names the wrong store" "sed -i 's/\"store\": \"buro_user\"/\"store\": \"llc_user\"/' data/ui/buro/assets.json"
 mutant pages "a ledger names an unknown report" "sed -i 's/budget_vs_actual/made_up_report/' data/ui/buro/budgeting.json"
-mutant pages "the llc store is undeclared in fleet-config" "sed -i 's/\"llc_user\"/\"llc_gone\"/' ../ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
+mutant pages "the llc store is undeclared in fleet-config" "sed -i 's/\"llc_user\"/\"llc_gone\"/' ../fleet-private-data/fleet-config.json"
 mutant achieves "one owner sentence altered" "sed -i 's/Aikido, Yoga and Meditation\\./Aikido and Yoga./' data/ui/pers/achieves/growth.json"
 mutant achieves "NomadMania link dropped" "sed -i 's#https://nomadmania.com/profile/73889#https://example.com#' data/ui/pers/achieves/geo.json"
 mutant achieves "Trips tab comes back" "python3 -c \"import json;d=json.load(open('build.json'));[p['pages'].append({'id':'trips','label':'Trips'}) for s in d['ui']['sections'] if s['id']=='pers' for p in s['pages'] if p['id']=='achieves'];json.dump(d,open('build.json','w'))\""

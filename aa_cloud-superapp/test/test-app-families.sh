@@ -101,7 +101,7 @@ for d in sorted(LNK):
 for d, name in LNK.items():
     if not os.path.isfile(os.path.join(root, d, "build.json")): continue   # F3 reported it
     if name not in fleet: bad.append("F5 %s is not in constellation-fleet.json" % name)
-    if name not in load("ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json")["apps"]: bad.append("F5 %s is not in fleet-config.json" % name)
+    if name not in load("fleet-private-data/fleet-config.json")["apps"]: bad.append("F5 %s is not in fleet-config.json" % name)
     if name not in [m["id"] for m in load("aa_cloud-superapp/data/ipc-mesh.json")["members"]]: bad.append("F5 %s is not in ipc-mesh.json" % name)
     if "ship-%s.yml" % name not in os.listdir(os.path.join(root, "1_cicd/src/cicd")): bad.append("F5 1_cicd/src/cicd/ship-%s.yml is missing" % name)
     elif not re.search(r"^  WORK_DIR:\s*%s\s*$" % re.escape(d), read("1_cicd/src/cicd/ship-%s.yml" % name), re.M): bad.append("F5 ship-%s.yml WORK_DIR is not %s" % (name, d))
@@ -128,7 +128,7 @@ stage() {   # a scratch copy of what the checks read (working tree, tracked or n
       find . -maxdepth 2 -name build.json -path './a[a-d]_*' -print0
       find ./1_cicd/src ./aa_cloud-superapp/data ./aa_cloud-superapp/test ./.github/workflows -type f -print0
       find ./ad_* -path '*/test/*' -type f -print0
-      printf '%s\0' ./ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json
+      printf '%s\0' ./fleet-private-data/fleet-config.json
     } | xargs -0 cp --parents -t "$W/t" )
 }
 mutant() {   # mutant <name> <python edit run in the copy> <needle>
@@ -147,6 +147,6 @@ mutant "a tester copy drifts from the template" "open('ad_Hardtech-CAD/test/test
 mutant "a guard spells the prefixes by hand"  "open('1_cicd/src/scripts/cloud-android-crash-default-guard.py','a').write('# glob a[ab]_*/x\n')"                                    "F4 1_cicd/src/scripts/cloud-android-crash-default-guard.py spells the folder class a[ab]_"
 mutant "the ratchet pattern rejects the ad_"  "$J;p='1_cicd/src/data/compose-migration.json';d=json.load(open(p));d['unit_dir_pattern']='^a[abc]_[a-z0-9-]+\$';json.dump(d,open(p,'w'))" "F4 compose-migration unit_dir_pattern"
 mutant "a ship workflow loses its folder"     "p='1_cicd/src/cicd/ship-hardtech-cad.yml';s=open(p).read().replace('WORK_DIR: ad_Hardtech-CAD','WORK_DIR: nowhere');open(p,'w').write(s)" "F5 ship-hardtech-cad.yml WORK_DIR"
-mutant "an app leaves the fleet manifest"     "$J;p='ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json';d=json.load(open(p));d['apps'].pop('cg-omniverse');json.dump(d,open(p,'w'))" "F5 cg-omniverse is not in fleet-config.json"
+mutant "an app leaves the fleet manifest"     "$J;p='fleet-private-data/fleet-config.json';d=json.load(open(p));d['apps'].pop('cg-omniverse');json.dump(d,open(p,'w'))" "F5 cg-omniverse is not in fleet-config.json"
 
 [ "$FAILS" -eq 0 ] && echo "ALL GREEN" || { echo "$FAILS FAILED"; exit 1; }

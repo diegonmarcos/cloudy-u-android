@@ -46,7 +46,7 @@ DL = LIB + "/BrowserDownloads.kt"
 main("library wiring", check, [
     ("downloads lose the cookie header", DL, 'addRequestHeader("Cookie"', 'addRequestHeader("X-None"', "cookies"),
     ("the download listener is dropped", FRAG, "setDownloadListener {", "run {", "tapped download"),
-    ("bookmarks drop out of the manifest", "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json", '"browser_bookmarks"', '"browser_bookmarks_x"', "browser_bookmarks is declared"),
+    ("bookmarks drop out of the manifest", "fleet-private-data/fleet-config.json", '"browser_bookmarks"', '"browser_bookmarks_x"', "browser_bookmarks is declared"),
     ("folder delete without confirm", "ac_cloud-browser/app/src/main/java/com/diegonmarcos/cloudbrowser/debugapi/BrowserDebugApi.kt", '"add confirm=1: this deletes', '"go ahead', "confirm=1"),
 ])
 PYEOF

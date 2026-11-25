@@ -11,7 +11,7 @@ import json, os, shutil, sys, tempfile
 LIB = "ab_cloud-libs-shared/libs/browser/src/main/java/com/diegonmarcos/superapp/browser"
 APP = "ac_cloud-browser/app/src/main/java/com/diegonmarcos/cloudbrowser"
 HEADLESS = "ab_cloud-libs-shared/libs/headless-browser/src/main/java/com/diegonmarcos/superapp/headless"  # #1498 the Headless Browser section's readers
-MANIFEST = "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
+MANIFEST = "fleet-private-data/fleet-config.json"
 # What a mutated copy needs: the app, the shared browser lib, the fleet manifest, cloud-search's declaration.
 COPY = ["ac_cloud-browser", "ab_cloud-libs-shared/libs/browser", MANIFEST,
         "ab_cloud-libs-shared/libs/ai",  # #823 the assistant panel, the consent card and the shared AI contract are libs:ai's

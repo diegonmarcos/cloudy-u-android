@@ -147,7 +147,7 @@ class BuroLlcDeclTest {
     }
 
     @Test fun `the user data stores are declared in fleet-config so the backup carries them`() {
-        val stores = JSONObject(BuroLlcTestData.text("../ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json")).getJSONObject("stores")
+        val stores = JSONObject(BuroLlcTestData.text("../fleet-private-data/fleet-config.json")).getJSONObject("stores")
         for (s in listOf(LedgerStore.BURO, LedgerStore.LLC)) {
             val st = stores.getJSONObject(s)
             assertEquals("config", st.getString("class")); assertEquals("prefs", st.getString("kind"))
@@ -186,7 +186,7 @@ class BuroLlcDeclTest {
     }
 
     @Test fun `the Achieves store experiences_user is a declared config store, so the backup carries every tab`() {
-        val fc = JSONObject(BuroLlcTestData.text("../ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"))
+        val fc = JSONObject(BuroLlcTestData.text("../fleet-private-data/fleet-config.json"))
         assertEquals("config", fc.getJSONObject("stores").getJSONObject(LedgerStore.EXP).getString("class"))
     }
 }

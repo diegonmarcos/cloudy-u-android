@@ -36,7 +36,7 @@ class PowerSavingDeclTest {
     }
 
     @Test fun `prefs are declared in fleet-config`() {
-        val stores = JSONObject(File("../../ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json").readText()).getJSONObject("stores")
+        val stores = JSONObject(File("../../fleet-private-data/fleet-config.json").readText()).getJSONObject("stores")
         val s = stores.getJSONObject(PowerSaving.PREFS)
         assertTrue(s.getString("doc").contains(PowerSaving.KEY_FOLLOW))
     }

@@ -12,7 +12,7 @@ SPIN="$KT/launcher/themes/cloud/ModelSpin.kt"
 POLY="$KT/launcher/themes/cloud/PolytopeMath.kt"
 PREFS="$KT/settings/LauncherSettingsPrefs.kt"
 CFG="$KT/settings/LauncherConfigFragment.kt"
-FC="$REPO/ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
+FC="$REPO/fleet-private-data/fleet-config.json"
 UT="$APP/app/src/test/java/com/diegonmarcos/superapp/launcher/themes/cloud/ModelSpinTest.kt"
 PASS=0; FAIL=0
 ok()  { PASS=$((PASS+1)); echo "  ok: $1"; }

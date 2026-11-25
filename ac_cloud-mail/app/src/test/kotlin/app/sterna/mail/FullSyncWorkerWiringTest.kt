@@ -76,7 +76,7 @@ class FullSyncWorkerWiringTest {
     }
 
     @Test fun `the setting is declared for the new-phone migration in the fleet config manifest`() {
-        val manifest = File(root.parentFile, "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json")
+        val manifest = File(root.parentFile, "fleet-private-data/fleet-config.json")
         if (!manifest.isFile) return // a partial checkout; CI has the whole tree
         val text = manifest.readText()
         assertTrue("datastore:settings documents offline_attachment_policy as migrating config", "offline_attachment_policy: Download attachments Always / Wi-Fi only / Off, default Wi-Fi only" in text)

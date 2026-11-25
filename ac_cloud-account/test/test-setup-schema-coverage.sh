@@ -16,7 +16,7 @@
 # Then each mutation is planted in a scratch copy and the check must go RED.
 set -u
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-FC="ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
+FC="fleet-private-data/fleet-config.json"
 GAPS="ac_cloud-account/test/setup-schema-gaps.json"
 CHAT="ac_cloud-chat"
 

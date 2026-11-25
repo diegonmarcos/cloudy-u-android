@@ -11,7 +11,7 @@ PASS=0; FAIL=0
 ok()  { PASS=$((PASS+1)); echo "  ok: $1"; }
 bad() { FAIL=$((FAIL+1)); echo "  FAIL: $1"; }
 for f in "$APP/build.json" "$KT/settings/GridColumns.kt" "$KT/settings/LauncherConfigFragment.kt" \
-         "$REPO/ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"; do
+         "$REPO/fleet-private-data/fleet-config.json"; do
   [ -f "$f" ] || { echo "ERROR: missing $f" >&2; exit 2; }
 done
 
@@ -45,8 +45,8 @@ grep -q "GridColumns.set(ctx, GridColumns.Kind.CLOUD" "$cfg" && grep -q "GridCol
   && ok "T4 two separate steppers in Launcher > Controls" || bad "T4 steppers"
 
 # T5 prefs are declared in the fleet manifest
-grep -q "grid_cols_cloud" "$REPO/ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json" \
-  && grep -q "grid_cols_phone" "$REPO/ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json" \
+grep -q "grid_cols_cloud" "$REPO/fleet-private-data/fleet-config.json" \
+  && grep -q "grid_cols_phone" "$REPO/fleet-private-data/fleet-config.json" \
   && ok "T5 keys declared in fleet-config.json" || bad "T5 fleet-config"
 
 echo "pass=$PASS fail=$FAIL"; [ "$FAIL" -eq 0 ]

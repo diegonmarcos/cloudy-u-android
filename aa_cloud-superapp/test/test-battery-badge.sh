@@ -32,7 +32,7 @@ SVC="$SRC/BatteryBadgeService.kt"
 MODEL="$SRC/BatteryBadgeModel.kt"
 SOT="$ROOT/ab_cloud-libs-shared/libs/battery/src/main/java/com/diegonmarcos/superapp/battery"
 MANIFEST="$APP/app/src/main/AndroidManifest.xml"
-FLEET="$ROOT/ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
+FLEET="$ROOT/fleet-private-data/fleet-config.json"
 
 echo "== T1: declared as a persistent badge with its own low-importance channel =="
 check "$(python3 - "$BJ" "$SVC" <<'PY'

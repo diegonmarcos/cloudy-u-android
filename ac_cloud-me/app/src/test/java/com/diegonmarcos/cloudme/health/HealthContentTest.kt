@@ -91,7 +91,7 @@ class HealthContentTest {
     }
 
     @Test fun `the user store is declared in the fleet config as a migrating config store used by cloud-me`() {
-        val f = File("").absoluteFile.let { var d: File? = it; var r: File? = null; while (d != null && r == null) { File(d, "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json").takeIf { x -> x.isFile }?.let { x -> r = x }; d = d.parentFile }; r }
+        val f = File("").absoluteFile.let { var d: File? = it; var r: File? = null; while (d != null && r == null) { File(d, "fleet-private-data/fleet-config.json").takeIf { x -> x.isFile }?.let { x -> r = x }; d = d.parentFile }; r }
             ?: throw AssertionError("fleet-config.json not found")
         val store = JSONObject(f.readText()).getJSONObject("stores").getJSONObject(HealthUserStore.PREFS)
         assertEquals("config", store.getString("class"))

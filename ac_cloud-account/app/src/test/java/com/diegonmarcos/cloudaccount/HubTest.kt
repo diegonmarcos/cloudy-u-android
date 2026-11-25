@@ -405,7 +405,7 @@ class HubTest {
 
     /** The fleet manifest as the SuperApp bakes it: the file in the tree when the test runs there, else this APK's. */
     private fun fleetManifest(): FleetPolicy.Manifest {
-        val f = File("../../ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json")
+        val f = File("../../fleet-private-data/fleet-config.json")
         return if (f.exists()) FleetPolicy.Manifest(JSONObject(f.readText())) else FleetPolicy.manifest(ctx)
     }
 

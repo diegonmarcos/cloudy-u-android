@@ -46,7 +46,7 @@ grep -q 'android:name=".light.LightActivity"' "$SRC/AndroidManifest.xml" && grep
 grep -q 'FOREGROUND_SERVICE_SPECIAL_USE' "$SRC/AndroidManifest.xml" && ok "foreground-service permission held" || bad "FOREGROUND_SERVICE_SPECIAL_USE missing"
 
 echo "== T4: persistence store declared in fleet-config.json =="
-FC="$ROOT/ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
+FC="$ROOT/fleet-private-data/fleet-config.json"
 eq "light_prefs class" "$(jq -r '.stores.light_prefs.class // ""' "$FC")" "config"
 # the store is the lib-light module's (generated used_by names the owner of the file, not the app that embeds the lib)
 eq "light_prefs used_by" "$(jq -r '.stores.light_prefs.used_by | join(",")' "$FC")" "lib-light"
