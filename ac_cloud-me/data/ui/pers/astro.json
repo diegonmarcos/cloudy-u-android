@@ -3,6 +3,7 @@
     "kind": "fragment",
     "id": "web",
     "url": "https://diegonmarcos.github.io/myAstro/",
-    "_doc": "Astro (sources: CG-circus c_Circus/myAstro) : the published site, embedded by its https URL (same page the browser opens)."
+    "_doc": "Astro (sources: CG-circus c_Circus/myAstro) : the published site, embedded by its https URL (same page the browser opens).",
+    "link": "https://diegonmarcos.github.io/myAstro/"
   }
 ]

@@ -3,6 +3,7 @@
     "kind": "fragment",
     "id": "web",
     "url": "mysocials/linkedin.html",
-    "_doc": "The LinkedIn page itself — see WebFragment for why this is not a reimplementation."
+    "_doc": "The LinkedIn page itself — see WebFragment for why this is not a reimplementation.",
+    "link": "https://linkedin.com/in/diegonmarcos"
   }
 ]
