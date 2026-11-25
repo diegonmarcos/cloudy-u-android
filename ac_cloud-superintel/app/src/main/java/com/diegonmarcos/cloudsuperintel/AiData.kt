@@ -67,12 +67,20 @@ object AiData {
         buckets.map { b -> AiGroup(b.label, b.known.map { AiRow(it, "known server of the " + b.label + " picker", "") }) } +
             AiGroup("KG-Store sources (not servers)", tabs.flatMap { t -> t.items.filter { it.kind != "mcp" }.map { AiRow(it.label, t.label + " · " + it.detail, it.kind) } })
 
-    /** An APK asset (apis, cost, dotfiles), or the served dataset of a moved one ("" until Cloud Store serves it). */
-    fun asset(ctx: Context, name: String): String =
-        SERVED[name]?.let { FleetData.get(ctx, it, own = true) { t -> t } ?: "" } ?: ctx.assets.open(name).bufferedReader().use { it.readText() }
+    /**
+     * #1562 cold-start seed: a byte copy of the served dataset (pages, mcp, plugins; public tier 3, no secret), shown on the very first run and while
+     * Cloud Store has not served the dataset yet, so a page is never empty. The served dataset always wins once present; a unit test pins the seed to
+     * data/fleet so it cannot drift.
+     */
+    const val SEED_DIR = "si/seed/"
+    fun seed(ctx: Context, dataset: String): String = runCatching { ctx.assets.open("$SEED_DIR$dataset.json").bufferedReader().use { it.readText() } }.getOrDefault("")
 
-    /** The served page declaration now (empty while loading), and again whenever Cloud Store syncs it. */
-    fun readPages(ctx: Context): Map<String, AiPageSpec> = FleetData.get(ctx, PAGES, own = true) { pages(it) } ?: emptyMap()
+    /** An APK asset (apis, cost, dotfiles), or the served dataset of a moved one (the cold-start seed until Cloud Store serves it). */
+    fun asset(ctx: Context, name: String): String =
+        SERVED[name]?.let { ds -> FleetData.get(ctx, ds, own = true) { t -> t } ?: seed(ctx, ds) } ?: ctx.assets.open(name).bufferedReader().use { it.readText() }
+
+    /** The served page declaration now (the cold-start seed while not served), and again whenever Cloud Store syncs it. */
+    fun readPages(ctx: Context): Map<String, AiPageSpec> = FleetData.get(ctx, PAGES, own = true) { pages(it) } ?: runCatching { pages(seed(ctx, PAGES)) }.getOrDefault(emptyMap())
     fun observePages(ctx: Context): Flow<Map<String, AiPageSpec>?> = FleetData.observe(ctx, PAGES, own = true) { runCatching { pages(it) }.getOrNull() }
 
     /** Fires whenever one of the served row datasets (mcp, plugins) changes, so a rows page redraws. */
