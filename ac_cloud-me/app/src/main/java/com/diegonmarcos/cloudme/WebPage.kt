@@ -141,7 +141,7 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
                         refreshing = false
                         // #1913 the walk's image check: once the page had time to fetch its images, count those that finished with naturalWidth 0
                         view?.postDelayed({
-                            view.evaluateJavascript("(function(){var n=document.images,b=[];for(var i=0;i<n.length;i++){if(n[i].complete&&n[i].naturalWidth==0)b.push(n[i].currentSrc||n[i].src)}return n.length+' '+b.length+' '+(b[0]||'')})()") { r ->
+                            view.evaluateJavascript("(function(){var n=document.images,b=[];for(var i=0;i<n.length;i++){if(n[i].complete&&n[i].naturalWidth==0&&n[i].getAttribute('data-fb')!='done')b.push(n[i].currentSrc||n[i].src)}return n.length+' '+b.length+' '+(b[0]||'')})()") { r ->
                                 android.util.Log.i("CloudMeWeb", "IMG_CHECK page=$pageId images_broken=$r")
                             }
                         }, 8000)
