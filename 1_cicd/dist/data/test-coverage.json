@@ -13,7 +13,7 @@
     },
     "aa_cloud-superapp": {
       "first_test": "Has 91 shell testers. tests.unit.enabled=false, so its step named 'JVM unit tests (fatal on failure)' executes nothing and goes green \u2014 its own task, not this one.",
-      "shell_testers": 217,
+      "shell_testers": 218,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
@@ -260,7 +260,7 @@
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": true,
-      "unit_test_sources": 903,
+      "unit_test_sources": 904,
       "workflow": "ship-cloud-mail.yml"
     },
     "ac_cloud-matrix": {
