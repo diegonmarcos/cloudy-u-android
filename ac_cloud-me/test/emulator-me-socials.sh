@@ -23,7 +23,8 @@ shot() { sleep "${2:-6}"; $T adb exec-out screencap -p > "$OUT/$1.png"; $T adb s
 for op in GET_USAGE_STATS SYSTEM_ALERT_WINDOW MANAGE_EXTERNAL_STORAGE REQUEST_INSTALL_PACKAGES; do $T adb shell appops set "$ME" "$op" allow; done
 open_page "$ME" "page:configs/general"; sleep 12
 for i in 1 2 3 4 5 6; do
-    $T adb shell dumpsys window | grep -m1 mCurrentFocus | grep -q "$ME" && break
+    focus="$($T adb shell dumpsys window 2>/dev/null)"
+    case "$(grep -m1 mCurrentFocus <<<"$focus" || true)" in *"$ME"*) break ;; esac
     $T adb shell input keyevent KEYCODE_BACK; sleep 2
 done
 open_page "$ME" "page:socials/socials-professional"; shot me-socials-professional 10
