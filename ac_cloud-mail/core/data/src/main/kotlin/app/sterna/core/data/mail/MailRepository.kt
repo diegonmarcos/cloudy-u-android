@@ -6062,7 +6062,13 @@ class MailRepository(
 
     /** Actually deliver one outbox item (no queue indirection); exceptions propagate to the worker. */
     suspend fun performSend(credentials: AccountCredentials, item: OutboxEntity) {
-        performDelivery(credentials, item)
+        // #1925 a failed send goes to the error log with its exchange and route profile, then propagates.
+        try { performDelivery(credentials, item) } catch (t: Throwable) {
+            if (t !is kotlin.coroutines.cancellation.CancellationException) {
+                com.diegonmarcos.superapp.fleetendpoints.errors.ErrorLog.shared.record("send", credentials.username, t)
+            }
+            throw t
+        }
         // Delivered: the draft this item replaces (#63) leaves Drafts, best-effort and AFTER
         // success. The numbering is CARRIED BY THE ROW, never looked up here (#99); on JMAP it is
         // null, that branch opposing the FOLDER instead (#122).

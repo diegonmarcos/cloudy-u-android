@@ -75,7 +75,7 @@ class AppContainer(context: Context) {
     private val jmapClient: JmapClient = JmapClient { message, error ->
         if (error == null) Log.i("JmapClient", message) else Log.w("JmapClient", message, error)
         // #1925 the same lines feed the mail log ring behind See log / Export.
-        com.diegonmarcos.superapp.fleetendpoints.errors.ErrorLog.shared.log("JmapClient", message + (error?.let { " | ${it.javaClass.simpleName}: ${it.message}" } ?: ""))
+        com.diegonmarcos.superapp.fleetendpoints.errors.ErrorLog.shared.log("jmap", message + (error?.let { " | ${it.javaClass.simpleName}: ${it.message}" } ?: ""))
     }
 
     init {

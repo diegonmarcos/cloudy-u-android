@@ -62,10 +62,6 @@ class OutboxWorker(context: Context, params: WorkerParameters) : CoroutineWorker
             repo.deleteOutbox(id)
             Result.success()
         } catch (t: Throwable) {
-            // #1925 the send failure goes to the error log with its exchange and route profile.
-            com.diegonmarcos.superapp.fleetendpoints.errors.ErrorLog.shared.record(
-                "send", container.accountStore.accounts().firstOrNull { it.id == item.accountId }?.username.orEmpty(), t,
-            )
             val attempts = OutboxLogic.attemptsAfterFailure(item.attemptCount, t)
             val error = t.message ?: t.javaClass.simpleName
             // The failure itself decides, not the count alone: a delivery the SERVER refused is

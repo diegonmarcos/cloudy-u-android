@@ -1441,6 +1441,8 @@ class InboxViewModel(
                         is Sel.Folder -> refreshFolder(sel.id)
                     }
                 }
+                // #1925 a failed refresh goes to the error log with its exchange and route profile.
+                (outcome as? RefreshOutcome.Failed)?.let { com.diegonmarcos.superapp.fleetendpoints.errors.ErrorLog.shared.record("sync", currentAccountLabel(), it.cause) }
                 when (outcome) {
                     RefreshOutcome.Delivered -> {
                         status.value = Status(refreshing = false, error = null)
@@ -1453,7 +1455,6 @@ class InboxViewModel(
                     }
                     is RefreshOutcome.Failed -> {
                         val cause = outcome.cause
-                        com.diegonmarcos.superapp.fleetendpoints.errors.ErrorLog.shared.record("sync", currentAccountLabel(), cause)
                         status.value = Status(refreshing = false, error = app.sterna.core.jmap.GatewayErrors.syncMessage(cause) ?: cause.message ?: cause.javaClass.simpleName)
                         connectivity.reportFailure(cause)
                     }

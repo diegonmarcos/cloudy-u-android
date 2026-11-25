@@ -53,6 +53,7 @@ object ErrorActions {
             putExtra(Intent.EXTRA_SUBJECT, "cloud-mail-error.md")
             putExtra(Intent.EXTRA_TEXT, markdown(log))
         }
+        // unguarded: the share chooser is a system sheet over this screen, a double tap only reopens it, nothing to leave twice.
         context.startActivity(Intent.createChooser(send, EXPORT_MD).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 }
