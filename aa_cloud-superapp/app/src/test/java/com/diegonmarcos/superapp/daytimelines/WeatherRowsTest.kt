@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import com.diegonmarcos.superapp.launcher.BadgeCard
@@ -156,6 +157,7 @@ class WeatherRowsTest : KitPageHarness() {
         showKit { Column { BadgeCard(cardData()) } }
         compose.onNodeWithTag(BadgeCardTags.weatherDetail(id), useUnmergedTree = true).assertDoesNotExist()
         compose.onNodeWithTag(BadgeCardTags.weatherDetailToggle(id), useUnmergedTree = true).performClick(); compose.waitForIdle()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag(BadgeCardTags.weatherDetail(id), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag(BadgeCardTags.weatherDetail(id), useUnmergedTree = true).assertExists()
         for (t in listOf("HEADLINE-1907", "SUBLINE-1907", "HOURLY-1907", "INFOLINE-1907"))
             compose.onAllNodesWithText(t, useUnmergedTree = true).fetchSemanticsNodes().also { assertEquals(t, 1, it.size) }
