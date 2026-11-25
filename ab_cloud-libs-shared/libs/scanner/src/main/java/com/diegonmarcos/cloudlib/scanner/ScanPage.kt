@@ -18,13 +18,36 @@ class ScanPage(val id: Long, val source: Bitmap) {
     /** The text read from the page as it is NOW; a changed page clears it (see [touch]). */
     var ocrDone = false
 
-    fun touch() { ocrDone = false }
+    /** #1908 bumped by every change, so a screen's cached preview of this page knows it is stale. */
+    var rev = 0
+
+    fun touch() { ocrDone = false; rev++ }
+
+    private var small: Bitmap? = null
+
+    /** #1908 the photo brought down to [ScanPipeline.PREVIEW_SOURCE] (made once): thumbnails and filter previews are drawn from it, not from the 2400 px source. */
+    fun previewSource(): Bitmap = small ?: run {
+        val longest = max(source.width, source.height)
+        val b = if (longest <= ScanPipeline.PREVIEW_SOURCE) source else {
+            val f = ScanPipeline.PREVIEW_SOURCE.toDouble() / longest
+            Bitmap.createScaledBitmap(source, max(1, (source.width * f).toInt()), max(1, (source.height * f).toInt()), true)
+        }
+        small = b; b
+    }
+
+    /** #1908 a duplicate page ([id] is the new one) with the same framing, turn, filter and text. */
+    fun copyAs(id: Long): ScanPage = ScanPage(id, source).also {
+        it.quad = quad; it.quarters = quarters; it.deskew = deskew; it.filter = filter; it.text = text; it.words = words; it.ocrDone = ocrDone
+    }
 }
 
 /** #1839 Bitmap <-> Raster and the page pipeline: perspective, turn, deskew, filter. */
 object ScanPipeline {
     /** Photos are brought down to this on import: the warp and the filters are per-pixel Kotlin. */
     const val SOURCE_SIDE = 2400
+
+    /** #1908 thumbnails and previews at or below this side are rendered from [ScanPage.previewSource]. */
+    const val PREVIEW_SOURCE = 900
 
     fun toRaster(b: Bitmap): Raster {
         val px = IntArray(b.width * b.height)
@@ -36,10 +59,14 @@ object ScanPipeline {
 
     /** The framed, turned, deskewed page before any filter. */
     fun flatten(page: ScanPage, maxSide: Int = SOURCE_SIDE): Raster {
-        val src = toRaster(page.source)
-        val (ow, oh) = page.quad.outputSize()
+        val small = maxSide <= PREVIEW_SOURCE
+        val bmp = if (small) page.previewSource() else page.source
+        val k = bmp.width.toDouble() / page.source.width
+        val quad = if (small) page.quad.scaled(k, bmp.height.toDouble() / page.source.height) else page.quad
+        val src = toRaster(bmp)
+        val (ow, oh) = quad.outputSize()
         val f = minOf(1.0, maxSide.toDouble() / max(ow, oh))
-        val flat = src.warp(page.quad, max(1, (ow * f).toInt()), max(1, (oh * f).toInt())) ?: src
+        val flat = src.warp(quad, max(1, (ow * f).toInt()), max(1, (oh * f).toInt())) ?: src
         return flat.rotateQuarters(page.quarters).rotate(page.deskew)
     }
 

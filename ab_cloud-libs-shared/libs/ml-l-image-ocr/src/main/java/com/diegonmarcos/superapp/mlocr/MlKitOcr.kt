@@ -67,4 +67,28 @@ object MlKitOcr {
         val b = best
         return if (b != null) Read(b.second.trim(), b.first, null) else Read(null, null, lastError ?: "no recognizer answered")
     }
+
+    /** #1908 one recognised word with its box in the bitmap's pixels (y down): no ML Kit type leaves this object. */
+    class Word(val text: String, val x: Int, val y: Int, val w: Int, val h: Int)
+
+    /** #1908 the best script's whole read: the text and every word with its box, for a caller that lays the text over the image (a searchable PDF). */
+    class WordRead(val text: String?, val words: List<Word>, val script: Script?, val error: String?)
+
+    /** Same script policy as [read] (Latin first, the others only when the Latin read holds no letters of its own), but keeps the words. BLOCKING. */
+    fun readWords(bitmap: Bitmap, timeoutSeconds: Long = 30): WordRead {
+        var best: Pair<Script, Text>? = null
+        var lastError: String? = null
+        for (s in Script.values()) {
+            if (s != Script.LATIN && best != null && !nonLatinNeeded(best.second.text)) break
+            val t = text(bitmap, s, timeoutSeconds)
+                .onFailure { lastError = it.javaClass.simpleName + (it.message?.let { m -> ": $m" } ?: "") }
+                .getOrNull() ?: continue
+            if (best == null || score(t.text) > score(best.second.text)) best = s to t
+        }
+        val b = best ?: return WordRead(null, emptyList(), null, lastError ?: "no recognizer answered")
+        val words = b.second.textBlocks.flatMap { blk -> blk.lines.flatMap { l -> l.elements } }.mapNotNull { el ->
+            el.boundingBox?.let { r -> Word(el.text, r.left, r.top, r.width(), r.height()) }
+        }
+        return WordRead(b.second.text.trim(), words, b.first, null)
+    }
 }

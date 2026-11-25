@@ -8,7 +8,8 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 
 enum class ExportFormat(val ext: String, val mime: String) {
-    PDF("pdf", "application/pdf"), JPEG("jpg", "image/jpeg"), PNG("png", "image/png"), TXT("txt", "text/plain")
+    PDF("pdf", "application/pdf"), JPEG("jpg", "image/jpeg"), PNG("png", "image/png"), TXT("txt", "text/plain"),
+    /** #1908 */ WEBP("webp", "image/webp")
 }
 
 /** The default base file name (a named constant so the fleet-config scan does not read `name` as a store name). */
@@ -22,6 +23,11 @@ data class ExportOptions(
     val size: PageSize = PageSize.A4,
     val marginMm: Double = 8.0,
     val orientation: Orientation = Orientation.AUTO,
+    /** #1908 a naming template ([NameTemplate]) built on [name] as the title; blank = [name] alone (the #1839 behaviour). */
+    val template: String = "",
+    /** #1908 the DPI an image export declares (0 = none) and the ceiling in bytes an image or PDF export is brought under (0 = none). */
+    val dpi: Int = 0,
+    val maxBytes: Int = 0,
 )
 
 /** One file to write: its name and its bytes. */
@@ -31,6 +37,10 @@ class ExportFile(val name: String, val mime: String, val bytes: ByteArray)
 object ScannerExport {
     fun safeName(raw: String): String = raw.trim().replace(Regex("[\\\\/:*?\"<>|\\s]+"), "_").trim('_', '.').ifEmpty { "scan" }
 
+    /** The file's base name: the template when one is set, else the typed name. [n] is the page / file number the {n} token takes. */
+    fun baseName(o: ExportOptions, n: Int, now: java.time.LocalDateTime): String =
+        if (o.template.isBlank()) safeName(o.name) else NameTemplate.render(o.template, o.name, o.format.ext, n, now)
+
     fun jpeg(b: Bitmap, quality: Int): ByteArray = ByteArrayOutputStream().also { b.compress(Bitmap.CompressFormat.JPEG, quality.coerceIn(10, 100), it) }.toByteArray()
     fun png(b: Bitmap): ByteArray = ByteArrayOutputStream().also { b.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
 
@@ -39,8 +49,8 @@ object ScannerExport {
         if (pages.size == 1) pages[0].text else pages.mapIndexed { i, p -> "--- ${i + 1} ---\n${p.text}" }.joinToString("\n\n")
 
     /** Every file the [o] export produces for [pages]; renders each page once. Blocking. */
-    fun build(pages: List<ScanPage>, o: ExportOptions): List<ExportFile> {
-        val base = safeName(o.name)
+    fun build(pages: List<ScanPage>, o: ExportOptions, now: java.time.LocalDateTime = java.time.LocalDateTime.now()): List<ExportFile> {
+        val base = baseName(o, 1, now)
         return when (o.format) {
             ExportFormat.TXT -> listOf(ExportFile("$base.txt", o.format.mime, fullText(pages).toByteArray(Charsets.UTF_8)))
             ExportFormat.PDF -> {
@@ -54,13 +64,23 @@ object ScannerExport {
                 PdfPlan.build(plan, o.size, o.marginMm, o.orientation).forEachIndexed { i, pl -> data.add(PdfPageData(pl, jpegs[i].first, jpegs[i].second, jpegs[i].third)) }
                 val out = ByteArrayOutputStream()
                 PdfWriter.write(out, data, base)
-                listOf(ExportFile("$base.pdf", o.format.mime, out.toByteArray()))
+                var pdf = out.toByteArray()
+                // #1908 a ceiling: the page images are recompressed until the file fits (the text layer is untouched).
+                if (o.maxBytes > 0 && pdf.size > o.maxBytes) {
+                    for (q in intArrayOf(70, 50, 35, 25, 15)) {
+                        if (pdf.size <= o.maxBytes) break
+                        pdf = PdfTools.compress(pdf, q, (PageFit.ORIGINAL_DPI * 8.27 * q / 100).toInt().coerceAtLeast(400))
+                    }
+                }
+                listOf(ExportFile("$base.pdf", o.format.mime, pdf))
             }
-            ExportFormat.JPEG, ExportFormat.PNG -> pages.mapIndexed { i, p ->
+            ExportFormat.JPEG, ExportFormat.PNG, ExportFormat.WEBP -> pages.mapIndexed { i, p ->
                 val bmp = ScanPipeline.toBitmap(ScanPipeline.render(p))
-                val bytes = if (o.format == ExportFormat.PNG) png(bmp) else jpeg(bmp, o.quality)
+                val fmt = when (o.format) { ExportFormat.PNG -> ImageFormat.PNG; ExportFormat.WEBP -> ImageFormat.WEBP; else -> ImageFormat.JPEG }
+                val bytes = ImageTools.convert(bmp, ImageTools.Convert(format = fmt, quality = o.quality, dpi = o.dpi, maxBytes = o.maxBytes))
                 bmp.recycle()
-                ExportFile(if (pages.size == 1) "$base.${o.format.ext}" else "${base}_${i + 1}.${o.format.ext}", o.format.mime, bytes)
+                val stem = if (o.template.isNotBlank()) baseName(o, i + 1, now) else if (pages.size == 1) base else "${base}_${i + 1}"
+                ExportFile("$stem.${o.format.ext}", o.format.mime, bytes)
             }
         }
     }

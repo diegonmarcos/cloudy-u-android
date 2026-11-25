@@ -3,13 +3,13 @@ package com.diegonmarcos.cloudlib.scanner
 import kotlin.math.max
 import kotlin.math.min
 
-/** #1839 how a page is drawn: the four looks the ticket names. */
+/** #1839 how a page is drawn: the four looks the ticket names; #1908 adds magic colour (the colour document, livened). */
 enum class FilterMode(val id: String) {
-    ORIGINAL("original"), GRAYSCALE("grayscale"), BW("bw"), COLOR_DOC("color_doc")
+    ORIGINAL("original"), GRAYSCALE("grayscale"), BW("bw"), COLOR_DOC("color_doc"), MAGIC("magic")
 }
 
-/** [brightness] and [contrast] are -100..100, 0 = untouched. */
-data class FilterSpec(val mode: FilterMode = FilterMode.COLOR_DOC, val brightness: Int = 0, val contrast: Int = 0)
+/** [brightness] and [contrast] are -100..100, 0 = untouched; #1908 [sharpness] is 0..100, 0 = untouched. */
+data class FilterSpec(val mode: FilterMode = FilterMode.COLOR_DOC, val brightness: Int = 0, val contrast: Int = 0, val sharpness: Int = 0)
 
 /**
  * #1839 the document filters, pure: B&W (an adaptive threshold, so a shadow does not turn the page black), grayscale, colour
@@ -19,11 +19,46 @@ data class FilterSpec(val mode: FilterMode = FilterMode.COLOR_DOC, val brightnes
 object DocFilter {
     fun apply(src: Raster, spec: FilterSpec): Raster {
         val adjusted = adjust(src, spec.brightness, spec.contrast, gray = spec.mode == FilterMode.GRAYSCALE || spec.mode == FilterMode.BW)
-        return when (spec.mode) {
+        val looked = when (spec.mode) {
             FilterMode.ORIGINAL, FilterMode.GRAYSCALE -> adjusted
             FilterMode.BW -> blackAndWhite(adjusted)
             FilterMode.COLOR_DOC -> colourDocument(adjusted)
+            FilterMode.MAGIC -> magicColour(adjusted)
         }
+        return if (spec.sharpness > 0 && spec.mode != FilterMode.BW) sharpen(looked, spec.sharpness) else looked
+    }
+
+    /** #1908 magic colour: the colour document, then every colour pushed [MAGIC_SATURATION] times away from its grey. */
+    fun magicColour(src: Raster): Raster {
+        val doc = colourDocument(src)
+        val out = IntArray(doc.px.size)
+        for (i in out.indices) {
+            val p = doc.px[i]
+            val r = (p shr 16) and 255; val g = (p shr 8) and 255; val b = p and 255
+            val y = doc.luma(i)
+            out[i] = Raster.rgb((y + (r - y) * MAGIC_SATURATION).toInt(), (y + (g - y) * MAGIC_SATURATION).toInt(), (y + (b - y) * MAGIC_SATURATION).toInt())
+        }
+        return Raster(doc.w, doc.h, out)
+    }
+
+    /** #1908 unsharp mask: every channel gets [amount] (1..100 -> 0..1.5) times its difference from the 3x3 mean added back. */
+    fun sharpen(src: Raster, amount: Int): Raster {
+        val k = amount.coerceIn(0, 100) / 100.0 * 1.5
+        val w = src.w; val h = src.h
+        val out = IntArray(src.px.size)
+        for (y in 0 until h) for (x in 0 until w) {
+            val p = src.px[y * w + x]
+            var sr = 0; var sg = 0; var sb = 0; var n = 0
+            for (dy in -1..1) for (dx in -1..1) {
+                val xx = x + dx; val yy = y + dy
+                if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue
+                val q = src.px[yy * w + xx]
+                sr += (q shr 16) and 255; sg += (q shr 8) and 255; sb += q and 255; n++
+            }
+            val r = (p shr 16) and 255; val g = (p shr 8) and 255; val b = p and 255
+            out[y * w + x] = Raster.rgb((r + k * (r - sr / n)).toInt(), (g + k * (g - sg / n)).toInt(), (b + k * (b - sb / n)).toInt())
+        }
+        return Raster(w, h, out)
     }
 
     /** Brightness (+-100 -> +-255/2) after contrast (factor 0..2 about mid grey); [gray] also drops the colour. */
@@ -87,6 +122,7 @@ object DocFilter {
     }
 
     const val BLACK = 0xFF000000.toInt()
+    private const val MAGIC_SATURATION = 1.4
     private const val INK_BELOW = 0.88
     private const val PAPER_NUDGE = 1.05
     private const val BLACK_POINT = 20.0

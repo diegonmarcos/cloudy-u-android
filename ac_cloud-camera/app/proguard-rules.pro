@@ -9,3 +9,12 @@
 -keepclassmembers class androidx.camera.core.internal.utils.ImageUtil {
     private static byte[] cropJpegByteArray(byte[], android.graphics.Rect, int);
 }
+
+# #1908 libs:scanner's PDF tools: PdfBox-Android loads its glyph lists, fonts and filters by name and carries optional
+# codecs (JPEG 2000, BouncyCastle encryption providers) that are not on the classpath; keep it whole and quiet.
+-keep class com.tom_roush.pdfbox.** { *; }
+-dontwarn com.tom_roush.pdfbox.**
+-dontwarn com.gemalto.jp2.**
+-dontwarn org.bouncycastle.**
+-dontwarn javax.xml.crypto.**
+-dontwarn org.apache.commons.logging.**

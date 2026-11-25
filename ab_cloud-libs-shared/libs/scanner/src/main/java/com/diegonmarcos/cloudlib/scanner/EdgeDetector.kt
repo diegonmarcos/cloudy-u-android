@@ -32,6 +32,12 @@ object EdgeDetector {
         return if (q.isConvex()) q else fallback
     }
 
+    /** #1908 the live-capture variant: the document's corners, or null when nothing plausible is in view (the manual fallback frame is not a detection). */
+    fun findQuadOrNull(src: Raster): Quad? {
+        val q = findQuad(src)
+        return if (q == Quad.full(src.w, src.h, 0.03)) null else q
+    }
+
     /** The angle to rotate the page by (clockwise degrees, -15..15) that makes its text lines horizontal. */
     fun deskewDegrees(src: Raster, range: Int = 15): Double {
         val small = src.scaledToMax(300)
