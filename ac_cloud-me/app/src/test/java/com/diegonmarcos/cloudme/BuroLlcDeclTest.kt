@@ -42,8 +42,8 @@ class BuroLlcDeclTest {
         val bar = ui.getJSONArray("bottom_nav").let { a -> (0 until a.length()).map { a.getString(it) } }
         assertFalse("tasks" in bar)
         assertEquals("https://linkedin.com/in/diegonmarcos", page("prof/prof-profiles", "professional").getJSONObject(0).getString("url"))
-        assertEquals("https://www.instagram.com/diegocnmarcos_/", page("pers/pers-profiles", "instagram").getJSONObject(0).getString("url"))
-        for ((d, p) in listOf("prof/prof-profiles" to "professional", "pers/pers-profiles" to "instagram")) assertEquals("web", page(d, p).getJSONObject(0).getString("id"))
+        assertEquals("https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html", page("pers/pers-profiles", "ig0").getJSONObject(0).getString("url"))
+        for ((d, p) in listOf("prof/prof-profiles" to "professional", "pers/pers-profiles" to "ig0")) assertEquals("web", page(d, p).getJSONObject(0).getString("id"))
         // nothing dropped: Prof keeps Professional, Pers keeps Personal, Tasks keeps Tree and Due with their groups
         val profiles = { s: String -> sections.getValue(s).getJSONArray("pages").getJSONObject(0).getJSONArray("pages") }
         assertTrue("professional" in ids(profiles("prof")))

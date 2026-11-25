@@ -32,7 +32,7 @@ class MeLinksEmbedTest {
 
     @Test fun `Leaf-y Nexus Stark Personal Social Instagram LinkedIn and Lnktree embed their real sites`() {
         val want = mapOf("prof-leafy" to "https://diegonmarcos.github.io/leafy/", "prof-nexus" to "https://diegonmarcos.github.io/nexus/", "prof-stark" to "https://diegonmarcos.github.io/stark/",
-            "pers-personal" to "https://diegonmarcos.com/", "pers-instagram" to "https://www.instagram.com/diegocnmarcos_/", "prof-professional" to "https://linkedin.com/in/diegonmarcos",
+            "pers-personal" to "https://diegonmarcos.com/", "pers-ig0" to "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html", "prof-professional" to "https://linkedin.com/in/diegonmarcos",
             "proj-lnktree" to "https://linktree.diegonmarcos.com/")
         for ((id, url) in want) assertEquals(id, url, block(tabs.first { it.getString("id") == id }).optString("url"))
     }
@@ -60,5 +60,6 @@ class MeLinksEmbedTest {
         assertTrue(w.contains("?: super.shouldInterceptRequest(view, request)"))
         assertTrue(w.contains("key(generation, url, pageId)"))
         assertTrue(w.contains("MAINFRAME_ERROR"))
+        assertTrue(w.contains("IMG_CHECK") && w.contains("naturalWidth==0"))
     }
 }

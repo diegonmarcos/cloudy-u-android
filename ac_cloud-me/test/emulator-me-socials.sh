@@ -80,12 +80,15 @@ PY
 [ -s "$OUT/.tabs" ] || { echo "no tabs in me-links.json"; rc=1; }
 while read -r sec page url id; do
     $T adb logcat -c
-    open_page "$ME" "page:$sec/$page"; shot "me-tab-$id" 14
+    open_page "$ME" "page:$sec/$page"; shot "me-tab-$id" 16
     $T adb logcat -d -s CloudMeWeb:V > "$OUT/tab-$id.log"
     if grep -q MAINFRAME_ERROR "$OUT/tab-$id.log"; then echo "$id: main frame error: $(grep -m1 MAINFRAME_ERROR "$OUT/tab-$id.log")"; rc=1
     elif grep -q "title=Web page not available" "$OUT/tab-$id.log"; then echo "$id: error page title"; rc=1
     elif ! grep -q "MAINFRAME_OK page=$page url=$url" "$OUT/tab-$id.log"; then echo "$id: the page did not load $url ($(tail -1 "$OUT/tab-$id.log"))"; rc=1
     else echo "$id: loaded $url"; fi
+    # #1913 no broken image: WebPage logs IMG_CHECK page=<id> images_broken="<images> <broken> <first broken src>" (naturalWidth 0 on a finished img)
+    if ! grep -q IMG_CHECK "$OUT/tab-$id.log"; then echo "$id: no IMG_CHECK line (the page was not checked for images)"; rc=1
+    elif ! grep -q 'images_broken="[0-9]* 0 ' "$OUT/tab-$id.log"; then echo "$id: broken images: $(grep -m1 IMG_CHECK "$OUT/tab-$id.log")"; rc=1; fi
     if grep -q "Web page not available" "$OUT/me-tab-$id.xml" 2>/dev/null; then echo "$id: the screen shows Web page not available"; rc=1; fi
 done < "$OUT/.tabs"
 $T adb logcat -d > "$OUT/logcat.txt"

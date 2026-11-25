@@ -20,7 +20,7 @@ K = open(os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudme/MeLinks.k
 S = open(os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudme/SectionScreen.kt")).read()
 G = open(os.path.join(app, "app/build.gradle")).read()
 W = open(os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudme/WebPage.kt")).read() if os.path.exists(os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudme/WebPage.kt")) else ""
-for need_, where_, txt_ in (("WebPage(single, modifier, pageId = page.id)", "page is the bare WebPage", S), ("data/links", "me-links.json asset", G), ("?: super.shouldInterceptRequest(view, request)", "asset loader fallback", W), ("key(generation, url, pageId)", "WebView keyed by its page", W), ("MAINFRAME_ERROR", "main-frame error log", W)):
+for need_, where_, txt_ in (("WebPage(single, modifier, pageId = page.id)", "page is the bare WebPage", S), ("data/links", "me-links.json asset", G), ("?: super.shouldInterceptRequest(view, request)", "asset loader fallback", W), ("key(generation, url, pageId)", "WebView keyed by its page", W), ("MAINFRAME_ERROR", "main-frame error log", W), ("naturalWidth==0", "broken-image check", W)):
     if need_ not in txt_: print("L4\t%s: %s is not bound" % (where_, need_))
 for gone_, txt_ in (("MeLinkedWeb", S + K), ("FilledTonalButton", K), ("ACTION_VIEW", K)):
     if gone_ in txt_: print("L5\t%s is back (the Open button and Links panel are removed)" % gone_)
@@ -32,7 +32,7 @@ for e in t:
     if not b.get("url", "").startswith("https://"): print("L6\t%s does not embed an https site" % e["id"])
     if b.get("url") in seen: print("L7\t%s and %s embed the same page" % (seen[b.get("url")], e["id"]))
     seen[b.get("url")] = e["id"]
-need = {"pers-personal", "pers-instagram", "pers-social", "pers-astro", "prof-professional", "prof-nexus", "prof-leafy", "prof-stark"}
+need = {"pers-personal", "pers-ig0", "pers-ig1", "pers-ig2", "pers-face0", "pers-pinterest", "pers-youtube", "pers-tidal", "pers-linkedin", "pers-orkut", "pers-astro", "prof-professional", "prof-nexus", "prof-leafy", "prof-stark"}
 for m in sorted(need - {e["id"] for e in t}): print("L1\t%s is not declared" % m)
 PY
 }
@@ -55,6 +55,7 @@ mut "the Open button is back" "import sys;p=sys.argv[1]+'/$K';s=open(p).read()+'
 mut "the Links panel wrapper is back" "import sys;p=sys.argv[1]+'/app/src/main/java/com/diegonmarcos/cloudme/SectionScreen.kt';s=open(p).read().replace('WebPage(single, modifier, pageId = page.id)','MeLinkedWeb(single, section.id, page.id, modifier)');open(p,'w').write(s)"
 mut "a cache miss no longer falls to the asset loader" "import sys;p=sys.argv[1]+'/$W';s=open(p).read().replace('?: super.shouldInterceptRequest(view, request)','');open(p,'w').write(s)"
 mut "the WebView is no longer keyed by its page" "import sys;p=sys.argv[1]+'/$W';s=open(p).read().replace('key(generation, url, pageId)','key(generation)');open(p,'w').write(s)"
+mut "the broken-image check is gone" "import sys;p=sys.argv[1]+'/$W';s=open(p).read().replace('naturalWidth==0','x');open(p,'w').write(s)"
 mut "a tab embeds a bundled mirror" 'import json,sys;p=sys.argv[1]+"/data/ui/prof/leafy.json";d=json.load(open(p));d[0]["url"]="mysocials/linkedin.html";json.dump(d,open(p,"w"))'
 mut "Leaf.y embeds the LinkedIn page" 'import json,sys;p=sys.argv[1]+"/data/ui/prof/leafy.json";d=json.load(open(p));d[0]["url"]="https://linkedin.com/in/diegonmarcos";json.dump(d,open(p,"w"))'
 mut "two tabs embed the same page" 'import json,sys;[ (lambda p:(lambda d:(d[0].update(url="https://diegonmarcos.github.io/nexus/"),json.dump(d,open(p,"w"))))(json.load(open(p))))(sys.argv[1]+"/data/ui/prof/"+f) for f in ("stark.json",)]; q=sys.argv[1]+"/data/links/me-links.json";d=json.load(open(q));[x.update(url="https://diegonmarcos.github.io/nexus/") for x in d["entries"] if x["id"]=="prof-stark"];json.dump(d,open(q,"w"))'

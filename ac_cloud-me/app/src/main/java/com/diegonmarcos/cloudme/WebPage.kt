@@ -139,6 +139,12 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
                     override fun onPageFinished(view: WebView?, url: String?) {
                         android.util.Log.i("CloudMeWeb", "MAINFRAME_OK page=$pageId url=$url title=${view?.title}")
                         refreshing = false
+                        // #1913 the walk's image check: once the page had time to fetch its images, count those that finished with naturalWidth 0
+                        view?.postDelayed({
+                            view.evaluateJavascript("(function(){var n=document.images,b=[];for(var i=0;i<n.length;i++){if(n[i].complete&&n[i].naturalWidth==0)b.push(n[i].currentSrc||n[i].src)}return n.length+' '+b.length+' '+(b[0]||'')})()") { r ->
+                                android.util.Log.i("CloudMeWeb", "IMG_CHECK page=$pageId images_broken=$r")
+                            }
+                        }, 8000)
                         view?.let { com.diegonmarcos.superapp.bottomnav.ChromeWebScroll.inject(it) }
                         view?.let { if (inject.isNotBlank()) pushProfile(it, ctx, inject) }
                         view?.saveState(saved)

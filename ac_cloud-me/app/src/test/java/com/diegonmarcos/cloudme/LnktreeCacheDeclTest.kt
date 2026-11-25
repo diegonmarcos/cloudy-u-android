@@ -51,10 +51,10 @@ class LnktreeCacheDeclTest {
 
     @Test fun `the pages the cache covers are the https web pages of the section`() {
         val files = mapOf("leafy" to "prof/leafy", "nexus" to "prof/nexus", "stark" to "prof/stark", "astro" to "pers/astro", "lnktree-site" to "proj/lnktree-site",
-            "personal" to "pers/pers-profiles/personal", "professional" to "prof/prof-profiles/professional", "instagram" to "pers/pers-profiles/instagram", "social" to "pers/pers-profiles/social",
+            "personal" to "pers/pers-profiles/personal", "professional" to "prof/prof-profiles/professional", "ig0" to "pers/pers-profiles/ig0", "orkut" to "pers/pers-profiles/orkut",
             "health-profile" to "pers/health/health-profile", "dd" to "pers/dd", "area-unix" to "proj/area-unix")
         val got = files.mapNotNull { (id, f) -> LnktreePages.fromStack(id, JSONArray(BuroLlcTestData.text("data/ui/$f.json")), cfg) }
-        assertEquals(setOf("leafy", "nexus", "stark", "astro", "lnktree-site", "personal"), got.map { it.id }.toSet())
+        assertEquals(setOf("leafy", "nexus", "stark", "astro", "lnktree-site", "personal", "professional", "ig0", "orkut"), got.map { it.id }.toSet())
         assertTrue(got.all { it.url.startsWith("https://") })
         val optOut = cfg.copy(excludePages = setOf("stark"))
         assertNull(LnktreePages.fromStack("stark", JSONArray(BuroLlcTestData.text("data/ui/prof/stark.json")), optOut))

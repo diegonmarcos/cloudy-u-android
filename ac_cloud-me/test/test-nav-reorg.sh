@@ -57,8 +57,8 @@ for gone in ("health", "experiences", "socials"):
 def labels(ps): return [(p["id"], p["label"]) for p in ps]
 if labels(secs.get("pers", {}).get("pages", [])) != [("pers-profiles", "Profiles"), ("health", "Health"), ("astro", "Astro"), ("dd", "DD"), ("achieves", "Personal Archives")]:
     bad("tree", "Pers is not Profiles, Health, Astro, DD, Personal Archives")
-if labels(sub("pers", "pers-profiles").get("pages", [])) != [("personal", "Personal"), ("instagram", "Instagram"), ("social", "Social")]:
-    bad("tree", "Pers > Profiles is not Personal, Instagram, Social")
+if labels(sub("pers", "pers-profiles").get("pages", [])) != [("personal", "Personal"), ("ig0", "ig0"), ("ig1", "ig1"), ("ig2", "ig2"), ("face0", "face0"), ("pinterest", "Pinterest"), ("youtube", "YouTube"), ("tidal", "Tidal"), ("linkedin", "LinkedIn"), ("orkut", "Orkut")]:
+    bad("tree", "Pers > Profiles is not Personal | ig0, ig1, ig2, face0, Pinterest, YouTube, Tidal, LinkedIn, Orkut (#1913)")
 if labels(sub("pers", "health").get("pages", [])) != [("trackers", "Trackers"), ("plan", "Plan"), ("health-profile", "Record")]:
     bad("tree", "Pers > Health is not Trackers, Plan, Record")
 if [p["id"] for p in sub("pers", "health", "trackers").get("pages", [])] != ["tracked", "activities", "bodycomp", "hr", "sleep"] or \
@@ -104,13 +104,12 @@ def norm(leaf):
     return f'{m.group(1)}="{m.group(2)}:{s}' + (f"/{p}" if p else "") + '"'
 
 RELABELED = {  # the owner's renames of #1901, and the two pages whose name the move gave to another page
-    "experiences/achieves": "Personal Archives", "socials/socials-personal": "Instagram",
+    "experiences/achieves": "Personal Archives", "socials/socials-personal": "ig0",
 }
 # #1911 owner order: these three tabs embed their real site (the declared me-links.json URL) instead of the bundled mysocials mirror; the
 # baseline value is compared through this table, ONLY on these pages (the Lnktree bottom-nav copies keep the mirrors)
 EMBED1911 = {"prof/professional": {"mysocials/linkedin.html": "https://linkedin.com/in/diegonmarcos"},
-             "pers/instagram": {"mysocials/instagram-diegocnmarcos_.html": "https://www.instagram.com/diegocnmarcos_/"},
-             "pers/social": {"mysocials/social.html": "https://diegonmarcos.github.io/mySocials/social.html"}}
+             "pers/ig0": {"mysocials/instagram-diegocnmarcos_.html": "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html"}}
 def real(x, to):
     for old, new in EMBED1911.get(to, {}).items(): x = x.replace(old, new)
     return x
@@ -136,7 +135,7 @@ for key, b in sorted(base["pages"].items()):
     if b["label"] and t["label"] != RELABELED.get(key, b["label"]):
         bad("parity", f"{key} -> {ns}/{np}: the label {b['label']!r} became {t['label']!r}")
 # the Lnktree bottom-nav pages (restored, lt- ids) also live on as the reorganised pages of Pers, Prof and Proj: those hold every baseline field too
-ALSO = {"professional": "prof/professional", "leafy": "prof/leafy", "nexus": "prof/nexus", "stark": "prof/stark", "personal": "pers/instagram", "social": "pers/social",
+ALSO = {"professional": "prof/professional", "leafy": "prof/leafy", "nexus": "prof/nexus", "stark": "prof/stark", "personal": "pers/ig0",
         "health": "pers/health-profile", "dd": "pers/dd", "astro": "pers/astro", "lnktree-site": "proj/lnktree-site",
         **{f"area-{a}": f"proj/area-{a}" for a in ("unix", "cg", "capital", "hardtech", "lecole42", "area-front"[5:])}}
 for pid, to in ALSO.items():
@@ -170,6 +169,9 @@ if "lnktree" in ren.get("sections", {}): bad("renamed", "ui.renamed.sections sti
 for key in base["pages"]:
     if key.split("/", 1)[0] not in secs and key not in ren.get("pages", {}):   # a page of a section that is gone needs its entry; the live sections' ids are unchanged
         bad("renamed", f"ui.renamed.pages has no entry for the old page {key}")
+# #1913 the Instagram and Social tabs were replaced by the mySocials page tabs: their ids still resolve, to a declared tab
+for old in ("pers/instagram", "pers/social"):
+    if ren.get("pages", {}).get(old) != "pers/ig0": bad("renamed", f"ui.renamed.pages has no alias {old} -> pers/ig0 (the replaced Pers > Profiles tab)")
 for s in base["sections"]:
     if s["id"] not in ren.get("sections", {}) and s["id"] not in secs:
         bad("renamed", f"ui.renamed.sections has no entry for the old section {s['id']}")
@@ -190,7 +192,15 @@ SITES = {  # tile -> (page file, the url it embeds)
     "Prof > Nexus.z": ("data/ui/prof/nexus.json", "https://diegonmarcos.github.io/nexus/"),
     "Prof > Stark.x": ("data/ui/prof/stark.json", "https://diegonmarcos.github.io/stark/"),
     "Pers > Profiles > Personal": ("data/ui/pers/pers-profiles/personal.json", "https://diegonmarcos.com/"),
-    "Pers > Profiles > Instagram": ("data/ui/pers/pers-profiles/instagram.json", "https://www.instagram.com/diegocnmarcos_/"),
+    "Pers > Profiles > ig0": ("data/ui/pers/pers-profiles/ig0.json", "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html"),
+    "Pers > Profiles > ig1": ("data/ui/pers/pers-profiles/ig1.json", "https://diegonmarcos.github.io/mySocials/instagram-diegocmarcos_.html"),
+    "Pers > Profiles > ig2": ("data/ui/pers/pers-profiles/ig2.json", "https://diegonmarcos.github.io/mySocials/instagram-diegonmarcos.html"),
+    "Pers > Profiles > face0": ("data/ui/pers/pers-profiles/face0.json", "https://diegonmarcos.github.io/mySocials/facebook-diegonmarcos.html"),
+    "Pers > Profiles > Pinterest": ("data/ui/pers/pers-profiles/pinterest.json", "https://diegonmarcos.github.io/mySocials/pinterest.html"),
+    "Pers > Profiles > YouTube": ("data/ui/pers/pers-profiles/youtube.json", "https://diegonmarcos.github.io/mySocials/youtube.html"),
+    "Pers > Profiles > Tidal": ("data/ui/pers/pers-profiles/tidal.json", "https://diegonmarcos.github.io/mySocials/tidal.html"),
+    "Pers > Profiles > LinkedIn": ("data/ui/pers/pers-profiles/linkedin.json", "https://diegonmarcos.github.io/mySocials/linkedin.html"),
+    "Pers > Profiles > Orkut": ("data/ui/pers/pers-profiles/orkut.json", "https://diegonmarcos.github.io/mySocials/orkut.html"),
     "Pers > Astro": ("data/ui/pers/astro.json", "https://diegonmarcos.github.io/myAstro/"),
     "Proj > Lnktree": ("data/ui/proj/lnktree-site.json", "https://linktree.diegonmarcos.com/"),
     "Lnktree (bottom nav) > Lnktree": ("data/ui/lnktree/lt-lnktree-site.json", "https://linktree.diegonmarcos.com/"),
@@ -268,13 +278,16 @@ mutant parity "a page is dropped from Pers (Astro)" "rm data/ui/pers/astro.json;
 mutant parity "a tile target inside a page changes" "sed -i 's#\"page:pers/home\"#\"page:pers/bio\"#' data/ui/pers/achieves/geo.json"
 mutant parity "the Health metric taxonomy loses a metric" "$J \"$BJ;S['pers']['metrics'].pop(0);$W_\""
 mutant parity "the Achieves migration is dropped" "$J \"$BJ;S['pers'].pop('migration');$W_\""
-mutant parity "the Instagram page is dropped (Personal's old content)" "rm data/ui/pers/pers-profiles/instagram.json; $J \"$BJ;[p['pages'].pop(1) for p in S['pers']['pages'] if p['id']=='pers-profiles'];$W_\""
+mutant parity "the ig0 page (the old Instagram content) is dropped" "rm data/ui/pers/pers-profiles/ig0.json; $J \"$BJ;[p['pages'].pop(1) for p in S['pers']['pages'] if p['id']=='pers-profiles'];$W_\""
 mutant parity "a moved page is left behind as a copy in the old folder" "mkdir -p data/ui/health && cp data/ui/pers/health/trackers/tracked.json data/ui/health/tracked.json"
 mutant parity "a page is silently relabelled" "$J \"$BJ;[q.update(label='Moods') for p in S['pers']['pages'] if p['id']=='health' for t in p['pages'] if t['id']=='trackers' for q in t['pages'] if q['id']=='hr'];$W_\""
 mutant parity "Work leaves Prof for nowhere" "rm data/ui/prof/prof-profiles/work.json; $J \"$BJ;[p['pages'].pop(1) for p in S['prof']['pages'] if p['id']=='prof-profiles'];$W_\""
 # renamed
 mutant renamed "an old page has no rename entry" "$J \"$BJ;U['renamed']['pages'].pop('health/home');$W_\""
 mutant renamed "a rename names a page that does not exist" "$J \"$BJ;U['renamed']['pages']['health/home']='pers/nope';$W_\""
+mutant renamed "the old Instagram tab id no longer resolves" "$J \"$BJ;U['renamed']['pages'].pop('pers/instagram');$W_\""
+mutant renamed "the old Social tab id no longer resolves" "$J \"$BJ;U['renamed']['pages'].pop('pers/social');$W_\""
+mutant tree "a Pers Profiles tab (Orkut) is dropped" "rm data/ui/pers/pers-profiles/orkut.json; $J \"$BJ;[p['pages'].pop() for p in S['pers']['pages'] if p['id']=='pers-profiles'];$W_\""
 mutant renamed "the section alias is gone" "$J \"$BJ;U['renamed']['sections'].pop('health');$W_\""
 mutant renamed "a rename sends a page to a section that is not declared" "$J \"$BJ;U['renamed']['sections']['socials']='social';$W_\""
 mutant renamed "LegacyRoutes stops applying ui.renamed" "sed -i 's/table.pages\\[key\\]/table.pagesX[key]/' app/src/main/java/com/diegonmarcos/cloudme/LegacyRoutes.kt"

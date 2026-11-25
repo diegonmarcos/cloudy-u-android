@@ -381,7 +381,9 @@
         "experiences/by40": "pers/by40",
         "experiences/by50": "pers/by50",
         "socials/socials-professional": "prof/professional",
-        "socials/socials-personal": "pers/instagram",
+        "socials/socials-personal": "pers/ig0",
+        "pers/instagram": "pers/ig0",
+        "pers/social": "pers/ig0",
         "lnktree/professional": "lnktree/lt-professional",
         "lnktree/leafy": "lnktree/lt-leafy",
         "lnktree/nexus": "lnktree/lt-nexus",
@@ -562,13 +564,48 @@
                 "icon": "ic_p_identities"
               },
               {
-                "id": "instagram",
-                "label": "Instagram",
+                "id": "ig0",
+                "label": "ig0",
                 "icon": "ic_p_identities"
               },
               {
-                "id": "social",
-                "label": "Social",
+                "id": "ig1",
+                "label": "ig1",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "ig2",
+                "label": "ig2",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "face0",
+                "label": "face0",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "pinterest",
+                "label": "Pinterest",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "youtube",
+                "label": "YouTube",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "tidal",
+                "label": "Tidal",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "linkedin",
+                "label": "LinkedIn",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "orkut",
+                "label": "Orkut",
                 "icon": "ic_p_identities"
               }
             ]

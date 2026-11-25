@@ -1,0 +1,9 @@
+[
+  {
+    "kind": "fragment",
+    "id": "web",
+    "url": "https://diegonmarcos.github.io/mySocials/youtube.html",
+    "_doc": "#1913 the mySocials page youtube.html, embedded by its https URL from the declared table (me-links.json); the inner mySocials tab bar is not a second navigation, this tab is the page.",
+    "link": "https://diegonmarcos.github.io/mySocials/youtube.html"
+  }
+]

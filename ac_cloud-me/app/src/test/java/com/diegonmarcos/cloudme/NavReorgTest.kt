@@ -43,7 +43,7 @@ class NavReorgTest {
     @Test fun `Pers is Profiles Health Astro DD Personal Archives with Health holding the whole former Health section`() {
         val pers = Sections.byId("pers")!!
         assertEquals(listOf("Profiles", "Health", "Astro", "DD", "Personal Archives"), pers.pages.map { it.label })
-        assertEquals(listOf("personal", "instagram", "social"), ids(pers.page("pers-profiles")!!.pages))
+        assertEquals(listOf("personal", "ig0", "ig1", "ig2", "face0", "pinterest", "youtube", "tidal", "linkedin", "orkut"), ids(pers.page("pers-profiles")!!.pages))
         val health = pers.page("health")!!
         assertEquals(listOf("trackers", "plan", "health-profile"), ids(health.pages))
         assertEquals(listOf("tracked", "activities", "bodycomp", "hr", "sleep"), ids(pers.page("trackers")!!.pages))
@@ -101,7 +101,7 @@ class NavReorgTest {
             ("health" to null) to ("pers" to null),
             ("experiences" to "work") to ("prof" to "work"), ("experiences" to "cv") to ("prof" to "cv"), ("experiences" to "achieves") to ("pers" to "achieves"),
             ("experiences" to "geo") to ("pers" to "geo"), ("experiences" to "by50") to ("pers" to "by50"),
-            ("socials" to "socials-professional") to ("prof" to "professional"), ("socials" to "socials-personal") to ("pers" to "instagram"),
+            ("socials" to "socials-professional") to ("prof" to "professional"), ("socials" to "socials-personal") to ("pers" to "ig0"), ("pers" to "instagram") to ("pers" to "ig0"), ("pers" to "social") to ("pers" to "ig0"),
             ("lnktree" to "professional") to ("lnktree" to "lt-professional"), ("lnktree" to "personal") to ("lnktree" to "lt-personal"),
             ("lnktree" to "leafy") to ("lnktree" to "lt-leafy"), ("lnktree" to "dd") to ("lnktree" to "lt-dd"), ("lnktree" to "health") to ("lnktree" to "lt-health"),
             ("lnktree" to "lnktree-site") to ("lnktree" to "lt-lnktree-site"), ("lnktree" to "area-unix") to ("lnktree" to "lt-area-unix"),
@@ -139,7 +139,7 @@ class NavReorgTest {
             Triple("prof", "professional", "https://linkedin.com/in/diegonmarcos"),
             Triple("prof", "leafy", "https://diegonmarcos.github.io/leafy/"), Triple("prof", "nexus", "https://diegonmarcos.github.io/nexus/"),
             Triple("prof", "stark", "https://diegonmarcos.github.io/stark/"),
-            Triple("pers", "personal", "https://diegonmarcos.com/"), Triple("pers", "instagram", "https://www.instagram.com/diegocnmarcos_/"),
+            Triple("pers", "personal", "https://diegonmarcos.com/"), Triple("pers", "ig0", "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html"),
             Triple("pers", "astro", "https://diegonmarcos.github.io/myAstro/"), Triple("proj", "lnktree-site", "https://linktree.diegonmarcos.com/"), Triple("lnktree", "lt-lnktree-site", "https://linktree.diegonmarcos.com/"),
         )
         for ((section, page, url) in want) {
@@ -156,7 +156,7 @@ class NavReorgTest {
             val chain = Sections.byId(s)!!.path(p).map { it.id }
             LnktreePages.fromStack(p, JSONArray(BuroLlcTestData.text("data/ui/$s/${chain.joinToString("/")}.json")), cfg)
         }
-        assertEquals(setOf("professional", "leafy", "nexus", "stark", "personal", "instagram", "astro", "lnktree-site", "lt-lnktree-site"), cached.map { it.id }.toSet())
+        assertEquals(setOf("professional", "leafy", "nexus", "stark", "personal", "ig0", "astro", "lnktree-site", "lt-lnktree-site"), cached.map { it.id }.toSet())
         assertEquals(listOf("pers", "prof", "proj"), cfg.cachedSections())
     }
 }

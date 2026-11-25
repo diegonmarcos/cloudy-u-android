@@ -18,39 +18,139 @@
       "sot_url": "https://diegonmarcos.com/"
     },
     {
-      "id": "pers-instagram",
+      "id": "pers-ig0",
       "section": "pers",
-      "kind": "social",
-      "label": "Instagram diegocnmarcos_",
+      "kind": "page",
+      "label": "ig0",
       "source": {
-        "file": "cloud-me-pub-profiles-prf-prs/b_Profiles/mySocials/src/data/instagram-diegocnmarcos_.json",
-        "pointer": "/profile/username",
-        "prefix": "https://www.instagram.com/",
-        "suffix": "/"
+        "literal": "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html"
       },
       "path": [
         "pers-profiles",
-        "instagram"
+        "ig0"
       ],
-      "url": "https://www.instagram.com/diegocnmarcos_/",
-      "sot_url": "https://www.instagram.com/diegocnmarcos_/"
+      "url": "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html",
+      "sot_url": "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html"
     },
     {
-      "id": "pers-social",
+      "id": "pers-ig1",
       "section": "pers",
-      "kind": "social",
-      "label": "Social (mySocials)",
+      "kind": "page",
+      "label": "ig1",
       "source": {
-        "file": "cloud-me-pub-profiles-_lnktree/Lnktree/linktree/src/data/personal-profiles.json",
-        "pointer": "/slides/0/collapsible/sections/0/items/9/url",
-        "suffix": "/social.html"
+        "literal": "https://diegonmarcos.github.io/mySocials/instagram-diegocmarcos_.html"
       },
       "path": [
         "pers-profiles",
-        "social"
+        "ig1"
       ],
-      "url": "https://diegonmarcos.github.io/mySocials/social.html",
-      "sot_url": "https://diegonmarcos.github.io/mySocials/social.html"
+      "url": "https://diegonmarcos.github.io/mySocials/instagram-diegocmarcos_.html",
+      "sot_url": "https://diegonmarcos.github.io/mySocials/instagram-diegocmarcos_.html"
+    },
+    {
+      "id": "pers-ig2",
+      "section": "pers",
+      "kind": "page",
+      "label": "ig2",
+      "source": {
+        "literal": "https://diegonmarcos.github.io/mySocials/instagram-diegonmarcos.html"
+      },
+      "path": [
+        "pers-profiles",
+        "ig2"
+      ],
+      "url": "https://diegonmarcos.github.io/mySocials/instagram-diegonmarcos.html",
+      "sot_url": "https://diegonmarcos.github.io/mySocials/instagram-diegonmarcos.html"
+    },
+    {
+      "id": "pers-face0",
+      "section": "pers",
+      "kind": "page",
+      "label": "face0",
+      "source": {
+        "literal": "https://diegonmarcos.github.io/mySocials/facebook-diegonmarcos.html"
+      },
+      "path": [
+        "pers-profiles",
+        "face0"
+      ],
+      "url": "https://diegonmarcos.github.io/mySocials/facebook-diegonmarcos.html",
+      "sot_url": "https://diegonmarcos.github.io/mySocials/facebook-diegonmarcos.html"
+    },
+    {
+      "id": "pers-pinterest",
+      "section": "pers",
+      "kind": "page",
+      "label": "Pinterest",
+      "source": {
+        "literal": "https://diegonmarcos.github.io/mySocials/pinterest.html"
+      },
+      "path": [
+        "pers-profiles",
+        "pinterest"
+      ],
+      "url": "https://diegonmarcos.github.io/mySocials/pinterest.html",
+      "sot_url": "https://diegonmarcos.github.io/mySocials/pinterest.html"
+    },
+    {
+      "id": "pers-youtube",
+      "section": "pers",
+      "kind": "page",
+      "label": "YouTube",
+      "source": {
+        "literal": "https://diegonmarcos.github.io/mySocials/youtube.html"
+      },
+      "path": [
+        "pers-profiles",
+        "youtube"
+      ],
+      "url": "https://diegonmarcos.github.io/mySocials/youtube.html",
+      "sot_url": "https://diegonmarcos.github.io/mySocials/youtube.html"
+    },
+    {
+      "id": "pers-tidal",
+      "section": "pers",
+      "kind": "page",
+      "label": "Tidal",
+      "source": {
+        "literal": "https://diegonmarcos.github.io/mySocials/tidal.html"
+      },
+      "path": [
+        "pers-profiles",
+        "tidal"
+      ],
+      "url": "https://diegonmarcos.github.io/mySocials/tidal.html",
+      "sot_url": "https://diegonmarcos.github.io/mySocials/tidal.html"
+    },
+    {
+      "id": "pers-linkedin",
+      "section": "pers",
+      "kind": "page",
+      "label": "LinkedIn",
+      "source": {
+        "literal": "https://diegonmarcos.github.io/mySocials/linkedin.html"
+      },
+      "path": [
+        "pers-profiles",
+        "linkedin"
+      ],
+      "url": "https://diegonmarcos.github.io/mySocials/linkedin.html",
+      "sot_url": "https://diegonmarcos.github.io/mySocials/linkedin.html"
+    },
+    {
+      "id": "pers-orkut",
+      "section": "pers",
+      "kind": "page",
+      "label": "Orkut",
+      "source": {
+        "literal": "https://diegonmarcos.github.io/mySocials/orkut.html"
+      },
+      "path": [
+        "pers-profiles",
+        "orkut"
+      ],
+      "url": "https://diegonmarcos.github.io/mySocials/orkut.html",
+      "sot_url": "https://diegonmarcos.github.io/mySocials/orkut.html"
     },
     {
       "id": "pers-astro",
