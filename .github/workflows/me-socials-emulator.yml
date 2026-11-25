@@ -25,7 +25,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          sparse-checkout: ac_cloud-me/test
+          sparse-checkout: |
+            ac_cloud-me/test
+            ac_cloud-me/data/links
 
       - name: Fetch the APKs
         env:

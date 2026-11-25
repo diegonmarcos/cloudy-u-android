@@ -24,6 +24,7 @@ def point(doc, ptr):
     return doc
 def sot_value(root, e):
     s = e["source"]
+    if "literal" in s: return s["literal"]
     return s.get("prefix", "") + point(load(root, s["file"]), s["pointer"]) + s.get("suffix", "")
 def page_file(e): return os.path.join(HERE, "ui", e["section"], *e["path"]) + ".json"
 def main():

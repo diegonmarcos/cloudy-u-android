@@ -69,6 +69,25 @@ shot superapp-cloud-apps 3
 $T adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*40/100)) 500; shot superapp-cloud-apps-me-row 3
 walk_tab section:lnktree me-lnktree Lnktree
 walk_tab section:proj me-proj Proj
+# #1911 every Pers/Prof/Proj tab of data/links/me-links.json: open it, screenshot it, and assert its main frame did not hit an error page
+# (WebPage logs MAINFRAME_ERROR / MAINFRAME_OK page=<id> url=<url> title=<title>; the title must not be "Web page not available")
+TABLES="$(dirname "$0")/../data/links/me-links.json"
+python3 - "$TABLES" > "$OUT/.tabs" <<'PY'
+import json, sys
+for e in json.load(open(sys.argv[1]))["entries"]:
+    if "path" in e: print(e["section"], e["path"][-1], e["url"], e["id"])
+PY
+[ -s "$OUT/.tabs" ] || { echo "no tabs in me-links.json"; rc=1; }
+while read -r sec page url id; do
+    $T adb logcat -c
+    open_page "$ME" "page:$sec/$page"; shot "me-tab-$id" 14
+    $T adb logcat -d -s CloudMeWeb:V > "$OUT/tab-$id.log"
+    if grep -q MAINFRAME_ERROR "$OUT/tab-$id.log"; then echo "$id: main frame error: $(grep -m1 MAINFRAME_ERROR "$OUT/tab-$id.log")"; rc=1
+    elif grep -q "title=Web page not available" "$OUT/tab-$id.log"; then echo "$id: error page title"; rc=1
+    elif ! grep -q "MAINFRAME_OK page=$page url=$url" "$OUT/tab-$id.log"; then echo "$id: the page did not load $url ($(tail -1 "$OUT/tab-$id.log"))"; rc=1
+    else echo "$id: loaded $url"; fi
+    if grep -q "Web page not available" "$OUT/me-tab-$id.xml" 2>/dev/null; then echo "$id: the screen shows Web page not available"; rc=1; fi
+done < "$OUT/.tabs"
 $T adb logcat -d > "$OUT/logcat.txt"
 ls -la "$OUT"
 exit $rc

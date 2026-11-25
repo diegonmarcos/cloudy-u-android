@@ -69,11 +69,11 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
     var atTop by remember { mutableStateOf(true) }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     /** The page's WebView state (history, scroll), refreshed whenever a page finishes loading. */
-    val saved = rememberSaveable { Bundle() }
+    val saved = rememberSaveable(url) { Bundle() }
     // Back walks the page's own history before it leaves the section — the
     // profiles have internal navigation and losing it would strand you.
-    var canGoBack by mutableStateOf(false)
-    val web = remember { mutableStateOf<WebView?>(null) }
+    var canGoBack by remember(url) { mutableStateOf(false) }
+    val web = remember(url) { mutableStateOf<WebView?>(null) }
     BackHandler(enabled = canGoBack) { web.value?.goBack() }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null || inject.isBlank()) return@rememberLauncherForActivityResult
@@ -96,7 +96,8 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
     // (WebViewClient.onRenderProcessGone returns false -> the process is killed). Handle it and build a fresh WebView.
     var generation by remember { mutableStateOf(0) }
     androidx.compose.runtime.LaunchedEffect(refreshing) { if (refreshing) { kotlinx.coroutines.delay(20_000); refreshing = false } }
-    androidx.compose.runtime.key(generation) {
+    // #1911 the WebView is bound to its page's URL: a tab switch builds a new one (it used to keep the previous tab's page and client)
+    androidx.compose.runtime.key(generation, url, pageId) {
     val page: @Composable (Modifier) -> Unit = { mod ->
     AndroidView(
         modifier = mod,
@@ -127,9 +128,16 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
                     override fun shouldInterceptRequest(view: WebView?, request: android.webkit.WebResourceRequest?): android.webkit.WebResourceResponse? =
                         // #1771 the script-blocking font stylesheet of the bundled pages is answered at once (FontSheetGate)
                         if (request != null && FontSheetGate.blocks(request.url.host, request.url.path)) FontSheetGate.emptySheet()
-                        else if (cached && request != null) LnktreeCache.intercept(ctx, pageId, url, request) else super.shouldInterceptRequest(view, request)
+                        else (if (cached && request != null) LnktreeCache.intercept(ctx, pageId, url, request) else null) ?: super.shouldInterceptRequest(view, request)  // #1911 a cache miss falls to the asset loader, so appassets never reaches DNS
+
+                    // #1911 the emulator walk reads these from logcat: a main-frame error is MAINFRAME_ERROR, a loaded page MAINFRAME_OK with its title
+                    override fun onReceivedError(view: WebView?, request: android.webkit.WebResourceRequest?, error: android.webkit.WebResourceError?) {
+                        if (request?.isForMainFrame == true) android.util.Log.e("CloudMeWeb", "MAINFRAME_ERROR page=$pageId url=${request.url} err=${error?.description}")
+                        super.onReceivedError(view, request, error)
+                    }
 
                     override fun onPageFinished(view: WebView?, url: String?) {
+                        android.util.Log.i("CloudMeWeb", "MAINFRAME_OK page=$pageId url=$url title=${view?.title}")
                         refreshing = false
                         view?.let { com.diegonmarcos.superapp.bottomnav.ChromeWebScroll.inject(it) }
                         view?.let { if (inject.isNotBlank()) pushProfile(it, ctx, inject) }

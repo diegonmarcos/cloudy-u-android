@@ -19,8 +19,19 @@ for e in t:
 K = open(os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudme/MeLinks.kt")).read() if os.path.exists(os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudme/MeLinks.kt")) else ""
 S = open(os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudme/SectionScreen.kt")).read()
 G = open(os.path.join(app, "app/build.gradle")).read()
-for need_, where_, txt_ in (("MeLinks.open(ctx, e.url)", "menu row click", K), ("MeLinks.open(ctx, link)", "Open action click", K), ("MeLinkedWeb(single, section.id, page.id, modifier)", "page wrapper", S), ("data/links", "me-links.json asset", G)):
+W = open(os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudme/WebPage.kt")).read() if os.path.exists(os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudme/WebPage.kt")) else ""
+for need_, where_, txt_ in (("WebPage(single, modifier, pageId = page.id)", "page is the bare WebPage", S), ("data/links", "me-links.json asset", G), ("?: super.shouldInterceptRequest(view, request)", "asset loader fallback", W), ("key(generation, url, pageId)", "WebView keyed by its page", W), ("MAINFRAME_ERROR", "main-frame error log", W)):
     if need_ not in txt_: print("L4\t%s: %s is not bound" % (where_, need_))
+for gone_, txt_ in (("MeLinkedWeb", S + K), ("FilledTonalButton", K), ("ACTION_VIEW", K)):
+    if gone_ in txt_: print("L5\t%s is back (the Open button and Links panel are removed)" % gone_)
+seen = {}
+for e in t:
+    if "path" not in e: continue
+    f = os.path.join(app, "data/ui", e["section"], *e["path"]) + ".json"; b = json.load(open(f))[0]
+    if b.get("url") != e.get("url"): print("L6\t%s embeds %s, the table says %s" % (e["id"], b.get("url"), e.get("url")))
+    if not b.get("url", "").startswith("https://"): print("L6\t%s does not embed an https site" % e["id"])
+    if b.get("url") in seen: print("L7\t%s and %s embed the same page" % (seen[b.get("url")], e["id"]))
+    seen[b.get("url")] = e["id"]
 need = {"pers-personal", "pers-instagram", "pers-social", "pers-astro", "prof-professional", "prof-nexus", "prof-leafy", "prof-stark"}
 for m in sorted(need - {e["id"] for e in t}): print("L1\t%s is not declared" % m)
 PY
@@ -32,14 +43,19 @@ fi
 # mutations
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
 mut() { # name, python edit on copy
-  rm -rf "$T/app"; mkdir -p "$T/app/data" "$T/app/app/src/main/java/com/diegonmarcos/cloudme"; cp -r "$APP/data/links" "$T/app/data/links"; cp -r "$APP/data/ui" "$T/app/data/ui"; cp "$APP/app/build.gradle" "$T/app/app/"; cp "$APP/app/src/main/java/com/diegonmarcos/cloudme/"{MeLinks,SectionScreen}.kt "$T/app/app/src/main/java/com/diegonmarcos/cloudme/"
+  rm -rf "$T/app"; mkdir -p "$T/app/data" "$T/app/app/src/main/java/com/diegonmarcos/cloudme"; cp -r "$APP/data/links" "$T/app/data/links"; cp -r "$APP/data/ui" "$T/app/data/ui"; cp "$APP/app/build.gradle" "$T/app/app/"; cp "$APP/app/src/main/java/com/diegonmarcos/cloudme/"{MeLinks,SectionScreen,WebPage}.kt "$T/app/app/src/main/java/com/diegonmarcos/cloudme/"
   python3 -c "$2" "$T/app"; r=$(check "$T/app"); if [ -n "$r" ]; then ok "mutation red: $1"; else bad "mutation stayed green: $1"; fi; }
 mut "blank url" 'import json,sys;p=sys.argv[1]+"/data/links/me-links.json";d=json.load(open(p));d["entries"][0]["url"]="";json.dump(d,open(p,"w"))'
 mut "url differs from SoT" 'import json,sys;p=sys.argv[1]+"/data/links/me-links.json";d=json.load(open(p));d["entries"][7]["url"]="https://example.com/";json.dump(d,open(p,"w"))'
 mut "entry dropped" 'import json,sys;p=sys.argv[1]+"/data/links/me-links.json";d=json.load(open(p));d["entries"]=[e for e in d["entries"] if e["id"]!="prof-stark"];json.dump(d,open(p,"w"))'
 mut "page link differs" 'import json,sys;p=sys.argv[1]+"/data/ui/prof/leafy.json";d=json.load(open(p));d[0]["link"]="https://x.test/";json.dump(d,open(p,"w"))'
 K=app/src/main/java/com/diegonmarcos/cloudme/MeLinks.kt
-mut "a menu row no longer opens its URL" "import sys;p=sys.argv[1]+'/$K';s=open(p).read().replace('MeLinks.open(ctx, e.url)','Unit');open(p,'w').write(s)"
-mut "the Open action no longer opens" "import sys;p=sys.argv[1]+'/$K';s=open(p).read().replace('MeLinks.open(ctx, link)','Unit');open(p,'w').write(s)"
-mut "the page is no longer wrapped" "import sys;p=sys.argv[1]+'/app/src/main/java/com/diegonmarcos/cloudme/SectionScreen.kt';s=open(p).read().replace('MeLinkedWeb(','WebPage(');open(p,'w').write(s)"
+W=app/src/main/java/com/diegonmarcos/cloudme/WebPage.kt
+mut "the Open button is back" "import sys;p=sys.argv[1]+'/$K';s=open(p).read()+'\nFilledTonalButton\n';open(p,'w').write(s)"
+mut "the Links panel wrapper is back" "import sys;p=sys.argv[1]+'/app/src/main/java/com/diegonmarcos/cloudme/SectionScreen.kt';s=open(p).read().replace('WebPage(single, modifier, pageId = page.id)','MeLinkedWeb(single, section.id, page.id, modifier)');open(p,'w').write(s)"
+mut "a cache miss no longer falls to the asset loader" "import sys;p=sys.argv[1]+'/$W';s=open(p).read().replace('?: super.shouldInterceptRequest(view, request)','');open(p,'w').write(s)"
+mut "the WebView is no longer keyed by its page" "import sys;p=sys.argv[1]+'/$W';s=open(p).read().replace('key(generation, url, pageId)','key(generation)');open(p,'w').write(s)"
+mut "a tab embeds a bundled mirror" 'import json,sys;p=sys.argv[1]+"/data/ui/prof/leafy.json";d=json.load(open(p));d[0]["url"]="mysocials/linkedin.html";json.dump(d,open(p,"w"))'
+mut "Leaf.y embeds the LinkedIn page" 'import json,sys;p=sys.argv[1]+"/data/ui/prof/leafy.json";d=json.load(open(p));d[0]["url"]="https://linkedin.com/in/diegonmarcos";json.dump(d,open(p,"w"))'
+mut "two tabs embed the same page" 'import json,sys;[ (lambda p:(lambda d:(d[0].update(url="https://diegonmarcos.github.io/nexus/"),json.dump(d,open(p,"w"))))(json.load(open(p))))(sys.argv[1]+"/data/ui/prof/"+f) for f in ("stark.json",)]; q=sys.argv[1]+"/data/links/me-links.json";d=json.load(open(q));[x.update(url="https://diegonmarcos.github.io/nexus/") for x in d["entries"] if x["id"]=="prof-stark"];json.dump(d,open(q,"w"))'
 echo "$PASS passed, $FAIL failed"; [ "$FAIL" -eq 0 ]

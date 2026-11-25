@@ -130,6 +130,20 @@
       "sot_url": "https://diegonmarcos.github.io/stark/"
     },
     {
+      "id": "proj-lnktree",
+      "section": "proj",
+      "kind": "site",
+      "label": "Lnktree",
+      "source": {
+        "literal": "https://linktree.diegonmarcos.com/"
+      },
+      "path": [
+        "lnktree-site"
+      ],
+      "url": "https://linktree.diegonmarcos.com/",
+      "sot_url": "https://linktree.diegonmarcos.com/"
+    },
+    {
       "id": "social-github",
       "section": "prof",
       "kind": "social",
