@@ -76,6 +76,14 @@ class DnsFragment : KitComposeFragment() {
 
     /** #794 The engine's consent activity answers RESULT_OK once Android's VPN dialog is
      *  accepted (at once when consent is already held): hand it the choice and check it took. */
+    private var pendingMd = ""
+    private val exportMdLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("text/markdown")) { uri ->
+        uri ?: return@registerForActivityResult
+        val text = pendingMd; pendingMd = ""
+        val ok = runCatching { requireContext().contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray()) } ?: error("could not write the file") }
+        toast(requireContext(), if (ok.isSuccess) "Saved the DNS page as Markdown" else "Export failed: ${ok.exceptionOrNull()?.message}")
+    }
+
     private val consentLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         model?.onConsentResult(r.resultCode)
     }
@@ -90,7 +98,11 @@ class DnsFragment : KitComposeFragment() {
             DnsModel(ctx, scope, askConsent = { c ->
                 WgState.backend(c).consentIntent()?.let { consentLauncher.launch(it) }
                     ?: toast(c, "Cloud-Lib-Net-Wg is not installed — install it from Store ▸ Cloud Constellation ▸ Libs")
-            }, openWirelessSettings = { startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS)) })
+            }, openWirelessSettings = { startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS)) },
+                exportMd = { name, text -> pendingMd = text; exportMdLauncher.launch(name) },
+                copy = { text ->
+                    c3copy(ctx, text)
+                })
         }
         model = m
         LaunchedEffect(Unit) { m.refreshAndroid(); m.refreshStatus() }
@@ -102,6 +114,10 @@ class DnsFragment : KitComposeFragment() {
     }
 }
 
+private fun c3copy(ctx: Context, text: String) {
+    ctx.getSystemService(android.content.ClipboardManager::class.java).setPrimaryClip(android.content.ClipData.newPlainText("DNS", text))
+}
+
 private fun toast(ctx: Context, msg: String) { Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show() }
 
 /** Everything the DNS page remembers while it is on screen, and the work behind each button. */
@@ -110,6 +126,8 @@ internal class DnsModel(
     private val scope: CoroutineScope,
     private val askConsent: (Context) -> Unit,
     private val openWirelessSettings: () -> Unit,
+    private val exportMd: (String, String) -> Unit = { _, _ -> },
+    private val copy: (String) -> Unit = {},
 ) {
     val decl get() = FleetDns.decl
     val prefs = FleetDns.Prefs(ctx)
@@ -279,6 +297,18 @@ internal class DnsModel(
         }
     }
 
+    /** #1924 Everything on the page, as one text (Status, Test lookup, Test reachability by IP, Bridges, DNS servers). */
+    fun reportText(): String = DnsExport.text(
+        "Cloud SuperApp DNS @ ${DateFormat.getDateTimeInstance().format(Date())}",
+        statusText, results, reach, bridges, servers)
+
+    fun copyAll() { copy(reportText()); toast("Copied the whole DNS page") }
+
+    fun exportMarkdown() {
+        val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US).format(Date())
+        exportMd("cloud-dns-$stamp.md", DnsExport.markdown(reportText()))
+    }
+
     fun testLookup() {
         results = "Resolving…"
         background({
@@ -371,6 +401,9 @@ private fun DnsPage(m: DnsModel) {
             ConfigCaption("Every server the presets, the mesh and Android name: protocol, role, which preset uses it, reachable now (a test query) and which one answers.")
             ConfigReadout(m.servers)
             ConfigButton("Scan bridges and servers") { m.scan() }
+            // #1924 the whole page as text, the same helper as the VPN page's Copy all / Export to Md
+            ConfigButton("Copy all") { m.copyAll() }
+            ConfigButton("Export to Markdown") { m.exportMarkdown() }
         }
     }
 }

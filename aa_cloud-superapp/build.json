@@ -8713,7 +8713,9 @@
         "ConfigHeader(\"DNS servers\")",
         "ConfigCaption(\"Every server the presets, the mesh and Android name",
         "ConfigReadout(m.servers)",
-        "ConfigButton(\"Scan bridges and servers\") { m.scan() }"
+        "ConfigButton(\"Scan bridges and servers\") { m.scan() }",
+        "ConfigButton(\"Copy all\") { m.copyAll() }",
+        "ConfigButton(\"Export to Markdown\") { m.exportMarkdown() }"
       ],
       "_doc_self_resolvers": "#794 Fleet code that talks DNS ITSELF instead of asking Android's resolver, so the preset in force does not decide where those lookups go. Each entry is inside a tree 1_cicd/src/data/dns-resolver-guard.json allows (that guard fails the build on any other), and the DNS page's Bridges list flags the app `pkg` names with `what` and `how`. Everything else in the fleet resolves through Android: Kotlin/Java code directly, terminal shells through their 127.0.0.1 SystemDnsBridge, bundled binaries through libs:sysdns ResolverProxy.",
       "self_resolvers": [
