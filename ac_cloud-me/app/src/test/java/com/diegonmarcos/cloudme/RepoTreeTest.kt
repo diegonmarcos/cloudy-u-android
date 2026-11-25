@@ -20,6 +20,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class RepoTreeTest {
+    init { BuroLlcTestData.installRenamed() }
     private val ui = JSONObject(BuroLlcTestData.text("build.json")).getJSONObject("ui")
     private val outlineText = BuroLlcTestData.text("data/repos/repos.outline.json")
     private val outline = RepoOutline.parse(outlineText)

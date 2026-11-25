@@ -40,7 +40,9 @@ walk_tab section:prof me-prof Prof
 walk_tab section:proj me-proj Proj
 # the ids of the layout before the move still land on a page (page:health/home -> Pers, page:lnktree/leafy -> Prof > Leaf.y)
 open_page "$ME" "page:health/home"; shot me-old-health-home 8
+grep -qE '(text|content-desc)="Pers"' "$OUT/me-old-health-home.xml" || { echo "me-old-health-home: page:health/home did not resolve to Pers"; rc=1; }
 open_page "$ME" "page:lnktree/leafy"; shot me-old-lnktree-leafy 10
+grep -qE '(text|content-desc)="Prof"' "$OUT/me-old-lnktree-leafy.xml" || { echo "me-old-lnktree-leafy: page:lnktree/leafy did not resolve to Prof"; rc=1; }
 open_page "$ME" "page:socials/socials-professional"; shot me-socials-professional 10
 open_page "$ME" "page:socials/socials-personal"; shot me-socials-personal 10
 # the Professional body must hold page text, not only the chrome (#1771: it was blank)

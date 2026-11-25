@@ -50,7 +50,16 @@ object LegacyRoutes {
     )
 
     /** The new (section, page) for an old one; the arguments come back unchanged when nothing moved. */
-    fun resolve(section: String, page: String?): Pair<String, String?> = renamed(resolveLegacy(section, page), Renamed.baked)
+    fun resolve(section: String, page: String?): Pair<String, String?> = renamed(resolveLegacy(section, page), table)
+
+    /** ui.renamed as the running app has it: read from the `renamed.json` asset by [load] (MainActivity.onCreate), nothing renamed before that. */
+    @Volatile private var table: Renamed = Renamed.EMPTY
+
+    /** Reads build.json::ui.renamed, which app/build.gradle writes to the `renamed.json` asset (data is read at runtime, not baked into BuildConfig). */
+    fun load(ctx: android.content.Context) { table = Renamed.fromAsset(ctx) }
+
+    /** A test hands in the table it declares. */
+    fun install(t: Renamed) { table = t }
 
     /**
      * #1901 the second stage: build.json::ui.renamed, the section and page ids of the layout before Health became Pers, Experiences Prof and
@@ -76,12 +85,12 @@ object LegacyRoutes {
                 return Renamed(map("sections"), map("pages"))
             }
 
-            /** The baked declaration (BuildConfig.UI_RENAMED_B64); fail-soft to "nothing renamed". */
-            val baked: Renamed by lazy {
-                runCatching {
-                    parse(org.json.JSONObject(String(android.util.Base64.decode(BuildConfig.UI_RENAMED_B64, android.util.Base64.DEFAULT))))
-                }.getOrDefault(EMPTY)
-            }
+            const val ASSET = "renamed.json"
+
+            /** The shipped declaration (asset [ASSET], written by app/build.gradle from build.json::ui.renamed); fail-soft to "nothing renamed". */
+            fun fromAsset(ctx: android.content.Context): Renamed = runCatching {
+                parse(org.json.JSONObject(ctx.assets.open(ASSET).bufferedReader().use { it.readText() }))
+            }.getOrDefault(EMPTY)
         }
     }
 

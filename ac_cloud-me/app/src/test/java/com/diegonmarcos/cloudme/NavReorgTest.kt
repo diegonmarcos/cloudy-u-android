@@ -21,6 +21,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class NavReorgTest {
+    init { BuroLlcTestData.installRenamed() }
     private fun arr(a: JSONArray) = (0 until a.length()).map { a.getJSONObject(it) }
     private val ui = JSONObject(BuroLlcTestData.text("build.json")).getJSONObject("ui")
     private val baseline = JSONObject(BuroLlcTestData.text("test/fixtures/nav-baseline-1901.json"))
@@ -112,9 +113,11 @@ class NavReorgTest {
         for (live in listOf("pers" to "geo", "prof" to "work", "proj" to "lnktree-site", "buro" to "ids", "tasks" to "backlogs")) assertEquals(live, LegacyRoutes.resolve(live.first, live.second))
     }
 
-    @Test fun `ui renamed names only pages and sections of the live tree and is what the app baked`() {
+    @Test fun `ui renamed names only pages and sections of the live tree and the asset the app reads is build json's`() {
         val ren = ui.getJSONObject("renamed")
-        val baked = LegacyRoutes.Renamed.baked
+        // app/build.gradle writes build.json::ui.renamed to the renamed.json asset; LegacyRoutes.load reads it at start-up
+        val baked = LegacyRoutes.Renamed.fromAsset(org.robolectric.RuntimeEnvironment.getApplication())
+        assertEquals(BuroLlcTestData.renamed(), baked)
         assertEquals(ren.getJSONObject("pages").length(), baked.pages.size)
         assertEquals(ren.getJSONObject("sections").length(), baked.sections.size)
         for ((old, to) in baked.pages) {
@@ -123,6 +126,8 @@ class NavReorgTest {
         }
         for ((old, to) in baked.sections) { assertEquals("$old is a live section", null, Sections.byId(old)); assertNotNull(to, Sections.byId(to)) }
         assertFalse(LegacyRoutes.Renamed.EMPTY == baked)
+        LegacyRoutes.install(baked)   // the same table drives the app: every old id still resolves with it
+        assertEquals("pers" to "home", LegacyRoutes.resolve("health", "home"))
     }
 
     // ---- the embedded URLs

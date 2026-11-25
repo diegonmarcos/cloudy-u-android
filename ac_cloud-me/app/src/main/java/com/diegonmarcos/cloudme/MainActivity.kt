@@ -116,6 +116,7 @@ class MainActivity : AppCompatActivity() {
         // Health and Fin are re-added by KitFragmentHost once Compose has a container for them.
         super.onCreate(KitFragmentHostState.withoutFragments(savedInstanceState))
         FleetChrome.apply(this)
+        LegacyRoutes.load(this) // #1901 ui.renamed first: the saved section and every deep link below resolve through it
         CloudMeApiData.sync(this) // cloud-me-api first (background); baked assets are the fallback
 
         if (savedInstanceState == null) {

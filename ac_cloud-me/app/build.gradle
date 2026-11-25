@@ -213,7 +213,9 @@ renamedPageIds = { pages -> (pages ?: []).collectMany { p -> [p.id.toString()] +
     def sec = (buildJson.ui.sections ?: []).find { it.id == parts[0] }
     if (sec == null || (parts.length > 1 && !(parts[1] in renamedPageIds(sec.pages)))) throw new GradleException("ui.renamed.pages[${old}] names '${now}', which is not a page of the tree")
 }
-def uiRenamedB64 = b64(renamedDecl)
+// Written to the generated assets dir (the one the Tasks rows already use), read by LegacyRoutes.load at runtime: the app's data is read, not baked into BuildConfig.
+vaultPagesDir.mkdirs()
+new File(vaultPagesDir, 'renamed.json').text = groovy.json.JsonOutput.toJson(renamedDecl)
 def calEngineFleet = new groovy.json.JsonSlurper().parse(fleetAppsFile).apps.find { it.id == calEngineDecl.fleet }
 if (calEngineFleet == null) {
     throw new GradleException(
@@ -261,7 +263,6 @@ android {
         buildConfigField "String", "UI_PERMISSIONS_B64", "\"${uiPermissionsB64}\""
         buildConfigField "String", "UI_REPO_TREE_B64",     "\"${uiRepoTreeB64}\""
         buildConfigField "String", "UI_LNKTREE_CACHE_B64", "\"${uiLnktreeCacheB64}\""
-        buildConfigField "String", "UI_RENAMED_B64",       "\"${uiRenamedB64}\""
         buildConfigField "String", "UI_PROFILE_NAME",  "\"${profile.name ?: ''}\""
         buildConfigField "String", "UI_PROFILE_EMAIL", "\"${profile.email ?: ''}\""
         buildConfigField "String", "CAL_ENGINE_PACKAGE",      "\"${calEnginePackage}\""

@@ -4,7 +4,7 @@
 #   N2 parity   field parity against test/fixtures/nav-baseline-1901.json (the tree dumped BEFORE the move by test/nav-tree-dump.py): every page of the
 #               old tree resolves, through ui.renamed, to a page that still holds every field, url and tile target it held; every section's own data
 #               (the Health metric taxonomy, the Achieves migration) is still declared; labels only changed where the owner renamed them
-#   N3 renamed  ui.renamed names only pages and sections of the live tree, lists EVERY page of the old tree, and LegacyRoutes reads and bakes it
+#   N3 renamed  ui.renamed names only pages and sections of the live tree, lists EVERY page of the old tree, and LegacyRoutes reads it from its asset
 #   N4 urls     each tile opens its own site: the URL of every embedded page is declared data (data/ui/<section>/..), none is a literal in Kotlin
 #   N5 walk     the emulator walk visits Pers, Prof and Proj and screenshots each default page
 # Every check is proven red by its own mutation of a copy of the tree (the tail of this file).
@@ -148,12 +148,12 @@ for s in base["sections"]:
         bad("renamed", f"ui.renamed.sections has no entry for the old section {s['id']}")
 src = lambda f: open(os.path.join(app, f), encoding="utf-8").read() if os.path.exists(os.path.join(app, f)) else ""
 lr = src("app/src/main/java/com/diegonmarcos/cloudme/LegacyRoutes.kt")
-if "UI_RENAMED_B64" not in lr or "fun renamed(" not in lr or "table.pages[key]" not in lr or "table.sections[section]" not in lr:
+if "fun renamed(" not in lr or "table.pages[key]" not in lr or "table.sections[section]" not in lr or "fun load(" not in lr or "assets.open(ASSET)" not in lr:
     bad("renamed", "LegacyRoutes does not apply ui.renamed (pages first, then the section alias)")
-if "UI_RENAMED_B64" not in src("app/build.gradle") or "ui.renamed.pages[" not in src("app/build.gradle"):
-    bad("renamed", "app/build.gradle does not bake and validate ui.renamed")
+if "'renamed.json'" not in src("app/build.gradle") or "ui.renamed.pages[" not in src("app/build.gradle") or "UI_RENAMED" in src("app/build.gradle"):
+    bad("renamed", "app/build.gradle does not write ui.renamed to the renamed.json asset (not a BuildConfig field) and validate it")
 mo = src("app/src/main/java/com/diegonmarcos/cloudme/MainActivity.kt")
-if "LegacyRoutes.resolve(sectionId, pageId)" not in mo:
+if "LegacyRoutes.resolve(sectionId, pageId)" not in mo or "LegacyRoutes.load(this)" not in mo:
     bad("renamed", "MainActivity.open does not resolve the id through LegacyRoutes (deep links and the SuperApp Me row would miss)")
 
 # ---- N4 every tile opens its own site; the URL is declared data
@@ -199,7 +199,7 @@ echo "== checks on the real tree =="
 expect_green
 for t in "tree|the bar, subpages, groups and defaults are Pers | Prof | Proj as declared (Lnktree first and default in Proj)" \
          "parity|every page, field, url and tile target of the baseline tree is still there (field parity)" \
-         "renamed|ui.renamed lists every old page and section, names only live pages, and LegacyRoutes bakes and applies it" \
+         "renamed|ui.renamed lists every old page and section, names only live pages, and LegacyRoutes loads and applies it" \
          "urls|every tile opens its own site, the URL is declared data and no Kotlin file carries one" \
          "walk|the emulator walk visits Pers, Prof and Proj and screenshots each default page"; do
   id="${t%%|*}"; name="${t#*|}"
@@ -239,7 +239,8 @@ mutant renamed "a rename names a page that does not exist" "$J \"$BJ;U['renamed'
 mutant renamed "the section alias is gone" "$J \"$BJ;U['renamed']['sections'].pop('health');$W_\""
 mutant renamed "a rename sends a page to a section that is not declared" "$J \"$BJ;U['renamed']['sections']['socials']='social';$W_\""
 mutant renamed "LegacyRoutes stops applying ui.renamed" "sed -i 's/table.pages\\[key\\]/table.pagesX[key]/' app/src/main/java/com/diegonmarcos/cloudme/LegacyRoutes.kt"
-mutant renamed "app/build.gradle stops baking ui.renamed" "sed -i 's/UI_RENAMED_B64/UI_RENAMED_X/' app/build.gradle"
+mutant renamed "app/build.gradle stops writing ui.renamed to its asset" "sed -i \"s/'renamed.json'/'renamed-x.json'/\" app/build.gradle"
+mutant renamed "MainActivity stops loading the table" "sed -i 's/LegacyRoutes.load(this)/Unit/' app/src/main/java/com/diegonmarcos/cloudme/MainActivity.kt"
 mutant renamed "MainActivity stops resolving old ids" "sed -i 's/LegacyRoutes.resolve(sectionId, pageId)/Pair(sectionId, pageId)/' app/src/main/java/com/diegonmarcos/cloudme/MainActivity.kt"
 # tree
 mutant tree "the bar order is swapped" "$J \"$BJ;b=U['bottom_nav'];b[0],b[1]=b[1],b[0];$W_\""

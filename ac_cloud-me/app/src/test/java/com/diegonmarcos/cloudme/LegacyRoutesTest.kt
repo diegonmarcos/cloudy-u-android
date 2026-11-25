@@ -13,6 +13,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class LegacyRoutesTest {
+    init { BuroLlcTestData.installRenamed() }
     private val declared: Map<String, Set<String>> = run {
         val secs = JSONObject(BuroLlcTestData.text("build.json")).getJSONObject("ui").getJSONArray("sections")
         (0 until secs.length()).map { secs.getJSONObject(it) }.associate { s ->

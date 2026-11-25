@@ -15,6 +15,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class AchievesTest {
+    init { BuroLlcTestData.installRenamed() }
     private val tabs = listOf("geo", "endurance", "growth", "community", "by30", "by40", "by50")
     private val ui = JSONObject(BuroLlcTestData.text("build.json")).getJSONObject("ui")
     private val sections = ui.getJSONArray("sections").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
