@@ -1,6 +1,7 @@
 package com.diegonmarcos.superapp.appstore
 
 import android.content.Context
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -23,7 +24,9 @@ object AppsMcpApi {
     class Decl(val group: String, val kinds: List<Kind>, val lib: String, val base: String,
                val shared: List<Endpoint>, val apps: Map<String, Map<String, List<Endpoint>>>)
 
-    fun load(ctx: Context): Decl = parse(ctx.assets.open("apps-mcp-api.json").bufferedReader().use { it.readText() })
+    /** #1566 the endpoints every app declares: a fleet-private tier-2 dataset (last-known-good copy of Cloud Account's route); null = not served yet, the Access rows then say so instead of listing anything. */
+    const val DATASET = "fleet/apps-mcp-api"
+    fun load(ctx: Context): Decl? = runCatching { FleetData.get(ctx.applicationContext, DATASET) { parse(it) } }.getOrNull()
 
     fun parse(json: String): Decl {
         val o = JSONObject(json)

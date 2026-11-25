@@ -187,7 +187,7 @@ object StoreInspect {
         val tabStyle = rememberStoreControls().groupTab
         // MCP + API from AppsMcpApi (apps-mcp-api.json), IPC from IpcMesh (baked ipc-mesh.json).
         val mcpApi = remember(app.id) {
-            runCatching { AppsMcpApi.rows(AppsMcpApi.load(ctx), listOf(app.id to app.label)).firstOrNull() }.getOrNull()
+            runCatching { AppsMcpApi.load(ctx)?.let { AppsMcpApi.rows(it, listOf(app.id to app.label)).firstOrNull() } }.getOrNull()
         }
         val ipc = remember(app.id) {
             runCatching { IpcMesh.baked().members.firstOrNull { it.id == app.id }?.endpoints }.getOrNull().orEmpty()
@@ -282,7 +282,7 @@ object StoreInspect {
         // MCP + API from AppsMcpApi (apps-mcp-api.json), IPC from IpcMesh (baked ipc-mesh.json),
         // ID from the baked fleet row beside PackageManager. Same sources Routes reads — no new data path.
         val mcpApi = remember(app.id) {
-            runCatching { AppsMcpApi.rows(AppsMcpApi.load(ctx), listOf(app.id to app.label)).firstOrNull() }.getOrNull()
+            runCatching { AppsMcpApi.load(ctx)?.let { AppsMcpApi.rows(it, listOf(app.id to app.label)).firstOrNull() } }.getOrNull()
         }
         val member = remember(app.id) {
             runCatching { IpcMesh.baked().members.firstOrNull { it.id == app.id } }.getOrNull()

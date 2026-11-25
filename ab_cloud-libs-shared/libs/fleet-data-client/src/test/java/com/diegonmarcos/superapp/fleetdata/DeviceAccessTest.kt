@@ -55,7 +55,7 @@ class DeviceAccessTest {
     }
 
     @Test fun everyEndpointOfTheOldAppsMcpApiPageIsInTheModel() {
-        val old = json("ab_cloud-libs-shared/libs/appstore/src/main/assets/apps-mcp-api.json")
+        val old = json("fleet-private-data/apps-mcp-api.json")   // #1566 fleet-private: CI materialises it
         assertEquals(old.a("kinds").map { Triple(it.s("id"), it.s("label"), it.s("what")) }, doc.kinds.map { Triple(it.id, it.label, it.what) })
         val sd = old["shared_debug"]!!.jsonObject
         assertEquals(sd.s("lib"), doc.sharedDebug.lib); assertEquals(sd.s("service"), doc.sharedDebug.service)

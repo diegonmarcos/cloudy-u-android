@@ -21,7 +21,10 @@ import json
 import os
 import sys
 
-OUT = "ab_cloud-libs-shared/libs/appstore/src/main/assets/apps-mcp-api.json"
+# #1566 the output is a fleet-private tier-2 dataset (served as fleet/apps-mcp-api by Cloud Account's private route): it lives in
+# cloud-me-pvt-configs fleet-data/2/fleet/, CI materialises it into the gitignored fleet-private-data/ (FLEET_PRIVATE_DIR overrides).
+# `write` writes the generated copy there; publish it to the private repo. `check` compares the materialised private copy.
+OUT = "fleet-private-data/apps-mcp-api.json"
 FLEET = "aa_cloud-superapp/data/constellation-fleet.json"
 STORE = "ac_cloud-store/build.json"
 METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"]
@@ -105,8 +108,14 @@ def consolidate(root):
     return doc, problems
 
 
+def out_path(root):
+    d = os.environ.get("FLEET_PRIVATE_DIR")
+    return os.path.join(d, os.path.basename(OUT)) if d else os.path.join(root, OUT)
+
+
 def dump(doc):
-    return json.dumps(doc, indent=2, ensure_ascii=False) + "\n"
+    """The served form: schemaVersion first (the fleet data client refuses a dataset without it)."""
+    return json.dumps(dict([("schemaVersion", 1)] + list(doc.items())), indent=2, ensure_ascii=False) + "\n"
 
 
 def main(argv):
@@ -123,11 +132,13 @@ def main(argv):
             print("ERROR: " + p, file=sys.stderr)
         if problems:
             return 1
-        with open(os.path.join(root, OUT), "w") as h:
+        path = out_path(root)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as h:
             h.write(dump(doc))
-        print("wrote %s (%d apps declare endpoints)" % (OUT, len(doc["apps"])))
+        print("wrote %s (%d apps declare endpoints); publish it to cloud-me-pvt-configs fleet-data/2/fleet/apps-mcp-api.json" % (path, len(doc["apps"])))
         return 0
-    path = os.path.join(root, OUT)
+    path = out_path(root)
     committed = open(path).read() if os.path.exists(path) else ""
     if committed != dump(doc):
         problems.append("%s is stale: run python3 1_cicd/src/scripts/cloud-android-apps-mcp-api.py write . "
