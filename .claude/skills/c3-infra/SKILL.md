@@ -10,7 +10,7 @@ Hard rules first, index last. Each rule has a one-line why in `rules/*.md` (read
 1. Main only. No branches, no PRs; commit and push straight to main. Why: owner order, branches rot. Guard: hooks no-branch-create, main-only-push.
 2. Never print or hardcode a secret; secrets files stay encrypted; no credentials as CLI args. Why: logs and transcripts leak. Guard: hook no-secrets-commit.
 3. Never quote the owner verbatim in commits, comments, specs or tickets; neutral third-person prose. Why: publication rule. Guard: none.
-4. Number every question put to the owner. Ask only when truly blocked. Why: answer by number. Guard: none.
+4. **Decisions are the agent's by default. Never wait on the owner.** An undeployed task costs more than a bad decision: decide, deploy, verify, then report each decision to the owner through the C3 infra bot (cloud-infra-mcp `infra_devops telegram_send`, one short line per decision: ticket, decision, why) and keep working without waiting for any reply. Questions to the owner are not allowed (hook owner-auto-answer answers them). The only things that still stop an action are the permission system's refusals and the hard rules below; report those once through the bot and move on to other work. Why: owner order 2026-11-25. Guard: hook owner-auto-answer.
 5. Do only what was asked; explain/how/what-is questions are read-only. Why: scope creep costs trust. Guard: none.
 6. Reports are short: result, files touched, verification, blockers. Why: token budget. Guard: none.
 7. "New task" is a ticket: write it to the Product Backlog (repo cloud-me-pvt-tasks) first, build, test, push (rules/backlog.md). Why: single task ledger. NEVER use TaskCreate/TaskUpdate for tickets (they truncate the session store and delete tickets); tickets are files, never deleted or blanked. Guard: test-backlog-metadata.sh, hooks ticket-guard, backlog-session-start, backlog-stop-push.
@@ -34,7 +34,7 @@ Hard rules first, index last. Each rule has a one-line why in `rules/*.md` (read
 | rules/addressing.md | mesh vs public, c3-pvt/c3-pub, mesh namespace, vault, exposure |
 | rules/backlog.md | tickets: schema, build, test, push, closing, phone check |
 | rules/ci.md | CI-only builds, Gradle, GHA tools, emulator tests |
-| rules/session-survival.md | dead shell recovery, disk, /tmp, worktrees |
+| rules/session-survival.md | dead shell recovery, disk, /tmp, one shared checkout per repo |
 | rules/agents.md | orchestration, token budget, lean agents, tools |
 | rules/security.md | secrets, gitleaks, geo-fence, MCP auth |
 | rules/relay-inbox.md | c3-bot Telegram relay inbox, lease, reply routing, session tag |

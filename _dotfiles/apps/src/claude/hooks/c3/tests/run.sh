@@ -94,4 +94,7 @@ echo '{"id":"9","subject":"#9 new","status":"pending"}' > "$BT/9.json"; (cd /tmp
 { git -C "$RM/o.git" show main:1___BACKLOG___/1.1.Product-Backlog/tasks/s1/7.json >/dev/null 2>&1 && [ -n "$(git -C "$RM/o.git" show main:1___BACKLOG___/1.1.Product-Backlog/tasks/s1/9.json)" ]; } || { echo "FAIL backlog-stop-push committed a delete/blank"; fail=$((fail+1)); }
 rm -rf "$BR" "$RM"
 bash "$(dirname "$0")/relay-inbox.sh" || fail=$((fail+1)); n=$((n+1))
+# owner-auto-answer: AskUserQuestion is denied with the owner's standing answer as the reason (JSON on stdout, exit 0)
+o="$(printf '%s' '{"tool_name":"AskUserQuestion","tool_input":{"questions":[]}}' | "$H/owner-auto-answer.sh")"; n=$((n+1))
+printf '%s' "$o" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const j=JSON.parse(s).hookSpecificOutput;process.exit(j.permissionDecision==="deny"&&/best decision to keep the system healthy, safe so you can deploy and the user can navigate the system/.test(j.permissionDecisionReason)?0:1)})' || { echo "FAIL owner-auto-answer: $o"; fail=$((fail+1)); }
 echo "hook tests: $n cases, $fail failed"; [ "$fail" = 0 ]

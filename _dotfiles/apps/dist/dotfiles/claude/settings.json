@@ -658,6 +658,16 @@
             "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/c3\"/ticket-guard.sh"
           }
         ]
+      },
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/c3\"/owner-auto-answer.sh",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "SessionStart": [

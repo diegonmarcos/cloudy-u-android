@@ -4,5 +4,5 @@
 - Free disk with `rm -rf ~/.gradle/caches ~/.gradle/daemon ~/.m2/repository ~/.cargo/registry/cache ~/.npm/_cacache`, then test `echo ok`. Why: it recovered the shell. Guard: none.
 - Never `rm -rf /tmp/*`, `/tmp/tmp.*` or any glob in /tmp or /dev/shm; delete only paths you created, by full name. Why: /tmp holds the sandbox's own files. Guard: hook no-glob-rm-tmp.
 - Never delete ~/.claude or /tmp/claude-*. Why: session state. Guard: none.
-- Keep unpushed work on disk worktrees (for example /home/user/wt/<name>), never /dev/shm; push WIP to main after each step. Why: each agent has a private /dev/shm that vanishes (three features lost). Guard: none.
+- One shared checkout per repo, at /home/user/<repo>: every agent and the orchestrator work in it. Never create a worktree, a second clone, a sparse or no-checkout copy, a bare repo, or an extracted copy of a repo. Keep unpushed work in that checkout on disk (never /dev/shm) and push WIP to main after each step; commit only your own paths. Why: owner order 2026-11-19 — duplicated copies filled the disk (to 100%), held stale indexes that blocked the shared checkout, and hid unpushed work (36 copies removed after a rescue). Guard: none (rule only).
 - Do not tell the owner the session is unrecoverable before trying the sandbox override. Why: it was always fixable. Guard: none.
