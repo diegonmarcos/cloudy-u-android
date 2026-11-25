@@ -47,6 +47,7 @@ class FleetDnsFallback1924Test {
     private fun walk(mesh: (ByteArray) -> ByteArray?, preset: String, fb: List<String>, name: String = "github.com", healthy: Boolean = true,
                      asked: MutableList<String> = mutableListOf()): Triple<ByteArray?, List<String>, List<Boolean>> {
         val seen = mutableListOf<Boolean>()
+        FleetDnsBridge.forget(name) // the bridge caches answers; an earlier test's answer would hide the walk
         FleetDnsBridge.meshObserver = { seen += it }
         FleetDnsBridge.exchange = { q, s, _ -> asked += s; if (s in MESH) mesh(q) else reply(q, 0, "140.82.112.3") }
         FleetDnsBridge.routes = { routes(name, preset, fb, healthy) }
