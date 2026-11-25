@@ -372,7 +372,7 @@ command grep -qE 'if \((labels|line)\.isEmpty\(\)\) continue' "$TABS" \
 #     assets/appstore-controls.json, so there is no exemption left. Derived from
 #     ALL THREE declarations, so the assertion count grows when any gains an
 #     entry: a pinned list would not move.
-CONTROLS_ASSET="$LIBS/appstore/src/main/assets/appstore-controls.json"
+CONTROLS_ASSET="$ROOT/data/fleet/appstore-controls.json"   # #1562 a served dataset
 [ -f "$CONTROLS_ASSET" ] || { echo "ERROR: missing $CONTROLS_ASSET" >&2; exit 2; }
 for label in $(jq -r '.groups[].label' "$FLEET" | tr ' ' '\036') \
              $(jq -r '.feeds[].label' "$FEEDS_ASSET" | tr ' ' '\036') \

@@ -82,6 +82,18 @@
         "*"
       ]
     },
+    "appstore-controls": {
+      "tier": 3,
+      "consumers": [
+        "*"
+      ]
+    },
+    "appstore-fleet-actions": {
+      "tier": 3,
+      "consumers": [
+        "*"
+      ]
+    },
     "appstore-priority": {
       "tier": 3,
       "consumers": [

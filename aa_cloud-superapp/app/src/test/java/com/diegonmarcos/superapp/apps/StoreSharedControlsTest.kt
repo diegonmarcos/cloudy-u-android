@@ -55,8 +55,9 @@ class StoreSharedControlsTest : KitPageHarness() {
     private val ctx: Context = ApplicationProvider.getApplicationContext()
     private val b64 = com.diegonmarcos.superapp.appstore.BuildConfig.CONSTELLATION_FLEET_B64
     private val fleet = Fleet.parse(b64)
+    private val seeded = ServedFixtures.seed(ctx, "appstore-controls", "appstore-fleet-actions")   // #1562 served datasets, read as production does
     private val decl = AppsMesh.load(ctx)
-    private val meshLabel = JSONObject(ctx.assets.open(StoreControls.ASSET).use { it.readBytes().decodeToString() })
+    private val meshLabel = JSONObject(ServedFixtures.text(StoreControls.DATASET))
         .getJSONObject("pages").getJSONObject("mesh").getString("label")
 
     private fun idle() { shadowOf(Looper.getMainLooper()).idle(); compose.waitForIdle() }

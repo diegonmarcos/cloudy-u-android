@@ -39,6 +39,7 @@ class AppsMeshTest {
     private val fleetJson = JSONObject(String(Base64.decode(b64, Base64.DEFAULT)))
     private val fleet = Fleet.parse(b64)
     private val links = StoreMesh.links(fleetJson)
+    private val seeded = ServedFixtures.seed(ctx, "appstore-controls")   // #1562 served dataset, read as production does
     private val decl = AppsMesh.load(ctx)
     private val apps = fleet.filter { it.kind == "app" }
     private val everyone = fleet.map { it.id }

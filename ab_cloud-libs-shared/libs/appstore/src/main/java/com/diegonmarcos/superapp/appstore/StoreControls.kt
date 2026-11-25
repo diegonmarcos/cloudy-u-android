@@ -1,5 +1,6 @@
 package com.diegonmarcos.superapp.appstore
 
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import android.content.Context
 import org.json.JSONObject
 
@@ -11,7 +12,8 @@ import org.json.JSONObject
  */
 object StoreControls {
 
-    const val ASSET = "appstore-controls.json"
+    /** #1562 the declaration is a served dataset of Cloud Store (shared), never an APK asset. */
+    const val DATASET = "appstore-controls"
 
     /** One declared style. Colours are ARGB; null means "none". */
     class Style(
@@ -50,8 +52,8 @@ object StoreControls {
     private val PLAIN = Style(null, null, null, null, 0x99FFFFFF.toInt(), 0xFFFFFFFF.toInt(), 0, false, false, "")
 
     fun load(ctx: Context): Decl = runCatching {
-        parse(JSONObject(ctx.assets.open(ASSET).use { it.readBytes().decodeToString() }))
-    }.getOrElse { parse(JSONObject()) }
+        FleetData.get(ctx, DATASET) { parse(JSONObject(it)) }
+    }.getOrNull() ?: parse(JSONObject())
 
     fun parse(decl: JSONObject): Decl {
         val s = decl.optJSONObject("styles") ?: JSONObject()

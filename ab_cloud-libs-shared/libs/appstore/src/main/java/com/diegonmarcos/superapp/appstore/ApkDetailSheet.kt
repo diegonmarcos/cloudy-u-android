@@ -165,7 +165,7 @@ object ApkDetailSheet {
                 else runCatching { ctx.startActivity(PhoneAppActions.appInfo(pkg)) }
                     .onFailure { toast(ctx, "${a.label}: ${it.message}") }
             }
-            else -> toast(ctx, "'${a.id}' is declared in ${FleetActions.ASSET} but this build has no handler for it")
+            else -> toast(ctx, "'${a.id}' is declared in ${FleetActions.DATASET} but this build has no handler for it")
         }
     }
 

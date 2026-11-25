@@ -35,7 +35,7 @@ def read(p):
 
 base = os.path.join(libs, "appstore/src/main")
 kt = os.path.join(base, "java/com/diegonmarcos/superapp/appstore")
-decl = json.loads(read(os.path.join(base, "assets/appstore-fleet-actions.json")))
+decl = json.loads(read(os.path.join(base, "../../../../../data/fleet/appstore-fleet-actions.json")))
 store = read(os.path.join(kt, "StoreCloudFragment.kt"))
 sheet = read(os.path.join(kt, "ApkDetailSheet.kt"))
 phone = read(os.path.join(kt, "StorePhoneFragment.kt"))

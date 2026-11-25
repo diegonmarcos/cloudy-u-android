@@ -1125,7 +1125,7 @@ class StoreCloudFragment : KitComposeFragment() {
             "access" -> verb { inspect.add(Inspect.Access(app)) }
             "about", "details" -> verb { details.add(app to states[app.id]) }
             else -> StoreVerb(a.label, 0xFF4A4A55.toInt(), {
-                Toast.makeText(ctx, "'${a.id}' is declared in ${FleetActions.ASSET} but this build has no handler for it",
+                Toast.makeText(ctx, "'${a.id}' is declared in ${FleetActions.DATASET} but this build has no handler for it",
                     Toast.LENGTH_LONG).show()
             }, tag)
         }

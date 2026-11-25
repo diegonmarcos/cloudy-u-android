@@ -1,5 +1,6 @@
 package com.diegonmarcos.superapp.appstore
 
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -173,8 +174,8 @@ object AppsMesh {
     private fun argb(v: String): Int? = v.takeIf { it.startsWith("0x") }?.removePrefix("0x")?.toLongOrNull(16)?.toInt()
 
     fun load(ctx: Context): Decl = runCatching {
-        decl(JSONObject(ctx.assets.open(StoreControls.ASSET).use { it.readBytes().decodeToString() }))
-    }.getOrElse { decl(JSONObject()) }
+        FleetData.get(ctx, StoreControls.DATASET) { decl(JSONObject(it)) }
+    }.getOrNull() ?: decl(JSONObject())
 
     /** What a tap on a member offers: the declared actions, minus `store` where
      *  the host has no Store row to open. */

@@ -14,7 +14,7 @@ set -u
 APP="$(cd "$(dirname "$0")/.." && pwd)"
 ROOT="$(cd "$APP/.." && pwd)"
 STORE="$ROOT/ab_cloud-libs-shared/libs/appstore/src/main"
-DECL="$STORE/assets/appstore-controls.json"
+DECL="$ROOT/data/fleet/appstore-controls.json"   # #1562 a served dataset, not an APK asset
 FEEDS="$STORE/assets/appstore-feeds.json"
 PAGE="$STORE/java/com/diegonmarcos/superapp/appstore/StoreCloudFragment.kt"
 CTRL="$STORE/java/com/diegonmarcos/superapp/appstore/StoreControls.kt"

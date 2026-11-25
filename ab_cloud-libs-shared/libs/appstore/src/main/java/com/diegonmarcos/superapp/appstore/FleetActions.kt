@@ -1,12 +1,13 @@
 package com.diegonmarcos.superapp.appstore
 
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
 
 /**
  * Store ▸ Cloud: which buttons a fleet row's detail and its About sheet draw,
- * in which order, under which caption — read from [ASSET], never written in the
+ * in which order, under which caption — read from the served dataset [DATASET], never written in the
  * fragment. The code only maps an [Action.id] to what it does, and an id it has
  * no handler for is drawn as a button that says so rather than dropped.
  *
@@ -17,7 +18,8 @@ import org.json.JSONObject
  */
 object FleetActions {
 
-    const val ASSET = "appstore-fleet-actions.json"
+    /** #1562 the declaration is a served dataset of Cloud Store (shared), never an APK asset. */
+    const val DATASET = "appstore-fleet-actions"
 
     class Action(
         val id: String, val label: String, val color: Int, val detail: String,
@@ -44,8 +46,10 @@ object FleetActions {
     fun label(ctx: Context, id: String): String =
         (rows(ctx).flatten() + details(ctx)).firstOrNull { it.id == id }?.label ?: id
 
-    private fun open(ctx: Context): JSONObject =
-        ctx.assets.open(ASSET).use { JSONObject(it.readBytes().decodeToString()) }
+    /** The served declaration; while it is not served yet (first run, offline) no action is drawn, never a crash. */
+    private fun open(ctx: Context): JSONObject = runCatching {
+        FleetData.get(ctx, DATASET) { JSONObject(it) }
+    }.getOrNull() ?: JSONObject("""{"rows":[],"details":[]}""")
 
     private fun color(s: String, fallback: String = "0xFF2A2A33"): Int =
         s.ifEmpty { fallback }.removePrefix("0x").toLong(16).toInt()

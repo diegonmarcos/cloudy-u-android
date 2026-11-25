@@ -44,4 +44,22 @@ class AppstoreServedDatasetsTest {
             assertFalse("$it still opens an asset", src.contains("assets.open"))
         }
     }
+
+    /** #1562 the Store controls' look and the fleet-row actions are served datasets too: no asset, in the manifest, parsed by the real readers, readers off assets. */
+    @Test fun controlsAndFleetActionsAreServedToo() {
+        val shared = JSONObject(File(fleet, "manifest.json").readText()).getJSONObject("shared")
+        for (n in listOf("appstore-controls", "appstore-fleet-actions")) {
+            assertFalse("$n.json is still an APK asset", File("src/main/assets/$n.json").exists())
+            assertEquals(1, JSONObject(served(n)).getInt("schemaVersion"))
+            assertEquals(3, shared.getJSONObject(n).getInt("tier"))
+        }
+        assertEquals("appstore-controls", StoreControls.DATASET)
+        assertEquals("appstore-fleet-actions", FleetActions.DATASET)
+        StoreControls.parse(JSONObject(served("appstore-controls")))   // the real parser accepts the served file
+        for (f in listOf("StoreControls", "AppsMesh", "FleetActions")) {
+            val src = File("src/main/java/com/diegonmarcos/superapp/appstore/$f.kt").readText()
+            assertTrue("$f must read FleetData", src.contains("FleetData.get(ctx"))
+            assertFalse("$f still opens an asset", src.contains("assets.open"))
+        }
+    }
 }
