@@ -279,7 +279,7 @@ fun ansi(s: String, dark: Boolean, base: Color, q: String = "", hl: Color = Colo
 fun AdbTerminal(status: ShellStatus?, onReconnect: () -> Unit, modifier: Modifier = Modifier, outputHeight: androidx.compose.ui.unit.Dp = KitStoreRow.step(520)) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
-    val decl = remember { runCatching { TerminalModel.parse(ctx.assets.open(ALLOWLIST).bufferedReader().use { it.readText() }) }.getOrDefault(TerminalModel.Decl(emptyList(), emptyList(), emptyList(), emptyList())) }
+    val decl = remember { runCatching { TerminalModel.parse(ShellBroker.declaration(ctx)!!) }.getOrDefault(TerminalModel.Decl(emptyList(), emptyList(), emptyList(), emptyList())) }
     val prefs = remember { ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE) }
     var ui by remember { mutableStateOf(TermUi(favourites = prefs.getStringSet(KEY_FAV, emptySet()).orEmpty().toSet())) }
     val jobs = remember { HashMap<Long, Job>() }
@@ -342,7 +342,6 @@ fun AdbTerminal(status: ShellStatus?, onReconnect: () -> Unit, modifier: Modifie
     AdbTerminalContent(ui, decl, a, modifier, outputHeight)
 }
 
-private const val ALLOWLIST = "shell-allowlist.json"
 private const val PREFS = "adb_terminal"
 private const val KEY_FAV = "favourites"
 private const val TIMEOUT_MS = 60_000L

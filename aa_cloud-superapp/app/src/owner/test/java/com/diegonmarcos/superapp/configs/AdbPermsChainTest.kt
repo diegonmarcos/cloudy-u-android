@@ -96,7 +96,7 @@ class AdbPermsChainTest : KitPageHarness() {
         assertFalse(AdbPrereqs.canGrant(down))
         val up = AdbPrereqs.rows(facts(), AdbPrereqs.Live(false, false, false), pkg)
         assertTrue(AdbPrereqs.canGrant(up))
-        val list = Allowlist.parse(File("../../ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json").readText())
+        val list = Allowlist.parse(File("../../fleet-private-data/shell-allowlist.json").readText())
         val ctx = RuntimeEnvironment.getApplication()
         val entries = (up + AdbPrereqs.rows(facts(mode = ChannelMode.SHIZUKU), allOn, pkg)).flatMap { it.actions }.filterIsInstance<Action.Grant>().map { it.entry }.toSet()
         assertEquals(AdbPrereqs.GRANT_ENTRIES.toSet(), entries)

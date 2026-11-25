@@ -7,7 +7,7 @@ import java.io.File
 
 /** #1688 role reads are read-only rules; the release rule is the SuperApp's own package only; writes elsewhere stay refused. */
 class RolesAllowlistTest {
-    private val list = Allowlist.parse(File("../../ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json").readText())
+    private val list = Allowlist.parse(File("../../fleet-private-data/shell-allowlist.json").readText())
     private val self = "com.diegonmarcos.superapp"
     private fun rule(c: String) = (list.decide(self, c) as? Allowlist.Decision.Allow)?.rule?.id
 
@@ -27,7 +27,7 @@ class RolesAllowlistTest {
     }
 
     @Test fun `no read rule matches a write variant`() {
-        val rx = Regex(org.json.JSONObject(File("../../ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json").readText())
+        val rx = Regex(org.json.JSONObject(File("../../fleet-private-data/shell-allowlist.json").readText())
             .getJSONObject("callers").getJSONObject(self).getJSONArray("allow").let { a ->
                 (0 until a.length()).map { a.getJSONObject(it) }.filter { it.getString("id").startsWith("roles-read") }.joinToString("|") { "(" + it.getString("re") + ")" }
             })

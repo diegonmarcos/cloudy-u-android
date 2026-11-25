@@ -15,7 +15,7 @@ ANDROID="$(cd "$DIR/.." && pwd)"                           # cloud-u-android
 TERMUX="$DIR"
 NIX="$ANDROID/ac_cloud-nix-on-droid"
 LIB="$ANDROID/ab_cloud-libs-shared/libs/shell-rish/src/main/java/com/diegonmarcos/superapp/shellrish"
-ALLOW="$ANDROID/ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json"
+ALLOW="$ANDROID/fleet-private-data/shell-allowlist.json"   # #1566 fleet-private: CI materialises it
 
 fails=0
 ok()   { echo "  ok   $1"; }

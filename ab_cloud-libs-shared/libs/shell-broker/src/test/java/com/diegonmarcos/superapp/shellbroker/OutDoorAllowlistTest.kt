@@ -23,7 +23,7 @@ class OutDoorAllowlistTest {
     }
 
     @Test fun shippedAllowlistGrantsOnlyTheOwnerHost() {
-        val f = listOf("src/main/assets/shell-allowlist.json", "ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json")
+        val f = listOf("../../../fleet-private-data/shell-allowlist.json", "fleet-private-data/shell-allowlist.json")
             .map { java.io.File(it) }.firstOrNull { it.isFile } ?: return
         val shipped = Allowlist.parse(f.readText())
         val audit = shipped.callers().filter { shipped.mayAudit(it) }

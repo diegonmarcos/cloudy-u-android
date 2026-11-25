@@ -26,6 +26,7 @@ kotlin {
 dependencies {
     api project(':libs:shell-client')
     implementation project(':libs:shizuku-adb-debug-tools')
+    implementation project(':libs:fleet-data-client')   // #1566 the allowlist is a fleet-private dataset served at runtime (deny-all while not served)
     implementation project(':libs:core')   // RetryBackoff (libs:devtools, api of core): the 30 s floor
     implementation 'androidx.activity:activity:1.9.3'
     implementation 'androidx.core:core-ktx:1.13.1'

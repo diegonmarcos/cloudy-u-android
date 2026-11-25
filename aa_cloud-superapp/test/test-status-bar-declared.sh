@@ -93,7 +93,7 @@ ok(all(f'Probe("{p}"' in probes for p in NEW), "S9: the new tracker probes exist
 ok(all(f'Tracker({n}, ' in probes for n in range(1, 14)), "S9: XrayProbes declares the 13 trackers", "S9: a tracker row is missing from XrayProbes.trackers")
 ok(all(f'Probe("{g["probe"]}"' in probes for d in dd.values() for g in d.get("groups", []) if g.get("probe")), "S9: every dropdown probe is an X-Ray probe", "S9: a dropdown names a probe XrayProbes lacks")
 import json as _j
-al = _j.load(open(f"{app}/../ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json", encoding="utf-8"))
+al = _j.load(open(f"{app}/../fleet-private-data/shell-allowlist.json", encoding="utf-8"))
 exact = set(al["callers"]["com.diegonmarcos.superapp"]["exact"])
 import re as _re
 # each NEW probe's command (first string literal after its id) is an exact allowlist line; the full proof is SelfAllowlistTest.everyXrayProbeIsAllowed

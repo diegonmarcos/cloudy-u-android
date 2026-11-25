@@ -4,7 +4,7 @@
 set -u
 R="$(cd "$(dirname "$0")/../.." && pwd)"
 F="$R/ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreCloudFragment.kt"
-A="$R/ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json"
+A="$R/fleet-private-data/shell-allowlist.json"   # #1566 fleet-private: CI materialises it
 fail=0
 chk() { if grep -qF -- "$2" "${3:-$F}"; then echo "  PASS: $1"; else echo "  FAIL: $1"; fail=1; fi; }
 no() { if grep -qF -- "$2" "$F"; then echo "  FAIL: $1"; fail=1; else echo "  PASS: $1"; fi; }

@@ -52,7 +52,7 @@ class AllowlistTest {
     }
 
     @Test fun theShippedAllowlistParsesAndDeniesByDefault() {
-        val real = Allowlist.parse(File("src/main/assets/shell-allowlist.json").readText())
+        val real = Allowlist.parse(File("../../../fleet-private-data/shell-allowlist.json").readText())
         assertTrue("com.diegonmarcos.superapp" in real.callers())
         // #1513 the SuperApp's self-grant of WRITE_SECURE_SETTINGS has its own exact rule
         val self = real.decide("com.diegonmarcos.superapp", "pm grant com.diegonmarcos.superapp android.permission.WRITE_SECURE_SETTINGS")
@@ -67,7 +67,7 @@ class AllowlistTest {
     }
 
     @Test fun theSuperAppMayGrantWriteSecureSettingsToFleetPackagesOnly() {
-        val real = Allowlist.parse(File("src/main/assets/shell-allowlist.json").readText())
+        val real = Allowlist.parse(File("../../../fleet-private-data/shell-allowlist.json").readText())
         val su = "com.diegonmarcos.superapp"
         val ok = real.decide(su, "pm grant com.diegonmarcos.cloudmail android.permission.WRITE_SECURE_SETTINGS")
         assertTrue(ok is Decision.Allow)
@@ -92,7 +92,7 @@ class AllowlistTest {
     }
 
     @Test fun theMeshEntryCoversThePeersToolsAndNothingRaw() {
-        val real = Allowlist.parse(File("src/main/assets/shell-allowlist.json").readText())
+        val real = Allowlist.parse(File("../../../fleet-private-data/shell-allowlist.json").readText())
         val web = "com.diegonmarcos.cloudwebserver"
         for (c in listOf("cmd package list packages -U com.x.y", "logcat -d -t 500 --uid=10234", "pm grant com.x.y android.permission.READ_LOGS",
                          "am force-stop com.x.y", "input tap 100 200", "input keyevent KEYCODE_HOME", "getprop ro.build.id",
@@ -104,7 +104,7 @@ class AllowlistTest {
 
     // #1682 the logical owner identity extends the SuperApp's rules and adds its own; the Webserver's package (mesh relay) gets neither.
     @Test fun ownerExtendsTheSuperAppAndTheRelayStaysRestricted() {
-        val f = listOf("src/main/assets/shell-allowlist.json", "ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json")
+        val f = listOf("../../../fleet-private-data/shell-allowlist.json", "fleet-private-data/shell-allowlist.json")
             .map { java.io.File(it) }.firstOrNull { it.isFile } ?: return
         val a = Allowlist.parse(f.readText())
         val sa = "com.diegonmarcos.superapp"
@@ -117,7 +117,7 @@ class AllowlistTest {
 
     // #1744 adopt: Cloud Store becomes the installer of record of a fleet package; only that one command, only to Cloud Store
     @Test fun adoptCommandIsAllowedForTheStoreAndTheSuperAppAndNothingElse() {
-        val f = listOf("src/main/assets/shell-allowlist.json", "ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json")
+        val f = listOf("../../../fleet-private-data/shell-allowlist.json", "fleet-private-data/shell-allowlist.json")
             .map { java.io.File(it) }.firstOrNull { it.isFile } ?: return
         val a = Allowlist.parse(f.readText())
         val ok = "pm set-installer com.diegonmarcos.cloudmail com.diegonmarcos.cloudstore"
@@ -135,7 +135,7 @@ class AllowlistTest {
     // #1748 no entry accepts an allowed command with anything appended: each rule matches the WHOLE command; a chain exists only
     // on a `segments` entry and only between rules that declare `chain` (Background policy / Super Saving), never an install,
     // grant, adopt, role or `id` rule.
-    private fun real(): Allowlist? = listOf("src/main/assets/shell-allowlist.json", "ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json")
+    private fun real(): Allowlist? = listOf("../../../fleet-private-data/shell-allowlist.json", "fleet-private-data/shell-allowlist.json")
         .map { java.io.File(it) }.firstOrNull { it.isFile }?.let { Allowlist.parse(it.readText()) }
 
     @Test fun everyEntryRefusesEveryChainingAndInjectionForm() {

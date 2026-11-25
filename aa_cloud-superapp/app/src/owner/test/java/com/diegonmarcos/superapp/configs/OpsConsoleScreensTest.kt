@@ -70,7 +70,7 @@ class OpsConsoleScreensTest : KitPageHarness() {
     }
 
     // ── ADB Shell fixture ──
-    private val decl = TerminalModel.parse(File("../../ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json").readText())
+    private val decl = TerminalModel.parse(File("../../fleet-private-data/shell-allowlist.json").readText())
 
     private fun termUi(connected: Boolean): TermUi {
         val st = if (connected) ShellStatus(true, true, "embedded-adb", "ok", 1_762_430_000_000, adb = AdbLink.CONNECTED, adbDetail = "192.168.1.23:37123")

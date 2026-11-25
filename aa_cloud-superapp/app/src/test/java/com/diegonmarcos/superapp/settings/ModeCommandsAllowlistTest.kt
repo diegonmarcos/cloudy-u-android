@@ -16,7 +16,7 @@ import java.io.File
 class ModeCommandsAllowlistTest {
     private class Rule(val id: String, val re: Regex, val meta: String)
 
-    private val entry = JSONObject(File("../../ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json").readText())
+    private val entry = JSONObject(File("../../fleet-private-data/shell-allowlist.json").readText())
         .getJSONObject("callers").getJSONObject("com.diegonmarcos.superapp")
     private val rules = entry.getJSONArray("allow").let { a -> (0 until a.length()).map { a.getJSONObject(it) }.map { Rule(it.optString("id"), Regex(it.getString("re")), it.optString("meta")) } }
     private val exact = entry.optJSONArray("exact")?.let { a -> (0 until a.length()).map { a.optString(it) }.toSet() }.orEmpty()

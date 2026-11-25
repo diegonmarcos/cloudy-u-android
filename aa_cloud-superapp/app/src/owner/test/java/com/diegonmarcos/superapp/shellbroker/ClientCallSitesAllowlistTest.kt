@@ -17,7 +17,7 @@ import java.io.File
  * declares the output door at the 8 MB the in-process calls had, plus the audit grant the X-Ray shell counters read.
  */
 class ClientCallSitesAllowlistTest {
-    private val list = Allowlist.parse(File("../../ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json").readText())
+    private val list = Allowlist.parse(File("../../fleet-private-data/shell-allowlist.json").readText())
     private val self = "com.diegonmarcos.superapp"
     private fun allowed(cmd: String) = assertTrue("refused: $cmd -> ${list.decide(self, cmd)}", list.decide(self, cmd) is Allowlist.Decision.Allow)
 

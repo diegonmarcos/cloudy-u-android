@@ -19,7 +19,7 @@ import java.io.File
 @Config(sdk = [34], application = Application::class)
 class SuperPowerSavingTest {
     private val ctx: Application = ApplicationProvider.getApplicationContext()
-    private val list = Allowlist.parse(File("../../ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json").readText())
+    private val list = Allowlist.parse(File("../../fleet-private-data/shell-allowlist.json").readText())
     private fun rule(c: String) = (list.decide("com.diegonmarcos.superapp", c) as? Allowlist.Decision.Allow)?.rule?.id
 
     @Test fun `only on grants are released, only remembered ones restored`() {

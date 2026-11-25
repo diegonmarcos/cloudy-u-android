@@ -143,7 +143,7 @@ class StdinDoorTest {
     }
 
     @Test fun theShippedAllowlistLetsOnlyTheInstallersStream() {
-        val real = Allowlist.parse(File("src/main/assets/shell-allowlist.json").readText())
+        val real = Allowlist.parse(File("../../../fleet-private-data/shell-allowlist.json").readText())
         val sz = 40_000_000L
         for (pkg in listOf("com.diegonmarcos.cloudstore", "com.diegonmarcos.cloudaccount", "com.diegonmarcos.clouddrive")) {
             assertTrue(pkg, real.decideStdin(pkg, "pm install -r -d -S $sz", sz) is Decision.Allow)
@@ -159,7 +159,7 @@ class StdinDoorTest {
     }
 
     @Test fun theInstallVerbsOfTheSessionAreAllowedForTheInstallersWithAMergedStderr() {
-        val real = Allowlist.parse(File("src/main/assets/shell-allowlist.json").readText())
+        val real = Allowlist.parse(File("../../../fleet-private-data/shell-allowlist.json").readText())
         for (pkg in listOf("com.diegonmarcos.cloudstore", "com.diegonmarcos.cloudaccount", "com.diegonmarcos.clouddrive"))
             for (c in listOf("pm install-create -r -d -S 123 2>&1", "pm install-commit 17 2>&1", "pm install-abandon 17 2>&1", "echo shell-ok"))
                 assertTrue("$pkg $c", real.decide(pkg, c) is Decision.Allow)

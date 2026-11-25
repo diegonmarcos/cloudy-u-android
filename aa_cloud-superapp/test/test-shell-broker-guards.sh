@@ -170,7 +170,7 @@ def shared_libs():
 GF = gate_facts()
 apps = collect()
 pending = json.load(open(f"{R}/{SA}/data/shell-migration.json"))["pending"]
-allow = json.load(open(f"{R}/{LIB}shell-broker/src/main/assets/shell-allowlist.json"))
+allow = json.load(open(f"{R}/fleet-private-data/shell-allowlist.json"))
 def libsrc(n):
     s = ""
     for base, _, files in os.walk(f"{R}/{LIB}{n}/src/main"):

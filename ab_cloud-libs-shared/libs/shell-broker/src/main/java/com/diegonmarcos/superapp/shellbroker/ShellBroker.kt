@@ -4,6 +4,7 @@ import android.content.Context
 import com.diegonmarcos.superapp.adbdebug.ChannelAutoArm
 import com.diegonmarcos.superapp.adbdebug.EmbeddedAdbChannel
 import com.diegonmarcos.superapp.adbdebug.ShellChannels
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import com.diegonmarcos.superapp.shellclient.ShellResult
 import com.diegonmarcos.superapp.shellclient.ShellStatus
 import com.diegonmarcos.superapp.shellclient.ShellWire
@@ -11,12 +12,13 @@ import java.io.File
 
 /**
  * #1510 The SuperApp's one shell broker: [BrokerCore] over the embedded ADB / Shizuku ladder ([ShellChannels]) of
- * libs:shizuku-adb-debug-tools, with the allowlist from assets/shell-allowlist.json and an audit file in the app's files dir.
+ * libs:shizuku-adb-debug-tools, with the allowlist served as fleet/shell-allowlist and an audit file in the app's files dir.
  * Entry points: [ShellBrokerProvider] and [ShellBrokerService] (other apps), and [exec] for the SuperApp's own features.
  */
 object ShellBroker {
     const val SELF = "owner"
-    private const val ALLOWLIST_ASSET = "shell-allowlist.json"
+    /** #1566 the allowlist is a fleet-private served dataset (Cloud Account's private route), never an APK asset. */
+    const val DATASET = "fleet/shell-allowlist"
     private const val SPOOL_DIR = "shell-stdin"
     private const val AUDIT_FILE = "shell-broker-audit.jsonl"
     private const val AUDIT_MAX_BYTES = 64 * 1024L
@@ -26,12 +28,28 @@ object ShellBroker {
     @Volatile private var core: BrokerCore? = null
     private val gate = ArmGate()
 
+    @Volatile private var parsed: Pair<String, Allowlist>? = null
+
+    /** #1566 DENY-ALL while the dataset is not served (nothing synced, provider absent, refused or unparseable copy with no earlier good one): never allow-all. */
+    fun current(app: Context): Allowlist {
+        val raw = runCatching { FleetData.get(app, DATASET) { it } }.getOrNull() ?: return DENY_ALL
+        parsed?.let { if (it.first == raw) return it.second }
+        val list = runCatching { Allowlist.parse(raw) }.getOrNull() ?: return parsed?.second ?: DENY_ALL
+        parsed = raw to list
+        return list
+    }
+
+    /** The served declaration text (callers + the terminal block) or null while not served; the ADB terminal parses its palette from it. */
+    fun declaration(ctx: Context): String? = runCatching { FleetData.get(ctx.applicationContext, DATASET) { it } }.getOrNull()
+
+    val DENY_ALL: Allowlist = Allowlist(emptyMap())
+
     private fun core(ctx: Context): BrokerCore = core ?: synchronized(this) {
         core ?: build(ctx.applicationContext).also { core = it }
     }
 
     private fun build(app: Context): BrokerCore {
-        val list = Allowlist.parse(app.assets.open(ALLOWLIST_ASSET).bufferedReader().use { it.readText() })
+        val list = { current(app) }
         val file = File(app.filesDir, AUDIT_FILE)
         val audit = AuditLog(sink = AuditLog.Sink { line ->
             if (file.length() > AUDIT_MAX_BYTES) file.writeText("")   // bounded: the ring in memory is the recent view
@@ -73,7 +91,7 @@ object ShellBroker {
             if (!ChannelAutoArm.enabled(app) || !gate.mayTry(now)) false
             else EmbeddedAdbChannel.autoArm(app).first.also { ok -> if (ok) gate.succeeded() else gate.failed(now) }
         }
-        return BrokerCore({ list }, channel, audit, tryArm = arm).also { c -> c.onChange = { onStatusChange?.invoke(it) } }
+        return BrokerCore(list, channel, audit, tryArm = arm).also { c -> c.onChange = { onStatusChange?.invoke(it) } }
     }
 
     /** For the SuperApp's own features and the provider: [caller] is the resolved package. Blocking. */

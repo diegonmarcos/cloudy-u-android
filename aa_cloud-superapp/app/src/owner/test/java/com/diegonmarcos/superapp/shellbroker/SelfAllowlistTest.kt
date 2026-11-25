@@ -14,7 +14,7 @@ import java.io.File
  * the X-Ray probes (`exact` lines) and every Background policy / Super Saving command shape (`segments`).
  */
 class SelfAllowlistTest {
-    private val list = Allowlist.parse(File("../../ab_cloud-libs-shared/libs/shell-broker/src/main/assets/shell-allowlist.json").readText())
+    private val list = Allowlist.parse(File("../../fleet-private-data/shell-allowlist.json").readText())
     private val self = "com.diegonmarcos.superapp"
 
     private fun allowed(cmd: String) = assertTrue("refused: $cmd -> ${list.decide(self, cmd)}", list.decide(self, cmd) is Allowlist.Decision.Allow)
