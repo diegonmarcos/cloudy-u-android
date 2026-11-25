@@ -86,7 +86,7 @@ class NavReorgTest {
             val section = Sections.byId(s)
             assertNotNull("$key -> $s/$p: the section is gone", section)
             if (Sections.byId(old) == null) moved++
-            assertNotNull("$key -> $s/$p: the page is gone", section!!.page(p))
+            assertTrue("$key -> $s/$p: the page is gone", p == null || section!!.path(p).isNotEmpty())
         }
         assertEquals("the baseline holds the 19 + 12 + 2 pages of the three moved sections", 33, moved)
         for (old in listOf("health", "experiences", "socials", "lnktree", "me", "study", "achieves")) {
@@ -123,8 +123,8 @@ class NavReorgTest {
         assertEquals(ren.getJSONObject("pages").length(), baked.pages.size)
         assertEquals(ren.getJSONObject("sections").length(), baked.sections.size)
         for ((old, to) in baked.pages) {
-            assertEquals("a renamed page is no live page: $old", null, Sections.byId(old.substringBefore('/'))?.page(old.substringAfter('/')))
-            assertNotNull("$old -> $to", Sections.byId(to.substringBefore('/'))?.page(to.substringAfter('/')))
+            assertTrue("a renamed page is no live page: $old", Sections.byId(old.substringBefore('/'))?.path(old.substringAfter('/')).isNullOrEmpty())
+            assertTrue("$old -> $to", Sections.byId(to.substringBefore('/'))?.path(to.substringAfter('/'))?.isNotEmpty() == true)
         }
         for ((old, to) in baked.sections) { assertEquals("$old is a live section", null, Sections.byId(old)); assertNotNull(to, Sections.byId(to)) }
         assertFalse(LegacyRoutes.Renamed.EMPTY == baked)
