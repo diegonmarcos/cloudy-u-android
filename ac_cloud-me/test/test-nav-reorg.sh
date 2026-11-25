@@ -6,6 +6,7 @@
 #               (the Health metric taxonomy, the Achieves migration) is still declared; labels only changed where the owner renamed them
 #   N3 renamed  ui.renamed names only pages and sections of the live tree, lists EVERY page of the old tree, and LegacyRoutes reads it from its asset
 #   N4 urls     each tile opens its own site: the URL of every embedded page is declared data (data/ui/<section>/..), none is a literal in Kotlin
+#   N6 profile  page:profile/profile (the Profile tile of the SuperApp Me row) stays reachable: settings section + page file, not renamed away
 #   N5 walk     the emulator walk visits Pers, Prof and Proj and screenshots each default page
 # Every check is proven red by its own mutation of a copy of the tree (the tail of this file).
 set -u
@@ -205,6 +206,16 @@ for r, _, fs in os.walk(main):
                 if "BuildConfig" in m.group(0): continue
                 bad("urls", f"{os.path.relpath(os.path.join(r, f), app)} carries the literal {m.group(0)[:80]}: tile URLs are declared data")
 
+# ---- N6 the Cloud Me profile page (page:profile/profile, the SuperApp Me row's former Profile tile, #1906) stays reachable: it is its own settings section
+# (the avatar at the top right), the very page that carries libs:account-ui's profile, so no copy under Pers is added (a copy would be a second page for one content).
+_ps = secs.get("profile", {})
+if "profile" not in ui.get("settings", []): bad("profile", "profile is not a settings section (the avatar no longer opens it)")
+if [p.get("id") for p in _ps.get("pages", [])] != ["profile"]: bad("profile", "page profile/profile is not declared")
+try: _pb = json.load(open(os.path.join(app, "data/ui/profile/profile.json"), encoding="utf-8"))
+except (OSError, ValueError): _pb = None
+if _pb != [{"kind": "fragment", "id": "account_profile"}]: bad("profile", "data/ui/profile/profile.json no longer draws the account profile")
+if "profile/profile" in ren.get("pages", {}) or "profile" in ren.get("sections", {}): bad("profile", "profile/profile is renamed away although it is a live page")
+
 # ---- N5 the emulator walk
 walk = src("test/emulator-me-socials.sh")
 for need in ("section:pers", "section:prof", "section:proj", "me-pers", "me-prof", "me-proj", "page:health/home", "page:lnktree/leafy"):
@@ -283,6 +294,10 @@ mutant urls "Proj > Lnktree opens another site" "sed -i 's#https://linktree.dieg
 mutant urls "Prof > Nexus.z opens Stark.x" "sed -i 's#diegonmarcos.github.io/nexus/#diegonmarcos.github.io/stark/#' data/ui/prof/nexus.json"
 mutant urls "Prof > Professional is not the LinkedIn page" "sed -i 's#mysocials/linkedin.html#mysocials/social.html#' data/ui/prof/prof-profiles/professional.json"
 mutant urls "a tile URL becomes a Kotlin literal" "sed -i '0,/^object Sections {/s//object Sections {\n    const val PERSONAL = \"https:\\/\\/diegonmarcos.com\\/\"/' app/src/main/java/com/diegonmarcos/cloudme/Sections.kt"
+# profile
+mutant profile "the profile section leaves the settings (unreachable)" "$J \"$BJ;U['settings'].remove('profile');$W_\""
+mutant profile "the profile page file is emptied" "echo '[]' > data/ui/profile/profile.json"
+mutant profile "the profile page is dropped from its section" "$J \"$BJ;S['profile']['pages']=[];$W_\""
 # walk
 mutant walk "the walk no longer visits Prof" "sed -i 's#section:prof#section:inventory#' test/emulator-me-socials.sh"
 mutant walk "the walk takes no Proj screenshot" "sed -i 's/me-proj/me-xxx/g' test/emulator-me-socials.sh"
