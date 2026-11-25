@@ -31,8 +31,8 @@ class MediaLaunchersTest {
     }
 
     @Test fun `an absent app is hidden and the others stay`() {
-        assertEquals(listOf("play-last", "open-spotify", "open-buds"), ids({ it != "com.aspiro.tidal" }))
-        assertEquals(listOf("play-last", "open-tidal", "open-spotify"), ids({ it in all - MediaLaunchers.BUDS_PKGS.toSet() }))
+        assertEquals(listOf("play-last", "open-spotify", "open-buds"), ids({ it != "com.aspiro.tidal" }, "com.spotify.music"))
+        assertEquals(listOf("play-last", "open-tidal", "open-spotify"), ids({ it in all - MediaLaunchers.BUDS_PKGS.toSet() }, "com.spotify.music"))
         assertEquals(emptyList<String>(), ids({ false }))
         // no known last player: Play last is hidden, never a dead button
         assertEquals(listOf("open-tidal", "open-spotify", "open-buds"), ids({ it in all }, last = null))
@@ -51,7 +51,7 @@ class MediaLaunchersTest {
     @Test fun `mutants are caught`() {
         fun ok(vis: (Boolean) -> List<String>) = vis(true) == listOf("play-last", "open-spotify", "open-buds")
         // real
-        assertTrue(ok { _ -> ids({ it != "com.aspiro.tidal" }) })
+        assertTrue(ok { _ -> ids({ it != "com.aspiro.tidal" }, "com.spotify.music") })
         // mutant 1: ignores the installed check
         assertFalse(ok { _ -> MediaLaunchers.ALL.map { it.id } })
         // mutant 2: lastPlayer prefers the persisted package over the playing one
