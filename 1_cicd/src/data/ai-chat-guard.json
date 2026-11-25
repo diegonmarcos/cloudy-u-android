@@ -11,7 +11,7 @@
     {"file": "src/main/kotlin/com/diegonmarcos/superapp/ai/AiCataloguePages.kt", "needles": ["fun AiModelCatalogue(", "fun AiTaskCatalogue("]},
     {"file": "src/main/kotlin/com/diegonmarcos/superapp/ai/AiPanel.kt", "needles": ["fun AiAssistantPanel("]},
     {"file": "src/main/kotlin/com/diegonmarcos/superapp/ai/AiHost.kt", "needles": ["class AiStandardHost("]},
-    {"file": "src/main/assets/ai/ai.json", "needles": ["\"gateway\"", "\"openrouter\""]}
+    {"repo_file": "fleet-private-data/ai.json", "needles": ["\"gateway\"", "\"openrouter\""]}
   ],
   "scan_prefixes": ["aa_", "ab_", "ac_"],
   "_doc_scan_prefixes": "A top-level directory starting with any of these is an app, solution or shared-lib tree and is scanned (Kotlin only). Cloud Code's JS chat is not Kotlin: its contract is held by ac_cloud-code/test/test-chat.sh.",

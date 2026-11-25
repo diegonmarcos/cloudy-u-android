@@ -17,7 +17,7 @@ import java.time.ZoneId
 class AiProtocolTest {
     private val dir = File("src/main/assets/ai")
     private val cases = JSONObject(File(dir, "protocol-cases.json").readText())
-    private val cfg = AiConfig.parse(File(dir, "ai.json").readText())
+    private val cfg = AiConfig.parse(File("../../../fleet-private-data/ai.json").readText())
 
     private fun JSONArray.objs() = (0 until length()).map { getJSONObject(it) }
     private fun JSONObject.strOrNull(k: String): String? = if (isNull(k)) null else getString(k)
@@ -122,7 +122,7 @@ class AiProtocolTest {
         assertEquals("X-Agent-Mode", cfg.modeHeader)
         assertEquals("openrouter", cfg.accountProvider)
         assertTrue(cfg.chatUrl.startsWith("https://"))
-        assertEquals("protocol-cases.json", JSONObject(File(dir, "ai.json").readText()).getJSONObject("protocol").getString("cases"))
+        assertEquals("protocol-cases.json", JSONObject(File("../../../fleet-private-data/ai.json").readText()).getJSONObject("protocol").getString("cases"))
     }
 
     @Test fun titlesAreOneLineAndCut() {

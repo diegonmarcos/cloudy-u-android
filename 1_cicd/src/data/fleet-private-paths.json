@@ -7,6 +7,7 @@
     "appstore-feeds": "fleet-private-data/appstore-feeds.json",
     "appstore-install-sources": "fleet-private-data/appstore-install-sources.json",
     "shell-allowlist": "fleet-private-data/shell-allowlist.json",
-    "decisions": "fleet-private-data/decisions.json"
+    "decisions": "fleet-private-data/decisions.json",
+    "ai": "fleet-private-data/ai.json"
   }
 }

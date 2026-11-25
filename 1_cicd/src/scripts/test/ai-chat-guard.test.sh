@@ -40,7 +40,7 @@ import json, os, sys
 policy, t = sys.argv[1], sys.argv[2]
 cfg = json.load(open(policy))
 for need in cfg["owner_must_hold"]:
-    p = os.path.join(t, cfg["owner"], need["file"])
+    p = os.path.join(t, need["repo_file"]) if need.get("repo_file") else os.path.join(t, cfg["owner"], need["file"])
     os.makedirs(os.path.dirname(p), exist_ok=True)
     open(p, "w").write("\n".join(need["needles"]) + "\n")
 PY
@@ -179,6 +179,15 @@ s = open(p).read().replace("fun AiChatPage(", "fun SomethingElse(")
 open(p, "w").write(s)
 PY
 expect 1 "an owner whose page is no longer there is red" "$WORK/ownerneedle"
+
+# #1566 the contract is the materialised fleet-private copy at the repo root: lost or emptied, the owner no longer holds the chat
+mutate nocontract
+rm "$WORK/nocontract/fleet-private-data/ai.json"
+expect 1 "a fleet without the materialised AI contract is red" "$WORK/nocontract"
+
+mutate emptycontract
+: > "$WORK/emptycontract/fleet-private-data/ai.json"
+expect 1 "a materialised AI contract without its gateway is red" "$WORK/emptycontract"
 
 mutate noowner
 rm -rf "${WORK:?}/noowner/${OWNER:?}"

@@ -3,7 +3,7 @@
 //     apply from: "$rootDir/../ab_cloud-libs-shared/libs/ai/ai-gateway.gradle"
 //     ...  buildConfigField "String", "AI_GATEWAY_URL", "\"${aiGatewayUrl}\""
 //
-// The gateway's SERVICE is named by the shared contract (assets/ai/ai.json::gateway.service); its mesh
+// The gateway's SERVICE is named by the shared contract (fleet/ai::gateway.service, materialised as fleet-private-data/ai.json); its mesh
 // address comes from the fleet's private catalogue (ac_cloud-c3/data/services_private.json, read only).
 // Nothing here restates either, so a moved gateway is one data edit in the catalogue.
 //
@@ -11,7 +11,7 @@
 // sets `ext.aiFleetRoot` first: an app whose Android project is nested (Cloud Notes vendors the upstream's, four levels
 // down) names the repository root itself.
 def aiFleetRoot = project.hasProperty('aiFleetRoot') ? new File(project.property('aiFleetRoot').toString()) : new File(rootDir, '..')
-def aiContract = new groovy.json.JsonSlurper().parse(new File(aiFleetRoot, 'ab_cloud-libs-shared/libs/ai/src/main/assets/ai/ai.json'))
+def aiContract = new groovy.json.JsonSlurper().parse(new File(aiFleetRoot, 'fleet-private-data/ai.json'))   // #1566 fleet-private: CI materialises it
 def aiPrivate = new groovy.json.JsonSlurper().parse(new File(aiFleetRoot, 'ac_cloud-c3/data/services_private.json'))
 def aiRow = (aiPrivate instanceof List ? aiPrivate : (aiPrivate.services ?: aiPrivate.values())).find { it.name == aiContract.gateway.service }
 if (aiRow?.private_dns == null)

@@ -99,16 +99,18 @@ def owner_findings(repo, cfg):
     if not os.path.isdir(owner):
         return ["the owner tree %s does not exist: the fleet's AI chat is gone" % cfg["owner"]]
     for need in cfg["owner_must_hold"]:
-        p = os.path.join(owner, need["file"])
+        # #1566 a need may name a repo-root file (`repo_file`): the fleet-private contract, materialised by CI, no longer sits in the owner tree.
+        name = need.get("repo_file") or need["file"]
+        p = os.path.join(repo, need["repo_file"]) if need.get("repo_file") else os.path.join(owner, need["file"])
         try:
             text = open(p, encoding="utf-8", errors="replace").read()
         except OSError:
-            bad.append("%s/%s is missing: libs:ai no longer holds the chat" % (cfg["owner"], need["file"]))
+            bad.append("%s is missing: libs:ai no longer holds the chat" % (name if need.get("repo_file") else cfg["owner"] + "/" + name))
             continue
         code = strip_comments(text) if p.endswith(".kt") else text
         for n in need["needles"]:
             if n not in code:
-                bad.append("%s/%s no longer contains %s: libs:ai no longer holds the chat" % (cfg["owner"], need["file"], n))
+                bad.append("%s no longer contains %s: libs:ai no longer holds the chat" % (name if need.get("repo_file") else cfg["owner"] + "/" + name, n))
     return bad
 
 

@@ -1,10 +1,11 @@
 package com.diegonmarcos.superapp.ai
 
 import android.content.Context
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import org.json.JSONObject
 
 /**
- * The shared contract (assets/ai/ai.json) as the lib reads it: the gateway's paths and mode header,
+ * The shared contract (the served fleet/ai dataset) as the lib reads it: the gateway's paths and mode header,
  * OpenRouter's endpoints and request parameters, the protocol knobs. One file, read by every Kotlin
  * app through this class and by Cloud Code (JS) through tools/resolve-targets.py, so no consumer
  * restates an endpoint, a path or a header name.
@@ -30,9 +31,22 @@ data class AiConfig(
     val titleChars: Int,
     val maxToolRounds: Int,
     val stream: Boolean,
+    /** #1566 false = the fleet-private contract is not served (yet): [NOT_SERVED], whose endpoints are empty so no call goes anywhere. */
+    val served: Boolean = true,
 ) {
     companion object {
-        const val ASSET = "ai/ai.json"
+        /** #1566 the contract is a fleet-private served dataset (Cloud Account's private route), never an APK asset. */
+        const val DATASET = "fleet/ai"
+
+        /** The minimal safe default while nothing is served: empty endpoints (a call fails and says so), the protocol defaults, no gateway. */
+        val NOT_SERVED = AiConfig(
+            gatewayService = "", gatewayChatPath = "", gatewayHealthPath = "/health", gatewayModelsPath = "/v1/models", gatewayMcpPath = "/v1/mcp/status",
+            modeHeader = "X-Agent-Mode", openRouterId = "openrouter", openRouterLabel = "OpenRouter", chatUrl = "", modelsUrl = "",
+            accountProvider = "openrouter", defaultModel = "", referer = "", timeoutMs = 60000, historyTurns = 20, webPlugin = "web",
+            nativeWebParam = "web_search_options", titleChars = 40, maxToolRounds = 6, stream = true, served = false,
+        )
+
+        @Volatile private var lastServed: AiConfig? = null
 
         fun parse(text: String): AiConfig {
             val root = JSONObject(text)
@@ -63,7 +77,13 @@ data class AiConfig(
             )
         }
 
-        /** The contract from the app's merged assets (the lib ships it). */
-        fun load(ctx: Context): AiConfig = parse(ctx.assets.open(ASSET).bufferedReader().use { it.readText() })
+        /** The served contract (last-known-good while the provider is away); null when nothing was ever served or the copy does not parse. */
+        fun loadOrNull(ctx: Context): AiConfig? {
+            lastServed?.let { return it }
+            return runCatching { FleetData.get(ctx.applicationContext, DATASET) { parse(it) } }.getOrNull()?.also { lastServed = it }
+        }
+
+        /** The contract, or [NOT_SERVED] (never null, so no call site crashes): a served copy is held for the process, not served is retried on every call. */
+        fun load(ctx: Context): AiConfig = loadOrNull(ctx) ?: NOT_SERVED
     }
 }

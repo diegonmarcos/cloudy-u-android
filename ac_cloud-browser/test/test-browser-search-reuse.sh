@@ -57,7 +57,7 @@ def check(root, ok):
        "the page is libs:ai's, on cloud-search's declared engines")
     ok("search.host(app.applicationContext)" in page and "direct = backend(relay(app))" in addon,
        "its chat is libs:ai's host on the add-on's relay backend, the key held by the engine")
-    ok("AI_CONFIG_B64" in gradle and "libs/ai/src/main/assets/ai/ai.json" in gradle and "AiConfig.parse(" in addon,
+    ok("AI_CONFIG_B64" in gradle and "fleet-private-data/ai.json" in gradle and "AiConfig.parse(" in addon,
        "the endpoints and header names are libs:ai's shared contract, baked, never restated")
     panel = src.get(os.path.join(APP, "search", "AgentPanelScreen.kt"), "")
     ok("AiAssistantPanel(" in panel and "BrowserAgentPanelHost.panel =" in panel and "AgentPanelScreen.install()" in api,

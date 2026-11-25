@@ -73,7 +73,7 @@ def searchDecl = new groovy.json.JsonSlurper().parse(file('../../ac_cloud-search
 (buildJson.ui.browser?.addons ?: []).findAll { it.id == 'search' }.each { it.engines = searchDecl.engines }
 def searchConfigB64 = b64(searchDecl)
 // libs:ai's shared contract (endpoints, paths, header names, knobs), baked like the search block: the browser spells none of them.
-def aiContractB64 = b64(new groovy.json.JsonSlurper().parse(file('../../ab_cloud-libs-shared/libs/ai/src/main/assets/ai/ai.json')))
+def aiContractB64 = b64(new groovy.json.JsonSlurper().parse(file('../../fleet-private-data/ai.json')))
 // #802 I10 an add-on's requires_fleet → its package, from the fleet manifest (and into <queries>,
 // without which an installed app reads as "not installed" on API 30+).
 def fleetApps = new groovy.json.JsonSlurper().parse(new File(rootDir, '../aa_cloud-superapp/data/constellation-fleet.json')).apps

@@ -382,7 +382,7 @@ out(sharedFile.agents.some((a) => a.id === "openclaw") && sharedFile.agents.some
 out(M.resolveAgents(chat, fleet, undefined).find((a) => a.id === "deepseek").label === sharedFile.agents.find((a) => a.id === "deepseek").label, "the picker shows the shared label");
 
 // ── the shared protocol cases (libs:ai assets/ai/protocol-cases.json): the same file libs:ai's AiProtocolTest runs ──
-const proto = JSON.parse(read(`../${nav.chat.ai.replace(/ai\.json$/, "protocol-cases.json")}`));
+const proto = JSON.parse(read(`../${nav.chat.protocol_cases}`));
 out(aiContract.protocol.cases === "protocol-cases.json", "ai.json names the shared protocol cases file");
 for (const c of proto.sse) {
 	const sp = M.sseParser();

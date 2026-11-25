@@ -16,7 +16,7 @@ import java.io.File
 class AiComposerTest {
     private val dir = File("src/main/assets/ai")
     private val design = AiDesign.parse(File(dir, "ai-design.json").readText())
-    private val cfg = AiConfig.parse(File(dir, "ai.json").readText())
+    private val cfg = AiConfig.parse(File("../../../fleet-private-data/ai.json").readText())
 
     @Test fun theBarKeepsItsOrderWhateverSubsetAnAppEnables() {
         assertEquals(listOf("plus", "task", "agent", "model", "effort", "mode", "mcp", "more"), design.controls.map { it.id })
