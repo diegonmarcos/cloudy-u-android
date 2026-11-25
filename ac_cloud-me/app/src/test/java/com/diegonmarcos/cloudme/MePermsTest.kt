@@ -32,6 +32,7 @@ class MePermsTest {
         val manifest = ctx.packageManager.getPackageInfo(ctx.packageName, PackageManager.GET_PERMISSIONS).requestedPermissions.orEmpty().toSet()
         val d = MePermDecl.baked
         assertTrue("nothing declared", d.entries.isNotEmpty() && d.healthRead.isNotEmpty() && d.healthWrite.isNotEmpty())
+        Perms.testCatalogue = java.io.File("../../fleet-private-data/perms-catalogue.json").readText()
         val cat = Perms.catalogue(ctx)
         for ((id, _) in d.entries) {
             val e = cat.byId(id); assertTrue("$id is not a libs:perms row", e != null)

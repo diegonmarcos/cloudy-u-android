@@ -39,7 +39,7 @@ class SelfAllowlistTest {
 
     /** #1519 Grant via shell: the SuperApp grants ITSELF each runtime / adb-only permission of the Perms catalogue by an exact rule, and Location on. */
     @Test fun theSuperAppMayGrantItselfEveryCataloguePermissionAndSwitchLocationOn() {
-        val cat = org.json.JSONObject(File("../../ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json").readText()).getJSONArray("entries")
+        val cat = org.json.JSONObject(File("../../fleet-private-data/perms-catalogue.json").readText()).getJSONArray("entries")
         val perms = (0 until cat.length()).map { cat.getJSONObject(it) }
             .filter { it.getString("kind") in setOf("runtime", "adb_only") && it.optString("permission").startsWith("android.permission.") }
             .map { it.getString("permission") }

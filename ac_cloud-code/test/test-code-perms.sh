@@ -4,7 +4,7 @@
 # asserted by the engine (build.json::release.artifact_assert.required_permissions). Static, no build.
 set -u
 APP="$(cd "$(dirname "$0")/.." && pwd)"; ROOT="$(cd "$APP/.." && pwd)"
-CAT="$ROOT/ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json"
+CAT="$ROOT/fleet-private-data/perms-catalogue.json"
 PERMS_KT="$ROOT/ab_cloud-libs-shared/libs/perms/src/main/java/com/diegonmarcos/superapp/perms/Perms.kt"
 F=0; ok() { echo "  PASS: $1"; }; bad() { echo "  FAIL: $1"; F=$((F+1)); }
 P=android.permission

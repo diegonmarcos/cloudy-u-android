@@ -100,6 +100,7 @@ class AdbPermsChainTest : KitPageHarness() {
         val ctx = RuntimeEnvironment.getApplication()
         val entries = (up + AdbPrereqs.rows(facts(mode = ChannelMode.SHIZUKU), allOn, pkg)).flatMap { it.actions }.filterIsInstance<Action.Grant>().map { it.entry }.toSet()
         assertEquals(AdbPrereqs.GRANT_ENTRIES.toSet(), entries)
+        com.diegonmarcos.superapp.perms.Perms.testCatalogue = File("../../fleet-private-data/perms-catalogue.json").readText()
         val cat = com.diegonmarcos.superapp.perms.Perms.catalogue(ctx).entries.associateBy { it.id }
         val vars = com.diegonmarcos.superapp.perms.Perms.vars(ctx) + ("pkg" to "com.diegonmarcos.superapp")
         for (id in entries) {
@@ -116,6 +117,7 @@ class AdbPermsChainTest : KitPageHarness() {
 
     @Test fun `P6 removed rows stay reachable in Configs Perms`() {
         val ctx = RuntimeEnvironment.getApplication()
+        com.diegonmarcos.superapp.perms.Perms.testCatalogue = File("../../fleet-private-data/perms-catalogue.json").readText()
         val catalogue = readPermRows(ctx, null)
         val previous = pageRows(ctx, catalogue).filter { it.counted }.map { it.entry.id }
         val inConfigs = com.diegonmarcos.superapp.perms.Perms.catalogue(ctx).entries.map { it.id }.toSet()

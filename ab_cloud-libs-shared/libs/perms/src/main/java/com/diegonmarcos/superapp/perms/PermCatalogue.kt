@@ -82,7 +82,8 @@ data class PermCatalogue(val entries: List<PermEntry>, val groupOrder: List<Stri
     }
 
     companion object {
-        const val ASSET = "perms-catalogue.json"
+        /** #1566 the fleet-private served dataset (never an APK asset). */
+        const val DATASET = "fleet/perms-catalogue"
 
         fun parse(json: String): PermCatalogue {
             val root = JSONObject(json)

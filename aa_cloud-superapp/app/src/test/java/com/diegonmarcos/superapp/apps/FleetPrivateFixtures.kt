@@ -17,5 +17,6 @@ object FleetPrivateFixtures {
         PhoneAppActions.testSources = file(PhoneAppActions.SOURCES_FILE).readText()
         BgHost.testConfig = file("bg-policy.json").readText()
         SuperSavingRuntime.testDecl = file("super-saving.json").readText()
+        com.diegonmarcos.superapp.perms.Perms.testCatalogue = file("perms-catalogue.json").readText()
     }
 }

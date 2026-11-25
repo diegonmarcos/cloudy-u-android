@@ -8,7 +8,7 @@ import java.io.File
 
 /** #1519 the real catalogue on the Perms page: every row has a category, the new Wi-Fi rows exist, the summary stays truthful. */
 class PermsPageCatalogueTest {
-    private val cat = PermCatalogue.parse(File("../../ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json").readText())
+    private val cat = PermCatalogue.parse(File("../../fleet-private-data/perms-catalogue.json").readText())
     private fun e(id: String) = cat.byId(id) ?: error("no entry $id")
 
     @Test fun `the Wi-Fi scan has a row for each of its needs`() {

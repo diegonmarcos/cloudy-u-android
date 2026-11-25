@@ -7,7 +7,7 @@ import java.io.File
 
 /** #1600 the Shizuku and Termux rows exist on the Perms page, land in the Shell/ADB category, and get a shell grant command. */
 class PermsShizukuTermuxTest {
-    private val cat = PermCatalogue.parse(File("src/main/assets/perms-catalogue.json").readText())
+    private val cat = PermCatalogue.parse(File("../../../fleet-private-data/perms-catalogue.json").readText())
     private val pkg = "com.diegonmarcos.superapp"
 
     private fun entry(id: String) = cat.byId(id) ?: error("no catalogue entry $id")

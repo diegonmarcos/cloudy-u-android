@@ -17,7 +17,7 @@ import java.io.File
 
 /** #1274 the permission catalogue (data asset), applicability, the open-time auto-request batching and the ADB block. */
 class PermsCatalogueTest {
-    private val asset = File("../../ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json")
+    private val asset = File("../../fleet-private-data/perms-catalogue.json")
     private val cat = PermCatalogue.parse(asset.readText())
     private fun e(id: String) = cat.byId(id) ?: error("no entry $id")
 

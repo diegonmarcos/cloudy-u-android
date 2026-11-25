@@ -12,7 +12,7 @@ import java.io.File
  * background hooks wired.
  */
 class DevVerifierRowTest {
-    private val asset = File("../../ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json")
+    private val asset = File("../../fleet-private-data/perms-catalogue.json")
     private val cat = PermCatalogue.parse(asset.readText())
     private val e = cat.byId("developer_verifier") ?: error("no developer_verifier row")
     private fun src(p: String) = File("src/main/$p").readText()

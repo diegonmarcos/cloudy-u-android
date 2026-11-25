@@ -54,7 +54,7 @@ for r in app.iter("receiver"):
 need(recv is not None, "U4 a receiver with exactly the model's media actions on the file scheme")
 need(recv.get(A + "exported") == "true", "U4 the media receiver is exported (system broadcasts)")
 need(any(x.get(A + "name") == "android.hardware.usb.action.USB_DEVICE_DETACHED" for x in recv.iter("action")), "U4 the receiver hears USB_DEVICE_DETACHED")
-cat = json.load(open(os.path.join(R, "ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json")))
+cat = json.load(open(os.path.join(R, "fleet-private-data/perms-catalogue.json")))
 e = [x for x in cat["entries"] if x["id"] == "usb_host"]
 need(e and e[0].get("check") == "usb_host" and e[0].get("icon") in cat["icons"], "U5 catalogue entry usb_host (check usb_host, known icon)")
 need("usb_host" in json.load(open(os.path.join(D, "build.json")))["perms"]["needs"], "U5 build.json perms.needs has usb_host")
@@ -85,7 +85,7 @@ python3 -I -c "$CHECK" "$ROOT" || fails=$((fails+1))
 T=$(mktemp -d)
 copy() { mkdir -p "$T/m"; for p in ac_cloud-drive/app/src/main/AndroidManifest.xml ac_cloud-drive/app/src/main/res/xml/device_filter.xml \
   ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/usb ab_cloud-libs-shared/libs/usb-drive/src/main/java/com/diegonmarcos/superapp/usbdrive ac_cloud-drive/build.json ac_cloud-drive/app/build.gradle \
-  data/fleet/app-perms.json ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json licenses/inventory.json; do
+  data/fleet/app-perms.json fleet-private-data/perms-catalogue.json licenses/inventory.json; do
   [ -e "$ROOT/$p" ] || continue; mkdir -p "$T/m/$(dirname "$p")"; cp -r "$ROOT/$p" "$T/m/$p"; done; mkdir -p "$T/m/ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive"; }
 mutate() { python3 -I -c 'import sys; p, a, b = sys.argv[1:]; a, b = a.replace(chr(92) + "n", chr(10)), b.replace(chr(92) + "n", chr(10)); s = open(p).read(); assert a in s, "anchor missing: " + a; open(p, "w").write(s.replace(a, b, 1))' "$T/m/$1" "$2" "$3"; }
 M=ac_cloud-drive/app/src/main/AndroidManifest.xml
@@ -107,7 +107,7 @@ media-scheme|$M|<data android:scheme="file" />|<data android:scheme="content" />
 media-detached|$M|<action android:name="android.hardware.usb.action.USB_DEVICE_DETACHED" />|
 receiver-unexported|$M|android:name=".usb.UsbVolumeReceiver"\n            android:exported="true"|android:name=".usb.UsbVolumeReceiver"\n            android:exported="false"
 model-actions|ab_cloud-libs-shared/libs/usb-drive/src/main/java/com/diegonmarcos/superapp/usbdrive/UsbVolumeModel.kt|ACTION_MEDIA_REMOVED, ACTION_MEDIA_BAD_REMOVAL)|ACTION_MEDIA_REMOVED)
-catalogue|ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json|"id": "usb_host"|"id": "usb_hostX"
+catalogue|fleet-private-data/perms-catalogue.json|"id": "usb_host"|"id": "usb_hostX"
 needs|ac_cloud-drive/build.json|"usb_host",|
 asset|data/fleet/app-perms.json|"storage_write",\n    "all_files",\n    "usb_host",|"storage_write",\n    "all_files",
 libaums|ac_cloud-drive/app/build.gradle|'me.jahnen.libaums:core:|'me.jahnen.libaumsX:core:

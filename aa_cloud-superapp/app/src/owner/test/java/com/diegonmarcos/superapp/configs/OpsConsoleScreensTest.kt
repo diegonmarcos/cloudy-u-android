@@ -114,7 +114,7 @@ class OpsConsoleScreensTest : KitPageHarness() {
     }
 
     // ── Perms fixture ──
-    private val cat = PermCatalogue.parse(File("../../ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json").readText())
+    private val cat = PermCatalogue.parse(File("../../fleet-private-data/perms-catalogue.json").readText())
     private val rows = cat.entries.mapIndexed { i, e ->
         PermRowState(e, PermStatus(when (i % 7) { 0, 1, 2 -> PermState.GRANTED; 3 -> PermState.DENIED; 4 -> PermState.PERMANENTLY_DENIED; 5 -> PermState.NOT_APPLICABLE; else -> PermState.UNKNOWN },
             if (i % 7 == 4) "asked twice" else ""))

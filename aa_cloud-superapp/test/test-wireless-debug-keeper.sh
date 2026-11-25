@@ -217,7 +217,7 @@ LIB="$APP/../ab_cloud-libs-shared/libs/shizuku-adb-debug-tools/src/main"
 WD="$LIB/java/com/diegonmarcos/superapp/adbdebug"
 for f in "$WD/WdKeeper.kt" "$WD/WdKeeperCore.kt" "$WD/WdKeeperService.kt" "$WD/WdAuditLog.kt" "$WD/AdbShellPage.kt" "$WD/HostShell.kt" \
          "$WD/AdbPeerReader.kt" "$LIB/AndroidManifest.xml" "$APP/app/src/main/java/com/diegonmarcos/superapp/devcontrol/DevControlServer.kt" \
-         "$APP/../ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json"; do
+         "$APP/../fleet-private-data/perms-catalogue.json"; do
   [ -f "$f" ] || { bad "T13 missing $f"; echo "== RESULT: $PASS passed, $FAIL failed =="; exit 1; }
 done
 WDK="$(code "$WD/WdKeeper.kt")"
@@ -251,7 +251,7 @@ import re,sys; m=open(sys.argv[1]).read()
 i=m.find("adbdebug.WdKeeperService"); seg=m[i:m.find("</service>", i)]
 sys.exit(0 if "foregroundServiceType=\"specialUse\"" in seg and "PROPERTY_SPECIAL_USE_FGS_SUBTYPE" in seg else 1)' "$LIB/AndroidManifest.xml" \
    && jq -e '[.foreground_services[]? | select(.id=="wireless-keeper" and .type=="specialUse" and (.why|length>20))] | length==1' \
-        "$APP/../ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json" >/dev/null; then
+        "$APP/../fleet-private-data/perms-catalogue.json" >/dev/null; then
   ok "T15 the foreground service is specialUse, justified in the manifest and in the perms catalogue"
 else
   bad "T15 the keeper service is not declared specialUse with a justification in both places"

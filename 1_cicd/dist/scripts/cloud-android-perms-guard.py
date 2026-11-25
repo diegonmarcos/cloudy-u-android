@@ -47,7 +47,7 @@ ROOT = ARGS[0] if ARGS else "."
 MATRIX = "--matrix" in sys.argv
 WRITE = "--write" in sys.argv
 POLICY_REL = "1_cicd/src/data/perms-guard.json"
-CAT_REL = "ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json"
+CAT_REL = "fleet-private-data/perms-catalogue.json"   # #1566 fleet-private: CI materialises it
 ASSET = "app-perms.json"   # the OLD per-app baked copy: now forbidden
 DATASET_REL = "data/fleet/app-perms.json"
 # #1546 the fleet index the Perms page reads for "used by fleet apps" and the per-app filter (libs:perms FleetPerms)

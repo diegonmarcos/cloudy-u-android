@@ -37,7 +37,7 @@ import java.io.File
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class PermsParityTest : KitPageHarness() {
     private val manifest = JSONObject(File("src/test/resources/parity/perms-parity.json").readText())
-    private val cat = PermCatalogue.parse(File("../../ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json").readText())
+    private val cat = PermCatalogue.parse(File("../../fleet-private-data/perms-catalogue.json").readText())
     private val states = PermState.values()
 
     /** Every state appears; a fixed reason per row so the bracketed reason is on screen. */

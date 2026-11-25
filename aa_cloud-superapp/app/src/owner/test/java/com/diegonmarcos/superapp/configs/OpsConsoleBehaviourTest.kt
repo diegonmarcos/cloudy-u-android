@@ -81,7 +81,7 @@ class OpsConsoleBehaviourTest : KitPageHarness() {
         assertEquals("the new tab starts empty", 1, count("term:empty"))
     }
 
-    private val cat = PermCatalogue.parse(File("../../ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json").readText())
+    private val cat = PermCatalogue.parse(File("../../fleet-private-data/perms-catalogue.json").readText())
     private val rows = cat.entries.mapIndexed { i, e -> PermRowState(e, PermStatus(if (i % 2 == 0) PermState.GRANTED else PermState.DENIED, "")) }
 
     private fun perms() {

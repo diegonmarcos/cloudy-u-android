@@ -63,7 +63,7 @@ ext.fleetConfigsB64 = { ->
     // #1352 v2: the rest of About, derived so build.json carries only what a person has to write.
     def specFile = new File(repoRoot, '1_cicd/src/data/configs-pages.json')
     def spec = specFile.isFile() ? slurp.parse(specFile) : [:]
-    def catFile = new File(repoRoot, 'ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json')
+    def catFile = new File(repoRoot, 'fleet-private-data/perms-catalogue.json')   // #1566 fleet-private: CI materialises it
     def catalogue = catFile.isFile() ? (slurp.parse(catFile).entries ?: []) : []
     def permWhy = { String id -> (cp.about?.perms_why ?: [:])[id] ?: (spec.perm_why ?: [:])[id] ?: '' }
     def permUse = { String id, String helper ->

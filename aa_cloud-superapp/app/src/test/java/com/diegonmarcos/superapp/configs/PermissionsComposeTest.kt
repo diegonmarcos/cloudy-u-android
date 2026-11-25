@@ -29,6 +29,7 @@ class PermissionsComposeTest : KitPageHarness() {
     /** The unit-test package carries no uses-permission list, so every gated row would read "not declared"; declare the catalogue's. */
     private fun declareCataloguePermissions() {
         val app = org.robolectric.RuntimeEnvironment.getApplication()
+        com.diegonmarcos.superapp.apps.FleetPrivateFixtures.install()
         val all = com.diegonmarcos.superapp.perms.Perms.catalogue(app).entries.map { it.permission }.filter { it.isNotEmpty() }.distinct()
         org.robolectric.Shadows.shadowOf(app.packageManager).getInternalMutablePackageInfo(app.packageName).requestedPermissions = all.toTypedArray()
     }

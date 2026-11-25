@@ -17,7 +17,7 @@ import java.io.File
 class PermsOnePlaceTest {
     private val root = File("../..")
     private val libs = File(root, "ab_cloud-libs-shared/libs")
-    private val catalogue = JSONObject(File(libs, "perms/src/main/assets/perms-catalogue.json").readText())
+    private val catalogue = JSONObject(File(root, "fleet-private-data/perms-catalogue.json").readText())
     private val app = File(root, "aa_cloud-superapp")
 
     private val forbidden = listOf(

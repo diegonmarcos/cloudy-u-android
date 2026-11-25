@@ -11,7 +11,7 @@ import java.io.File
  * "keep permissions when unused" row turns Android's auto-revoke off (and resets it) through the same shell owner.
  */
 class Perms1597Test {
-    private val cat = PermCatalogue.parse(File("src/main/assets/perms-catalogue.json").readText())
+    private val cat = PermCatalogue.parse(File("../../../fleet-private-data/perms-catalogue.json").readText())
     private val pkg = "com.diegonmarcos.superapp"
 
     private fun entry(id: String) = cat.byId(id) ?: error("no catalogue entry $id")

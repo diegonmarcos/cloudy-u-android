@@ -10,7 +10,7 @@ fails=0
 OUT="$(mktemp)"
 mk() {
   local r; r="$(mktemp -d)"
-  mkdir -p "$r/1_cicd/src/data" "$r/ab_cloud-libs-shared/libs/perms/src/main/assets"
+  mkdir -p "$r/1_cicd/src/data" "$r/fleet-private-data"
   cp "$REPO/1_cicd/src/data/perms-guard.json" "$r/1_cicd/src/data/"
   python3 - "$r/1_cicd/src/data/perms-guard.json" <<'PY'
 import json, sys
@@ -19,7 +19,7 @@ op = p["one_place"]; op["baseline"] = {}; op["baseline_max"] = 0; op["forks"] = 
 op["exceptions"] = [{"path": "ac_cloud-a/app/src/main/java/a/bg/", "tokens": ["appops set"], "why": "acts on other apps through the shell broker"}]
 json.dump(p, open(sys.argv[1], "w"))
 PY
-  cp "$REPO/ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json" "$r/ab_cloud-libs-shared/libs/perms/src/main/assets/"
+  cp "$REPO/fleet-private-data/perms-catalogue.json" "$r/fleet-private-data/"
   # ac_cloud-a: a Compose app on the shared scaffold that runs git in cld.termux and posts notifications
   mkdir -p "$r/ac_cloud-a/app/src/main/java/a" "$r/ac_cloud-termux/app/src/main/java/t"
   echo 'buildJson.modules.each { name, _spec -> include ":${name}" }' > "$r/ac_cloud-a/settings.gradle"

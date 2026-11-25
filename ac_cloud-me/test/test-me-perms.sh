@@ -22,7 +22,7 @@ root = sys.argv[1]; app = root + "/ac_cloud-me"; src = app + "/app/src/main/java
 out = []
 def bad(m): out.append(m)
 d = json.load(open(app + "/build.json")); p = d["ui"]["permissions"]
-cat = {e["id"]: e for e in json.load(open(root + "/ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json"))["entries"]}
+cat = {e["id"]: e for e in json.load(open(root + "/fleet-private-data/perms-catalogue.json"))["entries"]}
 ids = [e["id"] for e in p["entries"]]
 if len(ids) != len(set(ids)): bad("P1 an entry id is declared twice")
 for i in ids:
@@ -92,7 +92,7 @@ print("\n".join(out)); sys.exit(1 if out else 0)
 PY
 echo "[ac_cloud-me] Configs > Perms declaration"
 r="$(python3 "$CHECK" "$ROOT" 2>&1)" && ok "declaration, manifest, Health Connect set and start-up rule agree" || bad "$r"
-FILES="ac_cloud-me/build.json ac_cloud-me/app/src/main/AndroidManifest.xml ac_cloud-me/app/build.gradle ac_cloud-me/data/ui/configs/perms.json ac_cloud-me/app/src/main/java/com/diegonmarcos/cloudme/MePerms.kt ac_cloud-me/app/src/main/java/com/diegonmarcos/cloudme/MainActivity.kt ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json ab_cloud-libs-shared/libs/health/src/main/AndroidManifest.xml ab_cloud-libs-shared/libs/ui-icons/src/main/kotlin/com/diegonmarcos/superapp/uiicons/UiIcons.kt ab_cloud-libs-shared/libs/perms/src/main/java/com/diegonmarcos/superapp/perms/PermsUi.kt ab_cloud-libs-shared/libs/perms/src/main/java/com/diegonmarcos/superapp/perms/PermsView.kt"
+FILES="ac_cloud-me/build.json ac_cloud-me/app/src/main/AndroidManifest.xml ac_cloud-me/app/build.gradle ac_cloud-me/data/ui/configs/perms.json ac_cloud-me/app/src/main/java/com/diegonmarcos/cloudme/MePerms.kt ac_cloud-me/app/src/main/java/com/diegonmarcos/cloudme/MainActivity.kt fleet-private-data/perms-catalogue.json ab_cloud-libs-shared/libs/health/src/main/AndroidManifest.xml ab_cloud-libs-shared/libs/ui-icons/src/main/kotlin/com/diegonmarcos/superapp/uiicons/UiIcons.kt ab_cloud-libs-shared/libs/perms/src/main/java/com/diegonmarcos/superapp/perms/PermsUi.kt ab_cloud-libs-shared/libs/perms/src/main/java/com/diegonmarcos/superapp/perms/PermsView.kt"
 plant() { # <name> <python acting on T>
   rm -rf "$S/t"; for f in $FILES; do mkdir -p "$S/t/$(dirname "$f")"; cp "$ROOT/$f" "$S/t/$f"; done
   python3 - "$S/t" <<PY

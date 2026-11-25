@@ -17,6 +17,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.os.PowerManager
 import android.provider.Settings
+import com.diegonmarcos.superapp.fleetdata.FleetData
 
 /**
  * The permission contract (#1274). The host app's Permissions page is the ONE place that asks for, checks and opens the
@@ -37,10 +38,18 @@ object Perms {
 
     @Volatile private var cached: PermCatalogue? = null
 
-    fun catalogue(ctx: Context): PermCatalogue = cached ?: synchronized(this) {
+    /** UNIT TESTS ONLY: the CI-materialised catalogue text, put where the reader looks first; production never sets it. */
+    @Volatile var testCatalogue: String? = null
+
+    /**
+     * #1566 the catalogue is a fleet-private served dataset (Cloud Account's private route), never an APK asset: the served copy
+     * (last-known-good while the provider is away) is cached for the process; NOT SERVED = an empty catalogue that is NOT cached, so
+     * the next call tries again once the dataset arrives (no row, no need, nothing requested meanwhile).
+     */
+    fun catalogue(ctx: Context): PermCatalogue = testCatalogue?.let { PermCatalogue.parse(it) } ?: cached ?: synchronized(this) {
         cached ?: runCatching {
-            PermCatalogue.parse(ctx.applicationContext.assets.open(PermCatalogue.ASSET).bufferedReader().use { it.readText() })
-        }.getOrElse { PermCatalogue(emptyList(), emptyList()) }.also { cached = it }
+            FleetData.get(ctx.applicationContext, PermCatalogue.DATASET) { PermCatalogue.parse(it) }
+        }.getOrNull()?.also { cached = it } ?: PermCatalogue(emptyList(), emptyList())
     }
 
     /** The values the {placeholders} in settings keys and adb lines take on this device. */
