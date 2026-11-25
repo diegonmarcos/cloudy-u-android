@@ -5,7 +5,8 @@
 #   review strip + page operations (duplicate, delete) > export sheet (PDF / JPEG, sizes, naming template) > Save and read the PDF back (A4, text layer) >
 #   capture screen (live viewfinder, controls, batch shot) > file tools (compress, merge, PDF to images, password, image converter) > light theme screens.
 # Evidence: camera-scanner-1908-evidence (shots/NN-*.png, uiautomator XML, scan.pdf, verdict.txt). The job fails on any FAIL.
-# (the #1839 walk below this line is kept as it was, in test-camera-scanner-emulator.yml)
+# This walk supersedes the #1839 one (test-camera-scanner-emulator.yml, removed): it keeps every one of its checks (Scanner fifth in the island, the Filters
+# button on the Camera page, import through the picker, the edge quad, the four filters, A4, the searchable PDF) on the new screens.
 # --- original header of the #1839 walk follows ---
 # #1839 Cloud Camera Scanner on an emulator: the walk that proves what the ticket shipped.
 # Runs the x86_64 APK a Ship Cloud Camera run built (plus the image engine APK, for OCR) and checks, one PASS/FAIL line each:
@@ -256,6 +257,8 @@ jobs:
           # tap_rid TAG: tap the node tagged TAG (retries while the screen settles)
           tap_rid() { for _ in 1 2 3 4 5 6; do dump _t; xy=$(rid _t "$1"); [ -n "$xy" ] && { adb shell input tap $xy; echo "tapped $1 at $xy"; sleep 1; return 0; }; sleep 2; done
             echo "no node '$1'; tags: $(python3 -I ui.py ridlist "$OUT/_t.xml" scanner: | tr '\n' ' ')"; return 1; }
+          tap_id() { for _ in 1 2 3 4; do dump _t; xy=$(python3 -I ui.py id "$OUT/_t.xml" "$1"); [ -n "$xy" ] && { adb shell input tap $xy; echo "tapped id '$1' at $xy"; return 0; }; sleep 2; done
+            echo "no id '$1'; on screen: $(python3 -I ui.py texts "$OUT/_t.xml")"; return 1; }
           tap_text() { for _ in 1 2 3 4; do dump _t; xy=$(python3 -I ui.py text "$OUT/_t.xml" "$1"); [ -n "$xy" ] && { adb shell input tap $xy; echo "tapped '$1' at $xy"; return 0; }; sleep 2; done
             echo "no node '$1'; on screen: $(python3 -I ui.py texts "$OUT/_t.xml")"; return 1; }
           # wait_rid TAG [seconds]: wait until the tag is on screen (dump left in out/_w.xml)
@@ -310,6 +313,15 @@ jobs:
           else check no "01 bottom_nav='$decl' island=$ISLAND_N opened=$opened home=$(has _w scanner:home && echo y || echo n); tags: $(python3 -I ui.py ridlist "$OUT/_w.xml" '' | head -20 | tr '\n' ' ')"; fi
           ok=yes; for t in scanner:start_scan scanner:start_import scanner:start_tools scanner:action:tools; do has _w "$t" || ok=no; done
           [ "$ok" = yes ] && check ok "01 the start screen offers Scan, Import and Tools" || check no "01 start tiles missing"
+
+          # ── 1b. (#1839, kept) the Filters button on the Camera page opens the Filters/VR screen ──
+          adb shell input keyevent KEYCODE_BACK; sleep 3; ensure_app; dump camera-back
+          if [ -n "$(python3 -I ui.py id "$OUT/camera-back.xml" filters_option)" ]; then check ok "01 the Camera page shows the Filters button (filters_option)"; else check no "01 no Filters button on the Camera page: $(python3 -I ui.py texts "$OUT/camera-back.xml")"; fi
+          tap_id filters_option; sleep 6; shot filters-screen-dark
+          vr=$(python3 -I ui.py id "$OUT/$(printf '%02d' $N)-filters-screen-dark.xml" vr_status); gone=$(python3 -I ui.py id "$OUT/$(printf '%02d' $N)-filters-screen-dark.xml" filters_option)
+          if [ -n "$vr" ] && [ -z "$gone" ]; then check ok "01 tapping Filters opens the Filters/VR screen (vr_status on screen, the button hidden on the page itself)"
+          else check no "01 Filters tap: vr_status='$vr' filters_option still shown='$gone'"; fi
+          launch; open_scanner || echo "warn: ScannerActivity did not reopen"; sleep 2; wait_rid scanner:home 15 || true
 
           # ── 2. the Tools hub: every tool, scrolled ──
           tap_rid scanner:start_tools; wait_rid scanner:tools 15 || true; shot tools-hub-dark
