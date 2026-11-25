@@ -64,7 +64,7 @@ class NavReorgTest {
         assertEquals(listOf("prof-linkedin", "prof-cv"), ids(prof.page("prof-web")!!.pages))
         assertEquals(listOf("professional", "work", "study"), ids(prof.page("prof-profiles")!!.pages))
         assertEquals(listOf("cv", "roadmap"), ids(prof.page("study")!!.pages))
-        assertEquals("professional", leafOf("prof", null))
+        assertEquals("prof-linkedin", leafOf("prof", null))   // #1918 Prof opens on Profiles > LinkedIn
         val proj = Sections.byId("proj")!!
         assertEquals(listOf("pj-home", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42", "pj-repos"), ids(proj.pages))
         assertEquals(listOf("Home", "Unix", "CG", "Capital", "Hardtech", "Wiki", "Projects", "42", "Repos"), proj.pages.map { Regex("^[^\\p{L}\\p{N}]+ ").replace(it.label, "") })   // #1918 each label carries its Linktree emoji

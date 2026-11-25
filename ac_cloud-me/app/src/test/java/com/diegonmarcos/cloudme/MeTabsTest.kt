@@ -140,8 +140,8 @@ class MeTabsTest {
 
     @Test
     fun `#1901 Proj opens on Lnktree, Prof keeps Professional first, and Tasks is off the bar but still declared`() {
-        assertEquals("Home", Sections.byId("proj")!!.pages.first().label)
-        assertEquals(listOf("Professional", "Work", "Study"), Sections.byId("prof")!!.pages.first().pages.map { it.label })
+        assertEquals("\uD83C\uDFE0 Home", Sections.byId("proj")!!.pages.first().label)   // #1918 the Linktree emoji prefix
+        assertEquals(listOf("Professional", "Work", "Study"), Sections.byId("prof")!!.pages[1].pages.map { it.label })
         assertEquals(listOf("Personal", "ig0", "ig1", "ig2", "face0", "Pinterest", "YouTube", "Tidal", "LinkedIn", "Orkut"), Sections.byId("pers")!!.pages.first().pages.map { it.label })
         assertTrue("Tasks left the bar", Sections.bottom().none { it.id == "tasks" })
         assertEquals(listOf("roadmaps", "backlogs"), Sections.byId("tasks")!!.pages.map { it.id }.take(2))  // the baked vault row pages follow

@@ -1,16 +1,22 @@
 package com.diegonmarcos.cloudme
 
+import android.app.Application
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 /**
  * #1918 Prof > Profiles is LinkedIn | CV (the old pages moved to More, ids kept), Proj has a Repos page after 42, every Proj page wears the Linktree emoji and every
  * main category its Linktree banner. Declared data only (build.json, data/links/me-proj-emoji.json, data/links/me-links.json). test/test-proj-emoji.sh mutates each red.
  */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34], application = Application::class)
 class ProjEmojiTest {
     private fun obj(p: String) = JSONObject(BuroLlcTestData.text(p))
     private val ui = obj("build.json").getJSONObject("ui")

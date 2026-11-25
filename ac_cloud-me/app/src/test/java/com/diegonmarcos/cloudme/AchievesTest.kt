@@ -148,7 +148,7 @@ class AchievesTest {
         assertTrue(sections.none { it.getString("id") in setOf("study", "achieves", "experiences", "health", "socials") })
         assertEquals(listOf("pers-profiles", "health", "astro", "dd", "achieves"), sub(experiences).map { it.getString("id") })
         assertEquals(listOf("Profiles", "Health", "Astro", "DD", "Personal Archives"), sub(experiences).map { it.getString("label") })
-        val profiles = sub(prof)[0]
+        val profiles = sub(prof)[1]   // #1918 Profiles = LinkedIn | CV; the old Profiles pages are More
         assertEquals(listOf("professional", "work", "study"), sub(profiles).map { it.getString("id") })
         assertEquals(listOf("cv", "roadmap"), sub(sub(profiles)[2]).map { it.getString("id") })
         val ids = flat(experiences)
