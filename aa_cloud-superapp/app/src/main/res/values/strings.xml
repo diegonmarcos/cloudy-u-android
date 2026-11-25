@@ -611,8 +611,8 @@
     <string name="mesh_row_log">Log (%1$d)</string>
     <string name="mesh_status_log_how">All %1$d entries, every level and source, newest first. The Logs tab shows the same journal with its filter.</string>
     <string name="mesh_ctl_reach_meshes_run">Probe meshes</string>
-    <string name="mesh_ctl_prober_run">Run all probes</string>
-    <string name="mesh_ctl_prober_cancel">Cancel probes</string>
+    <string name="mesh_ctl_status_prober_run">Run all probes</string>
+    <string name="mesh_ctl_status_prober_cancel">Cancel probes</string>
     <string name="mesh_ctl_status_profiler_copy">Copy report</string>
     <string name="mesh_ctl_status_profiler_export">Export report</string>
     <string name="mesh_ctl_status_log_open">Show the full log here</string>

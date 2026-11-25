@@ -113,7 +113,7 @@ class MeshStatusSections1900Test : KitPageHarness() {
         fun has(tag: String) = assertTrue("no node $tag", compose.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
         for (sec in decl.sections) has("mesh:section:${sec.id}")
         for (r in decl.page("status")!!.rows) has(MeshTags.row(r))
-        for (c in listOf("prober_run", "prober_cancel", "status_copy_all", "status_export_md")) has(MeshTags.control(c))
+        for (c in listOf("status_prober_run", "status_prober_cancel", "status_copy_all", "status_export_md")) has(MeshTags.control(c))
         for (r in s.prober) has("mesh:prober:${r.spec.group}/${r.spec.id}")
         for (g in MeshProber.GROUPS) has("mesh:prober:group:$g")
         assertEquals("the page and the store agree on the state", s.prober.size, s.prober.count { it.done })

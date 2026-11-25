@@ -30,8 +30,8 @@ internal fun MeshProberRow(store: MeshStore, tag: String) {
     Column(Modifier.testTag(tag)) {
         Row(Modifier.padding(bottom = MeshDensity.dp(MeshDensity.S4)), horizontalArrangement = Arrangement.spacedBy(MeshDensity.dp(MeshDensity.S6)),
             verticalAlignment = Alignment.CenterVertically) {
-            page?.control("prober_run")?.let { c -> MButton(declLabel("ctl", c.id, c.label), { store.run(c.engine) }, Modifier.testTag(MeshTags.control(c.id)), emphasised = store.probing == 0) }
-            page?.control("prober_cancel")?.let { c -> MButton(declLabel("ctl", c.id, c.label), { store.run(c.engine) }, Modifier.testTag(MeshTags.control(c.id)), enabled = store.probing > 0) }
+            page?.control("status_prober_run")?.let { c -> MButton(declLabel("ctl", c.id, c.label), { store.run(c.engine) }, Modifier.testTag(MeshTags.control(c.id)), emphasised = store.probing == 0) }
+            page?.control("status_prober_cancel")?.let { c -> MButton(declLabel("ctl", c.id, c.label), { store.run(c.engine) }, Modifier.testTag(MeshTags.control(c.id)), enabled = store.probing > 0) }
             MText(if (store.probing > 0) "${rows.count { it.done }} of ${rows.size} done…" else if (rows.isEmpty()) "not run" else "${rows.count { it.ok == true }} of ${rows.size} pass · ${MeshFormat.clock(store.proberAtMs)}",
                 Modifier.testTag("mesh:prober:progress"), size = MeshDensity.T_META, mono = true, muted = true)
         }

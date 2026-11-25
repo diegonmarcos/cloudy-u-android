@@ -258,12 +258,13 @@ object MeshProber {
     /** Wait for [f] up to [limitMs], polling [cancelled] so a cancel does not wait out a slow probe. */
     private fun <T> await(f: java.util.concurrent.Future<T>, limitMs: Long, cancelled: () -> Boolean): T? {
         val end = System.nanoTime() + limitMs * 1_000_000
-        while (true) {
+        while (System.nanoTime() < end) {
             if (cancelled()) { f.cancel(true); return null }
             val left = (end - System.nanoTime()) / 1_000_000
-            if (left <= 0) { f.cancel(true); throw TimeoutException("no answer within $limitMs ms") }
-            try { return f.get(minOf(left, 100L), TimeUnit.MILLISECONDS) } catch (_: TimeoutException) { /* poll again */ }
+            try { return f.get(minOf(maxOf(left, 1L), 100L), TimeUnit.MILLISECONDS) } catch (_: TimeoutException) { /* poll again */ }
         }
+        f.cancel(true)
+        throw TimeoutException("no answer within $limitMs ms")
     }
 
     /**
