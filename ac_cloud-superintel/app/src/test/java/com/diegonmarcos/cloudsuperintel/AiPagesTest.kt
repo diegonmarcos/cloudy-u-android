@@ -123,8 +123,9 @@ class AiServedDatasetsTest {
 
     @Test fun theReaderIsTheServedOneAndNotServedIsEmpty() {
         val src = read("src/main/java/com/diegonmarcos/cloudsuperintel/AiData.kt")
-        assertTrue(src.contains("FleetData.get(ctx, it, own = true)") && src.contains("FleetData.get(ctx, PAGES, own = true)"))
+        assertTrue(src.contains("FleetData.get(ctx, ds, own = true)") && src.contains("FleetData.get(ctx, PAGES, own = true)"))
         assertTrue(!src.contains("ctx.assets.open(\"ai/pages.json\")"))
+        assertTrue("not served falls back to the cold-start seed, never an APK page asset", src.contains("seed(ctx, ds)") && src.contains("pages(seed(ctx, PAGES))"))   // #1562
         assertTrue(AiData.pages("").isEmpty())
         assertTrue(AiData.groups("").isEmpty())
     }
