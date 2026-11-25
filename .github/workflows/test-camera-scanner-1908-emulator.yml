@@ -390,7 +390,7 @@ jobs:
           tap_rid kit:segment:scanner:format:PDF; sleep 1; tap_rid "scanner:token:{date}"; sleep 1; shot export-template-dark
           prev=$(python3 -I ui.py ridtext "$OUT/_t.xml" scanner:file_preview)
           echo "file preview: $prev"
-          adb shell 'rm -f /sdcard/Download/scan*.pdf /sdcard/Documents/scan*.pdf' || true
+          adb shell 'rm -f /sdcard/Download/scan*.pdf /sdcard/Documents/scan*.pdf /sdcard/Download/20*.pdf /sdcard/Documents/20*.pdf' || true
           tap_rid scanner:save
           saved=""
           for _ in $(seq 1 60); do
@@ -398,7 +398,7 @@ jobs:
             s=""; [ -n "$(python3 -I ui.py id "$OUT/save-picker.xml" container_save)" ] && { s=$(python3 -I ui.py id "$OUT/save-picker.xml" button1); [ -z "$s" ] && s=$(python3 -I ui.py text "$OUT/save-picker.xml" SAVE); }
             if [ -n "$s" ]; then
               awake; sleep 1; adb exec-out screencap -p > "$SH/save-picker.png"; adb shell input tap $s; sleep 5
-              saved=$(adb shell 'find -L /sdcard/ -maxdepth 3 -name "scan*.pdf" 2>/dev/null' | tr -d '\r' | head -1)
+              saved=$(adb shell 'find -L /sdcard/ -maxdepth 3 \( -name "scan*.pdf" -o -name "20[0-9][0-9]-*.pdf" \) 2>/dev/null' | tr -d '\r' | head -1)
               [ -n "$saved" ] && break
               d=$(python3 -I ui.py text "$OUT/save-picker.xml" "Show roots"); [ -n "$d" ] && { adb shell input tap $d; sleep 2; dump save-roots; r=$(python3 -I ui.py text "$OUT/save-roots.xml" Downloads); [ -n "$r" ] && { adb shell input tap $r; sleep 2; }; }
             fi
@@ -416,7 +416,7 @@ jobs:
             if [ -z "$t" ]; then check no "09 OCR: the PDF has no text layer"
             else hit=""; for w in invoice scanner coffee bread total; do echo "$t" | grep -qi "$w" && hit="$hit $w"; done
               [ -n "$hit" ] && check ok "09 the searchable text layer holds:$hit" || check no "09 text layer has none of the page's words ($t)"; fi
-            case "$SAVEDNAME" in scan*) check ok "09 the saved file name follows the template/typed name ($SAVEDNAME)";; *) check no "09 unexpected file name $SAVEDNAME";; esac
+            case "$SAVEDNAME" in scan*|20[0-9][0-9]-*) check ok "09 the saved file name follows the template/typed name ($SAVEDNAME)";; *) check no "09 unexpected file name $SAVEDNAME";; esac
           fi
           adb shell am start -n "$ACT" >/dev/null 2>&1; ensure_app || true; wait_rid scanner:home 15 || wait_rid scanner:editor 5 || true
           has _w scanner:home || { launch; open_scanner || true; }
