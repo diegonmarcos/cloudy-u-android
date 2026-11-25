@@ -99,6 +99,7 @@ dependencies {
     // carries libs:devtools (fleet provider, MESH_MEMBER receiver and query).
     implementation project(':libs:web-core')   // #1371 the fleet's one web view (CloudWeb, WebProfile)
     implementation project(':libs:core')
+    implementation project(':libs:fleet-data-client')   // #1566 the probe registry is a fleet/infra (tier 2) dataset read at RUNTIME from Cloud Account's private route, never baked into the APK
     // 2026-10-15 owner decision: all apps must be Compose. The screen is a Compose host under
     // the fleet's CloudKitTheme, shared BY REFERENCE like the modules above.
     implementation project(':libs:ui-kit')

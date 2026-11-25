@@ -21,7 +21,7 @@
   "reuses": {
     "_doc": "What this app CONSUMES rather than reimplements. Each of these would silently diverge if copied, and the copy is always the one that goes stale.",
     "dagu": "The Dagu web UI, with Dagu's own Start button. The same server Cloud/C3/Observability reads through DaguClient.listDags().",
-    "probes": "app/src/main/assets/probes.json is a committed MIRROR of cloud-u-linux/da_morpheus/data/probes.json, which is the source of truth. Mirrored, not fetched, because the APK must render the registry with no network; the file's own _mirror_of key says which copy wins.",
+    "probes": "The probe registry is the fleet/infra (tier 2) dataset fleet/morpheus-probes, mirrored from cloud-u-linux/da_morpheus/data/probes.json (which stays the source of truth) into the PRIVATE repo cloud-me-pvt-configs fleet-data/2/fleet/ and served by Cloud Account through the c3-api private route (#1566); it is never an APK asset and holds no public copy. The mirror's own _mirror_of key says which copy wins.",
     "paca": "Rendered inline. There is no board API to wrap.",
     "constellation": "ab_cloud-libs-shared/libs/appstore/.../ConstellationFragment.kt, reached by launch intent."
   },

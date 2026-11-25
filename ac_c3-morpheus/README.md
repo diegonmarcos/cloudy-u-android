@@ -66,12 +66,13 @@ rule `libs/ops` follows for `DAGU_DEFAULT_SERVER`: a URL hardcoded in a class is
 a URL that gets copied and then diverges from the one the rest of the fleet
 uses.
 
-`app/src/main/assets/probes.json` is a committed **mirror** of
-`cloud-u-linux/da_morpheus/data/probes.json`, which is the source of truth (the
-file names this in its own `_mirror_of` key). Mirrored rather than fetched
-because the APK must render the registry with no network. If they disagree, the
-CLI copy wins — it is the one `c3-morpheus probes validate` checks against the
-ntfy topic registry.
+The probe registry is the tier-2 dataset `fleet/morpheus-probes`: a **mirror** of
+`cloud-u-linux/da_morpheus/data/probes.json` (the source of truth, named in the
+file's own `_mirror_of` key) kept in the private repo `cloud-me-pvt-configs`
+(`fleet-data/2/fleet/`) and served by Cloud Account over the authenticated c3-api
+route (#1566), so the public repo holds no copy of it. The phone keeps its
+last-known-good copy for offline use. If they disagree, the CLI copy wins - it is
+the one `c3-morpheus probes validate` checks against the ntfy topic registry.
 
 No shared library module: v1 needs nothing from `libs/`, and depending on
 `ab_cloud-libs-shared` now would put its whole build on this app's critical

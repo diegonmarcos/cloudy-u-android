@@ -204,6 +204,8 @@ class MainActivity : AppCompatActivity() {
         showNotice("COULD NOT LOAD\n\n$reason\n\n$where")
     }
 
+    private val PROBES_DATASET = "fleet/morpheus-probes"
+
     /**
      * The probe registry — WHAT "HEALTHY" IS DECLARED TO MEAN.
      *
@@ -214,17 +216,18 @@ class MainActivity : AppCompatActivity() {
      * is precisely the failure this whole product is trying to stop.
      *
      * The registry is the one shipped in the CLI (da_morpheus/data/probes.json),
-     * copied into assets at build time so there is one file and not two.
+     * served at runtime (tier 2, fleet/morpheus-probes) from the private repo, so the public repo holds no copy.
      */
     private fun showHealthRegistry() {
-        val raw = try {
-            assets.open("probes.json").bufferedReader().use { it.readText() }
-        } catch (t: Throwable) {
+        // #1566 the registry names internal hosts, so it is a fleet/infra (tier 2) dataset served by Cloud Account from the private repo,
+        // never an APK asset: read through the fleet data client (last-known-good copy offline). Null = not served yet.
+        val raw = com.diegonmarcos.superapp.fleetdata.FleetData.get(this, PROBES_DATASET) { it }
+        if (raw == null) {
             showNotice(
-                "PROBE REGISTRY NOT READABLE\n\n${t.message}\n\n" +
-                    "The app could not open its own copy of probes.json, so it is " +
-                    "showing nothing rather than an empty list that would read as " +
-                    "'no probes are declared'."
+                "PROBE REGISTRY NOT SERVED YET\n\n" +
+                    "Cloud Account has not delivered the registry (fleet/morpheus-probes) to this phone yet, so " +
+                    "this page shows nothing rather than an empty list that would read as " +
+                    "'no probes are declared'. Open Cloud Account once with the fleet bearer granted, then retry."
             )
             return
         }
