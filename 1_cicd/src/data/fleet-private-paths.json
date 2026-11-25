@@ -9,6 +9,7 @@
     "shell-allowlist": "fleet-private-data/shell-allowlist.json",
     "decisions": "fleet-private-data/decisions.json",
     "ai": "fleet-private-data/ai.json",
-    "perms-catalogue": "fleet-private-data/perms-catalogue.json"
+    "perms-catalogue": "fleet-private-data/perms-catalogue.json",
+    "fleet-config": "fleet-private-data/fleet-config.json"
   }
 }
