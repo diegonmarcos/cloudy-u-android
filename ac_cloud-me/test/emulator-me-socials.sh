@@ -79,10 +79,11 @@ for e in json.load(open(sys.argv[1]))["entries"]:
     if "path" in e: print(e["section"], e["path"][-1], e["url"], e["id"])
 PY
 [ -s "$OUT/.tabs" ] || { echo "no tabs in me-links.json"; rc=1; }
-while read -r sec page url id; do
-    $T adb logcat -c
-    open_page "$ME" "page:$sec/$page"; shot "me-tab-$id" 12
-    $T adb logcat -d -s CloudMeWeb:V > "$OUT/tab-$id.log"
+while read -r sec page url id <&3; do
+    $T adb shell am force-stop "$ME" </dev/null   # a fresh process: the page loads (and logs) again even when it is the one already on top
+    $T adb logcat -c </dev/null
+    open_page "$ME" "page:$sec/$page" </dev/null; shot "me-tab-$id" 12 </dev/null
+    $T adb logcat -d -s CloudMeWeb:V < /dev/null > "$OUT/tab-$id.log"
     if grep -q MAINFRAME_ERROR "$OUT/tab-$id.log"; then echo "$id: main frame error: $(grep -m1 MAINFRAME_ERROR "$OUT/tab-$id.log")"; rc=1
     elif grep -q "title=Web page not available" "$OUT/tab-$id.log"; then echo "$id: error page title"; rc=1
     elif ! grep -q "MAINFRAME_OK page=$page url=$url" "$OUT/tab-$id.log"; then echo "$id: the page did not load $url ($(tail -1 "$OUT/tab-$id.log"))"; rc=1
@@ -91,7 +92,7 @@ while read -r sec page url id; do
     if ! grep -q IMG_CHECK "$OUT/tab-$id.log"; then echo "$id: no IMG_CHECK line (the page was not checked for images)"; rc=1
     elif ! grep -q 'images_broken="[0-9]* 0 ' "$OUT/tab-$id.log"; then echo "$id: broken images: $(grep -m1 IMG_CHECK "$OUT/tab-$id.log")"; rc=1; fi
     if grep -q "Web page not available" "$OUT/me-tab-$id.xml" 2>/dev/null; then echo "$id: the screen shows Web page not available"; rc=1; fi
-done < "$OUT/.tabs"
+done 3< "$OUT/.tabs"   # fd 3: adb inside the loop must not eat the tab list from stdin
 $T adb logcat -d > "$OUT/logcat.txt"
 ls -la "$OUT"
 exit $rc
