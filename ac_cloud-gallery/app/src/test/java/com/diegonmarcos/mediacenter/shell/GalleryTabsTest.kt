@@ -28,7 +28,7 @@ class GalleryTabsTest {
     @Test
     fun theBarIsExactlyTheOwnersSevenInTheirOrder() {
         assertEquals(
-            listOf("screenshots", "downloads", "camera", "home", "timeline", "maps", "objects"),
+            listOf("screenshots", "downloads", "camera", "home", "all", "maps", "objects"),
             ids(ui.getValue("bottom_nav").jsonArray),
         )
     }
@@ -94,8 +94,11 @@ class GalleryTabsTest {
     }
 
     @Test
-    fun theTimelineTabOpensOnCameraButIsNotFixedToIt() {
+    fun theAllTabOpensOnEverythingAndIsNotFixedToAFolder() {
         assertNull(GalleryTab.TIMELINE.bucket)
+        assertFalse(TimelineFilter.ALL_DEFAULT.isActive)
+        assertTrue(TimelineFilter.ALL_DEFAULT.folders.isEmpty())
+        assertEquals(com.diegonmarcos.mediacenter.feature_node.domain.model.SourceFilter.ALL, TimelineFilter.ALL_DEFAULT.source)
         assertEquals(setOf(TimelineFilter.CAMERA_BUCKET), TimelineFilter.CAMERA_DEFAULT.folders)
     }
 

@@ -18,7 +18,7 @@ enum class GalleryTab(val id: String, val screen: Screen, val bucket: String? = 
     DOWNLOADS("downloads", Screen.DownloadsTabScreen, TimelineFilter.DOWNLOADS_BUCKET),
     CAMERA("camera", Screen.CameraTabScreen, TimelineFilter.CAMERA_BUCKET),
     HOME("home", Screen.HomeTabScreen),
-    TIMELINE("timeline", Screen.TimelineScreen),
+    TIMELINE("all", Screen.TimelineScreen),
     MAPS("maps", Screen.MapsTabScreen),
     OBJECTS("objects", Screen.ObjectsTabScreen);
 
@@ -28,12 +28,21 @@ enum class GalleryTab(val id: String, val screen: Screen, val bucket: String? = 
         /** Section ids in bar order: must equal build.json::ui.bottom_nav (GalleryTabsTest holds the two together). */
         val ORDER: List<String> = entries.map { it.id }
 
-        fun ofRoute(route: String?): GalleryTab? = if (route == null) null else entries.firstOrNull { it.route == route }
+        fun ofRoute(route: String?): GalleryTab? = GalleryAliases.route(route).let { r -> if (r == null) null else entries.firstOrNull { it.route == r } }
 
-        fun ofId(id: String?): GalleryTab? = entries.firstOrNull { it.id == id }
+        fun ofId(id: String?): GalleryTab? = GalleryAliases.id(id).let { i -> entries.firstOrNull { it.id == i } }
 
         fun isTabRoute(route: String?): Boolean = ofRoute(route) != null
     }
+}
+
+/** Old route and section ids that keep working after a rename (Timeline became All): old id -> current id. */
+object GalleryAliases {
+    val ROUTES: Map<String, String> = mapOf("timeline_screen" to Screen.TimelineScreen.route)
+    val IDS: Map<String, String> = mapOf("timeline" to "all")
+
+    fun route(route: String?): String? = route?.let { ROUTES[it] ?: it }
+    fun id(id: String?): String? = id?.let { IDS[it] ?: it }
 }
 
 /** The sub-pages (second row) of the tabs that have them; ids as in build.json::ui.sections[].pages. */

@@ -87,13 +87,16 @@ fun TimelineMediaContent(
     onMediaClick: (Media.UriMedia) -> Unit,
     emptyContent: @Composable () -> Unit,
     scrollToTopRoute: String? = null,
+    /** Section headers are on whatever the date-grouping setting says (Group by kind needs them). */
+    forceHeaders: Boolean = false,
 ) {
     var canScroll by rememberSaveable { mutableStateOf(true) }
     var lastCellIndex by rememberGridSize()
     val timelineLayoutType by rememberTimelineLayoutType()
     val timelineGroupByDate by rememberTimelineGroupByDate()
     val timelineGroupMethod by rememberTimelineGroupMethod()
-    val isMosaicLayout = timelineLayoutType == Settings.Misc.LAYOUT_MOSAIC && timelineGroupByDate
+    val headersOn = timelineGroupByDate || forceHeaders
+    val isMosaicLayout = timelineLayoutType == Settings.Misc.LAYOUT_MOSAIC && headersOn
     val cacheWindow = remember { LazyLayoutCacheWindow(aheadFraction = 2f, behindFraction = 2f) }
     val pinchState = rememberGridPinchZoomState(
         cellsList = cellsList,
@@ -133,9 +136,9 @@ fun TimelineMediaContent(
                 showSearchBar = showSearchBar,
                 allowSelection = true,
                 canScroll = canScroll,
-                allowHeaders = timelineGroupByDate,
-                enableStickyHeaders = timelineGroupByDate,
-                groupMethod = if (timelineGroupByDate) timelineGroupMethod else Settings.Misc.GROUP_NORMAL,
+                allowHeaders = headersOn,
+                enableStickyHeaders = headersOn,
+                groupMethod = if (timelineGroupByDate && !forceHeaders) timelineGroupMethod else Settings.Misc.GROUP_NORMAL,
                 aboveGridContent = aboveGridContent,
                 isScrolling = isScrolling,
                 emptyContent = emptyContent,
@@ -161,7 +164,7 @@ fun TimelineMediaContent(
     }
 
     val mappedData by rememberedDerivedState(mediaState.value, timelineGroupMethod) {
-        when (timelineGroupMethod) {
+        when (if (forceHeaders) Settings.Misc.GROUP_NORMAL else timelineGroupMethod) {
             Settings.Misc.GROUP_MONTHLY -> mediaState.value.mappedMediaWithMonthly
             Settings.Misc.GROUP_YEARLY -> mediaState.value.mappedMediaWithYearly
             else -> mediaState.value.mappedMedia
@@ -254,8 +257,8 @@ fun TimelineMediaContent(
                     paddingValues = contentPadding,
                     allowSelection = true,
                     canScroll = !mosaicPinchState.isZooming,
-                    allowHeaders = timelineGroupByDate,
-                    bigHeaders = timelineGroupMethod != Settings.Misc.GROUP_NORMAL,
+                    allowHeaders = headersOn,
+                    bigHeaders = timelineGroupMethod != Settings.Misc.GROUP_NORMAL && !forceHeaders,
                     aboveGridContent = aboveGridContent,
                     isScrolling = isScrolling,
                     emptyContent = emptyContent,

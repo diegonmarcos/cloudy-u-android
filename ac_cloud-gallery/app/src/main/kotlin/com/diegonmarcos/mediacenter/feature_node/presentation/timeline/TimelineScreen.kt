@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.layout.LazyLayoutCacheWindow
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material3.Badge
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -89,6 +90,7 @@ import com.diegonmarcos.mediacenter.core.presentation.components.EmptyMedia
 import com.diegonmarcos.mediacenter.core.presentation.components.SelectionSheet
 import com.diegonmarcos.mediacenter.core.toggleNavigationBar
 import com.diegonmarcos.mediacenter.feature_node.domain.model.Media
+import com.diegonmarcos.mediacenter.feature_node.domain.model.GroupBy
 import com.diegonmarcos.mediacenter.feature_node.domain.model.MediaMetadataState
 import com.diegonmarcos.mediacenter.feature_node.domain.model.MediaState
 import com.diegonmarcos.mediacenter.feature_node.domain.model.TimelineFilter
@@ -113,6 +115,7 @@ import com.diegonmarcos.mediacenter.feature_node.presentation.mediaview.remember
 import com.diegonmarcos.mediacenter.feature_node.presentation.search.MainSearchBar
 import com.diegonmarcos.mediacenter.feature_node.presentation.storycards.StoryCardsViewModel
 import com.diegonmarcos.mediacenter.feature_node.presentation.storycards.components.StoryCardsRow
+import com.diegonmarcos.mediacenter.feature_node.presentation.timeline.components.GroupBySheet
 import com.diegonmarcos.mediacenter.feature_node.presentation.timeline.components.TimelineFilterSheet
 import com.diegonmarcos.mediacenter.feature_node.presentation.timeline.components.TimelineNavActions
 import com.diegonmarcos.mediacenter.feature_node.presentation.util.LocalHazeState
@@ -148,6 +151,11 @@ fun TimelineScreen(
     // Filter state. The Timeline tab opens on the Camera folder and keeps the user's choice; a bucket
     // tab (Screenshots, Downloads, Camera) passes a fixed filter and shows no filter control.
     var storedFilter by rememberTimelineFilterText()
+    // Group by (bucket tabs only): one choice per page, kept across launches.
+    val groupById = scrollToTopRoute
+    var groupByText by Settings.Misc.rememberGroupBy(groupById)
+    val groupBy = remember(groupByText) { GroupBy.entries.firstOrNull { it.name == groupByText } ?: GroupBy.NONE }
+    val groupBySheetState = rememberAppBottomSheetState()
     val timelineFilter = fixedFilter ?: remember(storedFilter) { TimelineFilterCodec.decode(storedFilter) }
     val filterSheetState = rememberAppBottomSheetState()
 
@@ -168,8 +176,10 @@ fun TimelineScreen(
     }
 
     val geoIds = remember(metadataState.value.metadata) { geoTaggedIds(metadataState.value.metadata) }
-    val filteredMediaState: State<MediaState<Media.UriMedia>> = remember(mediaState, timelineFilter, geoIds) {
-        derivedStateOf { mediaState.value.filteredBy(timelineFilter, geoIds) }
+    val filteredMediaState: State<MediaState<Media.UriMedia>> = remember(mediaState, timelineFilter, geoIds, groupBy) {
+        derivedStateOf {
+            mediaState.value.filteredBy(timelineFilter, geoIds).let { if (fixedFilter != null && groupBy == GroupBy.KIND) it.groupedByKind() else it }
+        }
     }
     var lastSeenVersion by rememberLastSeenVersion()
     val showWhatsNew = remember(lastSeenVersion) { lastSeenVersion != BuildConfig.VERSION_NAME.substringBefore(" (sha-") }
@@ -265,6 +275,25 @@ fun TimelineScreen(
                                 }
                             }
                         }
+                    } else if (fixedFilter != null) {
+                        {
+                            Box {
+                                IconButton(onClick = { refreshScope.launch { groupBySheetState.show() } }) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Category,
+                                        contentDescription = stringResource(R.string.group_by_title),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                if (groupBy != GroupBy.NONE) {
+                                    Badge(
+                                        modifier = Modifier.align(Alignment.TopEnd).padding(4.dp),
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                }
+                            }
+                        }
                     } else null,
                 )
             }
@@ -290,6 +319,7 @@ fun TimelineScreen(
                     },
                     emptyContent = { EmptyMedia() },
                     scrollToTopRoute = scrollToTopRoute,
+                    forceHeaders = fixedFilter != null && groupBy == GroupBy.KIND,
                 )
             }
         }
@@ -304,6 +334,11 @@ fun TimelineScreen(
         )
     }
 
+    if (fixedFilter != null) GroupBySheet(
+        sheetState = groupBySheetState,
+        current = groupBy,
+        onChoose = { groupByText = it.name },
+    )
     if (fixedFilter == null) TimelineFilterSheet(
         sheetState = filterSheetState,
         currentFilter = timelineFilter,

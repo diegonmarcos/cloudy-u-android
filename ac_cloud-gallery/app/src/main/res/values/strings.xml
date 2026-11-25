@@ -1928,6 +1928,16 @@
     <string name="shell_permission_allow">Allow</string>
     <string name="shell_permission_settings">App settings</string>
     <string name="shell_count_photos">%1$d photos</string>
+    <string name="filter_albums">Albums</string>
+    <string name="filter_select_all">Select All</string>
+    <string name="filter_unselect_all">Unselect All</string>
+    <string name="source_emulated">Emulated</string>
+    <string name="source_external">External</string>
+    <string name="source_app">App</string>
+    <string name="shell_home_sources">Sources</string>
+    <string name="group_by_title">Group by</string>
+    <string name="group_by_none">None</string>
+    <string name="group_by_kind">Kind (GIF, Images, Videos)</string>
     <string name="shell_home_empty_title">No photos yet</string>
     <string name="shell_home_empty_body">Photos and videos on this phone appear here.</string>
     <string name="shell_home_summary">%1$d photos and videos, %2$d favourites</string>

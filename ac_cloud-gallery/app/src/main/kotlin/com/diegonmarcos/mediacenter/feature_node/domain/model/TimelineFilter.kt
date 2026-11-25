@@ -13,7 +13,7 @@ import kotlinx.serialization.json.Json
  * Represents the set of active filters applied to the timeline.
  * Each field that is null/empty means "no filter for this category".
  *
- * The Timeline tab opens on [CAMERA_DEFAULT] (the Camera folder only) and keeps whatever the
+ * The All tab (ex Timeline) opens on [ALL_DEFAULT] (every source, every folder; [CAMERA_DEFAULT] is the old Camera-only default) and keeps whatever the
  * user chose afterwards ([TimelineFilterCodec] is the persisted form).
  */
 @Stable
@@ -29,6 +29,8 @@ data class TimelineFilter(
     val dateFromSec: Long? = null,
     val dateToSec: Long? = null,
     val location: LocationFilter = LocationFilter.ANY,
+    /** Storage source: All | Emulated | External | App. */
+    val source: SourceFilter = SourceFilter.ALL,
 ) {
     val isActive: Boolean
         get() = mediaType != MediaTypeFilter.ALL ||
@@ -38,7 +40,8 @@ data class TimelineFilter(
                 folders.isNotEmpty() ||
                 dateFromSec != null ||
                 dateToSec != null ||
-                location != LocationFilter.ANY
+                location != LocationFilter.ANY ||
+                source != SourceFilter.ALL
 
     /** True when [media] passes every active criterion. */
     fun matches(media: FilterableMedia): Boolean {
@@ -52,6 +55,7 @@ data class TimelineFilter(
         if (selectedYears.isNotEmpty() && media.year !in selectedYears) return false
         if (selectedAlbumIds.isNotEmpty() && media.albumId !in selectedAlbumIds) return false
         if (folders.isNotEmpty() && folders.none { it.equals(media.bucket, ignoreCase = true) }) return false
+        if (!source.accepts(media.source)) return false
         if (dateFromSec != null && media.takenSec < dateFromSec) return false
         if (dateToSec != null && media.takenSec > dateToSec) return false
         return when (location) {
@@ -66,7 +70,10 @@ data class TimelineFilter(
         const val SCREENSHOTS_BUCKET = "Screenshots"
         const val DOWNLOADS_BUCKET = "Download"
 
-        /** What the Timeline tab shows until the user changes it: the Camera folder only. */
+        /** What the All tab (formerly Timeline) shows until the user changes it: every source, every folder. */
+        val ALL_DEFAULT = TimelineFilter()
+
+        /** What the Timeline tab opened on before it became All: the Camera folder only. */
         val CAMERA_DEFAULT = TimelineFilter(folders = setOf(CAMERA_BUCKET))
 
         /** The fixed filter behind a single-bucket tab (Screenshots, Downloads, Camera). */
@@ -99,10 +106,19 @@ data class FilterableMedia(
     val takenSec: Long,
     val year: Int,
     val hasLocation: Boolean,
+    val source: StorageSource = StorageSource.EMULATED,
 )
 
 /** The bucket (folder) name of a MediaStore RELATIVE_PATH: `DCIM/Camera/` -> `Camera`. */
 fun bucketOf(relativePath: String): String = relativePath.trim('/').substringAfterLast('/')
+
+/** Select All / Unselect All of the folder list: selecting every listed folder, or none (no folder restriction). */
+object FolderSelection {
+    fun selectAll(available: Collection<String>): Set<String> = available.toSet()
+    fun unselectAll(): Set<String> = emptySet()
+    fun isAllSelected(selected: Set<String>, available: Collection<String>): Boolean =
+        available.isNotEmpty() && available.all { a -> selected.any { it.equals(a, ignoreCase = true) } }
+}
 
 /** The persisted form of [TimelineFilter]: JSON in one DataStore string. Anything unreadable falls back to the default. */
 object TimelineFilterCodec {
@@ -111,8 +127,8 @@ object TimelineFilterCodec {
     fun encode(filter: TimelineFilter): String = json.encodeToString(TimelineFilter.serializer(), filter)
 
     fun decode(text: String?): TimelineFilter =
-        if (text.isNullOrBlank()) TimelineFilter.CAMERA_DEFAULT
-        else runCatching { json.decodeFromString(TimelineFilter.serializer(), text) }.getOrDefault(TimelineFilter.CAMERA_DEFAULT)
+        if (text.isNullOrBlank()) TimelineFilter.ALL_DEFAULT
+        else runCatching { json.decodeFromString(TimelineFilter.serializer(), text) }.getOrDefault(TimelineFilter.ALL_DEFAULT)
 }
 
 /** The date-range filter's conversions between the picker (UTC-midnight millis of a calendar day) and the filter (epoch seconds in the device's zone). */

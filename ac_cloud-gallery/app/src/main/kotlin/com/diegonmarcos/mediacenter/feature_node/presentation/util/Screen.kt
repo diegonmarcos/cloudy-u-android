@@ -6,9 +6,10 @@
 package com.diegonmarcos.mediacenter.feature_node.presentation.util
 
 sealed class Screen(val route: String) {
-    data object TimelineScreen : Screen("timeline_screen")
+    /** The All tab (ex Timeline). The old route id "timeline_screen" is an alias, see shell/GalleryAliases. */
+    data object TimelineScreen : Screen("all_screen")
 
-    // The other bottom-nav tabs (build.json::ui.bottom_nav): Screenshots, Downloads, Camera, Home, Timeline, Maps, Objects.
+    // The other bottom-nav tabs (build.json::ui.bottom_nav): Screenshots, Downloads, Camera, Home, All, Maps, Objects.
     data object ScreenshotsTabScreen : Screen("tab_screenshots")
     data object DownloadsTabScreen : Screen("tab_downloads")
     data object CameraTabScreen : Screen("tab_camera")

@@ -411,17 +411,34 @@ object Settings {
         fun rememberLastScreen() =
             rememberPreference(key = LAST_SCREEN, defaultValue = Screen.HomeTabScreen())
 
-        private val TIMELINE_FILTER = stringPreferencesKey("timeline_filter_v1")
+        private val TIMELINE_FILTER = stringPreferencesKey("timeline_filter_v2")
 
-        /** The Timeline tab's filter as [com.diegonmarcos.mediacenter.feature_node.domain.model.TimelineFilterCodec] text; blank = the Camera-only default. */
+        /** The All tab's filter as [com.diegonmarcos.mediacenter.feature_node.domain.model.TimelineFilterCodec] text; v2 so the old Camera-only choice gives way to the all-sources, all-folders default. */
         @Composable
         fun rememberTimelineFilterText() =
             rememberPreference(
                 key = TIMELINE_FILTER,
                 defaultValue = com.diegonmarcos.mediacenter.feature_node.domain.model.TimelineFilterCodec.encode(
-                    com.diegonmarcos.mediacenter.feature_node.domain.model.TimelineFilter.CAMERA_DEFAULT
+                    com.diegonmarcos.mediacenter.feature_node.domain.model.TimelineFilter.ALL_DEFAULT
                 )
             )
+
+        private val SOURCE_SELECTION = stringPreferencesKey("storage_sources_v1")
+
+        /** Home's source selector as [com.diegonmarcos.mediacenter.feature_node.domain.model.SourceSelection] text; every source by default. */
+        @Composable
+        fun rememberSourceSelectionText() =
+            rememberPreference(
+                key = SOURCE_SELECTION,
+                defaultValue = com.diegonmarcos.mediacenter.feature_node.domain.model.SourceSelection.encode(
+                    com.diegonmarcos.mediacenter.feature_node.domain.model.SourceSelection.ALL
+                )
+            )
+
+        /** The Group by choice of a bucket page ([com.diegonmarcos.mediacenter.feature_node.domain.model.GroupBy] name), one per page id. */
+        @Composable
+        fun rememberGroupBy(pageId: String) =
+            rememberPreference(key = stringPreferencesKey("group_by_v1_$pageId"), defaultValue = com.diegonmarcos.mediacenter.feature_node.domain.model.GroupBy.NONE.name)
 
         private val LAST_SEEN_VERSION = stringPreferencesKey("last_seen_version")
 

@@ -1,0 +1,80 @@
+# Cloud Gallery mutation runs (#1910): each job applies ONE deliberate break to the source classifier, Select All, the rename alias,
+# the kind grouping, the Source filter or the All label, then runs the app's JVM suite. The job is GREEN when the suite goes RED
+# (the mutation is caught) and RED when the suite stays green (the suite is blind). Manual only.
+name: gallery-mutation
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  WORK_DIR: ac_cloud-gallery
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [source-app-media, source-primary-volume, select-all, alias-route, group-order, group-count, source-filter, all-label]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply mutation ${{ matrix.name }}
+        run: |
+          M=ac_cloud-gallery/app/src/main/kotlin/com/diegonmarcos/mediacenter
+          case "${{ matrix.name }}" in
+            source-app-media)      sed -i 's/it == "data" || it == "media"/it == "data"/' $M/feature_node/domain/model/StorageSource.kt ;;
+            source-primary-volume) sed -i 's/private const val PRIMARY_VOLUME = "external_primary"/private const val PRIMARY_VOLUME = "none"/' $M/feature_node/domain/model/StorageSource.kt ;;
+            select-all)            sed -i 's/fun selectAll(available: Collection<String>): Set<String> = available.toSet()/fun selectAll(available: Collection<String>): Set<String> = emptySet()/' $M/feature_node/domain/model/TimelineFilter.kt ;;
+            alias-route)           sed -i 's/"timeline_screen" to Screen.TimelineScreen.route/"timeline_screen_x" to Screen.TimelineScreen.route/' $M/shell/GalleryTabs.kt ;;
+            group-order)           sed -i 's/MediaKind.entries.mapNotNull/MediaKind.entries.reversed().mapNotNull/' $M/feature_node/domain/model/MediaKind.kt ;;
+            group-count)           sed -i 's/"${kind.label} (${items.size})"/"${kind.label} (${items.size + 1})"/' $M/feature_node/domain/model/MediaKind.kt ;;
+            source-filter)         sed -i '/if (!source.accepts(media.source)) return false/d' $M/feature_node/domain/model/TimelineFilter.kt ;;
+            all-label)             sed -i 's/"label": "All"/"label": "Timeline"/' ac_cloud-gallery/build.json ;;
+            *) echo "unknown mutation"; exit 2 ;;
+          esac
+          git diff --stat
+          # a mutation that changed nothing would prove nothing
+          test -n "$(git diff --name-only)" || { echo "mutation target missing"; exit 3; }
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-37.1 platforms;android-37.0 platforms;android-35 platforms;android-34 platforms;android-26 build-tools;37.0.0 build-tools;35.0.0 build-tools;34.0.0 platform-tools ndk;29.0.14033849 cmake;3.31.6"
+      - name: Set up Gradle 8.10.2 (cached)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.10.2"
+      # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
+      # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
+      - name: Checkout vault (shared Android signing key, read by app/build.gradle at configuration)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+      - name: Install ORAS + sops (pinned)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: oras sops
+      - name: JVM unit tests (RED expected)
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+        run: |
+          if sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR"; then
+            echo "BLIND: the suite stayed green under mutation ${{ matrix.name }}"; exit 1
+          fi
+          echo "CAUGHT: the suite went red under mutation ${{ matrix.name }}"
+      - name: Failed tests (the evidence)
+        if: always()
+        run: grep -rl "<failure" --include="TEST-*.xml" ac_cloud-gallery/app/build 2>/dev/null | xargs -r grep -h -o 'testcase name="[^"]*"' | head -40 || true

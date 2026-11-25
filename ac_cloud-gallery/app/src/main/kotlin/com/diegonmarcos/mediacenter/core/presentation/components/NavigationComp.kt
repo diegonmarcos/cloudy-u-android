@@ -31,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -157,6 +158,11 @@ import com.diegonmarcos.mediacenter.feature_node.presentation.storycards.StoryCa
 import com.diegonmarcos.mediacenter.feature_node.presentation.storycards.StoryViewerScreen
 import com.diegonmarcos.mediacenter.feature_node.presentation.timeline.TimelineScreen
 import com.diegonmarcos.mediacenter.feature_node.domain.model.TimelineFilter
+import com.diegonmarcos.mediacenter.feature_node.domain.model.SourceSelection
+import com.diegonmarcos.mediacenter.feature_node.domain.model.StorageSource
+import com.diegonmarcos.mediacenter.feature_node.domain.model.StorageSources
+import com.diegonmarcos.mediacenter.feature_node.presentation.timeline.fromSources
+import com.diegonmarcos.mediacenter.shell.GalleryAliases
 import com.diegonmarcos.mediacenter.shell.GalleryTab
 import com.diegonmarcos.mediacenter.shell.HomeScreen
 import com.diegonmarcos.mediacenter.shell.MapsTabScreen
@@ -204,7 +210,7 @@ fun NavigationComp(
         mutableStateOf(
             if (permissionState && !setupNeeded) {
                 // A saved screen that is no longer a tab (Albums, Library) opens Home instead.
-                if (GalleryTab.isTabRoute(lastStartScreen)) lastStartScreen else Screen.HomeTabScreen()
+                if (GalleryTab.isTabRoute(lastStartScreen)) GalleryAliases.route(lastStartScreen)!! else Screen.HomeTabScreen()
             } else Screen.SetupScreen()
         )
     }
@@ -248,12 +254,26 @@ fun NavigationComp(
 
     // Preloaded viewModels
     val distributor = LocalMediaDistributor.current
-    val albumsState = navViewModel.albumsState.collectAsStateWithLifecycle()
+    val allAlbumsState = navViewModel.albumsState.collectAsStateWithLifecycle()
     val localTimelineState = navViewModel.timelineMediaState.collectAsStateWithLifecycle()
+    // Home's source selector (Emulated, External, App) feeds every page: the pages below read through it.
+    val sourceText by Settings.Misc.rememberSourceSelectionText()
+    val sources = remember(sourceText) { SourceSelection.decode(sourceText) }
+    val albumsState = remember(allAlbumsState, sources) {
+        derivedStateOf {
+            if (sources.size == StorageSource.entries.size) allAlbumsState.value
+            else allAlbumsState.value.let { s ->
+                fun List<Album>.pick() = filter { StorageSources.classify(it.pathToThumbnail.ifBlank { it.relativePath }) in sources }
+                s.copy(albums = s.albums.pick(), albumsWithBlacklisted = s.albumsWithBlacklisted.pick(), albumsUnpinned = s.albumsUnpinned.pick(), albumsPinned = s.albumsPinned.pick())
+            }
+        }
+    }
     val metadataState = navViewModel.metadataState.collectAsStateWithLifecycle()
     val vaultState = navViewModel.vaultState.collectAsStateWithLifecycle()
 
-    val timelineState = localTimelineState
+    val timelineState = remember(localTimelineState, sources) {
+        derivedStateOf { localTimelineState.value.fromSources(sources) }
+    }
 
     LaunchedEffect(permissionState) {
         navViewModel.updatePermissionGranted(permissionState)

@@ -161,16 +161,16 @@ class TimelineFilterTest {
     }
 
     @Test
-    fun nothingStoredMeansTheCameraDefault() {
-        assertEquals(TimelineFilter.CAMERA_DEFAULT, TimelineFilterCodec.decode(null))
-        assertEquals(TimelineFilter.CAMERA_DEFAULT, TimelineFilterCodec.decode(""))
+    fun nothingStoredMeansTheAllDefault() {
+        assertEquals(TimelineFilter.ALL_DEFAULT, TimelineFilterCodec.decode(null))
+        assertEquals(TimelineFilter.ALL_DEFAULT, TimelineFilterCodec.decode(""))
         assertEquals(TimelineFilter.CAMERA_DEFAULT, TimelineFilterCodec.decode(TimelineFilterCodec.encode(TimelineFilter.CAMERA_DEFAULT)))
     }
 
     @Test
-    fun unreadableStoredTextFallsBackToTheCameraDefault() {
-        assertEquals(TimelineFilter.CAMERA_DEFAULT, TimelineFilterCodec.decode("{not json"))
-        assertEquals(TimelineFilter.CAMERA_DEFAULT, TimelineFilterCodec.decode("""{"mediaType":"HOLOGRAMS"}"""))
+    fun unreadableStoredTextFallsBackToTheAllDefault() {
+        assertEquals(TimelineFilter.ALL_DEFAULT, TimelineFilterCodec.decode("{not json"))
+        assertEquals(TimelineFilter.ALL_DEFAULT, TimelineFilterCodec.decode("""{"mediaType":"HOLOGRAMS"}"""))
     }
 
     @Test

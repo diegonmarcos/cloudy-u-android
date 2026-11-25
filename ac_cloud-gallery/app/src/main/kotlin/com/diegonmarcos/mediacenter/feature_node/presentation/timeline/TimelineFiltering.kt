@@ -9,7 +9,11 @@ import com.diegonmarcos.mediacenter.feature_node.domain.model.FilterableMedia
 import com.diegonmarcos.mediacenter.feature_node.domain.model.Media
 import com.diegonmarcos.mediacenter.feature_node.domain.model.MediaItem
 import com.diegonmarcos.mediacenter.feature_node.domain.model.MediaMetadata
+import com.diegonmarcos.mediacenter.feature_node.domain.model.MediaKind
 import com.diegonmarcos.mediacenter.feature_node.domain.model.MediaState
+import com.diegonmarcos.mediacenter.feature_node.domain.model.StorageSource
+import com.diegonmarcos.mediacenter.feature_node.domain.model.StorageSources
+import com.diegonmarcos.mediacenter.feature_node.domain.model.groupByKind
 import com.diegonmarcos.mediacenter.feature_node.domain.model.TimelineFilter
 import com.diegonmarcos.mediacenter.feature_node.domain.model.bucketOf
 import com.diegonmarcos.mediacenter.feature_node.domain.util.isFavorite
@@ -36,6 +40,7 @@ fun Media.UriMedia.toFilterable(geoIds: Set<Long>, needYear: Boolean): Filterabl
         takenSec = taken,
         year = year,
         hasLocation = id in geoIds,
+        source = StorageSources.classify(path.ifBlank { relativePath }),
     )
 }
 
@@ -46,7 +51,16 @@ fun Media.UriMedia.toFilterable(geoIds: Set<Long>, needYear: Boolean): Filterabl
 fun MediaState<Media.UriMedia>.filteredBy(filter: TimelineFilter, geoIds: Set<Long>): MediaState<Media.UriMedia> {
     if (!filter.isActive) return this
     val needYear = filter.selectedYears.isNotEmpty()
-    val kept = media.filter { filter.matches(it.toFilterable(geoIds, needYear)) }
+    return keeping { filter.matches(it.toFilterable(geoIds, needYear)) }
+}
+
+/** [this] narrowed to the media in the Home-selected [sources]; every page reads through this. */
+fun MediaState<Media.UriMedia>.fromSources(sources: Set<StorageSource>): MediaState<Media.UriMedia> =
+    if (sources.size == StorageSource.entries.size) this
+    else keeping { StorageSources.classify(it.path.ifBlank { it.relativePath }) in sources }
+
+private fun MediaState<Media.UriMedia>.keeping(accept: (Media.UriMedia) -> Boolean): MediaState<Media.UriMedia> {
+    val kept = media.filter(accept)
     val keptIds = kept.mapTo(HashSet(kept.size)) { it.id }
     fun List<MediaItem<Media.UriMedia>>.narrow(): List<MediaItem<Media.UriMedia>> = filter { item ->
         when (item) {
@@ -61,5 +75,23 @@ fun MediaState<Media.UriMedia>.filteredBy(filter: TimelineFilter, geoIds: Set<Lo
         mappedMediaWithMonthly = mappedMediaWithMonthly.narrow(),
         mappedMediaWithYearly = mappedMediaWithYearly.narrow(),
         headers = headers.filter { header -> header.data.any { it in keptIds } },
+    )
+}
+
+/** [this] regrouped into one section per media kind (GIF, Images, Videos, ...), each with a header carrying its count. */
+fun MediaState<Media.UriMedia>.groupedByKind(): MediaState<Media.UriMedia> {
+    val groups = groupByKind(media) { MediaKind.of(it.mimeType, it.label) }
+    val headers = groups.map { g ->
+        MediaItem.Header<Media.UriMedia>("header_kind_${g.kind.name}", g.header, g.items.mapTo(HashSet(g.items.size)) { it.id })
+    }
+    val mapped = groups.flatMapIndexed { i, g ->
+        listOf<MediaItem<Media.UriMedia>>(headers[i]) + g.items.map { MediaItem.MediaViewItem("media_${it.id}_${it.label}", it) }
+    }
+    return copy(
+        media = groups.flatMap { it.items },
+        mappedMedia = mapped,
+        mappedMediaWithMonthly = mapped,
+        mappedMediaWithYearly = mapped,
+        headers = headers,
     )
 }

@@ -165,11 +165,16 @@
       "downloads",
       "camera",
       "home",
-      "timeline",
+      "all",
       "maps",
       "objects"
     ],
     "default_section": "home",
+    "aliases": {
+      "_doc": "#1910 Timeline was renamed All. The old ids keep working: sections.timeline -> all (stored section ids), routes.timeline_screen -> all_screen (the persisted last screen). shell/GalleryAliases is the Kotlin side; GalleryTabsTest holds the two together.",
+      "sections": {"timeline": "all"},
+      "routes": {"timeline_screen": "all_screen"}
+    },
     "configs_ui": ["nav_ui"],
     "sections": [
       {
@@ -193,8 +198,8 @@
         "icon": "home"
       },
       {
-        "id": "timeline",
-        "label": "Timeline",
+        "id": "all",
+        "label": "All",
         "icon": "timeline"
       },
       {
@@ -271,7 +276,9 @@
       "description": "Cloud Gallery is the photo and video gallery of the fleet, forked from an open-source MediaStore gallery. Beyond albums it has a timeline of every photo, a map of photos by place, and on-device recognition of faces, scenes, text and documents — recognition runs on the phone through the fleet's image engine, never in a cloud service. It exists so personal photos are browsed and searched without handing them to a third party.",
       "features": [
         "Screenshots, downloads and camera albums",
-        "Timeline of every photo",
+        "All: every photo and video by date, with source and folder filters",
+        "Home source selector: Emulated, External, App",
+        "Group by kind (GIF, Images, Videos) on Screenshots, Downloads and Camera",
         "Map of photos by place",
         "On-device faces, scenes, text and documents",
         "Screenshots and downloads as their own albums"
@@ -294,8 +301,8 @@
           "what": "Albums."
         },
         {
-          "name": "Timeline",
-          "what": "Every photo by date."
+          "name": "All",
+          "what": "Every photo by date, from all sources and folders; filter by source and folder."
         },
         {
           "name": "Maps",
@@ -308,7 +315,7 @@
       ],
       "guide": [
         "Grant Photos and Videos so the gallery can read them.",
-        "Use Timeline to scroll by date.",
+        "Use All to scroll every photo by date.",
         "Open Maps to find photos by place.",
         "Open Objects to search by what is in a photo."
       ],

@@ -22,12 +22,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material3.Card
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,12 +43,15 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.diegonmarcos.mediacenter.R
 import com.diegonmarcos.mediacenter.core.LocalEventHandler
+import com.diegonmarcos.mediacenter.core.Settings
 import com.diegonmarcos.mediacenter.core.navigate
 import com.diegonmarcos.mediacenter.feature_node.domain.model.Album
 import com.diegonmarcos.mediacenter.feature_node.domain.model.AlbumState
 import com.diegonmarcos.mediacenter.feature_node.domain.model.Media
 import com.diegonmarcos.mediacenter.feature_node.domain.model.MediaMetadataState
 import com.diegonmarcos.mediacenter.feature_node.domain.model.MediaState
+import com.diegonmarcos.mediacenter.feature_node.domain.model.SourceSelection
+import com.diegonmarcos.mediacenter.feature_node.domain.model.StorageSource
 import com.diegonmarcos.mediacenter.feature_node.domain.util.getUri
 import com.diegonmarcos.mediacenter.feature_node.domain.util.isFavorite
 import com.diegonmarcos.mediacenter.feature_node.presentation.storycards.StoryCardsViewModel
@@ -80,12 +85,21 @@ fun HomeScreen(
     val recent = remember(media) { media.take(RECENT_COUNT) }
     val albums = remember(albumsState.value.albums) { albumsState.value.albums.take(ALBUM_COUNT) }
 
+    var sourceText by Settings.Misc.rememberSourceSelectionText()
+    val sources = remember(sourceText) { SourceSelection.decode(sourceText) }
+    val sourceSelector: @Composable () -> Unit = {
+        SourceSelector(sources) { sourceText = SourceSelection.encode(SourceSelection.toggle(sources, it)) }
+    }
+
     if (media.isEmpty() && !mediaState.value.isLoading) {
-        ShellEmptyState(
-            icon = Icons.Outlined.PhotoLibrary,
-            title = stringResource(R.string.shell_home_empty_title),
-            body = stringResource(R.string.shell_home_empty_body),
-        )
+        Column {
+            sourceSelector()
+            ShellEmptyState(
+                icon = Icons.Outlined.PhotoLibrary,
+                title = stringResource(R.string.shell_home_empty_title),
+                body = stringResource(R.string.shell_home_empty_body),
+            )
+        }
         return
     }
 
@@ -93,6 +107,7 @@ fun HomeScreen(
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        item { sourceSelector() }
         item {
             Text(
                 stringResource(R.string.shell_home_summary, media.size, favourites),
@@ -141,6 +156,35 @@ fun HomeScreen(
         }
         item { SyncCard(sync) }
         item { IndexCard(index) }
+    }
+}
+
+/** The top multi-select of the storage sources (Emulated, External, App) every page reads from. */
+@Composable
+private fun SourceSelector(selected: Set<StorageSource>, onToggle: (StorageSource) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+    ) {
+        Text(stringResource(R.string.shell_home_sources), style = MaterialTheme.typography.titleSmall)
+        StorageSource.entries.forEach { source ->
+            FilterChip(
+                selected = source in selected,
+                onClick = { onToggle(source) },
+                label = {
+                    Text(
+                        stringResource(
+                            when (source) {
+                                StorageSource.EMULATED -> R.string.source_emulated
+                                StorageSource.EXTERNAL -> R.string.source_external
+                                StorageSource.APP -> R.string.source_app
+                            }
+                        )
+                    )
+                },
+            )
+        }
     }
 }
 

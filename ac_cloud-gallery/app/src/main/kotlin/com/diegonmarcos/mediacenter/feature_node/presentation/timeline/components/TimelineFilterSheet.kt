@@ -45,7 +45,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.diegonmarcos.mediacenter.R
 import com.diegonmarcos.mediacenter.feature_node.domain.model.Album
+import com.diegonmarcos.mediacenter.feature_node.domain.model.FolderSelection
 import com.diegonmarcos.mediacenter.feature_node.domain.model.LocationFilter
+import com.diegonmarcos.mediacenter.feature_node.domain.model.SourceFilter
 import com.diegonmarcos.mediacenter.feature_node.domain.model.MediaTypeFilter
 import com.diegonmarcos.mediacenter.feature_node.domain.model.TimelineDates
 import com.diegonmarcos.mediacenter.feature_node.domain.model.TimelineFilter
@@ -157,6 +159,29 @@ fun TimelineFilterSheet(
                         )
                     }
 
+                    // Storage source section: All | Emulated | External | App
+                    FilterSectionHeader(stringResource(R.string.filter_source))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    ) {
+                        SourceFilter.entries.forEach { option ->
+                            FilterChip(
+                                label = stringResource(
+                                    when (option) {
+                                        SourceFilter.ALL -> R.string.filter_all
+                                        SourceFilter.EMULATED -> R.string.source_emulated
+                                        SourceFilter.EXTERNAL -> R.string.source_external
+                                        SourceFilter.APP -> R.string.source_app
+                                    }
+                                ),
+                                selected = filter.source == option,
+                                onClick = { filter = filter.copy(source = option) }
+                            )
+                        }
+                    }
+
                     // Folder (bucket) section
                     if (availableBuckets.isNotEmpty()) {
                         FilterSectionHeader(stringResource(R.string.filter_folder))
@@ -165,6 +190,16 @@ fun TimelineFilterSheet(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.padding(bottom = 16.dp)
                         ) {
+                            FilterChip(
+                                label = stringResource(R.string.filter_select_all),
+                                selected = FolderSelection.isAllSelected(filter.folders, availableBuckets),
+                                onClick = { filter = filter.copy(folders = FolderSelection.selectAll(availableBuckets)) }
+                            )
+                            FilterChip(
+                                label = stringResource(R.string.filter_unselect_all),
+                                selected = filter.folders.isEmpty(),
+                                onClick = { filter = filter.copy(folders = FolderSelection.unselectAll()) }
+                            )
                             availableBuckets.forEach { bucket ->
                                 FilterChip(
                                     label = bucket,
@@ -249,7 +284,7 @@ fun TimelineFilterSheet(
 
                     // Source (Albums) section
                     if (availableAlbums.isNotEmpty()) {
-                        FilterSectionHeader(stringResource(R.string.filter_source))
+                        FilterSectionHeader(stringResource(R.string.filter_albums))
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -307,7 +342,7 @@ fun TimelineFilterSheet(
 }
 
 @Composable
-private fun FilterSectionHeader(title: String) {
+internal fun FilterSectionHeader(title: String) {
     Text(
         text = title,
         style = MaterialTheme.typography.titleSmall,
@@ -318,7 +353,7 @@ private fun FilterSectionHeader(title: String) {
 }
 
 @Composable
-private fun FilterChip(
+internal fun FilterChip(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
