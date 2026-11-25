@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.provider.Settings
 import android.provider.Telephony
 import android.telecom.TelecomManager
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import com.diegonmarcos.superapp.shellclient.ShellClient
 import com.diegonmarcos.superapp.shellclient.ShellResult
 import java.io.File
@@ -50,8 +51,10 @@ object BgAudit {
 
 /** The Android side of the policy: the declaration, the installed apps, the device's roles, the shell and the engine over them. */
 object BgHost {
-    fun config(ctx: Context): BgConfig =
-        BgConfig.parse(ctx.applicationContext.assets.open("bg-policy.json").bufferedReader().use { it.readText() })
+    /** #1566 the declaration names fleet prefixes and essential packages: a fleet-private dataset, the last-known-good copy of Cloud Account's route; null = not served yet, so nothing is restricted. */
+    const val DATASET = "fleet/bg-policy"
+    fun config(ctx: Context): BgConfig? =
+        runCatching { FleetData.get(ctx.applicationContext, DATASET) { BgConfig.parse(it) } }.getOrNull()
 
     fun shell(ctx: Context): BgShell? {
         val app = ctx.applicationContext
@@ -91,7 +94,7 @@ object BgHost {
         return out
     }
 
-    fun essential(ctx: Context, cfg: BgConfig = config(ctx)) =
+    fun essential(ctx: Context, cfg: BgConfig) =
         BgEssential(cfg, roles(ctx, cfg), ctx.packageName, EssentialSelfPolicy.protectedSelf(ctx))   // #1602 honour the self-essential flag
 
     /** Receivers and services the package declares, as class names. */
@@ -106,7 +109,7 @@ object BgHost {
         st == PackageManager.COMPONENT_ENABLED_STATE_ENABLED || st == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
     }.getOrDefault(true)
 
-    fun engine(ctx: Context, shell: BgShell? = shell(ctx), cfg: BgConfig = config(ctx)): BgEngine {
+    fun engine(ctx: Context, shell: BgShell? = shell(ctx), cfg: BgConfig): BgEngine {
         val app = ctx.applicationContext
         return BgEngine(shell, essential(app, cfg), BgStore(BgPrefsKv(app)), { BgAudit.append(app, it) },
             componentEnabled = { p, c -> runCatching { isEnabled(app, p, c) }.getOrNull() })

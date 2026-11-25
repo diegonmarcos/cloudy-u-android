@@ -324,3 +324,5 @@ ac_cloud-nix-on-droid/app/release.jks
 ## Python bytecode: an engine/tester import must never surface as generated-output drift.
 __pycache__/
 *.py[cod]
+.fleet-private/
+fleet-private-data/

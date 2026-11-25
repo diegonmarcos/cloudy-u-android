@@ -57,8 +57,10 @@ fun BatteryHungerPanel(activity: Activity) {
         Thread({
             try {
                 val shell = BgUi.ensureShell(activity, dialogs)
-                if (shell == null) status = "ADB shell not connected: nothing was changed."
-                else work(BgHost.engine(activity, shell), BgHost.config(activity))
+                val cfg = BgHost.config(activity)
+                if (cfg == null) status = "Fleet policy not served yet: ${BgOutcome.NOT_SERVED}."
+                else if (shell == null) status = "ADB shell not connected: nothing was changed."
+                else work(BgHost.engine(activity, shell, cfg), cfg)
             } catch (t: Throwable) { status = "Failed: ${t.message}" } finally { busy = false }
         }, "bg-policy").start()
     }

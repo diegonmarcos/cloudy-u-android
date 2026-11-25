@@ -42,7 +42,12 @@ object BgReplaced {
         val store = BgStore(BgPrefsKv(ctx))
         val targets = if (pkg != null) listOf(pkg).filter { store.choice(it) != null } else store.choices().keys.toList()
         if (targets.isEmpty()) return emptyList()
-        val engine = BgHost.engine(ctx)
+        val cfg = BgHost.config(ctx)
+        if (cfg == null) {
+            BgAudit.append(ctx, "bg-policy reapply skipped for ${targets.size} package(s): ${BgOutcome.NOT_SERVED}")
+            return emptyList()
+        }
+        val engine = BgHost.engine(ctx, cfg = cfg)
         if (!engine.available) {
             BgAudit.append(ctx, "bg-policy reapply skipped for ${targets.size} package(s): ${BgOutcome.NO_ADB}")
             return emptyList()

@@ -76,7 +76,7 @@ object SuperSavingRuntime {
     fun engine(ctx: Context, modeId: String, shell: BgShell?, journalKey: String = SuperSaving.K_SNAP): SuperSaving? = runCatching {
         val app = ctx.applicationContext
         val mode = LauncherModes.load().firstOrNull { it.id == modeId } ?: return null
-        val cfg = BgHost.config(app)
+        val cfg = BgHost.config(app) ?: return null
         SuperSaving(stepsOf(app, mode), shell, host(app), BgHost.engine(app, shell, cfg), cfg, BgPrefsKv(app), { BgAudit.append(app, it) },
             modeId = modeId, label = mode.label, tag = if (mode.engine == ENGINE) "super-saving" else "mode-$modeId", journalKey = journalKey)
     }.getOrNull()

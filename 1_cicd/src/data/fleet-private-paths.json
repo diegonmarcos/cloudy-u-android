@@ -1,5 +1,6 @@
 {
   "_doc": "#1566 fleet-private tier-2 datasets: the private copy (cloud-me-pvt-configs fleet-data/2/fleet/<dataset>.json) is materialised by CI into the path the build and the testers read. These paths are gitignored: the public repo never holds the content.",
   "datasets": {
+    "bg-policy": "fleet-private-data/bg-policy.json"
   }
 }

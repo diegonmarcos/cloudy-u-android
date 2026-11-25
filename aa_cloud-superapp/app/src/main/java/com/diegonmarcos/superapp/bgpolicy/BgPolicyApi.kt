@@ -16,7 +16,7 @@ object BgPolicyApi {
     /** `scope=fleet|all` (default fleet), `app=<pkg>` for one package. */
     fun get(ctx: Context, query: Map<String, String>): String {
         val app = ctx.applicationContext
-        val cfg = BgHost.config(app)
+        val cfg = BgHost.config(app) ?: return JSONObject().put("available", false).put("note", BgOutcome.NOT_SERVED).toString()
         val shell = BgHost.shell(app)
         val o = JSONObject().put("available", shell != null).put("channel", shell?.channel ?: "none")
             .put("super_saving_active", SuperSavingRuntime.active(app))
@@ -44,7 +44,7 @@ object BgPolicyApi {
         if (action !in setOf("allow", "restrict", "force_stop", "restrict_all", "restore", "disable", "enable")) return error("unknown action '$action'")
         if (needsApp && !Regex("[A-Za-z0-9_.]+").matches(pkg)) return error("missing or bad app")
         val shell = BgHost.shell(app) ?: return JSONObject().put("ok", false).put("skipped", true).put("note", BgOutcome.NO_ADB).toString()
-        val cfg = BgHost.config(app)
+        val cfg = BgHost.config(app) ?: return JSONObject().put("ok", false).put("skipped", true).put("note", BgOutcome.NOT_SERVED).toString()
         val e = BgHost.engine(app, shell, cfg)
         val outs: List<BgOutcome> = when (action) {
             "allow" -> listOf(e.allow(pkg))

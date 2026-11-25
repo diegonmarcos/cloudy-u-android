@@ -86,7 +86,7 @@ class BgFakeDevice(vararg apps: String) : BgShell {
     }
 
     companion object {
-        fun cfg() = BgConfig.parse(File("src/main/assets/bg-policy.json").readText())
+        fun cfg() = BgConfig.parse(File(System.getenv("FLEET_PRIVATE_DIR") ?: "../../fleet-private-data", "bg-policy.json").readText())
         fun kv() = object : BgKv {
             val m = HashMap<String, String>()
             override fun get(key: String) = m[key]

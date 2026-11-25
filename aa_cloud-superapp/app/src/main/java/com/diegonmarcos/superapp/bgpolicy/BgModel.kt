@@ -69,6 +69,7 @@ data class BgOutcome(
     val pkg: String, val action: BgAction, val ok: Boolean, val skipped: Boolean, val note: String, val after: BgState? = null,
 ) {
     companion object {
+        const val NOT_SERVED = "the fleet policy (fleet/bg-policy) is not served yet, nothing was changed"
         const val NO_ADB = "needs the ADB shell, which is not connected"
         fun noAdb(pkg: String, a: BgAction) = BgOutcome(pkg, a, ok = false, skipped = true, note = NO_ADB)
     }

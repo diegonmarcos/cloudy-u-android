@@ -5,7 +5,7 @@
 # The decisions (state machine, snapshot/restore, allowlist, no-ADB degradation) are JVM-tested against a fake phone in
 # app/src/test/.../bgpolicy/. This tester pins what makes them run, and the battery-safety rules of the feature:
 #
-#   T1  the declaration (assets/bg-policy.json) is valid and names the six essential roles and both fleet prefixes.
+#   T1  the declaration (fleet-private bg-policy.json) is valid and names the six essential roles and both fleet prefixes.
 #   T2  NOTHING polls or keeps alive: no WorkManager, AlarmManager, JobScheduler, Handler.postDelayed, Timer, foreground service,
 #       or loop in the feature's code. It runs on a tap, or once on PACKAGE_REPLACED.
 #   T3  no sp literal, no hand-made Text: the rows are KitStoreRowLine / KitStoreQuick and the ui-kit type ramp.
@@ -31,7 +31,7 @@ bad() { FAIL=$((FAIL+1)); echo "  FAIL: $1"; }
 
 SRC="$APP/app/src/main/java/com/diegonmarcos/superapp"
 BG="$SRC/bgpolicy"
-CFG="$APP/app/src/main/assets/bg-policy.json"
+CFG="${FLEET_PRIVATE_DIR:-$APP/../fleet-private-data}/bg-policy.json"   # #1566 fleet-private: CI materialises it
 for f in "$CFG" "$BG/BgEngine.kt" "$BG/BgCmd.kt" "$BG/BatteryHunger.kt" "$BG/BgReplacedReceiver.kt" "$BG/BgUi.kt"; do
   [ -f "$f" ] || { echo "FAIL: $f is missing, nothing here proves anything"; exit 1; }
 done
