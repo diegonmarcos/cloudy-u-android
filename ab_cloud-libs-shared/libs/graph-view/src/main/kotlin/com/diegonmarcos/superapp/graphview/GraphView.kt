@@ -26,6 +26,20 @@ import androidx.compose.ui.unit.sp
 
 /** Where a world point lands on screen under [scale] and [pan] with the view centred on [center]; and the way back. */
 object GraphCamera {
+    /**
+     * Where a node's label starts, or null when it would start outside the canvas. drawText lays the text out in the space
+     * left between this origin and the canvas edge; an origin at or past the right or bottom edge leaves negative room and
+     * Compose throws ("maxWidth must be >= than minWidth"), which crashed Cloud Wiki on zoom (2026-11-25). Off-screen labels
+     * are simply not drawn.
+     */
+    fun labelOrigin(node: Offset, radius: Float, width: Float, height: Float): Offset? {
+        val x = node.x + radius + 3f
+        val y = node.y - 7f
+        if (!x.isFinite() || !y.isFinite() || width <= 0f || height <= 0f) return null
+        if (x >= width - 1f || y >= height - 1f) return null
+        return Offset(x.coerceAtLeast(0f), y.coerceAtLeast(0f))
+    }
+
     fun toScreen(wx: Float, wy: Float, center: Offset, pan: Offset, scale: Float) = Offset(center.x + pan.x + wx * scale, center.y + pan.y + wy * scale)
     fun toWorld(p: Offset, center: Offset, pan: Offset, scale: Float) = Offset((p.x - center.x - pan.x) / scale, (p.y - center.y - pan.y) / scale)
 
@@ -155,7 +169,8 @@ fun GraphView(
             drawCircle(nodeColor(node), r, p)
             if (node.id == selectedId) drawCircle(labelColor, r + 4f, p, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f))
             if (node.id == selectedId || node.id == pressed || node.id in hubs || scale >= fitScale * 2.2f) {
-                drawText(measurer, node.label, Offset(p.x + r + 3f, p.y - 7f), style)
+                val at = GraphCamera.labelOrigin(p, r, size.width, size.height)
+                if (at != null) drawText(measurer, node.label, at, style)
             }
         }
     }
