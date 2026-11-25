@@ -37,8 +37,8 @@ fun HealthPage(pageId: String, modifier: Modifier = Modifier) {
         val env = HealthEnv(
             c, user,
             update = { f -> user = f(user).also { HealthUserStore.save(ctx, it) } },
-            go = { onTarget("page:health/$it") },
-            pageLabel = { Sections.byId("health")?.page(it)?.label ?: it },
+            go = { onTarget("page:pers/$it") },
+            pageLabel = { Sections.byId("pers")?.page(it)?.label ?: it },
         )
         when (pageId) {
             "home" -> HomePage(env)

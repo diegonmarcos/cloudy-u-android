@@ -41,8 +41,13 @@ data class LnktreeCacheConfig(
     /** "page" = the current page's files; "all" = every Lnktree cache file. */
     val hardRefreshScope: String,
     val excludePages: Set<String>,
+    /** #1901 every ui.sections id whose web pages are cached (the embedded sites are spread over Pers, Prof and Proj); empty = [section] alone. */
+    val sections: List<String> = emptyList(),
 ) {
     fun caches(pageId: String): Boolean = enabled && pageId !in excludePages
+
+    /** The sections whose pages are cached: the declared `sections`, else the one `section`. */
+    fun cachedSections(): List<String> = sections.ifEmpty { listOf(section) }
 
     companion object {
         const val DAY_MS = 24L * 60 * 60 * 1000
@@ -57,6 +62,7 @@ data class LnktreeCacheConfig(
             return LnktreeCacheConfig(
                 enabled = o.optBoolean("enabled", false),
                 section = o.optString("section"),
+                sections = o.optJSONArray("sections")?.let { a -> (0 until a.length()).map { a.getString(it) } }.orEmpty(),
                 ttlMs = (o.optDouble("ttl_days", 0.0) * DAY_MS).toLong(),
                 prefetchEnabled = p.optBoolean("enabled", false),
                 prefetchConcurrency = p.optInt("concurrency", 1).coerceAtLeast(1),

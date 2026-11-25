@@ -199,7 +199,7 @@
     }
   },
   "ui": {
-    "_doc": "Cloud Me's whole navigation is this block: seven bottom-nav sections (`ui.bottom_nav`, in order: Health, Experiences, Socials, Lnktree, Inventory, Buro, LLC; #1367 Tasks merged RoadMap and Duties, Inventory took the Duties slot; #1771 the Tasks bar slot became Socials and the Tasks section stays declared, off the bar, reachable from the title dropdown and every page:tasks/* route), the Settings entries at the top right (`ui.settings`: the sections the top bar's Profile and Configs icons open; the left side menu opens by tapping the hamburger only, there is no swipe gesture), and the page tabs of every section drawn as Samsung-Health icon pills (icon-only, the selected tab also shows its name). A section's `pages` are its tab strip, and a page may declare `pages` of its own. A page with an `action` is a launch tab: it hands that `extapp:`/`page:` target to MainActivity.onTarget instead of showing content (Buro > Account launches Cloud Account). Page CONTENT is not here: each page is a file at data/ui/<section>/<page>.json, shipped as an asset. The same `page:<section>/<page>` grammar arrives from OUTSIDE the app too: the SuperApp's Dashboard icons launch Cloud Me with a `shortcut_action` extra carrying one of these strings.",
+    "_doc": "Cloud Me's whole navigation is this block: six bottom-nav sections (`ui.bottom_nav`, in order: Pers, Prof, Proj, Inventory, Buro, LLC; #1901 Health became Pers, Experiences became Prof, Socials became Proj and the Lnktree section was spread over them, `ui.renamed` keeps every old section and page id working; #1367 Tasks merged RoadMap and Duties, Inventory took the Duties slot; the Tasks section stays declared, off the bar, reachable from the title dropdown and every page:tasks/* route), the Settings entries at the top right (`ui.settings`: the sections the top bar's Profile and Configs icons open; the left side menu opens by tapping the hamburger only, there is no swipe gesture), and the page tabs of every section drawn as Samsung-Health icon pills (icon-only, the selected tab also shows its name). A section's `pages` are its tab strip, and a page may declare `pages` of its own. A page with an `action` is a launch tab: it hands that `extapp:`/`page:` target to MainActivity.onTarget instead of showing content (Buro > Account launches Cloud Account). Page CONTENT is not here: each page is a file at data/ui/<section>/<page>.json, shipped as an asset. The same `page:<section>/<page>` grammar arrives from OUTSIDE the app too: the SuperApp's Dashboard icons launch Cloud Me with a `shortcut_action` extra carrying one of these strings.",
     "permissions": {
       "_doc": "Configs > Perms, declared: EVERY permission Cloud Me needs. `entries` are ids of the shared libs:perms catalogue (ab_cloud-libs-shared/libs/perms/src/main/assets/perms-catalogue.json), which owns each one's label, kind (runtime dialog, special settings page, app-op, OEM guide), live check and settings intents; `why` is Cloud Me's reason, one line on the row; `icon` is a libs:ui-icons name; `used: false` marks a permission on the list that no feature uses yet, shown collapsed under Not used yet (still in Grant all). `install` are install-time permissions, listed as granted. `health` is the Health Connect set: `read` is the SuperApp's exact set (libs:health's manifest), `write` what Health > Tracked's manual entry writes. MePerms.kt holds no permission name. The start-up rule (MePermPlan.startup): runtime permissions never asked are asked, a denied one is asked again until Android stops showing its dialog (permanently denied: never again at start), Health Connect is asked until it has been declined twice (Health Connect's own limit), a special access is opened once on first launch and then only from the banner or Grant all. test/test-me-perms.sh pins this list to AndroidManifest.xml both ways.",
       "entries": [
@@ -332,23 +332,99 @@
       }
     ],
     "bottom_nav": [
-      "health",
-      "experiences",
-      "socials",
-      "lnktree",
+      "pers",
+      "prof",
+      "proj",
       "inventory",
       "buro",
       "llc"
     ],
-    "default_section": "lnktree",
+    "default_section": "proj",
+    "renamed": {
+      "_doc": "#1901 the old section and page ids of the Cloud Me layout before Health became Pers, Experiences Prof and Socials Proj (and the Lnktree section was spread over Pers, Prof and Proj). LegacyRoutes reads it after its own table, so a deep link (page:<old section>/<old page>, e.g. the SuperApp's Me row), a shortcut or a saved state written against the old ids still lands on the page that now holds that content. `pages` maps \"<old section>/<old page>\" to \"<section>/<page>\" (the page is a leaf or a container; every page of the old tree is listed, test-nav-reorg.sh proves it against test/fixtures/nav-baseline-1901.json); `sections` maps an old section id alone (or one whose page is not listed) to the section that took its place. Professional and Personal were two copies of the same LinkedIn and Instagram pages (Lnktree and Socials): both ids point at the one page that now holds them.",
+      "sections": {
+        "health": "pers",
+        "experiences": "prof",
+        "socials": "proj",
+        "lnktree": "proj"
+      },
+      "pages": {
+        "health/tracked": "pers/tracked",
+        "health/activities": "pers/activities",
+        "health/bodycomp": "pers/bodycomp",
+        "health/hr": "pers/hr",
+        "health/sleep": "pers/sleep",
+        "health/home": "pers/home",
+        "health/bio": "pers/bio",
+        "health/circadian": "pers/circadian",
+        "health/biomarkers": "pers/biomarkers",
+        "health/timeline": "pers/timeline",
+        "health/objectives": "pers/objectives",
+        "health/matrix": "pers/matrix",
+        "health/culinary": "pers/culinary",
+        "health/clash": "pers/clash",
+        "health/thermal": "pers/thermal",
+        "health/hemo": "pers/hemo",
+        "health/shop": "pers/shop",
+        "health/dossier": "pers/dossier",
+        "health/workout": "pers/workout",
+        "experiences/work": "prof/work",
+        "experiences/study": "prof/study",
+        "experiences/cv": "prof/cv",
+        "experiences/roadmap": "prof/roadmap",
+        "experiences/achieves": "pers/achieves",
+        "experiences/geo": "pers/geo",
+        "experiences/endurance": "pers/endurance",
+        "experiences/growth": "pers/growth",
+        "experiences/community": "pers/community",
+        "experiences/by30": "pers/by30",
+        "experiences/by40": "pers/by40",
+        "experiences/by50": "pers/by50",
+        "socials/socials-professional": "prof/professional",
+        "socials/socials-personal": "pers/instagram",
+        "lnktree/professional": "prof/professional",
+        "lnktree/leafy": "prof/leafy",
+        "lnktree/nexus": "prof/nexus",
+        "lnktree/stark": "prof/stark",
+        "lnktree/personal": "pers/instagram",
+        "lnktree/social": "pers/social",
+        "lnktree/health": "pers/health-profile",
+        "lnktree/dd": "pers/dd",
+        "lnktree/astro": "pers/astro",
+        "lnktree/lnktree-site": "proj/lnktree-site",
+        "lnktree/area-unix": "proj/area-unix",
+        "lnktree/area-cg": "proj/area-cg",
+        "lnktree/area-capital": "proj/area-capital",
+        "lnktree/area-hardtech": "proj/area-hardtech",
+        "lnktree/area-lecole42": "proj/area-lecole42",
+        "lnktree/area-front": "proj/area-front"
+      }
+    },
     "configs_ui": ["nav_ui"],
     "sections": [
       {
-        "_doc": "Health \u2014 a bar section of its own (it was a shortcut into Projects > Health). Two page groups (Plan: index, 12 plan pages and the workout plan; Trackers: Tracked, the Google Fit / Samsung Health style today dashboard over Health Connect, and 4 more) on the many_rows nav mode, the groups referencing the flat pages list by id. Health opens on Tracked (#1390): Tracked is the first flat page (where NavSection.page(null) lands) and Trackers is the first row; every tracker page draws its charts from the one shared set, HealthCharts.kt. Every page is drawn by the app's own Compose HealthPage from data/health/*.json (the declared plan, formulas and workout) and the user's entries (SharedPreferences health_user, a declared fleet-config store); the trackers read Health Connect live and say so when it is empty. The metric taxonomy stays here because libs:health's build.gradle looks it up by SECTION ID (`ui.sections[id=health].metrics`).",
+        "_doc": "#1901 Pers: the section called Health became Pers, and it now holds every page of the person. Five subpages: Profiles (Personal, Instagram, Social: the three public profile pages), Health (the WHOLE former Health section moved in as one subpage: Trackers and Plan with every page, Tracked first, plus the health record page that was Lnktree > Health), Astro, DD (the shareholder due-diligence record) and Personal Archives (the Achieves tabs, moved whole from Experiences with their experiences_user ledgers). Personal is the owner's site, embedded by its https URL (data/ui/pers/profiles/personal.json); Instagram is the page the old Personal tab drew. Every page keeps its id; the old section ids and page ids resolve through ui.renamed (LegacyRoutes). The Health page content is drawn by the app's own Compose HealthPage from data/health/*.json and the user's entries (SharedPreferences health_user, a declared fleet-config store); the trackers read Health Connect live. The metric taxonomy stays on this section because libs:health's build.gradle looks it up on the section that declares `metrics` (it used to be looked up by the id health). Health opens on Tracked (#1390): Tracked is the first leaf of Health, Trackers its first strip. Personal Archives: the Achieves tabs: each tab is one kind of experience, holding a Done and a To do list of the owner's own records (add, edit, mark done with today's date, mark undone), all in the declared config store experiences_user so the backup and the new-phone migration carry them. Geo is first: every place visited with live stats (cities, countries, continents, % of world, grouped by continent and country, first and last visit) and a wishlist; the International Experience text and the old Trips tools moved into it. Endurance holds Travel & Adventure (the old Experiences rows and the Personal Pursuits text), Personal Growth holds Personal Growth, Health & Wellness, Creativity & Fun and Career and Finance (with the B1 Personal text), Community holds Relationship & Community, By 30 / By 40 / By 50 hold the Bucket 50 age goals. ui.sections[achieves].migration moves the old done/todo records into the matching tab on first load; LegacyRoutes sends the old page ids to their new tab. Every page id is unique in the section, so page:experiences/<id> reaches any of them; LegacyRoutes maps the old study and achieves routes here.",
         "_doc_metrics": "Data-driven metric taxonomy \u2014 read by SummaryPage / TimelinePage / ConfigsPage to render the per-metric tiles + drill-downs. Each metric maps to one-or-more Health Connect record types via `records` (matched at runtime by class simple-name) + the perm subset via `perm_keys`. Add a metric = one entry here + tile icon. Removing a metric here removes it from all 3 top-level pages.",
-        "id": "health",
-        "nav_mode": "horizontal_two_rows",
-        "label": "Health",
+        "migration": {
+          "_doc": "Achieves migration (store experiences_user): the old Experiences page kept its records in the collections done and todo. On load, each record moves to <tab>_done or <tab>_todo by its category; a category this map does not name goes to the default tab, so nothing is dropped. The old collections are then removed, which makes the migration run once.",
+          "store": "experiences_user",
+          "legacy": {
+            "done": "_done",
+            "todo": "_todo"
+          },
+          "field": "category",
+          "by_value": {
+            "\ud83c\udf10 Travel": "geo"
+          },
+          "default": "endurance",
+          "rename": {
+            "geo": {
+              "place": "country"
+            }
+          }
+        },
+        "id": "pers",
+        "label": "Pers",
         "icon": "ic_nav_health",
         "metrics": [
           {
@@ -476,186 +552,161 @@
         ],
         "pages": [
           {
-            "id": "tracked",
-            "label": "Tracked",
-            "icon": "monitor_heart"
-          },
-          {
-            "id": "activities",
-            "label": "Activities",
-            "icon": "ic_p_health_activity"
-          },
-          {
-            "id": "bodycomp",
-            "label": "Body comp",
-            "icon": "ic_p_health_body"
-          },
-          {
-            "id": "hr",
-            "label": "HR & HRV",
-            "icon": "ic_p_health_vitals"
-          },
-          {
-            "id": "sleep",
-            "label": "Sleep",
-            "icon": "ic_p_health_sleep"
-          },
-          {
-            "id": "home",
-            "label": "Index",
-            "icon": "home"
-          },
-          {
-            "id": "bio",
-            "label": "Anthropometrics",
-            "icon": "health_bio"
-          },
-          {
-            "id": "circadian",
-            "label": "Circadian",
-            "icon": "health_circadian"
-          },
-          {
-            "id": "biomarkers",
-            "label": "Biomarkers",
-            "icon": "health_biomarkers"
-          },
-          {
-            "id": "timeline",
-            "label": "Timeline",
-            "icon": "timeline"
-          },
-          {
-            "id": "objectives",
-            "label": "Objectives",
-            "icon": "health_objectives"
-          },
-          {
-            "id": "matrix",
-            "label": "Matrix",
-            "icon": "health_matrix"
-          },
-          {
-            "id": "culinary",
-            "label": "Culinary",
-            "icon": "health_culinary"
-          },
-          {
-            "id": "clash",
-            "label": "Absorption clash",
-            "icon": "health_clash"
-          },
-          {
-            "id": "thermal",
-            "label": "Thermal",
-            "icon": "health_thermal"
-          },
-          {
-            "id": "hemo",
-            "label": "Hemodynamics",
-            "icon": "health_hemo"
-          },
-          {
-            "id": "shop",
-            "label": "Supermarket",
-            "icon": "health_shop"
-          },
-          {
-            "id": "dossier",
-            "label": "Dossier",
-            "icon": "health_dossier"
-          },
-          {
-            "id": "workout",
-            "label": "Workout plan",
-            "icon": "ic_gym"
-          }
-        ],
-        "groups": [
-          {
-            "id": "trackers",
-            "label": "Trackers",
-            "icon": "monitor_heart",
-            "pages": [
-              "tracked",
-              "activities",
-              "bodycomp",
-              "hr",
-              "sleep"
-            ]
-          },
-          {
-            "id": "plan",
-            "label": "Plan",
-            "icon": "health_timeline",
-            "pages": [
-              "home",
-              "bio",
-              "circadian",
-              "biomarkers",
-              "timeline",
-              "objectives",
-              "matrix",
-              "culinary",
-              "clash",
-              "thermal",
-              "hemo",
-              "shop",
-              "dossier",
-              "workout"
-            ]
-          }
-        ]
-      },
-      {
-        "_doc": "Experiences (#1350): Study and Achieves merged into one section with three subpages. Work is a Done and To do ledger over experiences_user (work_done / work_todo), its Done list seeded by data/regen-study.py with the LinkedIn roles (the same source as LLC > Employed). Study keeps CV and Roadmap (data/regen-study.py). Personal Achieves holds the Achieves tabs: each tab is one kind of experience, holding a Done and a To do list of the owner's own records (add, edit, mark done with today's date, mark undone), all in the declared config store experiences_user so the backup and the new-phone migration carry them. Geo is first: every place visited with live stats (cities, countries, continents, % of world, grouped by continent and country, first and last visit) and a wishlist; the International Experience text and the old Trips tools moved into it. Endurance holds Travel & Adventure (the old Experiences rows and the Personal Pursuits text), Personal Growth holds Personal Growth, Health & Wellness, Creativity & Fun and Career and Finance (with the B1 Personal text), Community holds Relationship & Community, By 30 / By 40 / By 50 hold the Bucket 50 age goals. ui.sections[achieves].migration moves the old done/todo records into the matching tab on first load; LegacyRoutes sends the old page ids to their new tab. Every page id is unique in the section, so page:experiences/<id> reaches any of them; LegacyRoutes maps the old study and achieves routes here.",
-        "migration": {
-          "_doc": "Achieves migration (store experiences_user): the old Experiences page kept its records in the collections done and todo. On load, each record moves to <tab>_done or <tab>_todo by its category; a category this map does not name goes to the default tab, so nothing is dropped. The old collections are then removed, which makes the migration run once.",
-          "store": "experiences_user",
-          "legacy": {
-            "done": "_done",
-            "todo": "_todo"
-          },
-          "field": "category",
-          "by_value": {
-            "\ud83c\udf10 Travel": "geo"
-          },
-          "default": "endurance",
-          "rename": {
-            "geo": {
-              "place": "country"
-            }
-          }
-        },
-        "id": "experiences",
-        "label": "Experiences",
-        "icon": "ic_nav_achieves",
-        "pages": [
-          {
-            "id": "work",
-            "label": "Work",
-            "icon": "ic_nav_work"
-          },
-          {
-            "id": "study",
-            "label": "Study",
-            "icon": "ic_nav_study",
+            "id": "pers-profiles",
+            "label": "Profiles",
+            "icon": "ic_p_identities",
             "pages": [
               {
-                "id": "cv",
-                "label": "CV",
-                "icon": "ic_p_cv"
+                "id": "personal",
+                "label": "Personal",
+                "icon": "ic_p_identities"
               },
               {
-                "id": "roadmap",
-                "label": "Roadmap",
-                "icon": "ic_p_roadmap"
+                "id": "instagram",
+                "label": "Instagram",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "social",
+                "label": "Social",
+                "icon": "ic_p_identities"
               }
             ]
           },
           {
+            "id": "health",
+            "label": "Health",
+            "icon": "ic_nav_health",
+            "pages": [
+              {
+                "id": "trackers",
+                "label": "Trackers",
+                "icon": "monitor_heart",
+                "pages": [
+                  {
+                    "id": "tracked",
+                    "label": "Tracked",
+                    "icon": "monitor_heart"
+                  },
+                  {
+                    "id": "activities",
+                    "label": "Activities",
+                    "icon": "ic_p_health_activity"
+                  },
+                  {
+                    "id": "bodycomp",
+                    "label": "Body comp",
+                    "icon": "ic_p_health_body"
+                  },
+                  {
+                    "id": "hr",
+                    "label": "HR & HRV",
+                    "icon": "ic_p_health_vitals"
+                  },
+                  {
+                    "id": "sleep",
+                    "label": "Sleep",
+                    "icon": "ic_p_health_sleep"
+                  }
+                ]
+              },
+              {
+                "id": "plan",
+                "label": "Plan",
+                "icon": "health_timeline",
+                "pages": [
+                  {
+                    "id": "home",
+                    "label": "Index",
+                    "icon": "home"
+                  },
+                  {
+                    "id": "bio",
+                    "label": "Anthropometrics",
+                    "icon": "health_bio"
+                  },
+                  {
+                    "id": "circadian",
+                    "label": "Circadian",
+                    "icon": "health_circadian"
+                  },
+                  {
+                    "id": "biomarkers",
+                    "label": "Biomarkers",
+                    "icon": "health_biomarkers"
+                  },
+                  {
+                    "id": "timeline",
+                    "label": "Timeline",
+                    "icon": "timeline"
+                  },
+                  {
+                    "id": "objectives",
+                    "label": "Objectives",
+                    "icon": "health_objectives"
+                  },
+                  {
+                    "id": "matrix",
+                    "label": "Matrix",
+                    "icon": "health_matrix"
+                  },
+                  {
+                    "id": "culinary",
+                    "label": "Culinary",
+                    "icon": "health_culinary"
+                  },
+                  {
+                    "id": "clash",
+                    "label": "Absorption clash",
+                    "icon": "health_clash"
+                  },
+                  {
+                    "id": "thermal",
+                    "label": "Thermal",
+                    "icon": "health_thermal"
+                  },
+                  {
+                    "id": "hemo",
+                    "label": "Hemodynamics",
+                    "icon": "health_hemo"
+                  },
+                  {
+                    "id": "shop",
+                    "label": "Supermarket",
+                    "icon": "health_shop"
+                  },
+                  {
+                    "id": "dossier",
+                    "label": "Dossier",
+                    "icon": "health_dossier"
+                  },
+                  {
+                    "id": "workout",
+                    "label": "Workout plan",
+                    "icon": "ic_gym"
+                  }
+                ]
+              },
+              {
+                "id": "health-profile",
+                "label": "Record",
+                "icon": "ic_nav_health"
+              }
+            ]
+          },
+          {
+            "id": "astro",
+            "label": "Astro",
+            "icon": "ic_world"
+          },
+          {
+            "id": "dd",
+            "label": "DD",
+            "icon": "ic_nav_buro"
+          },
+          {
             "id": "achieves",
-            "label": "Personal Achieves",
+            "label": "Personal Archives",
             "icon": "ic_nav_achieves",
             "pages": [
               {
@@ -698,6 +749,83 @@
         ]
       },
       {
+        "_doc": "#1901 Prof: the section called Experiences became Prof. Two groups on one strip, Profiles | Leaf.y, Nexus.z, Stark.x. Profiles holds Professional (the LinkedIn social page, rendered from the mysocials web project by the web fragment), Work (a Done and To do ledger over experiences_user, its Done list seeded by data/regen-study.py with the LinkedIn roles) and Study (CV and Roadmap, data/regen-study.py); Leaf.y, Nexus.z and Stark.x are their published sites embedded by https URL (data/ui/prof/<id>.json). Personal Archives moved to Pers. Old page:experiences/* and page:lnktree/<prof page> routes resolve through ui.renamed.",
+        "id": "prof",
+        "label": "Prof",
+        "icon": "ic_nav_work",
+        "groups": [
+          {
+            "id": "profiles",
+            "label": "Profiles",
+            "icon": "badge",
+            "pages": [
+              "prof-profiles"
+            ]
+          },
+          {
+            "id": "companies",
+            "label": "Companies",
+            "icon": "ic_world",
+            "pages": [
+              "leafy",
+              "nexus",
+              "stark"
+            ]
+          }
+        ],
+        "pages": [
+          {
+            "id": "prof-profiles",
+            "label": "Profiles",
+            "icon": "ic_nav_me",
+            "pages": [
+              {
+                "id": "professional",
+                "label": "Professional",
+                "icon": "ic_nav_me"
+              },
+              {
+                "id": "work",
+                "label": "Work",
+                "icon": "ic_nav_work"
+              },
+              {
+                "id": "study",
+                "label": "Study",
+                "icon": "ic_nav_study",
+                "pages": [
+                  {
+                    "id": "cv",
+                    "label": "CV",
+                    "icon": "ic_p_cv"
+                  },
+                  {
+                    "id": "roadmap",
+                    "label": "Roadmap",
+                    "icon": "ic_p_roadmap"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "leafy",
+            "label": "Leaf.y",
+            "icon": "ic_world"
+          },
+          {
+            "id": "nexus",
+            "label": "Nexus.z",
+            "icon": "ic_world"
+          },
+          {
+            "id": "stark",
+            "label": "Stark.x",
+            "icon": "ic_world"
+          }
+        ]
+      },
+      {
         "_doc": "#1367 Tasks: one bar section in the slot RoadMap held, merging the former RoadMap and Duties sections as two subpages. RoadMaps is the folder hierarchy of the private notes vault diegonmarcos/cloud-me-pvt-notes (#1350), folders only, as an expandable tree: separator folders (0___, 1___, 2___) are section titles, tooling folders (0_docs, 0_hub, 1_workflows, _dotfiles, dot-folders) are hidden; the tree is data/repos/roadmap-tree.json, GENERATED by data/regen-roadmap-tree.py from the committed snapshot data/repos/roadmap-tree.dirs.txt (the vault's `git ls-tree -d -r` listing, refreshed with --refresh through gh api), test/test-roadmap-tree.sh is the drift guard. Backlogs is the former Duties page: what is due, the Tasks view (Day, Subject and Calendar) over the calendar engine. LegacyRoutes sends roadmap, roadmap/*, duties and duties/* here (test-me-redesign.sh pins it).",
         "id": "tasks",
         "_doc_rows": "#1398 Tasks is a many-rows section: Inboxes | Backlogs | RoadMaps | Library | Projects. Its groups and every vault chip page are NOT typed here: app/build.gradle bakes them from data/repos/vault-rows.json (generated by data/regen-vault-rows.py from the vault snapshot and ui.vault_rows), and the Projects row from the Lnktree Proj group (ui.vault_rows.projects). The two declared groups hold only the pages that lead those rows (app/build.gradle appends the vault chips and the other rows): Due (the calendar Tasks view, the former Backlogs page) leads Backlogs, Tree (the folder tree) leads RoadMaps.",
@@ -722,94 +850,39 @@
         ]
       },
       {
-        "_doc": "#1771 Socials: the section called Me before Lnktree (commit cf24a39a1, 2026-09-02, 'Profile splits into Professional and Personal'), restored in the bar slot Tasks held. Two tabs (page ids socials-professional and socials-personal: a page id is unique in the app, nav-shape N12): Professional is the LinkedIn page, Personal is the Instagram page, both rendered from the mysocials web project (data/web/mysocials, front-diegonmarcos b-Media/mySocials) by the web fragment, the same pages Lnktree > Professional and Personal draw (those stay). The Tasks section (Tree, Due, the vault rows) left the bar and stays declared with every page and route; the title dropdown lists it, and page:tasks/* deep links open it.",
-        "id": "socials",
-        "label": "Socials",
-        "icon": "ic_nav_me",
-        "pages": [
-          {"id": "socials-professional", "label": "Professional", "icon": "ic_nav_me"},
-          {"id": "socials-personal", "label": "Personal", "icon": "ic_p_identities"}
-        ]
-      },
-      {
-        "_doc": "Lnktree (#1299: formerly Profile, section id `me`; LegacyRoutes keeps `me` as an alias so old deep links, shortcuts and saved state still open it) \u2014 the app's namesake and its centre slot, in two halves: Professional is the LinkedIn profile, Personal is the Instagram one. Both are generated by data/regen-profile.py from the same files the web pages hydrate from, so neither is prose typed twice. The switcher is the section's ordinary tab strip. The app OPENS here \u2014 `ui.default_section`. The app opens here (`ui.default_section` = lnktree). Tasks moved out to Duties, now Tasks > Backlogs (#1367). Two rows (horizontal_two_rows groups, `separator_before` draws the \"|\" inside a row): Prof = Professional | Leaf.y, Nexus.z, Stark.x; Pers = Personal, Social | Health, DD, Astro | Lnktree. Leaf.y, Nexus.z, Stark.x, Astro and Lnktree are published sites embedded by https URL (data/ui/lnktree/<id>.json). #1298 a third row Proj (below Pers): its chips are the registry AREAS (ui.repo_tree.areas: the registry areas flagged show_in lnktree in repos-github.json areas[]; labels read from the outline), each page the repo tree of that area; tapping the Proj label opens the whole outline with Expand all / Collapse all. The tree is data, never typed here: libs:repos repos.outline.json, shipped byte-equal as data/repos/repos.outline.json.",
-        "id": "lnktree",
+        "_doc": "#1901 Proj: the section called Socials became Proj, and it now holds the Lnktree tile first (it moved here from Pers, and it is the page Proj and the app open on) followed by the registry areas: Lnktree | Unix, CG, Capital, Hardtech, 42, Projects. Lnktree is linktree.diegonmarcos.com embedded by https URL (data/ui/proj/lnktree-site.json); each area page is the collapsible repo tree of that registry area (ui.repo_tree.areas; the chip labels come from the registry outline, build.json declares none). Tapping the Proj label opens the whole outline. The Socials tabs moved: Professional to Prof, Personal (the Instagram page) to Pers > Profiles > Instagram; page:socials/* and page:lnktree/* routes resolve through ui.renamed.",
+        "id": "proj",
         "nav_mode": "horizontal_two_rows",
-        "label": "Lnktree",
-        "icon": "ic_nav_me",
+        "label": "Proj",
+        "icon": "ic_link_tile",
         "groups": [
           {
-            "id": "prof",
-            "label": "Prof",
-            "icon": "badge",
-            "pages": ["professional", "leafy", "nexus", "stark"]
-          },
-          {
-            "id": "pers",
-            "label": "Pers",
-            "icon": "person",
-            "pages": ["personal", "social", "health", "dd", "astro", "lnktree-site"]
+            "id": "lnktree",
+            "label": "Lnktree",
+            "icon": "ic_link_tile",
+            "pages": [
+              "lnktree-site"
+            ]
           },
           {
             "id": "proj",
             "label": "Proj",
             "icon": "account_tree",
-            "pages": ["area-unix", "area-cg", "area-capital", "area-hardtech", "area-lecole42", "area-front"]
+            "pages": [
+              "area-unix",
+              "area-cg",
+              "area-capital",
+              "area-hardtech",
+              "area-lecole42",
+              "area-front"
+            ]
           }
         ],
         "pages": [
           {
-            "id": "professional",
-            "label": "Professional",
-            "icon": "ic_nav_me"
-          },
-          {
-            "id": "leafy",
-            "label": "Leaf.y",
-            "icon": "ic_world",
-            "separator_before": true
-          },
-          {
-            "id": "nexus",
-            "label": "Nexus.z",
-            "icon": "ic_world"
-          },
-          {
-            "id": "stark",
-            "label": "Stark.x",
-            "icon": "ic_world"
-          },
-          {
-            "id": "personal",
-            "label": "Personal",
-            "icon": "ic_p_identities"
-          },
-          {
-            "id": "social",
-            "label": "Social",
-            "icon": "ic_p_identities"
-          },
-          {
-            "id": "health",
-            "label": "Health",
-            "icon": "ic_nav_health",
-            "separator_before": true
-          },
-          {
-            "id": "dd",
-            "label": "DD",
-            "icon": "ic_nav_buro"
-          },
-          {
-            "id": "astro",
-            "label": "Astro",
-            "icon": "ic_world"
-          },
-          {
             "id": "lnktree-site",
             "label": "Lnktree",
-            "icon": "ic_link_tile",
-            "separator_before": true
+            "icon": "ic_link_tile"
           },
           {
             "id": "area-unix",
@@ -837,6 +910,7 @@
           }
         ]
       },
+
       {
         "_doc": "#1367 Inventory: what the owner has and what it costs, in the slot Duties held. Three rows (horizontal_two_rows groups; `separator_before` draws the \"|\" inside a row, the same as Lnktree): City = Housing, Household, Transport, Parking; Buro = Utilities, Taxes, Insurance, Contracts, Banking, Subscriptions; Lifestyle = Leisure | Food, Care | Clothing, Electronics | Education. Every page is one `ledger` block over the inventory_user store (a declared fleet-config config store, so the backup and the new-phone migration carry it) with the same item fields (name, category, brand/model, purchased, price, monthly, location, status, note) and a `summary` header (count, value, monthly recurring; LedgerReports.summary). Each collection declares a `seed` of MOCK records (marked mock) that LedgerSeed copies into the store ONCE, on the first load that has not seen that collection; after that the records are the owner's to edit or delete and a seed is never applied again.",
         "id": "inventory",
@@ -1313,7 +1387,7 @@
         {"id": "roadmaps", "label": "RoadMaps", "root": "1.1_RoadMaps___", "under": ["1.1"], "icon": "ic_p_roadmap"},
         {"id": "library", "label": "Library", "root": "2___Library___", "under": ["2"], "sub": true, "icon": "menu_book"}
       ],
-      "projects": {"id": "projects", "label": "Projects", "icon": "account_tree", "section": "lnktree", "group": "proj"}
+      "projects": {"id": "projects", "label": "Projects", "icon": "account_tree", "section": "proj", "group": "proj"}
     },
     "repo_tree": {
       "_doc": "#1298 Lnktree > Proj: the registry outline as a collapsible tree. outline_asset is libs:repos repos.outline.json (byte-equal copy in data/repos, guarded by RepoOutlineTest and libs/repos/sync.sh --check-outline). group is the second-row group whose label opens the FULL tree. areas maps each page of that group to a registry area code, in registry order. NO names here: a chip label, the area order and which areas are listed all come from the registry (git-repos-master projects-repos.json: area name, and the area flag show_in containing lnktree), through the outline; app/build.gradle bakes each chip label from the outline and RepoTreeTest guards that nothing is overridden. Expansion state is the SharedPreferences store repo_tree (one set of expanded node codes, declared in fleet-config.json). A leaf opens the fleet app whose constellation repo_url is its url when there is one, else its GitHub url.",
@@ -1329,9 +1403,10 @@
       ]
     },
     "lnktree_cache": {
-      "_doc": "#1323 Lnktree page cache. The https pages of `section` (Leaf.y, Nexus.z, Stark.x, Astro, Lnktree) are cached on disk by the app itself (shouldInterceptRequest, files keyed by the URL: the HTML plus its same-origin CSS/JS/images), because the WebView's HTTP cache follows the server's headers, cannot be aged, listed or emptied per page. An entry older than ttl_days is STALE: it is still shown at once and refetched in the background (stale-while-revalidate); offline it is shown as is. Each visited page keeps its WebView alive (LRU of holder_max_webviews), so switching never reloads. Pull-down at the page's top is a HARD refresh: hard_refresh_scope `page` deletes that page's cache files (`all` = every Lnktree cache file), empties the WebView cache and reloads from the network. prefetch: at app start, in the background (WorkManager, never blocks start-up), every page with no valid entry is downloaded with its subresources: concurrency pages at a time, network `unmetered` or `connected`, at most max_pages pages and max_subresources_per_page files each. max_cache_mb trims the oldest entries. exclude_pages lists page ids that opt out. An absent block turns it all off.",
+      "_doc": "#1323 Lnktree page cache. The https pages of every section in `sections` (#1901: Pers, Prof, Proj; `section` is the Lnktree one, Proj): Personal, Astro, Leaf.y, Nexus.z, Stark.x, Lnktree are cached on disk by the app itself (shouldInterceptRequest, files keyed by the URL: the HTML plus its same-origin CSS/JS/images), because the WebView's HTTP cache follows the server's headers, cannot be aged, listed or emptied per page. An entry older than ttl_days is STALE: it is still shown at once and refetched in the background (stale-while-revalidate); offline it is shown as is. Each visited page keeps its WebView alive (LRU of holder_max_webviews), so switching never reloads. Pull-down at the page's top is a HARD refresh: hard_refresh_scope `page` deletes that page's cache files (`all` = every Lnktree cache file), empties the WebView cache and reloads from the network. prefetch: at app start, in the background (WorkManager, never blocks start-up), every page with no valid entry is downloaded with its subresources: concurrency pages at a time, network `unmetered` or `connected`, at most max_pages pages and max_subresources_per_page files each. max_cache_mb trims the oldest entries. exclude_pages lists page ids that opt out. An absent block turns it all off.",
       "enabled": true,
-      "section": "lnktree",
+      "section": "proj",
+      "sections": ["pers", "prof", "proj"],
       "ttl_days": 7,
       "max_cache_mb": 40,
       "holder_max_webviews": 8,

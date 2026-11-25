@@ -75,13 +75,13 @@ class MeShellTest {
     private val opened = mutableListOf<String>()
     private val targets = mutableListOf<String>()
     private val pagesOpened = mutableListOf<Pair<String, String>>()
-    private var selected by mutableStateOf<String?>("lnktree")
+    private var selected by mutableStateOf<String?>("proj")
 
     private fun show() {
         compose.setContent {
             CloudKitTheme(KitPalette(Color.Black, Color.DarkGray, Color.White, Color.LightGray, Color.Magenta, Color.Gray, Color.Black)) {
                 MeShell(
-                    "Lnktree", selected, onOpen = { opened += it; selected = it }, onTarget = { targets += it },
+                    "Proj", selected, onOpen = { opened += it; selected = it }, onTarget = { targets += it },
                     onOpenPage = { section, page -> pagesOpened += section to page },
                 ) {
                     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).testTag(PAGE)) { Spacer(Modifier.height(6000.dp)) }
@@ -118,11 +118,11 @@ class MeShellTest {
     @Test
     fun `tapping the title island lists the shown section's hierarchy and a pick opens that page (#1154)`() {
         show()
-        val section = Sections.byId("lnktree")!!
+        val section = Sections.byId("proj")!!
         compose.onNodeWithTag(TopBarTags.TITLE).performClick()
         compose.waitForIdle()
         compose.onNodeWithTag(TopFirstRowTags.entry(section.id)).assertIsDisplayed()
-        // Lnktree lists 16 pages (#1298 Proj): the later entries are reached by scrolling the menu.
+        // Proj lists 7 pages (#1901: Lnktree, then the #1298 areas): the later entries are reached by scrolling the menu.
         // #1483 the section list follows the pages, and a page id may equal a section id (Health): the page entry is the first node
         for (p in section.pages) compose.onAllNodesWithTag(TopFirstRowTags.entry(p.id)).onFirst().performScrollTo().assertIsDisplayed()
         val last = section.pages.last()

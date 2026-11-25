@@ -38,16 +38,16 @@ for n in sorted(os.listdir(sd)) if os.path.isdir(sd) else []:
         elif isinstance(o, list):
             for v in o: walk(v)
     walk(json.load(open(os.path.join(sd, n))))
-for pid in ("health", "dd"):
-    f = os.path.join(app, f"data/ui/lnktree/{pid}.json")
+for pid, rel in (("health", "health/health-profile"), ("dd", "dd")):   # #1901 Pers > Health > Record and Pers > DD (were Lnktree > Health and DD)
+    f = os.path.join(app, f"data/ui/pers/{rel}.json")
     if os.path.exists(f):
         for b in json.load(open(f)):
             if b.get("kind") not in ("profile_record", "fragment", "link", "note", "section_title"):
-                bad.append(f"lnktree/{pid}.json: block kind {b.get('kind')} may carry data")
+                bad.append(f"pers/{rel}.json: block kind {b.get('kind')} may carry data")
             if b.get("kind") == "profile_record" and set(b) - {"kind", "schema", "store", "_doc"}:
-                bad.append(f"lnktree/{pid}.json: profile_record carries extra keys {sorted(set(b) - {'kind','schema','store','_doc'})}")
+                bad.append(f"pers/{rel}.json: profile_record carries extra keys {sorted(set(b) - {'kind','schema','store','_doc'})}")
             if b.get("kind") == "fragment" and set(b) - {"kind", "id", "url", "inject", "_doc"}:
-                bad.append(f"lnktree/{pid}.json: fragment carries extra keys {sorted(set(b) - {'kind','id','url','inject','_doc'})}")
+                bad.append(f"pers/{rel}.json: fragment carries extra keys {sorted(set(b) - {'kind','id','url','inject','_doc'})}")
 wd = os.path.join(app, "data/web/mysocials")
 for n in sorted(os.listdir(wd)) if os.path.isdir(wd) else []:
     if re.match(r"data-profile-[a-z]+\.json\.js$", n):
@@ -79,8 +79,8 @@ plant "a dd values file" 'mkdir -p data/profiles && echo "{}" > data/profiles/dd
 plant "a value inside a schema" 'sed -i "0,/\"label\"/s//\"value\": \"x\", \"label\"/" data/profiles/profiles/health.schema.json'
 plant "a non-schema file next to the schemas" 'echo "{}" > data/profiles/profiles/health.json'
 plant "a value inside the bundled web schema" 'sed -i "0,/\"label\"/s//\"value\": \"x\", \"label\"/" data/web/mysocials/data-profile-dd.json.js'
-plant "a fragment carrying data" 'echo "[{\"kind\":\"fragment\",\"id\":\"web\",\"url\":\"x\",\"values\":{}}]" > data/ui/lnktree/health.json'
-plant "a stack block carrying data" 'echo "[{\"kind\":\"stats\",\"rows\":[]}]" > data/ui/lnktree/dd.json'
+plant "a fragment carrying data" 'echo "[{\"kind\":\"fragment\",\"id\":\"web\",\"url\":\"x\",\"values\":{}}]" > data/ui/pers/health/health-profile.json'
+plant "a stack block carrying data" 'echo "[{\"kind\":\"stats\",\"rows\":[]}]" > data/ui/pers/dd.json'
 
 if check "$ROOT" "$APP"; then echo "  PASS: no Health/DD values in this public repo"; else echo "  FAIL: see above"; fails=$((fails+1)); fi
 echo "profiles privacy: $fails failure(s)"

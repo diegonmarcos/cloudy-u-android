@@ -16,8 +16,8 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class ExperiencesTest {
-    private val pages = listOf("work", "study/roadmap") + listOf("geo", "endurance", "growth", "community", "by30", "by40", "by50").map { "achieves/$it" }
-    private fun block(p: String): JSONObject = JSONArray(BuroLlcTestData.text("data/ui/experiences/$p.json")).let { a ->
+    private val pages = listOf("prof/prof-profiles/work", "prof/prof-profiles/study/roadmap") + listOf("geo", "endurance", "growth", "community", "by30", "by40", "by50").map { "pers/achieves/$it" }
+    private fun block(p: String): JSONObject = JSONArray(BuroLlcTestData.text("data/ui/$p.json")).let { a ->
         (0 until a.length()).map { a.getJSONObject(it) }.single { it.optString("kind") == "ledger" }
     }
     private fun defs(p: String) = block(p).getJSONArray("ledgers").let { a -> (0 until a.length()).map { LedgerDef.parse(a.getJSONObject(it)) } }
@@ -131,9 +131,9 @@ class ExperiencesTest {
         // Planned: Pilot licence 2030 is past 40 (2028), so 50; Fund is undated, so its own 30; Planned 2027 -> 40; Someday -> 50.
         assertEquals(listOf(1, 1, 2), m.map { it.planned })
         assertEquals(listOf(true, false, false), m.map { it.reached })
-        val declared = block("achieves/by40").getJSONObject("milestones")
+        val declared = block("pers/achieves/by40").getJSONObject("milestones")
         assertEquals(40, declared.getInt("current")); assertTrue(declared.getInt("born") in 1900..2026)
-        assertFalse(block("achieves/geo").has("milestones"))
+        assertFalse(block("pers/achieves/geo").has("milestones"))
     }
 
     @Test fun `the category icon is the leading emoji, else the tab's`() {

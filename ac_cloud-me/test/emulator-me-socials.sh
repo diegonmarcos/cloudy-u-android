@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# emulator-me-socials (#1771) screenshots on a booted emulator: the SuperApp's Cloud > Apps Me row (Lnktree and Socials
-# tiles) and Cloud Me > Socials with its two tabs, Professional and Personal (deep link page:socials/<tab>).
+# emulator-me-socials (#1771, #1901) screenshots on a booted emulator: the SuperApp's Cloud > Apps Me row (Lnktree and Socials
+# tiles), Cloud Me's three reorganised tabs Pers, Prof and Proj (section:<id> opens each default page: Pers > Profiles > Personal,
+# Prof > Profiles > Professional, Proj > Lnktree) and the ids of the layout before the move (page:socials/<tab>, page:health/home,
+# page:lnktree/leafy), which keep resolving through ui.renamed.
 # Usage: emulator-me-socials.sh ME_APK SUPERAPP_APK OUT_DIR
 set -uo pipefail
 ME_APK="$1"; SA_APK="$2"; OUT="$3"; mkdir -p "$OUT"
@@ -27,6 +29,18 @@ for i in 1 2 3 4 5 6; do
     case "$(grep -m1 mCurrentFocus <<<"$focus" || true)" in *"$ME"*) break ;; esac
     $T adb shell input keyevent KEYCODE_BACK; sleep 2
 done
+# #1901 the three tabs, each on its default page; the selected bar item names the section (a missing one fails the walk)
+walk_tab() {  # TARGET SHOT LABEL
+    open_page "$ME" "$1"; shot "$2" 12
+    grep -qE "(text|content-desc)=\"$3\"" "$OUT/$2.xml" || { echo "$2: the screen does not show $3"; rc=1; }
+    echo "$2 text nodes: $(grep -o 'text="[^"]\+"' "$OUT/$2.xml" | wc -l)"
+}
+walk_tab section:pers me-pers Pers
+walk_tab section:prof me-prof Prof
+walk_tab section:proj me-proj Proj
+# the ids of the layout before the move still land on a page (page:health/home -> Pers, page:lnktree/leafy -> Prof > Leaf.y)
+open_page "$ME" "page:health/home"; shot me-old-health-home 8
+open_page "$ME" "page:lnktree/leafy"; shot me-old-lnktree-leafy 10
 open_page "$ME" "page:socials/socials-professional"; shot me-socials-professional 10
 open_page "$ME" "page:socials/socials-personal"; shot me-socials-personal 10
 # the Professional body must hold page text, not only the chrome (#1771: it was blank)

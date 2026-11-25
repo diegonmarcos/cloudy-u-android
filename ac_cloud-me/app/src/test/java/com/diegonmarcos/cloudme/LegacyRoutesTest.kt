@@ -53,7 +53,7 @@ class LegacyRoutesTest {
 
     @Test fun `current ids pass through untouched`() {
         for ((s, pages) in declared) for (p in pages) assertEquals("$s/$p", s to p, LegacyRoutes.resolve(s, p))
-        assertEquals("health" to null, LegacyRoutes.resolve("health", null))
+        assertEquals("pers" to null, LegacyRoutes.resolve("health", null))   // #1901 Health is Pers
     }
 
     @Test fun `every destination of the table is a declared page`() {

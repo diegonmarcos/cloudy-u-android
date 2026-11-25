@@ -85,7 +85,7 @@ jobs:
             if caught; then echo "RED (caught by HealthChartsTest): $name"
             else echo "::error::mutant stayed GREEN: $name"; stayed=$((stayed + 1)); fi
           done <<'MUTANTS'
-          default-page-index@J@-@import json; p = "ac_cloud-me/build.json"; d = json.load(open(p)); x = [s for s in d["ui"]["sections"] if s["id"] == "health"][0]; x["pages"].append(x["pages"].pop(0)); json.dump(d, open(p, "w"), indent=2, ensure_ascii=False)
+          default-page-index@J@-@import json; p = "ac_cloud-me/build.json"; d = json.load(open(p)); x = [s for s in d["ui"]["sections"] if s["id"] == "pers"][0]; h = [q for q in x["pages"] if q["id"] == "health"][0]; t = h["pages"][0]["pages"]; t.append(t.pop(0)); json.dump(d, open(p, "w"), indent=2, ensure_ascii=False)
           day-slot-is-day@T@TrackedRange.DAY -> t.withMinute(0).withSecond(0).withNano(0)@TrackedRange.DAY -> t.toLocalDate().atStartOfDay()
           year-slot-is-day@T@TrackedRange.YEAR -> t.toLocalDate().withDayOfMonth(1).atStartOfDay()@TrackedRange.YEAR -> t.toLocalDate().atStartOfDay()
           year-total-not-daily@T@else -> start.toLocalDate().lengthOfMonth()@else -> 1

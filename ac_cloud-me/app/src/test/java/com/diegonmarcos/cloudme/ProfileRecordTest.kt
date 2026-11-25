@@ -71,13 +71,15 @@ class ProfileRecordTest {
         assertFalse(ProfileRecord.validate(s, JSONObject("""{"schema":"health"}""")).isEmpty())
     }
 
-    @Test fun `Profile declares the three new pages and each is an embedded web page`() {
+    @Test fun `Pers declares Social, the health record and DD, and each is an embedded web page`() {
         val ui = JSONObject(BuroLlcTestData.text("build.json")).getJSONObject("ui").getJSONArray("sections")
-        val me = (0 until ui.length()).map { ui.getJSONObject(it) }.first { it.getString("id") == "lnktree" }.getJSONArray("pages")
-        val ids = (0 until me.length()).map { me.getJSONObject(it).getString("id") }
-        for (p in listOf("social", "health", "dd")) assertTrue(p in ids)
-        for (p in listOf("health", "dd")) {
-            val stack = org.json.JSONArray(BuroLlcTestData.text("data/ui/lnktree/$p.json"))
+        val pers = (0 until ui.length()).map { ui.getJSONObject(it) }.first { it.getString("id") == "pers" }
+        fun flat(a: org.json.JSONArray): List<String> = (0 until a.length()).flatMap { val o = a.getJSONObject(it); listOf(o.getString("id")) + (o.optJSONArray("pages")?.let(::flat) ?: emptyList()) }
+        val ids = flat(pers.getJSONArray("pages"))
+        for (p in listOf("social", "health-profile", "dd")) assertTrue(p in ids)
+        // #1901 the record page that was Lnktree > Health is Pers > Health > Record (page id health-profile; the id health is the container)
+        for ((p, f) in listOf("health" to "pers/health/health-profile", "dd" to "pers/dd")) {
+            val stack = org.json.JSONArray(BuroLlcTestData.text("data/ui/$f.json"))
             // Embedded render of the website page (like Professional and Personal); values are injected after load.
             assertEquals("fragment", stack.getJSONObject(0).getString("kind"))
             assertEquals("mysocials/$p.html", stack.getJSONObject(0).getString("url"))

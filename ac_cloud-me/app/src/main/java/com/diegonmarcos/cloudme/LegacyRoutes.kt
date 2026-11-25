@@ -19,23 +19,24 @@ object LegacyRoutes {
         "house" to "buro/assets",
         "me/tasks" to "tasks/backlogs",
         // #1299 the section took the name Lnktree, so its embedded linktree site page is lnktree-site (a page id equal
-        // to its section id draws two title-menu entries with one tag).
-        "me/lnktree" to "lnktree/lnktree-site",
-        "lnktree/lnktree" to "lnktree/lnktree-site",
+        // to its section id draws two title-menu entries with one tag). #1901 the Lnktree page is Proj's first page, Proj's default.
+        "me/lnktree" to "proj/lnktree-site",
+        "lnktree/lnktree" to "proj/lnktree-site",
         "buro/summary" to "buro/ids",
         "buro/docs" to "buro/assets",
         "buro/fin" to "buro/cashflow",
         "buro/acct" to "buro/cashflow",
         "buro/budget" to "buro/budgeting",
         "buro/portfolio" to "llc/portfolio",
-        // #1350 Study and Achieves are subpages of Experiences; the old Achieves pages' content moved to its tabs.
-        "study" to "experiences/cv",
-        "achieves" to "experiences/geo",
-        "achieves/personal" to "experiences/growth",
-        "achieves/pursuits" to "experiences/endurance",
-        "achieves/international" to "experiences/geo",
-        "achieves/trips" to "experiences/geo",
-        "achieves/experiences" to "experiences/endurance",
+        // #1350 Study and Achieves were subpages of Experiences, the old Achieves pages' content moved to its tabs; #1901 CV is under Prof
+        // and the Achieves tabs under Pers (the ids below are the live ones; ui.renamed maps the ids of the layout in between).
+        "study" to "prof/cv",
+        "achieves" to "pers/geo",
+        "achieves/personal" to "pers/growth",
+        "achieves/pursuits" to "pers/endurance",
+        "achieves/international" to "pers/geo",
+        "achieves/trips" to "pers/geo",
+        "achieves/experiences" to "pers/endurance",
         // #1367 RoadMap and Duties are the two subpages of Tasks; every page of either retired section lands on its subpage.
         "roadmap" to "tasks/roadmaps",
         "duties" to "tasks/backlogs",
@@ -49,7 +50,43 @@ object LegacyRoutes {
     )
 
     /** The new (section, page) for an old one; the arguments come back unchanged when nothing moved. */
-    fun resolve(section: String, page: String?): Pair<String, String?> {
+    fun resolve(section: String, page: String?): Pair<String, String?> = renamed(resolveLegacy(section, page), Renamed.baked)
+
+    /**
+     * #1901 the second stage: build.json::ui.renamed, the section and page ids of the layout before Health became Pers, Experiences Prof and
+     * Socials Proj. Applied after the table above (which still names the ids of earlier layouts, some of them the ids of this one's predecessor),
+     * once, to its result: every entry of ui.renamed already names a page of the live tree.
+     */
+    fun renamed(at: Pair<String, String?>, table: Renamed): Pair<String, String?> {
+        val (section, page) = at
+        val key = if (page.isNullOrBlank()) section else "$section/$page"
+        table.pages[key]?.let { return it.substringBefore('/') to it.substringAfter('/', "").ifBlank { null } }
+        // A page the table does not list keeps its id inside the section that took the old one's place.
+        table.sections[section]?.let { return it to page }
+        return at
+    }
+
+    /** build.json::ui.renamed, parsed: `sections` (old id -> section id) and `pages` ("old section/old page" -> "section/page"). */
+    data class Renamed(val sections: Map<String, String>, val pages: Map<String, String>) {
+        companion object {
+            val EMPTY = Renamed(emptyMap(), emptyMap())
+
+            fun parse(o: org.json.JSONObject?): Renamed {
+                fun map(k: String): Map<String, String> = o?.optJSONObject(k)?.let { m -> m.keys().asSequence().associateWith { m.getString(it) } }.orEmpty()
+                return Renamed(map("sections"), map("pages"))
+            }
+
+            /** The baked declaration (BuildConfig.UI_RENAMED_B64); fail-soft to "nothing renamed". */
+            val baked: Renamed by lazy {
+                runCatching {
+                    parse(org.json.JSONObject(String(android.util.Base64.decode(BuildConfig.UI_RENAMED_B64, android.util.Base64.DEFAULT))))
+                }.getOrDefault(EMPTY)
+            }
+        }
+    }
+
+    /** The first stage on its own: the retired layouts' table, no ui.renamed. */
+    fun resolveLegacy(section: String, page: String?): Pair<String, String?> {
         val hit = moved["$section/${page.orEmpty()}".trimEnd('/')]
         // A page of a retired section that the table does not list still opens the section's new home.
         val fallback = if (hit == null && section in RETIRED_SECTIONS) moved.getValue(section) else null

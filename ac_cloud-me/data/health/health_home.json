@@ -1,5 +1,5 @@
 {
-  "_doc": "Cloud Me > Health index: the cluster cards of the home page. A cluster lists page ids of build.json::ui.sections[id=health] (the labels and icons come from there, so a rename is one edit); tapping a page opens it through the `page:health/<id>` target. Data, not Kotlin: a cluster or page moves by editing this file.",
+  "_doc": "Cloud Me > Health index: the cluster cards of the home page. A cluster lists page ids of build.json::ui.sections[id=pers] > Health (the labels and icons come from there, so a rename is one edit); tapping a page opens it through the `page:pers/<id>` target. Data, not Kotlin: a cluster or page moves by editing this file.",
   "title": "Health",
   "subtitle": "Chrono-nutrition plan, simulators and trackers. Use the Plan and Trackers rows above, or pick from the index below.",
   "clusters": [

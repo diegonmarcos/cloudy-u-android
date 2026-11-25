@@ -111,6 +111,11 @@ for t in links:
     frag = t.split("#", 1)[1]
     assert frag.startswith("page:"), f"{t}: only page: targets are deep-linkable today"
     sec, _, pg = frag.removeprefix("page:").partition("/")
+    # #1901 Cloud-Me's old section and page ids (health/home ...) resolve through its ui.renamed, as LegacyRoutes does before MainActivity.open
+    ren = me["ui"].get("renamed", {})
+    to = ren.get("pages", {}).get(f"{sec}/{pg}" if pg else sec)
+    if to: sec, _, pg = to.partition("/")
+    else: sec = ren.get("sections", {}).get(sec, sec)
     assert sec in pages, f"{t}: Cloud-Me has no section '{sec}'"
     assert pg in pages[sec], f"{t}: Cloud-Me section '{sec}' has no page '{pg}'"
 PY

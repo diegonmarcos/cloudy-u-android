@@ -22,7 +22,8 @@ plugins {
 // pattern as libs/voice).
 def healthBuildJson = new groovy.json.JsonSlurper().parse(file("${rootDir}/build.json"))
 if (healthBuildJson.ui == null) healthBuildJson = new groovy.json.JsonSlurper().parse(file('../../build.json'))
-def healthSectionDef = healthBuildJson.ui.sections.find { it.id == 'health' }
+// #1901 Cloud Me moved Health into Pers: the section that declares `metrics` answers when none is called health.
+def healthSectionDef = healthBuildJson.ui.sections.find { it.id == 'health' } ?: healthBuildJson.ui.sections.find { it.metrics != null }
 def healthMetricsRaw = healthSectionDef?.metrics ?: []
 def healthMetricsJson = groovy.json.JsonOutput.toJson(healthMetricsRaw)
 def healthMetricsB64  = healthMetricsJson.bytes.encodeBase64().toString()

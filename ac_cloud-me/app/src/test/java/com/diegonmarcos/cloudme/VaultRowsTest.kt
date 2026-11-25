@@ -43,11 +43,11 @@ class VaultRowsTest {
         assertTrue(rows.first { it.id == "inboxes" }.chips.size >= 10)
     }
 
-    @Test fun `Projects is Lnktree's Proj row`() {
-        val proj = groups("lnktree").first { it.getString("id") == "proj" }
+    @Test fun `Projects is Proj's Proj row`() {
+        val proj = groups("proj").first { it.getString("id") == "proj" }
         val mine = groups("tasks").first { it.getString("id") == "projects" }
         assertEquals(ids(proj.getJSONArray("pages")), ids(mine.getJSONArray("pages")))
-        val lp = pages("lnktree"); val tp = pages("tasks")
+        val lp = pages("proj"); val tp = pages("tasks")
         ids(proj.getJSONArray("pages")).forEach { assertEquals(lp.getValue(it).toString(), tp.getValue(it).toString()) }
     }
 

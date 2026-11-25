@@ -38,13 +38,16 @@ for i in ids:
     if not p: bad("T2 %s has no known record type (%s)" % (i, t)); continue
     if "android.permission.health.WRITE_" + p not in perms["write"]: bad("T2 %s cannot be written: WRITE_%s is not declared" % (i, p))
     if "android.permission.health.READ_" + p not in perms["read"]: bad("T2 %s cannot be read: READ_%s is not declared" % (i, p))
-sec = [s for s in json.load(open(app + "/build.json"))["ui"]["sections"] if s["id"] == "health"][0]
-groups = {g["id"]: g["pages"] for g in sec["groups"]}
+# #1901 Health is Pers > Health: Trackers and Plan are its two strips (container pages), the health record page its last tab.
+sec = [s for s in json.load(open(app + "/build.json"))["ui"]["sections"] if s["id"] == "pers"][0]
+hl = [p for p in sec["pages"] if p["id"] == "health"][0]
+kids = {p["id"]: p for p in hl["pages"]}
+groups = {g: [p["id"] for p in kids[g].get("pages", [])] for g in ("trackers", "plan")}
 if groups.get("trackers", [None])[0] != "tracked": bad("T3 Tracked is not the first Trackers page")
-if "tracked" not in [p["id"] for p in sec["pages"]]: bad("T3 Tracked is not a declared page")
+if "tracked" not in groups["trackers"]: bad("T3 Tracked is not a declared page")
 try:
-    if json.load(open(app + "/data/ui/health/tracked.json"))[0].get("page") != "tracked": bad("T3 tracked.json hosts another page")
-except Exception as e: bad("T3 data/ui/health/tracked.json: %s" % e)
+    if json.load(open(app + "/data/ui/pers/health/trackers/tracked.json"))[0].get("page") != "tracked": bad("T3 tracked.json hosts another page")
+except Exception as e: bad("T3 data/ui/pers/health/trackers/tracked.json: %s" % e)
 if '"tracked" -> TrackedPage(env)' not in open(h + "/HealthPage.kt").read(): bad("T3 HealthPage does not dispatch tracked")
 ui = open(h + "/HealthTracked.kt").read()
 rng = re.search(r'enum class TrackedRange[^{]*\{([^}]*)\}', k)
@@ -54,8 +57,8 @@ for need, why in (("aggregateGroupByPeriod(", "daily buckets"), ("aggregateGroup
 for need in ("TrackedHc.add(", "TrackedDetail(", "Tracked.history(", "MetricChartCard(", "GoalRings(", "RangeToggle(", "Sparkline("):
     if need not in ui: bad("T4 the page lacks " + need)
 if "workout" not in groups.get("plan", []) or "workout" in groups.get("trackers", []): bad("T5 the Workout Plan is not on the Plan line")
-if [p["id"] for p in sec["pages"]][:1] != ["tracked"]: bad("T6 Health does not open on Tracked: the first page is %s" % [p["id"] for p in sec["pages"]][:1])
-if [g["id"] for g in sec["groups"]][:1] != ["trackers"]: bad("T6 the Trackers row is not the first row")
+if groups["trackers"][:1] != ["tracked"]: bad("T6 Health does not open on Tracked: the first page is %s" % groups["trackers"][:1])
+if [p["id"] for p in hl["pages"]][:1] != ["trackers"]: bad("T6 the Trackers row is not the first row")
 import glob, os
 painters = sorted(os.path.basename(f) for f in glob.glob(h + "/*.kt") if re.search(r'\bCanvas\(', open(f).read()))
 if painters != ["HealthCharts.kt"]: bad("T7 a Health page draws its own chart (Canvas in %s); use HealthCharts.kt" % painters)
@@ -63,7 +66,7 @@ print("\n".join(out)); sys.exit(1 if out else 0)
 PY
 echo "[ac_cloud-me] Health > Tracked"
 r="$(python3 "$CHECK" "$APP" 2>&1)" && ok "eight cards, mapped, writable, declared, D/W/M/Y detail, Workout Plan on Plan, Health opens on Tracked, one chart set" || bad "$r"
-FILES="build.json data/health/health_tracked.json data/ui/health/tracked.json app/src/main/java/com/diegonmarcos/cloudme/health/TrackedHc.kt app/src/main/java/com/diegonmarcos/cloudme/health/HealthTracked.kt app/src/main/java/com/diegonmarcos/cloudme/health/HealthPage.kt app/src/main/java/com/diegonmarcos/cloudme/health/HealthCharts.kt"
+FILES="build.json data/health/health_tracked.json data/ui/pers/health/trackers/tracked.json app/src/main/java/com/diegonmarcos/cloudme/health/TrackedHc.kt app/src/main/java/com/diegonmarcos/cloudme/health/HealthTracked.kt app/src/main/java/com/diegonmarcos/cloudme/health/HealthPage.kt app/src/main/java/com/diegonmarcos/cloudme/health/HealthCharts.kt"
 plant() {
   rm -rf "$S/t"; for f in $FILES; do mkdir -p "$S/t/$(dirname "$f")"; cp "$APP/$f" "$S/t/$f"; done
   python3 - "$S/t" <<PY
@@ -78,12 +81,12 @@ PY
 plant "a card is dropped"                       'sub(T + "/data/health/health_tracked.json", "    {\"id\": \"water\"", "    {\"id\": \"zz\"")'
 plant "a card loses its writer"                 'sub(H + "/TrackedHc.kt", "            \"weight\" -> WeightRecord(time", "            \"wt\" -> WeightRecord(time")'
 plant "a write permission is not declared"      'sub(T + "/build.json", "\"android.permission.health.WRITE_HYDRATION\"", "\"android.permission.health.WRITE_X\"")'
-plant "the Workout Plan goes back to Trackers"  'sub(T + "/build.json", "\"tracked\",\n              \"activities\"", "\"tracked\",\n              \"workout\",\n              \"activities\"")'
+plant "the Workout Plan goes back to Trackers"  'import json; d = json.load(open(T + "/build.json")); x = [s for s in d["ui"]["sections"] if s["id"] == "pers"][0]; h = [p for p in x["pages"] if p["id"] == "health"][0]; k = {p["id"]: p for p in h["pages"]}; k["trackers"]["pages"].append(k["plan"]["pages"].pop()); json.dump(d, open(T + "/build.json", "w"))'
 plant "HealthPage does not dispatch tracked"    'sub(H + "/HealthPage.kt", "\"tracked\" -> TrackedPage(env)", "")'
 plant "the manual entry is not written"         'sub(H + "/TrackedHc.kt", "c.insertRecords(", "c.toString(")'
 plant "the Month range is gone"                 'sub(H + "/TrackedHc.kt", ", MONTH(\"Month\", \"M\", 30)", "")'
 plant "the Year range is gone"                  'sub(H + "/TrackedHc.kt", ", YEAR(\"Year\", \"Y\", 365)", "")'
-plant "Health opens on Index again"             'import json; d = json.load(open(T + "/build.json")); x = [s for s in d["ui"]["sections"] if s["id"] == "health"][0]; x["pages"].append(x["pages"].pop(0)); json.dump(d, open(T + "/build.json", "w"))'
-plant "the Plan row comes first again"          'import json; d = json.load(open(T + "/build.json")); x = [s for s in d["ui"]["sections"] if s["id"] == "health"][0]; x["groups"].reverse(); json.dump(d, open(T + "/build.json", "w"))'
+plant "Health opens on Index again"             'import json; d = json.load(open(T + "/build.json")); x = [s for s in d["ui"]["sections"] if s["id"] == "pers"][0]; h = [p for p in x["pages"] if p["id"] == "health"][0]; t = h["pages"][0]["pages"]; t.append(t.pop(0)); json.dump(d, open(T + "/build.json", "w"))'
+plant "the Plan row comes first again"          'import json; d = json.load(open(T + "/build.json")); x = [s for s in d["ui"]["sections"] if s["id"] == "pers"][0]; h = [p for p in x["pages"] if p["id"] == "health"][0]; h["pages"].reverse(); json.dump(d, open(T + "/build.json", "w"))'
 plant "a page draws its own Canvas"             'sub(H + "/HealthTracked.kt", "@Composable\ninternal fun SectionLabel", "@Composable\nprivate fun Own() = androidx.compose.foundation.Canvas(Modifier) {}\n\n@Composable\ninternal fun SectionLabel")'
 echo; [ "$FAILS" -eq 0 ] && { echo "OK me health tracked"; exit 0; } || { echo "FAILED $FAILS"; exit 1; }

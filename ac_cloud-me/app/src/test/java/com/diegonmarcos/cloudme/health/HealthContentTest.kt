@@ -16,16 +16,17 @@ import java.io.File
 class HealthContentTest {
     private val c = HealthTestData.content()
 
+    /** #1901 Health is Pers > Health: the section is Pers, and the page Health holds Trackers and Plan as two strips. */
     private fun healthSection(): JSONObject {
         val secs = JSONObject(HealthTestData.text("build.json")).getJSONObject("ui").getJSONArray("sections")
-        return (0 until secs.length()).map { secs.getJSONObject(it) }.first { it.getString("id") == "health" }
+        val pers = (0 until secs.length()).map { secs.getJSONObject(it) }.first { it.getString("id") == "pers" }
+        return pers.getJSONArray("pages").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.first { it.getString("id") == "health" }
     }
 
     private fun groupPages(): Map<String, List<String>> {
-        val gs = healthSection().getJSONArray("groups")
-        return (0 until gs.length()).associate { i ->
-            val g = gs.getJSONObject(i)
-            g.getString("id") to (0 until g.getJSONArray("pages").length()).map { g.getJSONArray("pages").getString(it) }
+        val gs = healthSection().getJSONArray("pages")
+        return (0 until gs.length()).map { gs.getJSONObject(it) }.filter { it.has("pages") }.associate { g ->
+            g.getString("id") to (0 until g.getJSONArray("pages").length()).map { g.getJSONArray("pages").getJSONObject(it).getString("id") }
         }
     }
 
@@ -38,27 +39,29 @@ class HealthContentTest {
         assertTrue(c.formulas.circadian.single().points.size >= 2)
     }
 
-    @Test fun `Health declares the Plan and Trackers groups on the many rows second row, every page once`() {
+    @Test fun `Health declares the Trackers and Plan strips under Pers, every page once`() {
         val s = healthSection()
-        assertEquals("horizontal_two_rows", s.getString("nav_mode"))
-        val flat = s.getJSONArray("pages").let { a -> (0 until a.length()).map { a.getJSONObject(it).getString("id") } }
         val groups = groupPages()
-        // #1390: Health opens on Tracked, so the Trackers row is the first row and Tracked the first flat page.
+        // #1390: Health opens on Tracked, so the Trackers strip is the first and Tracked its first page (the first leaf of Health).
         assertEquals(listOf("trackers", "plan"), groups.keys.toList())
-        assertEquals("tracked", flat.first())
+        assertEquals("tracked", groups.getValue("trackers").first())
         assertEquals(listOf("bio", "circadian", "biomarkers", "timeline", "objectives", "matrix", "culinary", "clash", "thermal", "hemo", "shop", "dossier", "workout"), groups.getValue("plan").drop(1))
         // The Workout Plan is a plan (a programme to follow), not a tracker: it sits on the Plan line.
         assertEquals("workout", groups.getValue("plan").last())
         assertEquals(listOf("tracked", "activities", "bodycomp", "hr", "sleep"), groups.getValue("trackers"))
         val all = groups.values.flatten()
         assertEquals("a page is in two groups", all.size, all.toSet().size)
-        assertEquals("every flat page is in exactly one group", flat.toSet(), all.toSet())
-        for (g in 0 until s.getJSONArray("groups").length()) assertTrue("group icon", s.getJSONArray("groups").getJSONObject(g).getString("icon").isNotBlank())
+        assertEquals(19, all.size)
+        for (g in 0 until s.getJSONArray("pages").length()) assertTrue("strip icon", s.getJSONArray("pages").getJSONObject(g).getString("icon").isNotBlank())
+        // the metric taxonomy rides on the section that holds Health (libs:health reads it there)
+        val secs = JSONObject(HealthTestData.text("build.json")).getJSONObject("ui").getJSONArray("sections")
+        val pers = (0 until secs.length()).map { secs.getJSONObject(it) }.first { it.getString("id") == "pers" }
+        assertEquals(listOf("activity", "vitals", "body", "nutrition", "cycle", "sleep"), pers.getJSONArray("metrics").let { m -> (0 until m.length()).map { m.getJSONObject(it).getString("id") } })
     }
 
     @Test fun `every declared page has a stack file that hosts the Health page of its own id`() {
-        for (id in groupPages().values.flatten()) {
-            val arr = org.json.JSONArray(HealthTestData.text("data/ui/health/$id.json"))
+        for ((group, ids) in groupPages()) for (id in ids) {
+            val arr = org.json.JSONArray(HealthTestData.text("data/ui/pers/health/$group/$id.json"))
             assertEquals(1, arr.length())
             val o = arr.getJSONObject(0)
             assertEquals("fragment", o.getString("kind"))

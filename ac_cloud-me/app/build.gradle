@@ -194,8 +194,26 @@ if (lnktreeCacheDecl.enabled) {
     if (!(lnktreeCacheDecl.hard_refresh_scope in ['page', 'all'])) throw new GradleException("ui.lnktree_cache.hard_refresh_scope must be page or all")
     if (!(lnktreeCacheDecl.prefetch?.network in ['unmetered', 'connected'])) throw new GradleException("ui.lnktree_cache.prefetch.network must be unmetered or connected")
     if (!(buildJson.ui.sections ?: []).any { it.id == lnktreeCacheDecl.section }) throw new GradleException("ui.lnktree_cache.section '${lnktreeCacheDecl.section}' is not a ui.sections id")
+    // #1901 the embedded sites are spread over Pers, Prof and Proj: every section the cache covers must be declared.
+    (lnktreeCacheDecl.sections ?: []).each { sid ->
+        if (!(buildJson.ui.sections ?: []).any { it.id == sid }) throw new GradleException("ui.lnktree_cache.sections names '${sid}', which is not a ui.sections id")
+    }
 }
 def uiLnktreeCacheB64 = b64(lnktreeCacheDecl)
+// #1901 ui.renamed: the section and page ids of the layout before Health became Pers, Experiences Prof and Socials Proj, read by LegacyRoutes.
+// A rename that names a section or page the tree does not hold fails the build (a deep link must never land on nothing).
+def renamedDecl = buildJson.ui.renamed ?: [:]
+def renamedPageIds
+renamedPageIds = { pages -> (pages ?: []).collectMany { p -> [p.id.toString()] + renamedPageIds(p.pages) } }
+(renamedDecl.sections ?: [:]).each { old, now ->
+    if (!(buildJson.ui.sections ?: []).any { it.id == now }) throw new GradleException("ui.renamed.sections[${old}] names '${now}', which is not a ui.sections id")
+}
+(renamedDecl.pages ?: [:]).each { old, now ->
+    def parts = now.toString().split('/', 2)
+    def sec = (buildJson.ui.sections ?: []).find { it.id == parts[0] }
+    if (sec == null || (parts.length > 1 && !(parts[1] in renamedPageIds(sec.pages)))) throw new GradleException("ui.renamed.pages[${old}] names '${now}', which is not a page of the tree")
+}
+def uiRenamedB64 = b64(renamedDecl)
 def calEngineFleet = new groovy.json.JsonSlurper().parse(fleetAppsFile).apps.find { it.id == calEngineDecl.fleet }
 if (calEngineFleet == null) {
     throw new GradleException(
@@ -243,6 +261,7 @@ android {
         buildConfigField "String", "UI_PERMISSIONS_B64", "\"${uiPermissionsB64}\""
         buildConfigField "String", "UI_REPO_TREE_B64",     "\"${uiRepoTreeB64}\""
         buildConfigField "String", "UI_LNKTREE_CACHE_B64", "\"${uiLnktreeCacheB64}\""
+        buildConfigField "String", "UI_RENAMED_B64",       "\"${uiRenamedB64}\""
         buildConfigField "String", "UI_PROFILE_NAME",  "\"${profile.name ?: ''}\""
         buildConfigField "String", "UI_PROFILE_EMAIL", "\"${profile.email ?: ''}\""
         buildConfigField "String", "CAL_ENGINE_PACKAGE",      "\"${calEnginePackage}\""

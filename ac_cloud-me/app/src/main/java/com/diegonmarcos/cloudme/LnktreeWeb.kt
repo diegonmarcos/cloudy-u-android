@@ -33,9 +33,10 @@ object LnktreeCache {
 
     /** The cacheable pages of the declared section, read from the same page files the app shows. */
     fun pages(ctx: Context, cfg: LnktreeCacheConfig = config): List<LnktreePage> {
-        val section = Sections.byId(cfg.section) ?: return emptyList()
         fun leaves(ps: List<Page>): List<Page> = ps.flatMap { if (it.pages.isEmpty()) listOf(it) else leaves(it.pages) }
-        return leaves(section.pages).mapNotNull { LnktreePages.fromStack(it.id, Sections.stack(ctx, section.id, it.id), cfg) }
+        return cfg.cachedSections().mapNotNull { Sections.byId(it) }.flatMap { section ->
+            leaves(section.pages).mapNotNull { LnktreePages.fromStack(it.id, Sections.stack(ctx, section.id, it.id), cfg) }
+        }
     }
 
     /** One blocking GET with no HTTP caching of its own (the cache is ours). Null on any failure. */

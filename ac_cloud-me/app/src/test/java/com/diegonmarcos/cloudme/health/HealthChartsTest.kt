@@ -28,14 +28,14 @@ class HealthChartsTest {
     private val metrics = Tracked.parse(HealthTestData.text("data/health/${Tracked.ASSET}"))
     private fun m(id: String) = metrics.first { it.id == id }
 
-    @Test fun `Health opens on Tracked - the first flat page and the first row`() {
+    @Test fun `Health opens on Tracked - the first strip and its first page`() {
         val sections = JSONObject(HealthTestData.text("build.json")).getJSONObject("ui").getJSONArray("sections")
-        val health = (0 until sections.length()).map { sections.getJSONObject(it) }.first { it.getString("id") == "health" }
-        // NavSection.page(null) = pages.firstOrNull(): where a section opens when no page is asked for
-        assertEquals("tracked", health.getJSONArray("pages").getJSONObject(0).getString("id"))
-        val firstRow = health.getJSONArray("groups").getJSONObject(0)
+        val pers = (0 until sections.length()).map { sections.getJSONObject(it) }.first { it.getString("id") == "pers" }
+        val health = pers.getJSONArray("pages").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.first { it.getString("id") == "health" }
+        // a container opens its first child, a strip its first page: Pers > Health > Trackers > Tracked (#1901, was the section Health's first flat page)
+        val firstRow = health.getJSONArray("pages").getJSONObject(0)
         assertEquals("trackers", firstRow.getString("id"))
-        assertEquals("tracked", firstRow.getJSONArray("pages").getString(0))
+        assertEquals("tracked", firstRow.getJSONArray("pages").getJSONObject(0).getString("id"))
     }
 
     @Test fun `Day is 24 hourly buckets, readings in the same hour add up, empty hours stay null`() {

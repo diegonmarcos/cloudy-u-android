@@ -496,7 +496,7 @@
         "title": "Health",
         "subtitle": "Insurance · prescriptions · pharmacy",
         "accent": "#EC407A",
-        "target": "page:health/home"
+        "target": "page:pers/home"
       }
     ]
   }

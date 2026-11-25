@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""data/web/mysocials/data-linkedin.json.js -> data/ui/experiences/study/{cv,roadmap}.json + data/ui/experiences/work.json
+"""data/web/mysocials/data-linkedin.json.js -> data/ui/prof/prof-profiles/study/{cv,roadmap}.json + data/ui/prof/prof-profiles/work.json
    + data/ui/llc/{employed,side-hustles}.json
 
-Experiences > Study (CV, Roadmap), Experiences > Work (#1350: a Done and To do ledger whose Done list is seeded with
+Prof > Profiles > Study (CV, Roadmap), Prof > Profiles > Work (#1350: a Done and To do ledger whose Done list is seeded with
 every role) and the history half of LLC (Employed, Side hustles; the former Work
 section) are the owner's public LinkedIn profile, already bundled for Profile > Professional. There is no LinkedIn API, so
 the bundle is the one source: when the profile changes, refresh that bundle, then
@@ -111,7 +111,7 @@ def build(d):
     ]
     now = [e for e in d["experience"] if present(e["dates"])]
     nxt = [e for e in d["education"] if (end_year(e["dates"]) or 0) >= REF_YEAR]
-    # Experiences > Study: Done | Planned over experiences_user (study_done / study_todo). Done is seeded read-only
+    # Prof > Profiles > Study: Done | Planned over experiences_user (study_done / study_todo). Done is seeded read-only
     # with every finished course and the languages; Planned with every course still running (in progress).
     s_cats = ["🎓 Degree", "📚 Course", "📜 Certification", "🗣️ Language"]
     s_done, s_plan = done_plan([{"id": "title", "label": "Item", "type": "text", "required": True},
@@ -181,7 +181,7 @@ def build(d):
          "body": f"{len(own)} own ventures, newest first."},
         {"kind": "cards", "items": [job_card(e, body=True) for e in own]},
     ]
-    # #1350 Experiences > Work: the owner's own Done / To do career items (experiences_user, like every Achieves tab);
+    # #1350 Prof > Profiles > Work: the owner's own Done / To do career items (experiences_user, like every Achieves tab);
     # Done is seeded with the profile's roles, newest first, as read-only rows. "Career and Finance" goals stay in
     # Personal Growth; this page is the work record itself.
     cats = ["💼 Employment", "🚀 Own venture", "🏆 Milestone", "🎯 Career goal"]
@@ -201,7 +201,7 @@ def build(d):
          "builtin": roles, "move_to": "work_todo", "move_label": "Mark undone"},
         {"collection": "work_todo", "title": "🎯 To do", "empty": "Nothing planned yet. Add a career goal with its target date.", "fields": w_plan,
          "move_to": "work_done", "move_label": "Mark done", "move_stamp": "date"}]}]
-    return {"experiences/work.json": work_page, "experiences/study/cv.json": cv, "experiences/study/roadmap.json": roadmap, "llc/employed.json": work, "llc/side-hustles.json": endeavours}
+    return {"prof/prof-profiles/work.json": work_page, "prof/prof-profiles/study/cv.json": cv, "prof/prof-profiles/study/roadmap.json": roadmap, "llc/employed.json": work, "llc/side-hustles.json": endeavours}
 
 
 def main(argv):

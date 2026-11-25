@@ -186,7 +186,7 @@ bar = [by_id[i] for i in bar_ids if i in by_id]
 # Mirror NavDecl.bottomSections() — the order is the declared order. Diego's
 # Owner order (#1367): Health, Experiences, Socials, Lnktree, Inventory, Buro, LLC, left to right.
 bar_order = [s.get("label") for s in bar]
-EXPECTED_BAR_ORDER = ["Health", "Experiences", "Socials", "Lnktree", "Inventory", "Buro", "LLC"]
+EXPECTED_BAR_ORDER = ["Pers", "Prof", "Proj", "Inventory", "Buro", "LLC"]  # #1901
 if bar_order != EXPECTED_BAR_ORDER:
     bad.append(f"bottom bar order is {bar_order}, expected {EXPECTED_BAR_ORDER}")
 
@@ -235,13 +235,24 @@ if not os.path.exists(SUPERAPP):
     print("aa_cloud-superapp not checked out — deep-link routes skipped")
     sys.exit(0)
 
-secs = {s["id"]: s for s in json.load(open("build.json"))["ui"]["sections"]}
+_ui = json.load(open("build.json"))["ui"]
+secs = {s["id"]: s for s in _ui["sections"]}
+_ren = _ui.get("renamed", {})
+
+def renamed(section_id, page_id):
+    """LegacyRoutes.renamed: ui.renamed.pages["old section/old page"], else ui.renamed.sections[old section] with the page id kept (#1901)."""
+    to = _ren.get("pages", {}).get(f"{section_id}/{page_id}" if page_id else section_id)
+    if to:
+        a, _, b = to.partition("/")
+        return a, b
+    return _ren.get("sections", {}).get(section_id, section_id), page_id
 
 def resolve(target):
     """The page id Cloud Me would actually show, or a reason it would not."""
     if not target.startswith("page:"):
         return None, f"target {target} — not a page: route"
     section_id, _, page_id = target[len("page:"):].partition("/")
+    section_id, page_id = renamed(section_id, page_id)   # old ids (the SuperApp's Me row) go through ui.renamed, as MainActivity.open does
     section = secs.get(section_id)
     if section is None:
         return None, f"target {target} — no section '{section_id}'"
@@ -270,8 +281,14 @@ def strings(o):
 routes = {s.split("#", 1)[1] for s in strings(json.load(open(SUPERAPP)))
           if s.startswith("extapp:cloud-me#") and "#" in s}
 routes.add("page:tasks/backlogs")
-routes.add("page:experiences/geo")
+routes.add("page:experiences/geo")     # #1901 the pre-reorganisation ids stay routes: ui.renamed resolves them
 routes.add("page:experiences/work")
+routes.add("page:health/tracked")
+routes.add("page:lnktree/leafy")
+routes.add("page:pers/geo")
+routes.add("page:pers/tracked")
+routes.add("page:prof/work")
+routes.add("page:proj/lnktree-site")
 routes.add("page:tasks/roadmaps")
 routes.add("page:socials/socials-professional")  # #1771 the Cloud SA Socials tile
 routes.add("page:socials/socials-personal")
