@@ -111,6 +111,7 @@
     "writer-core",
     "media-viewer",
     "pdf",
+    "scanner",
     "odf",
     "json-viewer",
     "panoramaviewer",

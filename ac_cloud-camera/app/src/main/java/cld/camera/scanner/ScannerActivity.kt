@@ -30,6 +30,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import cld.camera.R
+import com.diegonmarcos.cloudlib.scanner.*
 import java.io.File
 import java.util.concurrent.Executors
 import kotlin.math.max

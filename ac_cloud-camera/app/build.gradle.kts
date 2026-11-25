@@ -205,6 +205,8 @@ dependencies {
     implementation(project(":libs:fleetconfigs-agents"))
     implementation(project(":libs:fleetconfigs-logcat"))
     implementation(project(":libs:fleetconfigs-xray"))
+    // #1908 the shared document-scanner toolkit (engines moved out of this app, plus the Scanner screens); it brings libs:pdf and libs:ml-l-image-ocr.
+    implementation(project(":libs:scanner"))
     implementation(platform("androidx.compose:compose-bom:2025.11.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.foundation:foundation")
@@ -223,3 +225,7 @@ dependencies {
     // The real org.json: android.jar's copy is a stub that throws on the JVM.
     testImplementation("org.json:json:20240303")
 }
+
+// #1908 the Scanner engines now live in libs:scanner: its JVM suite (detection, warp, filters, sizing, PDF round-trip, converters)
+// runs with this app's declared unit task, so a green Ship Camera means those tests ran.
+tasks.matching { it.name == "testDebugUnitTest" }.configureEach { dependsOn(":libs:scanner:testDebugUnitTest") }

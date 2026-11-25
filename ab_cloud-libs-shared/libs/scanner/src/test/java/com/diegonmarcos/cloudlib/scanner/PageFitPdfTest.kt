@@ -1,4 +1,4 @@
-package cld.camera.scanner
+package com.diegonmarcos.cloudlib.scanner
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

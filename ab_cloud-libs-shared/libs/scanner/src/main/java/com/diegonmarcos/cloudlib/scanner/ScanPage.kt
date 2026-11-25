@@ -1,4 +1,4 @@
-package cld.camera.scanner
+package com.diegonmarcos.cloudlib.scanner
 
 import android.graphics.Bitmap
 import kotlin.math.max

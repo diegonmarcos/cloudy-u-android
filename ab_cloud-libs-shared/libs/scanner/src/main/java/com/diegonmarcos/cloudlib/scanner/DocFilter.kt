@@ -1,4 +1,4 @@
-package cld.camera.scanner
+package com.diegonmarcos.cloudlib.scanner
 
 import kotlin.math.max
 import kotlin.math.min

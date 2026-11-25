@@ -5,7 +5,11 @@
 // is the consuming app's routing (Cloud Writer: core Ocr.run over Routing.run, PIT-gated).
 plugins {
     id 'com.android.library'
-    id 'org.jetbrains.kotlin.android'
+}
+// Conditional: an AGP 9 consumer (cloud-camera, #1908) self-registers the 'kotlin' extension and hard-errors on a
+// second apply; AGP 8 consumers still need it. Same pattern as libs/bottomnav/build.gradle.
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
 }
 
 android {
@@ -18,7 +22,12 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = '17' }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
 }
 
 dependencies {

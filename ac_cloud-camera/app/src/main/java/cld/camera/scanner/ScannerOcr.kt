@@ -3,6 +3,7 @@ package cld.camera.scanner
 import android.content.Context
 import android.graphics.Bitmap
 import cld.camera.analyzer.ImageContentScanner
+import com.diegonmarcos.cloudlib.scanner.OcrWord
 import com.diegonmarcos.superapp.image.mlkit.Scene
 
 /**

@@ -68,6 +68,15 @@ include(":libs:fleet-data-client")
 project(":libs:fleet-data-client").projectDir = file("../ab_cloud-libs-shared/libs/fleet-data-client")
 include(":libs:theme-background")
 project(":libs:theme-background").projectDir = file("../ab_cloud-libs-shared/libs/theme-background")
+// #1908 libs:scanner: the shared document-scanner toolkit (engines + Compose screens), and the two libs it reuses and the kit it draws with.
+include(":libs:scanner")
+project(":libs:scanner").projectDir = file("../ab_cloud-libs-shared/libs/scanner")
+include(":libs:pdf")
+project(":libs:pdf").projectDir = file("../ab_cloud-libs-shared/libs/pdf")
+include(":libs:ml-l-image-ocr")
+project(":libs:ml-l-image-ocr").projectDir = file("../ab_cloud-libs-shared/libs/ml-l-image-ocr")
+include(":libs:ui-kit")
+project(":libs:ui-kit").projectDir = file("../ab_cloud-libs-shared/libs/ui-kit")
 // Gradle 9 fails outright on a project directory that does not exist, and the
 // implicit ':libs' container resolves to <root>/libs which this app does not
 // have. Point it at the shared root, exactly as gallery does; the leaf

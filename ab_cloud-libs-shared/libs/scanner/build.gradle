@@ -1,0 +1,81 @@
+// libs:scanner (#1908) — THE document-scanner toolkit, shared BY REFERENCE (Cloud Camera first; Drive and others can link it).
+//
+// ENGINES (pure Kotlin, JVM-tested in src/test): edge detection, corner quads and perspective warp (Geometry, Raster, EdgeDetector),
+// crop presets, document filters (B&W adaptive threshold, grayscale, colour document with shadow and background whitening,
+// original, magic colour, brightness / contrast / sharpness), page operations, the searchable-PDF plan and writer (PdfPlan, PdfWriter),
+// page-size fit, naming templates, image converters (DPI, target size) and the PDF tools (merge, split, extract, rotate, reorder,
+// compress, protect, PDF to images).
+// REUSE, not a second copy: libs:pdf (PdfEditSession edits pages, PdfPages renders them), libs:ml-l-image-ocr (on-device OCR
+// with the bundled script models) and libs:ui-kit (the app kit the Scanner screens are drawn with).
+// The Compose screens (capture, review strip, per-page editor, Tools hub, export sheet) live in the ui package.
+//
+// Same sparse-version shape as libs:bottomnav: it builds under whichever AGP the consuming app pulls it in with.
+plugins {
+    id 'com.android.library'
+}
+// Conditional: an AGP 9 consumer (cloud-camera) self-registers the 'kotlin' extension and hard-errors on a second apply;
+// AGP 8 consumers still need it. Same pattern as libs/bottomnav/build.gradle.
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+apply plugin: 'org.jetbrains.kotlin.plugin.compose'
+
+android {
+    namespace 'com.diegonmarcos.cloudlib.scanner'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 26
+    }
+
+    buildFeatures {
+        compose = true
+    }
+
+    testOptions {
+        unitTests {
+            returnDefaultValues = true
+            all {
+                testLogging {
+                    events 'failed'
+                    exceptionFormat 'full'
+                }
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    api project(':libs:pdf')
+    api project(':libs:ml-l-image-ocr')
+    implementation project(':libs:ui-kit')
+    implementation 'androidx.core:core-ktx:1.15.0'
+    // The page tools open and write PDFs with PdfBox directly (merge, split, protect); libs:pdf keeps it `implementation`.
+    implementation 'com.tom-roush:pdfbox-android:2.0.27.0'
+    implementation platform('androidx.compose:compose-bom:2025.11.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.foundation:foundation'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.material:material-icons-extended'
+    implementation 'androidx.activity:activity-compose:1.9.3'
+    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.8.7'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    // Live capture: the viewfinder, the frame analyser for the edge overlay, still capture (same CameraX the Camera app links).
+    implementation 'androidx.camera:camera-core:1.6.1'
+    implementation 'androidx.camera:camera-camera2:1.6.1'
+    implementation 'androidx.camera:camera-lifecycle:1.6.1'
+    implementation 'androidx.camera:camera-view:1.6.1'
+
+    testImplementation 'junit:junit:4.13.2'
+}

@@ -1,4 +1,4 @@
-package cld.camera.scanner
+package com.diegonmarcos.cloudlib.scanner
 
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
