@@ -23,7 +23,7 @@ class ExperiencesTest {
     private fun defs(p: String) = block(p).getJSONArray("ledgers").let { a -> (0 until a.length()).map { LedgerDef.parse(a.getJSONObject(it)) } }
 
     /** By 30's two collections: two done, one planned, one in progress. */
-    private val by30 = defs("achieves/by30")
+    private val by30 = defs("pers/achieves/by30")
     private val data = LedgerData()
         .added("by30_done", mapOf("title" to "Degree", "category" to "💼 Career and Finance", "date" to "2015-12-01"))
         .added("by30_done", mapOf("title" to "Marathon", "category" to "🌍 Health & Wellness", "date" to "2017-05-01"))
@@ -56,7 +56,7 @@ class ExperiencesTest {
         assertEquals(ExpStatus.IN_PROGRESS, planned.single { it.title == "Fund" }.status)
         assertEquals(ExpStatus.PLANNED, planned.single { it.title == "Pilot licence" }.status)
         // Declared rows land on their side read-only; an accepted suggestion stops showing as one.
-        val end = defs("achieves/endurance")
+        val end = defs("pers/achieves/endurance")
         val (eDone, ePlan) = ExperiencesModel.split(ExperiencesModel.items(end, LedgerData()))
         assertEquals(end[0].builtin.size, eDone.size); assertTrue(eDone.all { it.readOnly })
         assertEquals(end[1].suggestions.size, ePlan.count { it.suggestion >= 0 })
@@ -94,7 +94,7 @@ class ExperiencesTest {
         assertEquals("💼 Career and Finance", ExperiencesModel.counts(ExperiencesModel.items(by30, data)).first().category)
         assertEquals(0.5f, ExperiencesModel.progress(2, 2)); assertEquals(0f, ExperiencesModel.progress(0, 0))
         // Geo groups by continent; a record with none is "Other".
-        val geo = defs("achieves/geo")
+        val geo = defs("pers/achieves/geo")
         val g = ExperiencesModel.items(geo, LedgerData().added("geo_todo", mapOf("title" to "Tokyo", "country" to "Japan")), "continent")
         assertEquals("Other", g.single { it.title == "Tokyo" }.category)
         assertTrue(ExperiencesModel.counts(g).any { it.category == "Europe" && it.done > 0 })
