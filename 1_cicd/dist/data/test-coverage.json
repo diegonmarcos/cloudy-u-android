@@ -40,7 +40,7 @@
     },
     "ac_c3-morpheus": {
       "first_test": "WebView panel app: assert every panel endpoint in build.json is a mesh 10.0.0.x address \u2014 a public hostname is Authelia-gated and renders a login page on the phone.",
-      "shell_testers": 0,
+      "shell_testers": 1,
       "ship_has_published_nothing_guard": true,
       "ship_runs_testers": true,
       "unit_task_declared": false,
@@ -597,6 +597,6 @@
       "workflow": "ship-lib-calc-native.yml"
     }
   },
-  "with_executed_tests": 41,
-  "with_no_tests_at_all": 25
+  "with_executed_tests": 42,
+  "with_no_tests_at_all": 24
 }
