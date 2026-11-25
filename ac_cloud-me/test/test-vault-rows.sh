@@ -55,7 +55,7 @@ secs = {s["id"]: s for s in ui["sections"]}
 pj = ui.get("vault_rows", {}).get("projects", {})
 src = secs.get(pj.get("section"), {})
 g = next((x for x in src.get("groups", []) if x["id"] == pj.get("group")), None)
-if pj.get("section") != "proj" or g is None or pj.get("group") != ui.get("repo_tree", {}).get("group"): print("Projects does not name the Proj section's Proj group")
+if pj.get("section") != "lnktree" or g is None or pj.get("group") != ui.get("repo_tree", {}).get("group"): print("Projects does not name the Lnktree bottom-nav section's Proj group (#1914)")
 if [p["id"] for p in secs["tasks"]["pages"]] != ["roadmaps", "backlogs"] or {x["id"]: x["pages"] for x in secs["tasks"].get("groups", [])} != {"backlogs": ["backlogs"], "roadmaps": ["roadmaps"]}: print("Tasks types its own pages or groups")
 gr = open(os.path.join(app, "app/build.gradle"), encoding="utf-8").read()
 if "area-" in gr: print("app/build.gradle types an area page")

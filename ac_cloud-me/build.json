@@ -1694,7 +1694,7 @@
         {"id": "roadmaps", "label": "RoadMaps", "root": "1.1_RoadMaps___", "under": ["1.1"], "icon": "ic_p_roadmap"},
         {"id": "library", "label": "Library", "root": "2___Library___", "under": ["2"], "sub": true, "icon": "menu_book"}
       ],
-      "projects": {"id": "projects", "label": "Projects", "icon": "account_tree", "section": "proj", "group": "proj"}
+      "projects": {"id": "projects", "label": "Projects", "icon": "account_tree", "section": "lnktree", "group": "proj"}
     },
     "repo_tree": {
       "_doc": "#1298 Lnktree > Proj: the registry outline as a collapsible tree. outline_asset is libs:repos repos.outline.json (byte-equal copy in data/repos, guarded by RepoOutlineTest and libs/repos/sync.sh --check-outline). group is the second-row group whose label opens the FULL tree. areas maps each page of that group to a registry area code, in registry order. NO names here: a chip label, the area order and which areas are listed all come from the registry (git-repos-master projects-repos.json: area name, and the area flag show_in containing lnktree), through the outline; app/build.gradle bakes each chip label from the outline and RepoTreeTest guards that nothing is overridden. Expansion state is the SharedPreferences store repo_tree (one set of expanded node codes, declared in fleet-config.json). A leaf opens the fleet app whose constellation repo_url is its url when there is one, else its GitHub url.",
