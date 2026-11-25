@@ -33,6 +33,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import app.sterna.ui.errors.ErrorLogDialog
+import app.sterna.ui.errors.showError
+import app.sterna.ui.errors.ErrorActionsWithLog
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -78,9 +81,11 @@ fun MailBySenderScreen(
         pluralStringResource(R.plurals.sender_volume_deleted, it.deleted, it.deleted)
     }
 
+    var errorLogOpen by remember { mutableStateOf(false) }
+    if (errorLogOpen) ErrorLogDialog { errorLogOpen = false }
     LaunchedEffect(message) {
         val m = message ?: return@LaunchedEffect
-        snackbarHostState.showSnackbar(m)
+        snackbarHostState.showError(m) { errorLogOpen = true }
         viewModel.clearMessage()
     }
 

@@ -74,6 +74,28 @@ class AppContainer(context: Context) {
      *  info/warn only, release stripping debug and verbose. */
     private val jmapClient: JmapClient = JmapClient { message, error ->
         if (error == null) Log.i("JmapClient", message) else Log.w("JmapClient", message, error)
+        // #1925 the same lines feed the mail log ring behind See log / Export.
+        com.diegonmarcos.superapp.fleetendpoints.errors.ErrorLog.shared.log("JmapClient", message + (error?.let { " | ${it.javaClass.simpleName}: ${it.message}" } ?: ""))
+    }
+
+    init {
+        // #1925 what the error log reads at failure time: the account behind a host, and whether a VPN is up.
+        val log = com.diegonmarcos.superapp.fleetendpoints.errors.ErrorLog.shared
+        val ctx = context.applicationContext
+        log.accountOf = { host ->
+            accountStore.accounts().firstOrNull { it.server.contains(host) }?.let { it.accountName.ifBlank { it.username } }.orEmpty()
+        }
+        log.vpnState = {
+            runCatching {
+                val cm = ctx.getSystemService(android.net.ConnectivityManager::class.java)
+                val caps = cm.getNetworkCapabilities(cm.activeNetwork)
+                when {
+                    caps == null -> "no active network"
+                    caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_VPN) -> "VPN up (active network is a VPN)"
+                    else -> "no VPN on the active network"
+                }
+            }.getOrDefault("unknown")
+        }
     }
 
     /** OpenPGP via the OpenKeychain provider (binds lazily; harmless when not installed). */

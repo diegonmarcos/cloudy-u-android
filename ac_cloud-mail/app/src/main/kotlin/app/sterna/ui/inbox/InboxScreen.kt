@@ -146,6 +146,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
+import app.sterna.ui.errors.ErrorLogDialog
+import app.sterna.ui.errors.showError
+import app.sterna.ui.errors.ErrorActionsWithLog
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -389,9 +392,11 @@ fun InboxScreen(
     LaunchedEffect(Unit) { viewModel.refreshThreadMembers() }
 
     // Surface transient action errors (e.g. "no Archive folder") in a snackbar.
+    var errorLogOpen by remember { mutableStateOf(false) }
+    if (errorLogOpen) ErrorLogDialog { errorLogOpen = false }
     LaunchedEffect(message) {
         val m = message ?: return@LaunchedEffect
-        snackbarHostState.showSnackbar(m)
+        snackbarHostState.showError(m) { errorLogOpen = true }
         viewModel.clearMessage()
     }
 
@@ -1781,6 +1786,7 @@ fun InboxScreen(
                                 textAlign = TextAlign.Center,
                             )
                             Button(onClick = viewModel::refreshRequested) { Text(stringResource(R.string.inbox_retry)) }
+                            ErrorActionsWithLog()
                         }
                     }
                     else -> {
@@ -3178,12 +3184,15 @@ private fun SyncErrorBanner(message: String) {
         ) {
             Icon(Icons.Filled.Warning, contentDescription = null)
             Spacer(Modifier.width(MailMetrics.s12))
-            Text(
-                stringResource(R.string.sync_error_banner, message),
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Column {
+                Text(
+                    stringResource(R.string.sync_error_banner, message),
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                ErrorActionsWithLog()
+            }
         }
     }
 }
@@ -3202,10 +3211,13 @@ private fun OutboxFailureBanner(onClick: () -> Unit) {
         ) {
             Icon(Icons.Filled.Warning, contentDescription = null)
             Spacer(Modifier.width(MailMetrics.s12))
-            Text(
-                stringResource(R.string.outbox_banner_failed),
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            Column {
+                Text(
+                    stringResource(R.string.outbox_banner_failed),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                ErrorActionsWithLog()
+            }
         }
     }
 }
