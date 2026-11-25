@@ -75,7 +75,7 @@ if "SafeEncryptedPrefs.prefs(" not in sp: bad.append("A2 SecretPrefs does not us
 for need in ("EncryptedSharedPreferences.create(", "MasterKey.KeyScheme.AES256_GCM", "PrefValueEncryptionScheme.AES256_GCM"):
     if need not in safe: bad.append("A2 SafeEncryptedPrefs does not use %s" % need)
 store = re.search(r'PREFS\s*=\s*"([^"]+)"', sp)
-fc = json.loads(read(os.path.join(root, "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json")))
+fc = json.loads(read(os.path.join(root, "fleet-private-data/fleet-config.json")))
 decl = fc["stores"].get(store.group(1)) if store else None
 if not decl or decl.get("kind") != "encrypted" or decl.get("class") != "secret":
     bad.append("A2 the token store %r is not declared encrypted/secret in fleet-config.json" % (store.group(1) if store else None))

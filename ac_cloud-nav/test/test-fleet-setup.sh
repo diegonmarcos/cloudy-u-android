@@ -42,7 +42,9 @@ scratch() {
   rm -rf "$T"; mkdir -p "$T/$M/core" "$T/$M/fleetconfig-model/src/main/assets" "$T/$M/fleetconfig-model/src/main/java/com/diegonmarcos/superapp/fleetconfig" "$T/$MODULE" "$T/1_cicd/src/data"
   cp "$ROOT/$M/core/build.gradle" "$T/$M/core/"
   cp "$ROOT/$M/fleetconfig-model/src/main/AndroidManifest.xml" "$T/$M/fleetconfig-model/src/main/"
-  cp "$ROOT/$M/fleetconfig-model/src/main/assets/fleet-config.json" "$T/$M/fleetconfig-model/src/main/assets/"
+  # the manifest sits where the policy names it (#1566: the CI-materialised fleet-private-data/fleet-config.json)
+  MAN="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['manifest'])" "$POLICY")"
+  mkdir -p "$T/$(dirname "$MAN")"; cp "$ROOT/$MAN" "$T/$MAN"
   cp "$ROOT/$M/fleetconfig-model/src/main/java/com/diegonmarcos/superapp/fleetconfig/SetupProvider.kt" "$T/$M/fleetconfig-model/src/main/java/com/diegonmarcos/superapp/fleetconfig/"
   cp "$APP/build.json" "$T/$MODULE/"
   for s in settings.gradle settings.gradle.kts; do [ -f "$APP/$s" ] && cp "$APP/$s" "$T/$MODULE/"; done

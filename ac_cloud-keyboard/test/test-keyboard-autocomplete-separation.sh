@@ -27,7 +27,7 @@ FILES=(
     "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/AutocompletePublisher.kt"
     "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/profile/AccountData.kt"
     "ab_cloud-libs-shared/libs/account/src/main/java/com/diegonmarcos/superapp/settings/AccountVault.kt"
-    "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
+    "fleet-private-data/fleet-config.json"
 )
 KJ=ab_cloud-libs-shared/libs/keyboard/src/main/java/helium314/keyboard
 DIRS=("$KJ/latin/autocomplete" "$KJ/keyboard/autocomplete" "$KJ/keyboard/clipboard" "$KJ/latin/autofill")
@@ -84,7 +84,7 @@ print("== S3 encrypted at rest, declared ==")
 st = rd(f"{KJ}/latin/autocomplete/AutocompleteStore.kt")
 check("AndroidKeyStore" in st and "AES/GCM/NoPadding" in st and "getSharedPreferences(PREFS" in st, "S3 the store is AES-GCM under a Keystore key in its own prefs file")
 m = re.search(r'const val PREFS = "([^"]+)"', st)
-manifest = json.loads(rd("ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"))
+manifest = json.loads(rd("fleet-private-data/fleet-config.json"))
 decl = manifest["stores"].get(m.group(1)) if m else None
 check(decl is not None and decl["kind"] == "prefs" and decl["class"] == "device" and "lib-keyboard" in decl.get("used_by", []) and decl.get("doc"),
       "S3 the fleet manifest declares the store as a device prefs store of lib-keyboard, with a doc")

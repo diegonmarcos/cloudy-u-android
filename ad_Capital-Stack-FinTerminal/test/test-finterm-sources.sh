@@ -107,7 +107,7 @@ box = ktf("EncryptedSecretBox.kt")
 m = re.search(r'SafeEncryptedPrefs\.prefs\(\s*\w+\s*,\s*PREFS\s*\)', box)
 if not m: bad.append("S4 EncryptedSecretBox does not open its file through SafeEncryptedPrefs.prefs")
 store = (re.search(r'const val PREFS\s*=\s*"([^"]+)"', box) or [None, ""])[1]
-fc = json.loads(read(os.path.join(root, "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json")))
+fc = json.loads(read(os.path.join(root, "fleet-private-data/fleet-config.json")))
 st = fc.get("stores", {}).get(store)
 if not st or st.get("kind") != "encrypted" or st.get("class") != "secret" or "ad_Capital-Stack-FinTerminal" not in st.get("used_by", []) and "ad_Capital-Stack-FinTerminal" not in st.get("used_by", []):
     bad.append("S4 the key store %r is not declared encrypted + secret for this app in fleet-config.json" % store)

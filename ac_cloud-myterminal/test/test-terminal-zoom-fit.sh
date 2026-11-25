@@ -48,7 +48,7 @@ const SRC = {
   html: fs.readFileSync(path.join(FE, "index.html"), "utf8"),
   bridge: fs.readFileSync(path.join(APP, "hub/src/main/java/com/diegonmarcos/ide/TerminalBridge.kt"), "utf8"),
   prefs: fs.readFileSync(path.join(APP, "hub/src/main/java/com/diegonmarcos/ide/IdePrefs.kt"), "utf8"),
-  fleet: fs.readFileSync(path.join(APP, "../ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"), "utf8"),
+  fleet: fs.readFileSync(path.join(APP, "../fleet-private-data/fleet-config.json"), "utf8"),
 };
 let pass = 0, fail = 0;
 const ok = (m) => { pass++; console.log("  PASS: " + m); };

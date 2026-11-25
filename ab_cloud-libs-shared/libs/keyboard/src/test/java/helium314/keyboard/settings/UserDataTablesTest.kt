@@ -78,7 +78,7 @@ class UserDataTablesTest {
 
     @Test fun storeIsDeclaredInFleetConfigAndNothingIsBaked() {
         val root = generateSequence(File("").absoluteFile) { it.parentFile }.firstOrNull { File(it, "ab_cloud-libs-shared/libs/fleetconfig-model").isDirectory } ?: return
-        val manifest = File(root, "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json").readText()
+        val manifest = File(root, "fleet-private-data/fleet-config.json").readText()
         assertTrue(manifest.contains("\"autocomplete_userdata\""))
         val app = File(root, "ac_cloud-keyboard/app/src/main/java/com/diegonmarcos/cloudkeyboard/App.kt").readText()
         assertTrue(app.contains("SafeEncryptedPrefs.prefs(ctx, \"autocomplete_userdata\")"))
