@@ -17,7 +17,6 @@ aa_cloud-superapp/build.json	ui.profile_sync.url	pending	request endpoint read f
 aa_cloud-superapp/build.json	ui.sections.*.jmap_default_server	pending	request endpoint read from build config; its consumer is not yet routed through libs:fleet-endpoints
 aa_cloud-superapp/build.json	ui.sections.*.pages.*.dagu_default_server	pending	request endpoint read from build config; its consumer is not yet routed through libs:fleet-endpoints
 aa_cloud-superapp/build.json	ui.sections.*.pages.*.mattermost_default_server	pending	request endpoint read from build config; its consumer is not yet routed through libs:fleet-endpoints
-aa_cloud-superapp/build.json	ui.sections.*.pages.*.url	link	a link the user opens in the browser or a WebView page; no request is made by the app
 aa_cloud-superapp/build.json	ui.sections.*.phone_app_groups.*.links.*.url	link	a public web shortcut tile (Phone Quickmarks > Projects > Linktree) the user opens in Cloud Browser or the default browser; no request is made by the app
 ab_cloud-libs-shared/build.json	auth.config_source.base_url	pending	request endpoint read from build config; its consumer is not yet routed through libs:fleet-endpoints
 ab_cloud-libs-shared/build.json	auth.git_chain.providers.fleet.clone_url	pending	request endpoint read from build config; its consumer is not yet routed through libs:fleet-endpoints
