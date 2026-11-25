@@ -157,7 +157,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "z-ai/glm-5.3-flash",
-        "pricing_as_of": "2026-11-24",
+        "pricing_as_of": "2026-11-25",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -315,8 +315,6 @@
               "fp8"
             ],
             "trained_for": [
-              "academia",
-              "legal",
               "programming",
               "roleplay"
             ],
@@ -347,8 +345,8 @@
               "translation",
               "trivia"
             ],
-            "prompt": 0.15,
-            "completion": 0.5,
+            "prompt": 0.12,
+            "completion": 0.38,
             "note": "The provider default: ranked in all twelve categories, and the cheapest all-rounder after DeepSeek."
           },
           {
