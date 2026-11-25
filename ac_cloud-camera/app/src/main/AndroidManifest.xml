@@ -248,6 +248,7 @@
         <activity
             android:name=".scanner.ScannerActivity"
             android:theme="@style/Theme.App"
+            android:configChanges="orientation|keyboardHidden|screenSize|smallestScreenSize|screenLayout|uiMode|density|fontScale"
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
 

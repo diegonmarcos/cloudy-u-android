@@ -99,6 +99,7 @@
     <string name="scanner_rotate_left">Rotate left</string>
     <string name="scanner_rotate_right">Rotate right</string>
     <string name="scanner_rotated">Rotated. Open Preview to see it.</string>
+    <string name="scanner_result_pdf">%1$d files, %2$d pages</string>
     <string name="scanner_run">Run</string>
     <string name="scanner_s_a4">A4</string>
     <string name="scanner_s_card">Business card</string>

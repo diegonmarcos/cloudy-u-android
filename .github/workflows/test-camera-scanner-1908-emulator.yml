@@ -1,0 +1,484 @@
+# #1908 Cloud Camera Scanner (libs:scanner, redesigned UI) on an emulator: the walk of EVERY screen, with a screenshot of each, in dark and in light.
+# Runs the x86_64 APK a Ship Cloud Camera run built (plus the image engine APK, for OCR). Screens walked, one PASS/FAIL line each:
+#   Scanner tab opens (fifth nav item) > start screen > Tools hub (all 17 tools, scrolled) > a tool screen > import through the picker >
+#   editor: crop canvas (handles, presets, auto edges, rotate, deskew) > filter carousel (B&W, grayscale, colour, original, magic) > Text (OCR) >
+#   review strip + page operations (duplicate, delete) > export sheet (PDF / JPEG, sizes, naming template) > Save and read the PDF back (A4, text layer) >
+#   capture screen (live viewfinder, controls, batch shot) > file tools (compress, merge, PDF to images, password, image converter) > light theme screens.
+# Evidence: camera-scanner-1908-evidence (shots/NN-*.png, uiautomator XML, scan.pdf, verdict.txt). The job fails on any FAIL.
+# (the #1839 walk below this line is kept as it was, in test-camera-scanner-emulator.yml)
+# --- original header of the #1839 walk follows ---
+# #1839 Cloud Camera Scanner on an emulator: the walk that proves what the ticket shipped.
+# Runs the x86_64 APK a Ship Cloud Camera run built (plus the image engine APK, for OCR) and checks, one PASS/FAIL line each:
+#   1. Scanner is the fifth bottom-nav item (build.json declaration, and the island on screen), and its tap opens ScannerActivity;
+#   2. the Camera page shows the Filters button (filters_option), and its tap opens the Filters/VR screen (vr_status);
+#   3. a generated document photo (white page, black text, slightly rotated, dark background) pushed to Pictures, media-scanned,
+#      is imported through the Scanner's Import button and the system picker (ScannerActivity is exported=false and takes
+#      no ACTION_SEND/VIEW, so the picker is the only way in);
+#   4. edge detection finds a quad hugging the page (cyan corner overlay measured in the screenshot) and the Frame tab's corner editor is shown;
+#   5. each filter (B&W, Grayscale, Colour, Original) is applied, with a screenshot of each;
+#   6. A4 is chosen on the Size tab;
+#   7. Export > PDF > Save through the system "save as" picker; the PDF is pulled with adb and must start with %PDF, have one page,
+#      a 595x842 pt page (A4), and a text layer (OCR through the image engine) holding a known word of the test page.
+# Evidence: camera-scanner-evidence (PNGs, uiautomator XML, the PDF, verdict.txt). The job fails on any FAIL.
+name: "Test -> Cloud Camera Scanner 1908 (emulator)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      camera_run_id:
+        description: "Ship Cloud Camera run id whose x86_64 APK artifact to test"
+        required: true
+      libs_run_id:
+        description: "Ship Cloud Libs run id whose image engine APK artifact to use for OCR (empty = release asset)"
+        required: false
+        default: ""
+      release_tag:
+        description: "Release to download the engine from when libs_run_id is empty"
+        required: false
+        default: "latest"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  scanner:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - name: Checkout the nav declaration
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: ac_cloud-camera/build.json
+          sparse-checkout-cone-mode: false
+
+      - name: Fetch the Cloud Camera and engine APKs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          C_RUN: ${{ inputs.camera_run_id }}
+          L_RUN: ${{ inputs.libs_run_id }}
+          TAG: ${{ inputs.release_tag }}
+        run: |
+          set -eu
+          mkdir -p apk/cam apk/lib
+          gh api "repos/$REPO/actions/runs/$C_RUN/artifacts" --paginate --jq '.artifacts[] | select(.name|startswith("Cloud-Camera-")) | .name' |
+          while read -r name; do gh run download "$C_RUN" -R "$REPO" -n "$name" -D "apk/cam/$name"; done
+          if [ -n "$L_RUN" ]; then
+            gh api "repos/$REPO/actions/runs/$L_RUN/artifacts" --paginate --jq '.artifacts[] | select(.name|startswith("Cloud-Libs-")) | .name' |
+            while read -r name; do gh run download "$L_RUN" -R "$REPO" -n "$name" -D "apk/lib/$name"; done
+          else
+            gh release download "${TAG:-latest}" -R "$REPO" -p 'Cloud-Lib-Ml-L-Image-Mlkit.apk' -D apk/lib
+          fi
+          cam=""
+          for want in x86_64 universal ''; do
+            cam=$(find apk/cam -name '*.apk' | sort | grep -i -- "$want" | head -1 || true)
+            [ -n "$cam" ] && break
+          done
+          eng=$(find apk/lib -name 'Cloud-Lib-Ml-L-Image-Mlkit*.apk' | head -1 || true)
+          [ -n "$cam" ] && [ -n "$eng" ] || { echo "::error::missing an APK (camera='$cam' engine='$eng')"; exit 1; }
+          cp "$cam" camera.apk; cp "$eng" engine.apk
+          ls -l camera.apk engine.apk
+
+      - name: Fixture tools (Pillow, fonts)
+        run: |
+          sudo apt-get update -q >/dev/null
+          sudo apt-get install -y -q python3-pil fonts-dejavu-core >/dev/null
+          python3 -I -c 'import PIL; print("Pillow", PIL.__version__)'
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Write the scripts
+        run: |
+          cat > fixture.py <<'PY'
+          import glob, sys
+          from PIL import Image, ImageDraw, ImageFont
+          def font(size, *names):
+              for n in names:
+                  for p in glob.glob("/usr/share/fonts/**/" + n, recursive=True):
+                      return ImageFont.truetype(p, size)
+              return ImageFont.load_default(size)
+          bold = lambda s: font(s, "DejaVuSans-Bold.ttf", "LiberationSans-Bold.ttf")
+          reg = lambda s: font(s, "DejaVuSans.ttf", "LiberationSans-Regular.ttf")
+          page = Image.new("RGBA", (1000, 1350), (250, 238, 200, 255))
+          d = ImageDraw.Draw(page)
+          d.text((70, 90), "INVOICE 0042", fill=(200, 0, 0), font=bold(90))
+          y = 290
+          for line in ("Cloud Scanner test page", "Coffee 2.50", "Bread 3.20", "Total 5.70", "Thank you for visiting"):
+              d.text((70, y), line, fill=(0, 0, 0), font=reg(66)); y += 150
+          rot = page.rotate(5, expand=True, resample=Image.BICUBIC)
+          bg = Image.new("RGB", (1500, 2000), (35, 35, 40))
+          bg.paste(rot, ((1500 - rot.width) // 2, (2000 - rot.height) // 2), rot)
+          bg.save(sys.argv[1])
+          print("fixture", bg.size)
+          PY
+          cat > ui.py <<'PY'
+          import html, re, sys
+          def nodes(path):
+              x = open(path, encoding="utf-8", errors="replace").read()
+              for m in re.finditer(r"<node [^>]*>", x):
+                  a = {k: html.unescape(v) for k, v in re.findall(r'([\w-]+)="([^"]*)"', m.group(0))}
+                  b = re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", a.get("bounds", ""))
+                  if b: a["_b"] = tuple(map(int, b.groups())); yield a
+          def onscreen(a): x1, y1, x2, y2 = a["_b"]; return x2 > x1 and y2 > y1
+          def centre(a): x1, y1, x2, y2 = a["_b"]; return "%d %d" % ((x1 + x2) // 2, (y1 + y2) // 2)
+          def order(hits): return sorted(hits, key=lambda a: (a["_b"][1], a["_b"][0]))
+          cmd, path = sys.argv[1], sys.argv[2]
+          ns = [a for a in nodes(path) if onscreen(a)]
+          if cmd == "text":        # n-th node whose text or content-desc is the label
+              want = sys.argv[3].strip().lower(); n = int(sys.argv[4]) if len(sys.argv) > 4 else 0
+              hits = order(a for a in ns if want in (a.get("text", "").strip().lower(), a.get("content-desc", "").strip().lower()))
+              print(centre(hits[n]) if len(hits) > n else "")
+          elif cmd == "starts":
+              want = sys.argv[3].lower()
+              hits = order(a for a in ns if a.get("text", "").strip().lower().startswith(want))
+              print(centre(hits[0]) if hits else "")
+          elif cmd == "id":        # a View id ending :id/<suffix>
+              want = sys.argv[3]
+              hits = order(a for a in ns if a.get("resource-id", "") == want or a.get("resource-id", "").endswith(":id/" + want))
+              print(centre(hits[0]) if hits else "")
+          elif cmd == "rid":       # a Compose testTag (the resource-id IS the tag): centre of the first node with exactly that tag
+              want = sys.argv[3]
+              hits = order(a for a in ns if a.get("resource-id", "") == want)
+              print(centre(hits[0]) if hits else "")
+          elif cmd == "ridhas":
+              want = sys.argv[3]
+              print(sum(1 for a in ns if a.get("resource-id", "") == want))
+          elif cmd == "ridb":     # bounds "x1 y1 x2 y2" of the tag
+              want = sys.argv[3]
+              hits = order(a for a in ns if a.get("resource-id", "") == want)
+              print("%d %d %d %d" % hits[0]["_b"] if hits else "")
+          elif cmd == "ridtext":  # the text of the tagged node and its descendants' texts, joined
+              want = sys.argv[3]
+              allnodes = [a for a in nodes(path)]
+              box = [a for a in allnodes if a.get("resource-id", "") == want]
+              if not box: print(""); sys.exit()
+              x1, y1, x2, y2 = box[0]["_b"]
+              print(" ".join(a.get("text", "") for a in allnodes if a["_b"][0] >= x1 and a["_b"][2] <= x2 and a["_b"][1] >= y1 and a["_b"][3] <= y2 and a.get("text", "")))
+          elif cmd == "ridlist":  # every distinct tag that starts with the prefix
+              want = sys.argv[3]
+              print("\n".join(sorted({a.get("resource-id", "") for a in ns if a.get("resource-id", "").startswith(want)})))
+          elif cmd == "has":
+              want = sys.argv[3].strip().lower()
+              print(sum(1 for a in ns if want in (a.get("text", "").strip().lower(), a.get("content-desc", "").strip().lower())))
+          elif cmd == "texts":
+              print(" | ".join(t for a in ns for t in (a.get("text", ""), a.get("content-desc", "")) if t.strip())[:1500])
+          elif cmd == "island":
+              isl = [a for a in ns if a.get("resource-id", "").endswith("camera_mode_island")]
+              if not isl: print("0 0 0"); sys.exit()
+              x1, y1, x2, y2 = isl[0]["_b"]
+              kids = sorted((a for a in ns if a is not isl[0] and a.get("content-desc", "").strip()
+                             and a["_b"][0] >= x1 and a["_b"][2] <= x2 and a["_b"][1] >= y1 and a["_b"][3] <= y2), key=lambda a: a["_b"][0])
+              if len(kids) >= 5: c = centre(kids[4]); print(len(kids), c)
+              else:
+                  w = x2 - x1; print(0, x1 + w // 10 + (w * 8 // 10) * 9 // 10, (y1 + y2) // 2)
+          PY
+          cat > stage.py <<'PY'
+          # stage.py frame shot.png "x1 y1 x2 y2" accent_rgb   the accent quad must hug the page (light region) inside the crop canvas
+          # stage.py filter shot.png "x1 y1 x2 y2" mono|colour|any   the page preview region: mono = no coloured pixels, colour = the cream page keeps its colour
+          import sys
+          from PIL import Image
+          cmd, shot, box = sys.argv[1], sys.argv[2], tuple(int(v) for v in sys.argv[3].split())
+          im = Image.open(shot).convert("RGB").crop(box); sw, sh = im.size
+          px = im.load(); step = 2
+          cy = []; light = []; col = 0; tot = 0
+          acc = tuple(int(v) for v in sys.argv[4].split(",")) if cmd == "frame" else (0, 0, 0)
+          for j in range(0, sh, step):
+              for i in range(0, sw, step):
+                  r, g, b = px[i, j]; tot += 1
+                  if cmd == "frame" and abs(r - acc[0]) < 30 and abs(g - acc[1]) < 30 and abs(b - acc[2]) < 30: cy.append((i, j)); continue
+                  if (r + g + b) / 3 > 200 and min(r, g, b) > 170: light.append((i, j))
+                  if max(r, g, b) - min(r, g, b) > 25: col += 1
+          def bx(p): return (min(i for i, _ in p), min(j for _, j in p), max(i for i, _ in p), max(j for _, j in p)) if p else None
+          if cmd == "frame":
+              cb, lb = bx(cy), bx(light)
+              if len(cy) < 150 or not lb: print("no accent=%d light=%d stage=%dx%d" % (len(cy), len(light), sw, sh)); sys.exit()
+              tol = 0.08
+              dev = max(abs(cb[0] - lb[0]) / sw, abs(cb[2] - lb[2]) / sw, abs(cb[1] - lb[1]) / sh, abs(cb[3] - lb[3]) / sh)
+              print(("ok" if dev <= tol else "no") + " accent=%d quad=%s page=%s maxdev=%.3f tol=%.2f stage=%dx%d" % (len(cy), cb, lb, dev, tol, sw, sh))
+          else:
+              expect = sys.argv[4]; lf = len(light) / tot; cf = col / tot
+              good = lf > 0.10 and (cf < 0.002 if expect == "mono" else cf > 0.04 if expect == "colour" else True)
+              print(("ok" if good else "no") + " light=%.3f coloured=%.4f expect=%s" % (lf, cf, expect))
+          PY
+          cat > pdfcheck.py <<'PY'
+          import re, sys
+          d = open(sys.argv[1], "rb").read()
+          f = {"size": len(d), "header": d.startswith(b"%PDF")}
+          f["count"] = len(re.findall(rb"/Type\s*/Page(?![s\w])", d))
+          m = re.search(rb"/Type\s*/Pages\b[^>]*?/Count\s+(\d+)", d)
+          f["declared"] = int(m.group(1)) if m else -1
+          f["boxes"] = [tuple(float(v) for v in b) for b in re.findall(rb"/MediaBox\s*\[\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*\]", d)]
+          f["boxes"] = [(b[2] - b[0], b[3] - b[1]) for b in f["boxes"]]
+          words = []
+          for s in re.findall(rb"\(((?:[^()\\]|\\.)*)\)\s*Tj", d):
+              words.append(re.sub(rb"\\(.)", rb"\1", s).decode("latin-1"))
+          f["text"] = " ".join(words)
+          for k, v in f.items(): print("%s=%s" % (k, v))
+          PY
+          cat > shoot.sh <<'EOF2'
+          set -u
+          OUT=out; SH=out/shots; mkdir -p "$OUT" "$SH"; : > "$OUT/verdict.txt"
+          fails=0; N=0
+          rec() { echo "$1 $2" | tee -a "$OUT/verdict.txt"; }
+          check() { if [ "$1" = ok ]; then rec PASS "$2"; else rec FAIL "$2"; fails=$((fails+1)); fi; }
+          adb install -r -g engine.apk || exit 2
+          adb install -r -g camera.apk || exit 2
+          aapt2=$(ls -d "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          PKG=$("$aapt2" dump packagename camera.apk)
+          ACT=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
+          echo "camera=$PKG ($ACT)"
+          DPI=$(adb shell wm density | tr -d '\r' | sed -n 's/.*: \([0-9]*\)$/\1/p' | tail -1); DPI=${DPI:-420}
+          adb shell settings put global hide_error_dialogs 1 || true
+          adb shell settings put global window_animation_scale 0; adb shell settings put global transition_animation_scale 0
+          adb shell settings put system screen_off_timeout 2147483647; adb shell svc power stayon true
+          adb shell locksettings set-disabled true || true
+          adb shell settings put global cloud_perms_first_run 0 || true
+          for k in screensaver_enabled screensaver_activate_on_sleep screensaver_activate_on_dock; do adb shell settings put secure $k 0 || true; done
+          adb shell settings put global stay_on_while_plugged_in 7 || true
+          awake() { adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard
+            adb shell dumpsys window 2>/dev/null | grep -qE "mDreamingLockscreen=true|isKeyguardShowing=true|mShowingLockscreen=true" && adb shell input keyevent 82; true; }
+          uncover() { for _ in 1 2 3; do adb shell uiautomator dump /sdcard/u0.xml >/dev/null 2>&1; adb pull /sdcard/u0.xml u0.xml >/dev/null 2>&1
+            u=$(python3 -I ui.py text u0.xml Unlock)
+            [ -z "$u" ] && grep -q 'text="Install unknown apps"' u0.xml && u=$(python3 -I ui.py starts u0.xml Skip)
+            [ -z "$u" ] && grep -q "isn't responding\|isn&apos;t responding" u0.xml && u=$(python3 -I ui.py text u0.xml Wait)
+            [ -z "$u" ] && return 0; adb shell input tap $u; sleep 2; done; }
+          dump() { awake; uncover; for _ in 1 2 3; do r=$(adb shell uiautomator dump /sdcard/ui.xml 2>&1 | tr -d '\r'); case "$r" in *dumped*) break;; esac; sleep 1; done
+            adb pull /sdcard/ui.xml "$OUT/$1.xml" >/dev/null 2>&1; }
+          # shot NAME: a numbered screenshot of the current screen (and its uiautomator dump, for the evidence)
+          shot() { N=$((N+1)); n=$(printf '%02d' $N); awake; sleep 1; adb exec-out screencap -p > "$SH/$n-$1.png"; dump "$n-$1"; echo "captured $n-$1"; }
+          rid() { python3 -I ui.py rid "$OUT/$1.xml" "$2"; }
+          has() { [ "$(python3 -I ui.py ridhas "$OUT/$1.xml" "$2")" -ge 1 ]; }
+          # tap_rid TAG: tap the node tagged TAG (retries while the screen settles)
+          tap_rid() { for _ in 1 2 3 4 5 6; do dump _t; xy=$(rid _t "$1"); [ -n "$xy" ] && { adb shell input tap $xy; echo "tapped $1 at $xy"; sleep 1; return 0; }; sleep 2; done
+            echo "no node '$1'; tags: $(python3 -I ui.py ridlist "$OUT/_t.xml" scanner: | tr '\n' ' ')"; return 1; }
+          tap_text() { for _ in 1 2 3 4; do dump _t; xy=$(python3 -I ui.py text "$OUT/_t.xml" "$1"); [ -n "$xy" ] && { adb shell input tap $xy; echo "tapped '$1' at $xy"; return 0; }; sleep 2; done
+            echo "no node '$1'; on screen: $(python3 -I ui.py texts "$OUT/_t.xml")"; return 1; }
+          # wait_rid TAG [seconds]: wait until the tag is on screen (dump left in out/_w.xml)
+          wait_rid() { t=${2:-30}; i=0; while [ $i -lt $t ]; do dump _w; has _w "$1" && return 0; i=$((i+3)); sleep 2; done; return 1; }
+          # wait_result: poll a tool screen for its result (scrolling it, the result sits below the options); everything seen is kept in out/_acc
+          wait_result() { : > "$OUT/_acc"; for _ in $(seq 1 30); do dump _w; python3 -I ui.py texts "$OUT/_w.xml" >> "$OUT/_acc"; python3 -I ui.py ridlist "$OUT/_w.xml" kit:listrow:out: >> "$OUT/_acc"
+              has _w scanner:result_save && return 0; adb shell input swipe 540 1700 540 900 300; sleep 2; done; return 1; }
+          on_scanner() { for _ in 1 2 3 4 5 6; do adb shell dumpsys activity activities | tr -d '\r' | grep -E "topResumedActivity|ResumedActivity" | grep -q "scanner.ScannerActivity" && return 0; sleep 2; done; return 1; }
+          app_up() { adb shell dumpsys activity activities | tr -d '\r' | grep -E "topResumedActivity|ResumedActivity" | grep -q "$PKG/"; }
+          ensure_app() { for _ in 1 2 3; do uncover; app_up && return 0; adb shell input keyevent KEYCODE_HOME; sleep 1; adb shell am start -W -n "$ACT" >/dev/null; sleep 4; done; uncover; app_up; }
+          launch() { uncover; adb shell am force-stop "$PKG"; adb shell am start -W -n "$ACT" >/dev/null; sleep 8; ensure_app || echo "warn: $PKG is not the resumed activity"; }
+          open_scanner() { for try in 1 2; do ensure_app; dump nav; set -- $(python3 -I ui.py island "$OUT/nav.xml"); ISLAND_N=$1; echo "island items=$1 fifth=($2,$3) try=$try"
+              adb shell input tap "$2" "$3"; sleep 3; on_scanner && return 0; done; return 1; }
+          # pick_doc NAME: in the system documents picker, tap the file called NAME and confirm
+          pick_doc() { for attempt in 1 2 3 4 5 6; do dump pk
+              xy=$(python3 -I ui.py text "$OUT/pk.xml" "$1")
+              if [ -n "$xy" ]; then adb shell input tap $xy; sleep 2; dump pk; a=$(python3 -I ui.py text "$OUT/pk.xml" Open); [ -z "$a" ] && a=$(python3 -I ui.py text "$OUT/pk.xml" Select); [ -n "$a" ] && adb shell input tap $a; sleep 2; return 0; fi
+              d=$(python3 -I ui.py text "$OUT/pk.xml" "Show roots"); [ -n "$d" ] && { adb shell input tap $d; sleep 2; dump pk; }
+              r=$(python3 -I ui.py text "$OUT/pk.xml" "Downloads"); [ -z "$r" ] && r=$(python3 -I ui.py text "$OUT/pk.xml" "Download"); [ -n "$r" ] && { adb shell input tap $r; sleep 3; }
+            done; return 1; }
+          # pick_photo: in the photo picker (or, through Browse, the documents picker) take the test page
+          pick_photo() { picked=no
+            for attempt in 1 2 3 4; do dump picker
+              if grep -q 'providers.media' "$OUT/picker.xml" && xy=$(python3 -I ui.py id "$OUT/picker.xml" icon_thumbnail) && [ -n "$xy" ]; then
+                adb shell input tap $xy; sleep 2; dump picker
+                for b in button_add Add Select; do a=$(python3 -I ui.py id "$OUT/picker.xml" "$b"); [ -z "$a" ] && a=$(python3 -I ui.py text "$OUT/picker.xml" "$b"); [ -n "$a" ] && { adb shell input tap $a; break; }; done
+                picked=yes; break
+              fi
+              b=$(python3 -I ui.py text "$OUT/picker.xml" "Browse…"); if [ -n "$b" ]; then adb shell input tap $b; sleep 4; continue; fi
+              xy=$(python3 -I ui.py text "$OUT/picker.xml" scan-test-page.png)
+              if [ -n "$xy" ]; then adb shell input tap $xy; sleep 3; dump picker; a=$(python3 -I ui.py text "$OUT/picker.xml" Open); [ -n "$a" ] && adb shell input tap $a; picked=yes; break; fi
+              for root in Images Downloads; do d=$(python3 -I ui.py text "$OUT/picker.xml" "Show roots"); [ -n "$d" ] && { adb shell input tap $d; sleep 2; dump picker; }
+                r=$(python3 -I ui.py text "$OUT/picker.xml" "$root"); [ -n "$r" ] && { adb shell input tap $r; sleep 3; break; }; done
+            done; }
+
+          # ── the fixture on the phone ──
+          python3 -I fixture.py "$OUT/scan-test-page.png" || exit 2
+          adb push "$OUT/scan-test-page.png" /sdcard/Pictures/scan-test-page.png >/dev/null
+          adb shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/Pictures/scan-test-page.png >/dev/null
+          indexed=no
+          for _ in $(seq 1 15); do adb shell content query --uri content://media/external/images/media --projection _display_name 2>/dev/null | grep -q scan-test-page.png && { indexed=yes; break; }; sleep 2; done
+          [ "$indexed" = yes ] && check ok "00 the test page is in Pictures and media-scanned" || check no "00 the test page never reached MediaStore"
+
+          # ── 1. dark: the Scanner tab opens on the start screen ──
+          adb shell cmd uimode night yes; sleep 2
+          decl=$(python3 -I -c 'import json; print(",".join(json.load(open("ac_cloud-camera/build.json"))["ui"]["bottom_nav"]))')
+          launch; open_scanner; sleep 2
+          if on_scanner; then opened=yes; else opened=no; fi
+          wait_rid scanner:home 20 || true
+          shot home-start-dark
+          if [ "$decl" = "qr_scan,objects,photo,video,scanner" ] && [ "$opened" = yes ] && [ "$ISLAND_N" -eq 5 ] && has _w scanner:home; then check ok "01 Scanner is the fifth nav item ($decl) and opens the new start screen (scanner:home)"
+          else check no "01 bottom_nav='$decl' island=$ISLAND_N opened=$opened home=$(has _w scanner:home && echo y || echo n); tags: $(python3 -I ui.py ridlist "$OUT/_w.xml" '' | head -20 | tr '\n' ' ')"; fi
+          ok=yes; for t in scanner:start_scan scanner:start_import scanner:start_tools scanner:action:tools; do has _w "$t" || ok=no; done
+          [ "$ok" = yes ] && check ok "01 the start screen offers Scan, Import and Tools" || check no "01 start tiles missing"
+
+          # ── 2. the Tools hub: every tool, scrolled ──
+          tap_rid scanner:start_tools; wait_rid scanner:tools 15 || true; shot tools-hub-dark
+          seen=""; for pass in 1 2 3 4; do dump _tools; seen="$seen $(python3 -I ui.py ridlist "$OUT/_tools.xml" scanner:tool: | tr '\n' ' ')"; adb shell input swipe 540 1700 540 700 400; sleep 1; [ $pass = 2 ] && shot tools-hub-scrolled-dark; done
+          missing=""; for t in crop perspective filters page_ops scan_pdf ocr export pdf_merge pdf_split pdf_extract pdf_rotate pdf_compress pdf_protect pdf_to_images pdf_to_pages img_convert img_to_pdf; do echo "$seen" | grep -q "scanner:tool:$t\b" || missing="$missing $t"; done
+          [ -z "$missing" ] && check ok "02 the Tools hub lists all 17 tools" || check no "02 tools missing from the hub:$missing"
+          adb shell input swipe 540 700 540 1900 300; adb shell input swipe 540 700 540 1900 300; sleep 1
+
+          # ── 3. a file tool screen ──
+          tap_rid scanner:tool:pdf_merge; wait_rid scanner:tool 15 || true; shot tool-merge-dark
+          has _w scanner:pick && check ok "03 the Merge PDFs tool screen has its picker" || check no "03 no picker on the tool screen"
+          adb shell input keyevent KEYCODE_BACK; sleep 2; adb shell input keyevent KEYCODE_BACK; sleep 2
+
+          # ── 4. import the test page: the editor opens on the crop canvas ──
+          wait_rid scanner:start_import 15 || true
+          tap_rid scanner:start_import; sleep 4; shot picker; pick_photo
+          wait_rid scanner:editor 40 || true; sleep 3; dump editor; shot editor-crop-dark
+          if has editor scanner:crop_canvas && has editor scanner:crop:a4; then check ok "04 the editor opens on the crop canvas with the crop presets (picker route: $picked)"
+          else check no "04 editor not shown (picker: $picked); tags: $(python3 -I ui.py ridlist "$OUT/editor.xml" scanner: | tr '\n' ' ')"; fi
+          cb=$(python3 -I ui.py ridb "$OUT/editor.xml" scanner:crop_canvas)
+          if [ -n "$cb" ]; then
+            q=$(python3 -I stage.py frame "$SH/$(printf '%02d' $N)-editor-crop-dark.png" "$cb" "79,195,247" 2>&1 | tail -1); echo "$q"
+            case "$q" in ok*) check ok "04 edge detection found a quad hugging the page ($q)";; *) check no "04 no page quad on the crop canvas ($q)";; esac
+          else check no "04 no crop canvas bounds"; fi
+
+          # ── 5. crop: preset, auto edges, rotate, deskew ──
+          tap_rid scanner:crop:a4; sleep 2; shot crop-a4-dark
+          tap_rid scanner:action:auto_edges; sleep 3
+          tap_rid scanner:action:rotate_right; sleep 1; tap_rid scanner:action:rotate_left; sleep 1
+          tap_rid scanner:action:deskew; sleep 6; shot crop-actions-dark
+          has _w scanner:editor && check ok "05 crop presets, auto edges, rotate and deskew run without leaving the editor" || check no "05 the editor was lost"
+
+          # ── 6. the filter carousel ──
+          tap_rid kit:segment:scanner:tabs:filter; sleep 3
+          for pair in "bw:mono" "grayscale:mono" "color_doc:any" "original:colour" "magic:any"; do
+            id=${pair%%:*}; expect=${pair#*:}
+            tap_rid "scanner:filter:$id" || true
+            for _ in $(seq 1 20); do dump _f; [ "$(python3 -I ui.py has "$OUT/_f.xml" 'Working…')" -eq 0 ] && break; sleep 2; done
+            sleep 2; shot "filter-$id-dark"
+            H=$(python3 -I -c 'from PIL import Image; import sys; print(Image.open(sys.argv[1]).size[1])' "$SH/$(printf '%02d' $N)-filter-$id-dark.png"); W=1080
+            q=$(python3 -I stage.py filter "$SH/$(printf '%02d' $N)-filter-$id-dark.png" "100 $((H*13/100)) $((W-100)) $((H*40/100))" "$expect" 2>&1 | tail -1); echo "$id: $q"
+            case "$q" in ok*) check ok "06 filter $id applied, live preview rendered ($q)";; *) check no "06 filter $id ($q)";; esac
+          done
+          has _f scanner:slider:brightness && has _f scanner:slider:contrast && has _f scanner:slider:sharpness && check ok "06 brightness, contrast and sharpness sliders are on the filter panel" || check no "06 a slider is missing"
+
+          # ── 7. Text (OCR) ──
+          tap_rid kit:segment:scanner:tabs:text; sleep 2; tap_rid scanner:ocr_page
+          txt=""; for _ in $(seq 1 40); do dump ocr; txt=$(python3 -I ui.py ridtext "$OUT/ocr.xml" scanner:ocr_text); echo "$txt" | grep -qi "invoice\|coffee\|bread\|total" && break; sleep 4; done
+          shot text-ocr-dark
+          echo "$txt" | grep -qi "invoice\|coffee\|bread\|total" && check ok "07 OCR read the page: $txt" || check no "07 OCR text not found ($txt)"
+
+          # ── 8. the review strip and the page operations ──
+          tap_rid scanner:action:done; wait_rid scanner:home 15 || true; sleep 2; shot review-dark
+          has _w scanner:strip && has _w scanner:page:0 && check ok "08 the review strip shows page 1" || check no "08 no review strip"
+          tap_rid scanner:action:duplicate; sleep 2; shot review-duplicate-dark
+          has _w scanner:page:1 && check ok "08 duplicate: the strip now has two pages" || check no "08 duplicate did not add a page"
+          tap_rid scanner:action:delete; sleep 2; dump _d
+          has _d scanner:page:1 && check no "08 delete left the second page" || check ok "08 delete removed the duplicate (one page left)"
+
+          # ── 9. the export sheet, and a real PDF out of it ──
+          tap_rid scanner:action:export; wait_rid scanner:export 10 || true; shot export-pdf-dark
+          has _w scanner:size:a4 && check ok "09 the export sheet (PDF) lists the page sizes" || check no "09 no sizes on the export sheet"
+          tap_rid scanner:size:a4
+          tap_rid kit:segment:scanner:format:JPEG; sleep 2; shot export-jpeg-dark
+          has _w scanner:size:a4 && check no "09 JPEG still shows PDF page sizes" || check ok "09 JPEG hides the PDF-only sizes and shows DPI / size options"
+          tap_rid kit:segment:scanner:format:PDF; sleep 1; tap_rid "scanner:token:{date}"; sleep 1; shot export-template-dark
+          prev=$(python3 -I ui.py ridtext "$OUT/_t.xml" scanner:file_preview)
+          echo "file preview: $prev"
+          adb shell 'rm -f /sdcard/Download/scan*.pdf /sdcard/Documents/scan*.pdf' || true
+          tap_rid scanner:save
+          saved=""
+          for _ in $(seq 1 60); do
+            dump save-picker
+            s=""; [ -n "$(python3 -I ui.py id "$OUT/save-picker.xml" container_save)" ] && { s=$(python3 -I ui.py id "$OUT/save-picker.xml" button1); [ -z "$s" ] && s=$(python3 -I ui.py text "$OUT/save-picker.xml" SAVE); }
+            if [ -n "$s" ]; then
+              awake; sleep 1; adb exec-out screencap -p > "$SH/save-picker.png"; adb shell input tap $s; sleep 5
+              saved=$(adb shell 'find -L /sdcard/ -maxdepth 3 -name "scan*.pdf" 2>/dev/null' | tr -d '\r' | head -1)
+              [ -n "$saved" ] && break
+              d=$(python3 -I ui.py text "$OUT/save-picker.xml" "Show roots"); [ -n "$d" ] && { adb shell input tap $d; sleep 2; dump save-roots; r=$(python3 -I ui.py text "$OUT/save-roots.xml" Downloads); [ -n "$r" ] && { adb shell input tap $r; sleep 2; }; }
+            fi
+            sleep 5
+          done
+          if [ -z "$saved" ]; then check no "09 no scan*.pdf was saved to the phone"
+          else
+            adb pull "$saved" "$OUT/scan.pdf" >/dev/null; echo "pulled $saved"; SAVEDNAME=$(basename "$saved")
+            python3 -I pdfcheck.py "$OUT/scan.pdf" > "$OUT/pdf-facts.txt"; head -20 "$OUT/pdf-facts.txt"
+            fact() { sed -n "s/^$1=//p" "$OUT/pdf-facts.txt" | head -1; }
+            [ "$(fact header)" = True ] && check ok "09 the export starts with %PDF ($(fact size) bytes)" || check no "09 the export does not start with %PDF"
+            [ "$(fact count)" = 1 ] && [ "$(fact declared)" = 1 ] && check ok "09 the PDF has 1 page" || check no "09 page count: x$(fact count), /Count $(fact declared), expected 1"
+            python3 -I -c 'import ast,sys; b=ast.literal_eval(sys.argv[1]); sys.exit(0 if b and all(abs(w-595)<=1 and abs(h-842)<=1 for w,h in b) else 1)' "$(fact boxes)" && check ok "09 the page size is 595x842 pt, A4 ($(fact boxes))" || check no "09 the page size is not A4: $(fact boxes)"
+            t=$(fact text)
+            if [ -z "$t" ]; then check no "09 OCR: the PDF has no text layer"
+            else hit=""; for w in invoice scanner coffee bread total; do echo "$t" | grep -qi "$w" && hit="$hit $w"; done
+              [ -n "$hit" ] && check ok "09 the searchable text layer holds:$hit" || check no "09 text layer has none of the page's words ($t)"; fi
+            case "$SAVEDNAME" in scan*) check ok "09 the saved file name follows the template/typed name ($SAVEDNAME)";; *) check no "09 unexpected file name $SAVEDNAME";; esac
+          fi
+          adb shell am start -n "$ACT" >/dev/null 2>&1; ensure_app || true; wait_rid scanner:home 15 || wait_rid scanner:editor 5 || true
+          has _w scanner:home || { launch; open_scanner || true; }
+
+          # ── 10. the capture screen ──
+          tap_rid scanner:camera || tap_rid scanner:start_scan || true
+          wait_rid scanner:capture 20 || true; sleep 8; shot capture-dark
+          cap=yes; for t in scanner:overlay scanner:shutter scanner:flash scanner:grid scanner:auto scanner:batch scanner:import scanner:finish; do has _w "$t" || { cap=no; echo "capture: no $t"; }; done
+          [ "$cap" = yes ] && check ok "10 the capture screen has the viewfinder overlay, shutter, flash, grid, auto-capture, batch, import and done" || check no "10 capture screen controls missing"
+          tap_rid scanner:flash; tap_rid scanner:grid; tap_rid scanner:grid; tap_rid scanner:flash; sleep 1
+          tap_rid scanner:shutter; sleep 6; dump _c; shot capture-batch-dark
+          has _c scanner:page:0 && check ok "10 a shot in batch mode lands in the review strip and the camera stays open" || check no "10 the shot did not add a page"
+          tap_rid scanner:finish; wait_rid scanner:home 15 || true; sleep 2; shot review-after-capture-dark
+
+          # ── 11. the file tools, end to end (on the PDF the export just wrote) ──
+          if [ -n "$saved" ]; then
+            tool_open() { tap_rid scanner:action:tools; wait_rid scanner:tools 10; tap_rid "scanner:tool:$1"; wait_rid scanner:tool 10; }
+            tool_pick() { tap_rid scanner:pick; sleep 3; pick_doc "$SAVEDNAME"; sleep 2; }
+            tool_open pdf_compress; tool_pick; wait_rid scanner:run 15 || true; shot tool-compress-before-dark; tap_rid scanner:run
+            wait_result || true; shot tool-compress-dark
+            note=$(cat "$OUT/_acc"); echo "$note" | grep -q "KB >" && check ok "11 Compress PDF ran: $(echo "$note" | grep -o '[0-9]* KB > [0-9]* KB' | head -1)" || check no "11 compress gave no before/after sizes ($note)"
+            adb shell input keyevent KEYCODE_BACK; sleep 2
+            tool_open pdf_merge; tool_pick; tool_pick; wait_rid scanner:run 15 || true; tap_rid scanner:run; wait_result || true; shot tool-merge-result-dark
+            grep -q "1 files, 2 pages" "$OUT/_acc" && check ok "11 Merge PDFs joined two copies into one 2-page file" || check no "11 merge result: $(cat "$OUT/_acc")"
+            adb shell input keyevent KEYCODE_BACK; sleep 2
+            tool_open pdf_to_images; tool_pick; wait_rid scanner:run 15 || true; tap_rid scanner:run; wait_result || true; shot tool-pdf-images-dark
+            grep -q "_p1.png" "$OUT/_acc" && check ok "11 PDF to images wrote page 1 as PNG" || check no "11 no image result: $(cat "$OUT/_acc")"
+            adb shell input keyevent KEYCODE_BACK; sleep 2
+            tool_open pdf_protect; tool_pick; wait_rid scanner:password 15 || true
+            tap_rid scanner:password; adb shell input text "s3cret"; sleep 1; adb shell input keyevent KEYCODE_BACK; tap_rid scanner:run; wait_result || true; shot tool-protect-dark
+            grep -q "_locked.pdf" "$OUT/_acc" && check ok "11 Password locked the PDF (scan_locked.pdf)" || check no "11 no locked result: $(cat "$OUT/_acc")"
+            adb shell input keyevent KEYCODE_BACK; sleep 2
+            tool_open img_convert; tap_rid scanner:pick; sleep 3; pick_photo; wait_rid scanner:run 15 || true; shot tool-convert-before-dark; tap_rid scanner:run; wait_result || true; shot tool-convert-dark
+            grep -q "scan-test-page" "$OUT/_acc" && check ok "11 the image converter wrote the converted picture" || check no "11 no converter result: $(cat "$OUT/_acc")"
+          else check no "11 no saved PDF to run the file tools on"; fi
+
+          # ── 12. light theme: the main screens again ──
+          adb shell cmd uimode night no; sleep 4; ensure_app || true
+          dump _l; on_scanner || { launch; open_scanner || true; }
+          for k in 1 2 3 4; do dump _l; has _l scanner:home && break; adb shell input keyevent KEYCODE_BACK; sleep 2; done
+          shot home-light
+          tap_rid scanner:action:tools || tap_rid scanner:start_tools || true; wait_rid scanner:tools 10 || true; shot tools-hub-light
+          adb shell input keyevent KEYCODE_BACK; sleep 2
+          tap_rid scanner:action:edit || true; wait_rid scanner:editor 15 || true; sleep 3; shot editor-crop-light
+          tap_rid kit:segment:scanner:tabs:filter; sleep 4; shot editor-filter-light
+          tap_rid scanner:action:done || true; wait_rid scanner:home 10 || true
+          tap_rid scanner:action:export || true; wait_rid scanner:export 10 || true; shot export-light
+          bg=$(python3 -I -c 'from PIL import Image; import sys; im=Image.open(sys.argv[1]).convert("RGB"); print(sum(im.getpixel((60,y))[0] for y in (200,400,600))//3)' "$SH/$(printf '%02d' $N)-export-light.png")
+          [ "${bg:-0}" -gt 120 ] && check ok "12 the light theme draws light screens (sample luma $bg)" || check no "12 light theme not light (sample $bg)"
+
+          timeout 60 adb logcat -d > "$OUT/logcat.txt" || true
+          adb shell dumpsys activity activities 2>/dev/null | grep -E "ResumedActivity" > "$OUT/resumed.txt" || true
+          grep -c "FATAL EXCEPTION" "$OUT/logcat.txt" | grep -q '^0$' && check ok "13 no crash in the log (no FATAL EXCEPTION)" || check no "13 a FATAL EXCEPTION is in the log"
+          if [ "$fails" -eq 0 ]; then echo "VERDICT: PASS" | tee -a "$OUT/verdict.txt"; else echo "VERDICT: FAIL ($fails failed)" | tee -a "$OUT/verdict.txt"; fi
+          [ "$fails" -eq 0 ]
+          EOF2
+          chmod +x shoot.sh
+
+      - name: Boot emulator and prove
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_7
+          target: google_apis
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash shoot.sh
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: camera-scanner-1908-evidence
+          path: out/
+          if-no-files-found: warn

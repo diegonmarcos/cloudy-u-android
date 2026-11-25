@@ -387,6 +387,11 @@ class ScannerController(val context: Context, val host: ScannerHost) {
                 }
                 else -> {}
             }
+            // a PDF result says how many pages it holds (a locked one cannot be read back without its password)
+            if (note.isBlank() && t != ToolId.PDF_PROTECT) {
+                val pdfs = out.filter { it.mime == pdf }
+                if (pdfs.isNotEmpty()) note = context.getString(R.string.scanner_result_pdf, pdfs.size, pdfs.sumOf { PdfTools.pageCount(it.bytes) })
+            }
             out to note
         }) { (files, note) -> results = files; resultNote = note }
     }

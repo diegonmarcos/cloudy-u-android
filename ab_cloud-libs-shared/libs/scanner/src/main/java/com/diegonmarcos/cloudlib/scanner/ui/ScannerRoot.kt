@@ -22,6 +22,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -46,6 +49,7 @@ object ScannerUi {
 }
 
 /** The Scanner: the route's screen, the export sheet over it, the busy line and the activity-result plumbing (pickers, save, share). */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ScannerRoot(c: ScannerController) {
     val ctx = LocalContext.current
@@ -98,7 +102,8 @@ fun ScannerRoot(c: ScannerController) {
     }
 
     ScannerTheme {
-        Box(Modifier.fillMaxSize().background(scannerBackground()).systemBarsPadding().imePadding()) {
+        // testTagsAsResourceId: every ScannerTags tag is the node's resource-id, so the emulator walk (uiautomator) finds controls by tag.
+        Box(Modifier.fillMaxSize().background(scannerBackground()).systemBarsPadding().imePadding().semantics { testTagsAsResourceId = true }) {
             when (c.route) {
                 Route.HOME -> HomeScreen(c)
                 Route.CAPTURE -> CaptureScreen(c)
