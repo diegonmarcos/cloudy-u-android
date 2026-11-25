@@ -46,7 +46,7 @@ class WebPageBackChainTest : KitPageHarness() {
     private fun declaredOrigin(url: String) = url.substringBefore("?").trimEnd('/')
 
     @Test fun `B1 to B3 back walks the history one page at a time, then falls through to the shell`() {
-        for (id in listOf("webapps", "lnktree")) {
+        for (id in listOf("webapps")) {   // #1930 the Linktree pane left the strip
             val (page, web) = shown(id)
             assertTrue("$id is not a BackHandler", (page as Any) is BackHandler)
             val origin = declaredOrigin(shadowOf(web).lastLoadedUrl!!)

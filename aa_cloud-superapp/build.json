@@ -692,7 +692,7 @@
         {
           "label": "Labs",
           "icon": "ic_p_sol_tools",
-          "target": "page:cloud/lnktree"
+          "target": "extapp:cloud-me"
         },
         {
           "label": "C3",
@@ -2932,6 +2932,8 @@
         "module": null,
         "_doc_hidden_pages": "Cloud's listed children are Cloud | Labs | C3. The six subject Labs (Data & ML, Engineering, Quant, Aero & Space, Circus) render INSIDE the Labs page via tiles_labs; `hidden` keeps them routable as page:cloud/<id> without listing them as top-level children. C3's own two children are NOT here at all: Cloud ▸ C3 mirrors the `c3` section, which carries them as its own Observability | Topology tab strip.",
         "is_aggregator": true,
+        "_doc_page_aliases_1930": "#1930 The top strip reads App | WebApps | Setup. The Linktree pane (id lnktree) left the strip on the owner's order; its old id is a page alias of apps, so a stored link or pin to page:cloud/lnktree still lands on Cloud > App, which holds the Lnktree tile of the Me row (extapp:cloud-me opens the same site). Every former page:cloud/lnktree target (the Home index Labs entries) now targets extapp:cloud-me. The Configs tab was renamed Setup (label only: the page id stays configs, so every page:configs target and tester keeps working).",
+        "page_aliases": {"lnktree": "apps"},
         "pages": [
           {
             "id": "apps",
@@ -2944,21 +2946,13 @@
             "id": "webapps",
             "label": "WebApps",
             "icon": "ic_world",
-            "_doc": "The cloud-webapps site index (repo cloud-webapps, published on GitHub Pages) in the app's embedded browser (WebPageFragment) as a pane INSIDE the shell: SuperApp's own Cloud tab strip (App | WebApps | Linktree | Configs) stays drawn flush under the top row and the WebView starts directly below it. ONE declaration of where it lives: `webapps_base` + `webapps_path` give the page URL. `?embed=1` tells the site it is drawn inside the SuperApp (it hides its own sub-page tab row and auto-scales to one screen), and WebPageFragment appends the user-agent marker ' CloudSuperApp-Embed/1' for the same reason. The pane fills exactly (no floating Back, the system Back walks the page history), pulls to refresh, and says so when it is offline. Guarded by WebAppsEmbedTest, ShellTopInsetGuardTest, WebPagesRenderTest and test-cloud-webapps-tab.sh.",
+            "_doc": "The cloud-webapps site index (repo cloud-webapps, published on GitHub Pages) in the app's embedded browser (WebPageFragment) as a pane INSIDE the shell: SuperApp's own Cloud tab strip (App | WebApps | Setup) stays drawn flush under the top row and the WebView starts directly below it. ONE declaration of where it lives: `webapps_base` + `webapps_path` give the page URL. `?embed=1` tells the site it is drawn inside the SuperApp (it hides its own sub-page tab row and auto-scales to one screen), and WebPageFragment appends the user-agent marker ' CloudSuperApp-Embed/1' for the same reason. The pane fills exactly (no floating Back, the system Back walks the page history), pulls to refresh, and says so when it is offline. Guarded by WebAppsEmbedTest, ShellTopInsetGuardTest, WebPagesRenderTest and test-cloud-webapps-tab.sh.",
             "webapps_base": "https://diegonmarcos.github.io/cloud-webapps",
             "webapps_path": "?embed=1"
           },
           {
-            "id": "lnktree",
-            "label": "Linktree",
-            "icon": "ic_p_sol_tools",
-            "mode": "apps",
-            "_doc": "Renders the live site in a WebView (WebPageFragment) instead of a Kotlin port of it — one maintained list, not two copies to keep in step. The PAGE is Linktree; the `url` host keeps its i because linktree.diegonmarcos.com is what actually serves the site (lnktree.diegonmarcos.com answers 404). `mode` still selects Apps mode on open — declared, not inferred from the id.",
-            "url": "https://linktree.diegonmarcos.com"
-          },
-          {
             "id": "configs",
-            "label": "Configs",
+            "label": "Setup",
             "icon": "ic_settings",
             "facet": true,
             "mirror_section": "config",
@@ -3678,7 +3672,7 @@
           }
         ],
         "_doc_tiles_labs": "Master Lab index — 6 icon tiles, one per subject Lab. Read by home_groups[title=Labs] via tiles_from_section='cloud/labs'. The key keeps the name `labs` on purpose: it is the SUBJECT labs, which is not what the Linktree tab became. No page `labs` exists, so this list is the Home face only — each icon opens page:cloud/<lab-id>.",
-        "_doc_pages": "Cloud: App (the cloud apps) | WebApps (the cloud-mobile replica, embedded) | Linktree (the site, embedded) | Configs. The C3 subpage tab was removed (owner, 2026-10): C3 is the extapp:cloud-c3 tile in the Configs group, and every former page:cloud/c3 link now targets it.",
+        "_doc_pages": "Cloud: App (the cloud apps) | WebApps (the cloud-mobile replica, embedded) | Setup (was Configs, page id configs; #1930; the embedded Linktree pane was removed from the strip and its id aliases to apps). The C3 subpage tab was removed (owner, 2026-10): C3 is the extapp:cloud-c3 tile in the Configs group, and every former page:cloud/c3 link now targets it.",
         "stack_lnktree": [
           {
             "kind": "link_grid",
@@ -7096,12 +7090,6 @@
         "label": "Phone"
       },
       {
-        "id": "lnktree",
-        "section": "cloud",
-        "page": "lnktree",
-        "label": "Linktree"
-      },
-      {
         "id": "c3",
         "section": "c3",
         "label": "C3"
@@ -9540,7 +9528,7 @@
         "tiles_from_bottom_nav": true,
         "tiles": [
           {
-            "id": "page:cloud/lnktree",
+            "id": "extapp:cloud-me",
             "label": "Labs",
             "icon": "ic_p_sol_tools"
           },
@@ -12437,7 +12425,7 @@
             },
             {
               "label": "Labs",
-              "target": "page:cloud/lnktree"
+              "target": "extapp:cloud-me"
             },
             {
               "label": "Configs",

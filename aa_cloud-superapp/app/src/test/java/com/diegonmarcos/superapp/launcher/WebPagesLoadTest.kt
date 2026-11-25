@@ -53,7 +53,7 @@ class WebPagesLoadTest : KitPageHarness() {
     }
 
     @Test fun `W1 and W2 each page loads its declared https url, live, in a WebView with a size`() {
-        for (id in listOf("webapps", "lnktree")) {
+        for (id in listOf("webapps")) {   // #1930 the Linktree pane left the strip
             val url = declared(id)
             assertTrue("$id is not https: $url", url.startsWith("https://"))
             val (_, web) = shown(id)
@@ -70,15 +70,12 @@ class WebPagesLoadTest : KitPageHarness() {
         val (_, apps) = shown("webapps")
         assertTrue("embed page lost its user-agent marker", apps.settings.userAgentString.endsWith(WebPageFragment.UA_MARKER))
         assertTrue(declared("webapps").contains("embed=1"))
-        compose.runOnUiThread { compose.activity.supportFragmentManager.beginTransaction().remove(
-            compose.activity.supportFragmentManager.fragments.last()).commitNow() }
-        val (_, tree) = shown("lnktree")
-        assertTrue("linktree must not carry the embed marker", !tree.settings.userAgentString.endsWith(WebPageFragment.UA_MARKER))
-        assertTrue(!declared("lnktree").contains("embed"))
+        // #1930 the Linktree pane left the strip: its old id is a page alias of Apps (test-cloud-setup-tab-1930.sh)
+        assertTrue("the removed lnktree page is no longer declared", Sections.byId("cloud")!!.pages.none { it.id == "lnktree" })
     }
 
     @Test fun `W4 re-entering revalidates the document only, never bypasses the cache for subresources`() {
-        for (id in listOf("webapps", "lnktree")) {
+        for (id in listOf("webapps")) {   // #1930 the Linktree pane left the strip
             val (page, web) = shown(id)
             // LOAD_NO_CACHE refetched every icon on every entry and tripped the edge rate limit (broken "?" icons, 2026-10-17).
             assertEquals("the first show must keep the HTTP cache for subresources", WebSettings.LOAD_DEFAULT, web.settings.cacheMode)

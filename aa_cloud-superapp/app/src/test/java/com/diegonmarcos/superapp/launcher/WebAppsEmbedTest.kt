@@ -56,7 +56,7 @@ class WebAppsEmbedTest : KitPageHarness() {
     fun `E3 the Cloud strip is drawn on WebApps and the WebView starts below it`() {
         show(SectionTabsFragment.newInstance("cloud", "webapps"))
         compose.waitForIdle()
-        for (id in listOf("apps", "webapps", "lnktree", "configs")) compose.onNodeWithTag(PageTabsTags.tab(id)).assertExists()
+        for (id in listOf("apps", "webapps", "configs")) compose.onNodeWithTag(PageTabsTags.tab(id)).assertExists()
         val strip = compose.onAllNodesWithTag(PageTabsTags.STRIP)[0].fetchSemanticsNode().boundsInWindow
         assertTrue("the strip is drawn (bottom ${strip.bottom})", strip.bottom > strip.top)
         // The pane's WebView is built by SectionTabsFragment.render through ShellActivity.nav.pageFragment; this harness hosts a plain
@@ -74,6 +74,6 @@ class WebAppsEmbedTest : KitPageHarness() {
     fun `E4 WebApps is a tab pane of the Cloud section, not an action or a pushed page`() {
         assertTrue("it has a page URL, so SectionPages routes it to the pane's WebPageFragment", page.url.isNotBlank())
         assertTrue("it is not an action tile", page.action.isBlank())
-        assertEquals("cloud's tab order is untouched", listOf("apps", "webapps", "lnktree", "configs"), Sections.byId("cloud")!!.pages.map { it.id })
+        assertEquals("cloud's tab order is untouched", listOf("apps", "webapps", "configs"), Sections.byId("cloud")!!.pages.map { it.id })
     }
 }

@@ -51,10 +51,10 @@ class WebAndTabsComposeTest : KitPageHarness() {
         else (v as? android.view.ViewGroup)?.let { g -> (0 until g.childCount).firstNotNullOfOrNull { webViewIn(g.getChildAt(it)) } }
 
     @Test
-    fun `C1 Cloud tabs are App, WebApps, Linktree, Configs in that order`() {
+    fun `C1 Cloud tabs are App, WebApps, Setup in that order (#1930: Linktree removed, Configs renamed Setup)`() {
         show(SectionTabsFragment.newInstance("cloud"))
         val ids = Sections.byId("cloud")!!.pages.map { it.id }
-        assertEquals(listOf("apps", "webapps", "lnktree", "configs"), ids)
+        assertEquals(listOf("apps", "webapps", "configs"), ids)
         for (id in ids) compose.onNodeWithTag(PageTabsTags.tab(id)).assertExists()
         val xs = ids.map { compose.onNodeWithTag(PageTabsTags.tab(it)).fetchSemanticsNode().positionInRoot.x }
         assertEquals("the tabs are laid out in declared order", xs.sorted(), xs)

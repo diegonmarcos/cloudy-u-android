@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Cloud ▸ tabs: App | WebApps | Linktree | Configs; WebApps (#1062) is the cloud-webapps index embedded in the shell, its address declared ONCE (webapps_base + webapps_path).
+# Cloud ▸ tabs: App | WebApps | Setup (#1930 MERGED: Linktree removed, Configs renamed Setup); WebApps (#1062) is the cloud-webapps index embedded in the shell, its address declared ONCE (webapps_base + webapps_path).
 #   T1 the Cloud section lists exactly those four visible pages, in that order
 #   T2 WebApps declares webapps_base (https) + webapps_path with embed=1, and no second url or per-app list
 #   T3 WebPageFragment appends the CloudSuperApp-Embed/1 user-agent marker, keyed off embed=1 only
@@ -26,10 +26,10 @@ ok = b.startswith("https://") and "embed=1" in path and not w.get("url") and "we
 print("URL", "ok " + b + "/" + path.lstrip("/") if ok else "BAD base=%r path=%r url=%r" % (b, path, w.get("url")))
 PY
 )"
-[ "$(grep '^ORDER' <<<"$out" | cut -d' ' -f2)" = "apps,webapps,lnktree,configs" ] \
-  && ok "T1 Cloud lists apps, webapps, lnktree, configs in that order" || bad "T1 Cloud's tabs are not App | WebApps | Linktree | Configs ($(grep '^ORDER' <<<"$out"))"
-[ "$(grep '^LABELS' <<<"$out" | cut -d' ' -f2)" = "App,WebApps,Linktree,Configs" ] \
-  && ok "T1 and they read App | WebApps | Linktree | Configs" || bad "T1 the tab labels moved ($(grep '^LABELS' <<<"$out"))"
+[ "$(grep '^ORDER' <<<"$out" | cut -d' ' -f2)" = "apps,webapps,configs" ] \
+  && ok "T1 Cloud lists apps, webapps, configs (Setup) in that order" || bad "T1 Cloud's tabs are not App | WebApps | Setup ($(grep '^ORDER' <<<"$out"))"
+[ "$(grep '^LABELS' <<<"$out" | cut -d' ' -f2)" = "App,WebApps,Setup" ] \
+  && ok "T1 and they read App | WebApps | Setup" || bad "T1 the tab labels moved ($(grep '^LABELS' <<<"$out"))"
 URL="$(grep '^URL' <<<"$out" | cut -d' ' -f2-)"
 case "$URL" in ok*) ok "T2 WebApps: $URL";; *) bad "T2 WebApps declaration is wrong: $URL";; esac
 grep -qF 'const val UA_MARKER = " CloudSuperApp-Embed/1"' "$WP" && grep -qF 'if (embed) CloudWeb.appendUserAgent(this, UA_MARKER)' "$WP" \

@@ -52,6 +52,7 @@ for f, fv in base['config_notify'].items():
     if cfg.get(f) != fv: probs.append('config notify.%s changed or lost' % f)
 for e in base['swipe_walk']:
     n = [x for x in b['ui']['swipe_walk'] if x['id'] == e['id']]
+    if not n and e['id'] == 'lnktree' and (b['ui']['sections'] and [s for s in b['ui']['sections'] if s['id'] == 'cloud'][0].get('page_aliases', {}).get('lnktree') == 'apps'): continue   # #1930 the Linktree pane left the strip: its stop merged into Cloud > App, the id aliases to apps
     if not n: probs.append('swipe stop %s gone' % e['id'])
 print('; '.join(probs) or 'OK')
 PY

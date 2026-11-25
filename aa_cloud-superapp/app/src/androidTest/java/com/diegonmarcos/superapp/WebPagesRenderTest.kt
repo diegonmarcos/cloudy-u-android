@@ -46,8 +46,7 @@ class WebPagesRenderTest {
     // github.io or linktree outage cannot fail the build. c loads the LIVE linktree and stays non-gating: it is the live smoke test.
     @Test fun a_webAppsEmbedRenders() { fixtures(); check("webapps", "page:cloud/webapps", night = false, embed = true) }
     @Test fun b_webAppsEmbedRendersAtNight() { fixtures(); check("webapps-night", "page:cloud/webapps", night = true, embed = true) }
-    @Test fun c_linktreeRenders() = check("linktree", "page:cloud/lnktree", night = false)
-    @Test fun e_linktreeFixtureRenders() { fixtures(); check("linktree-fixture", "page:cloud/lnktree", night = false) }
+    // #1930 the Cloud strip no longer has a Linktree pane: the former page:cloud/lnktree id is a page alias of Apps (the Me-row Lnktree tile opens the site in Cloud Me)
 
     private fun html(body: String, head: String = "") =
         "<!doctype html><html><head><meta charset=utf-8><meta name=viewport content=\"width=device-width,initial-scale=1\">$head" +
