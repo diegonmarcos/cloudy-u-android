@@ -3528,18 +3528,12 @@
             "_doc_row_order": "#1628 OWNER ORDER (2026-11, supersedes #1611): the Cloud > Apps > Configs row reads exactly Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About (#1745 supersedes the #1628 Firewall, WiFi and Account placement) - seven tile groups divided by six '|' separators. Groups: [Quick Actions, UI] [Firewall, WiFi] [Store] [Account, C3] [Watchdog] [About]. Each tile maps to a real existing page/app id (no page invented): Quick Actions=page:config/controls, UI=page:config/panels-ui, Firewall=page:config/firewall, WiFi=page:config/wifi, Store=extapp:cloud-store, Account=extapp:cloud-account, C3=extapp:cloud-c3, Watchdog=extapp:c3-watchdog, About=page:config/app-about. #1611's five tiles (Quick Actions, Watchdog, Account, C3, Store) are all retained; UI, Firewall, WiFi, About added. test-c3-is-an-app.sh finds this group by its CONTENT (a group holding both Store and Quick Actions labels), so the reorder keeps it identifiable. Pinned by test-configs-apps-row.sh. #1755 the group heading is now Setup (title only; was Configs); (owner order) final row: Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About; Profile = extapp:cloud-account; Watchdog left the row and stays on the Configs page (Profiling group).",
             "tiles": [
               {
-                "_doc": "#1628 Configs row group 1a: Quick Actions -> the merged Controls page (page:config/controls).",
-                "id": "configs-controls",
-                "label": "Quick Actions",
+                "_doc": "#1929 Setup row group 1: the two tiles Quick Actions and UI became ONE Launcher tile that opens the Configs > Launcher group (page:config/launcher-hub: Quick Actions, UI, Folders, One-Hand, Notify), so both stay reachable one tap further. The old tile ids configs-controls (Quick Actions, page:config/controls) and configs-ui (UI, page:config/panels-ui) are aliased to this tile (`aliases`). Row now: Launcher | NG Firewall | Store, Account | C3 | Profile, About. Pinned by test-quickmarks-field-parity.sh, test-configs-1755-parity.sh, test-launcher-setup-1929.sh.",
+                "id": "configs-launcher",
+                "label": "Launcher",
                 "icon": "ic_home",
-                "target": "page:config/controls"
-              },
-              {
-                "_doc": "#1628 Configs row group 1b: UI -> the Launcher UI page (page:config/panels-ui, LauncherConfigFragment; promoted to a sibling of Presets/Panels by #1623).",
-                "id": "configs-ui",
-                "label": "UI",
-                "icon": "ic_ctl_brightness",
-                "target": "page:config/panels-ui"
+                "target": "page:config/launcher-hub",
+                "aliases": ["configs-controls", "configs-ui"]
               },
               {
                 "_doc": "#1628 Rule between tile groups of the Cloud > Apps Configs row: Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About.",
@@ -4463,28 +4457,15 @@
           "packages": [],
           "folders": [
             {
-              "label": "Quick Actions",
+              "label": "Launcher",
+              "_doc": "#1929 Quick Actions and UI merged into one Launcher folder (Settings, SmartThings, Good Lock: every package kept).",
               "packages": [
-                {
-                  "pkg": "com.android.settings",
-                  "label": "Settings"
-                },
-                {
-                  "pkg": "com.samsung.android.oneconnect",
-                  "label": "SmartThings"
-                }
+                { "pkg": "com.android.settings", "label": "Settings" },
+                { "pkg": "com.samsung.android.oneconnect", "label": "SmartThings" },
+                { "pkg": "com.samsung.android.goodlock", "label": "Good Lock" }
               ],
+              "aliases": ["Quick Actions", "UI"],
               "icon_res": "ic_home"
-            },
-            {
-              "label": "UI",
-              "packages": [
-                {
-                  "pkg": "com.samsung.android.goodlock",
-                  "label": "Good Lock"
-                }
-              ],
-              "icon_res": "ic_ctl_brightness"
             },
             {
               "label": "NG Firewall",

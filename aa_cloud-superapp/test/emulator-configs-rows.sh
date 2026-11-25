@@ -48,7 +48,7 @@ wake; adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "section:c
 CUR=cloud-apps; cap cloud-apps-top
 for i in 1 2 3 4 5 6; do dump; has "NG Firewall" && break; swipe_up; done
 cap cloud-apps-configs-row
-need Setup "Quick Actions" UI "NG Firewall" Store   # #1755 the Cloud > Apps group heading is Setup (was Configs)
+need Setup "Launcher" "NG Firewall" Store   # #1755 the Cloud > Apps group heading is Setup (was Configs)
 # the row scrolls sideways: swipe it left (on the NG Firewall tile's line) to bring Account | About into view
 read -r NX NY < <(centre "NG Firewall"); read -r W H < <(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1 | tr x ' ')
 adb shell input swipe $((W*85/100)) "$NY" $((W*5/100)) "$NY" 500; sleep 2; dump; cap cloud-apps-configs-row-scrolled

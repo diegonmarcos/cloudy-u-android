@@ -109,12 +109,12 @@ for grp in ("Primary", "Data"):
 if "Setup" in by:
     ct = by["Setup"]["tiles"]
     labels = [t.get("label") for t in ct]
-    WANT = ["Quick Actions", "UI", "|", "NG Firewall", "|", "Store", "Account", "|", "C3", "|", "Profile", "About"]   # #1755 owner order
+    WANT = ["Launcher", "|", "NG Firewall", "|", "Store", "Account", "|", "C3", "|", "Profile", "About"]   # #1755 owner order
     if labels != WANT:
         emit("T5", "Configs row = %r" % labels)
     bytgt = {t.get("label"): t.get("target") for t in ct if not t.get("separator")}
     EXP = {
-        "Quick Actions": "page:config/controls", "UI": "page:config/panels-ui",
+        "Launcher": "page:config/launcher-hub",   # #1929 MOVED: Quick Actions (page:config/controls) and UI (page:config/panels-ui) are reached through it, see test-launcher-setup-1929.sh
         "NG Firewall": "page:config/ng-firewall",
         "Store": "extapp:cloud-store", "Account": "extapp:cloud-account",
         "C3": "extapp:cloud-c3", "Profile": "extapp:cloud-account", "About": "page:config/app-about",
@@ -132,7 +132,7 @@ if "Setup" in by:
     # #1755 Watchdog left this row; rule 16: it stays visible on the Configs page (Profiling group) on the same target.
     if not (cpid.get("c3-watchdog", {}).get("action") == "extapp:c3-watchdog" and not cpid["c3-watchdog"].get("hidden")):
         emit("T5", "#1755 Watchdog left the row and is not visible on the Configs page")
-    for retained in ("Quick Actions", "Account", "C3", "Store"):
+    for retained in ("Launcher", "Account", "C3", "Store"):   # #1929 Quick Actions and UI merged into Launcher
         if retained not in labels:
             emit("T5", "#1611 Configs tile %r was dropped (field parity)" % retained)
 else:

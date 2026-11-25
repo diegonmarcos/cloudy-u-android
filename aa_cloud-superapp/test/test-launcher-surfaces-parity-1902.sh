@@ -65,7 +65,14 @@ def surface(name, bj, ph, cl):
                 if n is None and old['id'] in ME_MOVED:
                     if ME_MOVED[old['id']] not in now or where.get(ME_MOVED[old['id']]) != 'Setup': f.append('Cloud Me tile %s left the Me row but is not in Setup as %s' % (old['id'], ME_MOVED[old['id']]))
                     continue
-                if n is None: f.append('Cloud %s tile %s is gone' % (gt, old['id'])); continue
+                if n is None:
+                    # #1929 a tile merged into another keeps its id as an alias of the merged tile, whose target opens the group that holds the old target's page
+                    h = [t for t in now.values() if old['id'] in t.get('aliases', [])]
+                    if h:
+                        launcher = {'page:config/' + p['id'] for p in S['config']['pages'] if p.get('group') == 'Launcher'}
+                        if h[0].get('target') != 'page:config/launcher-hub' or old['target'] not in launcher: f.append('Cloud tile %s merged into %s but its page %s is not reachable from the Launcher group' % (old['id'], h[0]['id'], old['target']))
+                        continue
+                    f.append('Cloud %s tile %s is gone' % (gt, old['id'])); continue
                 if gt == 'Me':   # #1903 renames: the id and the icon stay, the label and target are the new ones
                     if old['id'] in ME_TILE:
                         if n.get('icon') != old['icon'] or (n.get('label'), n.get('target')) != ME_TILE[old['id']]: f.append('Cloud Me tile %s is not renamed to %s with icon %s' % (old['id'], ME_TILE[old['id']], old['icon']))
@@ -81,9 +88,10 @@ def surface(name, bj, ph, cl):
         labels = {g['title']: [fo['label'] for fo in g.get('folders', [])] for g in pg.values()}
         everylabel = {l for ls in labels.values() for l in ls}
         links = {l['label'] for g in pg.values() for l in g.get('links', [])}
+        aliased = {a for g in pg.values() for fo in g.get('folders', []) for a in fo.get('aliases', [])}   # #1929 Quick Actions and UI merged into Launcher
         for gt, old in SNAP['phone_quickmarks'].items():
             for fl, pl in old['folders'].items():
-                if fl not in everylabel and ME_FOLDER.get(fl) not in everylabel: f.append('Phone quickmark folder %s (was in %s) is gone' % (fl, gt))
+                if fl not in everylabel and ME_FOLDER.get(fl) not in everylabel and fl not in aliased: f.append('Phone quickmark folder %s (was in %s) is gone' % (fl, gt))
                 lost = [p for p in pl if p not in allpk]
                 if lost: f.append('Phone quickmark folder %s lost packages %s' % (fl, lost))
             lost = [p for p in old['packages'] if p not in allpk]
@@ -156,6 +164,9 @@ mut('Me-Prof retargeted away from Cloud Me Prof (#1903)', 'S2', lambda bj, ph, c
 mut('the Profile tile returns to the Me row (#1903)', 'N', lambda bj, ph, cl: [g['tiles'].append({'id': 'tools-account', 'label': 'Profile', 'icon': 'ic_p_identities', 'target': 'extapp:cloud-me#page:profile/profile'}) for g in sec(bj, 'cloud')['tile_groups'] if g['title'] == 'Me'])
 mut('a phone Me folder is dropped (#1903)', 'S3', lambda bj, ph, cl: [g['folders'].pop(0) for g in sec(bj, 'phone')['phone_app_groups'] if g['title'] == 'Me'])
 mut('a phone Me folder keeps the old name (#1903)', 'N', lambda bj, ph, cl: [fo.__setitem__('label', 'Socials') for g in sec(bj, 'phone')['phone_app_groups'] if g['title'] == 'Me' for fo in g['folders'] if fo['label'] == 'Me-Prj'])
+mut('the Launcher tile loses its aliases (#1929)', 'S2', lambda bj, ph, cl: [t.pop('aliases') for g in sec(bj, 'cloud')['tile_groups'] for t in g['tiles'] if t['id'] == 'configs-launcher'])
+mut('the Launcher tile opens another page (#1929)', 'S2', lambda bj, ph, cl: [t.__setitem__('target', 'page:config/controls') for g in sec(bj, 'cloud')['tile_groups'] for t in g['tiles'] if t['id'] == 'configs-launcher'])
+mut('the Phone Launcher folder loses its aliases (#1929)', 'S3', lambda bj, ph, cl: [fo.pop('aliases') for g in sec(bj, 'phone')['phone_app_groups'] for fo in g.get('folders', []) if fo['label'] == 'Launcher'])
 mut('a Cloud tile removed', 'S2', lambda bj, ph, cl: [g['tiles'].pop(0) for g in sec(bj, 'cloud')['tile_groups'] if g['title'] == CITY])
 mut('a Cloud tile retargeted', 'S2', lambda bj, ph, cl: [t.__setitem__('target', 'extapp:cloud-news') for g in sec(bj, 'cloud')['tile_groups'] for t in g['tiles'] if t['id'] == 'shopping'])
 mut('the Cloud Social tile loses the mySocials URL (#1904)', 'N', lambda bj, ph, cl: [t.__setitem__('target', 'extapp:cloud-news') for g in sec(bj, 'cloud')['tile_groups'] for t in g['tiles'] if t['id'] == 'social'])

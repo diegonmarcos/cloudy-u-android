@@ -139,7 +139,7 @@ WANT_FOLDERS = {
  'Services · City': ['Money', 'Shopping', 'Health', 'Real Estate', 'Jobs & Business', 'City Mobility', 'Transports', 'Hotels'],  # #1902 (#1806 order)
  'Services · Leisure': ['News', 'Events', 'Media Center', 'Social', 'Games'],  # #1902 Social opens the media_social All Apps folder
  'AGI': ['AI', 'Code', 'Terminal', 'Search'],  # #1902 Search ends AGI
- 'Setup': ['Quick Actions', 'UI', 'NG Firewall', 'Store', 'C3', 'About'],
+ 'Setup': ['Launcher', 'NG Firewall', 'Store', 'C3', 'About'],
 }
 _me_labels = [t.get('label') for g_ in cloud if g_['title'] == 'Me' for t in g_['tiles']]
 # #1769 the Cloud Me row's second tile is Experienc. today and Socials once renamed; both folders follow that tile.
@@ -151,7 +151,7 @@ for e in bj['external_apps']:
 is_fleet = lambda p_: p_ in fleet_pkgs or p_.startswith('com.diegonmarcos.') or p_.startswith('cld.') or p_ == 'app.sterna'
 cloud_icons = {t.get('icon') for g_ in cloud for t in g_['tiles'] if not t.get('separator')}
 EXPECT_RES = {'Events': 'ic_p_cal_month', 'Transports': 'ic_ctl_airplane', 'City Mobility': 'ic_city_bus', 'Hotels': 'ic_hotel', 'Games': 'ic_device_gamepad', 'Health': 'ic_monitor_heart', 'Jobs & Business': 'ic_suite', 'AI': 'ic_ai_chat',
-              'Quick Actions': 'ic_home', 'UI': 'ic_ctl_brightness', 'NG Firewall': 'ic_act_shield', 'About': 'ic_info'}
+              'Launcher': 'ic_home', 'Quick Actions': 'ic_home', 'UI': 'ic_ctl_brightness', 'NG Firewall': 'ic_act_shield', 'About': 'ic_info'}
 for g in phone:
     if g['title'] not in WANT_FOLDERS: continue
     labs = [f['label'] for f in g['folders']]
@@ -206,7 +206,7 @@ for st, pl in want_pick.items():
 print('== C: Cloud quickmark icons are unchanged from origin/main ==')
 snap = json.load(open(A + 'test/data/cloud-tile-icons-1756.json'))['tiles']
 now = {t['id']: t.get('icon') for g in cloud for t in g['tiles'] if not t.get('separator')}
-MOVED = {'tools-account': 'configs-profile'}   # #1903 the Profile tile left the Me row; it is reachable in Setup (Profile | About), a rename of its place, not a removal
+MOVED = {'tools-account': 'configs-profile', 'configs-controls': 'configs-launcher', 'configs-ui': 'configs-launcher'}   # #1929 Quick Actions and UI merged into Launcher;   # #1903 the Profile tile left the Me row; it is reachable in Setup (Profile | About), a rename of its place, not a removal
 for tid, o in snap.items():
     if tid not in now and MOVED.get(tid) in now: continue
     if tid not in now: check(False, 'Cloud tile %s is gone' % tid)

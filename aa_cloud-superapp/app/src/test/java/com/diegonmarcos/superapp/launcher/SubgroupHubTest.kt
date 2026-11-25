@@ -117,7 +117,7 @@ class SubgroupHubTest : KitPageHarness() {
         // and a Firewall tile (page:config/firewall) is present. The config-section Agents hub page is a separate surface.
         val row = Sections.all().flatMap { it.tileGroups }.single { it.title == "Setup" }.tiles.filter { !it.separator }
         assertEquals(
-            listOf("Quick Actions", "UI", "NG Firewall", "Store", "Account", "C3", "Profile", "About"),
+            listOf("Launcher", "NG Firewall", "Store", "Account", "C3", "Profile", "About"),   // #1929 Quick Actions and UI merged into Launcher (page:config/launcher-hub)
             row.map { it.label })
         // #1755 Watchdog left this row (owner order) and stays visible on the Configs page, Profiling group (rule 16).
         assertTrue("Watchdog launches the C3-Watchdog app from Configs > Profiling", config.pages.any { it.id == "c3-watchdog" && !it.hidden && it.group == "Profiling" && it.action == "extapp:c3-watchdog" })

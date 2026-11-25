@@ -74,7 +74,7 @@ if by.get('profile-app', {}).get('action') != 'extapp:cloud-account': probs.appe
 # the Cloud > Apps > Configs row
 row = next(g for s in secs for g in s.get('tile_groups', []) if g.get('title') == 'Setup')['tiles']
 labels = [t['label'] for t in row]
-want = ['Quick Actions', 'UI', '|', 'NG Firewall', '|', 'Store', 'Account', '|', 'C3', '|', 'Profile', 'About']
+want = ['Launcher', '|', 'NG Firewall', '|', 'Store', 'Account', '|', 'C3', '|', 'Profile', 'About']   # #1929 MOVED: Quick Actions and UI merged into Launcher (page:config/launcher-hub); BEFORE_ROW proves both pages stay reachable
 if labels != want: probs.append('row = %r' % labels)
 tg = {t['label']: t.get('target', '') for t in row}
 page_actions = {p['label']: p.get('action') or 'page:config/' + p['id'] for p in sec['pages'] if not p.get('hidden') and not p.get('separator')}

@@ -197,7 +197,7 @@ configs = [g for g in groups(bj["ui"]["sections"], "Setup")]
 check(len(configs) == 1, "exactly one Configs tile group under ui.sections (found %d)" % len(configs))
 if configs:
     row = [t.get("label") for t in configs[0]["tiles"]]
-    check(row == ["Quick Actions", "UI", "|", "NG Firewall", "|", "Store", "Account", "|", "C3", "|", "Profile", "About"], "Configs row = Quick Actions, UI | NG Firewall | Store, Account | C3 | Profile, About (#1755 owner order, supersedes #1745) (got %s)" % row)
+    check(row == ["Launcher", "|", "NG Firewall", "|", "Store", "Account", "|", "C3", "|", "Profile", "About"], "Configs row = Launcher | NG Firewall | Store, Account | C3 | Profile, About (#1755 owner order, supersedes #1745) (got %s)" % row)
 lnk = [g for g in groups(bj["ui"]["sections"], "Projects")]
 if lnk:
     sa = next((t for t in lnk[0]["tiles"] if t.get("id") == "cloud-superapp"), {})  # #1778 Wiki now leads the row; SuperApp leads its group

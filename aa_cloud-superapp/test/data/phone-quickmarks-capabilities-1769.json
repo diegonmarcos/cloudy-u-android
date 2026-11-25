@@ -719,6 +719,26 @@
     "suggested": true
    }
   ],
-  "Social": []
+  "Social": [],
+  "Launcher": [
+   {
+    "capability": "system settings",
+    "pkg": "com.android.settings",
+    "label": "Settings",
+    "suggested": false
+   },
+   {
+    "capability": "smart home",
+    "pkg": "com.samsung.android.oneconnect",
+    "label": "SmartThings",
+    "suggested": false
+   },
+   {
+    "capability": "launcher and UI tuning",
+    "pkg": "com.samsung.android.goodlock",
+    "label": "Good Lock",
+    "suggested": false
+   }
+  ]
  }
 }
