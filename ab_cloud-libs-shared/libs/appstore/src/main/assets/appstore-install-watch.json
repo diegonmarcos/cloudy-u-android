@@ -1,6 +1,0 @@
-{
-  "_doc": "#858 A HANDED-OVER INSTALL IS WATCHED UNTIL IT ENDS. After the Store hands a cached APK to Android's installer, the prompt can be missed, dismissed or aborted, and Android may never report back. StoreInstallWatch records each handover and resolves it: the package's versionCode changed = landed; the session is gone without that (STATUS_FAILURE_ABORTED, abandoned) or `prompt_timeout_s` passed with no result = the row returns to a retryable state labelled `retry_label`, whose tap re-installs from the APK already in the cache (no re-download). When the Store returns to the foreground, a handover still waiting after `resurface_grace_s` has its system prompt launched again from that same cached APK.",
-  "prompt_timeout_s": 180,
-  "resurface_grace_s": 20,
-  "retry_label": "Retry"
-}

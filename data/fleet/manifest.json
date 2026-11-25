@@ -82,6 +82,18 @@
         "*"
       ]
     },
+    "appstore-priority": {
+      "tier": 3,
+      "consumers": [
+        "*"
+      ]
+    },
+    "appstore-install-watch": {
+      "tier": 3,
+      "consumers": [
+        "*"
+      ]
+    },
     "packs/hyg-stars": {
       "tier": 4,
       "consumers": [

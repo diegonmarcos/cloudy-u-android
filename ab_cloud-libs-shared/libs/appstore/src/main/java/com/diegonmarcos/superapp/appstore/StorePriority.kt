@@ -2,6 +2,7 @@ package com.diegonmarcos.superapp.appstore
 
 import android.content.Context
 import android.util.Log
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import com.diegonmarcos.superapp.updater.AutoUpdatePrefs
 import com.diegonmarcos.superapp.updater.Fleet
 import org.json.JSONObject
@@ -13,11 +14,12 @@ import com.diegonmarcos.superapp.updater.BuildConfig as AuConfig
  * pending update is queued and downloaded (the [StoreAuto] chain, at the
  * highest priority) before the Store page does any other work. The rule —
  * whether it applies, what runs first, what waits, how long — is declared in
- * assets/appstore-priority.json; this object only evaluates it.
+ * the served dataset appstore-priority (data/fleet, #1562); this object only evaluates it.
  */
 object StorePriority {
     private const val TAG = "StorePriority"
-    const val ASSET = "appstore-priority.json"
+    /** #1562 the declaration is a served dataset of Cloud Store (shared), never an APK asset. */
+    const val DATASET = "appstore-priority"
     const val HIGHEST = "highest"
 
     class Decl(
@@ -29,7 +31,7 @@ object StorePriority {
         val after: List<String>,
     )
 
-    /** What applies when the asset is missing or unreadable: updates first. */
+    /** What applies while the dataset is not served yet or unreadable: updates first. */
     val DEFAULT = Decl(true, HIGHEST, true, "unmetered", "download_all_updates",
         listOf("catalogue_refresh", "icons", "details"))
 
@@ -48,8 +50,8 @@ object StorePriority {
     }
 
     fun load(ctx: Context): Decl = runCatching {
-        parse(JSONObject(ctx.assets.open(ASSET).use { it.readBytes().decodeToString() }))
-    }.getOrElse { DEFAULT }
+        FleetData.get(ctx, DATASET) { parse(JSONObject(it)) }
+    }.getOrNull() ?: DEFAULT
 
     /** True when pending updates must run before any other Store work. Pure. */
     fun updatesFirst(d: Decl, autoOn: Boolean, unmetered: Boolean): Boolean =

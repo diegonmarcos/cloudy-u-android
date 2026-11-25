@@ -3,7 +3,7 @@
 # FIRST, at the highest priority, before the Store page's catalogue refresh,
 # icons or details.
 #
-# The rule is DECLARED in libs:appstore/assets/appstore-priority.json and
+# The rule is DECLARED in the served dataset data/fleet/appstore-priority.json and
 # evaluated by StorePriority; the Store page (StoreCloudFragment's per-tab effect)
 # starts the StoreAuto chain through StorePriority.startUpdatesAsync and then
 # runs its catalogue check (checkAll) AT ONCE: #861, the check never awaits,
@@ -20,7 +20,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
 LIB="${STORE_LIB:-$ROOT/ab_cloud-libs-shared/libs/appstore/src/main}"
 SRC="$LIB/java/com/diegonmarcos/superapp/appstore"
-DECL="$LIB/assets/appstore-priority.json"
+DECL="${STORE_FLEET:-$ROOT/data/fleet}/appstore-priority.json"   # #1562 a served dataset, not an APK asset
 
 PASS=0; FAIL=0
 ok()  { PASS=$((PASS+1)); echo "  PASS: $1"; }
@@ -61,7 +61,7 @@ else bad "appstore-priority.json does not declare updates first on Wi-Fi + Auto-
 # ── 2. the evaluator is the declaration's, and gates on both conditions ────
 PRI="$(strip "$SRC/StorePriority.kt")"
 FN="$(printf '%s' "$PRI" | sed -n '/fun updatesFirst(/,/^$/p')"
-if printf '%s' "$PRI" | grep -q 'appstore-priority.json' &&
+if printf '%s' "$PRI" | grep -q 'appstore-priority' &&
    printf '%s' "$FN" | grep -q 'autoOn' && printf '%s' "$FN" | grep -q 'unmetered' &&
    printf '%s' "$FN" | grep -q 'HIGHEST'; then
   ok "StorePriority.updatesFirst reads the asset and requires auto-update, unmetered and highest"

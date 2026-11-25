@@ -3,6 +3,7 @@ package com.diegonmarcos.superapp.appstore
 import android.content.Context
 import android.content.pm.PackageInstaller
 import android.util.Log
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import com.diegonmarcos.superapp.updater.Fleet
 import com.diegonmarcos.superapp.updater.UpdateProgress
 import com.diegonmarcos.superapp.updater.cache.ApkCache
@@ -21,7 +22,8 @@ import org.json.JSONObject
  */
 object StoreInstallWatch {
     private const val TAG = "StoreInstallWatch"
-    const val ASSET = "appstore-install-watch.json"
+    /** #1562 the declaration is a served dataset of Cloud Store (shared), never an APK asset. */
+    const val DATASET = "appstore-install-watch"
     // StoreAuto's declared store (fleet-config.json `store_auto`, device
     // state), under its own key prefix: a handover is device state too.
     private const val PREFS = "store_auto"
@@ -54,8 +56,8 @@ object StoreInstallWatch {
         o.optLong("resurface_grace_s", 20L) * 1000L, o.optString("retry_label", "Retry"))
 
     fun load(ctx: Context): Decl = runCatching {
-        parse(JSONObject(ctx.assets.open(ASSET).use { it.readBytes().decodeToString() }))
-    }.getOrElse { DEFAULT }
+        FleetData.get(ctx, DATASET) { parse(JSONObject(it)) }
+    }.getOrNull() ?: DEFAULT
 
     /** One handover: the package, when, and the installed build before it. */
     class Pending(val pkg: String, val since: Long, val before: String)

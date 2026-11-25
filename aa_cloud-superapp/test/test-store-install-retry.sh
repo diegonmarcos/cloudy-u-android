@@ -20,11 +20,12 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
 LIB="${STORE_LIB:-$ROOT/ab_cloud-libs-shared/libs/appstore/src/main}"
 SRC="$LIB/java/com/diegonmarcos/superapp/appstore"
+FLEET="${STORE_FLEET:-$ROOT/data/fleet}"   # #1562 the declaration is a served dataset (data/fleet), not an APK asset
 
 PASS=0; FAIL=0
 ok()  { PASS=$((PASS+1)); echo "  PASS: $1"; }
 bad() { FAIL=$((FAIL+1)); echo "  FAIL: $1"; }
-for f in "$SRC/StoreInstallWatch.kt" "$SRC/StoreStages.kt" "$SRC/StoreCloudFragment.kt" "$LIB/assets/appstore-install-watch.json"; do
+for f in "$SRC/StoreInstallWatch.kt" "$SRC/StoreStages.kt" "$SRC/StoreCloudFragment.kt" "$FLEET/appstore-install-watch.json"; do
   [ -f "$f" ] || { echo "  FAIL: missing $f"; echo "== RESULT: 0 passed, 1 failed =="; exit 1; }
 done
 strip() {
@@ -74,7 +75,7 @@ if python3 -c '
 import json, sys
 d = json.load(open(sys.argv[1]))
 assert 0 < d["prompt_timeout_s"] <= 600 and d["resurface_grace_s"] > 0 and d["retry_label"]
-' "$LIB/assets/appstore-install-watch.json" 2>/dev/null; then
+' "$FLEET/appstore-install-watch.json" 2>/dev/null; then
   ok "appstore-install-watch.json declares the prompt timeout, the re-surface grace and the Retry label"
 else bad "appstore-install-watch.json does not declare timeout / grace / retry_label"; fi
 
