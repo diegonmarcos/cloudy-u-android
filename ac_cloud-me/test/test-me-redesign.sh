@@ -216,7 +216,7 @@ for gone in ("house", "work"):
         bad("pages", f"data/ui/{gone} is back")
 # #1901 the Lnktree section is gone: Prof = Profiles | Leaf.y, Nexus.z, Stark.x; Pers holds Profiles, Health, Astro, DD, Personal Archives; Proj = Lnktree | the areas
 _lt = secs.get("lnktree", {})   # #1901 correction: the Lnktree bottom-nav entry is restored with its sixteen pages (lt- prefix, N12)
-if "lnktree" not in ui.get("bottom_nav", []) or [p["id"] for p in _lt.get("pages", [])] != ["lt-" + x for x in ["professional", "leafy", "nexus", "stark", "personal", "social", "health", "dd", "astro", "lnktree-site", "area-unix", "area-cg", "area-capital", "area-hardtech", "area-lecole42", "area-front"]]:
+if "lnktree" not in ui.get("bottom_nav", []) or [p["id"] for p in _lt.get("pages", [])] != ["lt-" + x for x in ["lnktree-site", "professional", "leafy", "nexus", "stark", "personal", "social", "health", "dd", "astro", "area-unix", "area-cg", "area-capital", "area-hardtech", "area-lecole42", "area-front"]]:
     bad("pages", "the Lnktree bottom-nav entry with its sixteen pages is missing")
 _pf = secs.get("prof", {})
 if [p["id"] for p in _pf.get("pages", [])] != ["prof-profiles", "leafy", "nexus", "stark"] or \
@@ -224,18 +224,16 @@ if [p["id"] for p in _pf.get("pages", [])] != ["prof-profiles", "leafy", "nexus"
    {g["id"]: g["pages"] for g in _pf.get("groups", [])} != {"profiles": ["prof-profiles"], "companies": ["leafy", "nexus", "stark"]}:
     bad("pages", "Prof is not Profiles (Professional, Work, Study) | Leaf.y, Nexus.z, Stark.x")
 _pj = secs.get("proj", {})
-if [p["id"] for p in _pj.get("pages", [])] != ["lnktree-site", "area-unix", "area-cg", "area-capital", "area-hardtech", "area-lecole42", "area-front"]:
-    bad("pages", "Proj pages are not Lnktree, Unix, CG, Capital, HardTech, 42, Projects")
-if _pj.get("nav_mode") != "horizontal_two_rows" or {g["id"]: g["pages"] for g in _pj.get("groups", [])} != {"lnktree": ["lnktree-site"], "proj": ["area-unix", "area-cg", "area-capital", "area-hardtech", "area-lecole42", "area-front"]}:
-    bad("pages", "Proj is not the two rows Lnktree / Proj")
-if ui.get("default_section") != "lnktree" or (_pj.get("pages") or [{}])[0].get("id") != "lnktree-site":
-    bad("pages", "the app does not open on Lnktree, or Proj does not open on its Lnktree page")
+if [p["id"] for p in _pj.get("pages", [])] != ["pj-home", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42"]:
+    bad("pages", "Proj pages are not Home, Unix, CG, Capital, Hardtech, Wiki, Projects, 42 (#1914)")
+if ui.get("default_section") != "lnktree" or (_lt.get("pages") or [{}])[0].get("id") != "lt-lnktree-site" or (_pj.get("pages") or [{}])[0].get("id") != "pj-home":
+    bad("pages", "the app does not open on Lnktree, the Lnktree entry on its Lnktree site, or Proj on its Home (#1914)")
 _pr = {p["id"]: p for p in _sub.get("pers-profiles", {}).get("pages", [])}
 if list(_pr) != ["personal", "ig0", "ig1", "ig2", "face0", "pinterest", "youtube", "tidal", "linkedin", "orkut"]:
     bad("pages", "Pers > Profiles is not Personal, ig0, ig1, ig2, face0, Pinterest, YouTube, Tidal, LinkedIn, Orkut (#1913)")
 if [p["id"] for p in _sub.get("health", {}).get("pages", [])] != ["trackers", "plan", "health-profile"]:
     bad("pages", "Pers > Health is not Trackers, Plan, Record")
-for _pid, _u, _rel in (("leafy", "https://diegonmarcos.github.io/leafy/", "prof/leafy"), ("nexus", "https://diegonmarcos.github.io/nexus/", "prof/nexus"), ("stark", "https://diegonmarcos.github.io/stark/", "prof/stark"), ("astro", "https://diegonmarcos.github.io/myAstro/", "pers/astro"), ("personal", "https://diegonmarcos.com/", "pers/pers-profiles/personal"), ("lnktree-site", "https://linktree.diegonmarcos.com/", "proj/lnktree-site")):
+for _pid, _u, _rel in (("leafy", "https://diegonmarcos.github.io/leafy/", "prof/leafy"), ("nexus", "https://diegonmarcos.github.io/nexus/", "prof/nexus"), ("stark", "https://diegonmarcos.github.io/stark/", "prof/stark"), ("astro", "https://diegonmarcos.github.io/myAstro/", "pers/astro"), ("personal", "https://diegonmarcos.com/", "pers/pers-profiles/personal"), ("lt-lnktree-site", "https://linktree.diegonmarcos.com/", "lnktree/lt-lnktree-site")):
     _f = os.path.join(app, f"data/ui/{_rel}.json")
     _b = json.load(open(_f, encoding="utf-8")) if os.path.exists(_f) else []
     if len(_b) != 1 or _b[0].get("id") != "web" or _b[0].get("url") != _u:

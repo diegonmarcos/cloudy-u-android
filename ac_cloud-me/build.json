@@ -384,6 +384,13 @@
         "socials/socials-personal": "pers/ig0",
         "pers/instagram": "pers/ig0",
         "pers/social": "pers/ig0",
+        "proj/lnktree-site": "lnktree/lt-lnktree-site",
+        "proj/area-unix": "proj/pj-unix",
+        "proj/area-cg": "proj/pj-cg",
+        "proj/area-capital": "proj/pj-capital",
+        "proj/area-hardtech": "proj/pj-hardtech",
+        "proj/area-lecole42": "proj/pj-lecole42",
+        "proj/area-front": "proj/pj-projects",
         "lnktree/professional": "lnktree/lt-professional",
         "lnktree/leafy": "lnktree/lt-leafy",
         "lnktree/nexus": "lnktree/lt-nexus",
@@ -887,63 +894,194 @@
         ]
       },
       {
-        "_doc": "#1901 Proj: the section called Socials became Proj, and it now holds the Lnktree tile first (it moved here from Pers, and it is the page Proj and the app open on) followed by the registry areas: Lnktree | Unix, CG, Capital, Hardtech, 42, Projects. Lnktree is linktree.diegonmarcos.com embedded by https URL (data/ui/proj/lnktree-site.json); each area page is the collapsible repo tree of that registry area (ui.repo_tree.areas; the chip labels come from the registry outline, build.json declares none). Tapping the Proj label opens the whole outline. The Socials tabs moved: Professional to Prof, Personal (the Instagram page) to Pers > Profiles > Instagram; page:socials/* and page:lnktree/* routes resolve through ui.renamed.",
+        "_doc": "#1914 Proj: Home (an icon grid of every group and leaf) | Unix, CG, Capital, Hardtech, Wiki, Projects, 42, each group holding its project leaves; every leaf embeds its site (me-links.json, derived from repos-pages.json and the registry) or its GitHub repo page. The Lnktree site is the default page of the Lnktree bottom-nav entry; the registry area trees stay on Lnktree > Proj (lt-area-*).",
         "id": "proj",
-        "nav_mode": "horizontal_two_rows",
         "label": "Proj",
         "icon": "ic_link_tile",
-        "groups": [
-          {
-            "id": "lnktree",
-            "label": "Lnktree",
-            "icon": "ic_link_tile",
-            "pages": [
-              "lnktree-site"
-            ]
-          },
-          {
-            "id": "proj",
-            "label": "Proj",
-            "icon": "account_tree",
-            "pages": [
-              "area-unix",
-              "area-cg",
-              "area-capital",
-              "area-hardtech",
-              "area-lecole42",
-              "area-front"
-            ]
-          }
-        ],
         "pages": [
           {
-            "id": "lnktree-site",
-            "label": "Lnktree",
+            "id": "pj-home",
+            "label": "Home",
             "icon": "ic_link_tile"
           },
           {
-            "id": "area-unix",
-            "icon": "terminal"
+            "id": "pj-unix",
+            "label": "Unix",
+            "icon": "ic_link_tile",
+            "pages": [
+              {
+                "id": "pj-unix-superapp",
+                "label": "SuperApp",
+                "icon": "ic_world"
+              },
+              {
+                "id": "pj-unix-cloudme",
+                "label": "Cloud-me",
+                "icon": "ic_world"
+              },
+              {
+                "id": "pj-unix-cloudy",
+                "label": "Cloudy",
+                "icon": "ic_world"
+              }
+            ]
           },
           {
-            "id": "area-cg",
-            "icon": "palette"
+            "id": "pj-cg",
+            "label": "CG",
+            "icon": "ic_link_tile",
+            "pages": [
+              {
+                "id": "pj-cg-omniverse",
+                "label": "Omniverse",
+                "icon": "ic_world"
+              },
+              {
+                "id": "pj-cg-zirkusverse",
+                "label": "Zirkusverse",
+                "icon": "ic_world"
+              }
+            ]
           },
           {
-            "id": "area-capital",
-            "icon": "payments"
+            "id": "pj-capital",
+            "label": "Capital",
+            "icon": "ic_link_tile",
+            "pages": [
+              {
+                "id": "pj-capital-cb",
+                "label": "CB",
+                "icon": "ic_world"
+              },
+              {
+                "id": "pj-capital-pm",
+                "label": "PM",
+                "icon": "ic_world"
+              },
+              {
+                "id": "pj-capital-finterm",
+                "label": "FinTerm",
+                "icon": "ic_world"
+              }
+            ]
           },
           {
-            "id": "area-hardtech",
-            "icon": "memory"
+            "id": "pj-hardtech",
+            "label": "Hardtech",
+            "icon": "ic_link_tile",
+            "pages": [
+              {
+                "id": "pj-hardtech-biomed",
+                "label": "BioMed",
+                "icon": "ic_world"
+              },
+              {
+                "id": "pj-hardtech-cad",
+                "label": "CAD",
+                "icon": "ic_world"
+              },
+              {
+                "id": "pj-hardtech-deepxtech",
+                "label": "DeepXTech",
+                "icon": "ic_world"
+              }
+            ]
           },
           {
-            "id": "area-lecole42",
-            "icon": "menu_book"
+            "id": "pj-wiki",
+            "label": "Wiki",
+            "icon": "ic_link_tile",
+            "pages": [
+              {
+                "id": "pj-wiki-modernsc",
+                "label": "ModernSc",
+                "icon": "ic_world"
+              },
+              {
+                "id": "pj-wiki-arcanum",
+                "label": "Arcanum",
+                "icon": "ic_world"
+              },
+              {
+                "id": "pj-wiki-projects",
+                "label": "Projects",
+                "icon": "ic_world"
+              }
+            ]
           },
           {
-            "id": "area-front",
-            "icon": "rocket_launch"
+            "id": "pj-projects",
+            "label": "Projects",
+            "icon": "ic_link_tile",
+            "pages": [
+              {
+                "id": "pj-projects-endeavours",
+                "label": "Endeavours",
+                "icon": "ic_world"
+              },
+              {
+                "id": "pj-projects-duckpeng",
+                "label": "DuckPeng",
+                "icon": "ic_world"
+              }
+            ]
+          },
+          {
+            "id": "pj-lecole42",
+            "label": "42",
+            "icon": "ic_link_tile",
+            "pages": [
+              {
+                "id": "pj-lecole42-algo",
+                "label": "Algo",
+                "icon": "ic_world"
+              },
+              {
+                "id": "pj-lecole42-graphic",
+                "label": "Graphic",
+                "icon": "ic_world"
+              },
+              {
+                "id": "pj-lecole42-system",
+                "label": "System",
+                "icon": "ic_world"
+              },
+              {
+                "id": "pj-lecole42-mylibs",
+                "label": "Mylibs",
+                "icon": "ic_world"
+              },
+              {
+                "id": "pj-lecole42-curriculum",
+                "label": "Curriculum",
+                "icon": "ic_world"
+              },
+              {
+                "id": "pj-lecole42-agentic",
+                "label": "Agentic",
+                "icon": "ic_world"
+              },
+              {
+                "id": "pj-lecole42-datascience",
+                "label": "DataScience",
+                "icon": "ic_world"
+              },
+              {
+                "id": "pj-lecole42-machinelearning",
+                "label": "MachineLearning",
+                "icon": "ic_world"
+              },
+              {
+                "id": "pj-lecole42-cyberwarfare",
+                "label": "Cyberwarfare",
+                "icon": "ic_world"
+              },
+              {
+                "id": "pj-lecole42-dev",
+                "label": "Dev",
+                "icon": "ic_world"
+              }
+            ]
           }
         ]
       },
@@ -955,6 +1093,14 @@
         "label": "Lnktree",
         "icon": "ic_nav_me",
         "groups": [
+          {
+            "id": "lnktree",
+            "label": "Lnktree",
+            "icon": "ic_link_tile",
+            "pages": [
+              "lt-lnktree-site"
+            ]
+          },
           {
             "id": "prof",
             "label": "Prof",
@@ -975,8 +1121,7 @@
               "lt-social",
               "lt-health",
               "lt-dd",
-              "lt-astro",
-              "lt-lnktree-site"
+              "lt-astro"
             ]
           },
           {
@@ -994,6 +1139,12 @@
           }
         ],
         "pages": [
+          {
+            "id": "lt-lnktree-site",
+            "label": "Lnktree",
+            "icon": "ic_link_tile",
+            "separator_before": true
+          },
           {
             "id": "lt-professional",
             "label": "Professional",
@@ -1040,12 +1191,6 @@
             "id": "lt-astro",
             "label": "Astro",
             "icon": "ic_world"
-          },
-          {
-            "id": "lt-lnktree-site",
-            "label": "Lnktree",
-            "icon": "ic_link_tile",
-            "separator_before": true
           },
           {
             "id": "lt-area-unix",

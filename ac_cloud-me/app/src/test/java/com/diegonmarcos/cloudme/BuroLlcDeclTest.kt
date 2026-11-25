@@ -32,7 +32,7 @@ class BuroLlcDeclTest {
         assertFalse("house" in sections); assertFalse("work" in sections); assertFalse("roadmap" in sections); assertFalse("duties" in sections)
         for (gone in listOf("health", "experiences", "socials")) assertFalse("$gone is a section of the layout before #1901", gone in sections)
         assertEquals("lnktree", ui.getString("default_section"))   // #1901 correction: the app opens on the restored Lnktree entry
-        assertEquals(listOf("lnktree-site", "area-unix", "area-cg", "area-capital", "area-hardtech", "area-lecole42", "area-front"), ids(sections.getValue("proj").getJSONArray("pages")))
+        assertEquals(listOf("pj-home", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42"), ids(sections.getValue("proj").getJSONArray("pages")))
         assertEquals(listOf("roadmaps", "backlogs"), ids(sections.getValue("tasks").getJSONArray("pages")))
         assertEquals("tasks", page("tasks", "backlogs").getJSONObject(0).getString("id"))
     }
@@ -166,10 +166,10 @@ class BuroLlcDeclTest {
 
     @Test fun `Proj is two rows, Lnktree then the areas, and Prof is Profiles then the three company sites`() {
         val proj = sections.getValue("proj")
-        assertEquals("horizontal_two_rows", proj.getString("nav_mode"))
-        assertEquals(mapOf("lnktree" to listOf("lnktree-site"),
-            "proj" to listOf("area-unix", "area-cg", "area-capital", "area-hardtech", "area-lecole42", "area-front")), groups("proj"))
-        assertEquals("lnktree-site", ids(proj.getJSONArray("pages")).first())
+        // #1914 Proj is one row: Home | Unix, CG, Capital, Hardtech, Wiki, Projects, 42; the Lnktree bottom-nav section holds the Lnktree row, first and default
+        assertEquals("pj-home", ids(proj.getJSONArray("pages")).first())
+        assertEquals(mapOf("lnktree" to listOf("lt-lnktree-site")), groups("lnktree").filterKeys { it == "lnktree" })
+        assertEquals("lt-lnktree-site", ids(sections.getValue("lnktree").getJSONArray("pages")).first())
         assertEquals(mapOf("profiles" to listOf("prof-profiles"), "companies" to listOf("leafy", "nexus", "stark")), groups("prof"))
         assertEquals(listOf("prof-profiles", "leafy", "nexus", "stark"), ids(sections.getValue("prof").getJSONArray("pages")))
     }
@@ -177,7 +177,7 @@ class BuroLlcDeclTest {
     @Test fun `the six embedded sites open by their https URL, each declared in its own page file`() {
         val want = mapOf("prof" to "leafy" to "https://diegonmarcos.github.io/leafy/", "prof" to "nexus" to "https://diegonmarcos.github.io/nexus/",
             "prof" to "stark" to "https://diegonmarcos.github.io/stark/", "pers" to "astro" to "https://diegonmarcos.github.io/myAstro/",
-            "pers/pers-profiles" to "personal" to "https://diegonmarcos.com/", "proj" to "lnktree-site" to "https://linktree.diegonmarcos.com/")
+            "pers/pers-profiles" to "personal" to "https://diegonmarcos.com/", "lnktree" to "lt-lnktree-site" to "https://linktree.diegonmarcos.com/")
         for (entry in want) {
             val (loc, url) = entry.key to entry.value
             val b = page(loc.first, loc.second).getJSONObject(0)

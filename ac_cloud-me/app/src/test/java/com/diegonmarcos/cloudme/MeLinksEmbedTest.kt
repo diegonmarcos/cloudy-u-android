@@ -26,14 +26,14 @@ class MeLinksEmbedTest {
     private val tabs get() = entries.filter { it.has("path") }
 
     @Test fun `every tab embeds the URL its me-links entry declares`() {
-        assertTrue(tabs.size >= 9)
+        assertTrue(tabs.size >= 45)
         for (e in tabs) assertEquals(e.getString("id"), e.getString("url"), block(e).optString("url"))
     }
 
     @Test fun `Leaf-y Nexus Stark Personal Social Instagram LinkedIn and Lnktree embed their real sites`() {
         val want = mapOf("prof-leafy" to "https://diegonmarcos.github.io/leafy/", "prof-nexus" to "https://diegonmarcos.github.io/nexus/", "prof-stark" to "https://diegonmarcos.github.io/stark/",
             "pers-personal" to "https://diegonmarcos.com/", "pers-ig0" to "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html", "prof-professional" to "https://linkedin.com/in/diegonmarcos",
-            "proj-lnktree" to "https://linktree.diegonmarcos.com/")
+            "lnktree-default" to "https://linktree.diegonmarcos.com/", "proj-cg-omniverse" to "https://diegonmarcos.github.io/galaxy/", "proj-unix-cloudy" to "https://github.com/diegonmarcos/cloudy-___")
         for ((id, url) in want) assertEquals(id, url, block(tabs.first { it.getString("id") == id }).optString("url"))
     }
 

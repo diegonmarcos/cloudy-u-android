@@ -1,0 +1,7 @@
+[
+  {
+    "kind": "fragment",
+    "id": "proj_home",
+    "_doc": "#1914 Proj > Home: an icon grid of every group and leaf of the Proj tabs (group headers, one tile per leaf), drawn from the declared page tree (build.json ui.sections proj) and opening the leaf."
+  }
+]

@@ -36,7 +36,7 @@ class NavReorgTest {
         assertEquals("lnktree", Sections.default()?.id)
         // #1901 correction: the Lnktree bottom-nav entry is not removed, it keeps its sixteen pages
         assertEquals(16, Sections.byId("lnktree")!!.pages.size)
-        assertEquals("lt-professional", leafOf("lnktree", null))
+        assertEquals("lt-lnktree-site", leafOf("lnktree", null))
         for (gone in listOf("health", "experiences", "socials")) assertEquals("$gone moved, it is no section", null, Sections.byId(gone))
     }
 
@@ -65,14 +65,15 @@ class NavReorgTest {
         assertEquals(listOf("cv", "roadmap"), ids(prof.page("study")!!.pages))
         assertEquals("professional", leafOf("prof", null))
         val proj = Sections.byId("proj")!!
-        assertEquals(listOf("lnktree-site", "area-unix", "area-cg", "area-capital", "area-hardtech", "area-lecole42", "area-front"), ids(proj.pages))
-        assertEquals(listOf("Lnktree", "Unix", "CG", "Capital", "HardTech", "42", "Projects"), proj.pages.map { it.label })
-        assertEquals("proj opens on the Lnktree tile", "lnktree-site", leafOf("proj", null))
+        assertEquals(listOf("pj-home", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42"), ids(proj.pages))
+        assertEquals(listOf("Home", "Unix", "CG", "Capital", "Hardtech", "Wiki", "Projects", "42"), proj.pages.map { it.label })
+        assertEquals("proj opens on its Home grid", "pj-home", leafOf("proj", null))
+        assertEquals("the Lnktree bottom-nav entry opens on the Lnktree site", "lt-lnktree-site", leafOf("lnktree", null))
         // the groups are the declared rows: Prof is `Profiles | Leaf.y, Nexus.z, Stark.x`, Proj is `Lnktree` over the areas
         fun groups(s: String) = arr(ui.getJSONArray("sections")).first { it.getString("id") == s }.getJSONArray("groups").let { g -> arr(g).associate { it.getString("id") to (0 until it.getJSONArray("pages").length()).map { i -> it.getJSONArray("pages").getString(i) } } }
         assertEquals(mapOf("profiles" to listOf("prof-profiles"), "companies" to listOf("leafy", "nexus", "stark")), groups("prof"))
-        assertEquals(listOf("lnktree", "proj"), groups("proj").keys.toList())
-        assertEquals(listOf("lnktree-site"), groups("proj").getValue("lnktree"))
+        assertEquals(listOf("lnktree", "prof", "pers", "proj"), groups("lnktree").keys.toList())
+        assertEquals(listOf("lt-lnktree-site"), groups("lnktree").getValue("lnktree"))
     }
 
     // ---- the rename map
@@ -104,7 +105,7 @@ class NavReorgTest {
             ("socials" to "socials-professional") to ("prof" to "professional"), ("socials" to "socials-personal") to ("pers" to "ig0"), ("pers" to "instagram") to ("pers" to "ig0"), ("pers" to "social") to ("pers" to "ig0"),
             ("lnktree" to "professional") to ("lnktree" to "lt-professional"), ("lnktree" to "personal") to ("lnktree" to "lt-personal"),
             ("lnktree" to "leafy") to ("lnktree" to "lt-leafy"), ("lnktree" to "dd") to ("lnktree" to "lt-dd"), ("lnktree" to "health") to ("lnktree" to "lt-health"),
-            ("lnktree" to "lnktree-site") to ("lnktree" to "lt-lnktree-site"), ("lnktree" to "area-unix") to ("lnktree" to "lt-area-unix"),
+            ("lnktree" to "lnktree-site") to ("lnktree" to "lt-lnktree-site"), ("proj" to "lnktree-site") to ("lnktree" to "lt-lnktree-site"), ("proj" to "area-unix") to ("proj" to "pj-unix"), ("proj" to "area-front") to ("proj" to "pj-projects"), ("lnktree" to "area-unix") to ("lnktree" to "lt-area-unix"),
             ("lnktree" to null) to ("lnktree" to null), ("socials" to null) to ("proj" to null),
             // ids of the layouts before the previous one chain through both tables
             ("me" to "leafy") to ("lnktree" to "lt-leafy"), ("me" to "lnktree") to ("lnktree" to "lt-lnktree-site"), ("study" to "cv") to ("prof" to "cv"),
@@ -112,7 +113,7 @@ class NavReorgTest {
         )
         for ((old, to) in want) assertEquals("${old.first}/${old.second}", to, LegacyRoutes.resolve(old.first, old.second))
         // the live ids pass through untouched
-        for (live in listOf("pers" to "geo", "prof" to "work", "proj" to "lnktree-site", "buro" to "ids", "tasks" to "backlogs")) assertEquals(live, LegacyRoutes.resolve(live.first, live.second))
+        for (live in listOf("pers" to "geo", "prof" to "work", "proj" to "pj-home", "buro" to "ids", "tasks" to "backlogs")) assertEquals(live, LegacyRoutes.resolve(live.first, live.second))
     }
 
     @Test fun `ui renamed names only pages and sections of the live tree and the asset the app reads is build json's`() {
@@ -140,7 +141,7 @@ class NavReorgTest {
             Triple("prof", "leafy", "https://diegonmarcos.github.io/leafy/"), Triple("prof", "nexus", "https://diegonmarcos.github.io/nexus/"),
             Triple("prof", "stark", "https://diegonmarcos.github.io/stark/"),
             Triple("pers", "personal", "https://diegonmarcos.com/"), Triple("pers", "ig0", "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html"),
-            Triple("pers", "astro", "https://diegonmarcos.github.io/myAstro/"), Triple("proj", "lnktree-site", "https://linktree.diegonmarcos.com/"), Triple("lnktree", "lt-lnktree-site", "https://linktree.diegonmarcos.com/"),
+            Triple("pers", "astro", "https://diegonmarcos.github.io/myAstro/"), Triple("lnktree", "lt-lnktree-site", "https://linktree.diegonmarcos.com/"),
         )
         for ((section, page, url) in want) {
             val chain = Sections.byId(section)!!.path(page).map { it.id }
@@ -156,7 +157,7 @@ class NavReorgTest {
             val chain = Sections.byId(s)!!.path(p).map { it.id }
             LnktreePages.fromStack(p, JSONArray(BuroLlcTestData.text("data/ui/$s/${chain.joinToString("/")}.json")), cfg)
         }
-        assertEquals(setOf("professional", "leafy", "nexus", "stark", "personal", "ig0", "astro", "lnktree-site", "lt-lnktree-site"), cached.map { it.id }.toSet())
+        assertEquals(setOf("professional", "leafy", "nexus", "stark", "personal", "ig0", "astro", "lt-lnktree-site"), cached.map { it.id }.toSet())
         assertEquals(listOf("pers", "prof", "proj"), cfg.cachedSections())
     }
 }

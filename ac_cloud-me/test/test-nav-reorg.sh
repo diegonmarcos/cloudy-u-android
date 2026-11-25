@@ -47,10 +47,10 @@ def sub(section, *chain):
 if ui.get("bottom_nav") != ["pers", "prof", "proj", "lnktree", "inventory", "buro", "llc"] or \
    [secs[i]["label"] for i in ui.get("bottom_nav", []) if i in secs] != ["Pers", "Prof", "Proj", "Lnktree", "Inventory", "Buro", "LLC"]:
     bad("tree", f"the bar is {ui.get('bottom_nav')}, wanted Pers | Prof | Proj | Lnktree | Inventory | Buro | LLC (the Lnktree entry is NOT removed)")
-LT = ["professional", "leafy", "nexus", "stark", "personal", "social", "health", "dd", "astro", "lnktree-site", "area-unix", "area-cg", "area-capital", "area-hardtech", "area-lecole42", "area-front"]
+LT = ["lnktree-site", "professional", "leafy", "nexus", "stark", "personal", "social", "health", "dd", "astro", "area-unix", "area-cg", "area-capital", "area-hardtech", "area-lecole42", "area-front"]
 if [p["id"] for p in secs.get("lnktree", {}).get("pages", [])] != ["lt-" + x for x in LT] or secs.get("lnktree", {}).get("nav_mode") != "horizontal_two_rows" or \
-   [g["id"] for g in secs.get("lnktree", {}).get("groups", [])] != ["prof", "pers", "proj"] or (secs.get("lnktree", {}).get("pages") or [{}])[0].get("id") != "lt-professional":
-    bad("tree", "the Lnktree bottom-nav section does not hold its sixteen pages in the three rows Prof / Pers / Proj")
+   [g["id"] for g in secs.get("lnktree", {}).get("groups", [])] != ["lnktree", "prof", "pers", "proj"] or (secs.get("lnktree", {}).get("pages") or [{}])[0].get("id") != "lt-lnktree-site":
+    bad("tree", "the Lnktree bottom-nav section does not hold its sixteen pages in the rows Lnktree / Prof / Pers / Proj, opening on lt-lnktree-site (#1914)")
 if ui.get("default_section") != "lnktree": bad("tree", "the app does not open on the Lnktree entry")
 for gone in ("health", "experiences", "socials"):
     if gone in secs: bad("tree", f"{gone} is a section again: it moved (ui.renamed keeps its ids working)")
@@ -72,17 +72,19 @@ if labels(secs.get("prof", {}).get("pages", [])) != [("prof-profiles", "Profiles
 if [p["id"] for p in sub("prof", "prof-profiles").get("pages", [])] != ["professional", "work", "study"] or \
    [p["id"] for p in sub("prof", "prof-profiles", "study").get("pages", [])] != ["cv", "roadmap"]:
     bad("tree", "Prof > Profiles is not Professional, Work, Study (CV, Roadmap)")
-if [p["id"] for p in secs.get("proj", {}).get("pages", [])] != ["lnktree-site", "area-unix", "area-cg", "area-capital", "area-hardtech", "area-lecole42", "area-front"] or \
-   secs.get("proj", {}).get("pages", [{}])[0].get("label") != "Lnktree":
-    bad("tree", "Proj is not Lnktree | Unix, CG, Capital, Hardtech, 42, Projects")
-if {g["id"]: g["pages"] for g in secs.get("proj", {}).get("groups", [])} != {"lnktree": ["lnktree-site"], "proj": ["area-unix", "area-cg", "area-capital", "area-hardtech", "area-lecole42", "area-front"]}:
-    bad("tree", "Proj is not the rows Lnktree / Proj")
-if (secs.get("proj", {}).get("pages") or [{}])[0].get("id") != "lnktree-site":
-    bad("tree", "Lnktree is not Proj's first and default page")
+PROJ = {"unix": ["superapp", "cloudme", "cloudy"], "cg": ["omniverse", "zirkusverse"], "capital": ["cb", "pm", "finterm"], "hardtech": ["biomed", "cad", "deepxtech"],
+        "wiki": ["modernsc", "arcanum", "projects"], "projects": ["endeavours", "duckpeng"], "lecole42": ["algo", "graphic", "system", "mylibs", "curriculum", "agentic", "datascience", "machinelearning", "cyberwarfare", "dev"]}
+if [p["id"] for p in secs.get("proj", {}).get("pages", [])] != ["pj-home"] + ["pj-" + g for g in PROJ] or \
+   [p["label"] for p in secs.get("proj", {}).get("pages", [])] != ["Home", "Unix", "CG", "Capital", "Hardtech", "Wiki", "Projects", "42"] or \
+   any([c["id"] for c in next(p for p in secs["proj"]["pages"] if p["id"] == "pj-" + g).get("pages", [])] != [f"pj-{g}-{l}" for l in ls] for g, ls in PROJ.items()):
+    bad("tree", "Proj is not Home | Unix, CG, Capital, Hardtech, Wiki, Projects, 42 with every project leaf (#1914)")
+for _o, _n in {"area-unix": "pj-unix", "area-cg": "pj-cg", "area-capital": "pj-capital", "area-hardtech": "pj-hardtech", "area-lecole42": "pj-lecole42", "area-front": "pj-projects"}.items():
+    if ren.get("pages", {}).get("proj/" + _o) != "proj/" + _n: bad("renamed", f"ui.renamed.pages has no alias proj/{_o} -> proj/{_n} (#1914)")
+if ren.get("pages", {}).get("proj/lnktree-site") != "lnktree/lt-lnktree-site": bad("renamed", "proj/lnktree-site does not alias lnktree/lt-lnktree-site (#1914)")
 if "lnktree-site" in [p["id"] for p in secs.get("pers", {}).get("pages", [])] or "lnktree-site" in ids(secs.get("pers", {}).get("pages")):
     bad("tree", "the Lnktree tile is still under Pers (it moved to Proj)")
-if ui.get("repo_tree", {}).get("group") not in {g["id"] for g in secs.get("proj", {}).get("groups", [])}:
-    bad("tree", "ui.repo_tree.group is not a group of Proj")
+if ui.get("repo_tree", {}).get("group") not in {g["id"] for g in secs.get("lnktree", {}).get("groups", [])}:
+    bad("tree", "ui.repo_tree.group is not a group of the Lnktree bottom-nav section (its Proj row)")
 if ui.get("vault_rows", {}).get("projects", {}).get("section") != "proj":
     bad("tree", "Tasks > Projects does not take Proj's group")
 lc = ui.get("lnktree_cache", {})
@@ -136,8 +138,7 @@ for key, b in sorted(base["pages"].items()):
         bad("parity", f"{key} -> {ns}/{np}: the label {b['label']!r} became {t['label']!r}")
 # the Lnktree bottom-nav pages (restored, lt- ids) also live on as the reorganised pages of Pers, Prof and Proj: those hold every baseline field too
 ALSO = {"professional": "prof/professional", "leafy": "prof/leafy", "nexus": "prof/nexus", "stark": "prof/stark", "personal": "pers/ig0",
-        "health": "pers/health-profile", "dd": "pers/dd", "astro": "pers/astro", "lnktree-site": "proj/lnktree-site",
-        **{f"area-{a}": f"proj/area-{a}" for a in ("unix", "cg", "capital", "hardtech", "lecole42", "area-front"[5:])}}
+        "health": "pers/health-profile", "dd": "pers/dd", "astro": "pers/astro", }
 for pid, to in ALSO.items():
     b = base["pages"].get(f"lnktree/{pid}")
     t = now["pages"].get(to)
@@ -202,8 +203,7 @@ SITES = {  # tile -> (page file, the url it embeds)
     "Pers > Profiles > LinkedIn": ("data/ui/pers/pers-profiles/linkedin.json", "https://diegonmarcos.github.io/mySocials/linkedin.html"),
     "Pers > Profiles > Orkut": ("data/ui/pers/pers-profiles/orkut.json", "https://diegonmarcos.github.io/mySocials/orkut.html"),
     "Pers > Astro": ("data/ui/pers/astro.json", "https://diegonmarcos.github.io/myAstro/"),
-    "Proj > Lnktree": ("data/ui/proj/lnktree-site.json", "https://linktree.diegonmarcos.com/"),
-    "Lnktree (bottom nav) > Lnktree": ("data/ui/lnktree/lt-lnktree-site.json", "https://linktree.diegonmarcos.com/"),
+        "Lnktree (bottom nav) > Lnktree": ("data/ui/lnktree/lt-lnktree-site.json", "https://linktree.diegonmarcos.com/"),
     "Lnktree (bottom nav) > Leaf.y": ("data/ui/lnktree/lt-leafy.json", "https://diegonmarcos.github.io/leafy/"),
 }
 for tile, (f, url) in SITES.items():
@@ -213,6 +213,17 @@ for tile, (f, url) in SITES.items():
         bad("urls", f"{tile} does not open {url} embedded")
     if not url.startswith("https://") and not os.path.exists(os.path.join(app, "data/web", url)):
         bad("urls", f"{tile}: the bundled page {url} does not exist")
+# #1914 every Proj leaf embeds the URL its me-links.json entry declares (derived from the SoT), no two the same
+_seen = {}
+for e in json.load(open(os.path.join(app, "data/links/me-links.json")))["entries"]:
+    if e["section"] != "proj": continue
+    f = os.path.join(app, "data/ui/proj", *e["path"]) + ".json"
+    try: b = json.load(open(f, encoding="utf-8"))[0]
+    except (OSError, ValueError): bad("urls", f"Proj leaf {e['id']}: {f} is missing"); continue
+    if b.get("url") != e["url"] or b.get("kind") != "fragment" or b.get("id") != "web": bad("urls", f"Proj leaf {e['id']} does not embed {e['url']}")
+    if e["url"] in _seen: bad("urls", f"Proj leaves {_seen[e['url']]} and {e['id']} embed the same page")
+    _seen[e["url"]] = e["id"]
+if len(_seen) != 26: bad("urls", f"Proj holds {len(_seen)} leaves, wanted the 26 of Unix, CG, Capital, Hardtech, Wiki, Projects, 42")
 main = os.path.join(app, "app/src/main/java")
 for r, _, fs in os.walk(main):
     for f in fs:
@@ -311,7 +322,11 @@ mutant parity "a Lnktree bottom-nav page file is emptied" "echo '[]' > data/ui/l
 mutant tree "the page cache covers only Proj" "$J \"$BJ;U['lnktree_cache']['sections']=['proj'];$W_\""
 # urls
 mutant urls "Pers > Personal opens another site" "sed -i 's#https://diegonmarcos.com/#https://example.com/#' data/ui/pers/pers-profiles/personal.json"
-mutant urls "Proj > Lnktree opens another site" "sed -i 's#https://linktree.diegonmarcos.com/#https://example.com/#' data/ui/proj/lnktree-site.json"
+mutant urls "a Proj leaf embeds another site" "sed -i 's#https://diegonmarcos.github.io/galaxy/#https://example.com/#' data/ui/proj/pj-cg/pj-cg-omniverse.json"
+mutant tree "a Proj leaf is dropped (42 Dev)" "rm data/ui/proj/pj-lecole42/pj-lecole42-dev.json; $J \"$BJ;[g['pages'].pop() for p in [x for x in S['proj']['pages'] if x['id']=='pj-lecole42'] for g in [p]];$W_\""
+mutant tree "Lnktree opens on Professional again" "$J \"$BJ;p=S['lnktree']['pages'];p.append(p.pop(0));$W_\""
+mutant renamed "an old Proj area id has no alias" "$J \"$BJ;U['renamed']['pages'].pop('proj/area-cg');$W_\""
+mutant renamed "the old Proj Lnktree id has no alias" "$J \"$BJ;U['renamed']['pages'].pop('proj/lnktree-site');$W_\""
 mutant urls "Prof > Nexus.z opens Stark.x" "sed -i 's#diegonmarcos.github.io/nexus/#diegonmarcos.github.io/stark/#' data/ui/prof/nexus.json"
 mutant urls "Prof > Professional is not the LinkedIn page" "sed -i 's#https://linkedin.com/in/diegonmarcos\"#mysocials/social.html\"#' data/ui/prof/prof-profiles/professional.json"
 mutant urls "a tile URL becomes a Kotlin literal" "sed -i '0,/^object Sections {/s//object Sections {\n    const val PERSONAL = \"https:\\/\\/diegonmarcos.com\\/\"/' app/src/main/java/com/diegonmarcos/cloudme/Sections.kt"

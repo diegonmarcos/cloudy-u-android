@@ -76,7 +76,7 @@ class ProfileRecordTest {
         val pers = (0 until ui.length()).map { ui.getJSONObject(it) }.first { it.getString("id") == "pers" }
         fun flat(a: org.json.JSONArray): List<String> = (0 until a.length()).flatMap { val o = a.getJSONObject(it); listOf(o.getString("id")) + (o.optJSONArray("pages")?.let(::flat) ?: emptyList()) }
         val ids = flat(pers.getJSONArray("pages"))
-        for (p in listOf("social", "health-profile", "dd")) assertTrue(p in ids)
+        for (p in listOf("ig0", "health-profile", "dd")) assertTrue(p in ids)
         // #1901 the record page that was Lnktree > Health is Pers > Health > Record (page id health-profile; the id health is the container)
         for ((p, f) in listOf("health" to "pers/health/health-profile", "dd" to "pers/dd")) {
             val stack = org.json.JSONArray(BuroLlcTestData.text("data/ui/$f.json"))

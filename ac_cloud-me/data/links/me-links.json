@@ -230,18 +230,440 @@
       "sot_url": "https://diegonmarcos.github.io/stark/"
     },
     {
-      "id": "proj-lnktree",
-      "section": "proj",
+      "id": "lnktree-default",
+      "section": "lnktree",
       "kind": "site",
       "label": "Lnktree",
       "source": {
         "literal": "https://linktree.diegonmarcos.com/"
       },
       "path": [
-        "lnktree-site"
+        "lt-lnktree-site"
       ],
       "url": "https://linktree.diegonmarcos.com/",
       "sot_url": "https://linktree.diegonmarcos.com/"
+    },
+    {
+      "id": "proj-unix-superapp",
+      "section": "proj",
+      "kind": "site",
+      "group": "Unix",
+      "label": "SuperApp",
+      "source": {
+        "repo": "cloudy-u-android"
+      },
+      "path": [
+        "pj-unix",
+        "pj-unix-superapp"
+      ],
+      "url": "https://github.com/diegonmarcos/cloudy-u-android",
+      "sot_url": "https://github.com/diegonmarcos/cloudy-u-android"
+    },
+    {
+      "id": "proj-unix-cloudme",
+      "section": "proj",
+      "kind": "site",
+      "group": "Unix",
+      "label": "Cloud-me",
+      "source": {
+        "repo": "cloud-me-___"
+      },
+      "path": [
+        "pj-unix",
+        "pj-unix-cloudme"
+      ],
+      "url": "https://github.com/diegonmarcos/cloud-me-___",
+      "sot_url": "https://github.com/diegonmarcos/cloud-me-___"
+    },
+    {
+      "id": "proj-unix-cloudy",
+      "section": "proj",
+      "kind": "site",
+      "group": "Unix",
+      "label": "Cloudy",
+      "source": {
+        "repo": "cloudy-___"
+      },
+      "path": [
+        "pj-unix",
+        "pj-unix-cloudy"
+      ],
+      "url": "https://github.com/diegonmarcos/cloudy-___",
+      "sot_url": "https://github.com/diegonmarcos/cloudy-___"
+    },
+    {
+      "id": "proj-cg-omniverse",
+      "section": "proj",
+      "kind": "site",
+      "group": "CG",
+      "label": "Omniverse",
+      "source": {
+        "repo": "CG-galaxy",
+        "overlay": "galaxy"
+      },
+      "path": [
+        "pj-cg",
+        "pj-cg-omniverse"
+      ],
+      "url": "https://diegonmarcos.github.io/galaxy/",
+      "sot_url": "https://diegonmarcos.github.io/galaxy/"
+    },
+    {
+      "id": "proj-cg-zirkusverse",
+      "section": "proj",
+      "kind": "site",
+      "group": "CG",
+      "label": "Zirkusverse",
+      "source": {
+        "repo": "CG-circus",
+        "overlay": "games"
+      },
+      "path": [
+        "pj-cg",
+        "pj-cg-zirkusverse"
+      ],
+      "url": "https://diegonmarcos.github.io/games/",
+      "sot_url": "https://diegonmarcos.github.io/games/"
+    },
+    {
+      "id": "proj-capital-cb",
+      "section": "proj",
+      "kind": "site",
+      "group": "Capital",
+      "label": "CB",
+      "source": {
+        "repo": "Capital-Macro-Central-Bank"
+      },
+      "path": [
+        "pj-capital",
+        "pj-capital-cb"
+      ],
+      "url": "https://github.com/diegonmarcos/Capital-Macro-Central-Bank",
+      "sot_url": "https://github.com/diegonmarcos/Capital-Macro-Central-Bank"
+    },
+    {
+      "id": "proj-capital-pm",
+      "section": "proj",
+      "kind": "site",
+      "group": "Capital",
+      "label": "PM",
+      "source": {
+        "repo": "Capital-Micro-Asset-Management"
+      },
+      "path": [
+        "pj-capital",
+        "pj-capital-pm"
+      ],
+      "url": "https://github.com/diegonmarcos/Capital-Micro-Asset-Management",
+      "sot_url": "https://github.com/diegonmarcos/Capital-Micro-Asset-Management"
+    },
+    {
+      "id": "proj-capital-finterm",
+      "section": "proj",
+      "kind": "site",
+      "group": "Capital",
+      "label": "FinTerm",
+      "source": {
+        "repo": "Capital-Stack-Fin-Terminal"
+      },
+      "path": [
+        "pj-capital",
+        "pj-capital-finterm"
+      ],
+      "url": "https://github.com/diegonmarcos/Capital-Stack-Fin-Terminal",
+      "sot_url": "https://github.com/diegonmarcos/Capital-Stack-Fin-Terminal"
+    },
+    {
+      "id": "proj-hardtech-biomed",
+      "section": "proj",
+      "kind": "site",
+      "group": "Hardtech",
+      "label": "BioMed",
+      "source": {
+        "repo": "HardTech-___"
+      },
+      "path": [
+        "pj-hardtech",
+        "pj-hardtech-biomed"
+      ],
+      "url": "https://github.com/diegonmarcos/HardTech-___",
+      "sot_url": "https://github.com/diegonmarcos/HardTech-___"
+    },
+    {
+      "id": "proj-hardtech-cad",
+      "section": "proj",
+      "kind": "site",
+      "group": "Hardtech",
+      "label": "CAD",
+      "source": {
+        "repo": "HardTech-Stack-CAD-Simulators"
+      },
+      "path": [
+        "pj-hardtech",
+        "pj-hardtech-cad"
+      ],
+      "url": "https://github.com/diegonmarcos/HardTech-Stack-CAD-Simulators",
+      "sot_url": "https://github.com/diegonmarcos/HardTech-Stack-CAD-Simulators"
+    },
+    {
+      "id": "proj-hardtech-deepxtech",
+      "section": "proj",
+      "kind": "site",
+      "group": "Hardtech",
+      "label": "DeepXTech",
+      "source": {
+        "repo": "HardTech-DeepXTech"
+      },
+      "path": [
+        "pj-hardtech",
+        "pj-hardtech-deepxtech"
+      ],
+      "url": "https://github.com/diegonmarcos/HardTech-DeepXTech",
+      "sot_url": "https://github.com/diegonmarcos/HardTech-DeepXTech"
+    },
+    {
+      "id": "proj-wiki-modernsc",
+      "section": "proj",
+      "kind": "site",
+      "group": "Wiki",
+      "label": "ModernSc",
+      "source": {
+        "repo": "lib-chronos",
+        "github_path": "tree/main/1.Modern-science"
+      },
+      "path": [
+        "pj-wiki",
+        "pj-wiki-modernsc"
+      ],
+      "url": "https://github.com/diegonmarcos/lib-chronos/tree/main/1.Modern-science",
+      "sot_url": "https://github.com/diegonmarcos/lib-chronos/tree/main/1.Modern-science"
+    },
+    {
+      "id": "proj-wiki-arcanum",
+      "section": "proj",
+      "kind": "site",
+      "group": "Wiki",
+      "label": "Arcanum",
+      "source": {
+        "repo": "lib-chronos",
+        "github_path": "tree/main/2.Arcanum-science"
+      },
+      "path": [
+        "pj-wiki",
+        "pj-wiki-arcanum"
+      ],
+      "url": "https://github.com/diegonmarcos/lib-chronos/tree/main/2.Arcanum-science",
+      "sot_url": "https://github.com/diegonmarcos/lib-chronos/tree/main/2.Arcanum-science"
+    },
+    {
+      "id": "proj-wiki-projects",
+      "section": "proj",
+      "kind": "site",
+      "group": "Wiki",
+      "label": "Projects",
+      "source": {
+        "repo": "lib-chronos",
+        "github_path": "tree/main/3.Projects"
+      },
+      "path": [
+        "pj-wiki",
+        "pj-wiki-projects"
+      ],
+      "url": "https://github.com/diegonmarcos/lib-chronos/tree/main/3.Projects",
+      "sot_url": "https://github.com/diegonmarcos/lib-chronos/tree/main/3.Projects"
+    },
+    {
+      "id": "proj-projects-endeavours",
+      "section": "proj",
+      "kind": "site",
+      "group": "Projects",
+      "label": "Endeavours",
+      "source": {
+        "repo": "Projects-endeavours",
+        "overlay": "Warehouse"
+      },
+      "path": [
+        "pj-projects",
+        "pj-projects-endeavours"
+      ],
+      "url": "https://diegonmarcos.github.io/Warehouse/",
+      "sot_url": "https://diegonmarcos.github.io/Warehouse/"
+    },
+    {
+      "id": "proj-projects-duckpeng",
+      "section": "proj",
+      "kind": "site",
+      "group": "Projects",
+      "label": "DuckPeng",
+      "source": {
+        "repo": "DuckPeng-___"
+      },
+      "path": [
+        "pj-projects",
+        "pj-projects-duckpeng"
+      ],
+      "url": "https://github.com/diegonmarcos/DuckPeng-___",
+      "sot_url": "https://github.com/diegonmarcos/DuckPeng-___"
+    },
+    {
+      "id": "proj-lecole42-algo",
+      "section": "proj",
+      "kind": "site",
+      "group": "42",
+      "label": "Algo",
+      "source": {
+        "repo": "lecole-42_back-Algo"
+      },
+      "path": [
+        "pj-lecole42",
+        "pj-lecole42-algo"
+      ],
+      "url": "https://github.com/diegonmarcos/lecole-42_back-Algo",
+      "sot_url": "https://github.com/diegonmarcos/lecole-42_back-Algo"
+    },
+    {
+      "id": "proj-lecole42-graphic",
+      "section": "proj",
+      "kind": "site",
+      "group": "42",
+      "label": "Graphic",
+      "source": {
+        "repo": "lecole-42_back-Graphic"
+      },
+      "path": [
+        "pj-lecole42",
+        "pj-lecole42-graphic"
+      ],
+      "url": "https://github.com/diegonmarcos/lecole-42_back-Graphic",
+      "sot_url": "https://github.com/diegonmarcos/lecole-42_back-Graphic"
+    },
+    {
+      "id": "proj-lecole42-system",
+      "section": "proj",
+      "kind": "site",
+      "group": "42",
+      "label": "System",
+      "source": {
+        "repo": "lecole-42_back-System"
+      },
+      "path": [
+        "pj-lecole42",
+        "pj-lecole42-system"
+      ],
+      "url": "https://github.com/diegonmarcos/lecole-42_back-System",
+      "sot_url": "https://github.com/diegonmarcos/lecole-42_back-System"
+    },
+    {
+      "id": "proj-lecole42-mylibs",
+      "section": "proj",
+      "kind": "site",
+      "group": "42",
+      "label": "Mylibs",
+      "source": {
+        "repo": "lecole-42_ops-Mylibs"
+      },
+      "path": [
+        "pj-lecole42",
+        "pj-lecole42-mylibs"
+      ],
+      "url": "https://github.com/diegonmarcos/lecole-42_ops-Mylibs",
+      "sot_url": "https://github.com/diegonmarcos/lecole-42_ops-Mylibs"
+    },
+    {
+      "id": "proj-lecole42-curriculum",
+      "section": "proj",
+      "kind": "site",
+      "group": "42",
+      "label": "Curriculum",
+      "source": {
+        "repo": "lecole-42-projects"
+      },
+      "path": [
+        "pj-lecole42",
+        "pj-lecole42-curriculum"
+      ],
+      "url": "https://github.com/diegonmarcos/lecole-42-projects",
+      "sot_url": "https://github.com/diegonmarcos/lecole-42-projects"
+    },
+    {
+      "id": "proj-lecole42-agentic",
+      "section": "proj",
+      "kind": "site",
+      "group": "42",
+      "label": "Agentic",
+      "source": {
+        "repo": "lecole-42_ml-Agentic"
+      },
+      "path": [
+        "pj-lecole42",
+        "pj-lecole42-agentic"
+      ],
+      "url": "https://github.com/diegonmarcos/lecole-42_ml-Agentic",
+      "sot_url": "https://github.com/diegonmarcos/lecole-42_ml-Agentic"
+    },
+    {
+      "id": "proj-lecole42-datascience",
+      "section": "proj",
+      "kind": "site",
+      "group": "42",
+      "label": "DataScience",
+      "source": {
+        "repo": "lecole-42_ml-DataScience"
+      },
+      "path": [
+        "pj-lecole42",
+        "pj-lecole42-datascience"
+      ],
+      "url": "https://github.com/diegonmarcos/lecole-42_ml-DataScience",
+      "sot_url": "https://github.com/diegonmarcos/lecole-42_ml-DataScience"
+    },
+    {
+      "id": "proj-lecole42-machinelearning",
+      "section": "proj",
+      "kind": "site",
+      "group": "42",
+      "label": "MachineLearning",
+      "source": {
+        "repo": "lecole-42_ml-MachineLearning"
+      },
+      "path": [
+        "pj-lecole42",
+        "pj-lecole42-machinelearning"
+      ],
+      "url": "https://github.com/diegonmarcos/lecole-42_ml-MachineLearning",
+      "sot_url": "https://github.com/diegonmarcos/lecole-42_ml-MachineLearning"
+    },
+    {
+      "id": "proj-lecole42-cyberwarfare",
+      "section": "proj",
+      "kind": "site",
+      "group": "42",
+      "label": "Cyberwarfare",
+      "source": {
+        "repo": "lecole-42_cyber-Cyberwarfare"
+      },
+      "path": [
+        "pj-lecole42",
+        "pj-lecole42-cyberwarfare"
+      ],
+      "url": "https://github.com/diegonmarcos/lecole-42_cyber-Cyberwarfare",
+      "sot_url": "https://github.com/diegonmarcos/lecole-42_cyber-Cyberwarfare"
+    },
+    {
+      "id": "proj-lecole42-dev",
+      "section": "proj",
+      "kind": "site",
+      "group": "42",
+      "label": "Dev",
+      "source": {
+        "repo": "lecole-42_dev"
+      },
+      "path": [
+        "pj-lecole42",
+        "pj-lecole42-dev"
+      ],
+      "url": "https://github.com/diegonmarcos/lecole-42_dev",
+      "sot_url": "https://github.com/diegonmarcos/lecole-42_dev"
     },
     {
       "id": "social-github",

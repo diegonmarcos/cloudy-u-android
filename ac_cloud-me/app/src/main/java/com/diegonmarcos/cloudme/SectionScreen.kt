@@ -162,6 +162,7 @@ private fun PageContent(section: Section, page: Page, modifier: Modifier) {
             "todo" -> AgendaScreen(AgendaMode.TODOS, modifier)
             "tasks" -> TasksScreen(modifier, single.optString("subject"), single.optString("open"))
             "files" -> FilesScreen(single, modifier)
+            "proj_home" -> ProjHomeScreen(modifier)
             "web" -> WebPage(single, modifier, pageId = page.id)
             // #1298 Lnktree > Proj > <area>: that registry area's tree (repos.outline.json, libs:repos).
             "repo_tree" -> RepoTreeScreen(single.optString("area"), modifier)

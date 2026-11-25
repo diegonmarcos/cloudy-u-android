@@ -69,6 +69,7 @@ shot superapp-cloud-apps 3
 $T adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*40/100)) 500; shot superapp-cloud-apps-me-row 3
 walk_tab section:lnktree me-lnktree Lnktree
 walk_tab section:proj me-proj Proj
+open_page "$ME" "page:proj/pj-home"; shot me-proj-home 8   # #1914 the icon grid of every group and leaf
 # #1911 every Pers/Prof/Proj tab of data/links/me-links.json: open it, screenshot it, and assert its main frame did not hit an error page
 # (WebPage logs MAINFRAME_ERROR / MAINFRAME_OK page=<id> url=<url> title=<title>; the title must not be "Web page not available")
 TABLES="$(dirname "$0")/../data/links/me-links.json"
@@ -80,7 +81,7 @@ PY
 [ -s "$OUT/.tabs" ] || { echo "no tabs in me-links.json"; rc=1; }
 while read -r sec page url id; do
     $T adb logcat -c
-    open_page "$ME" "page:$sec/$page"; shot "me-tab-$id" 16
+    open_page "$ME" "page:$sec/$page"; shot "me-tab-$id" 12
     $T adb logcat -d -s CloudMeWeb:V > "$OUT/tab-$id.log"
     if grep -q MAINFRAME_ERROR "$OUT/tab-$id.log"; then echo "$id: main frame error: $(grep -m1 MAINFRAME_ERROR "$OUT/tab-$id.log")"; rc=1
     elif grep -q "title=Web page not available" "$OUT/tab-$id.log"; then echo "$id: error page title"; rc=1

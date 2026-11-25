@@ -22,8 +22,24 @@ def load(root, rel):
 def point(doc, ptr):
     for k in ptr.strip("/").split("/"): doc = doc[int(k)] if isinstance(doc, list) else doc[k]
     return doc
+def repo_site(root, s):
+    """#1914 a Proj leaf: its published site from _front-html___/repos-pages.json (an `overlay` folder, else pages_url, else a custom domain page),
+    else its GitHub repo page (git-repos-master/0_registry/repos.json url; `github_path` = a folder of it)."""
+    name = s["repo"]
+    reg = {r["name"]: r for r in load(root, "git-repos-master/0_registry/repos.json")["repos"]}
+    if name not in reg: sys.exit("repo %s is not in the registry" % name)
+    if "github_path" not in s:
+        pg = {r["name"]: r for r in load(root, "_front-html___/repos-pages.json")["repos"]}.get(name, {})
+        if s.get("overlay"):
+            for o in pg.get("overlay_pages", []):
+                if o["folder"] == s["overlay"]: return o["url"]
+            sys.exit("repo %s has no overlay page %s" % (name, s["overlay"]))
+        if pg.get("pages_url"): return pg["pages_url"]
+    base = "https://github.com/" + reg[name]["url"].split(":", 1)[1][:-4]
+    return base + ("/" + s["github_path"] if "github_path" in s else "")
 def sot_value(root, e):
     s = e["source"]
+    if "repo" in s: return repo_site(root, s)
     if "literal" in s: return s["literal"]
     return s.get("prefix", "") + point(load(root, s["file"]), s["pointer"]) + s.get("suffix", "")
 def page_file(e): return os.path.join(HERE, "ui", e["section"], *e["path"]) + ".json"
