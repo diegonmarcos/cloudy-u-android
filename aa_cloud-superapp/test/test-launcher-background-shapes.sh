@@ -69,22 +69,24 @@ print('; '.join(probs) or 'OK')
 PY
 )" "background: enable/stars-ref/shape_key/default cube + auto-cycle (5 min default)"
 
-echo "== T3: the eleven regular polytopes, ids + dims =="
+echo "== T3: the catalogue keeps the eleven regular polytopes (same ids) and adds the #1915 shapes =="
 check "$(python3 - "$BJ" <<'PY'
 import json, sys
 b = json.load(open(sys.argv[1]))['ui']['launcher_settings']['background']
-got = [(s['id'], s['dim']) for s in b['shapes']]
-want = [('tetrahedron',3),('cube',3),('octahedron',3),('dodecahedron',3),('icosahedron',3),
-        ('cell5',4),('tesseract',4),('cell16',4),('cell120',4),('cell600',4),('cell24',4)]
-# the 24-cell is the one 4D shape with no 3D twin
-twin_ok = all(('dual_of' in s) == (s['id'] != 'cell24') or s['dim'] == 3 for s in b['shapes'] if s['dim'] == 4)
+dims = {s['id']: s['dim'] for s in b['shapes']}
+old = [('tetrahedron',3),('cube',3),('octahedron',3),('dodecahedron',3),('icosahedron',3),
+       ('cell5',4),('tesseract',4),('cell16',4),('cell120',4),('cell600',4),('cell24',4)]
+lost = [o for o in old if dims.get(o[0]) != o[1]]
 c24 = next(s for s in b['shapes'] if s['id'] == 'cell24')
-print('OK' if got == want and 'dual_of' not in c24 else 'shapes=%r' % (got,))
+print('OK' if not lost and 'dual_of' not in c24 and len(dims) == 27 and b['default_shape'] == 'cube' else 'lost=%r n=%d' % (lost, len(dims)))
 PY
-)" "5 Platonic (dim3) + 6 4D analogues (dim4); 24-cell self-dual (no dual_of)"
+)" "the 11 pre-#1915 ids still resolve with their dims (24-cell self-dual), 27 shapes in all, cube default"
 
 echo "== T4: PolytopeMath owns the geometry =="
-for id in TETRAHEDRON CUBE OCTAHEDRON DODECAHEDRON ICOSAHEDRON CELL5 TESSERACT CELL16 CELL120 CELL600 CELL24; do
+for id in TETRAHEDRON CUBE OCTAHEDRON DODECAHEDRON ICOSAHEDRON CELL5 TESSERACT CELL16 CELL120 CELL600 CELL24 \
+  GREAT_ICOSAHEDRON GREAT_DODECAHEDRON SMALL_STELLATED_DODECAHEDRON GREAT_STELLATED_DODECAHEDRON HEXAGONAL_PRISM HEXAGONAL_PYRAMID \
+  TRUNCATED_TETRAHEDRON TRUNCATED_OCTAHEDRON TRUNCATED_ICOSAHEDRON ICOSAHEDRAL_120_CELL GREAT_120_CELL GRAND_120_CELL \
+  SMALL_STELLATED_120_CELL GREAT_STELLATED_120_CELL TRUNCATED_5_CELL TRUNCATED_16_CELL; do
   grep -q "const val $id" "$POLY" || bad "PolytopeMath missing shape const $id"
 done
 grep -q 'val SHAPE_IDS' "$POLY" && grep -q 'DEFAULT_SHAPE = CUBE' "$POLY" \
@@ -115,7 +117,7 @@ grep -q "firstOrNull { it.id == bg.starsToggle }" "$CFG" \
 echo "== T7: the polytope geometry is CODE, not data in the APK declaration =="
 # A 600-vertex table does not belong in build.json; only the catalogue + labels do.
 nverts="$(python3 -c "import json;print(len(json.dumps(json.load(open('$BJ'))['ui']['launcher_settings']['background'])))")"
-[ "$nverts" -lt 4000 ] && ok "the background block is small (catalogue + labels, ${nverts}B); meshes live in PolytopeMath" \
+[ "$nverts" -lt 16000 ] && ok "the background block is small (catalogue + labels, ${nverts}B); meshes live in PolytopeMath" \
   || bad "the background block is ${nverts}B — vertex data leaked into the declaration"
 grep -q 'evenPermsWithSigns\|allPermsWithSigns' "$POLY" && ok "the 600-cell/120-cell vertices are GENERATED in code" || bad "generators missing"
 

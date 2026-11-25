@@ -96,6 +96,10 @@ object SectionPages {
         // two scopes of the ONE switch-board producer.
         sectionId == "config" && pageId == "panels-all" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_ALL)
         sectionId == "config" && pageId == "panels-ui" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_UI)
+        // #1915 Launcher ▸ UI is a strip over Display | Background | Screen Saver; `panels-ui` itself keeps SCOPE_UI (their union).
+        sectionId == "config" && pageId == "ui-display" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_UI_DISPLAY)
+        sectionId == "config" && pageId == "ui-background" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_UI_BACKGROUND)
+        sectionId == "config" && pageId == "ui-screensaver" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_UI_SCREENSAVER)
         sectionId == "config" && pageId == "panels-battery" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_BATTERY)
         sectionId == "config" && pageId == "panels-security" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_SECURITY)
         sectionId == "config" && pageId == "panels-quick-ui" -> LauncherConfigFragment.newInstance(LauncherConfigFragment.SCOPE_QUICK_UI)

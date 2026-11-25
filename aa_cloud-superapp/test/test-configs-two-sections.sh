@@ -231,9 +231,9 @@ import json
 print(len(next(s for s in json.load(open('$BJ'))['ui']['sections']
                if s['id'] == 'config')['pages']))
 ")
-[ "$COUNT" = 71 ] \
-  && ok "71 config pages declared (#1846 added the hidden panels-quick-ui and panels-network tabs and retired the hidden panels strip into controls) (#1833 added the hidden panels-security tab) (#1755 added launcher-hub, launcher-sep-0, apps-sep-1 and profile-app) (#1745 added the configs-sep-a separator after Account) (#1737: the #1719 Network page is retired; added the NG Firewall hub, OS Perms, Proxy and three Network separators) (#1623 added the hidden tools-sep-1 | separator for the Tools group; #1596 focus page; #1610's c3-watchdog + sync-clipboard/saving-mode/focus-mode; previous ids unchanged) — the set T5 walks is the whole set" \
-  || bad "$COUNT config pages, expected 71 — a page was added or DELETED, and T5 cannot report a page that is gone"
+[ "$COUNT" = 74 ] \
+  && ok "74 config pages declared (#1915 added the hidden ui-display, ui-background and ui-screensaver tabs of the UI page) (#1846 added the hidden panels-quick-ui and panels-network tabs and retired the hidden panels strip into controls) (#1833 added the hidden panels-security tab) (#1755 added launcher-hub, launcher-sep-0, apps-sep-1 and profile-app) (#1745 added the configs-sep-a separator after Account) (#1737: the #1719 Network page is retired; added the NG Firewall hub, OS Perms, Proxy and three Network separators) (#1623 added the hidden tools-sep-1 | separator for the Tools group; #1596 focus page; #1610's c3-watchdog + sync-clipboard/saving-mode/focus-mode; previous ids unchanged) — the set T5 walks is the whole set" \
+  || bad "$COUNT config pages, expected 74 — a page was added or DELETED, and T5 cannot report a page that is gone"
 
 echo "== T6: ACTIONS — the single shared row (#1610) =="
 # #1610 downgraded the ticket's two per-subpage Actions columns to ONE shared row
@@ -317,6 +317,7 @@ BEFORE = {'network', 'bluetooth-analyze', 'bluetooth-locate', 'presets', 'contro
           'store-cloud', 'store-phone',
           'panels', 'panels-all', 'panels-ui', 'panels-battery', 'panels-tools',
           'panels-quick-ui', 'panels-network',  # added on purpose (#1846): Quick actions > UI and > Network, hidden tabs
+          'ui-display', 'ui-background', 'ui-screensaver',  # added on purpose (#1915): the hidden tabs of Launcher ▸ UI
           'panels-security',  # added on purpose (#1833): Panels ▸ Security, a hidden tab after Battery Hungers
           # (previous line) added on purpose: Configs ▸ Setup ▸ Launcher ▸ Controls ▸ Panels (UI | Tools), hidden tabs of the merged Controls
           'update', 'kde_connect', 'animations',

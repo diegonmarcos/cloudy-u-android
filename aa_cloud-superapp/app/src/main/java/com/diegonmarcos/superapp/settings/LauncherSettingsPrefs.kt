@@ -212,7 +212,10 @@ class LauncherSettingsPrefs(context: Context) {
      *  4 = regular 4D polytope drawn as a 4D→3D projection. [dualOf] names the 3D
      *  twin a 4D shape generalises (empty for the self-dual 24-cell). */
     data class Shape(val id: String, val label: String, val dim: Int,
-                     val group: String, val dualOf: String, val isDefault: Boolean)
+                     val group: String, val dualOf: String, val isDefault: Boolean,
+                     // #1915 the face type this shape is filed under inside its group, and its face data.
+                     val faceGroup: String = "", val face: String = "", val faces: Int = 0,
+                     val composition: String = "")
     /** The whole background declaration: the enable switch, the shape catalogue,
      *  the galaxy-stars toggle it REFERENCES (never a second copy of), and the
      *  auto-cycle settings. */
@@ -336,7 +339,8 @@ class LauncherSettingsPrefs(context: Context) {
             val shapes = (0 until shapesArr.length()).map {
                 val s = shapesArr.getJSONObject(it)
                 Shape(s.optString("id"), s.optString("label"), s.optInt("dim", 3),
-                    s.optString("group", ""), s.optString("dual_of", ""), s.optBoolean("default", false))
+                    s.optString("group", ""), s.optString("dual_of", ""), s.optBoolean("default", false),
+                    s.optString("face_group", ""), s.optString("face", ""), s.optInt("faces", 0), s.optString("composition", ""))
             }
             val minO = cy.optJSONObject("minutes") ?: JSONObject()
             Background(

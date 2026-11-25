@@ -23,6 +23,15 @@ import kotlin.math.sqrt
  * then goes through the same 3D→2D projection the cube uses — so it lands in
  * the very slot the cube occupies.
  *
+ * #1915 the catalogue grew from the eleven regular polytopes to 27 shapes, grouped
+ * 3D Polyhedra / 4D Polytopes and by face type. The new ones are generated here the
+ * same way (no hand-typed edge tables): the Kepler-Poinsot solids and the Schlaefli-Hess
+ * star polychora reuse the icosahedron / dodecahedron / 600-cell vertex sets and differ
+ * only in WHICH distance class is drawn as an edge ([edgeRanks]); the truncations,
+ * the hexagonal prism / pyramid and the truncated 5-/16-cell have their own generators.
+ * [FACES] declares each shape's face data; [countFaces] re-derives it from the geometry
+ * so PolytopeMathTest can prove vertex, edge AND face counts.
+ *
  * Everything here is pure maths on plain arrays: no vertex/edge list is
  * hand-typed beyond the generating coordinate sets, edges are DERIVED by the
  * nearest-neighbour rule (a regular polytope's edges are exactly the vertex
@@ -45,11 +54,83 @@ object PolytopeMath {
     const val CELL600 = "cell600"        // Icosahedron's analogue
     const val CELL24 = "cell24"          // self-dual, no regular 3D twin
 
-    /** Declared order of the selectable shapes (3D first, then 4D). */
+    // #1915 new 3D shapes
+    const val GREAT_ICOSAHEDRON = "great_icosahedron"
+    const val GREAT_DODECAHEDRON = "great_dodecahedron"
+    const val SMALL_STELLATED_DODECAHEDRON = "small_stellated_dodecahedron"
+    const val GREAT_STELLATED_DODECAHEDRON = "great_stellated_dodecahedron"
+    const val HEXAGONAL_PRISM = "hexagonal_prism"
+    const val HEXAGONAL_PYRAMID = "hexagonal_pyramid"
+    const val TRUNCATED_TETRAHEDRON = "truncated_tetrahedron"
+    const val TRUNCATED_OCTAHEDRON = "truncated_octahedron"
+    const val TRUNCATED_ICOSAHEDRON = "truncated_icosahedron"
+    // #1915 new 4D shapes
+    const val ICOSAHEDRAL_120_CELL = "icosahedral_120_cell"
+    const val GREAT_120_CELL = "great_120_cell"
+    const val GRAND_120_CELL = "grand_120_cell"
+    const val SMALL_STELLATED_120_CELL = "small_stellated_120_cell"
+    const val GREAT_STELLATED_120_CELL = "great_stellated_120_cell"
+    const val TRUNCATED_5_CELL = "truncated_5_cell"
+    const val TRUNCATED_16_CELL = "truncated_16_cell"
+
+    /** Declared order of the selectable shapes: 3D Polyhedra then 4D Polytopes, each by face type
+     *  (Triangle, Square, Pentagon, Pentagram, Hexagon hybrid) — the order of build.json's catalogue. */
     val SHAPE_IDS: List<String> = listOf(
-        TETRAHEDRON, CUBE, OCTAHEDRON, DODECAHEDRON, ICOSAHEDRON,
-        CELL5, TESSERACT, CELL16, CELL120, CELL600, CELL24,
+        TETRAHEDRON, OCTAHEDRON, ICOSAHEDRON, GREAT_ICOSAHEDRON,
+        CUBE,
+        DODECAHEDRON, GREAT_DODECAHEDRON,
+        SMALL_STELLATED_DODECAHEDRON, GREAT_STELLATED_DODECAHEDRON,
+        HEXAGONAL_PRISM, HEXAGONAL_PYRAMID, TRUNCATED_TETRAHEDRON, TRUNCATED_OCTAHEDRON, TRUNCATED_ICOSAHEDRON,
+        CELL5, CELL16, CELL24, CELL600, ICOSAHEDRAL_120_CELL,
+        TESSERACT,
+        CELL120, GREAT_120_CELL, GRAND_120_CELL,
+        SMALL_STELLATED_120_CELL, GREAT_STELLATED_120_CELL,
+        TRUNCATED_5_CELL, TRUNCATED_16_CELL,
     )
+
+    /** Old / alternative names that still resolve to a shape (the ids themselves never changed). */
+    val ALIASES: Map<String, String> = mapOf(
+        "hypercube" to TESSERACT, "cell8" to TESSERACT, "pentachoron" to CELL5,
+        "hexadecachoron" to CELL16, "icositetrachoron" to CELL24,
+        "hecatonicosachoron" to CELL120, "hexacosichoron" to CELL600,
+        "soccer_ball" to TRUNCATED_ICOSAHEDRON, "truncated_hexadecachoron" to TRUNCATED_16_CELL,
+    )
+
+    /** One kind of face: [sides]-gon, [star] = pentagram, [count] of them. */
+    class FaceSpec(val sides: Int, val star: Boolean, val count: Int)
+    private fun tri(n: Int) = FaceSpec(3, false, n)
+    private fun sq(n: Int) = FaceSpec(4, false, n)
+    private fun pent(n: Int) = FaceSpec(5, false, n)
+    private fun pgram(n: Int) = FaceSpec(5, true, n)
+    private fun hex(n: Int) = FaceSpec(6, false, n)
+
+    /** Declared face data per shape (the owner's "{N} faces"); PolytopeMathTest re-derives it from the geometry. */
+    val FACES: Map<String, List<FaceSpec>> = mapOf(
+        TETRAHEDRON to listOf(tri(4)), OCTAHEDRON to listOf(tri(8)), ICOSAHEDRON to listOf(tri(20)),
+        GREAT_ICOSAHEDRON to listOf(tri(20)), CUBE to listOf(sq(6)),
+        DODECAHEDRON to listOf(pent(12)), GREAT_DODECAHEDRON to listOf(pent(12)),
+        SMALL_STELLATED_DODECAHEDRON to listOf(pgram(12)), GREAT_STELLATED_DODECAHEDRON to listOf(pgram(12)),
+        HEXAGONAL_PRISM to listOf(hex(2), sq(6)), HEXAGONAL_PYRAMID to listOf(hex(1), tri(6)),
+        TRUNCATED_TETRAHEDRON to listOf(hex(4), tri(4)), TRUNCATED_OCTAHEDRON to listOf(hex(8), sq(6)),
+        TRUNCATED_ICOSAHEDRON to listOf(hex(20), pent(12)),
+        CELL5 to listOf(tri(10)), CELL16 to listOf(tri(32)), CELL24 to listOf(tri(96)),
+        CELL600 to listOf(tri(1200)), ICOSAHEDRAL_120_CELL to listOf(tri(1200)),
+        TESSERACT to listOf(sq(24)),
+        CELL120 to listOf(pent(720)), GREAT_120_CELL to listOf(pent(720)), GRAND_120_CELL to listOf(pent(720)),
+        SMALL_STELLATED_120_CELL to listOf(pgram(720)), GREAT_STELLATED_120_CELL to listOf(pgram(720)),
+        TRUNCATED_5_CELL to listOf(hex(10), tri(20)), TRUNCATED_16_CELL to listOf(hex(32), tri(64)),
+    )
+
+    /** Which distance class(es) of the vertex set are drawn as edges: 0 = the shortest distance (every
+     *  shape before #1915), 1 = the next, ... The star shapes share a vertex set and differ only here.
+     *  The pyramid / prism draw two classes (base edges + the apex / vertical edges). */
+    private fun edgeRanks(id: String): IntArray = when (id) {
+        GREAT_ICOSAHEDRON, SMALL_STELLATED_DODECAHEDRON -> intArrayOf(1)   // icosahedron's 2nd neighbours
+        GREAT_STELLATED_DODECAHEDRON -> intArrayOf(3)                     // dodecahedron's 4th distance class
+        HEXAGONAL_PRISM, HEXAGONAL_PYRAMID -> intArrayOf(0, 1)
+        SMALL_STELLATED_120_CELL, GREAT_STELLATED_120_CELL -> intArrayOf(4) // 600-cell vertices at 108 degrees
+        else -> intArrayOf(0)
+    }
 
     const val DEFAULT_SHAPE = CUBE
 
@@ -88,16 +169,22 @@ object PolytopeMath {
     private val cache = HashMap<String, Mesh>()
 
     /** The mesh for [id], built once and cached. Unknown id falls back to the cube. */
-    fun mesh(id: String): Mesh = cache.getOrPut(id) { build(if (id in SHAPE_IDS) id else DEFAULT_SHAPE) }
+    fun mesh(id: String): Mesh {
+        val key = ALIASES[id] ?: id
+        return cache.getOrPut(key) { build(if (key in SHAPE_IDS) key else DEFAULT_SHAPE) }
+    }
 
     private fun build(id: String): Mesh {
-        val (dim, raw) = coordsFor(id)
+        val (dim, raw0) = coordsFor(id)
+        // Centre on the vertex centroid (a no-op for the symmetric shapes; the pyramid is not).
+        val cen = FloatArray(4) { k -> (raw0.sumOf { it[k].toDouble() } / raw0.size).toFloat() }
+        val raw = Array(raw0.size) { i -> FloatArray(4) { k -> raw0[i][k] - cen[k] } }
         // Normalise to circumradius 1 so every shape shares one coordinate scale.
         var maxN = 0.0
         for (v in raw) maxN = maxOf(maxN, norm(v).toDouble())
         val inv = if (maxN == 0.0) 1f else (1.0 / maxN).toFloat()
         val verts = Array(raw.size) { i -> FloatArray(4) { j -> raw[i][j] * inv } }
-        val edges = deriveEdges(verts)
+        val edges = deriveEdges(verts, edgeRanks(id))
         val fit = fitScale(dim, verts)
         return Mesh(id, dim, verts, edges, fit)
     }
@@ -124,19 +211,26 @@ object PolytopeMath {
         var s = 0f; for (x in v) s += x * x; return sqrt(s)
     }
 
-    /** Edges = all vertex pairs at the minimum pairwise distance (±2%). For a
-     *  regular polytope that is exactly its edge set. O(n²) once, then cached. */
-    private fun deriveEdges(verts: Array<FloatArray>): Array<IntArray> {
+    /** Edges = all vertex pairs in the given distance classes ([ranks]: 0 = the minimum pairwise
+     *  distance, 1 = the next distinct one, ...; distances within 1% of each other are one class).
+     *  For a regular polytope rank 0 is exactly its edge set. O(n^2) once, then cached. */
+    private fun deriveEdges(verts: Array<FloatArray>, ranks: IntArray = intArrayOf(0)): Array<IntArray> {
         val n = verts.size
-        var minD2 = Double.MAX_VALUE
-        for (i in 0 until n) for (j in i + 1 until n) {
-            val d2 = dist2(verts[i], verts[j])
-            if (d2 > 1e-9 && d2 < minD2) minD2 = d2
+        val all = DoubleArray(n * (n - 1) / 2)
+        var m = 0
+        for (i in 0 until n) for (j in i + 1 until n) all[m++] = dist2(verts[i], verts[j])
+        all.sort()
+        // Cluster the sorted squared distances into classes: [lo, hi] each.
+        val lo = ArrayList<Double>(); val hi = ArrayList<Double>()
+        for (d in all) {
+            if (d < 1e-9) continue
+            if (hi.isNotEmpty() && d <= hi.last() * 1.01 + 1e-9) hi[hi.size - 1] = d
+            else { lo.add(d); hi.add(d) }
         }
-        val tol = minD2 * 1.04 + 1e-9   // 2% on distance ≈ 4% on squared
         val out = ArrayList<IntArray>()
         for (i in 0 until n) for (j in i + 1 until n) {
-            if (dist2(verts[i], verts[j]) <= tol) out.add(intArrayOf(i, j))
+            val d = dist2(verts[i], verts[j])
+            for (r in ranks) if (r < lo.size && d >= lo[r] * 0.995 && d <= hi[r] * 1.005 + 1e-9) { out.add(intArrayOf(i, j)); break }
         }
         return out.toTypedArray()
     }
@@ -231,28 +325,79 @@ object PolytopeMath {
         OCTAHEDRON -> 3 to v3(
             f(1, 0, 0), f(-1, 0, 0), f(0, 1, 0), f(0, -1, 0), f(0, 0, 1), f(0, 0, -1),
         )
-        DODECAHEDRON -> {
-            val a = (1.0 / PHI).toFloat(); val b = PHI.toFloat()
+        DODECAHEDRON, GREAT_STELLATED_DODECAHEDRON -> 3 to dodecahedronCoords()
+        ICOSAHEDRON, GREAT_ICOSAHEDRON, GREAT_DODECAHEDRON, SMALL_STELLATED_DODECAHEDRON -> 3 to icosahedronCoords()
+        HEXAGONAL_PRISM -> {
             val list = ArrayList<FloatArray>()
-            for (sx in intArrayOf(-1, 1)) for (sy in intArrayOf(-1, 1)) for (sz in intArrayOf(-1, 1))
-                list.add(f3(sx.toFloat(), sy.toFloat(), sz.toFloat()))
-            for (s1 in intArrayOf(-1, 1)) for (s2 in intArrayOf(-1, 1)) {
-                list.add(f3(0f, s1 * a, s2 * b))
-                list.add(f3(s2 * b, 0f, s1 * a))
-                list.add(f3(s1 * a, s2 * b, 0f))
+            for (k in 0 until 6) for (z in floatArrayOf(0.75f, -0.75f))
+                list.add(f3(Math.cos(k * Math.PI / 3).toFloat(), Math.sin(k * Math.PI / 3).toFloat(), z))
+            3 to list.toTypedArray()
+        }
+        HEXAGONAL_PYRAMID -> {
+            val list = ArrayList<FloatArray>()
+            for (k in 0 until 6) list.add(f3(Math.cos(k * Math.PI / 3).toFloat(), Math.sin(k * Math.PI / 3).toFloat(), 0f))
+            list.add(f3(0f, 0f, 1.2f))
+            3 to list.toTypedArray()
+        }
+        TRUNCATED_TETRAHEDRON -> {
+            // permutations of (3,1,1) with an even number of minus signs
+            val list = ArrayList<FloatArray>()
+            for (big in 0..2) for (mask in 0 until 8) {
+                if (Integer.bitCount(mask) % 2 != 0) continue
+                val p = FloatArray(4)
+                for (k in 0..2) p[k] = (if (k == big) 3f else 1f) * (if ((mask shr k) and 1 == 1) -1f else 1f)
+                list.add(p)
             }
             3 to list.toTypedArray()
         }
-        ICOSAHEDRON -> {
-            val b = PHI.toFloat()
+        TRUNCATED_OCTAHEDRON -> {
+            // all permutations of (0, +-1, +-2)
             val list = ArrayList<FloatArray>()
-            for (s1 in intArrayOf(-1, 1)) for (s2 in intArrayOf(-1, 1)) {
-                list.add(f3(0f, s1 * 1f, s2 * b))
-                list.add(f3(s1 * 1f, s2 * b, 0f))
-                list.add(f3(s2 * b, 0f, s1 * 1f))
-            }
-            3 to list.toTypedArray()
+            val base = intArrayOf(0, 1, 2)
+            for (perm in listOf(intArrayOf(0, 1, 2), intArrayOf(0, 2, 1), intArrayOf(1, 0, 2),
+                intArrayOf(1, 2, 0), intArrayOf(2, 0, 1), intArrayOf(2, 1, 0)))
+                for (mask in 0 until 8) {
+                    val p = FloatArray(4)
+                    for (k in 0..2) p[k] = base[perm[k]].toFloat() * (if ((mask shr k) and 1 == 1) -1f else 1f)
+                    list.add(p)
+                }
+            3 to dedup(list)
         }
+        TRUNCATED_ICOSAHEDRON -> {
+            // even (cyclic) permutations of (0,+-1,+-3phi), (+-2,+-(1+2phi),+-phi), (+-1,+-(2+phi),+-2phi)
+            val list = ArrayList<FloatArray>()
+            val ph = PHI
+            for (t in listOf(doubleArrayOf(0.0, 1.0, 3 * ph), doubleArrayOf(2.0, 1 + 2 * ph, ph), doubleArrayOf(1.0, 2 + ph, 2 * ph)))
+                for (c in 0..2) for (mask in 0 until 8) {
+                    val p = FloatArray(4)
+                    for (k in 0..2) p[k] = (t[(k + c) % 3] * (if ((mask shr k) and 1 == 1) -1.0 else 1.0)).toFloat()
+                    list.add(p)
+                }
+            3 to dedup(list)
+        }
+        TRUNCATED_5_CELL -> {
+            // The 20 permutations of (0,0,0,1,2) in 5-space (sum-zero hyperplane after centring), expressed in an
+            // orthonormal basis of that hyperplane = a uniform truncated 4-simplex in R^4.
+            val basis = ArrayList<DoubleArray>()
+            for (k in 0..3) {
+                val w = DoubleArray(5); w[k] = 1.0; w[k + 1] = -1.0
+                for (o in basis) { var d = 0.0; for (i in 0..4) d += w[i] * o[i]; for (i in 0..4) w[i] -= d * o[i] }
+                var nn = 0.0; for (x in w) nn += x * x; nn = sqrt(nn)
+                for (i in 0..4) w[i] /= nn
+                basis.add(w)
+            }
+            val list = ArrayList<FloatArray>()
+            for (one in 0..4) for (two in 0..4) {
+                if (one == two) continue
+                val v = DoubleArray(5); v[one] = 1.0; v[two] = 2.0
+                for (i in 0..4) v[i] -= 0.6
+                val p = FloatArray(4)
+                for (k in 0..3) { var d = 0.0; for (i in 0..4) d += v[i] * basis[k][i]; p[k] = d.toFloat() }
+                list.add(p)
+            }
+            4 to list.toTypedArray()
+        }
+        TRUNCATED_16_CELL -> 4 to dedup(allPermsWithSigns(doubleArrayOf(2.0, 1.0, 0.0, 0.0)))
         CELL5 -> {
             val c = (1.0 / sqrt(5.0)).toFloat()
             4 to v4(
@@ -280,20 +425,8 @@ object PolytopeMath {
             }
             4 to list.toTypedArray()
         }
-        CELL600 -> {
-            val list = ArrayList<FloatArray>()
-            // 16 × (±½,±½,±½,±½)
-            for (a in intArrayOf(-1, 1)) for (b in intArrayOf(-1, 1)) for (c in intArrayOf(-1, 1)) for (d in intArrayOf(-1, 1))
-                list.add(f4(a * 0.5f, b * 0.5f, c * 0.5f, d * 0.5f))
-            // 8 × permutations of (±1,0,0,0)
-            for (axis in 0..3) for (s in intArrayOf(-1, 1)) {
-                val p = FloatArray(4); p[axis] = s.toFloat(); list.add(p)
-            }
-            // 96 × even permutations of (±φ/2, ±1/2, ±1/(2φ), 0)
-            val t = doubleArrayOf(PHI / 2.0, 0.5, 1.0 / (2.0 * PHI), 0.0)
-            list.addAll(evenPermsWithSigns(t))
-            4 to dedup(list)
-        }
+        CELL600, ICOSAHEDRAL_120_CELL, GREAT_120_CELL, GRAND_120_CELL,
+        SMALL_STELLATED_120_CELL, GREAT_STELLATED_120_CELL -> 4 to cell600Coords()
         CELL120 -> {
             val list = ArrayList<FloatArray>()
             val r5 = sqrt(5.0)
@@ -310,6 +443,103 @@ object PolytopeMath {
             4 to dedup(list)
         }
         else -> coordsFor(CUBE)
+    }
+
+    /** The 20 vertices (+-1,+-1,+-1) and (0,+-1/phi,+-phi) cyclic. */
+    private fun dodecahedronCoords(): Array<FloatArray> {
+        val a = (1.0 / PHI).toFloat(); val b = PHI.toFloat()
+        val list = ArrayList<FloatArray>()
+        for (sx in intArrayOf(-1, 1)) for (sy in intArrayOf(-1, 1)) for (sz in intArrayOf(-1, 1))
+            list.add(f3(sx.toFloat(), sy.toFloat(), sz.toFloat()))
+        for (s1 in intArrayOf(-1, 1)) for (s2 in intArrayOf(-1, 1)) {
+            list.add(f3(0f, s1 * a, s2 * b))
+            list.add(f3(s2 * b, 0f, s1 * a))
+            list.add(f3(s1 * a, s2 * b, 0f))
+        }
+        return list.toTypedArray()
+    }
+
+    /** The 12 vertices (0,+-1,+-phi) cyclic. */
+    private fun icosahedronCoords(): Array<FloatArray> {
+        val b = PHI.toFloat()
+        val list = ArrayList<FloatArray>()
+        for (s1 in intArrayOf(-1, 1)) for (s2 in intArrayOf(-1, 1)) {
+            list.add(f3(0f, s1 * 1f, s2 * b))
+            list.add(f3(s1 * 1f, s2 * b, 0f))
+            list.add(f3(s2 * b, 0f, s1 * 1f))
+        }
+        return list.toTypedArray()
+    }
+
+    /** The 120 vertices of the 600-cell; the five star polychora and the icosahedral 120-cell share them. */
+    private fun cell600Coords(): Array<FloatArray> {
+        val list = ArrayList<FloatArray>()
+        // 16 x (+-1/2,+-1/2,+-1/2,+-1/2)
+        for (a in intArrayOf(-1, 1)) for (b in intArrayOf(-1, 1)) for (c in intArrayOf(-1, 1)) for (d in intArrayOf(-1, 1))
+            list.add(f4(a * 0.5f, b * 0.5f, c * 0.5f, d * 0.5f))
+        // 8 x permutations of (+-1,0,0,0)
+        for (axis in 0..3) for (s in intArrayOf(-1, 1)) {
+            val p = FloatArray(4); p[axis] = s.toFloat(); list.add(p)
+        }
+        // 96 x even permutations of (+-phi/2, +-1/2, +-1/(2phi), 0)
+        val t = doubleArrayOf(PHI / 2.0, 0.5, 1.0 / (2.0 * PHI), 0.0)
+        list.addAll(evenPermsWithSigns(t))
+        return dedup(list)
+    }
+
+    /** #1915 Number of [sides]-gon faces in [mesh], re-derived from the geometry: chordless, planar cycles of
+     *  the edge graph. For 5 sides, [star] picks pentagrams (the step-2 chord is SHORTER than the side)
+     *  over convex pentagons. Pure and only used by the tests (the renderer never needs faces). */
+    fun countFaces(mesh: Mesh, sides: Int, star: Boolean = false): Int {
+        val n = mesh.verts.size
+        val adj = Array(n) { HashSet<Int>() }
+        for (e in mesh.edges) { adj[e[0]].add(e[1]); adj[e[1]].add(e[0]) }
+        val path = IntArray(sides)
+        var count = 0
+        fun close(): Boolean {
+            if (path[1] >= path[sides - 1]) return false   // each cycle once (direction)
+            if (path[0] !in adj[path[sides - 1]]) return false
+            for (i in 0 until sides) for (j in i + 2 until sides) {
+                if (i == 0 && j == sides - 1) continue
+                if (path[j] in adj[path[i]]) return false   // a chord: not a face boundary
+            }
+            if (!coplanar(Array(sides) { mesh.verts[path[it]] })) return false
+            if (sides == 5) {
+                val side = dist2(mesh.verts[path[0]], mesh.verts[path[1]])
+                val diag = dist2(mesh.verts[path[0]], mesh.verts[path[2]])
+                if ((diag < side) != star) return false
+            }
+            return true
+        }
+        fun rec(len: Int) {
+            if (len == sides) { if (close()) count++; return }
+            for (w in adj[path[len - 1]]) {
+                if (w <= path[0]) continue
+                var seen = false
+                for (i in 0 until len) if (path[i] == w) { seen = true; break }
+                if (seen) continue
+                path[len] = w; rec(len + 1)
+            }
+        }
+        for (v in 0 until n) { path[0] = v; rec(1) }
+        return count
+    }
+
+    private fun coplanar(pts: Array<FloatArray>): Boolean {
+        val p0 = pts[0]
+        val vs = (1 until pts.size).map { i -> DoubleArray(4) { k -> (pts[i][k] - p0[k]).toDouble() } }
+        val scale = vs.maxOf { v -> sqrt(v.sumOf { it * it }) }
+        val ob = ArrayList<DoubleArray>()
+        for (v in vs) {
+            val w = v.copyOf()
+            for (o in ob) { var d = 0.0; for (k in 0..3) d += w[k] * o[k]; for (k in 0..3) w[k] -= d * o[k] }
+            val nn = sqrt(w.sumOf { it * it })
+            if (nn > 1e-4 * scale) {
+                if (ob.size == 2) return false
+                ob.add(DoubleArray(4) { w[it] / nn })
+            }
+        }
+        return true
     }
 
     // ── Permutation helpers (4 elements) ─────────────────────────────────────

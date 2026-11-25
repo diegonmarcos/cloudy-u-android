@@ -107,7 +107,12 @@ class LauncherConfigFragment : KitComposeFragment() {
         // Notifications, Others, default-launcher action) and All = UI + Battery Hungers + Tools in that order.
         val scope = arguments?.getString(ARG_SCOPE).orEmpty()
         val all = scope.isEmpty() || scope == SCOPE_ALL
-        val showUi = all || scope == SCOPE_UI
+        // #1915 Launcher ▸ UI is three subpages (Display | Background | Screen Saver); SCOPE_UI is their union
+        // (what Panels ▸ All draws and what the page drew before the split), so no control was dropped.
+        val showUiScreensaver = all || scope == SCOPE_UI || scope == SCOPE_UI_SCREENSAVER
+        val showUiDisplay = all || scope == SCOPE_UI || scope == SCOPE_UI_DISPLAY
+        val showUiBackground = all || scope == SCOPE_UI || scope == SCOPE_UI_BACKGROUND
+        val showUi = all || scope == SCOPE_UI || scope == SCOPE_UI_DISPLAY || scope == SCOPE_UI_BACKGROUND || scope == SCOPE_UI_SCREENSAVER
         val showBattery = all || scope == SCOPE_BATTERY
         val showTools = all || scope == SCOPE_TOOLS
         val showSecurity = all || scope == SCOPE_SECURITY
@@ -118,53 +123,59 @@ class LauncherConfigFragment : KitComposeFragment() {
             val settingsPrefs = remember { LauncherSettingsPrefs(ctx) }
 
             if (showUi) {
-                // ── Screensaver section ────────────────────────────────────
-                GapDp(24)
-                SectionHeaderUi("Screensaver",
-                    "Which screensaver the floating-nav ‘Screensaver’ action shows, and the idle auto-start timer.")
-                // Same shape as the mode tiles above: the ● / ○ is derived from the
-                // store, so the box is repainted rather than the page rebuilt.
-                val currentSaver = epoch.let { settingsPrefs.screensaver }
-                for (saver in LauncherSettingsPrefs.Config.screensavers) {
-                    GenericTileUi(saver.label, saver.subtitle, saver.id == currentSaver) {
-                        settingsPrefs.screensaver = saver.id
-                        repaintFromStore()
+                if (showUiScreensaver) {
+                    // ── Screensaver section ────────────────────────────────────
+                    GapDp(24)
+                    SectionHeaderUi("Screensaver",
+                        "Which screensaver the floating-nav ‘Screensaver’ action shows, and the idle auto-start timer.")
+                    // Same shape as the mode tiles above: the ● / ○ is derived from the
+                    // store, so the box is repainted rather than the page rebuilt.
+                    val currentSaver = epoch.let { settingsPrefs.screensaver }
+                    for (saver in LauncherSettingsPrefs.Config.screensavers) {
+                        GenericTileUi(saver.label, saver.subtitle, saver.id == currentSaver) {
+                            settingsPrefs.screensaver = saver.id
+                            repaintFromStore()
+                        }
+                        GapDp(8)
                     }
+                    // Idle auto-start timer (seconds; 0 = never).
+                    val st = LauncherSettingsPrefs.Config.screensaverTimeout
+                    sliderRow(st.label, st.subtitle, st.min, st.max,
+                        settingsPrefs.screensaverTimeout) { v -> settingsPrefs.screensaverTimeout = v }
+                }
+
+                if (showUiDisplay) {
+                    // ── Icons per row ──────────────────────────────────────────
+                    // Two separate steppers, one per grid family. Neither writes until it is
+                    // tapped, so a phone that never touches them keeps following the
+                    // shipped defaults (see GridColumns). The grids redraw themselves when
+                    // the stored value changes.
+                    GapDp(24)
+                    SectionHeaderUi("Icons per row",
+                        "How many icons the Cloud apps and Phone apps grids fit on a line (${GridColumns.MIN}–${GridColumns.MAX}).")
+                    stepperRow("Cloud apps", "Cloud grids",
+                        GridColumns.cloud(ctx)) { GridColumns.set(ctx, GridColumns.Kind.CLOUD, it) }
                     GapDp(8)
+                    stepperRow("Phone apps", "Phone grids",
+                        GridColumns.phone(ctx)) { GridColumns.set(ctx, GridColumns.Kind.PHONE, it) }
+                    GapDp(8)
+
+                    // Screen brightness (device-wide → needs WRITE_SETTINGS)
+                    val b = LauncherSettingsPrefs.Config.brightness
+                    sliderRow(b.label, b.subtitle, b.min, b.max,
+                        settingsPrefs.brightness.let { if (it < b.min) b.min else it }) { v ->
+                        settingsPrefs.brightness = v
+                        applySystemBrightness(ctx, v)
+                    }
+
+                    // Cloud-superapp Scale (ruler centred on 411), Font Size, Zoom Size: live status + privileged write.
+                    DisplayControlsSection()
                 }
-                // Idle auto-start timer (seconds; 0 = never).
-                val st = LauncherSettingsPrefs.Config.screensaverTimeout
-                sliderRow(st.label, st.subtitle, st.min, st.max,
-                    settingsPrefs.screensaverTimeout) { v -> settingsPrefs.screensaverTimeout = v }
-
-                // ── Icons per row ──────────────────────────────────────────
-                // Two separate steppers, one per grid family. Neither writes until it is
-                // tapped, so a phone that never touches them keeps following the
-                // shipped defaults (see GridColumns). The grids redraw themselves when
-                // the stored value changes.
-                GapDp(24)
-                SectionHeaderUi("Icons per row",
-                    "How many icons the Cloud apps and Phone apps grids fit on a line (${GridColumns.MIN}–${GridColumns.MAX}).")
-                stepperRow("Cloud apps", "Cloud grids",
-                    GridColumns.cloud(ctx)) { GridColumns.set(ctx, GridColumns.Kind.CLOUD, it) }
-                GapDp(8)
-                stepperRow("Phone apps", "Phone grids",
-                    GridColumns.phone(ctx)) { GridColumns.set(ctx, GridColumns.Kind.PHONE, it) }
-                GapDp(8)
-
-                // Screen brightness (device-wide → needs WRITE_SETTINGS)
-                val b = LauncherSettingsPrefs.Config.brightness
-                sliderRow(b.label, b.subtitle, b.min, b.max,
-                    settingsPrefs.brightness.let { if (it < b.min) b.min else it }) { v ->
-                    settingsPrefs.brightness = v
-                    applySystemBrightness(ctx, v)
-                }
-
-                // Cloud-superapp Scale (ruler centred on 411), Font Size, Zoom Size: live status + privileged write.
-                DisplayControlsSection()
 
                 // #1621 Background: enable, star animation, the 3D/4D polytope shape picker and auto-cycle.
-                BackgroundSection(settingsPrefs, epoch)
+                if (showUiBackground) {
+                    BackgroundSection(settingsPrefs, epoch)
+                }
             }
 
             // ── Battery Hungers: the effect switches, the heaviest consumers, the Battery Hunger panel ──
@@ -361,18 +372,19 @@ class LauncherConfigFragment : KitComposeFragment() {
             GapDp(8)
         }
 
-        // Shape picker, grouped (3D Platonic solids, then their 4D analogues).
+        // Shape picker, grouped 3D Polyhedra / 4D Polytopes and, inside each, by face type (#1915).
         GapDp(8)
         SectionHeaderUi("Background shape",
             "The rotating shape on the home pane. 4D polytopes render as a rotating 4D→3D projection in the same slot.")
         val currentShape = epoch.let { settingsPrefs.backgroundShape }
         var lastGroup = ""
+        var lastFace = ""
         for (s in bg.shapes) {
-            if (s.group.isNotBlank() && s.group != lastGroup) { lastGroup = s.group; GapDp(8); SectionHeaderUi(s.group, "") }
-            val sub = when {
-                s.dim == 4 && s.dualOf.isBlank() -> "4D · self-dual (no regular 3D twin)"
-                s.dim == 4 -> "4D · analogue of the ${s.dualOf}"
-                else -> "3D Platonic solid"
+            if (s.group.isNotBlank() && s.group != lastGroup) { lastGroup = s.group; lastFace = ""; GapDp(8); SectionHeaderUi(s.group, "") }
+            if (s.faceGroup.isNotBlank() && s.faceGroup != lastFace) { lastFace = s.faceGroup; GapDp(4); SectionHeaderUi("${s.faceGroup} faces", "") }
+            val sub = buildString {
+                append(if (s.dim == 4) "4D" else "3D")
+                if (s.composition.isNotBlank()) append(" · ").append(s.composition)
             }
             GenericTileUi(s.label, sub, s.id == currentShape) {
                 settingsPrefs.backgroundShape = s.id; repaintFromStore()
@@ -737,6 +749,9 @@ class LauncherConfigFragment : KitComposeFragment() {
         private const val ARG_SCOPE = "scope"
         const val SCOPE_ALL = "all"
         const val SCOPE_UI = "ui"
+        const val SCOPE_UI_DISPLAY = "ui_display"
+        const val SCOPE_UI_BACKGROUND = "ui_background"
+        const val SCOPE_UI_SCREENSAVER = "ui_screensaver"
         const val SCOPE_BATTERY = "battery"
         const val SCOPE_TOOLS = "tools"
         const val SCOPE_SECURITY = "security"
