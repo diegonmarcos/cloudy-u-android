@@ -96,6 +96,16 @@ class WeatherRowsTest : KitPageHarness() {
         assertEquals(null, WeatherRows.feelsLike(20.0, null, 1.0))
     }
 
+    @Test fun `the notification text is built from the same rows`() {
+        val rows = WeatherRows.rows(snap(full))
+        val lines = WeatherRows.notificationText(rows).split("\n")
+        assertEquals(rows.size, lines.size)
+        for ((row, line) in rows.zip(lines)) {
+            assertTrue(line, line.contains("${row.left.label}: ${row.left.value}") && line.contains("${row.right.label}: ${row.right.value}"))
+        }
+        assertTrue(lines[4], lines[4].startsWith("Pressure: min / max: 1000 hPa / 1023 hPa"))
+    }
+
     @Test fun `no data at all gives seven rows of dashes and never throws`() {
         for (s in listOf(null, snap(emptyList(), DataStatus(DataStatus.Kind.NONE, 0L, "offline")))) {
             val r = WeatherRows.rows(s).associateBy { it.id }

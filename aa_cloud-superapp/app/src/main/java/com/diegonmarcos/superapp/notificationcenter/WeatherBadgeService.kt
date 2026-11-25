@@ -102,10 +102,12 @@ class WeatherBadgeService : Service() {
     private fun refresh(startId: Int) {
         scope.launch {
             val state = runCatching { compute() }.getOrElse { initialState() }
+            // #1922 the expanded notification shows the same rows as the in-app card (WeatherRows over the day snapshot).
+            val snap = runCatching { com.diegonmarcos.superapp.daytimelines.DayRepo.snapshot(this@WeatherBadgeService, allowFetch = true) }.getOrNull()
             main.post {
                 // Switched off while the fetch was in flight: the result is dropped, nothing is re-armed.
                 if (!DataWidgetRuntime.retiredIfOff(this@WeatherBadgeService, WeatherBadgeService::class.java)) {
-                    runCatching { NotifyGate.postCtx(this@WeatherBadgeService, NOTIF_ID, build(state)) }
+                    runCatching { NotifyGate.postCtx(this@WeatherBadgeService, NOTIF_ID, build(state, snap)) }
                     schedule()
                 }
                 stopSelf(startId)
@@ -183,7 +185,7 @@ class WeatherBadgeService : Service() {
     /** City name via [PlaceName] (locality -> subAdmin -> admin -> country, cached); "lat, lon" when unresolved. */
     private fun placeName(loc: WeatherLocation.Fix): String = PlaceName.resolve(this, loc.lat, loc.lon)
 
-    private fun build(state: WeatherFace.State): android.app.Notification {
+    private fun build(state: WeatherFace.State, snap: com.diegonmarcos.superapp.daytimelines.DayRepo.Snapshot? = null): android.app.Notification {
         val b = badge()
         val showHourly = b?.let { BadgeCustomization.bool(this, it, "show_hourly") } ?: true
         val today = (state as? WeatherFace.State.Forecast)?.today
@@ -200,6 +202,10 @@ class WeatherBadgeService : Service() {
             // sit on the lockscreen, which is exactly where a forecast helps.
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .apply {
+                val rowsText = if (snap == null) "" else com.diegonmarcos.superapp.daytimelines.WeatherRows.notificationText(
+                    com.diegonmarcos.superapp.daytimelines.WeatherRows.rows(snap))
+                if (rowsText.isNotEmpty() && !(today != null && showHourly && today.forecast.hours.isNotEmpty()))
+                    setStyle(NotificationCompat.BigTextStyle().bigText("$text\n\n$rowsText"))
                 if (today != null && showHourly && today.forecast.hours.isNotEmpty()) {
                     // Every 3rd hour: 8 readings span the day and still fit.
                     val rows = today.forecast.hours.filter { it.first % 3 == 0 }
@@ -208,7 +214,7 @@ class WeatherBadgeService : Service() {
                         }
                     val pos = (state as WeatherFace.State.Forecast).fix
                         ?.let { "\n" + WeatherFace.position(this@WeatherBadgeService, it, System.currentTimeMillis()) }.orEmpty()
-                    setStyle(NotificationCompat.BigTextStyle().bigText("$text\n\n$rows$pos"))
+                    setStyle(NotificationCompat.BigTextStyle().bigText(if (rowsText.isEmpty()) "$text\n\n$rows$pos" else "$text\n\n$rowsText\n\n$rows$pos"))
                 }
             }
             // Tap = the SOURCE's page for this position, the way Markets opens its ticker page.

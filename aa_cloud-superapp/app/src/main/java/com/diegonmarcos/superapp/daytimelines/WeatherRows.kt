@@ -60,6 +60,10 @@ object WeatherRows {
     private fun n(v: Double?, f: String = "%.0f") = v?.let { String.format(Locale.US, f, it) }
     private fun pair(a: String?, b: String?) = "${a ?: EM} / ${b ?: EM}"
 
+    /** #1922 the notification's expanded text: the SAME [rows], one line per row (single source with the in-app card). */
+    fun notificationText(rows: List<Row>): String =
+        rows.joinToString("\n") { "${it.left.label}: ${it.left.value}  |  ${it.right.label}: ${it.right.value}" }
+
     /** [snap] null (nothing loaded yet) gives all seven rows with dashes. */
     fun rows(snap: DayRepo.Snapshot?): List<Row> {
         val m = snap?.model
