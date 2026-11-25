@@ -1,0 +1,9 @@
+[
+  {
+    "kind": "fragment",
+    "id": "web",
+    "_doc": "#1918 Proj > Repos: the repos tree of _git-repos-master (A0_repos-tree/dist/repos-tree.html), bundled as the asset repos-tree.html (data/web) (data/regen-repos-tree.py copies it, --check detects drift) and embedded by the page WebView.",
+    "url": "repos-tree.html",
+    "link": "repos-tree.html"
+  }
+]

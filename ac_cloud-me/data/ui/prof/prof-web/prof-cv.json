@@ -1,0 +1,9 @@
+[
+  {
+    "kind": "fragment",
+    "id": "web",
+    "_doc": "#1918 Prof > Profiles > CV: the cv_web site (it shows the PDF), embedded by its https URL from the declared table me-links.json (_front-html___ repos-pages.json overlay cv_web).",
+    "url": "https://diegonmarcos.github.io/cv_web/",
+    "link": "https://diegonmarcos.github.io/cv_web/"
+  }
+]

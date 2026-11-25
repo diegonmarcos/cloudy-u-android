@@ -1,0 +1,9 @@
+[
+  {
+    "kind": "fragment",
+    "id": "web",
+    "_doc": "#1918 Prof > Profiles > LinkedIn: our own mySocials LinkedIn page, embedded by its https URL from the declared table me-links.json (the same page as Pers > Profiles > LinkedIn, declared as mirror_of).",
+    "url": "https://diegonmarcos.github.io/mySocials/linkedin.html",
+    "link": "https://diegonmarcos.github.io/mySocials/linkedin.html"
+  }
+]

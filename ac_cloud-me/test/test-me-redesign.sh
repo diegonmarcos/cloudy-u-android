@@ -219,12 +219,13 @@ _lt = secs.get("lnktree", {})   # #1901 correction: the Lnktree bottom-nav entry
 if "lnktree" not in ui.get("bottom_nav", []) or [p["id"] for p in _lt.get("pages", [])] != ["lt-" + x for x in ["lnktree-site", "professional", "leafy", "nexus", "stark", "personal", "social", "health", "dd", "astro", "area-unix", "area-cg", "area-capital", "area-hardtech", "area-lecole42", "area-front"]]:
     bad("pages", "the Lnktree bottom-nav entry with its sixteen pages is missing")
 _pf = secs.get("prof", {})
-if [p["id"] for p in _pf.get("pages", [])] != ["prof-profiles", "leafy", "nexus", "stark"] or \
-   [p["id"] for p in (_pf.get("pages") or [{}])[0].get("pages", [])] != ["professional", "work", "study"] or \
-   {g["id"]: g["pages"] for g in _pf.get("groups", [])} != {"profiles": ["prof-profiles"], "companies": ["leafy", "nexus", "stark"]}:
+if [p["id"] for p in _pf.get("pages", [])] != ["prof-web", "prof-profiles", "leafy", "nexus", "stark"] or \
+   [p["id"] for p in (_pf.get("pages") or [{}])[0].get("pages", [])] != ["prof-linkedin", "prof-cv"] or \
+   [p["id"] for p in (_pf.get("pages") or [{}, {}])[1].get("pages", [])] != ["professional", "work", "study"] or \
+   {g["id"]: g["pages"] for g in _pf.get("groups", [])} != {"profiles": ["prof-web", "prof-profiles"], "companies": ["leafy", "nexus", "stark"]}:
     bad("pages", "Prof is not Profiles (Professional, Work, Study) | Leaf.y, Nexus.z, Stark.x")
 _pj = secs.get("proj", {})
-if [p["id"] for p in _pj.get("pages", [])] != ["pj-home", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42"]:
+if [p["id"] for p in _pj.get("pages", [])] != ["pj-home", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42", "pj-repos"]:
     bad("pages", "Proj pages are not Home, Unix, CG, Capital, Hardtech, Wiki, Projects, 42 (#1914)")
 if ui.get("default_section") != "lnktree" or (_lt.get("pages") or [{}])[0].get("id") != "lt-lnktree-site" or (_pj.get("pages") or [{}])[0].get("id") != "pj-home":
     bad("pages", "the app does not open on Lnktree, the Lnktree entry on its Lnktree site, or Proj on its Home (#1914)")
@@ -386,7 +387,7 @@ for sid, labels in want_pages.items():
             bad("pages", f"Pers > Health pages are not {labels}")
     elif [p["label"] for p in secs.get(sid, {}).get("pages", [])] != labels:
         bad("pages", f"{sid} pages are not {labels}")
-_study = {p["id"]: p for p in secs.get("prof", {}).get("pages", [{}])[0].get("pages", [])}.get("study", {})
+_study = {p["id"]: p for p in secs.get("prof", {}).get("pages", [{}, {}])[1].get("pages", [])}.get("study", {})
 if [p["label"] for p in _study.get("pages", [])] != ["CV", "Roadmap"]:
     bad("pages", "Prof > Profiles > Study is not CV, Roadmap")
 _w = os.path.join(app, "data/ui/prof/prof-profiles/work.json")

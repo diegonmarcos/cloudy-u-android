@@ -803,6 +803,7 @@
             "label": "Profiles",
             "icon": "badge",
             "pages": [
+              "prof-web",
               "prof-profiles"
             ]
           },
@@ -819,8 +820,25 @@
         ],
         "pages": [
           {
-            "id": "prof-profiles",
+            "id": "prof-web",
             "label": "Profiles",
+            "icon": "ic_nav_me",
+            "pages": [
+              {
+                "id": "prof-linkedin",
+                "label": "LinkedIn",
+                "icon": "ic_world"
+              },
+              {
+                "id": "prof-cv",
+                "label": "CV",
+                "icon": "ic_world"
+              }
+            ]
+          },
+          {
+            "id": "prof-profiles",
+            "label": "More",
             "icon": "ic_nav_me",
             "pages": [
               {
@@ -901,187 +919,192 @@
         "pages": [
           {
             "id": "pj-home",
-            "label": "Home",
+            "label": "🏠 Home",
             "icon": "ic_link_tile"
           },
           {
             "id": "pj-unix",
-            "label": "Unix",
+            "label": "🐧 Unix",
             "icon": "ic_link_tile",
             "pages": [
               {
                 "id": "pj-unix-superapp",
-                "label": "SuperApp",
+                "label": "📱 SuperApp",
                 "icon": "ic_world"
               },
               {
                 "id": "pj-unix-cloudme",
-                "label": "Cloud-me",
+                "label": "🙋 Cloud-me",
                 "icon": "ic_world"
               },
               {
                 "id": "pj-unix-cloudy",
-                "label": "Cloudy",
+                "label": "☁️ Cloudy",
                 "icon": "ic_world"
               }
             ]
           },
           {
             "id": "pj-cg",
-            "label": "CG",
+            "label": "🎮 CG",
             "icon": "ic_link_tile",
             "pages": [
               {
                 "id": "pj-cg-omniverse",
-                "label": "Omniverse",
+                "label": "🌌 Omniverse",
                 "icon": "ic_world"
               },
               {
                 "id": "pj-cg-zirkusverse",
-                "label": "Zirkusverse",
+                "label": "🎪 Zirkusverse",
                 "icon": "ic_world"
               }
             ]
           },
           {
             "id": "pj-capital",
-            "label": "Capital",
+            "label": "💹 Capital",
             "icon": "ic_link_tile",
             "pages": [
               {
                 "id": "pj-capital-cb",
-                "label": "CB",
+                "label": "📈 CB",
                 "icon": "ic_world"
               },
               {
                 "id": "pj-capital-pm",
-                "label": "PM",
+                "label": "🏢 PM",
                 "icon": "ic_world"
               },
               {
                 "id": "pj-capital-finterm",
-                "label": "FinTerm",
+                "label": "📰 FinTerm",
                 "icon": "ic_world"
               }
             ]
           },
           {
             "id": "pj-hardtech",
-            "label": "Hardtech",
+            "label": "🔬 Hardtech",
             "icon": "ic_link_tile",
             "pages": [
               {
                 "id": "pj-hardtech-biomed",
-                "label": "BioMed",
+                "label": "💊 BioMed",
                 "icon": "ic_world"
               },
               {
                 "id": "pj-hardtech-cad",
-                "label": "CAD",
+                "label": "📐 CAD",
                 "icon": "ic_world"
               },
               {
                 "id": "pj-hardtech-deepxtech",
-                "label": "DeepXTech",
+                "label": "🧬 DeepXTech",
                 "icon": "ic_world"
               }
             ]
           },
           {
             "id": "pj-wiki",
-            "label": "Wiki",
+            "label": "📖 Wiki",
             "icon": "ic_link_tile",
             "pages": [
               {
                 "id": "pj-wiki-modernsc",
-                "label": "ModernSc",
+                "label": "🔭 ModernSc",
                 "icon": "ic_world"
               },
               {
                 "id": "pj-wiki-arcanum",
-                "label": "Arcanum",
+                "label": "🔮 Arcanum",
                 "icon": "ic_world"
               },
               {
                 "id": "pj-wiki-projects",
-                "label": "Projects",
+                "label": "🗂️ Projects",
                 "icon": "ic_world"
               }
             ]
           },
           {
             "id": "pj-projects",
-            "label": "Projects",
+            "label": "🎨 Projects",
             "icon": "ic_link_tile",
             "pages": [
               {
                 "id": "pj-projects-endeavours",
-                "label": "Endeavours",
+                "label": "🚀 Endeavours",
                 "icon": "ic_world"
               },
               {
                 "id": "pj-projects-duckpeng",
-                "label": "DuckPeng",
+                "label": "🦆 DuckPeng",
                 "icon": "ic_world"
               }
             ]
           },
           {
             "id": "pj-lecole42",
-            "label": "42",
+            "label": "🎓 42",
             "icon": "ic_link_tile",
             "pages": [
               {
                 "id": "pj-lecole42-algo",
-                "label": "Algo",
+                "label": "🧮 Algo",
                 "icon": "ic_world"
               },
               {
                 "id": "pj-lecole42-graphic",
-                "label": "Graphic",
+                "label": "🖼️ Graphic",
                 "icon": "ic_world"
               },
               {
                 "id": "pj-lecole42-system",
-                "label": "System",
+                "label": "⚙️ System",
                 "icon": "ic_world"
               },
               {
                 "id": "pj-lecole42-mylibs",
-                "label": "Mylibs",
+                "label": "📚 Mylibs",
                 "icon": "ic_world"
               },
               {
                 "id": "pj-lecole42-curriculum",
-                "label": "Curriculum",
+                "label": "🗂️ Curriculum",
                 "icon": "ic_world"
               },
               {
                 "id": "pj-lecole42-agentic",
-                "label": "Agentic",
+                "label": "🤖 Agentic",
                 "icon": "ic_world"
               },
               {
                 "id": "pj-lecole42-datascience",
-                "label": "DataScience",
+                "label": "📊 DataScience",
                 "icon": "ic_world"
               },
               {
                 "id": "pj-lecole42-machinelearning",
-                "label": "MachineLearning",
+                "label": "🧠 MachineLearning",
                 "icon": "ic_world"
               },
               {
                 "id": "pj-lecole42-cyberwarfare",
-                "label": "Cyberwarfare",
+                "label": "🛡️ Cyberwarfare",
                 "icon": "ic_world"
               },
               {
                 "id": "pj-lecole42-dev",
-                "label": "Dev",
+                "label": "💻 Dev",
                 "icon": "ic_world"
               }
             ]
+          },
+          {
+            "id": "pj-repos",
+            "label": "📦 Repos",
+            "icon": "ic_link_tile"
           }
         ]
       },

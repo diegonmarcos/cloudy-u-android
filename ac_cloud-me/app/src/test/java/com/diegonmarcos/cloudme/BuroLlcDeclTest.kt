@@ -32,7 +32,7 @@ class BuroLlcDeclTest {
         assertFalse("house" in sections); assertFalse("work" in sections); assertFalse("roadmap" in sections); assertFalse("duties" in sections)
         for (gone in listOf("health", "experiences", "socials")) assertFalse("$gone is a section of the layout before #1901", gone in sections)
         assertEquals("lnktree", ui.getString("default_section"))   // #1901 correction: the app opens on the restored Lnktree entry
-        assertEquals(listOf("pj-home", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42"), ids(sections.getValue("proj").getJSONArray("pages")))
+        assertEquals(listOf("pj-home", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42", "pj-repos"), ids(sections.getValue("proj").getJSONArray("pages")))
         assertEquals(listOf("roadmaps", "backlogs"), ids(sections.getValue("tasks").getJSONArray("pages")))
         assertEquals("tasks", page("tasks", "backlogs").getJSONObject(0).getString("id"))
     }
@@ -170,8 +170,8 @@ class BuroLlcDeclTest {
         assertEquals("pj-home", ids(proj.getJSONArray("pages")).first())
         assertEquals(mapOf("lnktree" to listOf("lt-lnktree-site")), groups("lnktree").filterKeys { it == "lnktree" })
         assertEquals("lt-lnktree-site", ids(sections.getValue("lnktree").getJSONArray("pages")).first())
-        assertEquals(mapOf("profiles" to listOf("prof-profiles"), "companies" to listOf("leafy", "nexus", "stark")), groups("prof"))
-        assertEquals(listOf("prof-profiles", "leafy", "nexus", "stark"), ids(sections.getValue("prof").getJSONArray("pages")))
+        assertEquals(mapOf("profiles" to listOf("prof-web", "prof-profiles"), "companies" to listOf("leafy", "nexus", "stark")), groups("prof"))
+        assertEquals(listOf("prof-web", "prof-profiles", "leafy", "nexus", "stark"), ids(sections.getValue("prof").getJSONArray("pages")))
     }
 
     @Test fun `the six embedded sites open by their https URL, each declared in its own page file`() {

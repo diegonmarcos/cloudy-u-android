@@ -38,7 +38,7 @@ class MeLinksEmbedTest {
     }
 
     @Test fun `no two Pers Prof Proj tabs embed the same page`() {
-        val urls = tabs.map { block(it).optString("url") }
+        val urls = tabs.filter { !it.has("mirror_of") }.map { block(it).optString("url") }   // #1918 Prof > LinkedIn declares mirror_of the Pers one
         assertEquals(urls.toString(), urls.size, urls.toSet().size)
         assertTrue(urls.none { it.isBlank() })
     }

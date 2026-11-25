@@ -70,6 +70,12 @@ $T adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*40/100)) 500; shot
 walk_tab section:lnktree me-lnktree Lnktree
 walk_tab section:proj me-proj Proj
 open_page "$ME" "page:proj/pj-home"; shot me-proj-home 8   # #1914 the icon grid of every group and leaf
+# #1918 the Home grid wears the emoji of Linktree and the banners of its categories; Repos (the bundled repos tree) loads in the page WebView
+grep -q "🐧" "$OUT/me-proj-home.xml" 2>/dev/null || { echo "me-proj-home: the Linktree emoji is not on the Proj tabs"; rc=1; }
+$T adb shell am force-stop "$ME" </dev/null; $T adb logcat -c </dev/null
+open_page "$ME" "page:proj/pj-repos" </dev/null; shot me-proj-repos 12 </dev/null
+$T adb logcat -d -s CloudMeWeb:V < /dev/null > "$OUT/tab-proj-repos.log"
+grep -q "MAINFRAME_OK page=pj-repos " "$OUT/tab-proj-repos.log" && echo "proj-repos: loaded the bundled repos tree" || { echo "proj-repos: the repos tree did not load"; rc=1; }
 # #1911 every Pers/Prof/Proj tab of data/links/me-links.json: open it, screenshot it, and assert its main frame did not hit an error page
 # (WebPage logs MAINFRAME_ERROR / MAINFRAME_OK page=<id> url=<url> title=<title>; the title must not be "Web page not available")
 TABLES="$(dirname "$0")/../data/links/me-links.json"
@@ -83,8 +89,8 @@ while read -r sec page url id <&3; do
     $T adb shell am force-stop "$ME" </dev/null   # a fresh process: the page loads (and logs) again even when it is the one already on top
     $T adb logcat -c </dev/null
     open_page "$ME" "page:$sec/$page" </dev/null; shot "me-tab-$id" 12 </dev/null
-    # a heavy page (Warehouse's 3D) finishes late and the image check runs 8 s after the finish: poll the log up to 90 s for both lines
-    for _ in $(seq 1 18); do
+    # a heavy page (Warehouse's 3D) finishes late and the image check runs 8 s after the finish: poll the log up to 40 s for both lines
+    for _ in $(seq 1 8); do
         $T adb logcat -d -s CloudMeWeb:V < /dev/null > "$OUT/tab-$id.log"
         grep -q IMG_CHECK "$OUT/tab-$id.log" && break
         grep -q MAINFRAME_ERROR "$OUT/tab-$id.log" && break

@@ -66,16 +66,16 @@ if [p["id"] for p in sub("pers", "health", "trackers").get("pages", [])] != ["tr
     bad("tree", "Pers > Health does not hold the 5 Trackers and 14 Plan pages in their old order")
 if [p["id"] for p in sub("pers", "achieves").get("pages", [])] != ["geo", "endurance", "growth", "community", "by30", "by40", "by50"]:
     bad("tree", "Pers > Personal Archives is not Geo, Endurance, Personal Growth, Community, By 30, By 40, By 50")
-if labels(secs.get("prof", {}).get("pages", [])) != [("prof-profiles", "Profiles"), ("leafy", "Leaf.y"), ("nexus", "Nexus.z"), ("stark", "Stark.x")] or \
-   {g["id"]: g["pages"] for g in secs.get("prof", {}).get("groups", [])} != {"profiles": ["prof-profiles"], "companies": ["leafy", "nexus", "stark"]}:
-    bad("tree", "Prof is not Profiles | Leaf.y, Nexus.z, Stark.x")
+if labels(secs.get("prof", {}).get("pages", [])) != [("prof-web", "Profiles"), ("prof-profiles", "More"), ("leafy", "Leaf.y"), ("nexus", "Nexus.z"), ("stark", "Stark.x")] or \
+   {g["id"]: g["pages"] for g in secs.get("prof", {}).get("groups", [])} != {"profiles": ["prof-web", "prof-profiles"], "companies": ["leafy", "nexus", "stark"]}:
+    bad("tree", "Prof is not Profiles (LinkedIn, CV), More | Leaf.y, Nexus.z, Stark.x")
 if [p["id"] for p in sub("prof", "prof-profiles").get("pages", [])] != ["professional", "work", "study"] or \
    [p["id"] for p in sub("prof", "prof-profiles", "study").get("pages", [])] != ["cv", "roadmap"]:
     bad("tree", "Prof > Profiles is not Professional, Work, Study (CV, Roadmap)")
 PROJ = {"unix": ["superapp", "cloudme", "cloudy"], "cg": ["omniverse", "zirkusverse"], "capital": ["cb", "pm", "finterm"], "hardtech": ["biomed", "cad", "deepxtech"],
         "wiki": ["modernsc", "arcanum", "projects"], "projects": ["endeavours", "duckpeng"], "lecole42": ["algo", "graphic", "system", "mylibs", "curriculum", "agentic", "datascience", "machinelearning", "cyberwarfare", "dev"]}
-if [p["id"] for p in secs.get("proj", {}).get("pages", [])] != ["pj-home"] + ["pj-" + g for g in PROJ] or \
-   [p["label"] for p in secs.get("proj", {}).get("pages", [])] != ["Home", "Unix", "CG", "Capital", "Hardtech", "Wiki", "Projects", "42"] or \
+if [p["id"] for p in secs.get("proj", {}).get("pages", [])] != ["pj-home"] + ["pj-" + g for g in PROJ] + ["pj-repos"] or \
+   [re.sub(r"^[^\w]+ ", "", p["label"]) for p in secs.get("proj", {}).get("pages", [])] != ["Home", "Unix", "CG", "Capital", "Hardtech", "Wiki", "Projects", "42", "Repos"] or \
    any([c["id"] for c in next(p for p in secs["proj"]["pages"] if p["id"] == "pj-" + g).get("pages", [])] != [f"pj-{g}-{l}" for l in ls] for g, ls in PROJ.items()):
     bad("tree", "Proj is not Home | Unix, CG, Capital, Hardtech, Wiki, Projects, 42 with every project leaf (#1914)")
 for _o, _n in {"area-unix": "pj-unix", "area-cg": "pj-cg", "area-capital": "pj-capital", "area-hardtech": "pj-hardtech", "area-lecole42": "pj-lecole42", "area-front": "pj-projects"}.items():

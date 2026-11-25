@@ -60,18 +60,19 @@ class NavReorgTest {
 
     @Test fun `Prof is Profiles then Leaf y Nexus z Stark x and Proj is Lnktree then the areas, Lnktree first and default`() {
         val prof = Sections.byId("prof")!!
-        assertEquals(listOf("Profiles", "Leaf.y", "Nexus.z", "Stark.x"), prof.pages.map { it.label })
+        assertEquals(listOf("Profiles", "More", "Leaf.y", "Nexus.z", "Stark.x"), prof.pages.map { it.label })   // #1918 Profiles = LinkedIn | CV; the old Profiles pages moved to More
+        assertEquals(listOf("prof-linkedin", "prof-cv"), ids(prof.page("prof-web")!!.pages))
         assertEquals(listOf("professional", "work", "study"), ids(prof.page("prof-profiles")!!.pages))
         assertEquals(listOf("cv", "roadmap"), ids(prof.page("study")!!.pages))
         assertEquals("professional", leafOf("prof", null))
         val proj = Sections.byId("proj")!!
-        assertEquals(listOf("pj-home", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42"), ids(proj.pages))
-        assertEquals(listOf("Home", "Unix", "CG", "Capital", "Hardtech", "Wiki", "Projects", "42"), proj.pages.map { it.label })
+        assertEquals(listOf("pj-home", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42", "pj-repos"), ids(proj.pages))
+        assertEquals(listOf("Home", "Unix", "CG", "Capital", "Hardtech", "Wiki", "Projects", "42", "Repos"), proj.pages.map { Regex("^[^\\p{L}\\p{N}]+ ").replace(it.label, "") })   // #1918 each label carries its Linktree emoji
         assertEquals("proj opens on its Home grid", "pj-home", leafOf("proj", null))
         assertEquals("the Lnktree bottom-nav entry opens on the Lnktree site", "lt-lnktree-site", leafOf("lnktree", null))
         // the groups are the declared rows: Prof is `Profiles | Leaf.y, Nexus.z, Stark.x`, Proj is `Lnktree` over the areas
         fun groups(s: String) = arr(ui.getJSONArray("sections")).first { it.getString("id") == s }.getJSONArray("groups").let { g -> arr(g).associate { it.getString("id") to (0 until it.getJSONArray("pages").length()).map { i -> it.getJSONArray("pages").getString(i) } } }
-        assertEquals(mapOf("profiles" to listOf("prof-profiles"), "companies" to listOf("leafy", "nexus", "stark")), groups("prof"))
+        assertEquals(mapOf("profiles" to listOf("prof-web", "prof-profiles"), "companies" to listOf("leafy", "nexus", "stark")), groups("prof"))
         assertEquals(listOf("lnktree", "prof", "pers", "proj"), groups("lnktree").keys.toList())
         assertEquals(listOf("lt-lnktree-site"), groups("lnktree").getValue("lnktree"))
     }

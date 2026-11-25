@@ -784,6 +784,38 @@
       },
       "url": "https://wa.me/34634769833",
       "sot_url": "https://wa.me/34634769833"
+    },
+    {
+      "id": "prof-linkedin",
+      "section": "prof",
+      "kind": "page",
+      "label": "LinkedIn",
+      "mirror_of": "pers-linkedin",
+      "source": {
+        "literal": "https://diegonmarcos.github.io/mySocials/linkedin.html"
+      },
+      "path": [
+        "prof-web",
+        "prof-linkedin"
+      ],
+      "url": "https://diegonmarcos.github.io/mySocials/linkedin.html",
+      "sot_url": "https://diegonmarcos.github.io/mySocials/linkedin.html"
+    },
+    {
+      "id": "prof-cv",
+      "section": "prof",
+      "kind": "site",
+      "label": "CV",
+      "source": {
+        "repo": "cloud-me-pub-profiles-prf-prs",
+        "overlay": "cv_web"
+      },
+      "path": [
+        "prof-web",
+        "prof-cv"
+      ],
+      "url": "https://diegonmarcos.github.io/cv_web/",
+      "sot_url": "https://diegonmarcos.github.io/cv_web/"
     }
   ]
 }
