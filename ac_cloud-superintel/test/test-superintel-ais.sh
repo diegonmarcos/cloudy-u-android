@@ -26,6 +26,7 @@ def code(p):
 bj = json.loads(read(os.path.join(app, "build.json")))
 ai = os.path.join(app, "app/src/main/assets/ai")
 fl = os.path.join(app, "../data/fleet/app/com.diegonmarcos.cloudsuperintel")   # #1562 pages, mcp and plugins are served datasets (never APK assets)
+fx = os.path.join(app, "test/fixtures")   # #1566 apis.json and cost.json are fleet-private served datasets (fleet/superintel-apis, fleet/superintel-cost): only these synthetic sample fixtures live here, never an APK asset
 SERVED = ("pages.json", "mcp.json", "plugins.json")
 kt = os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudsuperintel")
 def sec(i): return next(s for s in bj["ui"]["sections"] if s["id"] == i)
@@ -43,10 +44,10 @@ for k, v in pages.items():
     assets = [s["asset"] for s in v.get("sources", [])] if v["kind"] == "rows" else [v.get("asset", "")] if v["kind"] != "kg" else []
     if v["kind"] != "kg" and (not assets or not all(assets)): bad.append("A1 page %r declares no asset" % k)
     for a_ in assets:
-        if not os.path.exists(os.path.join(fl, os.path.basename(a_)) if os.path.basename(a_) in SERVED else os.path.join(app, "app/src/main/assets", a_)): bad.append("A1 page %r asset %s is missing" % (k, a_))
+        if not os.path.exists(os.path.join(fl, os.path.basename(a_)) if os.path.basename(a_) in SERVED else os.path.join(fx, os.path.basename(a_)) if os.path.basename(a_) in ("apis.json", "cost.json") else os.path.join(app, "app/src/main/assets", a_)): bad.append("A1 page %r asset %s is missing" % (k, a_))
 
 # A2
-apis = json.loads(read(os.path.join(ai, "apis.json")))
+apis = json.loads(read(os.path.join(fx, "apis.json")))
 if [r["label"] for r in apis["rows"]] != ["Claude Account 1", "Claude API 1", "OpenRouter 1", "OpenRouter 2"]: bad.append("A2 the API rows are not the owner's four, in order")
 if "sample" not in apis.get("sample_label", "").lower() or "SAMPLE" not in apis["_doc"]: bad.append("A2 the bundled APIs are not labelled sample")
 for r in apis["rows"]:
@@ -70,7 +71,7 @@ for dp, dn, fn in os.walk(os.path.join(app, "app/src/main")):
                 if re.search(s, t): bad.append("A3 %s holds a secret-shaped value (%s)" % (f, s))
 
 # A4
-cost = json.loads(read(os.path.join(ai, "cost.json")))
+cost = json.loads(read(os.path.join(fx, "cost.json")))
 cost_kt = code(os.path.join(kt, "Cost.kt"))
 sa = os.path.join(app, "../aa_cloud-superapp")
 if os.path.isdir(sa):
@@ -137,6 +138,7 @@ mutant() {   # mutant <name> <shell edit run in the copy> <needle expected in th
 }
 KT=app/src/main/java/com/diegonmarcos/cloudsuperintel
 AI=app/src/main/assets/ai
+FX=test/fixtures
 FL=../data/fleet/app/com.diegonmarcos.cloudsuperintel
 PYJ="import json;p='build.json';d=json.load(open(p));"
 mutant "nav order changes"        "python3 -c \"${PYJ}d['ui']['bottom_nav']=['notebook','si','cgcs','models','context'];json.dump(d,open(p,'w'))\"" "A1 the bottom nav must be"
@@ -144,14 +146,14 @@ mutant "Context loses Skills"     "python3 -c \"${PYJ}[s['pages'].pop() for s in
 mutant "Cost returns as a section" "python3 -c \"${PYJ}d['ui']['sections'].append({'id':'cost','label':'Cost','icon':'payments','pages':[]});json.dump(d,open(p,'w'))\"" "A1 Cost is the top-right window"
 mutant "a page loses its data"    "python3 -c \"import json;p='$FL/pages.json';d=json.load(open(p));del d['pages']['hooks'];json.dump(d,open(p,'w'))\"" "A1 pages.json ids"
 mutant "a page asset is missing"  "rm $FL/mcp.json"                                                             "A1 page 'mcp' asset ai/mcp.json is missing"
-mutant "an API row is renamed"    "sed -i 's/OpenRouter 2/OpenRouter 3/' $AI/apis.json"                        "A2 the API rows are not"
-mutant "a token is unmasked"      "sed -i '0,/••••-sample/s//plain/' $AI/apis.json"                            "A2 row .* token is not masked"
-mutant "a token field appears"    "sed -i '0,/\"token_masked\"/s//\"token\": \"x\", \"token_masked\"/' $AI/apis.json" "A2 row .* beyond the masked set"
-mutant "sample label dropped"     "sed -i 's/SAMPLE data only/data only/' $AI/apis.json"                       "A2 the bundled APIs are not labelled sample"
+mutant "an API row is renamed"    "sed -i 's/OpenRouter 2/OpenRouter 3/' $FX/apis.json"                        "A2 the API rows are not"
+mutant "a token is unmasked"      "sed -i '0,/••••-sample/s//plain/' $FX/apis.json"                            "A2 row .* token is not masked"
+mutant "a token field appears"    "sed -i '0,/\"token_masked\"/s//\"token\": \"x\", \"token_masked\"/' $FX/apis.json" "A2 row .* beyond the masked set"
+mutant "sample label dropped"     "sed -i 's/SAMPLE data only/data only/' $FX/apis.json"                       "A2 the bundled APIs are not labelled sample"
 mutant "reveal leaves the store"  "sed -i 's/if (r.sample) null else src.get(/if (r.sample) null else cfg.get(/' $KT/Apis.kt"  "A2 reveal does not come only"
 mutant "a key shape is planted"   "echo '{\"k\": \"sk-or-v1-aaaaaaaaaaaaaaaaaaaaaaaa\"}' > $AI/planted.json"      "A3 planted.json holds a secret-shaped value"
 mutant "a bearer is planted"      "echo '// Bearer abcdefghijklmnopqrstuvwxyz012345' >> $KT/Cost.kt"           "A3 Cost.kt holds a secret-shaped value"
-mutant "badge base not in Cost"   "sed -i 's#/c3-infra-api#/other-api#' $AI/cost.json"                          "A4 the badge's endpoint"
+mutant "badge base not in Cost"   "sed -i 's#/c3-infra-api#/other-api#' $FX/cost.json"                          "A4 the badge's endpoint"
 mutant "Cost grows its own route" "echo 'val u = \"/ai/usage\"' >> $KT/Cost.kt"                                 "A4 Cost.kt has its own /ai/usage"
 mutant "Cost grows its own client" "echo 'val c = HttpURLConnection::class' >> $KT/Cost.kt"                     "A4 Cost.kt has its own HttpURLConnection"
 mutant "Cost leaves the client"   "sed -i 's/AiUsageClient.fetchAny/Mine.fetchAny/' $KT/Cost.kt"                "A4 Cost does not fetch through AiUsageClient"

@@ -39,6 +39,7 @@
     <string name="ai_sample_note">Sample data: the real accounts load from the private store (Cloud Account) when it is reachable.</string>
     <string name="ai_reveal_none">Not available: the private store did not answer.</string>
     <string name="ai_empty">Nothing declared.</string>
+    <string name="ai_not_served">Not served yet: Cloud Account has not delivered this fleet-private page to the phone. Open Cloud Account once with the fleet bearer granted, then come back.</string>
     <string name="cost_loading">Reading the usage table…</string>
     <string name="cost_failed">No usage: %1$s</string>
     <string name="cost_refresh">Refresh</string>

@@ -8,7 +8,8 @@ object Data {
     fun asset(name: String): String = File("../../data/fleet/app/com.diegonmarcos.cloudsuperintel/$name").readText()   // #1547 served datasets (personas, notebook), never APK assets
 
     /** An asset of assets/ai (the AIs and Cost pages' data, #1499). */
-    fun ai(name: String): String = File(if (name in SERVED_AI) "../../data/fleet/app/com.diegonmarcos.cloudsuperintel/$name" else "src/main/assets/ai/$name").readText()   // #1562 pages, mcp and plugins are served datasets
+    fun ai(name: String): String = File(if (name in SERVED_AI) "../../data/fleet/app/com.diegonmarcos.cloudsuperintel/$name" else if (name in FIXTURE_AI) "../test/fixtures/$name" else "src/main/assets/ai/$name").readText()   // #1562 pages, mcp and plugins are served datasets
+    private val FIXTURE_AI = setOf("apis.json", "cost.json")   // #1566 fleet-private served datasets: synthetic sample fixtures, no APK asset
     private val SERVED_AI = setOf("pages.json", "mcp.json", "plugins.json")
     fun buildJson(): JSONObject = JSONObject(File("../build.json").readText())
 

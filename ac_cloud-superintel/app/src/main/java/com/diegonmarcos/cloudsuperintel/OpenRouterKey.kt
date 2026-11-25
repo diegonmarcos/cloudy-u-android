@@ -7,7 +7,7 @@ import org.json.JSONObject
 
 /**
  * The key of the image flow (an image in or out goes straight to OpenRouter's chat completions): read at the moment of each send from the
- * private store, Cloud Account's secret provider (the same door and the same declaration as the APIs page, assets/ai/apis.json), and never
+ * private store, Cloud Account's secret provider (the same door and the same declaration as the APIs page, the served dataset fleet/superintel-apis), and never
  * kept, logged or baked. The first REAL row of the declared key provider holds the key; the bundled sample rows never do.
  */
 object OpenRouterKey {
@@ -23,10 +23,14 @@ object OpenRouterKey {
 
     /** The token source of one app: asset read once, the private store asked on every call. */
     fun source(ctx: Context): () -> AiToken {
-        val text = AiData.asset(ctx, "ai/apis.json")
-        val cfg = Apis.parse(text)
-        val provider = provider(text)
-        val src = PrivateSource.account(ctx, cfg.authority, cfg.method)
-        return { token(cfg, provider, src) }
+        // #1566 the declaration is a served private dataset, read per call (the last-known-good copy answers offline); not served yet = no key, never a crash.
+        return {
+            val text = AiData.asset(ctx, "ai/apis.json")
+            if (text.isBlank()) AiToken(null, "the APIs declaration is not served yet")
+            else {
+                val cfg = Apis.parse(text)
+                token(cfg, provider(text), PrivateSource.account(ctx, cfg.authority, cfg.method))
+            }
+        }
     }
 }

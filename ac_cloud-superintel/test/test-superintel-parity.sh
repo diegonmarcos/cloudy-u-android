@@ -29,6 +29,7 @@ def code(p):
     return "\n".join(re.sub(r"(?<![:\"])//.*$", "", l) for l in t.splitlines())
 bj = json.loads(read(os.path.join(app, "build.json")))
 ai = os.path.join(app, "app/src/main/assets/ai")
+fx = os.path.join(app, "test/fixtures")   # #1566 fleet-private served datasets (apis, cost): synthetic sample fixtures
 fl = os.path.join(app, "../data/fleet/app/com.diegonmarcos.cloudsuperintel")   # #1562 pages, mcp and plugins are served datasets
 kt = os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudsuperintel")
 lib = os.path.join(app, "..", "ab_cloud-libs-shared", "libs", "ai", "src", "main")
@@ -84,7 +85,7 @@ if "spec.sources.flatMap" not in screens: bad.append("P2 the rows page does not 
 
 # P3 the Cost window carries the whole former Cost page
 if pj.get("cost", {}).get("kind") != "cost" or pj["cost"].get("asset") != "ai/cost.json": bad.append("P3 pages.json lost the cost page (the Cost window draws it)")
-cost = json.loads(read(os.path.join(ai, "cost.json")))
+cost = json.loads(read(os.path.join(fx, "cost.json")))
 if cost["columns"] != ["Claude", "OpenRouter"] and [str(c).lower() for c in cost["columns"]][:2] != ["claude", "openrouter"]: bad.append("P3 cost.json lost the Claude / OpenRouter columns: %s" % cost["columns"])
 if not cost.get("token_columns") or len(cost["token_columns"]) < 6: bad.append("P3 cost.json lost the Daily / Monthly token columns")
 metrics = {r["claude"] for r in cost["rows"]} | {r["openrouter"] for r in cost["rows"]}
@@ -168,6 +169,7 @@ mutant() {   # mutant <name> <shell edit run in the copy> <needle expected in th
 }
 KT=app/src/main/java/com/diegonmarcos/cloudsuperintel
 AI=app/src/main/assets/ai
+FX=test/fixtures
 FL=../data/fleet/app/com.diegonmarcos.cloudsuperintel
 LIB=../ab_cloud-libs-shared/libs/ai/src/main
 PYJ="import json;p='build.json';d=json.load(open(p));"
@@ -181,7 +183,7 @@ mutant "a group is shown twice"      "python3 -c \"${PYP}d['pages']['skills']['s
 mutant "MCP-Tools drops a group"     "python3 -c \"${PYP}d['pages']['mcp']['sources'][0]['groups']=['Default.*'];json.dump(d,open(p,'w'))\"" "P2 MCP-Tools must be the whole"
 mutant "the page selection is lost"  "sed -i 's/keep.isEmpty() || keep.any { it.matches(/keep.isEmpty() || keep.all { it.matches(/' $KT/AiData.kt" "P2 AiData no longer selects"
 mutant "Cost page is lost"           "python3 -c \"${PYP}del d['pages']['cost'];json.dump(d,open(p,'w'))\"" "P3 pages.json lost the cost page"
-mutant "a Cost row is lost"          "python3 -c \"${PYP}p='$AI/cost.json';d=json.load(open(p));d['rows']=[r for r in d['rows'] if r['openrouter']!='est_30d'];json.dump(d,open(p,'w'))\"" "P3 cost.json lost the est_30d row"
+mutant "a Cost row is lost"          "python3 -c \"${PYP}p='$FX/cost.json';d=json.load(open(p));d['rows']=[r for r in d['rows'] if r['openrouter']!='est_30d'];json.dump(d,open(p,'w'))\"" "P3 cost.json lost the est_30d row"
 mutant "the Daily table is lost"     "sed -i 's/AiTags.COST_DAILY/AiTags.COST_DAILX/g' $KT/ui/AiScreens.kt" "P3 AiScreens no longer draws AiTags.COST_DAILY"
 mutant "the Cost window is hollow"   "sed -i 's/AiPage(cost)/Unit/' $KT/ui/SiWindows.kt" "P3 the Cost window does not draw the whole Cost page"
 mutant "the badge link is dropped"   "sed -i 's/asked.section == PAGE_COST/asked.section == \"x\"/' $KT/ui/SiShell.kt" "P3 the SuperApp badge's deep link"

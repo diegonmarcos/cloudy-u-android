@@ -14,7 +14,7 @@
  "ac_cloud-superintel/app/src/main/assets/si/seed/plugins.json": "Cold-start seed (#1562): a byte copy of the served tier-3 dataset plugins of Cloud SuperIntel (public page and row declarations, no secret). The pages must not be empty on first run or while Cloud Store has not served the dataset yet; the served dataset always overrides it and ColdStartSeedTest pins the copy to data/fleet so it cannot drift.",
  "ab_cloud-libs-shared/libs/appstore/src/main/assets/store-catalogue.json": "Tier-4 static reference seed (#1791): the Store's own app list (one row per package, each with category, licence, Play Integrity tier, game dimension, source and icon) that every Search > Phone page filters. The pages must list apps offline and on first run, not stay empty while a runtime dataset is unserved (the bug it fixes); the list holds public app metadata and no secret, and the dispatchable icon check keeps its URLs live."
  },
- "json_max": 80,
+ "json_max": 78,
  "gradle_max": 22,
  "b64_max": 304,
  "mock_files": [
@@ -305,14 +305,6 @@
   "ac_cloud-shopping/app/src/debug/assets/shop/shop.json": {
    "tier": "mock",
    "target": "remove from release builds (phase 1)"
-  },
-  "ac_cloud-superintel/app/src/main/assets/ai/apis.json": {
-   "tier": 2,
-   "target": "account fleet/apis"
-  },
-  "ac_cloud-superintel/app/src/main/assets/ai/cost.json": {
-   "tier": 2,
-   "target": "account fleet/cost"
   },
   "ac_cloud-superintel/app/src/main/assets/ai/dotfiles.json": {
    "tier": 1,
