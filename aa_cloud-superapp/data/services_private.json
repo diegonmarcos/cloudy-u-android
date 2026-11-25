@@ -40,11 +40,41 @@
     "db_engine": null
   },
   {
+    "name": "jev-sidecar-go",
+    "service": "jev-sidecar-go",
+    "vm": "oci-A1-f_0",
+    "private_dns": "jev-sidecar-go:3143",
+    "port": 3143,
+    "protocol": "http",
+    "category": "ai",
+    "db_engine": null
+  },
+  {
+    "name": "c3-public-go-api",
+    "service": "c3-public-go-api",
+    "vm": "oci-A1-f_0",
+    "private_dns": "c3-public-go-api:8097",
+    "port": 8097,
+    "protocol": "http",
+    "category": "app",
+    "db_engine": null
+  },
+  {
     "name": "cloud-me-api",
     "service": "cloud-me-api",
     "vm": "oci-E2-f_1",
     "private_dns": "cloud-me-api.mesh.diegonmarcos.com:8124",
     "port": 8124,
+    "protocol": "http",
+    "category": "app",
+    "db_engine": null
+  },
+  {
+    "name": "cloud-me-go-api",
+    "service": "cloud-me-go-api",
+    "vm": "oci-E2-f_1",
+    "private_dns": "cloud-me-go-api:8134",
+    "port": 8134,
     "protocol": "http",
     "category": "app",
     "db_engine": null
@@ -57,6 +87,26 @@
     "port": 3111,
     "protocol": "http",
     "category": "data",
+    "db_engine": null
+  },
+  {
+    "name": "cloudy-all-go-mcp",
+    "service": "cloudy-all-go-mcp",
+    "vm": "oci-A1-f_0",
+    "private_dns": "cloudy-all-go-mcp:3140",
+    "port": 3140,
+    "protocol": "http",
+    "category": "obs",
+    "db_engine": null
+  },
+  {
+    "name": "cloudy-drive-git-proxy-go-api",
+    "service": "cloudy-drive-git-proxy-go-api",
+    "vm": "oci-E2-f_1",
+    "private_dns": "cloudy-drive-git-proxy-go-api:8133",
+    "port": 8133,
+    "protocol": "http",
+    "category": "app",
     "db_engine": null
   },
   {
@@ -280,6 +330,56 @@
     "db_engine": null
   },
   {
+    "name": "ntfy-go-rss-gateway",
+    "service": "ntfy-go",
+    "vm": "oci-A1-f_0",
+    "private_dns": "ntfy-go-rss-gateway:8191",
+    "port": 8191,
+    "protocol": "http",
+    "category": "obs",
+    "db_engine": null
+  },
+  {
+    "name": "ntfy-go-topic-scanner",
+    "service": "ntfy-go",
+    "vm": "oci-A1-f_0",
+    "private_dns": "ntfy-go-topic-scanner:8192",
+    "port": 8192,
+    "protocol": "http",
+    "category": "obs",
+    "db_engine": null
+  },
+  {
+    "name": "ntfy-go-notify-broker",
+    "service": "ntfy-go",
+    "vm": "oci-A1-f_0",
+    "private_dns": "ntfy-go-notify-broker:8193",
+    "port": 8193,
+    "protocol": "http",
+    "category": "obs",
+    "db_engine": null
+  },
+  {
+    "name": "ntfy-go-github-rss",
+    "service": "ntfy-go",
+    "vm": "oci-A1-f_0",
+    "private_dns": "ntfy-go-github-rss",
+    "port": null,
+    "protocol": "tcp",
+    "category": "obs",
+    "db_engine": null
+  },
+  {
+    "name": "ntfy-go-syslog-bridge",
+    "service": "ntfy-go",
+    "vm": "oci-A1-f_0",
+    "private_dns": "ntfy-go-syslog-bridge",
+    "port": null,
+    "protocol": "tcp",
+    "category": "obs",
+    "db_engine": null
+  },
+  {
     "name": "reports",
     "service": "reports",
     "vm": "local",
@@ -316,6 +416,16 @@
     "private_dns": "agents-tmp-reaper",
     "port": null,
     "protocol": "none",
+    "category": "tools",
+    "db_engine": null
+  },
+  {
+    "name": "c3-execd",
+    "service": "c3-execd",
+    "vm": "oci-A1-f_0",
+    "private_dns": "c3-execd:4187",
+    "port": 4187,
+    "protocol": "http",
     "category": "tools",
     "db_engine": null
   },
@@ -375,6 +485,46 @@
     "vm": "oci-A1-f_0",
     "private_dns": "cloudy-auth-email-api:4183",
     "port": 4183,
+    "protocol": "http",
+    "category": "sec",
+    "db_engine": null
+  },
+  {
+    "name": "cloudy-auth-google-go-api",
+    "service": "auth-broker-go",
+    "vm": "oci-A1-f_0",
+    "private_dns": "cloudy-auth-google-go-api:4280",
+    "port": 4280,
+    "protocol": "http",
+    "category": "sec",
+    "db_engine": null
+  },
+  {
+    "name": "cloudy-auth-github-go-api",
+    "service": "auth-broker-go",
+    "vm": "oci-A1-f_0",
+    "private_dns": "cloudy-auth-github-go-api:4281",
+    "port": 4281,
+    "protocol": "http",
+    "category": "sec",
+    "db_engine": null
+  },
+  {
+    "name": "cloudy-auth-cloudflare-go-api",
+    "service": "auth-broker-go",
+    "vm": "oci-A1-f_0",
+    "private_dns": "cloudy-auth-cloudflare-go-api:4282",
+    "port": 4282,
+    "protocol": "http",
+    "category": "sec",
+    "db_engine": null
+  },
+  {
+    "name": "cloudy-auth-email-go-api",
+    "service": "auth-broker-go",
+    "vm": "oci-A1-f_0",
+    "private_dns": "cloudy-auth-email-go-api:4283",
+    "port": 4283,
     "protocol": "http",
     "category": "sec",
     "db_engine": null
@@ -440,6 +590,16 @@
     "db_engine": null
   },
   {
+    "name": "cloudy-ai-tokens-go-api",
+    "service": "cloudy-ai-tokens-go-api",
+    "vm": "oci-A1-f_0",
+    "private_dns": "cloudy-ai-tokens-go-api:4188",
+    "port": 4188,
+    "protocol": "http",
+    "category": "sec",
+    "db_engine": null
+  },
+  {
     "name": "introspect-proxy",
     "service": "introspect-proxy",
     "vm": "gcp-E2-f_0",
@@ -465,6 +625,16 @@
     "vm": "gcp-E2-f_0",
     "private_dns": "mcp-oauth.mesh.diegonmarcos.com:4183",
     "port": 4183,
+    "protocol": "http",
+    "category": "sec",
+    "db_engine": null
+  },
+  {
+    "name": "mcp-oauth-go",
+    "service": "mcp-oauth-go",
+    "vm": "gcp-E2-f_0",
+    "private_dns": "mcp-oauth-go:4189",
+    "port": 4189,
     "protocol": "http",
     "category": "sec",
     "db_engine": null
@@ -600,6 +770,16 @@
     "db_engine": null
   },
   {
+    "name": "mattermost-bots-go",
+    "service": "chat-mattermost-go",
+    "vm": "oci-A1-f_0",
+    "private_dns": "mattermost-bots-go:8897",
+    "port": 8897,
+    "protocol": "http",
+    "category": "app",
+    "db_engine": null
+  },
+  {
     "name": "cloud-webmail",
     "service": "cloud-webmail",
     "vm": "oci-A1-f_0",
@@ -685,6 +865,16 @@
     "vm": "oci-A1-f_0",
     "private_dns": "capital-stack-news-gdelt-api:3019",
     "port": 3019,
+    "protocol": "http",
+    "category": "tools",
+    "db_engine": null
+  },
+  {
+    "name": "capital-stack-news-gdelt-go-api",
+    "service": "capital-stack-news-gdelt-go-api",
+    "vm": "oci-A1-f_0",
+    "private_dns": "capital-stack-news-gdelt-go-api:3142",
+    "port": 3142,
     "protocol": "http",
     "category": "tools",
     "db_engine": null
