@@ -13,7 +13,7 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 GUARD="$ROOT/1_cicd/src/scripts/cloud-android-decisions-use-guard.py"
 DATA=1_cicd/src/data/decisions-use-guard.json
-DECL=ab_cloud-libs-shared/libs/decisions-engine/src/main/assets/decisions.json
+DECL=fleet-private-data/decisions.json   # #1566 fleet-private: CI materialises it
 LINK=ab_cloud-libs-shared/libs/decisions-link
 AIDL=$LINK/src/main/aidl/com/diegonmarcos/superapp/decisions/link/IDecisionsEngine.aidl
 CLIENT=$LINK/src/main/java/com/diegonmarcos/superapp/decisions/link/DecisionsLink.kt

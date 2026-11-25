@@ -140,7 +140,7 @@ class EnhanceEngineTest {
     // ── the declaration and the sources ────────────────────────────────────
     @Test fun theCallSiteNamesTheDeclaredImageUseForThisApp() {
         val repo = root().parentFile
-        val decl = JSONObject(File(repo, "ab_cloud-libs-shared/libs/decisions-engine/src/main/assets/decisions.json").readText())
+        val decl = JSONObject(File(repo, "fleet-private-data/decisions.json").readText())
         val use = decl.getJSONObject("image").getJSONObject("uses").getJSONObject(EngineRoute.USE)
         val apps = use.getJSONArray("apps")
         assertTrue((0 until apps.length()).any { apps.getString(it) == "com.diegonmarcos.cloudcanvas" })

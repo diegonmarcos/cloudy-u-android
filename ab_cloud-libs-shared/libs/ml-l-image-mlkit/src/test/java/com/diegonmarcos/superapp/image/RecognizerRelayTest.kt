@@ -74,7 +74,7 @@ class RecognizerRelayTest {
     }
 
     @Test fun `the declared use is the one the engine serves the image scan`() {
-        val u = JSONObject(java.io.File("../decisions-engine/src/main/assets/decisions.json").readText())
+        val u = JSONObject(java.io.File("../../../fleet-private-data/decisions.json").readText())
             .getJSONObject("relay").getJSONObject("uses").getJSONObject("image_scan_recognize")
         assertTrue(u.getJSONArray("apps").toString().contains("com.diegonmarcos.cloudlib.mllimagemlkit"))
         assertTrue(u.getJSONArray("endpoints").toString().contains("decisions"))

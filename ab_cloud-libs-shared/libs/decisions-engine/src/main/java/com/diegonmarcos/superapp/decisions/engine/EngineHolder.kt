@@ -13,17 +13,19 @@ import com.diegonmarcos.superapp.decisions.core.KeyBook
 import com.diegonmarcos.superapp.decisions.core.Ledger
 import com.diegonmarcos.superapp.decisions.core.Policy
 import com.diegonmarcos.superapp.decisions.core.RelayEngine
+import com.diegonmarcos.superapp.fleetdata.FleetData
 import org.json.JSONObject
 import java.io.File
 
 /**
- * The one [Engine] of this process (#1801: with its [RelayEngine] and the [KeyBook] that holds the fleet's AI keys), built on first use from the baked policy (assets/decisions.json) and
+ * The one [Engine] of this process (#1801: with its [RelayEngine] and the [KeyBook] that holds the fleet's AI keys), built on first use from the served policy (fleet/decisions, last-known-good; not served = no engine, retried on the next call) and
  * the engine's own state files. A policy that does not parse leaves no engine at all: every call then
  * answers `no_policy`, and the reason is logged once (never anything that was asked).
  */
 object EngineHolder {
     private const val TAG = "DecisionsEngine"
-    const val ASSET = "decisions.json"
+    /** #1566 the engine declaration is a fleet-private served dataset (Cloud Account's private route), never an APK asset. */
+    const val DATASET = "fleet/decisions"
 
     @Volatile private var built: Holder? = null
 
@@ -56,9 +58,10 @@ object EngineHolder {
 
     private fun build(ctx: Context): Holder? {
         val policy = try {
-            Policy.parse(JSONObject(ctx.assets.open(ASSET).use { it.readBytes().toString(Charsets.UTF_8) }))
+            Policy.parse(JSONObject(FleetData.get(ctx, DATASET) { it }
+                ?: run { Log.w(TAG, "decisions is not served (no engine until it is)"); return null }))
         } catch (e: Exception) {
-            Log.w(TAG, "decisions.json did not load: ${e.javaClass.simpleName}: ${e.message}")
+            Log.w(TAG, "fleet/decisions did not load: ${e.javaClass.simpleName}: ${e.message}")
             return null
         }
         if (policy.rejected.isNotEmpty()) Log.w(TAG, "uses not served: ${policy.rejected}")

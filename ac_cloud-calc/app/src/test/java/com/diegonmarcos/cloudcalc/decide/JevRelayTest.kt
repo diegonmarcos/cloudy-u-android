@@ -52,7 +52,7 @@ class JevRelayTest {
 
     @Test
     fun `the engine serves Calc's use on the endpoints it names`() {
-        val u = JSONObject(File("../../ab_cloud-libs-shared/libs/decisions-engine/src/main/assets/decisions.json").readText())
+        val u = JSONObject(File("../../fleet-private-data/decisions.json").readText())
             .getJSONObject("relay").getJSONObject("uses").getJSONObject(JevStore.USE)
         assertTrue(u.getJSONArray("apps").toString().contains("com.diegonmarcos.cloudcalc"))
         for (e in listOf("decisions", "chat", "key")) assertTrue(e, u.getJSONArray("endpoints").toString().contains(e))

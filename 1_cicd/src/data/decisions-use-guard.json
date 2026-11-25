@@ -1,6 +1,6 @@
 {
   "_doc": "#881 THE DECLARATION the decisions-use guard (1_cicd/src/scripts/cloud-android-decisions-use-guard.py) reads. Everything it knows about where the fleet's decision-model plumbing lives is here, nothing is named in the script. D1 the wire carries no credential; D2 every declared use validates; D3 every DecisionsLink.decide/outcome call site names a declared use with a string literal, from an app that use lists; D4 a use with a call site names the test that proves its fallback (the app's own path runs when there is no verdict); D5 no app or lib outside key_readers reads the OpenRouter key (the ratchet: a new reader fails, a reader that stops can be removed from the list); D6 the declaration is not vacuous.",
-  "declaration": "ab_cloud-libs-shared/libs/decisions-engine/src/main/assets/decisions.json",
+  "declaration": "fleet-private-data/decisions.json",
   "link": "ab_cloud-libs-shared/libs/decisions-link",
   "engine_package": "com.diegonmarcos.cloudlib.decisionsengine",
   "fleet": "aa_cloud-superapp/data/constellation-fleet.json",

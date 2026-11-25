@@ -51,7 +51,7 @@ class SearchAddonRelayTest {
     fun `the declared use is the one the engine serves the browser`() {
         assertEquals("browser_search_ai", SearchAddon.USE)
         assertEquals("chat", SearchAddon.ENDPOINT)
-        val uses = JSONObject(File("../../ab_cloud-libs-shared/libs/decisions-engine/src/main/assets/decisions.json").readText())
+        val uses = JSONObject(File("../../fleet-private-data/decisions.json").readText())
             .getJSONObject("relay").getJSONObject("uses")
         val u = uses.getJSONObject(SearchAddon.USE)
         assertTrue(u.getJSONArray("apps").toString().contains("com.diegonmarcos.cloudbrowser"))

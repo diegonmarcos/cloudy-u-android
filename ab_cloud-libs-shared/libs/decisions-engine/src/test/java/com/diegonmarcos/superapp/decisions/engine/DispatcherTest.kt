@@ -30,7 +30,7 @@ import java.util.Base64
  */
 class DispatcherTest {
     private val self = "com.diegonmarcos.cloudlib.decisionsengine"
-    private val policy = Policy.parse(JSONObject(File("src/main/assets/decisions.json").readText()))
+    private val policy = Policy.parse(JSONObject(File("../../../fleet-private-data/decisions.json").readText()))
     private var posts = 0
     private val http = object : Http {
         override fun send(url: String, token: String?, body: String?, timeoutMs: Int): Http.Response {

@@ -60,6 +60,7 @@ dependencies {
     // CONSTELLATION_DATA (the signature permission guarding the service) is declared by core; devtools
     // (the debug server the /api/decisions route registers on) rides on core.
     implementation project(':libs:core')
+    implementation project(':libs:fleet-data-client')   // #1566 the declaration is a fleet-private dataset served at runtime
     // The one Decisions API call the engine's logic (src/main/java/.../decisions/core) makes.
     implementation project(':libs:decisions')
     // The wire (IDecisionsEngine) this service implements.

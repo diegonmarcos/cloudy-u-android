@@ -98,7 +98,7 @@ object Fixtures {
     }
 
     /** The real declaration, so the shipped file is parsed and exercised by the same suite. */
-    fun realManifest(): JSONObject = JSONObject(File("../decisions-engine/src/main/assets/decisions.json").readText())
+    fun realManifest(): JSONObject = JSONObject(File("../../../fleet-private-data/decisions.json").readText())
 
     fun noulQ(id: String = "ok") = JSONObject().put(id, JSONObject().put("type", "noul").put("instructions", "Is it fine?"))
 

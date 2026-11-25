@@ -375,9 +375,9 @@
       "expect": { "apps": 0, "libs": 1, "rootfs": 0, "ship": 1, "refresh": 0 }
     },
     {
-      "id": "#881 engine declaration: libs/decisions-engine's decisions.json (every use, threshold, cap and consent default)",
-      "_doc": "The declaration lives beside the engine, not in fleet-config.json: that manifest is baked into the SuperApp and every app, so a threshold edit there would ship the SuperApp and refresh 33 apps. Here a wave's new use rebuilds one lib APK.",
-      "files": ["ab_cloud-libs-shared/libs/decisions-engine/src/main/assets/decisions.json"],
+      "id": "#881 engine declaration reader: libs/decisions-engine's EngineHolder (the declaration decisions.json, every use, threshold, cap and consent default, is the fleet-private served dataset fleet/decisions since #1566)",
+      "_doc": "The declaration is served privately, not in fleet-config.json: that manifest is baked into the SuperApp and every app, so a threshold edit there would ship the SuperApp and refresh 33 apps. Here a wave's new use rebuilds one lib APK.",
+      "files": ["ab_cloud-libs-shared/libs/decisions-engine/src/main/java/com/diegonmarcos/superapp/decisions/engine/EngineHolder.kt"],
       "expect": { "apps": 0, "libs": 1, "rootfs": 0, "ship": 1, "refresh": 0 }
     },
     {

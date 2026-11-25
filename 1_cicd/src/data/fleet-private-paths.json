@@ -6,6 +6,7 @@
     "apps-mcp-api": "fleet-private-data/apps-mcp-api.json",
     "appstore-feeds": "fleet-private-data/appstore-feeds.json",
     "appstore-install-sources": "fleet-private-data/appstore-install-sources.json",
-    "shell-allowlist": "fleet-private-data/shell-allowlist.json"
+    "shell-allowlist": "fleet-private-data/shell-allowlist.json",
+    "decisions": "fleet-private-data/decisions.json"
   }
 }

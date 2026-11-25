@@ -59,7 +59,7 @@ class AiRouterRelayTest {
     }
 
     @Test fun `the engine serves the keyboard's use`() {
-        val u = JSONObject(src("../decisions-engine/src/main/assets/decisions.json"))
+        val u = JSONObject(src("../../../fleet-private-data/decisions.json"))
             .getJSONObject("relay").getJSONObject("uses").getJSONObject("keyboard_text_tools")
         assertTrue(u.getJSONArray("apps").toString().contains("com.diegonmarcos.cloudkeyboard"))
         assertEquals("chat", u.getJSONArray("endpoints").getString(0))

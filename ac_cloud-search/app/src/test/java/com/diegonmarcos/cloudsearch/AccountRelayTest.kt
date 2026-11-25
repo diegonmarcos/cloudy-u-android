@@ -51,7 +51,7 @@ class AccountRelayTest {
     fun `the declared use is the one the engine serves Search`() {
         assertEquals("search_ai_chat", Account.USE)
         assertEquals("chat", Account.ENDPOINT)
-        val u = JSONObject(File("../../ab_cloud-libs-shared/libs/decisions-engine/src/main/assets/decisions.json").readText())
+        val u = JSONObject(File("../../fleet-private-data/decisions.json").readText())
             .getJSONObject("relay").getJSONObject("uses").getJSONObject(Account.USE)
         assertTrue(u.getJSONArray("apps").toString().contains("com.diegonmarcos.cloudsearch"))
         assertTrue(u.getJSONArray("endpoints").toString().contains(Account.ENDPOINT))

@@ -57,7 +57,7 @@ class WriterRelayTest {
 
     @Test
     fun `the engine serves Writer's use from the keyboard that compiles it`() {
-        val u = JSONObject(File("../decisions-engine/src/main/assets/decisions.json").readText())
+        val u = JSONObject(File("../../../fleet-private-data/decisions.json").readText())
             .getJSONObject("relay").getJSONObject("uses").getJSONObject("writer_routes")
         assertTrue(u.getJSONArray("apps").toString().contains("com.diegonmarcos.cloudkeyboard"))
         assertTrue(u.getJSONArray("endpoints").toString().contains("chat"))
