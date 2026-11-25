@@ -266,11 +266,11 @@ if [p["id"] for p in secs.get("tasks", {}).get("pages", [])] != ["roadmaps", "ba
 # both drawing the mysocials web pages; Tasks stays declared off the bar with every page, so nothing is dropped.
 if "socials" in secs or "socials" in ui.get("bottom_nav", []) or os.path.isdir(os.path.join(app, "data/ui/socials")):
     bad("pages", "the Socials section is declared again (it is Proj; its two tabs live in Prof and Pers)")
-for _pg, _url, _rel in (("professional", "mysocials/linkedin.html", "prof/prof-profiles/professional"), ("instagram", "mysocials/instagram-diegocnmarcos_.html", "pers/pers-profiles/instagram")):
+for _pg, _url, _rel in (("professional", "https://linkedin.com/in/diegonmarcos", "prof/prof-profiles/professional"), ("instagram", "https://www.instagram.com/diegocnmarcos_/", "pers/pers-profiles/instagram")):
     _sf = os.path.join(app, f"data/ui/{_rel}.json")
     _sj = json.load(open(_sf, encoding="utf-8")) if os.path.exists(_sf) else [{}]
-    if _sj[0].get("kind") != "fragment" or _sj[0].get("id") != "web" or _sj[0].get("url") != _url or not os.path.exists(os.path.join(app, "data/web", _url)):
-        bad("pages", f"{_rel} does not draw the mysocials page {_url}")
+    if _sj[0].get("kind") != "fragment" or _sj[0].get("id") != "web" or _sj[0].get("url") != _url:
+        bad("pages", f"{_rel} does not embed {_url} (#1911)")
 if "tasks" in ui.get("bottom_nav", []) or "tasks" not in secs or [p["id"] for p in secs["tasks"].get("pages", [])] != ["roadmaps", "backlogs"] or \
    [g["id"] for g in secs["tasks"].get("groups", [])] != ["backlogs", "roadmaps"]:
     bad("pages", "Tasks left the bar but must stay a declared section with Tree and Due and its two groups (nothing dropped)")
@@ -533,7 +533,7 @@ mutant settings "the top bar loses its inline actions" "sed -i 's/inlineActions 
 mutant pages "the Home section is back" "python3 -c \"import json;d=json.load(open('build.json'));d['ui']['sections'].append({'id':'home','label':'Home','pages':[]});json.dump(d,open('build.json','w'))\""
 mutant pages "Backlogs dropped from Tasks" "python3 -c \"import json;d=json.load(open('build.json'));[s['pages'].pop() for s in d['ui']['sections'] if s['id']=='tasks'];json.dump(d,open('build.json','w'))\""
 mutant pages "Instagram dropped from Pers Profiles" "python3 -c \"import json;d=json.load(open('build.json'));[s['pages'][0]['pages'].pop(1) for s in d['ui']['sections'] if s['id']=='pers'];json.dump(d,open('build.json','w'))\""
-mutant pages "Prof Professional draws another page" "sed -i 's#mysocials/linkedin.html#mysocials/social.html#' data/ui/prof/prof-profiles/professional.json"
+mutant pages "Prof Professional draws another page" "sed -i 's#https://linkedin.com/in/diegonmarcos\"#mysocials/social.html\"#' data/ui/prof/prof-profiles/professional.json"
 mutant pages "Tasks section dropped with the bar slot" "python3 -c \"import json;d=json.load(open('build.json'));d['ui']['sections']=[s for s in d['ui']['sections'] if s['id']!='tasks'];json.dump(d,open('build.json','w'))\""
 mutant pages "the Duties section comes back" "python3 -c \"import json;d=json.load(open('build.json'));d['ui']['sections'].append({'id':'duties','label':'Duties','pages':[]});json.dump(d,open('build.json','w'))\""
 mutant nav-order "Inventory and Tasks swapped" "python3 -c \"import json;d=json.load(open('build.json'));b=d['ui']['bottom_nav'];b[2],b[4]=b[4],b[2];json.dump(d,open('build.json','w'))\""

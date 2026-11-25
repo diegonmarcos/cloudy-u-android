@@ -106,6 +106,14 @@ def norm(leaf):
 RELABELED = {  # the owner's renames of #1901, and the two pages whose name the move gave to another page
     "experiences/achieves": "Personal Archives", "socials/socials-personal": "Instagram",
 }
+# #1911 owner order: these three tabs embed their real site (the declared me-links.json URL) instead of the bundled mysocials mirror; the
+# baseline value is compared through this table, ONLY on these pages (the Lnktree bottom-nav copies keep the mirrors)
+EMBED1911 = {"prof/professional": {"mysocials/linkedin.html": "https://linkedin.com/in/diegonmarcos"},
+             "pers/instagram": {"mysocials/instagram-diegocnmarcos_.html": "https://www.instagram.com/diegocnmarcos_/"},
+             "pers/social": {"mysocials/social.html": "https://diegonmarcos.github.io/mySocials/social.html"}}
+def real(x, to):
+    for old, new in EMBED1911.get(to, {}).items(): x = x.replace(old, new)
+    return x
 for key, b in sorted(base["pages"].items()):
     sec, pid = key.split("/", 1)
     ns, np = resolve(sec, pid)
@@ -118,10 +126,10 @@ for key, b in sorted(base["pages"].items()):
         bad("parity", f"{key} -> {ns}/{np}: a container became a leaf or the other way round")
     have = {norm(x) for x in t["leaves"]}
     for leaf in b["leaves"]:
-        if norm(leaf) not in have:
+        if norm(real(leaf, f"{ns}/{np}")) not in have:
             bad("parity", f"{key} -> {ns}/{np}: the field {leaf[:110]} is gone")
     for u in b["urls"]:
-        if u not in t["urls"]: bad("parity", f"{key} -> {ns}/{np}: the url {u} is gone")
+        if real(u, f"{ns}/{np}") not in t["urls"]: bad("parity", f"{key} -> {ns}/{np}: the url {u} is gone")
     for tg in b["targets"]:
         n = norm(f'x="{tg}"')[3:-1]
         if n not in t["targets"]: bad("parity", f"{key} -> {ns}/{np}: the tile target {tg} is gone")
@@ -138,7 +146,7 @@ for pid, to in ALSO.items():
         bad("parity", f"lnktree/{pid} is also expected at {to}: one of them is gone"); continue
     have = {norm(x) for x in t["leaves"]}
     for leaf in b["leaves"]:
-        if norm(leaf) not in have: bad("parity", f"lnktree/{pid} -> {to}: the field {leaf[:110]} is gone")
+        if norm(real(leaf, to)) not in have: bad("parity", f"lnktree/{pid} -> {to}: the field {leaf[:110]} is gone")
 # every section's own data (Health's metric taxonomy, the Achieves migration ...) is still declared, on the section that took it over
 allextras = {x for s in now["sections"] for x in s["extras"]}
 for s in base["sections"]:
@@ -177,12 +185,12 @@ if "LegacyRoutes.resolve(sectionId, pageId)" not in mo or "LegacyRoutes.load(thi
 
 # ---- N4 every tile opens its own site; the URL is declared data
 SITES = {  # tile -> (page file, the url it embeds)
-    "Prof > Profiles > Professional (LinkedIn)": ("data/ui/prof/prof-profiles/professional.json", "mysocials/linkedin.html"),
+    "Prof > Profiles > Professional (LinkedIn)": ("data/ui/prof/prof-profiles/professional.json", "https://linkedin.com/in/diegonmarcos"),
     "Prof > Leaf.y": ("data/ui/prof/leafy.json", "https://diegonmarcos.github.io/leafy/"),
     "Prof > Nexus.z": ("data/ui/prof/nexus.json", "https://diegonmarcos.github.io/nexus/"),
     "Prof > Stark.x": ("data/ui/prof/stark.json", "https://diegonmarcos.github.io/stark/"),
     "Pers > Profiles > Personal": ("data/ui/pers/pers-profiles/personal.json", "https://diegonmarcos.com/"),
-    "Pers > Profiles > Instagram": ("data/ui/pers/pers-profiles/instagram.json", "mysocials/instagram-diegocnmarcos_.html"),
+    "Pers > Profiles > Instagram": ("data/ui/pers/pers-profiles/instagram.json", "https://www.instagram.com/diegocnmarcos_/"),
     "Pers > Astro": ("data/ui/pers/astro.json", "https://diegonmarcos.github.io/myAstro/"),
     "Proj > Lnktree": ("data/ui/proj/lnktree-site.json", "https://linktree.diegonmarcos.com/"),
     "Lnktree (bottom nav) > Lnktree": ("data/ui/lnktree/lt-lnktree-site.json", "https://linktree.diegonmarcos.com/"),
@@ -292,7 +300,7 @@ mutant tree "the page cache covers only Proj" "$J \"$BJ;U['lnktree_cache']['sect
 mutant urls "Pers > Personal opens another site" "sed -i 's#https://diegonmarcos.com/#https://example.com/#' data/ui/pers/pers-profiles/personal.json"
 mutant urls "Proj > Lnktree opens another site" "sed -i 's#https://linktree.diegonmarcos.com/#https://example.com/#' data/ui/proj/lnktree-site.json"
 mutant urls "Prof > Nexus.z opens Stark.x" "sed -i 's#diegonmarcos.github.io/nexus/#diegonmarcos.github.io/stark/#' data/ui/prof/nexus.json"
-mutant urls "Prof > Professional is not the LinkedIn page" "sed -i 's#mysocials/linkedin.html#mysocials/social.html#' data/ui/prof/prof-profiles/professional.json"
+mutant urls "Prof > Professional is not the LinkedIn page" "sed -i 's#https://linkedin.com/in/diegonmarcos\"#mysocials/social.html\"#' data/ui/prof/prof-profiles/professional.json"
 mutant urls "a tile URL becomes a Kotlin literal" "sed -i '0,/^object Sections {/s//object Sections {\n    const val PERSONAL = \"https:\\/\\/diegonmarcos.com\\/\"/' app/src/main/java/com/diegonmarcos/cloudme/Sections.kt"
 # profile
 mutant profile "the profile section leaves the settings (unreachable)" "$J \"$BJ;U['settings'].remove('profile');$W_\""

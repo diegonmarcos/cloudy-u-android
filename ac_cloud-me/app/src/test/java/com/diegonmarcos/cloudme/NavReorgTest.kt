@@ -136,10 +136,10 @@ class NavReorgTest {
 
     @Test fun `each tile opens its own site and the URL is declared data in its page file`() {
         val want = listOf(
-            Triple("prof", "professional", "mysocials/linkedin.html"),
+            Triple("prof", "professional", "https://linkedin.com/in/diegonmarcos"),
             Triple("prof", "leafy", "https://diegonmarcos.github.io/leafy/"), Triple("prof", "nexus", "https://diegonmarcos.github.io/nexus/"),
             Triple("prof", "stark", "https://diegonmarcos.github.io/stark/"),
-            Triple("pers", "personal", "https://diegonmarcos.com/"), Triple("pers", "instagram", "mysocials/instagram-diegocnmarcos_.html"),
+            Triple("pers", "personal", "https://diegonmarcos.com/"), Triple("pers", "instagram", "https://www.instagram.com/diegocnmarcos_/"),
             Triple("pers", "astro", "https://diegonmarcos.github.io/myAstro/"), Triple("proj", "lnktree-site", "https://linktree.diegonmarcos.com/"), Triple("lnktree", "lt-lnktree-site", "https://linktree.diegonmarcos.com/"),
         )
         for ((section, page, url) in want) {
@@ -156,7 +156,7 @@ class NavReorgTest {
             val chain = Sections.byId(s)!!.path(p).map { it.id }
             LnktreePages.fromStack(p, JSONArray(BuroLlcTestData.text("data/ui/$s/${chain.joinToString("/")}.json")), cfg)
         }
-        assertEquals(setOf("leafy", "nexus", "stark", "personal", "astro", "lnktree-site", "lt-lnktree-site"), cached.map { it.id }.toSet())
+        assertEquals(setOf("professional", "leafy", "nexus", "stark", "personal", "instagram", "astro", "lnktree-site", "lt-lnktree-site"), cached.map { it.id }.toSet())
         assertEquals(listOf("pers", "prof", "proj"), cfg.cachedSections())
     }
 }
