@@ -123,6 +123,7 @@
     "com.diegonmarcos.cloudlib.fleetconfigsxray": 38245,
     "com.diegonmarcos.cloudwiki": 38246,
     "com.diegonmarcos.cloudcanvas": 38247,
-    "com.diegonmarcos.cloudlib.accountui": 38090
+    "com.diegonmarcos.cloudlib.accountui": 38090,
+    "com.diegonmarcos.cloudlib.jsoncanvas": 38248
   }
 }
