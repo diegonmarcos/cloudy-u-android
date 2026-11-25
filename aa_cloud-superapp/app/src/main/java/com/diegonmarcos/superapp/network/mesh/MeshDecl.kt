@@ -50,6 +50,9 @@ object MeshDecl {
         fun control(id: String): Control? = controls.firstOrNull { it.id == id }
     }
 
+    /** #1900 A section of the Status page: [rows] are ids of the status page's `rows`. */
+    data class Section(val id: String, val label: String, val rows: List<String>)
+
     /** #1074 A tab of the strip: [sections] are the ids of `pages` it draws, in this order. */
     data class Tab(val id: String, val label: String, val icon: String, val sections: List<String>)
 
@@ -77,6 +80,13 @@ object MeshDecl {
         val meshes: List<com.diegonmarcos.superapp.fleetxray.mesh.C3MeshProbe.Target> = emptyList(),
         /** #1797 The IP packet sizes the profiler's MTU probe sends through the tunnel. */
         val mtuProbeSizes: List<Int> = emptyList(),
+        /** #1900 The Prober matrix: which names, URLs and IP literals each group probes, the per-probe timeout and the parallelism. */
+        val prober: MeshProber.Decl = MeshProber.Decl(),
+        /**
+         * #1900 The Status page's three sections (Status / Profiler / Prober): each a label and the row ids it draws. Every id of
+         * `rows` is in exactly one; empty = the page draws `rows` flat.
+         */
+        val sections: List<Section> = emptyList(),
     ) {
         fun tab(id: String?): Tab? = tabs.firstOrNull { it.id == id }
         /** The tab the strip opens on: the declared default, else the first. */
@@ -116,6 +126,13 @@ object MeshDecl {
                         resolver = m.optString("resolver", m.getString("hub")), name = m.getString("name"),
                         serviceUrl = m.optString("service_url"),
                     )
+                }
+            },
+            prober = MeshProber.parse(o.optJSONObject("prober")),
+            sections = o.optJSONArray("status_sections").let { a ->
+                if (a == null) emptyList() else (0 until a.length()).map { i ->
+                    val x = a.getJSONObject(i)
+                    Section(x.getString("id"), x.optString("label", x.getString("id")), x.optJSONArray("rows").strings())
                 }
             },
             mtuProbeSizes = o.optJSONArray("mtu_probe_sizes").let { a -> if (a == null) emptyList() else (0 until a.length()).map { a.getInt(it) } },

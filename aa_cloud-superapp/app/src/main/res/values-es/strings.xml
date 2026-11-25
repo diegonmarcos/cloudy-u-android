@@ -512,6 +512,8 @@
     <string name="mesh_row_log">Registro (%1$d)</string>
     <string name="mesh_status_log_how">Las %1$d entradas, todos los niveles y orígenes, la más reciente primero. La pestaña Registro muestra el mismo diario con su filtro.</string>
     <string name="mesh_ctl_reach_meshes_run">Sondear mallas</string>
+    <string name="mesh_ctl_prober_run">Ejecutar todas las sondas</string>
+    <string name="mesh_ctl_prober_cancel">Cancelar sondas</string>
     <string name="mesh_ctl_status_profiler_copy">Copiar informe</string>
     <string name="mesh_ctl_status_profiler_export">Exportar informe</string>
     <string name="mesh_ctl_status_log_open">Mostrar aquí el registro completo</string>

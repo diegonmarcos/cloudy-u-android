@@ -27,6 +27,7 @@
 
     <domain-config cleartextTrafficPermitted="true">
         <!-- BEGIN fleet-mesh-cleartext (generated from ac_cloud-account/build.json::fleet_endpoints by 1_cicd/src/scripts/cloud-android-fleet-nsc.py; do not edit) -->
+        <domain includeSubdomains="false">c3-infra-api.mesh.diegonmarcos.com</domain>
         <domain includeSubdomains="false">git-proxy-api.mesh.diegonmarcos.com</domain>
         <!-- END fleet-mesh-cleartext -->
         <domain includeSubdomains="true">localhost</domain>

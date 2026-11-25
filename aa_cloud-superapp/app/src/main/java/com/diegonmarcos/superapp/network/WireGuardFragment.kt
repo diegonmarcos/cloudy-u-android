@@ -39,6 +39,7 @@ class WireGuardFragment : KitComposeFragment() {
     private val prefs: WireGuardPrefs get() = WgState.prefs(requireContext())
 
     private val store: MeshStore by lazy {
+        TunnelBinder.install(requireContext())   // #1900 probes take their network (tunnel / outside) from the binder
         MeshStore(AndroidMeshPort(requireContext()), MeshDecl.baked, host,
             journalFile = com.diegonmarcos.superapp.network.mesh.MeshEventLog.file(requireContext()),
             autoProbe = true).also { s ->

@@ -35,7 +35,14 @@ class MeshStore(
     private val meshIo: C3MeshProbe.Io = C3MeshProbe.SystemIo,
     /** #1797 Probe the meshes once when Status first reads an UP tunnel (the app's page; tests drive it by hand). */
     private val autoProbe: Boolean = false,
+    /**
+     * #1900 Where probes run. The page's own thread ([exec]) is the one Connect / Disconnect / Reconnect queue on, so a probe on
+     * it froze every control for the minute the probes took. Probes get their own threads: null = a separate pool when [exec] is the
+     * default, else [exec] itself (a test that runs work inline sees the probe finish inline).
+     */
+    probeExec: ((Runnable) -> Unit)? = null,
 ) {
+    private val probeRun: (Runnable) -> Unit = probeExec ?: if (exec === defaultExec) defaultProbeExec else exec
     // ── observable state ──
     var snapshot by mutableStateOf<MeshSnapshot?>(null)
     /** The open tab of the strip (#1074: Status / Profile / Logs). */
@@ -84,6 +91,14 @@ class MeshStore(
     var logLevel by mutableStateOf("all")
     /** #1797 The last Cloud C3 mesh profile: the per-mesh table and every profiler step. Null = not probed yet. */
     var meshProfile by mutableStateOf<C3MeshProbe.Report?>(null)
+    /** #1900 The Prober matrix (groups A..F): one row per probe, streamed in as each finishes; queued rows carry their route profile already. */
+    var prober by mutableStateOf<List<MeshProber.Row>>(emptyList())
+    var proberAtMs by mutableStateOf(0L)
+    /** #1900 How many probe tasks are running. Never disables a control: a probe is not an action on the tunnel. */
+    var probing by mutableIntStateOf(0)
+    private val proberEpoch = java.util.concurrent.atomic.AtomicInteger()
+    private val proberLock = Any()
+    private var lastUp: Boolean? = null
     private var autoProbed = false
     private var seenStatic = false
     private var lastAo: Boolean? = null
@@ -106,13 +121,16 @@ class MeshStore(
         tick++
         val (snap, events) = MeshReducer.reduce(prev, cfg, s, th)
         prev = snap
+        if (lastUp != null && lastUp != snap.up) autoProbed = false   // #1900 a profile taken in the other tunnel state is stale: probe again
+        lastUp = snap.up
         if (events.isNotEmpty()) { journal.addAll(events); journalRev++ }
         snapshot = snap
         refreshStatic()
         logChanges(snap)
         if (autoProbe && !autoProbed && snap.up && tab == "status" && decl.meshes.isNotEmpty()) {
             autoProbed = true
-            perform("mesh probe") { probeNow() }
+            perform("mesh probe", probe = true) { probeNow() }
+            startProber()
         }
     }
 
@@ -166,9 +184,9 @@ class MeshStore(
     }
 
     /** Run [block] off the main thread; its result (or its failure's reason) becomes the notice and a journal line. */
-    fun perform(label: String, block: () -> String) {
-        busy = true
-        exec(Runnable {
+    fun perform(label: String, probe: Boolean = false, block: () -> String) {
+        if (probe) synchronized(proberLock) { probing++ } else busy = true
+        (if (probe) probeRun else exec)(Runnable {
             try {
                 val m = block()
                 notice = "$label: $m"
@@ -179,7 +197,7 @@ class MeshStore(
             } finally {
                 journalRev++; rev++
                 runCatching { poll() }
-                busy = false
+                if (probe) synchronized(proberLock) { probing-- } else busy = false
             }
         })
     }
@@ -201,10 +219,10 @@ class MeshStore(
 
     /** The one dispatch table: every `engine` id the declaration may name, and what it does. */
     private val handlers: Map<String, (String, Int) -> Unit> = mapOf(
-        "state.set" to { arg, _ -> if (arg == "on") connectFlow("connect") { port.connect() } else perform("disconnect") { port.disconnect() } },
+        "state.set" to { arg, _ -> if (arg != "on") cancelProber(); if (arg == "on") connectFlow("connect") { port.connect() } else perform("disconnect") { port.disconnect() } },
         "state.reconnect" to { _, _ -> connectFlow("reconnect") { port.reconnect() } },
         "state.connect" to { _, _ -> connectFlow("connect") { port.connect() } },
-        "state.disconnect" to { _, _ -> perform("disconnect") { port.disconnect() } },
+        "state.disconnect" to { _, _ -> cancelProber(); perform("disconnect") { port.disconnect() } },
         "alwayson.set" to { arg, _ ->
             if (!aoView.canChange) { host.openVpnSettings(); notice = "Always-on: " + aoView.reason }
             else perform("always-on") { port.setAlwaysOn(arg == "on") }
@@ -245,7 +263,7 @@ class MeshStore(
         "transport.mode" to { a, _ -> perform("path") { port.setTransportMode(a) } },
         "prefs.relayKey" to { a, _ -> perform("relay key") { port.setRelayKey(a) } },
         "transport.test" to { _, _ ->
-            perform("test fallbacks") {
+            perform("test fallbacks", probe = true) {
                 val r = port.testFallbacks()
                 probes = r
                 probesAtMs = clock()
@@ -254,8 +272,11 @@ class MeshStore(
                 "${r.count { it.ok == true }} of ${r.size} pass" + r.filter { it.ok == false }.joinToString("") { " · ${it.id} fails" }
             }
         },
-        "reach.run" to { _, _ -> perform("reachability") { reachNow() } },
-        "mesh.probe" to { _, _ -> perform("mesh probe") { probeNow() } },
+        "reach.run" to { _, _ -> perform("reachability", probe = true) { reachNow() } },
+        "mesh.probe" to { _, _ -> perform("mesh probe", probe = true) { probeNow() } },
+        // #1900 the Prober matrix: profile every route, then probe off the page's thread, streaming; cancel stops it, Disconnect too
+        "prober.run" to { _, _ -> journal.add(LogEvent(clock(), "action", "prober: started")); journalRev++; startProber() },
+        "prober.cancel" to { _, _ -> cancelProber(); journal.add(LogEvent(clock(), "action", "prober: cancelled")); journalRev++; notice = "prober cancelled" },
         "profiler.copy" to { _, _ ->
             val r = meshProfile
             if (r == null) notice = "copy profile: no mesh profile yet - tap Probe meshes"
@@ -353,8 +374,56 @@ class MeshStore(
         return "${r.rows.count { it.cell(C3MeshProbe.OVERALL).ok == true }} of ${r.rows.size} meshes pass"
     }
 
+    /** #1900 What the prober probes: the declared list, plus the DNS page's declared IP targets (one list of well-known sites by IP). */
+    private fun proberDecl(): MeshProber.Decl {
+        val d = decl.prober
+        val dnsIps = runCatching { com.diegonmarcos.superapp.network.FleetDns.decl.reach.targets }.getOrDefault(emptyList())
+            .filter { t -> d.ips.none { it.ip == t.ip } }.map { MeshProber.IpTarget("dns-${it.id}", it.label, it.ip, 443) }
+        return d.copy(ips = d.ips + dnsIps)
+    }
+
+    /** #1900 One poll's worth of context for the profile: the live snapshot, never a report taken earlier. */
+    private fun proberCtx(): MeshProber.Ctx = MeshProber.ctxOf(snapshot, runCatching { port.config() }.getOrNull(), transport, decl)
+
+    /**
+     * #1900 Profile every route, then probe. The queued rows (each with its route profile) show at once; probes run on the probe
+     * threads, [MeshProber.Decl.parallel] at a time, each under its own timeout, and every finished row lands in [prober] on its own.
+     * A new run, [cancelProber] or Disconnect supersedes the one in flight.
+     */
+    fun startProber() {
+        val epoch = proberEpoch.incrementAndGet()
+        val ctx = proberCtx()
+        val pd = proberDecl()
+        val specs = MeshProber.plan(pd, ctx)
+        synchronized(proberLock) { prober = specs.map { MeshProber.queued(it, ctx) }; proberAtMs = clock(); probing++ }
+        probeRun(Runnable {
+            try {
+                MeshProber.run(specs, ctx, meshIo, {
+                    val r = port.testFallbacks()
+                    probes = r; probesAtMs = clock()
+                    r
+                }, pd.timeoutMs, pd.parallel, clock, { proberEpoch.get() != epoch }) { row ->
+                    if (proberEpoch.get() == epoch) synchronized(proberLock) { prober = MeshProber.merge(prober, row) }
+                }
+                if (proberEpoch.get() == epoch) {
+                    val rows = prober
+                    for (r in rows.filter { it.ok == false }) journal.add(LogEvent(clock(), "warn", "prober ${r.spec.group}/${r.spec.id} FAIL: ${r.detail}"))
+                    journal.add(LogEvent(clock(), "probe", "prober: " + MeshProber.GROUPS.joinToString(" · ") { "${MeshProber.LETTERS[it]} ${MeshProber.groupLine(rows, it)}" }))
+                    journalRev++
+                    notice = "prober: ${rows.count { it.ok == true }} of ${rows.size} pass"
+                }
+            } catch (t: Throwable) {
+                notice = "prober failed: ${t.message ?: t.javaClass.simpleName}"
+                journal.add(LogEvent(clock(), "error", notice)); journalRev++
+            } finally { synchronized(proberLock) { probing-- } }
+        })
+    }
+
+    /** #1900 Stop the probes in flight: rows not yet answered stay queued, nothing already measured is lost. */
+    fun cancelProber() { proberEpoch.incrementAndGet() }
+
     /** #1153 The whole Status page as text (Copy all / Export all); #1797 adds the per-mesh table and the profile. */
-    fun reportText(): String = MeshReport.build(snapshot, dnsPreset, provider, transport, probes, reach, journal.list(), clock(), profile = meshProfile)
+    fun reportText(): String = MeshReport.build(snapshot, dnsPreset, provider, transport, probes, reach, journal.list(), clock(), profile = meshProfile, prober = prober)
 
     /** The Cloud preset after the owner confirmed replacing their settings. */
     fun confirmCloudPreset() { confirmCloud = false; perform("provider") { port.applyCloudPreset() } }
@@ -376,5 +445,7 @@ class MeshStore(
         private val ENGINE_BOUND = setOf("state.set", "state.connect", "state.disconnect", "state.reconnect", "fleetdns.preset", "alwayson.set", "lockdown.set")
         private val NEEDS_KEY = setOf("state.set", "state.connect", "state.reconnect")
         val defaultExec: (Runnable) -> Unit = Executors.newSingleThreadExecutor { r -> Thread(r, "mesh-page").apply { isDaemon = true } }::execute
+        /** #1900 The probes' own threads: a probe never queues behind Connect / Disconnect on [defaultExec]. */
+        val defaultProbeExec: (Runnable) -> Unit = Executors.newCachedThreadPool { r -> Thread(r, "mesh-probe").apply { isDaemon = true } }::execute
     }
 }

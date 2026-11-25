@@ -94,8 +94,33 @@ object C3MeshProbe {
         /** Android's own resolver: what every app gets. */
         fun systemResolve(name: String): List<String>
         fun tcp(host: String, port: Int, timeoutMs: Int)
+        /**
+         * #1900 [tcp] over the path [via] ([VIA_TUNNEL] bound to the VPN network, [VIA_DEFAULT] the OS route, [VIA_DIRECT]
+         * bound outside the VPN); returns the local address the connected socket used ("" when the Io cannot say), so a
+         * row can name the interface that really carried it.
+         */
+        fun tcpFrom(host: String, port: Int, timeoutMs: Int, via: String): String { tcp(host, port, timeoutMs); return "" }
         /** The HTTP status code of a GET of [url]. */
         fun https(url: String, timeoutMs: Int): Int
+        /** #1900 [https] over the path [via]. */
+        fun httpsVia(url: String, timeoutMs: Int, via: String): Int = https(url, timeoutMs)
+    }
+
+    const val VIA_TUNNEL = "tunnel"
+    const val VIA_DEFAULT = "default"
+    const val VIA_DIRECT = "direct"
+
+    /**
+     * #1900 Puts a probe's socket on a chosen network BEFORE it connects. The tunnel's probes were left unbound and Android
+     * sourced them from the Wi-Fi address (10.0.0.1:53 and 10.1.0.1:53 left from 192.168.x.y) and sent every IPv6 probe to the
+     * Wi-Fi network, which has no IPv6 route to fd0c:1d00::/64 (ENETUNREACH). Bound to the VPN network they use the tunnel.
+     * Throws [java.io.IOException] with the reason when the network does not exist (the tunnel is down).
+     */
+    interface SocketBinder {
+        fun bind(s: Socket, via: String)
+        fun bind(s: DatagramSocket, via: String)
+        /** A connection to [url] on [via], or null to use the platform default. */
+        fun open(url: URL, via: String): java.net.URLConnection? = null
     }
 
     fun run(input: Input, io: Io = SystemIo, nowMs: () -> Long = System::currentTimeMillis): Report {
@@ -366,8 +391,10 @@ object C3MeshProbe {
         override fun query(server: String, name: String, timeoutMs: Int, padTo: Int): String {
             val id = (System.nanoTime() and 0xFFFF).toInt()
             val (q, qEnd) = buildQuery(id, name, padTo)
-            val from = sourceInMesh(InetAddress.getByName(server).hostAddress.orEmpty(), localV4())
+            val b = binder
+            val from = if (b != null) null else sourceInMesh(InetAddress.getByName(server).hostAddress.orEmpty(), localV4())
             (if (from != null) DatagramSocket(InetSocketAddress(InetAddress.getByName(from), 0)) else DatagramSocket()).use { s ->
+                b?.bind(s, VIA_TUNNEL)
                 s.soTimeout = timeoutMs
                 s.send(DatagramPacket(q, q.size, InetAddress.getByName(server), 53))
                 val buf = ByteArray(4096)
@@ -377,21 +404,33 @@ object C3MeshProbe {
             }
         }
         override fun systemResolve(name: String): List<String> = InetAddress.getAllByName(name).mapNotNull { it.hostAddress }
-        override fun tcp(host: String, port: Int, timeoutMs: Int) {
+        /** #1900 Set once by the app (network/TunnelBinder.kt); null on the JVM, where the legacy same-/24 source bind stays. */
+        @Volatile var binder: SocketBinder? = null
+        override fun tcp(host: String, port: Int, timeoutMs: Int) { tcpFrom(host, port, timeoutMs, VIA_TUNNEL) }
+        override fun tcpFrom(host: String, port: Int, timeoutMs: Int, via: String): String {
             val dest = InetAddress.getByName(host)
-            val from = sourceInMesh(dest.hostAddress.orEmpty(), localV4())
             Socket().use { s ->
-                if (from != null) s.bind(InetSocketAddress(InetAddress.getByName(from), 0))
+                bindTcp(s, dest, via)
                 s.connect(InetSocketAddress(dest, port), timeoutMs)
+                return s.localAddress?.hostAddress?.substringBefore('%').orEmpty()
             }
         }
-        override fun https(url: String, timeoutMs: Int): Int {
-            val c = URL(url).openConnection() as HttpURLConnection
+        /** The one place a TCP probe's socket takes its network: the binder when installed, else the same-/24 source address. */
+        fun bindTcp(s: Socket, dest: InetAddress, via: String) {
+            val b = binder
+            if (b != null) { if (via != VIA_DEFAULT) b.bind(s, via); return }
+            val from = if (via == VIA_TUNNEL) sourceInMesh(dest.hostAddress.orEmpty(), localV4()) else null
+            if (from != null) s.bind(InetSocketAddress(InetAddress.getByName(from), 0))
+        }
+        override fun httpsVia(url: String, timeoutMs: Int, via: String): Int {
+            val u = URL(url)
+            val c = (binder?.takeIf { via != VIA_DEFAULT }?.open(u, via) ?: u.openConnection()) as HttpURLConnection
             return try {
                 c.connectTimeout = timeoutMs; c.readTimeout = timeoutMs; c.instanceFollowRedirects = false
                 c.requestMethod = "GET"
                 c.responseCode
             } finally { c.disconnect() }
         }
+        override fun https(url: String, timeoutMs: Int): Int = httpsVia(url, timeoutMs, VIA_TUNNEL)
     }
 }

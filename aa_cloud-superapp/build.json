@@ -8781,6 +8781,33 @@
       ],
       "_doc_mtu_probe_sizes": "#1797 IP packet sizes (bytes) of the profiler's MTU probe: EDNS0-padded DNS queries to the first mesh's resolver through the tunnel; the largest answered size is reported beside the interface MTU.",
       "mtu_probe_sizes": [576, 1200, 1280, 1340, 1380, 1420],
+      "_doc_status_sections": "#1900 The Status page is three sections, so each datum is drawn once: Status (the current state: lights, tunnel, interface, peers with every handshake / traffic / latency field, DNS, Cloudflare), Profiler (measured results: the per-mesh table, Cloud C3's profiler, Reachability, the fallback path) and Prober (the run controls and the raw per-probe detail: the A..F matrix and the complete Log). Every id of the status page's `rows` is in exactly one section (MeshDeclTest, MeshStatusParityTest); `rows` stays the flat declared order the earlier tests hold. A row moves between sections here, never out of the page.",
+      "status_sections": [
+        { "id": "status", "label": "Status", "rows": ["lights", "state", "vpn", "export", "profile", "interface", "pubkey", "endpoint", "peers", "handshake", "traffic", "latency", "dns", "cloudflare"] },
+        { "id": "profiler", "label": "Profiler", "rows": ["meshes", "profiler", "reachability", "transport"] },
+        { "id": "prober", "label": "Prober", "rows": ["prober", "log"] }
+      ],
+      "_doc_prober": "#1900 What the Prober matrix probes (network/mesh/MeshProber.kt; nothing is a Kotlin literal). Each row is profiled first (interface, DNS, route, mesh peer, fallback), then probed, and its status is the probe's. A private_names (mesh namespace, never a public TLD, rules/addressing.md; vault is the vaultwarden container, mail the maddy one; the `reach_hosts` and each mesh's service are probed too), B public_urls, C every WireGuard peer (handshake, endpoint, allowed IPs, keepalive), D the fallback ladder (Direct UDP, Pinned IP, DoH, TLS-443 relay: the engine's Test fallbacks), E IPv4 and F IPv6 (each mesh hub's :53 through the tunnel, plus `ip_targets`: well-known sites by fixed IP, no DNS; the DNS page's reachability targets join the IPv4 list). Each probe has its own timeout (`timeout_ms`, a hung probe becomes a FAIL row) and runs on its own thread, `parallel` at a time.",
+      "prober": {
+        "timeout_ms": 4000,
+        "parallel": 6,
+        "private_names": [
+          { "id": "vault", "label": "Vault", "host": "vaultwarden.mesh.diegonmarcos.com" },
+          { "id": "caddy", "label": "Caddy", "host": "caddy.mesh.diegonmarcos.com" },
+          { "id": "mail", "label": "Mail", "host": "maddy.mesh.diegonmarcos.com" },
+          { "id": "c3-infra-mcp", "label": "C3 Infra MCP", "host": "c3-infra-mcp.mesh.diegonmarcos.com" }
+        ],
+        "public_urls": [
+          { "id": "c3-pub", "label": "c3-pub (Cloudflare edge)", "url": "https://c3-pub.diegonmarcos.com/" },
+          { "id": "www", "label": "www", "url": "https://www.diegonmarcos.com/" },
+          { "id": "github", "label": "GitHub", "url": "https://github.com/" }
+        ],
+        "ip_targets": [
+          { "id": "cloudflare-v6", "label": "Cloudflare", "ip": "2606:4700:4700::1111", "port": 443 },
+          { "id": "google-v6", "label": "Google", "ip": "2001:4860:4860::8888", "port": 443 },
+          { "id": "quad9-v6", "label": "Quad9", "ip": "2620:fe::fe", "port": 443 }
+        ]
+      },
       "handshake": {
         "fresh_s": 150,
         "stale_s": 300
@@ -8847,7 +8874,8 @@
             "reachability",
             "cloudflare",
             "profiler",
-            "log"
+            "log",
+            "prober"
           ],
           "controls": [
             { "id": "status_copy_all", "kind": "action", "label": "Copy all", "engine": "clipboard.all" },
@@ -8858,6 +8886,8 @@
             { "id": "status_profiler_copy", "kind": "action", "label": "Copy report", "engine": "profiler.copy" },
             { "id": "status_profiler_export", "kind": "action", "label": "Export report", "engine": "profiler.export" },
             { "id": "status_log_open", "kind": "switch", "label": "Show the full log here", "default": "off", "engine": "view.statusLog" },
+            { "id": "prober_run", "kind": "action", "label": "Run all probes", "engine": "prober.run" },
+            { "id": "prober_cancel", "kind": "action", "label": "Cancel probes", "engine": "prober.cancel" },
             { "id": "vpn_connect", "kind": "action", "label": "Connect", "engine": "state.connect" },
             { "id": "vpn_disconnect", "kind": "action", "label": "Disconnect", "engine": "state.disconnect" },
             { "id": "vpn_reconnect", "kind": "action", "label": "Reconnect", "engine": "state.reconnect" },

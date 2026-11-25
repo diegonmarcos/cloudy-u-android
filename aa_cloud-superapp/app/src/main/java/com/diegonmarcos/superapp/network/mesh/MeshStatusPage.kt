@@ -28,7 +28,12 @@ fun MeshStatusPage(store: MeshStore, modifier: Modifier = Modifier, embedded: Bo
             .padding(MeshDensity.dp(MeshDensity.S8)),
     ) {
         if (s == null) MText(stringResource(R.string.mesh_reading), muted = true)
-        else for (id in rows) StatusRow(id, store, s)
+        else if (store.decl.sections.isEmpty()) for (id in rows) StatusRow(id, store, s)
+        else for (sec in store.decl.sections) {
+            // #1900 Status (the current state, once), Profiler (measured results), Prober (run controls and raw per-probe detail)
+            MeshSectionTitle(sec.id, sec.label)
+            for (id in sec.rows) StatusRow(id, store, s)
+        }
     }
 }
 
@@ -125,25 +130,18 @@ private fun StatusRow(id: String, store: MeshStore, s: MeshSnapshot) {
         "handshake" -> {
             MHeader(stringResource(R.string.mesh_row_handshake))
             KvRow(stringResource(R.string.mesh_k_newest), handshakeText(s.newestHandshakeAgeS, s.up, s.engineInstalled), tag = tag)
-            if (s.peers.size > 1) s.peers.forEach { p ->
-                KvRow(p.cfg.name.ifBlank { MeshFormat.shortKey(p.cfg.publicKey) }, handshakeText(p.handshakeAgeS, s.up, s.engineInstalled) + " · " + healthWord(p.health))
-            }
+            // #1900 the per-peer handshake and health live once, in the Peers row (peerFields handshake + health)
         }
         "traffic" -> {
             MHeader(stringResource(R.string.mesh_row_traffic))
             KvRow(stringResource(R.string.mesh_k_down), MeshFormat.bytes(s.rx) + "  " + MeshFormat.rate(s.rxRate), tag = tag)
             KvRow(stringResource(R.string.mesh_k_up), MeshFormat.bytes(s.tx) + "  " + MeshFormat.rate(s.txRate))
-            if (s.peers.size > 1) s.peers.forEach { p ->
-                KvRow(p.cfg.name.ifBlank { MeshFormat.shortKey(p.cfg.publicKey) },
-                    "↓ " + MeshFormat.rate(p.rxRate) + "  ↑ " + MeshFormat.rate(p.txRate))
-            }
+            // #1900 the per-peer rates live once, in the Peers row (peerFields rx + tx carry the rates)
         }
         "latency" -> {
             MHeader(stringResource(R.string.mesh_row_latency))
             KvRow(stringResource(R.string.mesh_k_hub), MeshFormat.latency(s.hubLatencyMs), tag = tag)
-            s.peers.forEach { p ->
-                KvRow(p.cfg.name.ifBlank { MeshFormat.shortKey(p.cfg.publicKey) }, MeshFormat.latency(p.latencyMs))
-            }
+            // #1900 the per-peer latency lives once, in the Peers row (peerFields latency)
             Reason(stringResource(R.string.mesh_latency_how))
         }
         "dns" -> {
@@ -174,6 +172,7 @@ private fun StatusRow(id: String, store: MeshStore, s: MeshSnapshot) {
         "meshes" -> MeshTableRow(store, tag)
         "peers" -> MeshPeersRow(store, s, tag)
         "profiler" -> MeshProfilerRow(store, tag)
+        "prober" -> MeshProberRow(store, tag)
         "log" -> MeshStatusLogRow(store, tag)
         else -> MText(stringResource(R.string.mesh_row_unknown, id), Modifier.testTag(tag), size = MeshDensity.T_META, muted = true)
     }

@@ -64,7 +64,8 @@ fun lightLines(
     out += LightLine("tunnel", when { !s.engineInstalled -> null; s.up -> s.light == Light.UP; else -> false },
         when { !s.engineInstalled -> "unknown"; !s.up -> "down"; s.light == Light.UP -> "up"; else -> "up, no fresh handshake" },
         "${s.cfg.tunnelName} · ${s.cfg.activeProfile.substringAfterLast('/').ifBlank { "no profile" }}")
-    val fresh = s.peers.count { it.health == Health.FRESH || it.health == Health.AGING }
+    // #1900 one verdict on a handshake ([MeshProber.handshakeOk]) for the lights, the profiler and the Prober: "fresh" is Health.FRESH only
+    val fresh = s.peers.count { MeshProber.handshakeOk(it.health) == true }
     out += LightLine("handshake", if (!s.up) (if (s.engineInstalled) false else null) else fresh == s.peers.size && s.peers.isNotEmpty(),
         "$fresh of ${s.peers.size} fresh",
         s.peers.joinToString(" · ") { "${it.cfg.name.ifBlank { MeshFormat.shortKey(it.cfg.publicKey) }} ${MeshFormat.age(it.handshakeAgeS)} ${it.health}" }.ifBlank { "no peers" })

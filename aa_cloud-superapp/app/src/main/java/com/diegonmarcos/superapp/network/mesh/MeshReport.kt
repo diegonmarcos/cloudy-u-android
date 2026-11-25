@@ -41,6 +41,8 @@ object MeshReport {
         tz: TimeZone = TimeZone.getDefault(),
         /** #1797 Cloud C3's mesh profile: the per-mesh table and the profiler's steps; null = not probed yet. */
         profile: com.diegonmarcos.superapp.fleetxray.mesh.C3MeshProbe.Report? = null,
+        /** #1900 The Prober matrix (groups A..F, each row with its route profile); empty = not run. */
+        prober: List<MeshProber.Row> = emptyList(),
     ): String {
         val out = StringBuilder()
         fun line(t: String = "") { out.append(t).append('\n') }
@@ -74,6 +76,9 @@ object MeshReport {
         else line(com.diegonmarcos.superapp.fleetxray.mesh.C3MeshProbe.text(profile))
         line("== Reachability")
         if (reach.isEmpty()) line("(not run)") else line(MeshReach.text(reach))
+        // #1900 the Prober matrix: route profile, probe result and status of every row, groups A..F
+        line("== Prober")
+        line(MeshProber.text(prober))
         line("== Log (${journal.size})")
         for (e in journal) line("${MeshFormat.clock(e.atMs, tz)} ${MeshJournal.levelOf(e.kind).uppercase().padEnd(5)} ${e.kind.padEnd(9)} ${e.text}")
         return redact(out.toString().trimEnd())
