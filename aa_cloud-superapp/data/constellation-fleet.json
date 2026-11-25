@@ -13,9 +13,9 @@
 {"id":"os","label":"OS","members":["lib-rootfs-nixdroid","lib-rootfs-termux","ae-tool_termux-boot"]}
 ],
 "app_categories":[
-{"id":"data","label":"Data","members":["drive","browser","gallery","notes","tasks","vault","wallet","office"]},
-{"id":"communication","label":"Communication","members":["mail","chat","matrix","dialer","contacts"]},
 {"id":"primary","label":"Primary","members":["nav","camera","canvas","keyboard","calc"]},
+{"id":"communication","label":"Communication","members":["mail","chat","matrix","dialer","contacts"]},
+{"id":"data","label":"Data","members":["drive","browser","gallery","notes","tasks","vault","wallet","office"]},
 {"id":"me","label":"Me","members":["me"]},
 {"id":"services-city","label":"Services · City","members":["shopping"]},
 {"id":"services-leisure","label":"Services · Leisure","members":["news","media-center"]},
