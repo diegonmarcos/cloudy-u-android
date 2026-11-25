@@ -26,7 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
-/** #1918 the banner of every main category (data/links/me-proj-emoji.json, the Linktree banner files): its GIF is fetched once and drawn animated. */
+/** #1918 the banner of every main category (data/web/me-proj-emoji.json, the Linktree banner files): its GIF is fetched once and drawn animated. */
 object ProjBanners {
     fun urls(ctx: android.content.Context): Map<String, String> = runCatching {
         val b = org.json.JSONObject(ctx.assets.open("me-proj-emoji.json").bufferedReader().use { it.readText() }).getJSONObject("banners")

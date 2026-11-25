@@ -215,7 +215,7 @@ for tile, (f, url) in SITES.items():
         bad("urls", f"{tile}: the bundled page {url} does not exist")
 # #1914 every Proj leaf embeds the URL its me-links.json entry declares (derived from the SoT), no two the same
 _seen = {}
-for e in json.load(open(os.path.join(app, "data/links/me-links.json")))["entries"]:
+for e in json.load(open(os.path.join(app, "data/web/me-links.json")))["entries"]:
     if e["section"] != "proj": continue
     f = os.path.join(app, "data/ui/proj", *e["path"]) + ".json"
     try: b = json.load(open(f, encoding="utf-8"))[0]

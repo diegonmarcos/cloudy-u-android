@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tester (#1906): every social account and company shown on Pers and Prof has its real link, declared in data/links/me-links.json and
+# Tester (#1906): every social account and company shown on Pers and Prof has its real link, declared in data/web/me-links.json and
 # derived from the SoT by data/regen-me-links.py. L1 each entry has a url equal to its SoT snapshot; L2 each tab entry's page file carries the same
 # `link`; L3 the SoT repos (when present) agree (regen --check). Each is proven red by a mutation of a copy.
 set -u
@@ -9,7 +9,7 @@ ok()  { PASS=$((PASS+1)); echo "  PASS: $1"; }
 bad() { FAIL=$((FAIL+1)); echo "  FAIL: $1"; }
 check() { python3 - "$1" <<'PY'
 import json, os, sys
-app = sys.argv[1]; t = json.load(open(os.path.join(app, "data/links/me-links.json")))["entries"]
+app = sys.argv[1]; t = json.load(open(os.path.join(app, "data/web/me-links.json")))["entries"]
 for e in t:
     if not e.get("url", "").startswith(("https://", "mailto:")): print("L1\t%s has no link" % e["id"])
     elif e["url"] != e.get("sot_url"): print("L1\t%s url %s differs from the SoT %s" % (e["id"], e["url"], e.get("sot_url")))
@@ -20,7 +20,7 @@ K = open(os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudme/MeLinks.k
 S = open(os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudme/SectionScreen.kt")).read()
 G = open(os.path.join(app, "app/build.gradle")).read()
 W = open(os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudme/WebPage.kt")).read() if os.path.exists(os.path.join(app, "app/src/main/java/com/diegonmarcos/cloudme/WebPage.kt")) else ""
-for need_, where_, txt_ in (("WebPage(single, modifier, pageId = page.id)", "page is the bare WebPage", S), ("data/links", "me-links.json asset", G), ("?: super.shouldInterceptRequest(view, request)", "asset loader fallback", W), ("key(generation, url, pageId)", "WebView keyed by its page", W), ("MAINFRAME_ERROR", "main-frame error log", W), ("naturalWidth==0", "broken-image check", W)):
+for need_, where_, txt_ in (("WebPage(single, modifier, pageId = page.id)", "page is the bare WebPage", S), ("data/web", "me-links.json asset", G), ("?: super.shouldInterceptRequest(view, request)", "asset loader fallback", W), ("key(generation, url, pageId)", "WebView keyed by its page", W), ("MAINFRAME_ERROR", "main-frame error log", W), ("naturalWidth==0", "broken-image check", W)):
     if need_ not in txt_: print("L4\t%s: %s is not bound" % (where_, need_))
 for gone_, txt_ in (("MeLinkedWeb", S + K), ("FilledTonalButton", K), ("ACTION_VIEW", K)):
     if gone_ in txt_: print("L5\t%s is back (the Open button and Links panel are removed)" % gone_)
@@ -43,11 +43,11 @@ fi
 # mutations
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
 mut() { # name, python edit on copy
-  rm -rf "$T/app"; mkdir -p "$T/app/data" "$T/app/app/src/main/java/com/diegonmarcos/cloudme"; cp -r "$APP/data/links" "$T/app/data/links"; cp -r "$APP/data/ui" "$T/app/data/ui"; cp "$APP/app/build.gradle" "$T/app/app/"; cp "$APP/app/src/main/java/com/diegonmarcos/cloudme/"{MeLinks,SectionScreen,WebPage}.kt "$T/app/app/src/main/java/com/diegonmarcos/cloudme/"
+  rm -rf "$T/app"; mkdir -p "$T/app/data" "$T/app/app/src/main/java/com/diegonmarcos/cloudme"; cp -r "$APP/data/web" "$T/app/data/web"; cp -r "$APP/data/ui" "$T/app/data/ui"; cp "$APP/app/build.gradle" "$T/app/app/"; cp "$APP/app/src/main/java/com/diegonmarcos/cloudme/"{MeLinks,SectionScreen,WebPage}.kt "$T/app/app/src/main/java/com/diegonmarcos/cloudme/"
   python3 -c "$2" "$T/app"; r=$(check "$T/app"); if [ -n "$r" ]; then ok "mutation red: $1"; else bad "mutation stayed green: $1"; fi; }
-mut "blank url" 'import json,sys;p=sys.argv[1]+"/data/links/me-links.json";d=json.load(open(p));d["entries"][0]["url"]="";json.dump(d,open(p,"w"))'
-mut "url differs from SoT" 'import json,sys;p=sys.argv[1]+"/data/links/me-links.json";d=json.load(open(p));d["entries"][7]["url"]="https://example.com/";json.dump(d,open(p,"w"))'
-mut "entry dropped" 'import json,sys;p=sys.argv[1]+"/data/links/me-links.json";d=json.load(open(p));d["entries"]=[e for e in d["entries"] if e["id"]!="prof-stark"];json.dump(d,open(p,"w"))'
+mut "blank url" 'import json,sys;p=sys.argv[1]+"/data/web/me-links.json";d=json.load(open(p));d["entries"][0]["url"]="";json.dump(d,open(p,"w"))'
+mut "url differs from SoT" 'import json,sys;p=sys.argv[1]+"/data/web/me-links.json";d=json.load(open(p));d["entries"][7]["url"]="https://example.com/";json.dump(d,open(p,"w"))'
+mut "entry dropped" 'import json,sys;p=sys.argv[1]+"/data/web/me-links.json";d=json.load(open(p));d["entries"]=[e for e in d["entries"] if e["id"]!="prof-stark"];json.dump(d,open(p,"w"))'
 mut "page link differs" 'import json,sys;p=sys.argv[1]+"/data/ui/prof/leafy.json";d=json.load(open(p));d[0]["link"]="https://x.test/";json.dump(d,open(p,"w"))'
 K=app/src/main/java/com/diegonmarcos/cloudme/MeLinks.kt
 W=app/src/main/java/com/diegonmarcos/cloudme/WebPage.kt
@@ -58,5 +58,5 @@ mut "the WebView is no longer keyed by its page" "import sys;p=sys.argv[1]+'/$W'
 mut "the broken-image check is gone" "import sys;p=sys.argv[1]+'/$W';s=open(p).read().replace('naturalWidth==0','x');open(p,'w').write(s)"
 mut "a tab embeds a bundled mirror" 'import json,sys;p=sys.argv[1]+"/data/ui/prof/leafy.json";d=json.load(open(p));d[0]["url"]="mysocials/linkedin.html";json.dump(d,open(p,"w"))'
 mut "Leaf.y embeds the LinkedIn page" 'import json,sys;p=sys.argv[1]+"/data/ui/prof/leafy.json";d=json.load(open(p));d[0]["url"]="https://linkedin.com/in/diegonmarcos";json.dump(d,open(p,"w"))'
-mut "two tabs embed the same page" 'import json,sys;[ (lambda p:(lambda d:(d[0].update(url="https://diegonmarcos.github.io/nexus/"),json.dump(d,open(p,"w"))))(json.load(open(p))))(sys.argv[1]+"/data/ui/prof/"+f) for f in ("stark.json",)]; q=sys.argv[1]+"/data/links/me-links.json";d=json.load(open(q));[x.update(url="https://diegonmarcos.github.io/nexus/") for x in d["entries"] if x["id"]=="prof-stark"];json.dump(d,open(q,"w"))'
+mut "two tabs embed the same page" 'import json,sys;[ (lambda p:(lambda d:(d[0].update(url="https://diegonmarcos.github.io/nexus/"),json.dump(d,open(p,"w"))))(json.load(open(p))))(sys.argv[1]+"/data/ui/prof/"+f) for f in ("stark.json",)]; q=sys.argv[1]+"/data/web/me-links.json";d=json.load(open(q));[x.update(url="https://diegonmarcos.github.io/nexus/") for x in d["entries"] if x["id"]=="prof-stark"];json.dump(d,open(q,"w"))'
 echo "$PASS passed, $FAIL failed"; [ "$FAIL" -eq 0 ]

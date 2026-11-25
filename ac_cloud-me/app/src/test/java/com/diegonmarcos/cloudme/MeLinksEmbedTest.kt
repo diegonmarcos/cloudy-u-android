@@ -18,7 +18,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class MeLinksEmbedTest {
-    private val entries = JSONObject(BuroLlcTestData.text("data/links/me-links.json")).getJSONArray("entries").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
+    private val entries = JSONObject(BuroLlcTestData.text("data/web/me-links.json")).getJSONArray("entries").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
     private fun block(e: JSONObject): JSONObject {
         val p = (0 until e.getJSONArray("path").length()).joinToString("/") { e.getJSONArray("path").getString(it) }
         return JSONArray(BuroLlcTestData.text("data/ui/${e.getString("section")}/$p.json")).getJSONObject(0)

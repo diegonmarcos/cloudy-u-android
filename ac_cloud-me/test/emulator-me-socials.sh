@@ -76,9 +76,9 @@ $T adb shell am force-stop "$ME" </dev/null; $T adb logcat -c </dev/null
 open_page "$ME" "page:proj/pj-repos" </dev/null; shot me-proj-repos 12 </dev/null
 $T adb logcat -d -s CloudMeWeb:V < /dev/null > "$OUT/tab-proj-repos.log"
 grep -q "MAINFRAME_OK page=pj-repos " "$OUT/tab-proj-repos.log" && echo "proj-repos: loaded the bundled repos tree" || { echo "proj-repos: the repos tree did not load"; rc=1; }
-# #1911 every Pers/Prof/Proj tab of data/links/me-links.json: open it, screenshot it, and assert its main frame did not hit an error page
+# #1911 every Pers/Prof/Proj tab of data/web/me-links.json: open it, screenshot it, and assert its main frame did not hit an error page
 # (WebPage logs MAINFRAME_ERROR / MAINFRAME_OK page=<id> url=<url> title=<title>; the title must not be "Web page not available")
-TABLES="$(dirname "$0")/../data/links/me-links.json"
+TABLES="$(dirname "$0")/../data/web/me-links.json"
 python3 - "$TABLES" > "$OUT/.tabs" <<'PY'
 import json, sys
 for e in json.load(open(sys.argv[1]))["entries"]:

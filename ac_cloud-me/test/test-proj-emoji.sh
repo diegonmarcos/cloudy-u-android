@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tester (#1918): E1 every Proj page label starts with its Linktree emoji (data/links/me-proj-emoji.json); E2 every main category has a Linktree banner URL;
+# Tester (#1918): E1 every Proj page label starts with its Linktree emoji (data/web/me-proj-emoji.json); E2 every main category has a Linktree banner URL;
 # E3 Repos follows 42 and embeds the bundled repos tree; E4 Prof > Profiles is LinkedIn | CV and the old Profiles pages are still pages of Prof;
 # E5 the table and the tree copy equal their sources (when the sibling repos are present). Each is proven red by a mutation of a copy.
 set -u
@@ -10,7 +10,7 @@ bad() { FAIL=$((FAIL+1)); echo "  FAIL: $1"; }
 check() { python3 - "$1" <<'PY'
 import json, os, sys
 app = sys.argv[1]; J = lambda p: json.load(open(os.path.join(app, p), encoding="utf-8"))
-ui = J("build.json")["ui"]; secs = {s["id"]: s for s in ui["sections"]}; tab = J("data/links/me-proj-emoji.json")
+ui = J("build.json")["ui"]; secs = {s["id"]: s for s in ui["sections"]}; tab = J("data/web/me-proj-emoji.json")
 def flat(o):
     for p in o.get("pages", []) or []:
         yield p; yield from flat(p)
@@ -36,11 +36,11 @@ if [ -d "$APP/../../cloud-me-pub-profiles-_lnktree" ] || [ -n "${ME_SOT_DIR:-}" 
   python3 "$APP/data/regen-proj-emoji.py" --check >/dev/null && ok "E5 emoji and banners equal the Linktree data" || bad "E5 the table differs from the Linktree data"
 fi
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
-mut() { rm -rf "$T/app"; mkdir -p "$T/app/data"; cp "$APP/build.json" "$T/app/"; cp -r "$APP/data/links" "$T/app/data/links"; cp -r "$APP/data/ui" "$T/app/data/ui"; cp -r "$APP/data/web" "$T/app/data/web" 2>/dev/null
+mut() { rm -rf "$T/app"; mkdir -p "$T/app/data"; cp "$APP/build.json" "$T/app/"; cp -r "$APP/data/web" "$T/app/data/web"; cp -r "$APP/data/ui" "$T/app/data/ui";
   python3 -c "$2" "$T/app"; r=$(check "$T/app"); if [ -n "$r" ]; then ok "mutation red: $1"; else bad "mutation stayed green: $1"; fi; }
 mut "a Proj label loses its emoji" 'import sys;p=sys.argv[1]+"/build.json";s=open(p,encoding="utf-8").read().replace("\U0001F427 Unix","Unix");open(p,"w",encoding="utf-8").write(s)'
-mut "a banner is dropped" 'import json,sys;p=sys.argv[1]+"/data/links/me-proj-emoji.json";d=json.load(open(p,encoding="utf-8"));del d["banners"]["pj-cg"];json.dump(d,open(p,"w",encoding="utf-8"))'
-mut "a banner leaves the Linktree site" 'import json,sys;p=sys.argv[1]+"/data/links/me-proj-emoji.json";d=json.load(open(p,encoding="utf-8"));d["banners"]["pj-cg"]["url"]="https://example.com/x.gif";json.dump(d,open(p,"w",encoding="utf-8"))'
+mut "a banner is dropped" 'import json,sys;p=sys.argv[1]+"/data/web/me-proj-emoji.json";d=json.load(open(p,encoding="utf-8"));del d["banners"]["pj-cg"];json.dump(d,open(p,"w",encoding="utf-8"))'
+mut "a banner leaves the Linktree site" 'import json,sys;p=sys.argv[1]+"/data/web/me-proj-emoji.json";d=json.load(open(p,encoding="utf-8"));d["banners"]["pj-cg"]["url"]="https://example.com/x.gif";json.dump(d,open(p,"w",encoding="utf-8"))'
 mut "Repos is dropped" 'import sys;p=sys.argv[1]+"/data/ui/proj/pj-repos.json";import os;os.remove(p)'
 mut "Repos tree is empty" 'import sys;open(sys.argv[1]+"/data/web/repos-tree.html","w").write("x")'
 mut "LinkedIn tab is dropped" 'import re,sys;p=sys.argv[1]+"/build.json";s=open(p,encoding="utf-8").read().replace("\"id\": \"prof-linkedin\"","\"id\": \"prof-x\"");open(p,"w",encoding="utf-8").write(s)'

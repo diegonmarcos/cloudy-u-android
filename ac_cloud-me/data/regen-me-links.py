@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""#1906 Pers/Prof links: derive data/links/me-links.json (the declared table) and the `link` of each page file from the SoT.
+"""#1906 Pers/Prof links: derive data/web/me-links.json (the declared table) and the `link` of each page file from the SoT.
 
 SoT (siblings of the clone, or --sot DIR): cloud-me-pub-profiles-_lnktree (personal-/professional-profiles.json),
 cloud-me-pub-profiles-prf-prs (mySocials data). Each entry names its SoT file + JSON pointer (`source`); `sot_url` is what
@@ -9,7 +9,7 @@ the SoT said at generation time (the snapshot the Kotlin test and CI compare aga
 """
 import json, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
-TABLE = os.path.join(HERE, "links", "me-links.json")
+TABLE = os.path.join(HERE, "web", "me-links.json")
 def sot_root():
     a = sys.argv
     if "--sot" in a: return a[a.index("--sot") + 1]

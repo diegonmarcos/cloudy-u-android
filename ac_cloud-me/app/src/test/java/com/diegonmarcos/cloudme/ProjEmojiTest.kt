@@ -13,7 +13,7 @@ import org.robolectric.annotation.Config
 
 /**
  * #1918 Prof > Profiles is LinkedIn | CV (the old pages moved to More, ids kept), Proj has a Repos page after 42, every Proj page wears the Linktree emoji and every
- * main category its Linktree banner. Declared data only (build.json, data/links/me-proj-emoji.json, data/links/me-links.json). test/test-proj-emoji.sh mutates each red.
+ * main category its Linktree banner. Declared data only (build.json, data/web/me-proj-emoji.json, data/web/me-links.json). test/test-proj-emoji.sh mutates each red.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
@@ -22,7 +22,7 @@ class ProjEmojiTest {
     private val ui = obj("build.json").getJSONObject("ui")
     private fun section(id: String) = (0 until ui.getJSONArray("sections").length()).map { ui.getJSONArray("sections").getJSONObject(it) }.first { it.getString("id") == id }
     private fun flat(o: JSONObject): List<JSONObject> = (o.optJSONArray("pages") ?: JSONArray()).let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.flatMap { listOf(it) + flat(it) }
-    private val table = obj("data/links/me-proj-emoji.json")
+    private val table = obj("data/web/me-proj-emoji.json")
 
     @Test fun `every Proj page label starts with its Linktree emoji`() {
         val pages = flat(section("proj"))

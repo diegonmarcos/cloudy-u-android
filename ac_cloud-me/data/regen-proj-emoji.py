@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""#1918 Proj emoji and banners: derive data/links/me-proj-emoji.json from the Linktree data (cloud-me-pub-profiles-_lnktree
+"""#1918 Proj emoji and banners: derive data/web/me-proj-emoji.json from the Linktree data (cloud-me-pub-profiles-_lnktree
 Lnktree/linktree/src/data/areas.json: each area/project `icon`, each area `banner`, the banner files served by linktree.diegonmarcos.com).
 A Proj page with no Linktree counterpart (Home, SuperApp, BioMed, the Wiki leaves, the Wiki group) takes a declared fallback, marked `fallback`.
   regen-proj-emoji.py          rewrite the table (and the label prefix of the Proj pages in build.json)
@@ -7,7 +7,7 @@ A Proj page with no Linktree counterpart (Home, SuperApp, BioMed, the Wiki leave
 """
 import json, os, re, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
-TABLE = os.path.join(HERE, "links", "me-proj-emoji.json")
+TABLE = os.path.join(HERE, "web", "me-proj-emoji.json")
 ORIGIN = "https://linktree.diegonmarcos.com/"
 # page id -> (Linktree area code, project code or None). A None area = the declared fallback below.
 GROUPS = {"pj-unix": "1", "pj-cg": "2", "pj-capital": "3", "pj-hardtech": "4", "pj-projects": "6", "pj-lecole42": "5"}

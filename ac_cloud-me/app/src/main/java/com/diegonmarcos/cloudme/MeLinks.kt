@@ -4,7 +4,7 @@ import android.content.Context
 import org.json.JSONObject
 
 /**
- * #1906 the link of every Pers/Prof/Proj site, DECLARED in data/links/me-links.json (generated from the SoT by data/regen-me-links.py,
+ * #1906 the link of every Pers/Prof/Proj site, DECLARED in data/web/me-links.json (generated from the SoT by data/regen-me-links.py,
  * shipped as an asset). #1911 it is the link TABLE only: each tab's page file embeds the same URL in the page WebView (WebPage), and
  * there is no Open button or Links panel.
  */
