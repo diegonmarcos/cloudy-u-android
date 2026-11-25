@@ -107,8 +107,7 @@ while read -r sec page url id <&3; do
     elif ! grep -q 'images_broken="[0-9]* 0 ' "$OUT/tab-$id.log"; then echo "$id: broken images: $(grep -m1 IMG_CHECK "$OUT/tab-$id.log")"; rc=1; fi ;; esac
     if grep -q "Web page not available" "$OUT/me-tab-$id.xml" 2>/dev/null; then echo "$id: the screen shows Web page not available"; rc=1; fi
 done 3< "$OUT/.tabs"   # fd 3: adb inside the loop must not eat the tab list from stdin
-# Lnktree (the remote site, an animated loader) lost the emulator when it was walked before the other pages (run 45655595371): it is the last page walked
-walk_tab section:lnktree me-lnktree Lnktree
+# the Lnktree bottom-nav entry (the remote site, an animated loader that kills the emulator under a UI dump) is covered by the lnktree-default tab above: its main frame must load
 $T adb logcat -d > "$OUT/logcat.txt"
 ls -la "$OUT"
 exit $rc

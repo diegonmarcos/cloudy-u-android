@@ -27,7 +27,7 @@ jobs:
         with:
           sparse-checkout: |
             ac_cloud-me/test
-            ac_cloud-me/data/links
+            ac_cloud-me/data/web
 
       - name: Fetch the APKs
         env:
