@@ -42,6 +42,7 @@ import java.io.File
 @Config(sdk = [34], application = Application::class, qualifiers = "w384dp-h832dp-night-450dpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class PresetsModesScreenTest : KitPageHarness() {
+    init { com.diegonmarcos.superapp.apps.FleetPrivateFixtures.install() }   // #1566 fleet-private datasets are materialised by CI, not APK assets
     private val ctx get() = RuntimeEnvironment.getApplication()
     private val kv get() = BgPrefsKv(ctx)
 

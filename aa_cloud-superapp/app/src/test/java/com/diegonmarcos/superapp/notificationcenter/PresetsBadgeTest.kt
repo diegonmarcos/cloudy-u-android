@@ -35,6 +35,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class PresetsBadgeTest {
+    init { com.diegonmarcos.superapp.apps.FleetPrivateFixtures.install() }   // #1566 fleet-private datasets are materialised by CI, not APK assets
     private val app get() = ApplicationProvider.getApplicationContext<Application>()
     private fun nm() = app.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     private fun posted() = nm().activeNotifications.firstOrNull { it.id == PresetsBadge.NOTIF_ID }?.notification

@@ -13,6 +13,7 @@ import java.io.File
  * verdicts), the declaration, the bank decision, and the pairing gate (nothing here can reach a connect or pair path).
  */
 class BankingModeTest {
+    init { com.diegonmarcos.superapp.apps.FleetPrivateFixtures.install() }   // #1566 fleet-private datasets are materialised by CI, not APK assets
     private val entry: JSONObject = JSONObject(File("../build.json").readText()).getJSONObject("ui").getJSONArray("launcher_modes").let { a ->
         (0 until a.length()).map { a.getJSONObject(it) }.first { it.getString("id") == "banking" }
     }

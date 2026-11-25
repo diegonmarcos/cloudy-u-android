@@ -38,10 +38,10 @@ object PhoneAppActions {
      */
     const val DATASET = "fleet/appstore-install-sources"
     const val SOURCES_FILE = "appstore-install-sources.json"
-    @Volatile var testSources: JSONObject? = null
+    @Volatile var testSources: String? = null
 
     fun sourcesOrNull(ctx: Context): JSONObject? =
-        testSources ?: runCatching { FleetData.get(ctx.applicationContext, DATASET) { JSONObject(it) } }.getOrNull()
+        testSources?.let { JSONObject(it) } ?: runCatching { FleetData.get(ctx.applicationContext, DATASET) { JSONObject(it) } }.getOrNull()
 
     /** The map, or an exception naming that it is not served yet (callers that cannot draw without it run this inside runCatching). */
     fun sources(ctx: Context): JSONObject = sourcesOrNull(ctx) ?: error("$DATASET is not served yet")

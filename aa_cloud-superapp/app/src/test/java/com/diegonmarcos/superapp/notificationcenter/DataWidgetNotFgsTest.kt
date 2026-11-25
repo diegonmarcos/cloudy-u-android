@@ -23,6 +23,7 @@ import java.io.File
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class DataWidgetNotFgsTest {
+    init { com.diegonmarcos.superapp.apps.FleetPrivateFixtures.install() }   // #1566 fleet-private datasets are materialised by CI, not APK assets
 
     private val dir = "src/main/java/com/diegonmarcos/superapp/notificationcenter"
     private val sources = mapOf(

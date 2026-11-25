@@ -15,6 +15,7 @@ import org.junit.Test
  * apply, batched shell calls and capability detection. The switch and the engines are the production classes over [ModeRig].
  */
 class PresetModesTest {
+    init { com.diegonmarcos.superapp.apps.FleetPrivateFixtures.install() }   // #1566 fleet-private datasets are materialised by CI, not APK assets
 
     // ── exactly one active mode ──
     @Test fun `whatever is picked, exactly one mode is active and the restore journal is that mode's`() {

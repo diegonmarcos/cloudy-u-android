@@ -58,6 +58,7 @@ import java.util.zip.ZipOutputStream
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class StoreAutoTest {
+    init { com.diegonmarcos.superapp.apps.FleetPrivateFixtures.install() }   // #1566 fleet-private datasets are materialised by CI, not APK assets
 
     private class Killed : Error("process killed")
 

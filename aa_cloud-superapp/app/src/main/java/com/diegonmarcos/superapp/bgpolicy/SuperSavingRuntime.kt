@@ -32,7 +32,10 @@ object SuperSavingRuntime {
     /** #1566 the step declaration names the device settings and shell toggles Super Saving drives: a fleet-private dataset (last-known-good copy of Cloud Account's route); null = not served yet, so the mode does nothing. */
     const val DATASET = "fleet/super-saving"
 
-    private fun decl(ctx: Context): String? = runCatching { FleetData.get(ctx.applicationContext, DATASET) { it } }.getOrNull()
+    /** UNIT TESTS ONLY: the CI-materialised declaration, put where the reader looks first; production never sets it. */
+    @Volatile var testDecl: String? = null
+
+    private fun decl(ctx: Context): String? = testDecl ?: runCatching { FleetData.get(ctx.applicationContext, DATASET) { it } }.getOrNull()
 
     /**
      * #1720 On = this is THE picked mode ([PresetState], the single state source of Presets). The restore journal is the

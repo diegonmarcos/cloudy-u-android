@@ -44,7 +44,7 @@ import org.robolectric.annotation.Config
 @Config(sdk = [34], application = Application::class)
 class TorrentPagesTest {
     // #1566 the feed declaration is a fleet-private dataset: the copy CI materialises into fleet-private-data
-    init { com.diegonmarcos.superapp.appstore.FeedViewer.testDecl = org.json.JSONObject(java.io.File(System.getenv("FLEET_PRIVATE_DIR") ?: "../../fleet-private-data", "appstore-feeds.json").readText()) }
+    init { com.diegonmarcos.superapp.appstore.FeedViewer.testDecl = java.io.File(System.getenv("FLEET_PRIVATE_DIR") ?: "../../fleet-private-data", "appstore-feeds.json").readText() }
     private val compose = createAndroidComposeRule<FragmentActivity>()
 
     @get:Rule

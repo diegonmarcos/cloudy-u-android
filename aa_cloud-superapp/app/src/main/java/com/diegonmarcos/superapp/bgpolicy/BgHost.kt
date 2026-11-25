@@ -53,8 +53,10 @@ object BgAudit {
 object BgHost {
     /** #1566 the declaration names fleet prefixes and essential packages: a fleet-private dataset, the last-known-good copy of Cloud Account's route; null = not served yet, so nothing is restricted. */
     const val DATASET = "fleet/bg-policy"
+    /** UNIT TESTS ONLY: the CI-materialised declaration, put where the reader looks first; production never sets it. */
+    @Volatile var testConfig: String? = null
     fun config(ctx: Context): BgConfig? =
-        runCatching { FleetData.get(ctx.applicationContext, DATASET) { BgConfig.parse(it) } }.getOrNull()
+        testConfig?.let { BgConfig.parse(it) } ?: runCatching { FleetData.get(ctx.applicationContext, DATASET) { BgConfig.parse(it) } }.getOrNull()
 
     fun shell(ctx: Context): BgShell? {
         val app = ctx.applicationContext

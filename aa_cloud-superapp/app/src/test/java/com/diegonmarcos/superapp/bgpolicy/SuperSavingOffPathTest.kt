@@ -32,6 +32,7 @@ import java.io.File
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class SuperSavingOffPathTest {
+    init { com.diegonmarcos.superapp.apps.FleetPrivateFixtures.install() }   // #1566 fleet-private datasets are materialised by CI, not APK assets
     private val app get() = ApplicationProvider.getApplicationContext<Application>()
     private fun nm() = app.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     private fun indicator() = nm().activeNotifications.firstOrNull { it.id == SsIndicator.NOTIFICATION_ID }?.notification
