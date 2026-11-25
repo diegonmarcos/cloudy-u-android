@@ -306,6 +306,8 @@ android {
             assets.srcDirs += file('../data/ui')
             // Health's declared content (plan, formulas, home clusters, workout): data/health/health_*.json.
             assets.srcDirs += file('../data/health')
+            // #1906 the link of every social account and company on Pers and Prof (data/links/me-links.json), read by MeLinks.
+            assets.srcDirs += file('../data/links')
             // The real mySocials pages, so Profile renders the actual LinkedIn
             // and Instagram layouts instead of an approximation of them.
             assets.srcDirs += file('../data/web')
