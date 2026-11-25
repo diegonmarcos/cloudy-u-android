@@ -27,7 +27,7 @@ import java.time.ZoneId
  * test/test-weather-card-rows.sh.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], application = Application::class)
+@Config(sdk = [34], application = Application::class, qualifiers = "w384dp-h3000dp-night-450dpi")
 class WeatherRowsTest : KitPageHarness() {
     private val berlin = ZoneId.of("Europe/Berlin")
     private val date = LocalDate.of(2026, 6, 21)
@@ -99,7 +99,7 @@ class WeatherRowsTest : KitPageHarness() {
     }
 
     private val id = WeatherBadgeService.BADGE_ID
-    private fun top(tag: String) = compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.top
+    private fun top(tag: String) = compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().positionInRoot.y
     private fun bottom(tag: String) = compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.bottom
 
     @Test fun `nothing is drawn between the title and the graphic and the rows sit below it in order`() {
