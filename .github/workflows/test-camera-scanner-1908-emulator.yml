@@ -450,7 +450,7 @@ jobs:
             grep -q "_locked.pdf" "$OUT/_acc" && check ok "11 Password locked the PDF (scan_locked.pdf)" || check no "11 no locked result: $(cat "$OUT/_acc")"
             adb shell input keyevent KEYCODE_BACK; sleep 2
             tool_open img_convert; tap_rid scanner:pick; sleep 3; pick_photo; wait_rid scanner:run 15 || true; shot tool-convert-before-dark; tap_rid scanner:run; wait_result || true; shot tool-convert-dark
-            grep -q "scan-test-page" "$OUT/_acc" && check ok "11 the image converter wrote the converted picture" || check no "11 no converter result: $(cat "$OUT/_acc")"
+            grep -Eq "RESULT \| (JPG|PNG|WEBP) \| [^|]*\.(jpg|png|webp) \| [0-9]+ KB" "$OUT/_acc" && check ok "11 the image converter wrote the converted picture" || check no "11 no converter result: $(cat "$OUT/_acc")"
           else check no "11 no saved PDF to run the file tools on"; fi
 
           # ── 12. light theme: the main screens again ──
