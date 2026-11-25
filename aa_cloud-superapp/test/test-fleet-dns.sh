@@ -371,7 +371,7 @@ d = json.load(open(f['bj']))['ui']['dns']
 pr = []
 # field parity: everything the page drew before the new section
 fields = d.get('page_fields') or []
-if len(fields) < 22: pr.append('bj: ui.dns.page_fields lists %d fields, the page had 22 before the reachability test' % len(fields))
+if len(fields) < 24: pr.append('bj: ui.dns.page_fields lists %d fields, the page had 22 before the reachability test and 24 with Copy all and Export (#1924)' % len(fields))
 for x in fields:
     if x not in frag: pr.append('frag: a field the page had is gone: %s' % x)
 for x in ('ConfigHeader("Android Private DNS")', 'ConfigHeader("Fleet DNS")', 'ConfigHeader("Status")', 'ConfigHeader("Bridges")', 'ConfigHeader("DNS servers")',
