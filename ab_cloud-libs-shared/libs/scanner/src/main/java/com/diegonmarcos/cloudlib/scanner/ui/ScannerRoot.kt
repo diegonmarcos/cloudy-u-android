@@ -91,6 +91,8 @@ fun ScannerRoot(c: ScannerController) {
         }
     }
     DisposableEffect(Unit) { onDispose { c.destroy() } }
+    // a notice ('Saved', a failure) fades after a few seconds
+    androidx.compose.runtime.LaunchedEffect(c.notice) { if (c.notice.isNotBlank()) { kotlinx.coroutines.delay(5000); c.notice = "" } }
 
     BackHandler {
         when {

@@ -376,17 +376,17 @@ jobs:
           # ── 8. the review strip and the page operations ──
           tap_rid scanner:action:done; wait_rid scanner:home 15 || true; sleep 2; shot review-dark
           has _w scanner:strip && has _w scanner:page:0 && check ok "08 the review strip shows page 1" || check no "08 no review strip"
-          tap_rid scanner:action:duplicate; sleep 2; shot review-duplicate-dark
-          has _w scanner:page:1 && check ok "08 duplicate: the strip now has two pages" || check no "08 duplicate did not add a page"
+          tap_rid scanner:action:duplicate; sleep 2; shot review-duplicate-dark; dump _d
+          has _d scanner:page:1 && check ok "08 duplicate: the strip now has two pages" || check no "08 duplicate did not add a page"
           tap_rid scanner:action:delete; sleep 2; dump _d
           has _d scanner:page:1 && check no "08 delete left the second page" || check ok "08 delete removed the duplicate (one page left)"
 
           # ── 9. the export sheet, and a real PDF out of it ──
-          tap_rid scanner:action:export; wait_rid scanner:export 10 || true; shot export-pdf-dark
-          has _w scanner:size:a4 && check ok "09 the export sheet (PDF) lists the page sizes" || check no "09 no sizes on the export sheet"
+          tap_rid scanner:action:export; wait_rid scanner:export 10 || true; shot export-pdf-dark; dump _e
+          has _e scanner:size:a4 && check ok "09 the export sheet (PDF) lists the page sizes" || check no "09 no sizes on the export sheet"
           tap_rid scanner:size:a4
-          tap_rid kit:segment:scanner:format:JPEG; sleep 2; shot export-jpeg-dark
-          has _w scanner:size:a4 && check no "09 JPEG still shows PDF page sizes" || check ok "09 JPEG hides the PDF-only sizes and shows DPI / size options"
+          tap_rid kit:segment:scanner:format:JPEG; sleep 2; shot export-jpeg-dark; dump _j
+          has _j scanner:size:a4 && check no "09 JPEG still shows PDF page sizes" || check ok "09 JPEG hides the PDF-only sizes and shows DPI / size options"
           tap_rid kit:segment:scanner:format:PDF; sleep 1; tap_rid "scanner:token:{date}"; sleep 1; shot export-template-dark
           prev=$(python3 -I ui.py ridtext "$OUT/_t.xml" scanner:file_preview)
           echo "file preview: $prev"
@@ -464,7 +464,7 @@ jobs:
           tap_rid kit:segment:scanner:tabs:filter; sleep 4; shot editor-filter-light
           tap_rid scanner:action:done || true; wait_rid scanner:home 10 || true
           tap_rid scanner:action:export || true; wait_rid scanner:export 10 || true; shot export-light
-          bg=$(python3 -I -c 'from PIL import Image; import sys; im=Image.open(sys.argv[1]).convert("RGB"); print(sum(im.getpixel((60,y))[0] for y in (200,400,600))//3)' "$SH/$(printf '%02d' $N)-export-light.png")
+          bg=$(python3 -I -c 'from PIL import Image; import sys; im=Image.open(sys.argv[1]).convert("RGB"); h=im.size[1]; print(sum(im.getpixel((30,y))[0] for y in (h*65//100,h*70//100,h*75//100))//3)' "$SH/$(printf '%02d' $N)-export-light.png")
           [ "${bg:-0}" -gt 120 ] && check ok "12 the light theme draws light screens (sample luma $bg)" || check no "12 light theme not light (sample $bg)"
 
           timeout 60 adb logcat -d > "$OUT/logcat.txt" || true

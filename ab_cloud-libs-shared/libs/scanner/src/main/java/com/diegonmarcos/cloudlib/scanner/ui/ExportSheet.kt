@@ -59,9 +59,9 @@ fun ExportSheet(c: ScannerController) {
     val o = c.options
     fun set(n: com.diegonmarcos.cloudlib.scanner.ExportOptions) { c.options = n }
     Box(Modifier.fillMaxSize().background(Color(0x99000000)).clickable { c.showExport = false }.testTag(ScannerTags.EXPORT), contentAlignment = Alignment.BottomCenter) {
+        Column(Modifier.fillMaxWidth().heightIn(max = 620.dp).clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp)).background(k.surface).clickable(enabled = false) {}) {
         Column(
-            Modifier.fillMaxWidth().heightIn(max = 560.dp).clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp)).background(k.surface).clickable(enabled = false) {}
-                .verticalScroll(rememberScrollState()).padding(KitDensity.medium),
+            Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(KitDensity.medium),
             verticalArrangement = Arrangement.spacedBy(KitDensity.small),
         ) {
             Text(stringResource(R.string.scanner_export), color = k.textPrimary, style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
@@ -120,12 +120,16 @@ fun ExportSheet(c: ScannerController) {
                     }
                 }
             }
+        }
+        // pinned: the destination stays in reach however long the options are
+        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(0.dp)).background(k.surface).padding(KitDensity.medium)) {
             GroupTitle(stringResource(R.string.scanner_destination))
             Row(horizontalArrangement = Arrangement.spacedBy(KitDensity.small), modifier = Modifier.fillMaxWidth()) {
                 KitButton({ c.export(share = false) }, Modifier.weight(1f).testTag("scanner:save"), enabled = c.busy.isEmpty()) { Text(stringResource(R.string.scanner_save_files)) }
                 KitTonalButton({ c.export(share = true) }, Modifier.weight(1f).testTag("scanner:share"), enabled = c.busy.isEmpty()) { Text(stringResource(R.string.scanner_share)) }
                 KitOutlinedButton({ c.showExport = false }, Modifier.testTag("scanner:export_close")) { Text(stringResource(R.string.scanner_close)) }
             }
+        }
         }
     }
 }

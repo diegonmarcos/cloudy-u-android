@@ -35,7 +35,7 @@
     <string name="scanner_empty">No pages yet. Take a photo with Camera or bring images in with Import.</string>
     <string name="scanner_export">Export</string>
     <string name="scanner_export_failed">Export failed: %1$s</string>
-    <string name="scanner_export_n">%1$d pages</string>
+    <string name="scanner_export_n">Pages: %1$d</string>
     <string name="scanner_f_bw">B&amp;W</string>
     <string name="scanner_f_color">Colour</string>
     <string name="scanner_f_gray">Grayscale</string>
@@ -78,7 +78,7 @@
     <string name="scanner_page_n">Page %1$d</string>
     <string name="scanner_page_of">Page %1$d of %2$d</string>
     <string name="scanner_page_size">Page size</string>
-    <string name="scanner_pages_count">%1$d pages</string>
+    <string name="scanner_pages_count">Pages: %1$d</string>
     <string name="scanner_pages_field">Pages</string>
     <string name="scanner_parked">%1$d pages set aside by Split</string>
     <string name="scanner_password">Password</string>
