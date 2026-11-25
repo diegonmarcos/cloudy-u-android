@@ -53,7 +53,7 @@ class WireGuardFragment : KitComposeFragment() {
     override fun Content() = MeshScreen(store)
 
     /** Tell the page what happened outside a composable (a picker's result): the notice line and the journal. */
-    private fun report(label: String, block: () -> String) = store.perform(label, block)
+    private fun report(label: String, block: () -> String) = store.perform(label, block = block)
 
     /** Read an imported .conf into prefs (multi-peer aware). */
     private val importLauncher: ActivityResultLauncher<String> =

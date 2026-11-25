@@ -214,7 +214,7 @@ class MeshStore(
     /** The Connected switch / Reconnect button: ask for VPN consent when needed, then drive the engine. */
     private fun connectFlow(label: String, call: () -> String) {
         val intent = runCatching { port.consentIntent() }.getOrNull()
-        if (intent == null) perform(label, call) else host.requestConsent(intent) { perform(label, call) }
+        if (intent == null) perform(label, block = call) else host.requestConsent(intent) { perform(label, block = call) }
     }
 
     /** The one dispatch table: every `engine` id the declaration may name, and what it does. */
