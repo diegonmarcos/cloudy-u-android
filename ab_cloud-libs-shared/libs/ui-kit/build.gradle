@@ -20,9 +20,13 @@
 
 plugins {
     id 'com.android.library'
-    id 'org.jetbrains.kotlin.android'
-    id 'org.jetbrains.kotlin.plugin.compose'
 }
+// Conditional: an AGP 9 consumer (cloud-camera, #1908) self-registers the 'kotlin' extension and hard-errors on a second
+// apply; AGP 8 consumers still need it. Same pattern as libs/bottomnav/build.gradle.
+if (project.extensions.findByName('kotlin') == null) {
+    apply plugin: 'org.jetbrains.kotlin.android'
+}
+apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 
 android {
     namespace 'com.diegonmarcos.superapp.uikit'
