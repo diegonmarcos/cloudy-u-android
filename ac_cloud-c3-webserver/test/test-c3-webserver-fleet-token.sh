@@ -91,7 +91,7 @@ need('"com.diegonmarcos.cloudwebserver" to listOf("%s")' % dl.get("grant") in rd
 andr = rd(kdir + "/FleetTokenAndroid.kt")
 need(dl.get("authority") in andr and '"%s"' % dl.get("method") in andr and dl.get("credential") in andr, "V1 the webserver's delivery call does not match the declaration")
 need("deliver" not in re.search(r"class FleetTokenOwnerProvider.*", andr, re.S).group(0), "V1 the peer-facing provider must not wake Cloud Account")
-need("fleet_token_vault" in rd("ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"), "V1 the store is not declared in fleet-config.json")
+need("fleet_token_vault" in rd("fleet-private-data/fleet-config.json"), "V1 the store is not declared in fleet-config.json")
 need("Fetch from vault" in page and "not in vault" in page, "V1 the page lacks Fetch from vault / the 'not in vault' mark")
 
 if errors:

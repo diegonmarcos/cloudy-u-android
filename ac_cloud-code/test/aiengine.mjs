@@ -177,7 +177,7 @@ out(!!siBj.modules["libs:ai-engine"] && siBj.modules.app.depends_on.includes("li
 const lc = JSON.parse(read("../1_cicd/src/data/lib-classes.json"));
 const libsMap = lc.libs || lc;
 out(libsMap["ai-engine"]?.class === "contract", "libs:ai-engine is classed a contract lib");
-const fc = JSON.parse(read("../ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"));
+const fc = JSON.parse(read("../fleet-private-data/fleet-config.json"));
 out(fc.apps.code.libs.includes("lib-ai-engine") && fc.apps.superintel.libs.includes("lib-ai-engine"), "fleet-config.json lists lib-ai-engine for Code and SuperIntel");
 const svc = read("../ac_cloud-superintel/app/src/main/java/com/diegonmarcos/cloudsuperintel/engine/EngineService.kt");
 out(has(svc, "AiGatewayBackend") && has(svc, "AiOpenRouterBackend") && has(svc, "OpenRouterKey.source(app)") && !/return\s+key\(\)|put\([^)]*key\(\)/.test(svc), "SuperIntel performs requests with libs:ai's backends and the key never leaves it");
