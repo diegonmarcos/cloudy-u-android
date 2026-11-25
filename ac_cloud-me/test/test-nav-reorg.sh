@@ -85,8 +85,8 @@ if "lnktree-site" in [p["id"] for p in secs.get("pers", {}).get("pages", [])] or
     bad("tree", "the Lnktree tile is still under Pers (it moved to Proj)")
 if ui.get("repo_tree", {}).get("group") not in {g["id"] for g in secs.get("lnktree", {}).get("groups", [])}:
     bad("tree", "ui.repo_tree.group is not a group of the Lnktree bottom-nav section (its Proj row)")
-if ui.get("vault_rows", {}).get("projects", {}).get("section") != "proj":
-    bad("tree", "Tasks > Projects does not take Proj's group")
+if ui.get("vault_rows", {}).get("projects", {}).get("section") != "lnktree":
+    bad("tree", "Tasks > Projects does not take the Lnktree bottom-nav section's Proj group")
 lc = ui.get("lnktree_cache", {})
 if set(lc.get("sections", [])) != {"pers", "prof", "proj"}:
     bad("tree", "the page cache does not cover Pers, Prof and Proj")
