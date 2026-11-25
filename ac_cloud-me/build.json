@@ -1012,32 +1012,26 @@
           },
           {
             "id": "lt-area-unix",
-            "label": "Unix",
             "icon": "terminal"
           },
           {
             "id": "lt-area-cg",
-            "label": "CG",
             "icon": "palette"
           },
           {
             "id": "lt-area-capital",
-            "label": "Capital",
             "icon": "payments"
           },
           {
             "id": "lt-area-hardtech",
-            "label": "HardTech",
             "icon": "memory"
           },
           {
             "id": "lt-area-lecole42",
-            "label": "42",
             "icon": "menu_book"
           },
           {
             "id": "lt-area-front",
-            "label": "Projects",
             "icon": "rocket_launch"
           }
         ]

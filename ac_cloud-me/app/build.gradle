@@ -131,7 +131,9 @@ if (repoTreeDecl) {
 }
 // Each Proj chip's label is its registry area's name, read from the outline here: build.json declares NO label for it.
 def areaLabels = repoOutline.areas.collectEntries { [(it.code.toString()): (it.label ?: it.name).toString()] }
-def areaPageCodes = (repoTreeDecl.areas ?: []).collectEntries { [(it.page.toString()): it.code.toString()] }
+// #1901 the restored Lnktree bottom-nav section carries the same area chips under the lt- prefix (page ids are unique in the app): same codes, same registry names
+def areaPageCodes = [:]
+(repoTreeDecl.areas ?: []).each { a -> areaPageCodes[a.page.toString()] = a.code.toString(); areaPageCodes['lt-' + a.page.toString()] = a.code.toString() }
 def labelAreaPages
 labelAreaPages = { pages -> pages.collect { p ->
     def q = new LinkedHashMap(p)

@@ -80,12 +80,12 @@ class CloudAppMenuTest {
         val kb = menuOf("extapp:cloud-keyboard").filter { it.verb == CloudAppMenu.Verb.ACTION }
         assertEquals(listOf("Writer" to "extapp:cloud-keyboard#page:writer"), kb.map { it.label to it.arg })
         val me = menuOf("extapp:cloud-me").filter { it.verb == CloudAppMenu.Verb.ACTION }.map { it.arg }
-        assertTrue("Me deep links: $me", "extapp:cloud-me#page:health/home" in me && "extapp:cloud-me#page:tasks/backlogs" in me)
+        assertTrue("Me deep links: $me", "extapp:cloud-me#page:pers/pers-profiles" in me && "extapp:cloud-me#page:tasks/backlogs" in me)
         assertEquals("no duplicate action target", me.distinct(), me)
         assertTrue("an app with no extra actions has only Open", menuOf("extapp:cloud-calc").count { it.group == CloudAppMenu.Group.ACTIONS } == 1)
         // a deep-link tile's own menu does not list itself twice
-        val deep = menuOf("extapp:cloud-me#page:health/home")
-        assertEquals(1, deep.count { it.arg == "extapp:cloud-me#page:health/home" })
+        val deep = menuOf("extapp:cloud-me#page:pers/pers-profiles")
+        assertEquals(1, deep.count { it.arg == "extapp:cloud-me#page:pers/pers-profiles" })
     }
 
     @Test

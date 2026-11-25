@@ -135,7 +135,7 @@ WANT_FOLDERS = {
  'Primary': ['Drive', 'Browser', 'Calc', 'Nav', 'Camera', 'Canvas', 'Keyboard', 'Wallet'],
  'Communication': ['Mail', 'Chat', 'Messenger', 'Dialer', 'Contacts'],
  'Data': ['Notes', 'Agenda', 'Office', 'Gallery', 'Vault'],
- 'Me': ['Me-Health', 'Experiences', 'Socials', 'Me-Buro'],
+ 'Me': ['Me-Pers', 'Me-Prof', 'Me-Prj', 'Me-Buro'],   # #1903 (were Me-Health, Experiences, Socials)
  'Services · City': ['Money', 'Shopping', 'Health', 'Real Estate', 'Jobs & Business', 'City Mobility', 'Transports', 'Hotels'],  # #1902 (#1806 order)
  'Services · Leisure': ['News', 'Events', 'Media Center', 'Social', 'Games'],  # #1902 Social opens the media_social All Apps folder
  'AGI': ['AI', 'Code', 'Terminal', 'Search'],  # #1902 Search ends AGI
@@ -143,7 +143,7 @@ WANT_FOLDERS = {
 }
 _me_labels = [t.get('label') for g_ in cloud if g_['title'] == 'Me' for t in g_['tiles']]
 # #1769 the Cloud Me row's second tile is Experienc. today and Socials once renamed; both folders follow that tile.
-CLOUD_LABEL = {'Nav': 'Navigation', 'Agenda': 'Tasks', 'Me-Health': 'Me-Health', 'Experiences': 'Experienc.' if 'Experienc.' in _me_labels else 'Socials', 'Socials': 'Experienc.' if 'Experienc.' in _me_labels else 'Socials', 'Me-Buro': 'Me-Buro'}
+CLOUD_LABEL = {'Nav': 'Navigation', 'Agenda': 'Tasks', 'Me-Pers': 'Me-Pers', 'Me-Prof': 'Me-Prof', 'Me-Prj': 'Me-Prj', 'Me-Buro': 'Me-Buro'}   # #1903 the phone folders carry the Cloud tile names
 fleet_pkgs = set()
 for e in bj['external_apps']:
     for p_ in [e.get('hub_package'), e.get('alt_package'), e.get('install_package')] + list((e.get('forks') or {}).values()):
@@ -195,9 +195,9 @@ for g in phone:
         check(rows is not None and len({r['capability'] for r in rows if r['capability'] != 'dating'}) == len([r for r in rows if r['capability'] != 'dating']), '%s / %s: one app per capability' % (g['title'], f['label']))
         miss = [r for r in rows or [] if r['pkg'] not in inst]
         check(all(r['pkg'] in {t['pkg'] for t in f['packages']} for r in miss), '%s / %s: every capability not installed is shown as a suggestion tile %s' % (g['title'], f['label'], [r['label'] for r in miss]))
-socials = [t['pkg'] for g in phone for f in g.get('folders', []) if f['label'] == 'Socials' for t in f['packages']]
+socials = [t['pkg'] for g in phone for f in g.get('folders', []) if f['label'] == 'Me-Prj' for t in f['packages']]
 check(all(p_ in socials for p_ in ['com.instagram.android', 'com.instagram.barcelona', 'com.facebook.katana', 'com.linkedin.android', 'com.pinterest', 'com.bereal.ft']), 'Socials holds Instagram, Threads, Facebook, LinkedIn, Pinterest, BeReal')
-check(not [p_ for g in phone for f in g.get('folders', []) if f['label'] != 'Socials' for t in f['packages'] for p_ in [t['pkg']] if p_ in socials], 'no social app sits in another folder')
+check(not [p_ for g in phone for f in g.get('folders', []) if f['label'] != 'Me-Prj' for t in f['packages'] for p_ in [t['pkg']] if p_ in socials], 'no social app sits in another folder')
 want_pick = {'Mail': ['com.google.android.gm'], 'Chat': ['com.Slack'], 'Messenger': ['com.whatsapp.w4b'], 'Drive': ['com.google.android.apps.docs'], 'Browser': ['com.brave.browser'], 'Nav': ['com.google.android.apps.maps']}
 for st, pl in want_pick.items():
     got = [t['pkg'] for g in phone for f in g.get('folders', []) if f['label'] == st for t in f['packages']]
@@ -206,10 +206,12 @@ for st, pl in want_pick.items():
 print('== C: Cloud quickmark icons are unchanged from origin/main ==')
 snap = json.load(open(A + 'test/data/cloud-tile-icons-1756.json'))['tiles']
 now = {t['id']: t.get('icon') for g in cloud for t in g['tiles'] if not t.get('separator')}
+MOVED = {'tools-account': 'configs-profile'}   # #1903 the Profile tile left the Me row; it is reachable in Setup (Profile | About), a rename of its place, not a removal
 for tid, o in snap.items():
+    if tid not in now and MOVED.get(tid) in now: continue
     if tid not in now: check(False, 'Cloud tile %s is gone' % tid)
     elif now[tid] != o['icon']: check(False, 'Cloud tile %s icon changed %s -> %s' % (tid, o['icon'], now[tid]))
-check(all(now.get(tid) == o['icon'] for tid, o in snap.items()), 'all %d Cloud tile icons are identical to origin/main' % len(snap))
+check(all(now.get(tid) == o['icon'] for tid, o in snap.items() if tid not in MOVED), 'all %d Cloud tile icons are identical to origin/main' % len(snap))
 # #1778 the Projects row reads Wiki | SuperApp, Omniverse | FinTerm, BioMed, CAD | Circusverse: Wiki and Circusverse are new, Circusverse is a greyed-out
 # coming_soon tile (no target, no fleet app), and every tile that was there keeps its icon (checked above).
 proj = [g for g in cloud if g['title'] == 'Projects'][0]['tiles']
@@ -224,7 +226,7 @@ check(circ.get('coming_soon') is True and not circ.get('target') and not circ.ge
 check(not [e for e in bj['external_apps'] if 'circus' in e['id']], 'Circusverse has no external app entry (#1778)')
 # #1771 the Cloud Me row renames (Me -> Lnktree, Tasks -> Socials) change labels only: the snapshot pins both.
 lab = {t['id']: t.get('label') for g in cloud for t in g['tiles'] if not t.get('separator')}
-check(lab.get('me') == snap['me']['label'] == 'Lnktree' and lab.get('myroadmap') == snap['myroadmap']['label'] == 'Socials', 'Cloud Me row tiles me and myroadmap read Lnktree and Socials (#1771)')
+check(lab.get('me') == snap['me']['label'] == 'Lnktree' and snap['myroadmap']['label'] == 'Socials' and lab.get('myroadmap') == 'Me-Prj' and lab.get('myhealth') == 'Me-Pers' and lab.get('myexperiences') == 'Me-Prof', 'Cloud Me row tiles me, myhealth, myexperiences and myroadmap read Lnktree, Me-Pers, Me-Prof and Me-Prj (#1903, renamed from Me-Health, Experienc., Socials: the ids and icons are unchanged)')
 
 print('== X: All Apps subtypes mirror the Cloud apps ==')
 sub = {f['id']: f['label'][1:] for f in folders}

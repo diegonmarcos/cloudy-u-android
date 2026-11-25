@@ -139,8 +139,8 @@ headers = [h for h in ("Primary", "Communication", "Data", "Me") if h in seq]
 order_ok = headers == ["Primary", "Communication", "Data", "Me"]
 prim = after("Primary", {"Drive", "Browser", "Calc", "Navigation", "Camera", "Canvas", "Keyboard", "Wallet"}, "Communication")
 com = after("Communication", {"Mail", "Chat", "Messenger", "Dialer", "C3-Bot", "Contacts"}, "Data")
-# Data ends on the 'Me' tile then Vault; the Me GROUP header is the 'Me' immediately followed by 'Me-Health'.
-data = after("Data", {"Notes", "Tasks", "Office", "Gallery"}, "Me-Health")
+# Data ends on the 'Me' tile then Vault; the Me GROUP header is the 'Me' immediately followed by 'Me-Pers' (#1903, was Me-Health).
+data = after("Data", {"Notes", "Tasks", "Office", "Gallery"}, "Me-Pers")
 print("Primary:", prim); print("Communication:", com); print("Data:", data)
 right = re.findall(r' text="([^"]+)"', open(sys.argv[3], encoding="utf-8", errors="ignore").read())
 # #1627 the Data row holds 7 app tiles (Notes, Tasks, Office, Gallery, Media Center, Me, Vault); Vault is the overflow

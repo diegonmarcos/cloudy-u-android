@@ -247,7 +247,7 @@
     "suggested": false
    }
   ],
-  "Me-Health": [
+  "Me-Pers": [
    {
     "capability": "health hub",
     "pkg": "com.sec.android.app.shealth",
@@ -279,7 +279,7 @@
     "suggested": false
    }
   ],
-  "Experiences": [
+  "Me-Prof": [
    {
     "capability": "vocabulary learning",
     "pkg": "com.memrise.android.memrisecompanion",
@@ -293,7 +293,7 @@
     "suggested": false
    }
   ],
-  "Socials": [
+  "Me-Prj": [
    {
     "capability": "photo sharing",
     "pkg": "com.instagram.android",
