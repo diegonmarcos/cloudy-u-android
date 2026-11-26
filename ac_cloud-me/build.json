@@ -1782,6 +1782,11 @@
       "holder_max_webviews": 8,
       "hard_refresh_scope": "page",
       "exclude_pages": [],
+      "queue": {
+        "_doc": "#1938 the section pager (every Cloud Me section, one implementation, SectionScreen + PageFetchQueue): the strips render at once from the declaration, then every page of the shown section is fetched in the background ONE AT A TIME, the page on screen first, then nav order; a failed page shows its error with Retry and the queue goes on. At most max_retained_pages fetched pages are kept (the page cache files and WebViews of the least recently viewed are released first).",
+        "enabled": true,
+        "max_retained_pages": 12
+      },
       "prefetch": {
         "enabled": true,
         "concurrency": 3,

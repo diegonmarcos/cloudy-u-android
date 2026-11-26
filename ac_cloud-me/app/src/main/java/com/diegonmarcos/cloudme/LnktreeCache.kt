@@ -43,6 +43,9 @@ data class LnktreeCacheConfig(
     val excludePages: Set<String>,
     /** #1901 every ui.sections id whose web pages are cached (the embedded sites are spread over Pers, Prof and Proj); empty = [section] alone. */
     val sections: List<String> = emptyList(),
+    /** #1938 the section pager's background queue (`queue` block): every subpage of the shown section fetched one at a time, at most [queueMaxRetained] kept (least recently viewed released first). */
+    val queueEnabled: Boolean = false,
+    val queueMaxRetained: Int = 0,
 ) {
     fun caches(pageId: String): Boolean = enabled && pageId !in excludePages
 
@@ -72,6 +75,8 @@ data class LnktreeCacheConfig(
                 maxBytes = (o.optDouble("max_cache_mb", 0.0) * MB).toLong(),
                 holderMaxWebViews = o.optInt("holder_max_webviews", 1).coerceAtLeast(1),
                 hardRefreshScope = o.optString("hard_refresh_scope", "page"),
+                queueEnabled = o.optJSONObject("queue")?.optBoolean("enabled", false) ?: false,
+                queueMaxRetained = o.optJSONObject("queue")?.optInt("max_retained_pages", 0)?.coerceAtLeast(1) ?: 0,
                 excludePages = if (ex == null) emptySet() else (0 until ex.length()).map { ex.getString(it) }.toSet(),
             )
         }

@@ -3,7 +3,11 @@ package com.diegonmarcos.cloudme
 import android.content.Context
 import android.content.ContextWrapper
 import android.view.View
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -67,6 +71,21 @@ fun SectionScreen(sectionId: String, requestedPage: String?, modifier: Modifier 
     val chain = section.path(page.id)
     val ctx = LocalContext.current
     val onTarget = LocalMeTarget.current
+    // #1938 ONE pager for every section: the strips below are drawn at once from the declaration; the pages of the section are fetched afterwards, one at a time, in the background
+    // (the page on screen first, then nav order; ui.lnktree_cache.queue declares the retained-page bound). Nothing below waits on it.
+    val qcfg = LnktreeCacheConfig.baked
+    var queueVersion by remember(section.id) { mutableStateOf(0) }
+    val fetchSeam = LocalPageFetch.current
+    val prefetcher = if (qcfg.queueEnabled) remember(section.id, fetchSeam) {
+        PagePrefetcher(
+            PageFetchQueue(section.nav.allPages().filter { it.pages.isEmpty() && it.action.isBlank() }.map { it.id }, qcfg.queueMaxRetained),
+            fetchSeam ?: PageFetch.default(ctx, section.id),
+            onRelease = { LnktreeCache.store(ctx).clearPage(it) },
+            onChange = { queueVersion++ },
+        )
+    } else null
+    androidx.compose.runtime.LaunchedEffect(prefetcher) { prefetcher?.run() }
+    androidx.compose.runtime.LaunchedEffect(prefetcher, page.id) { prefetcher?.show(page.id) }
 
     val store = LocalNavModeStore.current ?: rememberNavModePrefs()
     // The section's declared nav_mode, unless the user chose another for it in Configs (persisted, in the backup).
@@ -123,7 +142,12 @@ fun SectionScreen(sectionId: String, requestedPage: String?, modifier: Modifier 
                 }
             }
             if (tailTab) com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(pageId.orEmpty(), modifier = Modifier.weight(1f).fillMaxWidth())
-            else PageContent(section, page, Modifier.weight(1f).fillMaxWidth())
+            else Box(Modifier.weight(1f).fillMaxWidth()) {
+                PageContent(section, page, Modifier.fillMaxSize())
+                // #1938 a page whose background fetch failed shows its error with Retry; the other pages keep loading
+                val q = prefetcher?.queue
+                if (q != null && queueVersion >= 0 && q.stateOf(page.id) == PageFetchQueue.State.FAILED) PageFetchErrorStrip(q.errorOf(page.id).orEmpty(), { prefetcher.retry(page.id) }, Modifier.align(androidx.compose.ui.Alignment.TopCenter))
+            }
         }
     }
     if (sideMenu) {
@@ -237,4 +261,17 @@ private fun Context.findFragmentActivity(): FragmentActivity {
         c = c.baseContext
     }
     error("a hosted Fragment needs a FragmentActivity")
+}
+
+/** #1938 the error of a page whose background fetch failed, on that page, with Retry. */
+@Composable
+internal fun PageFetchErrorStrip(message: String, onRetry: () -> Unit, modifier: Modifier = Modifier) {
+    androidx.compose.foundation.layout.Row(
+        modifier.fillMaxWidth().background(androidx.compose.ui.graphics.Color(0xFF3B1020)).padding(horizontal = 12.dp, vertical = 6.dp)
+            .testTag("me:page:fetch-error"),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+    ) {
+        androidx.compose.material3.Text("Could not load this page: $message", color = androidx.compose.ui.graphics.Color.White, modifier = Modifier.weight(1f))
+        androidx.compose.material3.TextButton(onClick = onRetry, modifier = Modifier.testTag("me:page:fetch-retry")) { androidx.compose.material3.Text("Retry") }
+    }
 }
