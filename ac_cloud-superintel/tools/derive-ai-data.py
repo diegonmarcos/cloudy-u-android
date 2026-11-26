@@ -74,7 +74,56 @@ hooks += [row(os.path.basename(f), "posts or beacons AI usage") for f in sorted(
 enabled = {}
 for n in ("settings.base.json", "settings.project.json"):
     for k, v in J(n).get("enabledPlugins", {}).items(): enabled[k] = enabled.get(k, False) or v
+# #1939 Context > Plugins: two groups, Skills plugins and Performance plugins. The class is DECLARED per plugin in the SOT (plugin-classes.json: `primary`);
+# the other class, when the payload carries it, is derived from the plugin's folders and shown as a badge. Payload of skills, commands or agents = skills;
+# hooks, MCP servers, LSP, output styles = performance. Undeclared, unknown, or a primary the payload does not carry fails the derivation.
+cls = J("plugin-classes.json")
+CLASS_ORDER = ["skills", "performance"]
+mp = os.path.join(sot, "cloud-marketplace")
+def payload(d):
+    kinds = {}
+    n = len(glob.glob(os.path.join(d, "skills/*/SKILL.md")))
+    if n: kinds["skills"] = n
+    for sub in ("commands", "agents"):
+        n = len(glob.glob(os.path.join(d, sub, "*.md")))
+        if n: kinds[sub] = n
+    hp = os.path.join(d, "hooks/hooks.json")
+    if os.path.exists(hp):
+        n = sum(len(h.get("hooks", [])) for hs in json.load(open(hp)).get("hooks", {}).values() for h in hs)
+        if n: kinds["hooks"] = n
+    for f, key in ((".mcp.json", "mcp"), (".lsp.json", "lsp")):
+        if os.path.exists(os.path.join(d, f)): kinds[key] = 1
+    if glob.glob(os.path.join(d, "output-styles/*")): kinds["output-styles"] = 1
+    return kinds
+KIND_CLASS = {"skills": "skills", "commands": "skills", "agents": "skills", "hooks": "performance", "mcp": "performance", "lsp": "performance", "output-styles": "performance"}
+plugin_dirs = sorted(n for n in os.listdir(mp) if os.path.isdir(os.path.join(mp, n)) and os.path.exists(os.path.join(mp, n, ".claude-plugin/plugin.json")))
+universe = sorted(set(plugin_dirs) | {k.split("@")[0] for k in enabled})
+errors = []
+for n in universe:
+    if n not in cls["plugins"]: errors.append("plugin %s has no class in plugin-classes.json" % n)
+for n in cls["plugins"]:
+    if n not in universe: errors.append("plugin-classes.json declares %s, which is no plugin of the marketplace" % n)
+    elif cls["plugins"][n].get("primary") not in CLASS_ORDER: errors.append("plugin %s declares class %r (want skills or performance)" % (n, cls["plugins"][n].get("primary")))
+class_rows = {c: [] for c in CLASS_ORDER}
+for n in universe:
+    if n not in cls["plugins"] or n not in plugin_dirs: continue
+    d = os.path.join(mp, n)
+    meta = json.load(open(os.path.join(d, ".claude-plugin/plugin.json")))
+    kinds = payload(d)
+    have = {KIND_CLASS[k] for k in kinds}
+    primary = cls["plugins"][n]["primary"]
+    if primary not in CLASS_ORDER: continue
+    if have and primary not in have: errors.append("plugin %s is declared %s but its payload (%s) has none of it" % (n, primary, ", ".join(sorted(kinds))))
+    other = [c for c in CLASS_ORDER if c != primary and c in have]
+    badge = "".join(" · also %s (%s)" % (cls["classes"][c].split()[0], ", ".join(k for k in kinds if KIND_CLASS[k] == c)) for c in other)
+    on = any(v for k, v in enabled.items() if k.split("@")[0] == n)
+    class_rows[primary].append(row(n, meta.get("description", "") + " · payload: " + (", ".join("%s %d" % kv for kv in kinds.items()) or "none yet") + badge, meta.get("version", "") + (" · on" if on else " · off")))
+if errors:
+    for e in errors: print("ERROR " + e)
+    sys.exit(2)
 plug = [
+    grp(cls["classes"]["skills"], class_rows["skills"]),
+    grp(cls["classes"]["performance"], class_rows["performance"]),
     grp("Enabled plugins (SOT)", [row(k.split("@")[0], "@" + k.split("@")[1], "on" if v else "off") for k, v in enabled.items()]),
     grp("c3-infra plugin", [row(pj.get("name", "c3-infra"), pj.get("description", ""), pj.get("version", ""))]),
     grp("Skills", [row("c3-infra", desc)]),

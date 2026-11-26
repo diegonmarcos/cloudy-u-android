@@ -100,6 +100,21 @@ class AiPagesTest {
         assertTrue("ops" in g.getValue("Agents"))
         assertTrue("c3-infra" in g.getValue("Enabled plugins (SOT)"))
     }
+
+    /** #1939 Context > Plugins is two groups: every enabled plugin is in exactly one of Skills plugins and Performance plugins, the plugins page selects both. */
+    @Test fun pluginsAreSplitIntoSkillsAndPerformanceExactlyOnce() {
+        val g = AiData.groups(Data.ai("plugins.json")).associate { it.title to it.rows }
+        val skills = g.getValue("Skills plugins").map { it.title }
+        val perf = g.getValue("Performance plugins").map { it.title }
+        val all = g.getValue("Enabled plugins (SOT)").map { it.title }
+        assertTrue(skills.isNotEmpty() && perf.isNotEmpty())
+        assertEquals(all.sorted(), (skills + perf).sorted())
+        assertTrue("no plugin in both groups", skills.intersect(perf.toSet()).isEmpty())
+        // a mixed plugin sits under its primary class with a badge for the other
+        assertTrue(g.getValue("Skills plugins").first { it.title == "c3-infra" }.caption.contains("also Performance"))
+        val shown = pages.getValue("plugins").sources.filter { it.asset == "ai/plugins.json" }.flatMap { AiData.groups(Data.ai("plugins.json"), it.groups) }.map { it.title }
+        assertTrue("Skills plugins" in shown && "Performance plugins" in shown)
+    }
 }
 
 /** #1562 pages, mcp and plugins are served datasets of Cloud Store: no APK asset, read through FleetData, listed in the manifest, schemaVersion set. */

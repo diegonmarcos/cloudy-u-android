@@ -12,6 +12,8 @@
     {
      "asset": "ai/plugins.json",
      "groups": [
+      "Skills plugins",
+      "Performance plugins",
       "Enabled plugins \\(SOT\\)",
       "c3-infra plugin"
      ]

@@ -3,6 +3,51 @@
  "_doc": "Derived by tools/derive-ai-data.py from the cloudy-u-linux SOT da_my-ai/data/claude (names and counts only, no secrets). Never edit by hand.",
  "groups": [
   {
+   "title": "Skills plugins",
+   "rows": [
+    {
+     "title": "c3-infra",
+     "caption": "Owner rules (skill + rules/*.md), lean agents and PreToolUse guard hooks for the c3 fleet · payload: skills 1, hooks 12 · also Performance (hooks)",
+     "end": "1.0.0 · on"
+    },
+    {
+     "title": "ponytail",
+     "caption": "Lazy-senior-dev mode: forces the simplest solution that works (YAGNI, stdlib-first). · payload: skills 6, hooks 2 · also Performance (hooks)",
+     "end": "1.0.0 · on"
+    },
+    {
+     "title": "skill-claude-api-plugin",
+     "caption": "Claude API / Anthropic SDK skill, delivered as a plugin. Every skill in this fleet ships as a plugin — nothing loose in ~/.claude/skills/. Vendored from anthropics/skills; see ORIGIN.md. · payload: skills 1",
+     "end": "1.0.0 · on"
+    }
+   ]
+  },
+  {
+   "title": "Performance plugins",
+   "rows": [
+    {
+     "title": "compression-cloud-ai-plugin",
+     "caption": "Steady-state context compression: per-turn/per-bash one-line principles pointer instead of re-injecting the full set every turn. Split from cloud-principles-ai-plugin. · payload: hooks 1",
+     "end": "1.0.0 · on"
+    },
+    {
+     "title": "hooks-stack-framework-principles-cloud-ai-plugin",
+     "caption": "The core engine: declarative/data-driven/sops CORE PRINCIPLES + FIRE rules + repo reference injected at SessionStart, plus PreToolUse:Bash guard (allow/deny/warn) and PostToolUse nudge. Replaces static CLAUDE.md. Split from cloud-principles-ai-plugin. · payload: hooks 4",
+     "end": "1.0.0 · on"
+    },
+    {
+     "title": "memory-system-cloud-ai-plugin",
+     "caption": "Diego's memory-structure rule: MEMORY.md is an index, not a preload bundle — entries live in type subfolders, loaded on demand only. Injected at SessionStart. Split from cloud-principles-ai-plugin. · payload: hooks 1",
+     "end": "1.0.0 · on"
+    },
+    {
+     "title": "sub-agents-cloud-ai-plugin",
+     "caption": "Scaffold — reserved for future sub-agent / Task-tool orchestration principles. No active rules yet. Split from cloud-principles-ai-plugin. · payload: none yet",
+     "end": "0.1.0 · on"
+    }
+   ]
+  },
+  {
    "title": "Enabled plugins (SOT)",
    "rows": [
     {
@@ -96,6 +141,11 @@
      "end": ""
     },
     {
+     "title": "relay-inbox.md",
+     "caption": "c3-bot relay inbox (#1795)",
+     "end": ""
+    },
+    {
      "title": "security.md",
      "caption": "Security",
      "end": ""
@@ -178,6 +228,31 @@
     {
      "title": "no-mass-delete.sh",
      "caption": "PreToolUse",
+     "end": ""
+    },
+    {
+     "title": "ticket-guard.sh",
+     "caption": "PreToolUse",
+     "end": ""
+    },
+    {
+     "title": "owner-auto-answer.sh",
+     "caption": "PreToolUse",
+     "end": ""
+    },
+    {
+     "title": "backlog-session-start.sh",
+     "caption": "SessionStart",
+     "end": ""
+    },
+    {
+     "title": "relay-inbox.sh",
+     "caption": "SessionStart",
+     "end": ""
+    },
+    {
+     "title": "backlog-stop-push.sh",
+     "caption": "Stop",
      "end": ""
     },
     {
