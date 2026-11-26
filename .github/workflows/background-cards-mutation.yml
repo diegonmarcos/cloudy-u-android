@@ -2,6 +2,10 @@
 # filter, the ongoing flag, the group key, the summary's removal on stop) and runs that app's JVM suite, which holds the
 # card tests (StoreBackgroundCardTest, KeepAliveBadgeTest, NavBackgroundCardTest). Every leg must go RED; a green leg means
 # the suite is blind to that break. Manual only.
+#
+# A leg is a KILL only when the build COMPILED and the NAMED test of the targeted class failed (read from the JUnit XML);
+# anything else (a resolution error, a compile error, another test failing, no result) is a leg ERROR and the job is red
+# for that reason, never a kill. Only the targeted class runs; dependency resolution is retried once.
 name: background-cards-mutation
 on:
   workflow_dispatch:
@@ -61,6 +65,10 @@ jobs:
           PY
           git diff --stat
           test -n "$(git diff --name-only)" || { echo "mutation target missing"; exit 3; }
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -91,13 +99,61 @@ jobs:
         uses: ./.github/actions/install-pinned-tools
         with:
           tools: oras sops
-      - name: JVM unit tests (RED expected)
+      - name: Targeted test, RED expected (kill = compiled AND the named test failed)
         env:
           BYPASS_NIX: "1"
           VAULT_DIR: ${{ github.workspace }}/.vault
           SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
-        run: sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "${{ matrix.app }}"
-      # the evidence: which card test caught it
+          APP: ${{ matrix.app }}
+          M: ${{ matrix.name }}
+        run: |
+          set -u
+          case "$M" in
+            store-group-key|store-ongoing) CLS=com.diegonmarcos.cloudstore.StoreBackgroundCardTest; T="the card is ongoing, in the shared group, with a Stop action" ;;
+            store-removal-on-stop) CLS=com.diegonmarcos.cloudstore.StoreBackgroundCardTest; T="a running batch posts the group summary and stopping removes it with the card" ;;
+            mail-folder-filter) CLS=app.sterna.push.KeepAliveBadgeTest; T="every digit from 0 to 9 is a category and a letter is not" ;;
+            mail-ongoing) CLS=app.sterna.push.KeepAliveBadgeTest; T="the service notification is an ongoing keep-alive with a Stop action and the mail data" ;;
+            mail-group-key) CLS=app.sterna.push.KeepAliveBadgeTest; T="the card is in the shared group and the summary is the groups ongoing summary" ;;
+            mail-removal-on-stop) CLS=app.sterna.push.KeepAliveBadgeTest; T="the push service posts the summary with its card and removes it when it stops" ;;
+            nav-group-key|nav-ongoing) CLS=com.diegonmarcos.cloudnav.maps.NavBackgroundCardTest; T="the card is ongoing, not clearable, in the shared group, and carries the nav info" ;;
+            nav-removal-on-stop) CLS=com.diegonmarcos.cloudnav.maps.NavBackgroundCardTest; T="the service wires the card, the summary and the removal, and the tab publishes and clears" ;;
+            *) echo "::error::unknown leg $M"; exit 2 ;;
+          esac
+          SIMPLE="${CLS##*.}"
+          # Nav's entry has no class filter: only the suite under proof stays in this checkout (as mail-push-backoff-mutation does).
+          if [ "$APP" = ac_cloud-nav ]; then
+            find ac_cloud-nav/app/src/test ab_cloud-libs-shared/libs/maps/src/test -name '*.kt' ! -name "$SIMPLE.kt" -delete
+          fi
+          run_tests() {
+            rm -rf "$APP"/app/build/test-results
+            case "$APP" in
+              ac_cloud-store) UNIT_TEST_FILTER="$CLS" sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$APP" ;;
+              ac_cloud-nav) sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$APP" ;;
+              ac_cloud-mail) ( cd "$APP" && chmod +x gradlew && ./gradlew --no-daemon :app:testReleaseUnitTest --tests "$CLS" ) ;;
+            esac
+          }
+          xml() { find "$APP" -path '*build/test-results*' -name "TEST-$CLS.xml" 2>/dev/null | head -1; }
+          run_tests > /tmp/leg.log 2>&1 || true
+          if [ -z "$(xml)" ] && grep -qE 'Could not (resolve|GET|HEAD|download)|Connection (reset|timed out)|Read timed out|Failed to fetch maven|Could not find' /tmp/leg.log; then
+            echo "dependency resolution failed; retrying once"
+            run_tests > /tmp/leg.log 2>&1 || true
+          fi
+          tail -60 /tmp/leg.log | cut -c1-300
+          X="$(xml)"
+          if [ -z "$X" ]; then echo "::error::LEG ERROR $M: no result for $CLS (the build did not compile or did not run the class); not a kill"; exit 1; fi
+          python3 -I - "$X" "$T" "$M" <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          path, want, leg = sys.argv[1:]
+          root = ET.parse(path).getroot()
+          cases = {c.get("name"): c for c in root.iter("testcase")}
+          failed = sorted(n for n, c in cases.items() if c.find("failure") is not None or c.find("error") is not None)
+          print("failed tests:", failed)
+          if want not in cases:
+              print("::error::LEG ERROR %s: the named test did not run: %s" % (leg, want)); sys.exit(1)
+          if want not in failed:
+              print("::error::LEG SURVIVED %s: the named test stayed green: %s" % (leg, want)); sys.exit(1)
+          print("KILLED %s by: %s" % (leg, want))
+          PY
       - name: Failed tests
         if: always()
         run: grep -rl "<failure" --include="TEST-*.xml" ${{ matrix.app }}/app/build 2>/dev/null | xargs -r grep -h -o 'testcase name="[^"]*"' | head -40 || true
