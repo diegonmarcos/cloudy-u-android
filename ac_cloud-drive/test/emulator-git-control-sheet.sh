@@ -85,8 +85,9 @@ for m in re.finditer(r"<node [^>]*>",x):
 for a,t,c in nodes:
     if pat.search(t):
         cy=(a[1]+a[3])//2
-        for b,t2,c2 in nodes:
-            if c2 and b[0]>=a[2] and b[1]<=cy<=b[3] and b[0]>a[0]: print((b[0]+b[2])//2,cy); sys.exit(0)
+        # the toolbar pills carry no clickable flag in the dump: the first box right of the match, on its row, at least a finger wide (the gear is the one after it)
+        cand=sorted([b for b,t2,c2 in nodes if b[0]>=a[2] and b[1]<=cy<=b[3] and b[2]-b[0]>=20 and b[3]-b[1]<=60], key=lambda b:b[0])
+        if cand: print((cand[0][0]+cand[0][2])//2,cy); sys.exit(0)
 sys.exit(1)' "$1" | { read -r px py && adb shell input tap "$px" "$py" < /dev/null; }; }
 
 # a control may leave the sheet (Folder opens Files, Settings opens its own sheet): come back to the sheet before the next tap
@@ -118,6 +119,7 @@ PY
 ok=0; miss=0
 while IFS=$'\t' read -r -u 3 tab id label danger; do
   case "$id" in tab:Manage|tab:manage) adb shell input swipe $((W*80/100)) $((H*62/100)) $((W*20/100)) $((H*62/100)) 200 < /dev/null; sleep 1;; esac
+  case "$id" in tab:*) for r in 1 2 3 4 5 6; do dump | grep -q 'text="Workflow"' && break; adb shell input swipe $((W/2)) $((H*40/100)) $((W/2)) $((H*80/100)) 250 < /dev/null; sleep 1; done;; esac
   case "$id" in tab:*) tap "^$(printf '%s' "$label" | sed 's/[][\.*^$/]/\\&/g')$" ; sleep 1; adb exec-out screencap -p > "$OUT/walk/${id#tab:}.png"; dump >/dev/null; snap "tab-${id#tab:}"; printf '%s\t%s\ttab\tshown\t%s\n' "$tab" "$id" "walk/${id#tab:}.png" >> "$OUT/walk.tsv"; continue;; esac
   pat="^$(printf '%s' "$label" | sed 's/[][\.*^$/]/\\&/g')$"
   found=0
