@@ -44,7 +44,7 @@ class ControlEffectsTest {
     @Test fun autoSyncIntervalsAreFlooredAtWorkManagersPeriodAndTheWorkerTicksAtTheSmallest() {
         val declared = listOf(5L, 15L, 30L, 60L)
         assertEquals(listOf(15L, 15L, 30L, 60L), declared.map { AutoSyncPlan.minutes(it, 15) })
-        assertEquals(15L to 15L, AutoSyncPlan.toggled(true, 5, 15))
+        assertEquals(true to 15L, AutoSyncPlan.toggled(true, 5, 15))
         assertEquals(30L, AutoSyncPlan.tickMinutes(60, listOf(30L, 60L)))
         assertEquals(15L, AutoSyncPlan.tickMinutes(60, listOf(5L)))
         assertEquals(null, AutoSyncPlan.nextRunMinutes(false, 15, 0, 0, null))
