@@ -238,7 +238,6 @@ internal fun BadgeCard(d: BadgeCardData.Data) {
     val hostView = androidx.compose.ui.platform.LocalView.current
     val accent = accentOf(d)
     val icon = remember(d.badge.icon) { Sections.iconResFor(ctx, d.badge.icon) }
-    val tap = d.open
     var collapsed by androidx.compose.runtime.remember(d.badge.id) {
         androidx.compose.runtime.mutableStateOf(BadgeCollapse.isCollapsed(ctx, d.badge.id))
     }
@@ -246,6 +245,23 @@ internal fun BadgeCard(d: BadgeCardData.Data) {
         Haptics.tap(hostView); collapsed = !collapsed; BadgeCollapse.set(ctx, d.badge.id, collapsed)
     }
     if (collapsed) { CollapsedBadgeCard(d, accent, icon, flip); return }
+    BadgeCardBody(d, flip)
+}
+
+/**
+ * #1935 THE badge view in its most expanded form: the one builder both Notify pages draw. The Persistents page draws it
+ * for every badge ([BadgeCard]); the All page draws the very same function for a badge's SUPER EXPANDED state
+ * ([SummaryBadgeLine], [BadgeExpansion.Stage.SECOND]), from the same [BadgeCardData.Data]. Nothing about a badge's fields or
+ * actions is declared twice: a field added here shows on both pages, and there is no second renderer to forget it.
+ * [onChevron] is the header control: Persistents folds the card, All steps the badge's three-state cycle.
+ */
+@Composable
+internal fun BadgeCardBody(d: BadgeCardData.Data, onChevron: () -> Unit) {
+    val ctx = LocalContext.current
+    val hostView = androidx.compose.ui.platform.LocalView.current
+    val accent = accentOf(d)
+    val icon = remember(d.badge.icon) { Sections.iconResFor(ctx, d.badge.icon) }
+    val tap = d.open
     // #1603 Samsung-UI media card: the album art, dimmed, fills the card behind the transport; a scrim keeps the text
     // readable. Only for the media kind, and only when the posted notification carried art — otherwise a plain surface.
     val weather = d.badge.id == com.diegonmarcos.superapp.notificationcenter.WeatherBadgeService.BADGE_ID
@@ -274,7 +290,7 @@ internal fun BadgeCard(d: BadgeCardData.Data) {
                 fontFamily = NotifCard.font, maxLines = 1)
             Box(Modifier.weight(1f))
             Box(Modifier.size(8.dp).clip(CircleShape).background(if (d.live) accent else NotifCard.pill))
-            CollapseChevron(d.badge.id, expanded = true, onClick = flip)
+            CollapseChevron(d.badge.id, expanded = true, onClick = onChevron)
         }
         // #1907 the Weather card draws NOTHING between its title and the graphic: the value, the sub line, the hourly lines
         // and the progress live in its detail view ([WeatherDetail]) under the rows.
@@ -433,8 +449,12 @@ private fun SummaryBadgeLine(d: BadgeCardData.Data) {
         }
         when (stage) {
             BadgeExpansion.Stage.COLLAPSED -> Unit
-            BadgeExpansion.Stage.FIRST -> ShadeState(d, expanded = false, tag = BadgeCardTags.summaryFirst(d.badge.id))
-            BadgeExpansion.Stage.SECOND -> ShadeState(d, expanded = true, tag = BadgeCardTags.summarySecond(d.badge.id))
+            // #1935 the middle state is the badge as the shade shows it expanded; the last is THE Persistents view, drawn by
+            // the same function from the same model ([BadgeCardBody]), so it cannot stop short of it.
+            BadgeExpansion.Stage.FIRST -> ShadeState(d, expanded = true, tag = BadgeCardTags.summaryFirst(d.badge.id))
+            BadgeExpansion.Stage.SECOND -> Box(Modifier.fillMaxWidth().testTag(BadgeCardTags.summarySecond(d.badge.id))) {
+                BadgeCardBody(d, onChevron = step)
+            }
         }
     }
 }

@@ -7,9 +7,10 @@ import kotlin.math.abs
  * #1794 the All page's persistent-badge rows have THREE states, in this order:
  *
  *   COLLAPSED  the one-line summary (icon, name, key value, live dot) the page drew before;
- *   FIRST      the badge's FIRST state as the notification centre shows it (the platform's collapsed content view of
- *              the badge's own posted notification);
- *   SECOND     its expanded (second) state as the notification centre shows it (the big content view, action row).
+ *   FIRST      the badge's expanded state as the notification centre shows it (the platform's big content view of
+ *              the badge's own posted notification, action row included);
+ *   SECOND     SUPER EXPANDED (#1935): exactly the view the Persistents page shows, drawn by the same function
+ *              ([BadgeCardBody]) from the same model, every field and every action.
  *
  * Only two inputs move a row, and both take the same step ([next]): the arrow on the row's right, and a swipe DOWN on the
  * row's box ([isSwipeDown]). From SECOND that step folds the row back to COLLAPSED, so the arrow alone reaches every state

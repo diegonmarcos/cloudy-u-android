@@ -32,6 +32,7 @@ import org.robolectric.annotation.Config
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class, qualifiers = "w384dp-h832dp-450dpi")
+@org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
 class BadgeAllPageStatesTest : KitPageHarness() {
 
     private val ctx: Context = ApplicationProvider.getApplicationContext()
