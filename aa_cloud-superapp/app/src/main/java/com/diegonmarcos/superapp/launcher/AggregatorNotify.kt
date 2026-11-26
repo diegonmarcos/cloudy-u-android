@@ -181,7 +181,7 @@ private fun SplitCenter(state: AggregatorState, panel: Sections.StackPanel, onOp
             return@Column
         }
         when {
-            all -> GroupList(state, views, onOpen, shade = true)
+            all -> GroupList(state, views, shade = true, onOpen = onOpen)
             state.groupMode(feed) == AggregatorModel.GROUP_TIME -> Timeline(state, feed, views.map { it.group }, null, onOpen)
             else -> Categories(state, feed, views.map { it.group }, onOpen)
         }
@@ -293,7 +293,7 @@ private fun PhoneCenter(state: AggregatorState, onOpen: (String) -> Unit) {
         AggStateLine("silent · nothing captured", Tone.WARN); return
     }
     val views by remember { derivedStateOf { state.phoneViews() } }
-    if (views.isEmpty()) AggCaption(AggregatorModel.filteredAwayNote(total)) else GroupList(state, views, onOpen)
+    if (views.isEmpty()) AggCaption(AggregatorModel.filteredAwayNote(total)) else GroupList(state, views, onOpen = onOpen)
 }
 
 /** Cloud stream, grouped by PUBLISHER: the ntfy TOPIC for a fleet message, the `source` field for an in-app one. */
@@ -306,7 +306,7 @@ private fun CloudCenter(state: AggregatorState, panel: Sections.StackPanel, onOp
     if (local.isEmpty()) {
         if (total == 0) AggStateLine("silent · no in-app events", Tone.WARN)
         else AggCaption(AggregatorModel.filteredAwayNote(total))
-    } else GroupList(state, local, onOpen)
+    } else GroupList(state, local, onOpen = onOpen)
     AggShadeLabel("CHANNELS")
     NtfyGroups(state, panel, onOpen)
 }
@@ -330,7 +330,7 @@ internal fun NtfyGroups(state: AggregatorState, panel: Sections.StackPanel, onOp
     val order = remember(state.epoch, state.sortMode, topics) {
         AggregatorModel.orderTopics(topics, state.sortMode, state.ntfyCache.toMap())
     }
-    GroupList(state, state.ntfyViews(panel, order), onOpen)
+    GroupList(state, state.ntfyViews(panel, order), onOpen = onOpen)
 }
 
 // ── groups ───────────────────────────────────────────────────────────
@@ -340,7 +340,7 @@ internal fun NtfyGroups(state: AggregatorState, panel: Sections.StackPanel, onOp
  * Archive), and neither is a box whose every row was swiped into it.
  */
 @Composable
-internal fun GroupList(state: AggregatorState, views: List<GroupView>, onOpen: (String) -> Unit, shade: Boolean = false) {
+internal fun GroupList(state: AggregatorState, views: List<GroupView>, shade: Boolean = false, onOpen: (String) -> Unit) {
     for (v in views) {
         if (state.isArchived(v.group.key)) continue
         val rows = v.group.rows
@@ -425,8 +425,8 @@ internal fun GroupBlock(
     view: GroupView,
     archived: Boolean,
     rowArchive: Boolean = false,
-    onOpen: (String) -> Unit,
     shade: Boolean = false,
+    onOpen: (String) -> Unit,
 ) {
     val p = LocalKitPalette.current
     val g = view.group
@@ -957,7 +957,7 @@ internal fun InboxNotifications(state: AggregatorState, panel: Sections.StackPan
     // here, on purpose — this is ONE app's slice of the phone namespace and pruning against a partial view is what makes
     // read rows silently reappear.
     val views by remember(panel) { derivedStateOf { state.inboxViews(panel) } }
-    GroupList(state, views, onOpen)
+    GroupList(state, views, onOpen = onOpen)
 }
 
 // ── kind=class_inbox: one card per CHANNEL CLASS ─────────────────────
@@ -992,7 +992,7 @@ internal fun ClassInboxBody(state: AggregatorState, panel: Sections.StackPanel, 
     // may declare both, and RSS does: the same messages arrive by two roads and belong on one card.
     if (cls.source == AggregatorModel.C3NTFY_SOURCE) NtfyGroups(state, panel, onOpen)
     if (groups.isNotEmpty()) {
-        GroupList(state, state.classViews(panel), onOpen)
+        GroupList(state, state.classViews(panel), onOpen = onOpen)
     } else if (cls.source != AggregatorModel.C3NTFY_SOURCE) {
         // Granted and empty is a real, different state from unavailable, and the line names WHICH class came up empty.
         AggStateLine(stringResource(R.string.inbox_class_silent, name), Tone.WARN)

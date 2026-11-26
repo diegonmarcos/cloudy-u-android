@@ -45,7 +45,7 @@ class NotifyShadeAll1935Test : KitPageHarness() {
         compose.onAllNodesWithTag(tag, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
 
     private fun draw(st: AggregatorState, vararg v: GroupView) =
-        showKit { Column { GroupList(st, v.toList(), { }, shade = true) } }
+        showKit { Column { GroupList(st, v.toList(), shade = true) { } } }
 
     /** The menu entries of the removed row that this card's long-press menu holds right now. */
     private fun menuActions(key: String): List<String> = NotifActions.SHADE_LONG_PRESS_MENU.filter { a ->
@@ -124,7 +124,7 @@ internal object ShadeParity {
     fun missing(required: Collection<String>, present: Collection<String>): List<String> = required.filter { it !in present }
 
     fun sourceViolations(src: String): List<String> = buildList {
-        if (!src.contains("all -> GroupList(state, views, onOpen, shade = true)")) add("All is not drawn in shade mode")
+        if (!src.contains("all -> GroupList(state, views, shade = true, onOpen = onOpen)")) add("All is not drawn in shade mode")
         if (!src.contains("if (shade && !archived && !open) state.markGroupRead(g)")) add("expanding a card no longer reads it")
         if (!src.contains("if (shade && !inArchive && r.id.isNotBlank() && state.isUnread(r)) state.markRead(r.id, true)")) add("opening a notification no longer reads it")
         if (!src.contains("state.archiveRow(r.id, !inArchive)")) add("swipe away no longer archives")
@@ -137,7 +137,7 @@ internal object ShadeParity {
     }
 
     fun mutations(src: String): Map<String, String> = mapOf(
-        "All back to the button row" to src.replace("all -> GroupList(state, views, onOpen, shade = true)", "all -> GroupList(state, views, onOpen)"),
+        "All back to the button row" to src.replace("all -> GroupList(state, views, shade = true, onOpen = onOpen)", "all -> GroupList(state, views, onOpen = onOpen)"),
         "expand no longer reads" to src.replace("if (shade && !archived && !open) state.markGroupRead(g)", ""),
         "open no longer reads" to src.replace("state.markRead(r.id, true)\n        runCatching", "runCatching"),
         "swipe archive dropped" to src.replace("state.archiveRow(r.id, !inArchive)", "Unit"),
