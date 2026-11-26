@@ -475,6 +475,9 @@ object Sections {
          *  top-level children instead of Cloud | Labs | C3. `page:cloud/quant`
          *  still resolves — see [Section.allPages]. */
         val hidden: Boolean = false,
+        /** `hidden_on` (#1943): surfaces that do NOT draw this page though it stays listed everywhere else (Home Apps row, Canopus arc,
+         *  Sirius tree, hubs). `setup` = the Setup page grid ([LauncherNavController.sectionGrid]). */
+        val hiddenOn: List<String> = emptyList(),
         /** A thin `|` between two runs of tiles in the Configs page grid (same element as the
          *  Data Apps `separator`); never a destination, so the Home row skips it. */
         val separator: Boolean = false,
@@ -779,6 +782,7 @@ object Sections {
                         redirect = po.optString("redirect", ""),
                         actionsFromSection = po.optString("actions_from_section", ""),
                         hidden   = po.optBoolean("hidden", false),
+                        hiddenOn = po.optJSONArray("hidden_on")?.let { ha -> (0 until ha.length()).map { ha.getString(it) } }.orEmpty(),
                         separator = po.optBoolean("separator", false),
                         separatorBefore = po.optBoolean("separator_before", false),
                         tabs     = po.optJSONArray("tabs")?.let { ta ->

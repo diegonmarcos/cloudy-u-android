@@ -3,8 +3,10 @@
 #   P1  parity: every Setup + Launcher entry of the previous layout (listed below, with label, icon and action) is still declared and
 #       reachable at its NEW place: Launcher group -> Setup Launcher row; Connect + Profiling -> Setup C3 section; Configs group -> the
 #       Launcher page's Configs section (derived exactly as Sections.hubSections derives it); Actions row unchanged on Setup.
-#   P2  the Setup Connect section is named C3 and reads Cloudy C3 | Peer Control | Watchdog, X-Ray Device, Logcat Fleet; no Profiling
+#   P2  the Setup Connect section is named C3 and reads Cloudy C3 | Fleet Control (was Peer Control, label only) | Watchdog, X-Ray Device, Logcat Fleet; no Profiling
 #       group or heading remains; groups[] carries the same pages.
+#   P4  the Home Apps Configs row, Canopus arc and Sirius tree (all list Section.pages) still list every page they did before: the Configs pages are
+#       declared `hidden_on: [setup]` (only the Setup grid skips them), never `hidden`.
 #   P3  the Launcher row reads ... | Notify | Configs, and Configs opens the Launcher page (redirect to config/launcher-hub); the Launcher page
 #       has two sections, Launcher and Configs; the Setup page no longer draws the Configs group.
 # Each is then mutated and must turn red. Static, no device, no build.   bash aa_cloud-superapp/test/test-setup-launcher-configs-c3-1943.sh
@@ -38,18 +40,18 @@ BEFORE = [
 ACTIONS = [('update', 'Update All', 'action:update_all'), ('kde_connect', 'KDE Connect', 'action:kde_connect_now'),
            ('animations', 'Animations', 'action:toggle_animations'), ('sync-clipboard', 'Sync Clipboard', 'action:sync_clipboard'),
            ('saving-mode', 'Saving Mode', 'action:saving_mode'), ('focus-mode', 'Focus Mode', 'page:config/focus')]
-C3_ORDER = ['Cloudy C3', '|', 'Peer Control', '|', 'Watchdog', 'X-Ray Device', 'Logcat Fleet']
+C3_ORDER = ['Cloudy C3', '|', 'Fleet Control', '|', 'Watchdog', 'X-Ray Device', 'Logcat Fleet']
 
 def setup_runs(bj):   # the Setup grid: visible (not hidden) non-action pages, by group, in declaration order
     runs = {}
     for p in sec(bj)['pages']:
-        if p.get('hidden') or p.get('is_action'): continue
+        if p.get('hidden') or p.get('is_action') or 'setup' in p.get('hidden_on', []): continue   # Sections drops hidden; the Setup grid drops hidden_on setup
         runs.setdefault(p.get('group', ''), []).append(p)
     return runs
 
 def hub_sections(bj, hub_id='launcher-hub'):   # mirror of Sections.hubSections
     s = sec(bj); pages = s['pages']; hub = next(p for p in pages if p['id'] == hub_id)
-    listed = {i for p in pages if not p.get('hidden') for i in p.get('hub_pages', [])}
+    listed = {i for p in pages if not p.get('hidden') for i in p.get('hub_pages', [])}   # #1719 (unused by the Configs pages since #1943 follow-up: they are not hidden)
     out = {}
     for sub in hub.get('hub_sections', []):
         tiles = [p for p in pages if (p.get('subgroup') or p.get('group', '')) == sub and p['id'] != hub_id
@@ -57,13 +59,15 @@ def hub_sections(bj, hub_id='launcher-hub'):   # mirror of Sections.hubSections
         if tiles: out[sub] = tiles
     return out
 
+NEW_LABEL = {'kde': 'Fleet Control'}   # #1943 follow-up: label only; id, icon, action unchanged; 'Peer Control' kept as a search keyword (settings)
+
 def check(n, bj):
     f = []; by = {p['id']: p for p in sec(bj)['pages']}; runs = setup_runs(bj); hub = hub_sections(bj)
     if n == 'P1':
         for pid, label, grp, action, icon in BEFORE:
             p = by.get(pid)
             if p is None: f.append('LOST %s' % pid); continue
-            if p['label'] != label: f.append('%s label %r != %r' % (pid, p['label'], label))
+            if p['label'] != NEW_LABEL.get(pid, label): f.append('%s label %r != %r' % (pid, p['label'], label))
             if p.get('action', '') != action: f.append('%s action %r != %r' % (pid, p.get('action', ''), action))
             if p.get('icon', '') != icon: f.append('%s icon %r != %r' % (pid, p.get('icon', ''), icon))
             if p.get('separator'):
@@ -78,6 +82,13 @@ def check(n, bj):
                 if pid not in [q['id'] for q in hub.get('Configs', [])]: f.append('%s not in the Launcher page Configs section' % pid)
         acts = [(p['id'], p['label'], p.get('action')) for p in sec(bj)['pages'] if p.get('is_action')]
         if acts != ACTIONS: f.append('Actions row changed: %r' % acts)
+        if 'Peer Control' not in by['kde'].get('settings', []): f.append('kde lost the Peer Control search keyword')
+    elif n == 'P4':   # Home Apps Configs row, Canopus arc, Sirius tree all list Section.pages (= every page that is not `hidden`); the previous lists
+        vis = {p['id'] for p in sec(bj)['pages'] if not p.get('hidden')}
+        for pid, label, grp, action, icon in BEFORE:
+            if pid not in vis: f.append('%s dropped from the Home row / Canopus arc / Sirius tree' % pid)
+        for aid, _, _ in ACTIONS:
+            if aid not in vis: f.append('action %s dropped' % aid)
     elif n == 'P2':
         gl = {g['id']: g for g in sec(bj)['groups']}
         if gl.get('connect', {}).get('label') != 'C3': f.append('group connect label %r' % gl.get('connect', {}).get('label'))
@@ -102,7 +113,8 @@ def check(n, bj):
 
 fails = 0
 for n, t in (('P1', 'every old Setup + Launcher entry reachable at its new place'), ('P2', 'Connect is C3 with Profiling merged in'),
-             ('P3', '| Configs after Notify opens the Launcher page; Configs is its second section, off Setup')):
+             ('P3', '| Configs after Notify opens the Launcher page; Configs is its second section, off Setup'),
+             ('P4', 'Home Apps Configs row, Canopus arc and Sirius tree list every page they listed before')):
     r = check(n, bj0); print('  %s: %s %s' % ('PASS' if not r else 'FAIL', n, t + ('' if not r else ' -> ' + '; '.join(r)))); fails += bool(r)
 print('== mutants: each must turn its check red ==')
 page = lambda bj, i: [p for p in sec(bj)['pages'] if p['id'] == i][0]
@@ -111,8 +123,12 @@ def mut(name, s, fn):
     global fails
     bj = copy.deepcopy(bj0); fn(bj)
     red = bool(check(s, bj)); print('  %s: mutant %s turns %s red' % ('PASS' if red else 'FAIL', name, s)); fails += not red
+mut('Perms goes hidden (drops off Home row, Canopus arc, Sirius tree)', 'P4', lambda b: page(b, 'perms').__setitem__('hidden', True))
+mut('About goes hidden', 'P4', lambda b: page(b, 'app-about').__setitem__('hidden', True))
+mut('the Fleet Control label is reverted', 'P1', lambda b: page(b, 'kde').__setitem__('label', 'Peer Control'))
+mut('the Peer Control keyword is dropped', 'P1', lambda b: page(b, 'kde').pop('settings'))
 mut('Perms is dropped', 'P1', lambda b: drop(b, 'perms'))
-mut('About leaves the hub list (unreachable)', 'P1', lambda b: page(b, 'launcher-hub')['hub_pages'].remove('app-about'))
+mut('About goes hidden (leaves the hub)', 'P1', lambda b: page(b, 'app-about').__setitem__('hidden', True))
 mut('Logcat Fleet is dropped', 'P1', lambda b: drop(b, 'logcat-fleet'))
 mut('Watchdog loses its action', 'P1', lambda b: page(b, 'c3-watchdog').pop('action'))
 mut('X-Ray Device leaves C3', 'P1', lambda b: page(b, 'xray').__setitem__('group', 'Profiling'))
@@ -124,7 +140,7 @@ mut('C3 order changes', 'P2', lambda b: sec(b)['pages'].append(sec(b)['pages'].p
 mut('the Configs entry is dropped', 'P3', lambda b: drop(b, 'launcher-configs'))
 mut('the Configs entry opens another page', 'P3', lambda b: page(b, 'launcher-configs').__setitem__('redirect', 'config/controls'))
 mut('the Launcher page loses its Configs section', 'P3', lambda b: page(b, 'launcher-hub').__setitem__('hub_sections', ['Launcher']))
-mut('a Configs page returns to Setup', 'P3', lambda b: page(b, 'perms').pop('hidden'))
+mut('a Configs page returns to Setup', 'P3', lambda b: page(b, 'perms').pop('hidden_on'))
 print('== RESULT: %d failed ==' % fails)
 sys.exit(1 if fails else 0)
 PY

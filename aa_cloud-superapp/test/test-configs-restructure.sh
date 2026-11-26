@@ -101,7 +101,7 @@ tools = [p for p in sec['pages'] if p.get('group') == 'C3' and not p.get('hidden
 hubp = by['launcher-hub'].get('hub_pages', [])   # #1943: the Configs pages are hidden from Setup, listed by the Launcher hub
 cfg = [p for p in sec['pages'] if p.get('group') == 'Configs' and not p.get('is_action') and (not p.get('hidden') or p['id'] in hubp or p['id'] == 'configs-sep-a')]
 probs = []
-want_tools = [('c3', 'Cloudy C3'), ('c3-sep-0', '|'), ('kde', 'Peer Control'), ('tools-sep-1', '|'), ('c3-watchdog', 'Watchdog'), ('xray', 'X-Ray Device'), ('logcat-fleet', 'Logcat Fleet')]
+want_tools = [('c3', 'Cloudy C3'), ('c3-sep-0', '|'), ('kde', 'Fleet Control'), ('tools-sep-1', '|'), ('c3-watchdog', 'Watchdog'), ('xray', 'X-Ray Device'), ('logcat-fleet', 'Logcat Fleet')]
 if [(p['id'], p['label']) for p in tools] != want_tools:
     probs.append('C3 = %r' % [(p['id'], p['label']) for p in tools])
 want_cfg = [('profile-app', 'Profile'), ('configs-sep-a', '|'), ('perms', 'Perms'), ('agents-watchdog', 'Agents'), ('logcat', 'Logcat app'), ('xray-app', 'X-Ray App'), ('app-about', 'About')]
@@ -179,7 +179,7 @@ def run(g):
 probs = []
 gids = [g['id'] for g in sec['groups']]
 if gids != ['launcher', 'network', 'apps', 'connect', 'configs']: probs.append('group ids = %r (want the five #1943 groups; connect is labelled C3)' % gids)
-if run('C3') != ['Cloudy C3', 'Peer Control', 'Watchdog', 'X-Ray Device', 'Logcat Fleet']: probs.append('C3 = %r' % run('C3'))
+if run('C3') != ['Cloudy C3', 'Fleet Control', 'Watchdog', 'X-Ray Device', 'Logcat Fleet']: probs.append('C3 = %r' % run('C3'))
 if run('Apps') != ['Store', 'Account']: probs.append('Apps = %r' % run('Apps'))
 if 'Watchdog' not in run('C3'): probs.append('C3 lacks Watchdog: %r' % run('C3'))
 cw = by.get('c3-watchdog', {})

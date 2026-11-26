@@ -5958,7 +5958,6 @@
             "label": "Launcher",
             "icon": "ic_apps",
             "hub_sections": ["Launcher", "Configs"],
-            "hub_pages": ["profile-app", "perms", "agents-watchdog", "logcat", "xray-app", "app-about"],
             "group": "Launcher",
             "subgroup": ""
           },
@@ -6246,8 +6245,9 @@
           {
             "_doc_label": "#723 RENAMED KDE → Peer Control and moved, with WireGuard, out of Setup ▸ Apps into the new Setup ▸ Network sub-section. Only the label moved: the id stays `kde` because page:config/kde is spoken by KdeStatusNotifier and KdeConfigsPageTest, and a page id is identity, not a caption. Moved again, with C3, into the Configs ▸ Fleet group (Setup, Fleet, Observability): the id is unchanged, so page:config/kde still opens it.",
             "id": "kde",
-            "label": "Peer Control",
+            "label": "Fleet Control",
             "icon": "ic_hub",
+            "settings": ["Peer Control"],
             "group": "C3",
             "subgroup": ""
           },
@@ -6289,7 +6289,7 @@
             "label": "Profile",
             "icon": "ic_p_accounts",
             "action": "extapp:cloud-account",
-            "hidden": true,
+            "hidden_on": ["setup"],
             "group": "Configs",
             "subgroup": ""
           },
@@ -6298,7 +6298,7 @@
             "id": "configs-sep-a",
             "label": "|",
             "separator": true,
-            "hidden": true,
+            "hidden_on": ["setup"],
             "group": "Configs",
             "subgroup": ""
           },
@@ -6307,7 +6307,7 @@
             "id": "perms",
             "label": "Perms",
             "icon": "ic_key",
-            "hidden": true,
+            "hidden_on": ["setup"],
             "group": "Configs",
             "subgroup": ""
           },
@@ -6319,7 +6319,7 @@
             "hub_sections": [
               "Network"
             ],
-            "hidden": true,
+            "hidden_on": ["setup"],
             "group": "Configs",
             "subgroup": ""
           },
@@ -6328,7 +6328,7 @@
             "id": "logcat",
             "label": "Logcat app",
             "icon": "ic_subject",
-            "hidden": true,
+            "hidden_on": ["setup"],
             "group": "Configs",
             "subgroup": ""
           },
@@ -6337,7 +6337,7 @@
             "id": "xray-app",
             "label": "X-Ray App",
             "icon": "ic_p_c3_health",
-            "hidden": true,
+            "hidden_on": ["setup"],
             "group": "Configs",
             "subgroup": ""
           },
@@ -6346,7 +6346,7 @@
             "id": "app-about",
             "label": "About",
             "icon": "ic_info",
-            "hidden": true,
+            "hidden_on": ["setup"],
             "group": "Configs",
             "subgroup": ""
           },

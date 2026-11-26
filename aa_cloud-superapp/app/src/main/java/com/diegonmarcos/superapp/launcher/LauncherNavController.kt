@@ -377,7 +377,7 @@ class LauncherNavController(private val host: NavHost) {
      */
     private fun sectionGrid(section: Sections.Section, title: String): Fragment {
         val ctx = host.navContext()
-        val own = section.pages.map { p ->
+        val own = section.pages.filterNot { "setup" in it.hiddenOn }.map { p ->   // #1943 hidden_on setup: the Setup grid skips the page, every other surface keeps it
             TileGridFragment.Tile(
                 // FULLY QUALIFIED on purpose. The bare "page:<id>" form this
                 // used to emit resolves against MainActivity.currentSection,

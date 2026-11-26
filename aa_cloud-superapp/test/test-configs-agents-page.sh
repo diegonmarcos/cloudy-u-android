@@ -40,7 +40,7 @@ check "$(python3 - "$BJ" <<'PY'
 import json, sys
 sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
 pages = sec['pages']; by = {p['id']: p for p in pages}
-vis = [p for p in pages if not p.get('hidden') and not p.get('is_action')]
+vis = [p for p in pages if not p.get('hidden') and 'setup' not in p.get('hidden_on', []) and not p.get('is_action')]   # #1943 the Setup grid skips hidden_on setup
 groups = []
 for p in vis:
     g = p.get('group', '')
@@ -51,7 +51,7 @@ declared = [g['label'] for g in sec['groups']]
 if groups != [g for g in declared if g != 'Configs']: probs.append('grid groups %r != declared groups %r' % (groups, declared))
 if declared != ['Launcher', 'Network', 'Apps', 'C3', 'Configs']: probs.append('declared groups %r != the five #1943 groups' % declared)   # #1943: Connect renamed C3, Profiling merged into it
 connect = [p['label'] for p in vis if p.get('group') == 'C3' and not p.get('separator')]
-if connect != ['Cloudy C3', 'Peer Control', 'Watchdog', 'X-Ray Device', 'Logcat Fleet']: probs.append('C3 = %r' % connect)
+if connect != ['Cloudy C3', 'Fleet Control', 'Watchdog', 'X-Ray Device', 'Logcat Fleet']: probs.append('C3 = %r' % connect)
 for stale in ('Device', 'Setup', 'Fleet', 'Cloudy C3'):
     if any(p.get('group') == stale for p in pages): probs.append('a page still wears the group %r' % stale)
 for gone in ('agents', 'agents-superapp', 'agents-fleet', 'agents-watchtower'):
@@ -95,7 +95,7 @@ pages = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'
 by = {p['id']: p for p in pages}
 probs = []
 if by.get('c3', {}).get('action') != 'extapp:cloud-c3': probs.append('c3 = %r' % by.get('c3'))
-if by.get('kde', {}).get('label') != 'Peer Control': probs.append('kde = %r' % by.get('kde'))
+if by.get('kde', {}).get('label') != 'Fleet Control': probs.append('kde = %r' % by.get('kde'))
 print('; '.join(probs) or 'OK')
 PY
 )" "page:config/c3 and page:config/kde keep their ids, so every old link resolves to the moved pages"

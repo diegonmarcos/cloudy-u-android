@@ -41,9 +41,9 @@ class SubgroupHubTest : KitPageHarness() {
         // #1623: one page, six flat top-level groups (the #1610 Device/Setup split removed).
         val runs = config.pages.filter { !it.isAction }.map { it.group to it.subgroup }.distinct()
         assertEquals(listOf(
-            "Launcher" to "", "Network" to "", "Apps" to "", "C3" to ""), runs)   // #1943 Configs left the Setup grid, Connect + Profiling = C3
+            "Launcher" to "", "Network" to "", "Apps" to "", "C3" to "", "Configs" to ""), runs)   // #1943 Connect + Profiling = C3; Configs is still a Section.pages group (Home row, Canopus, Sirius), only the Setup grid skips it
         // C3 carries Cloudy C3, Peer Control (#1745), Watchdog, X-Ray Device and Logcat Fleet (#1943: Profiling merged in).
-        assertEquals(listOf("Cloudy C3", "Peer Control", "Watchdog", "X-Ray Device", "Logcat Fleet"), grp("C3").map { it.label })
+        assertEquals(listOf("Cloudy C3", "Fleet Control", "Watchdog", "X-Ray Device", "Logcat Fleet"), grp("C3").map { it.label })
         // #1755 Agents is the in-app agents-watchdog hub, now in the Configs group between Perms and Logcat app (the Tools group is Profiling);
         // the Launcher hub (launcher-hub) is the second hub page.
         assertEquals(listOf("launcher-hub", "agents-watchdog"), config.allPages.filter { it.hubSections.isNotEmpty() }.map { it.id })
@@ -55,7 +55,7 @@ class SubgroupHubTest : KitPageHarness() {
         assertEquals(listOf("launcher-hub", "controls", "panels-ui", "app-folders", "onehand", "notify", "launcher-configs"), grp("Launcher").map { it.id })
         assertEquals(listOf("store", "profile"), grp("Apps").map { it.id })
         assertEquals(listOf("c3", "kde", "c3-watchdog", "xray", "logcat-fleet"), grp("C3").map { it.id })
-        assertTrue("the Setup grid no longer draws the Configs group", grp("Configs").isEmpty())
+        assertTrue("every Configs page is hidden_on setup (not `hidden`: the Home row, Canopus arc and Sirius tree keep them)", grp("Configs").size == 6 && grp("Configs").all { "setup" in it.hiddenOn })
         assertEquals(listOf("profile-app", "perms", "agents-watchdog", "logcat", "xray-app", "app-about"), grpAll("Configs").map { it.id })
         assertEquals(listOf("Profile", "Perms", "Agents", "Logcat app", "X-Ray App", "About"), grpAll("Configs").map { it.label })
         assertEquals("extapp:cloud-account", config.allPages.first { it.id == "profile-app" }.action)
