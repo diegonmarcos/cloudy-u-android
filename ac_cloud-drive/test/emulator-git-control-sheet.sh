@@ -45,7 +45,7 @@ JSON
 adb shell "run-as $PKG ls -a files/fixtures/$NAME/.git" > "$OUT/fixture-ls.txt" 2>&1 || fail "fixture is not readable by the app"
 
 snap() { mkdir -p "$OUT/dumps"; cp "$OUT/ui.xml" "$OUT/dumps/$1.xml" 2>/dev/null; }
-dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > "$OUT/ui.xml" 2>/dev/null; cat "$OUT/ui.xml"; }
+dump() { adb shell rm -f /sdcard/ui.xml </dev/null; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > "$OUT/ui.xml" 2>/dev/null; cat "$OUT/ui.xml"; }
 # tap the centre of the first node whose text or content-desc matches the regex ($1)
 tap() { dump | python3 -I -c '
 import re,sys
@@ -70,7 +70,7 @@ size=$(adb shell wm size | tr -d '\r' | grep -oE '[0-9]+x[0-9]+' | tail -1); W=$
 
 find_row() {
   for i in $(seq 1 25); do
-    if dump | grep -q "$NAME"; then return 0; fi
+    if dump | grep -q "text=\"${1:-$NAME}\""; then return 0; fi
     adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*30/100)) 300 < /dev/null; sleep 1
   done; return 1; }
 snap() { mkdir -p "$OUT/dumps"; cp "$OUT/ui.xml" "$OUT/dumps/$1.xml" 2>/dev/null; }
@@ -116,8 +116,8 @@ ensure_sheet() {
   for b in 1 2 3; do adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 2; sheet_open && return 0; done
   adb shell am force-stop "$PKG" < /dev/null; sleep 1; timeout 120 adb shell am start -W -n "$act" < /dev/null >/dev/null; sleep 6
   for i in 1 2 3; do tap_text '^Continue with local files$' && break; sleep 2; done; sleep 2
-  tap_text '^Git$'; sleep 4; find_row; tap_text "^$1\$"; sleep 3; sheet_open; }
-open_row() { find_row || { snap no-row; fail "the row $1 never appeared"; }; tap_text "^$1\$" || fail "cannot open the row $1"; sleep 3; sheet_open || { snap no-sheet; fail "the sheet of $1 did not open"; }; }
+  tap_text '^Git$'; sleep 4; find_row "$1"; tap_text "^$1\$"; sleep 3; sheet_open; }
+open_row() { find_row "$1" || { snap no-row; fail "the row $1 never appeared"; }; tap_text "^$1\$" || fail "cannot open the row $1"; sleep 3; sheet_open || { snap no-sheet; fail "the sheet of $1 did not open"; }; }
 
 mkdir -p "$OUT/walk"; : > "$OUT/walk.tsv"; miss=0; ok=0
 python3 -I - "$BJ" > "$OUT/lists.txt" <<'PY'
@@ -132,7 +132,8 @@ def rows(tag, tabs, header):
         for g in t["groups"]:
             for c in g["controls"]:
                 if c.get("kind") in ("field", "preview", "output"): continue
-                out.append((t["label"], "git_sheet_ctl_" + c["id"], c["id"], c["label"], c.get("needs_clone", False), c.get("confirm") or c.get("danger"), c.get("disabled", False)))
+                rid = "git_sheet_interval_" + str(c["values"][0]) if c.get("kind") == "select" and c.get("values") else "git_sheet_ctl_" + c["id"]
+                out.append((t["label"], rid, c["id"], c["label"], c.get("needs_clone", False), c.get("confirm") or c.get("danger"), c.get("disabled", False)))
     return out
 for name, tabs, header in (("per", d["tabs"], True), ("bulk", d["bulk"]["tabs"], False)):
     with open(sys.argv[1] + "." + name, "w") as f: pass
@@ -152,6 +153,9 @@ walk() {
       printf '%s:%s\t%s\ttab\tshown\twalk/%s-%s-%s.png\n' "$phase" "$cloned" "$id" "$phase" "$cloned" "${id#tab:}" >> "$OUT/walk.tsv"; continue;; esac
     [ "$disabled" = True ] && { printf '%s:%s\t%s\t%s\tgreyed (declared disabled)\t-\n' "$phase" "$cloned" "$id" "$label" >> "$OUT/walk.tsv"; continue; }
     ensure_sheet "$row" || fail "cannot get the sheet back before $id"
+    # conditional groups (shown_when / hidden_when): put the option model in a state that shows them
+    case "$id" in sy.strategy.*|sy.dirty.*) tap_rid git_sheet_tab_sync >/dev/null; sleep 1; tap_rid git_sheet_ctl_sy.direction.pull >/dev/null; sleep 1;;
+      sy.winner.*) tap_rid git_sheet_tab_sync >/dev/null; sleep 1; tap_rid git_sheet_ctl_sy.direction.pull >/dev/null; sleep 1; tap_rid git_sheet_ctl_sy.strategy.merge >/dev/null; sleep 1;; esac
     st=""; found=0
     for n in 0 1 2 3 4 5 6; do
       st=$(tap_rid "$rid") && { found=1; break; }
