@@ -96,7 +96,7 @@ class SubgroupHubTest : KitPageHarness() {
 
     @Test
     fun `H4 Watchdog is the hub fragment and draws its headings and a Cloud Apps tile per entry`() {
-        val frag = SectionPages.pagesFor("config").first { it.id == "agents-watchdog" }.factory()
+        val frag = SectionPages.pagesFor("config", includeHidden = true).first { it.id == "agents-watchdog" }   // #1943 hidden from Setup, listed by the Launcher hub.factory()
         assertTrue("routes to the hub: ${frag.javaClass.simpleName}", frag is SubgroupHubFragment)
         show(frag)
         compose.onNodeWithTag(SubgroupHubFragment.TAG_GRID).assertExists()
@@ -139,7 +139,8 @@ class SubgroupHubTest : KitPageHarness() {
         assertEquals(listOf("Launcher", "Configs"), hub("launcher-hub").map { it.title })
         assertEquals(listOf("profile-app", "perms", "agents-watchdog", "logcat", "xray-app", "app-about"), hub("launcher-hub")[1].tiles.map { it.id })
         assertEquals(listOf("Profile", "Perms", "Agents", "Logcat app", "X-Ray App", "About"), hub("launcher-hub")[1].tiles.map { it.label })
-        assertEquals("page:config/launcher-hub", config.pages.first { it.id == "launcher-configs" }.action)
+        assertEquals("config/launcher-hub", config.pages.first { it.id == "launcher-configs" }.redirect)   // the Configs tile opens the Launcher page (redirect, so its tile target stays unique)
+        assertEquals("config" to "launcher-hub", Sections.canonicalPage("config", "launcher-configs"))
         assertEquals(listOf("controls", "panels-ui", "app-folders", "onehand", "notify"), hub("launcher-hub")[0].tiles.map { it.id })
         assertEquals(listOf("Quick Actions", "UI", "Folders", "One-Hand", "Notify"), hub("launcher-hub")[0].tiles.map { it.label })
         assertEquals("page:config/controls", hub("launcher-hub")[0].tiles[0].target)

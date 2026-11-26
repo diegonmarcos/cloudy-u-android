@@ -5,7 +5,7 @@
 #       Launcher page's Configs section (derived exactly as Sections.hubSections derives it); Actions row unchanged on Setup.
 #   P2  the Setup Connect section is named C3 and reads Cloudy C3 | Peer Control | Watchdog, X-Ray Device, Logcat Fleet; no Profiling
 #       group or heading remains; groups[] carries the same pages.
-#   P3  the Launcher row reads ... | Notify | Configs, and Configs opens the Launcher page (page:config/launcher-hub); the Launcher page
+#   P3  the Launcher row reads ... | Notify | Configs, and Configs opens the Launcher page (redirect to config/launcher-hub); the Launcher page
 #       has two sections, Launcher and Configs; the Setup page no longer draws the Configs group.
 # Each is then mutated and must turn red. Static, no device, no build.   bash aa_cloud-superapp/test/test-setup-launcher-configs-c3-1943.sh
 set -u
@@ -53,7 +53,7 @@ def hub_sections(bj, hub_id='launcher-hub'):   # mirror of Sections.hubSections
     out = {}
     for sub in hub.get('hub_sections', []):
         tiles = [p for p in pages if (p.get('subgroup') or p.get('group', '')) == sub and p['id'] != hub_id
-                 and p.get('action', '') != 'page:config/' + hub_id and (not p.get('hidden') or p['id'] in listed) and not p.get('separator')]
+                 and p.get('redirect', '') != 'config/' + hub_id and (not p.get('hidden') or p['id'] in listed) and not p.get('separator')]
         if tiles: out[sub] = tiles
     return out
 
@@ -92,7 +92,7 @@ def check(n, bj):
         row = [p['label'] for p in runs.get('Launcher', [])]
         if row != ['Launcher', '|', 'Quick Actions', 'UI', 'Folders', 'One-Hand', '|', 'Notify', '|', 'Configs']: f.append('Launcher row = %r' % row)
         c = by.get('launcher-configs', {})
-        if c.get('label') != 'Configs' or c.get('action') != 'page:config/launcher-hub' or c.get('hidden'): f.append('Configs entry = %r' % c)
+        if c.get('label') != 'Configs' or c.get('redirect') != 'config/launcher-hub' or c.get('hidden'): f.append('Configs entry = %r' % c)
         if by.get('launcher-hub', {}).get('hub_sections') != ['Launcher', 'Configs']: f.append('Launcher page sections = %r' % by.get('launcher-hub', {}).get('hub_sections'))
         if list(hub) != ['Launcher', 'Configs']: f.append('derived Launcher page sections = %r' % list(hub))
         if [p['label'] for p in hub.get('Configs', [])] != ['Profile', 'Perms', 'Agents', 'Logcat app', 'X-Ray App', 'About']: f.append('Configs section = %r' % [p['label'] for p in hub.get('Configs', [])])
@@ -122,7 +122,7 @@ mut('Profiling returns as a heading', 'P2', lambda b: page(b, 'xray').__setitem_
 mut('Peer Control leaves C3', 'P2', lambda b: page(b, 'kde').__setitem__('hidden', True))
 mut('C3 order changes', 'P2', lambda b: sec(b)['pages'].append(sec(b)['pages'].pop([p['id'] for p in sec(b)['pages']].index('xray'))))
 mut('the Configs entry is dropped', 'P3', lambda b: drop(b, 'launcher-configs'))
-mut('the Configs entry opens another page', 'P3', lambda b: page(b, 'launcher-configs').__setitem__('action', 'page:config/controls'))
+mut('the Configs entry opens another page', 'P3', lambda b: page(b, 'launcher-configs').__setitem__('redirect', 'config/controls'))
 mut('the Launcher page loses its Configs section', 'P3', lambda b: page(b, 'launcher-hub').__setitem__('hub_sections', ['Launcher']))
 mut('a Configs page returns to Setup', 'P3', lambda b: page(b, 'perms').pop('hidden'))
 print('== RESULT: %d failed ==' % fails)

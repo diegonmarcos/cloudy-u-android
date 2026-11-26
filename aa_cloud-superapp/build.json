@@ -6044,11 +6044,11 @@
             "subgroup": ""
           },
           {
-            "_doc": "#1943 Setup ▸ Launcher row, right after | Notify: Configs opens the Launcher page (page:config/launcher-hub), whose second section Configs holds what the Setup Configs section held (Profile, Perms, Agents, Logcat app, X-Ray App, About). A pure link, so the Launcher hub does not list it on itself (Sections.hubSections skips a page whose action is the hub).",
+            "_doc": "#1943 Setup ▸ Launcher row, right after | Notify: Configs opens the Launcher page (`redirect` to config/launcher-hub, like Notify: its own tile target keeps the Launcher tile's page:config/launcher-hub unique on the grid; its own icon keeps G1 unique), whose second section Configs holds what the Setup Configs section held (Profile, Perms, Agents, Logcat app, X-Ray App, About). A pure link, so the Launcher hub does not list it on itself (Sections.hubSections skips a page that redirects to the hub).",
             "id": "launcher-configs",
             "label": "Configs",
-            "icon": "ic_settings",
-            "action": "page:config/launcher-hub",
+            "icon": "ic_act_settings",
+            "redirect": "config/launcher-hub",
             "group": "Launcher",
             "subgroup": ""
           },

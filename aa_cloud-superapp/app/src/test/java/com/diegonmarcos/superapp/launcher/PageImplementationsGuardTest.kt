@@ -37,7 +37,8 @@ class PageImplementationsGuardTest {
     private val panels = File(main, "launcher/AggregatorPanels.kt").readText()
 
     private val delegatedSections = setOf("mail", "chat", "apptabs", "recentapps")
-    private val dataKeys = listOf("facet", "url", "upstream", "action", "is_action", "mode", "webapps_base")
+    private val dataKeys = listOf("facet", "url", "upstream", "action", "is_action", "mode", "webapps_base",
+        "redirect")   // #1943 a page that `redirect`s is answered by its target (Sections.canonicalPage), e.g. the Launcher row's Configs tile -> config/launcher-hub
 
     private data class Decl(val section: String, val page: String, val o: JSONObject)
 
@@ -67,6 +68,9 @@ class PageImplementationsGuardTest {
     private fun hubSectionsOf(d: Decl): List<String> =
         d.o.optJSONArray("hub_sections")?.let { a -> (0 until a.length()).map { a.getString(it) } }.orEmpty()
 
+    private fun hubPagesOf(d: Decl): List<String> =
+        d.o.optJSONArray("hub_pages")?.let { a -> (0 until a.length()).map { a.getString(it) } }.orEmpty()
+
     /** A hub page is implemented only while SectionPages really routes the key to SubgroupHubFragment... */
     private val hubRouted = Regex("""hubSections\.isNotEmpty\(\)\s*->\s*SubgroupHubFragment\.newInstance""").containsMatchIn(routing)
 
@@ -75,7 +79,8 @@ class PageImplementationsGuardTest {
      *  matched on its group (mirrors Sections.hubSections, which falls back to group when subgroup is blank). */
     private fun hubSectionsHavePages(d: Decl): Boolean = hubSectionsOf(d).all { sub ->
         declared().any { it.section == d.section && it.page != d.page &&
-            it.o.optString("subgroup").ifEmpty { it.o.optString("group") } == sub && !it.o.optBoolean("hidden") }
+            it.o.optString("subgroup").ifEmpty { it.o.optString("group") } == sub &&
+            (!it.o.optBoolean("hidden") || hubPagesOf(d).contains(it.page)) }   // #1943 a hidden page the hub names in `hub_pages` is listed too
     }
 
     @Test fun `P1 every declared page is implemented, data-drawn, lib-hosted or declared a placeholder`() {

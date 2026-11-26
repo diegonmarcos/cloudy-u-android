@@ -443,7 +443,7 @@ for g, s, label, icon in tiles:
     if s and s != s0: out.append('S:' + s.upper()); s0 = s
     out.append('%s[%s]' % (label, icon))
 want = ['H:LAUNCHER',
-        'Launcher[ic_apps]', '|[None]', 'Quick Actions[ic_home]', 'UI[ic_ctl_brightness]', 'Folders[ic_p_folder]', 'One-Hand[ic_onehand]', '|[None]', 'Notify[ic_rss]', '|[None]', 'Configs[ic_settings]',   # #1943 | Configs opens the Launcher page
+        'Launcher[ic_apps]', '|[None]', 'Quick Actions[ic_home]', 'UI[ic_ctl_brightness]', 'Folders[ic_p_folder]', 'One-Hand[ic_onehand]', '|[None]', 'Notify[ic_rss]', '|[None]', 'Configs[ic_act_settings]',   # #1943 | Configs opens the Launcher page
         'H:NETWORK',
         'NG Firewall[ic_act_shield]', '|[None]', 'Wi-Fi[ic_wifi]', 'Bluetooth[ic_bluetooth]', 'DNS[ic_world]', 'VPN[ic_wg]', '|[None]',   # #1737 individual icons again; the NG Firewall hub opens a page listing them
         'Firewall[ic_lock]', 'OS Perms[ic_act_key]', '|[None]', 'Webserver[ic_web]', 'Proxy[ic_ctl_mobile_data]',   # the ADB Shell icon stays removed (#1719); Apps Access is hidden
