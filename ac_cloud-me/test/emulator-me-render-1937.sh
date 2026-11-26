@@ -38,7 +38,12 @@ $T adb logcat -c
 open_page "section:pers";                 shot me-pers-early 12;      waitweb personal; shot me-pers 4
 open_page "page:proj/pj-home";            shot me-proj-home 10
 open_page "page:lnktree/lt-lnktree-site"; shot me-lnktree-early 12;   waitweb lt-lnktree-site; shot me-lnktree 4
+open_page "page:proj/pj-unix-cloudme";    shot me-proj-cloudme 8
 $T adb logcat -d -s CloudMeWeb:V > "$OUT/cloudmeweb.log"
+# a SHORT pane (the page area of a smaller phone): the landpage shows its hero only when ALL of it fits the pane (IntersectionObserver 0.95), so it must be revealed
+$T adb shell wm size 1080x1500
+$T adb shell am force-stop "$ME"; $T adb logcat -c
+open_page "section:pers";                 shot me-pers-short-early 12; waitweb personal; shot me-pers-short 4
 $T adb logcat -d > "$OUT/logcat.txt"
 $T adb shell wm size | tr -d '\r' | tee "$OUT/wm-size.txt"
 
@@ -46,6 +51,7 @@ pip install --quiet pillow >/dev/null 2>&1 || true
 for s in me-pers me-proj-home me-lnktree; do
     python3 "$HERE/render_check.py" pixels "$OUT/$s.png" | tee -a "$OUT/verdict.txt" || rc=1
 done
+python3 "$HERE/render_check.py" pixels "$OUT/me-pers-short.png" | tee -a "$OUT/verdict.txt" || rc=1
 python3 "$HERE/render_check.py" projhome "$OUT/me-proj-home.png" "$OUT/me-proj-home.xml" | tee -a "$OUT/verdict.txt" || rc=1
 echo "rc=$rc" | tee -a "$OUT/verdict.txt"
 exit $rc
