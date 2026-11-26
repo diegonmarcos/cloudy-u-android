@@ -36,8 +36,11 @@ dump | grep -q "package=\"$PKG\"" || fail "Calc never came to the front"
 tap '^Exchange$' || fail "no Exchange page pill in Calc: $(texts)"
 sleep 12; dump >/dev/null
 shot 01-exchange
-for w in 'You convert' 'INR' 'Add another currency' 'Mid-market rates'; do has "$w" || fail "Exchange lacks $w: $(texts)"; done
+for w in 'You convert' 'INR'; do has "$w" || fail "Exchange lacks $w: $(texts)"; done
 for c in USD EUR GBP BRL; do has "$c" || fail "no target card $c: $(texts)"; grep -qE "text=\"1 INR . [^\"]* $c\"" "$OUT/ui.xml" || fail "no unit-rate line for $c: $(texts)"; done
+# The add action and the footer sit below the four cards: scroll once, shoot again.
+swipe 80 30; sleep 2; dump >/dev/null; shot 02-exchange-bottom
+for w in 'Add another currency' 'Mid-market rates'; do has "$w" || fail "Exchange lacks $w: $(texts)"; done
 grep -qE 'text="(Offline . )?Last updated: ' "$OUT/ui.xml" || fail "no last-updated footer: $(texts)"
 grep -oE 'text="(Offline . )?Last updated: [^"]*"' "$OUT/ui.xml" | head -1 | tee "$OUT/footer.txt"
 adb logcat -d -v threadtime > "$OUT/logcat.txt" 2>/dev/null
