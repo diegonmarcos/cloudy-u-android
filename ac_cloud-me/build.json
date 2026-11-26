@@ -890,7 +890,7 @@
         ]
       },
       {
-        "_doc": "#1914 Proj: Home (an icon grid of every group and leaf) | Unix, CG, Capital, Hardtech, Wiki, Projects, 42, each group holding its project leaves; every leaf embeds its site (me-links.json, derived from repos-pages.json and the registry) or its GitHub repo page. The Lnktree site is the default page of the Lnktree bottom-nav entry; the registry area trees stay on Lnktree > Proj (lt-area-*).",
+        "_doc": "#1914 Proj: Home (an icon grid of every group and leaf) | Unix, CG, Capital, Hardtech, Wiki, Projects, 42, each group holding its project leaves; every leaf embeds its site (me-links.json, derived from repos-pages.json and the registry) or its GitHub repo page. The Lnktree site is the default page of the Lnktree bottom-nav entry; the registry area trees stay on Lnktree > Proj (lt-area-*). #1937: every Proj page is `emoji_only` (its chip draws the emoji + name and no glyph: neither the grey link icon nor the default globe), `separator_before` on Unix puts a | after Home (the fleet convention), every project leaf declares its `tile_icon` (its own app icon where its repository has one in this monorepo, else a distinct vector; data/regen-proj-icons.py) and every banner is bundled (data/web/banners, me-proj-emoji.json `asset`)",
         "id": "proj",
         "label": "Proj",
         "icon": "ic_link_tile",
@@ -898,27 +898,36 @@
           {
             "id": "pj-home",
             "label": "🏠 Home",
-            "icon": "ic_link_tile"
+            "icon": "ic_link_tile",
+            "emoji_only": true
           },
           {
             "id": "pj-unix",
             "label": "🐧 Unix",
             "icon": "ic_link_tile",
+            "emoji_only": true,
+            "separator_before": true,
             "pages": [
               {
                 "id": "pj-unix-superapp",
                 "label": "📱 SuperApp",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_unix_superapp"
               },
               {
                 "id": "pj-unix-cloudme",
                 "label": "🙋 Cloud-me",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_unix_cloudme"
               },
               {
                 "id": "pj-unix-cloudy",
                 "label": "☁️ Cloudy",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_unix_cloudy"
               }
             ]
           },
@@ -926,16 +935,21 @@
             "id": "pj-cg",
             "label": "🎮 CG",
             "icon": "ic_link_tile",
+            "emoji_only": true,
             "pages": [
               {
                 "id": "pj-cg-omniverse",
                 "label": "🌌 Omniverse",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_cg_omniverse"
               },
               {
                 "id": "pj-cg-zirkusverse",
                 "label": "🎪 Zirkusverse",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_cg_zirkusverse"
               }
             ]
           },
@@ -943,21 +957,28 @@
             "id": "pj-capital",
             "label": "💹 Capital",
             "icon": "ic_link_tile",
+            "emoji_only": true,
             "pages": [
               {
                 "id": "pj-capital-cb",
                 "label": "📈 CB",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_capital_cb"
               },
               {
                 "id": "pj-capital-pm",
                 "label": "🏢 PM",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_capital_pm"
               },
               {
                 "id": "pj-capital-finterm",
                 "label": "📰 FinTerm",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_capital_finterm"
               }
             ]
           },
@@ -965,21 +986,28 @@
             "id": "pj-hardtech",
             "label": "🔬 Hardtech",
             "icon": "ic_link_tile",
+            "emoji_only": true,
             "pages": [
               {
                 "id": "pj-hardtech-biomed",
                 "label": "💊 BioMed",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_hardtech_biomed"
               },
               {
                 "id": "pj-hardtech-cad",
                 "label": "📐 CAD",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_hardtech_cad"
               },
               {
                 "id": "pj-hardtech-deepxtech",
                 "label": "🧬 DeepXTech",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_hardtech_deepxtech"
               }
             ]
           },
@@ -987,21 +1015,28 @@
             "id": "pj-wiki",
             "label": "📖 Wiki",
             "icon": "ic_link_tile",
+            "emoji_only": true,
             "pages": [
               {
                 "id": "pj-wiki-modernsc",
                 "label": "🔭 ModernSc",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_wiki_modernsc"
               },
               {
                 "id": "pj-wiki-arcanum",
                 "label": "🔮 Arcanum",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_wiki_arcanum"
               },
               {
                 "id": "pj-wiki-projects",
                 "label": "🗂️ Projects",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_wiki_projects"
               }
             ]
           },
@@ -1009,16 +1044,21 @@
             "id": "pj-projects",
             "label": "🎨 Projects",
             "icon": "ic_link_tile",
+            "emoji_only": true,
             "pages": [
               {
                 "id": "pj-projects-endeavours",
                 "label": "🚀 Endeavours",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_projects_endeavours"
               },
               {
                 "id": "pj-projects-duckpeng",
                 "label": "🦆 DuckPeng",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_projects_duckpeng"
               }
             ]
           },
@@ -1026,63 +1066,85 @@
             "id": "pj-lecole42",
             "label": "🎓 42",
             "icon": "ic_link_tile",
+            "emoji_only": true,
             "pages": [
               {
                 "id": "pj-lecole42-algo",
                 "label": "🧮 Algo",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_lecole42_algo"
               },
               {
                 "id": "pj-lecole42-graphic",
                 "label": "🖼️ Graphic",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_lecole42_graphic"
               },
               {
                 "id": "pj-lecole42-system",
                 "label": "⚙️ System",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_lecole42_system"
               },
               {
                 "id": "pj-lecole42-mylibs",
                 "label": "📚 Mylibs",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_lecole42_mylibs"
               },
               {
                 "id": "pj-lecole42-curriculum",
                 "label": "🗂️ Curriculum",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_lecole42_curriculum"
               },
               {
                 "id": "pj-lecole42-agentic",
                 "label": "🤖 Agentic",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_lecole42_agentic"
               },
               {
                 "id": "pj-lecole42-datascience",
                 "label": "📊 DataScience",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_lecole42_datascience"
               },
               {
                 "id": "pj-lecole42-machinelearning",
                 "label": "🧠 MachineLearning",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_lecole42_machinelearning"
               },
               {
                 "id": "pj-lecole42-cyberwarfare",
                 "label": "🛡️ Cyberwarfare",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_lecole42_cyberwarfare"
               },
               {
                 "id": "pj-lecole42-dev",
                 "label": "💻 Dev",
-                "icon": "ic_world"
+                "icon": "ic_world",
+                "emoji_only": true,
+                "tile_icon": "ic_pj_lecole42_dev"
               }
             ]
           },
           {
             "id": "pj-repos",
             "label": "📦 Repos",
-            "icon": "ic_link_tile"
+            "icon": "ic_link_tile",
+            "emoji_only": true
           }
         ]
       },

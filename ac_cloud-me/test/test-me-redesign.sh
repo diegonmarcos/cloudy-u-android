@@ -67,9 +67,10 @@ else:
     # #1159 (owner, supersedes #1144's selected-only name): at rest EVERY tab shows its name, scrolled down (compact) only the selected one.
     if "named = !compact || page.id == selectedId" not in t:
         bad("tab-style", "the tab name is not gated by `named = !compact || page.id == selectedId` - every tab shows it at rest, only the selected one when compact")
-    if not re.search(r"AnimatedVisibility\(\s*named", t):
+    # #1937 an `emoji_only` tab has no glyph, so its name is never hidden: the gate is `named || page.emojiOnly`
+    if not re.search(r"AnimatedVisibility\(\s*named(?: \|\| page\.emojiOnly)?,", t):
         bad("tab-style", "the tab name is not drawn inside AnimatedVisibility(named)")
-    if len(re.findall(r"page\.label", t)) != len(re.findall(r"AnimatedVisibility\(\s*named,[^{]*\{\s*Text\(\s*page\.label", t)) + len(re.findall(r"contentDescription = page\.label", t)):
+    if len(re.findall(r"page\.label", t)) != len(re.findall(r"AnimatedVisibility\(\s*named(?: \|\| page\.emojiOnly)?,[^{]*\{\s*Text\(\s*page\.label", t)) + len(re.findall(r"contentDescription = page\.label", t)):
         bad("tab-style", "a tab draws its name outside the `named` gate")
 if "iconFor" not in code(tabs):
     bad("tab-style", "the second row does not take iconFor (icon-only pills)")

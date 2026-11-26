@@ -10,7 +10,11 @@ import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -95,6 +99,11 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
     // #1198 a remote page (Lnktree) can lose its renderer process; an unhandled loss takes the whole app down
     // (WebViewClient.onRenderProcessGone returns false -> the process is killed). Handle it and build a fresh WebView.
     var generation by remember { mutableStateOf(0) }
+    // #1937 a remote page that cannot be shown (no network and no cached copy, an HTTP error, an empty body) is a visible error with Retry, never a blank dark page:
+    // the WebView's own background is the app's near-black (0xFF0B0414), so a failed main frame used to read as a black screen with nothing on it.
+    var loadError by remember(url, pageId) { mutableStateOf<String?>(null) }
+    androidx.compose.runtime.LaunchedEffect(loadError) { if (loadError != null) collapse?.restore() }   // the top bar and the strips come back with the error
+    val retry: () -> Unit = { loadError = null; refreshing = false; web.value?.let { w -> if (url.startsWith("https://")) w.loadUrl(url) else w.reload() } ?: run { generation++ } }
     androidx.compose.runtime.LaunchedEffect(refreshing) { if (refreshing) { kotlinx.coroutines.delay(20_000); refreshing = false } }
     // #1911 the WebView is bound to its page's URL: a tab switch builds a new one (it used to keep the previous tab's page and client)
     androidx.compose.runtime.key(generation, url, pageId) {
@@ -132,13 +141,29 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
 
                     // #1911 the emulator walk reads these from logcat: a main-frame error is MAINFRAME_ERROR, a loaded page MAINFRAME_OK with its title
                     override fun onReceivedError(view: WebView?, request: android.webkit.WebResourceRequest?, error: android.webkit.WebResourceError?) {
-                        if (request?.isForMainFrame == true) android.util.Log.e("CloudMeWeb", "MAINFRAME_ERROR page=$pageId url=${request.url} err=${error?.description}")
+                        if (request?.isForMainFrame == true) {
+                            android.util.Log.e("CloudMeWeb", "MAINFRAME_ERROR page=$pageId url=${request.url} err=${error?.description}")
+                            if (url.startsWith("https://")) { refreshing = false; loadError = WebLoadState.describe(error?.description?.toString(), null) }
+                        }
                         super.onReceivedError(view, request, error)
+                    }
+
+                    // #1937 an edge that answers 5xx/4xx for the page itself (the fleet edge down) is an error too, not a page to draw
+                    override fun onReceivedHttpError(view: WebView?, request: android.webkit.WebResourceRequest?, errorResponse: android.webkit.WebResourceResponse?) {
+                        if (request?.isForMainFrame == true && url.startsWith("https://") && WebLoadState.isHttpFailure(errorResponse?.statusCode ?: 0)) {
+                            android.util.Log.e("CloudMeWeb", "MAINFRAME_HTTP page=$pageId url=${request.url} status=${errorResponse?.statusCode}")
+                            refreshing = false; loadError = WebLoadState.describe(null, errorResponse?.statusCode)
+                        }
+                        super.onReceivedHttpError(view, request, errorResponse)
                     }
 
                     override fun onPageFinished(view: WebView?, url: String?) {
                         android.util.Log.i("CloudMeWeb", "MAINFRAME_OK page=$pageId url=$url title=${view?.title}")
                         refreshing = false
+                        // #1937 a page that finished with nothing in it (an empty 200 from a half-up edge) is the black page: show the error instead
+                        if (loadError == null && url?.startsWith("https://") == true) view?.postDelayed({
+                            view.evaluateJavascript(WebLoadState.PROBE_JS) { r -> if (WebLoadState.isBlank(r) && loadError == null) loadError = WebLoadState.describe("the page loaded empty", null) }
+                        }, 2500)
                         // #1913 the walk's image check: once the page had time to fetch its images, count those that finished with naturalWidth 0
                         view?.postDelayed({
                             view.evaluateJavascript("(function(){var n=document.images,b=[];for(var i=0;i<n.length;i++){if(n[i].complete&&n[i].naturalWidth==0&&n[i].getAttribute('data-fb')!='done')b.push(n[i].currentSrc||n[i].src)}return n.length+' '+b.length+' '+(b[0]||'')})()") { r ->
@@ -206,8 +231,12 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
                 state = ptr, isRefreshing = refreshing,
                 modifier = Modifier.align(androidx.compose.ui.Alignment.TopCenter),
             )
+            loadError?.let { WebLoadErrorPanel(it, retry, Modifier.fillMaxSize()) }
         }
-    } else page(modifier.fillMaxSize())
+    } else androidx.compose.foundation.layout.Box(modifier.fillMaxSize()) {
+        page(Modifier.fillMaxSize())
+        loadError?.let { WebLoadErrorPanel(it, retry, Modifier.fillMaxSize()) }
+    }
     }
 }
 
@@ -215,4 +244,31 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
 private fun pushProfile(view: WebView, ctx: android.content.Context, id: String) {
     val doc = runCatching { ProfileStore.load(ctx, if (id == "health") ProfileStore.HEALTH else ProfileStore.DD) }.getOrNull() ?: return
     view.evaluateJavascript("window.CloudMeProfile&&window.CloudMeProfile.inject(${JSONObject.quote(doc.toString())})", null)
+}
+
+/** #1937 the pure rules of a failed remote page (unit-tested): what counts as a failure and what the panel says. */
+object WebLoadState {
+    /** One JavaScript expression: how much visible content the document holds (text characters + images + canvases, svgs, iframes, videos). */
+    const val PROBE_JS = "(function(){var b=document.body;if(!b)return 0;return b.innerText.trim().length+document.images.length+document.querySelectorAll('canvas,svg,iframe,video').length})()"
+    fun isBlank(jsResult: String?): Boolean = jsResult == null || jsResult.trim().trim('"') in setOf("0", "null", "")
+    fun isHttpFailure(status: Int): Boolean = status >= 400
+    fun describe(reason: String?, status: Int?): String = when {
+        status != null && status >= 400 -> "The server answered HTTP $status."
+        !reason.isNullOrBlank() -> reason
+        else -> "The page did not load."
+    }
+}
+
+/** #1937 the visible error of a remote page that did not load: what happened, the cached copy is shown first when there is one (LnktreeCache), and Retry. Never a blank page. */
+@Composable
+internal fun WebLoadErrorPanel(message: String, onRetry: () -> Unit, modifier: Modifier = Modifier) {
+    androidx.compose.foundation.layout.Column(
+        modifier.background(androidx.compose.ui.graphics.Color(0xFF0B0414)).padding(24.dp).testTag("me:web:error"),
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+    ) {
+        androidx.compose.material3.Text("This page could not be loaded", color = androidx.compose.ui.graphics.Color.White, style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+        androidx.compose.material3.Text(message, color = androidx.compose.ui.graphics.Color(0xFFB8B3C7), modifier = Modifier.padding(top = 8.dp, bottom = 16.dp))
+        androidx.compose.material3.Button(onClick = onRetry, modifier = Modifier.testTag("me:web:retry")) { androidx.compose.material3.Text("Retry") }
+    }
 }

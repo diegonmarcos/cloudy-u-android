@@ -147,42 +147,50 @@
     "pj-unix": {
       "path": "public/images/banners/cloud.gif",
       "source": "areas/1/banner",
-      "url": "https://linktree.diegonmarcos.com/public/images/banners/cloud.gif"
+      "url": "https://linktree.diegonmarcos.com/public/images/banners/cloud.gif",
+      "asset": "banners/cloud.gif"
     },
     "pj-cg": {
       "path": "public/images/banners/circus.gif",
       "source": "areas/2/banner",
-      "url": "https://linktree.diegonmarcos.com/public/images/banners/circus.gif"
+      "url": "https://linktree.diegonmarcos.com/public/images/banners/circus.gif",
+      "asset": "banners/circus.gif"
     },
     "pj-capital": {
       "path": "public/images/banners/nexus.webp",
       "source": "areas/3/banner",
-      "url": "https://linktree.diegonmarcos.com/public/images/banners/nexus.webp"
+      "url": "https://linktree.diegonmarcos.com/public/images/banners/nexus.webp",
+      "asset": "banners/nexus.webp"
     },
     "pj-hardtech": {
       "path": "public/images/banners/structural.gif",
       "source": "areas/4/banner",
-      "url": "https://linktree.diegonmarcos.com/public/images/banners/structural.gif"
+      "url": "https://linktree.diegonmarcos.com/public/images/banners/structural.gif",
+      "asset": "banners/structural.gif"
     },
     "pj-projects": {
       "path": "public/images/banners/lab-tools.gif",
       "source": "areas/6/banner",
-      "url": "https://linktree.diegonmarcos.com/public/images/banners/lab-tools.gif"
+      "url": "https://linktree.diegonmarcos.com/public/images/banners/lab-tools.gif",
+      "asset": "banners/lab-tools.gif"
     },
     "pj-lecole42": {
       "path": "public/images/banners/repos.gif",
       "source": "areas/5/banner",
-      "url": "https://linktree.diegonmarcos.com/public/images/banners/repos.gif"
+      "url": "https://linktree.diegonmarcos.com/public/images/banners/repos.gif",
+      "asset": "banners/repos.gif"
     },
     "pj-repos": {
       "path": "public/images/banners/repos.gif",
       "source": "direct/Repos/card/image",
-      "url": "https://linktree.diegonmarcos.com/public/images/banners/repos.gif"
+      "url": "https://linktree.diegonmarcos.com/public/images/banners/repos.gif",
+      "asset": "banners/repos.gif"
     },
     "pj-wiki": {
       "path": "public/images/banners/suite.gif",
       "source": "fallback",
-      "url": "https://linktree.diegonmarcos.com/public/images/banners/suite.gif"
+      "url": "https://linktree.diegonmarcos.com/public/images/banners/suite.gif",
+      "asset": "banners/suite.gif"
     }
   }
 }
