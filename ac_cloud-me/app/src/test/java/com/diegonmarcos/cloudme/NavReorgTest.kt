@@ -157,7 +157,7 @@ class NavReorgTest {
             val chain = Sections.byId(s)!!.path(p).map { it.id }
             LnktreePages.fromStack(p, JSONArray(BuroLlcTestData.text("data/ui/$s/${chain.joinToString("/")}.json")), cfg)
         }
-        assertEquals(setOf("professional", "leafy", "nexus", "stark", "personal", "ig0", "astro", "lt-lnktree-site"), cached.map { it.id }.toSet())
+        assertEquals(setOf("leafy", "nexus", "stark", "personal", "ig0", "astro", "lt-lnktree-site"), cached.map { it.id }.toSet())
         assertEquals(listOf("pers", "prof", "proj"), cfg.cachedSections())
     }
 }
