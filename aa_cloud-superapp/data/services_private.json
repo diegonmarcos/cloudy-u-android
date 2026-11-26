@@ -333,8 +333,8 @@
     "name": "ntfy-go-rss-gateway",
     "service": "ntfy-go",
     "vm": "oci-A1-f_0",
-    "private_dns": "ntfy-go-rss-gateway:8191",
-    "port": 8191,
+    "private_dns": "ntfy-go-rss-gateway:8091",
+    "port": 8091,
     "protocol": "http",
     "category": "obs",
     "db_engine": null
