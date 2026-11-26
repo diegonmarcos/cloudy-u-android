@@ -9,6 +9,21 @@
     <string name="loading">Loading…</string>
     <string name="value">Value</string>
     <string name="update_rates">Update exchange rates</string>
+    <!-- Finance > Exchange (#1945) -->
+    <string name="ex_you_convert">You convert</string>
+    <string name="ex_add">Add another currency</string>
+    <string name="ex_last_updated">Last updated: %1$s</string>
+    <string name="ex_last_updated_never">Last updated: never</string>
+    <string name="ex_offline">Offline</string>
+    <string name="ex_mid_market">Mid-market rates</string>
+    <string name="ex_info">About the rates</string>
+    <string name="ex_info_body">Mid-market rates are the midpoint between buy and sell prices, with no markup. Source: %1$s, fetched by the calculator engine, converted from its euro base and kept on this device with its time so the page works offline. Banks and card providers add their own fees and margins.</string>
+    <string name="ex_close">Close</string>
+    <string name="ex_refresh">Refresh rates</string>
+    <string name="ex_remove">Remove</string>
+    <string name="ex_pick">Choose a currency</string>
+    <string name="ex_search">Search currencies</string>
+    <string name="ex_amount">Amount</string>
     <!-- Convert ▸ Network / Data -->
     <string name="data_case_hint">Lowercase b = bits, uppercase B = bytes (1 B = 8 b); k M G T = ×1000, Ki Mi Gi Ti = ×1024.</string>
     <string name="data_not_a_number">Not a number: %1$s</string>

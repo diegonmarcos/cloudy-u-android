@@ -20,10 +20,11 @@ class NavRowsTest {
         val calc = Declarations.parseNav(sections, "calculator", "calculator").section("calculator")!!
         assertEquals(SecondRowMode.ManyRows, calc.rows)
         val rows = calc.rowGroups()
-        assertEquals(listOf("Decimals", "Others"), rows.map { it.label })
+        assertEquals(listOf("Decimals", "Finance", "Others"), rows.map { it.label })
         assertEquals(listOf("calc", "latex", "convert", "history"), rows[0].pages.map { it.id })
-        assertEquals(listOf("datetime", "sound", "finance", "graph", "ask"), rows[1].pages.map { it.id })
-        assertEquals(listOf("Calc", "LaTeX", "Convert", "History", "Time & Date", "Sound", "Finance", "Graph", "Ask Jev"), rows.flatMap { it.pages }.map { it.label })
+        assertEquals(listOf("finance"), rows[1].pages.map { it.id })
+        assertEquals(listOf("datetime", "sound", "graph", "ask"), rows[2].pages.map { it.id })
+        assertEquals(listOf("Calc", "LaTeX", "Convert", "History", "Finance", "Time & Date", "Sound", "Graph", "Ask Jev"), rows.flatMap { it.pages }.map { it.label })
         assertTrue("no Tools page is left", calc.pages.none { it.id == "tools" })
         // The baked declaration is the one on disk.
         assertEquals(rows.map { g -> g.pages.map { it.id } }, Declarations.nav.section("calculator")!!.rowGroups().map { g -> g.pages.map { it.id } })
@@ -32,7 +33,8 @@ class NavRowsTest {
     @Test fun `the Tools sections are pages of their own`() {
         assertEquals(listOf("datetime"), Declarations.modesOf("datetime").map { it.id })
         assertEquals(listOf("acoustics"), Declarations.modesOf("sound").map { it.id })
-        assertEquals(listOf("finance"), Declarations.modesOf("finance").map { it.id })
+        // #1945 Finance keeps its Fin forms and gains Exchange.
+        assertEquals(listOf("finance", "exchange"), Declarations.modesOf("finance").map { it.id })
         assertTrue(Declarations.modesOf("tools").isEmpty())
         val forms = Declarations.mode("datetime")!!.forms
         assertEquals("Date Converter", forms.first { it.id == "calendars" }.label)

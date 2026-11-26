@@ -77,6 +77,10 @@ object CalcMetrics {
     val cellHeight: Dp = 32.dp
     val headerWidth: Dp = 44.dp
     val resizeHandle: Dp = 14.dp
+    /** #1945 Finance > Exchange: the rounded cards' corner and the round flag's diameter. */
+    val exchangeCorner: Dp = 28.dp
+    val exchangeFlag: Dp = 36.dp
+    val exchangeIcon: Dp = 24.dp
 }
 
 private fun TextStyle.noFixedLine(): TextStyle =

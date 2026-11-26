@@ -2202,20 +2202,21 @@
         "id": "calculator",
         "label": "Calc",
         "icon": "calculate",
-        "_doc_groups": "#1409 two labelled rows (libs:bottomnav ManyRows, as Cloud Me's Me row): Decimals = the number pages, Others = the former Tools sections (#1377) promoted to pages, plus Graph. redirect_from: an old page id that now opens this page.",
+        "_doc_groups": "#1409 two labelled rows (libs:bottomnav ManyRows, as Cloud Me's Me row): Decimals = the number pages, Finance = the Finance page (Fin forms and Exchange, #1945; it was in Others), Others = the former Tools sections (#1377) promoted to pages, plus Graph. redirect_from: an old page id that now opens this page.",
         "nav_mode": "horizontal_two_rows",
         "groups": [
           {"id": "decimals", "label": "Decimals", "icon": "calculate", "pages": ["calc", "latex", "convert", "history"]},
-          {"id": "others", "label": "Others", "icon": "apps", "pages": ["datetime", "sound", "finance", "graph", "ask"]}
+          {"id": "finance", "label": "Finance", "icon": "payments", "pages": ["finance"]},
+          {"id": "others", "label": "Others", "icon": "apps", "pages": ["datetime", "sound", "graph", "ask"]}
         ],
         "pages": [
           {"id": "calc", "label": "Calc", "icon": "calculate"},
           {"id": "latex", "label": "LaTeX", "icon": "edit"},
           {"id": "convert", "label": "Convert", "icon": "swap"},
           {"id": "history", "label": "History", "icon": "history"},
+          {"id": "finance", "label": "Finance", "icon": "payments"},
           {"id": "datetime", "label": "Time & Date", "icon": "event", "redirect_from": ["tools"]},
           {"id": "sound", "label": "Sound", "icon": "graphic_eq"},
-          {"id": "finance", "label": "Finance", "icon": "payments"},
           {"id": "graph", "label": "Graph", "icon": "chart"},
           {"id": "ask", "label": "Ask Jev", "icon": "ask"}
         ]
@@ -2242,7 +2243,8 @@
             {"id": "calculations", "label": "Calculations", "icon": "calculate", "children": [
               {"id": "calc", "label": "Calc", "icon": "calculate", "section": "calculator", "children": [
                 {"id": "calc_decimals", "label": "Decimals", "icon": "calculate", "pages": ["calc", "latex", "convert", "history"]},
-                {"id": "calc_others", "label": "Others", "icon": "apps", "pages": ["datetime", "sound", "finance", "graph", "ask"]}
+                {"id": "calc_finance", "label": "Finance", "icon": "payments", "pages": ["finance"]},
+                {"id": "calc_others", "label": "Others", "icon": "apps", "pages": ["datetime", "sound", "graph", "ask"]}
               ]},
               {"id": "sheet", "label": "Sheet", "icon": "table_chart", "section": "sheet", "pages": ["sheet"]}
             ]},
@@ -4393,6 +4395,32 @@
         ],
         "spec": {
           "_doc": "#1377 Tools ▸ Fin: discount and tip are engine expressions; the rest are counted by tools/Finance.kt through ToolCalcs. A choice field with options_from `currencies` is the device's ISO 4217 list, defaults to the locale's currency and remembers the user's pick across forms; money outputs print in it."
+        }
+      },
+      {
+        "id": "exchange",
+        "label": "Exchange",
+        "icon": "currency",
+        "short": "Exchange",
+        "tab": "finance",
+        "kind": "exchange",
+        "options": {
+          "approx": 2,
+          "mixed_units": false
+        },
+        "default": {
+          "source": "INR",
+          "amount": "858.02",
+          "targets": ["USD", "EUR", "GBP", "BRL"]
+        },
+        "spec": {
+          "_doc": "#1945 Finance > Exchange: one source currency and its amount over one card per target currency. default = what a fresh install shows; the chosen source, amount and targets persist (SharedPreferences cloud_calc_exchange). Mid-market rates come from the engine (Cloud-Lib-Calc downloads the ECB euro reference rates, which the app cannot open itself: C6 in test-calc-shell.sh, no network of its own); the app reads the EUR-based table through the engine, derives every cross rate from the EUR base (rate(a to b) = perEur[b] / perEur[a]) and keeps the table with its timestamp on the device, shown offline. source_url is the engine's feed, declared here for the info dialog and the tests; the app never opens it.",
+          "source_name": "ECB euro foreign exchange reference rates",
+          "source_url": "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml",
+          "base": "EUR",
+          "max_targets": 12,
+          "amount_decimals": 2,
+          "rate_significant": 4
         }
       },
       {

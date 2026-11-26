@@ -303,7 +303,7 @@ class DeclarationsTest {
     @Test fun `Calc is split Decimals and Others as the Calc section's own groups, down to the last app`() {
         val calc = tree[0].items.filterIsInstance<Declarations.HomeGroup>().first { it.label == "Calc" }
         val groups = calc.items.filterIsInstance<Declarations.HomeGroup>()
-        assertEquals(listOf("Decimals", "Others"), groups.map { it.label })
+        assertEquals(listOf("Decimals", "Finance", "Others"), groups.map { it.label })
         val declared = nav.section("calculator")!!.rowGroups()
         assertEquals(declared.map { it.label }, groups.map { it.label })
         assertEquals(declared.map { g -> g.pages.map { it.id } }, groups.map { g -> g.leaves().map { it.page }.distinct() })

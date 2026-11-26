@@ -102,6 +102,7 @@ fun ModeScreen(mode: Declarations.Mode) {
             "base_converter" -> BaseConverterMode(mode)
             "nutrition" -> NutritionMode(mode)
             "form" -> FormMode(mode)
+            "exchange" -> ExchangeMode(mode)
             "plot" -> PlotMode(mode)
             "meter" -> MeterMode(mode)
             "sound_events" -> SoundEventsMode(mode)
