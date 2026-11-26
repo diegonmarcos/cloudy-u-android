@@ -1,3 +1,4 @@
+@file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 package com.diegonmarcos.clouddrive.sync
 
 import com.diegonmarcos.cloudlib.gitui.*
@@ -65,6 +66,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -1107,7 +1109,20 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
             val sheetScroll = rememberScrollState()
             val sheetScope = rememberCoroutineScope()
             val toTop: () -> Unit = { sheetScope.launch { sheetScroll.animateScrollTo(0) } }
-            Column(Modifier.fillMaxWidth().verticalScroll(sheetScroll).padding(bottom = DriveMetrics.padWide)) {
+            val gLang = java.util.Locale.getDefault().language
+            val gSheet = remember(gLang) { GitSheet.parse(Declarations.controlSheet, gLang) }
+            val sheetState = rememberGitSheetState(gSheet, e.key)
+            val eGlance = e.cloned?.let { GitSyncCoordinator.glanceFor(it, glances) }
+            // #1934 STICKY TABS: the header and the tab row are pinned above the scrolling body (the open tab's groups and the panels).
+            Column(Modifier.fillMaxWidth().semantics { testTagsAsResourceId = true }.padding(bottom = DriveMetrics.padWide)) {
+            ControlSheetBody(
+                page = page, repo = e.cloned, name = e.name, owner = e.owner, row = e.row, isPrivate = e.isPrivate, glance = eGlance,
+                icons = RepoStatus.icons(e.cloned != null, eGlance, e.cloned?.let { running.containsKey(it.id) } == true, events, e.cloned?.id.orEmpty()),
+                remote = remoteStats[RepoRemoteStats.keyOf(e.owner, e.name)], fmt = fmt, cloneUrl = e.cloneUrl.ifBlank { page.cloneUrl(e.name, Declarations.REMOTE_HTTPS) },
+                cloning = e.name in cloning, coordinator = coordinator, busy = e.cloned?.let { running[it.id] } != null, output = null, active = emptySet(), readOnly = false,
+                legacy = {}, onClone = e.onClone, onClose = { expanded = "" }, onTabSelected = toTop, part = GitSheetPart.TOP, sheetState = sheetState,
+            )
+            Column(Modifier.weight(1f, fill = false).verticalScroll(sheetScroll).testTag("git_sheet_scroll")) {
             // #1679 the sheet's Refresh row: the toolbar's Refresh items (Fetch status, Fetch, Check full) on THIS repository, in every state.
             // #1934 the sheet's header carries Refresh, Fetch status, Check lite and Check full (GitSheetRefreshRow is superseded by the control sheet).
             if (e.cloned == null) {
@@ -1116,7 +1131,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                     remote = remoteStats[RepoRemoteStats.keyOf(e.owner, e.name)], cloneUrl = e.cloneUrl,
                     cloning = e.name in cloning, coordinator = coordinator, actions = actions,
                     onClone = e.onClone, onClose = { expanded = "" },
-                    icons = RepoStatus.icons(false, null, false, events, ""), glance = null, fmt = fmt, onTabSelected = toTop,
+                    icons = RepoStatus.icons(false, null, false, events, ""), glance = null, fmt = fmt, onTabSelected = toTop, sheetState = sheetState,
                 )
             }
             if (e.cloned != null) {
@@ -1128,9 +1143,10 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                     initialPanel = if (panelRepo == e.cloned.id) panel else "", onPanel = { id -> panelRepo = e.cloned.id; panel = id },
                     cloneSsh = cloneSsh, onSettings = { settingsFor = e.cloned.id }, onClose = { expanded = "" },
                     row = e.row, isPrivate = e.isPrivate, nextRunMinutes = nextRunMinutes,
-                    icons = RepoStatus.icons(true, GitSyncCoordinator.glanceFor(e.cloned, glances), running.containsKey(e.cloned.id), events, e.cloned.id), onTabSelected = toTop,
+                    icons = RepoStatus.icons(true, GitSyncCoordinator.glanceFor(e.cloned, glances), running.containsKey(e.cloned.id), events, e.cloned.id), onTabSelected = toTop, sheetState = sheetState,
                     repoint = { from, to -> prefs?.let { p -> LocalRepoRefs.repoint(ctx.applicationContext, p, from, to).let { r -> ctx.getString(R.string.parentless_refs, r.repos, r.jobs, r.bookmarks) } }.orEmpty() },
                 )
+            }
             }
             }
         }
@@ -1142,7 +1158,9 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     if (showActivity) GitLogsWindow(page.topBar.logs, logsTab, coordinator, events, fmt, onClose = { showActivity = false })
     // #1934 THE ALL-REPOS CONTROL SHEET: the same five tabs for the filtered selection; destructive controls confirm with the repositories listed.
     if (showBulkSheet) ModalBottomSheet(onDismissRequest = { showBulkSheet = false }, modifier = Modifier.testTag("git_bulk_sheet")) {
-        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = DriveMetrics.sectionInset).padding(bottom = DriveMetrics.padWide)) {
+        val bLang = java.util.Locale.getDefault().language
+        val bState = rememberGitSheetState(remember(bLang) { GitSheet.parse(Declarations.controlSheet, bLang) }, "bulk")
+        val bulk: @Composable (GitSheetPart) -> Unit = { part ->
             BulkControlSheet(
                 page = page, targets = scopeTargets.map { it.name },
                 counts = mapOf(
@@ -1155,8 +1173,14 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                 output = jobLine?.let { it.label + ": " + it.done + "/" + it.total },
                 onTop = { runTopItem(it) },
                 onSync = { o -> coordinator.runPlanAll("sync", o.steps(), scopeTargets) },
-                onClone = { o -> entries.filter { it.cloned == null }.forEach { e -> coordinator.cloneOptions(GitSyncCoordinator.CloneTarget(e.name, e.cloneUrl.ifBlank { page.cloneUrl(e.name, Declarations.REMOTE_HTTPS) }, GitSyncCoordinator.AUTH_HTTPS, "", ""), o, null) } },
+                onClone = { o -> entries.filter { it.cloned == null }.forEach { e -> coordinator.cloneOptions(GitSyncCoordinator.CloneTarget(e.name, e.cloneUrl.ifBlank { page.cloneUrl(e.name, Declarations.REMOTE_HTTPS) }, GitSyncCoordinator.AUTH_HTTPS, "", ""), o, null) } },,
+                part = part, sheetState = bState,
             )
+        }
+        // #1934 sticky tabs here too: the tab row is pinned, the groups scroll
+        Column(Modifier.fillMaxWidth().semantics { testTagsAsResourceId = true }.padding(horizontal = DriveMetrics.sectionInset).padding(bottom = DriveMetrics.padWide)) {
+            bulk(GitSheetPart.TOP)
+            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).testTag("git_bulk_scroll")) { bulk(GitSheetPart.BODY) }
         }
     }
     if (showDepthReport) depthRun?.let { r -> DepthReportWindow(r, onCancel = { coordinator.cancelDepthRun() }, onClose = { showDepthReport = false }) }
@@ -1527,6 +1551,7 @@ private fun GitRepoOpsBox(
     /** #1934 the three status lights' kinds, for the control sheet's Overview. */
     icons: RepoStatus.Icons,
     onTabSelected: () -> Unit = {},
+    sheetState: GitSheetState? = null,
 ) {
     val ctx = LocalContext.current
     // #1395 Open repo on web: the embedded browser (CloudWeb BROWSER), not an external app
@@ -1658,7 +1683,7 @@ private fun GitRepoOpsBox(
                     val blocked = readOnly && (op.id == GitSyncCoordinator.OP_PUSH || op.id == GitSyncCoordinator.OP_FORCE_PUSH)
                     blocked
                 },
-                active = setOf(panel, if (cloneSsh) RepoActions.CLONE_SSH else RepoActions.CLONE_OAUTH), legacy = { act(it) }, onClone = {}, onClose = onClose, onTabSelected = onTabSelected,
+                active = setOf(panel, if (cloneSsh) RepoActions.CLONE_SSH else RepoActions.CLONE_OAUTH), legacy = { act(it) }, onClone = {}, onClose = onClose, onTabSelected = onTabSelected, part = GitSheetPart.BODY, sheetState = sheetState,
             )
         }
         // #1282 the "bare present" line under the menu: a mirror under the declared bare root already holds this repository.
@@ -1831,6 +1856,7 @@ private fun GitRepoNotClonedBox(
     glance: GitSyncCoordinator.Glance?,
     fmt: DateFormat,
     onTabSelected: () -> Unit = {},
+    sheetState: GitSheetState? = null,
 ) {
     val ctx = LocalContext.current
     // #1395 Open repo on web: the embedded browser (CloudWeb BROWSER), not an external app
@@ -1863,7 +1889,7 @@ private fun GitRepoNotClonedBox(
                     }
                 }
             },
-            onClone = onClone, onClose = onClose, onTabSelected = onTabSelected,
+            onClone = onClone, onClose = onClose, onTabSelected = onTabSelected, part = GitSheetPart.BODY, sheetState = sheetState,
         )
         Text(stringResource(R.string.repo_not_cloned_why), Modifier.padding(top = DriveMetrics.gap), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         when (panel) {

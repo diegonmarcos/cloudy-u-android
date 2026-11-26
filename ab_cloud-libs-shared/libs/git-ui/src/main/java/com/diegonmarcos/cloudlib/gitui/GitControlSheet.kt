@@ -23,12 +23,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import com.diegonmarcos.cloudlib.gitcore.CloneOptions
 import com.diegonmarcos.cloudlib.gitcore.GitStep
 import com.diegonmarcos.cloudlib.gitcore.SyncOptions
+
+/** #1934 which part of the sheet a composition draws: the pinned top (header + tab row), the scrolling body, or both. */
+enum class GitSheetPart { ALL, TOP, BODY }
 
 /** #1934 the sheet's own state: the open tab and the two option models. The host keeps it across recomposition ([rememberGitSheetState]). */
 @Stable
@@ -82,9 +87,13 @@ private fun SyncOptions.matches(c: Map<String, List<String>>) = c.all { (k, v) -
  * #1934 THE UNIFIED REPO CONTROL SHEET: the header (name, visibility, owner, clone state, Refresh, the action row, the not-cloned banner with Clone
  * Now), the sticky tab strip and the open tab's groups, all drawn from the declared [sheet]. [bulk] draws the same five tabs for the selection.
  */
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
-fun GitControlSheetView(sheet: GitSheet, state: GitSheetState, host: GitSheetHost, actions: GitSheetActions, modifier: Modifier = Modifier, onTabSelected: (String) -> Unit = {}) {
+fun GitControlSheetView(
+    sheet: GitSheet, state: GitSheetState, host: GitSheetHost, actions: GitSheetActions, modifier: Modifier = Modifier, onTabSelected: (String) -> Unit = {},
+    /** TOP = the header and the tab row (the host pins them outside its scrolling body), BODY = the open tab's groups and the confirm dialogs, ALL = both. */
+    part: GitSheetPart = GitSheetPart.ALL,
+) {
     val k = LocalGitUiKit.current
     val tabs = sheet.tabsFor(host.bulk)
     val open = tabs.firstOrNull { it.id == state.tab } ?: tabs.firstOrNull()
@@ -97,17 +106,17 @@ fun GitControlSheetView(sheet: GitSheet, state: GitSheetState, host: GitSheetHos
         c.needsClone && !host.cloned && !host.bulk -> whyNoClone
         else -> null
     }
-    Column(modifier.fillMaxWidth().testTag("git_control_sheet"), verticalArrangement = Arrangement.spacedBy(k.gapWide)) {
-        if (!host.bulk) Header(sheet, host, actions, ::blocked)
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag("git_sheet_tabs"), horizontalArrangement = Arrangement.spacedBy(k.gapWide)) {
+    Column(modifier.fillMaxWidth().semantics { testTagsAsResourceId = true }.testTag("git_control_sheet_" + part.name.lowercase()), verticalArrangement = Arrangement.spacedBy(k.gapWide)) {
+        if (part != GitSheetPart.BODY && !host.bulk) Header(sheet, host, actions, ::blocked)
+        if (part != GitSheetPart.BODY) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag("git_sheet_tabs"), horizontalArrangement = Arrangement.spacedBy(k.gapWide)) {
             tabs.forEach { t -> k.pill(GitPill(t.label, { state.tab = t.id; onTabSelected(t.id) }, Modifier.testTag("git_sheet_tab_" + t.id), filled = t.id == open?.id)) }
         }
-        open?.groups?.forEach { g -> GroupView(sheet, g, tabs, state, host, actions, ::blocked) }
+        if (part != GitSheetPart.TOP) open?.groups?.forEach { g -> GroupView(sheet, g, tabs, state, host, actions, ::blocked) }
     }
-    state.confirm?.let { c ->
+    if (part != GitSheetPart.TOP) state.confirm?.let { c ->
         ConfirmDialog(c.label, host.targets, { state.confirm = null }) { state.confirm = null; actions.action(c) }
     }
-    state.confirmRun?.let { which ->
+    if (part != GitSheetPart.TOP) state.confirmRun?.let { which ->
         ConfirmDialog(which.substringAfter('|'), host.targets, { state.confirmRun = null }) { state.confirmRun = null; if (which.startsWith("sync")) actions.runSync(state.sync) else actions.runClone(state.clone) }
     }
 }

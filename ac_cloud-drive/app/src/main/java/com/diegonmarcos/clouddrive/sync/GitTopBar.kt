@@ -15,6 +15,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -91,6 +93,7 @@ object GitTopBarState {
 }
 
 /** The split-menu toolbar: one button per declared group, its items in a dropdown; the Settings gear at the end. */
+@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 internal fun GitTopBar(
     decl: Declarations.GitTopBarDecl,
@@ -101,41 +104,15 @@ internal fun GitTopBar(
     storage: @Composable () -> Unit = {},
 ) {
     var sheet by remember { mutableStateOf(false) }
-    Row(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.sectionInset, vertical = DriveMetrics.gap).testTag(DriveTags.SYNC_GIT_TOP_BAR), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide)) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.sectionInset, vertical = DriveMetrics.gap).semantics { testTagsAsResourceId = true }.testTag(DriveTags.SYNC_GIT_TOP_BAR), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gapWide)) {
         // #1356 Check | Sync | Clone | Logs | More ..... Settings: the groups scroll inside their own weighted row (the spacer),
         // so Settings stays at the far right on any width.
+        val pinned = decl.groups.lastOrNull()?.takeIf { it.id == "more" }
         Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(DriveMetrics.gap)) {
-        decl.groups.forEach { g ->
-            var open by remember(g.id) { mutableStateOf(false) }
-            // #1356 a group of ONE item (Check, Sync, Clone, Logs) is a button: a tap runs it (a disabled one opens its menu, which says why).
-            val single = g.items.singleOrNull()
-            Box {
-                Pill(g.label, { if (single != null && enabledReason(single) == null) onItem(single) else open = true }, modifier = Modifier.testTag(DriveTags.SYNC_GIT_TOP_GROUP + "_" + g.id))
-                DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-                    g.items.forEachIndexed { n, item ->
-                        // #1356 a declared section (Sync All, Manual Sync) opens with its title when it changes.
-                        if (item.section.isNotBlank() && item.section != g.items.getOrNull(n - 1)?.section) Text(
-                            item.section, Modifier.padding(horizontal = DriveMetrics.padWide, vertical = DriveMetrics.gap).testTag(DriveTags.SYNC_GIT_TOP_ITEM + "_section_" + n),
-                            style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary,
-                        )
-                        val why = enabledReason(item)
-                        DropdownMenuItem(
-                            text = {
-                                Column {
-                                    Text(item.label, color = if (item.danger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface)
-                                    (why ?: item.hint.ifBlank { null })?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                                }
-                            },
-                            leadingIcon = { Icon(IconCatalog.vectorOrDefault(item.icon.ifBlank { g.icon }), contentDescription = null) },
-                            enabled = why == null,
-                            onClick = { open = false; onItem(item) },
-                            modifier = Modifier.testTag(DriveTags.SYNC_GIT_TOP_ITEM + "_" + item.id),
-                        )
-                    }
-                }
-            }
+            decl.groups.filter { it !== pinned }.forEach { g -> GitTopGroup(g, enabledReason, onItem) }
         }
-        }
+        // #1934 More is pinned outside the scrolling row: reachable without a swipe, one tap on its stable tag
+        pinned?.let { GitTopGroup(it, enabledReason, onItem) }
         storage()
         if (prefs != null) Row(Modifier.testTag(DriveTags.SYNC_AUTO_SETTINGS)) { IslandAction(Icons.Filled.Settings, decl.label("settings")) { sheet = true } }
     }
@@ -287,4 +264,37 @@ internal fun GitLegendDialog(decl: Declarations.GitTopBarDecl, icons: Map<String
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text(closeLabel) } },
     )
+}
+
+/** #1934 one group of the top bar as its button (+ menu); the last group ("More") is drawn outside the scrolling row so it is always reachable. */
+@Composable
+private fun GitTopGroup(g: Declarations.GitTopGroupDecl, enabledReason: (Declarations.GitTopItemDecl) -> String?, onItem: (Declarations.GitTopItemDecl) -> Unit) {
+        var open by remember(g.id) { mutableStateOf(false) }
+        // #1356 a group of ONE item (Check, Sync, Clone, Logs) is a button: a tap runs it (a disabled one opens its menu, which says why).
+        val single = g.items.singleOrNull()
+        Box {
+            Pill(g.label, { if (single != null && enabledReason(single) == null) onItem(single) else open = true }, modifier = Modifier.testTag(DriveTags.SYNC_GIT_TOP_GROUP + "_" + g.id))
+            DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+                g.items.forEachIndexed { n, item ->
+                    // #1356 a declared section (Sync All, Manual Sync) opens with its title when it changes.
+                    if (item.section.isNotBlank() && item.section != g.items.getOrNull(n - 1)?.section) Text(
+                        item.section, Modifier.padding(horizontal = DriveMetrics.padWide, vertical = DriveMetrics.gap).testTag(DriveTags.SYNC_GIT_TOP_ITEM + "_section_" + n),
+                        style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary,
+                    )
+                    val why = enabledReason(item)
+                    DropdownMenuItem(
+                        text = {
+                            Column {
+                                Text(item.label, color = if (item.danger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface)
+                                (why ?: item.hint.ifBlank { null })?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                            }
+                        },
+                        leadingIcon = { Icon(IconCatalog.vectorOrDefault(item.icon.ifBlank { g.icon }), contentDescription = null) },
+                        enabled = why == null,
+                        onClick = { open = false; onItem(item) },
+                        modifier = Modifier.testTag(DriveTags.SYNC_GIT_TOP_ITEM + "_" + item.id),
+                    )
+                }
+            }
+        }
 }

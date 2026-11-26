@@ -39,12 +39,14 @@ internal fun ControlSheetBody(
     legacy: (String) -> Unit, onClone: () -> Unit, onClose: () -> Unit,
     /** A tab was selected: the page scrolls the sheet back to its top. */
     onTabSelected: () -> Unit = {},
+    /** #1934 the pinned top (header + tab row), the scrolling body, or both; [sheetState] is shared between the two parts when the page splits them. */
+    part: GitSheetPart = GitSheetPart.ALL, sheetState: GitSheetState? = null,
 ) {
     val ctx = LocalContext.current
     val lang = java.util.Locale.getDefault().language
     val sheet = remember(lang) { GitSheet.parse(Declarations.controlSheet, lang) }
     if (sheet.tabs.isEmpty()) return
-    val state = rememberGitSheetState(sheet, repo?.id ?: name)
+    val state = sheetState ?: rememberGitSheetState(sheet, repo?.id ?: name)
     val cloned = repo != null
     val kind = RepoStatus.kindOf(cloned, glance)
     val block = RepoStatus.block(cloned, glance)
@@ -116,7 +118,7 @@ internal fun ControlSheetBody(
         override fun copy(text: String) = clip(text)
         override fun setAutoSync(on: Boolean, minutes: Int) { repo?.let { coordinator.setAutoSync(it, on, minutes.toLong()) } }
     }
-    GitControlSheetView(sheet, state, host, actions, Modifier, onTabSelected = { onTabSelected() })
+    GitControlSheetView(sheet, state, host, actions, Modifier, onTabSelected = { onTabSelected() }, part = part)
     // #1934 Rename Remote: the new name is typed here, then the same confirm as the other danger-zone actions; the request is HostingApi.rename (mock-tested).
     renameAsk?.let { old ->
         var typed by androidx.compose.runtime.remember(old) { androidx.compose.runtime.mutableStateOf(old) }
@@ -139,11 +141,12 @@ internal fun ControlSheetBody(
 internal fun BulkControlSheet(
     page: Declarations.GitPageDecl, targets: List<String>, counts: Map<String, Int>, results: List<Pair<String, String>>, output: String?,
     onTop: (Declarations.GitTopItemDecl) -> Unit, onSync: (SyncOptions) -> Unit, onClone: (CloneOptions) -> Unit,
+    part: GitSheetPart = GitSheetPart.ALL, sheetState: GitSheetState? = null,
 ) {
     val lang = java.util.Locale.getDefault().language
     val sheet = remember(lang) { GitSheet.parse(Declarations.controlSheet, lang) }
     if (sheet.bulkTabs.isEmpty()) return
-    val state = rememberGitSheetState(sheet, "bulk")
+    val state = sheetState ?: rememberGitSheetState(sheet, "bulk")
     val values = counts.mapKeys { "count:" + it.key }.mapValues { it.value.toString() }
     val host = GitSheetHost(cloned = true, values = values, output = output, targets = targets, bulk = true, results = results)
     val actions = object : GitSheetActions {
@@ -157,7 +160,7 @@ internal fun BulkControlSheet(
         override fun copy(text: String) {}
         override fun setAutoSync(on: Boolean, minutes: Int) {}
     }
-    GitControlSheetView(sheet, state, host, actions, Modifier)
+    GitControlSheetView(sheet, state, host, actions, Modifier, part = part)
 }
 
 /** #1934 the effects of the controls that touch the device, pure enough to be executed by ControlEffectsTest. */

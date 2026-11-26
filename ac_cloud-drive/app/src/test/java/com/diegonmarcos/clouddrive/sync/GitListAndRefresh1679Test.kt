@@ -193,6 +193,9 @@ class GitListAndRefresh1679Test {
         )
         assertEquals("lost toolbar actions", emptyList<String>(), previous.filterNot { it in ids })
         assertTrue(ids.containsAll(listOf("refresh_list", "fetch_status", "fetch_now", "remove_auto_cloned")))
+        // #1934 More is pinned outside the scrolling row (reachable without a swipe) and EVERY declared group is still drawn: the scrolling row takes all but More, More follows it
+        val bar = File(main, "sync/GitTopBar.kt").readText()
+        assertTrue(bar.contains("decl.groups.filter { it !== pinned }.forEach { g -> GitTopGroup(g, enabledReason, onItem) }") && bar.contains("pinned?.let { GitTopGroup(it, enabledReason, onItem) }") && bar.contains("SYNC_GIT_TOP_GROUP + \"_\" + g.id"))
         assertEquals(listOf("check", "sync", "clone", "logs", "more"), git["top_bar"]!!.jsonObject["groups"]!!.jsonArray.map { it.jsonObject["id"]!!.jsonPrimitive.content })
         // the sheet keeps both boxes (clone actions, ops, groups, metadata) and the Filters / Parentless / Unlisted panels stay
         // #1934 RepoActionGroupsView( and GitSheetTail( are now the control sheet (ControlSheetBody): every control they drew is placed once (test-drive-git-control-sheet.sh P1).

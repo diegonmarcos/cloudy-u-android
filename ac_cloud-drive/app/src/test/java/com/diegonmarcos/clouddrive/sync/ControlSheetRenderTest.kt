@@ -3,6 +3,12 @@ package com.diegonmarcos.clouddrive.sync
 import android.content.ComponentName
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.testTag
+import com.diegonmarcos.cloudlib.gitui.GitSheetPart
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
@@ -173,5 +179,27 @@ class ControlSheetRenderTest {
         }
         click("git_sheet_tab_sync"); click("git_sheet_tab_clone"); click("git_sheet_tab_manage")
         assertEquals(listOf("sync", "clone", "manage"), tabs)
+    }
+
+    @Test fun theTabRowStaysPinnedAndTappableWhileTheBodyScrolls() {
+        compose.setContent {
+            val state = rememberGitSheetState(sheet)
+            val host = GitSheetHost(cloned = true, values = mapOf("name" to "repo-x"))
+            // the page's layout: header + tab row OUTSIDE the scrolling column, the tab body inside it
+            androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.height(400.dp)) {
+                GitControlSheetView(sheet, state, host, actions, part = GitSheetPart.TOP)
+                androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.weight(1f).verticalScroll(androidx.compose.foundation.rememberScrollState()).testTag("body_scroll")) {
+                    GitControlSheetView(sheet, state, host, actions, part = GitSheetPart.BODY)
+                }
+            }
+        }
+        compose.onNodeWithTag("git_sheet_tab_sync").assertIsDisplayed()
+        compose.onNodeWithTag("git_sheet_tab_manage").performClick()
+        compose.onNodeWithTag("body_scroll").performScrollToNode(androidx.compose.ui.test.hasTestTag("git_sheet_ctl_mg.life.delete_remote"))
+        // scrolled to the end of the Manage body: the tab row is still on screen and a tap on it still switches the tab
+        compose.onNodeWithTag("git_sheet_tab_sync").assertIsDisplayed()
+        compose.onNodeWithTag("git_sheet_tab_sync").performClick()
+        compose.onNodeWithTag("git_sheet_group_sy_direction").assertExists()
+        compose.onNodeWithTag("git_sheet_ctl_sy.direction.fetch").assertIsDisplayed()
     }
 }
