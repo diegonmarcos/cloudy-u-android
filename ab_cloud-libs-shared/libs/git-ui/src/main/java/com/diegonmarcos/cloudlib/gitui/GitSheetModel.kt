@@ -11,7 +11,7 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
 
 /**
- * #1934 THE UNIFIED REPO CONTROL SHEET MODEL, parsed from the host's DECLARATION (Cloud Drive build.json ui.sync.git.control_sheet): tabs hold
+ * #1934 THE UNIFIED REPO CONTROL SHEET MODEL, parsed from the host's DECLARATION (Cloud Drive build.json ui.git_control_sheet): tabs hold
  * groups, groups hold controls, a control is an action, a field, an option of a group, a flag, a preset, a preview or a run. This module draws
  * it ([GitControlSheetView]); it names no tab, group or control of its own, so another app reuses it with its own declaration. Pure.
  */
@@ -61,7 +61,7 @@ data class GitSheet(
         private fun JsonObject.b(k: String): Boolean = (this[k] as? JsonPrimitive)?.booleanOrNull ?: false
         private fun objs(e: JsonElement?): List<JsonObject> = (e as? JsonArray)?.mapNotNull { it as? JsonObject } ?: emptyList()
         private fun strs(e: JsonElement?): List<String> = (e as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull } ?: emptyList()
-        private fun lang(o: JsonObject, key: String, lang: String): String =
+        private fun tr(o: JsonObject, key: String, lang: String): String =
             ((o["i18n"] as? JsonObject)?.get(lang) as? JsonPrimitive)?.contentOrNull?.takeIf { it.isNotBlank() } ?: o.s(key)
         private fun cond(e: JsonElement?): Map<String, List<String>> = (e as? JsonObject)?.mapValues { (_, v) -> strs(v) } ?: emptyMap()
         private fun condOpt(e: JsonElement?): Map<String, String> = (e as? JsonObject)?.mapValues { (_, v) -> (v as? JsonPrimitive)?.contentOrNull.orEmpty() } ?: emptyMap()
@@ -69,7 +69,7 @@ data class GitSheet(
         fun control(o: JsonObject, lang: String, reasons: Map<String, String> = emptyMap()): SheetControl {
             val reasonKey = o.s("reason")
             return SheetControl(
-                id = o.s("id"), kind = o.s("kind", "action"), label = lang(o, "label", lang), action = o.s("action"), group = o.s("group"), value = o.s("value"),
+                id = o.s("id"), kind = o.s("kind", "action"), label = tr(o, "label", lang), action = o.s("action"), group = o.s("group"), value = o.s("value"),
                 flag = o.s("flag"), preset = o.s("preset"), source = o.s("source"), plan = o.s("plan"), hint = o.s("hint"), reason = reasons[reasonKey] ?: reasonKey,
                 labelFrom = o.s("label_from"), needsClone = o.b("needs_clone"), danger = o.b("danger"), confirm = o.b("confirm"), caution = o.b("caution"),
                 disabled = o.b("disabled"), locked = o.b("locked"), legacy = strs(o["legacy"]),
@@ -79,7 +79,7 @@ data class GitSheet(
         }
 
         private fun group(o: JsonObject, lang: String, reasons: Map<String, String>): SheetGroup = SheetGroup(
-            id = o.s("id"), label = lang(o, "label", lang), layout = o.s("layout", "chips"), controls = objs(o["controls"]).map { control(it, lang, reasons) },
+            id = o.s("id"), label = tr(o, "label", lang), layout = o.s("layout", "chips"), controls = objs(o["controls"]).map { control(it, lang, reasons) },
             option = o.s("option"), danger = o.b("danger"),
             input = (o["input"] as? JsonObject)?.let { SheetInput(it.s("id"), it.s("key"), it.s("label"), it.s("default"), condOpt(it["shown_when_option"])) },
             chips = (o["chips"] as? JsonObject)?.let { c -> SheetChips(c.s("key"), (c["values"] as? JsonArray)?.mapNotNull { (it as? JsonPrimitive)?.intOrNull } ?: emptyList(), c.b("custom"), condOpt(c["shown_when_option"])) },
@@ -87,9 +87,9 @@ data class GitSheet(
         )
 
         private fun tabs(e: JsonElement?, lang: String, reasons: Map<String, String>): List<SheetTab> =
-            objs(e).map { t -> SheetTab(t.s("id"), lang(t, "label", lang), objs(t["groups"]).map { group(it, lang, reasons) }) }
+            objs(e).map { t -> SheetTab(t.s("id"), tr(t, "label", lang), objs(t["groups"]).map { group(it, lang, reasons) }) }
 
-        private fun preset(o: JsonObject, lang: String) = SheetPreset(o.s("id"), lang(o, "label", lang), (o["options"] as? JsonObject)?.mapNotNull { (k, v) ->
+        private fun preset(o: JsonObject, lang: String) = SheetPreset(o.s("id"), tr(o, "label", lang), (o["options"] as? JsonObject)?.mapNotNull { (k, v) ->
             (v as? JsonPrimitive)?.let { p -> k to (p.booleanOrNull ?: p.intOrNull ?: p.contentOrNull ?: "") }
         }?.toMap().orEmpty())
 

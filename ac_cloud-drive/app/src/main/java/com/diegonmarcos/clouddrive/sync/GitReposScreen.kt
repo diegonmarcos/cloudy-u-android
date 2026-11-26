@@ -1644,7 +1644,7 @@ private fun GitRepoOpsBox(
             if (running.step == GitSyncCoordinator.Step.PUSHING) Text(stringResource(R.string.sync_step_uninterruptible), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
 
-        // #1934 THE UNIFIED REPO CONTROL SHEET (Overview | Sync | Clone | Workflow | Manage), drawn from ui.sync.git.control_sheet; every control of the
+        // #1934 THE UNIFIED REPO CONTROL SHEET (Overview | Sync | Clone | Workflow | Manage), drawn from ui.git_control_sheet; every control of the
         // earlier grouped menu, status block and metadata tail lives in it (test-drive-git-control-sheet.sh P1). A tap goes to the page's own `act`.
         Box(Modifier.testTag(DriveTags.SYNC_GIT_OPS)) {
             ControlSheetBody(

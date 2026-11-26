@@ -1,6 +1,6 @@
 #!/bin/bash
 # #1934 Emulator WALK of the unified repo control sheet: opens Drive > Git, taps the fixture repository's row, then taps EVERY control the declaration
-# (ac_cloud-drive/build.json ui.sync.git.control_sheet, the per-repo tabs) names, once, on that fixture, and records per control: tapped or not, the screen text
+# (ac_cloud-drive/build.json ui.git_control_sheet, the per-repo tabs) names, once, on that fixture, and records per control: tapped or not, the screen text
 # that followed and a screenshot (out/walk/<id>.png, out/walk.tsv). A destructive control opens its confirm and the walk CANCELS it; the hosting-platform commands
 # (Archive Remote, Delete Remote) are never confirmed: they are verified against a local mock by HostingApiTest. A control that cannot be found fails the walk.
 #   1. open the page: NO check runs by itself, the row says "not checked yet" (the persisted-cache contract);
@@ -75,7 +75,7 @@ mkdir -p "$OUT/walk"; : > "$OUT/walk.tsv"
 # the walk list: tab label, control id, control label, danger/confirm flag (from the declaration itself)
 python3 -I - "$BJ" > "$OUT/walk-list.tsv" <<'PY'
 import json, sys
-d = json.load(open(sys.argv[1]))["ui"]["sync"]["git"]["control_sheet"]
+d = json.load(open(sys.argv[1]))["ui"]["git_control_sheet"]
 h = d["header"]
 for c in h["actions"] + [h["refresh"]]: print("\t".join(["header", c["id"], c["label"], "0"]))
 for t in d["tabs"]:

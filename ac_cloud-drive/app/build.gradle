@@ -421,6 +421,8 @@ if (ghEngineMinContract < 1) {
 def mountKeeperB64 = b64((buildJson.mount_keeper ?: [:]).findAll { k, v -> !k.startsWith('_') })
 def uiSyncB64     = b64(uiDecl.sync.findAll { k, v -> !k.startsWith('_') })
 def uiFilesB64    = b64(uiDecl.files.findAll { k, v -> !k.startsWith('_') })
+// #1934 the control sheet declaration is its own constant: ui.sync is one BuildConfig string and the JVM caps a constant at 65535 bytes.
+def uiGitSheetB64 = b64(uiDecl.git_control_sheet.findAll { k, v -> !k.startsWith('_') })
 // #1537 Manage's volume sources and the legacy routes of the deleted Home (decoded by Declarations.kt).
 def uiManageB64  = b64((uiDecl.manage ?: [:]).findAll { k, v -> !k.startsWith('_') })
 def uiLegacyB64  = b64(uiDecl.legacy_routes ?: [])
@@ -595,6 +597,7 @@ android {
         buildConfigField "String", "UI_WEBSERVER_B64",    "\"${webserverB64}\""
         buildConfigField "String", "MOUNT_KEEPER_B64", "\"${mountKeeperB64}\""
         buildConfigField "String", "UI_SYNC_B64",     "\"${uiSyncB64}\""
+        buildConfigField "String", "UI_GIT_SHEET_B64", "\"${uiGitSheetB64}\""
         // #705 the gh engine: where it is, how to find its service, the contract this build needs.
         buildConfigField "String", "GH_ENGINE_PACKAGE",      "\"${ghEnginePackage}\""
         buildConfigField "String", "AUTH_MISSION_PERMISSION", "\"${authMissionPermission}\"" // #1333 the Perms list resolves its {authMissionPermission}

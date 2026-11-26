@@ -21,7 +21,7 @@ import java.text.DateFormat
 import java.util.Date
 
 /**
- * #1934 THE UNIFIED REPO CONTROL SHEET of one repository, hosted: libs:git-ui draws it from the declaration (ui.sync.git.control_sheet);
+ * #1934 THE UNIFIED REPO CONTROL SHEET of one repository, hosted: libs:git-ui draws it from the declaration (ui.git_control_sheet);
  * this resolves the REAL state into the fields the declaration names (status, metadata) and dispatches each control to the git engine.
  * A control whose `action` is one of the earlier menu's ids goes to [legacy] (the page's own `act`); the rest are handled here. Sync Now and
  * Clone run the option model's steps: the same argv the command preview prints.
@@ -37,7 +37,7 @@ internal fun ControlSheetBody(
 ) {
     val ctx = LocalContext.current
     val lang = java.util.Locale.getDefault().language
-    val sheet = remember(lang, page.controlSheet) { GitSheet.parse(page.controlSheet, lang) }
+    val sheet = remember(lang) { GitSheet.parse(Declarations.controlSheet, lang) }
     if (sheet.tabs.isEmpty()) return
     val state = rememberGitSheetState(sheet, repo?.id ?: name)
     val cloned = repo != null
@@ -123,7 +123,7 @@ internal fun BulkControlSheet(
     onTop: (Declarations.GitTopItemDecl) -> Unit, onSync: (SyncOptions) -> Unit, onClone: (CloneOptions) -> Unit,
 ) {
     val lang = java.util.Locale.getDefault().language
-    val sheet = remember(lang, page.controlSheet) { GitSheet.parse(page.controlSheet, lang) }
+    val sheet = remember(lang) { GitSheet.parse(Declarations.controlSheet, lang) }
     if (sheet.bulkTabs.isEmpty()) return
     val state = rememberGitSheetState(sheet, "bulk")
     val values = counts.mapKeys { "count:" + it.key }.mapValues { it.value.toString() }

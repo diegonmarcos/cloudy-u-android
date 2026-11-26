@@ -40,6 +40,8 @@ class PlanExecutor(
         val rest = a.drop(2)
         if (a.any { it.startsWith("--recurse-submodules") }) return GitOpResult(false, "submodules: the in-process engine has no recursive submodule support")
         if (verb == "clone") return clone(a)
+        // a shallow fetch / history truncation rewrites the clone's depth in place, which JGit cannot do: it runs where git is a binary
+        if ("--depth" in a || verb == "reflog" || verb == "gc") return binary?.invoke(a, workTree) ?: GitOpResult(false, "git $verb needs the git binary")
         return JGitEngine(workTree).use { e ->
             when (verb) {
                 "add" -> { e.stageAll(); GitOpResult(true, "staged") }

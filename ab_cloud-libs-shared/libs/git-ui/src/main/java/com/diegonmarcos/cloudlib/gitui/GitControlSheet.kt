@@ -108,7 +108,7 @@ fun GitControlSheetView(sheet: GitSheet, state: GitSheetState, host: GitSheetHos
         ConfirmDialog(c.label, host.targets, { state.confirm = null }) { state.confirm = null; actions.action(c) }
     }
     state.confirmRun?.let { which ->
-        ConfirmDialog(which, host.targets, { state.confirmRun = null }) { state.confirmRun = null; if (which == "sync") actions.runSync(state.sync) else actions.runClone(state.clone) }
+        ConfirmDialog(which.substringAfter('|'), host.targets, { state.confirmRun = null }) { state.confirmRun = null; if (which.startsWith("sync")) actions.runSync(state.sync) else actions.runClone(state.clone) }
     }
 }
 
@@ -273,7 +273,10 @@ private fun RunGroup(sheet: GitSheet, g: SheetGroup, state: GitSheetState, host:
                 val isSync = c.action.startsWith("run_sync")
                 val why = blocked(c) ?: (if (isSync) s.unsupported() else null) ?: (if (isSync && host.readOnly && s.normalized().pushes) sheet.reasons["read_only"] else null)
                 val label = if (c.labelFrom == "profile") stringResource(R.string.git_sheet_clone_profile, cl.profileName()) else c.label
-                k.pill(GitPill(label, { if (isSync && (s.destructive() || host.bulk) || !isSync && host.bulk) state.confirmRun = if (isSync) "sync" else "clone" else if (isSync) actions.runSync(s) else actions.runClone(cl) },
+                k.pill(GitPill(label, {
+                    val ask = if (isSync) (s.destructive() || host.bulk) else host.bulk
+                    if (ask) { state.confirmRun = (if (isSync) "sync" else "clone") + "|" + label } else if (isSync) { actions.runSync(s) } else { actions.runClone(cl) }
+                },
                     Modifier.testTag("git_sheet_ctl_" + c.id), filled = true, enabled = why == null && !host.busy, danger = isSync && s.destructive()))
                 if (why != null) Text(why, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }

@@ -263,8 +263,6 @@ object Declarations {
         val copyTimeoutSeconds: Int = 110,
         /** #1289 the per-repository menu: groups, items, order, labels (ui.sync.git.repo_menu). */
         val repoMenu: GitRepoMenuDecl = GitRepoMenuDecl(),
-        /** #1934 the unified repo control sheet (ui.sync.git.control_sheet): tabs, groups, controls, presets; libs:git-ui parses and draws it. */
-        val controlSheet: JsonObject = JsonObject(emptyMap()),
         /** #1313 the stale temp pack cleanup (ui.sync.git.stale_pack_cleanup). */
         val stalePackCleanup: GitStalePackDecl = GitStalePackDecl(),
     ) {
@@ -491,6 +489,8 @@ object Declarations {
     /** #1149 the former Sync pages are bottom-nav sections now: [SYNC_SECTIONS], in nav order. */
     val sync: SyncDecl by lazy { parseSync(decode(BuildConfig.UI_SYNC_B64), nav.sections.filter { it.id in SYNC_SECTIONS }.map { PageDecl(it.id, it.label, it.icon) }) }
     /** #1149 Git > Cloud's public list (ui.sync.cloud_list) and Git > Me's extra hosts (ui.sync.git_hosts). */
+    /** #1934 the unified repo control sheet (build.json ui.git_control_sheet): tabs, groups, controls, presets; libs:git-ui parses and draws it. */
+    val controlSheet: JsonObject by lazy { runCatching { element(decode(BuildConfig.UI_GIT_SHEET_B64)) as? JsonObject }.getOrNull() ?: JsonObject(emptyMap()) }
     val cloudList: GitHostsDecl.CloudListDecl by lazy { GitHostsDecl.parseCloud(decode(BuildConfig.UI_SYNC_B64)) }
     val gitHosts: List<GitHostsDecl.GitHostDecl> by lazy { GitHostsDecl.parseHosts(decode(BuildConfig.UI_SYNC_B64)) }
     /** #1679 ui.sync.git.auto_cloned_cleanup: the folders the retired seed cloned by itself (More ▸ Remove auto-cloned copies). */
@@ -701,7 +701,6 @@ object Declarations {
             jobs = GitJobsDecl(((o["jobs"] as? JsonObject)?.int("workers") ?: 2).coerceIn(1, 4)),
             copyTimeoutSeconds = (o.int("copy_timeout_seconds") ?: 110).coerceIn(10, 120),
             repoMenu = parseRepoMenu(o["repo_menu"]),
-            controlSheet = o["control_sheet"] as? JsonObject ?: JsonObject(emptyMap()),
             stalePackCleanup = (o["stale_pack_cleanup"] as? JsonObject)?.let { c ->
                 GitStalePackDecl(
                     enabled = c.bool("enabled", true),

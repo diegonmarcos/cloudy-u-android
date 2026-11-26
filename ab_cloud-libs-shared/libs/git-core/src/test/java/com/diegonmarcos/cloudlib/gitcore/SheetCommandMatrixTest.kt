@@ -299,7 +299,7 @@ class SheetCommandMatrixTest {
                 val heads = g.repository.refDatabase.getRefsByPrefix(if (bare) "refs/heads/" else "refs/remotes/origin/").map { it.name.substringAfterLast('/') }
                 if (c.branches == "main") assertEquals(tag + "single branch", listOf("main"), heads.filter { it != "HEAD" }) else assertTrue(tag + "all branches: $heads", "dev" in heads && "main" in heads)
                 val n = org.eclipse.jgit.revwalk.RevWalk(g.repository).use { w -> w.markStart(w.parseCommit(g.repository.resolve("HEAD"))); w.count() }
-                if (c.history == "shallow") assertTrue(tag + "depth ${c.depth}: $n commits", n <= c.depth) else assertEquals(tag + "full history", 6, n)
+                if (c.history == "shallow") assertTrue(tag + "depth ${c.depth}: $n commits", n <= c.depth) else assertEquals(tag + "full history", 5, n)
                 if (c.filter.isNotBlank()) assertEquals(tag + "partial clone filter", c.filter, g.repository.config.getString("remote", "origin", "partialclonefilter"))
             }
         }

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# #1934 THE UNIFIED REPO CONTROL SHEET (Overview | Sync | Clone | Workflow | Manage) is DATA (build.json ui.sync.git.control_sheet), drawn by libs:git-ui.
+# #1934 THE UNIFIED REPO CONTROL SHEET (Overview | Sync | Clone | Workflow | Manage) is DATA (build.json ui.git_control_sheet), drawn by libs:git-ui.
 # P1 FIELD PARITY (rule 16): every control id of the earlier menu, bulk bar, repo table, status window and sheet (test/fixtures/git-controls-before.txt)
 #    sits in EXACTLY ONE control of the new structure (per-repo tabs + header + bulk tabs); nothing is dropped, nothing is doubled.
 # P2 REFERENCE COVERAGE: every control/group/tab of the owner's reference (test/fixtures/git-control-sheet-reference.txt) is declared.
@@ -21,7 +21,7 @@ fail() { echo "  FAIL  $*"; FAILURES=$((FAILURES + 1)); }
 
 p1() { python3 - "$1" "$FIX/git-controls-before.txt" <<'PY'
 import json, sys, collections
-d = json.load(open(sys.argv[1]))["ui"]["sync"]["git"]["control_sheet"]
+d = json.load(open(sys.argv[1]))["ui"]["git_control_sheet"]
 cnt = collections.Counter()
 h = d["header"]
 ctl = list(h["actions"]) + [h["refresh"], h["close"], h["banner"], h["clone_now"]] + list(h["fields"])
@@ -43,7 +43,7 @@ PY
 
 p2() { python3 - "$1" "$FIX/git-control-sheet-reference.txt" <<'PY'
 import json, sys
-d = json.load(open(sys.argv[1]))["ui"]["sync"]["git"]["control_sheet"]
+d = json.load(open(sys.argv[1]))["ui"]["git_control_sheet"]
 labels = set(); groups = set(); tabs = set()
 h = d["header"]
 for c in list(h["actions"]) + [h["refresh"], h["close"], h["banner"], h["clone_now"]]: labels.add(c["label"])
@@ -69,7 +69,7 @@ PY
 
 p3() { python3 - "$1" <<'PY'
 import json, sys
-d = json.load(open(sys.argv[1]))["ui"]["sync"]["git"]["control_sheet"]
+d = json.load(open(sys.argv[1]))["ui"]["git_control_sheet"]
 bad = 0
 order = ["overview", "sync", "clone", "workflow", "manage"]
 if [t["id"] for t in d["tabs"]] != order: print("    per-repo tabs", [t["id"] for t in d["tabs"]]); bad = 1
@@ -125,7 +125,7 @@ grep -qF 'git_sheet_badge_destructive' "$ROOT/ab_cloud-libs-shared/libs/git-ui/s
 
 echo "── M mutation-proof ──"
 TMP="$(mktemp -d)"; trap 'rm -rf "${TMP:?}"' EXIT
-mut() { python3 -c "import json,sys; b=json.load(open(sys.argv[1])); d=b['ui']['sync']['git']['control_sheet']; exec(sys.argv[3]); json.dump(b,open(sys.argv[2],'w'))" "$BJ" "$TMP/b.json" "$1"; }
+mut() { python3 -c "import json,sys; b=json.load(open(sys.argv[1])); d=b['ui']['git_control_sheet']; exec(sys.argv[3]); json.dump(b,open(sys.argv[2],'w'))" "$BJ" "$TMP/b.json" "$1"; }
 mut "d['tabs'][2]['groups'][1]['controls'][0]['legacy'].remove('menu:clone_repo_full')"; p1 "$TMP/b.json" >/dev/null && fail "P1 passed a dropped control (vacuous)" || pass "a before id removed → P1 RED"
 mut "d['tabs'][0]['groups'][1]['controls'][0]['legacy'].append('menu:folder_delete')"; p1 "$TMP/b.json" >/dev/null && fail "P1 passed a doubled id (vacuous)" || pass "an id in two places → P1 RED"
 mut "d['bulk']['tabs'][1]['groups'][2]['controls'].pop(0)"; p1 "$TMP/b.json" >/dev/null && fail "P1 passed a dropped bulk control (vacuous)" || pass "a bulk control removed → P1 RED"

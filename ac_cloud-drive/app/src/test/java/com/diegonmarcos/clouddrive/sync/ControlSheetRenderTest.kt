@@ -58,7 +58,7 @@ class ControlSheetRenderTest {
         }
     }).around(compose)
 
-    private val decl: JsonObject = Json.parseToJsonElement(File("../build.json").readText()).jsonObject["ui"]!!.jsonObject["sync"]!!.jsonObject["git"]!!.jsonObject["control_sheet"]!!.jsonObject
+    private val decl: JsonObject = Json.parseToJsonElement(File("../build.json").readText()).jsonObject["ui"]!!.jsonObject["git_control_sheet"]!!.jsonObject
     private val sheet = GitSheet.parse(decl, "en")
     private val seen = mutableListOf<String>()
     private val actions = object : GitSheetActions {

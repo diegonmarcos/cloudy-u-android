@@ -14,7 +14,7 @@ import org.junit.Test
 /** #1934 the control sheet model parsed from Cloud Drive's real declaration; presets applied to the one option model. */
 class GitSheetModelTest {
     private val file = listOf("../../../ac_cloud-drive/build.json", "ac_cloud-drive/build.json").map { File(it) }.first { it.exists() }
-    private val decl = Json.parseToJsonElement(file.readText()).jsonObject["ui"]!!.jsonObject["sync"]!!.jsonObject["git"]!!.jsonObject["control_sheet"]!!.jsonObject
+    private val decl = Json.parseToJsonElement(file.readText()).jsonObject["ui"]!!.jsonObject["git_control_sheet"]!!.jsonObject
     private val sheet = GitSheet.parse(decl, "en")
     private val es = GitSheet.parse(decl, "es")
 
