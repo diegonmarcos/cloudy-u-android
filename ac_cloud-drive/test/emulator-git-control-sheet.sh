@@ -71,6 +71,20 @@ tap "^${NAME}\$" || fail "cannot open the fixture row"
 sleep 3
 dump | grep -q 'text="Overview"' || fail "the control sheet did not open"
 
+
+# tap the first clickable node to the right of the node matching ($1), on the same row (the top bar's overflow button carries no text)
+tap_after() { dump | python3 -I -c '
+import re,sys
+x=sys.stdin.read(); pat=re.compile(sys.argv[1],re.I); nodes=[]
+for m in re.finditer(r"<node [^>]*>",x):
+    n=m.group(0); b=re.search(r"bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"",n); t=re.search(r"\btext=\"([^\"]*)\"",n)
+    if b: nodes.append((list(map(int,b.groups())),t.group(1) if t else "",'clickable="true"' in n))
+for a,t,c in nodes:
+    if pat.search(t):
+        cy=(a[1]+a[3])//2
+        for b,t2,c2 in nodes:
+            if c2 and b[0]>=a[2] and b[1]<=cy<=b[3] and b[0]>a[0]: print((b[0]+b[2])//2,cy); sys.exit(0)
+sys.exit(1)' "$1" | { read -r px py && adb shell input tap "$px" "$py" < /dev/null; }; }
 mkdir -p "$OUT/walk"; : > "$OUT/walk.tsv"
 # the walk list: tab label, control id, control label, danger/confirm flag (from the declaration itself)
 python3 -I - "$BJ" per > "$OUT/walk-list.tsv" <<'PY'
@@ -88,7 +102,7 @@ for t in (d["bulk"]["tabs"] if bulk else d["tabs"]):
             print("\t".join([t["label"], c["id"], c["label"], "1" if (c.get("confirm") or c.get("danger")) else "0"]))
 PY
 ok=0; miss=0
-while IFS=$'\t' read -r tab id label danger; do
+while IFS=$'\t' read -r -u 3 tab id label danger; do
   case "$id" in tab:*) tap "^$(printf '%s' "$label" | sed 's/[][\.*^$/]/\\&/g')$" ; sleep 1; adb exec-out screencap -p > "$OUT/walk/${id#tab:}.png"; printf '%s\t%s\ttab\tshown\t%s\n' "$tab" "$id" "walk/${id#tab:}.png" >> "$OUT/walk.tsv"; continue;; esac
   pat="^$(printf '%s' "$label" | sed 's/[][\.*^$/]/\\&/g')$"
   found=0
@@ -100,11 +114,11 @@ while IFS=$'\t' read -r tab id label danger; do
   if dump | grep -q 'git_sheet_confirm\|Confirm'; then tap '^Cancel$' || adb shell input keyevent KEYCODE_BACK; fi
   dump | grep -q 'text="Overview"' || { adb shell input keyevent KEYCODE_BACK; sleep 1; }
   ok=$((ok+1)); printf '%s\t%s\t%s\ttapped\t%s\n' "$tab" "$id" "$label" "walk/$id.png" >> "$OUT/walk.tsv"
-done < "$OUT/walk-list.tsv"
+done 3< "$OUT/walk-list.tsv"
 
 # ── the all-repos sheet: More ▸ All repos sheet, the same walk over its own controls ──
 adb shell input keyevent KEYCODE_BACK; sleep 2
-tap '^More$' || fail "no More menu"; sleep 1; tap '^All repos sheet$' || fail "no All repos sheet item"; sleep 3
+tap_after '^Logs$' || fail "no More menu"; sleep 1; tap '^All repos sheet$' || fail "no All repos sheet item"; sleep 3
 dump | grep -q 'text="Overview"' || fail "the all-repos sheet did not open"
 python3 -I - "$BJ" bulk > "$OUT/walk-list-bulk.tsv" <<'PY'
 import json, sys
@@ -120,7 +134,7 @@ for t in (d["bulk"]["tabs"] if bulk else d["tabs"]):
             if c.get("kind") in ("field", "preview", "output") or c.get("disabled"): continue
             print("\t".join([t["label"], c["id"], c["label"], "1" if (c.get("confirm") or c.get("danger")) else "0"]))
 PY
-while IFS=$'\t' read -r tab id label danger; do
+while IFS=$'\t' read -r -u 3 tab id label danger; do
   case "$id" in tab:*) tap "^$(printf '%s' "$label" | sed 's/[][\\.*^$/]/\\\\&/g')$"; sleep 1; adb exec-out screencap -p > "$OUT/walk/bulk-${id#tab:}.png"; printf 'bulk:%s\t%s\ttab\tshown\n' "$tab" "$id" >> "$OUT/walk.tsv"; continue;; esac
   pat="^$(printf '%s' "$label" | sed 's/[][\\.*^$/]/\\\\&/g')$"; found=0
   for s in 1 2 3 4 5 6; do tap "$pat" && { found=1; break; }; adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*35/100)) 250; sleep 1; done
@@ -129,7 +143,7 @@ while IFS=$'\t' read -r tab id label danger; do
   if dump | grep -q 'text="Confirm"'; then tap '^Cancel$' || adb shell input keyevent KEYCODE_BACK; fi
   dump | grep -q 'text="Overview"' || { adb shell input keyevent KEYCODE_BACK; sleep 1; }
   ok=$((ok+1)); printf 'bulk:%s\t%s\t%s\ttapped\twalk/bulk-%s.png\n' "$tab" "$id" "$label" "$id" >> "$OUT/walk.tsv"
-done < "$OUT/walk-list-bulk.tsv"
+done 3< "$OUT/walk-list-bulk.tsv"
 echo "control sheet walk: $ok controls tapped, $miss not found"
 adb logcat -d -v threadtime > "$OUT/logcat.txt"
 grep -q "FATAL EXCEPTION" "$OUT/logcat.txt" && grep -A5 "FATAL EXCEPTION" "$OUT/logcat.txt" | grep -q "$PKG" && fail "Drive crashed during the walk"
