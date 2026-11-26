@@ -223,7 +223,7 @@ class ExchangeTest {
         val changed = Exchange.State("USD", "12.5", listOf("JPY", "CHF"))
         Exchange.Store(prefs).save(changed)
         assertEquals(changed, Exchange.Store(prefs).load(d))
-        assertNotNull(prefs.getString("targets", null))
+        assertNotNull(prefs.getString("exchange_targets", null))
         assertEquals("a store with no prefs is the defaults", d, Exchange.Store(null).load(d))
     }
 }

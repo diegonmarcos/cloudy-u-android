@@ -105,7 +105,7 @@ private sealed interface Pick {
 fun ExchangeMode(mode: Declarations.Mode) {
     val api = LocalCalcApi.current
     val ctx = LocalContext.current
-    val prefs = remember { ctx.getSharedPreferences(Exchange.PREFS, Context.MODE_PRIVATE) }
+    val prefs = remember { ctx.getSharedPreferences("cloud_calc", Context.MODE_PRIVATE) }
     val spec = remember(mode.id) { Exchange.spec(mode) }
     val store = remember { Exchange.Store(prefs) }
     val rates = remember { Exchange.Rates(api, Exchange.RateCache(prefs), spec.base, mode.options) }

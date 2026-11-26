@@ -20,7 +20,8 @@ import java.util.Locale
  * The app opens no URL itself (C6): the engine downloads the declared mid-market feed, [Rates] reads its table through the engine.
  */
 object Exchange {
-    const val PREFS = "cloud_calc_exchange"
+    /** The app's existing declared store (fleet-config "cloud_calc"); every Exchange key is prefixed so it never meets History's. */
+    const val PREFS = "cloud_calc"
 
     /** build.json::ui.modes[exchange].spec. */
     data class Spec(
@@ -141,14 +142,14 @@ object Exchange {
     /** The rate table kept on the device with its timestamp, for offline use. [prefs] null = nothing is kept (previews). */
     class RateCache(private val prefs: SharedPreferences?) {
         fun load(): Snap? = runCatching {
-            val o = JSONObject(prefs?.getString("rates", null) ?: return null)
+            val o = JSONObject(prefs?.getString("exchange_rates", null) ?: return null)
             val r = o.getJSONObject("rates")
             Snap(r.keys().asSequence().associateWith { r.getDouble(it) }, o.getLong("t"))
         }.getOrNull()
 
         fun save(s: Snap) {
             val r = JSONObject(); s.perBase.forEach { (k, v) -> r.put(k, v) }
-            prefs?.edit()?.putString("rates", JSONObject().put("t", s.updatedMs).put("rates", r).toString())?.apply()
+            prefs?.edit()?.putString("exchange_rates", JSONObject().put("t", s.updatedMs).put("rates", r).toString())?.apply()
         }
     }
 
@@ -156,12 +157,12 @@ object Exchange {
     class Store(private val prefs: SharedPreferences?) {
         fun load(defaults: State): State {
             val p = prefs ?: return defaults
-            val targets = runCatching { JSONArray(p.getString("targets", null)).let { a -> (0 until a.length()).map { a.getString(it) } } }.getOrNull()
-            return State(p.getString("source", null) ?: defaults.source, p.getString("amount", null) ?: defaults.amount, targets ?: defaults.targets)
+            val targets = runCatching { JSONArray(p.getString("exchange_targets", null)).let { a -> (0 until a.length()).map { a.getString(it) } } }.getOrNull()
+            return State(p.getString("exchange_source", null) ?: defaults.source, p.getString("exchange_amount", null) ?: defaults.amount, targets ?: defaults.targets)
         }
 
         fun save(s: State) {
-            prefs?.edit()?.putString("source", s.source)?.putString("amount", s.amount)?.putString("targets", JSONArray(s.targets).toString())?.apply()
+            prefs?.edit()?.putString("exchange_source", s.source)?.putString("exchange_amount", s.amount)?.putString("exchange_targets", JSONArray(s.targets).toString())?.apply()
         }
     }
 

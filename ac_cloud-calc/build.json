@@ -4414,7 +4414,7 @@
           "targets": ["USD", "EUR", "GBP", "BRL"]
         },
         "spec": {
-          "_doc": "#1945 Finance > Exchange: one source currency and its amount over one card per target currency. default = what a fresh install shows; the chosen source, amount and targets persist (SharedPreferences cloud_calc_exchange). Mid-market rates come from the engine (Cloud-Lib-Calc downloads the ECB euro reference rates, which the app cannot open itself: C6 in test-calc-shell.sh, no network of its own); the app reads the EUR-based table through the engine, derives every cross rate from the EUR base (rate(a to b) = perEur[b] / perEur[a]) and keeps the table with its timestamp on the device, shown offline. source_url is the engine's feed, declared here for the info dialog and the tests; the app never opens it.",
+          "_doc": "#1945 Finance > Exchange: one source currency and its amount over one card per target currency. default = what a fresh install shows; the chosen source, amount and targets persist (SharedPreferences cloud_calc, keys exchange_*). Mid-market rates come from the engine (Cloud-Lib-Calc downloads the ECB euro reference rates, which the app cannot open itself: C6 in test-calc-shell.sh, no network of its own); the app reads the EUR-based table through the engine, derives every cross rate from the EUR base (rate(a to b) = perEur[b] / perEur[a]) and keeps the table with its timestamp on the device, shown offline. source_url is the engine's feed, declared here for the info dialog and the tests; the app never opens it.",
           "source_name": "ECB euro foreign exchange reference rates",
           "source_url": "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml",
           "base": "EUR",

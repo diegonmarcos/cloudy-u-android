@@ -112,7 +112,7 @@ class ExchangeScreenTest {
         compose.onNodeWithTag(ExchangeTags.AMOUNT).performTextReplacement("100")
         compose.waitUntil(5_000) { runCatching { compose.onNodeWithTag(ExchangeTags.targetAmount("USD")).assertTextContains("1.08") }.isSuccess }
         compose.onNodeWithTag(ExchangeTags.targetAmount("GBP")).assertTextContains("0.84")
-        assertEquals("100", prefs.getString("amount", null))
+        assertEquals("100", prefs.getString("exchange_amount", null))
     }
 
     @Test fun `a currency is added through the searchable picker and persists`() {
@@ -122,7 +122,7 @@ class ExchangeScreenTest {
         compose.onNodeWithTag(ExchangeTags.pickerItem("JPY")).performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTag(ExchangeTags.target("JPY")).fetchSemanticsNodes().isNotEmpty() }
         compose.waitUntil(5_000) { runCatching { compose.onNodeWithTag(ExchangeTags.targetRate("JPY")).assertTextContains("1 INR → 1.6 JPY") }.isSuccess }
-        assertTrue(prefs.getString("targets", "")!!.contains("JPY"))
+        assertTrue(prefs.getString("exchange_targets", "")!!.contains("JPY"))
     }
 
     @Test fun `a long press removes a target and the removal persists`() {
