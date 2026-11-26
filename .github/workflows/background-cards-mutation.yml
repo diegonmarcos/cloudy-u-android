@@ -1,0 +1,103 @@
+# #1944 Background-card mutation runs: each matrix leg applies ONE deliberate break to a card's key behaviour (the 0-9 folder
+# filter, the ongoing flag, the group key, the summary's removal on stop) and runs that app's JVM suite, which holds the
+# card tests (StoreBackgroundCardTest, KeepAliveBadgeTest, NavBackgroundCardTest). Every leg must go RED; a green leg means
+# the suite is blind to that break. Manual only.
+name: background-cards-mutation
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {name: store-group-key, app: ac_cloud-store}
+          - {name: store-ongoing, app: ac_cloud-store}
+          - {name: store-removal-on-stop, app: ac_cloud-store}
+          - {name: mail-folder-filter, app: ac_cloud-mail}
+          - {name: mail-ongoing, app: ac_cloud-mail}
+          - {name: mail-group-key, app: ac_cloud-mail}
+          - {name: mail-removal-on-stop, app: ac_cloud-mail}
+          - {name: nav-group-key, app: ac_cloud-nav}
+          - {name: nav-ongoing, app: ac_cloud-nav}
+          - {name: nav-removal-on-stop, app: ac_cloud-nav}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply mutation ${{ matrix.name }}
+        env:
+          M: ${{ matrix.name }}
+        run: |
+          python3 - <<'PY'
+          import os
+          L = "ab_cloud-libs-shared/libs/"
+          FN = L + "fleet-notify/src/main/java/com/diegonmarcos/superapp/core/FleetNotify.kt"
+          BF = L + "updater/src/main/java/com/diegonmarcos/superapp/updater/BatchForegroundService.kt"
+          MK = "ac_cloud-mail/app/src/main/kotlin/app/sterna/push/"
+          NC = L + "maps/src/main/java/com/diegonmarcos/cloudnav/maps/NavCard.kt"
+          LT = L + "maps/src/main/java/com/diegonmarcos/cloudnav/maps/LocationTrackerService.kt"
+          ONGOING = [(FN, ".setOngoing(true)", ".setOngoing(false)"),
+                     (FN, "return b.build().apply { flags = flags or Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT }", "return b.build()")]
+          m = {
+              "store-group-key": [(BF, "groupKey = FleetNotify.GROUP_RUNNING)", "groupKey = null)")],
+              "store-ongoing": ONGOING,
+              "store-removal-on-stop": [(BF, "runCatching { FleetNotify.cancelBackgroundSummary(app) }", "runCatching { }")],
+              "mail-folder-filter": [(MK + "KeepAliveBadge.kt", "it in '0'..'9'", "it in '0'..'8'")],
+              "mail-ongoing": ONGOING,
+              "mail-group-key": [(MK + "Notifications.kt", "groupKey = FleetNotify.GROUP_RUNNING,", "groupKey = null,")],
+              "mail-removal-on-stop": [(MK + "PushService.kt", "runCatching { FleetNotify.cancelBackgroundSummary(this) }", "runCatching { }")],
+              "nav-group-key": [(NC, ".setGroup(FleetNotify.GROUP_RUNNING)", ".setGroup(\"nc_maps\")")],
+              "nav-ongoing": [(NC, ".setOngoing(true)", ".setOngoing(false)"),
+                              (NC, "return b.build().apply { flags = flags or Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT }", "return b.build()")],
+              "nav-removal-on-stop": [(LT, "NavCard.cancelSummary(this)", "Unit")],
+          }[os.environ["M"]]
+          for p, a, b in m:
+              s = open(p).read()
+              assert a in s, "mutation target missing: " + a
+              open(p, "w").write(s.replace(a, b, 1))
+          PY
+          git diff --stat
+          test -n "$(git diff --name-only)" || { echo "mutation target missing"; exit 3; }
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
+      - name: Set up Gradle 8.10.2 (cached)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.10.2"
+      # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
+      # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
+      - name: Checkout vault (shared Android signing key, read by app/build.gradle at configuration)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+      - name: Install ORAS + sops (pinned)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: oras sops
+      - name: JVM unit tests (RED expected)
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+        run: sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "${{ matrix.app }}"
+      # the evidence: which card test caught it
+      - name: Failed tests
+        if: always()
+        run: grep -rl "<failure" --include="TEST-*.xml" ${{ matrix.app }}/app/build 2>/dev/null | xargs -r grep -h -o 'testcase name="[^"]*"' | head -40 || true
