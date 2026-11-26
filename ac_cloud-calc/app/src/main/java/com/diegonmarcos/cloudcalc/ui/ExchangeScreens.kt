@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -59,7 +58,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.window.Dialog
 import com.diegonmarcos.cloudcalc.Declarations
 import com.diegonmarcos.cloudcalc.Exchange
 import com.diegonmarcos.cloudcalc.R
@@ -81,6 +79,7 @@ object ExchangeTags {
     const val INFO = "ex_info"
     const val INFO_BODY = "ex_info_body"
     const val PICKER_SEARCH = "ex_picker_search"
+    const val PICKER_CLOSE = "ex_picker_close"
     fun target(code: String) = "ex_target_$code"
     fun targetCode(code: String) = "ex_target_code_$code"
     fun targetAmount(code: String) = "ex_target_amount_$code"
@@ -117,22 +116,29 @@ fun ExchangeMode(mode: Declarations.Mode) {
     var text by remember { mutableStateOf(Exchange.editText(state.amount, locale)) }
     var table by remember { mutableStateOf(Exchange.RateCache(prefs).load()?.let { Exchange.Table(it.perBase, it.updatedMs, false) } ?: Exchange.Table(emptyMap(), 0L, false)) }
     var refreshing by remember { mutableStateOf(false) }
+    /** The last refresh failed: sticky, so a plain read finishing after it cannot hide the offline state. */
+    var failed by remember { mutableStateOf(false) }
     var pick by remember { mutableStateOf<Pick?>(null) }
     var info by remember { mutableStateOf(false) }
     val currencies = remember(mode.id) { Exchange.currencies(api, spec.base, listOf(state.source) + state.targets) }
 
     fun edit(next: Exchange.State) { state = next; store.save(next) }
 
+    /** A read and a refresh may finish in either order: the newer time and the union of the rates win. */
+    fun apply(t: Exchange.Table) { table = Exchange.Table(table.perBase + t.perBase, maxOf(table.updatedMs, t.updatedMs), t.offline) }
+
     // The table follows the codes on screen (read, no fetch); once on open the engine is refreshed when its rates are stale.
     val codes = listOf(state.source) + state.targets
-    LaunchedEffect(codes) { table = withContext(Dispatchers.IO) { rates.read(codes) } }
+    LaunchedEffect(codes) { apply(withContext(Dispatchers.IO) { rates.read(codes) }) }
     LaunchedEffect(Unit) {
         refreshing = true
-        table = withContext(Dispatchers.IO) { rates.refresh(listOf(state.source) + state.targets, force = false) }
+        val t = withContext(Dispatchers.IO) { rates.refresh(listOf(state.source) + state.targets, force = false) }
+        failed = t.offline; apply(t)
         refreshing = false
     }
 
     val amount = Exchange.parseAmount(text, locale)
+    Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(CalcMetrics.gutter)) {
         ExchangeCard(Modifier.testTag(ExchangeTags.SOURCE_CARD)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -180,7 +186,8 @@ fun ExchangeMode(mode: Declarations.Mode) {
                 onClick = {
                     if (!refreshing) scope.launch {
                         refreshing = true
-                        table = withContext(Dispatchers.IO) { rates.refresh(listOf(state.source) + state.targets, force = true) }
+                        val t = withContext(Dispatchers.IO) { rates.refresh(listOf(state.source) + state.targets, force = true) }
+                        failed = t.offline; apply(t)
                         refreshing = false
                     }
                 },
@@ -191,7 +198,7 @@ fun ExchangeMode(mode: Declarations.Mode) {
             }
             val when_ = if (table.updatedMs > 0) stringResource(R.string.ex_last_updated, Exchange.stamp(table.updatedMs, zone, locale)) else stringResource(R.string.ex_last_updated_never)
             Text(
-                if (table.offline) stringResource(R.string.ex_offline) + " · " + when_ else when_,
+                if (failed) stringResource(R.string.ex_offline) + " · " + when_ else when_,
                 Modifier.weight(1f).padding(start = CalcMetrics.small).testTag(ExchangeTags.UPDATED),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -203,6 +210,7 @@ fun ExchangeMode(mode: Declarations.Mode) {
     }
 
     pick?.let { p ->
+        androidx.activity.compose.BackHandler { pick = null }
         val taken = if (p is Pick.Add) state.targets + state.source else emptyList()
         val current = when (p) { Pick.Source -> state.source; is Pick.Target -> state.targets.getOrNull(p.index).orEmpty(); Pick.Add -> "" }
         CurrencyPicker(
@@ -217,6 +225,7 @@ fun ExchangeMode(mode: Declarations.Mode) {
                 pick = null
             },
         )
+    }
     }
     if (info) AlertDialog(
         onDismissRequest = { info = false },
@@ -267,27 +276,28 @@ private fun CurrencyChip(code: String, modifier: Modifier, onClick: () -> Unit) 
     }
 }
 
-/** The searchable currency list. */
+/** The searchable currency list, drawn over the page (no window of its own). */
 @Composable
 private fun CurrencyPicker(rows: List<com.diegonmarcos.cloudcalc.Logic.Item>, onDismiss: () -> Unit, onPick: (String) -> Unit) {
     var query by remember { mutableStateOf("") }
     val titles = remember(rows) { rows.associate { it.name to it.title } }
     val shown = Exchange.filter(rows.map { it.name }, titles, query)
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(shape = RoundedCornerShape(CalcMetrics.exchangeCorner), color = MaterialTheme.colorScheme.surface) {
-            Column(Modifier.padding(CalcMetrics.gutter)) {
-                Text(stringResource(R.string.ex_pick), style = MaterialTheme.typography.titleMedium)
-                OutlinedTextField(
-                    query, { query = it }, Modifier.fillMaxWidth().padding(vertical = CalcMetrics.gap).testTag(ExchangeTags.PICKER_SEARCH),
-                    singleLine = true, placeholder = { Text(stringResource(R.string.ex_search)) },
-                )
-                LazyColumn(Modifier.heightIn(max = CalcMetrics.plotHeight)) {
-                    items(shown, key = { it }) { code ->
-                        Row(Modifier.fillMaxWidth().clickable { onPick(code) }.padding(vertical = CalcMetrics.gap).testTag(ExchangeTags.pickerItem(code)), verticalAlignment = Alignment.CenterVertically) {
-                            Text(Exchange.flag(code), style = MaterialTheme.typography.titleLarge)
-                            Text(code, Modifier.padding(start = CalcMetrics.gap), fontWeight = FontWeight.Medium)
-                            Text(titles[code].orEmpty(), Modifier.padding(start = CalcMetrics.gap), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-                        }
+    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Column(Modifier.padding(CalcMetrics.gutter)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.ex_pick), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                TextButton(onClick = onDismiss, modifier = Modifier.testTag(ExchangeTags.PICKER_CLOSE)) { Text(stringResource(R.string.ex_close)) }
+            }
+            OutlinedTextField(
+                query, { query = it }, Modifier.fillMaxWidth().padding(vertical = CalcMetrics.gap).testTag(ExchangeTags.PICKER_SEARCH),
+                singleLine = true, placeholder = { Text(stringResource(R.string.ex_search)) },
+            )
+            LazyColumn(Modifier.weight(1f)) {
+                items(shown, key = { it }) { code ->
+                    Row(Modifier.fillMaxWidth().clickable { onPick(code) }.padding(vertical = CalcMetrics.gap).testTag(ExchangeTags.pickerItem(code)), verticalAlignment = Alignment.CenterVertically) {
+                        Text(Exchange.flag(code), style = MaterialTheme.typography.titleLarge)
+                        Text(code, Modifier.padding(start = CalcMetrics.gap), fontWeight = FontWeight.Medium)
+                        Text(titles[code].orEmpty(), Modifier.padding(start = CalcMetrics.gap), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                     }
                 }
             }
