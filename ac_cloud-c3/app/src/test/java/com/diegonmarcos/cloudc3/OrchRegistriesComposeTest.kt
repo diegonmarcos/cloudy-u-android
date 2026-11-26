@@ -103,9 +103,15 @@ class OrchRegistriesComposeTest {
     }
 
     @Test
-    fun `declared GHCR packages cover the fleet images and one cgc-db package per repo`() {
-        val pk = Declarations.ghcrPackages
-        assertTrue(pk.any { it.name == "alerts-api" })
-        assertEquals(Declarations.containerProjects.repos.size, pk.count { it.name.startsWith("cgc-db-") && it.repo.isNotBlank() })
+    fun `GHCR packages derive from the declared container images plus one cgc-db package per repo`() {
+        val pk = OrchRegistries.packages(
+            listOf("ghcr.io/o/alerts-api", "ghcr.io/o/web:latest", "ghcr.io/o/web:1", "ghcr.io/o/caddy-l4@sha256:abc", "docker.io/x/y:1", ""),
+            listOf("alpha"), owner = "o",
+        )
+        assertEquals(listOf("alerts-api", "web", "caddy-l4", "cgc-db-alpha"), pk.map { it.name })
+        assertEquals("alpha", pk.last().repo)
+        val real = OrchRegistries.packages(com.diegonmarcos.cloudc3.pages.ContainersSource.current().entries.map { it.image }, Declarations.containerProjects.repos.map { it.name })
+        assertTrue(real.any { it.name == "alerts-api" })
+        assertEquals(Declarations.containerProjects.repos.size, real.count { it.repo.isNotBlank() })
     }
 }

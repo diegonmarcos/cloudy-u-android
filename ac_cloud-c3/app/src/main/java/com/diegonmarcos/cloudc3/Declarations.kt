@@ -148,11 +148,6 @@ object Declarations {
         com.diegonmarcos.cloudc3.pages.ContainerProjects.parse(decode(BuildConfig.CONTAINER_PROJECTS_B64), decode(BuildConfig.REPOS_DECLARED_B64))
     }
 
-    /** data/ghcr_declared.json (#1942): the GHCR packages Orch > GHCR lists, as (owner, package, repo). */
-    val ghcrPackages: List<com.diegonmarcos.cloudc3.pages.OrchRegistries.Pkg> by lazy {
-        com.diegonmarcos.cloudc3.pages.OrchRegistries.parsePackages(decode(BuildConfig.GHCR_DECLARED_B64))
-    }
-
     /** Renamed section ids (old -> new) and moved page ids (old -> "section/page"). */
     data class Aliases(val sections: Map<String, String> = emptyMap(), val pages: Map<String, String> = emptyMap())
 

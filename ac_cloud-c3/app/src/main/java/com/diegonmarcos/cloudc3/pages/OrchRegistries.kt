@@ -33,16 +33,28 @@ import java.net.URL
  * table (package, tags, visibility, updated). Both load LAZILY, one group at a time when its header is opened, so a cold page
  * costs no request (GitHub's anonymous quota is 60/h per IP; GitHubFeed caches each repo 15 min). Nothing here holds a token:
  * GHCR tags are read anonymously (ghcr.io/token, then /v2/<owner>/<img>/tags/list); a package the anonymous client cannot read
- * is shown as private with no tags, never as a failure. The package list is data/ghcr_declared.json (gen_ghcr_declared.py).
+ * is shown as private with no tags, never as a failure. The package list is derived at run time from the declared containers' image fields plus cgc-db-<repo> per declared repo.
  */
 object OrchRegistries {
 
     data class Pkg(val owner: String, val name: String, val repo: String)
 
-    fun parsePackages(text: String): List<Pkg> = runCatching {
-        val a = org.json.JSONObject(text).getJSONArray("packages")
-        (0 until a.length()).map { val o = a.getJSONObject(it); Pkg(o.getString("owner"), o.getString("package"), o.optString("repo", "")) }
-    }.getOrDefault(emptyList())
+    /**
+     * The GHCR packages, DERIVED from data the app already carries (no new baked data, #1547): every `ghcr.io/<owner>/<image>` of the
+     * declared containers (tag or digest dropped, one row per package) plus one `cgc-db-<repo>` package per declared repo.
+     */
+    fun packages(images: List<String>, repos: List<String>, owner: String = "diegonmarcos"): List<Pkg> {
+        val out = LinkedHashMap<Pair<String, String>, Pkg>()
+        images.filter { it.startsWith("ghcr.io/") }.forEach { im ->
+            val ref = im.removePrefix("ghcr.io/").substringBefore("@")
+            val name = ref.substringAfterLast('/')
+            val clean = if (':' in name) ref.substringBeforeLast(':') else ref
+            val o = clean.substringBefore('/', ""); val n = clean.substringAfter('/', "")
+            if (o.isNotBlank() && n.isNotBlank()) out.putIfAbsent(o to n, Pkg(o, n, ""))
+        }
+        repos.forEach { r -> out.putIfAbsent(owner to "cgc-db-$r", Pkg(owner, "cgc-db-$r", r)) }
+        return out.values.toList()
+    }
 
     /** One release-table row: [assets] is the asset names, [sizeBytes] their total. */
     data class ReleaseRow(val tag: String, val assets: List<String>, val sizeBytes: Long, val updated: String)
@@ -234,7 +246,7 @@ class OrchRegistryFragment : KitComposeFragment() {
     @Composable
     override fun Content() {
         val src = remember { OrchRegistries.Live(requireContext().applicationContext) }
-        if (arguments?.getString(ARG_KIND) == KIND_GHCR) OrchGhcrScreen(Declarations.ghcrPackages, src)
+        if (arguments?.getString(ARG_KIND) == KIND_GHCR) OrchGhcrScreen(OrchRegistries.packages(ContainersSource.current().entries.map { it.image }, Declarations.containerProjects.repos.map { it.name }), src)
         else OrchReleasesScreen(Declarations.containerProjects.repos.map { it.name }, src)
     }
 
