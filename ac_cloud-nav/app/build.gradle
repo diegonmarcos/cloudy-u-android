@@ -302,6 +302,7 @@ dependencies {
     implementation project(':libs:fleet-data-client')   // #1547 the sky catalog is read at RUNTIME from Cloud Store, never baked into the APK
     implementation project(':libs:maps')
     implementation project(':libs:updater')
+    testImplementation project(':libs:fleet-notify')   // #1944 the background-card tests name FleetNotify.GROUP_RUNNING
     implementation project(':libs:devtools')
     implementation project(':libs:bottomnav')   // #868 the island + page-tab strips + NavDecl
     implementation project(':libs:ui-nav-bars')
