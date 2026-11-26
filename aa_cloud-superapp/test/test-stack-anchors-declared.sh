@@ -180,7 +180,7 @@ for section, page in sorted(refs):
         emit("T7", "page:%s/%s names a page that section does not declare" % (section, page))
 hidden = [(s.get("id"), p.get("id"))
           for s in build.get("ui", {}).get("sections", [])
-          for p in s.get("pages", []) if p.get("hidden")]
+          for p in s.get("pages", []) if p.get("hidden") and not p.get("separator")]   # #1943 a hidden | separator is a character, never a destination
 # A TAB is the second way in, and it arrived after this check was written.
 # "A hidden page has no tab" was true until pages could declare `tabs`
 # (Configs ▸ Launcher, then ▸ Panel): a page named in another page's tab strip
@@ -191,7 +191,7 @@ hidden = [(s.get("id"), p.get("id"))
 tabbed = {(s.get("id"), tab)
           for s in build.get("ui", {}).get("sections", [])
           for p in s.get("pages", [])
-          for tab in ((p.get("tabs") or []) + (p.get("reaches") or []))}   # #1719 `reaches`: a page that hosts others behind its own nav (Configs > Network) is their referrer
+          for tab in ((p.get("tabs") or []) + (p.get("reaches") or []) + (p.get("hub_pages") or []))}   # #1943 `hub_pages`: the Launcher hub lists the hidden Configs pages as its tiles; #1719 `reaches`: a page that hosts others behind its own nav (Configs > Network) is their referrer
 # #865 a THIRD way in: a `page:` route the app's own Kotlin opens - the update
 # notification, Update All and the lib-row hop all land on config/store-cloud,
 # which lost its tab when the Store tile started opening Cloud Store instead.
