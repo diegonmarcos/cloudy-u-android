@@ -1173,7 +1173,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                 output = jobLine?.let { it.label + ": " + it.done + "/" + it.total },
                 onTop = { runTopItem(it) },
                 onSync = { o -> coordinator.runPlanAll("sync", o.steps(), scopeTargets) },
-                onClone = { o -> entries.filter { it.cloned == null }.forEach { e -> coordinator.cloneOptions(GitSyncCoordinator.CloneTarget(e.name, e.cloneUrl.ifBlank { page.cloneUrl(e.name, Declarations.REMOTE_HTTPS) }, GitSyncCoordinator.AUTH_HTTPS, "", ""), o, null) } },,
+                onClone = { o -> entries.filter { it.cloned == null }.forEach { e -> coordinator.cloneOptions(GitSyncCoordinator.CloneTarget(e.name, e.cloneUrl.ifBlank { page.cloneUrl(e.name, Declarations.REMOTE_HTTPS) }, GitSyncCoordinator.AUTH_HTTPS, "", ""), o, null) } },
                 part = part, sheetState = bState,
             )
         }
