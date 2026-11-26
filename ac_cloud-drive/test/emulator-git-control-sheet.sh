@@ -86,6 +86,14 @@ for a,t,c in nodes:
         for b,t2,c2 in nodes:
             if c2 and b[0]>=a[2] and b[1]<=cy<=b[3] and b[0]>a[0]: print((b[0]+b[2])//2,cy); sys.exit(0)
 sys.exit(1)' "$1" | { read -r px py && adb shell input tap "$px" "$py" < /dev/null; }; }
+
+# a control may leave the sheet (Folder opens Files, Settings opens its own sheet): come back to the sheet before the next tap
+ensure_sheet() {
+  dump | grep -q 'text="Overview"' && return 0
+  adb shell input keyevent KEYCODE_BACK; sleep 1; dump | grep -q 'text="Overview"' && return 0
+  tap '^Git$'; sleep 2
+  if [ "$1" = bulk ]; then tap_after '^Logs$' && sleep 1 && tap '^All repos sheet$'; else tap "^${NAME}\$"; fi
+  sleep 3; dump | grep -q 'text="Overview"'; }
 mkdir -p "$OUT/walk"; : > "$OUT/walk.tsv"
 # the walk list: tab label, control id, control label, danger/confirm flag (from the declaration itself)
 python3 -I - "$BJ" per > "$OUT/walk-list.tsv" <<'PY'
@@ -104,6 +112,7 @@ for t in (d["bulk"]["tabs"] if bulk else d["tabs"]):
 PY
 ok=0; miss=0
 while IFS=$'\t' read -r -u 3 tab id label danger; do
+  case "$id" in tab:Manage|tab:manage) adb shell input swipe $((W*80/100)) $((H*62/100)) $((W*20/100)) $((H*62/100)) 200 < /dev/null; sleep 1;; esac
   case "$id" in tab:*) tap "^$(printf '%s' "$label" | sed 's/[][\.*^$/]/\\&/g')$" ; sleep 1; adb exec-out screencap -p > "$OUT/walk/${id#tab:}.png"; printf '%s\t%s\ttab\tshown\t%s\n' "$tab" "$id" "walk/${id#tab:}.png" >> "$OUT/walk.tsv"; continue;; esac
   pat="^$(printf '%s' "$label" | sed 's/[][\.*^$/]/\\&/g')$"
   found=0
@@ -113,7 +122,7 @@ while IFS=$'\t' read -r -u 3 tab id label danger; do
   after=$(dump | grep -oE 'text="[^"]{3,80}"' | head -40 | tr '\n' ' ')
   # a confirm dialog is never confirmed
   if dump | grep -q 'git_sheet_confirm\|Confirm'; then tap '^Cancel$' || adb shell input keyevent KEYCODE_BACK; fi
-  dump | grep -q 'text="Overview"' || { adb shell input keyevent KEYCODE_BACK; sleep 1; }
+  ensure_sheet per || fail "cannot get the sheet back after $id"
   ok=$((ok+1)); printf '%s\t%s\t%s\ttapped\t%s\n' "$tab" "$id" "$label" "walk/$id.png" >> "$OUT/walk.tsv"
 done 3< "$OUT/walk-list.tsv"
 
@@ -136,13 +145,14 @@ for t in (d["bulk"]["tabs"] if bulk else d["tabs"]):
             print("\t".join([t["label"], c["id"], c["label"], "1" if (c.get("confirm") or c.get("danger")) else "0"]))
 PY
 while IFS=$'\t' read -r -u 3 tab id label danger; do
+  case "$id" in tab:Manage|tab:manage) adb shell input swipe $((W*80/100)) $((H*62/100)) $((W*20/100)) $((H*62/100)) 200 < /dev/null; sleep 1;; esac
   case "$id" in tab:*) tap "^$(printf '%s' "$label" | sed 's/[][\\.*^$/]/\\\\&/g')$"; sleep 1; adb exec-out screencap -p > "$OUT/walk/bulk-${id#tab:}.png"; printf 'bulk:%s\t%s\ttab\tshown\n' "$tab" "$id" >> "$OUT/walk.tsv"; continue;; esac
   pat="^$(printf '%s' "$label" | sed 's/[][\\.*^$/]/\\\\&/g')$"; found=0
   for s in 1 2 3; do tap "$pat" && { found=1; break; }; adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*35/100)) 250; sleep 1; done
   if [ $found = 0 ]; then miss=$((miss+1)); printf 'bulk:%s\t%s\t%s\tNOT FOUND\t-\n' "$tab" "$id" "$label" >> "$OUT/walk.tsv"; continue; fi
   sleep 1; adb exec-out screencap -p > "$OUT/walk/bulk-$id.png"
   if dump | grep -q 'text="Confirm"'; then tap '^Cancel$' || adb shell input keyevent KEYCODE_BACK; fi
-  dump | grep -q 'text="Overview"' || { adb shell input keyevent KEYCODE_BACK; sleep 1; }
+  ensure_sheet bulk || fail "cannot get the all-repos sheet back after $id"
   ok=$((ok+1)); printf 'bulk:%s\t%s\t%s\ttapped\twalk/bulk-%s.png\n' "$tab" "$id" "$label" "$id" >> "$OUT/walk.tsv"
 done 3< "$OUT/walk-list-bulk.tsv"
 echo "control sheet walk: $ok controls tapped, $miss not found"
