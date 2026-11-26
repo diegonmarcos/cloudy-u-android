@@ -1,0 +1,104 @@
+#!/bin/bash
+# #1934 Emulator WALK of the unified repo control sheet: opens Drive > Git, taps the fixture repository's row, then taps EVERY control the declaration
+# (ac_cloud-drive/build.json ui.sync.git.control_sheet, the per-repo tabs) names, once, on that fixture, and records per control: tapped or not, the screen text
+# that followed and a screenshot (out/walk/<id>.png, out/walk.tsv). A destructive control opens its confirm and the walk CANCELS it; the hosting-platform commands
+# (Archive Remote, Delete Remote) are never confirmed: they are verified against a local mock by HostingApiTest. A control that cannot be found fails the walk.
+#   1. open the page: NO check runs by itself, the row says "not checked yet" (the persisted-cache contract);
+#   2. pull to refresh (= Light check all): within 15 s the three icons of the row must be terminal
+#      (local clean, server in_sync, sync never) and "last check: ... / 1 of 1 done" must show;
+#   3. none of the three icons may say "reading" or "not_checked" after that.
+# Usage: emulator-git-status.sh <drive.apk> <outdir>
+set -u
+APK=${1:?drive apk}; OUT=${2:-out}
+PKG=com.diegonmarcos.clouddrive
+NAME=cloudy-fixture
+BJ=$(dirname "$0")/../build.json
+mkdir -p "$OUT"
+fail() { echo "::error title=Drive Git status::$*"; adb exec-out screencap -p > "$OUT/fail.png" 2>/dev/null; adb logcat -d -v threadtime > "$OUT/logcat.txt" 2>/dev/null; exit 1; }
+
+# ── the fixture: a real repository with one commit, an origin/main tracking ref and a FETCH_HEAD ──
+FIX=$(mktemp -d)/$NAME
+git init -q -b main "$FIX"
+# the in-process engine (JGit) resolves an upstream through the remote's fetch refspec, so origin is declared, not only its tracking ref
+( cd "$FIX" && echo one > a.txt && git add a.txt && git -c user.name=t -c user.email=t@t commit -q -m one \
+  && git remote add origin https://example.invalid/diegonmarcos/$NAME.git && git config branch.main.remote origin && git config branch.main.merge refs/heads/main \
+  && git update-ref refs/remotes/origin/main HEAD && echo x > .git/FETCH_HEAD )
+tar -C "$(dirname "$FIX")" -cf "$OUT/fixture.tar" "$NAME"
+
+adb uninstall "$PKG" >/dev/null 2>&1 || true   # a retry starts from a clean app, as the first attempt did
+adb install -r -g "$APK" || fail "install failed"
+adb shell appops set "$PKG" MANAGE_EXTERNAL_STORAGE allow || true
+act=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
+timeout 120 adb shell am start -W -n "$act" >/dev/null; sleep 8
+adb shell am force-stop "$PKG"
+
+DIR=/data/data/$PKG/files
+adb exec-in "run-as $PKG sh -c 'mkdir -p files/fixtures files/git-sync && tar -xf - -C files/fixtures'" < "$OUT/fixture.tar" || fail "fixture copy failed"
+adb shell "run-as $PKG sh -c 'cat > files/git-sync/repos.json'" <<JSON
+[{"id":"fixture-1","name":"$NAME","path":"$DIR/fixtures/$NAME","remoteUrl":"https://example.invalid/diegonmarcos/$NAME.git"}]
+JSON
+adb shell "run-as $PKG ls -a files/fixtures/$NAME/.git" > "$OUT/fixture-ls.txt" 2>&1 || fail "fixture is not readable by the app"
+
+dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > "$OUT/ui.xml" 2>/dev/null; cat "$OUT/ui.xml"; }
+# tap the centre of the first node whose text or content-desc matches the regex ($1)
+tap() { dump | python3 -I -c '
+import re,sys
+x=sys.stdin.read(); pat=re.compile(sys.argv[1],re.I)
+for m in re.finditer(r"<node [^>]*>",x):
+    n=m.group(0); t=re.search(r"\btext=\"([^\"]*)\"",n); d=re.search(r"content-desc=\"([^\"]*)\"",n); b=re.search(r"bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"",n)
+    if b and ((t and pat.search(t.group(1))) or (d and pat.search(d.group(1)))):
+        a=list(map(int,b.groups())); print((a[0]+a[2])//2,(a[1]+a[3])//2); break
+else: sys.exit(1)' "$1" | { read -r px py && adb shell input tap "$px" "$py"; }; }
+
+timeout 120 adb shell am start -W -n "$act" >/dev/null; sleep 6
+# The emulator has no cld.termux: Drive's startup gate offers "Continue with local files" (the fixture sits in the app's own files dir).
+for i in 1 2 3; do tap '^Continue with local files$' && break; sleep 2; done || true
+sleep 3
+# The bottom nav carries Git directly (there is no Sync tab; the top bar's Sync is the Sync All menu, which a tap here would open over the page).
+tap '^Git$' || fail "no Git sub-page"
+sleep 4
+
+size=$(adb shell wm size | tr -d '\r' | grep -oE '[0-9]+x[0-9]+' | tail -1); W=${size%x*}; H=${size#*x}
+
+find_row() {
+  for i in $(seq 1 25); do
+    if dump | grep -q "$NAME"; then return 0; fi
+    adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*30/100)) 300; sleep 1
+  done; return 1; }
+size=$(adb shell wm size | tr -d '\r' | grep -oE '[0-9]+x[0-9]+' | tail -1); W=${size%x*}; H=${size#*x}
+find_row || fail "the fixture row never appeared on the Git page"
+tap "$NAME" || fail "cannot open the fixture row"
+sleep 3
+dump | grep -q 'git_control_sheet\|Overview' || fail "the control sheet did not open"
+
+mkdir -p "$OUT/walk"; : > "$OUT/walk.tsv"
+# the walk list: tab label, control id, control label, danger/confirm flag (from the declaration itself)
+python3 -I - "$BJ" > "$OUT/walk-list.tsv" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1]))["ui"]["sync"]["git"]["control_sheet"]
+h = d["header"]
+for c in h["actions"] + [h["refresh"]]: print("\t".join(["header", c["id"], c["label"], "0"]))
+for t in d["tabs"]:
+    print("\t".join([t["label"], "tab:" + t["id"], t["label"], "0"]))
+    for g in t["groups"]:
+        for c in g["controls"]:
+            if c.get("kind") in ("field", "preview", "output"): continue
+            print("\t".join([t["label"], c["id"], c["label"], "1" if (c.get("confirm") or c.get("danger")) else "0"]))
+PY
+ok=0; miss=0
+while IFS=$'\t' read -r tab id label danger; do
+  case "$id" in tab:*) tap "^$(printf '%s' "$label" | sed 's/[][\.*^$/]/\\&/g')$" ; sleep 1; adb exec-out screencap -p > "$OUT/walk/${id#tab:}.png"; printf '%s\t%s\ttab\tshown\t%s\n' "$tab" "$id" "walk/${id#tab:}.png" >> "$OUT/walk.tsv"; continue;; esac
+  pat="^$(printf '%s' "$label" | sed 's/[][\.*^$/]/\\&/g')$"
+  found=0
+  for s in 1 2 3 4 5 6; do tap "$pat" && { found=1; break; }; adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*35/100)) 250; sleep 1; done
+  if [ $found = 0 ]; then miss=$((miss+1)); printf '%s\t%s\t%s\tNOT FOUND\t-\n' "$tab" "$id" "$label" >> "$OUT/walk.tsv"; continue; fi
+  sleep 1; adb exec-out screencap -p > "$OUT/walk/$id.png"
+  after=$(dump | grep -oE 'text="[^"]{3,80}"' | head -40 | tr '\n' ' ')
+  # a confirm dialog is never confirmed
+  if dump | grep -q 'git_sheet_confirm\|Confirm'; then tap '^Cancel$' || adb shell input keyevent KEYCODE_BACK; fi
+  ok=$((ok+1)); printf '%s\t%s\t%s\ttapped\t%s\n' "$tab" "$id" "$label" "walk/$id.png" >> "$OUT/walk.tsv"
+done < "$OUT/walk-list.tsv"
+echo "control sheet walk: $ok controls tapped, $miss not found"
+adb logcat -d -v threadtime > "$OUT/logcat.txt"
+grep -q "FATAL EXCEPTION" "$OUT/logcat.txt" && grep -A5 "FATAL EXCEPTION" "$OUT/logcat.txt" | grep -q "$PKG" && fail "Drive crashed during the walk"
+[ "$miss" = 0 ] || fail "$miss control(s) of the declaration were not found on screen (see walk.tsv)"
