@@ -2,8 +2,9 @@ package com.diegonmarcos.cloudc3
 
 import android.content.ComponentName
 import androidx.activity.ComponentActivity
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.ui.graphics.Color
+import com.diegonmarcos.superapp.uikit.CloudKitTheme
+import com.diegonmarcos.superapp.uikit.KitPalette
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -47,6 +48,7 @@ class OrchRegistriesComposeTest {
         }
     }).around(compose)
 
+    private val palette = KitPalette(Color.Black, Color.DarkGray, Color.White, Color.LightGray, Color.Cyan, Color.Gray, Color.Black)
     private val relCalls = mutableListOf<String>()
     private val ghcrCalls = mutableListOf<String>()
 
@@ -69,7 +71,7 @@ class OrchRegistriesComposeTest {
 
     @Test
     fun `release table loads lazily per repo and shows tag, assets, size and updated`() {
-        compose.setContent { MaterialTheme(colorScheme = darkColorScheme()) { OrchReleasesScreen(listOf("alpha", "limited"), fake) } }
+        compose.setContent { CloudKitTheme(palette) { OrchReleasesScreen(listOf("alpha", "limited"), fake) } }
         compose.waitForIdle()
         assertEquals("nothing is fetched before a repo is opened (60/h anonymous quota)", emptyList<String>(), relCalls)
         compose.onNodeWithTag(OrchRegistries.Tags.repo("alpha")).performClick()
@@ -89,7 +91,7 @@ class OrchRegistriesComposeTest {
     @Test
     fun `GHCR table groups by repo, loads on open, and a private package shows private with no tags`() {
         val pk = listOf(OrchRegistries.Pkg("o", "web", ""), OrchRegistries.Pkg("o", "secret-img", ""), OrchRegistries.Pkg("o", "cgc-db-alpha", "alpha"))
-        compose.setContent { MaterialTheme(colorScheme = darkColorScheme()) { OrchGhcrScreen(pk, fake) } }
+        compose.setContent { CloudKitTheme(palette) { OrchGhcrScreen(pk, fake) } }
         compose.waitForIdle()
         assertTrue("no package is read before its group is opened", ghcrCalls.isEmpty())
         compose.onNodeWithTag(OrchRegistries.Tags.group(OrchRegistries.FLEET)).performClick()
