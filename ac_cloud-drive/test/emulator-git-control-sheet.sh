@@ -71,7 +71,7 @@ size=$(adb shell wm size | tr -d '\r' | grep -oE '[0-9]+x[0-9]+' | tail -1); W=$
 find_row || fail "the fixture row never appeared on the Git page"
 tap "^${NAME}\$" || fail "cannot open the fixture row"
 sleep 3
-dump | grep -q 'text="Overview"' || fail "the control sheet did not open"
+dump | grep -q 'content-desc="Drag handle"' || fail "the control sheet did not open"
 
 
 # tap the first clickable node to the right of the node matching ($1), on the same row (the top bar's overflow button carries no text)
@@ -90,11 +90,11 @@ sys.exit(1)' "$1" | { read -r px py && adb shell input tap "$px" "$py" < /dev/nu
 
 # a control may leave the sheet (Folder opens Files, Settings opens its own sheet): come back to the sheet before the next tap
 ensure_sheet() {
-  dump | grep -q 'text="Overview"' && return 0
-  for b in 1 2 3; do adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 2; dump | grep -q 'text="Overview"' && return 0; done
+  dump | grep -q 'content-desc="Drag handle"' && return 0
+  for b in 1 2 3; do adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 2; dump | grep -q 'content-desc="Drag handle"' && return 0; done
   tap '^Git$'; sleep 2
   if [ "$1" = bulk ]; then tap_after '^Logs$' && sleep 1 && tap '^All repos sheet$'; else tap "^${NAME}\$"; fi
-  sleep 3; dump | grep -q 'text="Overview"'; }
+  sleep 3; dump | grep -q 'content-desc="Drag handle"'; }
 mkdir -p "$OUT/walk"; : > "$OUT/walk.tsv"
 # the walk list: tab label, control id, control label, danger/confirm flag (from the declaration itself)
 python3 -I - "$BJ" per > "$OUT/walk-list.tsv" <<'PY'
@@ -122,7 +122,7 @@ while IFS=$'\t' read -r -u 3 tab id label danger; do
   sleep 2; adb exec-out screencap -p > "$OUT/walk/$id.png"
   case "$id" in ov.goto.web|ov.goto.folder|mg.tools.settings)
     # these controls LEAVE the sheet (in-app web viewer, Drive Files, the settings sheet): the destination must differ from the sheet's own screen
-    if dump | grep -q 'text="Overview"' && dump | grep -q 'text="Goto &amp; Quick Actions"' && [ "$id" != mg.tools.settings ]; then miss=$((miss+1)); printf '%s\t%s\t%s\tNOT OPENED\t-\n' "$tab" "$id" "$label" >> "$OUT/walk.tsv"; continue; fi;;
+    if dump | grep -q 'content-desc="Drag handle"' && dump | grep -q 'text="Goto &amp; Quick Actions"' && [ "$id" != mg.tools.settings ]; then miss=$((miss+1)); printf '%s\t%s\t%s\tNOT OPENED\t-\n' "$tab" "$id" "$label" >> "$OUT/walk.tsv"; continue; fi;;
   esac
   after=$(dump | grep -oE 'text="[^"]{3,80}"' | head -40 | tr '\n' ' ')
   # a confirm dialog is never confirmed
@@ -134,7 +134,7 @@ done 3< "$OUT/walk-list.tsv"
 # ── the all-repos sheet: More ▸ All repos sheet, the same walk over its own controls ──
 adb shell input keyevent KEYCODE_BACK; sleep 2
 tap_after '^Logs$' || fail "no More menu"; sleep 1; tap '^All repos sheet$' || fail "no All repos sheet item"; sleep 3
-dump | grep -q 'text="Overview"' || fail "the all-repos sheet did not open"
+dump | grep -q 'content-desc="Drag handle"' || fail "the all-repos sheet did not open"
 python3 -I - "$BJ" bulk > "$OUT/walk-list-bulk.tsv" <<'PY'
 import json, sys
 d = json.load(open(sys.argv[1]))["ui"]["git_control_sheet"]
