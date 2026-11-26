@@ -123,7 +123,7 @@ class ControlSheetRenderTest {
         click("git_sheet_ctl_sy.run")
         compose.onNodeWithTag("git_sheet_confirm").assertExists()
         assertTrue("nothing ran before the confirm: $seen", seen.none { it.startsWith("run_sync") })
-        click("git_sheet_confirm_yes")
+        compose.onNodeWithTag("git_sheet_confirm_yes").performClick()
         assertEquals(listOf("run_sync:git push --force"), seen)
     }
 
