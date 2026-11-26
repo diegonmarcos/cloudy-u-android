@@ -136,7 +136,8 @@ if grep -qF 'installed = false' "$FRAGMENT"; then
 else
     bad "nothing constructs a not-installed AppInfo -- placeholders cannot render"
 fi
-for site in 'group.entries.map(::curated)' 'SuitePhoneAppsFragment::fleetLabelOf).map(::curated)'; do
+# #1936 the Cloud app is no longer prepended: a folder renders its declared (third-party) entries
+for site in 'group.entries.map(::curated)' 'folder to folder.entries.map(::curated)'; do
     if grep -qF "$site" "$FRAGMENT"; then
         ok "$site renders every declared entry"
     else

@@ -2,6 +2,7 @@ package com.diegonmarcos.superapp.search
 
 import android.content.Context
 import com.diegonmarcos.superapp.apps.PhoneAppsFragment
+import com.diegonmarcos.superapp.apps.PhonePageFleet
 import com.diegonmarcos.superapp.cloud.CloudData
 import com.diegonmarcos.superapp.launcher.Sections
 
@@ -89,7 +90,10 @@ object SuperappSearchIndex {
      *  whitelist) applies here exactly as it does on the Phone tab — the
      *  reason this scope is NOT in the library. */
     private fun phoneApps(scopeId: String, ctx: Context): List<SearchHit> =
-        PhoneAppsFragment.snapshot(ctx).mapNotNull { app ->
+        PhonePageFleet.forContext(ctx).let { fleet ->
+            // #1936 the Phone scope lists third-party apps only: a Cloud app is found in the Cloud scope (Cloud ▸ Apps)
+            PhoneAppsFragment.snapshot(ctx).filterNot { PhonePageFleet.isFleet(it.packageName, fleet) }
+        }.mapNotNull { app ->
             // snapshot() is the launchable set, so the component is always
             // present; mapNotNull (not let) so a non-launchable tile that
             // ever enters the snapshot cannot hand the search index a null
