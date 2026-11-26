@@ -83,6 +83,8 @@ class SheetCommandMatrixTest {
         @AfterClass @JvmStatic fun cleanup() {
             println("MATRIX cases=$cases distinct_argv_plans=$distinct")
             base.deleteRecursively()
+            // the matrix really ran: 2352 distinct sync plans + 46 core plans x 8 states + 144 clone plans + the targeted cases
+            assertTrue("matrix ran only $cases cases", cases >= 2600)
         }
 
         /** A fresh copy of the template of [state], its origin pointed at the copied bare remote. */
