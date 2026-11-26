@@ -195,7 +195,7 @@ class ControlSheetRenderTest {
         }
         compose.onNodeWithTag("git_sheet_tab_sync").assertIsDisplayed()
         compose.onNodeWithTag("git_sheet_tab_manage").performClick()
-        compose.onNodeWithTag("body_scroll").performScrollToNode(androidx.compose.ui.test.hasTestTag("git_sheet_ctl_mg.life.delete_remote"))
+        compose.onNodeWithTag("body_scroll").performScrollToNode(androidx.compose.ui.test.hasTestTag("git_sheet_ctl_mg.tools.settings"))
         // scrolled to the end of the Manage body: the tab row is still on screen and a tap on it still switches the tab
         compose.onNodeWithTag("git_sheet_tab_sync").assertIsDisplayed()
         compose.onNodeWithTag("git_sheet_tab_sync").performClick()
