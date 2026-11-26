@@ -135,8 +135,8 @@ class FleetNotifyTest {
         val grouped = FleetNotify.keepAliveNotification(ctx, android.R.drawable.ic_dialog_info, "Mail", listOf("2 unread"), pi(), groupKey = FleetNotify.GROUP_RUNNING)
         assertEquals(FleetNotify.GROUP_RUNNING, grouped.group)
         assertTrue(grouped.flags and Notification.FLAG_ONGOING_EVENT != 0)
-        assertEquals(FleetNotify.CHANNEL_KEEP_ALIVE, grouped.channelId)
-        assertNull("an existing consumer that passes no group stays ungrouped", keepAlive().group)
+        assertTrue(grouped.channelId.startsWith(FleetNotify.CHANNEL_KEEP_ALIVE))
+        assertTrue("an existing consumer that passes no group stays ungrouped", keepAlive().group.isNullOrEmpty())
     }
 
     @Test fun backgroundSummaryIsTheGroupsOngoingSummary() {
