@@ -96,7 +96,7 @@ class SubgroupHubTest : KitPageHarness() {
 
     @Test
     fun `H4 Watchdog is the hub fragment and draws its headings and a Cloud Apps tile per entry`() {
-        val frag = SectionPages.pagesFor("config", includeHidden = true).first { it.id == "agents-watchdog" }   // #1943 hidden from Setup, listed by the Launcher hub.factory()
+        val frag = SectionPages.pagesFor("config", includeHidden = true).first { it.id == "agents-watchdog" }.factory()   // #1943 hidden from Setup, listed by the Launcher hub
         assertTrue("routes to the hub: ${frag.javaClass.simpleName}", frag is SubgroupHubFragment)
         show(frag)
         compose.onNodeWithTag(SubgroupHubFragment.TAG_GRID).assertExists()
