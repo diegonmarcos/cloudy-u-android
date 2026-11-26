@@ -23,7 +23,8 @@ git init -q -b main "$FIX"
 ( cd "$FIX" && echo one > a.txt && git add a.txt && git -c user.name=t -c user.email=t@t commit -q -m one \
   && git remote add origin https://example.invalid/diegonmarcos/$NAME.git && git config branch.main.remote origin && git config branch.main.merge refs/heads/main \
   && git update-ref refs/remotes/origin/main HEAD && echo x > .git/FETCH_HEAD )
-tar -C "$(dirname "$FIX")" -cf "$OUT/fixture.tar" "$NAME"
+cp -r "$FIX" "$(dirname "$FIX")/$NAME-2"; cp -r "$FIX" "$(dirname "$FIX")/$NAME-3"   # #1934 three repositories for the all-repos sheet
+tar -C "$(dirname "$FIX")" -cf "$OUT/fixture.tar" "$NAME" "$NAME-2" "$NAME-3"
 
 adb uninstall "$PKG" >/dev/null 2>&1 || true   # a retry starts from a clean app, as the first attempt did
 adb install -r -g "$APK" || fail "install failed"
@@ -35,7 +36,7 @@ adb shell am force-stop "$PKG"
 DIR=/data/data/$PKG/files
 adb exec-in "run-as $PKG sh -c 'mkdir -p files/fixtures files/git-sync && tar -xf - -C files/fixtures'" < "$OUT/fixture.tar" || fail "fixture copy failed"
 adb shell "run-as $PKG sh -c 'cat > files/git-sync/repos.json'" <<JSON
-[{"id":"fixture-1","name":"$NAME","path":"$DIR/fixtures/$NAME","remoteUrl":"https://example.invalid/diegonmarcos/$NAME.git"}]
+[{"id":"fixture-1","name":"$NAME","path":"$DIR/fixtures/$NAME","remoteUrl":"https://example.invalid/diegonmarcos/$NAME.git"},{"id":"fixture-2","name":"$NAME-2","path":"$DIR/fixtures/$NAME-2","remoteUrl":"https://example.invalid/diegonmarcos/$NAME-2.git"},{"id":"fixture-3","name":"$NAME-3","path":"$DIR/fixtures/$NAME-3","remoteUrl":"https://example.invalid/diegonmarcos/$NAME-3.git"}]
 JSON
 adb shell "run-as $PKG ls -a files/fixtures/$NAME/.git" > "$OUT/fixture-ls.txt" 2>&1 || fail "fixture is not readable by the app"
 
@@ -90,7 +91,7 @@ sys.exit(1)' "$1" | { read -r px py && adb shell input tap "$px" "$py" < /dev/nu
 # a control may leave the sheet (Folder opens Files, Settings opens its own sheet): come back to the sheet before the next tap
 ensure_sheet() {
   dump | grep -q 'text="Overview"' && return 0
-  adb shell input keyevent KEYCODE_BACK; sleep 1; dump | grep -q 'text="Overview"' && return 0
+  for b in 1 2 3; do adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 2; dump | grep -q 'text="Overview"' && return 0; done
   tap '^Git$'; sleep 2
   if [ "$1" = bulk ]; then tap_after '^Logs$' && sleep 1 && tap '^All repos sheet$'; else tap "^${NAME}\$"; fi
   sleep 3; dump | grep -q 'text="Overview"'; }
@@ -118,7 +119,11 @@ while IFS=$'\t' read -r -u 3 tab id label danger; do
   found=0
   for s in 1 2 3; do tap "$pat" && { found=1; break; }; adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*35/100)) 250; sleep 1; done
   if [ $found = 0 ]; then miss=$((miss+1)); printf '%s\t%s\t%s\tNOT FOUND\t-\n' "$tab" "$id" "$label" >> "$OUT/walk.tsv"; continue; fi
-  sleep 1; adb exec-out screencap -p > "$OUT/walk/$id.png"
+  sleep 2; adb exec-out screencap -p > "$OUT/walk/$id.png"
+  case "$id" in ov.goto.web|ov.goto.folder|mg.tools.settings)
+    # these controls LEAVE the sheet (in-app web viewer, Drive Files, the settings sheet): the destination must differ from the sheet's own screen
+    if dump | grep -q 'text="Overview"' && dump | grep -q 'text="Goto &amp; Quick Actions"' && [ "$id" != mg.tools.settings ]; then miss=$((miss+1)); printf '%s\t%s\t%s\tNOT OPENED\t-\n' "$tab" "$id" "$label" >> "$OUT/walk.tsv"; continue; fi;;
+  esac
   after=$(dump | grep -oE 'text="[^"]{3,80}"' | head -40 | tr '\n' ' ')
   # a confirm dialog is never confirmed
   if dump | grep -q 'git_sheet_confirm\|Confirm'; then tap '^Cancel$' || adb shell input keyevent KEYCODE_BACK; fi
