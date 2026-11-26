@@ -233,10 +233,10 @@ object Stacks {
 
     /** #1148 the container dashboards: the SAME document as the Table page (ContainersSource), one card per group, one
      *  sub-table per category, in the document's order. Not cached: the live copy may replace the baked one. */
-    fun cloudServices(project: String? = null, kind: String? = null): CloudDash {
+    fun cloudServices(project: String? = null, kind: String? = null, types: Set<String> = emptySet(), vms: Set<String> = emptySet()): CloudDash {
         val c = ContainersSource.current()
         val d = Declarations.containerProjects
-        return dashOf(ContainerProjects.scope(d, c, project?.takeIf { d.project(it) != null }, kind))
+        return dashOf(ContainerProjects.scope(d, c, project?.takeIf { d.project(it) != null }, kind, types, vms))
     }
 
     fun dashOf(c: ContainersModel.Catalog): CloudDash = CloudDash(c.groups.map { g ->

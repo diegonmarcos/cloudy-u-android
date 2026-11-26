@@ -16,7 +16,7 @@ import kotlinx.serialization.json.contentOrNull
 object ContainerProjects {
 
     /** [repoGroup] non-blank = the project keeps its own container groups (Cloudy) and puts its repos in that one group; blank = the project's groups are its registry families. */
-    data class Project(val id: String, val label: String, val code: String, val folderPrefix: List<String>, val namePrefix: List<String>, val repoGroup: String = "")
+    data class Project(val id: String, val label: String, val code: String, val folderPrefix: List<String>, val namePrefix: List<String>, val repoGroup: String = "", val category: String = "")
 
     /** One owner git repo, generated into data/repos_declared.json from the fleet registry (data/gen_repos_slice.py). */
     data class Repo(
@@ -34,7 +34,22 @@ object ContainerProjects {
         /** Container name -> registry family (the group it takes in a project whose groups are families), and the group of the rest. */
         val containerFamily: Map<String, String> = emptyMap(), val containerGroup: String = "Containers",
         val repos: List<Repo> = emptyList(), val families: Map<String, List<String>> = emptyMap(),
+        /** #1941 Type (App | Db | MCP | API | Repo | Other), all declared in data/container_projects.json: the labels in order, kind id -> label, and the App categories that are Other. */
+        val types: List<String> = emptyList(), val typeOfKind: Map<String, String> = emptyMap(), val otherCategories: List<String> = emptyList(),
     ) {
+        /** The first-row categories (the Cloud Me > Proj groups, then Lib), in the declared order. */
+        fun categories(): List<String> = projects.map { it.category }.filter { it.isNotBlank() }.distinct()
+
+        /** The projects of the first-row category [category], in the declared order. */
+        fun projectsOf(category: String): List<Project> = projects.filter { it.category == category }
+
+        /** The Type of [e]: a git repo is Repo, else its kind's declared type, and an App in an `otherCategories` category is Other. */
+        fun typeOf(e: ContainersModel.Entry): String {
+            if (e.role == "repo") return typeOfKind["repo"].orEmpty()
+            val t = typeOfKind[kindOf(e)?.id].orEmpty()
+            return if (t == typeOfKind["apps"] && e.category in otherCategories) types.lastOrNull().orEmpty() else t
+        }
+
         fun project(id: String?): Project? = projects.firstOrNull { it.id == id }
         fun kind(id: String?): Kind? = kinds.firstOrNull { it.id == id }
 
@@ -69,7 +84,7 @@ object ContainerProjects {
         fun JsonObject.m(k: String) = (this[k] as? JsonObject).orEmpty().mapNotNull { (n, v) -> (v as? JsonPrimitive)?.contentOrNull?.let { n to it } }.toMap()
         val ps = (o["projects"] as? JsonArray).orEmpty().mapNotNull { e ->
             val p = e as? JsonObject ?: return@mapNotNull null
-            p.s("id").takeIf { it.isNotBlank() }?.let { Project(it, p.s("label").ifBlank { it }, p.s("code"), p.l("folder_prefix"), p.l("name_prefix"), p.s("repo_group")) }
+            p.s("id").takeIf { it.isNotBlank() }?.let { Project(it, p.s("label").ifBlank { it }, p.s("code"), p.l("folder_prefix"), p.l("name_prefix"), p.s("repo_group"), p.s("category")) }
         }
         val ks = (o["kinds"] as? JsonArray).orEmpty().mapNotNull { e ->
             val k = e as? JsonObject ?: return@mapNotNull null
@@ -86,6 +101,7 @@ object ContainerProjects {
         return Decl(
             o.s("default"), ps, o.m("name_overrides"), ks, o.s("default_kind"), o.m("group_remap"),
             o.m("container_family"), o.s("container_group").ifBlank { "Containers" }, repos, fams,
+            o.l("types"), o.m("type_of_kind"), o.l("other_categories"),
         )
     }
 
@@ -134,9 +150,12 @@ object ContainerProjects {
     }
 
     /** The containers of [projectId] (null = every project) and of [kindId] (null = every kind) only, groups and categories kept in the document's order (empty categories dropped). */
-    fun scope(decl: Decl, c0: ContainersModel.Catalog, projectId: String?, kindId: String? = null): ContainersModel.Catalog {
+    fun scope(decl: Decl, c0: ContainersModel.Catalog, projectId: String?, kindId: String? = null, types: Set<String> = emptySet(), vms: Set<String> = emptySet()): ContainersModel.Catalog {
         val c = full(decl, c0)
-        val keep = c.entries.filter { (projectId == null || decl.projectOf(it)?.id == projectId) && (kindId == null || decl.kindsOf(it).any { k -> k.id == kindId }) }
+        val keep = c.entries.filter {
+            (projectId == null || decl.projectOf(it)?.id == projectId) && (kindId == null || decl.kindsOf(it).any { k -> k.id == kindId }) &&
+                (types.isEmpty() || decl.typeOf(it) in types) && (vms.isEmpty() || it.host in vms)
+        }
         val names = keep.map { it.name }.toSet()
         val groups = c.groups.map { g ->
             g.copy(categories = g.categories.map { cat -> cat.copy(names = cat.names.filter { it in names }) }.filter { it.names.isNotEmpty() })
@@ -145,21 +164,33 @@ object ContainerProjects {
     }
 
     /**
-     * The Table's rows for [projectId] (null = All) and [kindId] (null = every kind). In All the rows are clustered by project in the declared order and the
-     * Group cell reads "<Project> / <group>", so the project grouping is visible there too.
+     * The Table's rows for [projectId] (null = All) and [kindId] (null = every kind). In All the rows are clustered by project in the declared order
+     * (each row names its project in the Project column).
      */
     fun rows(decl: Decl, c: ContainersModel.Catalog, projectId: String?, kindId: String? = null): List<RoutesTableModel.Row> {
         val scoped = scope(decl, c, projectId, kindId)
         val byName = scoped.entries.associateBy { it.name }
-        val rows = ContainersModel.rows(scoped)
+        // #1941 the Project and Type columns (the Cat1 column is the old Group, Cat2 the Category); the old "<Project> / <group>" prefix of the All table is the Project column now.
+        val rows = ContainersModel.rows(scoped).map { r ->
+            val e = byName[r.container]
+            val p = e?.let { decl.projectOf(it) }
+            val type = e?.let { decl.typeOf(it) }.orEmpty()
+            r.copy(project = p?.label.orEmpty(), type = type, meta = r.meta + listOf("project" to p?.label.orEmpty(), "type" to type))
+        }
         if (projectId != null) return rows
-        val order = decl.projects.map { it.id }
-        return rows.sortedBy { r -> order.indexOf(byName[r.container]?.let { decl.projectOf(it)?.id }).let { if (it < 0) order.size else it } }
-            .map { r -> byName[r.container]?.let { decl.projectOf(it) }?.let { p -> r.copy(group = "${p.label} / ${r.group}") } ?: r }
+        val order = decl.projects.map { it.label }
+        return rows.sortedBy { r -> order.indexOf(r.project).let { if (it < 0) order.size else it } }
     }
 }
 
-/** The page-wide Filters selection of the Containers section (All | MCPs | APIs | Apps | DBs | Repos): drawn once above the project tabs, read by every Topology and Table page of every project. */
+/**
+ * #1941 the Topology's own filters (Status, VM, Type), read by the container dashboards. The old page-wide kind Filters row is gone: its kinds
+ * are the Type filter. The Table keeps its own selection in RoutesTableModel.State.
+ */
 object ContainerFilter {
-    var kind by androidx.compose.runtime.mutableStateOf<String?>(null)
+    var lights by androidx.compose.runtime.mutableStateOf<Set<String>>(emptySet())
+    var vms by androidx.compose.runtime.mutableStateOf<Set<String>>(emptySet())
+    var types by androidx.compose.runtime.mutableStateOf<Set<String>>(emptySet())
+    fun reset() { lights = emptySet(); vms = emptySet(); types = emptySet() }
+    fun toggled(s: Set<String>, x: String): Set<String> = if (x in s) s - x else s + x
 }

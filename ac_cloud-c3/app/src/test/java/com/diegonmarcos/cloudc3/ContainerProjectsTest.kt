@@ -2,8 +2,10 @@ package com.diegonmarcos.cloudc3
 
 import com.diegonmarcos.cloudc3.pages.ContainerProjects
 import com.diegonmarcos.cloudc3.pages.ContainersModel
+import com.diegonmarcos.cloudc3.pages.RoutesTableModel
 import java.io.File
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -12,33 +14,67 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** #1454 the container -> project mapping is data/container_projects.json, held against the Containers document and build.json. */
+/**
+ * #1454 / #1941 the container -> project mapping is data/container_projects.json, held against the Containers document, build.json and
+ * the Cloud Me Proj data (ac_cloud-me/build.json): the projects ARE the Cloud Me Proj entries (plus Lib), each container has a project,
+ * a Cat1 / Cat2 (its taxonomy group / category) and a Type, and the Table keeps every value the previous column set showed.
+ */
 class ContainerProjectsTest {
 
     private val dir = FleetFixtures.moduleDir()
     private val decl = ContainerProjects.parse(File(dir, "data/container_projects.json").readText(), File(dir, "data/repos_declared.json").readText())
     private val catalog = ContainersModel.parse(File(dir, "data/containers_declared.json").readText())!!
 
-    private fun navTopIds(): List<String> {
-        val ui = Json.parseToJsonElement(File(dir, "build.json").readText()).jsonObject["ui"]!!.jsonObject
-        return ui["sections"]!!.jsonArray.map { it.jsonObject }.first { it["id"]!!.jsonPrimitive.content == "containers" }["pages"]!!.jsonArray
-            .map { it.jsonObject["id"]!!.jsonPrimitive.content }
+    private fun containersPages() = Json.parseToJsonElement(File(dir, "build.json").readText()).jsonObject["ui"]!!.jsonObject["sections"]!!.jsonArray
+        .map { it.jsonObject }.first { it["id"]!!.jsonPrimitive.content == "containers" }["pages"]!!.jsonArray.map { it.jsonObject }
+
+    private fun navTopIds() = containersPages().map { it["id"]!!.jsonPrimitive.content }
+
+    /** The Cloud Me Proj tree: (category label, [(page id, label)]), emoji stripped from the labels. */
+    private fun cloudMeProj(): List<Pair<String, List<Pair<String, String>>>> {
+        val root = Json.parseToJsonElement(File(dir.parentFile, "ac_cloud-me/build.json").readText()).jsonObject
+        val proj = root["ui"]!!.jsonObject["sections"]!!.jsonArray.map { it.jsonObject }.first { it["id"]!!.jsonPrimitive.content == "proj" }
+        fun plain(o: JsonObject) = o["label"]!!.jsonPrimitive.content.dropWhile { !it.isLetterOrDigit() }.trim()
+        return proj["pages"]!!.jsonArray.map { it.jsonObject }.filter { it["pages"]?.jsonArray?.isNotEmpty() == true }
+            .map { c -> plain(c) to c["pages"]!!.jsonArray.map { it.jsonObject }.map { it["id"]!!.jsonPrimitive.content to plain(it) } }
     }
 
     @Test
-    fun `every project page of the Containers strip is All or a declared project`() {
+    fun `every project page of the Containers strip is All or a declared project, in the declared order`() {
         val declared = decl.projects.map { it.id }
-        assertTrue("the strip lists a project the mapping does not know", navTopIds().all { decl.project(it) != null || it == "all" })
-        assertTrue("a declared project has no page", declared.all { it in navTopIds() })
+        assertEquals("All first, then every declared project in order", listOf("all") + declared, navTopIds())
         assertNotNull("the default project is declared", decl.project(decl.default))
     }
 
     @Test
-    fun `every container belongs to exactly one project and the projects partition the document`() {
+    fun `the projects are exactly the Cloud Me Proj entries plus Lib, named as that data names them`() {
+        val want = cloudMeProj().flatMap { (cat, ps) -> ps.map { (id, label) -> Triple(id, cat, "${cat}_$label") } } + Triple("lib", "Lib", "Lib")
+        assertEquals(want, decl.projects.map { Triple(it.id, it.category, it.label) })
+        // the page labels of build.json are the Cloud Me names without the category prefix
+        val pageLabels = containersPages().drop(1).map { it["label"]!!.jsonPrimitive.content }
+        assertEquals(decl.projects.map { it.label.removePrefix("${it.category}_") }, pageLabels)
+        // the owner's names, as the Cloud Me data spells them (DeepXTech, FinTerm, ModernSc: the data wins over a typed list)
+        listOf("Unix_SuperApp", "Unix_Cloud-me", "Unix_Cloudy", "CG_Omniverse", "CG_Zirkusverse", "Capital_CB", "Capital_PM", "Capital_FinTerm",
+            "Hardtech_BioMed", "Hardtech_CAD", "Hardtech_DeepXTech", "Wiki_ModernSc", "Wiki_Arcanum", "Wiki_Projects", "Lib").forEach { n ->
+            assertTrue("project $n is missing", decl.projects.any { it.label == n })
+        }
+        assertTrue("the 42 projects are there", decl.projects.count { it.category == "42" } >= 10)
+    }
+
+    @Test
+    fun `the first row is the Cloud Me categories then Lib and the second row lists the projects of the category`() {
+        assertEquals(cloudMeProj().map { it.first } + "Lib", decl.categories())
+        assertEquals(listOf("Unix_SuperApp", "Unix_Cloud-me", "Unix_Cloudy"), decl.projectsOf("Unix").map { it.label })
+        assertEquals(listOf("Lib"), decl.projectsOf("Lib").map { it.label })
+    }
+
+    @Test
+    fun `every container and every repo belongs to exactly one project and the projects partition the document`() {
         val seen = decl.projects.associate { p -> p.id to ContainerProjects.scope(decl, catalog, p.id).entries.map { it.name } }
         val all = (catalog.names + decl.repos.map { it.name }).sorted()
-        assertEquals(all, seen.values.flatten().sorted())
+        assertEquals("every container is reachable under some project", all, seen.values.flatten().sorted())
         assertEquals("no container or repo is in two projects", all.size, seen.values.flatten().toSet().size)
+        assertTrue("the All view has them all", ContainerProjects.rows(decl, catalog, null).map { it.container }.sorted() == all)
     }
 
     @Test
@@ -54,34 +90,38 @@ class ContainerProjectsTest {
     }
 
     @Test
-    fun `the All table clusters rows by project and labels the group, a project table keeps the plain group`() {
+    fun `the All table clusters rows by project in the declared order and a project table holds only its own`() {
         val all = ContainerProjects.rows(decl, catalog, null)
         assertEquals(catalog.entries.size + decl.repos.size, all.size)
         val labels = decl.projects.map { it.label }
-        val seq = all.map { r -> labels.indexOfFirst { r.group.startsWith("$it / ") } }
+        val seq = all.map { r -> labels.indexOf(r.project) }
         assertTrue("every All row names its project", seq.all { it >= 0 })
         assertEquals("rows are clustered in the declared project order", seq.sorted(), seq)
         val one = decl.projects.first { p -> ContainerProjects.scope(decl, catalog, p.id).entries.isNotEmpty() }
-        assertTrue(ContainerProjects.rows(decl, catalog, one.id).none { it.group.startsWith("${one.label} / ") })
-    }
-
-    private fun others() = decl.project("others")!!.id
-
-    @Test
-    fun `every declared container resolves to a non-Others project and cloud-me-api is Cloud-me`() {
-        catalog.entries.forEach { assertTrue("${it.name} falls to Others", decl.projectOf(it)?.id != others()) }
-        assertEquals("cloud_me", decl.projectOf(catalog.entry("cloud-me-api")!!)?.id)
-        assertEquals(listOf("cloud-me-api"), ContainerProjects.scope(decl, catalog, "cloud_me").entries.filter { it.role != "repo" }.map { it.name })
-        assertEquals("capital", decl.projectOf(catalog.entry("news-gdelt")!!)?.id)
-        assertEquals("cloudy", decl.projectOf(catalog.entry("vaultwarden")!!)?.id)
+        assertTrue(ContainerProjects.rows(decl, catalog, one.id).all { it.project == one.label })
     }
 
     @Test
-    fun `a name override beats the prefixes and an unknown container falls to Others`() {
+    fun `every declared container resolves to a project and the named ones land where declared`() {
+        catalog.entries.forEach { assertNotNull("${it.name} has no project", decl.projectOf(it)) }
+        assertEquals("pj-unix-cloudme", decl.projectOf(catalog.entry("cloud-me-api")!!)?.id)
+        assertEquals("pj-unix-superapp", decl.projectOf(catalog.entry("cloud-superapp-mcp")!!)?.id)
+        assertEquals("pj-capital-finterm", decl.projectOf(catalog.entry("news-gdelt")!!)?.id)
+        assertEquals("pj-unix-cloudy", decl.projectOf(catalog.entry("vaultwarden")!!)?.id)
+    }
+
+    @Test
+    fun `a name override beats the prefixes and an unknown container falls to the declared default`() {
         val e = catalog.entry("cloud-me-api")!!
-        assertEquals("cloud_me", decl.projectOf(e)?.id)
-        assertEquals("others", decl.projectOf(e.copy(name = "brand-new", folder = "zzz")) ?.id)
-        assertEquals("capital", decl.projectOf(e.copy(name = "capital-new", folder = "zzz"))?.id)
+        assertEquals("pj-unix-cloudme", decl.projectOf(e)?.id)
+        assertEquals(decl.default, decl.projectOf(e.copy(name = "brand-new", folder = "zzz"))?.id)
+        assertEquals("pj-capital-finterm", decl.projectOf(e.copy(name = "capital-new", folder = "zzz"))?.id)
+    }
+
+    @Test
+    fun `Lib holds the library repo and the empty projects say so, none is invented`() {
+        assertEquals(listOf("lib-chronos"), ContainerProjects.scope(decl, catalog, "lib").entries.map { it.name })
+        assertTrue(ContainerProjects.scope(decl, catalog, "pj-wiki-arcanum").entries.isEmpty())
     }
 
     @Test
@@ -91,70 +131,53 @@ class ContainerProjectsTest {
         assertEquals("db", k("umami-db")); assertEquals("db", k("postlite-npm")); assertEquals("db", k("authelia-redis"))
         assertEquals("apps", k("caddy")); assertEquals("apps", k("dbgate"))
         assertEquals(listOf("mcp", "api", "apps", "db", "repo"), decl.kinds.map { it.id })
-        decl.projects.forEach { p -> decl.kinds.forEach { kd ->
-            assertTrue(ContainerProjects.scope(decl, catalog, p.id, kd.id).entries.all { e -> decl.kindsOf(e).any { it.id == kd.id } })
-        } }
-        assertTrue(ContainerProjects.scope(decl, catalog, "cloudy", "repo").entries.all { it.role == "repo" })
+        assertTrue(ContainerProjects.scope(decl, catalog, "pj-unix-cloudy", "repo").entries.all { it.role == "repo" })
     }
 
     @Test
-    fun `every project tab is non-empty with the bundled data, in Topology groups and Table rows`() {
-        decl.projects.forEach { p ->
-            val c = ContainerProjects.scope(decl, catalog, p.id)
-            assertTrue("${p.id} has no entry", c.entries.isNotEmpty())
-            assertTrue("${p.id} has no group with a category", c.groups.any { g -> g.categories.isNotEmpty() })
-            assertTrue("${p.id} has no Table row", ContainerProjects.rows(decl, catalog, p.id).isNotEmpty())
-            assertTrue("${p.id} has no repo under the Repos filter", ContainerProjects.scope(decl, catalog, p.id, "repo").entries.isNotEmpty())
-        }
+    fun `Type is App Db MCP API Repo or Other, declared, and every container has one`() {
+        assertEquals(listOf("App", "Db", "MCP", "API", "Repo", "Other"), decl.types)
+        fun t(n: String) = decl.typeOf(catalog.entry(n)!!)
+        assertEquals("MCP", t("cloud-infra-mcp")); assertEquals("API", t("c3-infra-api")); assertEquals("Db", t("umami-db"))
+        assertEquals("App", t("dbgate")); assertEquals("Other", t("caddy"))
+        decl.repos.forEach { assertEquals("Repo", decl.typeOf(ContainerProjects.entryOf(decl, it))) }
+        val rows = ContainerProjects.rows(decl, catalog, null)
+        assertTrue("a row has no type", rows.all { it.type in decl.types })
+        decl.types.forEach { ty -> assertTrue("no container of type $ty", rows.any { it.type == ty }) }
+        // the type filter keeps exactly that type
+        decl.types.forEach { ty -> assertTrue(ContainerProjects.scope(decl, catalog, null, null, setOf(ty)).entries.all { decl.typeOf(it) == ty }) }
     }
 
     @Test
-    fun `a git repo is both a Repo and a DB, so it shows under both filters of its project`() {
+    fun `the vm filter keeps the containers of that host`() {
+        val host = catalog.entries.first { it.host.isNotBlank() }.host
+        val c = ContainerProjects.scope(decl, catalog, null, null, emptySet(), setOf(host))
+        assertTrue(c.entries.isNotEmpty() && c.entries.all { it.host == host })
+    }
+
+    @Test
+    fun `a git repo is both a Repo and a DB kind, so it is in the Db and Repo scopes of its project`() {
         decl.repos.forEach { r ->
             val e = ContainerProjects.entryOf(decl, r)
             assertEquals(listOf("db", "repo"), decl.kindsOf(e).map { it.id }.sorted())
             assertEquals("git", e.dbEngine)
             listOf("db", "repo").forEach { k -> assertTrue(ContainerProjects.scope(decl, catalog, r.project, k).entries.any { it.name == r.name }) }
         }
-        assertEquals(decl.repos.size + catalog.entries.size, ContainerProjects.rows(decl, catalog, null).size)
     }
 
     @Test
-    fun `Infra Apps and Cloud Apps belong to Cloudy only, no tab has Project Apps, each other project has its own families`() {
+    fun `Infra Apps and Cloud Apps belong to Cloudy only and Project Apps is gone`() {
         val macro = listOf(ContainersModel.INFRA, ContainersModel.CLOUD, ContainersModel.PROJECT)
         decl.projects.filter { it.repoGroup.isBlank() }.forEach { p ->
             val c = ContainerProjects.scope(decl, catalog, p.id)
-            val shown = c.groups.filter { it.categories.isNotEmpty() }
-            assertTrue("${p.id} repeats a Cloudy macro group", shown.none { it.label in macro } && c.entries.none { it.group in macro })
-            assertTrue("${p.id} has no declared families", decl.families[p.id].orEmpty().isNotEmpty())
-            assertTrue("${p.id} groups are not its families", shown.all { it.label in decl.families[p.id].orEmpty() || it.label == decl.containerGroup })
+            assertTrue("${p.id} repeats a Cloudy macro group", c.entries.none { it.group in macro })
+            val fams = decl.families[p.id].orEmpty()
+            assertTrue("${p.id} groups are not its families", c.groups.filter { g -> g.categories.isNotEmpty() }.all { it.label in fams || it.label == decl.containerGroup })
         }
-        decl.projects.forEach { p -> assertTrue(ContainerProjects.scope(decl, catalog, p.id).entries.none { it.group == ContainersModel.PROJECT }) }
-        val fam = decl.projects.filter { it.repoGroup.isBlank() }.map { decl.families[it.id].orEmpty().toSet() }
-        assertTrue("families of two projects coincide", fam.size == fam.toSet().size)
-    }
-
-    @Test
-    fun `Project Apps is gone from Cloudy and from the Table, its containers sit in Cloud Apps`() {
-        val c = ContainerProjects.scope(decl, catalog, "cloudy")
-        assertTrue(c.groups.none { it.label == "Project Apps" } && c.entries.none { it.group == "Project Apps" })
-        assertEquals("Cloud Apps", c.entry("send_app")!!.group)
-        assertTrue(ContainerProjects.rows(decl, catalog, null).none { it.group.endsWith("/ Project Apps") })
-    }
-
-    @Test
-    fun `a project's groups are its registry families, Cloudy keeps its own groups`() {
-        listOf("cloud_me", "cg", "capital", "hardtech", "others").forEach { id ->
-            val groups = ContainerProjects.scope(decl, catalog, id).groups.filter { g -> g.categories.isNotEmpty() }.map { it.label }
-            val fams = decl.families[id].orEmpty()
-            assertTrue("$id groups $groups are not registry families $fams", groups.all { it in fams || it == decl.containerGroup })
-        }
-        decl.containerFamily.forEach { (n, f) ->
-            val p = decl.projectOf(catalog.entry(n)!!)!!.id
-            assertTrue("$n family $f is not a registry family of $p", f in decl.families[p].orEmpty())
-        }
-        val cloudy = ContainerProjects.scope(decl, catalog, "cloudy").groups.filter { it.categories.isNotEmpty() }.map { it.label }
-        assertEquals(listOf("Infra Apps", "Cloud Apps", "Repos"), cloudy)
+        val cloudy = ContainerProjects.scope(decl, catalog, "pj-unix-cloudy")
+        assertTrue(cloudy.groups.none { it.label == "Project Apps" } && cloudy.entries.none { it.group == "Project Apps" })
+        assertEquals("Cloud Apps", cloudy.entry("send_app")!!.group)
+        assertEquals(listOf("Infra Apps", "Cloud Apps", "Repos"), cloudy.groups.filter { it.categories.isNotEmpty() }.map { it.label })
     }
 
     @Test
@@ -162,12 +185,61 @@ class ContainerProjectsTest {
         assertTrue(decl.repos.isNotEmpty())
         assertTrue(decl.repos.none { it.name.startsWith("z-archived_") })
         val r = decl.repos.first { it.name == "CG-galaxy" }
-        assertEquals("cg", r.project); assertEquals("https://github.com/diegonmarcos/CG-galaxy", r.githubUrl)
+        assertEquals("pj-cg-omniverse", r.project); assertEquals("https://github.com/diegonmarcos/CG-galaxy", r.githubUrl)
+        assertEquals("pj-cg-zirkusverse", decl.repos.first { it.name == "CG-circus" }.project)
         assertTrue(decl.repos.all { it.visibility in listOf("pub", "pvt") && it.githubUrl.endsWith("/${it.name}") })
-        assertTrue(decl.repos.filter { it.name.startsWith("cloud-me-p") }.all { it.project == "cloud_me" })
-        assertTrue(decl.repos.filter { it.name.startsWith("cloudy-") }.all { it.project == "cloudy" })
-        val e = ContainerProjects.scope(decl, catalog, "cg", "repo").entry("CG-galaxy")!!
+        assertTrue(decl.repos.filter { it.name.startsWith("cloud-me-p") }.all { it.project == "pj-unix-cloudme" })
+        assertTrue(decl.repos.filter { it.name.startsWith("cloudy-") }.all { it.project == "pj-unix-cloudy" })
+        val e = ContainerProjects.scope(decl, catalog, "pj-cg-omniverse", "repo").entry("CG-galaxy")!!
         assertEquals("repo", e.role)
         assertTrue(e.fields().any { it.first == "github_url" })
+    }
+
+    // ── #1941 field parity: the previous column set against the new one ───────────────────────────────────────
+
+    /** What the previous table showed per row (Group, Category, Container, Public URL, Auth Type, Private URL, VM Name, VM IP:PORT) that the new row no longer carries under the same or a mapped column; empty = nothing lost. */
+    private fun parityGaps(old: List<RoutesTableModel.Row>, new: List<RoutesTableModel.Row>): List<String> {
+        val by = new.associateBy { it.container }
+        val gaps = mutableListOf<String>()
+        old.forEach { o ->
+            val n = by[o.container] ?: run { gaps += "${o.container}: row gone"; return@forEach }
+            // Group -> Cat1 (column GROUP), Category -> Cat2 (column CATEGORY): the values are the old ones, unchanged
+            if (n.text(RoutesTableModel.Column.GROUP) != o.group) gaps += "${o.container}: Group/Cat1 ${o.group} -> ${n.group}"
+            if (n.text(RoutesTableModel.Column.CATEGORY) != o.category) gaps += "${o.container}: Category/Cat2"
+            if (n.publicUrl != o.publicUrl || n.authType != o.authType || n.privateUrl != o.privateUrl || n.vmName != o.vmName || n.vmAddr != o.vmAddr) gaps += "${o.container}: a cell"
+            if (n.meta.toMap().entries.containsAll(o.meta.toMap().entries).not()) gaps += "${o.container}: More fields"
+        }
+        return gaps
+    }
+
+    @Test
+    fun `field parity - every value the previous Table showed is still reachable in the new columns`() {
+        // the previous rows: the document plus the repos, through the previous (project-free) row builder
+        val old = ContainersModel.rows(ContainerProjects.scope(decl, catalog, null))
+        val new = ContainerProjects.rows(decl, catalog, null)
+        assertEquals(old.map { it.container }.sorted(), new.map { it.container }.sorted())
+        assertEquals("nothing lost", emptyList<String>(), parityGaps(old, new))
+        // the previous column set: each is reachable, the Group column is carried by Cat1
+        val cols = RoutesTableModel.Column.entries
+        val headers = com.diegonmarcos.cloudc3.pages.RoutesExport.HEADERS
+        listOf("Status", "Category", "Container", "Public URL", "Auth Type", "Private URL", "VM Name", "VM IP:PORT").forEach { h ->
+            assertTrue("$h is gone", h in headers.values || (h == "Category" && "Cat2" in headers.values))
+        }
+        assertTrue("Group is carried by Cat1", "Cat1" in headers.values && "Group" !in headers.values)
+        assertEquals(listOf("Project", "Cat1", "Cat2", "Type"), listOf(cols[1], cols[2], cols[3], cols[4]).map { headers.getValue(it) })
+        // MUTATION: drop a value and the parity check must go red
+        assertTrue("mutation (Cat1 blanked) is caught", parityGaps(old, new.map { it.copy(group = "") }).isNotEmpty())
+        assertTrue("mutation (Cat2 blanked) is caught", parityGaps(old, new.map { it.copy(category = "") }).isNotEmpty())
+        assertTrue("mutation (a row dropped) is caught", parityGaps(old, new.drop(1)).isNotEmpty())
+        assertTrue("mutation (a More field dropped) is caught", parityGaps(old, new.map { it.copy(meta = emptyList()) }).isNotEmpty())
+    }
+
+    @Test
+    fun `Cat1 and Cat2 are the container's taxonomy group and category`() {
+        val rows = ContainerProjects.rows(decl, catalog, "pj-unix-cloudy")
+        val e = catalog.entry("caddy")!!
+        val r = rows.first { it.container == "caddy" }
+        assertEquals(e.group, r.group); assertEquals(e.category, r.category)
+        assertEquals("Unix_Cloudy", r.project); assertEquals("Other", r.type)
     }
 }

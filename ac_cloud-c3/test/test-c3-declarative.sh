@@ -80,8 +80,11 @@ for p in cont:
     if got != want: bad.append("Containers page %r nests %s, not the Topology | Table switch %s" % (p["id"], got, want))
     labels = [q["label"] for q in p.get("pages") or []]
     if labels != ["Topology", "Table"]: bad.append("Containers page %r labels its switch %s" % (p["id"], labels))
-if [p["label"] for p in cont] != ["All", "Cloudy", "Cloud-me", "CG", "Capital", "Hardtech", "Others"]:
-    bad.append("the Containers strip reads %s" % [p["label"] for p in cont])
+cpj = json.load(open(app + "/data/container_projects.json", encoding="utf-8"))["projects"]
+if [p["id"] for p in cont] != ["all"] + [p["id"] for p in cpj]:
+    bad.append("the Containers strip reads %s, not All + the container_projects.json projects" % [p["id"] for p in cont])
+if [p["label"] for p in cont][0] != "All" or "Lib" not in [p["label"] for p in cont]:
+    bad.append("the Containers strip lacks All or Lib: %s" % [p["label"] for p in cont])
 def ids(pages): return [p["id"] for p in pages] + [i for p in pages for i in ids(p.get("pages") or [])]
 ops = ids(secs["ops"]["pages"])
 if "orch_agents" not in ops: bad.append("Agents is not an Ops page")
@@ -103,7 +106,8 @@ bad = []
 if sorted(declared) != sorted(i for i in strip if i != "all"): bad.append("the strip %s and container_projects.json %s name different projects" % (strip, declared))
 if cp.get("default") not in declared: bad.append("the default project %r is not declared" % cp.get("default"))
 for p in cp["projects"]:
-    if p["id"] != cp.get("default") and not re.fullmatch(r"\d+(\.\d+)*", p.get("code", "")): bad.append("project %r has no registry code" % p["id"])
+    if p.get("code", "") and not re.fullmatch(r"\d+(\.\d+)*", p["code"]): bad.append("project %r has a malformed registry code" % p["id"])
+    if not p.get("category"): bad.append("project %r has no category (the first row of the Containers page)" % p["id"])
 for b in bad: print("    " + b)
 sys.exit(1 if bad else 0)
 PY

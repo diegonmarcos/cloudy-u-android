@@ -86,15 +86,15 @@ while read -r page wait labels; do
     if has_scrolled "c-$page" "${l//_/ }" "${anchor:-${l//_/ }}"; then anchor="${l//_/ }"; else bad "c-$page: label '${l//_/ }' missing"; fi
   done
 done <<'CPAGES'
-all_topology 6 All,Cloudy,Cloud-me,CG,Capital,Hardtech,Others,Topology,Table
-all_table 6 Topology,Table,Container,Cloudy_/
-cloudy_topology 5 Topology,Table
-cloudy_table 5 Container
-capital_topology 5 Capital
-capital_table 5 Container
-cg_topology 5 Topology,Table,MCPs,APIs,Apps,DBs,Repos
-hardtech_table 5 Topology,Table
-cloud_me_table 5 Container
+all_topology 6 All,Unix,CG,Capital,Hardtech,Wiki,Projects,42,Lib,Topology,Table,Status,VM,Type
+all_table 6 Topology,Table,Container,Unix_Cloudy
+pj-unix-cloudy_topology 5 Topology,Table
+pj-unix-cloudy_table 5 Container
+pj-capital-finterm_topology 5 Capital
+pj-capital-finterm_table 5 Container
+pj-cg-omniverse_topology 5 Topology,Table,Status,VM,Type
+lib_table 5 Topology,Table
+pj-unix-cloudme_table 5 Container
 agents 5 Agents
 CPAGES
 

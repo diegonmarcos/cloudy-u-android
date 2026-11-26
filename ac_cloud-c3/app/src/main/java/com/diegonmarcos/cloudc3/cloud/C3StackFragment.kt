@@ -250,9 +250,10 @@ class C3StackFragment : KitComposeFragment() {
     private fun shownPanels(panels: List<Stacks.StackPanel>): List<Stacks.StackPanel> {
         val first = panels.indexOfFirst { it.kind == "cloud_dashboard" }
         if (first < 0) return panels
-        val kind = ContainerFilter.kind
-        return remember(ContainersSource.version, projectId, kind, panels) {
-            val dash = Stacks.cloudServices(projectId, kind)
+        val types = ContainerFilter.types
+        val vms = ContainerFilter.vms
+        return remember(ContainersSource.version, projectId, types, vms, panels) {
+            val dash = Stacks.cloudServices(projectId, null, types, vms)
             val cards = dash.groups.filter { g -> g.subgroups.any { it.containers.isNotEmpty() } }
                 .map { g -> panels[first].copy(title = g.label, anchor = "containers-${g.id}", anchors = emptyList(), dashGroupIds = listOf(g.id)) }
             val jump = { t: Stacks.AggTile -> t.target.startsWith("anchor:containers-") }
@@ -1242,8 +1243,10 @@ class C3StackFragment : KitComposeFragment() {
      *  opens [ContainerSheet] on tap. Provider groups render external consoles (no ping). */
     @Composable
     private fun CloudDashboard(index: Int, panel: Stacks.StackPanel) {
-        val kind = ContainerFilter.kind
-        val dash = remember(ContainersSource.version, projectId, kind) { Stacks.cloudServices(projectId, kind) }
+        val types = ContainerFilter.types
+        val vms = ContainerFilter.vms
+        val lightIds = ContainerFilter.lights
+        val dash = remember(ContainersSource.version, projectId, types, vms) { Stacks.cloudServices(projectId, null, types, vms) }
         val cols = Stacks.tileColumns()
         val wanted = panel.dashGroupIds.ifEmpty { dash.groups.map { it.id } }
         val groups = dash.groups.filter { it.id in wanted }
@@ -1263,11 +1266,16 @@ class C3StackFragment : KitComposeFragment() {
             }
             for (sub in group.subgroups) {
                 if (sub.containers.isEmpty()) continue
+                // #1941 the Topology's Status filter: a tile's light is green (answered), red (did not) or grey (not pinged yet / nothing to ping).
+                val tiles = containerTiles(sub).filter { t ->
+                    lightIds.isEmpty() || when (t.ping?.let { (host, port) -> lights["$host:$port"] }) { true -> "green"; false -> "red"; null -> "grey" } in lightIds
+                }
+                if (tiles.isEmpty()) continue
                 // Subgroups carry no id in cloud_services.json, so the panel's declaration
                 // names the label it binds to.
                 val id = declaredAnchor(panel, group.id, sub.label)
                 SubHeader(sub.label, if (id != null) anchors.mark(id) else Modifier)
-                CloudGrid(cols, containerTiles(sub))
+                CloudGrid(cols, tiles)
             }
         }
     }

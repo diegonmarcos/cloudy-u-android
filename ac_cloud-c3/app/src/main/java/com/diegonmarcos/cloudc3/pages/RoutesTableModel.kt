@@ -12,12 +12,14 @@ import kotlinx.serialization.json.contentOrNull
  */
 object RoutesTableModel {
 
-    /** The columns, in the owner's order (Group and Category first). [key] is the row field and the column's test tag. */
+    /** The columns, in the owner's order. [key] is the row field and the column's test tag. #1941 GROUP is shown as Cat1 and CATEGORY as Cat2 (the old Group and Category values, unchanged); Project and Type are new. */
     enum class Column(val key: String) {
         /** The status light (first column): sorted by [ProbeModel.rank], never a text cell. */
         STATUS("status"),
+        PROJECT("project"),
         GROUP("group"),
         CATEGORY("category"),
+        TYPE("type"),
         CONTAINER("container"),
         PUBLIC_URL("public_url"),
         AUTH_TYPE("auth_type"),
@@ -49,6 +51,9 @@ object RoutesTableModel {
         val vmAddr: String,
         /** Infra Apps / Cloud Apps / Project Apps (the document's group). */
         val group: String = "",
+        /** #1941 the Cloud Me project (Unix_Cloudy, ...) and the Type (App | Db | MCP | API | Repo | Other). */
+        val project: String = "",
+        val type: String = "",
         /** Every metadata field of the declared container, for the More view. */
         val meta: List<Pair<String, String>> = emptyList(),
     ) {
@@ -57,6 +62,8 @@ object RoutesTableModel {
 
         fun text(c: Column): String = when (c) {
             Column.STATUS -> ""
+            Column.PROJECT -> project
+            Column.TYPE -> type
             Column.GROUP -> group
             Column.CATEGORY -> category
             Column.CONTAINER -> container
@@ -83,6 +90,9 @@ object RoutesTableModel {
         val category: String = "",
         /** Light ids (green / yellow / red / grey) to keep; empty = every light. */
         val lights: Set<String> = emptySet(),
+        /** #1941 project labels and types to keep; empty = all. */
+        val projects: Set<String> = emptySet(),
+        val types: Set<String> = emptySet(),
     )
 
     /** Rows from the slice's `routes` array; a missing or malformed array is an empty table, never a crash. */
@@ -98,7 +108,8 @@ object RoutesTableModel {
         val kept = rows.filter { r ->
             (state.auth.isEmpty() || r.authType in state.auth) && (state.vms.isEmpty() || r.vmName in state.vms) &&
                 (state.category.isEmpty() || r.category == state.category) && matches(r, state.query) &&
-                (state.lights.isEmpty() || light(r).id in state.lights)
+                (state.lights.isEmpty() || light(r).id in state.lights) &&
+                (state.projects.isEmpty() || r.project in state.projects) && (state.types.isEmpty() || r.type in state.types)
         }
         val byText = Comparator<Row> { a, b ->
             if (state.sort == Column.STATUS) {
@@ -155,7 +166,7 @@ object RoutesTableModel {
             Column.CONTAINER -> OpenTarget.Container(v)
             Column.VM_NAME -> OpenTarget.Vm(v)
             Column.CATEGORY -> OpenTarget.Category(v)
-            Column.GROUP -> null
+            Column.GROUP, Column.PROJECT, Column.TYPE -> null
             Column.AUTH_TYPE, Column.STATUS -> null
         }
     }
@@ -167,6 +178,17 @@ object RoutesTableModel {
     fun toggleAuth(state: State, id: String): State = state.copy(auth = state.auth.toggled(id))
     fun toggleLight(state: State, id: String): State = state.copy(lights = state.lights.toggled(id))
     fun toggleVm(state: State, vm: String): State = state.copy(vms = state.vms.toggled(vm))
+    fun toggleProject(state: State, project: String): State = state.copy(projects = state.projects.toggled(project))
+    fun toggleType(state: State, type: String): State = state.copy(types = state.types.toggled(type))
+
+    /** The projects the rows name, in the rows' order, for the Project chips. */
+    fun projectOptions(rows: List<Row>): List<String> = rows.map { it.project }.filter { it.isNotBlank() }.distinct()
+
+    /** The types the rows carry, for the Type chips: the declared order ([order], data/container_projects.json) first. */
+    fun typeOptions(rows: List<Row>, order: List<String>): List<String> {
+        val have = rows.map { it.type }.filter { it.isNotBlank() }.toSet()
+        return order.filter { it in have } + (have - order.toSet()).sorted()
+    }
 
     /** Auth types worth a chip: the owner's three always, Open only when a row is in it. In tier order. */
     fun authOptions(rows: List<Row>): List<Auth> =
@@ -183,18 +205,21 @@ object RoutesTableModel {
 
     fun encode(s: State): String =
         listOf(s.sort.key, if (s.ascending) "asc" else "desc", s.auth.sorted().joinToString(","), s.vms.sorted().joinToString("|"),
-            java.net.URLEncoder.encode(s.query, "UTF-8"), java.net.URLEncoder.encode(s.category, "UTF-8"), s.lights.sorted().joinToString(",")).joinToString(";")
+            java.net.URLEncoder.encode(s.query, "UTF-8"), java.net.URLEncoder.encode(s.category, "UTF-8"), s.lights.sorted().joinToString(","),
+            s.projects.sorted().joinToString("|") { java.net.URLEncoder.encode(it, "UTF-8") }, s.types.sorted().joinToString(",")).joinToString(";")
 
     /** Anything unreadable is the default state: stale or hand-edited preferences cannot break the page. */
     fun decode(text: String?): State {
         val p = text?.split(';') ?: return State()
-        if (p.size !in 4..7) return State()
+        if (p.size !in 4..9) return State()
         val col = Column.entries.firstOrNull { it.key == p[0] } ?: return State()
         val asc = when (p[1]) { "asc" -> true; "desc" -> false; else -> return State() }
         return State(col, asc, p[2].split(',').filter { it.isNotBlank() }.toSet(), p[3].split('|').filter { it.isNotBlank() }.toSet(),
             p.getOrNull(4)?.let { runCatching { java.net.URLDecoder.decode(it, "UTF-8") }.getOrNull() }.orEmpty(),
             p.getOrNull(5)?.let { runCatching { java.net.URLDecoder.decode(it, "UTF-8") }.getOrNull() }.orEmpty(),
-            p.getOrNull(6)?.split(',')?.filter { it.isNotBlank() }?.toSet().orEmpty())
+            p.getOrNull(6)?.split(',')?.filter { it.isNotBlank() }?.toSet().orEmpty(),
+            p.getOrNull(7)?.split('|')?.filter { it.isNotBlank() }?.mapNotNull { runCatching { java.net.URLDecoder.decode(it, "UTF-8") }.getOrNull() }?.toSet().orEmpty(),
+            p.getOrNull(8)?.split(',')?.filter { it.isNotBlank() }?.toSet().orEmpty())
     }
 
     private fun Set<String>.toggled(x: String): Set<String> = if (x in this) this - x else this + x

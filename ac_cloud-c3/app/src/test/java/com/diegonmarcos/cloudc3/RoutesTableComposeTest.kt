@@ -80,9 +80,9 @@ class RoutesTableComposeTest {
     private fun tap(tag: String) { compose.onNodeWithTag(tag).performClick(); compose.waitForIdle() }
 
     @Test
-    fun `all eight data columns are headed in the owner's order, Group and Category first`() {
+    fun `all ten data columns are headed in the declared order, Project Cat1 Cat2 Type first, no Group column`() {
         show()
-        val want = listOf("Group", "Category", "Container", "Public URL", "Auth Type", "Private URL", "VM Name", "VM IP:PORT")
+        val want = listOf("Project", "Cat1", "Cat2", "Type", "Container", "Public URL", "Auth Type", "Private URL", "VM Name", "VM IP:PORT")
         Column.DATA.zip(want).forEach { (c, text) -> compose.onNodeWithTag(RoutesTags.header(c)).assertTextContains(text, substring = true) }
     }
 

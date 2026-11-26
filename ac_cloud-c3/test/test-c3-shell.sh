@@ -539,7 +539,7 @@ PYTHON
 # t12 <build.json> <infra_slice.json> <TabFragments.kt> : Containers = Topology | Table, Infra = five fleet pages, Table's data
 t12() {
     python3 - "$1" "$2" "$3" <<'PYTHON'
-import json, re, sys
+import json, os, re, sys
 b = json.load(open(sys.argv[1], encoding="utf-8"))
 ui = b["ui"]
 sl = {"routes": json.load(open(sys.argv[2].replace("infra_slice.json", "routes.json"), encoding="utf-8"))}
@@ -548,7 +548,8 @@ tabs = open(sys.argv[3], encoding="utf-8").read()
 bad = []
 secs = {x["id"]: x for x in ui.get("sections") or []}
 def pids(i): return [p["id"] for p in (secs.get(i) or {}).get("pages") or []]
-if pids("containers") != ["all", "cloudy", "cloud_me", "cg", "capital", "hardtech", "others"]: bad.append("Containers pages are %s, not the project pages [all, cloudy, cloud_me, cg, capital, hardtech, others]" % pids("containers"))
+_cp = [p["id"] for p in json.load(open(os.path.join(os.path.dirname(os.path.abspath(sys.argv[1])), "data", "container_projects.json"), encoding="utf-8"))["projects"]]
+if pids("containers") != ["all"] + _cp: bad.append("Containers pages are %s, not All + the container_projects.json projects %s" % (pids("containers"), _cp))
 for _p in (secs.get("containers") or {}).get("pages") or []:
     if [q["id"] for q in _p.get("pages") or []] != [_p["id"] + "_topology", _p["id"] + "_table"]:
         bad.append("Containers project %r lost its Topology | Table switch (nested pages %s)" % (_p["id"], [q["id"] for q in _p.get("pages") or []]))

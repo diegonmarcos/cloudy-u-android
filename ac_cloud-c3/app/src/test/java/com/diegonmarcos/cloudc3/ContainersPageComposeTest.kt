@@ -1,0 +1,277 @@
+package com.diegonmarcos.cloudc3
+
+import android.content.ComponentName
+import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.assertDoesNotExist
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.Dp
+import com.diegonmarcos.cloudc3.pages.ContainerFilter
+import com.diegonmarcos.cloudc3.pages.ContainerProjects
+import com.diegonmarcos.cloudc3.pages.ContainersChrome
+import com.diegonmarcos.cloudc3.pages.ContainersNav
+import com.diegonmarcos.cloudc3.pages.ContainersTags
+import com.diegonmarcos.cloudc3.pages.RoutesTableModel
+import com.diegonmarcos.cloudc3.pages.RoutesTableScreen
+import com.diegonmarcos.cloudc3.pages.RoutesTags
+import com.diegonmarcos.cloudc3.pages.TopologyFilters
+import com.diegonmarcos.superapp.bottomnav.NavPage
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.RuleChain
+import org.junit.rules.TestRule
+import org.junit.runner.RunWith
+import org.junit.runners.model.Statement
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
+
+/**
+ * #1941 the Containers page, DRIVEN: the four rows (category, project name, Topology | Table, the page's own Filters) in that order, Lib among the
+ * categories, the Topology's Status / VM / Type filters, the Table's Status / Auth / VM / Project / Type filters (Light is renamed Status), and the
+ * old page-wide Filters row gone.
+ */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34], qualifiers = "w1200dp-h1600dp-mdpi")
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+class ContainersPageComposeTest {
+
+    private val compose = createAndroidComposeRule<ComponentActivity>()
+
+    @get:Rule
+    val rules: RuleChain = RuleChain.outerRule(TestRule { base, _ ->
+        object : Statement() {
+            override fun evaluate() {
+                val app = RuntimeEnvironment.getApplication()
+                shadowOf(app.packageManager).addActivityIfNotPresent(ComponentName(app, ComponentActivity::class.java))
+                ContainerFilter.reset()
+                base.evaluate()
+            }
+        }
+    }).around(compose)
+
+    private val decl = Declarations.containerProjects
+    private val declared = Declarations.containersPages
+
+    private var top by mutableStateOf(declared.first().id)
+    private var view by mutableStateOf<String?>(null)
+
+    private fun show(filters: @androidx.compose.runtime.Composable () -> Unit = { TopologyFilters(listOf("vm-a", "vm-b"), decl.types) }) {
+        view = declared.first { it.id == top }.pages.first().id
+        compose.setContent {
+            MaterialTheme(colorScheme = darkColorScheme()) {
+                val category = ContainersNav.categoryOf(decl, declared, top)
+                ContainersChrome(
+                    categories = ContainersNav.categories(decl, declared), selectedCategory = category,
+                    onCategory = { c -> ContainersNav.pagesOf(decl, declared, c).first().let { top = it.id; view = it.pages.first().id } },
+                    projects = ContainersNav.pagesOf(decl, declared, category), selectedProject = top,
+                    onProject = { top = it.id; view = it.pages.first().id },
+                    views = declared.first { it.id == top }.pages, selectedView = view, onView = { view = it.id },
+                    filters = filters,
+                ) { m -> Box(m) { Text("body-of-${view}") } }
+            }
+        }
+        compose.waitForIdle()
+    }
+
+    private fun top(tag: String): Dp = compose.onNodeWithTag(tag).getBoundsInRoot().top
+
+    /** The four rows' tops, in the order the owner fixed; also true for the body under them. */
+    private fun rowsInOrder(): Boolean {
+        val t = listOf(ContainersTags.ROW_CATEGORY, ContainersTags.ROW_PROJECT, ContainersTags.ROW_VIEW, ContainersTags.ROW_FILTERS, ContainersTags.BODY).map { top(it).value }
+        return t.zipWithNext().all { (a, b) -> a < b }
+    }
+
+    @Test
+    fun `the four rows sit in order, category then project then Topology and Table then the Filters row`() {
+        show()
+        assertTrue("category < project < view < filters < body", rowsInOrder())
+    }
+
+    @Test
+    fun `MUTATION - a layout with the Filters row above the view row fails the order check`() {
+        compose.setContent {
+            MaterialTheme(colorScheme = darkColorScheme()) {
+                Column {
+                    Box(androidx.compose.ui.Modifier.testTag(ContainersTags.ROW_CATEGORY)) { Text("c") }
+                    Box(androidx.compose.ui.Modifier.testTag(ContainersTags.ROW_PROJECT)) { Text("p") }
+                    Box(androidx.compose.ui.Modifier.testTag(ContainersTags.ROW_FILTERS)) { Text("f") }
+                    Box(androidx.compose.ui.Modifier.testTag(ContainersTags.ROW_VIEW)) { Text("v") }
+                    Box(androidx.compose.ui.Modifier.testTag(ContainersTags.BODY)) { Text("b") }
+                }
+            }
+        }
+        compose.waitForIdle()
+        assertFalse("the swapped layout must be rejected", rowsInOrder())
+    }
+
+    @Test
+    fun `row 1 lists All, the Cloud Me categories and Lib, row 2 lists the projects of the category, row 3 is Topology and Table`() {
+        show()
+        val cats = ContainersNav.categories(decl, declared)
+        assertEquals(listOf("All") + listOf("Unix", "CG", "Capital", "Hardtech", "Wiki", "Projects", "42", "Lib"), cats)
+        cats.forEach { assertTrue("$it is not a first-row chip", compose.onAllNodesWithText(it).fetchSemanticsNodes().isNotEmpty()) }
+        compose.onNodeWithText("Topology").assertExists(); compose.onNodeWithText("Table").assertExists()
+        // pick Unix: its three projects are row 2
+        compose.onNodeWithText("Unix").performClick(); compose.waitForIdle()
+        listOf("SuperApp", "Cloud-me", "Cloudy").forEach { compose.onNodeWithText(it).assertExists() }
+        assertEquals("pj-unix-superapp", top)
+    }
+
+    @Test
+    fun `Lib is a category with its own page and Topology and Table`() {
+        show()
+        compose.onNodeWithText("Lib").performClick(); compose.waitForIdle()
+        assertEquals("lib", top)
+        assertEquals("lib_topology", view)
+        compose.onNodeWithTag(ContainersTags.ROW_PROJECT).assertIsDisplayed()
+        compose.onNodeWithText("Table").performClick(); compose.waitForIdle()
+        assertEquals("lib_table", view)
+        compose.onNodeWithText("body-of-lib_table").assertExists()
+    }
+
+    @Test
+    fun `every project of the declaration is reachable through rows 1 and 2`() {
+        decl.projects.forEach { p ->
+            val cat = ContainersNav.categoryOf(decl, declared, p.id)
+            assertTrue("${p.id} is not listed under $cat", ContainersNav.pagesOf(decl, declared, cat).any { it.id == p.id })
+            assertTrue(cat in ContainersNav.categories(decl, declared))
+        }
+        assertEquals("All", ContainersNav.categoryOf(decl, declared, "all"))
+    }
+
+    @Test
+    fun `the old page-wide Filters row is gone`() {
+        show()
+        compose.onNodeWithTag("filters").assertDoesNotExist()
+        assertTrue(compose.onAllNodesWithText("Filters").fetchSemanticsNodes().isEmpty())
+        listOf("kind_all", "kind_mcp", "kind_api", "kind_apps", "kind_db", "kind_repo").forEach { compose.onNodeWithTag(it).assertDoesNotExist() }
+        // and it is gone from the sources: no KindBar, no page-wide kind selection
+        val main = java.io.File(FleetFixtures.moduleDir(), "app/src/main/java/com/diegonmarcos/cloudc3")
+        val text = main.walkTopDown().filter { it.extension == "kt" }.joinToString("\n") { it.readText() }
+        assertFalse("KindBar is still defined or used", text.contains("KindBar"))
+        assertFalse("the page-wide kind selection is still read", text.contains("ContainerFilter.kind"))
+    }
+
+    @Test
+    fun `Topology filters are Status, VM and Type and they select`() {
+        show()
+        compose.onNodeWithTag(ContainersTags.TOPO_FILTERS).assertIsDisplayed()
+        listOf("status", "vm", "type").forEach { compose.onNodeWithTag(RoutesTags.filterLabel(it)).assertExists() }
+        assertTrue("no Auth or Project filter on the Topology", compose.onAllNodesWithText("Auth").fetchSemanticsNodes().isEmpty() && compose.onAllNodesWithText("Project").fetchSemanticsNodes().isEmpty())
+        compose.onNodeWithTag(ContainersTags.topoLight("green")).performClick(); compose.waitForIdle()
+        compose.onNodeWithTag(ContainersTags.topoVm("vm-a")).performClick(); compose.waitForIdle()
+        compose.onNodeWithTag(ContainersTags.topoType("MCP")).performClick(); compose.waitForIdle()
+        assertEquals(setOf("green"), ContainerFilter.lights)
+        assertEquals(setOf("vm-a"), ContainerFilter.vms)
+        assertEquals(setOf("MCP"), ContainerFilter.types)
+        compose.onNodeWithTag(ContainersTags.topoVm("vm-a")).performClick(); compose.waitForIdle()
+        assertTrue(ContainerFilter.vms.isEmpty())
+    }
+
+    @Test
+    fun `the Topology type and vm filters scope the dashboards`() {
+        val c = com.diegonmarcos.cloudc3.cloud.Stacks.cloudServices("pj-unix-cloudy", null, setOf("MCP"))
+        val names = c.groups.flatMap { g -> g.subgroups.flatMap { s -> s.containers.map { it.name } } }
+        assertTrue(names.isNotEmpty())
+        names.forEach { n -> assertEquals("$n is not an MCP", "MCP", decl.typeOf(com.diegonmarcos.cloudc3.pages.ContainersSource.current().entry(n)!!)) }
+        val entry = com.diegonmarcos.cloudc3.pages.ContainersSource.current().entries.first { it.host.isNotBlank() }
+        val byVm = com.diegonmarcos.cloudc3.cloud.Stacks.cloudServices(null, null, emptySet(), setOf(entry.host))
+        assertTrue(byVm.groups.flatMap { g -> g.subgroups.flatMap { s -> s.containers } }.isNotEmpty())
+    }
+
+    private fun row(name: String, project: String, type: String, auth: String = "mesh", vm: String = "vm-a") =
+        RoutesTableModel.Row("cat2", name, "", auth, "", vm, "", group = "cat1", project = project, type = type)
+
+    private val rows = listOf(
+        row("a-mcp", "Unix_Cloudy", "MCP"), row("b-api", "Unix_Cloudy", "API", vm = "vm-b"), row("c-app", "CG_Omniverse", "App"), row("d-repo", "CG_Omniverse", "Repo", auth = "bearer"),
+    )
+
+    private fun showTable() {
+        compose.setContent {
+            MaterialTheme(colorScheme = darkColorScheme()) {
+                Column {
+                    Box(androidx.compose.ui.Modifier.testTag(ContainersTags.ROW_VIEW)) { Text("Topology Table") }
+                    RoutesTableScreen(rows, typeOrder = decl.types)
+                }
+            }
+        }
+        compose.waitForIdle()
+    }
+
+    private fun containers(): List<String> = compose.onAllNodesWithTag(RoutesTags.cell(RoutesTableModel.Column.CONTAINER))
+        .fetchSemanticsNodes().map { n -> n.config.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.Text)?.joinToString("") { it.text }.orEmpty() }
+
+    @Test
+    fun `Table filters are Status, Auth, VM, Project and Type, in that order under the view row, and Light is gone`() {
+        showTable()
+        val tags = listOf("status", "auth", "vm", "project", "type").map { RoutesTags.filterLabel(it) }
+        tags.forEach { compose.onNodeWithTag(it).assertExists() }
+        val tops = tags.map { top(it).value }
+        assertEquals("filter rows in the declared order", tops.sorted(), tops)
+        assertTrue("the Filters row comes under the view row", top(ContainersTags.ROW_VIEW).value < tops.first())
+        assertTrue("Light is renamed Status", compose.onAllNodesWithText("Light").fetchSemanticsNodes().isEmpty())
+        compose.onNodeWithTag(RoutesTags.filterLabel("light")).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the Table Project filter keeps that project's rows`() {
+        showTable()
+        compose.onNodeWithTag(RoutesTags.projectChip("CG_Omniverse")).performClick(); compose.waitForIdle()
+        assertEquals(listOf("c-app", "d-repo"), containers())
+        compose.onNodeWithTag(RoutesTags.projectChip("CG_Omniverse")).performClick(); compose.waitForIdle()
+        assertEquals(4, containers().size)
+    }
+
+    @Test
+    fun `the Table Type filter keeps that type and the chips follow the declared order`() {
+        showTable()
+        compose.onNodeWithTag(RoutesTags.typeChip("MCP")).performClick(); compose.waitForIdle()
+        assertEquals(listOf("a-mcp"), containers())
+        compose.onNodeWithTag(RoutesTags.typeChip("MCP")).performClick(); compose.waitForIdle()
+        compose.onNodeWithTag(RoutesTags.typeChip("Repo")).performClick(); compose.waitForIdle()
+        assertEquals(listOf("d-repo"), containers())
+        assertEquals(listOf("App", "MCP", "API", "Repo"), RoutesTableModel.typeOptions(rows, decl.types))
+    }
+
+    @Test
+    fun `the Table Auth and VM filters still work`() {
+        showTable()
+        compose.onNodeWithTag(RoutesTags.authChip("bearer")).performClick(); compose.waitForIdle()
+        assertEquals(listOf("d-repo"), containers())
+        compose.onNodeWithTag(RoutesTags.authChip("bearer")).performClick(); compose.waitForIdle()
+        compose.onNodeWithTag(RoutesTags.vmChip("vm-b")).performClick(); compose.waitForIdle()
+        assertEquals(listOf("b-api"), containers())
+    }
+
+    @Test
+    fun `the Table Status filter (was Light) filters by light`() {
+        compose.setContent { MaterialTheme(colorScheme = darkColorScheme()) { RoutesTableScreen(rows, typeOrder = decl.types) } }
+        compose.waitForIdle()
+        compose.onNodeWithTag(RoutesTags.lightChip("grey")).performClick(); compose.waitForIdle()
+        assertEquals("every row is grey with no prober", 4, containers().size)
+        compose.onNodeWithTag(RoutesTags.lightChip("grey")).performClick(); compose.onNodeWithTag(RoutesTags.lightChip("green")).performClick(); compose.waitForIdle()
+        assertTrue(containers().isEmpty())
+    }
+}

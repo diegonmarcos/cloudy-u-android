@@ -385,7 +385,7 @@
         "id": "containers",
         "label": "Containers",
         "icon": "ic_p_c3_stack",
-        "_doc": "Renamed from Topology (owner request, 2026-10-16). #1454: one top page per PROJECT (All | Cloudy | Cloud-me | CG | Capital | Hardtech | Others), each with a Topology | Table switch (nested pages `<project>_topology`, `<project>_table`; ids are unique per section, the view is the id after the project). Topology = the container dashboards (C3StackFragment over ui.carried_c3.stack_topology) and Table = the sortable, filterable table (RoutesTableFragment), both scoped to the project. Which project a container belongs to is data/container_projects.json (explicit name_overrides, then folder / name prefixes; no match = Others), plus ONE page-wide Filters row above the project strip (All | MCPs | APIs | Apps | DBs | Repos) that filters every block of every project and a group_remap; a project id with no entry there is All. Agents moved to Ops.",
+        "_doc": "Renamed from Topology (owner request, 2026-10-16). #1941 four rows: 1) the project category (the Cloud Me > Proj groups, plus All and Lib; `category` of data/container_projects.json), 2) the project names of that category (one page per project here; the labels are the Cloud Me names without the category prefix), 3) Topology | Table (nested pages `<project>_topology`, `<project>_table`), 4) the page's own Filters (Table: Status, Auth, VM, Project, Type; Topology: Status, VM, Type). Topology = the container dashboards (C3StackFragment over ui.carried_c3.stack_topology) and Table = the sortable, filterable table (RoutesTableFragment), both scoped to the project. Which project a container belongs to is data/container_projects.json (explicit name_overrides, then folder / name prefixes; no match = the declared default) and its Type is derived there too. The old page-wide kind Filters row (All | MCPs | APIs | Apps | DBs | Repos) is gone: its kinds are the Type filter. Agents moved to Ops.",
         "pages": [
           {
             "id": "all",
@@ -397,57 +397,246 @@
             ]
           },
           {
-            "id": "cloudy",
-            "label": "Cloudy",
+            "id": "pj-unix-superapp",
+            "label": "SuperApp",
             "icon": "ic_p_c3_stack",
             "pages": [
-              {"id": "cloudy_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
-              {"id": "cloudy_table", "label": "Table", "icon": "ic_link_tile"}
+              {"id": "pj-unix-superapp_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-unix-superapp_table", "label": "Table", "icon": "ic_link_tile"}
             ]
           },
           {
-            "id": "cloud_me",
+            "id": "pj-unix-cloudme",
             "label": "Cloud-me",
             "icon": "ic_p_c3_stack",
             "pages": [
-              {"id": "cloud_me_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
-              {"id": "cloud_me_table", "label": "Table", "icon": "ic_link_tile"}
+              {"id": "pj-unix-cloudme_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-unix-cloudme_table", "label": "Table", "icon": "ic_link_tile"}
             ]
           },
           {
-            "id": "cg",
-            "label": "CG",
+            "id": "pj-unix-cloudy",
+            "label": "Cloudy",
             "icon": "ic_p_c3_stack",
             "pages": [
-              {"id": "cg_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
-              {"id": "cg_table", "label": "Table", "icon": "ic_link_tile"}
+              {"id": "pj-unix-cloudy_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-unix-cloudy_table", "label": "Table", "icon": "ic_link_tile"}
             ]
           },
           {
-            "id": "capital",
-            "label": "Capital",
+            "id": "pj-cg-omniverse",
+            "label": "Omniverse",
             "icon": "ic_p_c3_stack",
             "pages": [
-              {"id": "capital_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
-              {"id": "capital_table", "label": "Table", "icon": "ic_link_tile"}
+              {"id": "pj-cg-omniverse_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-cg-omniverse_table", "label": "Table", "icon": "ic_link_tile"}
             ]
           },
           {
-            "id": "hardtech",
-            "label": "Hardtech",
+            "id": "pj-cg-zirkusverse",
+            "label": "Zirkusverse",
             "icon": "ic_p_c3_stack",
             "pages": [
-              {"id": "hardtech_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
-              {"id": "hardtech_table", "label": "Table", "icon": "ic_link_tile"}
+              {"id": "pj-cg-zirkusverse_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-cg-zirkusverse_table", "label": "Table", "icon": "ic_link_tile"}
             ]
           },
           {
-            "id": "others",
-            "label": "Others",
+            "id": "pj-capital-cb",
+            "label": "CB",
             "icon": "ic_p_c3_stack",
             "pages": [
-              {"id": "others_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
-              {"id": "others_table", "label": "Table", "icon": "ic_link_tile"}
+              {"id": "pj-capital-cb_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-capital-cb_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "pj-capital-pm",
+            "label": "PM",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "pj-capital-pm_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-capital-pm_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "pj-capital-finterm",
+            "label": "FinTerm",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "pj-capital-finterm_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-capital-finterm_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "pj-hardtech-biomed",
+            "label": "BioMed",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "pj-hardtech-biomed_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-hardtech-biomed_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "pj-hardtech-cad",
+            "label": "CAD",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "pj-hardtech-cad_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-hardtech-cad_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "pj-hardtech-deepxtech",
+            "label": "DeepXTech",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "pj-hardtech-deepxtech_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-hardtech-deepxtech_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "pj-wiki-modernsc",
+            "label": "ModernSc",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "pj-wiki-modernsc_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-wiki-modernsc_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "pj-wiki-arcanum",
+            "label": "Arcanum",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "pj-wiki-arcanum_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-wiki-arcanum_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "pj-wiki-projects",
+            "label": "Projects",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "pj-wiki-projects_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-wiki-projects_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "pj-projects-endeavours",
+            "label": "Endeavours",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "pj-projects-endeavours_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-projects-endeavours_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "pj-projects-duckpeng",
+            "label": "DuckPeng",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "pj-projects-duckpeng_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-projects-duckpeng_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "pj-lecole42-algo",
+            "label": "Algo",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "pj-lecole42-algo_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-lecole42-algo_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "pj-lecole42-graphic",
+            "label": "Graphic",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "pj-lecole42-graphic_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-lecole42-graphic_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "pj-lecole42-system",
+            "label": "System",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "pj-lecole42-system_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-lecole42-system_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "pj-lecole42-mylibs",
+            "label": "Mylibs",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "pj-lecole42-mylibs_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-lecole42-mylibs_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "pj-lecole42-curriculum",
+            "label": "Curriculum",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "pj-lecole42-curriculum_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-lecole42-curriculum_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "pj-lecole42-agentic",
+            "label": "Agentic",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "pj-lecole42-agentic_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-lecole42-agentic_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "pj-lecole42-datascience",
+            "label": "DataScience",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "pj-lecole42-datascience_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-lecole42-datascience_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "pj-lecole42-machinelearning",
+            "label": "MachineLearning",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "pj-lecole42-machinelearning_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-lecole42-machinelearning_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "pj-lecole42-cyberwarfare",
+            "label": "Cyberwarfare",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "pj-lecole42-cyberwarfare_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-lecole42-cyberwarfare_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "pj-lecole42-dev",
+            "label": "Dev",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "pj-lecole42-dev_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "pj-lecole42-dev_table", "label": "Table", "icon": "ic_link_tile"}
+            ]
+          },
+          {
+            "id": "lib",
+            "label": "Lib",
+            "icon": "ic_p_c3_stack",
+            "pages": [
+              {"id": "lib_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
+              {"id": "lib_table", "label": "Table", "icon": "ic_link_tile"}
             ]
           }
         ]

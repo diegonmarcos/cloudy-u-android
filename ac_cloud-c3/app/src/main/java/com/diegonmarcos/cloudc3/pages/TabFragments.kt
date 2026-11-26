@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -59,19 +61,54 @@ class InfraFragment : PagedFragment() {
 }
 
 /**
- * CONTAINERS (was Topology) - one top page per PROJECT (All | Cloudy | CG | ..., declared in build.json), each with a Topology | Table
- * switch (nested pages, #1454). `topology` is the SuperApp's Topology page minus its address cards: [C3StackFragment] over
+ * CONTAINERS (was Topology) - #1941 four rows: the project category (the Cloud Me Proj groups, plus All and Lib), the project names of that
+ * category, Topology | Table, and the page's own Filters row (see [ContainersChrome]). Every project is a declared page (build.json) with a
+ * nested Topology | Table switch (#1454). `topology` is the SuperApp's Topology page minus its address cards: [C3StackFragment] over
  * ui.carried_c3.stack_topology, scoped to the project; `table` is [RoutesTableFragment]: the sortable, filterable table over the
  * same containers. Which project a container belongs to is data/container_projects.json (ContainerProjects), never code. Agents
  * moved to Ops (#1454).
  */
 class ContainersFragment : PagedFragment() {
     override fun pages(): List<NavPage> = Declarations.containersPages
-
-    /** Filters: the one kind selection of the page, above the project tabs, applied to every block of every project. */
-    @Composable
-    override fun AboveStrip() = KindBar(Declarations.containerProjects.kinds, ContainerFilter.kind) { ContainerFilter.kind = it }
     override fun pageFragment(pageId: String): Fragment? = null
+
+    @Composable
+    override fun Content() {
+        val decl = Declarations.containerProjects
+        val declared = remember { pages() }
+        val top = selectedTop ?: declared.first().id
+        val leaf = selectedLeaf
+        LaunchedEffect(top, leaf) {
+            val tab = arguments?.getString(PagedFragment.ARG_TAB)
+            val page = leaf ?: top
+            if (tab != null) (activity as? PagedFragment.PageListener)?.onPageShown(tab, page)
+        }
+        val category = ContainersNav.categoryOf(decl, declared, top)
+        val categories = ContainersNav.categories(decl, declared)
+        fun pagesOf(c: String): List<NavPage> = ContainersNav.pagesOf(decl, declared, c)
+        val views = declared.firstOrNull { it.id == top }?.pages.orEmpty()
+        val topology = leaf?.endsWith("_topology") == true
+        val version = ContainersSource.version
+        ContainersChrome(
+            categories = categories, selectedCategory = category,
+            onCategory = { c -> pagesOf(c).firstOrNull()?.let { openPage(it.id) } },
+            projects = pagesOf(category), selectedProject = top, onProject = { openPage(it.id) },
+            views = views, selectedView = leaf, onView = { selectLeaf(it.id) },
+            filters = {
+                if (topology) {
+                    val scoped = remember(version, top) { ContainerProjects.scope(decl, ContainersSource.current(), top.takeIf { decl.project(it) != null }) }
+                    TopologyFilters(
+                        vms = remember(scoped) { RoutesTableModel.vmOptions(scoped.entries.map { RoutesTableModel.Row("", "", "", "", "", it.host, "") }) },
+                        types = remember(scoped) { RoutesTableModel.typeOptions(scoped.entries.map { RoutesTableModel.Row("", "", "", "", "", "", "", type = decl.typeOf(it)) }, decl.types) },
+                    )
+                }
+            },
+        ) { modifier ->
+            if (leaf != null) C3FragmentHost(
+                fm = childFragmentManager, containerId = R.id.page_container, key = leaf, modifier = modifier,
+            ) { leafFragment(top, leaf) ?: UndeclaredPageFragment.newInstance(leaf) }
+        }
+    }
 
     /** A nested page `<project>_<view>` (build.json): the project is its parent page, the view the rest of its id. */
     override fun leafFragment(parentId: String, leafId: String): Fragment? = when (leafId.removePrefix("${parentId}_")) {

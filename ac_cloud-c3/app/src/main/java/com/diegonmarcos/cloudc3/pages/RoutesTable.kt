@@ -111,6 +111,9 @@ object RoutesTags {
     fun cell(c: Col) = "routes_cell_${c.key}"
     fun authChip(id: String) = "routes_auth_$id"
     fun vmChip(vm: String) = "routes_vm_$vm"
+    fun filterLabel(label: String) = "routes_filter_${label.lowercase()}"
+    fun projectChip(project: String) = "routes_project_$project"
+    fun typeChip(type: String) = "routes_type_$type"
 }
 
 /** Where the chosen sort and filters live between launches. */
@@ -131,12 +134,12 @@ class PrefsRoutesStateStore(context: Context) : RoutesStateStore {
 
 private val widths = mapOf(
     Col.STATUS to 56.dp,
-    Col.GROUP to 84.dp, Col.CATEGORY to 140.dp, Col.CONTAINER to 150.dp, Col.PUBLIC_URL to 250.dp, Col.AUTH_TYPE to 84.dp,
+    Col.PROJECT to 150.dp, Col.GROUP to 84.dp, Col.CATEGORY to 140.dp, Col.TYPE to 64.dp, Col.CONTAINER to 150.dp, Col.PUBLIC_URL to 250.dp, Col.AUTH_TYPE to 84.dp,
     Col.PRIVATE_URL to 190.dp, Col.VM_NAME to 100.dp, Col.VM_ADDR to 130.dp,
 )
 private val headers = mapOf(
     Col.STATUS to "Status",
-    Col.GROUP to "Group", Col.CATEGORY to "Category", Col.CONTAINER to "Container", Col.PUBLIC_URL to "Public URL", Col.AUTH_TYPE to "Auth Type",
+    Col.PROJECT to "Project", Col.GROUP to "Cat1", Col.CATEGORY to "Cat2", Col.TYPE to "Type", Col.CONTAINER to "Container", Col.PUBLIC_URL to "Public URL", Col.AUTH_TYPE to "Auth Type",
     Col.PRIVATE_URL to "Private URL", Col.VM_NAME to "VM Name", Col.VM_ADDR to "VM IP:PORT",
 )
 
@@ -159,6 +162,8 @@ fun RoutesTableScreen(
     store: RoutesProbeStore = remember { RoutesProbeStore() },
     /** data/declarations.json: container name -> declaration, for the More page. */
     declarations: JsonObject = JsonObject(emptyMap()),
+    /** The Type labels in their declared order (data/container_projects.json::types), for the Type chips. */
+    typeOrder: List<String> = emptyList(),
 ) {
     var state by remember { mutableStateOf(initial) }
     fun update(s: RoutesTableModel.State) { state = s; onState(s) }
@@ -187,7 +192,7 @@ fun RoutesTableScreen(
         LazyColumn(Modifier.fillMaxSize().testTag(RoutesTags.LIST)) {
             item {
             Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)) {
-                ChipRow("Light") {
+                ChipRow("Status") {
                     ProbeModel.Light.entries.forEach { l ->
                         Chip(l.label, l.id in state.lights, RoutesTags.lightChip(l.id)) { update(RoutesTableModel.toggleLight(state, l.id)) }
                     }
@@ -200,6 +205,16 @@ fun RoutesTableScreen(
                 ChipRow("VM") {
                     RoutesTableModel.vmOptions(rows).forEach { vm ->
                         Chip(vm, vm in state.vms, RoutesTags.vmChip(vm)) { update(RoutesTableModel.toggleVm(state, vm)) }
+                    }
+                }
+                ChipRow("Project") {
+                    RoutesTableModel.projectOptions(rows).forEach { pr ->
+                        Chip(pr, pr in state.projects, RoutesTags.projectChip(pr)) { update(RoutesTableModel.toggleProject(state, pr)) }
+                    }
+                }
+                ChipRow("Type") {
+                    RoutesTableModel.typeOptions(rows, typeOrder).forEach { ty ->
+                        Chip(ty, ty in state.types, RoutesTags.typeChip(ty)) { update(RoutesTableModel.toggleType(state, ty)) }
                     }
                 }
                 if (state.category.isNotEmpty()) ChipRow("Cat") {
@@ -487,25 +502,15 @@ private fun SearchBox(query: String, onQuery: (String) -> Unit) {
 private const val SEARCH_DEBOUNCE_MS = 200L
 
 @Composable
-private fun ChipRow(label: String, chips: @Composable () -> Unit) {
+internal fun ChipRow(label: String, chips: @Composable () -> Unit) {
     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, Modifier.width(36.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
+        Text(label, Modifier.width(52.dp).testTag(RoutesTags.filterLabel(label)), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
         chips()
     }
 }
 
-/** The page-wide Filters row of the Containers section: All, then one chip per declared kind (data/container_projects.json). Drawn once above the project tabs; every project's Topology and Table read the selection. */
 @Composable
-fun KindBar(kinds: List<ContainerProjects.Kind>, selected: String?, onSelect: (String?) -> Unit) {
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 4.dp).testTag("filters"), verticalAlignment = Alignment.CenterVertically) {
-        Text("Filters", Modifier.padding(end = 8.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
-        Chip("All", selected == null, "kind_all") { onSelect(null) }
-        kinds.forEach { k -> Chip(k.label, selected == k.id, "kind_${k.id}") { onSelect(k.id) } }
-    }
-}
-
-@Composable
-private fun Chip(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
+internal fun Chip(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
     val c = MaterialTheme.colorScheme
     Box(
         Modifier.padding(end = 6.dp).clip(RoundedCornerShape(12.dp))
@@ -536,9 +541,9 @@ class RoutesTableFragment : KitComposeFragment() {
         val version = ContainersSource.version
         LaunchedEffect(Unit) { ContainersSource.refresh(ApiFleetLive(ctx.applicationContext)) }
         val initial = remember { store.load() }
-        val kind = ContainerFilter.kind
         RoutesTableScreen(
-            rows = remember(version, project, kind) { ContainerProjects.rows(Declarations.containerProjects, ContainersSource.current(), project, kind) },
+            typeOrder = Declarations.containerProjects.types,
+            rows = remember(version, project) { ContainerProjects.rows(Declarations.containerProjects, ContainersSource.current(), project) },
             initial = initial,
             onState = store::save,
             prober = remember { NetProber(ctx) },
