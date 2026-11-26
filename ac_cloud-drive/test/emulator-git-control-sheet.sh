@@ -67,22 +67,24 @@ find_row() {
   done; return 1; }
 size=$(adb shell wm size | tr -d '\r' | grep -oE '[0-9]+x[0-9]+' | tail -1); W=${size%x*}; H=${size#*x}
 find_row || fail "the fixture row never appeared on the Git page"
-tap "$NAME" || fail "cannot open the fixture row"
+tap "^${NAME}\$" || fail "cannot open the fixture row"
 sleep 3
-dump | grep -q 'git_control_sheet\|Overview' || fail "the control sheet did not open"
+dump | grep -q 'text="Overview"' || fail "the control sheet did not open"
 
 mkdir -p "$OUT/walk"; : > "$OUT/walk.tsv"
 # the walk list: tab label, control id, control label, danger/confirm flag (from the declaration itself)
-python3 -I - "$BJ" > "$OUT/walk-list.tsv" <<'PY'
+python3 -I - "$BJ" per > "$OUT/walk-list.tsv" <<'PY'
 import json, sys
 d = json.load(open(sys.argv[1]))["ui"]["git_control_sheet"]
 h = d["header"]
-for c in h["actions"] + [h["refresh"]]: print("\t".join(["header", c["id"], c["label"], "0"]))
-for t in d["tabs"]:
+bulk = sys.argv[2] == "bulk"
+if not bulk:
+    for c in [x for x in h["actions"] if x["id"] != "hd.repo_list"] + [h["refresh"]]: print("\t".join(["header", c["id"], c["label"], "0"]))
+for t in (d["bulk"]["tabs"] if bulk else d["tabs"]):
     print("\t".join([t["label"], "tab:" + t["id"], t["label"], "0"]))
     for g in t["groups"]:
         for c in g["controls"]:
-            if c.get("kind") in ("field", "preview", "output"): continue
+            if c.get("kind") in ("field", "preview", "output") or c.get("disabled"): continue
             print("\t".join([t["label"], c["id"], c["label"], "1" if (c.get("confirm") or c.get("danger")) else "0"]))
 PY
 ok=0; miss=0
@@ -96,8 +98,38 @@ while IFS=$'\t' read -r tab id label danger; do
   after=$(dump | grep -oE 'text="[^"]{3,80}"' | head -40 | tr '\n' ' ')
   # a confirm dialog is never confirmed
   if dump | grep -q 'git_sheet_confirm\|Confirm'; then tap '^Cancel$' || adb shell input keyevent KEYCODE_BACK; fi
+  dump | grep -q 'text="Overview"' || { adb shell input keyevent KEYCODE_BACK; sleep 1; }
   ok=$((ok+1)); printf '%s\t%s\t%s\ttapped\t%s\n' "$tab" "$id" "$label" "walk/$id.png" >> "$OUT/walk.tsv"
 done < "$OUT/walk-list.tsv"
+
+# ── the all-repos sheet: More ▸ All repos sheet, the same walk over its own controls ──
+adb shell input keyevent KEYCODE_BACK; sleep 2
+tap '^More$' || fail "no More menu"; sleep 1; tap '^All repos sheet$' || fail "no All repos sheet item"; sleep 3
+dump | grep -q 'text="Overview"' || fail "the all-repos sheet did not open"
+python3 -I - "$BJ" bulk > "$OUT/walk-list-bulk.tsv" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1]))["ui"]["git_control_sheet"]
+h = d["header"]
+bulk = sys.argv[2] == "bulk"
+if not bulk:
+    for c in [x for x in h["actions"] if x["id"] != "hd.repo_list"] + [h["refresh"]]: print("\t".join(["header", c["id"], c["label"], "0"]))
+for t in (d["bulk"]["tabs"] if bulk else d["tabs"]):
+    print("\t".join([t["label"], "tab:" + t["id"], t["label"], "0"]))
+    for g in t["groups"]:
+        for c in g["controls"]:
+            if c.get("kind") in ("field", "preview", "output") or c.get("disabled"): continue
+            print("\t".join([t["label"], c["id"], c["label"], "1" if (c.get("confirm") or c.get("danger")) else "0"]))
+PY
+while IFS=$'\t' read -r tab id label danger; do
+  case "$id" in tab:*) tap "^$(printf '%s' "$label" | sed 's/[][\\.*^$/]/\\\\&/g')$"; sleep 1; adb exec-out screencap -p > "$OUT/walk/bulk-${id#tab:}.png"; printf 'bulk:%s\t%s\ttab\tshown\n' "$tab" "$id" >> "$OUT/walk.tsv"; continue;; esac
+  pat="^$(printf '%s' "$label" | sed 's/[][\\.*^$/]/\\\\&/g')$"; found=0
+  for s in 1 2 3 4 5 6; do tap "$pat" && { found=1; break; }; adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*35/100)) 250; sleep 1; done
+  if [ $found = 0 ]; then miss=$((miss+1)); printf 'bulk:%s\t%s\t%s\tNOT FOUND\t-\n' "$tab" "$id" "$label" >> "$OUT/walk.tsv"; continue; fi
+  sleep 1; adb exec-out screencap -p > "$OUT/walk/bulk-$id.png"
+  if dump | grep -q 'text="Confirm"'; then tap '^Cancel$' || adb shell input keyevent KEYCODE_BACK; fi
+  dump | grep -q 'text="Overview"' || { adb shell input keyevent KEYCODE_BACK; sleep 1; }
+  ok=$((ok+1)); printf 'bulk:%s\t%s\t%s\ttapped\twalk/bulk-%s.png\n' "$tab" "$id" "$label" "$id" >> "$OUT/walk.tsv"
+done < "$OUT/walk-list-bulk.tsv"
 echo "control sheet walk: $ok controls tapped, $miss not found"
 adb logcat -d -v threadtime > "$OUT/logcat.txt"
 grep -q "FATAL EXCEPTION" "$OUT/logcat.txt" && grep -A5 "FATAL EXCEPTION" "$OUT/logcat.txt" | grep -q "$PKG" && fail "Drive crashed during the walk"

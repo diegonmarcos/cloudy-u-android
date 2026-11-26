@@ -903,4 +903,6 @@
     <string name="commit_not_registered">This repository is not on the Git page yet: add it there first.</string>
     <string name="commit_read_failed">Could not read the repository.</string>
     <string name="commit_no_diff_text">(no textual diff)</string>
+    <string name="git_rename_remote_title">Rename %1$s/%2$s on the platform</string>
+    <string name="git_rename_remote_confirm">Rename</string>
 </resources>

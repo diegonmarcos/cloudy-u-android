@@ -938,8 +938,8 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
     }
 
     /** #1934 a hosting-platform command (archive / delete the remote repository): the exact REST request of [HostingApi], with the declared token; the answer lands in the repo's result line. */
-    fun hostingCall(repo: ManagedRepo?, owner: String, name: String, kind: String) {
-        val req = when (kind) { "archive" -> HostingApi.archive(owner, name); "delete_remote" -> HostingApi.deleteRepo(owner, name); else -> return }
+    fun hostingCall(repo: ManagedRepo?, owner: String, name: String, kind: String, newName: String = "") {
+        val req = when (kind) { "rename" -> if (newName.isBlank() || newName == name) return else HostingApi.rename(owner, name, newName.trim()); "archive" -> HostingApi.archive(owner, name); "delete_remote" -> HostingApi.deleteRepo(owner, name); else -> return }
         scope.launch {
             val r = withContext(Dispatchers.IO) { HostingApi.send(Declarations.sync.git.api.baseUrl, declaredToken(), req) }
             val result = r.fold({ GitOpResult(it.status in 200..299, "$kind $owner/$name: HTTP ${it.status}", it.body.take(300)) }, { GitOpResult(false, "$kind $owner/$name: ${it.message}") })

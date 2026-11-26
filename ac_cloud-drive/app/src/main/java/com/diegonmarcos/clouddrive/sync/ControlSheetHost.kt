@@ -5,8 +5,11 @@ import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.diegonmarcos.clouddrive.Declarations
 import com.diegonmarcos.clouddrive.R
@@ -82,7 +85,8 @@ internal fun ControlSheetBody(
         mirrorRoot = File(SharedStore.gitRoot(), page.bareRoot).absolutePath, readOnly = readOnly,
         unavailable = sheet.controls(false).mapNotNull { c -> page.op(c.action)?.takeIf { blocked(it) }?.let { c.id to stringResource(R.string.git_readonly_blocked) } }.toMap(),
     )
-    fun clip(text: String) { (ctx.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)?.setPrimaryClip(ClipData.newPlainText(name, text)) }
+    fun clip(text: String) = SheetEffects.copy(ctx, name, text)
+    var renameAsk by androidx.compose.runtime.remember(name) { androidx.compose.runtime.mutableStateOf<String?>(null) }
     val actions = object : GitSheetActions {
         override fun action(c: SheetControl) {
             when {
@@ -96,6 +100,7 @@ internal fun ControlSheetBody(
                 c.action == "clone_now" -> onClone()
                 c.action == "test_auth" -> repo?.let { coordinator.runPlan(it, "test_auth", listOf(GitStep(listOf("git", "fetch", "--dry-run")))) }
                 c.action.startsWith("remote_mode:") -> repo?.let { rp -> page.remoteMode(c.action.removePrefix("remote_mode:"))?.let { coordinator.setRemote(rp, it, page.owner, name) } }
+                c.action == "rename_remote" -> renameAsk = name
                 c.action == "archive_remote" -> coordinator.hostingCall(repo, owner, name, "archive")
                 c.action == "delete_remote" -> coordinator.hostingCall(repo, owner, name, "delete_remote")
                 else -> legacy(c.action)
@@ -110,6 +115,17 @@ internal fun ControlSheetBody(
         override fun setAutoSync(on: Boolean, minutes: Int) { repo?.let { coordinator.setAutoSync(it, on, minutes.toLong()) } }
     }
     GitControlSheetView(sheet, state, host, actions, Modifier)
+    // #1934 Rename Remote: the new name is typed here, then the same confirm as the other danger-zone actions; the request is HostingApi.rename (mock-tested).
+    renameAsk?.let { old ->
+        var typed by androidx.compose.runtime.remember(old) { androidx.compose.runtime.mutableStateOf(old) }
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { renameAsk = null },
+            title = { androidx.compose.material3.Text(stringResource(R.string.git_rename_remote_title, owner, old)) },
+            text = { androidx.compose.material3.OutlinedTextField(typed, { typed = it }, singleLine = true, modifier = Modifier.testTag("git_sheet_rename_remote_name")) },
+            confirmButton = { androidx.compose.material3.TextButton(onClick = { coordinator.hostingCall(repo, owner, name, "rename", typed); renameAsk = null }, enabled = typed.isNotBlank() && typed.trim() != old) { androidx.compose.material3.Text(stringResource(R.string.git_rename_remote_confirm)) } },
+            dismissButton = { androidx.compose.material3.TextButton(onClick = { renameAsk = null }) { androidx.compose.material3.Text(stringResource(R.string.chrome_cancel)) } },
+        )
+    }
 }
 
 /**
@@ -140,4 +156,13 @@ internal fun BulkControlSheet(
         override fun setAutoSync(on: Boolean, minutes: Int) {}
     }
     GitControlSheetView(sheet, state, host, actions, Modifier)
+}
+
+/** #1934 the effects of the controls that touch the device, pure enough to be executed by ControlEffectsTest. */
+internal object SheetEffects {
+    /** Copy URL / Copy command: [text] becomes the primary clip. */
+    fun copy(ctx: Context, label: String, text: String) { (ctx.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)?.setPrimaryClip(ClipData.newPlainText(label, text)) }
+
+    /** Open on Web: the repository's page on the platform. */
+    fun webUrl(page: Declarations.GitPageDecl, name: String): String = page.webUrl(name)
 }
