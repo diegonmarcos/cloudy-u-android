@@ -114,7 +114,7 @@ class StoreAdoptTest {
         val groups = fleet.getJSONArray("groups").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.associateBy { it.getString("id") }
         fun members(id: String) = groups.getValue(id).getJSONArray("members").let { a -> (0 until a.length()).map { a.getString(it) } }
         val libs = members("libs")
-        assertEquals("the 16 Libs", 16, libs.size)
+        assertEquals("the 17 Libs (lib-json-canvas joined, #1932)", 17, libs.size)
         for (id in libs) assertTrue("$id is an installable lib APK in the manifest", kind[id] == "lib" && pkgOf.getValue(id).isNotEmpty())
         // Lite-ML: the members that are real modules (in the manifest) are installable; the rest are reference rows with no package.
         val liteInstallable = members("libs-l-ml").filter { it in pkgOf }
