@@ -4,7 +4,8 @@
  "pages": {
   "apis": {
    "kind": "apis",
-   "asset": "ai/apis.json"
+   "asset": "ai/apis.json",
+   "accounts": "ai/api-accounts.json"
   },
   "plugins": {
    "kind": "rows",

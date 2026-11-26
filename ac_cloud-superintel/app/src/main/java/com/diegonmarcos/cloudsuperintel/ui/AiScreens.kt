@@ -33,6 +33,11 @@ import androidx.compose.ui.unit.dp
 import com.diegonmarcos.cloudsuperintel.AiData
 import com.diegonmarcos.cloudsuperintel.AiGroup
 import com.diegonmarcos.cloudsuperintel.AiPageSpec
+import com.diegonmarcos.cloudsuperintel.AgentLive
+import com.diegonmarcos.cloudsuperintel.AgentState
+import com.diegonmarcos.cloudsuperintel.Agents
+import com.diegonmarcos.cloudsuperintel.ApiAccount
+import com.diegonmarcos.cloudsuperintel.ApiAccounts
 import com.diegonmarcos.cloudsuperintel.ApiRow
 import com.diegonmarcos.cloudsuperintel.Apis
 import com.diegonmarcos.cloudsuperintel.Cost
@@ -60,18 +65,26 @@ object AiTags {
     const val COST_WEEK = "ai_cost_week_"
     const val COST_DAILY = "ai_cost_daily"
     const val COST_MONTHLY = "ai_cost_monthly"
+    const val ACCOUNT = "ai_account_"
+    const val ACCOUNT_STATUS = "ai_account_status_"
 }
 
 /** One page of the Context section, the API page or the Cost window: its screen is the declared kind (assets/ai/pages.json), its data the declared asset. */
 @Composable
-fun AiPage(spec: AiPageSpec) {
+fun AiPage(spec: AiPageSpec, onCost: (() -> Unit)? = null) {
     val ctx = LocalContext.current.applicationContext
     // #1562 mcp.json and plugins.json are served datasets: the rows redraw when Cloud Store syncs them.
     val served by produceState(0, ctx) { AiData.observeRows(ctx).collect { value += 1 } }
     KitHost {
         Box(Modifier.fillMaxSize().testTag(AiTags.PAGE)) {
             when (spec.kind) {
-                AiData.KIND_APIS -> remember(spec.asset, served) { AiData.asset(ctx, spec.asset) }.let { if (it.isBlank()) NotServedPage() else ApisPage(it) }
+                // #1939 the accounts are declared in app data (public, references only) and are listed even while the private rows are not served.
+                AiData.KIND_APIS -> ApisPage(
+                    remember(spec.asset, served) { AiData.asset(ctx, spec.asset) },
+                    // a page declaration served before #1939 names no accounts file: the shipped one still lists them.
+                    remember(spec.accounts) { runCatching { ApiAccounts.parse(AiData.asset(ctx, spec.accounts.ifBlank { ApiAccounts.ASSET })) }.getOrDefault(emptyList()) },
+                    onCost,
+                )
                 AiData.KIND_COST -> remember(spec.asset, served) { AiData.asset(ctx, spec.asset) }.let { if (it.isBlank()) NotServedPage() else CostPage(it) }
                 // #1854 MCP-KG: the composer's KG homes, read from the shared design.
                 AiData.KIND_KG -> RowsPage(remember { com.diegonmarcos.superapp.ai.AiDesign.load(ctx).let { AiData.kgGroups(it.mcpBuckets, it.kgStoreTabs) } })
@@ -132,29 +145,57 @@ private fun RowsPage(groups: List<AiGroup>) {
 }
 
 @Composable
-private fun ApisPage(text: String) {
+private fun ApisPage(text: String, accounts: List<ApiAccount>, onCost: (() -> Unit)?) {
     val ctx = LocalContext.current.applicationContext
     val p = LocalKitPalette.current
-    val cfg = remember(text) { Apis.parse(text) }
-    val src = remember(cfg) { PrivateSource.account(ctx, cfg.authority, cfg.method) }
-    var rows by remember { mutableStateOf(cfg.rows) }
-    LaunchedEffect(cfg) { rows = withContext(Dispatchers.IO) { Apis.rows(cfg, src) } }
+    // The private declaration (fleet-private, served by Cloud Account) may be missing: the accounts above it never depend on it.
+    val cfg = remember(text) { if (text.isBlank()) null else Apis.parse(text) }
+    val src = remember(cfg) { cfg?.let { PrivateSource.account(ctx, it.authority, it.method) } }
+    var rows by remember { mutableStateOf(cfg?.rows.orEmpty()) }
+    LaunchedEffect(cfg) { rows = if (cfg == null || src == null) emptyList() else withContext(Dispatchers.IO) { Apis.rows(cfg, src) } }
+    // Live status of the accounts behind the gateway: its /health, null while unreachable (the accounts stay listed).
+    val health by produceState<Pair<Boolean, org.json.JSONObject?>>(false to null, ctx) { value = true to Agents.healthAgents(withContext(Dispatchers.IO) { Agents.fetchHealth(ctx) }) }
     // A revealed token lives only in this map, only while the page is composed; a second tap hides it.
     val shown = remember { mutableStateMapOf<String, String>() }
     var tapped by remember { mutableStateOf<ApiRow?>(null) }
     LaunchedEffect(tapped) {
         val r = tapped ?: return@LaunchedEffect
-        if (shown.remove(r.id) == null) shown[r.id] = withContext(Dispatchers.IO) { Apis.reveal(cfg, src, r) } ?: ctx.getString(R.string.ai_reveal_none)
+        if (shown.remove(r.id) == null) shown[r.id] = withContext(Dispatchers.IO) { if (cfg == null || src == null) null else Apis.reveal(cfg, src, r) } ?: ctx.getString(R.string.ai_reveal_none)
         tapped = null
     }
     LazyColumn(Modifier.fillMaxSize().testTag(AiTags.ROWS)) {
-        if (rows.any { it.sample }) item { KitStoreCaption(stringResource(R.string.ai_sample_note), Modifier.fillMaxWidth().padding(KitStoreRow.padH).testTag(AiTags.SAMPLE), color = p.textSecondary) }
+        if (accounts.isNotEmpty()) item { Header(stringResource(R.string.api_accounts)) }
+        items(accounts, key = { "account-" + it.id }) { a ->
+            val live = if (!health.first && a.statusKey.isNotEmpty()) AgentLive(AgentState.CHECKING) else ApiAccounts.state(a, health.second)
+            val (word, dot) = when (live.state) {
+                AgentState.CHECKING -> stringResource(R.string.agents_state_checking) to p.textSecondary
+                AgentState.REACHABLE -> stringResource(R.string.agents_state_reachable) to KitStoreRow.UP
+                AgentState.DOWN -> stringResource(R.string.agents_state_down) to KitStoreRow.BAD
+                AgentState.NOT_DEPLOYED -> stringResource(R.string.agents_state_not_deployed) to p.textSecondary
+            }
+            KitStoreRowLine {
+                KitStoreDot("●", dot)
+                Column(Modifier.weight(1f).testTag(AiTags.ACCOUNT + a.id)) {
+                    KitStoreName(a.label, color = p.textPrimary)
+                    KitStoreCaption(stringResource(R.string.api_provider, a.provider), color = p.textSecondary)
+                    KitStoreCaption(stringResource(R.string.api_auth, a.auth), color = p.textSecondary)
+                    KitStoreCaption(stringResource(R.string.api_key_ref, a.keyRef), color = p.textSecondary)
+                    if (a.usedBy.isNotEmpty()) KitStoreCaption(stringResource(R.string.api_used_by, a.usedBy), color = p.textSecondary)
+                    if (a.cost && onCost != null) Row(Modifier.padding(top = KitStoreRow.tight)) { KitStoreQuick(stringResource(R.string.api_cost), KitStoreRow.BLUE_FILL, Modifier.padding(end = KitStoreRow.gap)) { onCost() } }
+                }
+                KitStoreCaption(word, Modifier.padding(start = KitStoreRow.gap).testTag(AiTags.ACCOUNT_STATUS + a.id), color = dot, mono = true)
+            }
+            Rule()
+        }
+        if (cfg == null) item { KitStoreCaption(stringResource(R.string.ai_not_served), Modifier.fillMaxWidth().padding(KitStoreRow.padH).testTag(AiTags.PAGE + "_not_served"), color = p.textSecondary) }
+        if (cfg != null && accounts.isNotEmpty()) item { Header(stringResource(R.string.api_rows)) }
+        if (cfg != null && rows.any { it.sample }) item { KitStoreCaption(stringResource(R.string.ai_sample_note), Modifier.fillMaxWidth().padding(KitStoreRow.padH).testTag(AiTags.SAMPLE), color = p.textSecondary) }
         items(rows, key = { it.id }) { r ->
             KitStoreRowLine(onClick = { tapped = r }) {
                 KitStoreDot(if (r.sample) "○" else "●", if (r.sample) p.textSecondary else KitStoreRow.UP)
                 Column(Modifier.weight(1f)) {
-                    KitStoreName(r.label + if (r.sample) " · ${cfg.sampleLabel}" else "", color = p.textPrimary)
-                    KitStoreCaption(Apis.line(cfg.caption, r), color = p.textSecondary)
+                    KitStoreName(r.label + if (r.sample) " · ${cfg!!.sampleLabel}" else "", color = p.textPrimary)
+                    KitStoreCaption(Apis.line(cfg!!.caption, r), color = p.textSecondary)
                     KitStoreCaption(Apis.line(cfg.caption2, r), color = p.textSecondary)
                     Row(Modifier.padding(top = KitStoreRow.tight)) {
                         r.links.forEach { l ->

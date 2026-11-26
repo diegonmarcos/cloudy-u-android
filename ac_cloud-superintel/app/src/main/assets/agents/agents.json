@@ -1,0 +1,166 @@
+{
+  "_doc": "#1939 THE agent list of Cloud SuperIntel, declared in app data: the composer's Agent picker (libs:ai AiAgents.load reads assets/agents/agents.json, this app's copy shadows the shared descriptor of libs:model-catalogue) and Models > Agents read this ONE file, so they cannot drift (test-superintel-agents.sh holds every agent of the shared descriptor here). The descriptor fields are the shared ones (id is the gateway's X-Agent-Mode value, health_key its /health.agents key); the page fields are icon, what, where, models and `gateway` (false = not a mode of the gateway: listed on the page, not offered in the composer). Live status is layered on top from the gateway's /health and never decides what is listed, so the list is never empty while the gateway is down.",
+  "gateway": {
+    "service": "cloud-agi-goose",
+    "chat_path": "/v1/chat/completions",
+    "health_path": "/health",
+    "mode_header": "X-Agent-Mode",
+    "mesh_only": true
+  },
+  "agents": [
+    {
+      "id": "hermes",
+      "label": "Hermes",
+      "mode": "hermes",
+      "health_key": "hermes",
+      "fleet": "cloud-agi-hermes",
+      "backend": "openrouter+mcp",
+      "model": {
+        "kind": "fixed"
+      },
+      "capabilities": {
+        "tools": true,
+        "mcp": true,
+        "images": false,
+        "reasoning": true,
+        "web": false
+      },
+      "_doc": "Nous Hermes Agent (native API once HERMES_API_KEY is wired, else the Hermes model behind the gateway's MCP loop); the gateway picks the model",
+      "icon": "H",
+      "what": "Nous Hermes Agent: a tool-using agent with the fleet MCP servers; native API when its key is wired on the gateway, else the Hermes model behind the gateway's MCP loop.",
+      "where": "Fleet gateway my-ai-api (mesh only), service cloud-agi-hermes",
+      "models": "Fixed: the gateway picks the Hermes model (the live name shows once the gateway answers)",
+      "gateway": true
+    },
+    {
+      "id": "goose",
+      "label": "Goose",
+      "mode": "goose",
+      "health_key": "goose",
+      "fleet": "cloud-agi-goose",
+      "backend": "openrouter+mcp",
+      "model": {
+        "kind": "fixed"
+      },
+      "capabilities": {
+        "tools": true,
+        "mcp": true,
+        "images": false,
+        "reasoning": true,
+        "web": false
+      },
+      "_doc": "Block's goose, the gateway's default agent; GOOSE_MODEL",
+      "icon": "G",
+      "what": "Block's goose: the gateway's default agent, a tool-using loop over the fleet MCP servers.",
+      "where": "Fleet gateway my-ai-api (mesh only), service cloud-agi-goose",
+      "models": "Fixed: the gateway's GOOSE_MODEL (the live name shows once the gateway answers)",
+      "gateway": true
+    },
+    {
+      "id": "claude",
+      "label": "Claude Code",
+      "mode": "claude-cli",
+      "health_key": "claude_cli",
+      "fleet": "cloud-agi-claude",
+      "backend": "claude-superset-api",
+      "model": {
+        "kind": "catalogue",
+        "providers": [
+          "Anthropic"
+        ],
+        "prefix": "anthropic/"
+      },
+      "capabilities": {
+        "tools": true,
+        "mcp": true,
+        "images": false,
+        "reasoning": true,
+        "web": false
+      },
+      "_doc": "the subscription claude CLI behind claude-superset-api; an Anthropic catalogue row is passed as the CLI model",
+      "icon": "C",
+      "what": "Claude Code: the subscription claude CLI behind claude-superset-api, with tools and MCP.",
+      "where": "Fleet gateway my-ai-api (mesh only), claude-superset-api on oci-apps (cloud-agi-claude)",
+      "models": "Anthropic catalogue (anthropic/...): the model picked in Models is passed to the CLI",
+      "gateway": true
+    },
+    {
+      "id": "agy",
+      "label": "Google AGY",
+      "mode": "agy",
+      "health_key": "agy",
+      "fleet": "agy",
+      "backend": "antigravity (Cloud Run, us-central1, behind an OAuth proxy)",
+      "model": {
+        "kind": "fixed"
+      },
+      "capabilities": {
+        "tools": true,
+        "mcp": false,
+        "images": false,
+        "reasoning": true,
+        "web": false
+      },
+      "icon": "A",
+      "what": "Google Antigravity (AGY): Google's agent IDE service, declared in the fleet by ticket #1432.",
+      "where": "Cloud Run service agy (us-central1) behind oauth2-proxy; not a mode of the fleet gateway yet",
+      "models": "Google's own (Antigravity); none is offered through the gateway yet",
+      "gateway": false,
+      "_doc": "Declared so the Agents page lists it. It is not a gateway mode: the composer's picker does not offer it (Select is off) and its status is not deployed until #1432 lands (unmanaged service, secrets not loaded)."
+    },
+    {
+      "id": "openclaw",
+      "label": "OpenClaw",
+      "mode": "openclaw",
+      "health_key": "openclaw",
+      "fleet": "cloud-agi-openclaw",
+      "backend": "openclaw-gateway",
+      "model": {
+        "kind": "fixed"
+      },
+      "capabilities": {
+        "tools": true,
+        "mcp": false,
+        "images": false,
+        "reasoning": false,
+        "web": false
+      },
+      "_doc": "OpenClaw (MIT), cloud-agi-openclaw on oci-apps since 2026-10-13: its gateway on 127.0.0.1:18789 only, reached through the fleet gateway's openclaw mode, which forwards only the messages and the agent target (openclaw/default). It runs the model its own config names (the fleet model through the gateway's OpenRouter face), with its own tool plugins; no fleet MCP servers are configured in it, and the gateway sends no reasoning field.",
+      "icon": "O",
+      "what": "OpenClaw (MIT): its own gateway and tool plugins, reached through the fleet gateway's openclaw mode.",
+      "where": "Fleet gateway my-ai-api (mesh only), service cloud-agi-openclaw on oci-apps",
+      "models": "Fixed: the model OpenClaw's own config names (openclaw/default)",
+      "gateway": true
+    },
+    {
+      "id": "deepseek",
+      "label": "DeepSeek Harness",
+      "mode": "deepseek",
+      "health_key": "deepseek",
+      "fleet": null,
+      "backend": "openrouter+mcp",
+      "model": {
+        "kind": "catalogue",
+        "providers": [
+          "DeepSeek"
+        ],
+        "prefix": "deepseek/",
+        "default": "deepseek/deepseek-v4-pro-0813",
+        "_doc": "the gateway runs only a deepseek/... model in this mode (v4-pro, v4-flash, r1); any other pick falls back to its DEEPSEEK_MODEL, so the app sends the default instead"
+      },
+      "capabilities": {
+        "tools": true,
+        "mcp": true,
+        "images": false,
+        "reasoning": true,
+        "web": false
+      },
+      "_doc": "The DeepSeek harness: a gateway MODE (no service of its own, fleet null), DeepSeek's models on OpenRouter driven through the gateway's MCP tool loop (callOpenRouterAgentic). Text only: DeepSeek's chat models take no images. No native web search; web comes from the fleet MCP tools when present.",
+      "icon": "D",
+      "what": "The DeepSeek harness: DeepSeek's models on OpenRouter driven through the gateway's MCP tool loop (text only).",
+      "where": "Fleet gateway my-ai-api (mesh only): a gateway mode, no service of its own",
+      "models": "DeepSeek catalogue (deepseek/...), default deepseek/deepseek-v4-pro-0813",
+      "gateway": true
+    }
+  ]
+}

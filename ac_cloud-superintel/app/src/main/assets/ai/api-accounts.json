@@ -1,0 +1,34 @@
+{
+  "_doc": "#1939 The API accounts of Cloud SuperIntel, declared in app data (public: names and references only). Models > API lists these first, then the private rows of apis.json (fleet-private, the sample rows while it is not served). NEVER a key, token or secret value here: `key_ref` names WHERE the secret lives (gateway environment name, vault or Secret Manager name), never the secret itself (test-superintel-agents.sh refuses a secret-shaped value). `status_key` is the gateway's /health.agents key the live status reads; absent = the account is not behind the gateway (status: not deployed). `cost` true = the row links to the Cost window.",
+  "accounts": [
+    {
+      "id": "openrouter",
+      "label": "OpenRouter",
+      "provider": "OpenRouter",
+      "auth": "API key (sent as a bearer by the gateway)",
+      "key_ref": "Gateway environment OPENROUTER_API_KEY (my-ai-api, from the fleet vault); the image flow reads the OpenRouter row of Cloud Account's private store per send",
+      "used_by": "Hermes, Goose, DeepSeek Harness and the OpenRouter models; image in and out",
+      "status_key": "openrouter",
+      "cost": true
+    },
+    {
+      "id": "claude-code",
+      "label": "Claude Code",
+      "provider": "Anthropic",
+      "auth": "Subscription login of the claude CLI (OAuth), no API key",
+      "key_ref": "claude-superset-api on oci-apps holds the CLI login; the gateway reaches it through CLAUDE_CLI_BASE_URL",
+      "used_by": "The Claude Code agent",
+      "status_key": "claude_cli",
+      "cost": true
+    },
+    {
+      "id": "google-agy",
+      "label": "Google AGY",
+      "provider": "Google (Antigravity)",
+      "auth": "Google OAuth through oauth2-proxy",
+      "key_ref": "GCP Secret Manager names agy-oauth-client-id, agy-oauth-client-secret, agy-cookie-secret, agy-allowed-email (not loaded yet, ticket #1432)",
+      "used_by": "The Google AGY agent (Cloud Run agy, us-central1)",
+      "cost": true
+    }
+  ]
+}

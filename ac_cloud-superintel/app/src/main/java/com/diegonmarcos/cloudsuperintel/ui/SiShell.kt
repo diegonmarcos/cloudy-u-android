@@ -204,11 +204,11 @@ fun SiShell() {
                                 )
                             }
                             // The Context pages and the API page are data (assets/ai/pages.json, by page id): the screen kind and the sources, no name here.
-            else -> if (pageId != null && aiPages[pageId] != null) AiPage(aiPages.getValue(pageId)) else when (pageId) {
+            else -> if (pageId != null && aiPages[pageId] != null) AiPage(aiPages.getValue(pageId), onCost = { costFromLink = true }) else when (pageId) {
                                 // The Models section: the agent and model pickers, the model catalogue by Core (each Core with the full OpenRouter
                                 // metadata table, refreshed daily), the task catalogue and the API accounts: the tools the chat composer opens.
                                 Decl.PAGE_TOOLS_MODELS -> ModelsPage(chat, theme, onClose = { open(Decl.SECTION_SI, forumPersona) }, modifier = Modifier.fillMaxSize())
-                                Decl.PAGE_TOOLS_PICKERS -> TextPage(R.string.tools_pickers_title, stringResource(R.string.tools_pickers_body)) { AiSettingsPickers(chat, theme) }
+                                Decl.PAGE_TOOLS_PICKERS -> AgentsPage(chat, theme, Modifier.fillMaxSize())
                                 Decl.PAGE_TOOLS_TASKS -> AiTaskCatalogue(chat, theme, composerDecl, Modifier.fillMaxSize())
                                 "perms", "agents", "logcat", "xray" -> com.diegonmarcos.superapp.fleetconfigs.FleetConfigsPageBody(pageId.orEmpty())
                                 Decl.PAGE_MODELS -> TextPage(R.string.models_title, stringResource(R.string.models_body)) { AiSettingsPickers(chat, theme) }

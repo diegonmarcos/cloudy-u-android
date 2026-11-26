@@ -1,7 +1,6 @@
 package com.diegonmarcos.cloudsuperintel
 
 import android.content.Context
-import com.diegonmarcos.superapp.ai.AiAgents
 import com.diegonmarcos.superapp.ai.AiAttachments
 import com.diegonmarcos.superapp.ai.AiImageFlow
 import com.diegonmarcos.superapp.ai.AiMedia
@@ -67,7 +66,7 @@ object SiAi {
             val cfg = AiConfig.load(app)
             AiChatState(AiStandardHost(
                 cfg, store(app), AiMemoryPrefs(cfg.defaultModel, p.web, p.agent),
-                gateway = AiGatewayBackend(cfg, BuildConfig.AI_GATEWAY_URL), agents = AiAgents.load(app),
+                gateway = AiGatewayBackend(cfg, BuildConfig.AI_GATEWAY_URL), agents = Agents.composer(app),
                 system = Personas.system(p, all), design = AiDesign.load(app), media = media(app, cfg),
             )).also { it.chooseMcps(p.mcps.toSet()); drafts.remove(p.id)?.let { d -> it.draft = d } }
         }
@@ -105,7 +104,7 @@ object SiAi {
         val app = ctx.applicationContext
         val chat = chat(app)
         val cfg = AiConfig.load(app)
-        val agents = AiAgents.load(app)
+        val agents = Agents.composer(app)
         val agent = agents.firstOrNull { it.id == chat.agent } ?: agents.firstOrNull()
         val wire = JSONArray().put(JSONObject().put("role", "system").put("content", system)).put(JSONObject().put("role", "user").put("content", user))
         val reply = AiGatewayBackend(cfg, BuildConfig.AI_GATEWAY_URL).chat(AiRequest(chat.model, emptyList(), agent = agent, wire = wire, stream = false)) {}

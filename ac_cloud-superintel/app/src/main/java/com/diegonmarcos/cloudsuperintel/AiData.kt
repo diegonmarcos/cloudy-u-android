@@ -19,9 +19,9 @@ data class AiSource(val asset: String, val groups: List<String>)
 
 /**
  * A page of the Context section or the Cost window: its screen kind and the data that declares it (assets/ai/pages.json, keyed by page
- * id): [asset] for the apis and cost kinds, [sources] for a rows page (so one derived asset can be split over several pages).
+ * id): [asset] for the apis and cost kinds ([accounts]: the apis kind's public account declaration, #1939), [sources] for a rows page (so one derived asset can be split over several pages).
  */
-data class AiPageSpec(val kind: String, val asset: String, val sources: List<AiSource> = emptyList())
+data class AiPageSpec(val kind: String, val asset: String, val sources: List<AiSource> = emptyList(), val accounts: String = "")
 
 /** The AIs and Cost pages are data: Kotlin names no page, group, row or label (#1499). */
 object AiData {
@@ -38,7 +38,7 @@ object AiData {
     fun pages(text: String): Map<String, AiPageSpec> {
         if (text.isBlank()) return emptyMap()
         val o = JSONObject(text).getJSONObject("pages")
-        return o.keys().asSequence().associateWith { k -> o.getJSONObject(k).let { AiPageSpec(it.getString("kind"), it.optString("asset"), sources(it)) } }
+        return o.keys().asSequence().associateWith { k -> o.getJSONObject(k).let { AiPageSpec(it.getString("kind"), it.optString("asset"), sources(it), it.optString("accounts")) } }
     }
 
     private fun sources(o: JSONObject): List<AiSource> {
