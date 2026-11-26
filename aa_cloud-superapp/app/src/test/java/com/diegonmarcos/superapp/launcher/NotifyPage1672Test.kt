@@ -10,7 +10,9 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
 import androidx.test.core.app.ApplicationProvider
 import com.diegonmarcos.superapp.core.NotificationStore
 import com.diegonmarcos.superapp.notificationcenter.BadgeDeclaration
@@ -179,7 +181,11 @@ class NotifyPage1672Test : KitPageHarness() {
     fun `4 archive moves a box to Archived, same layouts, and Restore brings it back`() {
         grant(true); page("my-rss")
         val all = AggTags.feed(AggregatorModel.SPLIT_ALL)
-        compose.onNodeWithTag(NotifActions.tag(NotifActions.ARCHIVE, phonePkg), useUnmergedTree = true).performScrollTo().performClick()
+        // #1935 the All page is the shade: no button row on the card, so Archive is the long-press menu's entry
+        compose.onNodeWithTag(NotifActions.tag(NotifActions.ARCHIVE, phonePkg), useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithTag(AggTags.groupHeader(phonePkg), useUnmergedTree = true).performScrollTo()
+            .performTouchInput { longClick(centerLeft + androidx.compose.ui.geometry.Offset(40f, 0f)) }
+        compose.onNodeWithTag(AggTags.groupArchive(phonePkg), useUnmergedTree = true).performClick()
         compose.waitForIdle()
         assertEquals(0, count(within(AggTags.group(phonePkg), all)))
         compose.onNodeWithTag(AggTags.ARCHIVE_HEADER).performScrollTo().performClick()

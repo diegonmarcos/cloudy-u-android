@@ -104,4 +104,13 @@ grep -q 'CollapsedBadgeCard(d, accent, icon, flip)' "$SRC/launcher/BadgeCards.kt
   && ok "T13 every badge card has a remembered collapsed / expanded view" || bad "T13 collapse missing"
 grep -q 'panel.split.isBlank() &&' "$SRC/launcher/AggregatorState.kt" \
   && ok "T14 a split panel never polls ntfy" || bad "T14 split panel may poll"
+# #1935 the All page is the shade: no per-card button row, every action of it in the long-press menu, one badge renderer
+case "$(awk '/^internal fun GroupBlock/,/^}/' "$NOTIFY")" in
+  *'else if (shade) {'*'AggTags.groupCheck(g.key)'*'AggTags.groupArchive(g.key)'*'AggTags.groupOpen(g.key)'*'NotifActions.menuTag(NotifActions.REPLY, g.key)'*)
+    ok "T15 All cards: shade face, long-press menu holds Read / Archive / Open / Reply" ;;
+  *) bad "T15 shade card face or its long-press menu is missing" ;;
+esac
+grep -q 'internal fun BadgeCardBody' "$SRC/launcher/BadgeCards.kt" && grep -q 'BadgeCardBody(d, onChevron = step)' "$SRC/launcher/BadgeCards.kt" \
+  && grep -q 'BadgeCardBody(d, flip)' "$SRC/launcher/BadgeCards.kt" \
+  && ok "T16 Persistents and the All page's super expanded state draw one function, BadgeCardBody" || bad "T16 badge renderer split again"
 echo "notify-page-1672: $PASS passed, $FAIL failed"; [ "$FAIL" = 0 ]

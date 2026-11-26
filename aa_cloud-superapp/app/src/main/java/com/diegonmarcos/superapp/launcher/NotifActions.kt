@@ -60,7 +60,28 @@ internal object NotifActions {
     /** Page-level: the centred pill row under the cards, and the way back out of the Archive. */
     val REQUIRED_PER_PAGE = listOf("mark_all_read", "archive_all", "restore")
 
+    /**
+     * #1935 the All page replicates the notification shade: the per-box pill row ([REQUIRED_PER_BOX]) is NOT drawn on a
+     * card face there. Nothing was dropped: this is where each of its four entries went (the parity test walks this map).
+     * MARK_READ: expanding the card or opening a notification reads it, a swipe right toggles it, and the long-press menu
+     * holds it; ARCHIVE: swipe a card away, and the menu; OPEN: tapping a notification, and the menu; REPLY: the
+     * notification's own inline Reply on the face when the app posted one, and the menu (which opens the conversation
+     * when there is no inline reply, as the pill did).
+     */
+    val SHADE_FACE_DROPPED = REQUIRED_PER_BOX
+    /** Every entry the long-press menu of an All-page card holds: the whole of the removed row. */
+    val SHADE_LONG_PRESS_MENU = listOf(MARK_READ, ARCHIVE, OPEN, REPLY)
+    /** The gesture that reaches each removed entry without the menu (null: the menu is the way, as the row had no gesture). */
+    val SHADE_GESTURE_FOR = mapOf(
+        MARK_READ to "expand_or_open_marks_read",
+        ARCHIVE to "swipe_away_archives",
+        OPEN to "tap_notification_opens",
+        REPLY to "inline_reply_on_face_when_posted",
+    )
+
     fun tag(action: String, key: String) = "agg:box-action:$action:$key"
+    /** The long-press menu item of [action] on the All-page card of [key]. */
+    fun menuTag(action: String, key: String) = "agg:shade-menu:$action:$key"
 }
 
 /**
@@ -77,11 +98,9 @@ internal fun NotifActionRow(
     replyKey: String?,
     unread: Boolean = true,
 ) {
-    val ctx = LocalContext.current
     val hostView = LocalView.current
     val canReply = ReplyActions.has(replyKey)
     var replying by remember { mutableStateOf(false) }
-    var draft by remember { mutableStateOf("") }
     Column(Modifier.fillMaxWidth().padding(start = NotifCard.pad, end = NotifCard.pad, top = 4.dp, bottom = 12.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ActionPill(if (unread) AggregatorModel.MARK_READ_LABEL else "Read", NotifActions.tag(NotifActions.MARK_READ, key),
@@ -97,24 +116,51 @@ internal fun NotifActionRow(
                 if (canReply) replying = !replying else onOpen?.invoke()
             }
         }
-        if (replying && canReply) Row(
-            Modifier.fillMaxWidth().padding(top = 8.dp).clip(NotifCard.actionShape).background(NotifCard.pill)
-                .padding(start = 14.dp), verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(Modifier.weight(1f).padding(vertical = 9.dp)) {
-                if (draft.isEmpty()) Text("Reply", color = NotifCard.meta, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font)
-                BasicTextField(draft, { draft = it }, singleLine = true, cursorBrush = SolidColor(NotifCard.title),
-                    textStyle = TextStyle(color = NotifCard.title, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font),
-                    modifier = Modifier.fillMaxWidth().testTag(NotifActions.tag("reply_field", key)))
-            }
-            Text("Send", color = NotifCard.title, fontSize = NotifCard.bodySp, fontWeight = FontWeight.Medium,
-                fontFamily = NotifCard.font,
-                modifier = Modifier.clip(NotifCard.actionShape).clickable(enabled = draft.isNotBlank()) {
-                    val ok = ReplyActions.send(ctx, replyKey, draft.trim())
-                    Toast.makeText(ctx, if (ok) "Reply sent" else "Reply failed", Toast.LENGTH_SHORT).show()
-                    if (ok) { draft = ""; replying = false }
-                }.padding(horizontal = 16.dp, vertical = 9.dp).testTag(NotifActions.tag("reply_send", key)))
+        if (replying && canReply) ReplyField(key, replyKey) { replying = false }
+    }
+}
+
+/** The inline reply box: a text field and Send, through the notification's own reply action ([ReplyActions]). */
+@Composable
+internal fun ReplyField(key: String, replyKey: String?, onSent: () -> Unit) {
+    val ctx = LocalContext.current
+    var draft by remember { mutableStateOf("") }
+    Row(
+        Modifier.fillMaxWidth().padding(top = 8.dp).clip(NotifCard.actionShape).background(NotifCard.pill)
+            .padding(start = 14.dp), verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.weight(1f).padding(vertical = 9.dp)) {
+            if (draft.isEmpty()) Text("Reply", color = NotifCard.meta, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font)
+            BasicTextField(draft, { draft = it }, singleLine = true, cursorBrush = SolidColor(NotifCard.title),
+                textStyle = TextStyle(color = NotifCard.title, fontSize = NotifCard.bodySp, fontFamily = NotifCard.font),
+                modifier = Modifier.fillMaxWidth().testTag(NotifActions.tag("reply_field", key)))
         }
+        Text("Send", color = NotifCard.title, fontSize = NotifCard.bodySp, fontWeight = FontWeight.Medium,
+            fontFamily = NotifCard.font,
+            modifier = Modifier.clip(NotifCard.actionShape).clickable(enabled = draft.isNotBlank()) {
+                val ok = ReplyActions.send(ctx, replyKey, draft.trim())
+                Toast.makeText(ctx, if (ok) "Reply sent" else "Reply failed", Toast.LENGTH_SHORT).show()
+                if (ok) { draft = ""; onSent() }
+            }.padding(horizontal = 16.dp, vertical = 9.dp).testTag(NotifActions.tag("reply_send", key)))
+    }
+}
+
+/**
+ * #1935 the only thing a shade card face may carry besides its text: the Reply the notification ITSELF posted. Drawn only
+ * when an inline reply exists for [replyKey]; [replying] opens the field. Mark read / Archive / Open are not here, they are
+ * the gestures and the long-press menu ([NotifActions.SHADE_GESTURE_FOR]).
+ */
+@Composable
+internal fun ShadeReplyRow(key: String, replyKey: String?, replying: Boolean, onToggle: () -> Unit, onSent: () -> Unit) {
+    if (!ReplyActions.has(replyKey)) return
+    val hostView = LocalView.current
+    Column(Modifier.fillMaxWidth().padding(start = NotifCard.pad, end = NotifCard.pad, top = 4.dp, bottom = 12.dp)) {
+        Row(Modifier.fillMaxWidth()) {
+            ActionPill("Reply", NotifActions.tag(NotifActions.REPLY, key), "Reply from here", Modifier.weight(1f)) {
+                Haptics.tap(hostView); onToggle()
+            }
+        }
+        if (replying) ReplyField(key, replyKey, onSent)
     }
 }
 

@@ -23,6 +23,8 @@
     {"id": "config.section", "before": "Settings section (folded) at the bottom", "status": "kept", "page": "notify-configs", "tag": "agg:config-section"},
     {"id": "config.filters", "before": "Filters row (By, Source, Tools, Services, Show)", "status": "kept", "page": "notify-configs", "tag": "agg:filters-toggle"},
     {"id": "config.badges", "before": "Configs card inside Settings: the declared-badge list (turn all, enabled, persistent, Launch)", "status": "kept", "page": "notify-configs", "tag": "badge-setting:*"},
+    {"id": "all.box_actions", "before": "#1935 the per-app Mark read / Archive / Open / Reply pill row under each card of All; now the long-press menu of the card, swipe away = Archive, opening or expanding = Read, and the notification's own Reply on the face (NotifyShadeAll1935Test proves each)", "status": "kept", "page": "my-rss", "tag": "agg:group-header:com.whatsapp"},
+    {"id": "all.badge.super_expanded", "before": "#1935 each persistent badge on All steps collapsed, expanded, super expanded (= the Persistents card, same function); the arrow that steps it", "status": "kept", "page": "my-rss", "tag": "badge-summary-arrow:*"},
     {"id": "presets", "before": "the tabs Inboxes, Data Apps, Tools, Services, Sys (filter presets)", "status": "kept", "page": "rss-inboxes", "tag": "agg:page"}
   ]
 }
