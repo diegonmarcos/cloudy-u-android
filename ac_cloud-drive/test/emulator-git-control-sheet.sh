@@ -110,6 +110,7 @@ top=max(best[1],0); bot=min(best[3],H); cx=(best[0]+best[2])//2
 print(cx, top+(bot-top)*3//4, top+(bot-top)//4)' x "$H" | { read -r cx y1 y2 && adb shell input swipe "$cx" "$y1" "$cx" "$y2" 300 < /dev/null; }; }
 
 sheet_open() { has_rid git_sheet_tab_overview; }
+close_sheet() { for b in 1 2 3 4; do sheet_open || return 0; adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 2; done; }
 # come back to the sheet after a control that leaves it (web viewer, Files, settings sheet): BACK, else relaunch and reopen the row ($1 = row text)
 ensure_sheet() {
   sheet_open && return 0
@@ -184,14 +185,14 @@ walk() {
 # 1. the cloned fixture
 open_row "$NAME"; walk per yes "$NAME"
 # 2. the not-cloned fixture: its row comes from the offline listing cache
-adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 2
+close_sheet
 if open_row "$NOTCLONED"; then
   has_rid git_sheet_banner || { miss=$((miss+1)); printf 'per:no\tbanner\tNot cloned banner\tNOT FOUND\t-\n' >> "$OUT/walk.tsv"; }
   tap_rid git_sheet_hd.clone_now >/dev/null || { miss=$((miss+1)); printf 'per:no\thd.clone_now\tClone Now\tNOT FOUND\t-\n' >> "$OUT/walk.tsv"; }
   walk per no "$NOTCLONED"
 fi
 # 3. the all-repos sheet over the 3 fixture repositories: More is pinned in the toolbar (tag sync_git_top_group_more)
-adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 2
+close_sheet
 tap_rid sync_git_top_group_more >/dev/null || { snap no-more; fail "no More menu"; }; sleep 1
 tap_text '^All repos sheet$' || { snap no-bulk-item; fail "no All repos sheet item"; }; sleep 3
 sheet_open || { snap no-bulk; fail "the all-repos sheet did not open"; }
