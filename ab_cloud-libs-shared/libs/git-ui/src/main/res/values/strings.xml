@@ -84,4 +84,14 @@
     <string name="git_window_close">Close</string>
     <string name="git_window_cloning">cloning…</string>
     <string name="repo_meta_table_title">Repository metadata</string>
+    <!-- #1934 the unified repo control sheet's chrome (tab, group and control labels are declared: build.json ui.sync.git.control_sheet, with the device-language i18n) -->
+    <string name="git_sheet_badge_preview">Preview only</string>
+    <string name="git_sheet_badge_destructive">Destructive</string>
+    <string name="git_sheet_badge_caution">Caution</string>
+    <string name="git_sheet_badge_read_only">Read-only</string>
+    <string name="git_sheet_badge_safe">Safe</string>
+    <string name="git_sheet_unsupported">Not available: %1$s</string>
+    <string name="git_sheet_clone_profile">Clone (%1$s)</string>
+    <string name="git_sheet_confirm">Confirm</string>
+    <string name="git_sheet_confirm_body">This changes data and cannot be undone. Repositories affected: %1$d</string>
 </resources>

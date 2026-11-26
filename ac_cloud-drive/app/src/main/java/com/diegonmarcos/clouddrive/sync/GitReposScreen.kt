@@ -247,6 +247,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     val inventoryState by coordinator.inventory.collectAsState()
     var depthConfirm by remember { mutableStateOf<Declarations.GitDepthActionDecl?>(null) }
     var showDepthReport by remember { mutableStateOf(false) }
+    var showBulkSheet by remember { mutableStateOf(false) }
     val tableScroll = rememberScrollState()
     // #1356 the repo id whose settings sheet is open ("" = none), resolved against the live list when drawn.
     var settingsFor by remember { mutableStateOf(memory.settingsFor) }
@@ -833,6 +834,8 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
             "depth" -> page.depthAction(item.action)?.let { a -> if (a.confirm) depthConfirm = a else runDepthAll(a) }
             "open_logs" -> { logsTab = page.topBar.logs.tabs.firstOrNull()?.first.orEmpty(); showActivity = true }
             "open_report" -> showDepthReport = true
+            // #1934 More ▸ All repos sheet: the five-tab control sheet applied to the repositories the filters leave.
+            "open_control_sheet" -> showBulkSheet = true
             "toggle_filter" -> page.filters.firstOrNull { it.id == item.filter }?.let { f -> coordinator.setFilter(f.id, RepoFilters.toggle(f, filterSel, item.option)) }
             "legend" -> showLegend = true
             // #1356 More > Advanced: the parentless and unlisted folder panels, out of the default view.
@@ -1103,13 +1106,14 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
         ModalBottomSheet(onDismissRequest = { expanded = "" }, modifier = Modifier.testTag(DriveTags.SYNC_GIT_DETAIL_SHEET)) {
             Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = DriveMetrics.padWide)) {
             // #1679 the sheet's Refresh row: the toolbar's Refresh items (Fetch status, Fetch, Check full) on THIS repository, in every state.
-            GitSheetRefreshRow(page, e.cloned, running = e.cloned?.let { running[it.id] } != null, result = e.cloned?.let { opResults[it.id] }, coordinator = coordinator)
+            // #1934 the sheet's header carries Refresh, Fetch status, Check lite and Check full (GitSheetRefreshRow is superseded by the control sheet).
             if (e.cloned == null) {
                 GitRepoNotClonedBox(
                     page = page, repoName = e.name, owner = e.owner, row = e.row, isPrivate = e.isPrivate,
                     remote = remoteStats[RepoRemoteStats.keyOf(e.owner, e.name)], cloneUrl = e.cloneUrl,
                     cloning = e.name in cloning, coordinator = coordinator, actions = actions,
                     onClone = e.onClone, onClose = { expanded = "" },
+                    icons = RepoStatus.icons(false, null, false, events, ""), glance = null, fmt = fmt,
                 )
             }
             if (e.cloned != null) {
@@ -1121,6 +1125,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                     initialPanel = if (panelRepo == e.cloned.id) panel else "", onPanel = { id -> panelRepo = e.cloned.id; panel = id },
                     cloneSsh = cloneSsh, onSettings = { settingsFor = e.cloned.id }, onClose = { expanded = "" },
                     row = e.row, isPrivate = e.isPrivate, nextRunMinutes = nextRunMinutes,
+                    icons = RepoStatus.icons(true, GitSyncCoordinator.glanceFor(e.cloned, glances), running.containsKey(e.cloned.id), events, e.cloned.id),
                     repoint = { from, to -> prefs?.let { p -> LocalRepoRefs.repoint(ctx.applicationContext, p, from, to).let { r -> ctx.getString(R.string.parentless_refs, r.repos, r.jobs, r.bookmarks) } }.orEmpty() },
                 )
             }
@@ -1132,6 +1137,25 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     // #1258 ACTIVITY LOGS: the one sync / operation history, opened from the top button, full screen.
     // #1356 LOGS (Repos | App): App is the Activity Logs view that used to open from More.
     if (showActivity) GitLogsWindow(page.topBar.logs, logsTab, coordinator, events, fmt, onClose = { showActivity = false })
+    // #1934 THE ALL-REPOS CONTROL SHEET: the same five tabs for the filtered selection; destructive controls confirm with the repositories listed.
+    if (showBulkSheet) ModalBottomSheet(onDismissRequest = { showBulkSheet = false }, modifier = Modifier.testTag("git_bulk_sheet")) {
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = DriveMetrics.sectionInset).padding(bottom = DriveMetrics.padWide)) {
+            BulkControlSheet(
+                page = page, targets = scopeTargets.map { it.name },
+                counts = mapOf(
+                    "total" to entries.size, "cloned" to entries.count { it.cloned != null }, "not_cloned" to entries.count { it.cloned == null },
+                    "needs_you" to entries.count { it.row.status?.light == StatusLight.State.OFF }, "ahead" to entries.count { (it.row.ahead ?: 0) > 0 },
+                    "behind" to entries.count { (it.row.behind ?: 0) > 0 }, "dirty" to entries.count { (it.row.dirtyFiles ?: 0) > 0 },
+                    "conflicts" to scopeTargets.count { (GitSyncCoordinator.glanceFor(it, glances)?.conflicts ?: 0) > 0 }, "checked" to checkProgress.done,
+                ),
+                results = scopeTargets.mapNotNull { r -> opResults[r.id]?.let { r.name to it.summary } },
+                output = jobLine?.let { it.label + ": " + it.done + "/" + it.total },
+                onTop = { runTopItem(it) },
+                onSync = { o -> coordinator.runPlanAll("sync", o.steps(), scopeTargets) },
+                onClone = { o -> entries.filter { it.cloned == null }.forEach { e -> coordinator.cloneOptions(GitSyncCoordinator.CloneTarget(e.name, e.cloneUrl.ifBlank { page.cloneUrl(e.name, Declarations.REMOTE_HTTPS) }, GitSyncCoordinator.AUTH_HTTPS, "", ""), o, null) } },
+            )
+        }
+    }
     if (showDepthReport) depthRun?.let { r -> DepthReportWindow(r, onCancel = { coordinator.cancelDepthRun() }, onClose = { showDepthReport = false }) }
     topConfirm?.let { item -> GitTopConfirm(item, page.topBar, scopeTargets.size, onConfirm = { runTopItem(item); topConfirm = null }, onDismiss = { topConfirm = null }, cancelLabel = stringResource(R.string.chrome_cancel)) }
     if (showFilters) GitFilterSheet(page.topBar, page.filters, filterSel, ::countsOf, onPick = { f, o -> coordinator.setFilter(f.id, RepoFilters.toggle(f, filterSel, o)) }, onClear = { coordinator.clearFilters(); query = "" }, onDismiss = { showFilters = false })
@@ -1497,6 +1521,8 @@ private fun GitRepoOpsBox(
     nextRunMinutes: Long? = null,
     /** #1288/#1289 Others > Rename re-points the registry, jobs and bookmarks at the moved folder. */
     repoint: (File, File) -> String = { _, _ -> "" },
+    /** #1934 the three status lights' kinds, for the control sheet's Overview. */
+    icons: RepoStatus.Icons,
 ) {
     val ctx = LocalContext.current
     // #1395 Open repo on web: the embedded browser (CloudWeb BROWSER), not an external app
@@ -1594,7 +1620,6 @@ private fun GitRepoOpsBox(
 
     DriveCard(repo.name, light = lightOf(repo, glance), tag = DriveTags.SYNC_REPO_CARD) {
         val statusBlock = RepoStatus.block(true, glance)
-        RepoStatusBlock(statusBlock, fmt)
         Text(
             if (repo.lastSyncEpochSeconds > 0) stringResource(R.string.sync_last, fmt.format(Date(repo.lastSyncEpochSeconds * 1000)), repo.lastSyncSummary) else stringResource(R.string.sync_never),
             Modifier.padding(top = DriveMetrics.tight), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis,
@@ -1619,17 +1644,17 @@ private fun GitRepoOpsBox(
             if (running.step == GitSyncCoordinator.Step.PUSHING) Text(stringResource(R.string.sync_step_uninterruptible), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
 
-        // #1138 THE OPERATIONS, GROUPED: one row per command type, chips wrapping, #1289 in the declared ui.sync.git.repo_menu order.
+        // #1934 THE UNIFIED REPO CONTROL SHEET (Overview | Sync | Clone | Workflow | Manage), drawn from ui.sync.git.control_sheet; every control of the
+        // earlier grouped menu, status block and metadata tail lives in it (test-drive-git-control-sheet.sh P1). A tap goes to the page's own `act`.
         Box(Modifier.testTag(DriveTags.SYNC_GIT_OPS)) {
-            RepoActionGroupsView(
-                page = page, busy = running != null,
+            ControlSheetBody(
+                page = page, repo = repo, name = repoName, owner = owner, row = row, isPrivate = isPrivate, glance = glance, icons = icons, remote = remote, fmt = fmt,
+                cloneUrl = repo.remoteUrl, cloning = false, coordinator = coordinator, busy = running != null, output = result?.summary, readOnly = readOnly,
                 blocked = { op ->
                     val blocked = readOnly && (op.id == GitSyncCoordinator.OP_PUSH || op.id == GitSyncCoordinator.OP_FORCE_PUSH)
                     blocked
                 },
-                active = { id -> id == panel || (id == RepoActions.CLONE_OAUTH && !cloneSsh) || (id == RepoActions.CLONE_SSH && cloneSsh) },
-                onAction = { act(it) },
-                slot = { g -> if (g.id == RepoActions.G_AUTOSYNC) { AutoSyncControls(repo, page.repoMenu.autoSync, g, nextRunMinutes, coordinator); true } else false },
+                active = setOf(panel, if (cloneSsh) RepoActions.CLONE_SSH else RepoActions.CLONE_OAUTH), legacy = { act(it) }, onClone = {}, onClose = onClose,
             )
         }
         // #1282 the "bare present" line under the menu: a mirror under the declared bare root already holds this repository.
@@ -1738,22 +1763,8 @@ private fun GitRepoOpsBox(
                 canSolve = running == null, onSolve = { solveAsk = it },
             )
         }
-        GitSheetTail(listOf(
-            stringResource(R.string.repo_meta_k_name) to repoName,
-            stringResource(R.string.repo_meta_k_owner) to owner,
-            stringResource(R.string.repo_meta_k_visibility) to repoVisibilityWord(isPrivate),
-            stringResource(R.string.repo_meta_k_path) to repo.path,
-            stringResource(R.string.repo_meta_k_remote) to repo.remoteUrl.ifBlank { stringResource(R.string.git_meta_no_remote) },
-            stringResource(R.string.repo_meta_k_branch) to (glance?.branch ?: stringResource(R.string.sync_no_branch)),
-            stringResource(R.string.repo_meta_k_upstream) to (glance?.upstream ?: stringResource(R.string.git_meta_no_upstream)),
-            stringResource(R.string.repo_meta_k_default_branch) to (remote?.defaultBranch ?: stringResource(R.string.repo_unknown)),
-            stringResource(R.string.repo_meta_k_auth) to repo.authKind,
-            stringResource(R.string.repo_meta_k_last_sync) to (if (repo.lastSyncEpochSeconds > 0) fmt.format(Date(repo.lastSyncEpochSeconds * 1000)) + " " + repo.lastSyncSummary else stringResource(R.string.sync_never)),
-            stringResource(R.string.repo_meta_k_size) to (RepoTable.size(row.sizeMainBytes) + " / " + RepoTable.size(row.sizeTotalBytes)),
-            stringResource(R.string.repo_meta_k_size_disk) to RepoTable.size(row.sizeDiskBytes),
-            stringResource(R.string.repo_meta_k_branches) to RepoTable.count(row.branches),
-        ), stringResource(R.string.repo_menu_close), onClose, footer =
-            if (repo.autoSync) stringResource(R.string.sync_auto, if (repo.syncIntervalMinutes > 0) repo.syncIntervalMinutes else BuildConfig.GIT_SYNC_INTERVAL_MINUTES, stringResource(if (repo.syncRequireUnmetered) R.string.sync_network_unmetered else R.string.sync_network_any)) else stringResource(R.string.sync_manual))
+        if (repo.autoSync) Text(stringResource(R.string.sync_auto, if (repo.syncIntervalMinutes > 0) repo.syncIntervalMinutes else BuildConfig.GIT_SYNC_INTERVAL_MINUTES, stringResource(if (repo.syncRequireUnmetered) R.string.sync_network_unmetered else R.string.sync_network_any)), Modifier.padding(top = DriveMetrics.gap), style = MaterialTheme.typography.labelSmall)
+        else Text(stringResource(R.string.sync_manual), Modifier.padding(top = DriveMetrics.gap), style = MaterialTheme.typography.labelSmall)
     }
 
     confirm?.let { id ->
@@ -1812,6 +1823,9 @@ private fun GitRepoNotClonedBox(
     actions: DriveActions,
     onClone: () -> Unit,
     onClose: () -> Unit,
+    icons: RepoStatus.Icons,
+    glance: GitSyncCoordinator.Glance?,
+    fmt: DateFormat,
 ) {
     val ctx = LocalContext.current
     // #1395 Open repo on web: the embedded browser (CloudWeb BROWSER), not an external app
@@ -1828,35 +1842,23 @@ private fun GitRepoNotClonedBox(
         if (panel == RepoActions.RUNS && runs == null) runs = coordinator.runFeed(owner, repoName).getOrElse { listOf(ctx.getString(R.string.repo_runs_failed, it.message.orEmpty())) }
     }
     DriveCard(repoName, light = StatusLight.State.UNKNOWN, tag = DriveTags.SYNC_GIT_NOT_CLONED_PANEL) {
-        // #1679 ONE SHEET: the same STATUS block heads the sheet of a not-cloned row (Cloned: no, the rest unknown), as on a clone's.
-        RepoStatusBlock(RepoStatus.block(false, null), remember { DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT) })
-        PillRow {
-            Pill(stringResource(R.string.repo_act_open_web), { openWeb(page.webUrl(repoName)) })
-            Pill(stringResource(R.string.sync_clone_into_store), onClone, filled = true, enabled = !cloning)
-            Pill(stringResource(R.string.repo_act_copy_url), {
-                (ctx.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)?.setPrimaryClip(ClipData.newPlainText(repoName, url))
-            })
-        }
-        RepoActionGroupsView(
-            page = page, busy = false, blocked = { false },
-            active = { it == panel },
-            onAction = { id ->
+        // #1934 the unified control sheet in the not-cloned state: the banner offers Clone Now, every control that needs a clone is greyed with its reason.
+        ControlSheetBody(
+            page = page, repo = null, name = repoName, owner = owner, row = row, isPrivate = isPrivate, glance = glance, icons = icons, remote = remote, fmt = fmt,
+            cloneUrl = url, cloning = cloning, coordinator = coordinator, busy = false, output = null, active = setOf(panel), readOnly = false,
+            legacy = { id ->
                 when (id) {
                     "web" -> openWeb(page.webUrl(repoName))
                     RepoActions.PRS, RepoActions.RUNS -> panel = if (panel == id) "" else id
                     RepoActions.CLONE_OAUTH -> coordinator.setCloneViaSsh(false)
                     RepoActions.CLONE_SSH -> coordinator.setCloneViaSsh(true)
-                    // #1491 a declared clone mode from the Clone group: the same one-clone rule as the bulk command.
                     else -> page.depthActions(Declarations.DEPTH_SCOPE_REPO).firstOrNull { it.id == id }?.let {
                         val target = GitSyncCoordinator.CloneTarget(repoName, url, GitSyncCoordinator.AUTH_HTTPS, "", "")
-                        when {
-                            it.kind == Declarations.DEPTH_CLONE_MODE -> coordinator.cloneMode(it, listOf(target))
-                        }
+                        if (it.kind == Declarations.DEPTH_CLONE_MODE) coordinator.cloneMode(it, listOf(target))
                     }
                 }
             },
-            // A clone that does not exist yet can be made from here; everything else that needs it is drawn disabled.
-            unavailable = { id -> page.depthActions(Declarations.DEPTH_SCOPE_REPO).firstOrNull { it.id == id }?.let { it.kind == Declarations.DEPTH_KEEP || cloning } ?: RepoActions.needsClone(id) },
+            onClone = onClone, onClose = onClose,
         )
         Text(stringResource(R.string.repo_not_cloned_why), Modifier.padding(top = DriveMetrics.gap), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         when (panel) {
@@ -1873,16 +1875,6 @@ private fun GitRepoNotClonedBox(
                 else feed.forEach { MetaLine(it) }
             }
         }
-        GitSheetTail(listOf(
-            stringResource(R.string.repo_meta_k_name) to repoName,
-            stringResource(R.string.repo_meta_k_owner) to owner,
-            stringResource(R.string.repo_meta_k_visibility) to repoVisibilityWord(isPrivate),
-            stringResource(R.string.repo_meta_k_remote) to url.ifBlank { stringResource(R.string.git_meta_no_remote) },
-            stringResource(R.string.repo_meta_k_default_branch) to (remote?.defaultBranch ?: stringResource(R.string.repo_unknown)),
-            stringResource(R.string.repo_meta_k_size) to (RepoTable.size(row.sizeMainBytes) + " / " + RepoTable.size(row.sizeTotalBytes)),
-            stringResource(R.string.repo_meta_k_size_disk) to RepoTable.size(row.sizeDiskBytes),
-            stringResource(R.string.repo_meta_k_branches) to RepoTable.count(row.branches),
-        ), stringResource(R.string.repo_menu_close), onClose)
     }
 }
 

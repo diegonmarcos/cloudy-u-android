@@ -263,6 +263,8 @@ object Declarations {
         val copyTimeoutSeconds: Int = 110,
         /** #1289 the per-repository menu: groups, items, order, labels (ui.sync.git.repo_menu). */
         val repoMenu: GitRepoMenuDecl = GitRepoMenuDecl(),
+        /** #1934 the unified repo control sheet (ui.sync.git.control_sheet): tabs, groups, controls, presets; libs:git-ui parses and draws it. */
+        val controlSheet: JsonObject = JsonObject(emptyMap()),
         /** #1313 the stale temp pack cleanup (ui.sync.git.stale_pack_cleanup). */
         val stalePackCleanup: GitStalePackDecl = GitStalePackDecl(),
     ) {
@@ -699,6 +701,7 @@ object Declarations {
             jobs = GitJobsDecl(((o["jobs"] as? JsonObject)?.int("workers") ?: 2).coerceIn(1, 4)),
             copyTimeoutSeconds = (o.int("copy_timeout_seconds") ?: 110).coerceIn(10, 120),
             repoMenu = parseRepoMenu(o["repo_menu"]),
+            controlSheet = o["control_sheet"] as? JsonObject ?: JsonObject(emptyMap()),
             stalePackCleanup = (o["stale_pack_cleanup"] as? JsonObject)?.let { c ->
                 GitStalePackDecl(
                     enabled = c.bool("enabled", true),
@@ -1017,7 +1020,7 @@ object Declarations {
     const val DEPTH_SCOPE_FOLDER = "folder"
     /** #1315 the top bar's item kinds (ui.sync.git.top_bar.groups[].items[].kind), dispatched by GitReposScreen; test-drive-git-top-bar.sh diffs both ways. */
     /** #1679 refresh_list / fetch_status = Refresh ▸ Refresh repo list / Fetch status; remove_auto_cloned = More ▸ Remove auto-cloned copies. */
-    val TOP_KINDS = setOf("check_light", "check_full", "check_remote", "check_sizes", "scan_inventory", "cancel_checks", "op", "compound", "pull", "depth", "open_logs", "open_report", "toggle_filter", "legend", "open_advanced", "open_conflicts", "refresh_list", "fetch_status", "remove_auto_cloned")
+    val TOP_KINDS = setOf("check_light", "check_full", "check_remote", "check_sizes", "scan_inventory", "cancel_checks", "op", "compound", "pull", "depth", "open_logs", "open_report", "toggle_filter", "legend", "open_advanced", "open_conflicts", "refresh_list", "fetch_status", "remove_auto_cloned", "open_control_sheet")
     const val REMOTE_READONLY = "readonly"
 
     /** #608 the Git page's two sections and the personal section's two groups, by id. */

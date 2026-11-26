@@ -102,4 +102,21 @@ class TermuxGitWireTest {
         val st = GitEngine(t, File(dir)).status()
         assertEquals("main", st.branch); assertEquals(GitChange.UNTRACKED, st.files.single().unstaged)
     }
+
+    // #1934 the control sheet's plan steps run as git itself: the argv the preview printed, every word quoted, only allow-listed verbs.
+    @Test fun `git_argv runs the previewed argv as git, quoted`() {
+        val a = JSONObject().put("argv", JSONArray(listOf("pull", "--no-rebase", "-X", "theirs", "--autostash"))).put("name", "N").put("email", "e@x")
+        val p = plan("git_argv", a, JSONObject().put("kind", "https").put("username", "u").put("secret", "S3CRET")).first!!
+        assertTrue(p.script, p.script.contains("pull --no-rebase -X theirs --autostash"))
+        assertTrue(p.network); assertFalse(p.script.contains("S3CRET"))
+        val c = plan("git_argv", JSONObject().put("argv", JSONArray(listOf("commit", "-m", "it's \$(x)")))).first!!
+        assertTrue(c.script, c.script.contains("'it'\\''s \$(x)'"))
+    }
+
+    @Test fun `git_argv refuses a verb outside the control sheet and any reset but hard at upstream`() {
+        for (bad in listOf("rm", "config", "clean", "checkout", "remote", "filter-branch")) assertNull(bad, plan("git_argv", JSONObject().put("argv", JSONArray(listOf(bad, "x")))).first)
+        assertNull(plan("git_argv", JSONObject().put("argv", JSONArray(listOf("reset", "--hard", "HEAD~5")))).first)
+        assertNotNull(plan("git_argv", JSONObject().put("argv", JSONArray(listOf("reset", "--hard", "@{u}")))).first)
+        assertNull(plan("git_argv", JSONObject()).first)
+    }
 }

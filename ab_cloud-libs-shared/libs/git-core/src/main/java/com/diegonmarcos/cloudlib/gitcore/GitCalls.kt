@@ -78,6 +78,8 @@ class GitCalls(
     private fun execute(verb: String, dir: File, a: JSONObject, auth: GitAuth): String {
         when (verb) {
             "init" -> { JGitEngine.init(dir).close(); return "" }
+            // #1934 one command of the control sheet's plan, as argv (the words after `git`): the SAME list the preview printed.
+            "git_argv" -> return enc(GitOpResult.serializer(), PlanExecutor(dir, auth, a.optString("name", "cloud-drive"), a.optString("email", "drive@cloud.local")).run(listOf(GitStep(listOf("git") + strings(a, "argv")))))
             "clone" -> { JGitEngine.clone(a.getString("url"), dir, auth, a.optInt("depth", 0), a.optBoolean("bare", false), a.optBoolean("single_branch", false), a.optString("branch"), a.optString("filter")).close(); return "" }
         }
         return JGitEngine(dir).use { e ->

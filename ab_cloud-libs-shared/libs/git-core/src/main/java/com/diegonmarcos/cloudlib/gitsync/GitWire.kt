@@ -21,7 +21,7 @@ object GitWire {
 
     /** The verbs the "git" method answers; the engine refuses anything else. */
     /** #1408 the compound ops Cloud Drive's sheet sends raw (RepoCompound); answered in-process and by the Termux wire. */
-    val COMPOUND: Set<String> = setOf("merge_upstream", "force_push_lease", "stash", "checkout_main", "rebase_continue", "shrink", "keep_depth")
+    val COMPOUND: Set<String> = setOf("merge_upstream", "force_push_lease", "stash", "checkout_main", "rebase_continue", "shrink", "keep_depth", "git_argv")
 
     val VERBS: Set<String> = setOf(
         "status", "stage", "stage_all", "unstage", "unstage_all", "discard", "commit",

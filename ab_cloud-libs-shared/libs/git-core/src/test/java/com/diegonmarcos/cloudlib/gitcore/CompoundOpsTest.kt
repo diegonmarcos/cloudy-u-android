@@ -135,7 +135,7 @@ class CompoundOpsTest {
             val r = op(v, JSONObject().put("depth", 1))
             assertFalse(r.ok); assertTrue(r.summary, r.summary.startsWith("$v rewrites") && r.summary.contains("cld.termux"))
         }
-        assertEquals(GitWire.COMPOUND, setOf("merge_upstream", "force_push_lease", "stash", "checkout_main", "rebase_continue", "shrink", "keep_depth"))
+        assertEquals(GitWire.COMPOUND, setOf("merge_upstream", "force_push_lease", "stash", "checkout_main", "rebase_continue", "shrink", "keep_depth", "git_argv"))
         assertTrue(GitWire.COMPOUND.none { it in GitWire.VERBS })
     }
 }

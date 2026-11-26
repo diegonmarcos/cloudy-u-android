@@ -912,6 +912,58 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
         }
     }
 
+    // ── #1934 the control sheet's plans: the SAME argv the command preview prints, run one step after the other ──
+
+    /** Runs [steps] on [repo] through the engine's `git_argv` verb (in-process JGit, or git in cld.termux for the shared store). Blocking. */
+    private fun runSteps(repo: ManagedRepo, steps: List<com.diegonmarcos.cloudlib.gitcore.GitStep>): GitOpResult {
+        val dir = File(repo.path)
+        val auth = authFor(repo)
+        val who = org.json.JSONObject().put("name", repo.authorName.ifBlank { DEFAULT_AUTHOR }).put("email", repo.authorEmail.ifBlank { DEFAULT_EMAIL })
+        val lines = mutableListOf<String>()
+        for (st in steps) {
+            val r = RepoCompound.raw(ctx, dir, "git_argv", org.json.JSONObject(who.toString()).put("argv", org.json.JSONArray(st.argv.drop(1))), auth)
+            lines += st.line() + " -> " + r.summary
+            if (!r.ok && !st.tolerant) return GitOpResult(false, lines.joinToString("; "), r.details.ifBlank { r.summary })
+        }
+        return GitOpResult(true, lines.joinToString("; "))
+    }
+
+    /** One plan on one clone (the sheet's Sync Now, Test Auth ...), recorded in the history like any operation. */
+    fun runPlan(repo: ManagedRepo, id: String, steps: List<com.diegonmarcos.cloudlib.gitcore.GitStep>) =
+        single(repo, id, Step.PULLING) { record(repo, id, runCatching { runSteps(repo, steps) }.getOrElse { GitOpResult(false, it.message ?: it.toString()) }, SyncHistory.TRIGGER_MANUAL) }
+
+    /** The same plan on every repository of [only] through ONE bounded job; each answers in its own row (per-repo progress and result). */
+    fun runPlanAll(id: String, steps: List<com.diegonmarcos.cloudlib.gitcore.GitStep>, only: List<ManagedRepo>) {
+        bulkOps(id, only) { repo -> record(repo, id, runCatching { runSteps(repo, steps) }.getOrElse { GitOpResult(false, it.message ?: it.toString()) }, SyncHistory.TRIGGER_MANUAL) }
+    }
+
+    /** #1934 a hosting-platform command (archive / delete the remote repository): the exact REST request of [HostingApi], with the declared token; the answer lands in the repo's result line. */
+    fun hostingCall(repo: ManagedRepo?, owner: String, name: String, kind: String) {
+        val req = when (kind) { "archive" -> HostingApi.archive(owner, name); "delete_remote" -> HostingApi.deleteRepo(owner, name); else -> return }
+        scope.launch {
+            val r = withContext(Dispatchers.IO) { HostingApi.send(Declarations.sync.git.api.baseUrl, declaredToken(), req) }
+            val result = r.fold({ GitOpResult(it.status in 200..299, "$kind $owner/$name: HTTP ${it.status}", it.body.take(300)) }, { GitOpResult(false, "$kind $owner/$name: ${it.message}") })
+            repo?.let { rp -> opResults.update { it + (rp.id to result) } }
+            DriveDebugLog.i(ctx, TAG, result.summary)
+        }
+    }
+
+    /** The Clone tab's Clone: the chosen options as ONE clone mode (depth, bare, single branch, partial-clone filter), into [into] (null = the store). */
+    fun cloneOptions(t: CloneTarget, o: com.diegonmarcos.cloudlib.gitcore.CloneOptions, into: File? = null) {
+        if (t.name in cloning.value) return
+        val mode = com.diegonmarcos.cloudlib.gitcore.CloneMode(
+            id = o.profileName(), label = o.profileName(), depth = if (o.history == "shallow") o.depth.coerceIn(1, 9999) else 0,
+            bare = o.workspace == "bare", singleBranch = o.branches == "main", filter = o.filter,
+        )
+        scope.launch {
+            cloning.update { it + t.name }
+            val r = try { withContext(Dispatchers.IO) { cloneBlocking(t.name, t.url, t.authKind, t.username, t.token, "", null, into, mode) } } finally { cloning.update { it - t.name } }
+            val dir = into?.let { File(it, t.name) } ?: cloneDir(t.name, mode)
+            withContext(Dispatchers.IO) { history.append(SyncEvent(System.currentTimeMillis() / 1000, RepoRegistry.idFor(dir.absolutePath), t.name, SyncHistory.TRIGGER_MANUAL, r.ok, "clone ${mode.id}: ${r.summary}", r.details)) }
+            refresh()
+        }
+    }
+
     /** #1491 where a clone of [name] in [mode] lives: the store's repo folder, or `<repo>.git` beside it for a bare mode. */
     private fun cloneDir(name: String, mode: com.diegonmarcos.cloudlib.gitcore.CloneMode?): File =
         SharedStore.repoDir(name).let { d -> if (mode?.bare == true) File(d.parentFile, mode.folderName(d.name)) else d }

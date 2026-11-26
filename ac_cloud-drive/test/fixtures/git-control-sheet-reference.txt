@@ -1,0 +1,138 @@
+# #1934 every control and group of the owner's Unified Repo Control Sheet reference (header, five tabs), by its label. test-drive-git-control-sheet.sh proves each one is declared in build.json ui.sync.git.control_sheet (a control or group label, or a control of the reference's option groups).
+header|Repo list
+header|Fetch status
+header|Check lite
+header|Check full
+header|Refresh
+header|Clone Now
+header|Not cloned locally: greyed-out actions require a local clone.
+tab|Overview
+tab|Sync
+tab|Clone
+tab|Workflow
+tab|Manage
+group|Repository Status
+group|Goto & Quick Actions
+group|Repository Metadata
+control|Cloned?
+control|Divergence
+control|Dirty / Stashed
+control|Detached HEAD
+control|Unpushed
+control|Branch
+control|Last fetch
+control|Last error
+control|Open on Web
+control|Copy URL
+control|Folder
+control|Branches: List
+control|Checkout main
+control|Auto-Sync
+control|Name
+control|Owner
+control|Remote URL
+control|Copy
+control|Local path
+control|Visibility
+control|Default branch
+control|Upstream
+control|Clone profile
+control|Last commit
+control|Remote size (depth 1 / total)
+control|Size on disk
+control|Branches / Tags
+control|Auth / Auto-Sync
+group|Quick Sync Presets
+group|1. Direction
+control|Fetch
+control|↓ Pull
+control|↑ Push
+control|⇅ Pull + Push
+group|2. Incoming Strategy
+control|FF-Only
+control|Merge
+control|Rebase
+control|Force Pull
+group|3. Conflict Winner Policy
+control|No Winner
+control|Remote Wins
+control|Local Wins
+group|4. Dirty Files Handling
+control|None
+control|Auto-Stash
+control|Auto-Commit
+input|-m
+group|5. Scope & Flags
+control|Current
+control|All Branches
+control|Prune Refs
+control|Sync Tags
+control|Submodules
+control|Force w/ Lease
+control|Force Push (!)
+control|Dry Run
+group|Manual Recovery
+control|Stash
+control|Stash Pop
+control|Pull (Rebase)
+control|Auto Commit
+control|Conflict Solver
+group|Background Auto-Sync
+control|On / Off
+control|Every N mins
+control|Command preview
+control|Copy command
+control|Sync Now
+group|Clone Destination
+control|Into Store
+control|Workspace
+control|Mirror Dir
+group|Quick Presets
+group|1. Workspace
+control|Working
+control|Bare (.git)
+group|2. Branches
+control|Main Only
+input|--branch
+group|3. History Depth
+control|Full History
+control|Shallow (Depth)
+group|4. Data Included
+control|Commits
+control|Trees
+control|Blobs
+control|Clone
+group|Local Git Workflow
+control|Stage & Commit
+control|Commits Unpushed
+control|Status
+control|List Dirty
+control|List Conflicts
+control|Commit History
+group|Remote Platform & CI/CD
+control|PRs
+control|Actions
+control|CI/CD Runs
+group|Command Preview / Output
+group|Repo Clean (Local History)
+control|Keep depth 1
+control|Keep depth 5
+control|Keep depth 10
+group|Configs · Auth
+control|Via Web OAuth
+control|Via SSH
+control|Test Auth
+group|Repository Configs & Tools
+control|Remote URL
+control|Default branch
+control|Last sync
+control|Hooks
+control|Size
+control|Fix origin
+control|Settings
+group|Lifecycle & Danger Zone
+control|Rename
+control|Archive
+control|Delete Local
+control|Delete Remote
+preset|Safe

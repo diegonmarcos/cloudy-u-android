@@ -1,0 +1,152 @@
+package com.diegonmarcos.clouddrive.sync
+
+import android.content.ComponentName
+import androidx.activity.ComponentActivity
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import com.diegonmarcos.cloudlib.gitcore.CloneOptions
+import com.diegonmarcos.cloudlib.gitcore.SyncOptions
+import com.diegonmarcos.cloudlib.gitui.GitControlSheetView
+import com.diegonmarcos.cloudlib.gitui.GitSheet
+import com.diegonmarcos.cloudlib.gitui.GitSheetActions
+import com.diegonmarcos.cloudlib.gitui.GitSheetHost
+import com.diegonmarcos.cloudlib.gitui.SheetControl
+import com.diegonmarcos.cloudlib.gitui.rememberGitSheetState
+import java.io.File
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.RuleChain
+import org.junit.rules.TestRule
+import org.junit.runner.RunWith
+import org.junit.runners.model.Statement
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
+
+/**
+ * #1934 the control sheet RENDERS from the declaration: five tabs, the header with its banner and Clone Now, the Sync tab's option groups and a command
+ * preview that changes with the options, the Clone tab, and the disabled-with-reason state of a repository that is not cloned. The sheet is the real
+ * libs:git-ui composable fed with the real build.json declaration (no copy of it here).
+ */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34], qualifiers = "w384dp-h832dp-450dpi")
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+class ControlSheetRenderTest {
+    private val compose = createAndroidComposeRule<ComponentActivity>()
+
+    @get:Rule
+    val rules: RuleChain = RuleChain.outerRule(TestRule { base, _ ->
+        object : Statement() {
+            override fun evaluate() {
+                val app = RuntimeEnvironment.getApplication()
+                shadowOf(app.packageManager).addActivityIfNotPresent(ComponentName(app, ComponentActivity::class.java))
+                base.evaluate()
+            }
+        }
+    }).around(compose)
+
+    private val decl: JsonObject = Json.parseToJsonElement(File("../build.json").readText()).jsonObject["ui"]!!.jsonObject["sync"]!!.jsonObject["git"]!!.jsonObject["control_sheet"]!!.jsonObject
+    private val sheet = GitSheet.parse(decl, "en")
+    private val seen = mutableListOf<String>()
+    private val actions = object : GitSheetActions {
+        override fun action(c: SheetControl) { seen += c.id }
+        override fun runSync(o: SyncOptions) { seen += "run_sync:" + o.steps().joinToString(" && ") { it.line() } }
+        override fun runClone(o: CloneOptions) { seen += "run_clone" }
+        override fun copy(text: String) { seen += "copy" }
+        override fun setAutoSync(on: Boolean, minutes: Int) {}
+    }
+
+    private fun show(cloned: Boolean, bulk: Boolean = false, readOnly: Boolean = false) {
+        compose.setContent {
+            val state = rememberGitSheetState(sheet)
+            androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState())) { GitControlSheetView(sheet, state, GitSheetHost(cloned = cloned, bulk = bulk, readOnly = readOnly, values = mapOf("name" to "repo-x", "branch" to "main"), cloneUrl = "https://github.com/o/r.git", repoName = "r", targets = if (bulk) listOf("a", "b") else emptyList()), actions) }
+        }
+    }
+
+    @Test fun fiveStickyTabsAndTheHeaderAreDrawn() {
+        show(cloned = true)
+        for (t in listOf("overview", "sync", "clone", "workflow", "manage")) compose.onNodeWithTag("git_sheet_tab_$t").assertIsEnabled()
+        for (id in listOf("hd.repo_list", "hd.fetch_status", "hd.check_lite", "hd.check_full", "hd.refresh")) compose.onNodeWithTag("git_sheet_$id").assertIsEnabled()
+        compose.onNodeWithTag("git_sheet_group_ov_status").assertExists()
+        compose.onNodeWithTag("git_sheet_group_ov_goto").assertExists()
+        compose.onNodeWithTag("git_sheet_group_ov_meta").assertExists()
+    }
+
+    @Test fun notClonedShowsTheBannerAndGreysTheLocalActionsWithTheirReason() {
+        show(cloned = false)
+        compose.onNodeWithTag("git_sheet_banner").assertExists()
+        compose.onNodeWithTag("git_sheet_hd.clone_now").assertIsEnabled()
+        compose.onNodeWithTag("git_sheet_hd.fetch_status").assertIsNotEnabled()
+        compose.onNodeWithTag("git_sheet_hd.check_full").assertIsNotEnabled()
+        compose.onNodeWithTag("git_sheet_ctl_ov.goto.folder").assertIsNotEnabled()
+        compose.onNodeWithTag("git_sheet_ctl_ov.goto.web").assertIsEnabled()
+        compose.onNodeWithTag("git_sheet_tab_workflow").performClick()
+        compose.onNodeWithTag("git_sheet_ctl_wf.commit").assertIsNotEnabled()
+        compose.onNodeWithTag("git_sheet_ctl_wf.prs").assertIsEnabled()
+    }
+
+    @Test fun syncTabPreviewFollowsTheOptions() {
+        show(cloned = true)
+        compose.onNodeWithTag("git_sheet_tab_sync").performClick()
+        compose.onNodeWithTag("git_sheet_preview_sync").assertTextEquals("git pull --ff-only && git push")
+        compose.onNodeWithTag("git_sheet_ctl_sy.direction.fetch").performClick()
+        compose.onNodeWithTag("git_sheet_preview_sync").assertTextEquals("git fetch")
+        compose.onNodeWithTag("git_sheet_ctl_sy.direction.pull").performClick()
+        compose.onNodeWithTag("git_sheet_ctl_sy.strategy.reset").performClick()
+        compose.onNodeWithTag("git_sheet_preview_sync").assertTextEquals("git fetch && git reset --hard @{u}")
+        compose.onNodeWithTag("git_sheet_ctl_sy.flag.submodules").assertIsNotEnabled()
+        compose.onNodeWithTag("git_sheet_ctl_sy.flag.dryRun").performClick()
+        compose.onNodeWithTag("git_sheet_preview_sync").assertTextEquals("git fetch --dry-run && git status -sb")
+    }
+
+    @Test fun destructiveSyncAsksBeforeItRuns() {
+        show(cloned = true)
+        compose.onNodeWithTag("git_sheet_tab_sync").performClick()
+        compose.onNodeWithTag("git_sheet_ctl_sy.direction.push").performClick()
+        compose.onNodeWithTag("git_sheet_ctl_sy.flag.forceRaw").performClick()
+        compose.onNodeWithTag("git_sheet_preview_sync").assertTextEquals("git push --force")
+        compose.onNodeWithTag("git_sheet_ctl_sy.run").performScrollTo().performClick()
+        compose.onNodeWithTag("git_sheet_confirm").assertExists()
+        assertTrue("nothing ran before the confirm: $seen", seen.none { it.startsWith("run_sync") })
+        compose.onNodeWithTag("git_sheet_confirm_yes").performClick()
+        assertEquals(listOf("run_sync:git push --force"), seen)
+    }
+
+    @Test fun readOnlyRemoteDisablesEveryPush() {
+        show(cloned = true, readOnly = true)
+        compose.onNodeWithTag("git_sheet_tab_sync").performClick()
+        compose.onNodeWithTag("git_sheet_ctl_sy.direction.push").assertIsNotEnabled()
+        compose.onNodeWithTag("git_sheet_ctl_sy.flag.forceRaw").assertIsNotEnabled()
+        compose.onNodeWithTag("git_sheet_ctl_sy.direction.fetch").assertIsEnabled()
+    }
+
+    @Test fun cloneTabPreviewAndProfileName() {
+        show(cloned = false)
+        compose.onNodeWithTag("git_sheet_tab_clone").performClick()
+        compose.onNodeWithTag("git_sheet_preview_clone").assertTextEquals("git clone https://github.com/o/r.git store/r")
+        compose.onNodeWithTag("git_sheet_ctl_cl.preset.bare_blobless").performClick()
+        compose.onNodeWithTag("git_sheet_ctl_cl.run").assertIsEnabled()
+    }
+
+    @Test fun bulkSheetHasTheSameFiveTabsAndConfirmListsTheRepos() {
+        show(cloned = true, bulk = true)
+        for (t in listOf("overview", "sync", "clone", "workflow", "manage")) compose.onNodeWithTag("git_sheet_tab_$t").assertIsEnabled()
+        compose.onNodeWithTag("git_sheet_group_bov_counts").assertExists()
+        compose.onNodeWithTag("git_sheet_tab_manage").performClick()
+        compose.onNodeWithTag("git_sheet_ctl_bo.mg.shrink_all").performClick()
+        compose.onNodeWithTag("git_sheet_confirm").assertExists()
+    }
+}

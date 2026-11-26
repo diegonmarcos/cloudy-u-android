@@ -22,7 +22,10 @@ object TermuxGitWire {
     data class Plan(val script: String, val stdin: String = "", val network: Boolean = false)
 
     /** Verbs that answer a GitOpResult. #1138 adds the compound ones the engine APK has no verb for (RepoCompound sends them). */
-    val OPS = setOf("push", "force_push", "fetch", "pull", "force_pull", "sync", "force_push_lease", "merge_upstream", "stash", "stash_pop", "shrink", "checkout_main", "keep_depth", "rebase_continue", "stash_push", "set_upstream")
+    val OPS = setOf("push", "force_push", "fetch", "pull", "force_pull", "sync", "force_push_lease", "merge_upstream", "stash", "stash_pop", "shrink", "checkout_main", "keep_depth", "rebase_continue", "stash_push", "set_upstream", "git_argv")
+
+    /** #1934 the verbs a control-sheet plan step may run through `git_argv`. */
+    val GIT_ARGV_VERBS = setOf("add", "commit", "fetch", "pull", "push", "reset", "status", "reflog", "gc")
 
     private const val FS = "%x1f"
     private const val RS = "%x1e"
@@ -87,6 +90,15 @@ object TermuxGitWire {
             "pull" -> ok(gAuthed(dir, "fetch ${q(remote)}") + "; " + track(dir, remote) + "; " + hdr(dir, "pull ${if (a.optBoolean("rebase", true)) "--rebase" else "--no-rebase"} ${q(remote)}"), true, header)
             "force_pull" -> ok(gAuthed(dir, "fetch ${q(remote)}") + "; " + track(dir, remote) + "; " + g(dir, "reset --hard '@{u}'"), true, header)
             // #1138 compound sync verbs and the local-only history trim.
+            // #1934 ONE command of the control sheet's plan: the argv the preview printed, run as git itself (allow-listed verbs, every word quoted).
+            "git_argv" -> {
+                val w = (0 until (a.optJSONArray("argv")?.length() ?: 0)).map { a.optJSONArray("argv")!!.getString(it) }
+                if (w.isEmpty() || w[0] !in GIT_ARGV_VERBS || w.any { it.contains('\u0000') }) return null to "git ${w.firstOrNull().orEmpty()}: not a control-sheet command"
+                if (w[0] == "reset" && w != listOf("reset", "--hard", "@{u}")) return null to "git reset: only --hard @{u}"
+                val who = "-c user.name=${q(a.optString("name", "cloud-drive"))} -c user.email=${q(a.optString("email", "drive@cloud.local"))} "
+                val cmd = who + w.joinToString(" ") { q(it) }
+                ok("H=\"\$(cat)\"; " + (if (w[0] == "pull" || w[0] == "reset") track(dir, remote) + "; " else "") + (if (w[0] == "fetch" || w[0] == "pull" || w[0] == "push") hdr(dir, cmd) else g(dir, cmd)), true, header)
+            }
             "force_push_lease" -> ok(gAuthed(dir, "push --force-with-lease ${q(remote)}"), true, header)
             "merge_upstream" -> ok(gAuthed(dir, "fetch ${q(remote)}") + "; " + track(dir, remote) + "; if " +
                 g(dir, "-c user.name=${q(a.optString("name"))} -c user.email=${q(a.optString("email"))} merge --no-edit '@{u}'") + "; then :; else rc=\$?; " +

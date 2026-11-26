@@ -34,7 +34,7 @@ import java.text.DateFormat
 import java.util.Date
 
 @Composable
-private fun kindText(k: RepoStatus.Kind): String = stringResource(when (k) {
+internal fun kindText(k: RepoStatus.Kind): String = stringResource(when (k) {
     RepoStatus.Kind.NOT_CLONED -> R.string.repo_kind_not_cloned
     RepoStatus.Kind.READING -> R.string.repo_kind_reading
     RepoStatus.Kind.NOT_CHECKED -> R.string.repo_kind_not_checked
