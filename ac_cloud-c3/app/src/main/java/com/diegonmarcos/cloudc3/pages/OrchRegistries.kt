@@ -36,7 +36,7 @@ import java.net.URL
  * is shown as private with no tags, never as a failure. The package list is derived at run time from the declared containers' image fields plus cgc-db-<repo> per declared repo.
  */
 object OrchRegistries {
-    // Tables are drawn by OrchReleasesScreen / OrchGhcrScreen below; OrchRegistryFragment hosts them on the Orch tab.
+    // Tables are drawn by OrchReleasesScreen / OrchGhcrScreen below; OrchRegistryFragment hosts them on the Orch tab (#1942).
 
     data class Pkg(val owner: String, val name: String, val repo: String)
 
