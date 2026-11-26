@@ -92,7 +92,10 @@ sys.exit(1)' "$1" | { read -r px py && adb shell input tap "$px" "$py" < /dev/nu
 ensure_sheet() {
   dump | grep -q 'content-desc="Drag handle"' && return 0
   for b in 1 2 3; do adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 2; dump | grep -q 'content-desc="Drag handle"' && return 0; done
-  tap '^Git$'; sleep 2
+  # Folder lands in Drive Files, which BACK does not leave: relaunch the app on the Git page (the fixture is in its files dir)
+  adb shell am force-stop "$PKG" < /dev/null; sleep 1; timeout 120 adb shell am start -W -n "$act" < /dev/null >/dev/null; sleep 6
+  for i in 1 2 3; do tap '^Continue with local files$' && break; sleep 2; done; sleep 2
+  tap '^Git$'; sleep 4
   if [ "$1" = bulk ]; then tap_after '^Logs$' && sleep 1 && tap '^All repos sheet$'; else tap "^${NAME}\$"; fi
   sleep 3; dump | grep -q 'content-desc="Drag handle"'; }
 mkdir -p "$OUT/walk"; : > "$OUT/walk.tsv"
