@@ -64,6 +64,7 @@ class PushService : Service() {
      */
     private fun goForeground(): Boolean = try {
         FleetNotify.startKeepAlive(this, Notifications.SERVICE_ID, Notifications.serviceNotification(this), FleetNotify.specialUseType())
+        runCatching { FleetNotify.post(this, FleetNotify.SUMMARY_ID, Notifications.backgroundSummary(this)) }   // #1944
         true
     } catch (e: RuntimeException) {
         Log.w(TAG, "startForeground refused; fallback poll carries delivery", e)
@@ -245,6 +246,7 @@ class PushService : Service() {
     override fun onDestroy() {
         instance = null
         isRunning = false
+        runCatching { FleetNotify.cancelBackgroundSummary(this) }   // #1944 the card and its group summary go together
         // #1768: no push any more: the full sync is back to every 15 minutes.
         runCatching { app.sterna.mail.OfflineSyncWorker.ensureScheduled(this, hasPush = false) }
         connections.values.forEach { runCatching { it.close() } }

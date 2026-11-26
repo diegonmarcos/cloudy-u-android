@@ -51,7 +51,9 @@ object StoreStages {
         // The badge's body: what runs now, how many updates wait, when the last pass ended (StoreKeepAliveText).
         BatchForeground.statusLines = { ctx ->
             val st = StoreAuto.load(ctx)
-            StoreKeepAliveText.lines(progress()?.text, st?.let { StoreAuto.pending(it) }, st?.finishedAt ?: 0L, System.currentTimeMillis())
+            // #1944 the per-app progress (name, phase, percent, bytes, queue position, last error) and the totals lead; the former lines follow.
+            StoreProgressCard.lines(StoreJobs.board.rows(), StoreJobs.board.overall()) +
+                StoreKeepAliveText.lines(progress()?.text, st?.let { StoreAuto.pending(it) }, st?.finishedAt ?: 0L, System.currentTimeMillis())
         }
         BatchForeground.icon = { AppStoreHost.notificationIcon }
         BatchForeground.launch = { ctx ->

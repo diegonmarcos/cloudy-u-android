@@ -194,8 +194,13 @@ object Notifications {
         return FleetNotify.keepAliveNotification(
             context, R.drawable.ic_stat_mail, shown.title, shown.lines, stop, open,
             stopLabel = context.getString(R.string.notif_keepalive_stop),
+            groupKey = FleetNotify.GROUP_RUNNING,   // #1944 one "running in the background" group
         )
     }
+
+    /** #1944 The group summary of the push service's background card: posted while the service runs, cancelled when it stops. */
+    fun backgroundSummary(context: Context): Notification =
+        FleetNotify.backgroundSummary(context, R.drawable.ic_stat_mail, context.getString(R.string.app_name), listOf(context.getString(R.string.notif_watching)))
 
     /**
      * [folderName] marks non-inbox mail (#16), null for the inbox; [mailboxId] is that folder's id,

@@ -87,4 +87,47 @@ class KeepAliveBadgeTest {
         val notif = File("src/main/kotlin/app/sterna/push/Notifications.kt").readText()
         assertTrue(notif.contains("FleetNotify.keepAliveNotification("))
     }
+
+    // ── #1944 per-folder unread for the categories 0* to 9*, in the shared background group ──
+
+    @Test fun `only folders whose name starts with a digit 0 to 9 get a line, one per folder, in name order`() {
+        val lines = KeepAliveBadge.folderLines(
+            listOf("1_Work" to 4, "0_Inbox" to 12, "Inbox" to 99, "Archive" to 7, "9_Later" to 0, "_x" to 5, "5_Money" to 2), texts,
+        )
+        assertEquals(listOf("0_Inbox · 12 unread", "1_Work · 4 unread", "5_Money · 2 unread", "9_Later · 0 unread"), lines)
+    }
+
+    @Test fun `every digit from 0 to 9 is a category and a letter is not`() {
+        ('0'..'9').forEach { assertTrue("$it", KeepAliveBadge.isCategoryFolder("${it}_f")) }
+        assertFalse(KeepAliveBadge.isCategoryFolder("A_f"))
+        assertFalse(KeepAliveBadge.isCategoryFolder(""))
+    }
+
+    @Test fun `the same folder on two accounts is one line with the counts added`() {
+        assertEquals(listOf("0_Inbox · 5 unread"), KeepAliveBadge.folderLines(listOf("0_Inbox" to 2, "0_Inbox" to 3), texts))
+    }
+
+    @Test fun `the badge content carries the folder lines before the watching line`() {
+        val c = KeepAliveBadge.content(3, row(), NotificationContent.SENDER_AND_SUBJECT, false, texts, folders = listOf("2_Bills" to 1, "Misc" to 8))
+        assertTrue(c.lines.contains("2_Bills · 1 unread"))
+        assertFalse(c.lines.any { it.startsWith("Misc") })
+        assertEquals("Watching for new mail", c.lines.last())
+    }
+
+    @Test fun `the card is in the shared group and the summary is the groups ongoing summary`() {
+        val n = Notifications.serviceNotification(app, KeepAliveBadge.content(1, row(), NotificationContent.SENDER_AND_SUBJECT, false, texts, folders = listOf("0_a" to 1)))
+        assertEquals(FleetNotify.GROUP_RUNNING, n.group)
+        assertTrue(n.extras.getCharSequence(Notification.EXTRA_BIG_TEXT).toString().contains("0_a · 1 unread"))
+        val s = Notifications.backgroundSummary(app)
+        assertEquals(FleetNotify.GROUP_RUNNING, s.group)
+        assertTrue(s.flags and Notification.FLAG_GROUP_SUMMARY != 0)
+        assertTrue(s.flags and Notification.FLAG_ONGOING_EVENT != 0)
+    }
+
+    @Test fun `the push service posts the summary with its card and removes it when it stops`() {
+        val svc = File("src/main/kotlin/app/sterna/push/PushService.kt").readText()
+        assertTrue(svc.contains("FleetNotify.SUMMARY_ID, Notifications.backgroundSummary("))
+        assertTrue(svc.substringAfter("override fun onDestroy()").contains("FleetNotify.cancelBackgroundSummary("))
+        assertTrue(File("src/main/kotlin/app/sterna/push/KeepAliveBadge.kt").readText().contains("observeMailboxes("))
+    }
 }

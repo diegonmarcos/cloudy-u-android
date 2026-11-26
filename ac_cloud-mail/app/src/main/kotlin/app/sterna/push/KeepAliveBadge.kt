@@ -39,6 +39,7 @@ object KeepAliveBadge {
         setting: NotificationContent,
         appLockEnabled: Boolean,
         texts: Texts,
+        folders: List<Pair<String, Int>> = emptyList(),
     ): Content {
         val head = when {
             unread == null -> texts.watching
@@ -52,9 +53,24 @@ object KeepAliveBadge {
             val row = MailNotificationText.widgetRow(setting, appLockEnabled, sender, subject, texts.hidden)
             lines += listOfNotNull(row.primary, row.secondary).joinToString(" - ")
         }
+        lines += folderLines(folders, texts)
         if (unread != null) lines += texts.watching
         return Content(head, lines)
     }
+
+    /** #1944 A folder of the categories 0* to 9*: its name starts with a digit. */
+    fun isCategoryFolder(name: String): Boolean = name.trim().firstOrNull()?.let { it in '0'..'9' } == true
+
+    /**
+     * #1944 One line per category folder (names starting 0..9) with its unread count, in name order. The same folder name on
+     * several watched accounts is one line with the counts added. Folder names are the user's own, not message content, so the
+     * privacy setting does not apply to them (the counts name nobody).
+     */
+    fun folderLines(folders: List<Pair<String, Int>>, texts: Texts): List<String> =
+        folders.filter { isCategoryFolder(it.first) }
+            .groupBy({ it.first.trim() }, { it.second.coerceAtLeast(0) })
+            .toSortedMap()
+            .map { (name, counts) -> "$name · ${texts.unread(counts.sum())}" }
 
     private const val READ_TIMEOUT_MS = 2_000L
 
@@ -65,7 +81,18 @@ object KeepAliveBadge {
         val lock = c.accountStore.appLockEnabled()
         val unread = withTimeoutOrNull(READ_TIMEOUT_MS) { c.mailRepository.observeUnifiedInboxUnread().first() }
         val latest = runCatching { c.mailRepository.recentUnifiedInbox(1).rows.firstOrNull() }.getOrNull()
-        return content(unread, latest, setting, lock, texts(app))
+        return content(unread, latest, setting, lock, texts(app), folders = readFolders(app))
+    }
+
+    /** #1944 (name, unread) of every folder of the watched accounts, from the cached mailbox rows: no network beyond what the app already does. */
+    private suspend fun readFolders(app: Application): List<Pair<String, Int>> {
+        val c = app.container
+        val store = c.accountStore
+        val ids = (if (store.pushAllAccounts()) store.allCredentials() else listOfNotNull(store.load())).map { it.id }
+        return ids.flatMap { id ->
+            withTimeoutOrNull(READ_TIMEOUT_MS) { c.mailRepository.observeMailboxes(id).first() }.orEmpty()
+                .map { it.name to it.unreadForList }
+        }
     }
 
     fun texts(app: Application): Texts = Texts(

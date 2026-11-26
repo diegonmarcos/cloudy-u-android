@@ -44,6 +44,8 @@ import com.diegonmarcos.cloudnav.cockpit.CockpitGauges
 import com.diegonmarcos.cloudnav.cockpit.CockpitSensors
 import com.diegonmarcos.cloudnav.maps.MapsMapFragment
 import com.diegonmarcos.cloudnav.maps.MapsProviderClient
+import com.diegonmarcos.cloudnav.maps.NavCardState
+import com.diegonmarcos.cloudnav.maps.NavInfo
 import com.diegonmarcos.cloudnav.places.PlaceDetailLogic
 import com.diegonmarcos.cloudnav.tracker.TrackerInk
 import com.diegonmarcos.superapp.uikit.KitComposeFragment
@@ -146,6 +148,8 @@ class NavigationFragment : KitComposeFragment() {
         }
     }
 
+    override fun onDestroy() { NavCardState.clear(); super.onDestroy() }   // #1944 no destination, no navigation lines on the card
+
     override fun onPause() { sensors?.stop(); sensors = null; super.onPause() }
 
     // ── mode switching ───────────────────────────────────────────────────
@@ -190,14 +194,16 @@ class NavigationFragment : KitComposeFragment() {
         val dLat = destLat; val dLon = destLon
         if (dLat != null && dLon != null) {
             val km = PlaceDetailLogic.haversineKm(loc.latitude, loc.longitude, dLat, dLon)
-            feed.onMetric("dist", if (km < 1.0) "${(km * 1000).roundToInt()} m" else "%.1f km".format(km))
+            val distText = if (km < 1.0) "${(km * 1000).roundToInt()} m" else "%.1f km".format(km)
+            feed.onMetric("dist", distText)
             val useSpeed = if (avgKmh > 3.0) avgKmh else kmh
-            feed.onMetric("eta",
-                if (useSpeed > 3.0) {
-                    val mins = km / useSpeed * 60.0
-                    SimpleDateFormat("HH:mm", Locale.US).format(Date(System.currentTimeMillis() + (mins * 60_000).toLong()))
-                } else "—"
-            )
+            val etaText = if (useSpeed > 3.0) {
+                val mins = km / useSpeed * 60.0
+                SimpleDateFormat("HH:mm", Locale.US).format(Date(System.currentTimeMillis() + (mins * 60_000).toLong()))
+            } else "—"
+            feed.onMetric("eta", etaText)
+            // #1944 the background card shows what this tab knows: destination, maneuver line, distance and ETA.
+            NavCardState.publish(NavInfo(destLabel, maneuverText, maneuverSub, distText, etaText, "${mode.emoji} ${mode.label}"))
         }
     }
 
@@ -214,6 +220,7 @@ class NavigationFragment : KitComposeFragment() {
                     query = hit.title
                     maneuverText = "Head to $destLabel"
                     maneuverSub = "${mode.emoji} ${mode.label} · follow the route"
+                    NavCardState.publish(NavInfo(destLabel, maneuverText, maneuverSub, "", "", "${mode.emoji} ${mode.label}"))   // #1944
                     mapFragment?.setPins(listOf(MapsMapFragment.Pin(hit.lat, hit.lon, MapsMapFragment.COLOR_RESULT)))
                     mapFragment?.recenterOnUser()
                 }

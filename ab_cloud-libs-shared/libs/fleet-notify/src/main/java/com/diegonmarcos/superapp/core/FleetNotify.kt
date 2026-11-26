@@ -35,6 +35,16 @@ object FleetNotify {
     const val CHANNEL_DATA_WIDGET_NAME = "Info widgets"
     const val STOP_LABEL = "Stop"
 
+    /**
+     * #1944 THE one group of every "running in the background" card (Cloud Store, Cloud Mail, Cloud Nav): the shared group key,
+     * declared once. Android groups per posting package, so each app's own cards sit under this key and one summary card
+     * ([backgroundSummary], id [SUMMARY_ID]); the SuperApp Notify centre mirrors them all through its phone-notification listener.
+     * The channel is the shared [CHANNEL_KEEP_ALIVE] one. Opt-in: a card joins by passing [GROUP_RUNNING] as `groupKey`.
+     */
+    const val GROUP_RUNNING = "fleet_running_in_background"
+    const val SUMMARY_ID = 0x6C60
+    const val SUMMARY_TITLE = "Running in the background"
+
     /** An extra button (the terminals' wake-lock toggle). */
     class Action(val icon: Int, val label: String, val intent: PendingIntent)
 
@@ -88,6 +98,7 @@ object FleetNotify {
         channelId: String? = null,
         color: Int = 0,
         stopLabel: String = STOP_LABEL,
+        groupKey: String? = null,
     ): Notification {
         val channel = channelId ?: keepAliveChannel(ctx)
         val b = NotificationCompat.Builder(ctx, channel)
@@ -104,11 +115,43 @@ object FleetNotify {
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
         if (color != 0) b.setColor(color)
+        if (groupKey != null) b.setGroup(groupKey).setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
         if (contentIntent != null) b.setContentIntent(contentIntent)
         b.addAction(0, stopLabel, stop)
         extraActions.forEach { b.addAction(it.icon, it.label, it.intent) }
         // Android 14 made foreground-service notifications swipeable; NO_CLEAR keeps it for the service's life.
         return b.build().apply { flags = flags or Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT }
+    }
+
+    /** #1944 The group summary card of [GROUP_RUNNING]: ongoing, silent, naming the app and what runs. Post it with [postBackgroundSummary]. */
+    @JvmStatic
+    @JvmOverloads
+    fun backgroundSummary(ctx: Context, smallIcon: Int, appName: String, lines: List<String> = emptyList(), contentIntent: PendingIntent? = null): Notification {
+        val b = NotificationCompat.Builder(ctx, keepAliveChannel(ctx))
+            .setSmallIcon(smallIcon)
+            .setContentTitle(SUMMARY_TITLE)
+            .setContentText(first(lines).ifEmpty { appName })
+            .setStyle(NotificationCompat.InboxStyle().also { st -> lines.filter { it.isNotBlank() }.forEach { st.addLine(it) } }.setSummaryText(appName))
+            .setGroup(GROUP_RUNNING).setGroupSummary(true)
+            .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
+            .setOngoing(true).setOnlyAlertOnce(true).setShowWhen(false).setSilent(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+        if (contentIntent != null) b.setContentIntent(contentIntent)
+        return b.build().apply { flags = flags or Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT }
+    }
+
+    /** #1944 Post (or refresh) the group summary. Call when the app starts running in the background. */
+    @JvmStatic
+    @JvmOverloads
+    fun postBackgroundSummary(ctx: Context, smallIcon: Int, appName: String, lines: List<String> = emptyList(), contentIntent: PendingIntent? = null) {
+        post(ctx, SUMMARY_ID, backgroundSummary(ctx, smallIcon, appName, lines, contentIntent))
+    }
+
+    /** #1944 Remove the group summary. Call when the app stops running in the background. */
+    @JvmStatic
+    fun cancelBackgroundSummary(ctx: Context) {
+        (ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).cancel(SUMMARY_ID)
     }
 
     /** startForeground with a type; [type] 0 means none (below the API that has types). */

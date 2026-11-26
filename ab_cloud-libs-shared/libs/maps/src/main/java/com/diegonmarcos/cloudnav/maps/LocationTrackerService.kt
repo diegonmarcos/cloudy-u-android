@@ -165,7 +165,10 @@ class LocationTrackerService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
-        startForeground(NOTIF_ID, buildNotification("Tracking — passive, waiting for movement"))
+        startForeground(NOTIF_ID, buildNotification(lastSubtitle))
+        NavCard.postSummary(this)
+        // #1944 a published navigation change refreshes the card (throttled in NavCardState); cleared again in onDestroy.
+        NavCardState.onChange = { main.post { runCatching { (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).notify(NOTIF_ID, buildNotification(lastSubtitle)) } } }
         instance = this
         gate = GateState(lastAccepted = db.recentPoints(1).lastOrNull()?.let { GateFix(it.lat, it.lon, it.accuracy, it.ts) })
         armWake?.invoke(applicationContext)
@@ -179,6 +182,8 @@ class LocationTrackerService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         if (instance === this) instance = null
+        NavCardState.onChange = null
+        NavCard.cancelSummary(this)   // #1944 the card (stopForeground) and its group summary go together
         main.removeCallbacks(expireRun); main.removeCallbacks(stopRun)
         callback?.let { fused.removeLocationUpdates(it) }
         callback = null
@@ -293,9 +298,8 @@ class LocationTrackerService : Service() {
         // Refresh the persistent notification's subtitle so the user
         // sees the live point count + accuracy as proof of life.
         val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        nm.notify(NOTIF_ID, buildNotification(
-            "Points: ${db.pointCount()} · acc: ${row.accuracy?.toInt() ?: "?"}m"
-        ))
+        lastSubtitle = "Points: ${db.pointCount()} · acc: ${row.accuracy?.toInt() ?: "?"}m"
+        nm.notify(NOTIF_ID, buildNotification(lastSubtitle))
     }
 
     /** Ring-buffer Stop detector. Holds the last [bufSize] points;
@@ -422,42 +426,12 @@ class LocationTrackerService : Service() {
     }
 
     // ── Notification plumbing ──────────────────────────────────────
-    private fun ensureChannel() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-        val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        if (nm.getNotificationChannel(CHANNEL_ID) != null) return
-        nm.createNotificationChannel(NotificationChannel(
-            CHANNEL_ID,
-            "Location tracker",
-            NotificationManager.IMPORTANCE_LOW,
-        ).apply {
-            description = "Persistent notification while GPS tracking is active."
-            setShowBadge(false)
-        })
-    }
+    private fun ensureChannel() = NavCard.ensureChannel(this)
 
-    private fun buildNotification(subtitle: String): Notification {
-        val openMain = PendingIntent.getActivity(
-            this, 0,
-            (packageManager.getLaunchIntentForPackage(packageName) ?: Intent()).apply {
-                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
-            },
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-        )
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_maps_notif)
-            .setContentTitle("Cloud Maps tracker")
-            .setContentText(subtitle)
-            .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .setContentIntent(openMain)
-            .setCategory(NotificationCompat.CATEGORY_SERVICE)
-            .setGroup("nc_maps") // own group → not auto-bundled with the other NC notifications
-            .build()
-            // Persistent in the notification centre: FLAG_NO_CLEAR blocks
-            // swipe-to-dismiss + "clear all" while tracking is active.
-            .apply { flags = flags or Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT }
-    }
+    /** #1944 the card, with Cloud Nav's navigation lines when the Navigation tab has published them ([NavCardState]). */
+    private fun buildNotification(subtitle: String): Notification = NavCard.notification(this, subtitle)
+
+    private var lastSubtitle = "Tracking — passive, waiting for movement"
 
     companion object {
         private const val CHANNEL_ID = "maps_tracker"
