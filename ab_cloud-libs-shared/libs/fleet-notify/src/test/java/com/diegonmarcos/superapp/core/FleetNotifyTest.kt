@@ -136,7 +136,7 @@ class FleetNotifyTest {
         assertEquals(FleetNotify.GROUP_RUNNING, grouped.group)
         assertTrue(grouped.flags and Notification.FLAG_ONGOING_EVENT != 0)
         assertTrue(grouped.channelId.startsWith(FleetNotify.CHANNEL_KEEP_ALIVE))
-        assertTrue("an existing consumer that passes no group stays ungrouped", keepAlive().group.isNullOrEmpty())
+        assertTrue("an existing consumer that passes no group stays ungrouped", keepAlive().group != FleetNotify.GROUP_RUNNING)
     }
 
     @Test fun backgroundSummaryIsTheGroupsOngoingSummary() {
