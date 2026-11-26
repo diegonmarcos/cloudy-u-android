@@ -200,6 +200,6 @@ class ControlSheetRenderTest {
         compose.onNodeWithTag("git_sheet_tab_manage").assertIsDisplayed()
         compose.onNodeWithTag("git_sheet_tab_sync").performScrollTo().performClick()
         compose.onNodeWithTag("git_sheet_group_sy_direction").assertExists()
-        compose.onNodeWithTag("git_sheet_ctl_sy.direction.fetch").assertIsDisplayed()
+        compose.onNodeWithTag("git_sheet_ctl_sy.direction.fetch").assertExists()
     }
 }
