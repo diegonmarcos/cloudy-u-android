@@ -453,6 +453,91 @@ class JGitEngine(val workTree: File) : AutoCloseable {
             .setUriType(if (push) RemoteSetUrlCommand.UriType.PUSH else RemoteSetUrlCommand.UriType.FETCH).call()
     }
 
+    // ── #1934 the option-driven verbs of the control sheet (git fetch / pull / push flags, one option model: GitCommandPlan) ──
+
+    /** `git fetch [--prune] [--tags] [--dry-run]`: [dryRun] downloads nothing and changes no ref; it reports what would update. */
+    fun fetchWith(remote: String = "origin", auth: GitAuth = GitAuth.None, prune: Boolean = false, tags: Boolean = false, dryRun: Boolean = false): GitOpResult {
+        val cmd = git.fetch().setRemote(remote).setRemoveDeletedRefs(prune).setDryRun(dryRun)
+        if (tags) cmd.setTagOpt(org.eclipse.jgit.transport.TagOpt.FETCH_TAGS)
+        cmd.withAuth(auth)
+        val r = cmd.call()
+        val n = r.trackingRefUpdates.size
+        val head = if (dryRun) "dry run: " else ""
+        return GitOpResult(true, head + (if (n == 0) "fetched $remote: nothing new" else "fetched $remote: $n ref(s) updated"), r.messages)
+    }
+
+    /**
+     * `git pull` with the sheet's strategy: [rebase], or [ffOnly] (refuses anything but a fast-forward), else a merge. [favor] settles a
+     * conflicting MERGE the way the Conflict Winner policy says (THEIRS = the remote, OURS = the local), file by file, then commits the merge;
+     * it never applies to a rebase. [tags] also fetches tags.
+     */
+    fun pullWith(remote: String = "origin", rebase: Boolean = false, ffOnly: Boolean = false, tags: Boolean = false, favor: ConflictSide? = null, auth: GitAuth = GitAuth.None): GitOpResult {
+        val branch = branchName() ?: return GitOpResult(false, "detached HEAD: no current branch")
+        val cmd = git.pull().setRemote(remote).setRebase(rebase)
+        if (ffOnly) cmd.setFastForward(org.eclipse.jgit.api.MergeCommand.FastForwardMode.FF_ONLY)
+        if (tags) cmd.setTagOpt(org.eclipse.jgit.transport.TagOpt.FETCH_TAGS)
+        cmd.withAuth(auth)
+        if (repo.config.getString("branch", branch, "merge") == null) {
+            fetch(remote, auth)
+            if (repo.findRef(Constants.R_REMOTES + remote + "/" + branch) == null) return GitOpResult(true, "remote $remote has no $branch yet — nothing to pull")
+            cmd.setRemoteBranchName(branch)
+        }
+        val r = cmd.call()
+        if (r.isSuccessful) {
+            val merge = r.mergeResult?.mergeStatus?.name ?: r.rebaseResult?.status?.name ?: "ok"
+            return GitOpResult(true, "pulled $remote/$branch: ${merge.lowercase().replace('_', ' ')}")
+        }
+        if (ffOnly) return GitOpResult(false, "pull refused: not a fast-forward", "")
+        val conflicts = r.mergeResult?.conflicts?.keys?.sorted() ?: status().conflicts.map { it.path }
+        if (favor != null && !rebase && r.mergeResult?.mergeStatus == MergeResult.MergeStatus.CONFLICTING && conflicts.isNotEmpty()) {
+            conflicts.forEach { resolve(it, favor) }
+            val msg = "Merge $remote/$branch (" + (if (favor == ConflictSide.THEIRS) "remote wins" else "local wins") + ")"
+            git.commit().setMessage(msg).call()
+            return GitOpResult(true, "pulled $remote/$branch: merged, ${conflicts.size} conflict(s) settled for " + (if (favor == ConflictSide.THEIRS) "the remote" else "the local side"))
+        }
+        val why = r.mergeResult?.mergeStatus?.let { if (it == MergeResult.MergeStatus.CONFLICTING) "conflicts" else it.name.lowercase() }
+            ?: r.rebaseResult?.status?.name?.lowercase() ?: "failed"
+        return GitOpResult(false, "pull $why: ${conflicts.size} file(s)", conflicts.joinToString("\n"))
+    }
+
+    /** `git push [--all] [--tags] [--force | --force-with-lease] [--dry-run]` of the current branch (every local branch with [all]). */
+    fun pushWith(remote: String = "origin", all: Boolean = false, tags: Boolean = false, force: Boolean = false, lease: Boolean = false, dryRun: Boolean = false, auth: GitAuth = GitAuth.None): GitOpResult {
+        val branch = branchName() ?: return GitOpResult(false, "detached HEAD: no current branch")
+        val cmd = git.push().setRemote(remote).setDryRun(dryRun)
+        if (all) cmd.setPushAll() else cmd.setRefSpecs(RefSpec(Constants.R_HEADS + branch + ":" + Constants.R_HEADS + branch))
+        if (tags) cmd.setPushTags()
+        val tracking = Constants.R_REMOTES + remote + "/" + branch
+        if (force) cmd.setForce(true)
+        else if (lease) {
+            cmd.setForce(true)
+            if (repo.findRef(tracking) != null) cmd.setRefLeaseSpecs(org.eclipse.jgit.transport.RefLeaseSpec(Constants.R_HEADS + branch, tracking))
+        }
+        cmd.withAuth(auth)
+        val results = cmd.call()
+        val bad = results.flatMap { it.remoteUpdates }.filter { it.status != RemoteRefUpdate.Status.OK && it.status != RemoteRefUpdate.Status.UP_TO_DATE }
+        if (bad.isNotEmpty()) return GitOpResult(false, "push rejected: " + bad.joinToString { "${it.remoteName} ${it.status}" }, bad.joinToString("\n") { it.message ?: "" })
+        if (!dryRun && !all && repo.config.getString("branch", branch, "remote") == null) {
+            repo.config.setString("branch", branch, "remote", remote)
+            repo.config.setString("branch", branch, "merge", Constants.R_HEADS + branch)
+            repo.config.save()
+        }
+        val upToDate = results.flatMap { it.remoteUpdates }.all { it.status == RemoteRefUpdate.Status.UP_TO_DATE }
+        return GitOpResult(true, (if (dryRun) "dry run: " else "") + (if (upToDate) "already up to date" else "pushed $branch to $remote"))
+    }
+
+    /** `git status -sb`: the branch line with its upstream and divergence. */
+    fun statusLine(): GitOpResult {
+        val s = status()
+        val div = if (s.upstream == null) "" else " [ahead ${s.ahead}, behind ${s.behind}]"
+        return GitOpResult(true, "## ${s.branch ?: "HEAD (detached)"}" + (s.upstream?.let { "...$it" } ?: "") + div, s.files.joinToString("\n") { it.path })
+    }
+
+    /** The remote names, for `--all`. */
+    fun remoteNames(): List<String> = repo.remoteNames.sorted()
+
+    /** The current branch name, null when HEAD is detached. */
+    fun branchName(): String? = repo.branch?.takeIf { repo.exactRef(Constants.HEAD)?.isSymbolic == true }
+
     // ── conflicts ────────────────────────────────────────────────────────
     // The conflict SURFACE is status().conflicts — one index diff, one snapshot,
     // no second verb to keep in step with it. What follows is how it is resolved.
