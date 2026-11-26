@@ -113,6 +113,7 @@ sheet_open() { has_rid git_sheet_tab_overview; }
 # every step leaves evidence in $OUT/close: the node tapped (bounds), the uiautomator dump, the window list and the top activity
 close_diag() { mkdir -p "$OUT/close"; dump > "$OUT/close/$1.xml"; adb shell dumpsys window windows < /dev/null 2>/dev/null | grep -E "Window #|mCurrentFocus|mFocusedApp" > "$OUT/close/$1.windows.txt"; adb shell dumpsys activity top < /dev/null 2>/dev/null | grep -E "ACTIVITY|Added Fragments|mResumed|ViewRootImpl" | head -20 > "$OUT/close/$1.top.txt"; adb exec-out screencap -p > "$OUT/close/$1.png"; }
 close_sheet() {
+  dump | grep -q 'text="Confirm"' && { tap_text '^Cancel$'; sleep 1; }   # a confirm dialog is its own window (no resource-ids): cancel it first
   close_diag "$1-before"
   grep -o '<node [^>]*git_sheet_hd.close[^>]*>' "$OUT/close/$1-before.xml" | grep -o 'bounds="[^"]*"\|enabled="[^"]*"\|clickable="[^"]*"' | tr '\n' ' ' > "$OUT/close/$1-close-node.txt"
   for b in 1 2 3; do tap_rid git_sheet_hd.close >/dev/null; sleep 2; close_diag "$1-tap$b"; dump | grep -q 'resource-id="git_sheet_tab_overview"' || return 0; done
@@ -182,7 +183,7 @@ walk() {
       if sheet_open; then miss=$((miss+1)); printf '%s:%s\t%s\t%s\tNOT OPENED\t-\n' "$phase" "$cloned" "$id" "$label" >> "$OUT/walk.tsv"; continue; fi;;
     esac
     # a destructive control opens its confirm: it is CANCELLED, never confirmed
-    if has_rid git_sheet_confirm; then tap_text '^Cancel$' || adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 1; fi
+    if dump | grep -q 'text="Confirm"'; then tap_text '^Cancel$' || adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 1; fi
     ok=$((ok+1)); printf '%s:%s\t%s\t%s\ttapped\twalk/%s-%s-%s.png\n' "$phase" "$cloned" "$id" "$label" "$phase" "$cloned" "$id" >> "$OUT/walk.tsv"
   done
   exec 3<&-
