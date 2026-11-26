@@ -136,7 +136,7 @@ data class CloneOptions(
     fun step(url: String, destPath: String): GitStep = GitStep(mutableListOf("git", "clone").apply {
         if (workspace == "bare") add("--bare")
         if (branches == "main") { add("--single-branch"); add("--branch"); add(branch.trim().ifBlank { "main" }) }
-        if (history == "shallow") { add("--depth"); add(depth.coerceIn(1, 9999).toString()) }
+        if (history == "shallow") { add("--depth"); add(depth.coerceIn(1, 9999).toString()); if (branches == "all") add("--no-single-branch") }   // git: --depth alone implies --single-branch
         if (filter.isNotBlank()) add("--filter=$filter")
         add(url); add(destPath)
     })

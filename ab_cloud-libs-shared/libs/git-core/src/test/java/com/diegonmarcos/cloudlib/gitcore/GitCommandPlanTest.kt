@@ -29,6 +29,7 @@ class GitCommandPlanTest {
         assertEquals("git clone --bare --single-branch --branch main --depth 3 --filter=blob:none U S/r.git",
             GitStep.preview(listOf(CloneOptions(workspace = "bare", branches = "main", history = "shallow", depth = 3, blobs = false).step("U", "S/r.git"))))
         assertEquals("git clone U D", GitStep.preview(listOf(CloneOptions().step("U", "D"))))
+        assertEquals("git clone --depth 1 --no-single-branch U D", GitStep.preview(listOf(CloneOptions(history = "shallow", depth = 1).step("U", "D"))))
         assertEquals("M/r.git", CloneOptions(dest = "mirror").destPath("r", "S", "W", "M"))
     }
 }

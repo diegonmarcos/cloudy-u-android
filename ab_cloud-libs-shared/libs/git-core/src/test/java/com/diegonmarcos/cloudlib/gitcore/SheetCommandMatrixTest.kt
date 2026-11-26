@@ -296,7 +296,7 @@ class SheetCommandMatrixTest {
             assertEquals(tag + "bare has no work tree", !bare, File(dest, "h4.txt").exists())
             val gitDir = if (bare) dest else File(dest, ".git")
             Git.open(gitDir).use { g ->
-                val heads = g.repository.refDatabase.getRefsByPrefix(if (bare) "refs/heads/" else "refs/remotes/origin/").map { it.name.substringAfterLast('/') }
+                val heads = (g.repository.refDatabase.getRefsByPrefix("refs/heads/") + g.repository.refDatabase.getRefsByPrefix("refs/remotes/origin/")).map { it.name.substringAfterLast('/') }.distinct()
                 if (c.branches == "main") assertEquals(tag + "single branch", listOf("main"), heads.filter { it != "HEAD" }) else assertTrue(tag + "all branches: $heads", "dev" in heads && "main" in heads)
                 val n = org.eclipse.jgit.revwalk.RevWalk(g.repository).use { w -> w.markStart(w.parseCommit(g.repository.resolve("HEAD"))); w.count() }
                 if (c.history == "shallow") assertTrue(tag + "depth ${c.depth}: $n commits", n <= c.depth) else assertEquals(tag + "full history", 5, n)

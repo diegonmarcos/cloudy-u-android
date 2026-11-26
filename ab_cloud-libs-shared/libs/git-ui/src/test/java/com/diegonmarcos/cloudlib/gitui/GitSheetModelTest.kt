@@ -59,7 +59,7 @@ class GitSheetModelTest {
         val p = sheet.clonePresets.associateBy { it.id }
         fun cmd(id: String) = GitStep.preview(listOf(SheetPresets.clone(CloneOptions(), p.getValue(id)).step("U", "D")))
         assertEquals("git clone U D", cmd("full"))
-        assertEquals("git clone --depth 3 U D", cmd("depth3"))
+        assertEquals("git clone --depth 3 --no-single-branch U D", cmd("depth3"))
         assertEquals("git clone --bare --single-branch --branch main U D", cmd("bare_main"))
         assertEquals("git clone --bare --filter=blob:none U D", cmd("bare_blobless"))
         assertEquals("git clone --bare --filter=tree:0 U D", cmd("bare_treeless"))
