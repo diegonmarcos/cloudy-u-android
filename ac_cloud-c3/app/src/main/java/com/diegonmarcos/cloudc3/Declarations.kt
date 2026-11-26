@@ -78,12 +78,12 @@ object Declarations {
     val externalApps: List<ExternalAppDecl> by lazy { parseExternalApps(decode(BuildConfig.UI_EXTERNAL_APPS_B64)) }
     val infraPages: List<NavPage> get() = pages("infra")
     val containersPages: List<NavPage> get() = pages("containers")
-    val observPages: List<NavPage> get() = pages("observ")
+    val orchPages: List<NavPage> get() = pages("orch")
     val configsPages: List<NavPage> get() = pages("configs")
     val opsPages: List<NavPage> get() = pages("ops")
 
-    /** The nested Ops pages (`<page>_<view>`) that show a topology [view]: its pivot target and label. */
-    fun opsViewPage(view: String): NavPage? = opsPages.flatMap { it.pages }.firstOrNull { it.id.endsWith("_$view") }
+    /** The Orch pages and the nested Ops pages (`<page>_<view>`) that show a topology [view]: its pivot target and label. */
+    fun opsViewPage(view: String): NavPage? = (orchPages + opsPages.flatMap { it.pages }).firstOrNull { it.id.endsWith("_$view") }
 
     /** ui.top_bar (libs:bottomnav TopBarDecl): the shared first row. Null = the app declares none. */
     val topBar: TopBarDecl? by lazy { TopBarDecl.fromBuildConfig(BuildConfig.UI_TOP_BAR_B64) }
@@ -146,6 +146,11 @@ object Declarations {
     /** data/container_projects.json: which project each container belongs to (Containers sub-pages). */
     val containerProjects: com.diegonmarcos.cloudc3.pages.ContainerProjects.Decl by lazy {
         com.diegonmarcos.cloudc3.pages.ContainerProjects.parse(decode(BuildConfig.CONTAINER_PROJECTS_B64), decode(BuildConfig.REPOS_DECLARED_B64))
+    }
+
+    /** data/ghcr_declared.json (#1942): the GHCR packages Orch > GHCR lists, as (owner, package, repo). */
+    val ghcrPackages: List<com.diegonmarcos.cloudc3.pages.OrchRegistries.Pkg> by lazy {
+        com.diegonmarcos.cloudc3.pages.OrchRegistries.parsePackages(decode(BuildConfig.GHCR_DECLARED_B64))
     }
 
     /** Renamed section ids (old -> new) and moved page ids (old -> "section/page"). */

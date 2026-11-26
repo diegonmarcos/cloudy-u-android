@@ -119,25 +119,28 @@ class ContainersFragment : PagedFragment() {
 }
 
 /**
- * OBSERV — the SuperApp's Observability tab CARRIED WHOLE (#648): the `observability`
- * page is [C3StackFragment] over stack_observability — the Index row, the FIVE feed cards
- * (Analytics, GHA, Dagu, GH Repos, Gitea Repos), the NTFY centre and the More row. Health
- * stays as it shipped; Dagu is libs:ops' own [DaguFragment] (the SuperApp's page:c3/dagu);
- * WG mesh is [C3MeshFragment] (its page:wg/status, the More row's target).
+ * ORCH (#1942) - the Orchestration pages that lived in Ops (CI/CD flow, the Service, Infrastructure, Declared and Release topology
+ * views, Agents) plus Dagu (libs:ops' own [DaguFragment], moved here from the old Observ tab) and, per repo, the GitHub release
+ * table and the GHCR package table ([OrchRegistryFragment], loaded lazily). Page ids keep their `orch_` names.
  */
-class ObservFragment : PagedFragment() {
-    override fun pages(): List<NavPage> = Declarations.observPages
+class OrchFragment : PagedFragment() {
+    override fun pages(): List<NavPage> = Declarations.orchPages
     override fun pageFragment(pageId: String): Fragment? = when (pageId) {
-        "observability" -> C3StackFragment.newInstance(C3StackFragment.STACK_OBSERVABILITY)
-        "health" -> C3HealthFragment.newInstance(C3HealthFragment.SCOPE_ALL)
-        "dagu" -> DaguFragment.newInstance()
-        "mesh" -> C3MeshFragment.newInstance()
+        "orch_flow" -> OpsMapFragment.newInstance("flow")
+        "orch_service" -> TopologyViewFragment.newInstance(TopologyModel.SERVICE)
+        "orch_infrastructure" -> TopologyViewFragment.newInstance(TopologyModel.INFRASTRUCTURE)
+        "orch_orchestration" -> TopologyViewFragment.newInstance(TopologyModel.ORCHESTRATION)
+        "orch_release" -> TopologyViewFragment.newInstance(TopologyModel.RELEASE)
+        "orch_agents" -> AgentsFragment()
+        "orch_dagu" -> DaguFragment.newInstance()
+        "orch_gh_releases" -> OrchRegistryFragment.newInstance(OrchRegistryFragment.KIND_RELEASES)
+        "orch_ghcr" -> OrchRegistryFragment.newInstance(OrchRegistryFragment.KIND_GHCR)
         else -> null
     }
 }
 
 /**
- * OPS (#1480, #1495: the catalog pages Security, Tests, Metrics, Alerts, Notify draw their API routes and MCP tools from data/c3_hierarchy.json via [OpsMapFragment]): Network Mail | Orchestration | Health Observability, one top page each, every one a nested strip of views (build.json,
+ * OPS (#1480, #1495: the catalog pages Security, Tests, Metrics, Alerts, Notify draw their API routes and MCP tools from data/c3_hierarchy.json via [OpsMapFragment]): Network Mail | Health Obsv (Orchestration moved to the Orch tab, #1942), one top page each, every one a nested strip of views (build.json,
  * ids `<page>_<view>`). Network and Mail are the maps of data/ops_maps.json ([OpsMapFragment], derived from mesh.json, infra_slice.json
  * and containers_declared.json); Orchestration is the CI/CD flow map, then the topology views and Agents ([TopologyViewFragment] over
  * ui.topology); Health is [OpsHealthFragment]; Observability is the logs catcher [OpsLogsFragment].
@@ -156,13 +159,10 @@ class OpsFragment : PagedFragment() {
         "tables" -> MailStackFragment.newInstance("tables")
         "topology_inbound" -> MailStackFragment.newInstance("inbound")
         "topology_outbound" -> MailStackFragment.newInstance("outbound")
-        "flow" -> OpsMapFragment.newInstance("flow")
-        "service" -> TopologyViewFragment.newInstance(TopologyModel.SERVICE)
-        "infrastructure" -> TopologyViewFragment.newInstance(TopologyModel.INFRASTRUCTURE)
-        "orchestration" -> TopologyViewFragment.newInstance(TopologyModel.ORCHESTRATION)
-        "release" -> TopologyViewFragment.newInstance(TopologyModel.RELEASE)
-        "agents" -> AgentsFragment()
+        "mesh" -> C3MeshFragment.newInstance()
         "uptime" -> OpsHealthFragment()
+        "health" -> C3HealthFragment.newInstance(C3HealthFragment.SCOPE_ALL)
+        "stack" -> C3StackFragment.newInstance(C3StackFragment.STACK_OBSERVABILITY)
         "logs" -> OpsLogsFragment()
         "security" -> OpsMapFragment.newInstance("hier_$leafId")
         "tests" -> OpsMapFragment.newInstance("hier_$leafId")

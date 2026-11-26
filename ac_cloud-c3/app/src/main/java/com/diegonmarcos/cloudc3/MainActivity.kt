@@ -36,7 +36,7 @@ import com.diegonmarcos.cloudc3.pages.ConfigsFragment
 import com.diegonmarcos.cloudc3.pages.ContainersFragment
 import com.diegonmarcos.cloudc3.pages.HomeFragment
 import com.diegonmarcos.cloudc3.pages.InfraFragment
-import com.diegonmarcos.cloudc3.pages.ObservFragment
+import com.diegonmarcos.cloudc3.pages.OrchFragment
 import com.diegonmarcos.cloudc3.pages.OpsFragment
 import com.diegonmarcos.cloudc3.pages.PagedFragment
 import com.diegonmarcos.cloudc3.pages.c3KitPalette
@@ -192,7 +192,7 @@ class MainActivity : AppCompatActivity(),
         val fragment = when (tabId) {
             "infra" -> InfraFragment()
             "containers" -> ContainersFragment()
-            "observ" -> ObservFragment()
+            "orch" -> OrchFragment()
             "home" -> HomeFragment()
             "ops" -> OpsFragment()
             "configs" -> ConfigsFragment()
@@ -247,9 +247,9 @@ class MainActivity : AppCompatActivity(),
                 // ships carry no in-page anchors of their own.
                 val page = target.removePrefix("page:").substringBefore('#')
                 val fragment: Fragment? = when (page) {
-                    "c3/health", "observ/health" -> C3HealthFragment.newInstance(C3HealthFragment.SCOPE_ALL)
-                    "c3/dagu", "observ/dagu" -> com.diegonmarcos.superapp.ops.dagu.DaguFragment.newInstance()
-                    "wg/status", "observ/mesh" -> C3MeshFragment.newInstance()
+                    "c3/health" -> C3HealthFragment.newInstance(C3HealthFragment.SCOPE_ALL)
+                    "c3/dagu" -> com.diegonmarcos.superapp.ops.dagu.DaguFragment.newInstance()
+                    "wg/status" -> C3MeshFragment.newInstance()
                     else        -> null
                 }
                 // A page that MOVED (ui.aliases) or any declared page/section id opens in its tab.

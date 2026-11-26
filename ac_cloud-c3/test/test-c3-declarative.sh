@@ -86,8 +86,8 @@ if [p["id"] for p in cont] != ["all"] + [p["id"] for p in cpj]:
 if [p["label"] for p in cont][0] != "All" or "Lib" not in [p["label"] for p in cont]:
     bad.append("the Containers strip lacks All or Lib: %s" % [p["label"] for p in cont])
 def ids(pages): return [p["id"] for p in pages] + [i for p in pages for i in ids(p.get("pages") or [])]
-ops = ids(secs["ops"]["pages"])
-if "orch_agents" not in ops: bad.append("Agents is not an Ops page")
+orch = ids(secs["orch"]["pages"])
+if "orch_agents" not in orch: bad.append("Agents is not an Orch page (#1942)")
 if "agents" in ids(cont): bad.append("Agents is still under Containers")
 for b in bad: print("    " + b)
 sys.exit(1 if bad else 0)
@@ -388,7 +388,7 @@ m_kt_platform()  { append "$1/$KT/pages/InfraPages.kt" 'val platformsTyped = lis
 m_kt_prefix()    { append "$1/$KT/pages/ContainerProjects.kt" 'val folderTyped = "user-fin_"'; }
 m_no_switch()    { pyjson "$1/build.json" 'next(s for s in d["ui"]["sections"] if s["id"]=="containers")["pages"][2]["pages"].pop()'; }
 m_agents_back()  { pyjson "$1/build.json" 'next(s for s in d["ui"]["sections"] if s["id"]=="containers")["pages"].append({"id":"agents","label":"Agents","icon":"ic_robot"})'; }
-m_no_agents()    { pyjson "$1/build.json" 'o=next(s for s in d["ui"]["sections"] if s["id"]=="ops"); [p.__setitem__("pages",[q for q in p["pages"] if q["id"]!="orch_agents"]) for p in o["pages"]]'; }
+m_no_agents()    { pyjson "$1/build.json" 'o=next(s for s in d["ui"]["sections"] if s["id"]=="orch"); o["pages"]=[q for q in o["pages"] if q["id"]!="orch_agents"]'; }
 m_extra_page()   { pyjson "$1/build.json" 'next(s for s in d["ui"]["sections"] if s["id"]=="containers")["pages"].append({"id":"ghost","label":"Ghost","icon":"ic_p_c3_stack","pages":[{"id":"ghost_topology","label":"Topology","icon":"ic_p_c3_stack"},{"id":"ghost_table","label":"Table","icon":"ic_link_tile"}]})'; }
 m_platform_gone(){ pyjson "$1/data/fleet_slice.json" 'd["hosting"]=d["hosting"][1:]'; }
 m_lists_ctrs()   { append "$1/$KT/pages/InfraPages.kt" 'val x = slice.serverless'; }

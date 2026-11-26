@@ -83,6 +83,9 @@ abstract class PagedFragment : KitComposeFragment() {
     /** Show a declared page of this tab (a pivot link from one page to a sibling); an id the tab does not declare is ignored. */
     fun openPage(pageId: String) = select(pageId)
 
+    /** True when [pageId] is a top or nested page of THIS tab (a pivot to another tab goes through the host instead). */
+    fun hasPage(pageId: String) = locate(pageId) != null
+
     override fun palette(): KitPalette = c3KitPalette(requireContext())
 
     override fun onCreate(savedInstanceState: Bundle?) {

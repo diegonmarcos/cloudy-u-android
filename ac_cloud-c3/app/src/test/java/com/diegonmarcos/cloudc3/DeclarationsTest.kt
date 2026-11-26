@@ -56,8 +56,8 @@ class DeclarationsTest {
         val tabs = nav().bottomSections()
         assertEquals("every declared tab must parse; a dropped one is an invisible missing tab",
             5, tabs.size)
-        assertEquals("owner order, 2026-10-16: Infra | Containers | Home | Ops | Observ; Configs is off the bar",
-            listOf("Infra", "Containers", "Home", "Ops", "Observ"), tabs.map { it.label })
+        assertEquals("owner order, 2026-10-16: Infra | Orch | Home | Containers | Ops (#1942); Configs is off the bar",
+            listOf("Infra", "Orch", "Home", "Containers", "Ops"), tabs.map { it.label })
         assertEquals("Home must be the centre item", "home", tabs[2].id)
         assertTrue("no tab may parse with a blank label or icon",
             tabs.all { it.label.isNotBlank() && it.icon.isNotBlank() })
@@ -133,7 +133,7 @@ class DeclarationsTest {
         assertEquals("#1454 every project page keeps the Topology | Table switch",
             pageIds("containers").map { listOf("${it}_topology", "${it}_table") },
             nav().section("containers")!!.pages.map { p -> p.pages.map { it.id } })
-        assertEquals(listOf("observability", "health", "dagu", "mesh"), pageIds("observ"))
+        assertEquals(listOf("orch_flow", "orch_service", "orch_infrastructure", "orch_orchestration", "orch_release", "orch_agents", "orch_dagu", "orch_gh_releases", "orch_ghcr"), pageIds("orch"))
         assertEquals("#1852 Configs is the app's own Build card and Plugins, then General | Perms | About", listOf("build", "plugins", "general", "perms", "about"), pageIds("configs"))
     }
 
@@ -192,10 +192,10 @@ class DeclarationsTest {
     }
 
     @Test
-    fun `the Ops tab reads Network Mail, Orchestration, Health Observability with a divider before each sub-group, and Agents stays`() {
-        assertEquals(listOf("net", "mail", "orch", "ops_health", "obs"), pageIds("ops"))
-        assertEquals(listOf("orch", "ops_health"), nav().section("ops")!!.pages.filter { it.separatorBefore }.map { it.id })
-        assertTrue("Agents is an Ops page", "orch_agents" in nav().section("ops")!!.allPages().map { it.id })
+    fun `the Ops tab reads Network Mail, Health Obsv with a divider before Health, and Agents moved to Orch`() {
+        assertEquals(listOf("net", "mail", "ops_health", "obs"), pageIds("ops"))
+        assertEquals(listOf("ops_health"), nav().section("ops")!!.pages.filter { it.separatorBefore }.map { it.id })
+        assertTrue("Agents is an Orch page", "orch_agents" in nav().section("orch")!!.allPages().map { it.id })
         assertTrue("Services and Tools are gone from Ops", pageIds("ops").none { it == "services" || it == "tools" })
         assertTrue("Agents left Containers", "agents" !in nav().section("containers")!!.allPages().map { it.id })
     }
@@ -203,13 +203,13 @@ class DeclarationsTest {
     @Test
     fun `every topology view has an Ops page, and every Ops page has an icon from the shared catalog`() {
         val topo = com.diegonmarcos.cloudc3.pages.TopologyModel.parseDecl(ui()["topology"]!!.toString())
-        val leaves = nav().section("ops")!!.pages.flatMap { it.pages }.map { it.id }
+        val leaves = nav().section("ops")!!.pages.flatMap { it.pages }.map { it.id } + nav().section("orch")!!.allPages().map { it.id }
         topo.views.forEach {
             assertTrue("${it.id} lacks grouping/metric/question/missing", it.grouping.isNotBlank() && it.metric.isNotBlank() && it.question.isNotBlank() && it.missing.isNotEmpty())
-            assertEquals("${it.id} is shown by exactly one Ops page", 1, leaves.count { id -> id.endsWith("_${it.id}") })
+            assertEquals("${it.id} is shown by exactly one Ops or Orch page", 1, leaves.count { id -> id.endsWith("_${it.id}") })
         }
         assertEquals("Ship", topo.release?.workflow)
-        nav().section("ops")!!.allPages().forEach {
+        (nav().section("ops")!!.allPages() + nav().section("orch")!!.allPages()).forEach {
             assertTrue("${it.id} icon ${it.icon} is not in libs:ui-icons", com.diegonmarcos.superapp.uiicons.UiIcons.has(it.icon))
         }
     }

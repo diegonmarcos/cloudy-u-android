@@ -163,7 +163,7 @@ object AppsCatalog {
             t["wg_only"]?.toString()?.takeIf { it == "true" }?.let { "exposure" to "wg_only (mesh only)" },
         ) + t.arr("well_known").strs().map { "well-known" to it }
         val health = listOf("declared check" to (t.str("health") ?: "none declared"),
-            "live status" to "see Observ > Health")
+            "live status" to "see Ops > Health > Health")
         return listOfNotNull(Block("Config", rows), urls.takeIf { it.isNotEmpty() }?.let { Block("URLs", it) }, Block("Health", health),
             t.arr("ports").objs().takeIf { it.isNotEmpty() }?.let { Block("Listeners", it.map { p -> "${p.str("port")} ${p.str("service")}" to p.str("desc").orEmpty() }) },
             t.arr("secret_names").strs().takeIf { it.isNotEmpty() }?.let { Block("Secrets (names only)", it.map { n -> n to "" }) })

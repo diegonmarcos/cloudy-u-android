@@ -78,6 +78,41 @@ object GitHubFeed {
         val workflowFile: String = "",
     )
 
+    /** One GitHub release (#1942): tag, its assets (name + size), and when it was published. */
+    data class Release(
+        val tag: String,
+        val assets: List<Asset>,
+        val tsMillis: Long,
+        val htmlUrl: String,
+    ) {
+        data class Asset(val name: String, val size: Long, val updatedMillis: Long)
+    }
+
+    /** #1942 the releases of one repo, newest first; the same 15-minute per-repo cache as the other feeds (one request per repo, loaded lazily by the caller). */
+    suspend fun releases(ctx: Context, owner: String, repo: String, perPage: Int = 10): Feed<Release> {
+        val res  = fetchCached(ctx, "$owner/$repo/releases",
+            "https://api.github.com/repos/$owner/$repo/releases?per_page=$perPage")
+        val body = res.body ?: return Feed(emptyList(), res.status)
+        return Feed(runCatching { parseReleases(body) }.getOrDefault(emptyList()), res.status)
+    }
+
+    fun parseReleases(body: String): List<Release> {
+        val arr = JSONArray(body)
+        return (0 until arr.length()).map { i ->
+            val o = arr.getJSONObject(i)
+            val a = o.optJSONArray("assets") ?: JSONArray()
+            Release(
+                tag       = o.optString("tag_name", ""),
+                assets    = (0 until a.length()).map { j ->
+                    val x = a.getJSONObject(j)
+                    Release.Asset(x.optString("name", ""), x.optLong("size", 0L), parseIso8601(x.optString("updated_at", "")))
+                },
+                tsMillis  = parseIso8601(o.optString("published_at", o.optString("created_at", ""))),
+                htmlUrl   = o.optString("html_url", ""),
+            )
+        }
+    }
+
     suspend fun commits(ctx: Context, owner: String, repo: String, perPage: Int = 5): Feed<Commit> {
         val key  = "$owner/$repo/commits"
         val res  = fetchCached(ctx, key,

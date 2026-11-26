@@ -37,9 +37,9 @@ class C3NavTest {
     }
 
     @Test
-    fun `the bottom nav order is Infra, Containers, Home, Ops, Observ`() {
-        assertEquals(listOf("infra", "containers", "home", "ops", "observ"), nav.bottomNav)
-        assertEquals(listOf("Infra", "Containers", "Home", "Ops", "Observ"), nav.bottomSections().map { it.label })
+    fun `the bottom nav order is Infra, Orch, Home, Containers, Ops`() {
+        assertEquals(listOf("infra", "orch", "home", "containers", "ops"), nav.bottomNav)
+        assertEquals(listOf("Infra", "Orch", "Home", "Containers", "Ops"), nav.bottomSections().map { it.label })
         assertNull("Configs is not on the island", nav.bottomNav.firstOrNull { it == "configs" })
         assertNotNull("but it is a declared section the top bar opens", nav.section("configs"))
     }
@@ -56,12 +56,16 @@ class C3NavTest {
 
     @Test
     fun `declared sections and pages resolve to themselves, unknown ids to nothing`() {
-        assertEquals(Target("observ"), C3Nav.resolve(nav, aliases, "observ"))
-        assertEquals(Target("observ", "health"), C3Nav.resolve(nav, aliases, "health"))
+        assertEquals("the old Observ tab is merged into Ops", Target("ops"), C3Nav.resolve(nav, aliases, "observ"))
+        assertEquals(Target("orch"), C3Nav.resolve(nav, aliases, "orch"))
+        assertEquals("#1942 Health is Ops > Health > Health", Target("ops", "ops_health_health"), C3Nav.resolve(nav, aliases, "health"))
+        assertEquals(Target("orch", "orch_dagu"), C3Nav.resolve(nav, aliases, "dagu"))
+        assertEquals(Target("ops", "net_mesh"), C3Nav.resolve(nav, aliases, "mesh"))
+        assertEquals(Target("ops", "obs_stack"), C3Nav.resolve(nav, aliases, "observability"))
         assertEquals("the old Table id opens the All project's Table", Target("containers", "all_table"), C3Nav.resolve(nav, aliases, "table"))
         assertEquals(Target("containers", "pj-cg-omniverse_table"), C3Nav.resolve(nav, aliases, "pj-cg-omniverse_table"))
         assertEquals("Lib is a Containers page (#1941)", Target("containers", "lib_topology"), C3Nav.resolve(nav, aliases, "lib_topology"))
-        assertEquals(Target("ops", "orch_agents"), C3Nav.resolve(nav, aliases, "agents"))
+        assertEquals(Target("orch", "orch_agents"), C3Nav.resolve(nav, aliases, "agents"))
         assertNull(C3Nav.resolve(nav, aliases, "nope"))
         assertNull(C3Nav.resolve(nav, aliases, ""))
         assertNull(C3Nav.resolve(nav, aliases, null))

@@ -275,7 +275,11 @@ class TopologyViewFragment : KitComposeFragment() {
             onFocus = { TopologyFocus.key = it },
             onPivot = { to, key ->
                 TopologyFocus.key = key
-                (parentFragment as? PagedFragment)?.openPage(Declarations.opsViewPage(to)?.id ?: to)
+                val page = Declarations.opsViewPage(to)?.id ?: to
+                val host = parentFragment as? PagedFragment
+                // #1942 the views live on two tabs (Orch and Ops > Network): a pivot to the other tab goes through the host's page: seam
+                if (host != null && host.hasPage(page)) host.openPage(page)
+                else (activity as? com.diegonmarcos.cloudc3.cloud.C3StackFragment.TargetListener)?.onTargetClicked("page:c3/$page")
             },
         )
     }

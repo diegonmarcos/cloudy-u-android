@@ -17,8 +17,8 @@
 # So T6 is the centre of this file: a page the declaration lists must resolve to a
 # real fragment, and no placeholder body may exist for one to fall back into.
 #
-#   T1  ONE tab declaration: exactly the five tabs, in declared order - Infra | Containers |
-#       Home | Ops | Observ (owner order, 2026-10-16) - Home in the CENTRE, ui.default_section
+#   T1  ONE tab declaration: exactly the five tabs, in declared order - Infra | Orch |
+#       Home | Containers | Ops (owner order, #1942) - Home in the CENTRE, ui.default_section
 #       = home (the app opens on Home), and Configs a declared section that is NOT on the bar.
 #   T2  NO ORPHANS, BOTH DIRECTIONS: every declared tab has a branch in the shell's
 #       dispatch and every branch answers a declared id.
@@ -88,7 +88,7 @@ secs = {s.get("id"): s for s in (ui.get("sections") or [])}
 ids = ui.get("bottom_nav") or []
 tabs = [secs.get(i) or {"id": i} for i in ids]
 labels = [t.get("label") for t in tabs]
-want = ["Infra", "Containers", "Home", "Ops", "Observ"]
+want = ["Infra", "Orch", "Home", "Containers", "Ops"]
 bad = []
 if len(ids) != 5: bad.append("ui.bottom_nav declares %d tabs, not five: %s" % (len(ids), ids))
 if labels != want: bad.append("ui.bottom_nav labels are %s, not %s in that order" % (labels, want))
@@ -273,7 +273,7 @@ bad = []
 
 # (a) each paged tab's DECLARED pages must each resolve to a real fragment, and every
 #     dispatched page id must be declared. Read out of each pageFragment() when-block.
-for tab, cls in (("infra", "InfraFragment"), ("containers", "ContainersFragment"), ("observ", "ObservFragment"),
+for tab, cls in (("infra", "InfraFragment"), ("containers", "ContainersFragment"), ("orch", "OrchFragment"),
                  ("ops", "OpsFragment"), ("configs", "ConfigsFragment")):
     sec = next((s for s in (ui.get("sections") or []) if s.get("id") == tab), {})
     declared = [p["id"] for p in (sec.get("pages") or [])]
@@ -335,7 +335,7 @@ for dirpath, _d, files in os.walk(srcdir):
                            % (os.path.relpath(p, srcdir), b))
 
 # (c) no escape-hatch flag in the declaration: `implemented`, `stub`, `wip`, `placeholder`
-for tab in ("infra", "containers", "observ", "ops", "configs"):
+for tab in ("infra", "containers", "orch", "ops", "configs"):
     sec = next((s for s in (ui.get("sections") or []) if s.get("id") == tab), {})
     for p in (sec.get("pages") or []):
         for k in p:
@@ -553,9 +553,11 @@ if pids("containers") != ["all"] + _cp: bad.append("Containers pages are %s, not
 for _p in (secs.get("containers") or {}).get("pages") or []:
     if [q["id"] for q in _p.get("pages") or []] != [_p["id"] + "_topology", _p["id"] + "_table"]:
         bad.append("Containers project %r lost its Topology | Table switch (nested pages %s)" % (_p["id"], [q["id"] for q in _p.get("pages") or []]))
-if pids("ops") != ["net", "mail", "orch", "ops_health", "obs"]: bad.append("Ops pages are %s, not Network Mail | Orchestration | Health Observability (#1480)" % pids("ops"))
+if pids("ops") != ["net", "mail", "ops_health", "obs"]: bad.append("Ops pages are %s, not Network Mail | Health Obsv (#1480, #1942)" % pids("ops"))
+if pids("orch") != ["orch_flow", "orch_service", "orch_infrastructure", "orch_orchestration", "orch_release", "orch_agents", "orch_dagu", "orch_gh_releases", "orch_ghcr"]: bad.append("Orch pages are %s (#1942)" % pids("orch"))
+if "observ" in secs: bad.append("the observ section is merged into Ops and Orch (#1942)")
 _ops = (secs.get("ops") or {}).get("pages") or []
-if [p["id"] for p in _ops if p.get("separator_before")] != ["orch", "ops_health"]: bad.append("Ops sub-group dividers are not before Orchestration and Health")
+if [p["id"] for p in _ops if p.get("separator_before")] != ["ops_health"]: bad.append("Ops sub-group divider is not before Health")
 if not all(p.get("pages") for p in _ops): bad.append("an Ops page nests no views")
 if pids("infra") != ["providers", "machines", "serverless", "node_python", "storage", "api_ai", "api_scraper", "api_endpoints", "api_mcp", "desktop", "mobile", "gadgets", "control", "domains", "domains_public"]: bad.append("Infra pages are %s, not the four declared rows (Bare, APIs, Personal, Domains)" % pids("infra"))
 c3 = ui["carried_c3"]
@@ -676,7 +678,7 @@ PY
 m_parallel()    { python3 - "$1$A/app/src/main/java/com/diegonmarcos/cloudc3/C3BottomNav.kt" <<'PY'
 import sys
 p=sys.argv[1]; s=open(p).read(); b=s
-s=s.replace("object C3BottomNav {",'object C3BottomNav {\n    val order = listOf("infra", "containers", "home", "ops", "observ")\n')
+s=s.replace("object C3BottomNav {",'object C3BottomNav {\n    val order = listOf("infra", "orch", "home", "containers", "ops")\n')
 assert s!=b
 open(p,"w").write(s)
 PY
@@ -705,7 +707,7 @@ open(p,"w").write(s)
 PY
 }
 # T6: the three shapes of "a shipped tab is empty"
-m_declare_unbuilt() { jqset "$1$A/build.json" 'sec("observ")["pages"].append(collections.OrderedDict([("id","workflows"),("label","Workflows"),("icon","ic_p_c3_workflows")]))'; }
+m_declare_unbuilt() { jqset "$1$A/build.json" 'sec("orch")["pages"].append(collections.OrderedDict([("id","workflows"),("label","Workflows"),("icon","ic_p_c3_workflows")]))'; }
 m_placeholder_body() { python3 - "$1$A/app/src/main/java/com/diegonmarcos/cloudc3/pages/TabFragments.kt" <<'PY'
 import sys
 p=sys.argv[1]; s=open(p).read(); b=s
@@ -715,8 +717,8 @@ assert s!=b
 open(p,"w").write(s)
 PY
 }
-m_escape_flag() { jqset "$1$A/build.json" 'sec("observ")["pages"][0]["implemented"]=False'; }
-m_empty_tab()   { jqset "$1$A/build.json" 'sec("observ")["pages"]=[]'; }
+m_escape_flag() { jqset "$1$A/build.json" 'sec("orch")["pages"][0]["implemented"]=False'; }
+m_empty_tab()   { jqset "$1$A/build.json" 'sec("orch")["pages"]=[]'; }
 # T7 / T8
 m_compose_screen() { printf 'package com.diegonmarcos.cloudc3.pages\nimport androidx.compose.runtime.Composable\n@Composable\nfun Reauthored(c: android.content.Context) { android.widget.TextView(c) }\n' > "$1$A/app/src/main/java/com/diegonmarcos/cloudc3/pages/Reauthored.kt"; }
 m_consume_insets() { python3 - "$1$A/app/src/main/java/com/diegonmarcos/cloudc3/MainActivity.kt" <<'PY'

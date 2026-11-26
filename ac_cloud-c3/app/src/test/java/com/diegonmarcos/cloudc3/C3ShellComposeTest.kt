@@ -129,11 +129,11 @@ class C3ShellComposeTest {
     private fun item(id: String) = "bottomnav_item_$id"
 
     @Test
-    fun `the island reads Infra, Containers, Home, Ops, Observ left to right, with no Configs`() {
+    fun `the island reads Infra, Orch, Home, Containers, Ops left to right, with no Configs`() {
         show()
-        val ids = listOf("infra", "containers", "home", "ops", "observ")
+        val ids = listOf("infra", "orch", "home", "containers", "ops")
         assertEquals(ids, Declarations.nav.bottomNav)
-        assertEquals(listOf("Infra", "Containers", "Home", "Ops", "Observ"), Declarations.tabs.map { it.label })
+        assertEquals(listOf("Infra", "Orch", "Home", "Containers", "Ops"), Declarations.tabs.map { it.label })
         val lefts = ids.map { compose.onNodeWithTag(item(it)).fetchSemanticsNode().boundsInRoot.left }
         assertEquals("island order", lefts.sorted(), lefts)
         assertEquals(5, lefts.toSet().size)

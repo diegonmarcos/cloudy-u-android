@@ -59,7 +59,7 @@ class Hierarchy(unittest.TestCase):
     def test_ops_and_infra_rows_of_the_owner(self):
         by = {s["id"]: s for s in self.h["sections"]}
         self.assertEqual([g["id"] for g in by["infra"]["children"]], ["bare", "apis", "personal", "domains_row"])
-        self.assertEqual([g["id"] for g in by["ops"]["children"]], ["net", "mail", "orch", "ops_health", "obs"])
+        self.assertEqual([g["id"] for g in by["ops"]["children"]], ["net", "mail", "ops_health", "obs"])
         self.assertEqual([g["id"] for g in by["containers"]["children"]], ["all"] + [p["id"] for p in json.load(open(os.path.join(os.path.dirname(__file__), "..", "data", "container_projects.json")))["projects"]])
         self.assertEqual([f["id"] for f in self.h["containers"]["filters"]], ["mcp", "api", "apps", "db", "repo"])
 

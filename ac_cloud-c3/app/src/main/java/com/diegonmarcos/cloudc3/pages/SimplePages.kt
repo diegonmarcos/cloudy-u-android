@@ -94,7 +94,7 @@ class HomeFragment : KitComposeFragment() {
                     stringResource(R.string.c3_health_section_private, priv),
                 ),
             )
-            Card(label("observ"), Declarations.observPages.map { it.label })
+            Card(label("orch"), Declarations.orchPages.map { it.label })
             Card(label("ops"), Declarations.externalApps.map { "${it.display} · ${it.packageName}" })
         }
         sheet?.let { target ->

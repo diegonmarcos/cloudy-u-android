@@ -574,7 +574,7 @@ class C3StackFragment : KitComposeFragment() {
             FeedItem.Row(
                 title    = r.name,
                 meta     = "${daguStatusLabel(r.status)} · ${GitHubFeed.ago(now - ts)}",
-                url      = "page:observ/dagu",
+                url      = "page:orch/orch_dagu",
                 severity = daguSeverity(r.status),
             )
         }

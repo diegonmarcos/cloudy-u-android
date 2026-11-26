@@ -229,7 +229,7 @@
     "devops.mail.*"
    ]
   },
-  "ops/orch/flow": {
+  "orch/orch_flow": {
    "api": [
     "/workflows",
     "/workflows/gha",
@@ -243,15 +243,15 @@
     "obs.debug.report"
    ]
   },
-  "ops/orch/service": {
+  "orch/orch_service": {
    "api": [],
    "mcp": []
   },
-  "ops/orch/infrastructure": {
+  "orch/orch_infrastructure": {
    "api": [],
    "mcp": []
   },
-  "ops/orch/orchestration": {
+  "orch/orch_orchestration": {
    "api": [
     "/health/declared",
     "/health/deployed",
@@ -265,7 +265,7 @@
     "obs.health.drift"
    ]
   },
-  "ops/orch/release": {
+  "orch/orch_release": {
    "api": [
     "/updates"
    ],
@@ -275,7 +275,7 @@
     "devops.repo.*"
    ]
   },
-  "ops/orch/agents": {
+  "orch/orch_agents": {
    "api": [],
    "mcp": []
   },
@@ -348,13 +348,13 @@
     "devops.telegram.*"
    ]
   },
-  "observ/observability": {
+  "ops/obs/stack": {
    "api": [
     "/events"
    ],
    "mcp": []
   },
-  "observ/health": {
+  "ops/ops_health/health": {
    "api": [
     "/health",
     "/health/status",
@@ -372,7 +372,7 @@
     "obs.health.resources_*"
    ]
   },
-  "observ/dagu": {
+  "orch/orch_dagu": {
    "api": [
     "/workflows/dagu"
    ],
@@ -380,7 +380,7 @@
     "devops.workflows.dagu*"
    ]
   },
-  "observ/mesh": {
+  "ops/net/mesh": {
    "api": [
     "/cloud-data/wireguard-peers"
    ],
@@ -409,6 +409,14 @@
    "mcp": [
     "plugin.*"
    ]
+  },
+  "orch/orch_gh_releases": {
+   "api": [],
+   "mcp": []
+  },
+  "orch/orch_ghcr": {
+   "api": [],
+   "mcp": []
   }
  }
 }

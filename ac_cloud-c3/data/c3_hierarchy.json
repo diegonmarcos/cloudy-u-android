@@ -3,10 +3,10 @@
  "version": 1,
  "bottom_nav": [
   "infra",
-  "containers",
+  "orch",
   "home",
-  "ops",
-  "observ"
+  "containers",
+  "ops"
  ],
  "sections": [
   {
@@ -671,6 +671,96 @@
    ]
   },
   {
+   "id": "orch",
+   "label": "Orch",
+   "children": [
+    {
+     "id": "orch_flow",
+     "label": "Flow",
+     "api": [
+      "/workflows",
+      "/workflows/gha",
+      "/workflows/dispatch",
+      "/reports/*",
+      "/files/report/:",
+      "/ops/push-event"
+     ],
+     "mcp": [
+      "devops.workflows.*",
+      "obs.debug.report"
+     ]
+    },
+    {
+     "id": "orch_service",
+     "label": "Service",
+     "api": [],
+     "mcp": []
+    },
+    {
+     "id": "orch_infrastructure",
+     "label": "Infrastructure",
+     "api": [],
+     "mcp": []
+    },
+    {
+     "id": "orch_orchestration",
+     "label": "Declared",
+     "api": [
+      "/health/declared",
+      "/health/deployed",
+      "/health/deployed/:",
+      "/health/drift",
+      "/cloud-data/topology/drift"
+     ],
+     "mcp": [
+      "obs.health.declared",
+      "obs.health.deployed",
+      "obs.health.drift"
+     ]
+    },
+    {
+     "id": "orch_release",
+     "label": "Release",
+     "api": [
+      "/updates"
+     ],
+     "mcp": [
+      "devops.build.*",
+      "devops.release.*",
+      "devops.repo.*"
+     ]
+    },
+    {
+     "id": "orch_agents",
+     "label": "Agents",
+     "api": [],
+     "mcp": []
+    },
+    {
+     "id": "orch_dagu",
+     "label": "Dagu",
+     "api": [
+      "/workflows/dagu"
+     ],
+     "mcp": [
+      "devops.workflows.dagu*"
+     ]
+    },
+    {
+     "id": "orch_gh_releases",
+     "label": "GH Releases",
+     "api": [],
+     "mcp": []
+    },
+    {
+     "id": "orch_ghcr",
+     "label": "GHCR",
+     "api": [],
+     "mcp": []
+    }
+   ]
+  },
+  {
    "id": "ops",
    "label": "Ops",
    "children": [
@@ -729,6 +819,14 @@
         "devops.secrets.*",
         "devops.build.secrets_status"
        ]
+      },
+      {
+       "id": "mesh",
+       "label": "WG Mesh",
+       "api": [
+        "/cloud-data/wireguard-peers"
+       ],
+       "mcp": []
       }
      ]
     },
@@ -768,74 +866,6 @@
      ]
     },
     {
-     "id": "orch",
-     "label": "Orchestration",
-     "children": [
-      {
-       "id": "flow",
-       "label": "Flow",
-       "api": [
-        "/workflows",
-        "/workflows/gha",
-        "/workflows/dispatch",
-        "/reports/*",
-        "/files/report/:",
-        "/ops/push-event"
-       ],
-       "mcp": [
-        "devops.workflows.*",
-        "obs.debug.report"
-       ]
-      },
-      {
-       "id": "service",
-       "label": "Service",
-       "api": [],
-       "mcp": []
-      },
-      {
-       "id": "infrastructure",
-       "label": "Infrastructure",
-       "api": [],
-       "mcp": []
-      },
-      {
-       "id": "orchestration",
-       "label": "Declared",
-       "api": [
-        "/health/declared",
-        "/health/deployed",
-        "/health/deployed/:",
-        "/health/drift",
-        "/cloud-data/topology/drift"
-       ],
-       "mcp": [
-        "obs.health.declared",
-        "obs.health.deployed",
-        "obs.health.drift"
-       ]
-      },
-      {
-       "id": "release",
-       "label": "Release",
-       "api": [
-        "/updates"
-       ],
-       "mcp": [
-        "devops.build.*",
-        "devops.release.*",
-        "devops.repo.*"
-       ]
-      },
-      {
-       "id": "agents",
-       "label": "Agents",
-       "api": [],
-       "mcp": []
-      }
-     ]
-    },
-    {
      "id": "ops_health",
      "label": "Health",
      "children": [
@@ -864,12 +894,32 @@
        "mcp": [
         "obs.debug.test"
        ]
+      },
+      {
+       "id": "health",
+       "label": "Health",
+       "api": [
+        "/health",
+        "/health/status",
+        "/health/status/:",
+        "/health/tier1",
+        "/health/tier1/:",
+        "/health/tier2",
+        "/health/tier2/:",
+        "/health/tier3",
+        "/health/tier3/:",
+        "/stream/health"
+       ],
+       "mcp": [
+        "obs.health.cloud*",
+        "obs.health.resources_*"
+       ]
       }
      ]
     },
     {
      "id": "obs",
-     "label": "Observability",
+     "label": "Obsv",
      "children": [
       {
        "id": "logs",
@@ -925,60 +975,16 @@
         "obs.notify.*",
         "devops.telegram.*"
        ]
+      },
+      {
+       "id": "stack",
+       "label": "Observability",
+       "api": [
+        "/events"
+       ],
+       "mcp": []
       }
      ]
-    }
-   ]
-  },
-  {
-   "id": "observ",
-   "label": "Observ",
-   "children": [
-    {
-     "id": "observability",
-     "label": "Observability",
-     "api": [
-      "/events"
-     ],
-     "mcp": []
-    },
-    {
-     "id": "health",
-     "label": "Health",
-     "api": [
-      "/health",
-      "/health/status",
-      "/health/status/:",
-      "/health/tier1",
-      "/health/tier1/:",
-      "/health/tier2",
-      "/health/tier2/:",
-      "/health/tier3",
-      "/health/tier3/:",
-      "/stream/health"
-     ],
-     "mcp": [
-      "obs.health.cloud*",
-      "obs.health.resources_*"
-     ]
-    },
-    {
-     "id": "dagu",
-     "label": "Dagu",
-     "api": [
-      "/workflows/dagu"
-     ],
-     "mcp": [
-      "devops.workflows.dagu*"
-     ]
-    },
-    {
-     "id": "mesh",
-     "label": "WG mesh",
-     "api": [
-      "/cloud-data/wireguard-peers"
-     ],
-     "mcp": []
     }
    ]
   },

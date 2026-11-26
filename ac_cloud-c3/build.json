@@ -194,13 +194,13 @@
   },
   "ui": {
     "_doc": "EVERY declarative list this app renders. app/build.gradle bakes each into BuildConfig as base64 JSON and Declarations.kt decodes it once; no screen reads a BuildConfig blob itself and no tab id, label or icon name is spelled in Kotlin.",
-    "_doc_nav": "#868 THE ONE navigation declaration (libs:bottomnav's NavDecl): ui.bottom_nav is the island's section ids in display order - Infra | Containers | Home | Ops | Observ, Home deliberately the centre item the way every other fleet five-tab shell places it; ui.sections[] holds each section's id, label, icon and its `pages` (the pill strip PageTabs draws over it); ui.default_section is the one it opens on (Home). Configs is a section that is NOT on the bar: the top bar's Settings > Configs opens it. Order is load-bearing: reordering ui.bottom_nav reorders the bottom nav and nothing else changes, which is the property test/test-c3-shell.sh asserts. The section ids are the ONLY tab ids in the app: C3Shell dispatches on them and the tester diffs that dispatch against the sections in both directions, so a section declared with no screen and a screen with no declared section are both build failures. ui.aliases maps the ids that moved in the 2026-10-16 renames to where they live now.",
+    "_doc_nav": "#868 THE ONE navigation declaration (libs:bottomnav's NavDecl): ui.bottom_nav is the island's section ids in display order - Infra | Orch | Home | Containers | Ops (#1942), Home deliberately the centre item the way every other fleet five-tab shell places it; ui.sections[] holds each section's id, label, icon and its `pages` (the pill strip PageTabs draws over it); ui.default_section is the one it opens on (Home). Configs is a section that is NOT on the bar: the top bar's Settings > Configs opens it. Order is load-bearing: reordering ui.bottom_nav reorders the bottom nav and nothing else changes, which is the property test/test-c3-shell.sh asserts. The section ids are the ONLY tab ids in the app: C3Shell dispatches on them and the tester diffs that dispatch against the sections in both directions, so a section declared with no screen and a screen with no declared section are both build failures. ui.aliases maps the ids that moved in the 2026-10-16 renames to where they live now.",
     "bottom_nav": [
       "infra",
-      "containers",
+      "orch",
       "home",
-      "ops",
-      "observ"
+      "containers",
+      "ops"
     ],
     "default_section": "home",
     "configs_ui": ["nav_ui"],
@@ -221,19 +221,24 @@
     "aliases": {
       "sections": {
         "topology": "containers",
-        "apps": "ops"
+        "apps": "ops",
+        "observ": "ops"
       },
       "pages": {
         "public": "containers/all_table",
         "private": "containers/all_table",
         "table": "containers/all_table",
         "stack": "infra/providers",
-        "service": "ops/orch_service",
-        "infrastructure": "ops/orch_infrastructure",
-        "orchestration": "ops/orch_orchestration",
+        "service": "orch/orch_service",
+        "infrastructure": "orch/orch_infrastructure",
+        "orchestration": "orch/orch_orchestration",
         "network": "ops/net_network",
-        "release": "ops/orch_release",
-        "agents": "ops/orch_agents"
+        "release": "orch/orch_release",
+        "agents": "orch/orch_agents",
+        "observability": "ops/obs_stack",
+        "health": "ops/ops_health_health",
+        "dagu": "orch/orch_dagu",
+        "mesh": "ops/net_mesh"
       }
     },
     "sections": [
@@ -647,10 +652,68 @@
         "icon": "ic_home"
       },
       {
+        "id": "orch",
+        "label": "Orch",
+        "icon": "ic_p_c3_stack",
+        "_doc": "#1942 Orch is a bottom tab: the Orchestration pages that lived in Ops (CI/CD flow, Service, Infrastructure, Declared, Release, Agents) plus Dagu (moved from the old Observ tab) and, per repo, the GitHub release table and the GHCR package table. Old ids (service, infrastructure, orchestration, release, agents, dagu) are ui.aliases.pages.",
+        "pages": [
+          {
+            "id": "orch_flow",
+            "label": "Flow",
+            "icon": "ic_p_c3_workflows"
+          },
+          {
+            "id": "orch_service",
+            "label": "Service",
+            "icon": "ic_p_c3_workflows"
+          },
+          {
+            "id": "orch_infrastructure",
+            "label": "Infrastructure",
+            "icon": "ic_p_c3_vms"
+          },
+          {
+            "id": "orch_orchestration",
+            "label": "Declared",
+            "icon": "ic_p_c3_stack",
+            "_doc": "The Orchestration topology view of ui.topology: declared vs deployed."
+          },
+          {
+            "id": "orch_release",
+            "label": "Release",
+            "icon": "ic_code"
+          },
+          {
+            "id": "orch_agents",
+            "label": "Agents",
+            "icon": "ic_robot",
+            "_doc": "AgentsFragment (#1454): the launchable C3 siblings. Not a topology view."
+          },
+          {
+            "id": "orch_dagu",
+            "label": "Dagu",
+            "icon": "ic_robot",
+            "_doc": "#648 the SuperApp's page:c3/dagu — libs:ops DaguFragment, the native DAG list with per-row Run buttons and the Authelia-bearer login whose server URL pre-fills from ui.sections[c3].pages[dagu].dagu_default_server. The same fragment the Dagu feed card's rows and the More row target."
+          },
+          {
+            "id": "orch_gh_releases",
+            "label": "GH Releases",
+            "icon": "ic_code",
+            "_doc": "#1942 per repo (data/repos_declared.json), the GitHub release table: tag, assets, size, updated. Each repo loads lazily when opened (GitHubFeed, 15-minute cache, anonymous 60/h quota): OrchRegistryFragment."
+          },
+          {
+            "id": "orch_ghcr",
+            "label": "GHCR",
+            "icon": "ic_p_c3_stack",
+            "_doc": "#1942 the GHCR package table: package, tags, visibility, updated. Packages are data/ghcr_declared.json (the fleet images of containers_declared.json plus cgc-db-<repo>, generated by data/gen_ghcr_declared.py); tags are read anonymously, a private package shows as private. No token in the APK."
+          }
+        ]
+      },
+      {
         "id": "ops",
         "label": "Ops",
         "icon": "ic_robot",
-        "_doc": "#1480 Ops reads Network Mail | Orchestration | Health Observability; each \"|\" is a declared separator_before, so the sub-groups are [Network, Mail], [Orchestration] and [Health, Observability]. Every top page nests its views (ids `<page>_<view>`, resolved by OpsFragment.leafFragment). Network: WireGuard, Auth and DNS & Caddy are maps of data/ops_maps.json drawn from mesh.json / infra_slice.json / containers_declared.json, then the Network topology tree. Mail: one map. Orchestration: the CI/CD flow map, then the topology views Service, Infrastructure, Declared vs deployed and Release (ui.topology), then Agents (#1454). Health: uptime of every service and the reports. Observability: the logs catcher over c3-infra-api GET /logs/search. Old ids (service, infrastructure, orchestration, network, release, agents) are ui.aliases.pages to their new leaf.",
+        "_doc": "#1480, #1942 Ops reads Network Mail | Health Obsv; each \"|\" is a declared separator_before, so the sub-groups are [Network, Mail] and [Health, Obsv]. The Orchestration group moved to the Orch bottom tab and the old Observ tab was merged here: its Health page is ops_health_health (next to Uptime and Tests), WG Mesh is net_mesh inside Network, its Observability stack page is obs_stack in the Obsv group (labelled Obsv so the group does not duplicate the page name). Every top page nests its views (ids `<page>_<view>`, resolved by OpsFragment.leafFragment). Old ids (observ, observability, health, dagu, mesh, service, infrastructure, orchestration, release, agents) are ui.aliases.",
         "pages": [
           {
             "id": "net",
@@ -683,6 +746,12 @@
                 "label": "Security",
                 "icon": "security",
                 "_doc": "#1495 NEW CATEGORY: the cloudy-c3-api /security/* routes (scan, docker, ssh, tokens, topology, wireguard, secrets) and the sec.* and secrets tools had no page. Data only: OpsMapFragment maps.hier_net_security."
+              },
+              {
+                "id": "net_mesh",
+                "label": "WG Mesh",
+                "icon": "ic_wg",
+                "_doc": "#648 the SuperApp's page:wg/status — C3MeshFragment over the canonical wg-mesh/v1 snapshot (data/mesh.json), grouped by transport. It is the More row's 'WG mesh' target on the Observability stack, which is why it lives under this tab."
               }
             ]
           },
@@ -718,46 +787,6 @@
             ]
           },
           {
-            "id": "orch",
-            "label": "Orchestration",
-            "icon": "ic_p_c3_stack",
-            "separator_before": true,
-            "pages": [
-              {
-                "id": "orch_flow",
-                "label": "Flow",
-                "icon": "ic_p_c3_workflows"
-              },
-              {
-                "id": "orch_service",
-                "label": "Service",
-                "icon": "ic_p_c3_workflows"
-              },
-              {
-                "id": "orch_infrastructure",
-                "label": "Infrastructure",
-                "icon": "ic_p_c3_vms"
-              },
-              {
-                "id": "orch_orchestration",
-                "label": "Declared",
-                "icon": "ic_p_c3_stack",
-                "_doc": "The Orchestration topology view of ui.topology: declared vs deployed."
-              },
-              {
-                "id": "orch_release",
-                "label": "Release",
-                "icon": "ic_code"
-              },
-              {
-                "id": "orch_agents",
-                "label": "Agents",
-                "icon": "ic_robot",
-                "_doc": "AgentsFragment (#1454): the launchable C3 siblings. Not a topology view."
-              }
-            ]
-          },
-          {
             "id": "ops_health",
             "label": "Health",
             "icon": "ic_p_c3_health",
@@ -773,12 +802,18 @@
                 "label": "Tests",
                 "icon": "ic_code",
                 "_doc": "#1495 NEW CATEGORY: the /tests/run suites and the obs.debug.test tool. Data only: OpsMapFragment maps.hier_ops_health_tests."
+              },
+              {
+                "id": "ops_health_health",
+                "label": "Health",
+                "icon": "ic_p_c3_health",
+                "_doc": "#1942 the old Observ > Health page, kept whole: C3HealthFragment, both the public and the private table with their counts in one view."
               }
             ]
           },
           {
             "id": "obs",
-            "label": "Observability",
+            "label": "Obsv",
             "icon": "ic_p_logs",
             "pages": [
               {
@@ -803,39 +838,14 @@
                 "label": "Notify",
                 "icon": "mail",
                 "_doc": "#1495 NEW CATEGORY: /notify/*, the obs.notify.* tools and the Telegram bridge. Data only: OpsMapFragment maps.hier_obs_notify."
+              },
+              {
+                "id": "obs_stack",
+                "label": "Observability",
+                "icon": "ic_p_c3_workflows",
+                "_doc": "#648 the SuperApp's Observability tab CARRIED WHOLE: C3StackFragment renders ui.sections[c3].stack_observability — the Index row, the FIVE feed cards (Analytics/github_run_stats, GHA/github_runs, Dagu/dagu_runs, GH Repos/github_commits, Gitea Repos/gitea_commits), the NTFY notification centre (stream=channels, last 5 per channel), and the More row."
               }
             ]
-          }
-        ]
-      },
-      {
-        "id": "observ",
-        "label": "Observ",
-        "icon": "ic_p_c3_workflows",
-        "_doc": "What the estate is doing. Today that is Health — the SuperApp's own page:c3/health, both tables with their counts in one view.",
-        "pages": [
-          {
-            "id": "observability",
-            "label": "Observability",
-            "icon": "ic_p_c3_workflows",
-            "_doc": "#648 the SuperApp's Observability tab CARRIED WHOLE: C3StackFragment renders ui.sections[c3].stack_observability — the Index row, the FIVE feed cards (Analytics/github_run_stats, GHA/github_runs, Dagu/dagu_runs, GH Repos/github_commits, Gitea Repos/gitea_commits), the NTFY notification centre (stream=channels, last 5 per channel), and the More row."
-          },
-          {
-            "id": "health",
-            "label": "Health",
-            "icon": "ic_p_c3_health"
-          },
-          {
-            "id": "dagu",
-            "label": "Dagu",
-            "icon": "ic_robot",
-            "_doc": "#648 the SuperApp's page:c3/dagu — libs:ops DaguFragment, the native DAG list with per-row Run buttons and the Authelia-bearer login whose server URL pre-fills from ui.sections[c3].pages[dagu].dagu_default_server. The same fragment the Dagu feed card's rows and the More row target."
-          },
-          {
-            "id": "mesh",
-            "label": "WG mesh",
-            "icon": "ic_wg",
-            "_doc": "#648 the SuperApp's page:wg/status — C3MeshFragment over the canonical wg-mesh/v1 snapshot (data/mesh.json), grouped by transport. It is the More row's 'WG mesh' target on the Observability stack, which is why it lives under this tab."
           }
         ]
       },

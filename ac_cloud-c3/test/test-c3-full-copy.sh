@@ -102,7 +102,7 @@ for key in ("labels", "scopes", "taxon"):
     if key not in (ui.get("ntfy") or {}):
         bad.append("ui.ntfy lost %r — part of the SuperApp catalog the cards resolve through" % key)
 # the six stub ids must NOT be declared as pages of this app's tabs (#648: no placeholder)
-for tab in ("infra", "containers", "observ", "ops", "configs"):
+for tab in ("infra", "containers", "orch", "ops", "configs"):
     sec = next((s for s in (ui.get("sections") or []) if s.get("id") == tab), {})
     for p in (sec.get("pages") or []):
         if p.get("id") in ("reports", "stack", "workflows", "vms", "logs", "gha"):
