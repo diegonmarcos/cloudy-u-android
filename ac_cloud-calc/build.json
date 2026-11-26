@@ -2215,7 +2215,7 @@
           {"id": "convert", "label": "Convert", "icon": "swap"},
           {"id": "history", "label": "History", "icon": "history"},
           {"id": "finance", "label": "Finance", "icon": "payments"},
-          {"id": "exchange", "label": "Exchange", "icon": "currency"},
+          {"id": "exchange", "label": "Exchange", "icon": "payments"},
           {"id": "datetime", "label": "Time & Date", "icon": "event", "redirect_from": ["tools"]},
           {"id": "sound", "label": "Sound", "icon": "graphic_eq"},
           {"id": "graph", "label": "Graph", "icon": "chart"},
