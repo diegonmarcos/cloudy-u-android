@@ -96,8 +96,8 @@ class ProjHome1937Test {
             val b = compose.onNodeWithTag(ProjHomeTags.banner(g.id)).fetchSemanticsNode().boundsInRoot
             assertTrue("${g.id} banner is empty (${b.height} high)", b.height > 50f && b.width > 50f)
             for (leaf in g.pages) {
-                grid.performScrollToNode(hasTestTag(ProjHomeTags.icon(leaf.id)))
-                val i = compose.onNodeWithTag(ProjHomeTags.icon(leaf.id)).fetchSemanticsNode().boundsInRoot
+                grid.performScrollToNode(hasTestTag(ProjHomeTags.tile(leaf.id)))
+                val i = compose.onNodeWithTag(ProjHomeTags.icon(leaf.id), useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
                 assertTrue("${leaf.id} icon is empty", i.height > 10f && i.width > 10f)
             }
         }

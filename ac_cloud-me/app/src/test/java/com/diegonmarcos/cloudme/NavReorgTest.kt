@@ -63,7 +63,7 @@ class NavReorgTest {
         val prof = Sections.byId("prof")!!
         assertEquals(listOf("Profiles", "Leaf.y", "Nexus.z", "Stark.x"), prof.pages.map { it.label })   // #1937 More (and Professional, Work, Study) removed by owner order
         assertEquals(listOf("prof-linkedin", "prof-cv"), ids(prof.page("prof-web")!!.pages))
-        for (gone in listOf("prof-profiles", "professional", "work", "study", "cv", "roadmap")) assertNull("$gone is removed", prof.page(gone))
+        for (gone in listOf("prof-profiles", "professional", "work", "study", "cv", "roadmap")) assertTrue("$gone is removed", prof.path(gone).isEmpty())
         assertEquals("prof-linkedin", leafOf("prof", null))   // #1918 Prof opens on Profiles > LinkedIn
         val proj = Sections.byId("proj")!!
         assertEquals(listOf("pj-home", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42", "pj-repos"), ids(proj.pages))
@@ -138,7 +138,6 @@ class NavReorgTest {
 
     @Test fun `each tile opens its own site and the URL is declared data in its page file`() {
         val want = listOf(
-            Triple("prof", "professional", "https://linkedin.com/in/diegonmarcos"),
             Triple("prof", "leafy", "https://diegonmarcos.github.io/leafy/"), Triple("prof", "nexus", "https://diegonmarcos.github.io/nexus/"),
             Triple("prof", "stark", "https://diegonmarcos.github.io/stark/"),
             Triple("pers", "personal", "https://diegonmarcos.com/"), Triple("pers", "ig0", "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html"),
