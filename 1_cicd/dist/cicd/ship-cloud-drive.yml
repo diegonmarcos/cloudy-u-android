@@ -368,6 +368,22 @@ jobs:
           SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
         run: sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR"
 
+      # #1934 the control sheet's result table from REAL results: every test id the table names, looked up in this run's JUnit XML (missing or failed = FAIL).
+      - name: Control sheet result table from the JUnit results (artifact)
+        if: ${{ always() && matrix.abi == 'arm64' }}
+        continue-on-error: true
+        run: |
+          mkdir -p control-sheet-results
+          python3 -I ac_cloud-drive/test/gen-git-control-sheet-results.py . --junit-root . --out control-sheet-results/git-control-sheet-results-observed.md --run-id "${{ github.run_id }}" --sha "${{ github.sha }}" || true
+      - name: Upload the observed control sheet result table
+        if: ${{ always() && matrix.abi == 'arm64' }}
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: git-control-sheet-results-observed
+          path: control-sheet-results/
+          if-no-files-found: warn
+
       # The A37 screenshots DriveScreenshotTest wrote (header with the Settings button, the Configs strip),
       # red or green, so the picture is reviewable without a phone.
       - name: Upload A37 screenshots (drive-screens)
