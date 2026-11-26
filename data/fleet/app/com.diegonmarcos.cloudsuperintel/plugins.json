@@ -26,9 +26,19 @@
    "title": "Performance plugins",
    "rows": [
     {
+     "title": "caveman",
+     "caption": "Status-bar registry plugin Caveman (env_set) · payload: tooling",
+     "end": ""
+    },
+    {
      "title": "compression-cloud-ai-plugin",
      "caption": "Steady-state context compression: per-turn/per-bash one-line principles pointer instead of re-injecting the full set every turn. Split from cloud-principles-ai-plugin. · payload: hooks 1",
      "end": "1.0.0 · on"
+    },
+    {
+     "title": "headroom",
+     "caption": "Status-bar registry plugin Headroom (env_set) · payload: tooling",
+     "end": ""
     },
     {
      "title": "hooks-stack-framework-principles-cloud-ai-plugin",
@@ -41,9 +51,49 @@
      "end": "1.0.0 · on"
     },
     {
+     "title": "rtk",
+     "caption": "Status-bar registry plugin RTK (env_set) · payload: tooling",
+     "end": ""
+    },
+    {
      "title": "sub-agents-cloud-ai-plugin",
      "caption": "Scaffold — reserved for future sub-agent / Task-tool orchestration principles. No active rules yet. Split from cloud-principles-ai-plugin. · payload: none yet",
      "end": "0.1.0 · on"
+    },
+    {
+     "title": "superset-mode",
+     "caption": "Status-bar registry plugin M (env_value) · payload: tooling",
+     "end": ""
+    }
+   ]
+  },
+  {
+   "title": "Registry plugins (SOT)",
+   "rows": [
+    {
+     "title": "headroom",
+     "caption": "status-bar registry: Headroom",
+     "end": "Sys"
+    },
+    {
+     "title": "ponytail",
+     "caption": "status-bar registry: Ponytail",
+     "end": "Sys"
+    },
+    {
+     "title": "rtk",
+     "caption": "status-bar registry: RTK",
+     "end": "Sys"
+    },
+    {
+     "title": "caveman",
+     "caption": "status-bar registry: Caveman",
+     "end": "Sys"
+    },
+    {
+     "title": "superset-mode",
+     "caption": "status-bar registry: M",
+     "end": ""
     }
    ]
   },

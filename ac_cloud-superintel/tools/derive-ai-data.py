@@ -97,7 +97,8 @@ def payload(d):
     return kinds
 KIND_CLASS = {"skills": "skills", "commands": "skills", "agents": "skills", "hooks": "performance", "mcp": "performance", "lsp": "performance", "output-styles": "performance"}
 plugin_dirs = sorted(n for n in os.listdir(mp) if os.path.isdir(os.path.join(mp, n)) and os.path.exists(os.path.join(mp, n, ".claude-plugin/plugin.json")))
-universe = sorted(set(plugin_dirs) | {k.split("@")[0] for k in enabled})
+registry = {e["id"]: e for e in J("claude-plugins.json")["plugins"]}   # the status-bar registry: tooling plugins (no marketplace folder)
+universe = sorted(set(plugin_dirs) | {k.split("@")[0] for k in enabled} | set(registry))
 errors = []
 for n in universe:
     if n not in cls["plugins"]: errors.append("plugin %s has no class in plugin-classes.json" % n)
@@ -106,7 +107,12 @@ for n in cls["plugins"]:
     elif cls["plugins"][n].get("primary") not in CLASS_ORDER: errors.append("plugin %s declares class %r (want skills or performance)" % (n, cls["plugins"][n].get("primary")))
 class_rows = {c: [] for c in CLASS_ORDER}
 for n in universe:
-    if n not in cls["plugins"] or n not in plugin_dirs: continue
+    if n not in cls["plugins"]: continue
+    if n not in plugin_dirs:   # registry-only plugin: tooling payload, so performance
+        if cls["plugins"][n].get("primary") != "performance": errors.append("registry plugin %s is tooling, declared %r (want performance)" % (n, cls["plugins"][n].get("primary")))
+        r = registry[n]; det = r.get("detect", {})
+        class_rows["performance"].append(row(n, "Status-bar registry plugin " + r.get("label", n) + " (" + det.get("type", "?") + ") · payload: tooling", ""))
+        continue
     d = os.path.join(mp, n)
     meta = json.load(open(os.path.join(d, ".claude-plugin/plugin.json")))
     kinds = payload(d)
@@ -124,6 +130,7 @@ if errors:
 plug = [
     grp(cls["classes"]["skills"], class_rows["skills"]),
     grp(cls["classes"]["performance"], class_rows["performance"]),
+    grp("Registry plugins (SOT)", [row(k, "status-bar registry: " + v.get("label", k), v.get("group", "")) for k, v in registry.items()]),
     grp("Enabled plugins (SOT)", [row(k.split("@")[0], "@" + k.split("@")[1], "on" if v else "off") for k, v in enabled.items()]),
     grp("c3-infra plugin", [row(pj.get("name", "c3-infra"), pj.get("description", ""), pj.get("version", ""))]),
     grp("Skills", [row("c3-infra", desc)]),

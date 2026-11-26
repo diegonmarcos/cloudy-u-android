@@ -106,7 +106,8 @@ class AiPagesTest {
         val g = AiData.groups(Data.ai("plugins.json")).associate { it.title to it.rows }
         val skills = g.getValue("Skills plugins").map { it.title }
         val perf = g.getValue("Performance plugins").map { it.title }
-        val all = g.getValue("Enabled plugins (SOT)").map { it.title }
+        val all = (g.getValue("Enabled plugins (SOT)") + g.getValue("Registry plugins (SOT)")).map { it.title }.distinct()   // marketplace plugins and the status-bar registry ones (ponytail is both)
+        assertTrue(listOf("headroom", "rtk", "caveman").all { it in all })
         assertTrue(skills.isNotEmpty() && perf.isNotEmpty())
         assertEquals(all.sorted(), (skills + perf).sorted())
         assertTrue("no plugin in both groups", skills.intersect(perf.toSet()).isEmpty())

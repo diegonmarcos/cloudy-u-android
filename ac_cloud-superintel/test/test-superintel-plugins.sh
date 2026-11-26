@@ -20,7 +20,7 @@ def read(p):
     with open(p, encoding="utf-8") as f: return f.read()
 fl = os.path.join(app, "../data/fleet/app/com.diegonmarcos.cloudsuperintel")
 seed = os.path.join(app, "app/src/main/assets/si/seed")
-SK, PF, EN = "Skills plugins", "Performance plugins", "Enabled plugins (SOT)"
+SK, PF, EN, RG = "Skills plugins", "Performance plugins", "Enabled plugins (SOT)", "Registry plugins (SOT)"
 pj = json.loads(read(os.path.join(fl, "pages.json")))["pages"]
 plug = json.loads(read(os.path.join(fl, "plugins.json")))["groups"]
 by = {g["title"]: [r for r in g["rows"]] for g in plug}
@@ -31,11 +31,14 @@ sel = src[0]["groups"] if src else []
 if SK not in sel or PF not in sel: bad.append("L1 the plugins page does not select both class groups")
 elif sel.index(SK) != 0 or sel.index(PF) != 1: bad.append("L1 the class groups must come first on the plugins page")
 if not any(re.fullmatch(p, EN) for p in sel): bad.append("L1 the plugins page lost the Enabled plugins group")
-for t in (SK, PF, EN):
+if not any(re.fullmatch(p, RG) for p in sel): bad.append("L1 the plugins page lost the Registry plugins group")
+for n in ("headroom", "rtk", "caveman"):
+    if n not in [r["title"] for r in by.get(RG, [])]: bad.append("L2 registry plugin %s is missing from the Registry group" % n)
+for t in (SK, PF, EN, RG):
     if t not in by: bad.append("L1 plugins.json has no group %r" % t)
 
 # L2
-universe = [r["title"] for r in by.get(EN, [])]
+universe = [r["title"] for r in by.get(EN, []) + by.get(RG, [])]   # the marketplace plugins and the status-bar registry plugins (headroom, rtk, caveman ...)
 if not universe: bad.append("L2 the enabled-plugins list is empty")
 for n in sorted(set(universe)):
     homes = [t for t in (SK, PF) if any(r["title"] == n for r in by.get(t, []))]
@@ -66,6 +69,10 @@ if read(os.path.join(seed, "pages.json")) != read(os.path.join(fl, "pages.json")
 sot = os.environ.get("CLAUDE_SOT_DIR", "")
 if sot and os.path.isfile(os.path.join(sot, "plugin-classes.json")):
     pc = json.loads(read(os.path.join(sot, "plugin-classes.json")))
+    rp = os.path.join(sot, "claude-plugins.json")
+    if os.path.exists(rp):
+        for e in json.loads(read(rp))["plugins"]:
+            if e["id"] not in pc["plugins"]: bad.append("L5 registry plugin %s has no declared class" % e["id"])
     for n, v in pc["plugins"].items():
         if v.get("primary") not in pc["classes"]: bad.append("L5 SOT plugin %s has no valid class" % n)
     mp = os.path.join(sot, "cloud-marketplace")
@@ -99,7 +106,14 @@ mutant "the page drops a class group" "sed -i 's/\"Performance plugins\",//' $FL
 mutant "the Enabled group is dropped" "python3 -c \"import json;p='$FL/pages.json';d=json.load(open(p));d['pages']['plugins']['sources'][0]['groups']=['Skills plugins','Performance plugins'];json.dump(d,open(p,'w'))\"" "L1 the plugins page lost the Enabled plugins group"
 mutant "a badge points at its own class" "python3 -c \"${PYP}r=g['Skills plugins']['rows'][0];r['caption']=r['caption'].replace('also Performance','also Skills');json.dump(d,open(p,'w'))\"" "L3 Skills plugins row c3-infra has a badge"
 mutant "a mixed plugin loses its badge" "python3 -c \"${PYP}r=g['Skills plugins']['rows'][0];r['caption']=r['caption'].replace(' · also Performance (hooks)','');json.dump(d,open(p,'w'))\"" "L3 Skills plugins row c3-infra: the badge must show"
+mutant "a registry plugin is in no group" "python3 -c \"${PYP}g['Performance plugins']['rows']=[r for r in g['Performance plugins']['rows'] if r['title']!='headroom'];json.dump(d,open(p,'w'))\"" "L2 plugin headroom is in 0 class groups"
+mutant "a registry plugin leaves the registry group" "python3 -c \"${PYP}g['Registry plugins (SOT)']['rows']=[r for r in g['Registry plugins (SOT)']['rows'] if r['title']!='rtk'];json.dump(d,open(p,'w'))\"" "L2 registry plugin rtk is missing"
+mutant "a registry plugin is in both groups" "python3 -c \"${PYP}g['Skills plugins']['rows'].append({'title':'caveman','caption':'x · payload: tooling','end':''});json.dump(d,open(p,'w'))\"" "L2 plugin caveman is in 2 class groups"
+mutant "the page drops the registry group" "sed -i 's/\"Registry plugins [\\\\]*(SOT[\\\\]*)\",//' $FL/pages.json" "L1 the plugins page lost the Registry plugins group"
 mutant "the seed drifts"              "echo ' ' >> app/src/main/assets/si/seed/plugins.json" "L4 the cold-start seed plugins.json differs"
+SOTR="$W/sotr"; mkdir -p "$SOTR/cloud-marketplace"; echo '{"plugins":[{"id":"zap"}]}' > "$SOTR/claude-plugins.json"
+echo '{"classes":{"skills":"Skills plugins","performance":"Performance plugins"},"plugins":{}}' > "$SOTR/plugin-classes.json"
+if out="$(CLAUDE_SOT_DIR="$SOTR" check "$APP" 2>&1)"; then bad "mutant 'a registry plugin is unclassified' stayed green"; elif grep -q -- "L5 registry plugin zap has no declared class" <<<"$out"; then ok "mutant 'a registry plugin is unclassified' is red (L5)"; else bad "wrong reason: $out"; fi
 SOTW="$W/sot"; mkdir -p "$SOTW/cloud-marketplace/p1/.claude-plugin"; echo '{}' > "$SOTW/cloud-marketplace/p1/.claude-plugin/plugin.json"
 echo '{"classes":{"skills":"Skills plugins","performance":"Performance plugins"},"plugins":{}}' > "$SOTW/plugin-classes.json"
 if out="$(CLAUDE_SOT_DIR="$SOTW" check "$APP" 2>&1)"; then bad "mutant 'the SOT leaves a plugin unclassified' stayed green"; elif grep -q -- "L5 SOT plugin p1 has no declared class" <<<"$out"; then ok "mutant 'the SOT leaves a plugin unclassified' is red (L5)"; else bad "wrong reason: $out"; fi
