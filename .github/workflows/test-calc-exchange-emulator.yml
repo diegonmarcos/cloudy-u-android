@@ -52,6 +52,12 @@ jobs:
           [ -n "$pick" ] || { echo "::error::no Cloud Calc APK"; exit 1; }
           cp "$pick" calc.apk
 
+      - name: Fetch Cloud-Lib-Calc.apk (the engine that downloads the ECB rates)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: gh release download latest -R "$REPO" -p Cloud-Lib-Calc.apk -D lib && cp lib/Cloud-Lib-Calc.apk libcalc.apk
+
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
@@ -70,7 +76,7 @@ jobs:
           target: google_apis
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
-          script: bash ac_cloud-calc/test/emulator-exchange.sh calc.apk out
+          script: bash ac_cloud-calc/test/emulator-exchange.sh calc.apk out libcalc.apk
 
       # The runner sometimes hands over an emulator adb reports offline; a second boot is the remedy, not a weaker test.
       - name: Boot emulator + walk Exchange (attempt 2)
@@ -83,7 +89,7 @@ jobs:
           target: google_apis
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
-          script: bash ac_cloud-calc/test/emulator-exchange.sh calc.apk out
+          script: bash ac_cloud-calc/test/emulator-exchange.sh calc.apk out libcalc.apk
 
       - name: Upload evidence (screenshot, ui dump, console, logcat)
         if: always()

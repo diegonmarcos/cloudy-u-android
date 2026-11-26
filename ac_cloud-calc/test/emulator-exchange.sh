@@ -2,9 +2,11 @@
 # Emulator walk (#1945): Calc > Finance > Exchange, dark theme, 1080x2400 @420dpi. Shot: the Exchange page; asserts by uiautomator dump the
 # source card ("You convert"), the four default target cards with their unit-rate lines, the add action and the footer texts.
 # Rates come from the engine (Cloud-Lib-Calc), which may be absent on the emulator: the page then shows its cached/offline state, still asserted.
-# Usage: emulator-exchange.sh <calc.apk> <outdir>
+# Two cases on one emulator: OFFLINE (Cloud-Lib-Calc not installed: no engine, cached/never state) then ONLINE (Cloud-Lib-Calc installed, the page
+# loads the ECB rates through the engine: a numeric amount, a "1 INR -> 0.0xxx" line and a real Last-updated date are asserted).
+# Usage: emulator-exchange.sh <calc.apk> <outdir> [<lib-calc.apk>]  (no lib apk = the offline case only)
 set -u
-APK=${1:?calc apk}; OUT=${2:-out}
+APK=${1:?calc apk}; OUT=${2:-out}; LIB=${3:-}
 PKG=com.diegonmarcos.cloudcalc
 mkdir -p "$OUT/shots"
 fail() { echo "::error title=Calc Exchange::$*"; adb exec-out screencap -p > "$OUT/shots/fail.png" 2>/dev/null; adb logcat -d -v threadtime > "$OUT/logcat.txt" 2>/dev/null; exit 1; }
@@ -27,21 +29,53 @@ swipe() { local W H; read -r W H < <(adb shell wm size | tr -d '\r' | tail -1 | 
 adb shell cmd uimode night yes; adb shell wm size 1080x2400; adb shell wm density 420
 adb install -r -g "$APK" || fail "install failed"
 act=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
-for i in 1 2 3; do
-  adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard >/dev/null 2>&1 || true
-  timeout 120 adb shell am start -W -n "$act" >/dev/null; sleep 8
-  dump | grep -q "package=\"$PKG\"" && break
+
+# walk <case> <wait-seconds>: cold start Calc, open Exchange, wait, shoot the top, scroll, shoot the bottom.
+walk() {
+  adb shell am force-stop "$PKG"; sleep 2
+  for i in 1 2 3; do
+    adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard >/dev/null 2>&1 || true
+    timeout 120 adb shell am start -W -n "$act" >/dev/null; sleep 8
+    dump | grep -q "package=\"$PKG\"" && break
+  done
+  dump | grep -q "package=\"$PKG\"" || fail "$1: Calc never came to the front"
+  tap '^Exchange$' || fail "$1: no Exchange page pill in Calc: $(texts)"
+  sleep "$2"; dump >/dev/null
+  shot "$1-01-exchange"
+  for w in 'You convert' 'INR'; do has "$w" || fail "$1: Exchange lacks $w: $(texts)"; done
+  for c in USD EUR GBP BRL; do has "$c" || fail "$1: no target card $c: $(texts)"; grep -qE "text=\"1 INR . [^\"]* $c\"" "$OUT/ui.xml" || fail "$1: no unit-rate line for $c: $(texts)"; done
+}
+# scrolled part: the add action and the footer
+bottom() {
+  swipe 80 30; sleep 2; dump >/dev/null; shot "$1-02-exchange-bottom"
+  for w in 'Add another currency' 'Mid-market rates'; do has "$w" || fail "$1: Exchange lacks $w: $(texts)"; done
+  grep -qE 'text="(Offline . )?Last updated: ' "$OUT/ui.xml" || fail "$1: no last-updated footer: $(texts)"
+  grep -oE 'text="(Offline . )?Last updated: [^"]*"' "$OUT/ui.xml" | head -1 | tee "$OUT/footer-$1.txt"
+}
+
+# ── OFFLINE: no engine installed ──
+adb uninstall com.diegonmarcos.cloudlib.calc >/dev/null 2>&1 || true
+walk offline 12; bottom offline
+grep -q 'Last updated: never' "$OUT/footer-offline.txt" || echo "note: offline footer is not 'never': $(cat "$OUT/footer-offline.txt")"
+echo "OFFLINE case: layout shown with no engine"
+[ -n "$LIB" ] || { adb logcat -d -v threadtime > "$OUT/logcat.txt" 2>/dev/null; exit 0; }
+
+# ── ONLINE: Cloud-Lib-Calc installed, the page loads rates through the engine ──
+adb install -r -g "$LIB" || fail "Cloud-Lib-Calc install failed"
+adb shell pm list packages | grep -i "cloudlib" > "$OUT/lib-packages.txt" 2>&1 || true
+walk online 5
+ok=0
+for i in 1 2 3 4 5 6 7 8 9 10 11 12; do   # up to ~60 s for the engine's ECB download and the table read
+  dump >/dev/null
+  if grep -qE 'text="1 INR . 0\.0[0-9]+ USD"' "$OUT/ui.xml"; then ok=1; break; fi
+  sleep 5
 done
-dump | grep -q "package=\"$PKG\"" || fail "Calc never came to the front"
-tap '^Exchange$' || fail "no Exchange page pill in Calc: $(texts)"
-sleep 12; dump >/dev/null
-shot 01-exchange
-for w in 'You convert' 'INR'; do has "$w" || fail "Exchange lacks $w: $(texts)"; done
-for c in USD EUR GBP BRL; do has "$c" || fail "no target card $c: $(texts)"; grep -qE "text=\"1 INR . [^\"]* $c\"" "$OUT/ui.xml" || fail "no unit-rate line for $c: $(texts)"; done
-# The add action and the footer sit below the four cards: scroll once, shoot again.
-swipe 80 30; sleep 2; dump >/dev/null; shot 02-exchange-bottom
-for w in 'Add another currency' 'Mid-market rates'; do has "$w" || fail "Exchange lacks $w: $(texts)"; done
-grep -qE 'text="(Offline . )?Last updated: ' "$OUT/ui.xml" || fail "no last-updated footer: $(texts)"
-grep -oE 'text="(Offline . )?Last updated: [^"]*"' "$OUT/ui.xml" | head -1 | tee "$OUT/footer.txt"
-adb logcat -d -v threadtime > "$OUT/logcat.txt" 2>/dev/null
-echo "Exchange walk: source card, 4 target cards with unit rates, add action, footer shown"
+shot online-01-exchange
+logcat_tail() { adb logcat -d -v threadtime > "$OUT/logcat.txt" 2>/dev/null; }
+[ "$ok" = 1 ] || { logcat_tail; grep -iE "calc|qalc|rates|fetch" "$OUT/logcat.txt" | tail -40 > "$OUT/engine-log.txt"; fail "online: no '1 INR -> 0.0xxx USD' line, the rates did not load: $(texts)"; }
+n=$(grep -oE 'text="[0-9][0-9,]*\.[0-9]{2}"' "$OUT/ui.xml" | sort -u | grep -vc '858.02')
+[ "$n" -ge 1 ] || fail "online: no numeric converted amount on a target card: $(texts)"
+bottom online
+grep -qE 'Last updated: [0-9]{1,2} [A-Za-z]{3} 20[0-9]{2}, [0-9]{2}:[0-9]{2}' "$OUT/footer-online.txt" || fail "online: the footer shows no real date: $(cat "$OUT/footer-online.txt")"
+logcat_tail
+echo "ONLINE case: rates loaded through Cloud-Lib-Calc, numeric amounts, unit-rate lines and a real Last-updated date"
