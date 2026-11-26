@@ -249,43 +249,46 @@ sys.exit(1 if bad else 0)
 PY
 }
 
-# d8 <app dir> : #2 Filters is ONE page-wide row above the project strip
+# d8 <app dir> : #1941 the page-wide Filters row is gone; each page draws its own Filters row under Topology | Table
 d8() { python3 - "$1" <<'PY'
-import re, sys
+import os, re, sys
 app = sys.argv[1]; K = app + "/app/src/main/java/com/diegonmarcos/cloudc3/"
 rd = lambda f: open(K + f, encoding="utf-8").read()
-rt, st, pg, tf = rd("pages/RoutesTable.kt"), rd("cloud/C3StackFragment.kt"), rd("pages/PagedFragment.kt"), rd("pages/TabFragments.kt")
+rt, st, cp, tf = rd("pages/RoutesTable.kt"), rd("cloud/C3StackFragment.kt"), rd("pages/ContainersPage.kt"), rd("pages/TabFragments.kt")
 bad = []
-m = re.search(r"fun KindBar\(.*?\n}\n", rt, flags=re.S)
-if not m or 'Text("Filters"' not in m.group(0): bad.append("the kind row is not labelled Filters")
-if re.search(r'ChipRow\("Kind"', rt): bad.append("a Kind chip row is left")
-if len(re.findall(r"\bKindBar\(", rt + st + tf)) != 2: bad.append("KindBar must be defined once and called once (ContainersFragment.AboveStrip), not per page")
-if "AboveStrip()" not in pg or pg.index("AboveStrip()") > pg.index("NavBarTopSecondRow("): bad.append("PagedFragment does not draw AboveStrip before the project strip")
-if not re.search(r"class ContainersFragment.*?override fun AboveStrip\(\) = KindBar", tf, flags=re.S): bad.append("ContainersFragment does not draw Filters above the strip")
-for name, src in (("Topology (C3StackFragment)", st), ("Table (RoutesTableFragment)", rt)):
-    if "ContainerFilter.kind" not in src: bad.append("%s does not read the page-wide ContainerFilter" % name)
+allsrc = ""
+for dp, _d, files in os.walk(K):
+    for f in files:
+        if f.endswith(".kt"): allsrc += open(os.path.join(dp, f), encoding="utf-8").read()
+if "KindBar" in allsrc: bad.append("the page-wide KindBar row is still defined or called")
+if "ContainerFilter.kind" in allsrc: bad.append("a page still reads the page-wide kind selection")
+if 'Text("Filters"' in allsrc: bad.append("a Filters label is still drawn")
+if re.search(r'ChipRow\("Light"', rt): bad.append("the Table still labels its status filter Light")
+for lab in ("Status", "Auth", "VM", "Project", "Type"):
+    if not re.search(r'ChipRow\("%s"' % lab, rt): bad.append("the Table lacks its %s filter row" % lab)
+for lab in ("Status", "VM", "Type"):
+    if not re.search(r'ChipRow\("%s"' % lab, cp): bad.append("the Topology lacks its %s filter row" % lab)
+order = [cp.find(x) for x in ("ContainersTags.ROW_CATEGORY)", "ContainersTags.ROW_PROJECT)", "ContainersTags.ROW_VIEW)", "ContainersTags.ROW_FILTERS)")]
+if -1 in order or order != sorted(order): bad.append("the Containers rows are not category, project, Topology | Table, Filters in that order")
+if "ContainerFilter.types" not in st: bad.append("Topology (C3StackFragment) does not read the Topology filters")
+if "ContainersChrome(" not in tf: bad.append("ContainersFragment does not draw the four rows")
 for b in bad: print("    " + b)
 sys.exit(1 if bad else 0)
 PY
 }
 
-# d9 <app dir> : #4 every project tab shows data; the Topology draws one card per scoped group (no static group-id filter)
+# d9 <app dir> : #4 every repo is in a declared project, Lib shows its library repo; the Topology draws one card per scoped group (no static group-id filter)
 d9() { python3 - "$1" <<'PY'
 import json, sys
 app = sys.argv[1]
 cp = json.load(open(app + "/data/container_projects.json", encoding="utf-8"))
 rd = json.load(open(app + "/data/repos_declared.json", encoding="utf-8"))
-cd = json.load(open(app + "/data/containers_declared.json", encoding="utf-8"))
 bad = []
 count = {p["id"]: 0 for p in cp["projects"]}
 for r in rd["repos"]:
     if r["project"] not in count: bad.append("repo %r is in the undeclared project %r" % (r["name"], r["project"]))
     else: count[r["project"]] += 1
-for c in cd["containers"]:
-    pid = cp["name_overrides"].get(c["name"]) or next((p["id"] for p in cp["projects"] if any(c.get("dir", "").startswith(x) for x in p["folder_prefix"]) or any(c["name"].startswith(x) for x in p["name_prefix"])), cp["default"])
-    if pid in count: count[pid] += 1
-for pid, n in count.items():
-    if n == 0: bad.append("project %r shows nothing: no container and no repo" % pid)
+if count.get("lib", 0) == 0: bad.append("project 'lib' shows nothing: no library repo")
 kt = open(app + "/app/src/main/java/com/diegonmarcos/cloudc3/cloud/C3StackFragment.kt", encoding="utf-8").read()
 if "shownPanels(panels)" not in kt or "dashGroupIds = listOf(g.id)" not in kt: bad.append("the Topology does not draw one card per scoped group: a group id outside the panels' static list would be dropped (the root cause of the empty tabs)")
 for b in bad: print("    " + b)
@@ -305,10 +308,11 @@ seen = {}
 for p in cp["projects"]:
     fams = rd["projects"].get(p["id"], {}).get("families") or []
     if p.get("repo_group"): continue
-    if not fams: bad.append("project %r declares no registry families" % p["id"])
+    if not fams: continue   # #1941 a Cloud Me project with no registry repo has no family yet
     if macro & set(fams): bad.append("project %r repeats a Cloudy macro group" % p["id"])
-    if tuple(fams) in seen: bad.append("projects %r and %r share one family list" % (p["id"], seen[tuple(fams)]))
-    seen[tuple(fams)] = p["id"]
+    # sibling projects of one category (the 42 projects) may share a registry family; two categories never do
+    if tuple(fams) in seen and seen[tuple(fams)][1] != p.get("category"): bad.append("projects %r and %r share one family list" % (p["id"], seen[tuple(fams)][0]))
+    seen[tuple(fams)] = (p["id"], p.get("category"))
     for r in rd["repos"]:
         if r["project"] == p["id"] and r["group"] not in fams: bad.append("repo %r sits in %r, not a family of %r" % (r["name"], r["group"], p["id"]))
 for n, f in cp.get("container_family", {}).items():
@@ -344,8 +348,8 @@ d4 "$APP" && pass "D4 the platform rows are declared, reach the slice, and the I
 d5 "$APP" && pass "D5 no personal email address and no secret-shaped value in the app tree; the private source is a declaration" || fail "D5 a personal address, a secret value or an undeclared private source"
 d6 "$APP" && pass "D6 the APIs row and its groups are declared; a secret is a name only" || fail "D6 the APIs row is not declarative or a secret is not a name"
 d7 "$APP" && pass "D7 no tab has a Project Apps table or macro group" || fail "D7 Project Apps is back on a tab"
-d8 "$APP" && pass "D8 Filters is one page-wide row above the project tabs, read by Topology and Table" || fail "D8 the Filters row is not page-wide"
-d9 "$APP" && pass "D9 every project tab shows data and the Topology draws one card per scoped group" || fail "D9 a project tab is empty"
+d8 "$APP" && pass "D8 no page-wide Filters row; each page draws its own Filters under Topology | Table" || fail "D8 the page-wide Filters row is back or a page lacks its own"
+d9 "$APP" && pass "D9 every repo is in a declared project, Lib shows its repo, and the Topology draws one card per scoped group" || fail "D9 a repo has no project, Lib is empty or the Topology drops a group"
 d10 "$APP" && pass "D10 Infra Apps and Cloud Apps are Cloudy's only; every other project has its own families" || fail "D10 a project repeats Cloudy's groups or lacks families"
 d11 "$APP" && pass "D11 both Google Apps Script environments are declared Containers-Node-Python platforms and reach the slice" || fail "D11 a Google Apps Script platform is missing"
 
@@ -379,7 +383,7 @@ json.dump(d, open(p, "w"), indent=2)
 PY
 }
 append() { printf '%s\n' "$2" >> "$1"; }
-m_kt_project()   { append "$1/$KT/pages/TabFragments.kt" 'val projectsTyped = listOf("Hardtech", "Capital")'; }
+m_kt_project()   { append "$1/$KT/pages/TabFragments.kt" 'val projectsTyped = listOf("Hardtech_CAD", "Capital_PM")'; }
 m_kt_platform()  { append "$1/$KT/pages/InfraPages.kt" 'val platformsTyped = listOf("Google Firebase")'; }
 m_kt_prefix()    { append "$1/$KT/pages/ContainerProjects.kt" 'val folderTyped = "user-fin_"'; }
 m_no_switch()    { pyjson "$1/build.json" 'next(s for s in d["ui"]["sections"] if s["id"]=="containers")["pages"][2]["pages"].pop()'; }
@@ -409,15 +413,17 @@ import json, sys
 p = sys.argv[1]; d = json.load(open(p)); d["group_remap"] = {}; json.dump(d, open(p, "w"))
 PY
 }
-m_filters_row()  { sed -i 's/Text("Filters"/Text("Kind"/' "$1/$KT/pages/RoutesTable.kt"; }
+m_filters_row()  { sed -i 's/ChipRow("Status")/ChipRow("Light")/' "$1/$KT/pages/RoutesTable.kt"; }
+m_kindbar_back() { append "$1/$KT/pages/RoutesTable.kt" 'fun KindBar() {}'; }
+m_rows_swap()    { sed -i 's/ContainersTags.ROW_FILTERS)/ContainersTags.ROW_ZZZ)/; s/ContainersTags.ROW_CATEGORY)/ContainersTags.ROW_FILTERS)/' "$1/$KT/pages/ContainersPage.kt"; }
 m_empty_tab()    { python3 - "$1/data/repos_declared.json" <<'PY'
 import json, sys
-p = sys.argv[1]; d = json.load(open(p)); d["repos"] = [r for r in d["repos"] if r["project"] != "hardtech"]; json.dump(d, open(p, "w"))
+p = sys.argv[1]; d = json.load(open(p)); d["repos"] = [r for r in d["repos"] if r["project"] != "lib"]; json.dump(d, open(p, "w"))
 PY
 }
 m_fam_repeat()   { python3 - "$1/data/repos_declared.json" <<'PY'
 import json, sys
-p = sys.argv[1]; d = json.load(open(p)); d["projects"]["cg"]["families"].append("Infra Apps"); json.dump(d, open(p, "w"))
+p = sys.argv[1]; d = json.load(open(p)); d["projects"]["pj-cg-omniverse"]["families"].append("Infra Apps"); json.dump(d, open(p, "w"))
 PY
 }
 m_no_source()    { pyjson "$1/build.json" 'del d["ui"]["private_sources"]'; }
@@ -437,8 +443,10 @@ mutate "a 4th address lands in public_identities.json"    d5 m_email_data
 mutate "an allowed address is copied into another file"   d5 m_email_other
 mutate "the private source declaration is removed"       d5 m_no_source
 mutate "Project Apps is no longer remapped"              d7 m_ps_card
-mutate "the Filters label is renamed back to Kind"       d8 m_filters_row
-mutate "a project tab has no container and no repo"      d9 m_empty_tab
+mutate "the Status filter is renamed back to Light"      d8 m_filters_row
+mutate "the page-wide KindBar row comes back"            d8 m_kindbar_back
+mutate "the Filters row is no longer under the view row" d8 m_rows_swap
+mutate "Lib has no repo"                                 d9 m_empty_tab
 mutate "a project repeats Infra Apps"                    d10 m_fam_repeat
 mutate "a provider name is typed into Kotlin"            d1 m_kt_provider
 mutate "an API group page id is typed into Kotlin"       d1 m_kt_group
