@@ -290,12 +290,13 @@ internal fun SecondRowTab(
     ) {
         // #1157 a tab ALWAYS draws its icon: the host's painter, else the declared Material symbol (never a letter).
         val painter = iconFor(page) ?: rememberVectorPainter(SecondRowIcons.vector(page.icon))
-        Icon(painter, null, Modifier.size(SecondRowSpec.ICON).testTag(SecondRowTags.icon(page.id)), tint = ink)
+        // #1937 a page declared `emoji_only` draws its label alone (the label carries its own emoji): no glyph, so no default globe or link icon
+        if (!page.emojiOnly) Icon(painter, null, Modifier.size(SecondRowSpec.ICON).testTag(SecondRowTags.icon(page.id)), tint = ink)
         AnimatedVisibility(
-            named, enter = fadeIn() + expandHorizontally(), exit = fadeOut() + shrinkHorizontally(),
+            named || page.emojiOnly, enter = fadeIn() + expandHorizontally(), exit = fadeOut() + shrinkHorizontally(),
         ) {
             Text(
-                page.label, Modifier.padding(start = 6.dp).testTag(SecondRowTags.label(page.id)),
+                page.label, Modifier.padding(start = if (page.emojiOnly) 0.dp else 6.dp).testTag(SecondRowTags.label(page.id)),
                 color = ink, fontSize = SecondRowSpec.LABEL, fontWeight = if (on) FontWeight.Bold else FontWeight.Medium,
                 maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis,
             )

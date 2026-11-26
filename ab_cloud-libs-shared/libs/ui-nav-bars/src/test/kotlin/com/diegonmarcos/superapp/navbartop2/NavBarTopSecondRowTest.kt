@@ -64,6 +64,16 @@ class NavBarTopSecondRowTest {
         }
     }
 
+    @Test fun `an emoji_only tab draws no glyph and always its name (#1937), a sibling without the flag still draws its icon`() {
+        val ps = listOf(NavPage("e1", "E1", "folder", emojiOnly = true), NavPage("e2", "E2", "folder", emojiOnly = true), NavPage("n1", "N1", "folder"))
+        compose.setContent { NavBarTopSecondRow(ps, "e1", {}, dark = true, compact = true) }
+        compose.waitForIdle()
+        compose.onNodeWithTag(SecondRowTags.icon("e1"), useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithTag(SecondRowTags.icon("e2"), useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithTag(SecondRowTags.label("e2"), useUnmergedTree = true).assertExists()   // compact would hide a name; an emoji-only tab has nothing else
+        compose.onNodeWithTag(SecondRowTags.icon("n1"), useUnmergedTree = true).assertExists()
+    }
+
     @Test fun `compact keeps only the selected name and shortens the tab, the icons stay`() {
         compose.setContent { NavBarTopSecondRow(pages(3), "p2", {}, dark = true, compact = true) }
         compose.waitForIdle()

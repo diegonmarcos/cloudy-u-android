@@ -34,6 +34,13 @@ class NavModesTest {
         assertEquals(SecondRowMode.OneRow, d.section("z")!!.rows)
     }
 
+    @Test fun `emoji_only and separator_before are read per page, both false when absent (#1937)`() {
+        val json = """[{"id":"x","label":"X","icon":"i","pages":[{"id":"a","label":"A","icon":"i"},{"id":"b","label":"B","icon":"i","emoji_only":true,"separator_before":true}]}]"""
+        val pages = NavDecl.parse(json).section("x")!!.pages
+        assertEquals(listOf(false, true), pages.map { it.emojiOnly })
+        assertEquals(listOf(false, true), pages.map { it.separatorBefore })
+    }
+
     @Test fun `the user's choice overrides the declaration per section and clearing it restores the declaration`() {
         val store = MemoryNavModeStore()
         assertSame(section, section.effective(store))

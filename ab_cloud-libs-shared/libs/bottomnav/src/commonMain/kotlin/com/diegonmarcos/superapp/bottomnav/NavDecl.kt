@@ -123,6 +123,8 @@ public data class NavPage(
     val background: PageBackground? = null,
     /** True: a "|" group separator is drawn on the strip just before this page (a declared group boundary, not a page). */
     val separatorBefore: Boolean = false,
+    /** True (`emoji_only`): the strip chip draws NO glyph, only its label (an emoji + text label). Additive and opt-in; the declared [icon] stays (the icon guards still hold it). */
+    val emojiOnly: Boolean = false,
 ) {
     /** The tab that actually renders when this one is selected, walked all the way down. */
     public fun leaf(): NavPage = pages.firstOrNull()?.leaf() ?: this
@@ -300,7 +302,7 @@ public class NavDecl(
             (a as? List<*>)?.mapNotNull { e ->
                 val o = e as? Map<*, *> ?: return@mapNotNull null
                 val id = o.text("id").ifBlank { return@mapNotNull null }
-                NavPage(id, o.text("label", id), o.text("icon"), o.text("action"), pages(o["pages"]), PageBackground.of(o.text("background")), o["separator_before"] == true)
+                NavPage(id, o.text("label", id), o.text("icon"), o.text("action"), pages(o["pages"]), PageBackground.of(o.text("background")), o["separator_before"] == true, o["emoji_only"] == true)
             } ?: emptyList()
     }
 }
