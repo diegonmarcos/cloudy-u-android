@@ -12,6 +12,8 @@ $T adb install -r -g "$ME_APK" || { echo "install failed"; exit 1; }
 $T adb shell settings put global window_animation_scale 0
 $T adb shell locksettings set-disabled true; $T adb shell settings put system screen_off_timeout 1800000
 $T adb shell cmd uimode night yes
+# a phone, not the emulator default (320x640 at 160 dpi): portrait 1080x2400 at 420 dpi, as the owner's device
+$T adb shell wm size 1080x2400; $T adb shell wm density 420
 wake() { $T adb shell svc power stayon true; $T adb shell input keyevent KEYCODE_WAKEUP; $T adb shell wm dismiss-keyguard; }
 launcher() { $T adb shell cmd package resolve-activity --brief -c android.intent.category.LAUNCHER "$1" | tail -1 | tr -d '\r'; }
 open_page() { wake; $T adb shell am start -W -n "$(launcher "$ME")" -f 0x14000000 --es shortcut_action "$1" >/dev/null; }
