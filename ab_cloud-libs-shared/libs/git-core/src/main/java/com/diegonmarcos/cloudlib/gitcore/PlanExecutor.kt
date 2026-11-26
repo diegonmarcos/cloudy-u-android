@@ -51,7 +51,7 @@ class PlanExecutor(
                     else GitOpResult(true, "committed " + e.commit(msg, authorName, authorEmail).sha.take(7))
                 }
                 "status" -> e.statusLine()
-                "fetch" -> remotes(e, flag(rest, "--all")).map { r -> e.fetchWith(r, auth, flag(rest, "--prune"), flag(rest, "--tags"), flag(rest, "--dry-run")) }.lastOrNull { !it.ok } ?: GitOpResult(true, "fetched")
+                "fetch" -> remotes(e, flag(rest, "--all")).map { r -> e.fetchWith(r, auth, flag(rest, "--prune"), flag(rest, "--tags"), flag(rest, "--dry-run")) }.let { l -> l.firstOrNull { !it.ok } ?: l.last() }
                 "pull" -> pull(e, rest)
                 "push" -> e.pushWith("origin", flag(rest, "--all"), flag(rest, "--tags"), flag(rest, "--force"), flag(rest, "--force-with-lease"), flag(rest, "--dry-run"), auth)
                 "reset" -> if (rest == listOf("--hard", "@{u}")) e.forcePull("origin", auth) else GitOpResult(false, "unsupported reset: $rest")
