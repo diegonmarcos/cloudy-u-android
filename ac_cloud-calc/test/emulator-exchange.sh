@@ -71,7 +71,7 @@ for i in 1 2 3 4 5 6 7 8 9 10 11 12; do   # up to ~60 s for the engine's ECB dow
   sleep 5
 done
 # The engine's ECB download may still be running (the first table is its compiled-in rates, dated July): wait until the footer carries TODAY's date.
-today=$(adb shell date +'%-d %b %Y' | tr -d '\r')
+today=$(date -u +'%-d %b %Y')   # the runner and the emulator share the clock (both UTC)
 fresh=0
 for i in $(seq 1 18); do   # up to ~90 s
   dump >/dev/null
