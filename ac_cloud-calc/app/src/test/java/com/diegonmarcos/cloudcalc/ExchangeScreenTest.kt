@@ -95,9 +95,9 @@ class ExchangeScreenTest {
         val targets = listOf("USD", "EUR", "GBP", "BRL")
         targets.forEach { compose.onNodeWithTag(ExchangeTags.target(it)).assertExists() }
         compose.onNodeWithTag(ExchangeTags.targetRate("USD"), useUnmergedTree = true).assertTextContains("1 INR → 0.0108 USD")
-        compose.onNodeWithTag(ExchangeTags.targetRate("EUR"), useUnmergedTree = true).assertTextContains("1 INR → 0.01 EUR")
+        compose.onNodeWithTag(ExchangeTags.targetRate("EUR"), useUnmergedTree = true).assertTextContains("1 INR → 0.0100 EUR")
         compose.onNodeWithTag(ExchangeTags.targetRate("GBP"), useUnmergedTree = true).assertTextContains("1 INR → 0.0084 GBP")
-        compose.onNodeWithTag(ExchangeTags.targetRate("BRL"), useUnmergedTree = true).assertTextContains("1 INR → 0.062 BRL")
+        compose.onNodeWithTag(ExchangeTags.targetRate("BRL"), useUnmergedTree = true).assertTextContains("1 INR → 0.0620 BRL")
         compose.onNodeWithTag(ExchangeTags.targetAmount("USD"), useUnmergedTree = true).assertTextContains("9.27")
         compose.onNodeWithTag(ExchangeTags.targetAmount("EUR"), useUnmergedTree = true).assertTextContains("8.58")
         compose.onNodeWithTag(ExchangeTags.ADD).assertTextContains("Add another currency")
@@ -122,7 +122,7 @@ class ExchangeScreenTest {
         compose.onNodeWithTag(ExchangeTags.PICKER_SEARCH).performTextReplacement("jp")
         compose.onNodeWithTag(ExchangeTags.pickerItem("JPY")).performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTag(ExchangeTags.target("JPY")).fetchSemanticsNodes().isNotEmpty() }
-        compose.waitUntil(5_000) { runCatching { compose.onNodeWithTag(ExchangeTags.targetRate("JPY"), useUnmergedTree = true).assertTextContains("1 INR → 1.6 JPY") }.isSuccess }
+        compose.waitUntil(5_000) { runCatching { compose.onNodeWithTag(ExchangeTags.targetRate("JPY"), useUnmergedTree = true).assertTextContains("1 INR → 1.6000 JPY") }.isSuccess }
         assertTrue(prefs.getString("exchange_targets", "")!!.contains("JPY"))
     }
 

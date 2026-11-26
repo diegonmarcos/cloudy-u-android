@@ -87,12 +87,13 @@ object Exchange {
     fun amountText(x: Double, locale: Locale, decimals: Int = 2): String =
         if (!x.isFinite()) "—" else NumberFormat.getNumberInstance(locale).apply { minimumFractionDigits = decimals; maximumFractionDigits = decimals }.format(x)
 
-    /** A unit rate to [significant] significant digits, trailing zeros dropped (0.010802 -> 0.0108). */
+    /** A unit rate to 4 decimal places (0.010802 -> 0.0108); only when that would print zero, [significant] significant digits (0.00001234 -> 0.00001234). */
     fun rateText(x: Double, locale: Locale, significant: Int = 4): String {
         if (!x.isFinite()) return "—"
-        val bd = BigDecimal(x).round(MathContext(significant)).stripTrailingZeros()
+        val fixed = BigDecimal(x).setScale(4, java.math.RoundingMode.HALF_UP)
+        val bd = if (fixed.signum() == 0 && x != 0.0) BigDecimal(x).round(MathContext(significant)).stripTrailingZeros() else fixed
         val scale = bd.scale().coerceAtLeast(0)
-        return NumberFormat.getNumberInstance(locale).apply { minimumFractionDigits = 0; maximumFractionDigits = scale }.format(bd)
+        return NumberFormat.getNumberInstance(locale).apply { minimumFractionDigits = scale; maximumFractionDigits = scale }.format(bd)
     }
 
     /** "1 INR → 0.0108 USD"; an unknown rate reads "—". */
