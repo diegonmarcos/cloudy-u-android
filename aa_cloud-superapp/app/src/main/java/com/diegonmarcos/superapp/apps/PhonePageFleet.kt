@@ -15,7 +15,7 @@ import com.diegonmarcos.superapp.updater.Fleet
  * Fleet membership = the declared fleet: ui.external_apps (hub / alt / install packages and every declared fork such as
  * cld.termux and cld.termux.nix), the constellation manifest (every app AND every lib APK, with its alt id), this app's own
  * package, and the debug / dev variants of any of them. Everything removed from the page is reachable in Cloud ▸ Apps
- * (GroupedTilesFragment lists exactly [Sections.constellationPackages]).
+ * (GroupedTilesFragment lists exactly [forContext], the same set this page excludes, so the two grids partition one list).
  *
  * Root cause (before #1936): the Quickmarks folders PREPENDED the Cloud app to every folder and drew it as the folder face
  * (#1764 / #1864 withCloudApp, icon_pkg), the curated entries and the user's own Quickmark adds were never filtered, the
@@ -27,7 +27,7 @@ internal object PhonePageFleet {
 
     /** The declared fleet as package ids. Pure: the callers hand in what they read ([forContext] reads it on a device). */
     fun packages(ownPackage: String, declaredApps: Collection<String>, manifest: Collection<String>): Set<String> =
-        (declaredApps + manifest + ownPackage).filter { it.isNotBlank() }.toSet()
+        (declaredApps + manifest + ownPackage).filter { it.isNotBlank() }.let { base -> (base + base.flatMap { b -> VARIANT_SUFFIXES.map { b + it } }).toSet() }
 
     fun forContext(ctx: Context): Set<String> = packages(
         ctx.packageName,

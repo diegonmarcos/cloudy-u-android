@@ -136,7 +136,10 @@ class PhonePageFleetTest {
     }
 
     @Test fun `every Cloud package taken off the page is reachable in Cloud Apps`() {
-        val cloudApps = Sections.constellationPackages(ctx.packageName)   // GroupedTilesFragment lists exactly this set (allApps(only = ...))
+        val cloudApps = PhonePageFleet.forContext(ctx)   // GroupedTilesFragment lists exactly this set (allApps(only = ...))
+        val grouped = File(System.getProperty("user.dir"), "src/main/java/com/diegonmarcos/superapp/launcher/GroupedTilesFragment.kt").readText()
+        assertTrue("Cloud Apps no longer lists the page's fleet set", grouped.contains("allApps(ctx, only = com.diegonmarcos.superapp.apps.PhonePageFleet.forContext(ctx))"))
+        assertTrue("a Cloud package the page dropped is not in Cloud Apps", Sections.constellationPackages(ctx.packageName).all { it in cloudApps })
         val removed = SuitePhoneAppsFragment.parseGroups().flatMap { g -> g.folders.mapNotNull { f -> f.iconPkg.takeIf { it.isNotBlank() } } }.toSet()
         assertTrue(removed.isNotEmpty())
         for (p in removed) assertTrue("$p left Phone ▸ Apps but Cloud ▸ Apps does not list it", p in cloudApps)

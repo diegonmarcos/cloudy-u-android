@@ -166,7 +166,7 @@ internal fun GroupedTilesPage(sectionId: String, click: (String) -> Unit) {
     // Folders follow. Computing them off the main thread keeps the tab from freezing on the previous page.
     val below by produceState<BelowFold?>(null, sectionId, epoch) {
         value = if (sectionId != "cloud") null else withContext(Dispatchers.Default) {
-            BelowFold(allApps(ctx, only = Sections.constellationPackages(ctx.packageName)), GroupedTilesFragment.recentTiles(ctx))
+            BelowFold(allApps(ctx, only = com.diegonmarcos.superapp.apps.PhonePageFleet.forContext(ctx)), GroupedTilesFragment.recentTiles(ctx))
         }
     }
     LazyColumn(Modifier.fillMaxSize().testTag(GroupedTilesFragment.TAG_LIST), contentPadding = PaddingValues(TILE_PAGE_PADDING)) {

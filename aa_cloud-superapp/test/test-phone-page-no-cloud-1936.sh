@@ -3,7 +3,7 @@
 #  P parity: every group, folder and third-party package of the page BEFORE (test/data/phone-page-before-1936.json) is still
 #    declared, in the same order, and no baseline third-party package is a fleet package (the predicate removes only Cloud apps);
 #  R reachability: every fleet package the old page showed (the icon_pkg of each folder) is a declared fleet app, so Cloud > Apps
-#    lists it (GroupedTilesFragment lists Sections.constellationPackages);
+#    lists it (GroupedTilesFragment lists PhonePageFleet.forContext, the set this page excludes);
 #  S source: every section of the page takes its list from PhonePageFleet, with mutations that must go red.
 set -u
 APP="$(cd "$(dirname "$0")/.." && pwd)"

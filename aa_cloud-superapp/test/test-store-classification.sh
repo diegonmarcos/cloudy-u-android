@@ -95,14 +95,14 @@ grouped = code(os.path.join(kt_dir, "launcher/GroupedTilesFragment.kt"))
 suite = code(os.path.join(kt_dir, "apps/SuitePhoneAppsFragment.kt"))
 phone_frag = code(os.path.join(kt_dir, "apps/PhoneAppsFragment.kt"))
 phone_ui = code(os.path.join(kt_dir, "apps/PhoneAppsUi.kt"))
-cloud_call = re.search(r"allApps\(ctx,\s*only\s*=\s*Sections\.constellationPackages\(ctx\.packageName\)\)", grouped)
+cloud_call = re.search(r"allApps\(ctx,\s*only\s*=\s*com\.diegonmarcos\.superapp\.apps\.PhonePageFleet\.forContext\(ctx\)\)", grouped)  # #1936 one fleet set for both pages
 # The below-the-fold block is produced only for the cloud page: the call sits right after the
 # `sectionId != "cloud"` gate of its produceState.
 if cloud_call and 'sectionId != "cloud"' in grouped[max(0, cloud_call.start() - 200):cloud_call.start()]:
     ok("Cloud ▸ Apps renders All Apps ONLY over the fleet's packages, in the cloud branch")
 else: bad("Cloud ▸ Apps does not render the All Apps grid over Sections.constellationPackages")
-if re.search(r"val ourApps = (?:remember\(epoch\) \{ )?Sections\.constellationPackages\(ctx\.packageName\)", suite) and \
-   "allApps(ctx, exclude = ourApps)" in suite:
+if re.search(r"val ourApps = (?:remember\(epoch\) \{ )?PhonePageFleet\.forContext\(ctx\)", suite) and \
+   "allApps(ctx, exclude = PhonePageFleet.exclude(ourApps))" in suite:
     ok("Phone ▸ Apps excludes that same set — the two grids partition one list")
 else: bad("Phone ▸ Apps no longer excludes Sections.constellationPackages — the mirror is broken")
 if "(only == null || it.packageName in only)" in phone_ui and "exclude.isEmpty() && only == null" in phone_ui:
