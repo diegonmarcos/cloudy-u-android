@@ -175,7 +175,7 @@ object ContainerProjects {
             val e = byName[r.container]
             val p = e?.let { decl.projectOf(it) }
             val type = e?.let { decl.typeOf(it) }.orEmpty()
-            r.copy(project = p?.label.orEmpty(), type = type, meta = r.meta + listOf("project" to p?.label.orEmpty(), "type" to type))
+            r.copy(project = p?.label.orEmpty(), type = type, meta = r.meta + listOf("project_name" to p?.label.orEmpty(), "type" to type))
         }
         if (projectId != null) return rows
         val order = decl.projects.map { it.label }
