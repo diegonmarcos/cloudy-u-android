@@ -107,10 +107,10 @@ class TermuxGitWireTest {
     @Test fun `git_argv runs the previewed argv as git, quoted`() {
         val a = JSONObject().put("argv", JSONArray(listOf("pull", "--no-rebase", "-X", "theirs", "--autostash"))).put("name", "N").put("email", "e@x")
         val p = plan("git_argv", a, JSONObject().put("kind", "https").put("username", "u").put("secret", "S3CRET")).first!!
-        assertTrue(p.script, p.script.contains("pull --no-rebase -X theirs --autostash"))
+        assertTrue(p.script, p.script.contains("'pull' '--no-rebase' '-X' 'theirs' '--autostash'"))
         assertTrue(p.network); assertFalse(p.script.contains("S3CRET"))
         val c = plan("git_argv", JSONObject().put("argv", JSONArray(listOf("commit", "-m", "it's \$(x)")))).first!!
-        assertTrue(c.script, c.script.contains("'it'\\''s \$(x)'"))
+        assertTrue(c.script, c.script.contains("'commit' '-m' 'it'\\''s \$(x)'"))
     }
 
     @Test fun `git_argv refuses a verb outside the control sheet and any reset but hard at upstream`() {

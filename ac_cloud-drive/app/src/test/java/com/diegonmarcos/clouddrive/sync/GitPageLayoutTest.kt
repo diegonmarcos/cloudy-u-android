@@ -105,7 +105,10 @@ class GitPageLayoutTest {
         // #1315 the not-cloned panel lives in the detail sheet, behind the one `e.cloned == null` branch.
         val sheet = src.substring(src.indexOf("DriveTags.SYNC_GIT_DETAIL_SHEET"))
         assertTrue(sheet.contains("if (e.cloned == null) {") && sheet.contains("GitRepoNotClonedBox("))
-        for (needle in listOf("R.string.repo_act_open_web", "R.string.sync_clone_into_store", "R.string.repo_act_copy_url", "RepoActions.PRS", "RepoActions.needsClone(id)", "R.string.repo_not_cloned_why")) assertTrue(needle, src.contains(needle))
+        // #1934 Open on web, Clone, Copy URL and the clone-required greying are the control sheet's header, Goto group and needs_clone controls (declared in build.json ui.git_control_sheet).
+        for (needle in listOf("ControlSheetBody(", "RepoActions.PRS", "R.string.repo_not_cloned_why")) assertTrue(needle, src.contains(needle))
+        val decl = java.io.File("../build.json").readText()
+        for (id in listOf("hd.clone_now", "ov.goto.web", "ov.goto.copy_url", "ov.goto.folder")) assertTrue(id, decl.contains("\"$id\""))
     }
 
     @Test fun `#1195 the pages open without disk, process or network work in their composables`() {

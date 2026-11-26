@@ -69,6 +69,8 @@ class ControlSheetRenderTest {
         override fun setAutoSync(on: Boolean, minutes: Int) {}
     }
 
+    private fun click(tag: String) { compose.onNodeWithTag(tag).performScrollTo().performClick() }
+
     private fun show(cloned: Boolean, bulk: Boolean = false, readOnly: Boolean = false) {
         compose.setContent {
             val state = rememberGitSheetState(sheet)
@@ -93,41 +95,41 @@ class ControlSheetRenderTest {
         compose.onNodeWithTag("git_sheet_hd.check_full").assertIsNotEnabled()
         compose.onNodeWithTag("git_sheet_ctl_ov.goto.folder").assertIsNotEnabled()
         compose.onNodeWithTag("git_sheet_ctl_ov.goto.web").assertIsEnabled()
-        compose.onNodeWithTag("git_sheet_tab_workflow").performClick()
+        click("git_sheet_tab_workflow")
         compose.onNodeWithTag("git_sheet_ctl_wf.commit").assertIsNotEnabled()
         compose.onNodeWithTag("git_sheet_ctl_wf.prs").assertIsEnabled()
     }
 
     @Test fun syncTabPreviewFollowsTheOptions() {
         show(cloned = true)
-        compose.onNodeWithTag("git_sheet_tab_sync").performClick()
+        click("git_sheet_tab_sync")
         compose.onNodeWithTag("git_sheet_preview_sync").assertTextEquals("git pull --ff-only && git push")
-        compose.onNodeWithTag("git_sheet_ctl_sy.direction.fetch").performClick()
+        click("git_sheet_ctl_sy.direction.fetch")
         compose.onNodeWithTag("git_sheet_preview_sync").assertTextEquals("git fetch")
-        compose.onNodeWithTag("git_sheet_ctl_sy.direction.pull").performClick()
-        compose.onNodeWithTag("git_sheet_ctl_sy.strategy.reset").performClick()
+        click("git_sheet_ctl_sy.direction.pull")
+        click("git_sheet_ctl_sy.strategy.reset")
         compose.onNodeWithTag("git_sheet_preview_sync").assertTextEquals("git fetch && git reset --hard @{u}")
         compose.onNodeWithTag("git_sheet_ctl_sy.flag.submodules").assertIsNotEnabled()
-        compose.onNodeWithTag("git_sheet_ctl_sy.flag.dryRun").performClick()
+        click("git_sheet_ctl_sy.flag.dryRun")
         compose.onNodeWithTag("git_sheet_preview_sync").assertTextEquals("git fetch --dry-run && git status -sb")
     }
 
     @Test fun destructiveSyncAsksBeforeItRuns() {
         show(cloned = true)
-        compose.onNodeWithTag("git_sheet_tab_sync").performClick()
-        compose.onNodeWithTag("git_sheet_ctl_sy.direction.push").performClick()
-        compose.onNodeWithTag("git_sheet_ctl_sy.flag.forceRaw").performClick()
+        click("git_sheet_tab_sync")
+        click("git_sheet_ctl_sy.direction.push")
+        click("git_sheet_ctl_sy.flag.forceRaw")
         compose.onNodeWithTag("git_sheet_preview_sync").assertTextEquals("git push --force")
-        compose.onNodeWithTag("git_sheet_ctl_sy.run").performScrollTo().performClick()
+        click("git_sheet_ctl_sy.run")
         compose.onNodeWithTag("git_sheet_confirm").assertExists()
         assertTrue("nothing ran before the confirm: $seen", seen.none { it.startsWith("run_sync") })
-        compose.onNodeWithTag("git_sheet_confirm_yes").performClick()
+        click("git_sheet_confirm_yes")
         assertEquals(listOf("run_sync:git push --force"), seen)
     }
 
     @Test fun readOnlyRemoteDisablesEveryPush() {
         show(cloned = true, readOnly = true)
-        compose.onNodeWithTag("git_sheet_tab_sync").performClick()
+        click("git_sheet_tab_sync")
         compose.onNodeWithTag("git_sheet_ctl_sy.direction.push").assertIsNotEnabled()
         compose.onNodeWithTag("git_sheet_ctl_sy.flag.forceRaw").assertIsNotEnabled()
         compose.onNodeWithTag("git_sheet_ctl_sy.direction.fetch").assertIsEnabled()
@@ -135,9 +137,9 @@ class ControlSheetRenderTest {
 
     @Test fun cloneTabPreviewAndProfileName() {
         show(cloned = false)
-        compose.onNodeWithTag("git_sheet_tab_clone").performClick()
+        click("git_sheet_tab_clone")
         compose.onNodeWithTag("git_sheet_preview_clone").assertTextEquals("git clone https://github.com/o/r.git store/r")
-        compose.onNodeWithTag("git_sheet_ctl_cl.preset.bare_blobless").performClick()
+        click("git_sheet_ctl_cl.preset.bare_blobless")
         compose.onNodeWithTag("git_sheet_ctl_cl.run").assertIsEnabled()
     }
 
@@ -145,8 +147,8 @@ class ControlSheetRenderTest {
         show(cloned = true, bulk = true)
         for (t in listOf("overview", "sync", "clone", "workflow", "manage")) compose.onNodeWithTag("git_sheet_tab_$t").assertIsEnabled()
         compose.onNodeWithTag("git_sheet_group_bov_counts").assertExists()
-        compose.onNodeWithTag("git_sheet_tab_manage").performClick()
-        compose.onNodeWithTag("git_sheet_ctl_bo.mg.shrink_all").performClick()
+        click("git_sheet_tab_manage")
+        click("git_sheet_ctl_bo.mg.shrink_all")
         compose.onNodeWithTag("git_sheet_confirm").assertExists()
     }
 }

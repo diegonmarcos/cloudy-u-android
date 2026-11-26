@@ -93,12 +93,14 @@ class GitListAndRefresh1679Test {
         // the listing goes away again (signed out): back to the clone's own row
         assertEquals("other-id1", GitSheetKeys.follow("own-gh-o/a", after, before))
         assertNull("nothing open", GitSheetKeys.follow("", before, after))
-        // ONE sheet: a single ModalBottomSheet, the Refresh row and a STATUS block in both states.
+        // ONE sheet: a single ModalBottomSheet; #1934 the Refresh row and the STATUS block are the control sheet's header and Overview (ControlSheetBody) in both states.
         assertEquals(1, Regex("""ModalBottomSheet\(onDismissRequest = \{ expanded = "" \}, modifier = Modifier\.testTag\(DriveTags\.SYNC_GIT_DETAIL_SHEET\)\)""").findAll(screen).count())
         val sheet = screen.substringAfter("DriveTags.SYNC_GIT_DETAIL_SHEET)) {").substringBefore("repos.firstOrNull { settingsFor")
-        assertTrue(sheet.indexOf("GitSheetRefreshRow(") in 0 until sheet.indexOf("if (e.cloned == null)"))
+        // #1934 GitSheetRefreshRow is superseded: its Fetch status / Check lite / Check full are the header's action row (declared), drawn inside both boxes.
+        assertTrue(sheet.contains("if (e.cloned == null)"))
+        for (h in listOf("hd.refresh", "hd.fetch_status", "hd.check_lite", "hd.check_full")) assertTrue(h, File(root, "build.json").readText().contains("\"$h\""))
         val notCloned = screen.substringAfter("private fun GitRepoNotClonedBox(").substringBefore("/** One monospace fact line")
-        assertTrue("the not-cloned sheet opens on the same STATUS block", notCloned.contains("RepoStatusBlock(RepoStatus.block(false, null)"))
+        assertTrue("the not-cloned sheet opens on the same control sheet, its Overview holding the STATUS fields (Cloned: no, the rest unknown)", notCloned.contains("ControlSheetBody(") && notCloned.contains("repo = null"))
         assertTrue(screen.contains("GitSheetKeys.follow(expanded, rowKeysBefore, rowKeys)"))
         assertEquals("one row model", 1, Regex("""private class TableEntry\(""").findAll(screen).count())
     }
@@ -193,7 +195,8 @@ class GitListAndRefresh1679Test {
         assertTrue(ids.containsAll(listOf("refresh_list", "fetch_status", "fetch_now", "remove_auto_cloned")))
         assertEquals(listOf("check", "sync", "clone", "logs", "more"), git["top_bar"]!!.jsonObject["groups"]!!.jsonArray.map { it.jsonObject["id"]!!.jsonPrimitive.content })
         // the sheet keeps both boxes (clone actions, ops, groups, metadata) and the Filters / Parentless / Unlisted panels stay
-        for (s in listOf("GitRepoNotClonedBox(", "GitRepoOpsBox(", "RepoActionGroupsView(", "GitSheetTail(", "ParentlessPanel(", "UnlistedPanel(", "showFilters = true", "RepoStatusWindow(")) assertTrue(s, screen.contains(s))
+        // #1934 RepoActionGroupsView( and GitSheetTail( are now the control sheet (ControlSheetBody): every control they drew is placed once (test-drive-git-control-sheet.sh P1).
+        for (s in listOf("GitRepoNotClonedBox(", "GitRepoOpsBox(", "ControlSheetBody(", "ParentlessPanel(", "UnlistedPanel(", "showFilters = true", "RepoStatusWindow(")) assertTrue(s, screen.contains(s))
         for (k in listOf("refresh_list", "fetch_status", "remove_auto_cloned", "check_light", "check_full", "op", "compound", "pull", "depth", "open_logs", "legend", "open_advanced", "open_conflicts"))
             assertTrue("no dispatch for $k", screen.contains("\"$k\" ->"))
     }
