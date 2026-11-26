@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.dp
  * for an asset that is missing, and a banner that cannot be loaded at all draws a visible titled panel, never an empty block.
  */
 object ProjBanners {
+    const val HEIGHT_DP = 140
+
     data class Entry(val url: String, val asset: String)
 
     fun parse(json: String): Map<String, Entry> = runCatching {
@@ -85,6 +87,18 @@ object ProjTileIcons {
     fun plainLabel(label: String): String = Regex("^[^\\p{L}\\p{N}]+").replace(label, "").trim().ifEmpty { label }
 }
 
+/**
+ * #1937 ROOT CAUSE of the Home banners covering the page: the banner is an ImageView with CENTER_CROP, which scales the image to COVER the 140dp box and so draws past it;
+ * the Compose AndroidView host does not clip its child, so the overflow was painted over the group headers and the project tiles (the layout said 140dp, the pixels 600dp+).
+ * The view clips its own drawing to its bounds.
+ */
+class BannerImageView(c: android.content.Context) : android.widget.ImageView(c) {
+    override fun onDraw(canvas: android.graphics.Canvas) {
+        canvas.save(); canvas.clipRect(0, 0, width, height)
+        try { super.onDraw(canvas) } finally { canvas.restore() }
+    }
+}
+
 @Composable
 private fun BannerImage(entry: ProjBanners.Entry, title: String, tag: String) {
     val ctx = LocalContext.current
@@ -96,14 +110,14 @@ private fun BannerImage(entry: ProjBanners.Entry, title: String, tag: String) {
     if (drawable == null) {
         // loading, or nothing could be loaded: a visible titled panel of the banner's size, never an empty block
         androidx.compose.foundation.layout.Box(
-            Modifier.fillMaxWidth().height(140.dp).testTag(tag).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)),
+            Modifier.fillMaxWidth().height(ProjBanners.HEIGHT_DP.dp).testTag(tag).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center,
         ) { Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold) }
         return
     }
     androidx.compose.ui.viewinterop.AndroidView(
-        modifier = Modifier.fillMaxWidth().height(140.dp).testTag(tag),
-        factory = { c -> android.widget.ImageView(c).apply { scaleType = android.widget.ImageView.ScaleType.CENTER_CROP } },
+        modifier = Modifier.fillMaxWidth().height(ProjBanners.HEIGHT_DP.dp).clip(RoundedCornerShape(12.dp)).testTag(tag),
+        factory = { c -> BannerImageView(c).apply { scaleType = android.widget.ImageView.ScaleType.CENTER_CROP } },
         update = { v -> v.setImageDrawable(drawable); (drawable as? android.graphics.drawable.AnimatedImageDrawable)?.start() },
     )
 }

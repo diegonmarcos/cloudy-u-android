@@ -170,6 +170,7 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
                                 android.util.Log.i("CloudMeWeb", "IMG_CHECK page=$pageId images_broken=$r")
                             }
                         }, 8000)
+                        view?.evaluateJavascript(WebReveal.JS, null)   // #1938 a section the page keeps hidden until a 95% intersection is shown while any part of it is on screen
                         view?.let { com.diegonmarcos.superapp.bottomnav.ChromeWebScroll.inject(it) }
                         view?.let { if (inject.isNotBlank()) pushProfile(it, ctx, inject) }
                         view?.saveState(saved)
