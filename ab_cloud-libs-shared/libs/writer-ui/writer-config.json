@@ -157,7 +157,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "z-ai/glm-5.3-flash",
-        "pricing_as_of": "2026-11-25",
+        "pricing_as_of": "2026-11-26",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -217,7 +217,7 @@
             ],
             "trained_for": [],
             "prompt": 0.08,
-            "completion": 0.16,
+            "completion": 0.45,
             "note": "Ranked for marketing/SEO only; light and predictable on short rewrites."
           },
           {
@@ -295,7 +295,6 @@
               "health",
               "marketing",
               "marketing/seo",
-              "programming",
               "roleplay",
               "science",
               "technology",
@@ -315,6 +314,7 @@
               "fp8"
             ],
             "trained_for": [
+              "legal",
               "programming",
               "roleplay"
             ],
@@ -345,8 +345,8 @@
               "translation",
               "trivia"
             ],
-            "prompt": 0.12,
-            "completion": 0.38,
+            "prompt": 0.15,
+            "completion": 0.5,
             "note": "The provider default: ranked in all twelve categories, and the cheapest all-rounder after DeepSeek."
           },
           {
@@ -369,7 +369,7 @@
           {
             "id": "openai/gpt-4.1-mini",
             "name": "GPT-4.1 mini",
-            "trained_for": ["translation"],
+            "trained_for": [],
             "prompt": 0.4,
             "completion": 1.6,
             "note": "Translation-ranked and closed-weight; steady, conservative English grammar fixes."
