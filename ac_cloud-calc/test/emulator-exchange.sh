@@ -73,12 +73,14 @@ done
 # The engine's ECB download may still be running (the first table is its compiled-in rates, dated July): wait until the footer carries TODAY's date.
 today=$(date -u +'%-d %b %Y')   # the runner and the emulator share the clock (both UTC)
 fresh=0
+swipe 80 30; sleep 2   # the footer is below the four cards
 for i in $(seq 1 18); do   # up to ~90 s
   dump >/dev/null
   if grep -qE "Last updated: $today, [0-9]{2}:[0-9]{2}" "$OUT/ui.xml"; then fresh=1; break; fi
   sleep 5
 done
 echo "today on the emulator: $today; footer: $(grep -oE 'text="(Offline . )?Last updated: [^"]*"' "$OUT/ui.xml" | head -1)"
+swipe 30 80; sleep 2; dump >/dev/null   # back to the top: the cards now carry the downloaded rates
 shot online-01-exchange
 logcat_tail() { adb logcat -d -v threadtime > "$OUT/logcat.txt" 2>/dev/null; }
 [ "$ok" = 1 ] || { logcat_tail; grep -iE "calc|qalc|rates|fetch" "$OUT/logcat.txt" | tail -40 > "$OUT/engine-log.txt"; fail "online: no '1 INR -> 0.0xxx USD' line, the rates did not load: $(texts)"; }
