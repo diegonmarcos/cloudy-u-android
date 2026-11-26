@@ -67,7 +67,12 @@ class ToolkitAppTest {
 
     private fun recordingsDir(): File = File(app.filesDir, JSONObject(Declarations.mode("recorder")!!.spec).getString("dir")).apply { mkdirs() }
 
-    @After fun clean() { recordingsDir().listFiles()?.forEach { it.delete() } }
+    /** #1566 the perms catalogue is a served fleet-private dataset: CI materialises it, the test puts it where the reader looks first, so the microphone is a known grant. */
+    @org.junit.Before fun catalogue() {
+        com.diegonmarcos.superapp.perms.Perms.testCatalogue = File(System.getenv("FLEET_PRIVATE_DIR") ?: "../../fleet-private-data", "perms-catalogue.json").readText()
+    }
+
+    @After fun clean() { com.diegonmarcos.superapp.perms.Perms.testCatalogue = null; recordingsDir().listFiles()?.forEach { it.delete() } }
 
     @Test fun `the Light page is the shared one, and it reports a phone with no flashlight instead of pretending`() {
         show("light")
