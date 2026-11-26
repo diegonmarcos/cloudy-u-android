@@ -70,12 +70,21 @@ for i in 1 2 3 4 5 6 7 8 9 10 11 12; do   # up to ~60 s for the engine's ECB dow
   if grep -qE 'text="1 INR . 0\.0[0-9]+ USD"' "$OUT/ui.xml"; then ok=1; break; fi
   sleep 5
 done
+# The engine's ECB download may still be running (the first table is its compiled-in rates, dated July): wait until the footer carries TODAY's date.
+today=$(adb shell date +'%-d %b %Y' | tr -d '\r')
+fresh=0
+for i in $(seq 1 18); do   # up to ~90 s
+  dump >/dev/null
+  if grep -qE "Last updated: $today, [0-9]{2}:[0-9]{2}" "$OUT/ui.xml"; then fresh=1; break; fi
+  sleep 5
+done
+echo "today on the emulator: $today; footer: $(grep -oE 'text="(Offline . )?Last updated: [^"]*"' "$OUT/ui.xml" | head -1)"
 shot online-01-exchange
 logcat_tail() { adb logcat -d -v threadtime > "$OUT/logcat.txt" 2>/dev/null; }
 [ "$ok" = 1 ] || { logcat_tail; grep -iE "calc|qalc|rates|fetch" "$OUT/logcat.txt" | tail -40 > "$OUT/engine-log.txt"; fail "online: no '1 INR -> 0.0xxx USD' line, the rates did not load: $(texts)"; }
 n=$(grep -oE 'text="[0-9][0-9,]*\.[0-9]{2}"' "$OUT/ui.xml" | sort -u | grep -vc '858.02')
 [ "$n" -ge 1 ] || fail "online: no numeric converted amount on a target card: $(texts)"
 bottom online
-grep -qE 'Last updated: [0-9]{1,2} [A-Za-z]{3} 20[0-9]{2}, [0-9]{2}:[0-9]{2}' "$OUT/footer-online.txt" || fail "online: the footer shows no real date: $(cat "$OUT/footer-online.txt")"
+[ "$fresh" = 1 ] && grep -q "Last updated: $today" "$OUT/footer-online.txt" || { logcat_tail; grep -iE "calc|qalc|rates|fetch|UnknownHost|SSL" "$OUT/logcat.txt" | tail -60 > "$OUT/engine-log.txt"; fail "online: the footer never showed today ($today): $(cat "$OUT/footer-online.txt")"; }
 logcat_tail
 echo "ONLINE case: rates loaded through Cloud-Lib-Calc, numeric amounts, unit-rate lines and a real Last-updated date"
