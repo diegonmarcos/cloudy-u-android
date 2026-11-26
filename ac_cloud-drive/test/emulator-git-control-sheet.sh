@@ -98,7 +98,7 @@ ensure_sheet() {
   adb shell am force-stop "$PKG" < /dev/null; sleep 1; timeout 120 adb shell am start -W -n "$act" < /dev/null >/dev/null; sleep 6
   for i in 1 2 3; do tap '^Continue with local files$' && break; sleep 2; done; sleep 2
   tap '^Git$'; sleep 4
-  if [ "$1" = bulk ]; then tap_after '^Logs$' && sleep 1 && tap '^All repos sheet$'; else tap "^${NAME}\$"; fi
+  if [ "$1" = bulk ]; then for k in 1 2 3; do adb shell input swipe $((W*70/100)) $((H*24/100)) $((W*10/100)) $((H*24/100)) 250 < /dev/null; sleep 1; done; tap '^More' && sleep 1 && tap '^All repos sheet$'; else tap "^${NAME}\$"; fi
   sleep 3; dump | grep -q 'content-desc="Drag handle"'; }
 mkdir -p "$OUT/walk"; : > "$OUT/walk.tsv"
 # the walk list: tab label, control id, control label, danger/confirm flag (from the declaration itself)
@@ -123,7 +123,7 @@ while IFS=$'\t' read -r -u 3 tab id label danger; do
   case "$id" in tab:*) tap "^$(printf '%s' "$label" | sed 's/[][\.*^$/]/\\&/g')$" ; sleep 1; adb exec-out screencap -p > "$OUT/walk/${id#tab:}.png"; dump >/dev/null; snap "tab-${id#tab:}"; printf '%s\t%s\ttab\tshown\t%s\n' "$tab" "$id" "walk/${id#tab:}.png" >> "$OUT/walk.tsv"; continue;; esac
   pat="^$(printf '%s' "$label" | sed 's/[][\.*^$/]/\\&/g')$"
   found=0
-  for s in 1 2 3; do tap "$pat" && { found=1; break; }; adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*35/100)) 250; sleep 1; done
+  for dir in 0 u u d d d d u u; do tap "$pat" && { found=1; break; }; case $dir in u) adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*45/100)) 250 < /dev/null;; d) adb shell input swipe $((W/2)) $((H*45/100)) $((W/2)) $((H*70/100)) 250 < /dev/null;; esac; sleep 1; done
   if [ $found = 0 ]; then miss=$((miss+1)); printf '%s\t%s\t%s\tNOT FOUND\t-\n' "$tab" "$id" "$label" >> "$OUT/walk.tsv"; continue; fi
   sleep 2; adb exec-out screencap -p > "$OUT/walk/$id.png"
   case "$id" in ov.goto.web|ov.goto.folder|mg.tools.settings)
@@ -144,7 +144,9 @@ go_git_page() {
   for i in 1 2 3; do tap '^Continue with local files$' && break; sleep 2; done; sleep 2; tap '^Git$'; sleep 4; dump | grep -q 'text="Logs"'; }
 go_git_page || { snap no-git-page; fail "cannot get back to the Git page"; }
 snap git-page
-tap_after '^Logs$' || { snap no-more; fail "no More menu"; }; sleep 1; snap more-open; tap '^All repos sheet$' || { snap no-bulk-item; fail "no All repos sheet item"; }; sleep 3
+# the toolbar row scrolls horizontally: More sits after Logs, off screen until the row is swiped
+for k in 1 2 3; do adb shell input swipe $((W*70/100)) $((H*24/100)) $((W*10/100)) $((H*24/100)) 250 < /dev/null; sleep 1; dump | grep -qE 'text="More"|content-desc="More' && break; done
+snap toolbar-swiped; tap '^More' || { snap no-more; fail "no More menu"; }; sleep 1; snap more-open; tap '^All repos sheet$' || { snap no-bulk-item; fail "no All repos sheet item"; }; sleep 3
 dump | grep -q 'content-desc="Drag handle"' || fail "the all-repos sheet did not open"
 python3 -I - "$BJ" bulk > "$OUT/walk-list-bulk.tsv" <<'PY'
 import json, sys
@@ -164,7 +166,7 @@ while IFS=$'\t' read -r -u 3 tab id label danger; do
   case "$id" in tab:Manage|tab:manage) adb shell input swipe $((W*80/100)) $((H*62/100)) $((W*20/100)) $((H*62/100)) 200 < /dev/null; sleep 1;; esac
   case "$id" in tab:*) tap "^$(printf '%s' "$label" | sed 's/[][\\.*^$/]/\\\\&/g')$"; sleep 1; adb exec-out screencap -p > "$OUT/walk/bulk-${id#tab:}.png"; printf 'bulk:%s\t%s\ttab\tshown\n' "$tab" "$id" >> "$OUT/walk.tsv"; continue;; esac
   pat="^$(printf '%s' "$label" | sed 's/[][\\.*^$/]/\\\\&/g')$"; found=0
-  for s in 1 2 3; do tap "$pat" && { found=1; break; }; adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*35/100)) 250; sleep 1; done
+  for dir in 0 u u d d d d u u; do tap "$pat" && { found=1; break; }; case $dir in u) adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*45/100)) 250 < /dev/null;; d) adb shell input swipe $((W/2)) $((H*45/100)) $((W/2)) $((H*70/100)) 250 < /dev/null;; esac; sleep 1; done
   if [ $found = 0 ]; then miss=$((miss+1)); printf 'bulk:%s\t%s\t%s\tNOT FOUND\t-\n' "$tab" "$id" "$label" >> "$OUT/walk.tsv"; continue; fi
   sleep 1; adb exec-out screencap -p > "$OUT/walk/bulk-$id.png"
   if dump | grep -q 'text="Confirm"'; then tap '^Cancel$' || adb shell input keyevent KEYCODE_BACK; fi
