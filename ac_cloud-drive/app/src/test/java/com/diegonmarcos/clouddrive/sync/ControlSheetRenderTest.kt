@@ -151,4 +151,11 @@ class ControlSheetRenderTest {
         click("git_sheet_ctl_bo.mg.shrink_all")
         compose.onNodeWithTag("git_sheet_confirm").assertExists()
     }
+
+    @Test fun settingsAndFolderRouteToTheirActionIds() {
+        show(cloned = true)
+        click("git_sheet_tab_manage"); click("git_sheet_ctl_mg.tools.settings")
+        click("git_sheet_tab_overview"); click("git_sheet_ctl_ov.goto.folder")
+        assertEquals(listOf("mg.tools.settings", "ov.goto.folder"), seen)
+    }
 }

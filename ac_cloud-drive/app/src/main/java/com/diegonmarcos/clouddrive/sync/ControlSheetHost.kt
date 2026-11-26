@@ -165,4 +165,7 @@ internal object SheetEffects {
 
     /** Open on Web: the repository's page on the platform. */
     fun webUrl(page: Declarations.GitPageDecl, name: String): String = page.webUrl(name)
+
+    /** Folder: reveal the clone's folder in Drive Files (the shell's openPath behind [com.diegonmarcos.clouddrive.DriveActions.openInFiles]). */
+    fun openFolder(actions: com.diegonmarcos.clouddrive.DriveActions, path: String) = actions.openInFiles(path)
 }

@@ -1592,7 +1592,7 @@ private fun GitRepoOpsBox(
             RepoActions.SYNC_NO_WINNER, RepoActions.SYNC_REMOTE_WINS, RepoActions.SYNC_LOCAL_WINS,
             RepoActions.STASH, RepoActions.PULL_REBASE, RepoActions.STASH_POP, RepoActions.AUTO_COMMIT -> coordinator.runCompound(repo, id)
             // #1289 Goto > Folder: the clone's folder in Drive Files (Explorer ▸ Local).
-            RepoActions.OPEN_FOLDER -> actions.openInFiles(repo.path)
+            RepoActions.OPEN_FOLDER -> SheetEffects.openFolder(actions, repo.path)
             RepoActions.CHECKOUT_MAIN -> coordinator.checkoutMain(repo)
             RepoActions.BRANCHES, RepoActions.PRS, RepoActions.UNPUSHED -> panel = if (panel == id) "" else id
             RepoActions.SYNC_NOW -> coordinator.syncNow(repo)
