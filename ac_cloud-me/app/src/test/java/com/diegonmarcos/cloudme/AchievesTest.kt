@@ -4,6 +4,7 @@ import android.app.Application
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -142,35 +143,29 @@ class AchievesTest {
         assertTrue(BuroLlcTestData.text("data/ui/pers/achieves/geo.json").contains("B3) International Experience"))
     }
 
-    @Test fun `the bar is Pers Prof Proj Inventory then the rest, Pers holds Personal Archives and Prof holds Work and Study`() {
+    @Test fun `the bar is Pers Prof Proj Inventory then the rest, Pers holds Personal Archives and Prof holds Profiles (LinkedIn, CV) and the three company sites`() {
         val bar = ui.getJSONArray("bottom_nav").let { a -> (0 until a.length()).map { a.getString(it) } }
         assertEquals(listOf("pers", "prof", "proj", "lnktree", "inventory", "buro", "llc"), bar)
         assertTrue(sections.none { it.getString("id") in setOf("study", "achieves", "experiences", "health", "socials") })
         assertEquals(listOf("pers-profiles", "health", "astro", "dd", "achieves"), sub(experiences).map { it.getString("id") })
         assertEquals(listOf("Profiles", "Health", "Astro", "DD", "Personal Archives"), sub(experiences).map { it.getString("label") })
-        val profiles = sub(prof)[1]   // #1918 Profiles = LinkedIn | CV; the old Profiles pages are More
-        assertEquals(listOf("professional", "work", "study"), sub(profiles).map { it.getString("id") })
-        assertEquals(listOf("cv", "roadmap"), sub(sub(profiles)[2]).map { it.getString("id") })
+        // #1937 owner-ordered removal: Prof > More (Professional, Work, Study > CV, Roadmap) is gone; Prof is Profiles (LinkedIn, CV) | Leaf.y, Nexus.z, Stark.x
+        assertEquals(listOf("prof-web", "leafy", "nexus", "stark"), sub(prof).map { it.getString("id") })
+        assertEquals(listOf("prof-linkedin", "prof-cv"), sub(sub(prof)[0]).map { it.getString("id") })
         val ids = flat(experiences)
         assertEquals("page ids are unique in Pers, so page:pers/<id> is never ambiguous", ids.size, ids.toSet().size)
         val pids = flat(prof)
         assertEquals("page ids are unique in Prof", pids.size, pids.toSet().size)
     }
 
-    @Test fun `Work is a Done and To do ledger seeded with the profile roles`() {
-        val w = JSONArray(BuroLlcTestData.text("data/ui/prof/prof-profiles/work.json")).getJSONObject(0)
-        assertEquals(LedgerStore.EXP, w.getString("store"))
-        val (done, todo) = w.getJSONArray("ledgers").let { a -> (0 until a.length()).map { LedgerDef.parse(a.getJSONObject(it)) } }
-        assertEquals(listOf("work_done", "work_todo"), listOf(done.collection, todo.collection))
-        assertEquals("work_todo", done.moveTo); assertEquals("work_done", todo.moveTo); assertEquals("date", todo.moveStamp)
-        assertTrue(done.builtin.size >= 5)
-        for (r in done.builtin) assertTrue("$r", LedgerModel.validate(done, r).isEmpty())
-        assertTrue("Career and Finance stays in Personal Growth", done.fields[1].options.none { it.contains("Career and Finance") })
+    @Test fun `the removed Prof pages leave no page file behind (#1937)`() {
+        for (f in listOf("professional", "work", "study/cv", "study/roadmap"))
+            assertFalse("data/ui/prof/prof-profiles/$f.json is back", runCatching { BuroLlcTestData.text("data/ui/prof/prof-profiles/$f.json") }.isSuccess)
     }
 
     @Test fun `old Study and Achieves routes redirect to a declared Prof or Pers page`() {
         val persIds = flat(experiences).toSet(); val profIds = flat(prof).toSet()
-        val want = mapOf(("study" to null) to ("prof" to "cv"), ("study" to "cv") to ("prof" to "cv"), ("study" to "roadmap") to ("prof" to "roadmap"),
+        val want = mapOf(("study" to null) to ("prof" to "prof-web"), ("study" to "cv") to ("prof" to "prof-web"), ("study" to "roadmap") to ("prof" to "prof-web"),
             ("achieves" to null) to ("pers" to "geo"), ("achieves" to "personal") to ("pers" to "growth"), ("achieves" to "pursuits") to ("pers" to "endurance"),
             ("achieves" to "international") to ("pers" to "geo"), ("achieves" to "trips") to ("pers" to "geo"), ("achieves" to "experiences") to ("pers" to "endurance"),
             ("achieves" to "geo") to ("pers" to "geo"), ("achieves" to "by30") to ("pers" to "by30"), ("achieves" to "by50") to ("pers" to "by50"))
@@ -178,8 +173,9 @@ class AchievesTest {
             assertEquals("$old", to.first to to.second, LegacyRoutes.resolve(old.first, old.second))
             assertTrue(to.second!! in (if (to.first == "pers") persIds else profIds))
         }
-        // #1901 the Experiences ids of the layout in between: Work and Study moved to Prof, the Achieves tabs to Pers
-        for (p in listOf("work", "study", "cv", "roadmap")) assertEquals("prof" to p, LegacyRoutes.resolve("experiences", p))
+        // #1901 the Experiences ids of the layout in between: the Achieves tabs went to Pers; #1937 Work, Study, CV and Roadmap (removed by owner order) resolve to Prof > Profiles
+        for (p in listOf("work", "study", "cv", "roadmap")) assertEquals("prof" to "prof-web", LegacyRoutes.resolve("experiences", p))
+        for (p in listOf("prof-profiles", "professional", "work", "study", "cv", "roadmap")) assertEquals("prof" to "prof-web", LegacyRoutes.resolve("prof", p))
         for (p in listOf("achieves", "geo", "endurance", "growth", "community", "by30", "by40", "by50")) assertEquals("pers" to p, LegacyRoutes.resolve("experiences", p))
     }
 }

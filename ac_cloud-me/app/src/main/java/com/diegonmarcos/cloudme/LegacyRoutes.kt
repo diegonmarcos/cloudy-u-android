@@ -28,9 +28,9 @@ object LegacyRoutes {
         "buro/acct" to "buro/cashflow",
         "buro/budget" to "buro/budgeting",
         "buro/portfolio" to "llc/portfolio",
-        // #1350 Study and Achieves were subpages of Experiences, the old Achieves pages' content moved to its tabs; #1901 CV is under Prof
+        // #1350 Study and Achieves were subpages of Experiences, the old Achieves pages' content moved to its tabs; #1901 CV was under Prof (#1937: Prof > More is removed, Study resolves to Prof > Profiles)
         // and the Achieves tabs under Pers (the ids below are the live ones; ui.renamed maps the ids of the layout in between).
-        "study" to "prof/cv",
+        "study" to "prof/prof-web",
         "achieves" to "pers/geo",
         "achieves/personal" to "pers/growth",
         "achieves/pursuits" to "pers/endurance",

@@ -12,7 +12,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * #1918 Prof > Profiles is LinkedIn | CV (the old pages moved to More, ids kept), Proj has a Repos page after 42, every Proj page wears the Linktree emoji and every
+ * #1918 Prof > Profiles is LinkedIn | CV (the old More pages were removed by #1937, ids kept), Proj has a Repos page after 42, every Proj page wears the Linktree emoji and every
  * main category its Linktree banner. Declared data only (build.json, data/web/me-proj-emoji.json, data/web/me-links.json). test/test-proj-emoji.sh mutates each red.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -62,7 +62,9 @@ class ProjEmojiTest {
         assertEquals("https://diegonmarcos.github.io/mySocials/linkedin.html", JSONArray(BuroLlcTestData.text("data/ui/prof/prof-web/prof-linkedin.json")).getJSONObject(0).getString("url"))
         assertEquals("https://diegonmarcos.github.io/cv_web/", JSONArray(BuroLlcTestData.text("data/ui/prof/prof-web/prof-cv.json")).getJSONObject(0).getString("url"))
         val ids = flat(prof).map { it.getString("id") }
-        for (old in listOf("prof-profiles", "professional", "work", "study", "cv", "roadmap", "leafy", "nexus", "stark")) assertTrue("$old is gone from Prof", old in ids)
+        // #1937 owner-ordered removal: More (prof-profiles) with Professional, Work and Study (CV, Roadmap) is gone; the company sites stay
+        for (kept in listOf("leafy", "nexus", "stark")) assertTrue("$kept is gone from Prof", kept in ids)
+        for (gone in listOf("prof-profiles", "professional", "work", "study", "cv", "roadmap")) assertFalse("$gone is declared again", gone in ids)
         assertFalse(table.toString().isBlank())
     }
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Tester (#1918): E1 every Proj page label starts with its Linktree emoji (data/web/me-proj-emoji.json); E2 every main category has a Linktree banner URL;
-# E3 Repos follows 42 and embeds the bundled repos tree; E4 Prof > Profiles is LinkedIn | CV and the old Profiles pages are still pages of Prof;
+# E3 Repos follows 42 and embeds the bundled repos tree; E4 Prof > Profiles is LinkedIn | CV, the company sites stay and the #1937-removed More pages are gone;
 # E5 the table and the tree copy equal their sources (when the sibling repos are present). Each is proven red by a mutation of a copy.
 set -u
 APP="$(cd "$(dirname "$0")/.." && pwd)"
@@ -27,8 +27,10 @@ try:
 except Exception as x: print("E3\t%s" % x)
 prof = {p["id"]: p for p in flat(secs["prof"])}
 if [p["id"] for p in prof.get("prof-web", {}).get("pages", [])] != ["prof-linkedin", "prof-cv"]: print("E4\tProf > Profiles is not LinkedIn | CV")
-for old in ("prof-profiles", "professional", "work", "study", "cv", "roadmap", "leafy", "nexus", "stark"):
+for old in ("leafy", "nexus", "stark"):
     if old not in prof: print("E4\told page %s is gone from Prof" % old)
+for gone in ("prof-profiles", "professional", "work", "study", "cv", "roadmap"):   # #1937 owner-ordered removal
+    if gone in prof: print("E4\tremoved page %s is declared again" % gone)
 PY
 }
 out=$(check "$APP"); if [ -z "$out" ]; then ok "E1-E4 emoji, banners, Repos and Profiles hold"; else bad "$out"; fi
@@ -44,5 +46,6 @@ mut "a banner leaves the Linktree site" 'import json,sys;p=sys.argv[1]+"/data/we
 mut "Repos is dropped" 'import sys;p=sys.argv[1]+"/data/ui/proj/pj-repos.json";import os;os.remove(p)'
 mut "Repos tree is empty" 'import sys;open(sys.argv[1]+"/data/web/repos-tree.html","w").write("x")'
 mut "LinkedIn tab is dropped" 'import re,sys;p=sys.argv[1]+"/build.json";s=open(p,encoding="utf-8").read().replace("\"id\": \"prof-linkedin\"","\"id\": \"prof-x\"");open(p,"w",encoding="utf-8").write(s)'
-mut "the old Work page is gone" 'import sys;p=sys.argv[1]+"/build.json";s=open(p,encoding="utf-8").read().replace("\"id\": \"work\"","\"id\": \"wrk\"");open(p,"w",encoding="utf-8").write(s)'
+mut "the Leaf.y page is gone" 'import sys;p=sys.argv[1]+"/build.json";s=open(p,encoding="utf-8").read().replace("\"id\": \"leafy\"","\"id\": \"lfy\"");open(p,"w",encoding="utf-8").write(s)'
+mut "the removed More page is declared again" 'import sys;p=sys.argv[1]+"/build.json";s=open(p,encoding="utf-8").read().replace("\"id\": \"leafy\",\n            \"label\"","\"id\": \"prof-profiles\",\n            \"label\"",1);open(p,"w",encoding="utf-8").write(s)'
 echo "$PASS passed, $FAIL failed"; [ "$FAIL" -eq 0 ]

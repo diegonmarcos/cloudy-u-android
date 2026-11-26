@@ -16,7 +16,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class ExperiencesTest {
-    private val pages = listOf("prof/prof-profiles/work", "prof/prof-profiles/study/roadmap") + listOf("geo", "endurance", "growth", "community", "by30", "by40", "by50").map { "pers/achieves/$it" }
+    private val pages = /* #1937 Prof > Work and Study > Roadmap were removed by owner order */ listOf("geo", "endurance", "growth", "community", "by30", "by40", "by50").map { "pers/achieves/$it" }
     private fun block(p: String): JSONObject = JSONArray(BuroLlcTestData.text("data/ui/$p.json")).let { a ->
         (0 until a.length()).map { a.getJSONObject(it) }.single { it.optString("kind") == "ledger" }
     }

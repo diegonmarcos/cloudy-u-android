@@ -41,12 +41,10 @@ class BuroLlcDeclTest {
         val ui = JSONObject(BuroLlcTestData.text("build.json")).getJSONObject("ui")
         val bar = ui.getJSONArray("bottom_nav").let { a -> (0 until a.length()).map { a.getString(it) } }
         assertFalse("tasks" in bar)
-        assertEquals("https://linkedin.com/in/diegonmarcos", page("prof/prof-profiles", "professional").getJSONObject(0).getString("url"))
         assertEquals("https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html", page("pers/pers-profiles", "ig0").getJSONObject(0).getString("url"))
-        for ((d, p) in listOf("prof/prof-profiles" to "professional", "pers/pers-profiles" to "ig0")) assertEquals("web", page(d, p).getJSONObject(0).getString("id"))
-        // nothing dropped: Prof keeps Professional, Pers keeps Personal, Tasks keeps Tree and Due with their groups
-        val profiles = { s: String -> sections.getValue(s).getJSONArray("pages").getJSONObject(if (s == "prof") 1 else 0).getJSONArray("pages") }
-        assertTrue("professional" in ids(profiles("prof")))
+        for ((d, p) in listOf("pers/pers-profiles" to "ig0")) assertEquals("web", page(d, p).getJSONObject(0).getString("id"))
+        // nothing dropped: Pers keeps Personal, Tasks keeps Tree and Due with their groups (#1937: Prof > More, with Professional, was removed by owner order)
+        val profiles = { s: String -> sections.getValue(s).getJSONArray("pages").getJSONObject(0).getJSONArray("pages") }
         assertTrue("personal" in ids(profiles("pers")))
         assertEquals(listOf("roadmaps", "backlogs"), ids(sections.getValue("tasks").getJSONArray("pages")))
         assertEquals(setOf("backlogs", "roadmaps"), groups("tasks").keys)
@@ -170,8 +168,8 @@ class BuroLlcDeclTest {
         assertEquals("pj-home", ids(proj.getJSONArray("pages")).first())
         assertEquals(mapOf("lnktree" to listOf("lt-lnktree-site")), groups("lnktree").filterKeys { it == "lnktree" })
         assertEquals("lt-lnktree-site", ids(sections.getValue("lnktree").getJSONArray("pages")).first())
-        assertEquals(mapOf("profiles" to listOf("prof-web", "prof-profiles"), "companies" to listOf("leafy", "nexus", "stark")), groups("prof"))
-        assertEquals(listOf("prof-web", "prof-profiles", "leafy", "nexus", "stark"), ids(sections.getValue("prof").getJSONArray("pages")))
+        assertEquals(mapOf("profiles" to listOf("prof-web"), "companies" to listOf("leafy", "nexus", "stark")), groups("prof"))
+        assertEquals(listOf("prof-web", "leafy", "nexus", "stark"), ids(sections.getValue("prof").getJSONArray("pages")))
     }
 
     @Test fun `the six embedded sites open by their https URL, each declared in its own page file`() {

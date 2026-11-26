@@ -5,6 +5,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -60,10 +61,9 @@ class NavReorgTest {
 
     @Test fun `Prof is Profiles then Leaf y Nexus z Stark x and Proj is Lnktree then the areas, Lnktree first and default`() {
         val prof = Sections.byId("prof")!!
-        assertEquals(listOf("Profiles", "More", "Leaf.y", "Nexus.z", "Stark.x"), prof.pages.map { it.label })   // #1918 Profiles = LinkedIn | CV; the old Profiles pages moved to More
+        assertEquals(listOf("Profiles", "Leaf.y", "Nexus.z", "Stark.x"), prof.pages.map { it.label })   // #1937 More (and Professional, Work, Study) removed by owner order
         assertEquals(listOf("prof-linkedin", "prof-cv"), ids(prof.page("prof-web")!!.pages))
-        assertEquals(listOf("professional", "work", "study"), ids(prof.page("prof-profiles")!!.pages))
-        assertEquals(listOf("cv", "roadmap"), ids(prof.page("study")!!.pages))
+        for (gone in listOf("prof-profiles", "professional", "work", "study", "cv", "roadmap")) assertNull("$gone is removed", prof.page(gone))
         assertEquals("prof-linkedin", leafOf("prof", null))   // #1918 Prof opens on Profiles > LinkedIn
         val proj = Sections.byId("proj")!!
         assertEquals(listOf("pj-home", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42", "pj-repos"), ids(proj.pages))
@@ -72,7 +72,7 @@ class NavReorgTest {
         assertEquals("the Lnktree bottom-nav entry opens on the Lnktree site", "lt-lnktree-site", leafOf("lnktree", null))
         // the groups are the declared rows: Prof is `Profiles | Leaf.y, Nexus.z, Stark.x`, Proj is `Lnktree` over the areas
         fun groups(s: String) = arr(ui.getJSONArray("sections")).first { it.getString("id") == s }.getJSONArray("groups").let { g -> arr(g).associate { it.getString("id") to (0 until it.getJSONArray("pages").length()).map { i -> it.getJSONArray("pages").getString(i) } } }
-        assertEquals(mapOf("profiles" to listOf("prof-web", "prof-profiles"), "companies" to listOf("leafy", "nexus", "stark")), groups("prof"))
+        assertEquals(mapOf("profiles" to listOf("prof-web"), "companies" to listOf("leafy", "nexus", "stark")), groups("prof"))
         assertEquals(listOf("lnktree", "prof", "pers", "proj"), groups("lnktree").keys.toList())
         assertEquals(listOf("lt-lnktree-site"), groups("lnktree").getValue("lnktree"))
     }
@@ -101,20 +101,20 @@ class NavReorgTest {
         val want = mapOf(
             ("health" to "home") to ("pers" to "home"), ("health" to "tracked") to ("pers" to "tracked"), ("health" to "workout") to ("pers" to "workout"),
             ("health" to null) to ("pers" to null),
-            ("experiences" to "work") to ("prof" to "work"), ("experiences" to "cv") to ("prof" to "cv"), ("experiences" to "achieves") to ("pers" to "achieves"),
+            ("experiences" to "work") to ("prof" to "prof-web"), ("experiences" to "cv") to ("prof" to "prof-web"), ("prof" to "prof-profiles") to ("prof" to "prof-web"), ("prof" to "study") to ("prof" to "prof-web"), ("experiences" to "achieves") to ("pers" to "achieves"),
             ("experiences" to "geo") to ("pers" to "geo"), ("experiences" to "by50") to ("pers" to "by50"),
-            ("socials" to "socials-professional") to ("prof" to "professional"), ("socials" to "socials-personal") to ("pers" to "ig0"), ("pers" to "instagram") to ("pers" to "ig0"), ("pers" to "social") to ("pers" to "ig0"),
+            ("socials" to "socials-professional") to ("prof" to "prof-web"), ("socials" to "socials-personal") to ("pers" to "ig0"), ("pers" to "instagram") to ("pers" to "ig0"), ("pers" to "social") to ("pers" to "ig0"),
             ("lnktree" to "professional") to ("lnktree" to "lt-professional"), ("lnktree" to "personal") to ("lnktree" to "lt-personal"),
             ("lnktree" to "leafy") to ("lnktree" to "lt-leafy"), ("lnktree" to "dd") to ("lnktree" to "lt-dd"), ("lnktree" to "health") to ("lnktree" to "lt-health"),
             ("lnktree" to "lnktree-site") to ("lnktree" to "lt-lnktree-site"), ("proj" to "lnktree-site") to ("lnktree" to "lt-lnktree-site"), ("proj" to "area-unix") to ("proj" to "pj-unix"), ("proj" to "area-front") to ("proj" to "pj-projects"), ("lnktree" to "area-unix") to ("lnktree" to "lt-area-unix"),
             ("lnktree" to null) to ("lnktree" to null), ("socials" to null) to ("proj" to null),
             // ids of the layouts before the previous one chain through both tables
-            ("me" to "leafy") to ("lnktree" to "lt-leafy"), ("me" to "lnktree") to ("lnktree" to "lt-lnktree-site"), ("study" to "cv") to ("prof" to "cv"),
+            ("me" to "leafy") to ("lnktree" to "lt-leafy"), ("me" to "lnktree") to ("lnktree" to "lt-lnktree-site"), ("study" to "cv") to ("prof" to "prof-web"),
             ("achieves" to "personal") to ("pers" to "growth"),
         )
         for ((old, to) in want) assertEquals("${old.first}/${old.second}", to, LegacyRoutes.resolve(old.first, old.second))
         // the live ids pass through untouched
-        for (live in listOf("pers" to "geo", "prof" to "work", "proj" to "pj-home", "buro" to "ids", "tasks" to "backlogs")) assertEquals(live, LegacyRoutes.resolve(live.first, live.second))
+        for (live in listOf("pers" to "geo", "prof" to "prof-web", "proj" to "pj-home", "buro" to "ids", "tasks" to "backlogs")) assertEquals(live, LegacyRoutes.resolve(live.first, live.second))
     }
 
     @Test fun `ui renamed names only pages and sections of the live tree and the asset the app reads is build json's`() {

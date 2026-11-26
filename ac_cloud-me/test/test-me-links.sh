@@ -32,7 +32,7 @@ for e in t:
     if not b.get("url", "").startswith("https://"): print("L6\t%s does not embed an https site" % e["id"])
     if b.get("url") in seen and not e.get("mirror_of"): print("L7\t%s and %s embed the same page" % (seen[b.get("url")], e["id"]))
     if not e.get("mirror_of"): seen[b.get("url")] = e["id"]
-need = {"pers-personal", "pers-ig0", "pers-ig1", "pers-ig2", "pers-face0", "pers-pinterest", "pers-youtube", "pers-tidal", "pers-linkedin", "pers-orkut", "pers-astro", "prof-professional", "prof-nexus", "prof-leafy", "prof-stark"}
+need = {"pers-personal", "pers-ig0", "pers-ig1", "pers-ig2", "pers-face0", "pers-pinterest", "pers-youtube", "pers-tidal", "pers-linkedin", "pers-orkut", "pers-astro", "prof-nexus", "prof-leafy", "prof-stark"}
 for m in sorted(need - {e["id"] for e in t}): print("L1\t%s is not declared" % m)
 PY
 }

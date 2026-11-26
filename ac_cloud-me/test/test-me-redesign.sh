@@ -219,11 +219,10 @@ _lt = secs.get("lnktree", {})   # #1901 correction: the Lnktree bottom-nav entry
 if "lnktree" not in ui.get("bottom_nav", []) or [p["id"] for p in _lt.get("pages", [])] != ["lt-" + x for x in ["lnktree-site", "professional", "leafy", "nexus", "stark", "personal", "social", "health", "dd", "astro", "area-unix", "area-cg", "area-capital", "area-hardtech", "area-lecole42", "area-front"]]:
     bad("pages", "the Lnktree bottom-nav entry with its sixteen pages is missing")
 _pf = secs.get("prof", {})
-if [p["id"] for p in _pf.get("pages", [])] != ["prof-web", "prof-profiles", "leafy", "nexus", "stark"] or \
+if [p["id"] for p in _pf.get("pages", [])] != ["prof-web", "leafy", "nexus", "stark"] or \
    [p["id"] for p in (_pf.get("pages") or [{}])[0].get("pages", [])] != ["prof-linkedin", "prof-cv"] or \
-   [p["id"] for p in (_pf.get("pages") or [{}, {}])[1].get("pages", [])] != ["professional", "work", "study"] or \
-   {g["id"]: g["pages"] for g in _pf.get("groups", [])} != {"profiles": ["prof-web", "prof-profiles"], "companies": ["leafy", "nexus", "stark"]}:
-    bad("pages", "Prof is not Profiles (Professional, Work, Study) | Leaf.y, Nexus.z, Stark.x")
+   {g["id"]: g["pages"] for g in _pf.get("groups", [])} != {"profiles": ["prof-web"], "companies": ["leafy", "nexus", "stark"]}:
+    bad("pages", "Prof is not Profiles (LinkedIn, CV) | Leaf.y, Nexus.z, Stark.x (#1937: More, with Professional, Work and Study, removed by owner order)")
 _pj = secs.get("proj", {})
 if [p["id"] for p in _pj.get("pages", [])] != ["pj-home", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42", "pj-repos"]:
     bad("pages", "Proj pages are not Home, Unix, CG, Capital, Hardtech, Wiki, Projects, 42 (#1914)")
@@ -265,7 +264,7 @@ if [p["id"] for p in secs.get("tasks", {}).get("pages", [])] != ["roadmaps", "ba
 # both drawing the mysocials web pages; Tasks stays declared off the bar with every page, so nothing is dropped.
 if "socials" in secs or "socials" in ui.get("bottom_nav", []) or os.path.isdir(os.path.join(app, "data/ui/socials")):
     bad("pages", "the Socials section is declared again (it is Proj; its two tabs live in Prof and Pers)")
-for _pg, _url, _rel in (("professional", "https://linkedin.com/in/diegonmarcos", "prof/prof-profiles/professional"), ("ig0", "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html", "pers/pers-profiles/ig0")):
+for _pg, _url, _rel in (("ig0", "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html", "pers/pers-profiles/ig0"),):
     _sf = os.path.join(app, f"data/ui/{_rel}.json")
     _sj = json.load(open(_sf, encoding="utf-8")) if os.path.exists(_sf) else [{}]
     if _sj[0].get("kind") != "fragment" or _sj[0].get("id") != "web" or _sj[0].get("url") != _url:
@@ -273,7 +272,7 @@ for _pg, _url, _rel in (("professional", "https://linkedin.com/in/diegonmarcos",
 if "tasks" in ui.get("bottom_nav", []) or "tasks" not in secs or [p["id"] for p in secs["tasks"].get("pages", [])] != ["roadmaps", "backlogs"] or \
    [g["id"] for g in secs["tasks"].get("groups", [])] != ["backlogs", "roadmaps"]:
     bad("pages", "Tasks left the bar but must stay a declared section with Tree and Due and its two groups (nothing dropped)")
-for _l, _sec in (("professional", "prof"), ("personal", "pers")):
+for _l, _sec in (("personal", "pers"),):   # #1937: Prof > Professional was removed by owner order
     if _l not in [p["id"] for p in pages(secs.get(_sec, {}).get("pages"))]:
         bad("pages", f"{_sec} lost its {_l} page")
 for _gone in ("roadmap", "duties"):
@@ -387,21 +386,13 @@ for sid, labels in want_pages.items():
             bad("pages", f"Pers > Health pages are not {labels}")
     elif [p["label"] for p in secs.get(sid, {}).get("pages", [])] != labels:
         bad("pages", f"{sid} pages are not {labels}")
-_study = {p["id"]: p for p in secs.get("prof", {}).get("pages", [{}, {}])[1].get("pages", [])}.get("study", {})
-if [p["label"] for p in _study.get("pages", [])] != ["CV", "Roadmap"]:
-    bad("pages", "Prof > Profiles > Study is not CV, Roadmap")
-_w = os.path.join(app, "data/ui/prof/prof-profiles/work.json")
-_wb = json.load(open(_w, encoding="utf-8")) if os.path.exists(_w) else []
-if not _wb or _wb[0].get("store") != "experiences_user" or [l["collection"] for l in _wb[0].get("ledgers", [])] != ["work_done", "work_todo"] \
-   or not _wb[0]["ledgers"][0].get("builtin"):
-    bad("pages", "Prof > Profiles > Work is not the Done/To do ledger seeded with the profile roles")
 _rf = os.path.join(app, "data/ui/tasks/roadmaps.json")
 if "roadmaps" not in [p["id"] for p in secs.get("tasks", {}).get("pages", [])] or \
    (json.load(open(_rf, encoding="utf-8")) if os.path.exists(_rf) else [{}])[0].get("id") != "folder_tree":
     bad("pages", "Tasks > RoadMaps does not draw the folder_tree")
 if '"folder_tree" -> FolderTreeScreen(' not in code(os.path.join(MAIN, "java/com/diegonmarcos/cloudme/SectionScreen.kt")):
     bad("pages", "SectionScreen does not draw folder_tree pages")
-for sid, pg in (("prof/prof-profiles/study", "cv"), ("prof/prof-profiles/study", "roadmap"), ("prof/prof-profiles", "work"), ("llc", "employed"), ("llc", "side-hustles"), ("tasks", "backlogs"), ("tasks", "roadmaps"), ("pers/achieves", "geo")):
+for sid, pg in (("llc", "employed"), ("llc", "side-hustles"), ("tasks", "backlogs"), ("tasks", "roadmaps"), ("pers/achieves", "geo")):
     f = os.path.join(app, f"data/ui/{sid}/{pg}.json")
     if not os.path.exists(f) or not json.load(open(f, encoding="utf-8")):
         bad("pages", f"data/ui/{sid}/{pg}.json is missing or empty")
@@ -532,7 +523,7 @@ mutant settings "the top bar loses its inline actions" "sed -i 's/inlineActions 
 mutant pages "the Home section is back" "python3 -c \"import json;d=json.load(open('build.json'));d['ui']['sections'].append({'id':'home','label':'Home','pages':[]});json.dump(d,open('build.json','w'))\""
 mutant pages "Backlogs dropped from Tasks" "python3 -c \"import json;d=json.load(open('build.json'));[s['pages'].pop() for s in d['ui']['sections'] if s['id']=='tasks'];json.dump(d,open('build.json','w'))\""
 mutant pages "Instagram dropped from Pers Profiles" "python3 -c \"import json;d=json.load(open('build.json'));[s['pages'][0]['pages'].pop(1) for s in d['ui']['sections'] if s['id']=='pers'];json.dump(d,open('build.json','w'))\""
-mutant pages "Prof Professional draws another page" "sed -i 's#https://linkedin.com/in/diegonmarcos\"#mysocials/social.html\"#' data/ui/prof/prof-profiles/professional.json"
+
 mutant pages "Tasks section dropped with the bar slot" "python3 -c \"import json;d=json.load(open('build.json'));d['ui']['sections']=[s for s in d['ui']['sections'] if s['id']!='tasks'];json.dump(d,open('build.json','w'))\""
 mutant pages "the Duties section comes back" "python3 -c \"import json;d=json.load(open('build.json'));d['ui']['sections'].append({'id':'duties','label':'Duties','pages':[]});json.dump(d,open('build.json','w'))\""
 mutant nav-order "Inventory and Tasks swapped" "python3 -c \"import json;d=json.load(open('build.json'));b=d['ui']['bottom_nav'];b[2],b[4]=b[4],b[2];json.dump(d,open('build.json','w'))\""
@@ -570,7 +561,7 @@ mutant pages "the done date is no longer stamped" "sed -i 's/\"move_stamp\": \"d
 mutant achieves "Study is a section again" "python3 -c \"import json;d=json.load(open('build.json'));d['ui']['sections'].append({'id':'study','label':'Study','pages':[]});json.dump(d,open('build.json','w'))\""
 mutant pages "Work dropped from Prof" "python3 -c \"import json;d=json.load(open('build.json'));[s['pages'][0]['pages'].pop(1) for s in d['ui']['sections'] if s['id']=='prof'];json.dump(d,open('build.json','w'))\""
 mutant nav-order "Tasks after Lnktree" "python3 -c \"import json;d=json.load(open('build.json'));b=d['ui']['bottom_nav'];b[2],b[3]=b[3],b[2];json.dump(d,open('build.json','w'))\""
-mutant pages "Work loses its seeded roles" "python3 -c \"import json;p='data/ui/prof/prof-profiles/work.json';d=json.load(open(p));d[0]['ledgers'][0].pop('builtin');json.dump(d,open(p,'w'))\""
+
 mutant pages "RoadMaps page draws no tree" "sed -i 's/folder_tree/stack/' data/ui/tasks/roadmaps.json"
 mutant pages "Geo loses its stats" "sed -i 's/\"visited\": \"geo_done\"/\"visited\": \"nope\"/' data/ui/pers/achieves/geo.json"
 mutant pages "migration sends records to an undeclared tab" "sed -i 's/\"default\": \"endurance\"/\"default\": \"trips\"/' build.json"

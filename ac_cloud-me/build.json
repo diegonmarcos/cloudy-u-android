@@ -375,10 +375,10 @@
         "health/shop": "pers/shop",
         "health/dossier": "pers/dossier",
         "health/workout": "pers/workout",
-        "experiences/work": "prof/work",
-        "experiences/study": "prof/study",
-        "experiences/cv": "prof/cv",
-        "experiences/roadmap": "prof/roadmap",
+        "experiences/work": "prof/prof-web",
+        "experiences/study": "prof/prof-web",
+        "experiences/cv": "prof/prof-web",
+        "experiences/roadmap": "prof/prof-web",
         "experiences/achieves": "pers/achieves",
         "experiences/geo": "pers/geo",
         "experiences/endurance": "pers/endurance",
@@ -387,7 +387,13 @@
         "experiences/by30": "pers/by30",
         "experiences/by40": "pers/by40",
         "experiences/by50": "pers/by50",
-        "socials/socials-professional": "prof/professional",
+        "socials/socials-professional": "prof/prof-web",
+        "prof/prof-profiles": "prof/prof-web",
+        "prof/professional": "prof/prof-web",
+        "prof/work": "prof/prof-web",
+        "prof/study": "prof/prof-web",
+        "prof/cv": "prof/prof-web",
+        "prof/roadmap": "prof/prof-web",
         "socials/socials-personal": "pers/ig0",
         "pers/instagram": "pers/ig0",
         "pers/social": "pers/ig0",
@@ -800,7 +806,7 @@
         ]
       },
       {
-        "_doc": "#1901 Prof: the section called Experiences became Prof. Two groups on one strip, Profiles | Leaf.y, Nexus.z, Stark.x. Profiles holds Professional (the LinkedIn social page, rendered from the mysocials web project by the web fragment), Work (a Done and To do ledger over experiences_user, its Done list seeded by data/regen-study.py with the LinkedIn roles) and Study (CV and Roadmap, data/regen-study.py); Leaf.y, Nexus.z and Stark.x are their published sites embedded by https URL (data/ui/prof/<id>.json). Personal Archives moved to Pers. Old page:experiences/* and page:lnktree/<prof page> routes resolve through ui.renamed.",
+        "_doc": "#1901 Prof: the section called Experiences became Prof. Two groups on one strip, Profiles | Leaf.y, Nexus.z, Stark.x. Profiles holds LinkedIn and CV (prof-web); Leaf.y, Nexus.z and Stark.x are their published sites embedded by https URL (data/ui/prof/<id>.json). #1937 owner-ordered removal: the page More (prof-profiles) with its subpages Professional, Work and Study (CV, Roadmap) is gone; every old id (page:prof/prof-profiles, professional, work, study, cv, roadmap and the experiences/* ones) resolves to Prof > Profiles (prof-web) through ui.renamed. Personal Archives moved to Pers. Old page:experiences/* and page:lnktree/<prof page> routes resolve through ui.renamed.",
         "id": "prof",
         "label": "Prof",
         "icon": "ic_nav_work",
@@ -810,8 +816,7 @@
             "label": "Profiles",
             "icon": "badge",
             "pages": [
-              "prof-web",
-              "prof-profiles"
+              "prof-web"
             ]
           },
           {
@@ -840,40 +845,6 @@
                 "id": "prof-cv",
                 "label": "CV",
                 "icon": "ic_world"
-              }
-            ]
-          },
-          {
-            "id": "prof-profiles",
-            "label": "More",
-            "icon": "ic_nav_me",
-            "pages": [
-              {
-                "id": "professional",
-                "label": "Professional",
-                "icon": "ic_nav_me"
-              },
-              {
-                "id": "work",
-                "label": "Work",
-                "icon": "ic_nav_work"
-              },
-              {
-                "id": "study",
-                "label": "Study",
-                "icon": "ic_nav_study",
-                "pages": [
-                  {
-                    "id": "cv",
-                    "label": "CV",
-                    "icon": "ic_p_cv"
-                  },
-                  {
-                    "id": "roadmap",
-                    "label": "Roadmap",
-                    "icon": "ic_p_roadmap"
-                  }
-                ]
               }
             ]
           },

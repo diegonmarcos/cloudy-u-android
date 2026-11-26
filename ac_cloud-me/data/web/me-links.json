@@ -169,22 +169,6 @@
       "sot_url": "https://diegonmarcos.github.io/myAstro/"
     },
     {
-      "id": "prof-professional",
-      "section": "prof",
-      "kind": "social",
-      "label": "LinkedIn",
-      "source": {
-        "file": "cloud-me-pub-profiles-_lnktree/Lnktree/linktree/src/data/professional-profiles.json",
-        "pointer": "/slides/0/sections/0/items/1/url"
-      },
-      "path": [
-        "prof-profiles",
-        "professional"
-      ],
-      "url": "https://linkedin.com/in/diegonmarcos",
-      "sot_url": "https://linkedin.com/in/diegonmarcos"
-    },
-    {
       "id": "prof-nexus",
       "section": "prof",
       "kind": "company",

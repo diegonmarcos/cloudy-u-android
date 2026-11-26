@@ -21,7 +21,7 @@ class MeLinksTest {
     private val entries = JSONObject(BuroLlcTestData.text("data/web/me-links.json")).getJSONArray("entries").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
 
     @Test fun `the tabs and companies of Pers and Prof are all declared`() {
-        val want = setOf("pers-personal", "pers-ig0", "pers-ig1", "pers-ig2", "pers-face0", "pers-pinterest", "pers-youtube", "pers-tidal", "pers-linkedin", "pers-orkut", "pers-astro", "prof-professional", "prof-nexus", "prof-leafy", "prof-stark", "lnktree-default", "proj-unix-superapp", "proj-lecole42-dev")
+        val want = setOf("pers-personal", "pers-ig0", "pers-ig1", "pers-ig2", "pers-face0", "pers-pinterest", "pers-youtube", "pers-tidal", "pers-linkedin", "pers-orkut", "pers-astro", "prof-nexus", "prof-leafy", "prof-stark", "lnktree-default", "proj-unix-superapp", "proj-lecole42-dev")
         assertEquals(emptySet<String>(), want - entries.map { it.getString("id") }.toSet())
     }
 

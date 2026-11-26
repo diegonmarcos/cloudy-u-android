@@ -66,12 +66,13 @@ if [p["id"] for p in sub("pers", "health", "trackers").get("pages", [])] != ["tr
     bad("tree", "Pers > Health does not hold the 5 Trackers and 14 Plan pages in their old order")
 if [p["id"] for p in sub("pers", "achieves").get("pages", [])] != ["geo", "endurance", "growth", "community", "by30", "by40", "by50"]:
     bad("tree", "Pers > Personal Archives is not Geo, Endurance, Personal Growth, Community, By 30, By 40, By 50")
-if labels(secs.get("prof", {}).get("pages", [])) != [("prof-web", "Profiles"), ("prof-profiles", "More"), ("leafy", "Leaf.y"), ("nexus", "Nexus.z"), ("stark", "Stark.x")] or \
-   {g["id"]: g["pages"] for g in secs.get("prof", {}).get("groups", [])} != {"profiles": ["prof-web", "prof-profiles"], "companies": ["leafy", "nexus", "stark"]}:
-    bad("tree", "Prof is not Profiles (LinkedIn, CV), More | Leaf.y, Nexus.z, Stark.x")
-if [p["id"] for p in sub("prof", "prof-profiles").get("pages", [])] != ["professional", "work", "study"] or \
-   [p["id"] for p in sub("prof", "prof-profiles", "study").get("pages", [])] != ["cv", "roadmap"]:
-    bad("tree", "Prof > Profiles is not Professional, Work, Study (CV, Roadmap)")
+if labels(secs.get("prof", {}).get("pages", [])) != [("prof-web", "Profiles"), ("leafy", "Leaf.y"), ("nexus", "Nexus.z"), ("stark", "Stark.x")] or \
+   {g["id"]: g["pages"] for g in secs.get("prof", {}).get("groups", [])} != {"profiles": ["prof-web"], "companies": ["leafy", "nexus", "stark"]}:
+    bad("tree", "Prof is not Profiles (LinkedIn, CV) | Leaf.y, Nexus.z, Stark.x (#1937: More is removed by owner order)")
+if [p["id"] for p in sub("prof", "prof-web").get("pages", [])] != ["prof-linkedin", "prof-cv"]:
+    bad("tree", "Prof > Profiles is not LinkedIn | CV")
+for _gone in ("prof-profiles", "professional", "work", "study", "cv", "roadmap"):
+    if _gone in set(ids(secs.get("prof", {}).get("pages"))): bad("tree", f"#1937 the removed Prof page {_gone} is declared again")
 PROJ = {"unix": ["superapp", "cloudme", "cloudy"], "cg": ["omniverse", "zirkusverse"], "capital": ["cb", "pm", "finterm"], "hardtech": ["biomed", "cad", "deepxtech"],
         "wiki": ["modernsc", "arcanum", "projects"], "projects": ["endeavours", "duckpeng"], "lecole42": ["algo", "graphic", "system", "mylibs", "curriculum", "agentic", "datascience", "machinelearning", "cyberwarfare", "dev"]}
 if [p["id"] for p in secs.get("proj", {}).get("pages", [])] != ["pj-home"] + ["pj-" + g for g in PROJ] + ["pj-repos"] or \
@@ -110,14 +111,19 @@ RELABELED = {  # the owner's renames of #1901, and the two pages whose name the 
 }
 # #1911 owner order: these three tabs embed their real site (the declared me-links.json URL) instead of the bundled mysocials mirror; the
 # baseline value is compared through this table, ONLY on these pages (the Lnktree bottom-nav copies keep the mirrors)
-EMBED1911 = {"prof/professional": {"mysocials/linkedin.html": "https://linkedin.com/in/diegonmarcos"},
-             "pers/ig0": {"mysocials/instagram-diegocnmarcos_.html": "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html"}}
+EMBED1911 = {"pers/ig0": {"mysocials/instagram-diegocnmarcos_.html": "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html"}}
 def real(x, to):
     for old, new in EMBED1911.get(to, {}).items(): x = x.replace(old, new)
     return x
+# #1937 OWNER-ORDERED REMOVAL: Prof > More (prof-profiles) and its subpages Professional, Work, Study (CV, Roadmap) were removed. These baseline pages are the only
+# ones allowed to lose their content; each must still resolve (deep links, saved state) to Prof > Profiles (prof/prof-web). Nothing else may be lost.
+OWNER_REMOVED_1937 = {"experiences/work", "experiences/study", "experiences/cv", "experiences/roadmap", "socials/socials-professional"}
 for key, b in sorted(base["pages"].items()):
     sec, pid = key.split("/", 1)
     ns, np = resolve(sec, pid)
+    if key in OWNER_REMOVED_1937:
+        if (ns, np) != ("prof", "prof-web"): bad("parity", f"{key} (owner-removed, #1937) resolves to {ns}/{np}, wanted prof/prof-web")
+        continue
     if ns not in secs:
         bad("parity", f"{key}: its section {ns} is not declared"); continue
     t = now["pages"].get(f"{ns}/{np}")
@@ -137,7 +143,7 @@ for key, b in sorted(base["pages"].items()):
     if b["label"] and t["label"] != RELABELED.get(key, b["label"]):
         bad("parity", f"{key} -> {ns}/{np}: the label {b['label']!r} became {t['label']!r}")
 # the Lnktree bottom-nav pages (restored, lt- ids) also live on as the reorganised pages of Pers, Prof and Proj: those hold every baseline field too
-ALSO = {"professional": "prof/professional", "leafy": "prof/leafy", "nexus": "prof/nexus", "stark": "prof/stark", "personal": "pers/ig0",
+ALSO = {"leafy": "prof/leafy", "nexus": "prof/nexus", "stark": "prof/stark", "personal": "pers/ig0",
         "health": "pers/health-profile", "dd": "pers/dd", "astro": "pers/astro", }
 for pid, to in ALSO.items():
     b = base["pages"].get(f"lnktree/{pid}")
@@ -152,6 +158,10 @@ allextras = {x for s in now["sections"] for x in s["extras"]}
 for s in base["sections"]:
     for x in s["extras"]:
         if x not in allextras: bad("parity", f"section {s['id']}: the declaration {x[:110]} is gone")
+# #1937 every id of the removed pages (the 1901 layout ones included) resolves to Prof > Profiles
+for _old in ("prof/prof-profiles", "prof/professional", "prof/work", "prof/study", "prof/cv", "prof/roadmap"):
+    if ren.get("pages", {}).get(_old) != "prof/prof-web": bad("renamed", f"ui.renamed.pages has no alias {_old} -> prof/prof-web (#1937)")
+if os.path.isdir(os.path.join(app, "data/ui/prof/prof-profiles")): bad("parity", "data/ui/prof/prof-profiles is back (#1937 removed it)")
 # the bar: every old bar section is a bar section of the new tree
 for i in base["bottom_nav"]:
     if resolve(i, None)[0] not in ui.get("bottom_nav", []): bad("parity", f"the old bar section {i} resolves to {resolve(i, None)[0]}, which is not on the bar")
@@ -188,7 +198,6 @@ if "LegacyRoutes.resolve(sectionId, pageId)" not in mo or "LegacyRoutes.load(thi
 
 # ---- N4 every tile opens its own site; the URL is declared data
 SITES = {  # tile -> (page file, the url it embeds)
-    "Prof > Profiles > Professional (LinkedIn)": ("data/ui/prof/prof-profiles/professional.json", "https://linkedin.com/in/diegonmarcos"),
     "Prof > Leaf.y": ("data/ui/prof/leafy.json", "https://diegonmarcos.github.io/leafy/"),
     "Prof > Nexus.z": ("data/ui/prof/nexus.json", "https://diegonmarcos.github.io/nexus/"),
     "Prof > Stark.x": ("data/ui/prof/stark.json", "https://diegonmarcos.github.io/stark/"),
@@ -282,7 +291,9 @@ W_="json.dump(d,open('build.json','w'),indent=1)"
 mutant parity "a field is dropped from a moved Leaf.y page" "$J \"import json;f='data/ui/prof/leafy.json';d=json.load(open(f));d[0].pop('url');json.dump(d,open(f,'w'))\""
 mutant parity "a page's content is emptied (DD)" "echo '[]' > data/ui/pers/dd.json"
 mutant parity "a ledger field is dropped from a moved Personal Archives tab" "$J \"import json;f='data/ui/pers/achieves/by40.json';d=json.load(open(f));l=d[0]['ledgers'][0];l['fields']=l['fields'][1:];json.dump(d,open(f,'w'))\""
-mutant parity "a seeded Work role is dropped" "$J \"import json;f='data/ui/prof/prof-profiles/work.json';d=json.load(open(f));d[0]['ledgers'][0]['builtin'].pop(0);json.dump(d,open(f,'w'))\""
+mutant renamed "a removed Prof page id (work) no longer resolves to Profiles (#1937)" "$J \"$BJ;U['renamed']['pages'].pop('prof/work');$W_\""
+mutant parity "an old experiences id (cv) resolves elsewhere than Profiles (#1937)" "$J \"$BJ;U['renamed']['pages']['experiences/cv']='pers/geo';$W_\""
+mutant tree "Prof > More is declared again (#1937)" "$J \"$BJ;S['prof']['pages'].insert(1,{'id':'prof-profiles','label':'More','icon':'ic_nav_me'});$W_\""
 mutant parity "a Health plan page's content is changed" "sed -i 's/\"page\": \"circadian\"/\"page\": \"circadian2\"/' data/ui/pers/health/plan/circadian.json"
 mutant parity "a Health tracker page file is lost" "rm data/ui/pers/health/trackers/sleep.json; $J \"$BJ;h=[p for p in S['pers']['pages'] if p['id']=='health'][0];h['pages'][0]['pages']=[p for p in h['pages'][0]['pages'] if p['id']!='sleep'];$W_\""
 mutant parity "a page is dropped from Pers (Astro)" "rm data/ui/pers/astro.json; $J \"$BJ;S['pers']['pages']=[p for p in S['pers']['pages'] if p['id']!='astro'];$W_\""
@@ -292,7 +303,7 @@ mutant parity "the Achieves migration is dropped" "$J \"$BJ;S['pers'].pop('migra
 mutant parity "the ig0 page (the old Instagram content) is dropped" "rm data/ui/pers/pers-profiles/ig0.json; $J \"$BJ;[p['pages'].pop(1) for p in S['pers']['pages'] if p['id']=='pers-profiles'];$W_\""
 mutant parity "a moved page is left behind as a copy in the old folder" "mkdir -p data/ui/health && cp data/ui/pers/health/trackers/tracked.json data/ui/health/tracked.json"
 mutant parity "a page is silently relabelled" "$J \"$BJ;[q.update(label='Moods') for p in S['pers']['pages'] if p['id']=='health' for t in p['pages'] if t['id']=='trackers' for q in t['pages'] if q['id']=='hr'];$W_\""
-mutant parity "Work leaves Prof for nowhere" "rm data/ui/prof/prof-profiles/work.json; $J \"$BJ;[p['pages'].pop(1) for p in S['prof']['pages'] if p['id']=='prof-profiles'];$W_\""
+mutant parity "the removed Prof > More folder is back (#1937)" "mkdir -p data/ui/prof/prof-profiles && echo '[]' > data/ui/prof/prof-profiles/work.json"
 # renamed
 mutant renamed "an old page has no rename entry" "$J \"$BJ;U['renamed']['pages'].pop('health/home');$W_\""
 mutant renamed "a rename names a page that does not exist" "$J \"$BJ;U['renamed']['pages']['health/home']='pers/nope';$W_\""
@@ -328,7 +339,6 @@ mutant tree "Lnktree opens on Professional again" "$J \"$BJ;p=S['lnktree']['page
 mutant renamed "an old Proj area id has no alias" "$J \"$BJ;U['renamed']['pages'].pop('proj/area-cg');$W_\""
 mutant renamed "the old Proj Lnktree id has no alias" "$J \"$BJ;U['renamed']['pages'].pop('proj/lnktree-site');$W_\""
 mutant urls "Prof > Nexus.z opens Stark.x" "sed -i 's#diegonmarcos.github.io/nexus/#diegonmarcos.github.io/stark/#' data/ui/prof/nexus.json"
-mutant urls "Prof > Professional is not the LinkedIn page" "sed -i 's#https://linkedin.com/in/diegonmarcos\"#mysocials/social.html\"#' data/ui/prof/prof-profiles/professional.json"
 mutant urls "a tile URL becomes a Kotlin literal" "sed -i '0,/^object Sections {/s//object Sections {\n    const val PERSONAL = \"https:\\/\\/diegonmarcos.com\\/\"/' app/src/main/java/com/diegonmarcos/cloudme/Sections.kt"
 # profile
 mutant profile "the profile section leaves the settings (unreachable)" "$J \"$BJ;U['settings'].remove('profile');$W_\""

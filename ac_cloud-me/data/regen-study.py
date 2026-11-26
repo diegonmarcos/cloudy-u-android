@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""data/web/mysocials/data-linkedin.json.js -> data/ui/prof/prof-profiles/study/{cv,roadmap}.json + data/ui/prof/prof-profiles/work.json
-   + data/ui/llc/{employed,side-hustles}.json
+"""data/web/mysocials/data-linkedin.json.js -> data/ui/llc/{employed,side-hustles}.json
+   (#1937: the Prof > More pages Work and Study (CV, Roadmap) this also wrote were removed by owner order)
 
 Prof > Profiles > Study (CV, Roadmap), Prof > Profiles > Work (#1350: a Done and To do ledger whose Done list is seeded with
 every role) and the history half of LLC (Employed, Side hustles; the former Work
@@ -8,7 +8,7 @@ section) are the owner's public LinkedIn profile, already bundled for Profile > 
 the bundle is the one source: when the profile changes, refresh that bundle, then
 run this. Nothing is typed twice.
 
-  ./data/regen-study.py           rewrite the three page files
+  ./data/regen-study.py           rewrite the two page files
   ./data/regen-study.py --check   exit 1 if they would change (drift)
 
 The roadmap rule is declared here, not guessed: "Now" is every role dated
@@ -201,7 +201,8 @@ def build(d):
          "builtin": roles, "move_to": "work_todo", "move_label": "Mark undone"},
         {"collection": "work_todo", "title": "🎯 To do", "empty": "Nothing planned yet. Add a career goal with its target date.", "fields": w_plan,
          "move_to": "work_done", "move_label": "Mark done", "move_stamp": "date"}]}]
-    return {"prof/prof-profiles/work.json": work_page, "prof/prof-profiles/study/cv.json": cv, "prof/prof-profiles/study/roadmap.json": roadmap, "llc/employed.json": work, "llc/side-hustles.json": endeavours}
+    # #1937 owner-ordered removal: Prof > More (Professional, Work, Study > CV, Roadmap) is gone, so work_page, cv and roadmap are no longer written.
+    return {"llc/employed.json": work, "llc/side-hustles.json": endeavours}
 
 
 def main(argv):
