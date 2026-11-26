@@ -58,7 +58,7 @@ class RoutesTableComposeTest {
     }).around(compose)
 
     private fun r(name: String, auth: String, vm: String, pub: String = "$name.example.com") =
-        RoutesTableModel.Row("app", name, pub, auth, "$name.app:80", vm, "$name.vm:80", group = "Infra Apps")
+        RoutesTableModel.Row("app", name, pub, auth, "$name.app:80", vm, "$name.vm:80", group = "Infra Apps", project = "Unix_Cloudy", type = "App")
 
     private val rows = listOf(
         r("charlie", "bearer", "vm-b"), r("alpha", "woauth", "vm-a"), r("bravo", "mesh", "vm-a", pub = ""), r("delta", "mesh", "vm-c", pub = ""),
