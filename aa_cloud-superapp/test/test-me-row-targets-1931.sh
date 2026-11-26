@@ -63,7 +63,7 @@ mut('Me-Prj back on the stale proj/lnktree-site', 'R1', lambda b, m: tile(b, 'my
 mut('a target names a page that does not exist', 'R1', lambda b, m: tile(b, 'myburo').__setitem__('target', 'extapp:cloud-me#page:buro/nope'))
 mut('Cloud Me drops the page a tile opens', 'R1', lambda b, m: [s['pages'].remove(p) for s in m['ui']['sections'] if s['id'] == 'llc' for p in list(s['pages']) if p['id'] == 'employed'])
 mut('Me-Prj points at a page of another section', 'R2', lambda b, m: tile(b, 'myroadmap').__setitem__('target', 'extapp:cloud-me#page:lnktree/lt-lnktree-site'))
-mut('Me-Pers points at Prof', 'R2', lambda b, m: tile(b, 'myhealth').__setitem__('target', 'extapp:cloud-me#page:prof/prof-profiles'))
+mut('Me-Pers points at Prof', 'R2', lambda b, m: tile(b, 'myhealth').__setitem__('target', 'extapp:cloud-me#page:prof/prof-web'))
 mut('the Lnktree tile loses the default-section link', 'R2', lambda b, m: tile(b, 'me').__setitem__('target', 'extapp:cloud-wiki'))
 mut('the icons are swapped back', 'R3', lambda b, m: (tile(b, 'me').__setitem__('icon', 'ic_vcard'), tile(b, 'myroadmap').__setitem__('icon', 'ic_tree')))
 print('== RESULT: %d failed ==' % fails)

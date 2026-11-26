@@ -108,7 +108,7 @@ def run(bj, ds, fav):
     for gt, tl in PREV['cloud_tile_groups'].items():
         # #1903 renames, never removals: the Profile tile moved to Setup (configs-profile) and its rule (a layout item) went with it; the three Cloud Me page tiles keep id and icon, their targets are the new pages
         ME_MOVED = {'tools-account': 'configs-profile', 'me-sep-3': None}
-        ME_RETARGET = {'myhealth': 'extapp:cloud-me#page:pers/pers-profiles', 'myexperiences': 'extapp:cloud-me#page:prof/prof-profiles', 'myroadmap': 'extapp:cloud-me#page:proj/pj-home'}
+        ME_RETARGET = {'myhealth': 'extapp:cloud-me#page:pers/pers-profiles', 'myexperiences': 'extapp:cloud-me#page:prof/prof-web', 'myroadmap': 'extapp:cloud-me#page:proj/pj-home'}
         gone = [t['id'] for t in tl if t['id'] not in allc and not (t['id'] in ME_MOVED and (ME_MOVED[t['id']] is None or ME_MOVED[t['id']] in allc))]
         check(not gone, 'every Cloud %s tile is still there (%d)%s' % (gt, len(tl), ' GONE %s' % gone if gone else ''))
         moved = [t['id'] for t in tl if t['id'] in allc and (allc[t['id']].get('icon') != {'me': 'ic_tree', 'myroadmap': 'ic_vcard'}.get(t['id'], t['icon']) or   # #1931 Lnktree and Me-Prj swapped icons

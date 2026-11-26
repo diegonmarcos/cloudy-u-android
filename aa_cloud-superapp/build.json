@@ -3265,7 +3265,7 @@
                 "id": "myexperiences",
                 "label": "Me-Prof",
                 "icon": "ic_file_stack",
-                "target": "extapp:cloud-me#page:prof/prof-profiles"
+                "target": "extapp:cloud-me#page:prof/prof-web"
               },
               {
                 "_doc": "Socials (#1771, was Tasks, before that RoadMap) — Cloud-Me's Socials tab, entered at Professional (Professional | Personal, the mysocials pages); Cloud-Me's Tasks section (Tree, Due, vault rows) left the bar and stays reachable from the title dropdown. The tile id stays myroadmap: it is the tile's identity, pinned by the cross-app deep-link tester. Same `extapp:<appId>#<target>` hand-off as the tiles beside it: launchExternalApp opens Cloud-Me and passes everything after the '#' as the `shortcut_action` extra, which Cloud-Me's MainActivity resolves through the `page:<section>/<page>` grammar; not installed, the same download-and-install path every other extapp tile uses. The fragment names declared section/page ids of ac_cloud-me/build.json (test-dashboard-cross-app-deeplink.sh T3 proves they resolve).",

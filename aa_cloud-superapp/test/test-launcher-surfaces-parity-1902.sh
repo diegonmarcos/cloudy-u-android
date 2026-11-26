@@ -29,7 +29,7 @@ SNAP = json.load(open(A + 'test/data/launcher-surfaces-before-1902.json'))
 pk = lambda x: x if isinstance(x, str) else x['pkg']
 # #1903 the Me row renames (old -> new), never removals: the three page tiles keep id and icon (label and target are the new Cloud Me pages), the Profile tile and
 # its rule moved to Setup (configs-profile), the three phone Me folders carry the same new names.
-ME_TILE = {'myhealth': ('Me-Pers', 'extapp:cloud-me#page:pers/pers-profiles'), 'myexperiences': ('Me-Prof', 'extapp:cloud-me#page:prof/prof-profiles'), 'myroadmap': ('Me-Prj', 'extapp:cloud-me#page:proj/pj-home')}
+ME_TILE = {'myhealth': ('Me-Pers', 'extapp:cloud-me#page:pers/pers-profiles'), 'myexperiences': ('Me-Prof', 'extapp:cloud-me#page:prof/prof-web'), 'myroadmap': ('Me-Prj', 'extapp:cloud-me#page:proj/pj-home')}
 ICON_SWAP = {'me': 'ic_tree', 'myroadmap': 'ic_vcard'}   # #1931 the Lnktree and Me-Prj tiles swapped icons (a move)
 ME_MOVED = {'tools-account': 'configs-profile'}
 ME_FOLDER = {'Me-Health': 'Me-Pers', 'Experiences': 'Me-Prof', 'Socials': 'Me-Prj'}
