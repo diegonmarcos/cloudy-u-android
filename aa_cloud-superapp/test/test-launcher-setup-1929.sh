@@ -28,7 +28,7 @@ def check(n, bj):
     elif n == 'L2':
         pages = {p['id']: p for p in sec(bj, 'config')['pages']}
         hub = pages.get('launcher-hub', {})
-        if hub.get('hub_sections') != ['Launcher'] or hub.get('group') != 'Launcher': f.append('launcher-hub is not the Launcher hub')
+        if hub.get('hub_sections') != ['Launcher', 'Configs'] or hub.get('group') != 'Launcher': f.append('launcher-hub is not the Launcher hub')
         for pid, label in (('controls', 'Quick Actions'), ('panels-ui', 'UI')):
             p = pages.get(pid)
             if not p or p.get('hidden') or p.get('group') != 'Launcher' or p.get('label') != label: f.append('%s (%s) is not a visible Launcher page' % (label, pid))

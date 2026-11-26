@@ -90,8 +90,8 @@ class XrayExportTest {
         // XrayTree.PAGES is the X-Ray-internal walk order, still the one source of truth for what is walked.
         val pages = find(root)!!.getJSONArray("pages")
         val declared = (0 until pages.length()).map { pages.getJSONObject(it) }
-            .filter { it.optString("group") in setOf("Profiling", "Configs") && it.optString("action").isEmpty() &&
-                !it.optBoolean("separator", false) && !it.has("hub_sections") }
+            .filter { it.optString("group") in setOf("C3", "Configs") && it.optString("action").isEmpty() &&   // #1943 Profiling merged into C3: Peer Control (kde) shares the group but is no diagnostic page
+                it.getString("id") != "kde" && !it.optBoolean("separator", false) && !it.has("hub_sections") }
             .map { it.getString("id") }
         assertEquals(XrayTree.PAGES.toSet(), declared.toSet())
         val r = build()

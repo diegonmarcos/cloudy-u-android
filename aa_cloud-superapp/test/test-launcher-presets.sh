@@ -51,10 +51,10 @@ by     = {p['id']: p for p in pages}
 labels = [p['label'] for p in pages if p.get('group') == 'Launcher' and not p.get('hidden') and not p.get('separator')]  # #1623 the Launcher group tiles
 tabs   = [by[i]['label'] for i in by['controls'].get('tabs', [])]
 sub    = tabs[1:]  # #1846 the Panels strip is gone: its six tabs are the Quick actions row after Preset
-print('OK' if (labels, tabs, sub) == (['Launcher', 'Quick Actions', 'UI', 'Folders', 'One-Hand', 'Notify'], ['Preset', 'Battery', 'Security', 'UI', 'Network', 'Others', 'All'], ['Battery', 'Security', 'UI', 'Network', 'Others', 'All'])
+print('OK' if (labels, tabs, sub) == (['Launcher', 'Quick Actions', 'UI', 'Folders', 'One-Hand', 'Notify', 'Configs'], ['Preset', 'Battery', 'Security', 'UI', 'Network', 'Others', 'All'], ['Battery', 'Security', 'UI', 'Network', 'Others', 'All'])
       else 'labels = %r, Controls tabs = %r, Panels tabs = %r' % (labels, tabs, sub))
 PY
-)" "Launcher = Launcher hub | Quick Actions, UI, Folders, One-Hand | Notify (#1755 hub; #1623 UI promoted out of Quick Actions; Controls tabs Presets | Panels ▸ All | Battery Hungers | Tools)"
+)" "Launcher = Launcher hub | Quick Actions, UI, Folders, One-Hand | Notify | Configs (#1943 link to the Launcher page; #1755 hub; #1623 UI promoted out of Quick Actions; Controls tabs Presets | Panels ▸ All | Battery Hungers | Tools)"
 
 echo "== T2: Presets declares Sandboxes · Themes · Modes, in order =="
 check "$(python3 - "$BJ" <<'PY'

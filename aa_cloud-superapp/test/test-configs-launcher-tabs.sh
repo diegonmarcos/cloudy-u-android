@@ -49,9 +49,10 @@ if any(p['id'] == 'launcher' for p in pages):
           'and a page of that name would tile beside its own members')
     sys.exit()
 def run(g): return [p['id'] for p in pages if p.get('group') == g and not p.get('hidden')]
-launcher = run('Launcher'); tools = run('Profiling'); cfg = run('Configs')
-if launcher != ['launcher-hub', 'launcher-sep-0', 'controls', 'panels-ui', 'app-folders', 'onehand', 'launcher-sep-1', 'notify']: print('Launcher = %r' % (launcher,)); sys.exit()
-if tools != ['c3-watchdog', 'tools-sep-1', 'xray', 'logcat-fleet']: print('Profiling = %r' % (tools,)); sys.exit()
+# #1943: Connect + Profiling became the C3 group; the Configs pages are hidden from Setup and listed by the Launcher hub (hub_pages)
+launcher = run('Launcher'); tools = run('C3'); cfg = [p['id'] for p in pages if p.get('group') == 'Configs' and not p.get('is_action') and not p.get('hidden') or p['id'] in next(q for q in pages if q['id'] == 'launcher-hub').get('hub_pages', []) + ['configs-sep-a']]
+if launcher != ['launcher-hub', 'launcher-sep-0', 'controls', 'panels-ui', 'app-folders', 'onehand', 'launcher-sep-1', 'notify', 'launcher-sep-2', 'launcher-configs']: print('Launcher = %r' % (launcher,)); sys.exit()
+if tools != ['c3', 'c3-sep-0', 'kde', 'tools-sep-1', 'c3-watchdog', 'xray', 'logcat-fleet']: print('C3 = %r' % (tools,)); sys.exit()
 if cfg != ['profile-app', 'configs-sep-a', 'perms', 'agents-watchdog', 'logcat', 'xray-app', 'app-about']: print('Configs = %r' % (cfg,)); sys.exit()
 ids = [p['id'] for p in pages]
 for r in (launcher, tools, cfg):
@@ -67,7 +68,7 @@ if loose:
     print('tab page(s) missing or drawing a tile of their own: %r' % (loose,)); sys.exit()
 print('OK')
 PY
-)" "Launcher = Quick Actions (#1623 tabs Presets | Panels ▸ All | Battery Hungers | Tools), UI, Folders, One-Hand | Notify — all consecutive direct pages; Profiling (was Tools) = Watchdog | X-Ray Device, Logcat Fleet; Configs = Profile | Perms, Agents, Logcat app, X-Ray App, About (#1755); Launcher is led by the Launcher hub item and a | (#1755)"
+)" "Launcher = Quick Actions (#1623 tabs Presets | Panels ▸ All | Battery Hungers | Tools), UI, Folders, One-Hand | Notify — all consecutive direct pages; C3 (was Connect + Profiling, #1943) = Cloudy C3 | Peer Control | Watchdog, X-Ray Device, Logcat Fleet; Launcher row ends | Configs (opens the Launcher page); Configs = Profile | Perms, Agents, Logcat app, X-Ray App, About (#1755); Launcher is led by the Launcher hub item and a | (#1755)"
 
 echo "== T2: no Configs page is a tab strip any more =="
 # #865 deleted the generic tab-owner rule: its last subject, Store, became a

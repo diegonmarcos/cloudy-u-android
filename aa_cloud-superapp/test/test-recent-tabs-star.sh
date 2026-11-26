@@ -193,7 +193,9 @@ d=json.load(open('$BJ'))
 c=[s for s in d['ui']['sections'] if s['id']=='config'][0]
 print(' '.join(p['id'] for p in c['pages']
                 if not p.get('hidden') and not p.get('is_action')
-                and p.get('group') == 'Configs'))
+                and p.get('group') == 'Configs')
+      # #1943 the Configs group left the Setup grid: its pages are hidden there and listed by the Launcher hub (hub_pages)
+      + ' '.join(p['id'] for p in c['pages'] if p.get('group') == 'Configs' and p.get('id') in next(q for q in c['pages'] if q['id'] == 'launcher-hub').get('hub_pages', []) and p.get('hidden')))
 ")
 # #1623 Configs is one page of six groups; the Configs group itself — Perms, Logcat, X-Ray App, About — closes with About
 # (app-about), the last visible tile of the group (X-Ray Device and Logcat Fleet moved out to Tools; the | separator moved

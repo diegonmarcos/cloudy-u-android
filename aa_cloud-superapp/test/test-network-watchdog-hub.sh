@@ -5,7 +5,7 @@
 #      Watchdog is no Network item; no agents-watchtower page is declared
 #   W2 the hub's sections are DERIVED (Sections.hubSections over the subgroups), routed by data (SectionPages hub_sections
 #      branch), and drawn with the Cloud ▸ Apps heading and tile components (GroupTitle, TileStrip), not a copy
-#   W3 Watchdog is the C3-Watchdog app (extapp:c3-watchdog) in Configs ▸ Profiling (#1755, left the Cloud ▸ Apps ▸ Configs row) and that row has an NG Firewall tile
+#   W3 Watchdog is the C3-Watchdog app (extapp:c3-watchdog) in Setup ▸ C3 (#1943: Profiling merged into C3) (#1755, left the Cloud ▸ Apps ▸ Configs row) and that row has an NG Firewall tile
 #      (page:config/firewall) — #1628 redefined this apps-Configs row (Quick Actions, UI | NG Firewall | Store, Account |
 #      C3 | Profile, About, #1755); the config-section Agents hub page (W1) is a separate surface and unchanged.
 set -u
@@ -27,7 +27,7 @@ print('AGENTS', ' '.join('%s:%s:%r:%s' % (p['id'], p['label'], p.get('action', '
 print('NETWORK', ','.join(p['id'] for p in pages if p.get('subgroup') == 'Network' and not p.get('hidden')))
 rows = [g for s in secs for g in s.get('tile_groups', []) if g.get('title') == 'Setup']
 tiles = rows[0]['tiles'] if rows else []
-print('CFGWD', ','.join('%s=%s' % (p['id'], p.get('action', '')) for p in pages if p['id'] == 'c3-watchdog' and p.get('group') == 'Profiling' and not p.get('hidden')))
+print('CFGWD', ','.join('%s=%s' % (p['id'], p.get('action', '')) for p in pages if p['id'] == 'c3-watchdog' and p.get('group') == 'C3' and not p.get('hidden')))
 print('ROW', '|'.join('%s=%s' % (t.get('label'), t.get('target', '')) for t in tiles if not t.get('separator')))
 PY
 )"
@@ -36,8 +36,8 @@ echo "$out" | grep -qx "AGENTS agents-watchdog:Agents:'':Network" \
   && ok "the Agents hub (agents-watchdog, relabelled Agents) has hub_sections [Network] and no action (an in-app hub page, #1610)" \
   || bad "agents-watchdog is not exactly the Agents hub (hub_sections [Network]) without an action"
 echo "$out" | grep -q '^NETWORK.*watchdog' && bad "Watchdog is still a Network item" || ok "Watchdog left Network"
-echo "$out" | grep -q '^CFGWD c3-watchdog=extapp:c3-watchdog' && ok "Watchdog opens the C3-Watchdog app (extapp:c3-watchdog) from the Configs page, Profiling group (#1755: it left the Cloud ▸ Apps ▸ Configs row, rule 16: still visible)" \
-  || bad "Configs ▸ Profiling has no Watchdog item on extapp:c3-watchdog (#1755)"
+echo "$out" | grep -q '^CFGWD c3-watchdog=extapp:c3-watchdog' && ok "Watchdog opens the C3-Watchdog app (extapp:c3-watchdog) from the Configs page, C3 group (#1755: it left the Cloud ▸ Apps ▸ Configs row, rule 16: still visible)" \
+  || bad "Setup ▸ C3 has no Watchdog item on extapp:c3-watchdog (#1755)"
 echo "$out" | grep -q 'NG Firewall=page:config/ng-firewall' && ok "Cloud ▸ Apps ▸ Configs carries an NG Firewall tile on page:config/ng-firewall (#1745, was Firewall + WiFi #1628)" \
   || bad "Cloud ▸ Apps ▸ Configs has no NG Firewall tile on page:config/ng-firewall (#1745)"
 

@@ -52,12 +52,13 @@ BEFORE_ROW = [   # (label, target) of the Cloud > Apps > Configs row before #175
 ]
 RENAMED = {'logcat': 'Logcat app'}                                  # #1755 item 4
 MOVED = {'profile': 'Apps', 'agents-watchdog': 'Configs'}          # #1755 items 2 and 3 (Account -> Apps, Agents -> Configs)
-GROUP_RENAMED = {'Tools': 'Profiling'}                              # #1755 item 3
+GROUP_RENAMED = {'Tools': 'C3', 'Connect': 'C3'}                   # #1755 item 3, then #1943 (Connect -> C3, Profiling merged into it)
 probs = []
 for pid, label, group, action, icon in BEFORE_PAGES:
     p = by.get(pid)
     if p is None: probs.append('LOST page %s' % pid); continue
-    if p.get('hidden'): probs.append('page %s went hidden' % pid)
+    # #1943: the six Configs pages left the Setup grid and are listed by the Launcher hub (hub_pages); any other page must stay visible
+    if p.get('hidden') and pid not in (by.get('launcher-hub', {}).get('hub_pages') or []): probs.append('page %s went hidden' % pid)
     want_label = RENAMED.get(pid, label)
     if p['label'] != want_label: probs.append('%s label %r != %r' % (pid, p['label'], want_label))
     want_group = MOVED.get(pid, GROUP_RENAMED.get(group, group))
@@ -66,9 +67,10 @@ for pid, label, group, action, icon in BEFORE_PAGES:
     if p.get('icon', '') != icon: probs.append('%s icon %r != %r' % (pid, p.get('icon', ''), icon))
 # the Launcher hub lists every Launcher icon (derived from the group, no second list)
 hub = by.get('launcher-hub', {})
-if hub.get('hub_sections') != ['Launcher'] or hub.get('group') != 'Launcher': probs.append('launcher-hub is not the Launcher hub: %r' % hub)
+if hub.get('hub_sections') != ['Launcher', 'Configs'] or hub.get('group') != 'Launcher': probs.append('launcher-hub is not the Launcher hub: %r' % hub)
 launcher = [p['id'] for p in sec['pages'] if p.get('group') == 'Launcher' and not p.get('hidden') and not p.get('separator') and p['id'] != 'launcher-hub']
-if launcher != ['controls', 'panels-ui', 'app-folders', 'onehand', 'notify']: probs.append('Launcher group icons = %r' % launcher)
+# #1943 adds the Configs link tile after Notify
+if launcher != ['controls', 'panels-ui', 'app-folders', 'onehand', 'notify', 'launcher-configs']: probs.append('Launcher group icons = %r' % launcher)
 # Profile launches the Cloud Account app
 if by.get('profile-app', {}).get('action') != 'extapp:cloud-account': probs.append('profile-app does not launch extapp:cloud-account')
 # the Cloud > Apps > Configs row

@@ -44,10 +44,10 @@ by = {p['id']: p for p in sec['pages']}
 def run(g):
     return [p['id'] for p in sec['pages'] if p.get('group') == g and not p.get('hidden') and not p.get('separator')]
 probs = []
-if run('Launcher') != ['launcher-hub', 'controls', 'panels-ui', 'app-folders', 'onehand', 'notify']: probs.append('Launcher tiles = %r' % run('Launcher'))
+if run('Launcher') != ['launcher-hub', 'controls', 'panels-ui', 'app-folders', 'onehand', 'notify', 'launcher-configs']: probs.append('Launcher tiles = %r' % run('Launcher'))   # #1943 adds the Configs link
 if [by[i]['label'] for i in ('controls', 'panels-ui', 'app-folders', 'onehand', 'notify')] != ['Quick Actions', 'UI', 'Folders', 'One-Hand', 'Notify']: probs.append('Launcher labels drifted')
 full = [p['id'] for p in sec['pages'] if p.get('group') == 'Launcher' and not p.get('hidden')]
-if full != ['launcher-hub', 'launcher-sep-0', 'controls', 'panels-ui', 'app-folders', 'onehand', 'launcher-sep-1', 'notify']: probs.append('Launcher order (with |) = %r' % full)
+if full != ['launcher-hub', 'launcher-sep-0', 'controls', 'panels-ui', 'app-folders', 'onehand', 'launcher-sep-1', 'notify', 'launcher-sep-2', 'launcher-configs']: probs.append('Launcher order (with |) = %r' % full)
 if by['perms'].get('label') != 'Perms' or by['perms'].get('icon') != 'ic_key': probs.append('perms = %r' % by['perms'])
 if (by['perms'].get('group'), by['perms'].get('subgroup')) != ('Configs', ''): probs.append('perms not under the Configs group')
 print('; '.join(probs) or 'OK')
@@ -97,12 +97,13 @@ check "$(python3 - "$BJ" <<'PY'
 import json, sys
 sec = next(s for s in json.load(open(sys.argv[1]))['ui']['sections'] if s['id'] == 'config')
 by = {p['id']: p for p in sec['pages']}
-tools = [p for p in sec['pages'] if p.get('group') == 'Profiling' and not p.get('hidden')]
-cfg = [p for p in sec['pages'] if p.get('group') == 'Configs' and not p.get('hidden') and not p.get('is_action')]
+tools = [p for p in sec['pages'] if p.get('group') == 'C3' and not p.get('hidden')]   # #1943: Connect + Profiling = C3
+hubp = by['launcher-hub'].get('hub_pages', [])   # #1943: the Configs pages are hidden from Setup, listed by the Launcher hub
+cfg = [p for p in sec['pages'] if p.get('group') == 'Configs' and not p.get('is_action') and (not p.get('hidden') or p['id'] in hubp or p['id'] == 'configs-sep-a')]
 probs = []
-want_tools = [('c3-watchdog', 'Watchdog'), ('tools-sep-1', '|'), ('xray', 'X-Ray Device'), ('logcat-fleet', 'Logcat Fleet')]
+want_tools = [('c3', 'Cloudy C3'), ('c3-sep-0', '|'), ('kde', 'Peer Control'), ('tools-sep-1', '|'), ('c3-watchdog', 'Watchdog'), ('xray', 'X-Ray Device'), ('logcat-fleet', 'Logcat Fleet')]
 if [(p['id'], p['label']) for p in tools] != want_tools:
-    probs.append('Profiling = %r' % [(p['id'], p['label']) for p in tools])
+    probs.append('C3 = %r' % [(p['id'], p['label']) for p in tools])
 want_cfg = [('profile-app', 'Profile'), ('configs-sep-a', '|'), ('perms', 'Perms'), ('agents-watchdog', 'Agents'), ('logcat', 'Logcat app'), ('xray-app', 'X-Ray App'), ('app-about', 'About')]
 if [(p['id'], p['label']) for p in cfg] != want_cfg:
     probs.append('Configs = %r' % [(p['id'], p['label']) for p in cfg])
@@ -113,7 +114,7 @@ if any(p.get('subgroup') == 'Watchtower - Obsv' for p in sec['pages']): probs.ap
 if (by['battery'].get('group'), by['battery'].get('subgroup')) != ('Configs', '') or not by['battery'].get('hidden'): probs.append('battery left the Configs group or stopped being hidden')
 print('; '.join(probs) or 'OK')
 PY
-)" "Profiling holds Watchdog, |, X-Ray Device, Logcat Fleet; Configs holds Profile, |, Perms, Agents, Logcat app, X-Ray App, About (#1755); Battery is hidden in the Configs group; no Watchtower - Obsv subgroup remains"
+)" "C3 holds Cloudy C3, |, Peer Control, |, Watchdog, X-Ray Device, Logcat Fleet (#1943); Configs holds Profile, |, Perms, Agents, Logcat app, X-Ray App, About (#1755); Battery is hidden in the Configs group; no Watchtower - Obsv subgroup remains"
 python3 - "$DEV" "$PAGES" <<'PY' && ok "X-Ray Device is DevControlFragment.newInstance(label) with no filter and all 14 macro groups are still declared" || bad "X-Ray Device lost its macro groups or got a filter"
 import re, sys
 dev = open(sys.argv[1]).read(); pages = open(sys.argv[2]).read()
@@ -177,10 +178,10 @@ def run(g):
     return [p['label'] for p in sec['pages'] if p.get('group') == g and not p.get('hidden') and not p.get('separator') and not p.get('is_action')]
 probs = []
 gids = [g['id'] for g in sec['groups']]
-if gids != ['launcher', 'network', 'apps', 'connect', 'tools', 'configs']: probs.append('group ids = %r (want the six #1623 groups)' % gids)
-if run('Connect') != ['Cloudy C3', 'Peer Control']: probs.append('Connect = %r' % run('Connect'))
+if gids != ['launcher', 'network', 'apps', 'connect', 'configs']: probs.append('group ids = %r (want the five #1943 groups; connect is labelled C3)' % gids)
+if run('C3') != ['Cloudy C3', 'Peer Control', 'Watchdog', 'X-Ray Device', 'Logcat Fleet']: probs.append('C3 = %r' % run('C3'))
 if run('Apps') != ['Store', 'Account']: probs.append('Apps = %r' % run('Apps'))
-if 'Watchdog' not in run('Profiling'): probs.append('Profiling lacks Watchdog: %r' % run('Profiling'))
+if 'Watchdog' not in run('C3'): probs.append('C3 lacks Watchdog: %r' % run('C3'))
 cw = by.get('c3-watchdog', {})
 if cw.get('action') != 'extapp:c3-watchdog': probs.append('c3-watchdog action = %r' % cw.get('action'))
 if by['c3'].get('action') != 'extapp:cloud-c3': probs.append('Cloudy C3 lost its extapp target')
@@ -188,7 +189,7 @@ for stale in ('Device', 'Setup', 'Agents', 'Cloudy C3', 'Fleet'):
     if any(p.get('group') == stale for p in sec['pages']): probs.append('a page still wears the group %r' % stale)
 print('; '.join(probs) or 'OK')
 PY
-)" "six groups launcher/network/apps/connect/tools/configs; Connect = Cloudy C3, Peer Control (Account moved to Configs, #1745); Apps = Store, Account (#1755); Profiling (was Tools) holds Watchdog (c3-watchdog → extapp:c3-watchdog); no page wears Device/Setup/Fleet as a group"
+)" "five groups launcher/network/apps/connect(labelled C3)/configs (#1943); C3 = Cloudy C3, Peer Control, Watchdog, X-Ray Device, Logcat Fleet; Apps = Store, Account (#1755); C3 holds Watchdog (c3-watchdog → extapp:c3-watchdog); no page wears Device/Setup/Fleet as a group"
 
 echo "== R8: coverage — nothing was dropped =="
 check "$(python3 - "$BJ" <<'PY'

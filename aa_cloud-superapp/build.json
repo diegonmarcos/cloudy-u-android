@@ -5789,6 +5789,8 @@
               "onehand",
               "launcher-sep-1",
               "notify",
+              "launcher-sep-2",
+              "launcher-configs",
               "presets",
               "panels-all",
               "panels-battery",
@@ -5853,20 +5855,14 @@
           },
           {
             "id": "connect",
-            "label": "Connect",
+            "label": "C3",
             "icon": "ic_settings",
             "pages": [
               "c3",
-              "kde"
-            ]
-          },
-          {
-            "id": "tools",
-            "label": "Profiling",
-            "icon": "ic_settings",
-            "pages": [
-              "c3-watchdog",
+              "c3-sep-0",
+              "kde",
               "tools-sep-1",
+              "c3-watchdog",
               "xray",
               "logcat-fleet"
             ]
@@ -5961,7 +5957,8 @@
             "id": "launcher-hub",
             "label": "Launcher",
             "icon": "ic_apps",
-            "hub_sections": ["Launcher"],
+            "hub_sections": ["Launcher", "Configs"],
+            "hub_pages": ["profile-app", "perms", "agents-watchdog", "logcat", "xray-app", "app-about"],
             "group": "Launcher",
             "subgroup": ""
           },
@@ -6035,6 +6032,23 @@
             "mirror_page": "communication/my-rss",
             "_doc_1848": "#1848 ONE Notify page: this Configs tile (and page:config/notify, and every link that used it) is REDIRECTED to Notify (communication) on its All sub-page, with its full two-row menu (Cards | Boards). mirror_page is kept as the record of what this tile used to render; the redirect is applied by Sections.canonicalPage, before any page is built.",
             "redirect": "communication/my-rss",
+            "group": "Launcher",
+            "subgroup": ""
+          },
+          {
+            "_doc": "#1943 The | between Notify and the Configs tile of the Launcher row: a CHARACTER, not a tile.",
+            "id": "launcher-sep-2",
+            "label": "|",
+            "separator": true,
+            "group": "Launcher",
+            "subgroup": ""
+          },
+          {
+            "_doc": "#1943 Setup ▸ Launcher row, right after | Notify: Configs opens the Launcher page (page:config/launcher-hub), whose second section Configs holds what the Setup Configs section held (Profile, Perms, Agents, Logcat app, X-Ray App, About). A pure link, so the Launcher hub does not list it on itself (Sections.hubSections skips a page whose action is the hub).",
+            "id": "launcher-configs",
+            "label": "Configs",
+            "icon": "ic_settings",
+            "action": "page:config/launcher-hub",
             "group": "Launcher",
             "subgroup": ""
           },
@@ -6218,7 +6232,15 @@
             "label": "Cloudy C3",
             "icon": "ic_cloud_control",
             "action": "extapp:cloud-c3",
-            "group": "Connect",
+            "group": "C3",
+            "subgroup": ""
+          },
+          {
+            "_doc": "#1943 The | between Cloudy C3 and Peer Control in the Setup C3 section: a CHARACTER, not a tile.",
+            "id": "c3-sep-0",
+            "label": "|",
+            "separator": true,
+            "group": "C3",
             "subgroup": ""
           },
           {
@@ -6226,7 +6248,14 @@
             "id": "kde",
             "label": "Peer Control",
             "icon": "ic_hub",
-            "group": "Connect",
+            "group": "C3",
+            "subgroup": ""
+          },
+          {
+            "id": "tools-sep-1",
+            "label": "|",
+            "separator": true,
+            "group": "C3",
             "subgroup": ""
           },
           {
@@ -6235,14 +6264,7 @@
             "label": "Watchdog",
             "icon": "ic_watchtower",
             "action": "extapp:c3-watchdog",
-            "group": "Profiling",
-            "subgroup": ""
-          },
-          {
-            "id": "tools-sep-1",
-            "label": "|",
-            "separator": true,
-            "group": "Profiling",
+            "group": "C3",
             "subgroup": ""
           },
           {
@@ -6250,7 +6272,7 @@
             "id": "xray",
             "label": "X-Ray Device",
             "icon": "ic_monitor_heart",
-            "group": "Profiling",
+            "group": "C3",
             "subgroup": ""
           },
           {
@@ -6258,7 +6280,7 @@
             "id": "logcat-fleet",
             "label": "Logcat Fleet",
             "icon": "ic_p_logs",
-            "group": "Profiling",
+            "group": "C3",
             "subgroup": ""
           },
           {
@@ -6267,6 +6289,7 @@
             "label": "Profile",
             "icon": "ic_p_accounts",
             "action": "extapp:cloud-account",
+            "hidden": true,
             "group": "Configs",
             "subgroup": ""
           },
@@ -6275,6 +6298,7 @@
             "id": "configs-sep-a",
             "label": "|",
             "separator": true,
+            "hidden": true,
             "group": "Configs",
             "subgroup": ""
           },
@@ -6283,6 +6307,7 @@
             "id": "perms",
             "label": "Perms",
             "icon": "ic_key",
+            "hidden": true,
             "group": "Configs",
             "subgroup": ""
           },
@@ -6294,6 +6319,7 @@
             "hub_sections": [
               "Network"
             ],
+            "hidden": true,
             "group": "Configs",
             "subgroup": ""
           },
@@ -6302,6 +6328,7 @@
             "id": "logcat",
             "label": "Logcat app",
             "icon": "ic_subject",
+            "hidden": true,
             "group": "Configs",
             "subgroup": ""
           },
@@ -6310,6 +6337,7 @@
             "id": "xray-app",
             "label": "X-Ray App",
             "icon": "ic_p_c3_health",
+            "hidden": true,
             "group": "Configs",
             "subgroup": ""
           },
@@ -6318,6 +6346,7 @@
             "id": "app-about",
             "label": "About",
             "icon": "ic_info",
+            "hidden": true,
             "group": "Configs",
             "subgroup": ""
           },

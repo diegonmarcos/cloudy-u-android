@@ -47,22 +47,23 @@ for p in vis:
     if not groups or groups[-1] != g: groups.append(g)
 probs = []
 declared = [g['label'] for g in sec['groups']]
-if groups != declared: probs.append('grid groups %r != declared groups %r' % (groups, declared))
-if declared != ['Launcher', 'Network', 'Apps', 'Connect', 'Profiling', 'Configs']: probs.append('declared groups %r != the six #1623 groups' % declared)
-connect = [p['label'] for p in vis if p.get('group') == 'Connect']
-if connect != ['Cloudy C3', 'Peer Control']: probs.append('Connect = %r' % connect)
+# #1943: the Configs group left the Setup grid (its pages are hidden, listed by the Launcher hub), the grid shows the other groups
+if groups != [g for g in declared if g != 'Configs']: probs.append('grid groups %r != declared groups %r' % (groups, declared))
+if declared != ['Launcher', 'Network', 'Apps', 'C3', 'Configs']: probs.append('declared groups %r != the five #1943 groups' % declared)   # #1943: Connect renamed C3, Profiling merged into it
+connect = [p['label'] for p in vis if p.get('group') == 'C3' and not p.get('separator')]
+if connect != ['Cloudy C3', 'Peer Control', 'Watchdog', 'X-Ray Device', 'Logcat Fleet']: probs.append('C3 = %r' % connect)
 for stale in ('Device', 'Setup', 'Fleet', 'Cloudy C3'):
     if any(p.get('group') == stale for p in pages): probs.append('a page still wears the group %r' % stale)
 for gone in ('agents', 'agents-superapp', 'agents-fleet', 'agents-watchtower'):
     if gone in by: probs.append('%s is still declared' % gone)
-obsv = [p['id'] for p in vis if p.get('group') == 'Profiling' and p['id'] in ('xray', 'logcat-fleet')]
-if obsv != ['xray', 'logcat-fleet']: probs.append('X-Ray Device/Logcat Fleet not in the Profiling group: %r' % obsv)
+obsv = [p['id'] for p in vis if p.get('group') == 'C3' and p['id'] in ('xray', 'logcat-fleet')]
+if obsv != ['xray', 'logcat-fleet']: probs.append('X-Ray Device/Logcat Fleet not in the C3 group: %r' % obsv)
 w = by.get('agents-watchdog', {})
 if w.get('label') != 'Agents' or (w.get('group'), w.get('subgroup')) != ('Configs', ''):
     probs.append('the Agents hub is %r' % {k: w.get(k) for k in ('label', 'group', 'subgroup')})
 print('; '.join(probs) or 'OK')
 PY
-)" "Configs groups are build.json's six groups (Launcher, Network, Apps, Connect, Profiling, Configs); Connect = Cloudy C3, Peer Control (Account moved to Configs, #1745); no agents page; X-Ray Device, Logcat Fleet in the Profiling group (#1755 renamed from Tools); the Agents hub is agents-watchdog relabelled Agents, in the Configs group between Perms and Logcat app (#1755, was Tools)"
+)" "Configs groups are build.json's five groups (Launcher, Network, Apps, C3, Configs; #1943 renamed Connect C3 and merged Profiling into it; the Configs group is listed by the Launcher hub); C3 = Cloudy C3, Peer Control, Watchdog, X-Ray Device, Logcat Fleet; no agents page; the Agents hub is agents-watchdog relabelled Agents, in the Configs group between Perms and Logcat app (#1755, was Tools)"
 
 echo "== A2: the old Agents ids land on X-Ray =="
 check "$(python3 - "$BJ" <<'PY'

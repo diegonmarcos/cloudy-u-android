@@ -95,7 +95,7 @@ gone = [i for i in ('home', 'push', 'panel', 'control', 'launcher') if i in ids]
 def run(g): return [p['id'] for p in pages if p.get('group') == g and not p.get('hidden')]
 launcher = run('Launcher')
 if gone:                     print('retired page(s) still declared: %r' % gone)
-elif launcher != ['launcher-hub', 'launcher-sep-0', 'controls', 'panels-ui', 'app-folders', 'onehand', 'launcher-sep-1', 'notify']:
+elif launcher != ['launcher-hub', 'launcher-sep-0', 'controls', 'panels-ui', 'app-folders', 'onehand', 'launcher-sep-1', 'notify', 'launcher-sep-2', 'launcher-configs']:   # #1943 | Configs
                              # #1623 the Launcher group holds Quick Actions, UI, Folders, One-Hand | Notify as direct tiles
                              print('Launcher is not Quick Actions, UI, Folders, One-Hand | Notify: %r' % (launcher,))
 elif 'launcher-sep-1' not in ids: print('the | separator page is gone')
