@@ -110,7 +110,13 @@ top=max(best[1],0); bot=min(best[3],H); cx=(best[0]+best[2])//2
 print(cx, top+(bot-top)*3//4, top+(bot-top)//4)' x "$H" | { read -r cx y1 y2 && adb shell input swipe "$cx" "$y1" "$cx" "$y2" 300 < /dev/null; }; }
 
 sheet_open() { has_rid git_sheet_tab_overview; }
-close_sheet() { for b in 1 2 3; do tap_rid git_sheet_hd.close >/dev/null; sleep 2; done; for b in 1 2; do dump | grep -q "resource-id=\"git_sheet_tab_overview\"" || return 0; adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 2; done; }
+# every step leaves evidence in $OUT/close: the node tapped (bounds), the uiautomator dump, the window list and the top activity
+close_diag() { mkdir -p "$OUT/close"; dump > "$OUT/close/$1.xml"; adb shell dumpsys window windows < /dev/null 2>/dev/null | grep -E "Window #|mCurrentFocus|mFocusedApp" > "$OUT/close/$1.windows.txt"; adb shell dumpsys activity top < /dev/null 2>/dev/null | grep -E "ACTIVITY|Added Fragments|mResumed|ViewRootImpl" | head -20 > "$OUT/close/$1.top.txt"; adb exec-out screencap -p > "$OUT/close/$1.png"; }
+close_sheet() {
+  close_diag "$1-before"
+  grep -o '<node [^>]*git_sheet_hd.close[^>]*>' "$OUT/close/$1-before.xml" | grep -o 'bounds="[^"]*"\|enabled="[^"]*"\|clickable="[^"]*"' | tr '\n' ' ' > "$OUT/close/$1-close-node.txt"
+  for b in 1 2 3; do tap_rid git_sheet_hd.close >/dev/null; sleep 2; close_diag "$1-tap$b"; dump | grep -q 'resource-id="git_sheet_tab_overview"' || return 0; done
+  for b in 1 2; do adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 2; close_diag "$1-back$b"; dump | grep -q 'resource-id="git_sheet_tab_overview"' || return 0; done; }
 # come back to the sheet after a control that leaves it (web viewer, Files, settings sheet): BACK, else relaunch and reopen the row ($1 = row text)
 ensure_sheet() {
   sheet_open && return 0
@@ -185,14 +191,14 @@ walk() {
 # 1. the cloned fixture
 open_row "$NAME"; walk per yes "$NAME"
 # 2. the not-cloned fixture: its row comes from the offline listing cache
-close_sheet
+close_sheet cloned
 if open_row "$NOTCLONED"; then
   has_rid git_sheet_banner || { miss=$((miss+1)); printf 'per:no\tbanner\tNot cloned banner\tNOT FOUND\t-\n' >> "$OUT/walk.tsv"; }
   tap_rid git_sheet_hd.clone_now >/dev/null || { miss=$((miss+1)); printf 'per:no\thd.clone_now\tClone Now\tNOT FOUND\t-\n' >> "$OUT/walk.tsv"; }
   walk per no "$NOTCLONED"
 fi
 # 3. the all-repos sheet over the 3 fixture repositories: More is pinned in the toolbar (tag sync_git_top_group_more)
-close_sheet
+close_sheet notcloned
 tap_rid sync_git_top_group_more >/dev/null || { snap no-more; fail "no More menu"; }; sleep 1
 tap_text '^All repos sheet$' || { snap no-bulk-item; fail "no All repos sheet item"; }; sleep 3
 sheet_open || { snap no-bulk; fail "the all-repos sheet did not open"; }
