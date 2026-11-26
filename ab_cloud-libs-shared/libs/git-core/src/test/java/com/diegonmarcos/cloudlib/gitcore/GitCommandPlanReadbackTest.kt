@@ -20,7 +20,7 @@ class GitCommandPlanReadbackTest {
         assertEquals("both", off.direction); assertEquals("ff", off.strategy); assertEquals("none", off.winner); assertEquals("none", off.dirty)
         assertEquals("chore: auto-sync", off.commitMessage); assertEquals("current", off.scope)
         assertFalse(off.prune); assertFalse(off.tags); assertFalse(off.submodules); assertFalse(off.forceLease); assertFalse(off.forceRaw); assertFalse(off.dryRun)
-        assertTrue(on.pulls); assertTrue(on.pushes); assertTrue(SyncOptions(direction = "pull").pulls); assertFalse(SyncOptions(direction = "pull").pushes)
+        assertTrue(on.pulls); assertFalse(on.pushes); assertTrue(SyncOptions(direction = "both").pushes); assertTrue(SyncOptions(direction = "both").pulls); assertTrue(SyncOptions(direction = "pull").pulls); assertFalse(SyncOptions(direction = "pull").pushes)
         assertTrue(SyncOptions(direction = "push").pushes); assertFalse(SyncOptions(direction = "push").pulls); assertFalse(SyncOptions(direction = "fetch").pulls)
     }
 
