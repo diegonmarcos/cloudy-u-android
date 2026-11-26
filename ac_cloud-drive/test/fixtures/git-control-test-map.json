@@ -5,7 +5,8 @@
    "command": "header: name, visibility, owner/branch/size, clone state, Refresh, action row, banner",
    "tests": [
     "ControlSheetRenderTest#fiveStickyTabsAndTheHeaderAreDrawn",
-    "ControlSheetRenderTest#notClonedShowsTheBannerAndGreysTheLocalActionsWithTheirReason"
+    "ControlSheetRenderTest#notClonedShowsTheBannerAndGreysTheLocalActionsWithTheirReason",
+    "ControlSheetRenderTest#selectingATabTellsThePageSoItCanScrollTheSheetToItsTop"
    ]
   },
   "ov_status": {
@@ -92,7 +93,9 @@
    "command": "Auto-Sync on/off and interval (WorkManager floor 15)",
    "tests": [
     "ControlEffectsTest#autoSyncIntervalsAreFlooredAtWorkManagersPeriodAndTheWorkerTicksAtTheSmallest",
-    "ControlEffects2Test#autoSyncRegistersOneUniquePeriodicWorkAtTheDeclaredIntervalAndUpdatesIt"
+    "ControlEffects2Test#autoSyncRegistersOneUniquePeriodicWorkAtTheDeclaredIntervalAndUpdatesIt",
+    "ControlEffects2Test#turningAutoSyncOffCancelsTheWorkAndTurningItOnEnqueuesItAgain",
+    "ControlEffects2Test#withNoRepositoryAtAllNothingIsEnqueued"
    ]
   },
   "sy_run": {
@@ -368,9 +371,9 @@
   "mg.tools.settings": {
    "command": "onSettings() opens the repo settings sheet",
    "tests": [
-    "ControlSheetRenderTest#settingsAndFolderRouteToTheirActionIds"
-   ],
-   "note": "the control routes to the settings action; the settings sheet's own fields are not composed in a JVM test (emulator walk only)"
+    "ControlSheetRenderTest#settingsAndFolderRouteToTheirActionIds",
+    "RepoSettingsSheetTest#theSettingsSheetShowsItsFields"
+   ]
   },
   "hd.fetch_status": {
    "command": "git fetch --dry-run + remote show origin",
@@ -447,7 +450,9 @@
    "command": "Auto-Sync on/off",
    "tests": [
     "ControlEffectsTest#autoSyncIntervalsAreFlooredAtWorkManagersPeriodAndTheWorkerTicksAtTheSmallest",
-    "ControlEffects2Test#autoSyncRegistersOneUniquePeriodicWorkAtTheDeclaredIntervalAndUpdatesIt"
+    "ControlEffects2Test#autoSyncRegistersOneUniquePeriodicWorkAtTheDeclaredIntervalAndUpdatesIt",
+    "ControlEffects2Test#turningAutoSyncOffCancelsTheWorkAndTurningItOnEnqueuesItAgain",
+    "ControlEffects2Test#withNoRepositoryAtAllNothingIsEnqueued"
    ]
   }
  }

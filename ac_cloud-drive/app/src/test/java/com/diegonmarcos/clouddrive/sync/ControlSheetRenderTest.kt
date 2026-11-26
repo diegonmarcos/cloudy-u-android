@@ -7,6 +7,8 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -97,6 +99,8 @@ class ControlSheetRenderTest {
         compose.onNodeWithTag("git_sheet_ctl_ov.goto.web").assertIsEnabled()
         click("git_sheet_tab_workflow")
         compose.onNodeWithTag("git_sheet_ctl_wf.commit").assertIsNotEnabled()
+        // every greyed control says why: the declared reason is on screen
+        compose.onAllNodesWithText("Needs a local clone", substring = true).onFirst().assertExists()
         compose.onNodeWithTag("git_sheet_ctl_wf.prs").assertIsEnabled()
     }
 
@@ -157,5 +161,17 @@ class ControlSheetRenderTest {
         click("git_sheet_tab_manage"); click("git_sheet_ctl_mg.tools.settings")
         click("git_sheet_tab_overview"); click("git_sheet_ctl_ov.goto.folder")
         assertEquals(listOf("mg.tools.settings", "ov.goto.folder"), seen)
+    }
+
+    @Test fun selectingATabTellsThePageSoItCanScrollTheSheetToItsTop() {
+        val tabs = mutableListOf<String>()
+        compose.setContent {
+            val state = rememberGitSheetState(sheet)
+            androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState())) {
+                GitControlSheetView(sheet, state, GitSheetHost(cloned = true), actions, onTabSelected = { tabs += it })
+            }
+        }
+        click("git_sheet_tab_sync"); click("git_sheet_tab_clone"); click("git_sheet_tab_manage")
+        assertEquals(listOf("sync", "clone", "manage"), tabs)
     }
 }

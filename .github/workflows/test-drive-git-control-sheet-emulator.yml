@@ -76,6 +76,30 @@ jobs:
           disable-animations: true
           script: bash ac_cloud-drive/test/emulator-git-control-sheet.sh apk/drive.apk out
 
+      # #1934 the walk's per-control results go into the observed table: the Ship run's JVM column + this walk's emulator column.
+      - name: Combined result table (JVM observed + emulator walk)
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -eu
+          mkdir -p combined
+          RUN=$(gh api "repos/$REPO/actions/workflows/ship-cloud-drive.yml/runs?branch=main&status=success&per_page=1" --jq '.workflow_runs[0].id')
+          SHA=$(gh api "repos/$REPO/actions/runs/$RUN" --jq '.head_sha')
+          AID=$(gh api "repos/$REPO/actions/runs/$RUN/artifacts" --jq '.artifacts[]|select(.name=="git-control-sheet-results-observed")|.id' | head -1)
+          gh api "repos/$REPO/actions/artifacts/$AID/zip" > combined/obs.zip
+          python3 -I -c "import zipfile; zipfile.ZipFile('combined/obs.zip').extractall('combined/obs')"
+          python3 -I ac_cloud-drive/test/merge-walk-into-results.py combined/obs/git-control-sheet-results-observed.md out/walk.tsv combined/git-control-sheet-results-combined.md "$RUN" "$SHA"
+      - name: Upload the combined result table
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: git-control-sheet-results-combined
+          path: combined/*.md
+          if-no-files-found: warn
+
       - name: Upload evidence
         if: always()
         uses: actions/upload-artifact@v4

@@ -40,6 +40,7 @@ adb shell "run-as $PKG sh -c 'cat > files/git-sync/repos.json'" <<JSON
 JSON
 adb shell "run-as $PKG ls -a files/fixtures/$NAME/.git" > "$OUT/fixture-ls.txt" 2>&1 || fail "fixture is not readable by the app"
 
+snap() { mkdir -p "$OUT/dumps"; cp "$OUT/ui.xml" "$OUT/dumps/$1.xml" 2>/dev/null; }
 dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > "$OUT/ui.xml" 2>/dev/null; cat "$OUT/ui.xml"; }
 # tap the centre of the first node whose text or content-desc matches the regex ($1)
 tap() { dump | python3 -I -c '
@@ -117,7 +118,7 @@ PY
 ok=0; miss=0
 while IFS=$'\t' read -r -u 3 tab id label danger; do
   case "$id" in tab:Manage|tab:manage) adb shell input swipe $((W*80/100)) $((H*62/100)) $((W*20/100)) $((H*62/100)) 200 < /dev/null; sleep 1;; esac
-  case "$id" in tab:*) tap "^$(printf '%s' "$label" | sed 's/[][\.*^$/]/\\&/g')$" ; sleep 1; adb exec-out screencap -p > "$OUT/walk/${id#tab:}.png"; printf '%s\t%s\ttab\tshown\t%s\n' "$tab" "$id" "walk/${id#tab:}.png" >> "$OUT/walk.tsv"; continue;; esac
+  case "$id" in tab:*) tap "^$(printf '%s' "$label" | sed 's/[][\.*^$/]/\\&/g')$" ; sleep 1; adb exec-out screencap -p > "$OUT/walk/${id#tab:}.png"; dump >/dev/null; snap "tab-${id#tab:}"; printf '%s\t%s\ttab\tshown\t%s\n' "$tab" "$id" "walk/${id#tab:}.png" >> "$OUT/walk.tsv"; continue;; esac
   pat="^$(printf '%s' "$label" | sed 's/[][\.*^$/]/\\&/g')$"
   found=0
   for s in 1 2 3; do tap "$pat" && { found=1; break; }; adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*35/100)) 250; sleep 1; done
@@ -135,8 +136,13 @@ while IFS=$'\t' read -r -u 3 tab id label danger; do
 done 3< "$OUT/walk-list.tsv"
 
 # ── the all-repos sheet: More ▸ All repos sheet, the same walk over its own controls ──
-adb shell input keyevent KEYCODE_BACK; sleep 2
-tap_after '^Logs$' || fail "no More menu"; sleep 1; tap '^All repos sheet$' || fail "no All repos sheet item"; sleep 3
+go_git_page() {
+  for i in 1 2 3; do dump | grep -q 'text="Logs"' && ! dump | grep -q 'content-desc="Drag handle"' && return 0; adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 2; done
+  adb shell am force-stop "$PKG" < /dev/null; sleep 1; timeout 120 adb shell am start -W -n "$act" < /dev/null >/dev/null; sleep 6
+  for i in 1 2 3; do tap '^Continue with local files$' && break; sleep 2; done; sleep 2; tap '^Git$'; sleep 4; dump | grep -q 'text="Logs"'; }
+go_git_page || { snap no-git-page; fail "cannot get back to the Git page"; }
+snap git-page
+tap_after '^Logs$' || { snap no-more; fail "no More menu"; }; sleep 1; snap more-open; tap '^All repos sheet$' || { snap no-bulk-item; fail "no All repos sheet item"; }; sleep 3
 dump | grep -q 'content-desc="Drag handle"' || fail "the all-repos sheet did not open"
 python3 -I - "$BJ" bulk > "$OUT/walk-list-bulk.tsv" <<'PY'
 import json, sys

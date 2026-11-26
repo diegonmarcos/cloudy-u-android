@@ -126,6 +126,8 @@ class GitSyncWorker(context: Context, params: WorkerParameters) : Worker(context
             // #1289 the tick is the smallest period an opted-in repository asks for (Configs-AutoSync, floor 15), so
             // "every 15 mins" on one repository is served even when the declared base is longer.
             val opted = runCatching { RepoRegistry(File(context.applicationContext.filesDir, REGISTRY_FILE)).load().filter { it.autoSync }.map { it.syncIntervalMinutes } }.getOrDefault(emptyList())
+            // #1934 Auto-Sync off cancels: with no repository opted in there is nothing to tick for, the unique work is cancelled; turning one on enqueues it again.
+            if (opted.isEmpty()) { WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME); return }
             val tick = com.diegonmarcos.clouddrive.sync.AutoSyncPlan.tickMinutes(BuildConfig.GIT_SYNC_INTERVAL_MINUTES, opted)
             val request = PeriodicWorkRequestBuilder<GitSyncWorker>(tick, TimeUnit.MINUTES)
                 .setConstraints(constraints)

@@ -61,3 +61,16 @@ pitest {
 }
 
 tasks.named('test') { finalizedBy 'pitest' }
+
+// #1934 the survivors in the CI log: every SURVIVED / NO_COVERAGE mutant of the run (class, method, line, mutator), so a weak spot can be killed by a test and not guessed.
+tasks.named('pitest') {
+    doLast {
+        def xml = file("${buildDir}/reports/pitest/mutations.xml")
+        if (xml.exists()) {
+            new XmlSlurper().parse(xml).mutation.each { m ->
+                def st = m.@status.toString()
+                if (st == 'SURVIVED' || st == 'NO_COVERAGE') println "PIT ${st} ${m.mutatedClass}.${m.mutatedMethod}:${m.lineNumber} ${m.mutator.toString().tokenize('.').last()}"
+            }
+        }
+    }
+}

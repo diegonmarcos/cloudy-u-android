@@ -35,19 +35,46 @@ class ControlEffects2Test {
 
     private fun works(): List<WorkInfo> = WorkManager.getInstance(ctx).getWorkInfosForUniqueWork(GitSyncWorker.WORK_NAME).get(10, TimeUnit.SECONDS)
 
+    private fun init() { try { WorkManager.initialize(ctx, Configuration.Builder().setExecutor(Executors.newSingleThreadExecutor()).setTaskExecutor(Executors.newSingleThreadExecutor()).build()) } catch (_: IllegalStateException) { /* already initialised by androidx.startup */ } }
+    private fun live(): List<WorkInfo> = works().filter { !it.state.isFinished }
+    private fun registry() = RepoRegistry(File(ctx.filesDir, GitSyncWorker.REGISTRY_FILE).also { it.parentFile!!.mkdirs() })
+
     @Test fun autoSyncRegistersOneUniquePeriodicWorkAtTheDeclaredIntervalAndUpdatesIt() {
-        try { WorkManager.initialize(ctx, Configuration.Builder().setExecutor(Executors.newSingleThreadExecutor()).setTaskExecutor(Executors.newSingleThreadExecutor()).build()) } catch (_: IllegalStateException) { /* already initialised by androidx.startup */ }
-        val reg = RepoRegistry(File(ctx.filesDir, GitSyncWorker.REGISTRY_FILE).also { it.parentFile!!.mkdirs() })
+        init(); val reg = registry()
         reg.upsert(ManagedRepo(id = "r1", name = "r1", path = "/x/r1", autoSync = true, syncIntervalMinutes = 30))
         GitSyncWorker.schedule(ctx)
-        var w = works()
+        var w = live()
         assertEquals("one unique work", 1, w.size); assertEquals(WorkInfo.State.ENQUEUED, w[0].state)
         assertEquals("the worker ticks at the smallest opted-in period", TimeUnit.MINUTES.toMillis(AutoSyncPlan.tickMinutes(com.diegonmarcos.clouddrive.BuildConfig.GIT_SYNC_INTERVAL_MINUTES, listOf(30L))), w[0].periodicityInfo!!.repeatIntervalMillis)
         reg.upsert(ManagedRepo(id = "r2", name = "r2", path = "/x/r2", autoSync = true, syncIntervalMinutes = 15))
         GitSyncWorker.schedule(ctx)
-        w = works()
+        w = live()
         assertEquals("replaced, not duplicated", 1, w.size)
         assertEquals(TimeUnit.MINUTES.toMillis(AutoSyncPlan.tickMinutes(com.diegonmarcos.clouddrive.BuildConfig.GIT_SYNC_INTERVAL_MINUTES, listOf(30L, 15L))), w[0].periodicityInfo!!.repeatIntervalMillis)
         assertTrue(w[0].periodicityInfo!!.repeatIntervalMillis >= TimeUnit.MINUTES.toMillis(15))
+    }
+
+    @Test fun turningAutoSyncOffCancelsTheWorkAndTurningItOnEnqueuesItAgain() {
+        init(); val reg = registry()
+        reg.upsert(ManagedRepo(id = "r1", name = "r1", path = "/x/r1", autoSync = true, syncIntervalMinutes = 15))
+        GitSyncWorker.schedule(ctx)
+        assertEquals(1, live().size)
+        // the last repository leaves Auto-Sync: nothing to tick for, the unique work is cancelled
+        reg.upsert(ManagedRepo(id = "r1", name = "r1", path = "/x/r1", autoSync = false, syncIntervalMinutes = 15))
+        GitSyncWorker.schedule(ctx)
+        assertTrue("no live work while no repository is opted in: ${works()}", live().isEmpty())
+        assertTrue(works().all { it.state == WorkInfo.State.CANCELLED })
+        // a repository turns it on again: enqueued at the declared interval
+        reg.upsert(ManagedRepo(id = "r1", name = "r1", path = "/x/r1", autoSync = true, syncIntervalMinutes = 60))
+        GitSyncWorker.schedule(ctx)
+        val w = live()
+        assertEquals(1, w.size); assertEquals(WorkInfo.State.ENQUEUED, w[0].state)
+        assertEquals(TimeUnit.MINUTES.toMillis(AutoSyncPlan.tickMinutes(com.diegonmarcos.clouddrive.BuildConfig.GIT_SYNC_INTERVAL_MINUTES, listOf(60L))), w[0].periodicityInfo!!.repeatIntervalMillis)
+    }
+
+    @Test fun withNoRepositoryAtAllNothingIsEnqueued() {
+        init(); registry()
+        GitSyncWorker.schedule(ctx)
+        assertTrue(live().isEmpty())
     }
 }

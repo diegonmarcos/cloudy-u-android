@@ -84,7 +84,7 @@ private fun SyncOptions.matches(c: Map<String, List<String>>) = c.all { (k, v) -
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun GitControlSheetView(sheet: GitSheet, state: GitSheetState, host: GitSheetHost, actions: GitSheetActions, modifier: Modifier = Modifier) {
+fun GitControlSheetView(sheet: GitSheet, state: GitSheetState, host: GitSheetHost, actions: GitSheetActions, modifier: Modifier = Modifier, onTabSelected: (String) -> Unit = {}) {
     val k = LocalGitUiKit.current
     val tabs = sheet.tabsFor(host.bulk)
     val open = tabs.firstOrNull { it.id == state.tab } ?: tabs.firstOrNull()
@@ -100,7 +100,7 @@ fun GitControlSheetView(sheet: GitSheet, state: GitSheetState, host: GitSheetHos
     Column(modifier.fillMaxWidth().testTag("git_control_sheet"), verticalArrangement = Arrangement.spacedBy(k.gapWide)) {
         if (!host.bulk) Header(sheet, host, actions, ::blocked)
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag("git_sheet_tabs"), horizontalArrangement = Arrangement.spacedBy(k.gapWide)) {
-            tabs.forEach { t -> k.pill(GitPill(t.label, { state.tab = t.id }, Modifier.testTag("git_sheet_tab_" + t.id), filled = t.id == open?.id)) }
+            tabs.forEach { t -> k.pill(GitPill(t.label, { state.tab = t.id; onTabSelected(t.id) }, Modifier.testTag("git_sheet_tab_" + t.id), filled = t.id == open?.id)) }
         }
         open?.groups?.forEach { g -> GroupView(sheet, g, tabs, state, host, actions, ::blocked) }
     }

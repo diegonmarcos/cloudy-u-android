@@ -37,6 +37,8 @@ internal fun ControlSheetBody(
     /** #608 an operation that cannot run now (a read-only remote refuses push and force push); its control is drawn disabled. */
     blocked: (Declarations.GitOpDecl) -> Boolean = { false },
     legacy: (String) -> Unit, onClone: () -> Unit, onClose: () -> Unit,
+    /** A tab was selected: the page scrolls the sheet back to its top. */
+    onTabSelected: () -> Unit = {},
 ) {
     val ctx = LocalContext.current
     val lang = java.util.Locale.getDefault().language
@@ -114,7 +116,7 @@ internal fun ControlSheetBody(
         override fun copy(text: String) = clip(text)
         override fun setAutoSync(on: Boolean, minutes: Int) { repo?.let { coordinator.setAutoSync(it, on, minutes.toLong()) } }
     }
-    GitControlSheetView(sheet, state, host, actions, Modifier)
+    GitControlSheetView(sheet, state, host, actions, Modifier, onTabSelected = { onTabSelected() })
     // #1934 Rename Remote: the new name is typed here, then the same confirm as the other danger-zone actions; the request is HostingApi.rename (mock-tested).
     renameAsk?.let { old ->
         var typed by androidx.compose.runtime.remember(old) { androidx.compose.runtime.mutableStateOf(old) }
