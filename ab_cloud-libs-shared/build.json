@@ -3140,7 +3140,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "google/gemini-2.5-flash",
-        "pricing_as_of": "2026-11-25",
+        "pricing_as_of": "2026-11-26",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -3178,7 +3178,7 @@
             "params_b": 27,
             "quant": ["fp8"],
             "trained_for": [],
-            "prompt": 0.08, "completion": 0.16,
+            "prompt": 0.08, "completion": 0.45,
             "note": "Ranked for marketing/SEO only; light and predictable on short rewrites."
           },
           {
@@ -3223,7 +3223,7 @@
             "name": "DeepSeek V4 Flash 0731",
             "open": true,
             "quant": ["fp32", "fp4", "fp8", "nvfp4"],
-            "trained_for": ["academia", "finance", "health", "marketing", "marketing/seo", "programming", "roleplay", "science", "technology", "translation", "trivia"],
+            "trained_for": ["academia", "finance", "health", "marketing", "marketing/seo", "roleplay", "science", "technology", "translation", "trivia"],
             "prompt": 0.0456, "completion": 0.3,
             "note": "Ranked in all twelve categories at the second-lowest price here."
           },
@@ -3232,7 +3232,7 @@
             "name": "GLM 5.2",
             "open": true,
             "quant": ["fp4", "fp8"],
-            "trained_for": ["programming", "roleplay"],
+            "trained_for": ["legal", "programming", "roleplay"],
             "prompt": 0.62, "completion": 2.42,
             "note": "Ranked in ten categories including translation; the formal-register GLM."
           },
@@ -3242,7 +3242,7 @@
             "open": true,
             "quant": ["fp4", "fp8", "nvfp4"],
             "trained_for": ["academia", "finance", "health", "legal", "marketing", "marketing/seo", "programming", "roleplay", "science", "technology", "translation", "trivia"],
-            "prompt": 0.12, "completion": 0.38,
+            "prompt": 0.15, "completion": 0.5,
             "note": "Ranked in all twelve categories; the cheapest all-rounder after DeepSeek."
           },
           {
@@ -3263,7 +3263,7 @@
           {
             "id": "openai/gpt-4.1-mini",
             "name": "GPT-4.1 mini",
-            "trained_for": ["translation"],
+            "trained_for": [],
             "prompt": 0.4, "completion": 1.6,
             "note": "Translation-ranked and closed-weight; steady, conservative English grammar fixes."
           },
