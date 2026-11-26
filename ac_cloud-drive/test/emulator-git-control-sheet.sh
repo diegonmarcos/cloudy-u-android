@@ -43,11 +43,12 @@ dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out
 # tap the centre of the first node whose text or content-desc matches the regex ($1)
 tap() { dump | python3 -I -c '
 import re,sys
-x=sys.stdin.read(); pat=re.compile(sys.argv[1],re.I)
+x=sys.stdin.read(); pat=re.compile(sys.argv[1],re.I); hit=None
 for m in re.finditer(r"<node [^>]*>",x):
     n=m.group(0); t=re.search(r"\btext=\"([^\"]*)\"",n); d=re.search(r"content-desc=\"([^\"]*)\"",n); b=re.search(r"bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"",n)
     if b and ((t and pat.search(t.group(1))) or (d and pat.search(d.group(1)))):
-        a=list(map(int,b.groups())); print((a[0]+a[2])//2,(a[1]+a[3])//2); break
+        a=list(map(int,b.groups())); hit=((a[0]+a[2])//2,(a[1]+a[3])//2)   # the LAST match: the open sheet is drawn over the page (its Sync / Clone tabs, not the top bar buttons)
+if hit: print(*hit)
 else: sys.exit(1)' "$1" | { read -r px py && adb shell input tap "$px" "$py"; }; }
 
 timeout 120 adb shell am start -W -n "$act" >/dev/null; sleep 6
@@ -106,7 +107,7 @@ while IFS=$'\t' read -r -u 3 tab id label danger; do
   case "$id" in tab:*) tap "^$(printf '%s' "$label" | sed 's/[][\.*^$/]/\\&/g')$" ; sleep 1; adb exec-out screencap -p > "$OUT/walk/${id#tab:}.png"; printf '%s\t%s\ttab\tshown\t%s\n' "$tab" "$id" "walk/${id#tab:}.png" >> "$OUT/walk.tsv"; continue;; esac
   pat="^$(printf '%s' "$label" | sed 's/[][\.*^$/]/\\&/g')$"
   found=0
-  for s in 1 2 3 4 5 6; do tap "$pat" && { found=1; break; }; adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*35/100)) 250; sleep 1; done
+  for s in 1 2 3; do tap "$pat" && { found=1; break; }; adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*35/100)) 250; sleep 1; done
   if [ $found = 0 ]; then miss=$((miss+1)); printf '%s\t%s\t%s\tNOT FOUND\t-\n' "$tab" "$id" "$label" >> "$OUT/walk.tsv"; continue; fi
   sleep 1; adb exec-out screencap -p > "$OUT/walk/$id.png"
   after=$(dump | grep -oE 'text="[^"]{3,80}"' | head -40 | tr '\n' ' ')
@@ -137,7 +138,7 @@ PY
 while IFS=$'\t' read -r -u 3 tab id label danger; do
   case "$id" in tab:*) tap "^$(printf '%s' "$label" | sed 's/[][\\.*^$/]/\\\\&/g')$"; sleep 1; adb exec-out screencap -p > "$OUT/walk/bulk-${id#tab:}.png"; printf 'bulk:%s\t%s\ttab\tshown\n' "$tab" "$id" >> "$OUT/walk.tsv"; continue;; esac
   pat="^$(printf '%s' "$label" | sed 's/[][\\.*^$/]/\\\\&/g')$"; found=0
-  for s in 1 2 3 4 5 6; do tap "$pat" && { found=1; break; }; adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*35/100)) 250; sleep 1; done
+  for s in 1 2 3; do tap "$pat" && { found=1; break; }; adb shell input swipe $((W/2)) $((H*70/100)) $((W/2)) $((H*35/100)) 250; sleep 1; done
   if [ $found = 0 ]; then miss=$((miss+1)); printf 'bulk:%s\t%s\t%s\tNOT FOUND\t-\n' "$tab" "$id" "$label" >> "$OUT/walk.tsv"; continue; fi
   sleep 1; adb exec-out screencap -p > "$OUT/walk/bulk-$id.png"
   if dump | grep -q 'text="Confirm"'; then tap '^Cancel$' || adb shell input keyevent KEYCODE_BACK; fi
