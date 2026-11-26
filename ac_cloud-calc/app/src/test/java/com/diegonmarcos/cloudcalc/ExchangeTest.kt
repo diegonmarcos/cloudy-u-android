@@ -57,7 +57,7 @@ class ExchangeTest {
     @Test fun `Finance sits right after Decimals, Others keeps its other entries, every page and Finance form is still there`() {
         assertEquals(emptyList<String>(), problems(declaredRows(), declaredForms))
         assertEquals(listOf("Decimals", "Finance", "Others"), declaredRows().map { it.first })
-        assertEquals(listOf("calc", "latex", "convert", "history", "finance", "datetime", "sound", "graph", "ask"), nav.section("calculator")!!.pages.map { it.id })
+        assertEquals(listOf("calc", "latex", "convert", "history", "finance", "exchange", "datetime", "sound", "graph", "ask"), nav.section("calculator")!!.pages.map { it.id })
         // The page id is unchanged, so a saved or deep-linked "finance" still resolves.
         assertEquals("finance", Declarations.resolve("finance"))
         assertEquals("datetime", Declarations.resolve("tools"))
@@ -76,8 +76,10 @@ class ExchangeTest {
         assertTrue("a page dropped from Others", problems(listOf(rows[0], rows[1], "Others" to listOf("datetime", "sound", "graph")), declaredForms).isNotEmpty())
     }
 
-    @Test fun `Exchange is a mode of the Finance page after Fin, and its spec declares the source`() {
-        assertEquals(listOf("finance", "exchange"), Declarations.modesOf("finance").map { it.id })
+    @Test fun `Exchange is a page of the Finance row after Finance, and its spec declares the source`() {
+        assertEquals(listOf("finance", "exchange"), declaredRows()[1].second)
+        assertEquals(listOf("finance"), Declarations.modesOf("finance").map { it.id })
+        assertEquals(listOf("exchange"), Declarations.modesOf("exchange").map { it.id })
         val m = Declarations.mode("exchange")!!
         assertEquals("exchange", m.kind)
         val spec = Exchange.spec(m)
@@ -106,7 +108,7 @@ class ExchangeTest {
     }
 
     @Test fun `formats are 2 decimals for amounts and 4 significant for unit rates, locale aware`() {
-        assertEquals("9.28", Exchange.amountText(9.2666, en))
+        assertEquals("9.27", Exchange.amountText(9.2666, en))
         assertEquals("1,234,567.50", Exchange.amountText(1234567.5, en))
         assertEquals("1.234.567,50", Exchange.amountText(1234567.5, Locale.GERMANY))
         assertEquals("0.0108", Exchange.rateText(0.010802, en))

@@ -338,7 +338,7 @@ class DeclarationsTest {
         assertFalse("ai page", "ai" in now)
         assertTrue("ai section", nav.sections.none { it.id == "ai" })
         assertTrue("ai mode", modes.none { it.id == "ai" || it.kind == "ai" })
-        assertEquals("the page set minus AI, plus Home", (pagesBefore.toSet() - "ai") + "home", now)
+        assertEquals("the page set minus AI, plus Home and Exchange (#1945)", (pagesBefore.toSet() - "ai") + "home" + "exchange", now)
         assertEquals("Ask Jev renders", "jev", Declarations.modesOf("ask").single().kind)
         assertEquals("home", Declarations.modesOf("home").single().kind)
     }

@@ -9,6 +9,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
@@ -81,24 +82,24 @@ class ExchangeScreenTest {
 
     private fun launch() {
         compose.setContent { CalcTheme { CompositionLocalProvider(LocalCalcApi provides engine) { ExchangeMode(mode) } } }
-        compose.waitUntil(5_000) { compose.onAllNodesWithTag(ExchangeTags.targetRate("USD")).fetchSemanticsNodes().isNotEmpty() }
-        compose.waitUntil(5_000) { runCatching { compose.onNodeWithTag(ExchangeTags.targetRate("USD")).assertTextContains("0.0108", substring = true) }.isSuccess }
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag(ExchangeTags.targetRate("USD"), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(5_000) { runCatching { compose.onNodeWithTag(ExchangeTags.targetRate("USD"), useUnmergedTree = true).assertTextContains("0.0108", substring = true) }.isSuccess }
     }
 
     @Test fun `the layout is the source card, one card per target with its unit rate, the add action and the footer`() {
         launch()
         compose.onNodeWithTag(ExchangeTags.SOURCE_CARD).assertExists()
-        compose.onNodeWithTag(ExchangeTags.SOURCE_CARD).assertTextContains("You convert", substring = true)
+        compose.onNodeWithText("You convert").assertExists()
         compose.onNodeWithTag(ExchangeTags.SOURCE_CODE).assertTextContains("INR", substring = true)
         compose.onNodeWithTag(ExchangeTags.AMOUNT).assertTextContains("858.02")
         val targets = listOf("USD", "EUR", "GBP", "BRL")
         targets.forEach { compose.onNodeWithTag(ExchangeTags.target(it)).assertExists() }
-        compose.onNodeWithTag(ExchangeTags.targetRate("USD")).assertTextContains("1 INR → 0.0108 USD")
-        compose.onNodeWithTag(ExchangeTags.targetRate("EUR")).assertTextContains("1 INR → 0.01 EUR")
-        compose.onNodeWithTag(ExchangeTags.targetRate("GBP")).assertTextContains("1 INR → 0.0084 GBP")
-        compose.onNodeWithTag(ExchangeTags.targetRate("BRL")).assertTextContains("1 INR → 0.062 BRL")
-        compose.onNodeWithTag(ExchangeTags.targetAmount("USD")).assertTextContains("9.27")
-        compose.onNodeWithTag(ExchangeTags.targetAmount("EUR")).assertTextContains("8.58")
+        compose.onNodeWithTag(ExchangeTags.targetRate("USD"), useUnmergedTree = true).assertTextContains("1 INR → 0.0108 USD")
+        compose.onNodeWithTag(ExchangeTags.targetRate("EUR"), useUnmergedTree = true).assertTextContains("1 INR → 0.01 EUR")
+        compose.onNodeWithTag(ExchangeTags.targetRate("GBP"), useUnmergedTree = true).assertTextContains("1 INR → 0.0084 GBP")
+        compose.onNodeWithTag(ExchangeTags.targetRate("BRL"), useUnmergedTree = true).assertTextContains("1 INR → 0.062 BRL")
+        compose.onNodeWithTag(ExchangeTags.targetAmount("USD"), useUnmergedTree = true).assertTextContains("9.27")
+        compose.onNodeWithTag(ExchangeTags.targetAmount("EUR"), useUnmergedTree = true).assertTextContains("8.58")
         compose.onNodeWithTag(ExchangeTags.ADD).assertTextContains("Add another currency")
         compose.onNodeWithTag(ExchangeTags.REFRESH).assertExists()
         compose.onNodeWithTag(ExchangeTags.UPDATED).assertTextContains("Last updated:", substring = true)
@@ -110,8 +111,8 @@ class ExchangeScreenTest {
     @Test fun `typing an amount converts every card`() {
         launch()
         compose.onNodeWithTag(ExchangeTags.AMOUNT).performTextReplacement("100")
-        compose.waitUntil(5_000) { runCatching { compose.onNodeWithTag(ExchangeTags.targetAmount("USD")).assertTextContains("1.08") }.isSuccess }
-        compose.onNodeWithTag(ExchangeTags.targetAmount("GBP")).assertTextContains("0.84")
+        compose.waitUntil(5_000) { runCatching { compose.onNodeWithTag(ExchangeTags.targetAmount("USD"), useUnmergedTree = true).assertTextContains("1.08") }.isSuccess }
+        compose.onNodeWithTag(ExchangeTags.targetAmount("GBP"), useUnmergedTree = true).assertTextContains("0.84")
         assertEquals("100", prefs.getString("exchange_amount", null))
     }
 
@@ -121,7 +122,7 @@ class ExchangeScreenTest {
         compose.onNodeWithTag(ExchangeTags.PICKER_SEARCH).performTextReplacement("jp")
         compose.onNodeWithTag(ExchangeTags.pickerItem("JPY")).performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTag(ExchangeTags.target("JPY")).fetchSemanticsNodes().isNotEmpty() }
-        compose.waitUntil(5_000) { runCatching { compose.onNodeWithTag(ExchangeTags.targetRate("JPY")).assertTextContains("1 INR → 1.6 JPY") }.isSuccess }
+        compose.waitUntil(5_000) { runCatching { compose.onNodeWithTag(ExchangeTags.targetRate("JPY"), useUnmergedTree = true).assertTextContains("1 INR → 1.6 JPY") }.isSuccess }
         assertTrue(prefs.getString("exchange_targets", "")!!.contains("JPY"))
     }
 
@@ -139,6 +140,6 @@ class ExchangeScreenTest {
         launch()
         compose.waitUntil(5_000) { runCatching { compose.onNodeWithTag(ExchangeTags.UPDATED).assertTextContains("Offline", substring = true) }.isSuccess }
         compose.onNodeWithTag(ExchangeTags.UPDATED).assertTextContains("Last updated:", substring = true)
-        compose.onNodeWithTag(ExchangeTags.targetRate("USD")).assertTextContains("0.0108", substring = true)
+        compose.onNodeWithTag(ExchangeTags.targetRate("USD"), useUnmergedTree = true).assertTextContains("0.0108", substring = true)
     }
 }
