@@ -47,13 +47,10 @@ pitest {
     targetClasses = ['com.diegonmarcos.cloudlib.gitcore.*']
     // The ssh/session transport callbacks need a live ssh or http server; they are proven on the emulator flow.
     excludedMethods = ['equals', 'hashCode', 'toString', 'copy', 'copy$default', 'component*',
-                       'sshCallback', 'sessionCallback', 'withAuth', 'ownerOnly',
-                       // #1934 the option-driven verbs and the plan executor are proven by SheetCommandMatrixTest, which EXECUTES every distinct
-                       // argv of the control sheet against throwaway repositories in every state and asserts the resulting state; that matrix
-                       // (thousands of runs) is too heavy to replay per mutant, so PIT leaves both it and these methods out.
-                       'fetchWith', 'pullWith', 'pushWith', 'statusLine', 'remoteNames', 'branchName']
+                       'sshCallback', 'sessionCallback', 'withAuth', 'ownerOnly']
     // The jsch session factory only runs against a live ssh server (proven on the emulator flow, not in a JVM suite).
-    excludedClasses = ['com.diegonmarcos.cloudlib.gitcore.JGitEngine$Companion$sshCallback$factory$1', 'com.diegonmarcos.cloudlib.gitcore.PlanExecutor*']
+    excludedClasses = ['com.diegonmarcos.cloudlib.gitcore.JGitEngine$Companion$sshCallback$factory$1']
+    // #1934 only the heavy executed matrix stays out of the per-mutant replay; PlanExecutorFastTest (a representative slice on tiny repos) kills the mutants of the new code.
     excludedTestClasses = ['com.diegonmarcos.cloudlib.gitcore.SheetCommandMatrixTest']
     // Closing a resource is not observable from a test (kotlin.io.use / AutoCloseable.use).
     avoidCallsTo = ['kotlin.jvm.internal', 'kotlin.jdk7.AutoCloseableKt', 'kotlin.io.CloseableKt']
