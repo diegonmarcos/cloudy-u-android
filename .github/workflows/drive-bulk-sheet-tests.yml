@@ -69,7 +69,9 @@ jobs:
           SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
           NAME_IN: ${{ inputs.name }}
         run: |
-          set -u
+          set -uE
+          R=ac_cloud-drive/app/build/test-results/testDebugUnitTest
+          trap 'echo "::error::step died at line $LINENO"; tail -60 /tmp/suite.log 2>/dev/null; ls -la "$R" 2>&1 | head -20' ERR
           case "${NAME_IN:-all}" in
             all|none|derive-drops-uncovered|twins-ignored|scope-reasons-dropped|confirm-not-forced|progress-never-running|confirm-scope-dropped|cancel-disabled|concurrency-ignored) ONLY="${NAME_IN:-all}" ;;
             *) echo "::error::input not in the allow-list"; exit 1 ;;
@@ -78,7 +80,6 @@ jobs:
           L=ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui
           # only the suites under proof run: an unrelated test must not decide whether these mutants are caught
           find ac_cloud-drive/app/src/test -name '*.kt' ! -name 'Bulk*Test.kt' -delete
-          R=ac_cloud-drive/app/build/test-results/testDebugUnitTest
           suite() { rm -rf "$R"; sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR" > /tmp/suite.log 2>&1; true; }
           # verdict: "tests failures" read from the Bulk*Test XML files; prints "N F" (F = failures + errors), "0 -1" when no XML exists (compile failure, not a verdict)
           verdict() { python3 - "$R" <<'PY'
