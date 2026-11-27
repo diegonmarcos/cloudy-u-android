@@ -25,7 +25,15 @@ object RoutesTableModel {
         AUTH_TYPE("auth_type"),
         PRIVATE_URL("private_url"),
         VM_NAME("vm_name"),
-        VM_ADDR("vm_addr");
+        VM_ADDR("vm_addr"),
+        /** #1954 the deployed state the old Orch Service and Declared pages showed: the service, its role, the compose project, the declared and the running image tag, the live `docker ps` state and the declared-vs-running drift. */
+        SERVICE("service"),
+        ROLE("role"),
+        COMPOSE("compose"),
+        TAG("tag"),
+        RUNNING_TAG("running_tag"),
+        LIVE("live"),
+        DRIFT("drift");
 
         companion object {
             /** The seven text columns (everything but the light). */
@@ -56,6 +64,14 @@ object RoutesTableModel {
         val type: String = "",
         /** Every metadata field of the declared container, for the More view. */
         val meta: List<Pair<String, String>> = emptyList(),
+        /** #1954 service, role (db engine in brackets), compose project (the declared folder), declared image tag; the live state, the running tag and the drift are filled by [ContainersLive] once `docker ps` answered. */
+        val service: String = "",
+        val role: String = "",
+        val compose: String = "",
+        val tag: String = "",
+        val runningTag: String = "",
+        val live: String = "",
+        val drift: String = "",
     ) {
         /** Identity of a row for the probe cache. */
         val key: String get() = "$container|$publicUrl|$privateUrl"
@@ -72,6 +88,13 @@ object RoutesTableModel {
             Column.PRIVATE_URL -> privateUrl
             Column.VM_NAME -> vmName
             Column.VM_ADDR -> vmAddr
+            Column.SERVICE -> service
+            Column.ROLE -> role
+            Column.COMPOSE -> compose
+            Column.TAG -> tag
+            Column.RUNNING_TAG -> runningTag
+            Column.LIVE -> live
+            Column.DRIFT -> drift
         }
     }
 
@@ -93,6 +116,8 @@ object RoutesTableModel {
         /** #1941 project labels and types to keep; empty = all. */
         val projects: Set<String> = emptySet(),
         val types: Set<String> = emptySet(),
+        /** #1954 drift values to keep (in sync | declared, not running | running, not declared | ...); empty = all. */
+        val drifts: Set<String> = emptySet(),
     )
 
     /** Rows from the slice's `routes` array; a missing or malformed array is an empty table, never a crash. */
@@ -109,7 +134,8 @@ object RoutesTableModel {
             (state.auth.isEmpty() || r.authType in state.auth) && (state.vms.isEmpty() || r.vmName in state.vms) &&
                 (state.category.isEmpty() || r.category == state.category) && matches(r, state.query) &&
                 (state.lights.isEmpty() || light(r).id in state.lights) &&
-                (state.projects.isEmpty() || r.project in state.projects) && (state.types.isEmpty() || r.type in state.types)
+                (state.projects.isEmpty() || r.project in state.projects) && (state.types.isEmpty() || r.type in state.types) &&
+                (state.drifts.isEmpty() || r.drift in state.drifts)
         }
         val byText = Comparator<Row> { a, b ->
             if (state.sort == Column.STATUS) {
@@ -168,6 +194,7 @@ object RoutesTableModel {
             Column.CATEGORY -> OpenTarget.Category(v)
             Column.GROUP, Column.PROJECT, Column.TYPE -> null
             Column.AUTH_TYPE, Column.STATUS -> null
+            Column.SERVICE, Column.ROLE, Column.COMPOSE, Column.TAG, Column.RUNNING_TAG, Column.LIVE, Column.DRIFT -> null
         }
     }
 
@@ -180,6 +207,13 @@ object RoutesTableModel {
     fun toggleVm(state: State, vm: String): State = state.copy(vms = state.vms.toggled(vm))
     fun toggleProject(state: State, project: String): State = state.copy(projects = state.projects.toggled(project))
     fun toggleType(state: State, type: String): State = state.copy(types = state.types.toggled(type))
+    fun toggleDrift(state: State, drift: String): State = state.copy(drifts = state.drifts.toggled(drift))
+
+    /** The drift values the rows carry, in the declared order ([ContainersLive.DRIFTS]), for the Drift chips; empty while `docker ps` has not answered. */
+    fun driftOptions(rows: List<Row>): List<String> {
+        val have = rows.map { it.drift }.filter { it.isNotBlank() }.toSet()
+        return ContainersLive.DRIFTS.filter { it in have } + (have - ContainersLive.DRIFTS.toSet()).sorted()
+    }
 
     /** The projects the rows name, in the rows' order, for the Project chips. */
     fun projectOptions(rows: List<Row>): List<String> = rows.map { it.project }.filter { it.isNotBlank() }.distinct()
@@ -206,12 +240,13 @@ object RoutesTableModel {
     fun encode(s: State): String =
         listOf(s.sort.key, if (s.ascending) "asc" else "desc", s.auth.sorted().joinToString(","), s.vms.sorted().joinToString("|"),
             java.net.URLEncoder.encode(s.query, "UTF-8"), java.net.URLEncoder.encode(s.category, "UTF-8"), s.lights.sorted().joinToString(","),
-            s.projects.sorted().joinToString("|") { java.net.URLEncoder.encode(it, "UTF-8") }, s.types.sorted().joinToString(",")).joinToString(";")
+            s.projects.sorted().joinToString("|") { java.net.URLEncoder.encode(it, "UTF-8") }, s.types.sorted().joinToString(","),
+            s.drifts.sorted().joinToString("|") { java.net.URLEncoder.encode(it, "UTF-8") }).joinToString(";")
 
     /** Anything unreadable is the default state: stale or hand-edited preferences cannot break the page. */
     fun decode(text: String?): State {
         val p = text?.split(';') ?: return State()
-        if (p.size !in 4..9) return State()
+        if (p.size !in 4..10) return State()
         val col = Column.entries.firstOrNull { it.key == p[0] } ?: return State()
         val asc = when (p[1]) { "asc" -> true; "desc" -> false; else -> return State() }
         return State(col, asc, p[2].split(',').filter { it.isNotBlank() }.toSet(), p[3].split('|').filter { it.isNotBlank() }.toSet(),
@@ -219,7 +254,8 @@ object RoutesTableModel {
             p.getOrNull(5)?.let { runCatching { java.net.URLDecoder.decode(it, "UTF-8") }.getOrNull() }.orEmpty(),
             p.getOrNull(6)?.split(',')?.filter { it.isNotBlank() }?.toSet().orEmpty(),
             p.getOrNull(7)?.split('|')?.filter { it.isNotBlank() }?.mapNotNull { runCatching { java.net.URLDecoder.decode(it, "UTF-8") }.getOrNull() }?.toSet().orEmpty(),
-            p.getOrNull(8)?.split(',')?.filter { it.isNotBlank() }?.toSet().orEmpty())
+            p.getOrNull(8)?.split(',')?.filter { it.isNotBlank() }?.toSet().orEmpty(),
+            p.getOrNull(9)?.split('|')?.filter { it.isNotBlank() }?.mapNotNull { runCatching { java.net.URLDecoder.decode(it, "UTF-8") }.getOrNull() }?.toSet().orEmpty())
     }
 
     private fun Set<String>.toggled(x: String): Set<String> = if (x in this) this - x else this + x

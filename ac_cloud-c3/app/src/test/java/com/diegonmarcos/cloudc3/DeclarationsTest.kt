@@ -134,7 +134,8 @@ class DeclarationsTest {
         assertEquals("#1454 every project page keeps the Topology | Table switch",
             pageIds("containers").map { listOf("${it}_topology", "${it}_table") },
             nav().section("containers")!!.pages.map { p -> p.pages.map { it.id } })
-        assertEquals(listOf("orch_flow", "orch_service", "orch_orchestration", "orch_release", "orch_agents", "orch_dagu", "orch_gh_releases", "orch_ghcr"), pageIds("orch"))
+        assertEquals("#1954 Orch: Pipeline (Home, Workflows, Deploy history), Registries (GH Releases, GHCR), CI/CD (Flow, Dagu, Agents)",
+            listOf("orch_home", "orch_workflows", "orch_deploys", "orch_gh_releases", "orch_ghcr", "orch_flow", "orch_dagu", "orch_agents"), pageIds("orch"))
         assertEquals("#1852 Configs is the app's own Build card and Plugins, then General | Perms | About", listOf("build", "plugins", "general", "perms", "about"), pageIds("configs"))
     }
 

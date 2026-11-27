@@ -110,6 +110,8 @@ object ContainersModel {
             category = e.category, container = e.name, publicUrl = e.publicUrl, authType = e.authType,
             privateUrl = if (e.dns.isBlank()) "" else e.dns + (e.port?.let { ":$it" } ?: ""),
             vmName = e.host, vmAddr = "", group = e.group, meta = e.fields(),
+            service = e.service, role = if (e.dbEngine.isBlank()) e.role else "${e.role} (${e.dbEngine})", compose = e.folder,
+            tag = if (e.image.isBlank()) "" else TopologyModel.imageTag(e.image),
         )
     }
 }

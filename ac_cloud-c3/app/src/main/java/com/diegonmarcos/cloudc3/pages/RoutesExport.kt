@@ -14,6 +14,9 @@ object RoutesExport {
         RoutesTableModel.Column.PUBLIC_URL to "Public URL", RoutesTableModel.Column.AUTH_TYPE to "Auth Type",
         RoutesTableModel.Column.PRIVATE_URL to "Private URL", RoutesTableModel.Column.VM_NAME to "VM Name",
         RoutesTableModel.Column.VM_ADDR to "VM IP:PORT",
+        RoutesTableModel.Column.SERVICE to "Service", RoutesTableModel.Column.ROLE to "Role", RoutesTableModel.Column.COMPOSE to "Compose project",
+        RoutesTableModel.Column.TAG to "Image tag", RoutesTableModel.Column.RUNNING_TAG to "Running tag", RoutesTableModel.Column.LIVE to "Live state",
+        RoutesTableModel.Column.DRIFT to "Drift",
     )
 
     /** Header row, then one row per shown row; the Status cell is the light's label. */

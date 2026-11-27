@@ -101,6 +101,11 @@
       "type": "library",
       "dir": "../ab_cloud-libs-shared/libs/decisions-link"
     },
+    "libs:health-core-rs": {
+      "type": "library",
+      "_doc": "#1955 C A1 the on-phone health engine (libhealth_core_jni.so): the Rust health-core crate behind a thin JNI layer and the Kotlin HealthCore facade. Health and X-ray render what it returns; no check logic is in Kotlin.",
+      "dir": "../ab_cloud-libs-shared/libs/health-core-rs"
+    },
     "_doc": "Single source of truth for the Gradle module graph. settings.gradle iterates this list.",
     "app": {
       "type": "application",
@@ -114,7 +119,8 @@
         "libs:theme-background",
         "libs:ops",
         "libs:ui-kit",
-        "libs:ai"
+        "libs:ai",
+        "libs:health-core-rs"
       ]
     },
     "libs:core": {
@@ -225,7 +231,7 @@
       "section_pages": {"containers": "containers_project"},
       "pages": {
         "machines": "infra_vms", "providers": "infra_vms", "domains": "infra_domains", "domains_public": "infra_domains", "projects": "projects_status",
-        "orch_flow": "orch_runs", "orch_release": "orch_runs", "orch_gh_releases": "orch_runs", "orch_dagu": "dagu_runs",
+        "orch_home": "orch_runs", "orch_workflows": "orch_runs", "orch_flow": "orch_runs", "orch_gh_releases": "orch_runs", "orch_dagu": "dagu_runs",
         "mail": "mail_state", "mail_tables": "mail_state", "mail_topology_inbound": "mail_state", "mail_topology_outbound": "mail_state",
         "ops_health": "ops_uptime", "ops_health_uptime": "ops_uptime", "ops_health_health": "ops_reports", "ops_health_tests": "ops_reports"
       }
@@ -241,12 +247,12 @@
         "private": "containers/all_table",
         "table": "containers/all_table",
         "stack": "infra/providers",
-        "service": "orch/orch_service",
-        "infrastructure": "orch/orch_orchestration",
-        "orchestration": "orch/orch_orchestration",
+        "service": "containers/all_table",
+        "infrastructure": "containers/all_table",
+        "orchestration": "containers/all_table",
         "network": "ops/net_network",
         "mail_map": "ops/mail_tables",
-        "release": "orch/orch_release",
+        "release": "orch/orch_gh_releases",
         "agents": "orch/orch_agents",
         "observability": "ops/obs_stack",
         "health": "ops/ops_health_health",
@@ -257,7 +263,10 @@
         "lib_topology": "containers/pj-wiki-modernsc_topology",
         "lib_table": "containers/pj-wiki-modernsc_table",
         "api_mcp": "infra/api_endpoints",
-        "orch_infrastructure": "orch/orch_orchestration",
+        "orch_infrastructure": "containers/all_table",
+        "orch_service": "containers/all_table",
+        "orch_orchestration": "containers/all_table",
+        "orch_release": "orch/orch_gh_releases",
         "control": "infra/gadgets"
       }
     },
@@ -675,34 +684,75 @@
         "id": "orch",
         "label": "Orch",
         "icon": "ic_p_c3_stack",
-        "_doc": "#1942 Orch is a bottom tab: the Orchestration pages that lived in Ops (CI/CD flow, Service, Infrastructure, Declared, Release, Agents) plus Dagu (moved from the old Observ tab) and, per repo, the GitHub release table and the GHCR package table. Old ids (service, infrastructure, orchestration, release, agents, dagu) are ui.aliases.pages.",
+        "_doc": "#1942 Orch is a bottom tab. #1954 it is the CI/CD orchestration page, in three groups (the strip's rows): Pipeline = Home (the flow with live status per stage), Workflows (GHA workflows and their last runs), Deploy history; Registries = GH Releases ([Table | Graph]; one page, the former Release page is an alias), GHCR; CI/CD = Flow, Dagu, Agents. What is DEPLOYED left Orch: the old Service and Declared pages are in Containers (Table: live state, drift 'running, not declared' / 'declared, not running', service, compose project, image tags) and their ids are ui.aliases.pages. Old ids (service, infrastructure, orchestration, orch_service, orch_orchestration, release, orch_release, agents, dagu) are aliases.",
+        "nav_mode": "horizontal_two_rows",
+        "groups": [
+          {
+            "id": "pipeline",
+            "label": "Pipeline",
+            "icon": "ic_p_c3_workflows",
+            "pages": [
+              "orch_home",
+              "orch_workflows",
+              "orch_deploys"
+            ]
+          },
+          {
+            "id": "registries",
+            "label": "Registries",
+            "icon": "ic_code",
+            "pages": [
+              "orch_gh_releases",
+              "orch_ghcr"
+            ]
+          },
+          {
+            "id": "cicd",
+            "label": "CI/CD",
+            "icon": "ic_robot",
+            "pages": [
+              "orch_flow",
+              "orch_dagu",
+              "orch_agents"
+            ]
+          }
+        ],
         "pages": [
+          {
+            "id": "orch_home",
+            "label": "Home",
+            "icon": "ic_home",
+            "_doc": "#1954 the CI/CD pipeline flow first: sources -> workflows -> builds -> registries (GHCR/ORAS, GH Releases) -> deploys -> running, each stage with its live last-run status, then the lane matrix (declared pipelines x stages). Declared in data/orch_flow.json (baked as ORCH_FLOW_B64), folded by pages/OrchFlow.kt from the sources the other Orch pages read; a stage that cannot be read prints why and is never green."
+          },
+          {
+            "id": "orch_workflows",
+            "label": "Workflows",
+            "icon": "ic_p_c3_workflows",
+            "_doc": "#1954 every GitHub Actions workflow of the pipeline repos (data/orch_flow.json) with its last run and, on a tap, its recent runs; then the Dagu DAGs with their last run. Same sources as Home (GitHubFeed, DaguRunsFeed)."
+          },
+          {
+            "id": "orch_deploys",
+            "label": "Deploy history",
+            "icon": "ic_p_c3_reports",
+            "_doc": "#1954 the deploy history of c3-infra-api GET /db/deploy/history (deploy_log: ts, service, step, success, duration_ms, output), newest first, filtered by service."
+          },
+          {
+            "id": "orch_gh_releases",
+            "label": "GH Releases",
+            "icon": "ic_code",
+            "_doc": "#1954 ONE GH Releases page (the former Release page is merged in; the id orch_release is an alias). [Table | Graph]: Table = per repo (data/repos_declared.json) the GitHub release table: tag, assets, size, updated (each repo loads lazily when opened, GitHubFeed, 15-minute cache, anonymous 60/h quota; OrchRegistryFragment); Graph = the release topology view (the last Ship runs of ui.topology.release, then VM > service > declared vs running image tag; TopologyViewBody(release)). GhReleasesViewerFragment holds the switch."
+          },
+          {
+            "id": "orch_ghcr",
+            "label": "GHCR",
+            "icon": "ic_p_c3_stack",
+            "_doc": "#1942 the GHCR package table: package, tags, visibility, updated. Packages are derived in the app by OrchRegistries.packages (pages/OrchRegistries.kt) from the fleet images of the Containers document plus cgc-db-<repo> for every registry repo, hubs excluded (#1953; #1954: there is no ghcr_declared.json or generator, the packages are derived in the app); tags are read anonymously, a private package shows as private. No token in the APK."
+          },
           {
             "id": "orch_flow",
             "label": "Flow",
-            "icon": "ic_p_c3_workflows"
-          },
-          {
-            "id": "orch_service",
-            "label": "Service",
-            "icon": "ic_p_c3_workflows"
-          },
-          {
-            "id": "orch_orchestration",
-            "label": "Declared",
-            "icon": "ic_p_c3_stack",
-            "_doc": "The Orchestration topology view of ui.topology: declared vs deployed."
-          },
-          {
-            "id": "orch_release",
-            "label": "Release",
-            "icon": "ic_code"
-          },
-          {
-            "id": "orch_agents",
-            "label": "Agents",
-            "icon": "ic_robot",
-            "_doc": "AgentsFragment (#1454): the launchable C3 siblings. Not a topology view."
+            "icon": "ic_p_c3_workflows",
+            "_doc": "The static CI/CD flow map of data/ops_maps.json (maps.flow): every row and edge kept (#1954). The live pipeline view is Home."
           },
           {
             "id": "orch_dagu",
@@ -711,16 +761,10 @@
             "_doc": "#648 the SuperApp's page:c3/dagu — libs:ops DaguFragment, the native DAG list with per-row Run buttons and the Authelia-bearer login whose server URL pre-fills from ui.sections[c3].pages[dagu].dagu_default_server. The same fragment the Dagu feed card's rows and the More row target."
           },
           {
-            "id": "orch_gh_releases",
-            "label": "GH Releases",
-            "icon": "ic_code",
-            "_doc": "#1942 per repo (data/repos_declared.json), the GitHub release table: tag, assets, size, updated. Each repo loads lazily when opened (GitHubFeed, 15-minute cache, anonymous 60/h quota): OrchRegistryFragment."
-          },
-          {
-            "id": "orch_ghcr",
-            "label": "GHCR",
-            "icon": "ic_p_c3_stack",
-            "_doc": "#1942 the GHCR package table: package, tags, visibility, updated. Packages are derived in the app by OrchRegistries.packages (pages/OrchRegistries.kt) from the fleet images of the Containers document plus cgc-db-<repo> for every registry repo, hubs excluded (#1953; #1954 R4: no ghcr_declared.json or generator exists); tags are read anonymously, a private package shows as private. No token in the APK."
+            "id": "orch_agents",
+            "label": "Agents",
+            "icon": "ic_robot",
+            "_doc": "AgentsFragment (#1454): the launchable C3 siblings. Not a topology view."
           }
         ]
       },
@@ -1626,6 +1670,15 @@
         "health_report_cloud-sec-network-report": "=",
         "infra_mail-health": "="
       }
+    }
+  },
+  "native_core": {
+    "_doc": "#1955 C A1 the on-phone health engine (libs:health-core-rs, libhealth_core_jni.so). Read by ship-cloud-c3.yml (never restated there): cargo builds the crate for each Android ABI with the NDK clang as linker; HEALTH_CORE_ABIS picks the ABI of the matrix leg and HEALTH_CORE_RS_REQUIRED=1 makes a missing toolchain a failed build.",
+    "crates": ["health-core (std only)", "jni"],
+    "toolchain": {
+      "ndk": "27.2.12479018",
+      "rust": "stable",
+      "rust_targets": ["aarch64-linux-android", "x86_64-linux-android"]
     }
   },
   "web": {

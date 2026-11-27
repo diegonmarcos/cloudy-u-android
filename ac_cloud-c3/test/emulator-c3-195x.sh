@@ -84,6 +84,14 @@ done 3<<'SHOTS'
 1972 c3-api-top api_endpoints 8 0 C3_API,Public:,Mesh:
 1972 c3-api-mcp api_endpoints 6 12 API_route,tree
 1972 c3-api-alias api_mcp 8 0 -
+1954 orch-strip orch_home 8 0 Pipeline,Registries,CI/CD,Home,Workflows,Deploy_history
+1954 home-flow orch_home 8 0 SOURCES,WORKFLOWS,BUILDS,REGISTRIES,DEPLOYS,RUNNING
+1954 home-lanes orch_home 6 3 Pipelines
+1954 gh-releases-table orch_gh_releases 8 0 Table,Graph,GH_Releases
+1954 release-alias orch_release 8 0 Table,Graph
+1954 workflows orch_workflows 8 0 Dagu_DAGs
+1954 deploys orch_deploys 8 0 -
+1954 service-alias service 8 0 Status,Auth,VM,Project,Type
 1955 mail-strip mail_tables 8 0 Tables,Topology-Inbound,Topology-Outbound,Map:,Path:_Inbound
 1955 mail-map-alias mail_map 8 0 Tables,Path:_Inbound
 1955 mail-tables-map mail_tables 6 1 Path:_Outbound
@@ -187,6 +195,16 @@ if [ "$T" = all ] || [ "$T" = 1955 ]; then
   tap_text c3-1955-net-mesh-pre "Legend"; shot c3-1955-net-legend 3
   has c3-1955-net-legend "ROOT = root cause" || bad "c3-1955-net-legend: legend not open"
   rm -f "$OUT"/c3-1955-net-*-pre.png
+fi
+
+# #1954 the GH Releases Graph (the former Release page) behind the Table | Graph switch, and the Containers Table's deployed-state columns
+if [ "$T" = all ] || [ "$T" = 1954 ]; then
+  open_page orch_gh_releases; sleep 2; shot c3-1954-gh-releases-pre 8
+  tap_text c3-1954-gh-releases-pre "Graph"; shot c3-1954-gh-releases-graph 8
+  chk c3-1954-gh-releases-graph "Table,Graph,Grouped_by"
+  rm -f "$OUT/c3-1954-gh-releases-pre.png"
+  open_page all_table; sleep 6; hswipe 45 10 left; shot c3-1954-containers-drift 4
+  chk c3-1954-containers-drift "Live_state,Drift"
 fi
 
 adb logcat -d -t 3000 > "$OUT/logcat.txt" 2>/dev/null || true

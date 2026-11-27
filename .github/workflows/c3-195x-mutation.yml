@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost | home-row-lost | home-zero-on-fail | projects-row-lost | projects-column-lost | vm-unknown-lost | vm-repo-on-host | vm-devices-dropped | control-back | c3mcp-field-lost | infra-order | orch-infra-back | net-edge-dropped | net-node-twice | net-node-undeclared | net-viewer-page-lost | net-section-match-lost | net-resolve-lost | net-unbound-ok | net-dns-depends-lost | net-bundle-weight | net-sheet-field-lost | net-token-blames-vm | net-label-overlap'
+        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost | home-row-lost | home-zero-on-fail | projects-row-lost | projects-column-lost | vm-unknown-lost | vm-repo-on-host | vm-devices-dropped | control-back | c3mcp-field-lost | infra-order | orch-infra-back | net-edge-dropped | net-node-twice | net-node-undeclared | net-viewer-page-lost | net-section-match-lost | net-resolve-lost | net-unbound-ok | net-dns-depends-lost | net-bundle-weight | net-sheet-field-lost | net-token-blames-vm | net-label-overlap | orch-dup-back | orch-home-lost | deployed-field-lost | orch-page-twice'
         required: true
 permissions:
   contents: read
@@ -22,7 +22,7 @@ jobs:
       - name: Validate the mutation name against the allowed list
         run: |
           case "$MUT" in
-            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost|vm-unknown-lost|vm-repo-on-host|vm-devices-dropped|control-back|c3mcp-field-lost|infra-order|orch-infra-back|net-edge-dropped|net-node-twice|net-node-undeclared|net-viewer-page-lost|net-section-match-lost|net-resolve-lost|net-unbound-ok|net-dns-depends-lost|net-bundle-weight|net-sheet-field-lost|net-token-blames-vm|net-label-overlap) echo "leg: $MUT" ;;
+            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost|vm-unknown-lost|vm-repo-on-host|vm-devices-dropped|control-back|c3mcp-field-lost|infra-order|orch-infra-back|net-edge-dropped|net-node-twice|net-node-undeclared|net-viewer-page-lost|net-section-match-lost|net-resolve-lost|net-unbound-ok|net-dns-depends-lost|net-bundle-weight|net-sheet-field-lost|net-token-blames-vm|net-label-overlap|orch-dup-back|orch-home-lost|deployed-field-lost|orch-page-twice) echo "leg: $MUT" ;;
             *) echo "::error::unknown mutation name"; exit 1 ;;
           esac
       - uses: actions/checkout@v4
@@ -107,6 +107,11 @@ jobs:
             # #1955 A fixes: a missing device token blames a VM; a label may sit on a node
             net-token-blames-vm) rep $K/pages/NetLive.kt '!it.deviceSide && (it.health == MailStack.Health.BAD || it.unreadable)' '(it.health == MailStack.Health.BAD || it.unreadable)' ;;
             net-label-overlap) rep $K/pages/NetGraphLayout.kt 'r.takeIf { c -> nodes.none { hit(c, it) } && placed.values.none { hit(c, it) } }' 'r.takeIf { c -> placed.values.none { hit(c, it) } }' ;;
+            # #1954 Orch: each leg breaks one guarantee of the reorganisation; the named test must catch it
+            orch-dup-back)     pyj ac_cloud-c3/build.json 'o = next(s for s in d["ui"]["sections"] if s["id"] == "orch"); o["pages"].append({"id": "orch_release", "label": "Release", "icon": "ic_code"})' ;;
+            orch-home-lost)    pyj ac_cloud-c3/build.json 'o = next(s for s in d["ui"]["sections"] if s["id"] == "orch"); o["pages"] = [p for p in o["pages"] if p["id"] != "orch_home"]; [g.update(pages=[x for x in g["pages"] if x != "orch_home"]) for g in o["groups"]]' ;;
+            deployed-field-lost) rep $K/pages/ContainersLive.kt 'r.copy(live = text, drift = drift, runningTag = running,' 'r.copy(live = text, drift = "", runningTag = running,' ;;
+            orch-page-twice)   pyj ac_cloud-c3/build.json 'o = next(s for s in d["ui"]["sections"] if s["id"] == "orch"); next(g for g in o["groups"] if g["id"] == "pipeline")["pages"].append("orch_ghcr")' ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
           git diff --stat
@@ -184,6 +189,10 @@ jobs:
             net-sheet-field-lost) C=NetGraphTest; N="the node sheet prints every field of every row it stands for" ;;
             net-token-blames-vm) C=NetLiveTest; N="a device with no token blames no VM - nodes are not read, the note is device-side" ;;
             net-label-overlap) C=NetGraphLayoutTest; N="a label whose wire midpoint lies inside a node is moved off every node" ;;
+            orch-dup-back)     C=OrchOpsReorgTest; N="#1954 one GH Releases page - the Release page is merged in, its id is an alias, both bodies are modes of the one page" ;;
+            orch-home-lost)    C=OrchOpsReorgTest; N="#1954 Home is the first Orch page and the first of the Pipeline group, and its flow is declared" ;;
+            deployed-field-lost) C=ContainersLiveTest; N="#1954 parity - every field of the removed Service and Declared pages is a column or a row of Containers" ;;
+            orch-page-twice)   C=OrchOpsReorgTest; N="#1954 every Orch page appears exactly once, in Pipeline, Registries or CI-CD" ;;
             mail-alias-lost)   C=OrchOpsReorgTest; N="every old page id still resolves through the aliases to its new place" ;;
           esac
           X="$(find ac_cloud-c3/app/build -path '*test-results*' -name "TEST-*.$C.xml" | head -1)"

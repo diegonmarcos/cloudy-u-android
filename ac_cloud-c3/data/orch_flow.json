@@ -1,0 +1,21 @@
+{
+ "_doc": "#1954 the Orch > Home pipeline flow: the stages a change passes (source -> CI workflows -> build -> registries -> deploy -> running) and the pipelines that cross them. Read by pages/OrchFlow.kt; the live last-run status of every stage is FOLDED from sources the Orch pages already read (GitHubFeed runs, DaguRunsFeed, c3-infra-api /db/deploy/history and /health/deployed/:vm), never typed here. `from` names the live sources, `open` is the declared Orch/Containers page that owns the stage (long-press). Workflow names are never typed: they are the distinct run names of the runs feed. Every pipeline repo must be in data/repos_declared.json (by name or github).",
+ "stages": [
+  {"id": "sources",    "label": "Sources",    "from": ["repos_declared", "github_runs"],         "open": "orch_gh_releases"},
+  {"id": "workflows",  "label": "Workflows",  "from": ["github_runs", "dagu_runs"],              "open": "orch_workflows"},
+  {"id": "builds",     "label": "Builds",     "from": ["github_runs"],                           "open": "orch_workflows"},
+  {"id": "registries", "label": "Registries", "from": ["ghcr_packages", "github_releases"],      "open": "orch_ghcr"},
+  {"id": "deploys",    "label": "Deploys",    "from": ["api:/db/deploy/history?limit=20"],       "open": "orch_deploys"},
+  {"id": "running",    "label": "Running",    "from": ["api:/health/deployed/:vm"],              "open": "all_table"}
+ ],
+ "pipelines": [
+  {"id": "android",    "label": "android",    "repo": "cloudy-u-android",       "stages": ["sources", "workflows", "builds", "registries"]},
+  {"id": "containers", "label": "containers", "repo": "cloudy-u-containers",    "stages": ["sources", "workflows", "builds", "registries", "deploys", "running"]},
+  {"id": "infra",      "label": "infra",      "repo": "cloudy-t-infra",         "stages": ["sources", "workflows", "builds", "deploys", "running"]},
+  {"id": "front",      "label": "front",      "repo": "diegonmarcos.github.io", "stages": ["sources", "workflows", "builds"]},
+  {"id": "dagu",       "label": "dagu",       "dagu": true,                      "stages": ["workflows", "deploys"]}
+ ],
+ "runs_per_repo": 30,
+ "stale_after_minutes": 1440,
+ "status_rules": {"bad": "the newest run of any workflow failed", "warn": "a run is in progress, or the newest run is older than stale_after_minutes", "unknown": "the source could not be read (the stage prints why, never a zero)"}
+}

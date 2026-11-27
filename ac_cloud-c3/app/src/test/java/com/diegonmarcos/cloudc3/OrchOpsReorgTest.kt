@@ -38,9 +38,11 @@ class OrchOpsReorgTest {
         "ops/net_network" to "ops/net_network", "ops/net_security" to "ops/net_security",
         "ops/mail" to "ops/mail", "ops/mail_tables" to "ops/mail_tables", "ops/mail_topology_inbound" to "ops/mail_topology_inbound",
         "ops/mail_topology_outbound" to "ops/mail_topology_outbound", "ops/mail_map" to "ops/mail_tables",
-        "ops/orch" to "orch", "ops/orch_flow" to "orch/orch_flow", "ops/orch_service" to "orch/orch_service",
-        "ops/orch_infrastructure" to "orch/orch_orchestration", "ops/orch_orchestration" to "orch/orch_orchestration",
-        "ops/orch_release" to "orch/orch_release", "ops/orch_agents" to "orch/orch_agents",
+        "ops/orch" to "orch", "ops/orch_flow" to "orch/orch_flow",
+        // #1954 what is deployed (the Service and Declared pages) is in the Containers Table; the Release page is the Graph of the one GH Releases page
+        "ops/orch_service" to "containers/all_table",
+        "ops/orch_infrastructure" to "containers/all_table", "ops/orch_orchestration" to "containers/all_table",
+        "ops/orch_release" to "orch/orch_gh_releases", "ops/orch_agents" to "orch/orch_agents",
         "ops/ops_health" to "ops/ops_health", "ops/ops_health_uptime" to "ops/ops_health_uptime", "ops/ops_health_tests" to "ops/ops_health_tests",
         "ops/obs" to "ops/obs", "ops/obs_logs" to "ops/obs_logs", "ops/obs_metrics" to "ops/obs_metrics", "ops/obs_alerts" to "ops/obs_alerts", "ops/obs_notify" to "ops/obs_notify",
         "observ" to "ops", "observ/observability" to "ops/obs_stack", "observ/health" to "ops/ops_health_health",
@@ -68,8 +70,9 @@ class OrchOpsReorgTest {
     fun `every old page id still resolves through the aliases to its new place`() {
         val moved = mapOf(
             "observability" to Target("ops", "obs_stack"), "health" to Target("ops", "ops_health_health"), "dagu" to Target("orch", "orch_dagu"),
-            "mesh" to Target("ops", "net_mesh"), "service" to Target("orch", "orch_service"), "infrastructure" to Target("orch", "orch_orchestration"), "orch_infrastructure" to Target("orch", "orch_orchestration"),
-            "orchestration" to Target("orch", "orch_orchestration"), "release" to Target("orch", "orch_release"), "agents" to Target("orch", "orch_agents"),
+            "mesh" to Target("ops", "net_mesh"), "service" to Target("containers", "all_table"), "infrastructure" to Target("containers", "all_table"), "orch_infrastructure" to Target("containers", "all_table"),
+            "orchestration" to Target("containers", "all_table"), "release" to Target("orch", "orch_gh_releases"), "agents" to Target("orch", "orch_agents"),
+            "orch_service" to Target("containers", "all_table"), "orch_orchestration" to Target("containers", "all_table"), "orch_release" to Target("orch", "orch_gh_releases"),
             "network" to Target("ops", "net_network"), "observ" to Target("ops"), "mail_map" to Target("ops", "mail_tables"),
         )
         moved.forEach { (old, to) -> assertEquals(old, to, C3Nav.resolve(nav, aliases, old)) }
@@ -80,17 +83,66 @@ class OrchOpsReorgTest {
         assertEquals(listOf("infra", "orch", "home", "containers", "ops"), nav.bottomNav)
         assertNull("observ is off the bar and no longer a section", nav.section("observ"))
         assertEquals(
-            listOf("orch_flow", "orch_service", "orch_orchestration", "orch_release", "orch_agents", "orch_dagu", "orch_gh_releases", "orch_ghcr"),
+            listOf("orch_home", "orch_workflows", "orch_deploys", "orch_gh_releases", "orch_ghcr", "orch_flow", "orch_dagu", "orch_agents"),
             nav.section("orch")!!.pages.map { it.id },
         )
     }
 
     @Test
-    fun `#1972 Orch has no Infrastructure page and its old ids resolve to the next page, Declared`() {
+    fun `#1972 Orch has no Infrastructure page and its old ids resolve to Containers, where the deployed state is`() {
         assertFalse("orch_infrastructure is back in Orch", nav.section("orch")!!.pages.any { it.id == "orch_infrastructure" })
-        assertEquals(Target("orch", "orch_orchestration"), C3Nav.resolve(nav, aliases, "orch_infrastructure"))
-        assertEquals(Target("orch", "orch_orchestration"), C3Nav.resolve(nav, aliases, "infrastructure"))
-        assertEquals("only that page left Orch", 8, nav.section("orch")!!.pages.size)
+        assertEquals(Target("containers", "all_table"), C3Nav.resolve(nav, aliases, "orch_infrastructure"))
+        assertEquals(Target("containers", "all_table"), C3Nav.resolve(nav, aliases, "infrastructure"))
+        assertEquals("Orch has the eight #1954 pages", 8, nav.section("orch")!!.pages.size)
+    }
+
+    private fun orchSection() = ui()["sections"]!!.jsonArray.map { it.jsonObject }.first { it["id"]!!.jsonPrimitive.content == "orch" }
+    private fun orchGroups() = orchSection()["groups"]!!.jsonArray.map { it.jsonObject }
+    private fun groupPages(g: JsonObject) = g["pages"]!!.jsonArray.map { it.jsonPrimitive.content }
+
+    @Test
+    fun `#1954 every Orch page appears exactly once, in Pipeline, Registries or CI-CD`() {
+        val groups = orchGroups()
+        assertEquals(listOf("Pipeline", "Registries", "CI/CD"), groups.map { it["label"]!!.jsonPrimitive.content })
+        assertEquals(listOf("orch_home", "orch_workflows", "orch_deploys"), groupPages(groups[0]))
+        assertEquals(listOf("orch_gh_releases", "orch_ghcr"), groupPages(groups[1]))
+        assertEquals(listOf("orch_flow", "orch_dagu", "orch_agents"), groupPages(groups[2]))
+        val declared = nav.section("orch")!!.pages.map { it.id }
+        val inGroups = groups.flatMap { groupPages(it) }
+        assertEquals("a page is declared once", declared.size, declared.toSet().size)
+        assertEquals("a page is in the groups once", inGroups.size, inGroups.toSet().size)
+        assertEquals("every declared page is in a group and every group page is declared", declared.sorted(), inGroups.sorted())
+    }
+
+    @Test
+    fun `#1954 Home is the first Orch page and the first of the Pipeline group, and its flow is declared`() {
+        assertEquals("orch_home", nav.section("orch")!!.pages.first().id)
+        assertEquals("orch_home", groupPages(orchGroups().first()).first())
+        val flow = Declarations.orchFlow
+        assertEquals(listOf("sources", "workflows", "builds", "registries", "deploys", "running"), flow.stages.map { it.id })
+        assertTrue("Home is reachable by id", C3Nav.resolve(nav, aliases, "orch_home") == Target("orch", "orch_home"))
+    }
+
+    @Test
+    fun `#1954 one GH Releases page - the Release page is merged in, its id is an alias, both bodies are modes of the one page`() {
+        val pages = nav.section("orch")!!.pages
+        assertEquals("exactly one releases page", listOf("orch_gh_releases"), pages.filter { it.id.contains("release") || it.label.contains("Release") }.map { it.id })
+        assertNull("the second releases page is back", pages.firstOrNull { it.id == "orch_release" })
+        assertEquals(Target("orch", "orch_gh_releases"), C3Nav.resolve(nav, aliases, "orch_release"))
+        assertEquals(Target("orch", "orch_gh_releases"), C3Nav.resolve(nav, aliases, "release"))
+        // the fields of both former pages: the per-repo release table (Table) and the release topology view (Graph)
+        assertEquals(listOf("table", "graph"), com.diegonmarcos.cloudc3.pages.GhReleasesViewer.MODES)
+        assertTrue("the Graph is the declared release topology view", Declarations.topology.view(com.diegonmarcos.cloudc3.pages.TopologyModel.RELEASE) != null)
+        assertTrue("the Table has the declared repos", Declarations.containerProjects.repos.isNotEmpty())
+    }
+
+    @Test
+    fun `#1954 the removed Service and Declared pages are not in Orch and their ids resolve into Containers`() {
+        val ids = nav.section("orch")!!.pages.map { it.id }
+        listOf("orch_service", "orch_orchestration", "orch_release", "orch_infrastructure").forEach { assertFalse("$it is back in Orch", it in ids) }
+        listOf("orch_service", "orch_orchestration", "service", "orchestration", "infrastructure").forEach {
+            assertEquals(it, Target("containers", "all_table"), C3Nav.resolve(nav, aliases, it))
+        }
     }
 
     private fun infraGroups() = ui()["sections"]!!.jsonArray.map { it.jsonObject }.first { it["id"]!!.jsonPrimitive.content == "infra" }["groups"]!!.jsonArray.map { it.jsonObject }

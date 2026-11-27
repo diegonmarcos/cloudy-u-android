@@ -151,10 +151,19 @@
     "/vms/:/containers/:/inspect",
     "/vms/:/containers/:/stats",
     "/vms/:/services/:/start",
-    "/vms/:/services/:/stop"
+    "/vms/:/services/:/stop",
+    "/health/declared",
+    "/health/deployed",
+    "/health/deployed/:",
+    "/health/drift",
+    "/cloud-data/topology/drift"
    ],
    "mcp": [
     "devops.container.*",
+    "obs.health.declared",
+    "obs.health.deployed",
+    "obs.health.drift",
+
     "devops.service.*",
     "devops.docker.*",
     "obs.debug.profile_container",
@@ -220,7 +229,19 @@
    "api": [],
    "mcp": []
   },
-  "orch/orch_flow": {
+  "orch/pipeline/orch_home": {
+   "api": [],
+   "mcp": []
+  },
+  "orch/pipeline/orch_workflows": {
+   "api": [],
+   "mcp": []
+  },
+  "orch/pipeline/orch_deploys": {
+   "api": [],
+   "mcp": []
+  },
+  "orch/cicd/orch_flow": {
    "api": [
     "/workflows",
     "/workflows/gha",
@@ -234,35 +255,7 @@
     "obs.debug.report"
    ]
   },
-  "orch/orch_service": {
-   "api": [],
-   "mcp": []
-  },
-  "orch/orch_orchestration": {
-   "api": [
-    "/health/declared",
-    "/health/deployed",
-    "/health/deployed/:",
-    "/health/drift",
-    "/cloud-data/topology/drift"
-   ],
-   "mcp": [
-    "obs.health.declared",
-    "obs.health.deployed",
-    "obs.health.drift"
-   ]
-  },
-  "orch/orch_release": {
-   "api": [
-    "/updates"
-   ],
-   "mcp": [
-    "devops.build.*",
-    "devops.release.*",
-    "devops.repo.*"
-   ]
-  },
-  "orch/orch_agents": {
+  "orch/cicd/orch_agents": {
    "api": [],
    "mcp": []
   },
@@ -359,7 +352,7 @@
     "obs.health.resources_*"
    ]
   },
-  "orch/orch_dagu": {
+  "orch/cicd/orch_dagu": {
    "api": [
     "/workflows/dagu"
    ],
@@ -397,11 +390,17 @@
     "plugin.*"
    ]
   },
-  "orch/orch_gh_releases": {
-   "api": [],
-   "mcp": []
+  "orch/registries/orch_gh_releases": {
+   "api": [
+    "/updates"
+   ],
+   "mcp": [
+    "devops.build.*",
+    "devops.release.*",
+    "devops.repo.*"
+   ]
   },
-  "orch/orch_ghcr": {
+  "orch/registries/orch_ghcr": {
    "api": [],
    "mcp": []
   }

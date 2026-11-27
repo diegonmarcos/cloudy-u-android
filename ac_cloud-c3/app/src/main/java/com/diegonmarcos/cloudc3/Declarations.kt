@@ -138,6 +138,9 @@ object Declarations {
         com.diegonmarcos.cloudc3.pages.C3Mcp.parse(decode(BuildConfig.API_PROVIDERS_B64))
     }
 
+    /** data/orch_flow.json (#1954): the Orch > Home pipeline stages and pipelines. */
+    val orchFlow: com.diegonmarcos.cloudc3.pages.OrchFlow.Decl by lazy { com.diegonmarcos.cloudc3.pages.OrchFlow.parse(decode(BuildConfig.ORCH_FLOW_B64)) }
+
     /** data/ops_maps.json (#1480): the Ops maps, and the wg-mesh snapshot (data/mesh.json) the Network map reads. */
     val opsMaps: JsonObject by lazy { element(decode(BuildConfig.OPS_MAPS_B64)) as? JsonObject ?: JsonObject(emptyMap()) }
     /** data/mail_stack.json (#1926): the Ops > Mail tables and the two declared topologies with their probe bindings. */

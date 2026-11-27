@@ -125,20 +125,22 @@ class ContainersFragment : PagedFragment() {
 }
 
 /**
- * ORCH (#1942) - the Orchestration pages that lived in Ops (CI/CD flow, the Service, Infrastructure, Declared and Release topology
- * views, Agents) plus Dagu (libs:ops' own [DaguFragment], moved here from the old Observ tab) and, per repo, the GitHub release
- * table and the GHCR package table ([OrchRegistryFragment], loaded lazily). Page ids keep their `orch_` names.
+ * ORCH (#1942, #1954) - the CI/CD orchestration page: Home (the pipeline flow with live status), Workflows, Deploy history, GH Releases
+ * ([Table | Graph], the former Release page is its Graph), GHCR, the static Flow map, Dagu (libs:ops' own [DaguFragment]) and Agents. What is
+ * deployed (the old Service and Declared pages) is in Containers. Page ids keep their `orch_` names.
  */
 class OrchFragment : PagedFragment() {
     override fun pages(): List<NavPage> = Declarations.orchPages
+    /** #1954 the strip is three declared groups (Pipeline | Registries | CI/CD), as Infra's rows are. */
+    override fun section() = Declarations.nav.section("orch")
     override fun pageFragment(pageId: String): Fragment? = when (pageId) {
+        "orch_home" -> OrchHomeFragment.newInstance()
+        "orch_workflows" -> OrchWorkflowsFragment.newInstance()
+        "orch_deploys" -> OrchDeploysFragment.newInstance()
         "orch_flow" -> OpsMapFragment.newInstance("flow")
-        "orch_service" -> TopologyViewFragment.newInstance(TopologyModel.SERVICE)
-        "orch_orchestration" -> TopologyViewFragment.newInstance(TopologyModel.ORCHESTRATION)
-        "orch_release" -> TopologyViewFragment.newInstance(TopologyModel.RELEASE)
         "orch_agents" -> AgentsFragment()
         "orch_dagu" -> DaguFragment.newInstance()
-        "orch_gh_releases" -> OrchRegistryFragment.newInstance(OrchRegistryFragment.KIND_RELEASES)
+        "orch_gh_releases" -> GhReleasesViewerFragment.newInstance()
         "orch_ghcr" -> OrchRegistryFragment.newInstance(OrchRegistryFragment.KIND_GHCR)
         else -> null
     }

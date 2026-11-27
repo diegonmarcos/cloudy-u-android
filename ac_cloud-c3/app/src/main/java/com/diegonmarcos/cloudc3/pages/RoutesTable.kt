@@ -114,6 +114,8 @@ object RoutesTags {
     fun filterLabel(label: String) = "routes_filter_${label.lowercase()}"
     fun projectChip(project: String) = "routes_project_$project"
     fun typeChip(type: String) = "routes_type_$type"
+    fun driftChip(drift: String) = "routes_drift_$drift"
+    const val LIVE_SUMMARY = "routes_live_summary"
 }
 
 /** Where the chosen sort and filters live between launches. */
@@ -136,11 +138,13 @@ private val widths = mapOf(
     Col.STATUS to 56.dp,
     Col.PROJECT to 150.dp, Col.GROUP to 84.dp, Col.CATEGORY to 140.dp, Col.TYPE to 64.dp, Col.CONTAINER to 150.dp, Col.PUBLIC_URL to 250.dp, Col.AUTH_TYPE to 84.dp,
     Col.PRIVATE_URL to 190.dp, Col.VM_NAME to 100.dp, Col.VM_ADDR to 130.dp,
+    Col.SERVICE to 120.dp, Col.ROLE to 100.dp, Col.COMPOSE to 150.dp, Col.TAG to 90.dp, Col.RUNNING_TAG to 100.dp, Col.LIVE to 230.dp, Col.DRIFT to 160.dp,
 )
 private val headers = mapOf(
     Col.STATUS to "Status",
     Col.PROJECT to "Project", Col.GROUP to "Cat1", Col.CATEGORY to "Cat2", Col.TYPE to "Type", Col.CONTAINER to "Container", Col.PUBLIC_URL to "Public URL", Col.AUTH_TYPE to "Auth Type",
     Col.PRIVATE_URL to "Private URL", Col.VM_NAME to "VM Name", Col.VM_ADDR to "VM IP:PORT",
+    Col.SERVICE to "Service", Col.ROLE to "Role", Col.COMPOSE to "Compose project", Col.TAG to "Image tag", Col.RUNNING_TAG to "Running tag", Col.LIVE to "Live state", Col.DRIFT to "Drift",
 )
 
 /**
@@ -216,6 +220,13 @@ fun RoutesTableScreen(
                     RoutesTableModel.typeOptions(rows, typeOrder).forEach { ty ->
                         Chip(ty, ty in state.types, RoutesTags.typeChip(ty)) { update(RoutesTableModel.toggleType(state, ty)) }
                     }
+                }
+                // #1954 the drift filter and the live summary exist once `docker ps` answered (the rows carry the live state)
+                RoutesTableModel.driftOptions(rows).takeIf { it.isNotEmpty() }?.let { opts ->
+                    ChipRow("Drift") {
+                        opts.forEach { dr -> Chip(dr, dr in state.drifts, RoutesTags.driftChip(dr)) { update(RoutesTableModel.toggleDrift(state, dr)) } }
+                    }
+                    Text(ContainersLive.summary(rows), color = c.onSurfaceVariant, style = MaterialTheme.typography.labelMedium, modifier = Modifier.testTag(RoutesTags.LIVE_SUMMARY))
                 }
                 if (state.category.isNotEmpty()) ChipRow("Cat") {
                     Chip("${state.category}  \u00D7", true, RoutesTags.CATEGORY_CHIP) { update(state.copy(category = "")) }
@@ -539,11 +550,27 @@ class RoutesTableFragment : KitComposeFragment() {
         val store = remember { PrefsRoutesStateStore(ctx) }
         // The SAME document the Topology page reads (ContainersSource); the API copy replaces the baked one when it answers.
         val version = ContainersSource.version
-        LaunchedEffect(Unit) { ContainersSource.refresh(ApiFleetLive(ctx.applicationContext)) }
+        // #1954 the deployed state (docker ps per VM, the old Orch Service and Declared pages) is read once per minute and shared with the Topology views
+        val slice = remember { Declarations.fleet }
+        val liveState = TopologyLiveState.shared
+        LaunchedEffect(Unit) {
+            ContainersSource.refresh(ApiFleetLive(ctx.applicationContext))
+            runCatching { liveState.refresh(slice, ApiFleetLive(ctx.applicationContext), { emptyList<TopologyModel.Run>() to null }) }
+        }
+        val live = liveState.live
         val initial = remember { store.load() }
         RoutesTableScreen(
             typeOrder = Declarations.containerProjects.types,
-            rows = remember(version, project) { ContainerProjects.rows(Declarations.containerProjects, ContainersSource.current(), project) },
+            rows = remember(version, project, live) {
+                val decl = Declarations.containerProjects
+                val scope = project
+                ContainersLive.overlay(
+                    ContainerProjects.rows(decl, ContainersSource.current(), scope),
+                    TopologyModel.Inputs(ContainersSource.current(), slice, TopologyModel.parseInfra(Declarations.infraSlice), live, Declarations.topology),
+                    // the undeclared containers belong to All and to the VM page of their host
+                    extras = { vm -> scope == null || (decl.isVmPage(scope) && scope.removePrefix(decl.vm.prefix).let { it == decl.vm.all || it == vm }) },
+                )
+            },
             initial = initial,
             onState = store::save,
             prober = remember { NetProber(ctx) },
