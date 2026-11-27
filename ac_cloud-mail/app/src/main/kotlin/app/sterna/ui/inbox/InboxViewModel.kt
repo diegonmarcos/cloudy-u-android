@@ -1225,7 +1225,7 @@ class InboxViewModel(
             unread = if (sel is Sel.Unified) unifiedUnread else meta.unread,
             refreshing = status.refreshing,
             error = status.error,
-            // Read at every status change: the Delivered arm of [refresh] stamps it BEFORE it publishes the status.
+            // Read at every status change; the collector in init stamps it when a refresh lands.
             lastSyncAt = store.lastSyncAt(store.currentId()),
         )
     }
@@ -1297,6 +1297,15 @@ class InboxViewModel(
     init {
         // #1952: ONE list ViewModel per process run is the design; a second one means a page change rebuilt the list.
         FirstRowTiming.viewModelCreated()
+        // #1952: the last sync time of the banner over the cached list. Stamped from the status itself ([refreshLanded]): only the
+        // refresh's landed arm leaves a running refresh with no error. The account on screen and nothing else.
+        viewModelScope.launch {
+            var wasRefreshing = false
+            status.collect { now ->
+                if (refreshLanded(wasRefreshing, now.refreshing, now.error)) store.currentId()?.let { store.setLastSyncAt(it, System.currentTimeMillis()) }
+                wasRefreshing = now.refreshing
+            }
+        }
         // Backfill the "G0 _ Auth" class of rows cached before it existed (bounded batches, once per row).
         viewModelScope.launch(Dispatchers.IO) { runCatching { repo.indexAuth() } }
         // And the sender domain ("Group by Domain"), the same way.
@@ -1463,9 +1472,6 @@ class InboxViewModel(
                 (outcome as? RefreshOutcome.Failed)?.let { com.diegonmarcos.superapp.fleetendpoints.errors.ErrorLog.shared.record("sync", currentAccountLabel(), it.cause) }
                 when (outcome) {
                     RefreshOutcome.Delivered -> {
-                        // #1952: stamped before the status is published, so the state built from it reads the new time.
-                        // The account on screen too: a first refresh starts before the Inbox id is known and reconciles no scope yet.
-                        (reconciled.map { it.first } + listOfNotNull(store.currentId())).distinct().forEach { store.setLastSyncAt(it, System.currentTimeMillis()) }
                         status.value = Status(refreshing = false, error = null)
                         // #65: every refresh doubles as the connectivity probe. A killswitch VPN is
                         // invisible to the framework; only what the requests live can correct it.

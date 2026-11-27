@@ -55,8 +55,11 @@ class CacheFirst1952Test {
     fun `only a refresh that landed moves the last sync time`() {
         val vm = code("app/src/main/kotlin/app/sterna/ui/inbox/InboxViewModel.kt")
         assertEquals("one stamp", 1, vm.count { "store.setLastSyncAt(" in it })
-        val stamp = vm.indexOfFirst { "store.setLastSyncAt(" in it }
-        assertEquals("in the Delivered arm, before the status is published", "RefreshOutcome.Delivered -> {", vm[stamp - 1])
+        assertTrue("the one stamp is guarded by refreshLanded", vm.single { "store.setLastSyncAt(" in it }.startsWith("if (refreshLanded(wasRefreshing, now.refreshing, now.error))"))
+        assertTrue("a refresh that ran and left no error landed", refreshLanded(wasRefreshing = true, refreshing = false, error = null))
+        assertTrue("a failed session (HTTP 502) is not a sync", !refreshLanded(wasRefreshing = true, refreshing = false, error = "HTTP 502"))
+        assertTrue("a refresh still running is not a sync", !refreshLanded(wasRefreshing = true, refreshing = true, error = null))
+        assertTrue("an idle status is not a sync", !refreshLanded(wasRefreshing = false, refreshing = false, error = null))
     }
 
     private fun repoFile(path: String): File =

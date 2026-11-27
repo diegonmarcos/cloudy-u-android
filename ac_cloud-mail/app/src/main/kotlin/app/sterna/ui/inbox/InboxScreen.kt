@@ -3187,7 +3187,7 @@ private fun lastSyncLabel(at: Long?): String =
     if (at == null) stringResource(R.string.banner_never_synced)
     else stringResource(
         R.string.banner_last_sync,
-        android.text.format.DateUtils.getRelativeTimeSpanString(at, System.currentTimeMillis(), android.text.format.DateUtils.MINUTE_IN_MILLIS).toString(),
+        lastSyncAgo(at),
     )
 
 /**

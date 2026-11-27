@@ -34,7 +34,7 @@ jobs:
             # the banner over the cached rows loses the failure reason
             banner-drops-reason) sed -i 's/RefreshNotice.ERROR -> CacheBanner(notice, error, lastSyncAt)/RefreshNotice.ERROR -> CacheBanner(notice, null, lastSyncAt)/' $K/inbox/CacheBanner.kt ;;
             # a failed refresh moves the last sync time too
-            stamp-on-failure)    sed -i 's/                        connectivity.reportFailure(cause)/                        store.setLastSyncAt(store.currentId().orEmpty(), System.currentTimeMillis()); connectivity.reportFailure(cause)/' $K/inbox/InboxViewModel.kt ;;
+            stamp-on-failure)    sed -i 's/wasRefreshing \&\& !refreshing \&\& error == null/wasRefreshing \&\& !refreshing/' $K/inbox/CacheBanner.kt ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
           git diff --stat
