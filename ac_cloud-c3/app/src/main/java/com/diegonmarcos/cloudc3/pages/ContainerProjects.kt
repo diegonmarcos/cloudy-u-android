@@ -45,6 +45,8 @@ object ContainerProjects {
         val lfsKind: String = "", val lfsEngine: String = "",
         /** #1953 the Topology layout (bands, sections, the Public / Private split), declared under `topology_layout`; the raw object, read by [ContainerTopology]. */
         val layout: JsonObject? = null,
+        /** #1969 Infra > Projects: the declared columns (key, label), filter chips (column keys) and the page a row tap opens (`{project}` = the project id), under `projects_table`. */
+        val projectsColumns: List<Pair<String, String>> = emptyList(), val projectsFilters: List<String> = emptyList(), val openPage: String = "",
     ) {
         /** The first-row categories (the Cloud Me > Proj groups; Lib is Wiki since #1968), in the declared order. */
         fun categories(): List<String> = projects.map { it.category }.filter { it.isNotBlank() }.distinct()
@@ -121,6 +123,8 @@ object ContainerProjects {
             o.m("container_family"), o.s("container_group").ifBlank { "Containers" }, repos, fams,
             o.l("types"), o.m("type_of_kind"), o.l("other_categories"),
             (o["lfs"] as? JsonObject)?.s("type_kind").orEmpty(), (o["lfs"] as? JsonObject)?.s("db_engine").orEmpty(), o["topology_layout"] as? JsonObject,
+            ((o["projects_table"] as? JsonObject)?.get("columns") as? JsonArray).orEmpty().mapNotNull { c -> (c as? JsonObject)?.let { it.s("key").takeIf { k -> k.isNotBlank() }?.let { k -> k to it.s("label").ifBlank { k } } } },
+            (o["projects_table"] as? JsonObject)?.l("filters").orEmpty(), (o["projects_table"] as? JsonObject)?.s("open_page").orEmpty(),
         )
     }
 

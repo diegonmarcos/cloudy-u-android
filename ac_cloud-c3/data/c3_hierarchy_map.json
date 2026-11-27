@@ -124,6 +124,10 @@
    "api": [],
    "mcp": []
   },
+  "infra/projects_row/projects": {
+   "api": [],
+   "mcp": []
+  },
   "containers/all/topology": {
    "api": [
     "/cloud-data/topology",

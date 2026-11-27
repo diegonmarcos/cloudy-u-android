@@ -165,6 +165,18 @@
        "mcp": []
       }
      ]
+    },
+    {
+     "id": "projects_row",
+     "label": "Projects",
+     "children": [
+      {
+       "id": "projects",
+       "label": "Projects",
+       "api": [],
+       "mcp": []
+      }
+     ]
     }
    ]
   },

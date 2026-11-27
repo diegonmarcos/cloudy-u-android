@@ -136,6 +136,7 @@ def stackObservB64     = b64(c3Section.stack_observability)
 // The top bar declaration (libs:bottomnav TopBarDecl): ui.top_bar as base64 JSON, '' when the app declares none.
 def uiTopBarB64        = buildJson.ui?.top_bar ? b64(buildJson.ui.top_bar) : ''
 def uiAliasesB64       = b64(buildJson.ui.aliases ?: [:])
+def uiHomeB64          = b64(buildJson.ui.home ?: [:])
 // The top bar's AI panel: libs:ai's contract names the gateway service, the fleet catalogue (this app's
 // data/services_private.json) its mesh address (sets aiGatewayUrl).
 apply from: "$rootDir/../ab_cloud-libs-shared/libs/ai/ai-gateway.gradle"
@@ -261,6 +262,7 @@ android {
         buildConfigField "String", "UI_STACK_OBSERV_B64",   "\"${stackObservB64}\""
         buildConfigField "String", "UI_TOP_BAR_B64",        "\"${uiTopBarB64}\""
         buildConfigField "String", "UI_ALIASES_B64",        "\"${uiAliasesB64}\""
+        buildConfigField "String", "UI_HOME_B64",           "\"${uiHomeB64}\""
         buildConfigField "String", "AI_GATEWAY_URL",        "\"${aiGatewayUrl}\""
         buildConfigField "String", "UI_NTFY_B64",           "\"${uiNtfyB64}\""
         buildConfigField "int",    "UI_TILE_COLUMNS",       "${tileColumns}"

@@ -82,6 +82,13 @@ class HomeFragment : KitComposeFragment() {
             report = withContext(Dispatchers.IO) { FleetDown.load(bearer) }
         }
 
+        // #1969 the per-page live rows: each source is read once here, on open and on Refresh; a failure keeps its reason
+        val measuredNames = remember { FleetDown.declared().map { it.name }.toSet() }
+        var live by remember { mutableStateOf(HomeLive.Inputs(measured = measuredNames)) }
+        LaunchedEffect(measureKey) {
+            val c = ctx.applicationContext
+            live = withContext(Dispatchers.IO) { HomeLiveLoader.load(c, Declarations.topology.release).copy(measured = measuredNames) }
+        }
         val pub = Services.publicServices().size
         val priv = Services.privateServices().size
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp)) {
@@ -96,6 +103,9 @@ class HomeFragment : KitComposeFragment() {
             )
             Card(label("orch"), Declarations.orchPages.map { it.label })
             Card(label("ops"), Declarations.externalApps.map { "${it.display} · ${it.packageName}" })
+            HomePagesCard(
+                HomeLive.rows(Declarations.nav, Declarations.home, live.copy(down = report?.let { HomeLive.Live.Ok(it) } ?: live.down), Declarations.containerProjects, ContainersSource.current(), Declarations.fleet),
+            ) { t -> (activity as? com.diegonmarcos.cloudc3.cloud.C3StackFragment.TargetListener)?.onTargetClicked(if (t.startsWith("page:")) t else "page:c3/$t") }
         }
         sheet?.let { target ->
             ContainerSheet.Sheet(

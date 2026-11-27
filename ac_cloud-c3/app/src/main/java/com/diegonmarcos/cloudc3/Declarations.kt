@@ -91,6 +91,9 @@ object Declarations {
     /** ui.aliases: ids that moved keep working ([C3Nav.resolve]). */
     val aliases: Aliases by lazy { parseAliases(decode(BuildConfig.UI_ALIASES_B64)) }
 
+    /** ui.home (#1969): which live source feeds each Home row; the rows come from the nav declaration. */
+    val home: com.diegonmarcos.cloudc3.pages.HomeLive.Decl by lazy { com.diegonmarcos.cloudc3.pages.HomeLive.parse(decode(BuildConfig.UI_HOME_B64)) }
+
     /** The Containers > Table rows: data/infra_slice.json::routes. */
     val routes: List<RoutesTableModel.Row> by lazy { RoutesTableModel.parse(element(decodeChunks(BuildConfig.ROUTES_B64))) }
 

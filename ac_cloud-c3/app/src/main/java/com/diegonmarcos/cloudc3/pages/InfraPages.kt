@@ -47,7 +47,8 @@ object InfraSections {
     const val CONTROL = "control"
     const val DOMAINS = "domains"
     const val DOMAINS_PUBLIC = "domains_public"
-    val ALL = listOf(PROVIDERS, MACHINES, SERVERLESS, NODE_PYTHON, STORAGE, DESKTOP, MOBILE, GADGETS, CONTROL, DOMAINS, DOMAINS_PUBLIC)
+    const val PROJECTS = "projects"
+    val ALL = listOf(PROVIDERS, MACHINES, SERVERLESS, NODE_PYTHON, STORAGE, DESKTOP, MOBILE, GADGETS, CONTROL, DOMAINS, DOMAINS_PUBLIC, PROJECTS)
 }
 
 /** Test tags of the Infra pages, for the declaration-to-screen suite. */
@@ -68,6 +69,7 @@ fun InfraSectionScreen(
     apis: ApiProviders.Decl = Declarations.apiProviders,
     fleet: FleetEndpoints.Decl = Declarations.fleetEndpoints,
     mcp: C3Mcp.Decl = Declarations.c3Mcp,
+    down: com.diegonmarcos.cloudc3.cloud.FleetDown.Report? = null, measured: Set<String> = emptySet(), onOpen: (String) -> Unit = {},
 ) {
     when (section) {
         InfraSections.PROVIDERS -> ProvidersScreen(slice, live)
@@ -81,6 +83,7 @@ fun InfraSectionScreen(
         InfraSections.CONTROL -> OpsCatalogScreen(InfraTags.screen(InfraSections.CONTROL), "hier_control")
         InfraSections.DOMAINS_PUBLIC -> PublicDomainsScreen(slice, identities, onToken)
         InfraSections.DOMAINS -> DomainsScreen(slice, live, today)
+        InfraSections.PROJECTS -> ProjectsScreen(Declarations.containerProjects, ContainersSource.current(), slice.domains.map { it.name }, down, measured, onOpen)
         else -> apis.groupOfPage(section)?.let { if (it.id == fleet.group) FleetEndpointsScreen(section, it, fleet) else if (it.id == mcp.group) C3McpScreen(section, it, mcp) else ApiProvidersScreen(section, it, apis) }
             ?: Text("Unknown Infra page: $section", color = LocalKitPalette.current.bad)
     }
@@ -430,7 +433,13 @@ class InfraSectionFragment : KitComposeFragment() {
                 live.notes = live.notes + ("dns" to "${e.javaClass.simpleName}: ${e.message.orEmpty()}")
             }
         }
-        InfraSectionScreen(section, slice, live, identities = identities, onToken = { t ->
+        var down by remember { mutableStateOf<com.diegonmarcos.cloudc3.cloud.FleetDown.Report?>(null) }
+        if (section == InfraSections.PROJECTS) LaunchedEffect(section) {
+            val bearer = runCatching { com.diegonmarcos.superapp.ops.dagu.DaguPrefs(ctx).bearerToken }.getOrDefault("")
+            down = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.diegonmarcos.cloudc3.cloud.FleetDown.load(bearer) }
+        }
+        InfraSectionScreen(section, slice, live, identities = identities, down = down, measured = remember { com.diegonmarcos.cloudc3.cloud.FleetDown.declared().map { it.name }.toSet() },
+            onOpen = { t -> (activity as? com.diegonmarcos.cloudc3.cloud.C3StackFragment.TargetListener)?.onTargetClicked(t) }, onToken = { t ->
             PrivateData.saveToken(ctx, t)
             scope.launch { identities.refresh(ctx.applicationContext, source) }
         })

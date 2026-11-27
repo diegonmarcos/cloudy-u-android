@@ -553,5 +553,47 @@
   "lib": "pj-wiki-modernsc",
   "pj-lib": "pj-wiki-modernsc",
   "Lib": "Wiki"
+ },
+ "projects_table": {
+  "_doc": "#1969 Infra > Projects: the columns, the filter chips (column keys) and the page a row tap opens ({project} = the project id: its Containers Topology). One row per project above; nothing here is typed in Kotlin.",
+  "columns": [
+   {
+    "key": "category",
+    "label": "Category"
+   },
+   {
+    "key": "project",
+    "label": "Project"
+   },
+   {
+    "key": "repos",
+    "label": "Repos (pub/pvt)"
+   },
+   {
+    "key": "containers",
+    "label": "Containers"
+   },
+   {
+    "key": "vms",
+    "label": "VMs"
+   },
+   {
+    "key": "domains",
+    "label": "Domains"
+   },
+   {
+    "key": "status",
+    "label": "Live status"
+   },
+   {
+    "key": "links",
+    "label": "Links"
+   }
+  ],
+  "filters": [
+   "category",
+   "status"
+  ],
+  "open_page": "{project}_topology"
  }
 }

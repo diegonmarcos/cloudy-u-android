@@ -182,7 +182,7 @@ ap = json.load(open(app + "/data/api_providers.json", encoding="utf-8"))
 infra = next(s for s in bj["ui"]["sections"] if s["id"] == "infra")
 rows = [g["label"] for g in infra["groups"]]
 bad = []
-if rows != ["Bare", "APIs", "Personal", "Domains"]: bad.append("the Infra rows read %s, not Bare | APIs | Personal | Domains" % rows)
+if rows != ["Bare", "APIs", "Personal", "Domains", "Projects"]: bad.append("the Infra rows read %s, not Bare | APIs | Personal | Domains | Projects (#1969)" % rows)
 row = next((g for g in infra["groups"] if g["id"] == "apis"), {})
 pages = {p["id"] for p in infra["pages"]}
 gids = [g["id"] for g in ap["groups"]]

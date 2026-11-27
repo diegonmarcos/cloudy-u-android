@@ -218,6 +218,18 @@
     "private_sources": {
       "identities": {"owner": "diegonmarcos", "repo": "cloud-me-pvt-configs", "ref": "main", "path": "profile/identities.json"}
     },
+    "home": {
+      "_doc": "#1969 Home live rows: one dense row per declared section (section_rows) and page (the nav declaration; a page's source is `pages`, else its section's `section_pages`, else `default`). A source is one the pages already read: declared (the declaration only), containers_project (FleetDown + the project scope), infra_vms (FleetDown), infra_domains (fleet slice), projects_status (Infra Projects rows), orch_runs (GitHubFeed), dagu_runs (DaguRunsFeed), ops_reports / ops_uptime (OpsLive), mail_state (the mail stack answer). A source that cannot be read shows its reason on the row, never a zero.",
+      "default": "declared",
+      "section_rows": {"infra": "infra_vms", "containers": "containers_project", "orch": "orch_runs", "ops": "ops_reports", "configs": "declared"},
+      "section_pages": {"containers": "containers_project"},
+      "pages": {
+        "machines": "infra_vms", "providers": "infra_vms", "domains": "infra_domains", "domains_public": "infra_domains", "projects": "projects_status",
+        "orch_flow": "orch_runs", "orch_release": "orch_runs", "orch_gh_releases": "orch_runs", "orch_dagu": "dagu_runs",
+        "mail": "mail_state", "mail_tables": "mail_state", "mail_topology_inbound": "mail_state", "mail_topology_outbound": "mail_state",
+        "ops_health": "ops_uptime", "ops_health_uptime": "ops_uptime", "ops_health_health": "ops_reports", "ops_health_tests": "ops_reports"
+      }
+    },
     "aliases": {
       "sections": {
         "topology": "containers",
@@ -295,6 +307,14 @@
             "pages": [
               "domains",
               "domains_public"
+            ]
+          },
+          {
+            "id": "projects_row",
+            "label": "Projects",
+            "icon": "ic_link_tile",
+            "pages": [
+              "projects"
             ]
           }
         ],
@@ -388,6 +408,12 @@
             "label": "Public",
             "icon": "ic_link_tile",
             "_doc": "InfraSectionFragment (Domains row, #1437): the public mailbox domains the owner uses (for example gmail, proton), READ from fleet-assets.json public_domains[], plus (#1454) the owner's email identities, PRIVATE: loaded at run time from the owner's private repo declared in ui.private_sources.identities (never in this repo)."
+          },
+          {
+            "id": "projects",
+            "label": "Projects",
+            "icon": "ic_link_tile",
+            "_doc": "#1969 InfraSectionFragment (Projects row, after Domains): one row per declared project of data/container_projects.json (the Cloud Me Proj set; Wiki holds the former Lib, #1968) - category, project, repos (count, public/private), containers, VMs, domains, live status (up / down / unknown with its reason, from the FleetDown read), links. Columns and filters are declared in container_projects.json::projects_table; sortable, filter chips, search; a row tap opens the project's Containers Topology."
           }
         ]
       },

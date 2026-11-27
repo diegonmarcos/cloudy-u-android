@@ -128,7 +128,7 @@ class DeclarationsTest {
         // WG mesh arrived with them. The SuperApp's sample-stub page ids stay undeclared,
         // which is what keeps "no placeholder in a shipped tab" assertable.
         assertEquals("Infra = Providers | VMs | Storage | Electronics | Domains (2026-10-20); no Stack, Dbs or API page",
-            listOf("providers", "machines", "serverless", "node_python", "storage", "api_ai", "api_scraper", "api_endpoints", "api_mcp", "desktop", "mobile", "gadgets", "control", "domains", "domains_public"), pageIds("infra"))
+            listOf("providers", "machines", "serverless", "node_python", "storage", "api_ai", "api_scraper", "api_endpoints", "api_mcp", "desktop", "mobile", "gadgets", "control", "domains", "domains_public", "projects"), pageIds("infra"))
         assertEquals("#1941 All, then one page per Cloud Me Proj project (Lib is Wiki, #1968), in the declared order", listOf("all") + Declarations.containerProjects.projects.map { it.id }, pageIds("containers"))
         assertEquals("#1454 every project page keeps the Topology | Table switch",
             pageIds("containers").map { listOf("${it}_topology", "${it}_table") },

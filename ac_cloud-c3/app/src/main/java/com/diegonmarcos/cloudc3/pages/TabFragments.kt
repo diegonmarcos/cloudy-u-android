@@ -56,6 +56,7 @@ class InfraFragment : PagedFragment() {
         "control" -> InfraSectionFragment.newInstance(InfraSections.CONTROL)
         "domains_public" -> InfraSectionFragment.newInstance(InfraSections.DOMAINS_PUBLIC)
         "domains" -> InfraSectionFragment.newInstance(InfraSections.DOMAINS)
+        "projects" -> InfraSectionFragment.newInstance(InfraSections.PROJECTS)
         else -> Declarations.apiProviders.groupOfPage(pageId)?.let { InfraSectionFragment.newInstance(pageId) }
     }
 }

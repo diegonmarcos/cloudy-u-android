@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost'
+        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost | home-row-lost | home-zero-on-fail | projects-row-lost | projects-column-lost'
         required: true
 permissions:
   contents: read
@@ -22,7 +22,7 @@ jobs:
       - name: Validate the mutation name against the allowed list
         run: |
           case "$MUT" in
-            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost) echo "leg: $MUT" ;;
+            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost) echo "leg: $MUT" ;;
             *) echo "::error::unknown mutation name"; exit 1 ;;
           esac
       - uses: actions/checkout@v4
@@ -63,6 +63,14 @@ jobs:
             mail-alias-lost)   pyj ac_cloud-c3/build.json 'del d["ui"]["aliases"]["pages"]["mail_map"]' ;;
             # #1968 a former Lib entity (the root _git-repos-master) loses its Wiki attachment (the parity test must catch it)
             wiki-lost)         pyj $D/repos_declared.json 'r = next(x for x in d["repos"] if x["name"] == "_git-repos-master"); r["attached"] = []' ;;
+            # #1969 Home loses the row of the first page of every section (a declared page has no row)
+            home-row-lost)     sed -i 's/flat(s.pages).map { (p, depth) ->/flat(s.pages).drop(1).map { (p, depth) ->/' $K/pages/HomeLive.kt ;;
+            # #1969 a Home source that failed shows a zero instead of its reason
+            home-zero-on-fail) sed -i 's/"\$what unavailable: \${l.why}"/"\$what: 0"/' $K/pages/HomeLive.kt ;;
+            # #1969 Infra Projects drops the first declared project
+            projects-row-lost) sed -i 's/decl.projects.map { p ->/decl.projects.drop(1).map { p ->/' $K/pages/InfraProjects.kt ;;
+            # #1969 Infra Projects loses a declared column
+            projects-column-lost) pyj $D/container_projects.json 'd["projects_table"]["columns"] = [c for c in d["projects_table"]["columns"] if c["key"] != "domains"]' ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
           git diff --stat
@@ -116,6 +124,10 @@ jobs:
             drop-wiki-path)    C=ContainerTopologyTest; N="each Wiki project carries lib-chronos with its path" ;;
             split-ignored)     C=ContainersPageComposeTest; N="the Topology body has a services band and a Repos band, with Public and Private under Apps, DB and Repos on Cloud-me" ;;
             map-edge-dropped)  C=MailStackTest; N="parity - every section, row and edge of the old Mail map is in a Tables table" ;;
+            home-row-lost)     C=HomeLiveTest; N="every declared section and page has a Home row, in the declared order" ;;
+            home-zero-on-fail) C=HomeLiveTest; N="a failed source shows its reason on the row, never a zero" ;;
+            projects-row-lost) C=InfraProjectsTest; N="every declared project is a row and the columns match the declaration" ;;
+            projects-column-lost) C=InfraProjectsTest; N="every declared project is a row and the columns match the declaration" ;;
             wiki-lost)         C=ContainerProjectsTest; N="#1968 parity every entity under Lib before is under Wiki now, the All total is unchanged and the old ids resolve to Wiki" ;;
             mail-alias-lost)   C=OrchOpsReorgTest; N="every old page id still resolves through the aliases to its new place" ;;
           esac

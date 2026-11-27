@@ -559,7 +559,7 @@ if "observ" in secs: bad.append("the observ section is merged into Ops and Orch 
 _ops = (secs.get("ops") or {}).get("pages") or []
 if [p["id"] for p in _ops if p.get("separator_before")] != ["ops_health"]: bad.append("Ops sub-group divider is not before Health")
 if not all(p.get("pages") for p in _ops): bad.append("an Ops page nests no views")
-if pids("infra") != ["providers", "machines", "serverless", "node_python", "storage", "api_ai", "api_scraper", "api_endpoints", "api_mcp", "desktop", "mobile", "gadgets", "control", "domains", "domains_public"]: bad.append("Infra pages are %s, not the four declared rows (Bare, APIs, Personal, Domains)" % pids("infra"))
+if pids("infra") != ["providers", "machines", "serverless", "node_python", "storage", "api_ai", "api_scraper", "api_endpoints", "api_mcp", "desktop", "mobile", "gadgets", "control", "domains", "domains_public", "projects"]: bad.append("Infra pages are %s, not the five declared rows (Bare, APIs, Personal, Domains, Projects)" % pids("infra"))
 c3 = ui["carried_c3"]
 topo, infra = c3.get("stack_topology") or [], []
 for k in ("c3_public", "c3_private"):
