@@ -59,6 +59,9 @@ class ListReturn1952cTest {
         assertTrue("the list view starts as the stored view of the restored selection", ".stateIn(viewModelScope, SharingStarted.Eagerly, initialListView())" in vm)
         assertTrue("return ListViewPrefs.load(getApplication<Application>(), key)" in vm)
         assertTrue(".stateIn(viewModelScope, SharingStarted.Eagerly, ListFilter.UNREAD in listView.value.filters)" in vm)
+        val keys = code("app/src/main/kotlin/app/sterna/ui/inbox/PageSource.kt")
+        assertTrue("a folder's key never carries the unread view's late folder list", ".map(::pageKeyForItsView).distinctUntilChanged()" in vm)
+        assertTrue("is Sel.Folder -> key.copy(unifiedScopes = emptyList(), unreadScopes = emptyList())" in keys)
         assertFalse("no placeholder view is ever a key", vm.any { ".stateIn(viewModelScope, SharingStarted.Eagerly, ListView())" in it })
     }
 

@@ -58,6 +58,17 @@ internal fun pageKeyFlow(
         .combine(listShape) { key, shape -> key.copy(shape = shape) }
         .distinctUntilChanged()
 
+/**
+ * #1952 (applied by [InboxViewModel.pagedEmails], after [pageKeyFlow]): a key carries only the scopes ITS view pages. The unread view's folder list starts empty and arrives from the store
+ * a moment later; left in a folder's key it rebuilt that folder's pager (and re-ran its query) on every cold start, for a
+ * list that never reads it. The same for the unified inbox's scopes.
+ */
+internal fun pageKeyForItsView(key: PageKey): PageKey = when (key.sel) {
+    is Sel.Folder -> key.copy(unifiedScopes = emptyList(), unreadScopes = emptyList())
+    Sel.Unified -> key.copy(unreadScopes = emptyList())
+    Sel.Unread -> key.copy(unifiedScopes = emptyList())
+}
+
 /** The folders the "unread" view pages: every folder of [accountId] except Trash, Junk/Spam, Sent
  * and Drafts. Pairs, never bare folder ids (#121/#31); the role is judged, never the name. A
  *  losing IMAP trash stays in, so a shared `Shared/…/Trash` is paged, deleted mail and all (debt). */

@@ -179,6 +179,7 @@ for w in 1 2; do
   [ "${wms:-99999}" -le "$WARM_LIMIT_MS" ] 2>/dev/null || fail "warm $w: first row after $wms ms (limit $WARM_LIMIT_MS)"
 done
 
+adb shell top -b -n 1 -m 8 2>/dev/null | tail -9 > "$OUT/top-online.txt"
 # scroll jank over ten flings of the list
 adb shell dumpsys gfxinfo "$PKG" reset >/dev/null 2>&1
 for j in $(seq 1 10); do adb shell input swipe 700 1600 700 500 250; sleep 1; done
@@ -212,6 +213,20 @@ note "airplane: the reader showed the body after about $(( $(date +%s) - t0 )) s
 shot 07-airplane-old-body
 if [ "$body" = 1 ]; then note "airplane: the body of an old message shows from the store"; else fail "airplane: the opened old message shows no body"; fi
 grep -E "MailOpen" "$OUT/logcat.txt" | tail -4 | sed 's/id=[^ ]*/id=…/' >> "$OUT/summary.txt"
+# quiet (no network, so no background sync): the same return and the same flings, to tell the list's own cost from the sync's
+adb shell input keyevent KEYCODE_BACK; sleep 3; front 8; tapt "Mail" exact; sleep 3
+for w in 1 2; do
+  n0=$(grep -c -E "MailList.*first-row" "$OUT/logcat.txt")
+  tapt "Alerts" exact; sleep 4; tapt "Mail" exact; sleep 4
+  n1=$(grep -c -E "MailList.*first-row" "$OUT/logcat.txt")
+  wms=missing; [ "$n1" -gt "$n0" ] && wms=$(grep -E "MailList.*first-row" "$OUT/logcat.txt" | tail -1 | sed -n 's/.*first-row ms=\([0-9]*\).*/\1/p')
+  echo "| warm return $w, airplane mode (no sync running) | $wms | | - | |" >> "$OUT/timing.md"
+done
+adb shell dumpsys gfxinfo "$PKG" reset >/dev/null 2>&1
+for j in $(seq 1 10); do adb shell input swipe 700 1600 700 500 250; sleep 1; done
+adb shell dumpsys gfxinfo "$PKG" | grep -E "Total frames rendered|Janky frames|50th percentile|90th percentile|95th percentile" | head -5 > "$OUT/jank-quiet.txt"
+echo "" >> "$OUT/timing.md"; echo "scroll (10 flings), airplane mode (no sync running):" >> "$OUT/timing.md"; sed 's/^ */- /' "$OUT/jank-quiet.txt" >> "$OUT/timing.md"
+adb shell top -b -n 1 -m 8 2>/dev/null | tail -9 > "$OUT/top-quiet.txt"
 adb shell cmd connectivity airplane-mode disable
 
 sizes "end"

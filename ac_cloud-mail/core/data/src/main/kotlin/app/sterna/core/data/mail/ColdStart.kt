@@ -38,7 +38,9 @@ class ColdStartGate(private val log: (String) -> Unit = {}, private val now: () 
     }
 
     fun rowsPainted() {
-        if (painted.complete(Unit)) log("cold-start rows-painted ms=${if (armed.get()) now() - armedAt else -1}")
+        // Logged BEFORE the waiters are released, so the log's order is the real order.
+        if (!painted.isCompleted) log("cold-start rows-painted ms=${if (armed.get()) now() - armedAt else -1}")
+        painted.complete(Unit)
     }
 
     /** The list's first read of the store came back empty: nothing will be painted, the sync may start. */

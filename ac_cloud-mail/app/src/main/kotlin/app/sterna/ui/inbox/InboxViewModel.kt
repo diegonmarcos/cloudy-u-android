@@ -1117,11 +1117,14 @@ class InboxViewModel(
             currentAccountId = currentAccountId,
             listShape = effectiveShape,
         )
+        // #1952: only the scopes the view pages may rebuild its pager ([pageKeyForItsView]).
+        .map(::pageKeyForItsView).distinctUntilChanged()
         .flatMapLatest { key ->
+            if (key.sel !is Sel.Folder) app.sterna.core.data.mail.ColdStart.mark("list-key view=${key.sel.javaClass.simpleName}")
             when (val sel = key.sel) {
                 is Sel.Folder -> {
                     val id = sel.id
-                    app.sterna.core.data.mail.ColdStart.mark("list-key")
+                    app.sterna.core.data.mail.ColdStart.mark("list-key folder-known=${id != null} conversation=${key.conversationView} domain=${key.shape.byDomain} sort=${key.sort} unread=${key.unreadOnly}")
                     val credentials = store.load()
                     app.sterna.core.data.mail.ColdStart.mark("credentials")
                     if (id == null || credentials == null) {
