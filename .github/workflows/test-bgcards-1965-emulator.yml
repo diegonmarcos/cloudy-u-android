@@ -55,6 +55,16 @@ jobs:
                 run=$(gh run list -R "$REPO" --workflow "$wf" --branch main --status success -L 1 --json databaseId --jq '.[0].databaseId // empty')
               fi ;; esac
             [ -n "$run" ] || { echo "::error::no green $wf run"; exit 1; }
+            # A test-only Ship publishes no APK: then the newest green Ship on main that carries one.
+            has() { gh api "repos/$REPO/actions/runs/$1/artifacts" --paginate --jq '.artifacts[] | select(.expired|not) | .name' | grep -qE "$re"; }
+            if ! has "$run"; then
+              echo "$n: run $run carries no APK; taking the newest green one that does"
+              run=""
+              for r in $(gh run list -R "$REPO" --workflow "$wf" --branch main --status success -L 8 --json databaseId --jq '.[].databaseId'); do
+                if has "$r"; then run="$r"; break; fi
+              done
+              [ -n "$run" ] || { echo "::error::no green $wf run with an APK"; exit 1; }
+            fi
             sha=$(gh api "repos/$REPO/actions/runs/$run" --jq .head_sha)
             echo "$n: ship run $run on ${sha}"
             echo "$n $run $sha" >> apks/runs.txt
