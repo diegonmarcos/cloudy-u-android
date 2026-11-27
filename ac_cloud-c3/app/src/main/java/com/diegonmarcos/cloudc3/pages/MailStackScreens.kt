@@ -152,13 +152,20 @@ fun MailTablesScreen(decl: MailStack.Decl, answer: MailStack.Answer?, banner: St
 fun MailTopologyCanvas(topology: MailStack.Topology, decl: MailStack.Decl, answer: MailStack.Answer?, modifier: Modifier = Modifier, onOpen: (String) -> Unit) {
     val p = LocalKitPalette.current
     val plan = remember(topology, answer, p) { MailStack.plan(topology, answer, decl, p) }
+    PlanCanvas(plan, MailTags.canvas(topology.id), modifier, onOpen)
+}
+
+/** #1955 A The node-edge canvas of any [MailStack.Plan] (Mail's topologies, the Network Graph views): grid, bezier wires with arrows, pulses, labels, pan, pinch zoom, tap a node. */
+@Composable
+fun PlanCanvas(plan: MailStack.Plan, tag: String, modifier: Modifier = Modifier, onOpen: (String) -> Unit) {
+    val p = LocalKitPalette.current
     var box by remember { mutableStateOf(IntSize.Zero) }
     var view by remember { mutableStateOf<MailStack.View?>(null) }
     val v = view ?: MailStack.fit(plan.bounds, box.width.toFloat().coerceAtLeast(1f), box.height.toFloat().coerceAtLeast(1f))
     val phase by rememberInfiniteTransition(label = "mail-flow").animateFloat(0f, 1f, infiniteRepeatable(tween(3200, easing = LinearEasing), RepeatMode.Restart), label = "phase")
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current.density
-    Canvas(modifier.onSizeChanged { box = it }.background(p.surface).testTag(MailTags.canvas(topology.id))
+    Canvas(modifier.onSizeChanged { box = it }.background(p.surface).testTag(tag)
         .pointerInput(plan) { detectTransformGestures { c, pan, z, _ -> view = (view ?: v).transform(c, pan, z) } }
         .pointerInput(plan, v) { detectTapGestures { at -> MailStack.hit(plan, view ?: v, at)?.let(onOpen) } }) {
         val s = v.scale
