@@ -172,6 +172,14 @@ object HealthModel {
     /** What the phone knows about itself before any probe: a probe of a public host is gated on [internet], a private one on [vpn]. */
     data class Vantage(val token: Boolean?, val vpn: Boolean?, val internet: ProbeOut?, val internetRan: Boolean)
 
+    /**
+     * The phone's internet check: a NAME (Android's own connectivity-check host) resolved through Android's resolver, so the lookup goes
+     * through the SuperApp's DNS menu like every fleet lookup (dns-resolver guard #741: no public DNS server address in the fleet's code).
+     */
+    const val INTERNET_HOST = "connectivitycheck.gstatic.com"
+    const val INTERNET_TARGET = "tcp://$INTERNET_HOST:443"
+    const val INTERNET_LABEL = "Internet (tcp $INTERNET_HOST:443)"
+
     fun vantageChecks(v: Vantage): List<Check> = listOf(
         when (v.token) {
             true -> Check("vantage.token", "vantage", "C3 token", St.OK, "an Authelia token is on this device", kind = "device")
@@ -183,10 +191,10 @@ object HealthModel {
             false -> Check("vantage.vpn", "vantage", "VPN (mesh) network", St.WARN, "no VPN network is active: private names and the mesh are not probed", kind = "device")
             null -> Check("vantage.vpn", "vantage", "VPN (mesh) network", St.PENDING, "not read yet", kind = "device")
         },
-        if (!v.internetRan) Check("vantage.internet", "vantage", "Internet (tcp 1.1.1.1:443)", St.PENDING, "not probed yet", kind = "device")
+        if (!v.internetRan) Check("vantage.internet", "vantage", INTERNET_LABEL, St.PENDING, "not probed yet", kind = "device")
         else v.internet.let { p ->
-            if (p == null) Check("vantage.internet", "vantage", "Internet (tcp 1.1.1.1:443)", St.NOT_SERVED, "${com.diegonmarcos.cloudlib.healthcore.HealthCore.NOT_IN_BUILD}", kind = "device")
-            else Check("vantage.internet", "vantage", "Internet (tcp 1.1.1.1:443)", if (p.status == St.OK) St.OK else St.WARN, p.error.ifBlank { "tcp answered" }, kind = "device", phases = p.phases)
+            if (p == null) Check("vantage.internet", "vantage", INTERNET_LABEL, St.NOT_SERVED, "${com.diegonmarcos.cloudlib.healthcore.HealthCore.NOT_IN_BUILD}", kind = "device")
+            else Check("vantage.internet", "vantage", INTERNET_LABEL, if (p.status == St.OK) St.OK else St.WARN, p.error.ifBlank { "tcp answered" }, kind = "device", phases = p.phases)
         },
     )
 
@@ -210,7 +218,7 @@ object HealthModel {
      * private rows its VPN; a blocked vantage makes them BLIND with that reason (never DOWN: the service was not looked at).
      */
     fun lightsChecks(pub: List<Services.PublicService>, priv: List<Services.PrivateService>, probes: Map<String, ProbeOut>, v: Vantage, engineReason: String?, ran: Boolean): List<Check> {
-        val noNet = if (v.internetRan && (v.internet == null || v.internet.status != St.OK)) "not probed: this phone has no internet (tcp 1.1.1.1:443 failed)" else null
+        val noNet = if (v.internetRan && (v.internet == null || v.internet.status != St.OK)) "not probed: this phone has no internet ($INTERNET_TARGET failed)" else null
         val noVpn = if (v.vpn == false) "not probed: this phone is not on the VPN" else null
         val publicRows = pub.map { s ->
             probed("lights.public:${s.name}", "lights", s.name, probes["lights.public:${s.name}"], ran, listOf("vantage.internet", "edge.caddy"), noNet,

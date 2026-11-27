@@ -83,7 +83,7 @@ fun HealthDebugBody(onOpenUrl: (String) -> Unit) {
             readLive()
             val reason = HealthCore.unavailable()
             if (reason == null) {
-                val net1 = HealthCore.probe("tcp://1.1.1.1:443", 3000)
+                val net1 = HealthCore.probe(HealthModel.INTERNET_TARGET, 3000)
                 internet = net1.okJson?.let { HealthModel.parseProbe(it) }
                 internetRan = true
                 val out = mutableMapOf<String, HealthModel.ProbeOut>()
