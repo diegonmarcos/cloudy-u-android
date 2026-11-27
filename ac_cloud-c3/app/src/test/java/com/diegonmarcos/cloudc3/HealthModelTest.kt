@@ -112,7 +112,7 @@ class HealthModelTest {
     }
 
     @Test fun `X-ray - the tabs, the allow-list and the not-served states`() {
-        assertEquals(listOf("full", "vms", "services", "suites"), XrayModel.TABS.map { it.first })
+        assertEquals(listOf("engines", "full", "vms", "services", "suites"), XrayModel.TABS.map { it.first })
         assertEquals(listOf("xray-vm", "xray-service", "xray-full"), XrayModel.KINDS)
         assertEquals("xray-full" to "fleet", XrayModel.runRequest("xray-full", "x", emptyList()))
         assertEquals("xray-vm" to "oci-apps", XrayModel.runRequest("xray-vm", "oci-apps", listOf("oci-apps")))

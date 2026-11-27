@@ -38,7 +38,7 @@ object XrayTags {
 data class XrayItem(val id: String, val title: String, val sub: String, val state: XrayModel.State)
 
 @Composable
-private fun XChip(tag: String, label: String, on: Boolean, click: () -> Unit) {
+internal fun XChip(tag: String, label: String, on: Boolean, click: () -> Unit) {
     val p = LocalKitPalette.current
     val shape = RoundedCornerShape(KitStoreRow.tight)
     Text(label, color = if (on) p.tileInk else p.textPrimary, fontSize = KitStoreRow.caption,
@@ -47,7 +47,7 @@ private fun XChip(tag: String, label: String, on: Boolean, click: () -> Unit) {
 }
 
 @Composable
-private fun XLine(text: String, color: androidx.compose.ui.graphics.Color = LocalKitPalette.current.textSecondary, mono: Boolean = false) {
+internal fun XLine(text: String, color: androidx.compose.ui.graphics.Color = LocalKitPalette.current.textSecondary, mono: Boolean = false) {
     Text(text, color = color, fontSize = KitStoreRow.caption, fontFamily = if (mono) FontFamily.Monospace else null, modifier = Modifier.padding(horizontal = KitStoreRow.padH, vertical = 1.dp))
 }
 
@@ -87,7 +87,8 @@ private fun ItemRow(i: XrayItem, kind: String, onRun: () -> Unit, runnable: Bool
  * run request, printed as it came; a route that is not served yet says so instead of showing nothing.
  */
 @Composable
-fun XrayScreen(full: XrayItem, vms: List<XrayItem>, services: List<XrayItem>, runNote: String, onRun: (String, String) -> Unit, suites: @Composable () -> Unit, initialTab: String = "full") {
+fun XrayScreen(full: XrayItem, vms: List<XrayItem>, services: List<XrayItem>, runNote: String, onRun: (String, String) -> Unit, suites: @Composable () -> Unit, initialTab: String = "full",
+    engines: @Composable () -> Unit = {}, fedBy: (String) -> List<String> = { emptyList() }) {
     var tab by remember { mutableStateOf(initialTab) }
     Column(Modifier.fillMaxSize().testTag(XrayTags.ROOT)) {
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = KitStoreRow.padH, vertical = KitStoreRow.tight)) {
@@ -99,12 +100,14 @@ fun XrayScreen(full: XrayItem, vms: List<XrayItem>, services: List<XrayItem>, ru
         if (runNote.isNotBlank()) XLine(runNote, color = KitStoreRow.UPDATE)
         Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())) {
             when (tab) {
+                "engines" -> Column(Modifier.testTag(EngineTags.ROOT)) { engines() }
                 "full" -> {
+                    fedBy("full").forEach { XLine("fed by: $it", mono = true) }
                     XLine("X-ray C3 full = the X-ray of each VM (hub last), then of each service, the layer report and the diff against the previous full run.")
                     ItemRow(full, "xray-full", { onRun("xray-full", "fleet") }, true)
                 }
-                "vms" -> vms.forEach { ItemRow(it, "xray-vm", { onRun("xray-vm", it.id) }, true) }
-                "services" -> services.forEach { ItemRow(it, "xray-service", { onRun("xray-service", it.id) }, true) }
+                "vms" -> { fedBy("vms").forEach { XLine("fed by: $it", mono = true) }; vms.forEach { ItemRow(it, "xray-vm", { onRun("xray-vm", it.id) }, true) } }
+                "services" -> { fedBy("services").forEach { XLine("fed by: $it", mono = true) }; services.forEach { ItemRow(it, "xray-service", { onRun("xray-service", it.id) }, true) } }
                 "suites" -> Column(Modifier.testTag(XrayTags.SUITES)) { suites() }
             }
         }

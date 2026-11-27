@@ -9,7 +9,7 @@ import com.diegonmarcos.superapp.fleetxray.FleetXrayExport
  * "route not served yet (#1977)" state, never an empty page that looks like a result.
  */
 object XrayModel {
-    val TABS = listOf("full" to "C3 full", "vms" to "VMs", "services" to "Services", "suites" to "Suites")
+    val TABS = listOf("engines" to "Engines", "full" to "C3 full", "vms" to "VMs", "services" to "Services", "suites" to "Suites")
 
     /** The only kinds the app may ask the API to run. */
     val KINDS = listOf("xray-vm", "xray-service", "xray-full")

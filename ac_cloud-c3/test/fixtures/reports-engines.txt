@@ -1,0 +1,7 @@
+cloud-analytics-daily
+cloud-health-full-daily
+cloud-mail-health-full
+cloud-sec-data-report
+cloud-sec-network-report
+cloud-url-health-report
+reports-common

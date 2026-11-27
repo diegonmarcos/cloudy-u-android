@@ -161,15 +161,47 @@ class XrayFragment : KitComposeFragment() {
         val svcNames = remember(version) { ContainersSource.current().entries.map { it.name } }
         var states by remember { mutableStateOf<Map<String, XrayModel.State>>(emptyMap()) }
         var runNote by remember { mutableStateOf("") }
+        var fresh by remember { mutableStateOf<Map<String, EnginesModel.Fresh>>(emptyMap()) }
+        var bodies by remember { mutableStateOf<Map<String, EnginesModel.Body>>(emptyMap()) }
+        var runs by remember { mutableStateOf<List<EnginesModel.Run>?>(null) }
+        var runsWhy by remember { mutableStateOf("not read yet") }
         LaunchedEffect(Unit) {
             val src = ApiFleetLive(ctx.applicationContext)
+            // #1983 the engines: freshness, history, and each engine's body (the body route is not served yet, #1977: the card then says why).
+            (src.get(OpsLive.REPORTS_PATH) as? FleetLive.Result.Body)?.let { b -> EnginesModel.parseStatus(b.text)?.let { fresh = it } }
+            when (val r = src.get("/reports/runs")) {
+                is FleetLive.Result.Body -> { runs = EnginesModel.parseRuns(r.text); if (runs == null) runsWhy = "the answer is not a runs list" }
+                is FleetLive.Result.Failed -> runsWhy = r.why
+            }
+            bodies = EnginesModel.ENGINES.filter { it.family != null }.associate { it.id to EnginesModel.classify(it, src.get(XrayModel.dataPath(it.family!!))) }
             val ids = listOf(XrayModel.FULL_FAMILY) + vmIds.map { XrayModel.vmFamily(it) }
             states = ids.associateWith { XrayModel.classify(src.get(XrayModel.dataPath(it))) }
         }
         val full = XrayItem("full", "X-ray C3 full", "every VM (hub last), every service, the layer report, the diff", states[XrayModel.FULL_FAMILY] ?: XrayModel.State.Idle)
         val vms = vmIds.map { XrayItem(it, it, "per-VM X-ray", states[XrayModel.vmFamily(it)] ?: XrayModel.State.Idle) }
         val services = svcNames.map { XrayItem(it, it, "per-service X-ray: ${XrayModel.dataPath(XrayModel.serviceFamily(it))}", states[XrayModel.serviceFamily(it)] ?: XrayModel.State.NotServed(HealthModel.NOT_SERVED_ROUTE)) }
-        XrayScreen(full, vms, services, runNote, onRun = { kind, subject ->
+        val engineItems = EnginesModel.ENGINES.map { e ->
+            EngineItem(e, e.family?.let { fresh[it] }, bodies[e.id] ?: if (e.family == null) EnginesModel.Body.Why(e.note) else EnginesModel.Body.Idle)
+        }
+        val verdicts = engineItems.associate { it.engine.id to "${it.engine.dir} ${EnginesModel.verdictText(it.body)}" }
+        XrayScreen(full, vms, services, runNote, initialTab = "engines",
+            engines = {
+                EnginesBody(engineItems, runs, runsWhy) { e ->
+                    val body = EnginesModel.runBody(e.kind)
+                    if (body == null) runNote = "refused here: ${e.id} has no allow-listed trigger"
+                    else scope.launch {
+                        val bearer = runCatching { DaguPrefs(ctx).bearerToken }.getOrDefault("")
+                        runNote = "asking the API to run ${e.dir}..."
+                        val r = withContext(Dispatchers.IO) { OpsClient.runEngine(e.kind!!, bearer) }
+                        runNote = when (r) {
+                            is OpsClient.Outcome.Ok -> "the API accepted ${e.dir} (${e.kind}): ${r.body.take(160)}"
+                            is OpsClient.Outcome.Failed -> "the API did not run ${e.dir}: ${r.kind}: ${r.message.lineSequence().first().take(160)}"
+                        }
+                    }
+                }
+            },
+            fedBy = { tab -> (EnginesModel.FEEDS[tab] ?: emptyList()).mapNotNull { verdicts[it] } },
+            onRun = { kind, subject ->
             val req = XrayModel.runRequest(kind, subject, if (kind == "xray-vm") vmIds else svcNames)
             if (req == null) runNote = "refused here: $kind of '$subject' is not a declared subject"
             else scope.launch {

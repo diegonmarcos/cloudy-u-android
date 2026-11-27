@@ -280,6 +280,16 @@ jobs:
           SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
         run: sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR"
 
+      # #1983 the Robolectric render of the real mail report drill-down (a PNG the test writes), kept as evidence
+      - name: Upload the Tests-page render (#1983)
+        if: always() && steps.gate.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: c3-1983-render-${{ matrix.abi }}
+          path: ac_cloud-c3/app/build/c3-1983/*.png
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Determine variant
         if: steps.gate.outputs.skip != 'true'
         id: variant

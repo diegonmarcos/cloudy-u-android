@@ -70,6 +70,16 @@ object OpsClient {
         post("/reports/run", bearer, "run $kind", "{\"report\":\"$kind\",\"subject\":\"$subject\"}")
 
     /**
+     * #1983 Ask the API to run one engine's report (`POST /reports/run`, no GitHub token in the APK). [kind] is checked against the allow-list
+     * (EnginesModel.RUN_KINDS) before it leaves the phone; a kind outside it is refused here without a request.
+     */
+    fun runEngine(kind: String, bearer: String): Outcome {
+        val body = com.diegonmarcos.cloudc3.pages.EnginesModel.runBody(kind)
+            ?: return fail(Kind.NOT_FOUND, "refused: '$kind' is not an allow-listed report kind")
+        return post("/reports/run", bearer, "run $kind", body)
+    }
+
+    /**
      * Trigger a GitHub Actions `workflow_dispatch` run.
      *
      * The GitHub token is NOT in this app, deliberately. GitHub only accepts a

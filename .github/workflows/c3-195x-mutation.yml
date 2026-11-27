@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost | home-row-lost | home-zero-on-fail | projects-row-lost | projects-column-lost | vm-unknown-lost | vm-repo-on-host | vm-devices-dropped | control-back | c3mcp-field-lost | infra-order | orch-infra-back | net-edge-dropped | net-node-twice | net-node-undeclared | net-viewer-page-lost | net-section-match-lost | net-resolve-lost | net-unbound-ok | net-dns-depends-lost | net-bundle-weight | net-sheet-field-lost | net-token-blames-vm | net-label-overlap | orch-dup-back | orch-home-lost | deployed-field-lost | orch-page-twice | health-field-lost | health-root-cause-on-vm-when-token-missing | health-layer-order | xray-scope-lost | health-number-on-blind | xray-run-unvalidated'
+        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost | home-row-lost | home-zero-on-fail | projects-row-lost | projects-column-lost | vm-unknown-lost | vm-repo-on-host | vm-devices-dropped | control-back | c3mcp-field-lost | infra-order | orch-infra-back | net-edge-dropped | net-node-twice | net-node-undeclared | net-viewer-page-lost | net-section-match-lost | net-resolve-lost | net-unbound-ok | net-dns-depends-lost | net-bundle-weight | net-sheet-field-lost | net-token-blames-vm | net-label-overlap | orch-dup-back | orch-home-lost | deployed-field-lost | orch-page-twice | health-field-lost | health-root-cause-on-vm-when-token-missing | health-layer-order | xray-scope-lost | health-number-on-blind | xray-run-unvalidated | engine-card-lost | engine-field-lost | engine-run-unlisted'
         required: true
 permissions:
   contents: read
@@ -22,7 +22,7 @@ jobs:
       - name: Validate the mutation name against the allowed list
         run: |
           case "$MUT" in
-            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost|vm-unknown-lost|vm-repo-on-host|vm-devices-dropped|control-back|c3mcp-field-lost|infra-order|orch-infra-back|net-edge-dropped|net-node-twice|net-node-undeclared|net-viewer-page-lost|net-section-match-lost|net-resolve-lost|net-unbound-ok|net-dns-depends-lost|net-bundle-weight|net-sheet-field-lost|net-token-blames-vm|net-label-overlap|orch-dup-back|orch-home-lost|deployed-field-lost|orch-page-twice|health-field-lost|health-root-cause-on-vm-when-token-missing|health-layer-order|xray-scope-lost|health-number-on-blind|xray-run-unvalidated|two-rows-label-lost|two-rows-or|two-rows-vm-order|two-rows-parity) echo "leg: $MUT" ;;
+            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost|vm-unknown-lost|vm-repo-on-host|vm-devices-dropped|control-back|c3mcp-field-lost|infra-order|orch-infra-back|net-edge-dropped|net-node-twice|net-node-undeclared|net-viewer-page-lost|net-section-match-lost|net-resolve-lost|net-unbound-ok|net-dns-depends-lost|net-bundle-weight|net-sheet-field-lost|net-token-blames-vm|net-label-overlap|orch-dup-back|orch-home-lost|deployed-field-lost|orch-page-twice|health-field-lost|health-root-cause-on-vm-when-token-missing|health-layer-order|xray-scope-lost|health-number-on-blind|xray-run-unvalidated|two-rows-label-lost|two-rows-or|two-rows-vm-order|two-rows-parity|engine-card-lost|engine-field-lost|engine-run-unlisted) echo "leg: $MUT" ;;
             *) echo "::error::unknown mutation name"; exit 1 ;;
           esac
       - uses: actions/checkout@v4
@@ -126,6 +126,10 @@ jobs:
             health-layer-order) rep $K/pages/HealthModel.kt $'        Layer("lights", "Lights (Public / Private URLs)", 9, listOf("edge", "auth", "mesh", "containers", "certs")),\n        Layer("containers", "Containers", 3, listOf("vms")),' $'        Layer("containers", "Containers", 3, listOf("vms")),\n        Layer("lights", "Lights (Public / Private URLs)", 9, listOf("edge", "auth", "mesh", "containers", "certs")),' ;;
             xray-scope-lost)   rep $K/pages/XrayModel.kt 'val KINDS = listOf("xray-vm", "xray-service", "xray-full")' 'val KINDS = listOf("xray-vm", "xray-full")' ;;
             health-number-on-blind) rep $K/pages/HealthModel.kt 'if (status.carriesNumber && phases.any) "${phases.total} ms"' 'if (phases.any) "${phases.total} ms"' ;;
+            # #1983 Ops > Health > Tests engines: each leg breaks one guarantee; the named test must catch it
+            engine-card-lost)  rep $K/pages/EnginesModel.kt '"cloud-url-health-report", "cloud_url_health"' '"cloud-url-health-reportX", "cloud_url_health"' ;;
+            engine-field-lost) rep $K/pages/EnginesModel.kt 'return Chk(name, status, o.entries.map { it.key to prim(it.value) })' 'return Chk(name, status, o.entries.filter { it.key == "name" }.map { it.key to prim(it.value) })' ;;
+            engine-run-unlisted) rep $K/pages/EnginesModel.kt 'if (kind != null && kind in RUN_KINDS)' 'if (kind != null)' ;;
             xray-run-unvalidated) rep $K/pages/XrayModel.kt 'if (!SUBJECT.matches(subject) || subject !in declared) return null' 'if (false) return null' ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
@@ -213,6 +217,9 @@ jobs:
             health-layer-order) C=HealthModelTest; N="the layers are in the owner's order and the attribution ranks are distinct" ;;
             xray-scope-lost)   C=HealthModelTest; N="X-ray - the tabs, the allow-list and the not-served states" ;;
             health-number-on-blind) C=HealthModelTest; N="an unread status never carries a number or a phase bar" ;;
+            engine-card-lost)  C=EnginesModelTest; N="every engine folder of infra-obs_reports has a card or is a declared library" ;;
+            engine-field-lost) C=EnginesModelTest; N="the mail report phases and checks come out of the real JSON with their own values" ;;
+            engine-run-unlisted) C=EnginesModelTest; N="the run trigger is allow-listed" ;;
             xray-run-unvalidated) C=HealthModelTest; N="X-ray - the tabs, the allow-list and the not-served states" ;;
             two-rows-label-lost) C=ContainersTwoRowsComposeTest; N="#1982 both rows render with their labels, Projects over VM, no toggle" ;;
             two-rows-or)       C=ContainersTwoRowsFilterTest; N="#1982 AND filtering - a project or category row and a VM row narrow together, All in a row is no filter" ;;

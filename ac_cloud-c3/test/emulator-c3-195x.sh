@@ -26,6 +26,7 @@ shot() { # a system "isn't responding" dialog is dismissed (Wait) and the shot r
   done
 }
 has() { grep -q -- "$2" "$OUT/$1.xml"; }
+dec() { local s="${1//_/ }"; printf "%s" "${s//+/_}"; }   # a label: _ = space, + = a literal underscore
 open_page() { adb shell am start -W -n "$PKG/.MainActivity" --es shortcut_action "page:$1" </dev/null >/dev/null 2>&1; }
 scroll() { # <times>
   local s; s="$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1)"; local w="${s%x*}" h="${s#*x}"
@@ -52,20 +53,20 @@ while read -r tk name page wait scr labels <&3; do
     open_page "$page"; sleep 2
     [ "$scr" -gt 0 ] && scroll "$scr"
     shot "c3-$tk-$name" "$((wait + (_pass - 1) * 6))"
-    miss=0; [ "$labels" = - ] || for l in ${labels//,/ }; do has "c3-$tk-$name" "${l//_/ }" || miss=1; done
+    miss=0; [ "$labels" = - ] || for l in ${labels//,/ }; do has "c3-$tk-$name" "$(dec "$l")" || miss=1; done
     [ $miss = 0 ] && break
   done
   [ "$labels" = - ] && continue
-  for l in ${labels//,/ }; do has "c3-$tk-$name" "${l//_/ }" || bad "c3-$tk-$name: label '${l//_/ }' missing"; done
+  for l in ${labels//,/ }; do has "c3-$tk-$name" "$(dec "$l")" || bad "c3-$tk-$name: label '$(dec "$l")' missing"; done
 done 3<<'SHOTS'
 1953 all-topology-top all_topology 8 0 Topology,Table,Status,VM,Type,Apps_/_DB_/_MCP_/_API
 1953 cloudme-services pj-unix-cloudme_topology 8 0 Apps_/_DB_/_MCP_/_API,API_(1)
 1953 cloudme-repos pj-unix-cloudme_topology 6 3 Pvt
 1953 cloudy pj-unix-cloudy_topology 8 0 Apps_/_DB_/_MCP_/_API
 1953 cg-omniverse pj-cg-omniverse_topology 8 0 Repos
-1953 capital-cb pj-capital-cb_topology 8 0 Repos,Capital-___
+1953 capital-cb pj-capital-cb_topology 8 0 Repos,Capital-+++
 1953 wiki-modernsc pj-wiki-modernsc_topology 8 0 Repos,lib-chronos
-1953 42-algo pj-lecole42-algo_topology 8 0 Repos,lecole-42-___
+1953 42-algo pj-lecole42-algo_topology 8 0 Repos,lecole-42-+++
 1953 lib lib_topology 8 0 Repos
 1968 category-row all_topology 8 0 Capital,Hardtech
 1968 wiki-modernsc pj-wiki-modernsc_topology 6 3 Repos,lib-chronos
@@ -104,7 +105,7 @@ hswipe() { # <y percent> <times> <dir: left|right>: swipe a horizontally scrolli
   done
 }
 chk() { # <shot> <labels, _ = space>
-  for l in ${2//,/ }; do has "$1" "${l//_/ }" || bad "$1: label '${l//_/ }' missing"; done
+  for l in ${2//,/ }; do has "$1" "$(dec "$l")" || bad "$1: label '$(dec "$l")' missing"; done
 }
 ypct() { # <shot> <text>: the vertical centre (percent of the screen height) of the first node whose text starts with <text>
   local s h; s="$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1)"; h="${s#*x}"
@@ -153,7 +154,8 @@ fi
 if [ "$T" = all ] || [ "$T" = 1953 ]; then
   open_page pj-unix-cloudy_table; shot c3-1953-cloudy-table-pre 8
   tap_text c3-1953-cloudy-table-pre "Db" ; shot c3-1953-cloudy-table-db 4
-  found=0; has c3-1953-cloudy-table-db cloudy_db_LFS && found=1
+  hswipe 50 2 left; shot c3-1953-cloudy-table-db-right 3   # the Name column sits right of Project / Cat1
+  found=0; has c3-1953-cloudy-table-db-right cloudy_db_LFS && found=1
   for k in 2 3 4 5 6 7 8; do [ $found = 1 ] && break; scroll 2 </dev/null; shot c3-1953-cloudy-table-db-$k 2; has c3-1953-cloudy-table-db-$k cloudy_db_LFS && found=1; done
   [ $found = 1 ] || bad "cloudy table Type=Db: cloudy_db_LFS missing"
   rm -f "$OUT/c3-1953-cloudy-table-pre.png"
@@ -229,7 +231,9 @@ if [ "$T" = all ] || [ "$T" = 1955 ]; then
   done
   chk c3-1955-health-more-layers "route_not_served_yet"
   chk c3-1955-health-lights "public,private"
-  open_page ops_health_tests; sleep 2; shot c3-1955-health-xray-full 8
+  open_page ops_health_tests; sleep 2; shot c3-1955-health-tests-open 8
+  chk c3-1955-health-tests-open "Engines,C3_full,VMs,Services,Suites"
+  tap_text c3-1955-health-tests-open "C3 full"; shot c3-1955-health-xray-full 4
   chk c3-1955-health-xray-full "C3_full,VMs,Services,Suites,X-ray"
   for t in VMs Services Suites; do
     n="$(printf '%s' "$t" | tr 'A-Z' 'a-z')"
@@ -245,6 +249,18 @@ if [ "$T" = all ] || [ "$T" = 1954 ]; then
   rm -f "$OUT/c3-1954-gh-releases-pre.png"
   open_page all_table; sleep 6; hswipe 45 10 left; shot c3-1954-containers-drift 4
   chk c3-1954-containers-drift "Live_state,Drift"
+fi
+
+# #1983 Ops > Health > Tests: every engine as a card, the mail card opened (history, reasons: no token on this emulator), X-ray C3 full fed by the engines
+if [ "$T" = all ] || [ "$T" = 1983 ]; then
+  open_page ops_health_tests; sleep 2; shot c3-1983-tests-list 8
+  chk c3-1983-tests-list "Engines,C3_full,cloud-mail-health-full,cloud-health-full-daily,cloud-url-health-report,Run"
+  tap_text c3-1983-tests-list "cloud-mail-health-full"; shot c3-1983-mail-card 4
+  chk c3-1983-mail-card "HISTORY,no_verdict"
+  open_page ops_health_tests; sleep 2; scroll 3; shot c3-1983-tests-list-bottom 4
+  chk c3-1983-tests-list-bottom "cloud-sec-network-report,cloud-sec-data-report,cloud-analytics-daily,no_trigger"
+  open_page ops_health_tests; sleep 2; tap_text c3-1983-tests-list "C3 full"; shot c3-1983-xray-c3-full 4
+  chk c3-1983-xray-c3-full "fed_by,X-ray"
 fi
 
 adb logcat -d -t 3000 > "$OUT/logcat.txt" 2>/dev/null || true
