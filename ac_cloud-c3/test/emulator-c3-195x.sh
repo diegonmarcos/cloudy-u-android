@@ -133,8 +133,11 @@ if [ "$T" = all ] || [ "$T" = 1971 ]; then   # the VM row: the devices after the
 fi
 # #1982 the Projects row and the VM row, both always drawn, combined as AND: All/All, Unix only, oci-apps only, Unix + oci-apps, then both rows scrolled on the narrow screen
 if [ "$T" = all ] || [ "$T" = 1982 ]; then
-  open_page all_topology; sleep 6; shot c3-1982-all-all 4
-  chk c3-1982-all-all "Projects,VM,All,Unix,CG,Capital,Hardtech,Wiki,oci-apps,Topology,Table,Status,Type"
+  for _pass in 1 2 3; do   # a slow cold start leaves the Home page in the shot: open the page again until the two rows are there
+    open_page all_topology; sleep 6; shot c3-1982-all-all 4
+    has c3-1982-all-all 'text="Projects' && break
+  done
+  chk c3-1982-all-all "Projects,VM,All,Unix,CG,Capital,oci-apps,oci-analytics,Topology,Table,Status,Type"
   has c3-1982-all-all 'text="Projects"' && bad "c3-1982-all-all: the old Projects | VM toggle is still there"
   tap_text c3-1982-all-all "Unix"; shot c3-1982-unix-only 4
   chk c3-1982-unix-only "Unix,SuperApp,Cloud-me,Cloudy"
@@ -144,7 +147,7 @@ if [ "$T" = all ] || [ "$T" = 1982 ]; then
   chk c3-1982-oci-apps-only "oci-apps,Projects,VM"
   py="$(ypct c3-1982-oci-apps-only Projects)"; vy="$(ypct c3-1982-oci-apps-only VM)"
   hswipe "$py" 3 left; hswipe "$vy" 3 left; shot c3-1982-narrow-scrolled 3
-  chk c3-1982-narrow-scrolled "Projects,VM,Unknown_host"
+  chk c3-1982-narrow-scrolled "Projects,VM,Hardtech,Wiki,Unknown_host"
 fi
 # #1968 the category row has no Lib chip (Lib is Wiki); the old lib_topology id above opens through the alias
 if [ "$T" = all ] || [ "$T" = 1968 ]; then
