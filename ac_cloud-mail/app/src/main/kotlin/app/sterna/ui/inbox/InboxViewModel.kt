@@ -224,6 +224,9 @@ private const val PANE_THREAD = "pane.thread"
  * own and survives process death; it carries the reading pane's anchor (#103) and nothing else.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
+/** How long the list must rest before its top is written for the next cold start. */
+private const val FIRST_ROWS_SAVE_DELAY_MS = 1_500L
+
 class InboxViewModel(
     application: Application,
     private val savedState: SavedStateHandle,
@@ -1194,9 +1197,50 @@ class InboxViewModel(
      * handed them FIRST ([returningListRows]): the same rows in its first frame, with no store query, whatever generation the
      * cache above is still loading. Dropped when the view changes, so a return never shows another folder's rows.
      */
-    @Volatile private var shownRows: List<InboxRow> = emptyList()
+    @Volatile private var shownRows: List<InboxRow> = restoreFirstRows()
 
-    fun rememberShownRows(rows: List<InboxRow>) { shownRows = rows }
+    fun rememberShownRows(rows: List<InboxRow>) {
+        shownRows = rows
+        saveFirstRows(rows)
+    }
+
+    // #1952 cold start: the top of the list survives the process ([app.sterna.core.data.mail.KeptRows]), named by the view it belongs to.
+    private fun firstRowsFile(): java.io.File = java.io.File(getApplication<Application>().noBackupFilesDir, "list-first-rows.json")
+
+    private fun firstRowsView(): String? = encodeSelection(store.currentId(), selection.value)?.let { "$it\n${listView.value}" }
+
+    private fun restoreFirstRows(): List<InboxRow> = runCatching {
+        val view = firstRowsView() ?: return emptyList()
+        val file = firstRowsFile()
+        if (!file.isFile) return emptyList()
+        app.sterna.core.data.mail.KeptRows.decode(file.readText(), view).orEmpty()
+    }.getOrDefault(emptyList())
+
+    private var firstRowsSave: Job? = null
+
+    /** #1952: a start with no remembered Inbox id asks the STORE's folder list for it, not the next sync (which a cold start holds back). */
+    private fun resolveInboxFromTheStore() {
+        if ((selection.value as? Sel.Folder)?.id != null || selection.value !is Sel.Folder) return
+        val account = store.currentId() ?: return
+        viewModelScope.launch {
+            // Waits for the folder list to reach the store (a first sync writes it long before its 40 000 headers are in): until
+            // #1952 the id only arrived when the whole first refresh had ended, and the list stayed empty for that long.
+            val inbox = runCatching {
+                repo.observeMailboxes(account).first { folders -> folders.any { it.role?.trim()?.lowercase() == "inbox" } }
+                    .first { it.role?.trim()?.lowercase() == "inbox" }
+            }.getOrNull() ?: return@launch
+            if ((selection.value as? Sel.Folder)?.id == null && selection.value is Sel.Folder && store.currentId() == account) selection.value = Sel.Folder(inbox.id)
+        }
+    }
+
+    private fun saveFirstRows(rows: List<InboxRow>) {
+        val view = firstRowsView() ?: return
+        firstRowsSave?.cancel()
+        firstRowsSave = viewModelScope.launch(Dispatchers.IO) {
+            delay(FIRST_ROWS_SAVE_DELAY_MS)
+            runCatching { firstRowsFile().writeText(app.sterna.core.data.mail.KeptRows.encode(view, rows)) }
+        }
+    }
 
     val returningListRows: Flow<PagingData<InboxRow>> =
         app.sterna.core.data.mail.keptFirst({ shownRows.takeIf { it.isNotEmpty() }?.let { PagingData.from(it) } }, keptListRows)
@@ -1360,6 +1404,7 @@ class InboxViewModel(
         }
         // #1952: the kept rows belong to one view; another view starts from its own.
         viewModelScope.launch { selection.drop(1).collect { shownRows = emptyList() } }
+        resolveInboxFromTheStore()
         // Remember the view so a cold start reopens on it. The account is read HERE, at the write:
         // switchAccount() calls setCurrent(id) BEFORE onAccountChanged(). That leaves a window
         // where a refreshFolder() stores a stale pair — never one crossed between accounts.

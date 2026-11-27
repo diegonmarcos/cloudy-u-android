@@ -52,6 +52,31 @@ class ListReturn1952cTest {
         assertTrue("LaunchedEffect(listRows) { snapshotFlow { listRows.itemSnapshotList.items }.collect { if (it.isNotEmpty()) viewModel.rememberShownRows(it) } }" in screen)
     }
 
+    // -- cold start: the first rows survive the process -----------------------------------------------------------------
+
+    @Test fun `the top of the list is kept for the next cold start, for its own view only`() {
+        val rows = (1..40).map { InboxRow(app.sterna.core.jmap.model.Email(id = "m$it", subject = "s$it"), threadCount = it, unread = it % 2 == 0, threadExpandable = true, unreadCount = it % 3) }
+        val text = KeptRows.encode("acc\nf\ninbox\ndomain", rows)
+        val back = KeptRows.decode(text, "acc\nf\ninbox\ndomain")
+        assertEquals("one screen and a half, the top of the list, every field of a row", rows.take(KEPT_ROWS_MAX), back)
+        assertEquals("another folder never shows these rows", null, KeptRows.decode(text, "acc\nf\narchive\ndomain"))
+        assertEquals("another account neither", null, KeptRows.decode(text, "other\nf\ninbox\ndomain"))
+        assertEquals("a broken file is no rows, never a crash", null, KeptRows.decode("{not json", "acc\nf\ninbox\ndomain"))
+        val vm = code("app/src/main/kotlin/app/sterna/ui/inbox/InboxViewModel.kt")
+        assertTrue("@Volatile private var shownRows: List<InboxRow> = restoreFirstRows()" in vm)
+        assertTrue("runCatching { firstRowsFile().writeText(app.sterna.core.data.mail.KeptRows.encode(view, rows)) }" in vm)
+        assertTrue("an unknown Inbox id is read from the store", "resolveInboxFromTheStore()" in vm)
+    }
+
+    @Test fun `the background fill pauses between batches only while the app is on screen`() {
+        assertEquals(UI_RESUMED_BATCH_PAUSE_MS, UiLoad.pauseMs(resumed = true))
+        assertEquals("a worker with no screen runs flat out", 0L, UiLoad.pauseMs(resumed = false))
+        assertTrue(code("core/data/src/main/kotlin/app/sterna/core/data/mail/FullSync.kt").let { it.indexOf("UiLoad.yieldToUi()") in 0 until it.indexOf("port.fetchBodies(folder, ids)") })
+        assertTrue(code("core/data/src/main/kotlin/app/sterna/core/data/mail/BodyPrefetch.kt").let { it.indexOf("UiLoad.yieldToUi()") in 0 until it.indexOf("port.fetchAndStore(batch)") })
+        val activity = code("app/src/main/kotlin/app/sterna/MainActivity.kt")
+        assertTrue(activity.any { it.startsWith("app.sterna.core.data.mail.UiLoad.uiResumed = true") } && "app.sterna.core.data.mail.UiLoad.uiResumed = false" in activity)
+    }
+
     // -- cold start: one key ----------------------------------------------------------------------------------------
 
     @Test fun `the pager's first key carries the stored view, never a placeholder`() {

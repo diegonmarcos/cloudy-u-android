@@ -43,8 +43,14 @@ class MainActivity : AppCompatActivity() {
     private val pendingConfigsPage = androidx.compose.runtime.mutableStateOf<String?>(null)
 
     /** Read here, on its own, so both the cold start and the singleTask re-entry are covered; the extra is stripped once read. */
+    override fun onPause() {
+        super.onPause()
+        app.sterna.core.data.mail.UiLoad.uiResumed = false
+    }
+
     override fun onResume() {
         super.onResume()
+        app.sterna.core.data.mail.UiLoad.uiResumed = true // #1952: the background fill gives way to the screen
         val page = intent?.getStringExtra(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsActivity.EXTRA_PAGE) ?: return
         intent.removeExtra(com.diegonmarcos.superapp.fleetconfigs.FleetConfigsActivity.EXTRA_PAGE)
         pendingConfigsPage.value = page

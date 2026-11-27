@@ -283,6 +283,7 @@ class FullSync(
                 if (ids.isEmpty()) break
                 attempted += ids
                 try {
+                    UiLoad.yieldToUi()
                     port.fetchBodies(folder, ids)
                     bodies += ids.size
                 } catch (c: CancellationException) {

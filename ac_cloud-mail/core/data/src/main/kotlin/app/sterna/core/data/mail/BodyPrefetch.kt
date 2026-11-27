@@ -129,6 +129,7 @@ class BodyPrefetcher(
                             // Re-read per batch: battery saver switched on mid-pass stops the rest.
                             if (!prefetchBudget(conditions(), trigger).allowed) return@withPermit
                             try {
+                                UiLoad.yieldToUi()
                                 port.fetchAndStore(batch)
                                 synchronized(lock) { done++ }
                             } catch (c: CancellationException) {
