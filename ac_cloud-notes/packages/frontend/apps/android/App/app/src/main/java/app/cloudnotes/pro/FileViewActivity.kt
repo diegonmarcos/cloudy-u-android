@@ -110,8 +110,9 @@ class FileViewActivity : Activity() {
      */
     private fun showPdf(root: LinearLayout, u: Uri) {
         try {
-            startActivity(Intent(this, PdfViewActivity::class.java).setDataAndType(u, "application/pdf")
-                .setClipData(android.content.ClipData.newRawUri(name, u)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
+            val view = Intent(this, PdfViewActivity::class.java).setDataAndType(u, "application/pdf").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            view.clipData = android.content.ClipData.newRawUri(name, u)
+            startActivity(view)
             finish()
         } catch (e: Exception) {
             root.addView(label("Cannot open this PDF (${e.message ?: e.javaClass.simpleName})."))
