@@ -304,6 +304,7 @@ class LnktreeCacheStore(val root: File, private val clock: () -> Long = System::
         CacheTtl.decide(get(pageId, url)?.fetchedAt, clock(), ttlMs)
 
     fun put(pageId: String, url: String, mime: String, encoding: String?, status: Int, bytes: ByteArray, reason: String? = null) {
+        val budget = budget   // read from disk BEFORE this write (a lazy first read after it counted the file twice)
         if (sharedFor(pageId, url) && status == 200) {
             shared!!.put(SHARED_ID, url, mime, encoding, status, bytes)
             metaFile(pageId, url).delete(); bodyFile(pageId, url).delete()   // a page-local mark it replaces
