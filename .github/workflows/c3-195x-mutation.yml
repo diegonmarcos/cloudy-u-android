@@ -62,7 +62,7 @@ jobs:
             # #1955-B the mail_map alias is dropped (a deep link to the old Mail subpage opens nothing)
             mail-alias-lost)   pyj ac_cloud-c3/build.json 'del d["ui"]["aliases"]["pages"]["mail_map"]' ;;
             # #1968 a former Lib entity (the root _git-repos-master) loses its Wiki attachment (the parity test must catch it)
-            wiki-lost)         pyj $D/repos_declared.json 'r = next(x for x in d["repos"] if x["name"] == "_git-repos-master"); r["attached"] = []' ;;
+            wiki-lost)         pyj $D/repos_declared.json 'r = next(x for x in d["repos"] if x["name"] == "_git-repos-master"); r["attached"] = []; r["project"] = ""' ;;
             # #1969 Home loses the row of the first page of every section (a declared page has no row)
             home-row-lost)     sed -i 's/flat(s.pages).map { (p, depth) ->/flat(s.pages).drop(1).map { (p, depth) ->/' $K/pages/HomeLive.kt ;;
             # #1969 a Home source that failed shows a zero instead of its reason
