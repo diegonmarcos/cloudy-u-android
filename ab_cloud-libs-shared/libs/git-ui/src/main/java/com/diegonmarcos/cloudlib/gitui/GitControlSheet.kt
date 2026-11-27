@@ -351,8 +351,8 @@ private fun BulkScopeBar(sheet: GitSheet, host: GitSheetHost, actions: GitSheetA
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(k.gapWide), verticalAlignment = Alignment.CenterVertically) {
             Row(Modifier.weight(1f, fill = trailing == null).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(k.gapWide), verticalAlignment = Alignment.CenterVertically) {
                 sheet.scopes.forEach { sc -> k.pill(GitPill(sc.label, { actions.setScope(sc.id) }, Modifier.testTag("git_bulk_scope_" + sc.id), filled = sc.id == host.scope)) }
-                if (trailing != null) count()
             }
+            if (trailing != null) count()
             trailing?.invoke()
         }
         if (trailing == null) count()
