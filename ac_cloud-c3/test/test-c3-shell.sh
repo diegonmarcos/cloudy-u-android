@@ -713,7 +713,7 @@ m_declare_unbuilt() { jqset "$1$A/build.json" 'sec("orch")["pages"].append(colle
 m_placeholder_body() { python3 - "$1$A/app/src/main/java/com/diegonmarcos/cloudc3/pages/TabFragments.kt" <<'PY'
 import sys
 p=sys.argv[1]; s=open(p).read(); b=s
-s=s.replace('        "health" -> C3HealthFragment.newInstance(C3HealthFragment.SCOPE_ALL)',
+s=s.replace('        "health" -> HealthDebugFragment.newInstance()',
             '        "health" -> NotBuiltYet()')
 assert s!=b
 open(p,"w").write(s)
