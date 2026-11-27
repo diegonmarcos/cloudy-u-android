@@ -208,7 +208,7 @@ private fun TableRow(cells: List<String>, group: Boolean, header: Boolean) {
     val weight = if (group || header) FontWeight.Bold else FontWeight.Normal
     Row(Modifier.fillMaxWidth().padding(top = if (group) 12.dp else 6.dp, start = if (group || header) 0.dp else 12.dp)) {
         cells.forEachIndexed { i, c ->
-            Text(c, color = ink, fontSize = 13.sp, fontWeight = weight, modifier = Modifier.weight(if (i == 0) 2.4f else 1f),
+            Text(c, color = ink, fontSize = 13.sp, fontWeight = weight, modifier = Modifier.weight(if (i == 0) (if (cells.size > 4) 1.6f else 2.4f) else 1f),   // #1976 the five-column Places table keeps its headings on one line
                 textAlign = if (i == 0) TextAlign.Start else TextAlign.End)
         }
     }

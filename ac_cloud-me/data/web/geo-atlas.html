@@ -25,7 +25,7 @@ function X(lo){return ((lo-f[0])*cx*k).toFixed(1)}function Y(la){return ((f[3]-l
 var paintC=mode==='country'||mode==='culture';
 D.countries.forEach(function(c){var v=vis[c.iso],eff=v?v.continent:c.continent;if(eff!==cur)return;total++;if(v){nv++;names.push(v)}
 var d=c.rings.map(function(r){return 'M'+r.map(function(q){return X(q[0])+','+Y(q[1])}).join('L')+'Z'}).join('');var on=v&&paintC;
-var p=el('path',{d:d,'class':'c'+(on?' v':''),'data-iso':c.iso,'data-visited':v?1:0});if(on)p.setAttribute('fill',mode==='culture'?(cul[D.culture[c.iso]]||col):col);
+var p=el('path',{d:d,'class':'c'+(on?' v':''),'data-iso':c.iso,'data-visited':v?1:0});if(on)p.style.fill=(mode==='culture'?(cul[D.culture[c.iso]]||col):col);
 var t=el('title',{});t.textContent=c.name+(v?' (visited, '+v.days+' days)':' (not visited)');p.appendChild(t);s.appendChild(p)});
 for(var iso in vis){var v=vis[iso];if(v.continent!==cur)continue;if(!D.countries.some(function(c){return c.iso===iso})){total++;nv++;names.push(v);if(paintC){var m=el('circle',{cx:X(v.lng),cy:Y(v.lat),r:3.5,fill:col,'class':'m','data-iso':iso,'data-visited':1});s.appendChild(m)}}}
 var pts=[],lg='';
