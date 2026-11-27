@@ -21,6 +21,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.verticalScroll
+import com.diegonmarcos.cloudlib.gitui.GitSheetPart
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -297,4 +301,33 @@ private fun GitTopGroup(g: Declarations.GitTopGroupDecl, enabledReason: (Declara
                 }
             }
         }
+}
+
+/**
+ * #1934 THE TOP NAV: row 1 = the scope chips (All Repos | Selected Ones | Cloned Ones) with the storage selector (the cloud button) and Settings (the gear) at its end,
+ * row 2 = the group tabs (Overview | Sync | Clone | Workflow | Manage), then the open tab's controls drawn right here (no sheet): the SAME declaration as the per-repo
+ * control sheet, so the old Refresh | Sync | Clone | Logs | More actions are the controls of these groups ([bulk] draws the TOP part, then the BODY part while [open]).
+ */
+@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+@Composable
+internal fun GitTopNav(open: Boolean, onCollapse: () -> Unit, collapseLabel: String, bodyScroll: androidx.compose.foundation.ScrollState, bulk: @Composable (GitSheetPart) -> Unit) {
+    val maxBody = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.42f).dp
+    Column(Modifier.fillMaxWidth().padding(horizontal = DriveMetrics.sectionInset, vertical = DriveMetrics.gap).semantics { testTagsAsResourceId = true }.testTag(DriveTags.SYNC_GIT_TOP_BAR)) {
+        bulk(GitSheetPart.TOP)
+        if (open) {
+            Pill(collapseLabel, onCollapse, modifier = Modifier.testTag("git_nav_collapse"))
+            Column(Modifier.heightIn(max = maxBody).verticalScroll(bodyScroll).testTag("git_bulk_scroll")) { bulk(GitSheetPart.BODY) }
+        }
+    }
+}
+
+/** #1934 the old row's storage selector (the cloud button) and Settings gear, kept at the end of the nav's scope row. */
+@Composable
+internal fun GitNavUtility(decl: Declarations.GitTopBarDecl, prefs: DrivePrefs?, storage: @Composable () -> Unit) {
+    var sheet by remember { mutableStateOf(false) }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        storage()
+        if (prefs != null) Row(Modifier.testTag(DriveTags.SYNC_AUTO_SETTINGS)) { IslandAction(Icons.Filled.Settings, decl.label("settings")) { sheet = true } }
+    }
+    if (sheet && prefs != null) AutoSettingsSheet(AutoChecks.Page.GIT, prefs) { sheet = false }
 }

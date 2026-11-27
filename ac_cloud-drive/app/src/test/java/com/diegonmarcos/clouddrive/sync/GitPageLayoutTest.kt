@@ -50,10 +50,10 @@ class GitPageLayoutTest {
 
     @Test fun `the declared top bar comes before the rows and dispatches every declared kind`() {
         val block = src.substring(src.indexOf("fun LazyListScope.tableBlock()"))
-        assertTrue(block.indexOf("GitTopBar(page.topBar") in 0 until block.indexOf("items(sortedEntries"))
+        assertTrue(block.indexOf("GitTopNav(navOpen") in 0 until block.indexOf("items(sortedEntries"))
         // #1452 the block is two rows (actions, filters) then the column header: no summary line, no Clone-into row
         assertFalse(block.contains("Text(summaryLine") || block.contains("GitCloneTargetRow("))
-        assertTrue(block.indexOf("QuickFilterRail(") in block.indexOf("GitTopBar(page.topBar") until block.indexOf("RepoTableHeader(sortColumn"))
+        assertTrue(block.indexOf("QuickFilterRail(") in block.indexOf("GitTopNav(navOpen") until block.indexOf("RepoTableHeader(sortColumn"))
         // #1315 no Kotlin list of bulk commands: every kind of ui.sync.git.top_bar has a branch, nothing else does.
         for (k in Declarations.TOP_KINDS) assertTrue(k, src.contains("\"$k\" ->"))
         assertFalse(src.contains("RepoActions.Bulk"))
@@ -76,7 +76,7 @@ class GitPageLayoutTest {
     @Test fun `#1195 the actions bar sits above the column header and the header is the sticky item right below it`() {
         val block = src.substring(src.indexOf("fun LazyListScope.tableBlock()"))
         val sticky = block.indexOf("stickyHeader(key = \"table-top\")")
-        val bar = block.indexOf("GitTopBar(page.topBar")
+        val bar = block.indexOf("GitTopNav(navOpen")
         val header = block.indexOf("RepoTableHeader(sortColumn")
         val rows = block.indexOf("items(sortedEntries")
         // #1315 the declared toolbar, then the column header, both INSIDE the one sticky block, then the rows.
@@ -88,7 +88,7 @@ class GitPageLayoutTest {
 
     @Test fun `#1195 git fsync and mounts share one actions bar with the settings sheet and one tap-to-open row`() {
         // #1315 the Git bar is the declared GitTopBar (sync/GitTopBar.kt); Fsync and Mounts keep the shared PageActionsBar of TablePage.kt.
-        assertTrue(File(dir, "TablePage.kt").readText().contains("fun PageActionsBar(") && src.contains("GitTopBar(page.topBar"))
+        assertTrue(File(dir, "TablePage.kt").readText().contains("fun PageActionsBar(") && src.contains("GitTopNav(navOpen"))
         assertFalse("the Git table has no second, enum-driven bar", tableUi.contains("PageActionsBar("))
         assertEquals("one Fsync bar (#1216: folders only)", 1, Regex("PageActionsBar\\(").findAll(fsync).count())
         assertEquals("two Mounts bars (rclone, fuse)", 2, Regex("PageActionsBar\\(").findAll(mounts).count())

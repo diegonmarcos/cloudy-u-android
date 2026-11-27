@@ -101,6 +101,8 @@ fun GitControlSheetView(
     sheet: GitSheet, state: GitSheetState, host: GitSheetHost, actions: GitSheetActions, modifier: Modifier = Modifier, onTabSelected: (String) -> Unit = {},
     /** TOP = the header and the tab row (the host pins them outside its scrolling body), BODY = the open tab's groups and the confirm dialogs, ALL = both. */
     part: GitSheetPart = GitSheetPart.ALL,
+    /** #1934 the top-nav host's own icons (storage, settings), drawn at the end of the scope row: a non-null slot also draws the scope bar compact (one row). */
+    scopeTrailing: (@Composable () -> Unit)? = null,
 ) {
     val k = LocalGitUiKit.current
     val tabs = sheet.tabsFor(host.bulk)
@@ -116,7 +118,7 @@ fun GitControlSheetView(
     }
     Column(modifier.fillMaxWidth().semantics { testTagsAsResourceId = true }.testTag("git_control_sheet_" + part.name.lowercase()), verticalArrangement = Arrangement.spacedBy(k.gapWide)) {
         if (part != GitSheetPart.BODY && !host.bulk) Header(sheet, host, actions, ::blocked)
-        if (part != GitSheetPart.BODY && host.bulk) BulkScopeBar(sheet, host, actions)
+        if (part != GitSheetPart.BODY && host.bulk) BulkScopeBar(sheet, host, actions, scopeTrailing)
         if (part != GitSheetPart.BODY) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag("git_sheet_tabs"), horizontalArrangement = Arrangement.spacedBy(k.gapWide)) {
             tabs.forEach { t -> k.pill(GitPill(t.label, { state.tab = t.id; onTabSelected(t.id) }, Modifier.testTag("git_sheet_tab_" + t.id), filled = t.id == open?.id)) }
         }
@@ -341,14 +343,19 @@ private fun ConfirmDialog(what: String, targets: List<String>, scopeLabel: Strin
 /** #1934 the bulk sheet's pinned scope bar: the three scopes, the count they hold, and the run's summary with Cancel (the progress rows are under Workflow > Output). */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun BulkScopeBar(sheet: GitSheet, host: GitSheetHost, actions: GitSheetActions) {
+private fun BulkScopeBar(sheet: GitSheet, host: GitSheetHost, actions: GitSheetActions, trailing: (@Composable () -> Unit)? = null) {
     val k = LocalGitUiKit.current
+    val count: @Composable () -> Unit = { Text(stringResource(R.string.git_bulk_scope_count, host.targets.size), Modifier.testTag("git_bulk_scope_count"), style = MaterialTheme.typography.labelMedium, fontFamily = FontFamily.Monospace) }
     Column(Modifier.testTag("git_bulk_scope_bar"), verticalArrangement = Arrangement.spacedBy(k.gap)) {
-        Text(stringResource(R.string.git_bulk_scope_title), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(k.gapWide), verticalAlignment = Alignment.CenterVertically) {
-            sheet.scopes.forEach { sc -> k.pill(GitPill(sc.label, { actions.setScope(sc.id) }, Modifier.testTag("git_bulk_scope_" + sc.id), filled = sc.id == host.scope)) }
+        if (trailing == null) Text(stringResource(R.string.git_bulk_scope_title), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(k.gapWide), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.weight(1f, fill = trailing == null).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(k.gapWide), verticalAlignment = Alignment.CenterVertically) {
+                sheet.scopes.forEach { sc -> k.pill(GitPill(sc.label, { actions.setScope(sc.id) }, Modifier.testTag("git_bulk_scope_" + sc.id), filled = sc.id == host.scope)) }
+                if (trailing != null) count()
+            }
+            trailing?.invoke()
         }
-        Text(stringResource(R.string.git_bulk_scope_count, host.targets.size), Modifier.testTag("git_bulk_scope_count"), style = MaterialTheme.typography.labelMedium, fontFamily = FontFamily.Monospace)
+        if (trailing == null) count()
         if (host.progress.isNotEmpty()) {
             val sum = BulkProgress.summary(host.progress)
             Row(horizontalArrangement = Arrangement.spacedBy(k.gapWide), verticalAlignment = Alignment.CenterVertically) {

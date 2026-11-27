@@ -846,6 +846,9 @@
     <string name="git_list_as_of">List as of %1$s</string>
     <string name="git_list_never">List not read yet: pull down or Refresh</string>
     <string name="git_list_refreshing">refreshing</string>
+    <string name="git_list_failed">refresh failed: %1$s</string>
+    <string name="git_list_no_credential">refresh needs a sign-in (gh, the fleet or a token)</string>
+    <string name="git_nav_collapse">Hide controls</string>
     <string name="git_list_refresh">Refresh repo list</string>
     <string name="git_sheet_refresh_title">Refresh</string>
     <string name="editor_explorer_open">Open file explorer</string>

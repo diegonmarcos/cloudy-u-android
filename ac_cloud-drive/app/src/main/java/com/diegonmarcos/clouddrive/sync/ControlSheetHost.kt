@@ -148,6 +148,8 @@ internal fun BulkControlSheet(
     part: GitSheetPart = GitSheetPart.ALL, sheetState: GitSheetState? = null,
     /** A tab was selected: the page scrolls the sheet back to its top (the tabs differ in length). */
     onTabSelected: () -> Unit = {},
+    /** #1934 the top nav's own icons (storage, settings) at the end of the scope row. */
+    scopeTrailing: (@Composable () -> Unit)? = null,
 ) {
     val ctx = LocalContext.current
     val lang = java.util.Locale.getDefault().language
@@ -176,7 +178,7 @@ internal fun BulkControlSheet(
         override fun togglePick(name: String) = onPick(name)
         override fun cancelRun() = onCancel()
     }
-    GitControlSheetView(sheet, state, host, actions, Modifier, onTabSelected = { onTabSelected() }, part = part)
+    GitControlSheetView(sheet, state, host, actions, Modifier, onTabSelected = { onTabSelected() }, part = part, scopeTrailing = scopeTrailing)
 }
 
 /** #1934 the effects of the controls that touch the device, pure enough to be executed by ControlEffectsTest. */

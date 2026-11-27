@@ -318,16 +318,17 @@ sys.exit(1)' "$1"; }
 brec() { # <scope> <id> <label> <0=ok> <value>
   if [ "$4" = 0 ]; then ok=$((ok+1)); printf 'bulk-%s\t%s\t%s\tverified (value ok)\t%s\n' "$1" "$2" "$3" "$5" >> "$OUT/walk.tsv"
   else miss=$((miss+1)); printf 'bulk-%s\t%s\t%s\tVALUE MISMATCH (got "%s")\t-\n' "$1" "$2" "$3" "$5" >> "$OUT/walk.tsv"; fi; }
-bshot() { adb exec-out screencap -p > "$OUT/walk/drive-bulk-1934-$1-$2.png" 2>/dev/null; }
+bshot() { adb exec-out screencap -p > "$OUT/walk/drive-topnav-1934-$1-$2.png" 2>/dev/null; }
 fixfile() { adb shell "run-as $PKG cat files/fixtures/$1/a.txt" < /dev/null 2>/dev/null | tr -d '\r\n'; }
 find_ctl() { # <rid>: scroll the body until the control is on screen; prints "x y state"
-  local n pos; for n in 0 1 2 3 4 5 6 7; do dump >/dev/null; pos=$(probe "$1") && { echo "$pos"; return 0; }; scroll_body || return 1; sleep 1; done; return 1; }
+  local n pos; for n in $(seq 0 24); do dump >/dev/null; pos=$(probe "$1") && { echo "$pos"; return 0; }; scroll_body || return 1; sleep 1; done; return 1; }
 tap_ctl() { local pos; pos=$(find_ctl "$1") || return 1; set -- $pos; [ "$3" = enabled ] && adb shell input tap "$1" "$2" < /dev/null; echo "$3"; }
+# #1934 the bulk controls are the page's own TOP NAV (scope chips row, group tabs row): "opening" is tapping a tab, "closing" is the nav's Hide controls button
 open_bulk() {
-  tap_rid sync_git_top_group_more >/dev/null || { snap no-more; fail "no More menu"; }; sleep 1
-  for i in 1 2 3 4 5; do tap_text '^All repos sheet$' && break; adb shell input swipe $((W*2/3)) $((H*70/100)) $((W*2/3)) $((H*30/100)) 300 < /dev/null; sleep 1; done
-  sleep 3; has_rid git_bulk_scope_bar || { snap no-bulk; fail "the bulk sheet did not open"; }; }
-close_bulk() { for b in 1 2 3; do has_rid git_bulk_scope_bar || return 0; adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 2; done; }
+  has_rid git_bulk_scope_bar || { snap no-nav; fail "the top nav (scope chips) is not on the page"; }
+  for b in 1 2 3; do tap_rid git_sheet_tab_overview >/dev/null; sleep 2; has_rid git_bulk_scroll && return 0; done
+  snap no-bulk; fail "the top nav did not open its controls"; }
+close_bulk() { tap_rid git_nav_collapse >/dev/null; sleep 1; }
 wait_summary() { local n t; for n in $(seq 1 45); do t=$(nodetext git_bulk_summary) && printf '%s' "$t" | grep -q '^Summary ' && { echo "$t"; return 0; }; sleep 2; done; echo "${t:-no summary}"; return 1; }
 bulk_phase() {
   local S=$1 label cnt wantcnt t st sum rows
@@ -405,12 +406,9 @@ bulk_phase() {
   tap_text '^Cancel$' || adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 1
   close_bulk
 }
-# 3. the all-repos sheet over the 3 fixture repositories: More is pinned in the toolbar (tag sync_git_top_group_more)
+# 3. the all-repos nav over the 3 fixture repositories: the old More button is gone, its controls are the nav's tabs
 if want all-repos; then
-  tap_rid sync_git_top_group_more >/dev/null || { snap no-more; fail "no More menu"; }; sleep 1
-  # the More menu is a long scrolling dropdown: the item sits below the fold
-  for i in 1 2 3 4 5; do tap_text '^All repos sheet$' && break; adb shell input swipe $((W*2/3)) $((H*70/100)) $((W*2/3)) $((H*30/100)) 300 < /dev/null; sleep 1; done
-  sleep 3; sheet_open || { snap no-bulk; fail "the all-repos sheet did not open"; }
+  open_bulk; bshot all-repos nav-open
   walk bulk yes "$NAME"
 fi
 for sc in all selected cloned; do want bulk-$sc && bulk_phase $sc; done

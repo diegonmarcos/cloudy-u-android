@@ -52,7 +52,7 @@ t2() {
   grep -q 'repo_bulk_' "$APP/app/src/main/res/values/strings.xml" && { echo "    strings.xml still carries repo_bulk_*"; bad=1; }
   grep -rqE 'fun (RepoBulkBar|DepthBar|RepoFilterRow)\(' "$SYNC" && { echo "    an old bar composable survives"; bad=1; }
   local block; block=$(sed -n '/stickyHeader(key = "table-top")/,/^        }$/p' "$1")
-  for t in 'GitTopBar(page.topBar' 'GitJobLine(' 'GitSearchRow(' 'QuickFilterRail(' 'RepoTableHeader(sortColumn'; do grep -qF -- "$t" <<<"$block" || { echo "    the sticky block lacks $t"; bad=1; }; done
+  for t in 'GitTopNav(navOpen' 'GitJobLine(' 'GitSearchRow(' 'QuickFilterRail(' 'RepoTableHeader(sortColumn'; do grep -qF -- "$t" <<<"$block" || { echo "    the sticky block lacks $t"; bad=1; }; done
   # #1452 two rows only (actions, filters): no Clone-into row, no summary line
   for t in 'GitCloneTargetRow(' 'Text(summaryLine'; do grep -qF -- "$t" <<<"$block" && { echo "    the sticky block still has $t"; bad=1; }; done
   grep -q 'item(key = "table-bulk")' "$1" && { echo "    a plain item still sits above the sticky block"; bad=1; }
