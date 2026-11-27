@@ -82,7 +82,7 @@ for needle, what in (("PhoneAppActions.installerOf(ctx, pkg)", "origin_store is 
                      ("StoreMembership.fleetPackages(Fleet.parse(BuildConfig.CONSTELLATION_FLEET_B64))", "fleet membership comes from the manifest, alt ids included (#1681 the one tab classifier)")):
     if needle in inv: ok(what)
     else: bad("AppInventory: " + what + " - missing " + needle)
-if "PhoneAppActions.sources(app)" in phone: ok("the import reads the map shipped in assets")
+if "PhoneAppActions.sources(app)" in phone or "PhoneAppActions.sources(app)" in imp_: ok("the import reads the map shipped in assets")
 else: bad("the import does not read PhoneAppActions.sources")
 src = json.loads(read(os.path.join(os.environ.get("FLEET_PRIVATE_DIR") or os.path.join(lib, "../../../../../fleet-private-data"), "appstore-install-sources.json")))   # #1566 fleet-private: CI materialises it
 installers = sorted(src["sources"])
