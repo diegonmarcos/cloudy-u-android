@@ -74,7 +74,7 @@ object MeshView {
                 "wg0-tcp" -> tcpNodes to tcpPeers
                 else      -> mesh.nodes to mesh.peers
             }
-            TransportCard(transport, nodesForT, peersForT)
+            TransportCard(transport, nodesForT, peersForT, mesh)
         }
     }
 
@@ -83,6 +83,7 @@ object MeshView {
         t: Stacks.MeshTransport,
         nodes: List<Stacks.MeshNode>,
         peers: List<Stacks.MeshPeer>,
+        mesh: Stacks.Mesh? = null,
     ) {
         val p = LocalKitPalette.current
         Column(Modifier.fillMaxWidth().padding(bottom = 14.dp).testTag("c3:mesh:${t.name}")) {
@@ -106,6 +107,10 @@ object MeshView {
                     fontFamily = FontFamily.Monospace,
                     modifier = Modifier.padding(top = 4.dp).alpha(0.85f),
                 )
+                // #1955 A the snapshot's health line (mesh.json health): a blank field prints as not served, never as nothing
+                if (mesh != null) Text("health ${mesh.healthStatus.ifBlank { "not served" }} · last snapshot ${mesh.lastSnapshotAt.ifBlank { "not served" }}",
+                    color = p.textSecondary, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace,
+                    modifier = Modifier.padding(top = 2.dp).testTag("c3:mesh:health:${t.name}"))
             }
 
             Column(Modifier.fillMaxWidth().padding(top = 4.dp)) {
@@ -123,6 +128,19 @@ object MeshView {
                             Line("${peer.from}  →  ${peer.to}", title = true)
                             Line("AllowedIPs: ${peer.allowedIps.joinToString(", ")}")
                             Line("keepalive ${peer.keepalive}s", dim = true)
+                        }
+                    }
+                }
+
+                // ── routes (#1955 A: mesh.json routes via this transport) ──
+                val routes = mesh?.routes.orEmpty().filter { it.viaTransport == t.name }
+                if (routes.isNotEmpty()) {
+                    Subheader("Routes · ${routes.size}")
+                    for (r in routes) {
+                        val alias = mesh?.nodes?.firstOrNull { it.name == r.srcNode }?.alias.orEmpty()
+                        Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp).testTag("c3:mesh:route:${r.srcNode}")) {
+                            Line("${alias.ifBlank { r.srcNode }}  →  ${r.dstSubnet}", title = true)
+                            Line("via ${r.viaTransport}", dim = true)
                         }
                     }
                 }

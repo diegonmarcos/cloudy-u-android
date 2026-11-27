@@ -137,10 +137,16 @@ object Stacks {
         val activePeers: Int,
         val useCase: String,
     )
+    /** #1955 A one declared mesh route (mesh.json `routes`): which node reaches which subnet through which transport. */
+    data class MeshRoute(val srcNode: String, val dstSubnet: String, val viaTransport: String)
     data class Mesh(
         val nodes: List<MeshNode>,
         val peers: List<MeshPeer>,
         val transports: List<MeshTransport>,
+        /** #1955 A mesh.json `routes` and `health` (status, last snapshot), shown in the cards so the Table carries what the Graph draws */
+        val routes: List<MeshRoute> = emptyList(),
+        val healthStatus: String = "",
+        val lastSnapshotAt: String = "",
     )
 
     @Volatile private var cachedTopology: List<StackPanel>? = null
@@ -328,7 +334,14 @@ object Stacks {
             )
         }
 
-        val out = Mesh(nodes, peers, transports)
+        val routes = mutableListOf<MeshRoute>()
+        val rArr = root.optJSONArray("routes") ?: org.json.JSONArray()
+        for (i in 0 until rArr.length()) {
+            val r = rArr.getJSONObject(i)
+            routes.add(MeshRoute(r.optString("src_node", ""), r.optString("dst_subnet", ""), r.optString("via_transport", "")))
+        }
+        val health = root.optJSONObject("health")
+        val out = Mesh(nodes, peers, transports, routes, health?.optString("status", "").orEmpty(), health?.optString("last_snapshot_at", "").orEmpty())
         cachedMesh = out
         return out
     }
