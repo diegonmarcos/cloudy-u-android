@@ -58,7 +58,11 @@ fun RingScreen(onDone: () -> Unit) {
     val d = remember(version) { ClockEngine.load(ctx) }
     LaunchedEffect(d.ringing.isEmpty()) { if (d.ringing.isEmpty()) onDone() }
     Column(
-        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(12.dp).testTag(RING_TAG),
+        // #1970 the ringing alarm's chosen background (the sheet's Alarm background preview), in the theme's colours
+        Modifier.fillMaxSize().background(com.diegonmarcos.clocktools.ui.ringBackground(
+            d.alarms.firstOrNull { a -> d.ringing.lastOrNull()?.key == ClockLogic.alarmKey(a.id) }?.background ?: ClockDesign.BACKGROUND_DEFAULT,
+            MaterialTheme.colorScheme,
+        )).padding(12.dp).testTag(RING_TAG),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -75,7 +79,7 @@ fun RingScreen(onDone: () -> Unit) {
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
                 Button(onClick = { ClockEngine.dismiss(ctx, r.key) }) { Text(stringResource(R.string.clock_dismiss)) }
-                if (r.key.startsWith("alarm:")) FilledTonalButton(onClick = { ClockEngine.snooze(ctx, r.key) }) { Text(stringResource(R.string.clock_snooze)) }
+                if (r.key.startsWith("alarm:") && d.alarms.firstOrNull { ClockLogic.alarmKey(it.id) == r.key }?.let(ClockLogic::canSnooze) != false) FilledTonalButton(onClick = { ClockEngine.snooze(ctx, r.key) }) { Text(stringResource(R.string.clock_snooze)) }
                 if (r.key.startsWith("timer:")) {
                     FilledTonalButton(onClick = { ClockEngine.control(ctx, "timer_add", r.key) }) { Text(stringResource(R.string.clock_plus_minute)) }
                 }

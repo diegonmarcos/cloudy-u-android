@@ -544,7 +544,9 @@
     "needs": [
       "notifications",
       "install_unknown",
-      "exact_alarm"
+      "exact_alarm",
+      "calendar_read",
+      "calendar_write"
     ],
     "helpers": [],
     "first_run": "libs:perms"

@@ -6,5 +6,5 @@ package com.diegonmarcos.clocktools
  * own test pins its Clock to Cloud Calc's, so the two apps cannot drift apart.
  */
 object ClockSubpages {
-    val IDS: List<String> = listOf("world", "alarms", "timers", "stopwatch", "interval", "bedtime")
+    val IDS: List<String> = listOf("world", "alarms", "timers", "stopwatch", "interval", "bedtime", "pomodoro")
 }

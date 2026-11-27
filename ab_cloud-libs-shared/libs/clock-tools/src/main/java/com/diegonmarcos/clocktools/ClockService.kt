@@ -80,7 +80,7 @@ class ClockService : Service() {
         val sound = alarm?.sound.orEmpty()
         if (sound != Alarm.SILENT) player = play(sound) ?: play("")
         if (alarm?.vibrate ?: ClockTools.config(this@ClockService).vibrateDefault) {
-            vibrator(this)?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 800, 600), 0), ClockEngine.alarmAudio)
+            vibrator(this)?.vibrate(VibrationEffect.createWaveform(ClockDesign.vibrationPattern(alarm?.vibration ?: ClockDesign.VIBRATION_DEFAULT), 0), ClockEngine.alarmAudio)
         }
     }
 
@@ -115,7 +115,7 @@ class ClockService : Service() {
         /** Whether anything needs the service: something rings, runs, or waits paused. */
         fun needed(d: ClockData): Boolean = d.ringing.isNotEmpty() ||
             d.timers.any { it.state == TimerState.RUNNING || it.state == TimerState.PAUSED } ||
-            d.stopwatch.running || d.interval != null || d.sleepUntil > 0
+            d.stopwatch.running || d.interval != null || d.sleepUntil > 0 || d.pomodoro.running || d.pomodoro.remainingMs >= 0
 
         fun running(): Boolean = live != null
 
@@ -195,7 +195,10 @@ object ClockNotifications {
                 .setOngoing(true)
                 .setFullScreenIntent(ringScreen(ctx), true)
                 .addAction(0, ctx.getString(R.string.clock_dismiss), control(ctx, "dismiss_all", ""))
-            if (top.key.startsWith("alarm:")) b.addAction(0, ctx.getString(R.string.clock_snooze), control(ctx, "snooze", top.key))
+            if (top.key.startsWith("alarm:") && d.alarms.firstOrNull { ClockLogic.alarmKey(it.id) == top.key }?.let(ClockLogic::canSnooze) != false) {
+                b.addAction(0, ctx.getString(R.string.clock_snooze), control(ctx, "snooze", top.key))
+            }
+            if (top.key == ClockLogic.POMODORO) b.addAction(0, ctx.getString(R.string.clock_start), control(ctx, "pomodoro_start", ""))
             if (top.key.startsWith("timer:")) b.addAction(0, ctx.getString(R.string.clock_plus_minute), control(ctx, "timer_add", top.key))
             return b.build()
         }
@@ -209,6 +212,18 @@ object ClockNotifications {
                     .setContentText(i.label)
                     .setUsesChronometer(true).setChronometerCountDown(true).setWhen(p.endsAt).setShowWhen(true)
                     .addAction(0, ctx.getString(R.string.clock_stop), control(ctx, "interval_stop", ""))
+            }
+            // #1970 a Pomodoro phase running or paused
+            d.pomodoro.running || d.pomodoro.remainingMs >= 0 -> {
+                val p = d.pomodoro
+                base(ctx, CH_RUNNING, "pomodoro")
+                    .setContentTitle(ctx.getString(R.string.clock_pomodoro_phase, pomodoroName(ctx, p.phase), PomodoroLogic.cycleOf(p), p.longEvery))
+                    .setContentText(if (p.running) ctx.getString(R.string.clock_tab_pomodoro)
+                        else ctx.getString(R.string.clock_paused_left, ClockLogic.countdown(PomodoroLogic.remaining(p, now))))
+                    .apply { if (p.running) setUsesChronometer(true).setChronometerCountDown(true).setWhen(p.endsAt).setShowWhen(true) }
+                    .addAction(0, ctx.getString(if (p.running) R.string.clock_pause else R.string.clock_resume),
+                        control(ctx, if (p.running) "pomodoro_pause" else "pomodoro_start", ""))
+                    .addAction(0, ctx.getString(R.string.clock_skip), control(ctx, "pomodoro_skip", ""))
             }
             sw.running -> base(ctx, CH_RUNNING, "stopwatch")
                 .setContentTitle(ctx.getString(R.string.clock_stopwatch))
@@ -259,6 +274,12 @@ object ClockNotifications {
         // Without POST_NOTIFICATIONS this is refused; the reminder is the notification, so there is nothing else to do.
         runCatching { ctx.getSystemService(NotificationManager::class.java)?.notify(REMINDER_ID, n) }
     }
+
+    fun pomodoroName(ctx: Context, p: PomodoroPhase): String = ctx.getString(when (p) {
+        PomodoroPhase.WORK -> R.string.clock_phase_work
+        PomodoroPhase.SHORT_BREAK -> R.string.clock_short_break
+        PomodoroPhase.LONG_BREAK -> R.string.clock_long_break
+    })
 
     fun phaseName(ctx: Context, k: ClockLogic.PhaseKind): String = ctx.getString(when (k) {
         ClockLogic.PhaseKind.WORK -> R.string.clock_phase_work

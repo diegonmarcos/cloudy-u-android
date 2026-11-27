@@ -107,7 +107,7 @@ class TasksPageTest {
         compose.onNodeWithTag(ClockTags.bar(home)).assertExists()
         compose.onNodeWithTag(ClockTags.REF_NOW).assertIsNotEnabled()
         for ((tab, page) in listOf("alarms" to ClockTags.ALARMS, "timers" to ClockTags.TIMERS, "stopwatch" to ClockTags.STOPWATCH,
-                "interval" to ClockTags.INTERVAL, "bedtime" to ClockTags.BEDTIME, "world" to ClockTags.WORLD)) {
+                "interval" to ClockTags.INTERVAL, "bedtime" to ClockTags.BEDTIME, "pomodoro" to ClockTags.POMODORO, "world" to ClockTags.WORLD)) {
             compose.onNodeWithTag(ClockTags.tab(tab)).performScrollTo().performClick()
             compose.waitForIdle()
             compose.onNodeWithTag(page).assertExists()

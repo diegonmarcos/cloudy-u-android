@@ -35,6 +35,11 @@ object ClockLogic {
         val mask = a.days and ALL_DAYS
         val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
         val time = LocalTime.of(a.minuteOfDay / 60, a.minuteOfDay % 60)
+        // #1970 a one-off alarm on a picked date rings then; once that is past it is an ordinary one-off.
+        if (mask == 0 && a.date >= 0) {
+            val at = ZonedDateTime.of(java.time.LocalDate.ofEpochDay(a.date), time, zone).toInstant().toEpochMilli()
+            if (at > now) return at
+        }
         // Eight days: today's time may already have passed and the only listed day be today.
         for (d in 0L..7L) {
             val date = today.plusDays(d)
@@ -127,6 +132,8 @@ object ClockLogic {
     data class Wakeup(val key: String, val at: Long, val clock: Boolean)
 
     const val INTERVAL = "interval"
+    /** #1970 the Pomodoro phase's end, on the timer engine's wakeups. */
+    const val POMODORO = "pomodoro"
     const val SLEEP = "sleep"
     const val SILENCE = "silence"
     fun alarmKey(id: Long) = "alarm:$id"
@@ -141,6 +148,7 @@ object ClockLogic {
         d.timers.filter { it.state == TimerState.RUNNING }.forEach { add(Wakeup(timerKey(it.id), it.endsAt, clock = false)) }
         // A session already over is finished by an immediate wakeup.
         d.interval?.let { i -> add(Wakeup(INTERVAL, phaseAt(i, now)?.endsAt ?: now, clock = false)) }
+        if (d.pomodoro.running) add(Wakeup(POMODORO, d.pomodoro.endsAt, clock = false))
         if (d.sleepUntil > 0) add(Wakeup(SLEEP, d.sleepUntil, clock = false))
         d.ringing.minOfOrNull { it.since }?.let { add(Wakeup(SILENCE, it + ringMs, clock = false)) }
     }
@@ -194,6 +202,14 @@ object ClockLogic {
                 if (phaseAt(i, now + EARLY_MS) != null) return Fired(d, Effect.BEEP, i.label)
                 return Fired(d.copy(interval = null, ringing = d.ringing.filter { it.key != key } + Ring(key, i.label, now)), Effect.RING, i.label)
             }
+            key == POMODORO -> {
+                val p = PomodoroLogic.fire(d.pomodoro, now, Instant.ofEpochMilli(now).atZone(zone).toLocalDate().toEpochDay())
+                    ?: return Fired(d, Effect.NONE)
+                val label = "Pomodoro: " + d.pomodoro.phase.name.lowercase().replace('_', ' ')
+                // Auto-advance: the next phase already runs, a tone marks the change; else it rings until answered.
+                return if (p.running) Fired(d.copy(pomodoro = p), Effect.BEEP, label)
+                else Fired(d.copy(pomodoro = p, ringing = d.ringing.filter { it.key != key } + Ring(key, label, now)), Effect.RING, label)
+            }
             key == SLEEP -> {
                 if (d.sleepUntil == 0L || d.sleepUntil > due) return Fired(d, Effect.NONE)
                 return Fired(d.copy(sleepUntil = 0), Effect.PAUSE_MEDIA)
@@ -208,12 +224,20 @@ object ClockLogic {
     }
 
     /** Dismiss: the ring ends; a timer that rang goes back to its full duration. */
-    fun dismiss(d: ClockData, key: String): ClockData = stopRinging(d.copy(ringing = d.ringing.filter { it.key != key }), listOf(key))
+    fun dismiss(d: ClockData, key: String): ClockData = stopRinging(d.copy(
+        ringing = d.ringing.filter { it.key != key },
+        // #1970 a dismissed alarm's snoozes start again from none
+        alarms = d.alarms.map { if (alarmKey(it.id) == key) it.copy(snoozeCount = 0) else it },
+    ), listOf(key))
+
+    /** #1970 whether [a]'s ring may still be snoozed: snooze on, and under its count (0 is unlimited). */
+    fun canSnooze(a: Alarm): Boolean = a.snoozeOn && (a.snoozeTimes <= 0 || a.snoozeCount < a.snoozeTimes)
 
     /** Snooze an alarm's ring for its own snooze minutes; anything else that rings is dismissed. */
     fun snooze(d: ClockData, key: String, now: Long): ClockData {
         val a = d.alarms.firstOrNull { alarmKey(it.id) == key } ?: return dismiss(d, key)
-        val alarms = d.alarms.map { if (it.id == a.id) it.copy(enabled = true, snoozedUntil = now + a.snoozeMinutes * MINUTE_MS) else it }
+        if (!canSnooze(a)) return dismiss(d, key)
+        val alarms = d.alarms.map { if (it.id == a.id) it.copy(enabled = true, snoozedUntil = now + a.snoozeMinutes * MINUTE_MS, snoozeCount = a.snoozeCount + 1) else it }
         return d.copy(alarms = alarms, ringing = d.ringing.filter { it.key != key })
     }
 

@@ -136,6 +136,11 @@ class DeclarationsTest {
                     assertTrue(c.getJSONArray("sleep_choices").length() > 0)
                     assertTrue("${m.id}: bedtime_default", com.diegonmarcos.clocktools.ClockLogic.parseTime(c.getString("bedtime_default")) != null)
                 }
+                // #1970 the Pomodoro's declared lengths: what ClockConfig.parse hands the page, unclamped
+                "pomodoro" -> JSONObject(m.clock).let { c ->
+                    assertEquals(listOf(25, 5, 15, 4), listOf(c.getInt("work"), c.getInt("short_break"), c.getInt("long_break"), c.getInt("long_every")))
+                    assertEquals(com.diegonmarcos.clocktools.Pomodoro(), com.diegonmarcos.clocktools.ClockConfig.parse(mapOf("pomodoro" to m.clock)).pomodoro)
+                }
             }
         }
     }

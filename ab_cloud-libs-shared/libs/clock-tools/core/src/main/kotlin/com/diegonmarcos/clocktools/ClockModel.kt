@@ -24,6 +24,25 @@ data class Alarm(
     /** A reminder (bedtime): it posts a notification and never rings. */
     val quiet: Boolean = false,
     val snoozedUntil: Long = 0,
+    // #1970 the alarm editor's sheet
+    /** Snooze switched off: a ring has Dismiss only. */
+    val snoozeOn: Boolean = true,
+    /** How many snoozes a ring allows; 0 is unlimited (every alarm stored before #1970). */
+    val snoozeTimes: Int = 0,
+    /** Snoozes used since the last dismiss. */
+    val snoozeCount: Int = 0,
+    /** The vibration pattern's id ([ClockDesign.VIBRATIONS]). */
+    val vibration: String = ClockDesign.VIBRATION_DEFAULT,
+    /** The alarm group; "" is Unassigned. */
+    val group: String = "",
+    /** The ring screen's background ([ClockDesign.BACKGROUNDS]). */
+    val background: String = ClockDesign.BACKGROUND_DEFAULT,
+    /** A one-off alarm on this date (epoch day); -1 is the next time it comes round. Only with [days] 0. */
+    val date: Long = -1,
+    /** "Add to calendar": the alarm and its repeats are an event in the device calendar ([ClockCalendar]). */
+    val calendar: Boolean = false,
+    /** The calendar event this alarm wrote; 0 is none. */
+    val calendarEventId: Long = 0,
 ) {
     companion object { const val SILENT = "silent" }
 }
@@ -72,6 +91,10 @@ data class ClockData(
     /** #1667 the world clock's default city (an IANA zone id); null is the device's zone, as before #1667. */
     val home: String? = null,
     val ringing: List<Ring> = emptyList(),
+    /** #1970 the Pomodoro subpage: its settings, cycle state and today's count. */
+    val pomodoro: Pomodoro = Pomodoro(),
+    /** #1970 the timer wheel's preset chips in seconds; null until the user edits one, which shows the declared ones. */
+    val wheelPresets: List<Long>? = null,
     /** The last id handed out; ids are never reused, so a stale wakeup cannot hit a newer item. */
     val seq: Long = 0,
 )
@@ -83,6 +106,9 @@ object ClockCodec {
             JSONObject().put("id", a.id).put("minute", a.minuteOfDay).put("days", a.days).put("enabled", a.enabled)
                 .put("label", a.label).put("vibrate", a.vibrate).put("sound", a.sound).put("snooze", a.snoozeMinutes)
                 .put("quiet", a.quiet).put("snoozed_until", a.snoozedUntil)
+                .put("snooze_on", a.snoozeOn).put("snooze_times", a.snoozeTimes).put("snooze_count", a.snoozeCount)
+                .put("vibration", a.vibration).put("group", a.group).put("background", a.background).put("date", a.date)
+                .put("calendar", a.calendar).put("calendar_event", a.calendarEventId)
         }))
         .put("timers", JSONArray(d.timers.map { t ->
             JSONObject().put("id", t.id).put("label", t.label).put("duration", t.durationMs).put("state", t.state.name)
@@ -98,6 +124,8 @@ object ClockCodec {
         .put("zones", d.zones?.let { JSONArray(it) } ?: JSONObject.NULL)
         .put("home", d.home ?: JSONObject.NULL)
         .put("ringing", JSONArray(d.ringing.map { JSONObject().put("key", it.key).put("label", it.label).put("since", it.since) }))
+        .put("pomodoro", PomodoroCodec.encode(d.pomodoro))
+        .put("wheel_presets", d.wheelPresets?.let { JSONArray(it) } ?: JSONObject.NULL)
         .put("seq", d.seq)
         .toString()
 
@@ -109,7 +137,10 @@ object ClockCodec {
                 Alarm(
                     a.getLong("id"), a.getInt("minute"), a.optInt("days"), a.optBoolean("enabled", true), a.optString("label"),
                     a.optBoolean("vibrate", true), a.optString("sound"), a.optInt("snooze", 10), a.optBoolean("quiet"),
-                    a.optLong("snoozed_until"),
+                    a.optLong("snoozed_until"), a.optBoolean("snooze_on", true), a.optInt("snooze_times"), a.optInt("snooze_count"),
+                    a.optString("vibration", ClockDesign.VIBRATION_DEFAULT), a.optString("group"),
+                    a.optString("background", ClockDesign.BACKGROUND_DEFAULT), a.optLong("date", -1),
+                    a.optBoolean("calendar"), a.optLong("calendar_event"),
                 )
             },
             timers = o.optJSONArray("timers").objects().map { t ->
@@ -131,6 +162,8 @@ object ClockCodec {
             zones = o.optJSONArray("zones")?.let { z -> (0 until z.length()).map { z.getString(it) } },
             home = if (o.isNull("home")) null else o.optString("home").ifBlank { null },
             ringing = o.optJSONArray("ringing").objects().map { Ring(it.getString("key"), it.optString("label"), it.getLong("since")) },
+            pomodoro = PomodoroCodec.decode(o.optJSONObject("pomodoro")),
+            wheelPresets = o.optJSONArray("wheel_presets").let { if (it == null) null else it.longs() },
             seq = o.optLong("seq"),
         )
     }.getOrDefault(ClockData())

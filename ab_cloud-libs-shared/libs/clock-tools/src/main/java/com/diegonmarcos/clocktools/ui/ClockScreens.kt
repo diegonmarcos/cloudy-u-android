@@ -1,8 +1,49 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class,
+    androidx.compose.foundation.ExperimentalFoundationApi::class)
 
 package com.diegonmarcos.clocktools.ui
 
 import com.diegonmarcos.superapp.perms.PermsFixChip
+import android.Manifest
+import android.content.ClipData
+import android.content.ClipboardManager
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.VerticalDivider
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.diegonmarcos.clocktools.ClockCalendarProvider
+import com.diegonmarcos.clocktools.ClockDesign
+import com.diegonmarcos.clocktools.ClockService
+import com.diegonmarcos.clocktools.Pomodoro
+import com.diegonmarcos.clocktools.PomodoroLogic
+import com.diegonmarcos.clocktools.PomodoroPhase
+import com.diegonmarcos.clocktools.TimerPresets
+import com.diegonmarcos.clocktools.Wheel
+import com.diegonmarcos.superapp.perms.PermsChip
+import com.diegonmarcos.superapp.perms.rememberPermsAsk
+import com.diegonmarcos.superapp.perms.rememberRawPermAsk
+import java.time.LocalDate
 import android.app.Activity
 import android.app.NotificationManager
 import android.content.Context
@@ -38,8 +79,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimeInput
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -77,7 +116,7 @@ import java.time.temporal.WeekFields
 import java.util.Locale
 
 /*
- * The Clock tab (#768): World clock, Alarms, Timers, Stopwatch, Interval and Bedtime. Every screen
+ * The Clock tab (#768): World clock, Alarms, Timers, Stopwatch, Interval, Bedtime and (#1970) Pomodoro. Every screen
  * reads ClockEngine's store and writes only through ClockEngine, the path the notification buttons,
  * the wakeups and /api/clock/… take too — so what a screen shows is what will ring.
  */
@@ -161,18 +200,26 @@ fun AlarmsScreen(modifier: Modifier = Modifier) {
             else stringResource(R.string.clock_next_alarm, inWords(next.second - now)),
             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        d.alarms.filter { !it.quiet }.sortedBy { it.minuteOfDay }.forEach { a ->
+        // #1970 alarm groups: each group under its name, Unassigned last; one list as before when no alarm has a group.
+        val all = d.alarms.filter { !it.quiet }
+        val grouped = all.any { it.group.isNotBlank() }
+        all.groupBy { it.group }.toSortedMap(compareBy<String>({ it.isBlank() }, { it })).forEach { (g, list) ->
+        if (grouped) Text(g.ifBlank { stringResource(R.string.clock_unassigned) }, style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = ClockMetrics.gutter).testTag(ClockTags.group(g)))
+        list.sortedBy { it.minuteOfDay }.forEach { a ->
             Row(Modifier.fillMaxWidth().clickable { editing = a }.padding(vertical = ClockMetrics.gap), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(ClockLogic.timeText(a.minuteOfDay), style = MaterialTheme.typography.displaySmall,
                         color = if (a.enabled) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(listOf(a.label, ClockLogic.daysText(a.days, firstDay(), ::shortDay)).filter { it.isNotBlank() }.joinToString("  ·  ") +
+                        (if (a.calendar) "  ·  " + stringResource(R.string.clock_add_to_calendar) else "") +
                         (if (a.snoozedUntil > now) "  ·  " + stringResource(R.string.clock_snoozed_until, HHMM.format(Instant.ofEpochMilli(a.snoozedUntil).atZone(ClockEngine.zone()))) else ""),
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Switch(checked = a.enabled, onCheckedChange = { on -> ClockEngine.saveAlarm(ctx, a.copy(enabled = on)) })
             }
             HorizontalDivider()
+        }
         }
         Button(onClick = {
             val cfg = ClockTools.config(ctx)
@@ -219,70 +266,233 @@ private fun Banner(text: String, onFix: () -> Unit) {
     }
 }
 
+/** #1970 the alarm editor: hour : minute wheels over a bottom sheet of every setting, a floating Cancel | Save bar. */
 @Composable
 private fun AlarmEditor(initial: Alarm, onDone: () -> Unit) {
     val ctx = LocalContext.current
-    val time = rememberTimePickerState(initial.minuteOfDay / 60, initial.minuteOfDay % 60, is24Hour = true)
+    val d = rememberClock()
+    var hour by remember { mutableIntStateOf(initial.minuteOfDay / 60) }
+    var minute by remember { mutableIntStateOf(initial.minuteOfDay % 60) }
     var label by remember { mutableStateOf(initial.label) }
-    var days by remember { mutableStateOf(initial.days) }
+    var days by remember { mutableIntStateOf(initial.days) }
+    var date by remember { mutableLongStateOf(initial.date) }
     var vibrate by remember { mutableStateOf(initial.vibrate) }
+    var vibration by remember { mutableStateOf(initial.vibration) }
     var sound by remember { mutableStateOf(initial.sound) }
-    var snooze by remember { mutableStateOf(initial.snoozeMinutes) }
+    // The sound the switch brings back: the last one picked (the system alarm sound until one is).
+    var lastSound by remember { mutableStateOf(initial.sound.takeIf { it != Alarm.SILENT }.orEmpty()) }
+    var snooze by remember { mutableIntStateOf(initial.snoozeMinutes) }
+    var snoozeOn by remember { mutableStateOf(initial.snoozeOn) }
+    var snoozeTimes by remember { mutableIntStateOf(initial.snoozeTimes) }
+    var group by remember { mutableStateOf(initial.group) }
+    var background by remember { mutableStateOf(initial.background) }
+    var calendar by remember { mutableStateOf(initial.calendar) }
+    var detail by remember { mutableStateOf<String?>(null) }
+    var granted by remember { mutableStateOf(ClockCalendarProvider.granted(ctx)) }
+    // WRITE_CALENDAR is asked only when "Add to calendar" is switched on, through libs:perms (the one place that asks).
+    val askPerms = rememberPermsAsk { granted = ClockCalendarProvider.granted(ctx) }
+    val askRaw = rememberRawPermAsk { granted = ClockCalendarProvider.granted(ctx) }
     // The system's own ringtone picker: offline, every sound on the device, "None" included.
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         if (r.resultCode == Activity.RESULT_OK) {
             @Suppress("DEPRECATION")
             val uri = r.data?.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
             sound = uri?.toString() ?: Alarm.SILENT
+            if (sound != Alarm.SILENT) lastSound = sound
         }
     }
+    fun pickSound() = runCatching {
+        picker.launch(Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
+            .putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+            .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
+            .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+            .putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, if (sound.isBlank() || sound == Alarm.SILENT) null else Uri.parse(sound)))
+    }
+    fun setCalendar(on: Boolean) {
+        calendar = on
+        if (on && !ClockCalendarProvider.granted(ctx)) {
+            val missing = PermsChip.missing(ctx, ClockCalendarProvider.PERMS)
+            if (missing.isNotEmpty()) askPerms(missing) else askRaw(arrayOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR))
+        }
+    }
+    val big = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.SemiBold)
+    Dialog(onDismissRequest = onDone, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Surface(Modifier.fillMaxSize().testTag(ClockTags.ALARM_EDITOR), color = MaterialTheme.colorScheme.background) {
+            Box(Modifier.fillMaxSize()) {
+                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 112.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        if (initial.id != 0L) TextButton(onClick = { ClockEngine.deleteAlarm(ctx, initial.id); onDone() }, Modifier.testTag(ClockTags.DELETE_ALARM)) {
+                            Text(stringResource(R.string.clock_delete))
+                        }
+                    }
+                    Row(Modifier.fillMaxWidth().padding(vertical = ClockMetrics.gutter), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                        WheelPicker(hour, 0, 23, { hour = it }, Modifier.width(132.dp), rowHeight = 96.dp, style = big, tag = ClockTags.ALARM_HOUR)
+                        WheelColon(big)
+                        WheelPicker(minute, 0, 59, { minute = it }, Modifier.width(132.dp), rowHeight = 96.dp, style = big, tag = ClockTags.ALARM_MINUTE)
+                    }
+                    Card(Modifier.fillMaxWidth().padding(horizontal = ClockMetrics.gap), shape = RoundedCornerShape(28.dp)) {
+                        Column(Modifier.padding(ClockMetrics.gutter + ClockMetrics.small)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(repeatText(days, date), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+                                IconButton(onClick = { detail = "date" }, Modifier.testTag(ClockTags.ALARM_DATE)) { CalendarGlyph() }
+                            }
+                            Row(Modifier.fillMaxWidth().padding(vertical = ClockMetrics.gap), horizontalArrangement = Arrangement.SpaceBetween) {
+                                ClockLogic.week(firstDay()).forEach { day ->
+                                    val bit = ClockLogic.dayBit(day)
+                                    DayChip(shortDay(day).take(1), days and bit != 0, Modifier.testTag(ClockTags.day(day.name))) {
+                                        days = days xor bit
+                                        if (days != 0) date = -1
+                                    }
+                                }
+                            }
+                            TextField(label, { label = it }, Modifier.fillMaxWidth().testTag(ClockTags.ALARM_NAME), singleLine = true,
+                                placeholder = { Text(stringResource(R.string.clock_alarm_name)) },
+                                colors = TextFieldDefaults.colors(focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent))
+                            SheetRow(stringResource(R.string.clock_sound_row), if (sound == Alarm.SILENT) stringResource(R.string.clock_off) else soundTitle(ctx, sound),
+                                sound != Alarm.SILENT, { on -> sound = if (on) lastSound else Alarm.SILENT }, ClockTags.ROW_SOUND) { pickSound() }
+                            SheetRow(stringResource(R.string.clock_vibration), if (vibrate) ClockDesign.vibrationLabel(vibration) else stringResource(R.string.clock_off),
+                                vibrate, { vibrate = it }, ClockTags.ROW_VIBRATION) { detail = "vibration" }
+                            SheetRow(stringResource(R.string.clock_snooze_minutes), if (snoozeOn) ClockDesign.snoozeText(snooze, snoozeTimes) else stringResource(R.string.clock_off),
+                                snoozeOn, { snoozeOn = it }, ClockTags.ROW_SNOOZE) { detail = "snooze" }
+                            SheetRow(stringResource(R.string.clock_alarm_groups), group.ifBlank { stringResource(R.string.clock_unassigned) }, null, null, ClockTags.ROW_GROUP) { detail = "group" }
+                            SheetRow(stringResource(R.string.clock_add_to_calendar),
+                                stringResource(if (calendar && !granted) R.string.clock_calendar_needs_grant else R.string.clock_add_to_calendar_doc),
+                                calendar, { setCalendar(it) }, ClockTags.ROW_CALENDAR) { setCalendar(!calendar) }
+                            Text(stringResource(R.string.clock_alarm_background), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = ClockMetrics.gutter))
+                            BackgroundPreview(background, Wheel.minuteOfDay(hour, minute), label, Modifier.align(Alignment.CenterHorizontally).padding(vertical = ClockMetrics.gap))
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(ClockMetrics.gap, Alignment.CenterHorizontally)) {
+                                ClockDesign.BACKGROUNDS.forEach { id ->
+                                    Box(Modifier.size(36.dp).clip(CircleShape).background(ringBackground(id, MaterialTheme.colorScheme))
+                                        .border(if (id == background) 3.dp else 1.dp, MaterialTheme.colorScheme.primary.copy(alpha = if (id == background) 1f else 0.3f), CircleShape)
+                                        .clickable { background = id }.testTag(ClockTags.background(id)))
+                                }
+                            }
+                        }
+                    }
+                }
+                Surface(Modifier.align(Alignment.BottomCenter).padding(bottom = 24.dp), shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.surfaceVariant, tonalElevation = 6.dp, shadowElevation = 6.dp) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        TextButton(onClick = onDone, Modifier.width(132.dp).testTag(ClockTags.CANCEL)) { Text(stringResource(R.string.clock_cancel), style = MaterialTheme.typography.titleMedium) }
+                        VerticalDivider(Modifier.height(24.dp))
+                        TextButton(onClick = {
+                            ClockEngine.saveAlarm(ctx, initial.copy(
+                                minuteOfDay = Wheel.minuteOfDay(hour, minute), label = label.trim(), days = days,
+                                vibrate = vibrate, sound = sound, snoozeMinutes = snooze, enabled = true,
+                                snoozeOn = snoozeOn, snoozeTimes = snoozeTimes, snoozeCount = 0, vibration = vibration, group = group.trim(),
+                                background = background, date = if (days == 0) date else -1, calendar = calendar,
+                            ))
+                            onDone()
+                        }, Modifier.width(132.dp).testTag(ClockTags.SAVE)) { Text(stringResource(R.string.clock_save), style = MaterialTheme.typography.titleMedium) }
+                    }
+                }
+            }
+        }
+    }
+    when (detail) {
+        "vibration" -> ChoiceDialog(stringResource(R.string.clock_vibration), { detail = null }) {
+            ClockDesign.VIBRATIONS.forEach { (id, v) ->
+                Row(Modifier.fillMaxWidth().clickable { vibration = id; vibrate = true; ClockService.buzz(ctx, v.second) }, verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(selected = id == vibration, onClick = { vibration = id; vibrate = true; ClockService.buzz(ctx, v.second) })
+                    Text(v.first)
+                }
+            }
+        }
+        "snooze" -> ChoiceDialog(stringResource(R.string.clock_snooze_minutes), { detail = null }) {
+            Text(stringResource(R.string.clock_interval_min), style = MaterialTheme.typography.labelLarge)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(ClockMetrics.small)) {
+                ClockTools.config(ctx).snoozeChoices.forEach { m -> FilterChip(selected = m == snooze, onClick = { snooze = m; snoozeOn = true }, label = { Text("$m min") }) }
+            }
+            Text(stringResource(R.string.clock_times), style = MaterialTheme.typography.labelLarge)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(ClockMetrics.small)) {
+                ClockDesign.SNOOZE_TIMES.forEach { n ->
+                    FilterChip(selected = n == snoozeTimes, onClick = { snoozeTimes = n; snoozeOn = true },
+                        label = { Text(if (n == 0) stringResource(R.string.clock_unlimited) else "$n") })
+                }
+            }
+        }
+        "group" -> {
+            var typed by remember { mutableStateOf("") }
+            ChoiceDialog(stringResource(R.string.clock_alarm_groups), { detail = null }) {
+                (listOf("") + d.alarms.map { it.group }.filter { it.isNotBlank() }.distinct().sorted()).forEach { g ->
+                    Row(Modifier.fillMaxWidth().clickable { group = g }, verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = g == group, onClick = { group = g })
+                        Text(g.ifBlank { stringResource(R.string.clock_unassigned) })
+                    }
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(typed, { typed = it }, Modifier.weight(1f), singleLine = true, label = { Text(stringResource(R.string.clock_new_group)) })
+                    TextButton(onClick = { if (typed.isNotBlank()) { group = typed.trim(); detail = null } }) { Text(stringResource(R.string.clock_ok)) }
+                }
+            }
+        }
+        "date" -> {
+            val state = rememberDatePickerState(initialSelectedDateMillis = if (date >= 0) date * 86_400_000L else null)
+            DatePickerDialog(
+                onDismissRequest = { detail = null },
+                confirmButton = {
+                    TextButton(onClick = {
+                        state.selectedDateMillis?.let { date = it / 86_400_000L; days = 0 }
+                        detail = null
+                    }) { Text(stringResource(R.string.clock_ok)) }
+                },
+                dismissButton = { TextButton(onClick = { date = -1; detail = null }) { Text(stringResource(R.string.clock_clear_date)) } },
+            ) { DatePicker(state) }
+        }
+    }
+}
+
+/** "Every day", "Weekdays", "Mon Wed", or the picked date of a one-off ("Fri 27 Nov"). */
+private fun repeatText(days: Int, date: Long): String =
+    if (days and ClockLogic.ALL_DAYS == 0 && date >= 0) DAY.format(LocalDate.ofEpochDay(date)) else ClockLogic.daysText(days, firstDay(), ::shortDay)
+
+@Composable
+private fun DayChip(letter: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    Box(
+        modifier.size(40.dp).clip(CircleShape).background(if (selected) scheme.primaryContainer else Color.Transparent)
+            .border(1.dp, scheme.outlineVariant, CircleShape).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) { Text(letter, color = if (selected) scheme.onPrimaryContainer else scheme.onSurfaceVariant, style = MaterialTheme.typography.titleSmall) }
+}
+
+/** A sheet row: title, its detail line, and (when [checked] is given) a divider and a switch. A tap opens the detail. */
+@Composable
+private fun SheetRow(title: String, detail: String, checked: Boolean?, onToggle: ((Boolean) -> Unit)?, tag: String, onClick: () -> Unit) {
+    Column {
+        Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = ClockMetrics.gutter).testTag(tag), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (checked != null && onToggle != null) {
+                VerticalDivider(Modifier.height(28.dp).padding(end = ClockMetrics.gutter))
+                Switch(checked = checked, onCheckedChange = onToggle)
+            }
+        }
+        HorizontalDivider()
+    }
+}
+
+/** The ring screen as it will look: the background, "Alarm", the time and today's date. */
+@Composable
+private fun BackgroundPreview(id: String, minuteOfDay: Int, label: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier.size(150.dp, 120.dp).clip(RoundedCornerShape(16.dp)).background(ringBackground(id, MaterialTheme.colorScheme)).testTag(ClockTags.BACKGROUND_PREVIEW),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+    ) {
+        Text(label.ifBlank { stringResource(R.string.clock_alarm) }, style = MaterialTheme.typography.labelSmall)
+        Text(ClockLogic.timeText(minuteOfDay), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
+        Text(DAY.format(Instant.ofEpochMilli(ClockEngine.now()).atZone(ClockEngine.zone())), style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+@Composable
+private fun ChoiceDialog(title: String, onDone: () -> Unit, content: @Composable () -> Unit) {
     AlertDialog(
         onDismissRequest = onDone,
-        confirmButton = {
-            TextButton(onClick = {
-                ClockEngine.saveAlarm(ctx, initial.copy(
-                    minuteOfDay = time.hour * 60 + time.minute, label = label.trim(), days = days,
-                    vibrate = vibrate, sound = sound, snoozeMinutes = snooze, enabled = true,
-                ))
-                onDone()
-            }, Modifier.testTag(ClockTags.SAVE)) { Text(stringResource(R.string.clock_save)) }
-        },
-        dismissButton = {
-            Row {
-                if (initial.id != 0L) TextButton(onClick = { ClockEngine.deleteAlarm(ctx, initial.id); onDone() }) { Text(stringResource(R.string.clock_delete)) }
-                TextButton(onClick = onDone) { Text(stringResource(R.string.clock_cancel)) }
-            }
-        },
-        text = {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
-                TimeInput(time)
-                OutlinedTextField(label, { label = it }, Modifier.fillMaxWidth(), singleLine = true, label = { Text(stringResource(R.string.clock_label)) })
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(ClockMetrics.small)) {
-                    ClockLogic.week(firstDay()).forEach { day ->
-                        val bit = ClockLogic.dayBit(day)
-                        FilterChip(selected = days and bit != 0, onClick = { days = days xor bit }, label = { Text(shortDay(day)) })
-                    }
-                }
-                Text(ClockLogic.daysText(days, firstDay(), ::shortDay), style = MaterialTheme.typography.bodySmall)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.clock_vibrate), Modifier.weight(1f))
-                    Switch(checked = vibrate, onCheckedChange = { vibrate = it })
-                }
-                OutlinedButton(onClick = {
-                    runCatching {
-                        picker.launch(Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
-                            .putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
-                            .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
-                            .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
-                            .putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, if (sound.isBlank() || sound == Alarm.SILENT) null else Uri.parse(sound)))
-                    }
-                }, Modifier.fillMaxWidth()) { Text(stringResource(R.string.clock_sound, soundTitle(ctx, sound))) }
-                Text(stringResource(R.string.clock_snooze_minutes), style = MaterialTheme.typography.labelLarge)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(ClockMetrics.small)) {
-                    ClockTools.config(ctx).snoozeChoices.forEach { m -> FilterChip(selected = m == snooze, onClick = { snooze = m }, label = { Text("$m min") }) }
-                }
-            }
-        },
+        confirmButton = { TextButton(onClick = onDone) { Text(stringResource(R.string.clock_ok)) } },
+        title = { Text(title) },
+        text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(ClockMetrics.small)) { content() } },
     )
 }
 
@@ -294,61 +504,95 @@ private fun soundTitle(ctx: Context, sound: String): String = when {
 
 // ── timers ──────────────────────────────────────────────────────────────────────────────────
 
+/** #1970 hours / minutes / seconds wheels, the preset chips (tap sets the wheels, long-press edits), a round Start. */
 @Composable
 fun TimersScreen(modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
     val d = rememberClock()
     val now = rememberNow(250, d.timers.any { it.state == TimerState.RUNNING })
-    var h by rememberSaveable { mutableStateOf("0") }
-    var m by rememberSaveable { mutableStateOf("5") }
-    var s by rememberSaveable { mutableStateOf("0") }
+    var h by rememberSaveable { mutableIntStateOf(0) }
+    var m by rememberSaveable { mutableIntStateOf(5) }
+    var s by rememberSaveable { mutableIntStateOf(0) }
     var label by rememberSaveable { mutableStateOf("") }
-    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(ClockMetrics.gutter).testTag(ClockTags.TIMERS)) {
+    var editPreset by remember { mutableStateOf<Int?>(null) }
+    val presets = TimerPresets.effective(d.wheelPresets, ClockTools.config(ctx).wheelPresets)
+    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(ClockMetrics.gutter).testTag(ClockTags.TIMERS),
+        horizontalAlignment = Alignment.CenterHorizontally) {
         RingingBar(d)
         PermsFixChip(listOf("notifications"), "clock", Modifier.padding(bottom = ClockMetrics.gap))
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(ClockMetrics.small)) {
+        Row(verticalAlignment = Alignment.Bottom) {
+            LabelledWheel(stringResource(R.string.clock_hours), h, 0, 99, { h = it }, tag = ClockTags.WHEEL_H)
+            Box(Modifier.height(216.dp), contentAlignment = Alignment.Center) { WheelColon() }
+            LabelledWheel(stringResource(R.string.clock_minutes), m, 0, 59, { m = it }, tag = ClockTags.WHEEL_M)
+            Box(Modifier.height(216.dp), contentAlignment = Alignment.Center) { WheelColon() }
+            LabelledWheel(stringResource(R.string.clock_seconds), s, 0, 59, { s = it }, tag = ClockTags.WHEEL_S)
+        }
+        Row(Modifier.padding(vertical = ClockMetrics.gutter), horizontalArrangement = Arrangement.spacedBy(ClockMetrics.gutter)) {
+            presets.forEachIndexed { i, sec ->
+                Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.clip(RoundedCornerShape(50)).combinedClickable(
+                        onClick = { Wheel.msToHms(sec * ClockLogic.SECOND_MS).let { (a, b, c) -> h = a; m = b; s = c } },
+                        onLongClick = { editPreset = i },
+                    ).testTag(ClockTags.preset(i))) {
+                    Text(TimerPresets.text(sec), Modifier.padding(horizontal = 18.dp, vertical = 14.dp), style = MaterialTheme.typography.titleMedium)
+                }
+            }
+        }
+        OutlinedTextField(label, { label = it }, Modifier.fillMaxWidth(), singleLine = true, label = { Text(stringResource(R.string.clock_label)) })
+        val total = Wheel.hmsToMs(h, m, s)
+        RoundButton(stringResource(R.string.clock_start), { ClockEngine.addTimer(ctx, label.trim(), total, start = true) }, enabled = total > 0,
+            modifier = Modifier.padding(vertical = ClockMetrics.gutter).testTag(ClockTags.START_TIMER))
+        Text(stringResource(R.string.clock_quick_start), style = MaterialTheme.typography.labelLarge, modifier = Modifier.fillMaxWidth())
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(ClockMetrics.small)) {
             ClockTools.config(ctx).timerPresets.forEach { sec ->
                 FilterChip(selected = false, onClick = {
                     ClockEngine.addTimer(ctx, label.trim().ifBlank { durationWords(sec) }, sec * ClockLogic.SECOND_MS, start = true)
                 }, label = { Text(durationWords(sec)) })
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(ClockMetrics.gap)) {
-            OutlinedTextField(h, { h = it.filter(Char::isDigit) }, Modifier.weight(1f), label = { Text("h") }, singleLine = true)
-            OutlinedTextField(m, { m = it.filter(Char::isDigit) }, Modifier.weight(1f), label = { Text("min") }, singleLine = true)
-            OutlinedTextField(s, { s = it.filter(Char::isDigit) }, Modifier.weight(1f), label = { Text("s") }, singleLine = true)
-        }
-        OutlinedTextField(label, { label = it }, Modifier.fillMaxWidth(), singleLine = true, label = { Text(stringResource(R.string.clock_label)) })
-        val total = ((h.toLongOrNull() ?: 0) * 3600 + (m.toLongOrNull() ?: 0) * 60 + (s.toLongOrNull() ?: 0)) * ClockLogic.SECOND_MS
-        Button(onClick = {
-            ClockEngine.addTimer(ctx, label.trim(), total, start = true)
-        }, enabled = total > 0, modifier = Modifier.padding(vertical = ClockMetrics.gap).testTag(ClockTags.START_TIMER)) { Text(stringResource(R.string.clock_start)) }
         d.timers.forEach { t ->
             HorizontalDivider()
-            Column(Modifier.fillMaxWidth().padding(vertical = ClockMetrics.gap)) {
-                Text(t.label.ifBlank { stringResource(R.string.clock_timer) }, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    if (t.state == TimerState.RINGING) stringResource(R.string.clock_times_up) else ClockLogic.countdown(ClockLogic.remaining(t, now)),
-                    style = MaterialTheme.typography.displaySmall, fontFamily = FontFamily.Monospace,
-                    color = if (t.state == TimerState.RINGING) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                )
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(ClockMetrics.small)) {
-                    when (t.state) {
-                        TimerState.RUNNING -> FilledTonalButton(onClick = { ClockEngine.timer(ctx, t.id, "pause") }) { Text(stringResource(R.string.clock_pause)) }
-                        TimerState.RINGING -> Button(onClick = { ClockEngine.dismiss(ctx, ClockLogic.timerKey(t.id)) }) { Text(stringResource(R.string.clock_dismiss)) }
-                        else -> FilledTonalButton(onClick = { ClockEngine.timer(ctx, t.id, "start") }) { Text(stringResource(R.string.clock_start)) }
+            Row(Modifier.fillMaxWidth().padding(vertical = ClockMetrics.gap), verticalAlignment = Alignment.CenterVertically) {
+                ProgressRing(if (t.durationMs > 0) 1f - ClockLogic.remaining(t, now).toFloat() / t.durationMs else 1f, Modifier.size(56.dp)) {}
+                Column(Modifier.weight(1f).padding(start = ClockMetrics.gutter)) {
+                    Text(t.label.ifBlank { stringResource(R.string.clock_timer) }, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        if (t.state == TimerState.RINGING) stringResource(R.string.clock_times_up) else ClockLogic.countdown(ClockLogic.remaining(t, now)),
+                        style = MaterialTheme.typography.displaySmall, fontFamily = FontFamily.Monospace,
+                        color = if (t.state == TimerState.RINGING) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                    )
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(ClockMetrics.small)) {
+                        when (t.state) {
+                            TimerState.RUNNING -> FilledTonalButton(onClick = { ClockEngine.timer(ctx, t.id, "pause") }) { Text(stringResource(R.string.clock_pause)) }
+                            TimerState.RINGING -> Button(onClick = { ClockEngine.dismiss(ctx, ClockLogic.timerKey(t.id)) }) { Text(stringResource(R.string.clock_dismiss)) }
+                            else -> FilledTonalButton(onClick = { ClockEngine.timer(ctx, t.id, "start") }) { Text(stringResource(R.string.clock_start)) }
+                        }
+                        OutlinedButton(onClick = { ClockEngine.timer(ctx, t.id, "add") }) { Text(stringResource(R.string.clock_plus_minute)) }
+                        OutlinedButton(onClick = { ClockEngine.timer(ctx, t.id, "reset") }) { Text(stringResource(R.string.clock_reset)) }
+                        TextButton(onClick = { ClockEngine.timer(ctx, t.id, "delete") }) { Text(stringResource(R.string.clock_delete)) }
                     }
-                    OutlinedButton(onClick = { ClockEngine.timer(ctx, t.id, "add") }) { Text(stringResource(R.string.clock_plus_minute)) }
-                    OutlinedButton(onClick = { ClockEngine.timer(ctx, t.id, "reset") }) { Text(stringResource(R.string.clock_reset)) }
-                    TextButton(onClick = { ClockEngine.timer(ctx, t.id, "delete") }) { Text(stringResource(R.string.clock_delete)) }
                 }
             }
         }
+    }
+    editPreset?.let { i ->
+        var text by remember(i) { mutableStateOf(TimerPresets.text(presets.getOrElse(i) { 0L })) }
+        AlertDialog(
+            onDismissRequest = { editPreset = null },
+            title = { Text(stringResource(R.string.clock_edit_preset)) },
+            text = { OutlinedTextField(text, { text = it }, singleLine = true, isError = TimerPresets.parse(text) == null, modifier = Modifier.testTag(ClockTags.PRESET_EDIT)) },
+            confirmButton = {
+                TextButton(onClick = { TimerPresets.parse(text)?.let { ClockEngine.editWheelPreset(ctx, i, it) }; editPreset = null },
+                    enabled = TimerPresets.parse(text) != null) { Text(stringResource(R.string.clock_save)) }
+            },
+            dismissButton = { TextButton(onClick = { editPreset = null }) { Text(stringResource(R.string.clock_cancel)) } },
+        )
     }
 }
 
 // ── stopwatch ───────────────────────────────────────────────────────────────────────────────
 
+/** #1970 the dial (tick ring, sweep hand) round the digital time, round Lap / Reset and Start / Pause, a second page of laps. */
 @Composable
 fun StopwatchScreen(modifier: Modifier = Modifier) {
     val ctx = LocalContext.current
@@ -356,29 +600,64 @@ fun StopwatchScreen(modifier: Modifier = Modifier) {
     val sw = d.stopwatch
     val now = rememberNow(47, sw.running)
     val elapsed = ClockLogic.elapsed(sw, now)
+    val laps = ClockLogic.lapTimes(sw)
+    val pager = rememberPagerState { 2 }
     Column(modifier.fillMaxSize().padding(ClockMetrics.gutter).testTag(ClockTags.STOPWATCH), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(ClockLogic.stopwatchText(elapsed), style = MaterialTheme.typography.displayMedium, fontFamily = FontFamily.Monospace)
-        Row(horizontalArrangement = Arrangement.spacedBy(ClockMetrics.gap), modifier = Modifier.padding(vertical = ClockMetrics.gap)) {
-            Button(onClick = { ClockEngine.stopwatch(ctx, "toggle") }) {
-                Text(stringResource(if (sw.running) R.string.clock_pause else R.string.clock_start))
-            }
-            if (sw.running) FilledTonalButton(onClick = { ClockEngine.stopwatch(ctx, "lap") }) { Text(stringResource(R.string.clock_lap)) }
-            else if (elapsed > 0) OutlinedButton(onClick = { ClockEngine.stopwatch(ctx, "reset") }) { Text(stringResource(R.string.clock_reset)) }
-        }
-        val laps = ClockLogic.lapTimes(sw)
-        LazyColumn(Modifier.fillMaxWidth()) {
-            items(laps.indices.reversed().toList()) { i ->
-                Row(Modifier.fillMaxWidth().padding(vertical = ClockMetrics.small), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(stringResource(R.string.clock_lap_n, i + 1))
-                    Text(ClockLogic.stopwatchText(laps[i]), fontFamily = FontFamily.Monospace)
-                    Text(ClockLogic.stopwatchText(sw.laps[i]), fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth()) { page ->
+            if (page == 0) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    StopwatchDial(elapsed, Modifier.fillMaxWidth(0.9f).testTag(ClockTags.STOPWATCH_DIAL)) {
+                        Text(ClockLogic.stopwatchText(elapsed), style = MaterialTheme.typography.displaySmall, fontFamily = FontFamily.Monospace,
+                            modifier = Modifier.padding(bottom = 96.dp))
+                    }
+                }
+            } else {
+                Column(Modifier.fillMaxSize().testTag(ClockTags.LAPS)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.clock_laps) + " (" + laps.size + ")", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                        TextButton(onClick = { copyLaps(ctx, sw) }, enabled = laps.isNotEmpty()) { Text(stringResource(R.string.clock_copy_laps)) }
+                        TextButton(onClick = { shareLaps(ctx, sw) }, enabled = laps.isNotEmpty(), modifier = Modifier.testTag(ClockTags.SHARE_LAPS)) { Text(stringResource(R.string.clock_share_laps)) }
+                    }
+                    LazyColumn(Modifier.fillMaxWidth()) {
+                        items(laps.indices.reversed().toList()) { i ->
+                            Row(Modifier.fillMaxWidth().padding(vertical = ClockMetrics.small), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(stringResource(R.string.clock_lap_n, i + 1))
+                                Text(ClockLogic.stopwatchText(laps[i]), fontFamily = FontFamily.Monospace)
+                                Text(ClockLogic.stopwatchText(sw.laps[i]), fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
                 }
             }
+        }
+        PagerDots(2, pager.currentPage, Modifier.padding(vertical = ClockMetrics.gap))
+        Row(Modifier.fillMaxWidth().padding(horizontal = ClockMetrics.gutter), horizontalArrangement = Arrangement.SpaceBetween) {
+            when {
+                sw.running -> RoundButton(stringResource(R.string.clock_lap), { ClockEngine.stopwatch(ctx, "lap") }, primary = false, modifier = Modifier.testTag(ClockTags.LAP))
+                elapsed > 0 -> RoundButton(stringResource(R.string.clock_reset), { ClockEngine.stopwatch(ctx, "reset") }, primary = false, modifier = Modifier.testTag(ClockTags.RESET))
+                else -> RoundButton(stringResource(R.string.clock_lap), {}, enabled = false, primary = false, modifier = Modifier.testTag(ClockTags.LAP))
+            }
+            RoundButton(stringResource(if (sw.running) R.string.clock_pause else R.string.clock_start), { ClockEngine.stopwatch(ctx, "toggle") },
+                modifier = Modifier.testTag(ClockTags.TOGGLE))
         }
     }
 }
 
-// ── interval / Pomodoro ─────────────────────────────────────────────────────────────────────
+/** The laps as text: one line per lap, its own time and the running total. */
+private fun lapsText(sw: Stopwatch): String = ClockLogic.lapTimes(sw).mapIndexed { i, l ->
+    "Lap ${i + 1}\t${ClockLogic.stopwatchText(l)}\t${ClockLogic.stopwatchText(sw.laps[i])}"
+}.joinToString("\n")
+
+private fun shareLaps(ctx: Context, sw: Stopwatch) = runCatching {
+    ctx.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, lapsText(sw)), null)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+}
+
+private fun copyLaps(ctx: Context, sw: Stopwatch) = runCatching {
+    ctx.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(ClipData.newPlainText("laps", lapsText(sw)))
+}
+
+// ── interval ────────────────────────────────────────────────────────────────────────────────
 
 @Composable
 fun IntervalScreen(modifier: Modifier = Modifier) {
@@ -386,35 +665,41 @@ fun IntervalScreen(modifier: Modifier = Modifier) {
     val d = rememberClock()
     val i = d.interval
     val now = rememberNow(250, i != null)
-    var work by rememberSaveable { mutableStateOf("25") }
-    var rest by rememberSaveable { mutableStateOf("5") }
-    var rounds by rememberSaveable { mutableStateOf("4") }
-    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(ClockMetrics.gutter).testTag(ClockTags.INTERVAL)) {
+    var work by rememberSaveable { mutableIntStateOf(25) }
+    var rest by rememberSaveable { mutableIntStateOf(5) }
+    var rounds by rememberSaveable { mutableIntStateOf(4) }
+    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(ClockMetrics.gutter).testTag(ClockTags.INTERVAL),
+        horizontalAlignment = Alignment.CenterHorizontally) {
         RingingBar(d)
         PermsFixChip(listOf("notifications"), "clock", Modifier.padding(bottom = ClockMetrics.gap))
         val phase = i?.let { ClockLogic.phaseAt(it, now) }
         if (i != null && phase != null) {
-            Text(ClockNotifications.phaseName(ctx, phase.kind), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
-            Text(stringResource(R.string.clock_round, phase.round, i.rounds) + "  ·  " + i.label, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(ClockLogic.countdown(phase.endsAt - now), style = MaterialTheme.typography.displayMedium, fontFamily = FontFamily.Monospace)
+            val len = (phase.endsAt - phase.startsAt).coerceAtLeast(1)
+            ProgressRing(1f - (phase.endsAt - now).toFloat() / len, Modifier.fillMaxWidth(0.8f).testTag(ClockTags.INTERVAL_RING)) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(ClockNotifications.phaseName(ctx, phase.kind), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
+                    Text(ClockLogic.countdown(phase.endsAt - now), style = MaterialTheme.typography.displayMedium, fontFamily = FontFamily.Monospace)
+                    Text(stringResource(R.string.clock_round, phase.round, i.rounds), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Text(i.label, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(stringResource(R.string.clock_session_left, ClockLogic.countdown(ClockLogic.phases(i).last().endsAt - now)), style = MaterialTheme.typography.bodySmall)
-            Button(onClick = { ClockEngine.stopInterval(ctx) }, Modifier.padding(top = ClockMetrics.gap)) { Text(stringResource(R.string.clock_stop)) }
+            RoundButton(stringResource(R.string.clock_stop), { ClockEngine.stopInterval(ctx) }, Modifier.padding(top = ClockMetrics.gutter))
         } else {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(ClockMetrics.small)) {
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(ClockMetrics.small)) {
                 ClockTools.config(ctx).intervalPresets.forEach { p ->
                     FilterChip(selected = false, onClick = { ClockEngine.startInterval(ctx, p) }, label = { Text(p.label) })
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(ClockMetrics.gap)) {
-                OutlinedTextField(work, { work = it.filter(Char::isDigit) }, Modifier.weight(1f), label = { Text(stringResource(R.string.clock_work_min)) }, singleLine = true)
-                OutlinedTextField(rest, { rest = it.filter(Char::isDigit) }, Modifier.weight(1f), label = { Text(stringResource(R.string.clock_rest_min)) }, singleLine = true)
-                OutlinedTextField(rounds, { rounds = it.filter(Char::isDigit) }, Modifier.weight(1f), label = { Text(stringResource(R.string.clock_rounds)) }, singleLine = true)
+            val small = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.SemiBold)
+            Row(verticalAlignment = Alignment.Bottom) {
+                LabelledWheel(stringResource(R.string.clock_work_min), work, 0, 180, { work = it }, rowHeight = 56.dp, style = small, tag = ClockTags.INTERVAL_WORK)
+                LabelledWheel(stringResource(R.string.clock_rest_min), rest, 0, 60, { rest = it }, rowHeight = 56.dp, style = small, tag = ClockTags.INTERVAL_REST)
+                LabelledWheel(stringResource(R.string.clock_rounds), rounds, 0, 99, { rounds = it }, rowHeight = 56.dp, style = small, tag = ClockTags.INTERVAL_ROUNDS)
             }
-            val w = work.toLongOrNull() ?: 0
-            val n = rounds.toIntOrNull() ?: 0
-            Button(onClick = {
-                ClockEngine.startInterval(ctx, ClockConfig.IntervalPreset(ctx.getString(R.string.clock_custom), w * 60, (rest.toLongOrNull() ?: 0) * 60, 0, 0, n))
-            }, enabled = w > 0 && n > 0, modifier = Modifier.padding(top = ClockMetrics.gap)) { Text(stringResource(R.string.clock_start)) }
+            RoundButton(stringResource(R.string.clock_start), {
+                ClockEngine.startInterval(ctx, ClockConfig.IntervalPreset(ctx.getString(R.string.clock_custom), work * 60L, rest * 60L, 0, 0, rounds))
+            }, enabled = work > 0 && rounds > 0, modifier = Modifier.padding(top = ClockMetrics.gutter).testTag(ClockTags.INTERVAL_START))
         }
     }
 }
@@ -427,33 +712,53 @@ fun BedtimeScreen(modifier: Modifier = Modifier) {
     val d = rememberClock()
     val now = rememberNow(ClockLogic.SECOND_MS, d.sleepUntil > 0)
     val bed = d.alarms.firstOrNull { it.quiet }
-    var time by remember(bed?.minuteOfDay) { mutableStateOf(ClockLogic.timeText(bed?.minuteOfDay ?: ClockTools.config(ctx).bedtimeDefault)) }
-    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(ClockMetrics.gutter).testTag(ClockTags.BEDTIME)) {
-        Text(stringResource(R.string.clock_sleep_timer), style = MaterialTheme.typography.titleMedium)
-        Text(stringResource(R.string.clock_sleep_timer_doc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    val start = bed?.minuteOfDay ?: ClockTools.config(ctx).bedtimeDefault
+    var hour by remember(bed?.minuteOfDay) { mutableIntStateOf(start / 60) }
+    var minute by remember(bed?.minuteOfDay) { mutableIntStateOf(start % 60) }
+    var sleepTotal by remember { mutableLongStateOf(0L) }
+    // A bedtime reminder that is on follows the wheels (after they settle).
+    LaunchedEffect(hour, minute) {
+        delay(700)
+        val m = Wheel.minuteOfDay(hour, minute)
+        if (bed != null && bed.enabled && bed.minuteOfDay != m) ClockEngine.saveAlarm(ctx, bed.copy(minuteOfDay = m))
+    }
+    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(ClockMetrics.gutter).testTag(ClockTags.BEDTIME),
+        horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(stringResource(R.string.clock_sleep_timer), style = MaterialTheme.typography.titleMedium, modifier = Modifier.fillMaxWidth())
+        Text(stringResource(R.string.clock_sleep_timer_doc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth())
         if (d.sleepUntil > 0) {
-            Text(ClockLogic.countdown(d.sleepUntil - now), style = MaterialTheme.typography.displaySmall, fontFamily = FontFamily.Monospace)
-            OutlinedButton(onClick = { ClockEngine.cancelSleep(ctx) }) { Text(stringResource(R.string.clock_cancel)) }
+            val left = d.sleepUntil - now
+            val total = if (sleepTotal >= left) sleepTotal else left
+            ProgressRing(1f - left.toFloat() / total.coerceAtLeast(1), Modifier.fillMaxWidth(0.6f).testTag(ClockTags.SLEEP_RING)) {
+                Text(ClockLogic.countdown(left), style = MaterialTheme.typography.displaySmall, fontFamily = FontFamily.Monospace)
+            }
+            RoundButton(stringResource(R.string.clock_cancel), { ClockEngine.cancelSleep(ctx) }, primary = false, size = 88.dp)
         } else {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(ClockMetrics.small)) {
-                ClockTools.config(ctx).sleepChoices.forEach { m -> FilterChip(selected = false, onClick = { ClockEngine.startSleep(ctx, m) }, label = { Text("$m min") }) }
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(ClockMetrics.small)) {
+                ClockTools.config(ctx).sleepChoices.forEach { m ->
+                    FilterChip(selected = false, onClick = { sleepTotal = m * ClockLogic.MINUTE_MS; ClockEngine.startSleep(ctx, m) }, label = { Text("$m min") })
+                }
             }
         }
         HorizontalDivider(Modifier.padding(vertical = ClockMetrics.gutter))
-        Text(stringResource(R.string.clock_bedtime), style = MaterialTheme.typography.titleMedium)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(time, { time = it }, Modifier.weight(1f), singleLine = true, label = { Text(stringResource(R.string.clock_bedtime_at)) },
-                isError = ClockLogic.parseTime(time) == null)
+            Text(stringResource(R.string.clock_bedtime), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
             Switch(
                 checked = bed?.enabled == true,
                 onCheckedChange = { on ->
-                    ClockLogic.parseTime(time)?.let { minute ->
-                        ClockEngine.saveAlarm(ctx, (bed ?: Alarm(0, minute, days = ClockLogic.ALL_DAYS, quiet = true, label = ctx.getString(R.string.clock_bedtime)))
-                            .copy(minuteOfDay = minute, enabled = on))
-                    }
+                    val minuteOfDay = Wheel.minuteOfDay(hour, minute)
+                    ClockEngine.saveAlarm(ctx, (bed ?: Alarm(0, minuteOfDay, days = ClockLogic.ALL_DAYS, quiet = true, label = ctx.getString(R.string.clock_bedtime)))
+                        .copy(minuteOfDay = minuteOfDay, enabled = on))
                 },
-                modifier = Modifier.padding(start = ClockMetrics.gap),
+                modifier = Modifier.padding(start = ClockMetrics.gap).testTag(ClockTags.BEDTIME_SWITCH),
             )
+        }
+        Text(stringResource(R.string.clock_bedtime_time), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        val big = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.SemiBold)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            WheelPicker(hour, 0, 23, { hour = it }, Modifier.width(110.dp), style = big, tag = ClockTags.BEDTIME_HOUR)
+            WheelColon(big)
+            WheelPicker(minute, 0, 59, { minute = it }, Modifier.width(110.dp), style = big, tag = ClockTags.BEDTIME_MINUTE)
         }
         ClockLogic.sleepWindow(d, now, ClockEngine.zone())?.let { (from, to) ->
             Text(
@@ -467,12 +772,117 @@ fun BedtimeScreen(modifier: Modifier = Modifier) {
     }
 }
 
+// ── Pomodoro (#1970) ────────────────────────────────────────────────────────────────────────
+
+/** Work / short break / long break on the timer engine: a progress ring, cycle and session counts, today's count, settings. */
+@Composable
+fun PomodoroScreen(modifier: Modifier = Modifier) {
+    val ctx = LocalContext.current
+    val d = rememberClock()
+    val p = d.pomodoro
+    val now = rememberNow(250, p.running)
+    val day = Instant.ofEpochMilli(now).atZone(ClockEngine.zone()).toLocalDate().toEpochDay()
+    // A Pomodoro never configured takes the host's declared lengths once.
+    LaunchedEffect(Unit) {
+        val decl = ClockTools.config(ctx).pomodoro
+        if (p == Pomodoro() && decl != Pomodoro()) ClockEngine.configurePomodoro(ctx, decl.workMin, decl.shortMin, decl.longMin, decl.longEvery, decl.autoAdvance)
+    }
+    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(ClockMetrics.gutter).testTag(ClockTags.POMODORO),
+        horizontalAlignment = Alignment.CenterHorizontally) {
+        RingingBar(d)
+        PermsFixChip(listOf("notifications"), "clock", Modifier.padding(bottom = ClockMetrics.gap))
+        ProgressRing(PomodoroLogic.progress(p, now), Modifier.fillMaxWidth(0.8f).testTag(ClockTags.POMODORO_RING),
+            color = if (p.phase == PomodoroPhase.WORK) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(ClockNotifications.pomodoroName(ctx, p.phase), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
+                Text(ClockLogic.countdown(PomodoroLogic.remaining(p, now)), style = MaterialTheme.typography.displayMedium, fontFamily = FontFamily.Monospace)
+            }
+        }
+        Text(stringResource(R.string.clock_pomodoro_counts, PomodoroLogic.cycleOf(p), p.longEvery, p.sessions, PomodoroLogic.todayCount(p, day)),
+            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag(ClockTags.POMODORO_COUNTS))
+        Row(Modifier.fillMaxWidth().padding(vertical = ClockMetrics.gutter), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+            RoundButton(stringResource(R.string.clock_reset), { ClockEngine.pomodoro(ctx, "reset") }, primary = false, size = 80.dp, modifier = Modifier.testTag(ClockTags.POMODORO_RESET))
+            RoundButton(stringResource(if (p.running) R.string.clock_pause else if (p.remainingMs >= 0) R.string.clock_resume else R.string.clock_start),
+                { ClockEngine.pomodoro(ctx, if (p.running) "pause" else "start") }, modifier = Modifier.testTag(ClockTags.POMODORO_TOGGLE))
+            RoundButton(stringResource(R.string.clock_skip), { ClockEngine.pomodoro(ctx, "skip") }, primary = false, size = 80.dp, modifier = Modifier.testTag(ClockTags.POMODORO_SKIP))
+        }
+        HorizontalDivider()
+        val small = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.SemiBold)
+        fun set(w: Int = p.workMin, s: Int = p.shortMin, l: Int = p.longMin, e: Int = p.longEvery, a: Boolean = p.autoAdvance) =
+            ClockEngine.configurePomodoro(ctx, w, s, l, e, a)
+        Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(top = ClockMetrics.gap)) {
+            LabelledWheel(stringResource(R.string.clock_work_len), p.workMin, 1, 180, { set(w = it) }, rowHeight = 48.dp, style = small, tag = ClockTags.POMODORO_WORK)
+            LabelledWheel(stringResource(R.string.clock_short_len), p.shortMin, 1, 60, { set(s = it) }, rowHeight = 48.dp, style = small, tag = ClockTags.POMODORO_SHORT)
+            LabelledWheel(stringResource(R.string.clock_long_len), p.longMin, 1, 120, { set(l = it) }, rowHeight = 48.dp, style = small, tag = ClockTags.POMODORO_LONG)
+        }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.clock_long_every), Modifier.weight(1f))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(ClockMetrics.small)) {
+                listOf(2, 3, 4, 5, 6).forEach { n -> FilterChip(selected = p.longEvery == n, onClick = { set(e = n) }, label = { Text("$n") }) }
+            }
+        }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.clock_auto_advance), Modifier.weight(1f))
+            Switch(checked = p.autoAdvance, onCheckedChange = { set(a = it) }, modifier = Modifier.testTag(ClockTags.POMODORO_AUTO))
+        }
+    }
+}
+
 /** Test tags of the Clock screens. */
 object ClockTags {
     const val WORLD = "clock_world"
     const val ALARMS = "clock_alarms"
     const val ADD_ALARM = "clock_add_alarm"
     const val SAVE = "clock_save"
+    // #1970 the alarm editor sheet
+    const val ALARM_EDITOR = "clock_alarm_editor"
+    const val ALARM_HOUR = "clock_alarm_hour"
+    const val ALARM_MINUTE = "clock_alarm_minute"
+    const val ALARM_DATE = "clock_alarm_date"
+    const val ALARM_NAME = "clock_alarm_name"
+    const val ROW_SOUND = "clock_row_sound"
+    const val ROW_VIBRATION = "clock_row_vibration"
+    const val ROW_SNOOZE = "clock_row_snooze"
+    const val ROW_GROUP = "clock_row_group"
+    const val ROW_CALENDAR = "clock_row_calendar"
+    const val BACKGROUND_PREVIEW = "clock_background_preview"
+    const val CANCEL = "clock_cancel"
+    const val DELETE_ALARM = "clock_delete_alarm"
+    fun day(name: String) = "clock_day:$name"
+    fun background(id: String) = "clock_background:$id"
+    fun group(name: String) = "clock_group:$name"
+    // #1970 timer wheels and presets, stopwatch dial, interval / bedtime wheels, Pomodoro
+    const val WHEEL_H = "clock_wheel_h"
+    const val WHEEL_M = "clock_wheel_m"
+    const val WHEEL_S = "clock_wheel_s"
+    const val PRESET_EDIT = "clock_preset_edit"
+    fun preset(i: Int) = "clock_preset:$i"
+    const val STOPWATCH_DIAL = "clock_stopwatch_dial"
+    const val LAPS = "clock_laps"
+    const val SHARE_LAPS = "clock_share_laps"
+    const val LAP = "clock_lap"
+    const val RESET = "clock_reset"
+    const val TOGGLE = "clock_toggle"
+    const val INTERVAL_RING = "clock_interval_ring"
+    const val INTERVAL_WORK = "clock_interval_work"
+    const val INTERVAL_REST = "clock_interval_rest"
+    const val INTERVAL_ROUNDS = "clock_interval_rounds"
+    const val INTERVAL_START = "clock_interval_start"
+    const val SLEEP_RING = "clock_sleep_ring"
+    const val BEDTIME_SWITCH = "clock_bedtime_switch"
+    const val BEDTIME_HOUR = "clock_bedtime_hour"
+    const val BEDTIME_MINUTE = "clock_bedtime_minute"
+    const val WORLD_DIAL = "clock_world_dial"
+    const val POMODORO = "clock_pomodoro"
+    const val POMODORO_RING = "clock_pomodoro_ring"
+    const val POMODORO_COUNTS = "clock_pomodoro_counts"
+    const val POMODORO_TOGGLE = "clock_pomodoro_toggle"
+    const val POMODORO_SKIP = "clock_pomodoro_skip"
+    const val POMODORO_RESET = "clock_pomodoro_reset"
+    const val POMODORO_WORK = "clock_pomodoro_work"
+    const val POMODORO_SHORT = "clock_pomodoro_short"
+    const val POMODORO_LONG = "clock_pomodoro_long"
+    const val POMODORO_AUTO = "clock_pomodoro_auto"
     const val TIMERS = "clock_timers"
     const val START_TIMER = "clock_start_timer"
     const val STOPWATCH = "clock_stopwatch"

@@ -5114,6 +5114,11 @@
             900,
             1800,
             3600
+          ],
+          "wheel_presets": [
+            600,
+            900,
+            1800
           ]
         }
       },
@@ -5169,6 +5174,20 @@
           ],
           "bedtime_default": "23:00"
         }
+      },
+      {
+        "id": "pomodoro",
+        "label": "Pomodoro",
+        "tab": "clock",
+        "kind": "pomodoro",
+        "clock": {
+          "work": 25,
+          "short_break": 5,
+          "long_break": 15,
+          "long_every": 4,
+          "auto_advance": true
+        },
+        "_doc": "#1970 libs:clock-tools' Pomodoro subpage (ClockSubpages.IDS): work, short and long breaks on the clock's timer engine (wakeups, notifications, foreground service); these are the declared lengths in minutes, each editable on the page."
       },
       {
         "id": "sheet",
@@ -5601,7 +5620,9 @@
       "microphone",
       "activity_recognition",
       "body_sensors",
-      "exact_alarm"
+      "exact_alarm",
+      "calendar_read",
+      "calendar_write"
     ],
     "helpers": [],
     "first_run": "libs:perms"

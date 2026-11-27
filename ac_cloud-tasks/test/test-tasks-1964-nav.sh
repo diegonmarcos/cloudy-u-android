@@ -98,7 +98,7 @@ MUTATIONS = [
           }'''),
     ("m4-old-library-route-dead", "library_still_reachable", "nav", '"library" to (HOME to PAGE_LIBRARY),', ''),
     ("m5-calc-clock-drifts", "clock_subpages_match_calc", "calc", '"id": "bedtime",\n        "label": "Bedtime",\n        "tab": "clock"', '"id": "bedtime",\n        "label": "Bedtime",\n        "tab": "clockx"'),
-    ("m6-lib-list-drifts", "clock_subpages_match_calc", "subpages", ', "bedtime")', ')'),
+    ("m6-lib-list-drifts", "clock_subpages_match_calc", "subpages", ', "pomodoro")', ')'),
     ("m7-fullclock-own-list", "clock_subpages_match_calc", "full", 'com.diegonmarcos.clocktools.ClockSubpages.IDS.map { it to labels.getValue(it) }', 'listOf("world", "alarms").map { it to labels.getValue(it) }'),
 ]
 

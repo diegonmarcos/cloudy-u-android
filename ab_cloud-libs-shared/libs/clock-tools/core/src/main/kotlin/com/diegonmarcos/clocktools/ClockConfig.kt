@@ -16,6 +16,10 @@ data class ClockConfig(
     val zones: List<String> = listOf("Europe/Madrid", "America/New_York", "America/Sao_Paulo", "Asia/Tokyo"),
     /** Timer presets in seconds. */
     val timerPresets: List<Long> = listOf(60, 180, 300, 600, 900, 1800, 3600),
+    /** #1970 the timer wheel's preset chips in seconds (00:10:00, 00:15:00, 00:30:00); the user may edit each. */
+    val wheelPresets: List<Long> = TimerPresets.DEFAULT,
+    /** #1970 the Pomodoro subpage's declared lengths (minutes), long-break spacing and auto-advance. */
+    val pomodoro: Pomodoro = Pomodoro(),
     val sleepChoices: List<Int> = listOf(15, 30, 45, 60, 90),
     val bedtimeDefault: Int = 23 * 60,
     val intervalPresets: List<IntervalPreset> = listOf(
@@ -32,7 +36,7 @@ data class ClockConfig(
         val DEFAULT = ClockConfig()
 
         /**
-         * [byKind] maps a mode kind (worldclock, alarms, timers, interval, bedtime) to its `clock` JSON object. A key the
+         * [byKind] maps a mode kind (worldclock, alarms, timers, interval, bedtime, pomodoro) to its `clock` JSON object. A key the
          * declaration leaves out reads as Cloud Calc's ClockDecl read it before #1668 (an empty list, 10 minutes, ...);
          * unreadable JSON is an empty object, never a crash.
          */
@@ -48,6 +52,11 @@ data class ClockConfig(
                 vibrateDefault = alarms.optBoolean("vibrate_default", true),
                 zones = of("worldclock").optJSONArray("zones").let { a -> if (a == null) emptyList() else (0 until a.length()).map { a.getString(it) } },
                 timerPresets = ints(of("timers").optJSONArray("presets")).map { it.toLong() },
+                wheelPresets = ints(of("timers").optJSONArray("wheel_presets")).map { it.toLong() }.filter { it > 0 }.ifEmpty { TimerPresets.DEFAULT },
+                pomodoro = of("pomodoro").let { p ->
+                    PomodoroLogic.configure(Pomodoro(), p.optInt("work", 25), p.optInt("short_break", 5), p.optInt("long_break", 15),
+                        p.optInt("long_every", 4), p.optBoolean("auto_advance", true))
+                },
                 sleepChoices = ints(bed.optJSONArray("sleep_choices")),
                 bedtimeDefault = ClockLogic.parseTime(bed.optString("bedtime_default")) ?: (23 * 60),
                 intervalPresets = of("interval").optJSONArray("presets").let { a ->

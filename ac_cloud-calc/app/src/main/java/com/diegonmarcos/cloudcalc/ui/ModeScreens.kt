@@ -6,6 +6,7 @@ import androidx.compose.foundation.Canvas
 import com.diegonmarcos.clocktools.ui.AlarmsScreen
 import com.diegonmarcos.clocktools.ui.BedtimeScreen
 import com.diegonmarcos.clocktools.ui.IntervalScreen
+import com.diegonmarcos.clocktools.ui.PomodoroScreen
 import com.diegonmarcos.clocktools.ui.StopwatchScreen
 import com.diegonmarcos.clocktools.ui.TimersScreen
 import com.diegonmarcos.clocktools.ui.WorldClockScreen
@@ -131,6 +132,7 @@ fun ModeScreen(mode: Declarations.Mode) {
             "stopwatch" -> StopwatchScreen()
             "interval" -> IntervalScreen()
             "bedtime" -> BedtimeScreen()
+            "pomodoro" -> PomodoroScreen()
             "sheet" -> SheetMode(mode)
             "home" -> HomeMode()
             "jev" -> JevMode(mode)

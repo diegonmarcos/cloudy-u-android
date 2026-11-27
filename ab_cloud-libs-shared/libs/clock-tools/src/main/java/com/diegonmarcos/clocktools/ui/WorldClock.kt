@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.horizontalScroll
@@ -114,8 +115,14 @@ fun WorldClockScreen(modifier: Modifier = Modifier) {
     LazyColumn(modifier.fillMaxSize().testTag(ClockTags.WORLD), contentPadding = PaddingValues(ClockMetrics.gutter)) {
         item {
             val t = Instant.ofEpochMilli(ref).atZone(homeZone)
-            Text(if (picked == null) HHMMSS.format(t) else HHMM.format(t), style = MaterialTheme.typography.displayMedium, fontFamily = FontFamily.Monospace)
-            Text(DAY.format(t) + "  ·  " + homeZone.id, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            // #1970 an analog dial of the default city beside its digital time, as the other clock pages' dials
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(ClockMetrics.gutter)) {
+                AnalogDial(ref, homeZone, Modifier.size(112.dp).testTag(ClockTags.WORLD_DIAL))
+                Column {
+                    Text(if (picked == null) HHMMSS.format(t) else HHMM.format(t), style = MaterialTheme.typography.displayMedium, fontFamily = FontFamily.Monospace)
+                    Text(DAY.format(t) + "  ·  " + homeZone.id, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
             // The converter: the reference time is live, or a date and time in the default city.
             Row(Modifier.fillMaxWidth().padding(top = ClockMetrics.gap), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(ClockMetrics.small)) {
@@ -316,6 +323,7 @@ fun FullClock(modifier: Modifier = Modifier, initialTab: Int = 0) {
     val labels = mapOf(
         "world" to R.string.clock_tab_world, "alarms" to R.string.clock_tab_alarms, "timers" to R.string.clock_tab_timers,
         "stopwatch" to R.string.clock_tab_stopwatch, "interval" to R.string.clock_tab_interval, "bedtime" to R.string.clock_tab_bedtime,
+        "pomodoro" to R.string.clock_tab_pomodoro,
     )
     // #1964 the subpage list is ClockSubpages.IDS, declared once for Cloud Calc and Cloud Tasks
     val tabs = com.diegonmarcos.clocktools.ClockSubpages.IDS.map { it to labels.getValue(it) }
@@ -336,6 +344,7 @@ fun FullClock(modifier: Modifier = Modifier, initialTab: Int = 0) {
                 "stopwatch" -> StopwatchScreen()
                 "interval" -> IntervalScreen()
                 "bedtime" -> BedtimeScreen()
+                "pomodoro" -> PomodoroScreen()
             }
         }
     }

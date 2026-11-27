@@ -152,7 +152,9 @@
     "microphone",
     "activity_recognition",
     "body_sensors",
-    "exact_alarm"
+    "exact_alarm",
+    "calendar_read",
+    "calendar_write"
    ],
    "helpers": []
   },
@@ -429,7 +431,9 @@
    "needs": [
     "notifications",
     "install_unknown",
-    "exact_alarm"
+    "exact_alarm",
+    "calendar_read",
+    "calendar_write"
    ],
    "helpers": []
   },

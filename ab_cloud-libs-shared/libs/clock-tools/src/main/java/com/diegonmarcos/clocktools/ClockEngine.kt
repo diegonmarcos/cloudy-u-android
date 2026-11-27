@@ -72,8 +72,11 @@ object ClockEngine {
     // ── what the screens and buttons do ─────────────────────────────────────────────────────
 
     /** Adds [a] when its id is 0, else replaces the alarm with that id (and drops its snooze). */
-    fun saveAlarm(ctx: Context, a: Alarm): Long {
-        var id = a.id
+    fun saveAlarm(ctx: Context, alarm: Alarm): Long {
+        var id = alarm.id
+        // #1970 "Add to calendar": the event follows the alarm (written, updated, or removed) before the alarm is stored
+        // with the event's id. Without the calendar grant nothing is written and the id stays as it was.
+        val a = calendarSync(ctx, alarm)
         update(ctx) { d ->
             if (a.id == 0L) {
                 id = d.seq + 1
@@ -85,7 +88,15 @@ object ClockEngine {
         return id
     }
 
+    /** #1970 [a] with its calendar event brought in line (ClockCalendar.sync through the device calendar). */
+    fun calendarSync(ctx: Context, a: Alarm): Alarm {
+        if (!a.calendar && a.calendarEventId == 0L) return a
+        val sink = ClockCalendarProvider.sinkOrNull(ctx) ?: return a
+        return runCatching { ClockCalendar.sync(a, sink, now(), zone()) }.getOrDefault(a)
+    }
+
     fun deleteAlarm(ctx: Context, id: Long) = update(ctx) { d ->
+        d.alarms.firstOrNull { it.id == id }?.let { a -> ClockCalendarProvider.sinkOrNull(ctx)?.let { runCatching { ClockCalendar.remove(a, it) } } }
         d.copy(alarms = d.alarms.filter { it.id != id }, ringing = d.ringing.filter { it.key != ClockLogic.alarmKey(id) })
     }
 
@@ -134,6 +145,33 @@ object ClockEngine {
 
     fun stopInterval(ctx: Context) = update(ctx) { d -> d.copy(interval = null, ringing = d.ringing.filter { it.key != ClockLogic.INTERVAL }) }
 
+    // ── #1970 Pomodoro, on the same store, wakeups and service as the timers ─────────────────
+
+    private fun today(): Long = java.time.Instant.ofEpochMilli(now()).atZone(zone()).toLocalDate().toEpochDay()
+
+    /** op: start | pause | skip | reset. */
+    fun pomodoro(ctx: Context, op: String) = update(ctx) { d ->
+        val p = d.pomodoro
+        d.copy(
+            pomodoro = when (op) {
+                "start" -> PomodoroLogic.start(p, now())
+                "pause" -> PomodoroLogic.pause(p, now())
+                "skip" -> PomodoroLogic.advance(p, now(), today(), counted = false)
+                "reset" -> PomodoroLogic.reset(p)
+                else -> p
+            },
+            ringing = if (op == "start" || op == "skip" || op == "reset") d.ringing.filter { it.key != ClockLogic.POMODORO } else d.ringing,
+        )
+    }
+
+    fun configurePomodoro(ctx: Context, work: Int, short: Int, long: Int, every: Int, auto: Boolean) =
+        update(ctx) { d -> d.copy(pomodoro = PomodoroLogic.configure(d.pomodoro, work, short, long, every, auto)) }
+
+    /** The timer wheel's preset chips: chip [index] becomes [seconds] (the declared row is the starting point). */
+    fun editWheelPreset(ctx: Context, index: Int, seconds: Long) = update(ctx) { d ->
+        d.copy(wheelPresets = TimerPresets.edit(TimerPresets.effective(d.wheelPresets, config(ctx).wheelPresets), index, seconds))
+    }
+
     fun startSleep(ctx: Context, minutes: Int) = update(ctx) { it.copy(sleepUntil = now() + minutes * ClockLogic.MINUTE_MS) }
     fun cancelSleep(ctx: Context) = update(ctx) { it.copy(sleepUntil = 0) }
 
@@ -164,6 +202,9 @@ object ClockEngine {
             "stopwatch_lap" -> stopwatch(ctx, "lap")
             "interval_stop" -> stopInterval(ctx)
             "sleep_cancel" -> cancelSleep(ctx)
+            "pomodoro_start" -> pomodoro(ctx, "start")
+            "pomodoro_pause" -> pomodoro(ctx, "pause")
+            "pomodoro_skip" -> pomodoro(ctx, "skip")
         }
     }
 

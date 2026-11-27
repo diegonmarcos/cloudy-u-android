@@ -1,0 +1,311 @@
+name: "Test -> Clock #1970 (rule-16 parity, wheel / presets / Pomodoro / calendar mutation legs, emulator shots of every subpage in Tasks and Calc)"
+
+# #1970 libs:clock-tools redesign (alarm sheet, timer wheels, stopwatch dial, Pomodoro, Add to calendar).
+#   parity   clock-tools/test/clock-1970-parity.sh: every control of the old screens still exists, the new parts are wired, and 20
+#            mutations each turn their test red. Verdict from its JUnit XML, never from the script's exit code.
+#   jvm      the core suites (WheelPresetsTest, PomodoroTest, ClockCalendarTest with a fake calendar provider, and the rest) run GREEN
+#            in a standalone Gradle project over the lib's own sources, then each planted mutant must turn its suite RED. Verdict from
+#            the Gradle JUnit XML. (PIT also mutates these classes on every Cloud Calc ship: core/build.gradle targetClasses.)
+#   shots    (only with run ids) installs the x86_64 debug APKs of a Ship Cloud Tasks and / or Ship Cloud Calc run on an API-34
+#            emulator and screenshots every Clock subpage, the alarm editor sheet, the stopwatch laps page and Pomodoro running.
+# Dispatch inputs reach the scripts through env only, behind allow-lists (mutant names; run ids digits).
+
+on:
+  workflow_dispatch:
+    inputs:
+      mutant:
+        description: "all | wheel-wrap | wheel-centre | wheel-hms | preset-seconds | preset-edits-ignored | preset-text | pomodoro-long-late | pomodoro-skip-counts | pomodoro-no-auto | pomodoro-today-sticky | pomodoro-long-keeps-cycle | calendar-always-insert | calendar-no-delete | calendar-rrule | calendar-disabled-kept"
+        required: false
+        type: string
+        default: "all"
+      tasks_run:
+        description: "Ship Cloud Tasks run whose x86_64 debug APK is screenshotted (digits; empty = none)"
+        required: false
+        type: string
+        default: ""
+      calc_run:
+        description: "Ship Cloud Calc run whose x86_64 debug APK is screenshotted (digits; empty = none)"
+        required: false
+        type: string
+        default: ""
+  push:
+    branches: [main]
+    paths:
+      - "ab_cloud-libs-shared/libs/clock-tools/**"
+      - ".github/workflows/test-clock-1970.yml"
+      - "ac_cloud-calc/build.json"
+      - "ac_cloud-calc/app/src/main/java/com/diegonmarcos/cloudcalc/ui/ModeScreens.kt"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parity tests and their mutations (writes JUnit XML)
+        run: JUNIT_OUT="$RUNNER_TEMP/clock-1970-parity.xml" bash ab_cloud-libs-shared/libs/clock-tools/test/clock-1970-parity.sh || true
+      - name: Verdict from the XML
+        run: |
+          python3 -I - "$RUNNER_TEMP/clock-1970-parity.xml" <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          cases = ET.parse(sys.argv[1]).getroot().findall("testcase")
+          tests = [c for c in cases if c.get("classname") == "tests"]
+          muts = [c for c in cases if c.get("classname") == "mutations"]
+          red = [c.get("name") + ": " + c.find("failure").get("message") for c in cases if c.find("failure") is not None]
+          for c in cases: print(("FAIL " if c.find("failure") is not None else "ok   ") + c.get("classname") + "/" + c.get("name"))
+          if len(tests) != 11 or len(muts) != 20: red.append("expected 11 tests and 20 mutations, got %d and %d" % (len(tests), len(muts)))
+          if red: print("\n".join(red)); sys.exit(1)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: clock-1970-parity-xml
+          path: ${{ runner.temp }}/clock-1970-parity.xml
+
+  jvm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      MUTANT: ${{ inputs.mutant || 'all' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the dispatch input (allow-list)
+        run: |
+          case "$MUTANT" in
+            all|wheel-wrap|wheel-centre|wheel-hms|preset-seconds|preset-edits-ignored|preset-text|pomodoro-long-late|pomodoro-skip-counts|pomodoro-no-auto|pomodoro-today-sticky|pomodoro-long-keeps-cycle|calendar-always-insert|calendar-no-delete|calendar-rrule|calendar-disabled-kept) ;;
+            *) echo "::error::mutant not in the allow-list"; exit 2 ;;
+          esac
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.10.2"
+      - name: Standalone project over the lib's core sources
+        run: |
+          set -eu
+          P="$RUNNER_TEMP/core1970"; mkdir -p "$P"
+          CORE="$GITHUB_WORKSPACE/ab_cloud-libs-shared/libs/clock-tools/core"
+          echo "rootProject.name = 'clock-core-1970'" > "$P/settings.gradle"
+          cat > "$P/build.gradle" <<EOF
+          plugins { id 'org.jetbrains.kotlin.jvm' version '2.3.20' }
+          repositories { mavenCentral() }
+          java { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
+          kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
+          sourceSets {
+              main { kotlin.srcDirs = ['$CORE/src/main/kotlin'] }
+              test { kotlin.srcDirs = ['$CORE/src/test/kotlin'] }
+          }
+          dependencies {
+              implementation 'org.json:json:20240303'
+              testImplementation 'junit:junit:4.13.2'
+          }
+          test { ignoreFailures = true }
+          EOF
+          echo "P=$P" >> "$GITHUB_ENV"
+      - name: Real tree GREEN, every mutant RED (verdict from the JUnit XML)
+        run: |
+          set -u
+          C=ab_cloud-libs-shared/libs/clock-tools/core/src/main/kotlin/com/diegonmarcos/clocktools
+          OUT="$RUNNER_TEMP/clock-1970-jvm.xml"
+          # prints "<tests> <failed>" for suite $1 from the Gradle XML; exit 1 when the suite has no XML or ran nothing
+          verdict() {
+            python3 -I - "$P/build/test-results/test" "$1" <<'PY'
+          import glob, os, sys, xml.etree.ElementTree as ET
+          fs = glob.glob(os.path.join(sys.argv[1], "TEST-*" + sys.argv[2] + ".xml"))
+          if not fs: print("NO-XML"); sys.exit(1)
+          r = ET.parse(fs[0]).getroot(); n = int(r.get("tests", 0)); f = int(r.get("failures", 0)) + int(r.get("errors", 0))
+          print(n, f); sys.exit(0 if n > 0 else 1)
+          PY
+          }
+          sub() { python3 -I -c 'import sys; p, a, b = sys.argv[1:]; s = open(p).read(); assert a in s, "anchor missing: " + a; open(p, "w").write(s.replace(a, b, 1))' "$1" "$2" "$3"; }
+          suite() { rm -rf "$P/build/test-results"; gradle -p "$P" test $1 > "$RUNNER_TEMP/suite.log" 2>&1 || true; }
+          cases=""
+          add() { cases="$cases$1|$2|$3"$'\n'; }
+          suite ""
+          for cls in WheelPresetsTest PomodoroTest ClockCalendarTest ClockLogicTest WorldClockTest; do
+            v=$(verdict $cls) || { tail -60 "$RUNNER_TEMP/suite.log"; add tests "$cls" "no XML or no test ran"; continue; }
+            echo "real tree $cls: $v"
+            [ "${v#* }" = 0 ] && add tests "$cls" "" || add tests "$cls" "real tree RED: $v"
+          done
+          while IFS='@' read -r name cls file a b; do
+            [ -z "$name" ] && continue
+            [ "$MUTANT" != all ] && [ "$MUTANT" != "$name" ] && continue
+            git checkout -- "$C"
+            if ! sub "$C/$file" "$a" "$b"; then add mutations "$name" "anchor missing"; continue; fi
+            suite "--tests com.diegonmarcos.clocktools.$cls"
+            v=$(verdict $cls) || { add mutations "$name" "no verdict (compile error?)"; tail -30 "$RUNNER_TEMP/suite.log"; continue; }
+            if [ "${v#* }" -gt 0 ]; then echo "RED (caught): $name $v"; add mutations "$name" ""; else echo "::error::mutant stayed GREEN: $name"; add mutations "$name" "stayed GREEN"; fi
+          done <<'MUTANTS'
+          wheel-wrap@WheelPresetsTest@ClockDesign.kt@min + Math.floorMod(index, size(min, max))@min + index % size(min, max)
+          wheel-centre@WheelPresetsTest@ClockDesign.kt@offsetPx * 2 >= rowPx@offsetPx >= rowPx
+          wheel-hms@WheelPresetsTest@ClockDesign.kt@(h.coerceIn(0, 99) * 3600L@(h.coerceIn(0, 99) * 60L
+          preset-seconds@WheelPresetsTest@ClockDesign.kt@if (m > 59 || s > 59) return null@if (m > 59) return null
+          preset-edits-ignored@WheelPresetsTest@ClockDesign.kt@= stored ?: declared.ifEmpty { DEFAULT }@= declared.ifEmpty { DEFAULT }
+          preset-text@WheelPresetsTest@ClockDesign.kt@.format(t / 3600, (t % 3600) / 60, t % 60)@.format(0, (t % 3600) / 60, t % 60)
+          pomodoro-long-late@PomodoroTest@Pomodoro.kt@done >= p.longEvery@done > p.longEvery
+          pomodoro-skip-counts@PomodoroTest@Pomodoro.kt@val work = counted && p.phase == PomodoroPhase.WORK@val work = p.phase == PomodoroPhase.WORK
+          pomodoro-no-auto@PomodoroTest@Pomodoro.kt@return if (p.autoAdvance) moved.copy(endsAt = now + durationMs(moved)) else moved@return moved
+          pomodoro-today-sticky@PomodoroTest@Pomodoro.kt@if (p.todayDay == day) p.today else 0@p.today
+          pomodoro-long-keeps-cycle@PomodoroTest@Pomodoro.kt@PomodoroPhase.LONG_BREAK -> PomodoroPhase.WORK to 0@PomodoroPhase.LONG_BREAK -> PomodoroPhase.WORK to p.cycle
+          calendar-always-insert@ClockCalendarTest@ClockCalendar.kt@if (a.calendarEventId > 0 && sink.update(a.calendarEventId, e)) return a@Unit
+          calendar-no-delete@ClockCalendarTest@ClockCalendar.kt@if (a.calendarEventId > 0) sink.delete(a.calendarEventId)@Unit
+          calendar-rrule@ClockCalendarTest@ClockCalendar.kt@ClockLogic.ALL_DAYS -> "FREQ=DAILY"@ClockLogic.ALL_DAYS -> "FREQ=WEEKLY"
+          calendar-disabled-kept@ClockCalendarTest@ClockCalendar.kt@fun wanted(a: Alarm): Boolean = a.calendar && a.enabled@fun wanted(a: Alarm): Boolean = a.calendar
+          MUTANTS
+          git checkout -- "$C"
+          printf '%s' "$cases" | python3 -I - "$OUT" <<'PY'
+          import sys
+          from xml.sax.saxutils import quoteattr
+          rows = [l.split("|", 2) for l in sys.stdin.read().splitlines() if l]
+          with open(sys.argv[1], "w") as h:
+              h.write('<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="clock-1970-jvm" tests="%d" failures="%d">\n' % (len(rows), sum(1 for r in rows if r[2])))
+              for cl, n, m in rows:
+                  h.write('  <testcase classname=%s name=%s>%s</testcase>\n' % (quoteattr(cl), quoteattr(n), "" if not m else "<failure message=%s/>" % quoteattr(m)))
+              h.write("</testsuite>\n")
+          PY
+      - name: Verdict from the XML
+        run: |
+          python3 -I - "$RUNNER_TEMP/clock-1970-jvm.xml" "$MUTANT" <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          cases = ET.parse(sys.argv[1]).getroot().findall("testcase")
+          tests = [c for c in cases if c.get("classname") == "tests"]; muts = [c for c in cases if c.get("classname") == "mutations"]
+          red = [c.get("classname") + "/" + c.get("name") + ": " + c.find("failure").get("message") for c in cases if c.find("failure") is not None]
+          for c in cases: print(("FAIL " if c.find("failure") is not None else "ok   ") + c.get("classname") + "/" + c.get("name"))
+          want = 15 if sys.argv[2] == "all" else 1
+          if len(tests) != 5 or len(muts) != want: red.append("expected 5 suites and %d mutants, got %d and %d" % (want, len(tests), len(muts)))
+          if red: print("\n".join(red)); sys.exit(1)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: clock-1970-jvm-xml
+          path: |
+            ${{ runner.temp }}/clock-1970-jvm.xml
+            ${{ runner.temp }}/core1970/build/test-results/test/*.xml
+
+  shots:
+    needs: [parity, jvm]
+    if: ${{ inputs.tasks_run != '' || inputs.calc_run != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      TASKS_RUN: ${{ inputs.tasks_run }}
+      CALC_RUN: ${{ inputs.calc_run }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the APKs of the Ship runs (run ids allow-listed to digits)
+        run: |
+          set -eu
+          for v in "$TASKS_RUN" "$CALC_RUN"; do case "$v" in *[!0-9]*) echo "::error::run ids must be digits"; exit 1;; esac; done
+          if [ -n "$TASKS_RUN" ]; then
+            gh run download "$TASKS_RUN" --repo "$GITHUB_REPOSITORY" --pattern 'Cloud-Tasks-x86_64-debug-*' --dir apk-tasks
+            cp "$(find apk-tasks -name '*.apk' | sort | head -1)" tasks.apk
+          fi
+          if [ -n "$CALC_RUN" ]; then
+            gh run download "$CALC_RUN" --repo "$GITHUB_REPOSITORY" --pattern 'Cloud-Calc-x86_64-debug-*' --dir apk-calc
+            cp "$(find apk-calc -name '*.apk' | sort | head -1)" calc.apk
+          fi
+          ls -la *.apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Write the scene script
+        run: |
+          cat > walk.sh <<'SH'
+          #!/bin/bash
+          set -u
+          mkdir -p walk-out/shots
+          adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
+          sleep 30
+          shot() { adb exec-out screencap -p > "walk-out/shots/clock-1970-$1.png"; echo "shot $1" >> walk-out/summary.txt; }
+          dump() { for t in 1 2 3 4; do adb shell rm -f /sdcard/ui.xml; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > walk-out/ui.xml; grep -q "<hierarchy" walk-out/ui.xml && break; sleep 2; done; }
+          tap() { # tap the first on-screen node whose text or content-desc is exactly $1
+            dump
+            xy=$(python3 -I - walk-out/ui.xml "$1" <<'PY'
+          import re, sys
+          x = open(sys.argv[1], encoding="utf-8").read()
+          for m in re.finditer(r'<node\b[^>]*>', x):
+              n = m.group(0)
+              t = re.search(r'\btext="([^"]*)"', n); d = re.search(r'content-desc="([^"]*)"', n); b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
+              if b and ((t and t.group(1) == sys.argv[2]) or (d and d.group(1) == sys.argv[2])):
+                  a, bb, c, dd = map(int, b.groups())
+                  if c > a and dd > bb and c <= 1080: print((a + c) // 2, (bb + dd) // 2); break
+          PY
+          )
+            echo "tap '$1' -> '${xy:-NOT FOUND}'" | tee -a walk-out/summary.txt
+            [ -n "$xy" ] && adb shell input tap $xy
+            sleep 3
+          }
+          editor() { # $1 app prefix: the alarm editor and its sheet, then Cancel
+            tap "Add alarm"; sleep 2; shot "$1-03-alarm-editor"
+            adb shell input swipe 540 1900 540 700 400; sleep 2; shot "$1-04-alarm-editor-sheet"
+            adb shell input swipe 540 1900 540 700 400; sleep 2; shot "$1-05-alarm-editor-sheet-bottom"
+            tap Cancel
+          }
+          stopwatch() { tap Start; sleep 4; tap Lap; sleep 2; tap Lap; sleep 1; shot "$1-07-stopwatch-running"
+            adb shell input swipe 900 1000 150 1000 300; sleep 2; shot "$1-08-stopwatch-laps"; adb shell input swipe 150 1000 900 1000 300; sleep 1; tap Pause; }
+          if [ -f tasks.apk ]; then
+            PKG=com.diegonmarcos.cloudagenda
+            adb install -r -g tasks.apk || echo "::error::tasks install failed"
+            adb shell monkey -p $PKG -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1; sleep 15
+            tap Clock; shot tasks-01-world
+            tap Alarms; shot tasks-02-alarms
+            editor tasks
+            tap Timers; shot tasks-06-timers
+            tap Stopwatch; stopwatch tasks
+            adb shell input swipe 900 334 150 334 300; sleep 1
+            tap Interval; shot tasks-09-interval
+            tap Bedtime; shot tasks-10-bedtime
+            tap Pomodoro; shot tasks-11-pomodoro; tap Start; sleep 4; shot tasks-12-pomodoro-running
+            timeout 30 adb logcat -d -v threadtime "*:E" > walk-out/logcat-tasks.txt || true
+            adb shell am force-stop $PKG
+          fi
+          if [ -f calc.apk ]; then
+            PKG=com.diegonmarcos.cloudcalc
+            adb install -r -g calc.apk || echo "::error::calc install failed"
+            ACT=$(adb shell cmd package resolve-activity --brief -c android.intent.category.LAUNCHER $PKG | tail -1 | tr -d '\r')
+            adb shell monkey -p $PKG -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1; sleep 15; shot calc-00-launch
+            open() { adb shell am start -n "$ACT" --es clock_mode "$1" >/dev/null 2>&1; sleep 5; }
+            open world; shot calc-01-world
+            open alarms; shot calc-02-alarms; editor calc
+            open timers; shot calc-06-timers
+            open stopwatch; stopwatch calc
+            open interval; shot calc-09-interval
+            open bedtime; shot calc-10-bedtime
+            open pomodoro; shot calc-11-pomodoro; tap Start; sleep 4; shot calc-12-pomodoro-running
+            timeout 30 adb logcat -d -v threadtime "*:E" > walk-out/logcat-calc.txt || true
+          fi
+          SH
+          chmod +x walk.sh
+      - name: Boot emulator + scenes
+        timeout-minutes: 40
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: ./walk.sh
+      - name: Upload the PNGs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clock-1970-shots
+          path: |
+            walk-out/shots/*.png
+            walk-out/summary.txt
+            walk-out/logcat-*.txt
+          if-no-files-found: warn

@@ -48,7 +48,9 @@
    "needs": [
     "notifications",
     "install_unknown",
-    "exact_alarm"
+    "exact_alarm",
+    "calendar_read",
+    "calendar_write"
    ],
    "first_run": "libs:perms",
    "helpers": []
@@ -90,7 +92,9 @@
     "microphone",
     "activity_recognition",
     "body_sensors",
-    "exact_alarm"
+    "exact_alarm",
+    "calendar_read",
+    "calendar_write"
    ],
    "first_run": "libs:perms",
    "helpers": []
