@@ -20,6 +20,7 @@ class CloudNotesApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        LifecycleProbe.install(this)
         startWebView()
         _context = applicationContext
         // DE-CLOUDED (#469): Firebase/Crashlytics removed — this is a local-first

@@ -30,7 +30,13 @@ URI="${URI:-content://media/external/file/$ID}"
 echo "URI=$URI"
 adb logcat -c
 adb shell am start --grant-read-uri-permission -a android.intent.action.VIEW -t application/pdf -d "$URI" -n "$PKG/app.cloudnotes.pro.MainActivity"
-sleep 25
+# 3, 6 and 10 s after the launch: a screenshot and the resumed activity each (the reader must stay on top)
+sleep 3; adb exec-out screencap -p > "$OUT/pdf-1949-notes-t03.png"; adb shell dumpsys activity activities | grep -E "topResumedActivity|mResumedActivity" | head -2 | tee "$OUT/top-t03.txt"
+sleep 3; adb exec-out screencap -p > "$OUT/pdf-1949-notes-t06.png"; adb shell dumpsys activity activities | grep -E "topResumedActivity|mResumedActivity" | head -2 | tee "$OUT/top-t06.txt"
+sleep 4; adb exec-out screencap -p > "$OUT/pdf-1949-notes-t10.png"; adb shell dumpsys activity activities | grep -E "topResumedActivity|mResumedActivity" | head -2 | tee "$OUT/top-t10.txt"
+sleep 12
+adb logcat -d -v threadtime -s Notes1949:V > "$OUT/lifecycle.txt" || true
+cat "$OUT/lifecycle.txt" | head -150
 adb exec-out screencap -p > "$OUT/pdf-1949-notes-grant.png"
 adb shell uiautomator dump /sdcard/ui.xml >/dev/null; adb pull /sdcard/ui.xml "$OUT/ui.xml" >/dev/null
 timeout 60 adb logcat -d -v threadtime > "$OUT/logcat.txt" || true

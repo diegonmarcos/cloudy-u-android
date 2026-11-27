@@ -252,4 +252,9 @@ class MainActivity : BridgeActivity(), CloudNotesThemePlugin.Callback {
     override fun getSystemNavBarHeight(): Int {
         return navHeight
     }
+
+    // #1949 trace
+    override fun startActivityForResult(intent: Intent, requestCode: Int, options: Bundle?) { LifecycleProbe.call(this, "startActivity", intent); super.startActivityForResult(intent, requestCode, options) }
+    override fun navigateUpTo(upIntent: Intent): Boolean { LifecycleProbe.call(this, "navigateUpTo", upIntent); return super.navigateUpTo(upIntent) }
+    override fun finish() { LifecycleProbe.call(this, "finish"); super.finish() }
 }
