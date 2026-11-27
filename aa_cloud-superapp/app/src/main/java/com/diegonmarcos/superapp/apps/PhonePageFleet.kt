@@ -54,7 +54,7 @@ internal object PhonePageFleet {
             g.copy(
                 entries = g.entries.filterNot { isFleet(it.pkg, fleet) },
                 folders = g.folders.map { f -> f.copy(entries = f.entries.filterNot { isFleet(it.pkg, fleet) }) }
-                    .filter { f -> f.entries.isNotEmpty() || f.opensFolder.isNotEmpty() },
+                    .filter { f -> f.entries.isNotEmpty() || f.opensFolder.isNotEmpty() || f.links.isNotEmpty() },
             )
         }
 

@@ -91,7 +91,7 @@ class PhonePageFleetTest {
             "Active enumerator exclusion dropped" to (src.replace("RunningApps.load(ctx, PhonePageFleet.exclude(ourApps))", "RunningApps.load(ctx, emptySet())") to search),
             "Last enumerator exclusion dropped" to (src.replace("RunningApps.loadLastOpened(ctx, PhonePageFleet.exclude(ourApps))", "RunningApps.loadLastOpened(ctx, emptySet())") to search),
             "Cloud app prepended to folders again" to (src.replace("folder to folder.entries.map(::curated)", "folder to (listOf(Entry(folder.iconPkg, folder.label)) + folder.entries).map(::curated)") to search),
-            "Cloud app is the folder face again" to (src.replace("contents.firstOrNull { it.installed }, \"\")", "folder.iconPkg.takeIf { it.isNotBlank() }?.let { resolve(it) }, folder.iconRes)") to search),
+            "Cloud app is the folder face again" to (src.replace("FolderTile(folder.label, contents, null, folder.iconRes)", "FolderTile(folder.label, contents, folder.iconPkg.takeIf { it.isNotBlank() }?.let { resolve(it) }, folder.iconRes)") to search),
             "search unfiltered" to (src to search.replace("filterNot { PhonePageFleet.isFleet(it.packageName, fleet) }", "toList()")),
         )
         for ((name, pair) in mutations) {

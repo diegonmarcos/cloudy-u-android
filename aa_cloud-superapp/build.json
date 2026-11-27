@@ -3939,6 +3939,10 @@
                 {
                   "pkg": "com.viscouspot.gitsync",
                   "label": "Git Sync"
+                },
+                {
+                  "pkg": "com.github.android",
+                  "label": "GitHub"
                 }
               ],
               "icon_res": "ic_drive"
@@ -4055,6 +4059,19 @@
           "packages": [],
           "folders": [
             {
+              "label": "Lnktree",
+              "icon_pkg": "com.diegonmarcos.cloudme",
+              "icon_res": "ic_tree",
+              "packages": [],
+              "links": [
+                {
+                  "label": "Linktree",
+                  "url": "https://linktree.diegonmarcos.com",
+                  "icon": "ic_link_tile"
+                }
+              ]
+            },
+            {
               "label": "Me-Pers",
               "icon_pkg": "com.diegonmarcos.cloudme",
               "packages": [
@@ -4077,30 +4094,7 @@
                 {
                   "pkg": "com.garmin.android.apps.connectmobile",
                   "label": "Garmin Connect"
-                }
-              ],
-              "icon_res": "ic_heart"
-            },
-            {
-              "label": "Me-Prof",
-              "icon_pkg": "com.diegonmarcos.cloudme",
-              "packages": [
-                {
-                  "pkg": "com.memrise.android.memrisecompanion",
-                  "label": "Memrise"
                 },
-                {
-                  "pkg": "mobi.eup.easygerman",
-                  "label": "Todaii German"
-                }
-              ],
-              "icon_res": "ic_file_stack"
-            },
-            {
-              "label": "Me-Prj",
-              "icon_pkg": "com.diegonmarcos.cloudme",
-              "icon_res": "ic_file_stack",
-              "packages": [
                 {
                   "pkg": "com.instagram.android",
                   "label": "Instagram"
@@ -4136,6 +4130,35 @@
                 {
                   "pkg": "co.hinge.app",
                   "label": "Hinge"
+                }
+              ],
+              "icon_res": "ic_heart"
+            },
+            {
+              "label": "Me-Prof",
+              "icon_pkg": "com.diegonmarcos.cloudme",
+              "packages": [
+                {
+                  "pkg": "com.memrise.android.memrisecompanion",
+                  "label": "Memrise"
+                },
+                {
+                  "pkg": "mobi.eup.easygerman",
+                  "label": "Todaii German"
+                }
+              ],
+              "icon_res": "ic_file_stack"
+            },
+            {
+              "label": "Me-Prj",
+              "icon_pkg": "com.diegonmarcos.cloudme",
+              "icon_res": "ic_vcard",
+              "packages": [],
+              "links": [
+                {
+                  "label": "Linktree",
+                  "url": "https://linktree.diegonmarcos.com",
+                  "icon": "ic_link_tile"
                 }
               ]
             },
@@ -4357,12 +4380,12 @@
                   "label": "YouTube"
                 },
                 {
-                  "pkg": "com.amazon.avod.thirdpartyclient",
-                  "label": "Prime Video"
-                },
-                {
                   "pkg": "com.shazam.android",
                   "label": "Shazam"
+                },
+                {
+                  "pkg": "com.aspiro.tidal",
+                  "label": "Tidal"
                 }
               ],
               "icon_res": "ic_music"
@@ -4403,6 +4426,10 @@
                 {
                   "pkg": "ai.perplexity.app.android",
                   "label": "Perplexity"
+                },
+                {
+                  "pkg": "com.google.android.apps.bard",
+                  "label": "Gemini"
                 }
               ],
               "icon_res": "ic_ai_chat"
@@ -4414,10 +4441,6 @@
                 {
                   "pkg": "com.foxdebug.acode",
                   "label": "Acode"
-                },
-                {
-                  "pkg": "com.github.android",
-                  "label": "GitHub"
                 }
               ],
               "icon_res": "ic_ide"

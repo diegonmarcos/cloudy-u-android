@@ -1,5 +1,5 @@
 {
- "_doc": "#1769 capability -> phone app per Phone Quickmarks folder: the smallest set of phone apps that together replace what the Cloud app does, one per capability. suggested=true: not a quickmark before, offered as a missing-app tile (greyed, Install). #1806 Mobility & Travel split into Hotels, Transports and City Mobility (rows re-homed, none dropped); Games and Health are new Services folders. #1902 Services · Leisure > Social opens the All Apps folder media_social (opens_folder) and holds no phone apps of its own, so it has no capability rows.",
+ "_doc": "#1769 capability -> phone app per Phone Quickmarks folder: the smallest set of phone apps that together replace what the Cloud app does, one per capability. suggested=true: not a quickmark before, offered as a missing-app tile (greyed, Install). #1806 Mobility & Travel split into Hotels, Transports and City Mobility (rows re-homed, none dropped); Games and Health are new Services folders. #1902 Services · Leisure > Social opens the All Apps folder media_social (opens_folder) and holds no phone apps of its own, so it has no capability rows. #1956 the social apps moved from Me-Prj to Me-Pers; Me-Prj and Lnktree hold the Linktree web link (no phone app); Media Center swaps Prime Video for Tidal; AI gains Gemini; GitHub moved from Code to Drive.",
  "folders": {
   "Drive": [
    {
@@ -24,6 +24,12 @@
     "capability": "git sync",
     "pkg": "com.viscouspot.gitsync",
     "label": "Git Sync",
+    "suggested": false
+   },
+   {
+    "capability": "repositories",
+    "pkg": "com.github.android",
+    "label": "GitHub",
     "suggested": false
    }
   ],
@@ -277,23 +283,7 @@
     "pkg": "com.garmin.android.apps.connectmobile",
     "label": "Garmin Connect",
     "suggested": false
-   }
-  ],
-  "Me-Prof": [
-   {
-    "capability": "vocabulary learning",
-    "pkg": "com.memrise.android.memrisecompanion",
-    "label": "Memrise",
-    "suggested": false
    },
-   {
-    "capability": "German reading",
-    "pkg": "mobi.eup.easygerman",
-    "label": "Todaii German",
-    "suggested": false
-   }
-  ],
-  "Me-Prj": [
    {
     "capability": "photo sharing",
     "pkg": "com.instagram.android",
@@ -349,6 +339,21 @@
     "suggested": false
    }
   ],
+  "Me-Prof": [
+   {
+    "capability": "vocabulary learning",
+    "pkg": "com.memrise.android.memrisecompanion",
+    "label": "Memrise",
+    "suggested": false
+   },
+   {
+    "capability": "German reading",
+    "pkg": "mobi.eup.easygerman",
+    "label": "Todaii German",
+    "suggested": false
+   }
+  ],
+  "Me-Prj": [],
   "Me-Buro": [
    {
     "capability": "national ID",
@@ -413,15 +418,15 @@
     "suggested": false
    },
    {
-    "capability": "films and series",
-    "pkg": "com.amazon.avod.thirdpartyclient",
-    "label": "Prime Video",
-    "suggested": false
-   },
-   {
     "capability": "music recognition",
     "pkg": "com.shazam.android",
     "label": "Shazam",
+    "suggested": false
+   },
+   {
+    "capability": "lossless music",
+    "pkg": "com.aspiro.tidal",
+    "label": "Tidal",
     "suggested": false
    }
   ],
@@ -523,6 +528,12 @@
     "pkg": "ai.perplexity.app.android",
     "label": "Perplexity",
     "suggested": false
+   },
+   {
+    "capability": "assistant (Google)",
+    "pkg": "com.google.android.apps.bard",
+    "label": "Gemini",
+    "suggested": false
    }
   ],
   "Code": [
@@ -530,12 +541,6 @@
     "capability": "code editor",
     "pkg": "com.foxdebug.acode",
     "label": "Acode",
-    "suggested": false
-   },
-   {
-    "capability": "repositories",
-    "pkg": "com.github.android",
-    "label": "GitHub",
     "suggested": false
    }
   ],
@@ -739,6 +744,7 @@
     "label": "Good Lock",
     "suggested": false
    }
-  ]
+  ],
+  "Lnktree": []
  }
 }

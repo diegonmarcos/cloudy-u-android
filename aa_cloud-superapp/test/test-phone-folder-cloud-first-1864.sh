@@ -18,7 +18,7 @@ check() {
     local f="$1"
     grep -q 'withCloudApp' "$f" && echo "withCloudApp is back: the Cloud app is prepended to folders again"
     grep -q 'folder.iconPkg.takeIf' "$f" && echo "the Cloud app is the folder face again"
-    grep -q 'contents.firstOrNull { it.installed }' "$f" || echo "the folder face is not the first installed third-party app"
+    grep -q 'FolderTile(folder.label, contents, null, folder.iconRes)' "$f" || echo "the folder face is not the Cloud page icon_res (#1956)"
     grep -q 'folder to folder.entries.map(::curated)' "$f" || echo "folders do not render their declared entries"
 }
 OUT="$(check "$SRC")"
@@ -48,7 +48,7 @@ mut() { cp "$SRC" "$T/m.kt"; sed -i "$2" "$T/m.kt"
     if cmp -s "$SRC" "$T/m.kt"; then bad "mutation '$1' changed nothing"; return; fi
     [ -n "$(check "$T/m.kt")" ] && ok "mutation '$1' goes red" || bad "mutation '$1' stayed green"; }
 mut "prepend the Cloud app again" 's/folder to folder.entries.map(::curated)/folder to withCloudApp(folder).map(::curated)/'
-mut "the Cloud app is the face again" 's/contents.firstOrNull { it.installed }, ""/folder.iconPkg.takeIf { it.isNotBlank() }?.let { resolve(it) }, ""/'
+mut "the face is the first installed app again" 's/FolderTile(folder.label, contents, null, folder.iconRes)/FolderTile(folder.label, contents, contents.firstOrNull { it.installed }, "")/'
 
 echo; echo "-- test-phone-folder-cloud-first-1864 (merged by #1936): $PASS passed, $FAIL failed --"
 [ "$FAIL" -eq 0 ]

@@ -1,0 +1,201 @@
+{
+ "_doc": "#1956 Phone Quickmarks BEFORE the socials/Lnktree/Tidal/Gemini/GitHub changes (HEAD 2026-11-27): group/folder -> packages, group loose packages and links. test-quickmarks-1956.sh and Quickmarks1956Test prove each is still present somewhere, Prime Video in Media Center being the one owner-named removal.",
+ "folders": {
+  "Primary/Nav": [
+   "com.google.android.apps.maps",
+   "app.organicmaps"
+  ],
+  "Primary/Camera": [
+   "com.sec.android.app.camera"
+  ],
+  "Primary/Canvas": [
+   "com.adsk.sketchbook",
+   "com.imageline.FLM"
+  ],
+  "Primary/Keyboard": [
+   "com.google.android.inputmethod.latin"
+  ],
+  "Primary/Calc": [
+   "com.sec.android.app.popupcalculator",
+   "com.sec.android.app.clockpackage",
+   "com.google.android.apps.translate"
+  ],
+  "Communication/Mail": [
+   "com.google.android.gm"
+  ],
+  "Communication/Chat": [
+   "com.Slack"
+  ],
+  "Communication/Messenger": [
+   "com.whatsapp.w4b",
+   "org.telegram.messenger",
+   "org.thoughtcrime.securesms",
+   "com.google.android.apps.tachyon"
+  ],
+  "Communication/Dialer": [
+   "com.samsung.android.dialer"
+  ],
+  "Communication/Contacts": [
+   "com.google.android.contacts"
+  ],
+  "Data/Drive": [
+   "com.google.android.apps.docs",
+   "com.sec.android.app.myfiles",
+   "com.rarlab.rar",
+   "com.viscouspot.gitsync"
+  ],
+  "Data/Browser": [
+   "com.brave.browser"
+  ],
+  "Data/Gallery": [
+   "com.google.android.apps.photos"
+  ],
+  "Data/Notes": [
+   "md.obsidian",
+   "com.rhmsoft.edit"
+  ],
+  "Data/Agenda": [
+   "com.google.android.calendar",
+   "com.google.android.apps.tasks",
+   "co.mangotechnologies.clickup"
+  ],
+  "Data/Vault": [
+   "com.x8bit.bitwarden",
+   "com.beemdevelopment.aegis"
+  ],
+  "Data/Wallet": [
+   "com.google.android.apps.walletnfcrel"
+  ],
+  "Data/Office": [
+   "com.google.android.apps.docs.editors.docs",
+   "com.google.android.apps.docs.editors.sheets",
+   "com.google.android.apps.docs.editors.slides",
+   "com.adobe.reader"
+  ],
+  "Me/Me-Pers": [
+   "com.sec.android.app.shealth",
+   "com.strava",
+   "com.fatsecret.android",
+   "com.urbandroid.sleep",
+   "com.garmin.android.apps.connectmobile"
+  ],
+  "Me/Me-Prof": [
+   "com.memrise.android.memrisecompanion",
+   "mobi.eup.easygerman"
+  ],
+  "Me/Me-Prj": [
+   "com.instagram.android",
+   "com.instagram.barcelona",
+   "com.facebook.katana",
+   "com.linkedin.android",
+   "com.pinterest",
+   "com.bereal.ft",
+   "com.tinder",
+   "com.bumble.app",
+   "co.hinge.app"
+  ],
+  "Me/Me-Buro": [
+   "es.gob.interior.policia.midni"
+  ],
+  "Services · City/Money": [
+   "es.bancosantander.apps",
+   "com.revolut.revolut",
+   "com.paypal.android.p2pmobile",
+   "com.binance.dev",
+   "com.btg.pactual.digital.mobile",
+   "com.fusionmedia.investing",
+   "com.xe.currency"
+  ],
+  "Services · City/Shopping": [
+   "com.amazon.mShop.android.shopping",
+   "de.dhl.paket",
+   "com.ebay.kleinanzeigen"
+  ],
+  "Services · City/Health": [
+   "com.urbansportsclub",
+   "com.medantapatient.app",
+   "com.downdogapp",
+   "com.motosumo.app"
+  ],
+  "Services · City/Real Estate": [
+   "de.is24.android",
+   "com.wggesucht.android"
+  ],
+  "Services · City/Jobs & Business": [
+   "com.indeed.android.jobsearch"
+  ],
+  "Services · City/City Mobility": [
+   "com.ubercab",
+   "com.trafi.whitelabel.bvg"
+  ],
+  "Services · City/Transports": [
+   "com.thetrainline",
+   "com.ryanair.cheapflights",
+   "com.rome2rio.www.rome2rio",
+   "com.comuto",
+   "com.nomadmania.presentation"
+  ],
+  "Services · City/Hotels": [
+   "com.booking"
+  ],
+  "Services · Leisure/News": [
+   "com.google.android.apps.magazines",
+   "com.devhd.feedly"
+  ],
+  "Services · Leisure/Events": [
+   "de.eventim.mobile.app.Android",
+   "com.codekarussell.rausgegangen",
+   "com.meetup"
+  ],
+  "Services · Leisure/Media Center": [
+   "com.spotify.music",
+   "com.google.android.youtube",
+   "com.amazon.avod.thirdpartyclient",
+   "com.shazam.android"
+  ],
+  "Services · Leisure/Social": [],
+  "Services · Leisure/Games": [
+   "com.werewolfapps.online"
+  ],
+  "AGI/AI": [
+   "com.anthropic.claude",
+   "ai.perplexity.app.android"
+  ],
+  "AGI/Code": [
+   "com.foxdebug.acode",
+   "com.github.android"
+  ],
+  "AGI/Terminal": [
+   "com.termux"
+  ],
+  "AGI/Search": [
+   "com.google.android.googlequicksearchbox"
+  ],
+  "Setup/Launcher": [
+   "com.android.settings",
+   "com.samsung.android.oneconnect",
+   "com.samsung.android.goodlock"
+  ],
+  "Setup/NG Firewall": [
+   "eu.faircode.netguard",
+   "com.wireguard.android"
+  ],
+  "Setup/Store": [
+   "com.android.vending",
+   "org.fdroid.fdroid"
+  ],
+  "Setup/C3": [
+   "moe.shizuku.privileged.api",
+   "org.kde.kdeconnect_tp",
+   "com.mobidia.android.mdm",
+   "com.ubnt.usurvey"
+  ],
+  "Setup/About": [
+   "com.digibites.accubattery"
+  ]
+ },
+ "packages": {},
+ "links": [
+  "Linktree"
+ ]
+}

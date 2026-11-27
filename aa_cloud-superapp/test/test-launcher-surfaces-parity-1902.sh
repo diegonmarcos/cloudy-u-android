@@ -93,7 +93,7 @@ def surface(name, bj, ph, cl):
         for gt, old in SNAP['phone_quickmarks'].items():
             for fl, pl in old['folders'].items():
                 if fl not in everylabel and ME_FOLDER.get(fl) not in everylabel and fl not in aliased: f.append('Phone quickmark folder %s (was in %s) is gone' % (fl, gt))
-                lost = [p for p in pl if p not in allpk]
+                lost = [p for p in pl if p not in allpk and p != 'com.amazon.avod.thirdpartyclient']   # #1956 the only removal: Prime Video leaves the Media Center folder (named by the owner)
                 if lost: f.append('Phone quickmark folder %s lost packages %s' % (fl, lost))
             lost = [p for p in old['packages'] if p not in allpk]
             if lost: f.append('Phone %s lost loose packages %s' % (gt, lost))
@@ -108,7 +108,7 @@ def surface(name, bj, ph, cl):
     elif name == 'N':
         mg = [g for g in S['cloud']['tile_groups'] if g['title'] == 'Me'][0]['tiles']
         if [t['label'] for t in mg] != ['Lnktree', '|', 'Me-Pers', 'Me-Prof', 'Me-Prj', '|', 'Me-Invent.', 'Me-Buro', 'Me-LLC']: f.append('the Me row does not read Lnktree | Me-Pers Me-Prof Me-Prj | Me-Invent. Me-Buro Me-LLC: %s' % [t['label'] for t in mg])
-        if [fo['label'] for g in S['phone']['phone_app_groups'] if g['title'] == 'Me' for fo in g['folders']] != ['Me-Pers', 'Me-Prof', 'Me-Prj', 'Me-Buro']: f.append('the Phone quickmarks Me group is not Me-Pers, Me-Prof, Me-Prj, Me-Buro')
+        if [fo['label'] for g in S['phone']['phone_app_groups'] if g['title'] == 'Me' for fo in g['folders']] != ['Lnktree', 'Me-Pers', 'Me-Prof', 'Me-Prj', 'Me-Buro']: f.append('the Phone quickmarks Me group is not Lnktree, Me-Pers, Me-Prof, Me-Prj, Me-Buro')
         su = [g for g in S['cloud']['tile_groups'] if g['title'] == 'Setup'][0]['tiles']
         if [t['label'] for t in su[-2:]] != ['Profile', 'About']: f.append('Setup does not end Profile | About (the Profile tile left the Me row)')
         sp = {s['title']: s['prefix'] for s in ui['phone_sections']}
@@ -163,7 +163,7 @@ mut('the Profile tile is removed from Setup as well as from Me (#1903)', 'S2', l
 mut('Me-Pers goes back to Me-Health (#1903)', 'N', lambda bj, ph, cl: [t.__setitem__('label', 'Me-Health') for g in sec(bj, 'cloud')['tile_groups'] for t in g['tiles'] if t['id'] == 'myhealth'])
 mut('Me-Prof retargeted away from Cloud Me Prof (#1903)', 'S2', lambda bj, ph, cl: [t.__setitem__('target', 'extapp:cloud-me#page:experiences/work') for g in sec(bj, 'cloud')['tile_groups'] for t in g['tiles'] if t['id'] == 'myexperiences'])
 mut('the Profile tile returns to the Me row (#1903)', 'N', lambda bj, ph, cl: [g['tiles'].append({'id': 'tools-account', 'label': 'Profile', 'icon': 'ic_p_identities', 'target': 'extapp:cloud-me#page:profile/profile'}) for g in sec(bj, 'cloud')['tile_groups'] if g['title'] == 'Me'])
-mut('a phone Me folder is dropped (#1903)', 'S3', lambda bj, ph, cl: [g['folders'].pop(0) for g in sec(bj, 'phone')['phone_app_groups'] if g['title'] == 'Me'])
+mut('a phone Me folder is dropped (#1903)', 'S3', lambda bj, ph, cl: [g['folders'].pop(1) for g in sec(bj, 'phone')['phone_app_groups'] if g['title'] == 'Me'])
 mut('a phone Me folder keeps the old name (#1903)', 'N', lambda bj, ph, cl: [fo.__setitem__('label', 'Socials') for g in sec(bj, 'phone')['phone_app_groups'] if g['title'] == 'Me' for fo in g['folders'] if fo['label'] == 'Me-Prj'])
 mut('the Launcher tile loses its aliases (#1929)', 'S2', lambda bj, ph, cl: [t.pop('aliases') for g in sec(bj, 'cloud')['tile_groups'] for t in g['tiles'] if t['id'] == 'configs-launcher'])
 mut('the Launcher tile opens another page (#1929)', 'S2', lambda bj, ph, cl: [t.__setitem__('target', 'page:config/controls') for g in sec(bj, 'cloud')['tile_groups'] for t in g['tiles'] if t['id'] == 'configs-launcher'])

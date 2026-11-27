@@ -27,18 +27,24 @@ for e in ui['external_apps']:
     fleet |= {e.get('hub_package'), e.get('alt_package'), e.get('install_package')} | set(e.get('forks', {}).values())
 fleet.discard(None); fleet.discard('')
 errs = []
+SOC = {'com.instagram.android', 'com.instagram.barcelona', 'com.facebook.katana', 'com.linkedin.android', 'com.pinterest', 'com.bereal.ft', 'com.tinder', 'com.bumble.app', 'co.hinge.app'}
+MOVED = {'Me-Prj': SOC, 'Code': {'com.github.android'}, 'Media Center': {'com.amazon.avod.thirdpartyclient'}}
+anynow = {pk(p) for g in now for p in g.get('packages', [])} | {pk(p) for g in now for f in g.get('folders', []) for p in f.get('packages', [])}
+lostany = [p for g in before for f in g['folders'] for p in f['packages'] if p not in anynow and p != 'com.amazon.avod.thirdpartyclient']
+if lostany: errs.append('packages gone from every folder: %s' % lostany)
 if [g['title'] for g in now][:len(before)] != [g['title'] for g in before]: errs.append('group order')
 for bg in before:
     g = next((x for x in now if x['title'] == bg['title']), None)
     if not g: errs.append('group lost ' + bg['title']); continue
     if [pk(p) for p in g.get('packages', [])][:len(bg['packages'])] != bg['packages']: errs.append(bg['title'] + ' loose packages')
-    nf = [f['label'] for f in g.get('folders', [])]
+    nf = [f['label'] for f in g.get('folders', []) if f['label'] != 'Lnktree']   # #1956 Lnktree is the one new folder
     if nf[:len(bg['folders'])] != [f['label'] for f in bg['folders']]: errs.append(bg['title'] + ' folder order')
     for bf in bg['folders']:
         f = next((x for x in g.get('folders', []) if x['label'] == bf['label']), None)
         if not f: continue
         mem = [pk(p) for p in f.get('packages', [])]
-        if mem[:len(bf['packages'])] != bf['packages']: errs.append('%s/%s members' % (bg['title'], bf['label']))
+        gone = MOVED.get(bf['label'], set())   # #1956 moves: socials Me-Prj -> Me-Pers, GitHub Code -> Drive, Prime Video removed from Media Center
+        if mem[:len([p for p in bf['packages'] if p not in gone])] != [p for p in bf['packages'] if p not in gone]: errs.append('%s/%s members' % (bg['title'], bf['label']))
         bad = [p for p in bf['packages'] if p in fleet]
         if bad: errs.append('%s/%s baseline holds fleet apps %s' % (bg['title'], bf['label'], bad))
 print('; '.join(errs)) if errs else None

@@ -144,7 +144,7 @@ class SuitePhoneAppsFragment : KitComposeFragment(), BackHandler {
      *  [iconRes] (#1769, `icon_res`): the drawable of the Cloud tile at the same position, the face when the Cloud app is not installed or has none.
      *  The data holds phone apps only; since #1936 the Cloud app is neither a member nor the face: the page removes every fleet package ([PhonePageFleet]) and the face is the folder's first installed third-party app. */
     /** [opensFolder] (#1902, build.json `opens_folder`): the id of an All Apps folder (ui.phone_folders) this tile OPENS, instead of listing apps of its own: Services · Leisure's Social opens media_social. A folder with it needs no `packages`. */
-    internal data class Folder(val label: String, val entries: List<Entry>, val iconPkg: String = "", val iconRes: String = "", val opensFolder: String = "")
+    internal data class Folder(val label: String, val entries: List<Entry>, val iconPkg: String = "", val iconRes: String = "", val opensFolder: String = "", val links: List<Link> = emptyList())
     /** #1764 A web-shortcut tile (build.json `links`): opens [url] in Cloud Browser, else the default browser. [icon] is a drawable name. */
     internal data class Link(val label: String, val url: String, val icon: String)
     internal data class Group(
@@ -212,20 +212,11 @@ class SuitePhoneAppsFragment : KitComposeFragment(), BackHandler {
                         if (fLabel.isBlank()) continue
                         val fEntries = parseEntries(fo.optJSONArray("packages"))
                         val opens = fo.optString("opens_folder").trim()
-                        if (fEntries.isNotEmpty() || opens.isNotEmpty()) folderList.add(Folder(fLabel, fEntries, fo.optString("icon_pkg").trim(), fo.optString("icon_res").trim(), opens))
+                        val fLinks = parseLinks(fo.optJSONArray("links"))
+                        if (fEntries.isNotEmpty() || opens.isNotEmpty() || fLinks.isNotEmpty()) folderList.add(Folder(fLabel, fEntries, fo.optString("icon_pkg").trim(), fo.optString("icon_res").trim(), opens, fLinks))
                     }
                 }
-                val linkList = mutableListOf<Link>()
-                val linksArr = o.optJSONArray("links")
-                if (linksArr != null) {
-                    for (k in 0 until linksArr.length()) {
-                        val lo = linksArr.optJSONObject(k) ?: continue
-                        val url = lo.optString("url").trim()
-                        val label = lo.optString("label").trim()
-                        if (url.isBlank() || label.isBlank()) continue
-                        linkList.add(Link(label, url, lo.optString("icon").ifBlank { "ic_link_tile" }))
-                    }
-                }
+                val linkList = parseLinks(o.optJSONArray("links"))
                 out.add(Group(title, entryList, folderList, linkList))
             }
             out
@@ -236,6 +227,20 @@ class SuitePhoneAppsFragment : KitComposeFragment(), BackHandler {
          *  object {"pkg", "label"}. Both forms stay valid on purpose: the label
          *  is only needed where a placeholder might be drawn, so requiring it
          *  everywhere would be churn for no behaviour. */
+        /** A `links` array (group level, or #1956 inside a folder) -> [Link] list. */
+        internal fun parseLinks(arr: JSONArray?): List<Link> {
+            val out = mutableListOf<Link>()
+            if (arr == null) return out
+            for (k in 0 until arr.length()) {
+                val lo = arr.optJSONObject(k) ?: continue
+                val url = lo.optString("url").trim()
+                val label = lo.optString("label").trim()
+                if (url.isBlank() || label.isBlank()) continue
+                out.add(Link(label, url, lo.optString("icon").ifBlank { "ic_link_tile" }))
+            }
+            return out
+        }
+
         internal fun parseEntries(arr: JSONArray?): List<Entry> {
             if (arr == null) return emptyList()
             val out = mutableListOf<Entry>()
@@ -401,7 +406,7 @@ private fun SuitePhonePage(epoch: Int, refresh: () -> Unit) {
             // A folder is skipped only when it DECLARES nothing.
             val folderTiles = group.folders.map { folder ->
                 folder to folder.entries.map(::curated)
-            }.filter { (folder, contents) -> contents.isNotEmpty() || folder.opensFolder.isNotEmpty() }
+            }.filter { (folder, contents) -> contents.isNotEmpty() || folder.opensFolder.isNotEmpty() || folder.links.isNotEmpty() }
             if (packageTiles.isEmpty() && folderTiles.isEmpty() && group.links.isEmpty()) continue
             anyRendered = true
             item(key = "g:${group.title}") {
@@ -413,9 +418,9 @@ private fun SuitePhonePage(epoch: Int, refresh: () -> Unit) {
                         for (l in group.links) item(key = "l:${l.label}") { LinkTile(l) }
                         for (a in packageTiles) item(key = "t:${a.pkg}") { AppTile(a) }
                         for ((folder, contents) in folderTiles) item(key = "f:${folder.label}") {
-                            // #1936 the face is the folder's first installed third-party app; without one the 2x2 preview (the folder's own members)
-                            FolderTile(folder.label, contents, contents.firstOrNull { it.installed }, "") {
-                                if (folder.opensFolder.isNotEmpty()) openAllAppsFolder(folder.opensFolder) else open = SuiteOpen(folder.label, contents)
+                            // #1956 the face is the drawable of the Cloud page tile the folder mirrors (icon_res, the declared Cloud icon); only a folder without one shows the 2x2 preview of its members
+                            FolderTile(folder.label, contents, null, folder.iconRes) {
+                                if (folder.opensFolder.isNotEmpty()) openAllAppsFolder(folder.opensFolder) else open = SuiteOpen(folder.label, contents, folder.links)
                             }
                         }
                     }
@@ -488,7 +493,7 @@ private fun SuitePhonePage(epoch: Int, refresh: () -> Unit) {
     phoneOpen?.let { PhoneFolderSheet(it) { phoneOpen = null } }
 }
 
-private class SuiteOpen(val label: String, val contents: List<AppInfo>)
+private class SuiteOpen(val label: String, val contents: List<AppInfo>, val links: List<SuitePhoneAppsFragment.Link> = emptyList())
 
 /** A subheading plus ONE sideways-scrollable line of app tiles — the shape both Quickmarks usage sections (Active
  *  Apps, Last Apps) render. Draws nothing at all when [apps] is empty, so a missing usage-access grant leaves no
@@ -645,6 +650,8 @@ private fun SuiteFolderSheet(open: SuiteOpen, onDismiss: () -> Unit) {
     val cols = GridColumns.phone(ctx)
     val iconDp = remember(cols) { expandedIconDp(ctx, cols) }
     FolderSheetFrame(open.label, onDismiss) {
+        // #1956 web links declared inside the folder (Me-Prj, Lnktree: the Linktree page)
+        if (open.links.isNotEmpty()) Row(Modifier.fillMaxWidth()) { for (l in open.links) LinkTile(l) }
         for (row in open.contents.chunked(cols)) {
             Row(Modifier.fillMaxWidth()) {
                 for (app in row) {
