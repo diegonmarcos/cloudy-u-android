@@ -30,6 +30,7 @@ adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
 sleep 45
 adb install -r -g app-under-test.apk || { echo "::error::adb install failed"; exit 2; }
 adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS 2>/dev/null || true
+adb shell settings put global hide_error_dialogs 1
 adb logcat -c
 adb logcat -v threadtime "*:W" MailList:I MailCore:I MailSync:I MailOpen:I NavWalkSeed:I > "$OUT/logcat.txt" 2>&1 &
 LP=$!
@@ -144,11 +145,11 @@ for round in 1 2 3; do
   sleep 2
   [ "$round" = 1 ] && shot 04-cold-start-after-2s
   sleep 10
-  tail -n +$((n0 + 1)) "$OUT/logcat.txt" | grep -E "MailList" > "$OUT/cold-$round.log" || true
+  tail -n +$((n0 + 1)) "$OUT/logcat.txt" | grep -E "MailList|MailCore: sync|ForegroundPush: foreground" > "$OUT/cold-$round.log" || true
   ms=$(sed -n 's/.*first-row ms=\([0-9]*\) rows=\([0-9]*\).*/\1/p' "$OUT/cold-$round.log" | head -1)
   rows=$(sed -n 's/.*first-row ms=\([0-9]*\) rows=\([0-9]*\).*/\2/p' "$OUT/cold-$round.log" | head -1)
   lp=$(grep -n "cold-start rows-painted" "$OUT/cold-$round.log" | head -1 | cut -d: -f1)
-  ln=$(grep -n "cold-start first-network" "$OUT/cold-$round.log" | head -1 | cut -d: -f1)
+  ln=$(grep -n -E "cold-start first-network|MailCore: sync .* requests=[1-9]" "$OUT/cold-$round.log" | head -1 | cut -d: -f1)
   order=unknown
   if [ -n "$lp" ] && [ -z "$ln" ]; then order="yes (no server call in 12 s)"; fi
   if [ -n "$lp" ] && [ -n "$ln" ]; then

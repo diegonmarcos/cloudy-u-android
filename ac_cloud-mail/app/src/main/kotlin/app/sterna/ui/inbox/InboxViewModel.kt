@@ -1108,7 +1108,9 @@ class InboxViewModel(
             when (val sel = key.sel) {
                 is Sel.Folder -> {
                     val id = sel.id
+                    app.sterna.core.data.mail.ColdStart.mark("list-key")
                     val credentials = store.load()
+                    app.sterna.core.data.mail.ColdStart.mark("credentials")
                     if (id == null || credentials == null) {
                         flowOf(PagingData.empty())
                     } else {

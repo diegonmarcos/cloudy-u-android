@@ -36,6 +36,11 @@ class ColdStartGate(private val log: (String) -> Unit = {}, private val now: () 
         withTimeoutOrNull(timeoutMs) { painted.await() }
     }
 
+    /** A step of the list's own start (logcat tag MailList, no message data): where the time before the first row goes. */
+    fun mark(step: String) {
+        if (armed.get() && !painted.isCompleted) log("cold-start mark=$step ms=${now() - armedAt}")
+    }
+
     fun network(what: String) {
         if (networkSeen.compareAndSet(false, true)) {
             log("cold-start first-network what=$what after-rows=${painted.isCompleted} ms=${if (armed.get()) now() - armedAt else -1}")

@@ -1262,6 +1262,8 @@ class MailRepository(
         if (credentials.protocol == MailProtocol.IMAP) return null
         val core = mailCore ?: return null
         if (core.unavailableReason() != null) return null
+        ColdStart.awaitRows() // #1952 cold start: the core's pass talks to the server, so it waits for the painted rows too
+        ColdStart.network("core")
         val known = accountStore.accounts().map { it.id }.toSet()
         core.storedAccounts().filter { it !in known }.forEach { core.dropAccount(it) }
         checkAccountStillConfigured(credentials.id, known)
@@ -1774,7 +1776,9 @@ class MailRepository(
         shape: ListShape = ListShape.NONE,
     ): Flow<PagingData<InboxRow>> {
         val scopes = listOf(credentials.id to mailboxId)
+        ColdStart.mark("paged-folder")
         return extraScopes().flatMapLatest { extra ->
+            ColdStart.mark("extra-scopes")
             RustMailEngine.log("list $mailboxId: membership term=${scopes.any { it in extra }} (folders with extra members: ${extra.size}), conversation=$conversationView")
             if (conversationView) {
                 Pager(
@@ -5301,6 +5305,8 @@ class MailRepository(
         // nothing for an ACL-shared one. Empty = this credential's own account.
         watchedJmapAccountIds: Set<String> = emptySet(),
     ): Closeable {
+        ColdStart.awaitRows() // #1952 cold start: the push connection waits for the painted rows
+        ColdStart.network("push")
         if (credentials.protocol == MailProtocol.IMAP) {
             return imap.openIdle(credentials, onChanged = onChanged, onClosed = onClosed)
         }

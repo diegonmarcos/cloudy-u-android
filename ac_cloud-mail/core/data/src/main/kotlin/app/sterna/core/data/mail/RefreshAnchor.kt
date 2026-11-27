@@ -32,6 +32,7 @@ internal class AnchoredRefreshPagingSource<Value : Any>(
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Value> {
         // #1952: the list's own stopwatch for the store query (logcat tag MailList, sizes only), read by the emulator walk.
         val t0 = System.nanoTime()
+        ColdStart.mark("page-load-start")
         val result = delegate.load(params)
         runCatching {
             android.util.Log.i(
