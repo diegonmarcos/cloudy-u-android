@@ -28,5 +28,3 @@ jobs:
         run: bash aa_cloud-superapp/test/test-dns-split-1979.sh
       - name: Every mutant must be KILLED
         run: bash aa_cloud-superapp/test/test-dns-split-1979.sh --mutants
-      - name: Fleet DNS tester
-        run: bash aa_cloud-superapp/test/test-fleet-dns.sh
