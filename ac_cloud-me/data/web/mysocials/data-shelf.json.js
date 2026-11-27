@@ -1,5 +1,5 @@
 // GENERATED FROM shelf.json by front-data-json-js-wrapper.sh — DO NOT EDIT BY HAND.
-// Re-generate with: bash a-Portals/linktree/src/data/build.sh
+// Re-generate with: bash a_Portals/linktree/src/data/build.sh
 (function () {
   var g = (typeof globalThis !== "undefined") ? globalThis : (typeof window !== "undefined" ? window : this);
   g.PORTAL_DATA = g.PORTAL_DATA || {};
@@ -9,11 +9,11 @@
     { "title": "A History of Western Philosophy", "author": "Bertrand Russell", "isbn": "9780671201586", "spine": "#8b4513" },
     { "title": "Meditations", "author": "Marcus Aurelius", "isbn": "9780140449334", "spine": "#2e4057" },
     { "title": "The Republic", "author": "Plato", "isbn": "9780140455113", "spine": "#5c3317" },
-    { "title": "Tao Te Ching", "author": "Lao Tzu", "isbn": "9780061112089", "spine": "#1a472a" },
+    { "title": "Tao Te Ching", "author": "Lao Tzu", "isbn": "9780679724346", "spine": "#1a472a" },
     { "title": "Man's Search for Meaning", "author": "Viktor Frankl", "isbn": "9780807014271", "spine": "#4a4a4a" },
     { "title": "The Myth of Sisyphus", "author": "Albert Camus", "isbn": "9780679733737", "spine": "#7b2d00" },
     { "title": "Beyond Good and Evil", "author": "Friedrich Nietzsche", "isbn": "9780140449235", "spine": "#1c1c2e" },
-    { "title": "Meditations on First Philosophy", "author": "René Descartes", "isbn": "9781107665958", "spine": "#3d5a80" },
+    { "title": "Meditations on First Philosophy", "author": "René Descartes", "isbn": "9780872204201", "spine": "#3d5a80" },
     { "title": "Siddhartha", "author": "Hermann Hesse", "isbn": "9780553208849", "spine": "#8b6914" },
     { "title": "The Stranger", "author": "Albert Camus", "isbn": "9780679720201", "spine": "#556b2f" }
   ],

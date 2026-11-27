@@ -42,10 +42,39 @@
     img.style.objectFit = 'cover';
   }
 
+  // #1950: jsDelivr refuses some objects (files over 20 MB, repo over its package limit). Second source for the same
+  // file: raw.githubusercontent.com of the same repo (same path), tried once before the placeholder.
+  var JSD_RE = /^https:\/\/cdn\.jsdelivr\.net\/gh\/diegonmarcos\/([^@/]+)@main\/(.+)$/;
+  function rawAlt(url) {
+    var m = url && JSD_RE.exec(url);
+    return m ? 'https://raw.githubusercontent.com/diegonmarcos/' + m[1] + '/main/' + m[2] : '';
+  }
+
   document.addEventListener('error', function (ev) {
-    var img = ev.target;
-    if (!img || img.tagName !== 'IMG' || img.getAttribute('data-fb') === 'done') return;
-    if ((img.getAttribute('src') || '').indexOf('data:image/svg+xml') === 0) return;
+    var el = ev.target;
+    if (!el) return;
+    if (el.tagName === 'VIDEO' || el.tagName === 'SOURCE') {
+      var v = el.tagName === 'SOURCE' ? el.parentNode : el;
+      var alt = rawAlt(el.getAttribute('src') || '');
+      if (alt && el.getAttribute('data-fb-alt') !== '1') {
+        el.setAttribute('data-fb-alt', '1');
+        el.setAttribute('src', alt);
+        if (v && v.load) v.load();
+      } else if (v && v.tagName === 'VIDEO' && !v.getAttribute('poster')) {
+        v.setAttribute('poster', placeholder(v.getAttribute('aria-label') || v.getAttribute('title') || ''));
+      }
+      return;
+    }
+    var img = el;
+    if (img.tagName !== 'IMG' || img.getAttribute('data-fb') === 'done') return;
+    var src = img.getAttribute('src') || '';
+    if (src.indexOf('data:image/svg+xml') === 0) return;
+    var a2 = rawAlt(src);
+    if (a2 && img.getAttribute('data-fb-alt') !== '1') {
+      img.setAttribute('data-fb-alt', '1');
+      img.setAttribute('src', a2);
+      return;
+    }
     swap(img);
   }, true);
 

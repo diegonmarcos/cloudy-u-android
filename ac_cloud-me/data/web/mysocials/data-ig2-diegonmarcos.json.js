@@ -1,5 +1,5 @@
 // GENERATED FROM ig2-diegonmarcos.json by front-data-json-js-wrapper.sh — DO NOT EDIT BY HAND.
-// Re-generate with: bash a-Portals/linktree/src/data/build.sh
+// Re-generate with: bash a_Portals/linktree/src/data/build.sh
 (function () {
   var g = (typeof globalThis !== "undefined") ? globalThis : (typeof window !== "undefined" ? window : this);
   g.PORTAL_DATA = g.PORTAL_DATA || {};
@@ -14,571 +14,571 @@
     "posts": 63,
     "following_shown": 982,
     "followers_shown": 127,
-    "photo": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/profiles/ig2-diegonmarcos.jpg"
+    "photo": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/profiles/ig2-diegonmarcos.jpg"
   },
   "posts": [
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842128607039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842128607039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842128607039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842128607039585.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842366327039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842366327039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842366327039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842366327039585.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842366387039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842366387039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842366387039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842366387039585.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842384843039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842384843039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842384843039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842384843039585.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842385392039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842385392039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842385392039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842385392039585.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842386520039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842386520039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842386520039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842386520039585.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842388971039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842388971039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842388971039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842388971039585.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842389682039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842389682039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842389682039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842389682039585.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842412704039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842412704039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842412704039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842412704039585.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842442932039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842442932039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842442932039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842442932039585.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842461676039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842461676039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842461676039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842461676039585.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842631659039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842631659039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842631659039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842631659039585.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17843463004039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17843463004039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17843463004039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17843463004039585.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17844390185027813.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17844390185027813.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17844390185027813.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17844390185027813.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17847193867243816.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17847193867243816.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17847193867243816.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17847193867243816.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17847360370630132.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17847360370630132.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17847360370630132.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17847360370630132.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17851658410773971.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17851658410773971.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17851658410773971.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17851658410773971.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17856835213837936.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17856835213837936.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17856835213837936.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17856835213837936.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17858761027794465.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17858761027794465.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17858761027794465.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17858761027794465.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17859109957759275.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17859109957759275.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17859109957759275.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17859109957759275.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17864184748536306.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17864184748536306.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17864184748536306.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17864184748536306.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17864235301216577.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17864235301216577.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17864235301216577.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17864235301216577.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17867724862206198.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17867724862206198.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17867724862206198.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17867724862206198.jpg"
       ],
       "caption": "Treix por Deix!\n\n#baitatime",
       "time": "Feb 14, 2018 06:03 PM UTC",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17869906243361150.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17869906243361150.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17869906243361150.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17869906243361150.jpg"
       ],
       "caption": "Family trip",
       "time": "Apr 19, 2019 10:21 PM UTC",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17873584117462988.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17873584117462988.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17873584117462988.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17873584117462988.jpg"
       ],
       "caption": "Orgulho poder presenciar essa união, numa celebração repleta do que vocês mais simbolizam!\n\nVamos viver o máximo, para podermos reviver momentos como esses!\n\nA nossa festa só começou!!!\n.\n.\n.\n#titaetico #ticoetita",
       "time": "Oct 01, 2019 02:41 AM UTC",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17873829640602781.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17873829640602781.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17873829640602781.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17873829640602781.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17875603246289468.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17875603246289468.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17875603246289468.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17875603246289468.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17884971628513306.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17884971628513306.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17884971628513306.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17884971628513306.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17897348155386829.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17897348155386829.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17897348155386829.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17897348155386829.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17899048045274847.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17899048045274847.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17899048045274847.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17899048045274847.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17906970712084573.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17906970712084573.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17906970712084573.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17906970712084573.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17913757489259774.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17913757489259774.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17913757489259774.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17913757489259774.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17914752421253796.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17914752421253796.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17914752421253796.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17914752421253796.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17915663185251040.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17915663185251040.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17915663185251040.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17915663185251040.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17916206734079747.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17916206734079747.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17916206734079747.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17916206734079747.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17924954443001668.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17924954443001668.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17924954443001668.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17924954443001668.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17926729393191583.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17926729393191583.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17926729393191583.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17926729393191583.jpg"
       ],
       "caption": "dubaizinha 🇧🇷",
       "time": "Jun 15, 2018 01:46 AM UTC",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17930506747233120.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17930506747233120.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17930506747233120.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17930506747233120.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17932545712226541.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17932545712226541.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17932545712226541.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17932545712226541.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17932925506230368.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17932925506230368.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17932925506230368.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17932925506230368.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17938207531104187.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17938207531104187.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17938207531104187.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17938207531104187.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17940532525339216.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17940532525339216.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17940532525339216.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17940532525339216.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17944366573076483.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17944366573076483.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17944366573076483.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17944366573076483.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17944740355224004.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17944740355224004.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17944740355224004.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17944740355224004.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17952549532040361.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17952549532040361.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17952549532040361.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17952549532040361.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17962403839258615.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17962403839258615.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17962403839258615.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17962403839258615.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17964407953305707.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17964407953305707.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17964407953305707.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17964407953305707.jpg"
       ],
       "caption": "O PRAZER É TODO MEU\n\nUm irmão\nUm trabalhador da roça\nUm primo\nUm escrevente\nUm pai\nUm comerciante\nUm avô\nUm fazendeiro\n\nMas acima de tudo, um fiel e sincero amigo.\n\nDe tudo que podia ser, escolheu o que lhe disseram que não seria, oferecer o que não tinha, cultivar onde nada nascia.\n\nEscolheu o caminho mais difícil, talvez por isso da sua forma aprendeu a ser um excelente ser humano.\n\nAprendeu na dor, ensinou no exemplo.\n\nFoi responsável por me ensinar o significado e valor da família, do que é cuidar mesmo quando ninguém olha por você, do que é garantir uma cama para alguém mesmo quando você está sem dormir, de oferecer o que você nunca teve, e ser e estar presente para quem precisa.\n\nNão foram 100 anos para mim, mas nos menos de 30 e poucos anos que tive a minha oportunidade, tive a sorte de um principiante de reconhecer um gigante a minha frente. Um grande homem em caráter, difícil de lidar, fácil de se amar. Sem papas na língua, porque sabia o valor da verdade, com pressa no andar, porque sabia o valor do tempo, com a seriedade no olhar de quem sabia que tinha muito a cumprir ainda, e magníficamente cumpriu.\n\nEra capaz de reunir figuras expoentes e rivais em uma mesma sala. Havia na sua figura o impecável do rigor e da ética e ao mesmo tempo da simplicidade e humildade. Conseguia te intimidar em poucos segundos, para em minutos ganhar a sua eterna confiança. Era amigo de ministro, mas era na roça que se sentia em casa. A complexidade dos seus atos confundia os que não o conhecia, e não deixava de continuamente impressionar nós que estávamos apenas observando e aprendendo.\n\nAté na sua ida, nos deixou a última mensagem, de que nada é mais perpétuo do que um legado de união, coragem e luta.\n\nForam de brigas, irônias, sarcasmos, histórias, telefonemas, exemplos e atitudes, que eu descobri que tive a sorte de conhecer em carne e osso o que é a minha maior referência de homem.\n\nFoi um prazer, uma felicidade, uma honra.\n\nPara mim não existe melhor herança do que ter a eterna dívida de buscar honrar todo seu esforço.\n\nhttps://youtu.be/ZJ75eqDOG_M",
       "time": "Mar 13, 2020 02:19 AM UTC",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17966775217161966.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17966775217161966.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17966775217161966.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17966775217161966.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17978396896191419.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17978396896191419.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17978396896191419.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17978396896191419.jpg"
       ],
       "caption": "Escolha bem seus amigos, eles irão no seu casamento!\n.\n.\n.\n.\n@aleturqueto\n@paulo.l.filho \n@ianverderesi \n@feltonetti \n@rafatupi \n@ticopierre \n@divaquer \n@fevaquer \n@ebravacino \n@titoferraz\n@phfmarcondes\n@lgosilva88\n@rafaelmgallo\n@pharodrigues\n@Pedromargutti\n@gabrielfilassi\n@fabsgc",
       "time": "Dec 02, 2018 09:49 PM UTC",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17979506923191299.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17979506923191299.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17979506923191299.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17979506923191299.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17979685438188875.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17979685438188875.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17979685438188875.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17979685438188875.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17979989521242909.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17979989521242909.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17979989521242909.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17979989521242909.jpg"
       ],
       "caption": "Blues na Montanha",
       "time": "Apr 21, 2019 01:03 PM UTC",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17989897378119553.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17989897378119553.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17989897378119553.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17989897378119553.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17991509530215260.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17991509530215260.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17991509530215260.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17991509530215260.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/18005038048013898.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/18005038048013898.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/18005038048013898.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/18005038048013898.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/18005466739063535.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/18005466739063535.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/18005466739063535.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/18005466739063535.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/18007419202018566.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/18007419202018566.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/18007419202018566.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/18007419202018566.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/18011971750268917.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/18011971750268917.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/18011971750268917.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/18011971750268917.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/18035738119240160.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/18035738119240160.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/18035738119240160.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/18035738119240160.jpg"
       ],
       "caption": "Mantenha-se cercado das melhores coisas da vida!\nVirada de ano, de década! \n2020 vem forte!!!",
       "time": "Jan 04, 2020 09:11 PM UTC",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/18096770836083228.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/18096770836083228.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/18096770836083228.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/18096770836083228.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/18122582410006868.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/18122582410006868.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/18122582410006868.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/18122582410006868.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/18132157045032370.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/18132157045032370.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/18132157045032370.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/18132157045032370.jpg"
       ],
       "caption": "",
       "time": "",
       "location": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/18132264361018547.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/18132264361018547.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/18132264361018547.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/18132264361018547.jpg"
       ],
       "caption": "",
       "time": "",
@@ -587,6572 +587,6572 @@
   ],
   "stories": [
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17890728014476892.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17890728014476892.mp4",
       "caption": "",
       "time": "Dec 17, 2021 09:18 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17918211560113609.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17918211560113609.webp",
       "caption": "",
       "time": "Dec 17, 2021 08:40 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17857931879627106.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17857931879627106.webp",
       "caption": "",
       "time": "Nov 15, 2021 11:33 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17875681667523270.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17875681667523270.webp",
       "caption": "",
       "time": "Nov 15, 2021 11:15 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17992272802372145.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17992272802372145.webp",
       "caption": "",
       "time": "Nov 15, 2021 11:02 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17950657999576880.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17950657999576880.webp",
       "caption": "",
       "time": "Nov 15, 2021 11:02 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18153383827171322.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18153383827171322.webp",
       "caption": "",
       "time": "Nov 15, 2021 11:01 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18140012386237495.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18140012386237495.webp",
       "caption": "",
       "time": "Nov 15, 2021 11:00 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17918566049042853.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17918566049042853.webp",
       "caption": "",
       "time": "Nov 15, 2021 10:59 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17935178602761009.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17935178602761009.webp",
       "caption": "",
       "time": "Nov 15, 2021 10:58 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17881486367540137.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17881486367540137.webp",
       "caption": "",
       "time": "Nov 15, 2021 10:57 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17923856725947830.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17923856725947830.mp4",
       "caption": "",
       "time": "Nov 15, 2021 10:56 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17935209433753733.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17935209433753733.webp",
       "caption": "",
       "time": "Nov 15, 2021 10:54 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17870574896559422.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17870574896559422.mp4",
       "caption": "",
       "time": "Nov 15, 2021 10:53 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17921208851005180.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17921208851005180.webp",
       "caption": "",
       "time": "Nov 15, 2021 10:51 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17902175681478435.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17902175681478435.mp4",
       "caption": "",
       "time": "Nov 15, 2021 10:18 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18176917681089810.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18176917681089810.webp",
       "caption": "",
       "time": "Nov 15, 2021 10:17 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17895900830434756.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17895900830434756.mp4",
       "caption": "",
       "time": "Nov 15, 2021 10:15 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17877713711590636.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17877713711590636.webp",
       "caption": "",
       "time": "Nov 15, 2021 10:12 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17915664416002276.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17915664416002276.webp",
       "caption": "",
       "time": "Nov 15, 2021 10:11 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17918014742035369.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17918014742035369.webp",
       "caption": "",
       "time": "Nov 15, 2021 10:10 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17927152201802810.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17927152201802810.webp",
       "caption": "",
       "time": "Nov 15, 2021 10:10 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17925909622827407.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17925909622827407.webp",
       "caption": "",
       "time": "Nov 15, 2021 10:07 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17909819327095474.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17909819327095474.mp4",
       "caption": "",
       "time": "Nov 15, 2021 10:05 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17918742764072917.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17918742764072917.webp",
       "caption": "",
       "time": "Nov 15, 2021 10:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17896280768328496.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17896280768328496.webp",
       "caption": "",
       "time": "Nov 15, 2021 06:13 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17932926742781622.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17932926742781622.mp4",
       "caption": "",
       "time": "Oct 29, 2021 07:03 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18015652042340888.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18015652042340888.webp",
       "caption": "",
       "time": "Oct 29, 2021 07:00 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17933190220752664.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17933190220752664.mp4",
       "caption": "",
       "time": "Oct 29, 2021 06:48 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17917783169051005.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17917783169051005.mp4",
       "caption": "",
       "time": "Oct 29, 2021 06:48 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17892299312447385.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17892299312447385.webp",
       "caption": "",
       "time": "Oct 29, 2021 06:34 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17941979701625342.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17941979701625342.webp",
       "caption": "",
       "time": "Oct 29, 2021 06:26 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18010930186351391.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18010930186351391.webp",
       "caption": "O melhor do açaí brasileiro direto nas Arábias! Chega de avião e vai de camelo Voa mll!!!\n@rafaelmgallo",
       "time": "Oct 29, 2021 06:24 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17916427322075846.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17916427322075846.webp",
       "caption": "",
       "time": "Oct 29, 2021 06:17 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17899897094226654.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17899897094226654.webp",
       "caption": "",
       "time": "Oct 29, 2021 06:10 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18248559316068353.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18248559316068353.webp",
       "caption": "",
       "time": "Oct 29, 2021 06:09 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17917276787060058.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17917276787060058.webp",
       "caption": "",
       "time": "Oct 29, 2021 06:09 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17927198563764492.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17927198563764492.webp",
       "caption": "",
       "time": "Oct 29, 2021 06:09 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17886283199454798.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17886283199454798.webp",
       "caption": "",
       "time": "Oct 29, 2021 06:04 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17920391038980405.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17920391038980405.mp4",
       "caption": "",
       "time": "Oct 29, 2021 06:03 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17937763177679958.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17937763177679958.webp",
       "caption": "",
       "time": "Oct 29, 2021 06:02 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17981180191423063.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17981180191423063.mp4",
       "caption": "",
       "time": "Oct 29, 2021 06:01 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17904371987138709.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17904371987138709.webp",
       "caption": "",
       "time": "Oct 24, 2021 06:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17898577472349887.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17898577472349887.webp",
       "caption": "@paulo.l.filho \n@cabapt \n@pedromargutti",
       "time": "Oct 24, 2021 06:03 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18000677461368718.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18000677461368718.webp",
       "caption": "",
       "time": "Oct 01, 2021 01:10 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18185763619132719.webp",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18185763619132719.webp",
       "caption": "",
       "time": "Oct 01, 2021 01:09 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17997725755370907.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17997725755370907.jpg",
       "caption": "",
       "time": "Sep 25, 2021 05:01 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17921898919795334.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17921898919795334.jpg",
       "caption": "",
       "time": "Sep 25, 2021 05:01 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17912022908041286.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17912022908041286.jpg",
       "caption": "Dated 1970, e ainda fazendo história",
       "time": "Sep 22, 2021 05:50 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17859533282591648.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17859533282591648.jpg",
       "caption": "",
       "time": "Sep 18, 2021 06:31 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18007693414350536.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18007693414350536.jpg",
       "caption": "Sangre nostro",
       "time": "Sep 18, 2021 06:06 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18000308260363386.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18000308260363386.jpg",
       "caption": "",
       "time": "Sep 08, 2021 09:22 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17893843229216658.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17893843229216658.jpg",
       "caption": "",
       "time": "Sep 04, 2021 07:21 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17939382934586564.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17939382934586564.jpg",
       "caption": "",
       "time": "Aug 30, 2021 08:22 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17938953007601211.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17938953007601211.jpg",
       "caption": "",
       "time": "Aug 30, 2021 08:20 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18186694348188666.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18186694348188666.mp4",
       "caption": "Rumo ao Big Air Kite League\n\nHahaha",
       "time": "Aug 30, 2021 03:45 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18250524934063556.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18250524934063556.jpg",
       "caption": "@abelardo.marcos",
       "time": "Aug 29, 2021 03:32 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17887130384396424.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17887130384396424.mp4",
       "caption": "@preabeach_experience  @raphaelandradecorrea \n@fernandorosa \n@caiokf7 \n@fevaquer",
       "time": "Aug 29, 2021 02:13 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18160517812164679.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18160517812164679.jpg",
       "caption": "",
       "time": "Aug 29, 2021 02:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17900946587090144.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17900946587090144.mp4",
       "caption": "",
       "time": "Aug 29, 2021 01:51 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17925293731774270.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17925293731774270.mp4",
       "caption": "",
       "time": "Aug 29, 2021 01:51 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17973669325423776.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17973669325423776.mp4",
       "caption": "",
       "time": "Aug 29, 2021 01:51 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17900346299314038.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17900346299314038.mp4",
       "caption": "",
       "time": "Aug 29, 2021 01:51 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17881526144400997.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17881526144400997.jpg",
       "caption": "",
       "time": "Aug 29, 2021 01:46 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17996842591366793.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17996842591366793.mp4",
       "caption": "",
       "time": "Aug 29, 2021 01:44 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18248249824017432.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18248249824017432.jpg",
       "caption": "@fernandorosa",
       "time": "Aug 29, 2021 01:43 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17915173360846929.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17915173360846929.mp4",
       "caption": "",
       "time": "Aug 29, 2021 01:42 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17910747254004240.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17910747254004240.jpg",
       "caption": "@raphaelandradecorrea \n@fernandorosa \n@caio_rgoncalves \n@fevaquer \n@caio_rgoncalves",
       "time": "Aug 29, 2021 01:40 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17980973161393851.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17980973161393851.jpg",
       "caption": "",
       "time": "Aug 29, 2021 01:34 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17941289035577847.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17941289035577847.jpg",
       "caption": "",
       "time": "Aug 29, 2021 01:33 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17877431465521780.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17877431465521780.jpg",
       "caption": "",
       "time": "Aug 29, 2021 01:30 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17924550118795026.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17924550118795026.jpg",
       "caption": "",
       "time": "Aug 29, 2021 01:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17852724683630930.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17852724683630930.mp4",
       "caption": "",
       "time": "Aug 28, 2021 07:32 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17898140075126168.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17898140075126168.mp4",
       "caption": "",
       "time": "Aug 28, 2021 06:47 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17892203957337906.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17892203957337906.mp4",
       "caption": "",
       "time": "Aug 28, 2021 02:16 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18021005296318052.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18021005296318052.mp4",
       "caption": "",
       "time": "Aug 28, 2021 02:16 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17937897484606560.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17937897484606560.jpg",
       "caption": "",
       "time": "Aug 28, 2021 11:15 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18057769429290162.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18057769429290162.jpg",
       "caption": "",
       "time": "Aug 28, 2021 03:42 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18102197242260689.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18102197242260689.jpg",
       "caption": "",
       "time": "Aug 28, 2021 03:40 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17939327104594758.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17939327104594758.jpg",
       "caption": "@fernandorosa",
       "time": "Aug 28, 2021 03:38 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17881381364513966.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17881381364513966.mp4",
       "caption": "",
       "time": "Aug 28, 2021 03:32 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18194394145113593.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18194394145113593.mp4",
       "caption": "",
       "time": "Aug 28, 2021 03:27 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18227726728074190.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18227726728074190.mp4",
       "caption": "",
       "time": "Aug 28, 2021 03:27 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17895999701169306.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17895999701169306.jpg",
       "caption": "",
       "time": "Aug 28, 2021 03:24 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17894915348332883.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17894915348332883.jpg",
       "caption": "",
       "time": "Aug 26, 2021 01:05 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17985165493389891.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17985165493389891.mp4",
       "caption": "",
       "time": "Aug 26, 2021 12:54 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17950492969511284.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17950492969511284.mp4",
       "caption": "",
       "time": "Aug 26, 2021 12:54 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17930200120724119.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17930200120724119.mp4",
       "caption": "",
       "time": "Aug 26, 2021 12:45 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17903214686126331.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17903214686126331.mp4",
       "caption": "",
       "time": "Aug 26, 2021 12:45 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18124158619218850.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18124158619218850.jpg",
       "caption": "",
       "time": "Aug 26, 2021 12:41 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17895016676186837.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17895016676186837.jpg",
       "caption": "",
       "time": "Aug 26, 2021 12:35 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17941270381563887.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17941270381563887.jpg",
       "caption": "",
       "time": "Aug 26, 2021 12:32 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18159458353160537.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18159458353160537.mp4",
       "caption": "@fernandorosa \n@raphaelandradecorrea",
       "time": "Aug 26, 2021 12:24 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17940878971563402.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17940878971563402.mp4",
       "caption": "@fernandorosa \n@fernandorosa",
       "time": "Aug 26, 2021 12:24 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17875508342524241.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17875508342524241.jpg",
       "caption": "",
       "time": "Aug 25, 2021 11:50 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18124543021218354.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18124543021218354.jpg",
       "caption": "",
       "time": "Aug 25, 2021 11:49 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17944522732556186.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17944522732556186.jpg",
       "caption": "",
       "time": "Aug 24, 2021 11:43 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17929822939663986.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17929822939663986.mp4",
       "caption": "@felipenepo sempre existe o passo anterior ao chocar dos ovos",
       "time": "Aug 24, 2021 02:50 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17875151261487562.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17875151261487562.jpg",
       "caption": "",
       "time": "Aug 24, 2021 02:24 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17944290220557718.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17944290220557718.mp4",
       "caption": "",
       "time": "Aug 24, 2021 02:16 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17870632094538318.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17870632094538318.mp4",
       "caption": "",
       "time": "Aug 24, 2021 02:16 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17930246554675154.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17930246554675154.mp4",
       "caption": "",
       "time": "Aug 24, 2021 02:11 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18124361590242735.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18124361590242735.mp4",
       "caption": "",
       "time": "Aug 24, 2021 02:11 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17925620230742752.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17925620230742752.jpg",
       "caption": "",
       "time": "Aug 24, 2021 01:58 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17897985398206335.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17897985398206335.mp4",
       "caption": "",
       "time": "Aug 23, 2021 05:23 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17895025214183904.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17895025214183904.mp4",
       "caption": "",
       "time": "Aug 23, 2021 05:23 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17997060850362763.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17997060850362763.mp4",
       "caption": "",
       "time": "Aug 23, 2021 05:23 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17895878465326749.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17895878465326749.mp4",
       "caption": "",
       "time": "Aug 23, 2021 05:23 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17910750034990916.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17910750034990916.mp4",
       "caption": "",
       "time": "Aug 23, 2021 02:01 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17934078700626872.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17934078700626872.mp4",
       "caption": "",
       "time": "Aug 23, 2021 02:01 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17944119373518250.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17944119373518250.jpg",
       "caption": "",
       "time": "Aug 23, 2021 02:00 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17897116028197828.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17897116028197828.jpg",
       "caption": "",
       "time": "Aug 23, 2021 02:00 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17898670376215006.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17898670376215006.jpg",
       "caption": "",
       "time": "Aug 22, 2021 06:24 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17980583587401535.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17980583587401535.jpg",
       "caption": "",
       "time": "Aug 22, 2021 06:17 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17886125657458188.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17886125657458188.jpg",
       "caption": "@fevaquer \n@raphaelandradecorrea \n@fernandorosa \n@caio_rgoncalves",
       "time": "Aug 22, 2021 06:07 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18247404628003445.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18247404628003445.jpg",
       "caption": "",
       "time": "Aug 22, 2021 12:58 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17908214855038523.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17908214855038523.jpg",
       "caption": "",
       "time": "Aug 21, 2021 10:31 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17886621902459613.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17886621902459613.jpg",
       "caption": "@caio_rgoncalves \n@fernandorosa \n@fevaquer \n@raphaelandradecorrea",
       "time": "Aug 21, 2021 10:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17944312723540224.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17944312723540224.jpg",
       "caption": "@raphaelandradecorrea \n@fernandorosa \n@caio_rgoncalves \n@fevaquer",
       "time": "Aug 21, 2021 09:50 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18139994701200435.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18139994701200435.jpg",
       "caption": "@raphaelandradecorrea \n@fernandorosa \n@fevaquer \n@caio_rgoncalves",
       "time": "Aug 21, 2021 12:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17912081728969165.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17912081728969165.mp4",
       "caption": "",
       "time": "Aug 20, 2021 03:49 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18166689988195374.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18166689988195374.mp4",
       "caption": "",
       "time": "Aug 20, 2021 02:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17908586819023276.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17908586819023276.mp4",
       "caption": "",
       "time": "Aug 20, 2021 02:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18197520763107212.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18197520763107212.mp4",
       "caption": "",
       "time": "Aug 20, 2021 02:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17923086979727398.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17923086979727398.mp4",
       "caption": "",
       "time": "Aug 20, 2021 02:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17884553708407058.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17884553708407058.jpg",
       "caption": "",
       "time": "Aug 15, 2021 06:43 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18139557373200248.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18139557373200248.jpg",
       "caption": "",
       "time": "Aug 15, 2021 06:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17921332285817479.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17921332285817479.jpg",
       "caption": "",
       "time": "Aug 15, 2021 04:16 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17928763333722687.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17928763333722687.jpg",
       "caption": "Jabuticabeira in that house @fabsgc \n@nataly_slopes",
       "time": "Aug 15, 2021 01:17 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17888425460340641.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17888425460340641.jpg",
       "caption": "@feirinhabar",
       "time": "Aug 14, 2021 08:52 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17901618869133584.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17901618869133584.jpg",
       "caption": "@ebravacino \n@gregcm7 \n@pedroalo",
       "time": "Aug 12, 2021 01:08 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17854884071614853.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17854884071614853.jpg",
       "caption": "",
       "time": "Aug 09, 2021 08:14 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17956127323475701.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17956127323475701.mp4",
       "caption": "",
       "time": "Aug 08, 2021 08:20 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17896028231275641.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17896028231275641.mp4",
       "caption": "@artur_nepo_marcos \n@marcelonmarcos \n@marianamarcos",
       "time": "Aug 08, 2021 08:20 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18167049508159826.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18167049508159826.mp4",
       "caption": "",
       "time": "Aug 08, 2021 08:19 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18157043596162210.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18157043596162210.mp4",
       "caption": "@marianamarcos \n@abelardo.marcos",
       "time": "Aug 08, 2021 08:19 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17972905381413650.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17972905381413650.jpg",
       "caption": "",
       "time": "Aug 08, 2021 06:36 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18009255466331693.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18009255466331693.jpg",
       "caption": "@raphaelandradecorrea \n@fernandorosa \n@phpaoliello",
       "time": "Aug 08, 2021 06:33 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17929212757657671.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17929212757657671.jpg",
       "caption": "Voa !!\n\n@aleturqueto \n@lauracossi",
       "time": "Aug 08, 2021 04:55 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18119431033244794.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18119431033244794.jpg",
       "caption": "",
       "time": "Aug 08, 2021 01:18 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17861013305545525.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17861013305545525.jpg",
       "caption": "",
       "time": "Aug 08, 2021 01:17 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17906833313046940.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17906833313046940.jpg",
       "caption": "",
       "time": "Aug 07, 2021 03:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18005293837341217.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18005293837341217.jpg",
       "caption": "",
       "time": "Aug 07, 2021 04:40 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17942583568534688.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17942583568534688.jpg",
       "caption": "",
       "time": "Aug 07, 2021 04:39 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17855301776588874.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17855301776588874.jpg",
       "caption": "@phfmarcondes \n\n@fealtemari",
       "time": "Aug 06, 2021 11:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17858411615563718.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17858411615563718.mp4",
       "caption": "",
       "time": "Aug 06, 2021 11:30 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17935794805600244.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17935794805600244.jpg",
       "caption": "",
       "time": "Aug 06, 2021 07:11 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17896097516283907.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17896097516283907.jpg",
       "caption": "",
       "time": "Aug 06, 2021 07:11 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17969210926404642.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17969210926404642.jpg",
       "caption": "",
       "time": "Aug 06, 2021 05:13 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18170397916145610.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18170397916145610.jpg",
       "caption": "",
       "time": "Aug 06, 2021 05:05 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17949500410468384.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17949500410468384.jpg",
       "caption": "",
       "time": "Aug 05, 2021 07:47 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17995966780367385.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17995966780367385.jpg",
       "caption": "",
       "time": "Aug 05, 2021 07:47 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17882967323506210.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17882967323506210.jpg",
       "caption": "",
       "time": "Aug 05, 2021 07:47 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17923506007739851.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17923506007739851.jpg",
       "caption": "@titoferraz  DeeDee",
       "time": "Aug 05, 2021 07:11 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17928376351662054.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17928376351662054.mp4",
       "caption": "@titoferraz",
       "time": "Aug 05, 2021 07:09 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17890793186204970.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17890793186204970.mp4",
       "caption": "@titoferraz",
       "time": "Aug 05, 2021 07:09 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18182872078191378.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18182872078191378.jpg",
       "caption": "",
       "time": "Aug 05, 2021 07:07 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18123917950237682.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18123917950237682.mp4",
       "caption": "",
       "time": "Aug 05, 2021 06:09 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17983592446380648.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17983592446380648.mp4",
       "caption": "@gregcm7 \n@uukoc \n@pedromargutti",
       "time": "Aug 05, 2021 06:08 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17969513662427036.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17969513662427036.jpg",
       "caption": "",
       "time": "Aug 05, 2021 06:07 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17926027840686006.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17926027840686006.jpg",
       "caption": "",
       "time": "Aug 05, 2021 06:06 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17902233797119449.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17902233797119449.jpg",
       "caption": "",
       "time": "Aug 05, 2021 06:03 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17887760291286529.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17887760291286529.jpg",
       "caption": "",
       "time": "Aug 03, 2021 05:03 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17915300632803394.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17915300632803394.jpg",
       "caption": "",
       "time": "Aug 03, 2021 05:02 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17917503148755958.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17917503148755958.jpg",
       "caption": "",
       "time": "Aug 03, 2021 01:37 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17970561853423029.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17970561853423029.jpg",
       "caption": "Não é sobre religião, mas encontrar em templos a sua paz!",
       "time": "Aug 03, 2021 01:31 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18167516440154102.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18167516440154102.jpg",
       "caption": "",
       "time": "Aug 02, 2021 04:37 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18241675168038075.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18241675168038075.mp4",
       "caption": "",
       "time": "Aug 02, 2021 03:56 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17864196722574244.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17864196722574244.mp4",
       "caption": "",
       "time": "Aug 01, 2021 02:56 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18197110612100217.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18197110612100217.jpg",
       "caption": "",
       "time": "Jul 26, 2021 04:37 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17963611840412604.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17963611840412604.jpg",
       "caption": "Sangreeee",
       "time": "Jul 16, 2021 07:34 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17881289567493780.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17881289567493780.jpg",
       "caption": "Te amo, Juuuuuuuuuu(s)!",
       "time": "Jul 08, 2021 02:26 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17910883783896053.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17910883783896053.mp4",
       "caption": "",
       "time": "Jun 29, 2021 11:59 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17933213533528898.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17933213533528898.mp4",
       "caption": "",
       "time": "Jun 29, 2021 11:58 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17881712051372902.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17881712051372902.jpg",
       "caption": "",
       "time": "Jun 28, 2021 01:13 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17860403285555361.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17860403285555361.jpg",
       "caption": "",
       "time": "Jun 27, 2021 01:21 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17912692330847892.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17912692330847892.jpg",
       "caption": "",
       "time": "Jun 27, 2021 01:17 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18236322322036005.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18236322322036005.jpg",
       "caption": "",
       "time": "Jun 27, 2021 01:17 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17885271974241089.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17885271974241089.mp4",
       "caption": "",
       "time": "Jun 26, 2021 01:11 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17940049825524010.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17940049825524010.mp4",
       "caption": "",
       "time": "Jun 26, 2021 01:11 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17913057469762793.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17913057469762793.mp4",
       "caption": "",
       "time": "Jun 26, 2021 01:10 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18172159615127693.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18172159615127693.mp4",
       "caption": "",
       "time": "Jun 26, 2021 01:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18171767713121823.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18171767713121823.mp4",
       "caption": "",
       "time": "Jun 25, 2021 07:25 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17852880545567996.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17852880545567996.mp4",
       "caption": "",
       "time": "Jun 25, 2021 07:24 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17914680685803699.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17914680685803699.mp4",
       "caption": "",
       "time": "Jun 25, 2021 07:23 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17909073877840337.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17909073877840337.mp4",
       "caption": "",
       "time": "Jun 24, 2021 11:25 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17887886612181536.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17887886612181536.mp4",
       "caption": "",
       "time": "Jun 24, 2021 11:24 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17858532515570719.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17858532515570719.mp4",
       "caption": "",
       "time": "Jun 18, 2021 04:54 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18009832081320967.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18009832081320967.mp4",
       "caption": "",
       "time": "Jun 18, 2021 04:54 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18088994827270764.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18088994827270764.mp4",
       "caption": "",
       "time": "Jun 18, 2021 04:53 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17875201562352162.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17875201562352162.jpg",
       "caption": "",
       "time": "Jun 18, 2021 04:48 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17949240169480827.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17949240169480827.mp4",
       "caption": "",
       "time": "Jun 18, 2021 04:45 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18215128366073356.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18215128366073356.mp4",
       "caption": "",
       "time": "Jun 18, 2021 04:44 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17889413375211750.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17889413375211750.jpg",
       "caption": "",
       "time": "Jun 14, 2021 06:45 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18233956849054397.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18233956849054397.mp4",
       "caption": "",
       "time": "Jun 14, 2021 06:38 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18006727375322331.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18006727375322331.mp4",
       "caption": "",
       "time": "Jun 14, 2021 06:37 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17844975806607829.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17844975806607829.jpg",
       "caption": "",
       "time": "Jun 14, 2021 06:35 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17915688508776257.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17915688508776257.jpg",
       "caption": "",
       "time": "Jun 14, 2021 06:19 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18116128426224996.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18116128426224996.jpg",
       "caption": "",
       "time": "Jun 14, 2021 06:18 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17930691937579353.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17930691937579353.jpg",
       "caption": "",
       "time": "Jun 13, 2021 05:44 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17916181666745376.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17916181666745376.jpg",
       "caption": "",
       "time": "Jun 13, 2021 05:41 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17883999854239020.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17883999854239020.jpg",
       "caption": "",
       "time": "Jun 13, 2021 05:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17891951402082033.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17891951402082033.jpg",
       "caption": "",
       "time": "Jun 13, 2021 05:38 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17899167389074972.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17899167389074972.jpg",
       "caption": "",
       "time": "Jun 13, 2021 05:37 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17968320130410533.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17968320130410533.mp4",
       "caption": "",
       "time": "Jun 12, 2021 11:42 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17901423160913619.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17901423160913619.mp4",
       "caption": "",
       "time": "Jun 12, 2021 11:42 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17865540146523043.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17865540146523043.mp4",
       "caption": "",
       "time": "Jun 12, 2021 11:41 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17900343059019243.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17900343059019243.jpg",
       "caption": "",
       "time": "Jun 12, 2021 01:27 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17914909063772949.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17914909063772949.mp4",
       "caption": "",
       "time": "Jun 12, 2021 12:49 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18066084958304881.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18066084958304881.mp4",
       "caption": "",
       "time": "Jun 12, 2021 12:48 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17902234024999913.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17902234024999913.mp4",
       "caption": "",
       "time": "Jun 12, 2021 12:48 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17910924967862360.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17910924967862360.jpg",
       "caption": "",
       "time": "Jun 11, 2021 07:28 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17888827709133961.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17888827709133961.mp4",
       "caption": "",
       "time": "Jun 10, 2021 05:37 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18228443752051581.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18228443752051581.jpg",
       "caption": "",
       "time": "Jun 10, 2021 05:29 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17925274294625982.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17925274294625982.jpg",
       "caption": "",
       "time": "Jun 10, 2021 05:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17929452025587545.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17929452025587545.mp4",
       "caption": "",
       "time": "Jun 10, 2021 05:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17890797566108038.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17890797566108038.mp4",
       "caption": "",
       "time": "Jun 10, 2021 05:27 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17885835275324543.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17885835275324543.mp4",
       "caption": "",
       "time": "Jun 10, 2021 05:19 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17899687229057083.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17899687229057083.jpg",
       "caption": "",
       "time": "Jun 10, 2021 03:31 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17897061002084419.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17897061002084419.jpg",
       "caption": "\"Amanhã eu fico triste\nHoje vou ser feliz\" @uukoc \n@helainecamacho \n@gregcm7 \n@analucamacho  Leia todo dia 🙏🏻",
       "time": "Jun 07, 2021 03:07 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17898316547066253.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17898316547066253.jpg",
       "caption": "Muito Obrigado, Caraíva!\n\nAté breve!",
       "time": "Jun 06, 2021 08:38 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17905758478931117.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17905758478931117.jpg",
       "caption": "🙏",
       "time": "Jun 06, 2021 08:33 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17909925847785583.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17909925847785583.mp4",
       "caption": "",
       "time": "Jun 06, 2021 08:32 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18119582974210319.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18119582974210319.mp4",
       "caption": "",
       "time": "Jun 06, 2021 08:31 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18002926006328195.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18002926006328195.mp4",
       "caption": "",
       "time": "Jun 06, 2021 08:31 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18129028843206517.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18129028843206517.jpg",
       "caption": "@marcellalima  @isabelaleaobc  @mariinogues",
       "time": "Jun 06, 2021 08:23 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17873080358379566.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17873080358379566.jpg",
       "caption": "É sobre isso",
       "time": "Jun 05, 2021 10:41 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17948225731470218.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17948225731470218.mp4",
       "caption": "",
       "time": "Jun 05, 2021 05:57 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17906367205905661.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17906367205905661.mp4",
       "caption": "O encontro",
       "time": "Jun 05, 2021 05:56 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17890090457189251.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17890090457189251.mp4",
       "caption": "Caradeliz",
       "time": "Jun 05, 2021 03:25 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17901030637993138.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17901030637993138.jpg",
       "caption": "",
       "time": "Jun 05, 2021 01:56 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17876944613411500.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17876944613411500.mp4",
       "caption": "",
       "time": "Jun 04, 2021 01:33 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17909625130855681.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17909625130855681.jpg",
       "caption": "",
       "time": "Jun 04, 2021 01:30 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18160526425152214.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18160526425152214.mp4",
       "caption": "",
       "time": "Jun 04, 2021 01:01 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17885989850261897.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17885989850261897.mp4",
       "caption": "",
       "time": "Jun 04, 2021 12:09 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18176994112139085.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18176994112139085.mp4",
       "caption": "",
       "time": "Jun 04, 2021 12:09 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17888373200130584.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17888373200130584.jpg",
       "caption": "",
       "time": "Jun 04, 2021 06:03 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17877704720381926.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17877704720381926.jpg",
       "caption": "",
       "time": "Jun 04, 2021 05:54 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17873467799350559.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17873467799350559.mp4",
       "caption": "",
       "time": "Jun 03, 2021 11:05 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17917863211703641.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17917863211703641.mp4",
       "caption": "",
       "time": "Jun 03, 2021 11:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18175219975137836.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18175219975137836.mp4",
       "caption": "",
       "time": "Jun 03, 2021 11:03 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17904486424874859.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17904486424874859.mp4",
       "caption": "",
       "time": "Jun 03, 2021 11:03 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17929531651557797.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17929531651557797.jpg",
       "caption": "",
       "time": "Jun 03, 2021 06:13 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17871660143399774.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17871660143399774.mp4",
       "caption": "",
       "time": "Jun 03, 2021 06:13 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18232033144024219.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18232033144024219.jpg",
       "caption": "",
       "time": "Jun 02, 2021 10:32 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17879558702344235.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17879558702344235.jpg",
       "caption": "",
       "time": "Jun 01, 2021 12:53 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18227783839030847.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18227783839030847.jpg",
       "caption": "",
       "time": "May 31, 2021 05:59 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17934366052531739.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17934366052531739.mp4",
       "caption": "",
       "time": "May 31, 2021 05:52 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17900211808913267.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17900211808913267.jpg",
       "caption": "",
       "time": "May 31, 2021 04:51 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18086629801265479.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18086629801265479.mp4",
       "caption": "",
       "time": "May 30, 2021 03:37 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18181545319119616.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18181545319119616.jpg",
       "caption": "Where business happens",
       "time": "May 30, 2021 02:01 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17880673955267136.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17880673955267136.mp4",
       "caption": "",
       "time": "May 30, 2021 12:02 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17876503022472584.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17876503022472584.jpg",
       "caption": "",
       "time": "May 29, 2021 11:33 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18171041749190265.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18171041749190265.mp4",
       "caption": "@larmar",
       "time": "May 29, 2021 11:12 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17985239338367064.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17985239338367064.jpg",
       "caption": "@anacarolpediatra  Our roots",
       "time": "May 29, 2021 09:24 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18153734803093536.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18153734803093536.jpg",
       "caption": "",
       "time": "May 28, 2021 04:21 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17872541843345542.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17872541843345542.jpg",
       "caption": "",
       "time": "May 25, 2021 12:00 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18114315112226605.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18114315112226605.mp4",
       "caption": "",
       "time": "May 25, 2021 12:00 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17900181266008306.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17900181266008306.mp4",
       "caption": "",
       "time": "May 25, 2021 12:00 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17899625614997774.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17899625614997774.mp4",
       "caption": "",
       "time": "May 24, 2021 11:57 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17903630380864139.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17903630380864139.mp4",
       "caption": "",
       "time": "May 24, 2021 11:55 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17880371675265820.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17880371675265820.mp4",
       "caption": "",
       "time": "May 24, 2021 11:55 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17902642078942400.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17902642078942400.jpg",
       "caption": "",
       "time": "May 24, 2021 11:54 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17999654332329589.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17999654332329589.mp4",
       "caption": "",
       "time": "May 22, 2021 11:34 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18181575019107112.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18181575019107112.jpg",
       "caption": "",
       "time": "May 21, 2021 06:42 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17917686274655730.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17917686274655730.jpg",
       "caption": "There's love in Sampa City!",
       "time": "May 05, 2021 03:12 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17886811919098421.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17886811919098421.jpg",
       "caption": "@tidelabarra \n@carolcaropitta  Hoje eu conheci a Liz, mais uma menina cheia luz para a família!!!\n\nE ainda ganhei presente.\n\nFoi bom revê-los, prima(o) queridos!!!",
       "time": "May 02, 2021 09:49 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17853515654548011.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17853515654548011.jpg",
       "caption": "",
       "time": "May 02, 2021 08:10 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17897778826985897.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17897778826985897.mp4",
       "caption": "hometown",
       "time": "May 01, 2021 07:16 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17852455595552714.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17852455595552714.mp4",
       "caption": "ThrowBack Friday @JabaquaraParaty",
       "time": "Apr 30, 2021 10:41 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17888294621129898.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17888294621129898.jpg",
       "caption": "",
       "time": "Apr 24, 2021 03:11 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17886955502155576.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17886955502155576.jpg",
       "caption": "Voa mlk!!!\n\nVocê é mostro demais!!!\n\nInclusive, baita clipe!!! Kkk @pelanza",
       "time": "Apr 23, 2021 10:44 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18199941406075302.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18199941406075302.jpg",
       "caption": "@processohoffmanbrasil  Foram 7 dias em uma experiência única! 🙏🏻",
       "time": "Apr 20, 2021 12:07 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17877843143205026.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17877843143205026.jpg",
       "caption": "",
       "time": "Apr 12, 2021 01:37 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18217644265010769.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18217644265010769.jpg",
       "caption": "",
       "time": "Apr 12, 2021 01:36 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17967815572384692.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17967815572384692.jpg",
       "caption": "",
       "time": "Apr 12, 2021 01:34 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17898067282877596.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17898067282877596.jpg",
       "caption": "",
       "time": "Apr 12, 2021 01:33 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17853979319529225.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17853979319529225.mp4",
       "caption": "",
       "time": "Apr 12, 2021 01:32 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17941308196474315.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17941308196474315.mp4",
       "caption": "",
       "time": "Apr 12, 2021 01:32 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17923704013574514.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17923704013574514.jpg",
       "caption": "",
       "time": "Apr 12, 2021 01:31 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17874219038281465.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17874219038281465.mp4",
       "caption": "",
       "time": "Apr 12, 2021 01:30 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17894622157905179.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17894622157905179.mp4",
       "caption": "",
       "time": "Apr 12, 2021 01:30 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17913451105679245.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17913451105679245.jpg",
       "caption": "",
       "time": "Apr 12, 2021 01:28 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18216485608031985.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18216485608031985.jpg",
       "caption": "",
       "time": "Apr 11, 2021 09:44 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17857137554520124.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17857137554520124.jpg",
       "caption": "",
       "time": "Apr 11, 2021 09:43 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17907367744789183.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17907367744789183.jpg",
       "caption": "",
       "time": "Apr 11, 2021 09:43 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17886282344139664.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17886282344139664.mp4",
       "caption": "#05",
       "time": "Apr 11, 2021 09:42 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17941416496468421.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17941416496468421.jpg",
       "caption": "",
       "time": "Apr 11, 2021 09:40 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17887715486117974.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17887715486117974.mp4",
       "caption": "",
       "time": "Apr 11, 2021 09:39 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17868880529466123.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17868880529466123.mp4",
       "caption": "",
       "time": "Apr 11, 2021 09:39 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18218111776053988.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18218111776053988.mp4",
       "caption": "",
       "time": "Apr 11, 2021 09:39 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17849666084550500.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17849666084550500.mp4",
       "caption": "",
       "time": "Apr 11, 2021 09:39 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18079507861270057.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18079507861270057.mp4",
       "caption": "",
       "time": "Apr 11, 2021 09:38 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17963120866400348.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17963120866400348.mp4",
       "caption": "",
       "time": "Apr 11, 2021 09:38 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18154750525180003.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18154750525180003.mp4",
       "caption": "",
       "time": "Apr 11, 2021 09:36 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17876891291333154.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17876891291333154.mp4",
       "caption": "#04",
       "time": "Apr 11, 2021 09:36 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17872324856347383.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17872324856347383.jpg",
       "caption": "Zzz",
       "time": "Apr 11, 2021 09:33 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17885846879153167.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17885846879153167.jpg",
       "caption": "",
       "time": "Apr 11, 2021 09:32 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18068760700281286.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18068760700281286.mp4",
       "caption": "",
       "time": "Apr 11, 2021 09:29 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17863835591508977.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17863835591508977.mp4",
       "caption": "",
       "time": "Apr 11, 2021 09:29 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17912451166727271.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17912451166727271.mp4",
       "caption": "",
       "time": "Apr 11, 2021 09:29 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17901304276879589.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17901304276879589.mp4",
       "caption": "#03",
       "time": "Apr 11, 2021 09:29 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17894503738922510.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17894503738922510.jpg",
       "caption": "",
       "time": "Apr 11, 2021 09:27 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17870481338478460.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17870481338478460.jpg",
       "caption": "",
       "time": "Apr 11, 2021 09:26 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17907724396776222.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17907724396776222.jpg",
       "caption": "",
       "time": "Apr 11, 2021 09:25 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17879791505164732.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17879791505164732.jpg",
       "caption": "",
       "time": "Apr 11, 2021 09:24 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17917929901622136.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17917929901622136.mp4",
       "caption": "",
       "time": "Apr 11, 2021 09:23 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17926849594523105.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17926849594523105.mp4",
       "caption": "",
       "time": "Apr 11, 2021 09:23 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17878910333185602.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17878910333185602.mp4",
       "caption": "",
       "time": "Apr 11, 2021 09:23 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17842651844585887.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17842651844585887.mp4",
       "caption": "#day02",
       "time": "Apr 11, 2021 09:23 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17927182507558138.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17927182507558138.mp4",
       "caption": "",
       "time": "Apr 10, 2021 01:03 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17890760117072612.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17890760117072612.mp4",
       "caption": "",
       "time": "Apr 10, 2021 01:03 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17924176522568989.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17924176522568989.mp4",
       "caption": "1st night camp",
       "time": "Apr 10, 2021 01:03 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17870763998379991.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17870763998379991.mp4",
       "caption": "",
       "time": "Apr 10, 2021 12:38 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18201397369074773.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18201397369074773.mp4",
       "caption": "",
       "time": "Apr 10, 2021 12:37 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18083922715248729.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18083922715248729.mp4",
       "caption": "",
       "time": "Apr 10, 2021 12:37 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17902384456795680.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17902384456795680.mp4",
       "caption": "",
       "time": "Apr 10, 2021 12:37 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17892753014014818.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17892753014014818.mp4",
       "caption": "",
       "time": "Apr 10, 2021 12:37 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17915387542645781.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17915387542645781.mp4",
       "caption": "",
       "time": "Apr 10, 2021 12:34 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17922941278586773.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17922941278586773.mp4",
       "caption": "",
       "time": "Apr 10, 2021 12:34 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17898898615902254.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17898898615902254.mp4",
       "caption": "",
       "time": "Apr 10, 2021 12:34 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17897778706938548.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17897778706938548.jpg",
       "caption": "",
       "time": "Apr 10, 2021 12:33 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17882152805195308.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17882152805195308.jpg",
       "caption": "",
       "time": "Apr 10, 2021 12:32 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17873377559295703.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17873377559295703.jpg",
       "caption": "#day01",
       "time": "Apr 10, 2021 12:31 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18148139296084951.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18148139296084951.mp4",
       "caption": "Pico do Papagaio\nDistância 16km\nAscensão 1.000m\nTempo 5h\nDuração 1 dia\n\n  Volta a Ilha\nDistância 86km\nAscensão 3.200m\nTempo 25h20\nDuração 5 dias\n\n  Total\nDistância 102km\nAscensão 4.200m\nTempo 35h20\nDuração 6 dias\n\nMochila 23kg",
       "time": "Apr 10, 2021 12:29 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18001120234316231.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18001120234316231.mp4",
       "caption": "",
       "time": "Mar 31, 2021 11:08 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17845866065558983.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17845866065558983.jpg",
       "caption": "",
       "time": "Mar 29, 2021 07:03 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17879668112205303.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17879668112205303.mp4",
       "caption": "",
       "time": "Mar 29, 2021 07:03 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18148550491147049.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18148550491147049.mp4",
       "caption": "",
       "time": "Mar 29, 2021 07:03 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17906039764759998.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17906039764759998.mp4",
       "caption": "",
       "time": "Mar 29, 2021 02:20 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17914088590635951.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17914088590635951.mp4",
       "caption": "",
       "time": "Mar 29, 2021 02:20 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17907657328740916.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17907657328740916.mp4",
       "caption": "",
       "time": "Mar 29, 2021 02:19 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18196834483077221.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18196834483077221.mp4",
       "caption": "",
       "time": "Mar 29, 2021 02:19 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17892918874988738.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17892918874988738.jpg",
       "caption": "",
       "time": "Mar 29, 2021 02:18 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17878073393273604.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17878073393273604.mp4",
       "caption": "",
       "time": "Mar 29, 2021 02:18 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17883176525169482.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17883176525169482.mp4",
       "caption": "",
       "time": "Mar 29, 2021 02:17 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17909041915734992.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17909041915734992.mp4",
       "caption": "",
       "time": "Mar 29, 2021 02:17 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17863982186396947.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17863982186396947.mp4",
       "caption": "",
       "time": "Mar 29, 2021 02:17 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17888677925006486.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17888677925006486.mp4",
       "caption": "",
       "time": "Mar 29, 2021 02:17 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17902828129762480.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17902828129762480.jpg",
       "caption": "",
       "time": "Mar 29, 2021 01:24 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17878509119176860.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17878509119176860.mp4",
       "caption": "",
       "time": "Mar 29, 2021 12:55 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18158342533122801.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18158342533122801.mp4",
       "caption": "",
       "time": "Mar 29, 2021 12:55 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17908051483738274.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17908051483738274.mp4",
       "caption": "",
       "time": "Mar 29, 2021 12:55 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18075754228267468.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18075754228267468.jpg",
       "caption": "",
       "time": "Mar 28, 2021 03:46 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17878760861284715.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17878760861284715.jpg",
       "caption": "",
       "time": "Mar 28, 2021 03:27 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17966015683391403.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17966015683391403.jpg",
       "caption": "Tempo:4h30\nDistância:20km\nElevação:683m\nCarga:21,5kg",
       "time": "Mar 28, 2021 12:46 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17984095033350306.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17984095033350306.jpg",
       "caption": "",
       "time": "Mar 26, 2021 01:29 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17966358397380632.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17966358397380632.mp4",
       "caption": "",
       "time": "Mar 26, 2021 01:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17896463143913769.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17896463143913769.mp4",
       "caption": "",
       "time": "Mar 26, 2021 01:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18074952637267867.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18074952637267867.mp4",
       "caption": "",
       "time": "Mar 26, 2021 01:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18207332989036614.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18207332989036614.jpg",
       "caption": "",
       "time": "Mar 26, 2021 01:27 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17889709541041288.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17889709541041288.jpg",
       "caption": "",
       "time": "Mar 26, 2021 01:27 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17871120281306697.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17871120281306697.jpg",
       "caption": "",
       "time": "Mar 26, 2021 12:56 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17900565610867926.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17900565610867926.jpg",
       "caption": "pp 81 kg\ncv 36kg\n+ 1 Hérnia de Disco",
       "time": "Mar 26, 2021 12:50 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17919891058591620.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17919891058591620.jpg",
       "caption": "",
       "time": "Mar 26, 2021 12:36 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17961050347392071.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17961050347392071.jpg",
       "caption": "ARRAIS A CAMINHO",
       "time": "Mar 23, 2021 01:01 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17854661114517705.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17854661114517705.jpg",
       "caption": "",
       "time": "Mar 22, 2021 02:40 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17899669819878345.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17899669819878345.jpg",
       "caption": "",
       "time": "Mar 22, 2021 02:38 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17901060577788876.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17901060577788876.jpg",
       "caption": "",
       "time": "Mar 22, 2021 02:34 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17860748312456113.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17860748312456113.jpg",
       "caption": "Família ê\nFamília ah\nFamília (...) @cavalcanti_ph \n@antcarlos \n@marcelonmarcos \n@abelardo.marcos \n@marianamarcos \n@pmoral48 \n@laurabertelli \n@juduenhas \n@jpdmarcos \n@artur_nepo_marcos \n @carolcaropitta \n@rosa_cavalcanti",
       "time": "Mar 22, 2021 02:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18208376185055349.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18208376185055349.jpg",
       "caption": "",
       "time": "Mar 21, 2021 09:59 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17852827457522227.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17852827457522227.jpg",
       "caption": "",
       "time": "Mar 21, 2021 09:59 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18003471685308523.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18003471685308523.mp4",
       "caption": "",
       "time": "Mar 21, 2021 09:57 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17899946830861773.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17899946830861773.jpg",
       "caption": "",
       "time": "Mar 21, 2021 09:56 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17902111582838877.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17902111582838877.jpg",
       "caption": "",
       "time": "Mar 21, 2021 09:55 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17872879847261635.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17872879847261635.jpg",
       "caption": "VO2 Máx",
       "time": "Mar 21, 2021 03:21 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17885935721094463.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17885935721094463.mp4",
       "caption": "",
       "time": "Mar 20, 2021 12:26 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17844128219557599.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17844128219557599.jpg",
       "caption": "",
       "time": "Mar 20, 2021 12:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17964960940383223.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17964960940383223.jpg",
       "caption": "",
       "time": "Mar 20, 2021 12:31 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17916445606579114.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17916445606579114.jpg",
       "caption": "",
       "time": "Mar 20, 2021 12:33 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17864897771341584.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17864897771341584.jpg",
       "caption": "",
       "time": "Mar 20, 2021 12:25 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17908428799706911.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17908428799706911.mp4",
       "caption": "",
       "time": "Mar 20, 2021 12:26 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17843901665550677.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17843901665550677.mp4",
       "caption": "",
       "time": "Mar 20, 2021 12:26 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17872597208267031.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17872597208267031.jpg",
       "caption": "",
       "time": "Mar 18, 2021 04:42 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17869072706345171.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17869072706345171.jpg",
       "caption": "",
       "time": "Mar 18, 2021 04:41 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18182519590076761.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18182519590076761.jpg",
       "caption": "@juduenhas  @reinaldokjr  @jpdmarcos  @ceciliagmarcos",
       "time": "Mar 09, 2021 10:34 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17910322945660718.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17910322945660718.jpg",
       "caption": "",
       "time": "Mar 09, 2021 09:19 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17876574533233709.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17876574533233709.jpg",
       "caption": "Medalha andarilho",
       "time": "Mar 09, 2021 12:43 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18151871962184557.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18151871962184557.jpg",
       "caption": "",
       "time": "Mar 06, 2021 12:43 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17910583972649652.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17910583972649652.jpg",
       "caption": "",
       "time": "Mar 06, 2021 12:42 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18179355346077365.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18179355346077365.jpg",
       "caption": "",
       "time": "Mar 06, 2021 12:42 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17899571419832442.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17899571419832442.jpg",
       "caption": "",
       "time": "Mar 04, 2021 08:42 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17860185920416660.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17860185920416660.mp4",
       "caption": "",
       "time": "Mar 02, 2021 02:08 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17887986544965178.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17887986544965178.mp4",
       "caption": "",
       "time": "Mar 02, 2021 02:08 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17906225815701672.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17906225815701672.mp4",
       "caption": "",
       "time": "Mar 02, 2021 02:08 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18107684734200173.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18107684734200173.jpg",
       "caption": "",
       "time": "Mar 01, 2021 06:54 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18139655695144841.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18139655695144841.mp4",
       "caption": "",
       "time": "Mar 01, 2021 12:30 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17875529309168005.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17875529309168005.mp4",
       "caption": "",
       "time": "Mar 01, 2021 12:29 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17900776876745994.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17900776876745994.mp4",
       "caption": "",
       "time": "Feb 28, 2021 04:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17851428980516351.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17851428980516351.mp4",
       "caption": "",
       "time": "Feb 28, 2021 04:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17899102825768814.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17899102825768814.mp4",
       "caption": "",
       "time": "Feb 28, 2021 04:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17902517677759002.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17902517677759002.mp4",
       "caption": "",
       "time": "Feb 28, 2021 04:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17889771928935469.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17889771928935469.mp4",
       "caption": "",
       "time": "Feb 28, 2021 03:35 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17864824703381752.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17864824703381752.jpg",
       "caption": "",
       "time": "Feb 25, 2021 12:35 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17887842391963729.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17887842391963729.jpg",
       "caption": "",
       "time": "Feb 25, 2021 12:24 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17884771613069244.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17884771613069244.jpg",
       "caption": "",
       "time": "Feb 22, 2021 11:30 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17875552439161417.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17875552439161417.mp4",
       "caption": "",
       "time": "Feb 22, 2021 10:14 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17918129602561563.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17918129602561563.jpg",
       "caption": "Também não entendi nada",
       "time": "Feb 21, 2021 07:16 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17917905349571587.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17917905349571587.jpg",
       "caption": "Carnario18",
       "time": "Feb 21, 2021 02:42 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18149310337189393.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18149310337189393.jpg",
       "caption": "",
       "time": "Feb 20, 2021 10:42 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17903729224735593.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17903729224735593.jpg",
       "caption": "",
       "time": "Feb 20, 2021 10:36 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17980111033347224.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17980111033347224.jpg",
       "caption": "",
       "time": "Feb 20, 2021 10:35 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17986207831326567.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17986207831326567.mp4",
       "caption": "",
       "time": "Feb 20, 2021 10:34 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17916577510581893.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17916577510581893.jpg",
       "caption": "",
       "time": "Feb 20, 2021 10:32 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17895869728871399.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17895869728871399.jpg",
       "caption": "Última escalada!",
       "time": "Feb 20, 2021 10:31 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17873298227185645.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17873298227185645.jpg",
       "caption": "",
       "time": "Feb 16, 2021 10:55 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17920290892558644.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17920290892558644.jpg",
       "caption": "Via Ricardo Prado 6° VI\nPedra da Babilônia\nUrca/RJ",
       "time": "Feb 16, 2021 10:54 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17849802953509751.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17849802953509751.jpg",
       "caption": "Primeiros 100m\n3 enfiadas na Pedra da Babilônia\n~215m ganhos de altitude",
       "time": "Feb 16, 2021 10:50 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18065922280268124.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18065922280268124.mp4",
       "caption": "",
       "time": "Feb 16, 2021 10:43 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17941450681447017.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17941450681447017.mp4",
       "caption": "",
       "time": "Feb 16, 2021 10:43 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17847904304520423.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17847904304520423.mp4",
       "caption": "",
       "time": "Feb 16, 2021 10:43 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17896491301849388.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17896491301849388.jpg",
       "caption": "Fenda\nPlatô da Lagoa",
       "time": "Feb 15, 2021 10:10 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17874026324166483.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17874026324166483.jpg",
       "caption": "",
       "time": "Feb 15, 2021 10:07 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17860905185434990.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17860905185434990.mp4",
       "caption": "",
       "time": "Feb 15, 2021 10:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17857430069441189.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17857430069441189.mp4",
       "caption": "",
       "time": "Feb 15, 2021 10:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17861164247463473.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17861164247463473.jpg",
       "caption": "",
       "time": "Feb 15, 2021 10:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18149848957124025.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18149848957124025.jpg",
       "caption": "",
       "time": "Feb 15, 2021 10:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17854338728484955.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17854338728484955.mp4",
       "caption": "",
       "time": "Feb 15, 2021 10:03 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17877721244153597.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17877721244153597.jpg",
       "caption": "",
       "time": "Feb 15, 2021 02:28 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17863704482379145.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17863704482379145.jpg",
       "caption": "",
       "time": "Feb 15, 2021 02:26 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17870886752317709.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17870886752317709.mp4",
       "caption": "",
       "time": "Feb 15, 2021 02:19 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17908761982653558.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17908761982653558.mp4",
       "caption": "",
       "time": "Feb 15, 2021 02:19 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17914778167593660.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17914778167593660.mp4",
       "caption": "",
       "time": "Feb 15, 2021 02:19 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18073750642249406.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18073750642249406.mp4",
       "caption": "",
       "time": "Feb 15, 2021 02:17 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18147754441137501.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18147754441137501.mp4",
       "caption": "",
       "time": "Feb 15, 2021 02:17 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17920920523543100.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17920920523543100.jpg",
       "caption": "",
       "time": "Feb 15, 2021 02:16 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18030244762292029.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18030244762292029.mp4",
       "caption": "",
       "time": "Feb 15, 2021 02:11 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17918254510546139.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17918254510546139.mp4",
       "caption": "",
       "time": "Feb 15, 2021 02:11 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17913943855599410.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17913943855599410.mp4",
       "caption": "",
       "time": "Feb 15, 2021 02:09 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17890211887943786.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17890211887943786.mp4",
       "caption": "",
       "time": "Feb 15, 2021 02:07 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17918118832538263.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17918118832538263.mp4",
       "caption": "",
       "time": "Feb 15, 2021 02:07 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18195224059021456.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18195224059021456.mp4",
       "caption": "",
       "time": "Feb 14, 2021 04:26 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17915421676586664.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17915421676586664.mp4",
       "caption": "@nandi_bushell",
       "time": "Feb 14, 2021 04:16 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17877145322173309.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17877145322173309.jpg",
       "caption": "",
       "time": "Feb 14, 2021 04:07 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17895078970872525.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17895078970872525.jpg",
       "caption": "",
       "time": "Feb 13, 2021 11:05 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17884179728068196.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17884179728068196.jpg",
       "caption": "Prussik",
       "time": "Feb 13, 2021 11:03 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17874001679227080.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17874001679227080.jpg",
       "caption": "Chaminé",
       "time": "Feb 13, 2021 10:58 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17857854998437084.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17857854998437084.jpg",
       "caption": "",
       "time": "Feb 13, 2021 10:56 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17864911253358702.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17864911253358702.jpg",
       "caption": "",
       "time": "Feb 13, 2021 10:55 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17873348393235989.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17873348393235989.mp4",
       "caption": "",
       "time": "Feb 11, 2021 11:15 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17892695053856298.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17892695053856298.mp4",
       "caption": "",
       "time": "Feb 11, 2021 11:15 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17973283657361715.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17973283657361715.mp4",
       "caption": "",
       "time": "Feb 11, 2021 11:15 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17870404703317757.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17870404703317757.jpg",
       "caption": "",
       "time": "Feb 11, 2021 11:12 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17895431359863799.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17895431359863799.jpg",
       "caption": "",
       "time": "Feb 11, 2021 11:11 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18138493555092863.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18138493555092863.jpg",
       "caption": "",
       "time": "Feb 11, 2021 11:11 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18148871581122769.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18148871581122769.mp4",
       "caption": "",
       "time": "Feb 11, 2021 10:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17917334272560894.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17917334272560894.mp4",
       "caption": "",
       "time": "Feb 11, 2021 10:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17900792428753218.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17900792428753218.mp4",
       "caption": "",
       "time": "Feb 11, 2021 10:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17863996091331518.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17863996091331518.mp4",
       "caption": "",
       "time": "Feb 11, 2021 10:03 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17896939483783089.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17896939483783089.mp4",
       "caption": "",
       "time": "Feb 11, 2021 10:03 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17871708878278484.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17871708878278484.mp4",
       "caption": "",
       "time": "Feb 11, 2021 09:56 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17874171062214006.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17874171062214006.mp4",
       "caption": "",
       "time": "Feb 11, 2021 09:53 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18159595498128608.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18159595498128608.mp4",
       "caption": "",
       "time": "Feb 11, 2021 09:53 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17884814360026429.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17884814360026429.jpg",
       "caption": "Via Reinaldo Behken\n3° III sup E2 D1 \nBabilônia, Urca",
       "time": "Feb 10, 2021 10:40 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17896867873784842.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17896867873784842.mp4",
       "caption": "",
       "time": "Feb 10, 2021 09:23 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17890774312925176.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17890774312925176.jpg",
       "caption": "",
       "time": "Feb 10, 2021 09:21 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17920676374545129.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17920676374545129.mp4",
       "caption": "",
       "time": "Feb 10, 2021 09:20 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17879584949115136.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17879584949115136.jpg",
       "caption": "Roda-Viva\n4º VI \nMorro da Babilônia – Urca – RJ\n50m",
       "time": "Feb 10, 2021 02:19 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17984856418327519.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17984856418327519.jpg",
       "caption": "",
       "time": "Feb 09, 2021 09:19 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17867175173295637.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17867175173295637.mp4",
       "caption": "",
       "time": "Feb 09, 2021 08:29 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18156171307118820.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18156171307118820.mp4",
       "caption": "",
       "time": "Feb 09, 2021 08:29 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17842600979531612.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17842600979531612.mp4",
       "caption": "",
       "time": "Feb 09, 2021 08:29 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18191158666004451.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18191158666004451.mp4",
       "caption": "",
       "time": "Feb 09, 2021 08:29 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17867750627281991.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17867750627281991.jpg",
       "caption": "",
       "time": "Feb 09, 2021 08:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18144954505186314.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18144954505186314.mp4",
       "caption": "",
       "time": "Feb 09, 2021 08:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17871967502253418.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17871967502253418.mp4",
       "caption": "",
       "time": "Feb 09, 2021 08:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17885295098013652.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17885295098013652.jpg",
       "caption": "",
       "time": "Feb 09, 2021 08:24 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17860871126358266.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17860871126358266.mp4",
       "caption": "",
       "time": "Feb 08, 2021 11:36 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17895817042793215.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17895817042793215.mp4",
       "caption": "",
       "time": "Feb 08, 2021 01:40 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17859342698483100.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17859342698483100.mp4",
       "caption": "",
       "time": "Feb 08, 2021 01:40 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17899786177788838.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17899786177788838.mp4",
       "caption": "",
       "time": "Feb 08, 2021 01:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17896778110778121.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17896778110778121.mp4",
       "caption": "",
       "time": "Feb 08, 2021 01:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17858734967394839.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17858734967394839.mp4",
       "caption": "",
       "time": "Feb 08, 2021 01:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18192080077027874.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18192080077027874.mp4",
       "caption": "",
       "time": "Feb 08, 2021 01:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17867655467333213.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17867655467333213.mp4",
       "caption": "",
       "time": "Feb 07, 2021 11:40 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18138475213092786.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18138475213092786.mp4",
       "caption": "",
       "time": "Feb 07, 2021 05:51 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17859786962470501.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17859786962470501.jpg",
       "caption": "",
       "time": "Feb 07, 2021 02:22 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17970009160366295.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17970009160366295.jpg",
       "caption": "",
       "time": "Feb 06, 2021 11:12 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18051402397283441.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18051402397283441.jpg",
       "caption": "",
       "time": "Feb 06, 2021 12:12 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17899633600762830.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17899633600762830.jpg",
       "caption": "",
       "time": "Feb 05, 2021 03:31 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17858522570401499.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17858522570401499.jpg",
       "caption": "",
       "time": "Feb 05, 2021 03:29 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17882336639072921.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17882336639072921.jpg",
       "caption": "",
       "time": "Feb 05, 2021 03:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17924835889508154.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17924835889508154.mp4",
       "caption": "",
       "time": "Feb 05, 2021 03:25 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17907751096654525.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17907751096654525.mp4",
       "caption": "",
       "time": "Feb 05, 2021 03:24 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18158920372097174.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18158920372097174.mp4",
       "caption": "",
       "time": "Feb 05, 2021 03:24 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17929482187489584.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17929482187489584.jpg",
       "caption": "",
       "time": "Feb 05, 2021 03:22 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17863825832360592.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17863825832360592.mp4",
       "caption": "",
       "time": "Feb 04, 2021 11:54 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17943694588434748.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17943694588434748.mp4",
       "caption": "",
       "time": "Feb 04, 2021 11:54 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18095400022220542.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18095400022220542.mp4",
       "caption": "",
       "time": "Feb 04, 2021 11:54 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17893574458888357.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17893574458888357.mp4",
       "caption": "",
       "time": "Feb 04, 2021 11:54 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17903206093683502.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17903206093683502.mp4",
       "caption": "",
       "time": "Feb 04, 2021 11:54 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17872739546198968.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17872739546198968.jpg",
       "caption": "",
       "time": "Feb 03, 2021 11:45 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17901762982709572.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17901762982709572.jpg",
       "caption": "",
       "time": "Feb 03, 2021 11:42 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18182547388069791.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18182547388069791.jpg",
       "caption": "",
       "time": "Feb 03, 2021 11:42 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18195458608030424.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18195458608030424.jpg",
       "caption": "Hello Rio",
       "time": "Feb 03, 2021 11:42 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17939676319444137.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17939676319444137.mp4",
       "caption": "",
       "time": "Feb 03, 2021 11:34 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17880755216088965.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17880755216088965.mp4",
       "caption": "",
       "time": "Feb 03, 2021 11:34 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17978485735330235.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17978485735330235.jpg",
       "caption": "",
       "time": "Feb 01, 2021 02:31 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17878928702120762.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17878928702120762.jpg",
       "caption": "",
       "time": "Feb 01, 2021 02:30 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17872296455224168.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17872296455224168.jpg",
       "caption": "",
       "time": "Feb 01, 2021 02:29 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17939118859443864.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17939118859443864.jpg",
       "caption": "",
       "time": "Feb 01, 2021 10:44 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17882412797063617.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17882412797063617.jpg",
       "caption": "",
       "time": "Jan 31, 2021 01:33 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17892998692884406.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17892998692884406.jpg",
       "caption": "",
       "time": "Jan 30, 2021 11:09 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17865984056302502.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17865984056302502.mp4",
       "caption": "",
       "time": "Jan 30, 2021 06:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17915454562567255.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17915454562567255.mp4",
       "caption": "",
       "time": "Jan 30, 2021 06:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18137182288088042.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18137182288088042.mp4",
       "caption": "",
       "time": "Jan 30, 2021 06:03 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17895722467837796.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17895722467837796.mp4",
       "caption": "",
       "time": "Jan 30, 2021 06:03 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17887208074980012.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17887208074980012.jpg",
       "caption": "",
       "time": "Jan 29, 2021 03:58 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17844593237520125.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17844593237520125.jpg",
       "caption": "",
       "time": "Jan 29, 2021 03:58 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18157088086101182.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18157088086101182.jpg",
       "caption": "",
       "time": "Jan 29, 2021 03:58 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17875818641155801.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17875818641155801.mp4",
       "caption": "",
       "time": "Jan 28, 2021 12:23 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17901638803732428.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17901638803732428.jpg",
       "caption": "",
       "time": "Jan 26, 2021 08:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17874109373130545.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17874109373130545.jpg",
       "caption": "",
       "time": "Jan 26, 2021 05:23 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17859535859356017.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17859535859356017.jpg",
       "caption": "@fevaquer",
       "time": "Jan 25, 2021 12:37 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17883336436982663.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17883336436982663.jpg",
       "caption": "",
       "time": "Jan 25, 2021 11:32 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17871614294231103.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17871614294231103.jpg",
       "caption": "",
       "time": "Jan 24, 2021 05:08 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17891868727889791.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17891868727889791.jpg",
       "caption": "",
       "time": "Jan 24, 2021 03:08 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17898488524761738.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17898488524761738.jpg",
       "caption": "",
       "time": "Jan 23, 2021 10:44 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17904648553670077.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17904648553670077.mp4",
       "caption": "",
       "time": "Jan 23, 2021 07:44 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18068989543252030.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18068989543252030.mp4",
       "caption": "",
       "time": "Jan 23, 2021 07:44 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18056609110277306.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18056609110277306.jpg",
       "caption": "Night shift @sereiabeach.ilhabela",
       "time": "Jan 22, 2021 10:25 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17909941699612779.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17909941699612779.mp4",
       "caption": "",
       "time": "Jan 22, 2021 06:18 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18190538797033219.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18190538797033219.jpg",
       "caption": "",
       "time": "Jan 22, 2021 04:18 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17864706908304979.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17864706908304979.mp4",
       "caption": "",
       "time": "Jan 22, 2021 02:16 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17943583726427385.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17943583726427385.mp4",
       "caption": "",
       "time": "Jan 22, 2021 02:16 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17930789185472077.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17930789185472077.mp4",
       "caption": "Valeu fera!!!\n@dm_tiagosoldera",
       "time": "Jan 22, 2021 01:47 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18189673033023102.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18189673033023102.mp4",
       "caption": "",
       "time": "Jan 22, 2021 01:44 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18179993365064736.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18179993365064736.mp4",
       "caption": "",
       "time": "Jan 22, 2021 01:44 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17858745209412466.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17858745209412466.jpg",
       "caption": "Mergulho noturno\nIlha das Cabras",
       "time": "Jan 22, 2021 12:08 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18067386091260950.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18067386091260950.jpg",
       "caption": "",
       "time": "Jan 21, 2021 04:00 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17902090663699290.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17902090663699290.jpg",
       "caption": "",
       "time": "Jan 20, 2021 08:35 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18132398875155452.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18132398875155452.jpg",
       "caption": "",
       "time": "Jan 20, 2021 03:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17952513172401527.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17952513172401527.jpg",
       "caption": "",
       "time": "Jan 19, 2021 09:14 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17874877139153176.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17874877139153176.mp4",
       "caption": "",
       "time": "Jan 19, 2021 09:11 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17878736582098688.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17878736582098688.jpg",
       "caption": "",
       "time": "Jan 19, 2021 09:09 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17946650458419254.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17946650458419254.mp4",
       "caption": "",
       "time": "Jan 19, 2021 09:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17946218341417830.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17946218341417830.mp4",
       "caption": "",
       "time": "Jan 19, 2021 09:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17880981362086322.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17880981362086322.mp4",
       "caption": "",
       "time": "Jan 19, 2021 09:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17886334615950295.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17886334615950295.jpg",
       "caption": "",
       "time": "Jan 19, 2021 09:03 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18090670720224640.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18090670720224640.mp4",
       "caption": "",
       "time": "Jan 18, 2021 10:25 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17901824338680859.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17901824338680859.mp4",
       "caption": "",
       "time": "Jan 18, 2021 10:25 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17875975910086373.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17875975910086373.mp4",
       "caption": "",
       "time": "Jan 18, 2021 10:24 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18125416681163607.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18125416681163607.mp4",
       "caption": "",
       "time": "Jan 18, 2021 10:24 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17914309441568260.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17914309441568260.mp4",
       "caption": "",
       "time": "Jan 18, 2021 10:23 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17903186452715347.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17903186452715347.mp4",
       "caption": "",
       "time": "Jan 18, 2021 10:23 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17906004802633627.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17906004802633627.jpg",
       "caption": "",
       "time": "Jan 18, 2021 10:23 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17925359155498088.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17925359155498088.mp4",
       "caption": "",
       "time": "Jan 18, 2021 10:23 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17892124846827763.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17892124846827763.mp4",
       "caption": "",
       "time": "Jan 18, 2021 10:23 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17861592332360436.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17861592332360436.jpg",
       "caption": "",
       "time": "Jan 18, 2021 10:22 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17876085632087016.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17876085632087016.jpg",
       "caption": "",
       "time": "Jan 17, 2021 09:24 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17881507808053621.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17881507808053621.jpg",
       "caption": "",
       "time": "Jan 17, 2021 09:22 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17913964861561883.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17913964861561883.jpg",
       "caption": "",
       "time": "Jan 17, 2021 09:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17957167984381469.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17957167984381469.mp4",
       "caption": "",
       "time": "Jan 17, 2021 09:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18003940030307740.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18003940030307740.jpg",
       "caption": "",
       "time": "Jan 17, 2021 09:01 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17860315199379173.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17860315199379173.jpg",
       "caption": "",
       "time": "Jan 17, 2021 09:01 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17852893697472677.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17852893697472677.mp4",
       "caption": "",
       "time": "Jan 17, 2021 09:01 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17898107893730937.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17898107893730937.jpg",
       "caption": "",
       "time": "Jan 17, 2021 08:46 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17967838042365527.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17967838042365527.mp4",
       "caption": "",
       "time": "Jan 16, 2021 08:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17857521692433455.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17857521692433455.mp4",
       "caption": "",
       "time": "Jan 16, 2021 08:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18042537907303294.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18042537907303294.jpg",
       "caption": "",
       "time": "Jan 16, 2021 08:38 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17864733950290129.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17864733950290129.jpg",
       "caption": "",
       "time": "Jan 16, 2021 08:37 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17917727536550390.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17917727536550390.jpg",
       "caption": "",
       "time": "Jan 16, 2021 08:35 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17885239837972948.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17885239837972948.mp4",
       "caption": "",
       "time": "Jan 16, 2021 08:21 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18153945124110332.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18153945124110332.mp4",
       "caption": "",
       "time": "Jan 16, 2021 08:21 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18089640586230787.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18089640586230787.mp4",
       "caption": "",
       "time": "Jan 16, 2021 08:21 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17896637533788822.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17896637533788822.mp4",
       "caption": "",
       "time": "Jan 12, 2021 12:20 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17911288366597808.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17911288366597808.mp4",
       "caption": "",
       "time": "Jan 12, 2021 12:20 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17895948157788967.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17895948157788967.mp4",
       "caption": "",
       "time": "Jan 12, 2021 12:07 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18168896881075545.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18168896881075545.mp4",
       "caption": "",
       "time": "Jan 12, 2021 12:07 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17881289570048407.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17881289570048407.mp4",
       "caption": "",
       "time": "Jan 11, 2021 11:59 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18025649827288541.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18025649827288541.mp4",
       "caption": "",
       "time": "Jan 11, 2021 11:59 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18151318606113198.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18151318606113198.jpg",
       "caption": "",
       "time": "Jan 10, 2021 10:46 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17939864248440066.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17939864248440066.jpg",
       "caption": "",
       "time": "Jan 10, 2021 10:45 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17899481626722005.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17899481626722005.jpg",
       "caption": "",
       "time": "Jan 10, 2021 10:45 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17976578998342281.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17976578998342281.jpg",
       "caption": "",
       "time": "Jan 10, 2021 10:42 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18142362181185167.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18142362181185167.jpg",
       "caption": "",
       "time": "Jan 10, 2021 10:42 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17910432169600830.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17910432169600830.mp4",
       "caption": "",
       "time": "Jan 10, 2021 09:34 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17903084206679665.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17903084206679665.mp4",
       "caption": "",
       "time": "Jan 10, 2021 09:34 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17892049108817261.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17892049108817261.mp4",
       "caption": "",
       "time": "Jan 10, 2021 09:34 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17904890275643743.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17904890275643743.mp4",
       "caption": "",
       "time": "Jan 09, 2021 12:08 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17893674088781901.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17893674088781901.jpg",
       "caption": "",
       "time": "Jan 09, 2021 12:00 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18092767525219215.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18092767525219215.jpg",
       "caption": "",
       "time": "Jan 09, 2021 12:02 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17896064758740136.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17896064758740136.jpg",
       "caption": "",
       "time": "Jan 09, 2021 12:01 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17976139378327425.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17976139378327425.jpg",
       "caption": "",
       "time": "Jan 09, 2021 12:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18102425224205744.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18102425224205744.jpg",
       "caption": "",
       "time": "Jan 09, 2021 12:05 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17945722378417783.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17945722378417783.jpg",
       "caption": "",
       "time": "Jan 09, 2021 12:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17865778484259747.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17865778484259747.jpg",
       "caption": "",
       "time": "Jan 09, 2021 12:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18116038117172710.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18116038117172710.mp4",
       "caption": "",
       "time": "Jan 09, 2021 11:57 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17904911284644703.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17904911284644703.mp4",
       "caption": "",
       "time": "Jan 09, 2021 11:55 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17900521279683499.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17900521279683499.mp4",
       "caption": "",
       "time": "Jan 09, 2021 11:54 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17879495582075448.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17879495582075448.jpg",
       "caption": "Parte 2 - Canastra Sul",
       "time": "Jan 08, 2021 01:44 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18132747886147513.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18132747886147513.jpg",
       "caption": "PQP!!!\nAmo vocês dois!!!\n@felipenepo \n@mabrandini",
       "time": "Jan 07, 2021 06:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17929366597472461.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17929366597472461.jpg",
       "caption": "",
       "time": "Jan 07, 2021 03:02 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18176237638064119.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18176237638064119.jpg",
       "caption": "",
       "time": "Jan 07, 2021 03:01 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17866216199244571.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17866216199244571.jpg",
       "caption": "",
       "time": "Jan 07, 2021 03:01 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17952021892398073.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17952021892398073.mp4",
       "caption": "",
       "time": "Jan 07, 2021 12:23 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17892346024809403.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17892346024809403.mp4",
       "caption": "",
       "time": "Jan 07, 2021 12:22 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17885783818947298.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17885783818947298.mp4",
       "caption": "",
       "time": "Jan 07, 2021 12:22 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17890658374839807.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17890658374839807.mp4",
       "caption": "",
       "time": "Jan 07, 2021 12:22 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17902121974719573.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17902121974719573.mp4",
       "caption": "",
       "time": "Jan 07, 2021 12:22 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17860534886342228.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17860534886342228.mp4",
       "caption": "",
       "time": "Jan 07, 2021 12:22 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17900835589724845.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17900835589724845.mp4",
       "caption": "",
       "time": "Jan 07, 2021 12:22 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17855898173457977.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17855898173457977.jpg",
       "caption": "Since 2002",
       "time": "Jan 05, 2021 08:02 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18185972947017812.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18185972947017812.mp4",
       "caption": "",
       "time": "Jan 05, 2021 07:57 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17867778254294199.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17867778254294199.mp4",
       "caption": "",
       "time": "Jan 05, 2021 07:57 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17922010489503736.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17922010489503736.mp4",
       "caption": "",
       "time": "Jan 05, 2021 07:57 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17869520096182607.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17869520096182607.mp4",
       "caption": "",
       "time": "Jan 05, 2021 07:50 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17901848158714807.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17901848158714807.jpg",
       "caption": "",
       "time": "Jan 05, 2021 07:49 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17871565358141913.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17871565358141913.mp4",
       "caption": "",
       "time": "Jan 05, 2021 07:47 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17862247307316546.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17862247307316546.mp4",
       "caption": "",
       "time": "Jan 05, 2021 07:47 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17968830001363453.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17968830001363453.jpg",
       "caption": "",
       "time": "Jan 05, 2021 07:45 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17898688222736527.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17898688222736527.jpg",
       "caption": "",
       "time": "Jan 05, 2021 07:40 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18179974876016610.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18179974876016610.jpg",
       "caption": "Aquele presente de punho e alma!\n @artur_nepo_marcos",
       "time": "Dec 26, 2020 02:07 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17855914394383508.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17855914394383508.mp4",
       "caption": "Jun/1933",
       "time": "Dec 26, 2020 12:19 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17893374295782286.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17893374295782286.mp4",
       "caption": "Wesley Julin",
       "time": "Dec 26, 2020 12:10 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18176675710071707.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18176675710071707.jpg",
       "caption": "Vovó ❤️",
       "time": "Dec 26, 2020 12:01 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17914536064531030.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17914536064531030.mp4",
       "caption": "",
       "time": "Dec 25, 2020 11:57 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17852296796415793.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17852296796415793.mp4",
       "caption": "",
       "time": "Dec 25, 2020 01:31 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17860988636300726.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17860988636300726.jpg",
       "caption": "",
       "time": "Dec 22, 2020 03:54 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18182095042054769.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18182095042054769.jpg",
       "caption": "",
       "time": "Dec 22, 2020 03:49 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17891646499765036.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17891646499765036.jpg",
       "caption": "",
       "time": "Dec 22, 2020 03:49 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17853786755405760.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17853786755405760.jpg",
       "caption": "",
       "time": "Dec 22, 2020 03:48 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17850628844446736.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17850628844446736.jpg",
       "caption": "",
       "time": "Dec 22, 2020 03:48 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17916067072517460.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17916067072517460.jpg",
       "caption": "",
       "time": "Dec 22, 2020 03:46 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17873829071077022.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17873829071077022.jpg",
       "caption": "",
       "time": "Dec 22, 2020 03:41 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17880185827957444.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17880185827957444.jpg",
       "caption": "",
       "time": "Dec 22, 2020 03:40 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17864675000278474.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17864675000278474.jpg",
       "caption": "",
       "time": "Dec 22, 2020 03:37 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17916519874505904.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17916519874505904.jpg",
       "caption": "@dmorinaga",
       "time": "Dec 22, 2020 03:34 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17882057446955758.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17882057446955758.mp4",
       "caption": "",
       "time": "Dec 22, 2020 03:33 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17896641241700655.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17896641241700655.mp4",
       "caption": "",
       "time": "Dec 22, 2020 03:33 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17954090845378819.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17954090845378819.mp4",
       "caption": "",
       "time": "Dec 22, 2020 03:31 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18042383263284866.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18042383263284866.mp4",
       "caption": "",
       "time": "Dec 22, 2020 03:30 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18147445240105973.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18147445240105973.mp4",
       "caption": "",
       "time": "Dec 22, 2020 03:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17862416318321420.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17862416318321420.jpg",
       "caption": "",
       "time": "Dec 22, 2020 03:25 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18043748857284913.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18043748857284913.jpg",
       "caption": "",
       "time": "Dec 22, 2020 03:24 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17916427549521748.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17916427549521748.jpg",
       "caption": "Triumph 1200\n\n900km asfalto\n60km tERRA\n15h\n\nSp<-->SERRA da canastra",
       "time": "Dec 22, 2020 03:22 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17850715124416580.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17850715124416580.jpg",
       "caption": "",
       "time": "Dec 16, 2020 04:26 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17900231947649525.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17900231947649525.jpg",
       "caption": "",
       "time": "Dec 15, 2020 09:15 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17880288931897320.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17880288931897320.mp4",
       "caption": "",
       "time": "Dec 15, 2020 09:12 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17898238234666702.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17898238234666702.jpg",
       "caption": "",
       "time": "Dec 14, 2020 04:50 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17863023800301365.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17863023800301365.mp4",
       "caption": "Quem compra tinta não compra galinha polonesa",
       "time": "Dec 13, 2020 11:15 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17912352193551797.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17912352193551797.jpg",
       "caption": "Engenharia é arte também!",
       "time": "Dec 12, 2020 09:52 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17892157342765656.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17892157342765656.jpg",
       "caption": "Cavalinha no limão",
       "time": "Dec 12, 2020 08:36 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18036127078303925.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18036127078303925.jpg",
       "caption": "Vento tá prá",
       "time": "Dec 12, 2020 08:31 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17898681544662570.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17898681544662570.jpg",
       "caption": "",
       "time": "Dec 12, 2020 08:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17908119130571537.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17908119130571537.jpg",
       "caption": "",
       "time": "Dec 12, 2020 03:40 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17957428825372394.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17957428825372394.jpg",
       "caption": "Baby Pirarara #pesqueesolte",
       "time": "Dec 12, 2020 02:55 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17880247426950242.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17880247426950242.jpg",
       "caption": "",
       "time": "Dec 12, 2020 02:51 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17875667033037686.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17875667033037686.jpg",
       "caption": "",
       "time": "Dec 12, 2020 02:49 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17968359139337957.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17968359139337957.jpg",
       "caption": "Check out PADI nos túneis de Moreré!\n\nValeu grande Yuri!!!\n@boipebamergulho",
       "time": "Dec 12, 2020 02:44 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18125831371154666.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18125831371154666.jpg",
       "caption": "",
       "time": "Dec 12, 2020 02:26 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17891320303776171.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17891320303776171.mp4",
       "caption": "",
       "time": "Dec 12, 2020 02:20 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17879372419985352.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17879372419985352.jpg",
       "caption": "",
       "time": "Dec 12, 2020 02:06 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17876089618981448.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17876089618981448.jpg",
       "caption": "",
       "time": "Nov 29, 2020 04:18 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17886613786795658.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17886613786795658.mp4",
       "caption": "",
       "time": "Nov 28, 2020 04:45 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17849849588435346.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17849849588435346.mp4",
       "caption": "",
       "time": "Nov 28, 2020 04:42 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17885083087857189.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17885083087857189.jpg",
       "caption": "",
       "time": "Nov 27, 2020 11:37 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18117657469163599.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18117657469163599.jpg",
       "caption": "",
       "time": "Nov 27, 2020 11:37 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17849290742392459.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17849290742392459.mp4",
       "caption": "",
       "time": "Nov 26, 2020 09:07 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17864965718150469.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17864965718150469.mp4",
       "caption": "",
       "time": "Nov 26, 2020 09:07 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17898458668648540.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17898458668648540.mp4",
       "caption": "",
       "time": "Nov 26, 2020 09:07 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17888825563779249.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17888825563779249.jpg",
       "caption": "",
       "time": "Nov 16, 2020 06:15 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17849138492418087.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17849138492418087.mp4",
       "caption": "",
       "time": "Nov 16, 2020 06:10 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17851977314364866.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17851977314364866.jpg",
       "caption": "",
       "time": "Nov 13, 2020 06:50 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17859281999237557.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17859281999237557.jpg",
       "caption": "",
       "time": "Nov 13, 2020 06:47 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17906496790529370.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17906496790529370.jpg",
       "caption": "",
       "time": "Nov 13, 2020 06:45 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17876323282979690.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17876323282979690.mp4",
       "caption": "",
       "time": "Nov 09, 2020 07:54 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17917641466486613.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17917641466486613.jpg",
       "caption": "Давайте играть?",
       "time": "Nov 03, 2020 11:38 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17908177285531557.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17908177285531557.mp4",
       "caption": "@renanschmid",
       "time": "Nov 01, 2020 08:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17854264460331594.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17854264460331594.mp4",
       "caption": "",
       "time": "Nov 01, 2020 08:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17917582360468498.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17917582360468498.mp4",
       "caption": "@michel.bazolli",
       "time": "Nov 01, 2020 08:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17844170276452702.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17844170276452702.jpg",
       "caption": "",
       "time": "Oct 29, 2020 08:41 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17869250321041143.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17869250321041143.mp4",
       "caption": "",
       "time": "Oct 28, 2020 11:48 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17929364137441726.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17929364137441726.mp4",
       "caption": "",
       "time": "Oct 28, 2020 09:56 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17849805641353583.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17849805641353583.mp4",
       "caption": "",
       "time": "Oct 24, 2020 08:10 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18126899491130812.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18126899491130812.jpg",
       "caption": "SCUBA",
       "time": "Oct 24, 2020 08:02 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17857284842242258.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17857284842242258.jpg",
       "caption": "Primo;\nTio;\nTia;\nSobrinho;\nPai; e \nMãe",
       "time": "Oct 23, 2020 11:21 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17845706909433475.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17845706909433475.mp4",
       "caption": "",
       "time": "Oct 22, 2020 01:40 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17911204348503697.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17911204348503697.mp4",
       "caption": "@dmorinaga @gabrielfilassi",
       "time": "Oct 17, 2020 01:26 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17848712696344864.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17848712696344864.jpg",
       "caption": "Macaco nas terças e coelho de quinta",
       "time": "Oct 16, 2020 02:06 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17924927110449672.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17924927110449672.mp4",
       "caption": "",
       "time": "Oct 16, 2020 12:33 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17871943178001285.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17871943178001285.mp4",
       "caption": "",
       "time": "Oct 16, 2020 12:26 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17923434583454821.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17923434583454821.jpg",
       "caption": "Vento Srs, o vento...",
       "time": "Oct 15, 2020 10:09 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17918125420473204.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17918125420473204.mp4",
       "caption": "Capivara no barranco;\nVento noroeste;\nSir Jimmy Page no front.",
       "time": "Oct 15, 2020 10:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18116844613155541.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18116844613155541.jpg",
       "caption": "A famosa rota do pinguim de rabo longo @farialima.elevator  é aqui que vc vai achar o seu pergaminho",
       "time": "Oct 14, 2020 12:41 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18119199892151513.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18119199892151513.mp4",
       "caption": "",
       "time": "Oct 13, 2020 11:21 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17966941795339363.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17966941795339363.jpg",
       "caption": "",
       "time": "Oct 12, 2020 06:24 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17881949269789925.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17881949269789925.jpg",
       "caption": "",
       "time": "Oct 12, 2020 06:05 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17878537432844875.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17878537432844875.jpg",
       "caption": "",
       "time": "Oct 12, 2020 12:46 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17864000639078397.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17864000639078397.jpg",
       "caption": "",
       "time": "Oct 11, 2020 05:37 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17852869166322839.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17852869166322839.mp4",
       "caption": "",
       "time": "Oct 11, 2020 05:32 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17855373581239545.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17855373581239545.jpg",
       "caption": "",
       "time": "Sep 21, 2020 06:22 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17878645018824232.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17878645018824232.jpg",
       "caption": "#VILAMADA",
       "time": "Sep 19, 2020 08:38 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17854728344206107.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17854728344206107.jpg",
       "caption": "MCXRA",
       "time": "Sep 07, 2020 06:21 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17871849607928844.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17871849607928844.jpg",
       "caption": "Under that good n' Gold company",
       "time": "Sep 04, 2020 11:19 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17957841634353902.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17957841634353902.jpg",
       "caption": "",
       "time": "Sep 03, 2020 04:00 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18104837341198128.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18104837341198128.jpg",
       "caption": "Mãe das minha duas preciosas \n(e um tranqueira), \nmas também uma outra mãe \nque podia me chamar de filhinho.\n\nA fala sem filtro que mais criou fãs\ne fortificou laços.\n\nNinguém segurava o seu verbo, e ninguém ia segurar a sua trajetória.\n\nFarei os seus Tins Tins, daqui!",
       "time": "Aug 29, 2020 05:18 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17862554510075159.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17862554510075159.jpg",
       "caption": "@_anaclaradeoliveira ♥️",
       "time": "Aug 27, 2020 01:08 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17958812746327677.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17958812746327677.jpg",
       "caption": "A vida te oferece oportunidades e caminhos, mas ela ainda assim é via de mão única.\n\nVocê pode buscar querer se diferenciar e se autoproclamar, mas no final suas pegadas não fugirão ao seu DNA.\n \nExistiam muitas diferenças, porque tinha muita semelhança.\n\n\"Acorde cedo para cumprir com os seus deveres, mas nunca durma antes de ter vivido o seu dia.\"\n\nObrigado aos dois!",
       "time": "Aug 14, 2020 03:16 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17897926024525153.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17897926024525153.jpg",
       "caption": "",
       "time": "Jul 27, 2020 12:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18116360650143975.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18116360650143975.jpg",
       "caption": "@_anaclaradeoliveira",
       "time": "Jul 26, 2020 07:26 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18044480182250415.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18044480182250415.mp4",
       "caption": "",
       "time": "Jul 23, 2020 09:30 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17951953330353089.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17951953330353089.jpg",
       "caption": "",
       "time": "Jul 18, 2020 09:58 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17927515444410352.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17927515444410352.jpg",
       "caption": "",
       "time": "Jul 18, 2020 02:44 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17856751706065905.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17856751706065905.jpg",
       "caption": "",
       "time": "Jul 18, 2020 02:44 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17881361074690395.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17881361074690395.jpg",
       "caption": "",
       "time": "Jul 18, 2020 02:43 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18111076420177398.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18111076420177398.mp4",
       "caption": "",
       "time": "Jul 18, 2020 01:50 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18107555680155313.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18107555680155313.mp4",
       "caption": "@_anaclaradeoliveira  Suprise for me",
       "time": "Jul 18, 2020 03:31 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17877637717735654.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17877637717735654.jpg",
       "caption": "Junina",
       "time": "Jul 12, 2020 08:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17842392140293735.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17842392140293735.jpg",
       "caption": "@_anaclaradeoliveira ♥️",
       "time": "Jul 05, 2020 05:55 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18054262969246749.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18054262969246749.jpg",
       "caption": "",
       "time": "Jun 22, 2020 06:12 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17861645305910958.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17861645305910958.jpg",
       "caption": "",
       "time": "Jun 21, 2020 11:47 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17881212709635674.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17881212709635674.jpg",
       "caption": "",
       "time": "Jun 21, 2020 02:33 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18147692146026721.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18147692146026721.jpg",
       "caption": "Ser♥️elepe @_anaclaradeoliveira",
       "time": "Jun 12, 2020 10:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18120921790101871.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18120921790101871.jpg",
       "caption": "@_anaclaradeoliveira",
       "time": "Jun 07, 2020 12:43 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17890686742540867.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17890686742540867.jpg",
       "caption": "",
       "time": "May 31, 2020 07:56 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18101078989148093.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18101078989148093.mp4",
       "caption": "",
       "time": "May 23, 2020 06:14 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17919480970409341.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17919480970409341.mp4",
       "caption": "",
       "time": "May 09, 2020 03:45 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18116933965109162.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18116933965109162.jpg",
       "caption": "",
       "time": "May 07, 2020 03:09 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17851112222045066.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17851112222045066.jpg",
       "caption": "",
       "time": "May 06, 2020 09:09 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17887487986527312.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17887487986527312.mp4",
       "caption": "Rage, kids!",
       "time": "May 06, 2020 03:00 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17943611983349140.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17943611983349140.mp4",
       "caption": "",
       "time": "May 04, 2020 03:01 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18103208074085163.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18103208074085163.jpg",
       "caption": "",
       "time": "May 03, 2020 07:20 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17889882664515941.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17889882664515941.jpg",
       "caption": "",
       "time": "May 03, 2020 06:11 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17851151906025726.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17851151906025726.jpg",
       "caption": "",
       "time": "May 02, 2020 11:38 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17886655849548158.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17886655849548158.jpg",
       "caption": "",
       "time": "Apr 29, 2020 09:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17863570315791740.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17863570315791740.jpg",
       "caption": "Quarantine #41",
       "time": "Apr 28, 2020 04:30 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17912502157425132.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17912502157425132.mp4",
       "caption": "",
       "time": "Apr 26, 2020 04:53 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17872794151656459.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17872794151656459.jpg",
       "caption": "@farialima.elevator  Netflix is the new oil?",
       "time": "Apr 20, 2020 10:05 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17854308967929280.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17854308967929280.jpg",
       "caption": "19/04/1648",
       "time": "Apr 19, 2020 03:45 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18113213911129992.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18113213911129992.jpg",
       "caption": "Sthulba",
       "time": "Apr 18, 2020 11:38 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17880246883569278.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17880246883569278.jpg",
       "caption": "Live modesta de ontem",
       "time": "Apr 18, 2020 11:37 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17924059033379342.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17924059033379342.jpg",
       "caption": "",
       "time": "Apr 18, 2020 03:09 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17866315564739557.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17866315564739557.jpg",
       "caption": "Lynyrd Skynyrd",
       "time": "Apr 14, 2020 09:24 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17865463204743998.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17865463204743998.jpg",
       "caption": "",
       "time": "Apr 14, 2020 01:46 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17896722802475068.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17896722802475068.mp4",
       "caption": "",
       "time": "Apr 11, 2020 10:09 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17887078240516303.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17887078240516303.mp4",
       "caption": "",
       "time": "Apr 11, 2020 10:09 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17874964942615869.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17874964942615869.mp4",
       "caption": "",
       "time": "Apr 11, 2020 10:09 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17849166062016657.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17849166062016657.mp4",
       "caption": "",
       "time": "Apr 11, 2020 10:09 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18094933312155441.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18094933312155441.mp4",
       "caption": "",
       "time": "Apr 11, 2020 08:25 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17865133834745884.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17865133834745884.mp4",
       "caption": "Se nem o mudinho tá conseguindo ficar quieto...",
       "time": "Apr 11, 2020 08:25 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17959011865309441.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17959011865309441.mp4",
       "caption": "D  A  R  K",
       "time": "Apr 10, 2020 10:23 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17907712861425347.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17907712861425347.mp4",
       "caption": "",
       "time": "Apr 10, 2020 10:23 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17990398417289760.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17990398417289760.jpg",
       "caption": "",
       "time": "Apr 09, 2020 05:03 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17858750704839574.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17858750704839574.jpg",
       "caption": "",
       "time": "Apr 07, 2020 04:47 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17847179810045854.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17847179810045854.jpg",
       "caption": "1^-10^(10^(10^10)) ppm",
       "time": "Apr 06, 2020 10:01 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17844736010059143.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17844736010059143.jpg",
       "caption": "Não entendi, isso é pra incentivar a ficar ou sair de casa?",
       "time": "Apr 06, 2020 09:41 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17868089602709202.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17868089602709202.jpg",
       "caption": "",
       "time": "Apr 06, 2020 04:16 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17869646395672505.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17869646395672505.mp4",
       "caption": "\"Great men to it.\nCaptains, lords.\nGreat men to it!\"",
       "time": "Apr 06, 2020 01:15 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17859723997815891.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17859723997815891.mp4",
       "caption": "",
       "time": "Apr 05, 2020 11:41 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18029484181261868.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18029484181261868.mp4",
       "caption": "",
       "time": "Apr 05, 2020 11:41 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18058713040215073.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18058713040215073.mp4",
       "caption": "E o próximo que viria a comer croissaint seria o alemãozinho",
       "time": "Apr 05, 2020 11:41 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17863439011762348.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17863439011762348.jpg",
       "caption": "(...) he respects war as only a man who has seen it's most monstruous form can.\nHe lusts after it not,\nBut rather regards \nit with the grim sobriety that you and your men's should hope he would.",
       "time": "Apr 05, 2020 08:47 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17931830707368310.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17931830707368310.jpg",
       "caption": "Mandetta > Cazuza",
       "time": "Apr 05, 2020 01:56 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17868483811719515.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17868483811719515.mp4",
       "caption": "",
       "time": "Apr 04, 2020 08:18 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17852431609949227.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17852431609949227.mp4",
       "caption": "",
       "time": "Apr 04, 2020 08:18 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18049329310233694.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18049329310233694.mp4",
       "caption": "Sds Daciolo",
       "time": "Apr 04, 2020 05:53 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18049528057230513.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18049528057230513.jpg",
       "caption": "Não que eu esteja sugerindo algo, mas se organizar direitinho...",
       "time": "Apr 03, 2020 12:11 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18030649507255281.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18030649507255281.jpg",
       "caption": "",
       "time": "Apr 01, 2020 10:51 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17871284941635874.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17871284941635874.jpg",
       "caption": "",
       "time": "Apr 01, 2020 12:41 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18121581487079579.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18121581487079579.jpg",
       "caption": "",
       "time": "Apr 01, 2020 12:27 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17851869949919624.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17851869949919624.jpg",
       "caption": "@lets_poke",
       "time": "Mar 31, 2020 07:34 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17858528683823954.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17858528683823954.jpg",
       "caption": "Vai... Coloca restrição em nego teimoso!",
       "time": "Mar 27, 2020 09:01 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17866851586708689.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17866851586708689.mp4",
       "caption": "",
       "time": "Mar 27, 2020 07:29 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17936227705356324.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17936227705356324.mp4",
       "caption": "",
       "time": "Mar 27, 2020 07:29 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18014180614272985.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18014180614272985.mp4",
       "caption": "",
       "time": "Mar 27, 2020 07:29 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17938168591354483.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17938168591354483.mp4",
       "caption": "Sextou na quarentena",
       "time": "Mar 27, 2020 07:29 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17849510662953846.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17849510662953846.jpg",
       "caption": "Quarantine day #08",
       "time": "Mar 26, 2020 03:55 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18134371072039515.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18134371072039515.jpg",
       "caption": "Keep walking",
       "time": "Mar 26, 2020 03:32 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17911200271411088.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17911200271411088.mp4",
       "caption": "",
       "time": "Mar 25, 2020 02:52 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17862148078754733.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17862148078754733.mp4",
       "caption": "",
       "time": "Mar 25, 2020 02:52 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17849200585959104.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17849200585959104.mp4",
       "caption": "",
       "time": "Mar 25, 2020 02:52 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17904760324437845.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17904760324437845.mp4",
       "caption": "Quarantine day #07 E continuam a cair no circo que o palhaço montou Loca a atleta",
       "time": "Mar 25, 2020 02:52 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18133694605059695.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18133694605059695.jpg",
       "caption": "Seguimos sem máscara!!!",
       "time": "Mar 24, 2020 09:02 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17920608472384564.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17920608472384564.jpg",
       "caption": "Vamos ver se bato os 38 antes do IBOV",
       "time": "Mar 24, 2020 09:01 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17870352370651920.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17870352370651920.jpg",
       "caption": "",
       "time": "Mar 24, 2020 08:38 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18128335144067512.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18128335144067512.mp4",
       "caption": "Esse domingo vai ser divertido",
       "time": "Mar 22, 2020 06:27 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17891236207483149.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17891236207483149.jpg",
       "caption": "Aqui tá sem leão e é só manter 2m de distância de qualquer energúmeno",
       "time": "Mar 22, 2020 05:26 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17886258832510947.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17886258832510947.jpg",
       "caption": "Sds Rússia!!!",
       "time": "Mar 22, 2020 04:48 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17906401177430537.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17906401177430537.jpg",
       "caption": "#JaspionNaBand",
       "time": "Mar 22, 2020 02:49 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17851533781909276.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17851533781909276.jpg",
       "caption": "Quarantine day #01: \nHappy hours persistem em ambiente tecnológico",
       "time": "Mar 20, 2020 12:50 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17944540285328221.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17944540285328221.mp4",
       "caption": "",
       "time": "Mar 20, 2020 02:53 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17944604359334048.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17944604359334048.mp4",
       "caption": "",
       "time": "Mar 20, 2020 02:53 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17866208257712623.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17866208257712623.mp4",
       "caption": "Elis",
       "time": "Mar 20, 2020 02:53 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18097571788141364.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18097571788141364.jpg",
       "caption": "Sds de trabalhar na obra",
       "time": "Mar 19, 2020 01:36 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17877525925575558.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17877525925575558.jpg",
       "caption": "Falando em água",
       "time": "Mar 19, 2020 12:22 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17871756238623883.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17871756238623883.jpg",
       "caption": "Foi muito\nAdeus sola",
       "time": "Mar 19, 2020 12:07 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18029442745247795.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18029442745247795.mp4",
       "caption": "Fôda-se a chuva\nNois é...",
       "time": "Mar 19, 2020 12:05 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17896937515460661.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17896937515460661.mp4",
       "caption": "",
       "time": "Mar 15, 2020 11:22 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18091802947147980.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18091802947147980.jpg",
       "caption": "",
       "time": "Mar 15, 2020 10:52 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17907692653421776.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17907692653421776.jpg",
       "caption": "Prometemos um almoço tranquilo de domingo",
       "time": "Mar 15, 2020 04:52 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17857669192794021.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17857669192794021.jpg",
       "caption": "@padoca",
       "time": "Mar 15, 2020 12:02 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17947894360317785.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17947894360317785.jpg",
       "caption": "",
       "time": "Mar 14, 2020 11:18 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17866071121685143.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17866071121685143.jpg",
       "caption": "Nenhum mercado vive sem uma boa feira! @farialima.elevator",
       "time": "Mar 14, 2020 04:23 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17856973468830367.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17856973468830367.jpg",
       "caption": "",
       "time": "Mar 14, 2020 04:19 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18119427508072854.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18119427508072854.mp4",
       "caption": "Acoordaa fiii",
       "time": "Mar 14, 2020 04:18 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18096010462091864.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18096010462091864.jpg",
       "caption": "Aterrorizando os tomados na bolsa",
       "time": "Mar 14, 2020 04:14 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17852017693860830.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17852017693860830.jpg",
       "caption": "Erre",
       "time": "Feb 16, 2020 10:32 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17844303373987317.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17844303373987317.jpg",
       "caption": "Jota",
       "time": "Feb 16, 2020 10:35 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17896189852453990.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17896189852453990.jpg",
       "caption": "",
       "time": "Feb 16, 2020 10:33 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17851088818852565.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17851088818852565.jpg",
       "caption": "",
       "time": "Feb 08, 2020 06:15 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17872304149564280.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17872304149564280.jpg",
       "caption": "",
       "time": "Feb 02, 2020 06:52 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18092669512138777.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18092669512138777.jpg",
       "caption": "",
       "time": "Feb 02, 2020 03:53 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17853314794825144.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17853314794825144.mp4",
       "caption": "",
       "time": "Feb 02, 2020 03:51 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17855049070771237.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17855049070771237.jpg",
       "caption": "",
       "time": "Feb 02, 2020 03:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17848624888883142.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17848624888883142.jpg",
       "caption": "",
       "time": "Feb 01, 2020 10:36 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17855690551760283.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17855690551760283.jpg",
       "caption": "",
       "time": "Feb 01, 2020 10:32 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17995735864287590.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17995735864287590.jpg",
       "caption": "",
       "time": "Feb 01, 2020 10:30 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17843114623964168.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17843114623964168.mp4",
       "caption": "",
       "time": "Feb 01, 2020 10:27 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17861917834674357.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17861917834674357.jpg",
       "caption": "Sangre",
       "time": "Feb 01, 2020 10:25 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17875935916535477.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17875935916535477.jpg",
       "caption": "",
       "time": "Feb 01, 2020 10:20 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18097189009125687.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18097189009125687.mp4",
       "caption": "",
       "time": "Jan 30, 2020 05:52 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18090503251086175.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18090503251086175.jpg",
       "caption": "Chega a tirar uma lágrima do olho!\n\nUma geração dorme tranquila hoje!!! 🤘🏽",
       "time": "Jan 29, 2020 03:16 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17855627476687601.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17855627476687601.jpg",
       "caption": "",
       "time": "Dec 17, 2019 04:15 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18091540792125077.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18091540792125077.jpg",
       "caption": "@tvcultura 👏🏼",
       "time": "Dec 17, 2019 02:37 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18084948151139847.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18084948151139847.jpg",
       "caption": "",
       "time": "Dec 17, 2019 02:33 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17876152300483401.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17876152300483401.jpg",
       "caption": "@farialima.elevator",
       "time": "Dec 06, 2019 05:36 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17855779270636011.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17855779270636011.jpg",
       "caption": "",
       "time": "Nov 24, 2019 04:47 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17845149490805789.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17845149490805789.jpg",
       "caption": "",
       "time": "Nov 23, 2019 09:46 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17922789415354486.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17922789415354486.jpg",
       "caption": "",
       "time": "Nov 23, 2019 06:10 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17860405423603039.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17860405423603039.mp4",
       "caption": "",
       "time": "Nov 23, 2019 04:35 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17866374001558201.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17866374001558201.mp4",
       "caption": "",
       "time": "Nov 23, 2019 04:33 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18076744642151317.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18076744642151317.mp4",
       "caption": "",
       "time": "Nov 23, 2019 04:09 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17846148985757960.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17846148985757960.jpg",
       "caption": "",
       "time": "Nov 22, 2019 10:01 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18114915199017813.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18114915199017813.jpg",
       "caption": "",
       "time": "Nov 20, 2019 09:18 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18080185924186363.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18080185924186363.mp4",
       "caption": "",
       "time": "Nov 15, 2019 11:25 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17843826319814027.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17843826319814027.jpg",
       "caption": "Quando você deixa o seu pai com seu primo... @felipenepo \n@abelardo.marcos",
       "time": "Nov 15, 2019 06:20 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17842305319824917.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17842305319824917.mp4",
       "caption": "",
       "time": "Nov 14, 2019 08:52 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17919223207357321.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17919223207357321.jpg",
       "caption": "",
       "time": "Nov 12, 2019 09:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18011115802258941.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18011115802258941.jpg",
       "caption": "Um visionário que anda ao lado da ciência, filosofia, religião e tecnologia!",
       "time": "Nov 12, 2019 02:32 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17870319943508495.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17870319943508495.jpg",
       "caption": "",
       "time": "Nov 10, 2019 08:35 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18064303771175857.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18064303771175857.jpg",
       "caption": "",
       "time": "Nov 10, 2019 08:34 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17842678189789524.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17842678189789524.jpg",
       "caption": "",
       "time": "Nov 10, 2019 08:33 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17843377168787422.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17843377168787422.jpg",
       "caption": "",
       "time": "Nov 10, 2019 08:32 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18091836550105417.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18091836550105417.jpg",
       "caption": "",
       "time": "Nov 10, 2019 08:32 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17853428650637220.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17853428650637220.jpg",
       "caption": "Pastrami&IPA",
       "time": "Nov 09, 2019 01:18 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17864511562533508.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17864511562533508.jpg",
       "caption": "@carolcaropitta",
       "time": "Nov 03, 2019 07:52 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17900815747390998.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17900815747390998.mp4",
       "caption": "",
       "time": "Nov 03, 2019 05:00 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17878241992467012.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17878241992467012.jpg",
       "caption": "",
       "time": "Nov 03, 2019 01:24 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17903304625386836.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17903304625386836.mp4",
       "caption": "",
       "time": "Nov 02, 2019 07:16 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18079245013136869.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18079245013136869.jpg",
       "caption": "",
       "time": "Nov 02, 2019 02:14 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18037810450209094.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18037810450209094.jpg",
       "caption": "Get to know ur shit",
       "time": "Oct 29, 2019 02:57 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17987409481302021.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17987409481302021.jpg",
       "caption": "",
       "time": "Oct 29, 2019 02:50 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18109836574019014.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18109836574019014.jpg",
       "caption": "",
       "time": "Oct 29, 2019 02:49 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17846070298729757.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17846070298729757.jpg",
       "caption": "",
       "time": "Oct 29, 2019 02:49 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17897310751395980.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17897310751395980.jpg",
       "caption": "",
       "time": "Oct 29, 2019 02:48 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17872651666488407.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17872651666488407.jpg",
       "caption": "",
       "time": "Oct 29, 2019 02:48 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17842656688764774.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17842656688764774.jpg",
       "caption": "",
       "time": "Oct 29, 2019 02:47 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17847276514709677.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17847276514709677.jpg",
       "caption": "",
       "time": "Oct 29, 2019 02:47 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18062449075174540.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18062449075174540.jpg",
       "caption": "",
       "time": "Oct 29, 2019 02:47 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18075698536192790.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18075698536192790.jpg",
       "caption": "",
       "time": "Oct 29, 2019 02:46 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17870691007497563.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17870691007497563.jpg",
       "caption": "",
       "time": "Oct 29, 2019 02:46 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17854479031606483.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17854479031606483.jpg",
       "caption": "",
       "time": "Oct 29, 2019 02:46 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17858530342584770.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17858530342584770.jpg",
       "caption": "",
       "time": "Oct 29, 2019 02:46 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17859770443572256.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17859770443572256.jpg",
       "caption": "",
       "time": "Oct 29, 2019 02:45 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17931054940322139.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17931054940322139.jpg",
       "caption": "",
       "time": "Oct 27, 2019 05:47 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17849404639676717.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17849404639676717.jpg",
       "caption": "",
       "time": "Oct 26, 2019 11:15 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18109777492034773.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18109777492034773.mp4",
       "caption": "",
       "time": "Oct 26, 2019 11:09 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18088781818116591.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18088781818116591.jpg",
       "caption": "",
       "time": "Oct 26, 2019 11:09 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17879931016444990.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17879931016444990.jpg",
       "caption": "",
       "time": "Oct 25, 2019 09:09 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17846759320725051.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17846759320725051.jpg",
       "caption": "",
       "time": "Oct 25, 2019 09:00 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17901425947382948.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17901425947382948.mp4",
       "caption": "",
       "time": "Oct 25, 2019 02:12 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18077237644090140.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18077237644090140.jpg",
       "caption": "U can't alaways get what u want @felipenepo",
       "time": "Oct 24, 2019 05:06 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17844884200735260.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17844884200735260.jpg",
       "caption": "",
       "time": "Oct 24, 2019 12:33 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17873523835479309.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17873523835479309.mp4",
       "caption": "",
       "time": "Oct 24, 2019 12:30 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17871826036490893.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17871826036490893.jpg",
       "caption": "",
       "time": "Oct 24, 2019 12:21 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18087916912115913.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18087916912115913.jpg",
       "caption": "",
       "time": "Oct 24, 2019 12:20 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17894038228408312.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17894038228408312.jpg",
       "caption": "",
       "time": "Oct 24, 2019 12:18 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17847673975716599.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17847673975716599.jpg",
       "caption": "",
       "time": "Oct 24, 2019 12:17 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18109309687034696.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18109309687034696.jpg",
       "caption": "SFO->LAS",
       "time": "Oct 24, 2019 12:11 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17858174581569970.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17858174581569970.jpg",
       "caption": "",
       "time": "Oct 24, 2019 12:05 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17982737425305092.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17982737425305092.jpg",
       "caption": "",
       "time": "Oct 24, 2019 12:03 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17935599229315246.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17935599229315246.jpg",
       "caption": "🧐",
       "time": "Oct 18, 2019 09:50 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17913382516354894.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17913382516354894.jpg",
       "caption": "",
       "time": "Oct 18, 2019 09:49 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17925209653333793.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17925209653333793.jpg",
       "caption": "",
       "time": "Oct 18, 2019 09:49 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17862045040548235.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17862045040548235.jpg",
       "caption": "",
       "time": "Oct 18, 2019 09:43 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17846484478706545.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17846484478706545.jpg",
       "caption": "",
       "time": "Oct 18, 2019 09:41 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17866599694508074.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17866599694508074.jpg",
       "caption": "",
       "time": "Oct 18, 2019 09:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18074314018193187.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18074314018193187.jpg",
       "caption": "",
       "time": "Oct 18, 2019 09:38 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17914166494360596.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17914166494360596.jpg",
       "caption": "That i laughed alone",
       "time": "Oct 18, 2019 09:37 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18108266104013820.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18108266104013820.jpg",
       "caption": "",
       "time": "Oct 17, 2019 05:20 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18097399624077047.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18097399624077047.jpg",
       "caption": "",
       "time": "Oct 17, 2019 05:19 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17856770368581216.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17856770368581216.jpg",
       "caption": "",
       "time": "Oct 17, 2019 05:19 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17915053324357634.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17915053324357634.jpg",
       "caption": "",
       "time": "Oct 17, 2019 05:19 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17850236962653208.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17850236962653208.jpg",
       "caption": "",
       "time": "Oct 17, 2019 05:18 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18075895051091354.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18075895051091354.jpg",
       "caption": "",
       "time": "Oct 17, 2019 05:17 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18097108810077681.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18097108810077681.jpg",
       "caption": "",
       "time": "Oct 17, 2019 05:15 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17910873769364795.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17910873769364795.jpg",
       "caption": "",
       "time": "Oct 17, 2019 05:14 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17914662151357148.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17914662151357148.jpg",
       "caption": "",
       "time": "Oct 17, 2019 05:14 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17886036376429038.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17886036376429038.jpg",
       "caption": "",
       "time": "Oct 16, 2019 08:48 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18109642039029581.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18109642039029581.jpg",
       "caption": "StreetFood",
       "time": "Oct 16, 2019 08:33 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17849188189636465.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17849188189636465.mp4",
       "caption": "",
       "time": "Oct 16, 2019 08:29 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18071018425154477.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18071018425154477.mp4",
       "caption": "",
       "time": "Oct 16, 2019 08:29 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17845263832723331.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17845263832723331.jpg",
       "caption": "",
       "time": "Oct 16, 2019 08:25 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18107833342023402.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18107833342023402.jpg",
       "caption": "",
       "time": "Oct 16, 2019 08:25 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18096022468072419.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18096022468072419.jpg",
       "caption": "",
       "time": "Oct 16, 2019 08:23 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18107925469025475.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18107925469025475.jpg",
       "caption": "",
       "time": "Oct 16, 2019 08:22 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17855920207588061.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17855920207588061.jpg",
       "caption": "",
       "time": "Oct 16, 2019 08:21 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18109210312025082.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18109210312025082.mp4",
       "caption": "",
       "time": "Oct 15, 2019 04:08 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17860270435540561.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17860270435540561.jpg",
       "caption": "",
       "time": "Oct 15, 2019 05:45 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17845086988723531.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17845086988723531.jpg",
       "caption": "",
       "time": "Oct 15, 2019 05:27 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17851845613616073.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17851845613616073.jpg",
       "caption": "",
       "time": "Oct 15, 2019 05:09 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17849810935638085.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17849810935638085.jpg",
       "caption": "",
       "time": "Oct 15, 2019 05:06 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17867039995499070.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17867039995499070.jpg",
       "caption": "",
       "time": "Oct 15, 2019 04:40 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18087409072108601.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18087409072108601.jpg",
       "caption": "SFO->",
       "time": "Oct 14, 2019 05:07 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17848095763668996.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17848095763668996.jpg",
       "caption": "",
       "time": "Oct 13, 2019 10:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17931662557320319.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17931662557320319.jpg",
       "caption": "\"Internet for people\nNot for profit\"",
       "time": "Oct 13, 2019 07:38 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18007234717254333.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18007234717254333.jpg",
       "caption": "",
       "time": "Oct 13, 2019 06:51 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17888242630422004.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17888242630422004.jpg",
       "caption": "",
       "time": "Oct 13, 2019 06:32 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17848353508660605.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17848353508660605.jpg",
       "caption": "",
       "time": "Oct 13, 2019 01:27 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17987141653301332.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17987141653301332.mp4",
       "caption": "",
       "time": "Oct 13, 2019 12:54 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17879818768451691.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17879818768451691.jpg",
       "caption": "",
       "time": "Oct 13, 2019 12:44 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17931080089319007.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17931080089319007.jpg",
       "caption": "",
       "time": "Oct 12, 2019 11:43 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18007291240255579.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18007291240255579.jpg",
       "caption": "🤨",
       "time": "Oct 11, 2019 10:48 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17895297094400079.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17895297094400079.jpg",
       "caption": "Valley to go",
       "time": "Oct 11, 2019 09:01 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17869010629491786.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17869010629491786.jpg",
       "caption": "",
       "time": "Oct 11, 2019 01:40 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17847471325669392.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17847471325669392.jpg",
       "caption": "Ovelha nostra",
       "time": "Oct 10, 2019 02:51 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17889222340410490.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17889222340410490.jpg",
       "caption": "",
       "time": "Oct 06, 2019 12:20 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17982059860282612.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17982059860282612.mp4",
       "caption": "Amor platônico",
       "time": "Oct 05, 2019 08:33 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18074391781080897.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18074391781080897.jpg",
       "caption": "brl 7,94\n@PdA\n#Ficaa",
       "time": "Oct 05, 2019 07:20 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18069550381179798.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18069550381179798.mp4",
       "caption": "Rugby\nWorld Cup Japan 2019",
       "time": "Oct 05, 2019 05:40 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18074011351184712.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18074011351184712.jpg",
       "caption": "Nem Duracell foi tanto",
       "time": "Oct 05, 2019 04:42 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17893794670399540.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17893794670399540.jpg",
       "caption": "SP's greenfield",
       "time": "Oct 05, 2019 04:41 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17863037629513424.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17863037629513424.jpg",
       "caption": "@ticopierre \n@nataliarpires",
       "time": "Oct 04, 2019 10:41 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17863700896501488.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17863700896501488.mp4",
       "caption": "\"",
       "time": "Oct 04, 2019 10:33 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17845011376675861.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17845011376675861.jpg",
       "caption": "Ceviche & Shitake  Quinta-feira está produtiva",
       "time": "Oct 04, 2019 02:30 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18104832925024756.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18104832925024756.jpg",
       "caption": "Minto, esse é o brinde!",
       "time": "Oct 04, 2019 01:58 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18031660978220242.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18031660978220242.jpg",
       "caption": "E um Chuck Norris de brinde",
       "time": "Oct 04, 2019 01:49 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17847113650645205.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17847113650645205.jpg",
       "caption": "Filme do Doors",
       "time": "Oct 04, 2019 01:47 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17977580551285763.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17977580551285763.mp4",
       "caption": "Temos um try de boas vindas",
       "time": "Oct 04, 2019 01:47 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17933089948315474.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17933089948315474.jpg",
       "caption": "328 dias sem ligar a TV",
       "time": "Oct 04, 2019 01:46 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18001855309256743.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18001855309256743.mp4",
       "caption": "",
       "time": "Sep 22, 2019 11:02 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17996657968264370.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17996657968264370.mp4",
       "caption": "Pula boi\nPula cavalo\nPula boi e cavalo",
       "time": "Sep 22, 2019 10:58 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17995353235268317.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17995353235268317.mp4",
       "caption": "Sds Tim!",
       "time": "Sep 15, 2019 09:35 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17902981408365497.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17902981408365497.mp4",
       "caption": "Mamonas vive!",
       "time": "Sep 15, 2019 08:05 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18076276714119152.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18076276714119152.jpg",
       "caption": "",
       "time": "Sep 02, 2019 12:25 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17959442641290856.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17959442641290856.jpg",
       "caption": "Aôôôô #99y",
       "time": "Sep 01, 2019 05:15 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17974122598302369.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17974122598302369.jpg",
       "caption": "",
       "time": "Sep 01, 2019 12:28 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18092917318033013.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18092917318033013.jpg",
       "caption": "Fckng rck n' rll",
       "time": "Aug 23, 2019 03:32 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17851297174547860.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17851297174547860.jpg",
       "caption": "",
       "time": "Aug 23, 2019 01:50 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18014245597229175.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18014245597229175.jpg",
       "caption": "Carnívoros e herbívoros em comunhão",
       "time": "Aug 18, 2019 07:40 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17979926302275947.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17979926302275947.jpg",
       "caption": "Pros que começaram na quinta...",
       "time": "Aug 16, 2019 04:17 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18090948055003201.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18090948055003201.jpg",
       "caption": "That pic",
       "time": "Aug 14, 2019 10:05 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17854292353505758.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17854292353505758.jpg",
       "caption": "",
       "time": "Aug 12, 2019 04:00 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18044316430198445.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18044316430198445.jpg",
       "caption": "Warm up",
       "time": "Aug 09, 2019 11:44 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18071012830113037.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18071012830113037.jpg",
       "caption": "Sexta da maldade",
       "time": "Aug 09, 2019 04:42 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17987181322264787.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17987181322264787.jpg",
       "caption": "Só faltou ter o preço da alface",
       "time": "Aug 07, 2019 01:31 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17847005707550013.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17847005707550013.jpg",
       "caption": "",
       "time": "Aug 03, 2019 07:02 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18060657199093426.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18060657199093426.mp4",
       "caption": "",
       "time": "Aug 02, 2019 11:24 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17861285020461646.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17861285020461646.jpg",
       "caption": "",
       "time": "Aug 02, 2019 03:27 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17844827863554538.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17844827863554538.jpg",
       "caption": "🎷",
       "time": "Jul 27, 2019 09:29 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18085512214036848.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18085512214036848.jpg",
       "caption": "Tiers counting",
       "time": "Jul 27, 2019 06:40 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17845496017544164.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17845496017544164.jpg",
       "caption": "",
       "time": "Jul 27, 2019 04:29 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17854428316483938.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17854428316483938.jpg",
       "caption": "Passando pelo condado FL",
       "time": "Jul 26, 2019 05:18 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18087430468027511.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18087430468027511.jpg",
       "caption": "A bit of toxo",
       "time": "Jul 26, 2019 12:58 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18086151838003990.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18086151838003990.jpg",
       "caption": "Clássico Ministrão",
       "time": "Jul 25, 2019 10:59 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17989060888262298.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17989060888262298.jpg",
       "caption": "",
       "time": "Jul 25, 2019 02:35 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17863680139447256.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17863680139447256.jpg",
       "caption": "Ribs n' Negroni",
       "time": "Jul 25, 2019 12:09 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17874635428410506.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17874635428410506.jpg",
       "caption": "",
       "time": "Jul 24, 2019 11:54 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17891274646369859.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17891274646369859.jpg",
       "caption": "Pastrami 🤤",
       "time": "Jul 23, 2019 04:21 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17964949612281805.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17964949612281805.jpg",
       "caption": "By @ceciliagdmarcos \n@jpdmarcos",
       "time": "Jul 20, 2019 07:46 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18056124019138099.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18056124019138099.jpg",
       "caption": "",
       "time": "Jul 20, 2019 12:14 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17878023934399221.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17878023934399221.jpg",
       "caption": "Aquela criança com carinha de quem cedo já queria se alistar na Al Qaeda",
       "time": "Jul 19, 2019 08:10 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18085098349015084.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18085098349015084.jpg",
       "caption": "",
       "time": "Jul 18, 2019 10:00 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18068595589098038.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18068595589098038.jpg",
       "caption": "Aging with the Masters",
       "time": "Jul 18, 2019 06:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18077836120053320.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18077836120053320.jpg",
       "caption": "",
       "time": "Jun 24, 2019 12:59 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17845087519456857.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17845087519456857.jpg",
       "caption": "",
       "time": "May 25, 2019 07:57 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18067594780022577.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18067594780022577.jpg",
       "caption": "",
       "time": "May 17, 2019 04:21 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18033491521146313.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18033491521146313.jpg",
       "caption": "",
       "time": "May 17, 2019 12:29 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18032640880154634.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18032640880154634.mp4",
       "caption": "",
       "time": "May 17, 2019 12:26 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18047626639128050.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18047626639128050.mp4",
       "caption": "#MEUTE",
       "time": "May 11, 2019 09:00 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17988189049227864.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17988189049227864.jpg",
       "caption": "Gargazella no poró",
       "time": "May 11, 2019 08:00 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17969928652250701.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17969928652250701.jpg",
       "caption": "Ó",
       "time": "May 11, 2019 06:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18047390938110827.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18047390938110827.jpg",
       "caption": "Workaholic",
       "time": "May 11, 2019 06:34 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18031834903148617.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18031834903148617.mp4",
       "caption": "Pavarotti & James Brown in tha house",
       "time": "May 11, 2019 06:30 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17882181955346683.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17882181955346683.mp4",
       "caption": "@felipenepo",
       "time": "May 11, 2019 06:26 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17888348674327707.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17888348674327707.jpg",
       "caption": "Vaaai @giltada",
       "time": "May 11, 2019 06:24 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18065105068043616.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18065105068043616.jpg",
       "caption": "Brieziiin no mel truffes",
       "time": "May 11, 2019 06:22 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17851134706418298.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17851134706418298.jpg",
       "caption": "",
       "time": "May 05, 2019 03:45 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17877870298354491.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17877870298354491.jpg",
       "caption": "",
       "time": "May 03, 2019 05:15 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17885354506333448.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17885354506333448.jpg",
       "caption": "",
       "time": "May 03, 2019 05:01 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17966533633261195.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17966533633261195.jpg",
       "caption": "",
       "time": "May 03, 2019 04:38 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17996855866214381.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17996855866214381.jpg",
       "caption": "",
       "time": "May 03, 2019 03:55 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18061902796051248.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18061902796051248.jpg",
       "caption": "",
       "time": "May 03, 2019 03:30 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17855545309402456.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17855545309402456.jpg",
       "caption": "",
       "time": "May 03, 2019 03:29 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17998512412205231.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17998512412205231.jpg",
       "caption": "",
       "time": "May 03, 2019 03:19 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17847876064427089.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17847876064427089.jpg",
       "caption": "",
       "time": "May 02, 2019 02:41 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18040142869124335.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18040142869124335.mp4",
       "caption": "",
       "time": "May 02, 2019 02:39 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18043515142113755.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18043515142113755.jpg",
       "caption": "",
       "time": "May 02, 2019 12:19 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17873845714361780.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17873845714361780.jpg",
       "caption": "",
       "time": "May 01, 2019 10:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17998410907203325.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17998410907203325.jpg",
       "caption": "",
       "time": "Apr 30, 2019 11:19 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18042872638118617.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18042872638118617.jpg",
       "caption": "",
       "time": "Apr 28, 2019 07:46 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17958997660269392.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17958997660269392.jpg",
       "caption": "",
       "time": "Apr 28, 2019 07:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18060108127026924.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18060108127026924.jpg",
       "caption": "",
       "time": "Apr 27, 2019 05:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18060100162017434.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18060100162017434.jpg",
       "caption": "",
       "time": "Apr 27, 2019 05:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18042304213110784.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18042304213110784.jpg",
       "caption": "",
       "time": "Apr 26, 2019 04:07 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17876527822345819.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17876527822345819.mp4",
       "caption": "",
       "time": "Apr 23, 2019 12:58 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17923836466289394.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17923836466289394.mp4",
       "caption": "",
       "time": "Apr 21, 2019 04:47 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17856048895378957.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17856048895378957.mp4",
       "caption": "",
       "time": "Apr 21, 2019 01:44 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17879015557337516.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17879015557337516.mp4",
       "caption": "",
       "time": "Apr 20, 2019 11:29 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18040953022117608.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18040953022117608.mp4",
       "caption": "",
       "time": "Apr 20, 2019 11:29 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18016997455171688.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18016997455171688.jpg",
       "caption": "",
       "time": "Apr 20, 2019 11:13 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17886254683326047.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17886254683326047.jpg",
       "caption": "",
       "time": "Apr 20, 2019 11:12 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18025747966178885.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18025747966178885.jpg",
       "caption": "",
       "time": "Apr 20, 2019 11:11 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18058606474044552.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18058606474044552.jpg",
       "caption": "Beer with grandpa",
       "time": "Apr 20, 2019 12:14 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17962361536258742.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17962361536258742.jpg",
       "caption": "Bingo with Granma",
       "time": "Apr 20, 2019 12:12 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18024702115158214.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18024702115158214.jpg",
       "caption": "Holy Friday Panceta de peixe 🤦🏻‍♂️",
       "time": "Apr 19, 2019 08:21 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17954738239266937.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17954738239266937.jpg",
       "caption": "Commodities mineiras",
       "time": "Apr 19, 2019 08:03 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18048223375073483.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18048223375073483.jpg",
       "caption": "",
       "time": "Apr 19, 2019 08:01 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18031720855087119.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18031720855087119.mp4",
       "caption": "",
       "time": "Apr 19, 2019 07:59 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17989607131220735.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17989607131220735.mp4",
       "caption": "Última vez deu muito certo",
       "time": "Apr 19, 2019 04:15 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18052926028068610.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18052926028068610.mp4",
       "caption": "",
       "time": "Apr 19, 2019 04:12 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18024202552183150.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18024202552183150.mp4",
       "caption": "Está aberto o feriado em família!",
       "time": "Apr 19, 2019 04:12 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17856238777379608.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17856238777379608.mp4",
       "caption": "Kkk esse Guedes não consegue soltar uma sem taca um chinelo pela janela",
       "time": "Apr 18, 2019 02:59 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17865712072368870.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17865712072368870.jpg",
       "caption": "Subindinhas da UXP",
       "time": "Apr 18, 2019 12:51 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17880296128328967.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17880296128328967.jpg",
       "caption": "Nine ninenine",
       "time": "Apr 16, 2019 12:27 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18055764205006482.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18055764205006482.jpg",
       "caption": "Não é todo mundo que acorda cedo de bom humor",
       "time": "Apr 16, 2019 12:02 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17978748481224908.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17978748481224908.jpg",
       "caption": "Place ur bets",
       "time": "Apr 15, 2019 09:08 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18021807055153243.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18021807055153243.mp4",
       "caption": "",
       "time": "Apr 15, 2019 01:24 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17898277807306090.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17898277807306090.jpg",
       "caption": "",
       "time": "Apr 14, 2019 11:43 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17922088237289159.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17922088237289159.jpg",
       "caption": "GoT everywhere",
       "time": "Apr 14, 2019 10:29 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18025816732134767.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18025816732134767.jpg",
       "caption": "Pre GoT",
       "time": "Apr 14, 2019 10:18 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18038876284110411.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18038876284110411.mp4",
       "caption": "",
       "time": "Apr 14, 2019 12:08 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18056414953044999.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18056414953044999.jpg",
       "caption": "La Cuiabana",
       "time": "Apr 13, 2019 05:50 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18027689728186072.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18027689728186072.mp4",
       "caption": "Chegando...\n@titoferraz",
       "time": "Apr 13, 2019 05:00 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17992064935204764.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17992064935204764.mp4",
       "caption": "",
       "time": "Apr 13, 2019 03:55 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18058418800018734.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18058418800018734.jpg",
       "caption": "Quando seu histórico não joga a favor...",
       "time": "Apr 13, 2019 03:44 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18019110025164475.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18019110025164475.mp4",
       "caption": "30k, 45k, 60k, 75k, 90k @feltonetti",
       "time": "Apr 13, 2019 02:19 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18036704476117097.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18036704476117097.jpg",
       "caption": "",
       "time": "Apr 12, 2019 01:24 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17842946467418128.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17842946467418128.jpg",
       "caption": "Winter is coming",
       "time": "Apr 11, 2019 04:31 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17882870086325319.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17882870086325319.jpg",
       "caption": "",
       "time": "Apr 11, 2019 11:00 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17960811328254107.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17960811328254107.mp4",
       "caption": "",
       "time": "Apr 11, 2019 03:45 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17987068087221561.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17987068087221561.mp4",
       "caption": "",
       "time": "Apr 11, 2019 03:38 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18033278842120814.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18033278842120814.mp4",
       "caption": "",
       "time": "Apr 11, 2019 03:38 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17846568685407940.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17846568685407940.mp4",
       "caption": "",
       "time": "Apr 11, 2019 03:38 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17960307964253348.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17960307964253348.jpg",
       "caption": "Less mimimimi\n\nMore equations",
       "time": "Apr 11, 2019 03:34 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18057800509043385.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18057800509043385.jpg",
       "caption": "Moto elétrica para competir com o crowd das novidades na mobilidade urbana da selva",
       "time": "Apr 10, 2019 03:16 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18027468154136995.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18027468154136995.mp4",
       "caption": "",
       "time": "Apr 10, 2019 03:12 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17977880968224720.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17977880968224720.jpg",
       "caption": "",
       "time": "Apr 09, 2019 11:49 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17987491375223098.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17987491375223098.jpg",
       "caption": "Quando uma chuvinha separa os homens dos meninos @titoferraz @feltonetti",
       "time": "Apr 09, 2019 10:02 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18031502527120627.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18031502527120627.mp4",
       "caption": "Aqueles clássicos que só na rádio",
       "time": "Apr 06, 2019 05:53 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17989675558207136.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17989675558207136.jpg",
       "caption": "Easy going ma frenda\nTamo chegando...",
       "time": "Apr 06, 2019 05:43 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17858311492374270.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17858311492374270.jpg",
       "caption": "30km->45km->60km->75k",
       "time": "Apr 06, 2019 05:40 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17886363100315534.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17886363100315534.jpg",
       "caption": "",
       "time": "Apr 04, 2019 11:34 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17872916275338611.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17872916275338611.mp4",
       "caption": "",
       "time": "Apr 03, 2019 12:18 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18051730303000943.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18051730303000943.jpg",
       "caption": "Agora tem que pedalar, né!",
       "time": "Apr 02, 2019 11:37 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17948657761263331.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17948657761263331.jpg",
       "caption": "E me disseram que era só comprar a bike, capacete... ...pedal, taquinho, sapatilha, luzes frente/atrás, bermuda forrada, camisa, ciclocomputador, polchete com ferramenta e câmara, bomba de ar, que dá pra começar!!!",
       "time": "Apr 02, 2019 01:38 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18016730755165603.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18016730755165603.mp4",
       "caption": "",
       "time": "Apr 01, 2019 05:14 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17846011735402427.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17846011735402427.mp4",
       "caption": "",
       "time": "Apr 01, 2019 05:12 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17869521769347691.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17869521769347691.mp4",
       "caption": "Sem feridos!\nBaita susto!",
       "time": "Apr 01, 2019 05:12 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17850496444391112.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17850496444391112.mp4",
       "caption": "",
       "time": "Mar 31, 2019 11:51 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17983695262223639.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17983695262223639.mp4",
       "caption": "",
       "time": "Mar 31, 2019 11:51 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17930698381303550.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17930698381303550.mp4",
       "caption": "",
       "time": "Mar 31, 2019 11:51 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17850583258390962.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17850583258390962.mp4",
       "caption": "",
       "time": "Mar 31, 2019 11:51 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18021090133135466.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18021090133135466.jpg",
       "caption": "Where Flat Earth Believers and  Orthodox  Religious people get in depression",
       "time": "Mar 31, 2019 11:49 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17867701396352324.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17867701396352324.jpg",
       "caption": "Back to The Game ing @titoferraz \n@feltonetti",
       "time": "Mar 31, 2019 09:22 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18025775737093280.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18025775737093280.jpg",
       "caption": "SampaCity",
       "time": "Mar 31, 2019 09:16 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18050984779063948.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18050984779063948.jpg",
       "caption": "Risotei loading...",
       "time": "Mar 30, 2019 05:19 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18050197663029993.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18050197663029993.mp4",
       "caption": "We're back!",
       "time": "Mar 30, 2019 03:20 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18009994591172054.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18009994591172054.jpg",
       "caption": "Patinete raiz!!!!",
       "time": "Mar 30, 2019 03:18 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18050508871026639.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18050508871026639.jpg",
       "caption": "Quem nunca precisou fazer um resgate do carro de patinete",
       "time": "Mar 30, 2019 03:17 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17892960811305934.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17892960811305934.jpg",
       "caption": "Janis & Groni",
       "time": "Mar 30, 2019 05:09 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17932807636301202.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17932807636301202.jpg",
       "caption": "Quando a reunião dos  presidentes do Legislativo, Executivo e Judiciário mais parece uma reunião de cosplay de Nhonhos In Guedes we trust",
       "time": "Mar 27, 2019 09:31 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18023226190095841.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18023226190095841.jpg",
       "caption": "@kingstonclubsp  CGH>SDU Parabéns Dallll @fevaquer",
       "time": "Mar 25, 2019 05:44 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17928561010303750.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17928561010303750.jpg",
       "caption": "FRA+ARG+MG",
       "time": "Mar 24, 2019 09:20 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17947246522270015.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17947246522270015.mp4",
       "caption": "",
       "time": "Mar 24, 2019 05:27 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18029912677113864.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18029912677113864.jpg",
       "caption": "Riding with the king",
       "time": "Mar 24, 2019 04:45 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17926230976287752.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17926230976287752.jpg",
       "caption": "Jack,\n\nThis's Negroni.\n\nAtt,\n\nA friend of yours",
       "time": "Mar 24, 2019 03:00 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18019116034187735.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18019116034187735.mp4",
       "caption": "",
       "time": "Mar 24, 2019 01:38 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17971401154242514.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17971401154242514.jpg",
       "caption": "De boa na lagoa @feltonetti  @fabsgc  @nataly_slopes",
       "time": "Mar 23, 2019 10:31 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17853770434375495.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17853770434375495.jpg",
       "caption": "In God We Trust!!!",
       "time": "Mar 23, 2019 07:15 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18032368549106755.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18032368549106755.jpg",
       "caption": "Miojo na laje",
       "time": "Mar 23, 2019 07:02 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17954089231255123.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17954089231255123.mp4",
       "caption": "O segredo é pimenta calabresa 🤫",
       "time": "Mar 23, 2019 06:58 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18016720264144391.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18016720264144391.jpg",
       "caption": "@kingstonclubsp",
       "time": "Mar 23, 2019 06:50 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17870900710335969.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17870900710335969.jpg",
       "caption": "Janta engana troxa",
       "time": "Mar 22, 2019 10:08 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17847367588383507.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17847367588383507.mp4",
       "caption": "Jogo é jogo",
       "time": "Mar 22, 2019 06:19 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18030473545102723.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18030473545102723.jpg",
       "caption": "... e da família os primos @felipenepo",
       "time": "Mar 22, 2019 05:34 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18016639306153265.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18016639306153265.jpg",
       "caption": "",
       "time": "Mar 21, 2019 11:32 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18022435453086398.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18022435453086398.jpg",
       "caption": "",
       "time": "Mar 21, 2019 11:32 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18030786760106402.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18030786760106402.jpg",
       "caption": "",
       "time": "Mar 21, 2019 11:31 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18047088997045234.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18047088997045234.jpg",
       "caption": "Porque o melhor e o pior do Brasil é o brasileiro....",
       "time": "Mar 21, 2019 11:30 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18047266534045711.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18047266534045711.jpg",
       "caption": "",
       "time": "Mar 21, 2019 04:35 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17865631261346685.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17865631261346685.jpg",
       "caption": "Netflix\nHBOgo\nAmazonPrime\n... Disney Streaming?",
       "time": "Mar 20, 2019 04:44 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17868462673338999.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17868462673338999.mp4",
       "caption": "Sheldon be like #Física Quântica\n#Equação de Schrödinger\n#Teoria da Relatividade\n#WormHole&WarpeDrive",
       "time": "Mar 20, 2019 01:49 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17980680775210975.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17980680775210975.jpg",
       "caption": "Netflix tornou quase obsoleto milhões de salas de cinema pelo mundo Acho que a Google estava entediada e resolveu num clique transcender na indústria de games e tornar milhões de consoles obsoletos",
       "time": "Mar 20, 2019 12:10 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18017844400132528.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18017844400132528.jpg",
       "caption": "Ba dum tsss",
       "time": "Mar 19, 2019 01:18 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18019555105136250.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18019555105136250.jpg",
       "caption": "@farialima.elevator  Kkkkkk",
       "time": "Mar 18, 2019 08:57 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18036991891074075.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18036991891074075.jpg",
       "caption": "",
       "time": "Mar 17, 2019 11:13 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18029414002105636.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18029414002105636.mp4",
       "caption": "",
       "time": "Mar 17, 2019 10:05 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18046424104028648.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18046424104028648.jpg",
       "caption": "",
       "time": "Mar 17, 2019 09:52 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18046080283050222.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18046080283050222.jpg",
       "caption": "👽",
       "time": "Mar 17, 2019 08:11 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18045981259050465.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18045981259050465.jpg",
       "caption": "Era brinde 👀👀",
       "time": "Mar 17, 2019 04:20 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17845803652380025.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17845803652380025.jpg",
       "caption": "Saindo do forno",
       "time": "Mar 17, 2019 02:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17950443040261125.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17950443040261125.jpg",
       "caption": "",
       "time": "Mar 17, 2019 12:10 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17874742930323642.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17874742930323642.jpg",
       "caption": "",
       "time": "Mar 16, 2019 08:25 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18045443134059885.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18045443134059885.jpg",
       "caption": "Negroni's lunch",
       "time": "Mar 16, 2019 07:52 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18020593618092621.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18020593618092621.jpg",
       "caption": "Porque Pinheiros é hipster...",
       "time": "Mar 16, 2019 07:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17983534699200628.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17983534699200628.jpg",
       "caption": "Mesa que DJ ainda não tem",
       "time": "Mar 16, 2019 02:18 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17979416425210900.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17979416425210900.mp4",
       "caption": "Not a soft opening",
       "time": "Mar 16, 2019 02:16 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17977907230218740.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17977907230218740.jpg",
       "caption": "",
       "time": "Mar 16, 2019 02:13 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17962777438246691.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17962777438246691.mp4",
       "caption": "",
       "time": "Mar 13, 2019 03:01 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18028437133104609.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18028437133104609.jpg",
       "caption": "",
       "time": "Mar 13, 2019 02:59 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18044816653036291.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18044816653036291.mp4",
       "caption": "",
       "time": "Mar 13, 2019 02:59 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18027642658129087.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18027642658129087.jpg",
       "caption": "FoodPorn",
       "time": "Mar 11, 2019 10:53 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17949996622254081.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17949996622254081.jpg",
       "caption": "No place like home",
       "time": "Mar 10, 2019 05:29 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17846369674352173.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17846369674352173.mp4",
       "caption": "Ihaaaaaa",
       "time": "Jan 29, 2019 02:22 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18008133175015876.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18008133175015876.mp4",
       "caption": "S\nE\nG\nU\nU\nU\nR\nA\n\nNo\n\nP\nQ\nP",
       "time": "Dec 09, 2018 04:47 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18007646671008948.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18007646671008948.jpg",
       "caption": "Cada ano com o seu macaco",
       "time": "Dec 09, 2018 04:43 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18008492716063397.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18008492716063397.mp4",
       "caption": "",
       "time": "Dec 07, 2018 08:30 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18006851536022850.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18006851536022850.mp4",
       "caption": "",
       "time": "Dec 06, 2018 04:43 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17899853146276795.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17899853146276795.jpg",
       "caption": "",
       "time": "Dec 06, 2018 12:22 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18006549520018362.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18006549520018362.jpg",
       "caption": "Não tão feliz como com o álbum da Copa de 94, mas é o que temos...",
       "time": "Dec 02, 2018 02:53 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18004874254011250.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18004874254011250.jpg",
       "caption": "Poke\nPoke\nPoke\nPoke",
       "time": "Nov 28, 2018 03:18 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17961089920197718.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17961089920197718.jpg",
       "caption": "\"Salve lindo pendão da esperança!\nSalve símbolo augusto da paz!\nTua nobre presença à lembrança\nA grandeza da Pátria nos traz(...)\"🎵 19/11 Dia da Bandeira",
       "time": "Nov 19, 2018 06:58 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18000845500059724.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18000845500059724.jpg",
       "caption": "",
       "time": "Nov 18, 2018 11:53 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17971268737183771.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17971268737183771.jpg",
       "caption": "#sqn",
       "time": "Nov 18, 2018 06:46 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/18000594688045057.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/18000594688045057.mp4",
       "caption": "Feriado, e vc num inferno de shopping😰\nPelo menos o time de ontem colou tb\n😎",
       "time": "Nov 18, 2018 06:21 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17937303706222602.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17937303706222602.jpg",
       "caption": "Quando começam me falando do imóvel que \"investiram\" na planta",
       "time": "Nov 18, 2018 05:34 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17970498418154378.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17970498418154378.mp4",
       "caption": "🎅🏼",
       "time": "Nov 18, 2018 04:52 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17911005304254952.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17911005304254952.jpg",
       "caption": "🤤",
       "time": "Nov 17, 2018 07:59 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17927476435235863.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17927476435235863.mp4",
       "caption": "Ceviche com Pimenta Biquin",
       "time": "Nov 17, 2018 07:37 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17901078907271900.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17901078907271900.jpg",
       "caption": "Acharam mesmo que eu ia doar vocês duas?Nunca!!! Um enorme Parabéns para as\nminhas geminhas, que eu amo muiiito!!! @prinepo  @tatinepo",
       "time": "Nov 15, 2018 03:52 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17991306337079128.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17991306337079128.mp4",
       "caption": "",
       "time": "Nov 15, 2018 03:31 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17935802638219686.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17935802638219686.jpg",
       "caption": "",
       "time": "Nov 14, 2018 05:52 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17977650124091926.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17977650124091926.mp4",
       "caption": "@yellow.us \n#patinete",
       "time": "Nov 14, 2018 05:51 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17998270954041101.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17998270954041101.jpg",
       "caption": "StanLee",
       "time": "Nov 12, 2018 09:34 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17998850254000880.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17998850254000880.jpg",
       "caption": "Avante!!!\n👊🏼👊🏼👊🏼",
       "time": "Nov 12, 2018 01:18 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17976546718087073.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17976546718087073.mp4",
       "caption": "Bcause kings don't die\nBBking\nRon Wood\nEric Clapton\nThe Thrill's gone",
       "time": "Nov 11, 2018 10:25 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17965821244161013.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17965821244161013.jpg",
       "caption": "Ave Caesar",
       "time": "Nov 11, 2018 09:25 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17881455892280956.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17881455892280956.mp4",
       "caption": "Risotaremos",
       "time": "Nov 11, 2018 08:32 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17981447116119030.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17981447116119030.mp4",
       "caption": "",
       "time": "Nov 09, 2018 11:03 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17867504461294360.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17867504461294360.jpg",
       "caption": "",
       "time": "Nov 09, 2018 04:54 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17971671370192806.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17971671370192806.jpg",
       "caption": "Peixe&Tijuca&Jambu",
       "time": "Nov 08, 2018 11:51 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17992265020067221.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17992265020067221.jpg",
       "caption": "Almoço pugli",
       "time": "Nov 08, 2018 02:01 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17981775526113960.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17981775526113960.jpg",
       "caption": "#1\n#2 🤔",
       "time": "Nov 08, 2018 10:55 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17934763309215562.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17934763309215562.jpg",
       "caption": "",
       "time": "Nov 08, 2018 12:00 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17923265695229359.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17923265695229359.jpg",
       "caption": "Cada um sabe da vitamina que precisa pós treino",
       "time": "Nov 07, 2018 01:08 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17997057046044922.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17997057046044922.jpg",
       "caption": "Apenas o essencial\n#drymartini\n#negroni\n#bloodymary\n#aperolspritz\n#oldfashionedNunca Faltou",
       "time": "Nov 06, 2018 10:46 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17997369244046212.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17997369244046212.jpg",
       "caption": "No dia que você compra duas garrafas de Vermute e aquela sensação de que estão lendo seus rastros",
       "time": "Nov 06, 2018 10:20 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17995728337000459.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17995728337000459.jpg",
       "caption": "CPOR/SP\nBerço de Líderes, Escola de Cidadania. \nOnde o \"Non Dvcor, Dvco\" respira",
       "time": "Nov 05, 2018 02:48 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17981509375111765.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17981509375111765.jpg",
       "caption": "&tarantino",
       "time": "Nov 05, 2018 12:02 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17972425195189820.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17972425195189820.jpg",
       "caption": "&bino&Doors",
       "time": "Nov 04, 2018 11:57 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17933941501211410.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17933941501211410.jpg",
       "caption": "Risoteeeei calabra&poró&mozza",
       "time": "Nov 04, 2018 11:55 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17995157773011468.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17995157773011468.mp4",
       "caption": "#aviseiquenaoiadarcerto",
       "time": "Nov 04, 2018 04:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17923517872237449.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17923517872237449.mp4",
       "caption": "Por isso que família tem que ver só uma vez por ano no natal",
       "time": "Nov 04, 2018 04:38 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17937791893203376.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17937791893203376.jpg",
       "caption": "Famiglia\n\nNunca disse que daria certo",
       "time": "Nov 03, 2018 03:23 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17977350346125190.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17977350346125190.jpg",
       "caption": "Filhotes gemeos de tuiuiú\nSe dão bem\nForam encontradas fora do ninho\nDoa-se @prinepo  @tatinepo ❤️",
       "time": "Nov 02, 2018 09:54 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17877987328282394.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17877987328282394.jpg",
       "caption": "Sangre\nParte#328\n@felipenepo",
       "time": "Nov 02, 2018 09:49 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17966284363148349.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17966284363148349.mp4",
       "caption": "",
       "time": "Nov 02, 2018 07:55 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17977964488121320.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17977964488121320.mp4",
       "caption": "",
       "time": "Nov 02, 2018 07:55 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17982887575100004.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17982887575100004.mp4",
       "caption": "",
       "time": "Nov 02, 2018 07:51 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17994277867028656.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17994277867028656.mp4",
       "caption": "",
       "time": "Nov 02, 2018 06:15 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17896803442268339.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17896803442268339.mp4",
       "caption": "Quero ver pular com pouco vento\nVamooooo",
       "time": "Nov 02, 2018 07:57 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17994723307011241.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17994723307011241.jpg",
       "caption": "",
       "time": "Nov 02, 2018 07:56 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17877907864283541.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17877907864283541.mp4",
       "caption": "",
       "time": "Nov 02, 2018 07:55 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17969653015138769.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17969653015138769.mp4",
       "caption": "",
       "time": "Nov 02, 2018 06:15 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17965862350150910.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17965862350150910.mp4",
       "caption": "#elevadorpanoramico\n#98",
       "time": "Nov 02, 2018 05:53 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17920688335242775.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17920688335242775.jpg",
       "caption": "Rumo @pocosdecaldasoficial \nFamilyTrip\n+5h bus solo\n\nAcordei",
       "time": "Nov 02, 2018 04:21 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17994980965004133.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17994980965004133.jpg",
       "caption": "🌶️",
       "time": "Nov 01, 2018 01:20 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17985957397079697.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17985957397079697.jpg",
       "caption": "#arrozdoce\n#GrandmaFeelings",
       "time": "Oct 31, 2018 04:21 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17918733298232619.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17918733298232619.jpg",
       "caption": "@fabiocapricho",
       "time": "Oct 23, 2018 11:15 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17990904298015712.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17990904298015712.jpg",
       "caption": "Rimos muito e até caçamba teve @felipenepo",
       "time": "Oct 21, 2018 04:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17931752356200308.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17931752356200308.jpg",
       "caption": "Malinha que amo mto!!!\nParabéns casal !!! @laurabertelli \n@jonastaragano 👰💒🤵",
       "time": "Oct 21, 2018 04:18 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17916030406241839.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17916030406241839.mp4",
       "caption": "",
       "time": "Oct 20, 2018 08:59 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17962487404182283.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17962487404182283.mp4",
       "caption": "",
       "time": "Oct 20, 2018 08:59 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17884165927276858.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17884165927276858.jpg",
       "caption": "#sangre @felipenepo",
       "time": "Oct 20, 2018 08:22 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17916622891237097.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17916622891237097.mp4",
       "caption": "",
       "time": "Oct 20, 2018 05:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17968848829094129.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17968848829094129.mp4",
       "caption": "",
       "time": "Oct 20, 2018 05:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17976174415128706.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17976174415128706.mp4",
       "caption": "",
       "time": "Oct 20, 2018 05:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17913177241245901.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17913177241245901.mp4",
       "caption": "",
       "time": "Oct 20, 2018 05:06 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17860175695289037.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17860175695289037.mp4",
       "caption": "",
       "time": "Oct 20, 2018 04:48 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17990578363053298.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17990578363053298.mp4",
       "caption": "",
       "time": "Oct 20, 2018 04:48 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17916432835237874.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17916432835237874.jpg",
       "caption": "Sangreeeeee @felipenepo",
       "time": "Oct 20, 2018 04:00 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17985904540070025.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17985904540070025.jpg",
       "caption": "",
       "time": "Oct 20, 2018 02:29 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17990175172015201.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17990175172015201.jpg",
       "caption": "#Doppo @artur_nepo  @felipenepo  Warmup",
       "time": "Oct 20, 2018 01:41 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17989543558048724.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17989543558048724.mp4",
       "caption": "Glória a deuxxx\nChega de internet por hoje!\n#parei",
       "time": "Oct 14, 2018 09:44 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17890273789270514.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17890273789270514.jpg",
       "caption": "Motivos pelos quais eu acredito no Brasil #selfiegringolesca\n#tomadoemNTN-B\n#acordarvendidoemDI1\n#melhordoBrasiléoBrasil\n#esquerdaNÃO\n#esquerdaNUNCAMAIS\n#CaboDaciolo\n#51",
       "time": "Oct 14, 2018 08:52 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17858304091295441.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17858304091295441.mp4",
       "caption": "Go big or go home #Senna\n#jhonnycash\n#verdadeiroDNAbrl\n#redbulltv\n#ABCofFormulaOne",
       "time": "Oct 14, 2018 08:02 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17964352600136189.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17964352600136189.jpg",
       "caption": "Quando vc deixa a porta de casa aberta no feriado\nCervejas podem aparecer na sua parede",
       "time": "Oct 14, 2018 06:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17963093341138577.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17963093341138577.jpg",
       "caption": "Feliz dia da criança pra vc que descobriu um jeito novo de importunar os amigos @aleturqueto  @phfmarcondes  @lgosilva88  @ressacadabraba",
       "time": "Oct 14, 2018 06:25 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17914801639233417.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17914801639233417.jpg",
       "caption": "👍 Cara de tonto a gente sempre teve,\nMas pelo menos os primos eram(são) bons!!!",
       "time": "Oct 14, 2018 06:17 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17987166976038413.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17987166976038413.jpg",
       "caption": "Oldfhasioned to be the king",
       "time": "Oct 13, 2018 04:26 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17989574410054073.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17989574410054073.mp4",
       "caption": "",
       "time": "Oct 12, 2018 06:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17881083754274856.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17881083754274856.jpg",
       "caption": "Warmup",
       "time": "Oct 12, 2018 06:17 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17897593831247856.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17897593831247856.jpg",
       "caption": "BK em duas rodas\n O guaraná não sobreviveu pra contar",
       "time": "Oct 08, 2018 03:01 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17986565773013083.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17986565773013083.jpg",
       "caption": "Parabéns monstro!!!!\n@pharodrigues",
       "time": "Oct 08, 2018 02:55 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17924395807214456.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17924395807214456.jpg",
       "caption": "Cuarenta y tres ficou pequeno Disputa de grandes GrandMarnier levou!",
       "time": "Oct 07, 2018 09:54 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17965282246091629.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17965282246091629.mp4",
       "caption": "",
       "time": "Oct 07, 2018 09:14 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17965019308086170.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17965019308086170.mp4",
       "caption": "",
       "time": "Oct 07, 2018 09:14 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17896293799250658.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17896293799250658.jpg",
       "caption": "Nunca serão!!!! #boinaAzul\n#solardosAndradas\n#CartadoFico",
       "time": "Oct 07, 2018 05:24 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17986102102041767.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17986102102041767.jpg",
       "caption": "#CPOR\n Velha caserna #aspira",
       "time": "Oct 07, 2018 05:09 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17985763825061359.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17985763825061359.mp4",
       "caption": "Glória a Deuxxx #vote51\n#caboDaciolo\n#saudadedoEnéias\n#tiriricaficoupequeno\n#ngmpodeserpreso",
       "time": "Oct 07, 2018 02:15 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17879242726275599.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17879242726275599.jpg",
       "caption": "#masterchef",
       "time": "Oct 07, 2018 02:04 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17985779059047405.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17985779059047405.jpg",
       "caption": "Veeem",
       "time": "Oct 07, 2018 02:02 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17986035589041059.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17986035589041059.jpg",
       "caption": "#peishhh 😋",
       "time": "Oct 07, 2018 01:56 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17949844813168103.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17949844813168103.jpg",
       "caption": "#kudos\n#newwayhome\n#dodgeV8\n#jáéDia🤔\n#pax",
       "time": "Oct 03, 2018 12:31 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17877656524278517.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17877656524278517.mp4",
       "caption": "#sundaymood \n#redbulltv\n#bigwavedoc\n#PAS",
       "time": "Oct 01, 2018 01:46 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17957370847142810.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17957370847142810.jpg",
       "caption": "@titoferraz  C'est la vie",
       "time": "Sep 24, 2018 10:17 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17953286806156287.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17953286806156287.jpg",
       "caption": "Sangre @felipenepo",
       "time": "Sep 24, 2018 10:11 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17979525463007824.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17979525463007824.jpg",
       "caption": "Qui vaibi @victorlamonica_  Baita casório!!! Parabéns ao casaaal!!",
       "time": "Sep 17, 2018 05:22 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17971272409072582.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17971272409072582.jpg",
       "caption": "",
       "time": "Sep 17, 2018 05:17 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17906547724226628.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17906547724226628.jpg",
       "caption": "#família\n#primos\n#casaVô\n A tia tem a cara da sobrinha!!!",
       "time": "Sep 13, 2018 12:11 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17946123796167872.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17946123796167872.mp4",
       "caption": "@eatalybr",
       "time": "Sep 09, 2018 05:35 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17962510735110711.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17962510735110711.jpg",
       "caption": "👊🏼👊🏼👊🏼👊🏼👊🏼👊🏼👊🏼👊🏼",
       "time": "Sep 05, 2018 12:33 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17886429868253700.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17886429868253700.jpg",
       "caption": "Rfn'br",
       "time": "Sep 03, 2018 01:16 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17914310437213223.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17914310437213223.jpg",
       "caption": "#Pzzday",
       "time": "Sep 03, 2018 12:40 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17960820757113891.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17960820757113891.mp4",
       "caption": "E quando os tios colocam as crianças para dormir... @jpdmarcos \n@ceciliagdmarcos \n@juduenhas\n@reinaldokjr \n@carolcaropitta \n@tidelabarra",
       "time": "Sep 03, 2018 12:28 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17973969010050247.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17973969010050247.mp4",
       "caption": "Pizza Day",
       "time": "Aug 27, 2018 12:27 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17913851425205265.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17913851425205265.mp4",
       "caption": "Brinkss\n Uhaaaaaa",
       "time": "Aug 26, 2018 08:38 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17952535477089607.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17952535477089607.jpg",
       "caption": "",
       "time": "Aug 26, 2018 07:41 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17959133533114403.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17959133533114403.mp4",
       "caption": "Elis&Tom",
       "time": "Aug 25, 2018 09:00 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17949752818083122.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17949752818083122.jpg",
       "caption": "A Cortana tentando ser cool!\n\nBill nunca será Jobs!",
       "time": "Aug 17, 2018 05:57 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17970221227014259.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17970221227014259.jpg",
       "caption": "RIP 🎷 @felipenepo Mustanguera feelings",
       "time": "Aug 17, 2018 04:29 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17969802943010717.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17969802943010717.mp4",
       "caption": "Dps de 2 dias escrevendo a Macro e o melhor é colocar um contador dela executando!!!",
       "time": "Aug 14, 2018 03:25 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17952197935096776.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17952197935096776.jpg",
       "caption": "",
       "time": "Aug 01, 2018 04:10 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17943715702082391.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17943715702082391.mp4",
       "caption": "🤘🏼",
       "time": "Jul 28, 2018 04:41 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17891814106224599.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17891814106224599.jpg",
       "caption": "E como vai o retorno da Copa...",
       "time": "Jul 28, 2018 02:54 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17958368272069048.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17958368272069048.jpg",
       "caption": "",
       "time": "Jul 25, 2018 02:32 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17855407759272515.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17855407759272515.jpg",
       "caption": "",
       "time": "Jul 25, 2018 02:30 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17958243472066660.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17958243472066660.jpg",
       "caption": "",
       "time": "Jul 25, 2018 02:29 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17962968103060547.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17962968103060547.jpg",
       "caption": "",
       "time": "Jul 25, 2018 02:28 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17844786193280697.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17844786193280697.jpg",
       "caption": "",
       "time": "Jul 25, 2018 02:27 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17854620355274517.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17854620355274517.mp4",
       "caption": "Isso compra vôo das 10am 👏🏼",
       "time": "Jul 22, 2018 05:12 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17888968348236203.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17888968348236203.jpg",
       "caption": "♥️POA",
       "time": "Jul 22, 2018 01:51 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17950585678111603.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17950585678111603.jpg",
       "caption": "",
       "time": "Jul 22, 2018 12:55 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17934211003179780.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17934211003179780.jpg",
       "caption": "",
       "time": "Jul 21, 2018 11:07 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17961633307026637.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17961633307026637.jpg",
       "caption": "♥️POA",
       "time": "Jul 21, 2018 05:35 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17871109606258146.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17871109606258146.jpg",
       "caption": "",
       "time": "Jul 20, 2018 12:04 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17899369606216644.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17899369606216644.jpg",
       "caption": "Melhor presente de aniversário é poder ter na sua frente quem você quer se tornar",
       "time": "Jul 18, 2018 08:15 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17946450193099045.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17946450193099045.jpg",
       "caption": "",
       "time": "Jul 14, 2018 11:44 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17960676130028563.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17960676130028563.jpg",
       "caption": "",
       "time": "Jul 14, 2018 11:42 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17934204844133610.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17934204844133610.mp4",
       "caption": "",
       "time": "Jul 09, 2018 11:14 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17924988421173108.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17924988421173108.jpg",
       "caption": "Por isso que hj é domingo e não sábado",
       "time": "Jul 09, 2018 10:32 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17957508994008354.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17957508994008354.mp4",
       "caption": "",
       "time": "Jul 08, 2018 02:12 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17885762128235715.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17885762128235715.jpg",
       "caption": "",
       "time": "Jul 08, 2018 12:32 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17928731947156289.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17928731947156289.mp4",
       "caption": "@lauracossi @aleturqueto",
       "time": "Jul 07, 2018 11:52 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17934120415187757.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17934120415187757.mp4",
       "caption": "",
       "time": "Jul 07, 2018 11:17 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17956138396060081.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17956138396060081.jpg",
       "caption": "",
       "time": "Jul 01, 2018 03:46 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17940100837125383.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17940100837125383.mp4",
       "caption": "Elzinha",
       "time": "Jul 01, 2018 03:42 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17914648738196811.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17914648738196811.jpg",
       "caption": "",
       "time": "Jul 01, 2018 03:37 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17928120265133099.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17928120265133099.mp4",
       "caption": "@kartgranjaviana",
       "time": "Jun 21, 2018 01:01 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17938406293099708.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17938406293099708.jpg",
       "caption": "",
       "time": "Jun 10, 2018 02:39 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17950619899006530.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17950619899006530.jpg",
       "caption": "",
       "time": "Jun 09, 2018 04:08 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17917794481173669.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17917794481173669.mp4",
       "caption": "",
       "time": "Jun 09, 2018 04:03 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17951621704045567.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17951621704045567.jpg",
       "caption": "",
       "time": "Jun 09, 2018 03:58 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17850076549269245.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17850076549269245.jpg",
       "caption": "",
       "time": "Jun 03, 2018 03:09 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17949304240013727.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17949304240013727.mp4",
       "caption": "@fabricaescalada  #Making Off",
       "time": "May 31, 2018 07:49 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17949359368034689.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17949359368034689.mp4",
       "caption": "",
       "time": "May 31, 2018 06:38 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17914778047175998.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17914778047175998.mp4",
       "caption": "Blood\nDrugs\nVisual\n&\nHappy #netflix",
       "time": "May 26, 2018 06:00 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17946157300020156.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17946157300020156.jpg",
       "caption": "",
       "time": "May 17, 2018 04:09 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17858948470245116.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17858948470245116.jpg",
       "caption": "",
       "time": "Apr 07, 2018 09:55 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17918591149078285.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17918591149078285.mp4",
       "caption": "@jpdmarcos  @ceciliagdmarcos",
       "time": "Feb 25, 2018 09:37 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17927014426057633.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17927014426057633.jpg",
       "caption": "Desjejum com Negroni",
       "time": "Feb 24, 2018 10:44 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17910995266120095.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17910995266120095.jpg",
       "caption": "",
       "time": "Feb 21, 2018 04:11 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17864729056218869.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17864729056218869.mp4",
       "caption": "De volta aos 20k sem saia",
       "time": "Feb 15, 2018 09:55 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17901260659138254.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17901260659138254.jpg",
       "caption": "Fomos comprados pelo shake de Nutella do General GP@JARDIM_PAMPLONA",
       "time": "Feb 15, 2018 04:41 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17925973192008471.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17925973192008471.jpg",
       "caption": "🎊 #BELMONT #JOBI",
       "time": "Feb 14, 2018 10:43 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17923901302004265.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17923901302004265.jpg",
       "caption": "",
       "time": "Feb 10, 2018 12:12 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17925291421055089.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17925291421055089.jpg",
       "caption": "Benzina rocks! ERREJOTA, TAMO CHEGANDO!",
       "time": "Feb 09, 2018 01:03 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17911700338103827.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17911700338103827.mp4",
       "caption": "Os $5MM mais bem gastos dos comerciais do SuperBowl",
       "time": "Feb 07, 2018 02:09 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17909074153117997.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17909074153117997.mp4",
       "caption": "Para o #SuperBowlSunday 🏈 Stop no CarnAmauri",
       "time": "Feb 05, 2018 12:42 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17910902407096720.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17910902407096720.jpg",
       "caption": "🤔 Carnamauri🎉 🎉Monobloco",
       "time": "Feb 04, 2018 02:00 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17922459982040435.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17922459982040435.jpg",
       "caption": "🛫 🛬 Dale Carnegie",
       "time": "Feb 01, 2018 01:09 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17924810584030622.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17924810584030622.jpg",
       "caption": "🤖 🤔",
       "time": "Jan 30, 2018 12:11 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17847293281242503.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17847293281242503.mp4",
       "caption": "Mini churros!!! @marianamarcos",
       "time": "Jan 28, 2018 05:56 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17890316203169060.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17890316203169060.jpg",
       "caption": "Café com sorvete!!!\n😋",
       "time": "Jan 27, 2018 05:19 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17913416068073537.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17913416068073537.jpg",
       "caption": "Negroni",
       "time": "Jan 27, 2018 12:21 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17919891205039871.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17919891205039871.jpg",
       "caption": "",
       "time": "Jan 26, 2018 11:40 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17920003240014212.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17920003240014212.jpg",
       "caption": "O crème de la crème",
       "time": "Jan 26, 2018 07:15 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17912764015072245.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17912764015072245.jpg",
       "caption": "Say my name! SextaBurguer @gabrielfilassi",
       "time": "Jan 26, 2018 04:22 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17912750149074451.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17912750149074451.mp4",
       "caption": "",
       "time": "Jan 25, 2018 01:43 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17909105359106517.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17909105359106517.jpg",
       "caption": "#zigpay 👊🏼",
       "time": "Jan 25, 2018 01:11 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17862458062203709.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17862458062203709.mp4",
       "caption": "",
       "time": "Jan 25, 2018 12:04 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17905069057125972.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17905069057125972.jpg",
       "caption": "Rááá!!! Vim atrás de vc!!",
       "time": "Jan 24, 2018 10:45 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17862608059207875.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17862608059207875.jpg",
       "caption": "Moti 😋 🎎",
       "time": "Jan 24, 2018 10:41 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17906244241123413.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17906244241123413.jpg",
       "caption": "Acarajé!!!!",
       "time": "Jan 24, 2018 10:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17896138750141098.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17896138750141098.jpg",
       "caption": "O corpo agradece!!!",
       "time": "Jan 22, 2018 06:16 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17902424503089168.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17902424503089168.mp4",
       "caption": "@artur_nepo",
       "time": "Jan 21, 2018 11:56 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17914426222067016.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17914426222067016.jpg",
       "caption": "Ficha de gin num sobra, né?!",
       "time": "Jan 21, 2018 05:22 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17906594860109785.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17906594860109785.jpg",
       "caption": "",
       "time": "Jan 21, 2018 01:31 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17918441224048223.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17918441224048223.jpg",
       "caption": "Cé loco quase morri!!!",
       "time": "Jan 14, 2018 08:43 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17891477275176925.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17891477275176925.jpg",
       "caption": "Mas foram 3h de chuva!!!",
       "time": "Jan 14, 2018 08:38 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17913307510067151.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17913307510067151.jpg",
       "caption": "Chega tá um puta do Saara",
       "time": "Jan 14, 2018 08:32 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17860412104205794.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17860412104205794.mp4",
       "caption": "",
       "time": "Jan 14, 2018 01:12 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17905380055112595.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17905380055112595.jpg",
       "caption": "@gabrielfilassi  Congrats",
       "time": "Jan 14, 2018 01:10 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17887835788174183.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17887835788174183.jpg",
       "caption": "A gente escuta e anota!",
       "time": "Jan 13, 2018 07:04 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17918613091033475.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17918613091033475.jpg",
       "caption": "Ele fala",
       "time": "Jan 13, 2018 07:00 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17900654113091246.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17900654113091246.jpg",
       "caption": "@gabrielfilassi  Sejamos leve hj no Bday no Copas Bar!!!! 30km \nAquecendo pros 80km de amanhã",
       "time": "Jan 13, 2018 06:01 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17917532749029277.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17917532749029277.mp4",
       "caption": "Gargantinha @titoferraz",
       "time": "Jan 13, 2018 05:56 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17894477287142608.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17894477287142608.jpg",
       "caption": "Na mesma semana que vc comprou a passagem pro carnaval no RJ, chega o celular novo...",
       "time": "Jan 13, 2018 12:48 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17843036341224702.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17843036341224702.jpg",
       "caption": "Baita after",
       "time": "Dec 31, 2017 06:01 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17856195850217754.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17856195850217754.jpg",
       "caption": "&day after",
       "time": "Dec 31, 2017 06:02 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17910648868069427.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17910648868069427.mp4",
       "caption": "",
       "time": "Dec 31, 2017 05:57 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17888704849147263.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17888704849147263.jpg",
       "caption": "@tatinepo",
       "time": "Dec 26, 2017 01:38 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17900389414121391.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17900389414121391.jpg",
       "caption": "@artur_nepo  Conforme premeditado!",
       "time": "Dec 25, 2017 08:31 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17897937913085238.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17897937913085238.jpg",
       "caption": "@artur_nepo  A derrota é inevitável",
       "time": "Dec 25, 2017 08:17 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17891256253140381.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17891256253140381.mp4",
       "caption": "Vovô está seguro!!!",
       "time": "Dec 25, 2017 07:50 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17888593330176323.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17888593330176323.mp4",
       "caption": "",
       "time": "Dec 25, 2017 07:14 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17886768538165469.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17886768538165469.mp4",
       "caption": "Que todos encontrem Jesus em seus corações!!! @aleturqueto",
       "time": "Dec 25, 2017 04:17 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17915215261026251.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17915215261026251.mp4",
       "caption": "@prinepo  @felipenepo  @tatinepo  @sophiahelenanc  @annanepomucenoc",
       "time": "Dec 25, 2017 06:01 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17888227069153104.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17888227069153104.jpg",
       "caption": "Vaai fiiii @felipenepo",
       "time": "Dec 24, 2017 11:37 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17899802767126291.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17899802767126291.jpg",
       "caption": "Znóia Agora é Natal Fckingnepos",
       "time": "Dec 24, 2017 10:53 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17889570649133253.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17889570649133253.jpg",
       "caption": "#prenatale Nepo's blood @annanepomucenoc  @felipenepo",
       "time": "Dec 24, 2017 06:27 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17914222939029514.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17914222939029514.mp4",
       "caption": "Prénatale",
       "time": "Dec 24, 2017 06:00 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17855258242212566.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17855258242212566.jpg",
       "caption": "Vôti @fabsgc",
       "time": "Dec 23, 2017 08:52 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17913917860014108.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17913917860014108.jpg",
       "caption": "Pessoas querendo dar liquidez pro celular parado, eis um comprador!!!! Compro celular, principalmente se ele puder ser acoplado no corpo",
       "time": "Dec 23, 2017 07:42 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17890218580141749.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17890218580141749.jpg",
       "caption": "Novo Hobby Colecionador de caixas de celular #3meses",
       "time": "Dec 23, 2017 07:39 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17911308364065475.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17911308364065475.mp4",
       "caption": "pro café da manhã Raimundos",
       "time": "Dec 22, 2017 11:33 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17914448539018493.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17914448539018493.jpg",
       "caption": "",
       "time": "Dec 17, 2017 02:52 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17898876943123636.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17898876943123636.mp4",
       "caption": "In POA we trust",
       "time": "Dec 16, 2017 06:32 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17886702397176672.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17886702397176672.jpg",
       "caption": "",
       "time": "Dec 16, 2017 06:30 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17904245587076619.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17904245587076619.jpg",
       "caption": "❤️",
       "time": "Dec 16, 2017 06:29 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17912768851001260.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17912768851001260.jpg",
       "caption": "#filass",
       "time": "Dec 10, 2017 02:16 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/stories/17852641021211936.mp4",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/stories/17852641021211936.mp4",
       "caption": "",
       "time": "Dec 08, 2017 08:38 PM UTC"
     }
@@ -30378,132 +30378,132 @@
   ],
   "archived_posts": [
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17864184748536306.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17864184748536306.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17864184748536306.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17864184748536306.jpg"
       ],
       "caption": "Birthplace of Silicon Valley",
       "time": "Oct 31, 2019 05:52 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17930506747233120.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17930506747233120.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17930506747233120.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17930506747233120.jpg"
       ],
       "caption": "\"Sob o céu e o sol da Bahia (...)\"",
       "time": "Nov 30, 2018 12:42 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17913757489259774.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17913757489259774.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17913757489259774.jpg",
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17966775217161966.jpg",
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17989897378119553.jpg",
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/18005038048013898.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17913757489259774.jpg",
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17966775217161966.jpg",
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17989897378119553.jpg",
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/18005038048013898.jpg"
       ],
       "caption": "",
       "time": "Nov 29, 2018 04:36 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17843463004039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17843463004039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17843463004039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17843463004039585.jpg"
       ],
       "caption": "#feEPedro",
       "time": "Sep 06, 2015 12:38 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842631659039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842631659039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842631659039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842631659039585.jpg"
       ],
       "caption": "Gás pra continuar com ânimo...",
       "time": "Dec 05, 2014 05:41 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842461676039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842461676039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842461676039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842461676039585.jpg"
       ],
       "caption": "Uma semana comendo 328 tipos de carne e vinho, mas na hora de curar a ressaca esse veneno é a melhor opção do menu...",
       "time": "Jul 21, 2013 09:09 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842442932039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842442932039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842442932039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842442932039585.jpg"
       ],
       "caption": "End of the party...",
       "time": "May 18, 2013 07:59 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842412704039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842412704039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842412704039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842412704039585.jpg"
       ],
       "caption": "Furikaki lovers... @karinaysuzuki",
       "time": "Jan 02, 2013 11:56 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842389682039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842389682039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842389682039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842389682039585.jpg"
       ],
       "caption": "Tá começando a ficar divertido...",
       "time": "Aug 27, 2012 12:06 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842388971039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842388971039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842388971039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842388971039585.jpg"
       ],
       "caption": "Bike@Metro! Deixando o carro em casa e praticando um pouco de cidadania!!!",
       "time": "Aug 23, 2012 01:19 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842386520039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842386520039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842386520039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842386520039585.jpg"
       ],
       "caption": "Night sessions",
       "time": "Aug 12, 2012 03:07 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842385392039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842385392039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842385392039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842385392039585.jpg"
       ],
       "caption": "",
       "time": "Aug 05, 2012 10:51 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842384843039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842384843039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842384843039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842384843039585.jpg"
       ],
       "caption": "Magrelinha in the House!!",
       "time": "Aug 02, 2012 02:50 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842366387039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842366387039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842366387039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842366387039585.jpg"
       ],
       "caption": "",
       "time": "Feb 02, 2012 03:51 AM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842366327039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842366327039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842366327039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842366327039585.jpg"
       ],
       "caption": "",
       "time": "Jan 29, 2012 10:11 PM UTC"
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842128607039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842128607039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/posts/17842128607039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/posts/17842128607039585.jpg"
       ],
       "caption": "Undercover",
       "time": "Aug 08, 2015 05:04 PM UTC"
@@ -32609,481 +32609,481 @@
   ],
   "other": [
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841609304039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841609304039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841609304039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841609304039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841609307039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841609307039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841609307039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841609307039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841719122039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841719122039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841719122039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841719122039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841749284039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841749284039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841749284039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841749284039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841762787039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841762787039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841762787039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841762787039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841783760039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841783760039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841783760039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841783760039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841785902039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841785902039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841785902039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841785902039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841787252039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841787252039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841787252039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841787252039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841790843039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841790843039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841790843039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841790843039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841813976039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841813976039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841813976039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841813976039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841861883039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841861883039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17841861883039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17841861883039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842074511098490.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842074511098490.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842074511098490.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842074511098490.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842078879039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842078879039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842078879039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842078879039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842175566039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842175566039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842175566039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842175566039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842180720039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842180720039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842180720039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842180720039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842368718039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842368718039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842368718039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842368718039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842370332039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842370332039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842370332039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842370332039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842386685039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842386685039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842386685039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842386685039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842392070039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842392070039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842392070039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842392070039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842396762039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842396762039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842396762039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842396762039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842397827039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842397827039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842397827039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842397827039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842400671039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842400671039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842400671039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842400671039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842409011039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842409011039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842409011039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842409011039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842418704039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842418704039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842418704039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842418704039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842429777039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842429777039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842429777039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842429777039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842437076039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842437076039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842437076039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842437076039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842596946039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842596946039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842596946039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842596946039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842627471039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842627471039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842627471039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842627471039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842635787039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842635787039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842635787039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842635787039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842827463039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842827463039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17842827463039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17842827463039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17843464309039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17843464309039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17843464309039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17843464309039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17843733394105964.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17843733394105964.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17843733394105964.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17843733394105964.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17844455317126969.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17844455317126969.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17844455317126969.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17844455317126969.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17844872986039585.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17844872986039585.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17844872986039585.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17844872986039585.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17847670204003319.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17847670204003319.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17847670204003319.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17847670204003319.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17847695293075297.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17847695293075297.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17847695293075297.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17847695293075297.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17848040923129688.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17848040923129688.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17848040923129688.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17848040923129688.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17849256211015587.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17849256211015587.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17849256211015587.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17849256211015587.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17849512261670625.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17849512261670625.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17849512261670625.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17849512261670625.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17853618261134821.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17853618261134821.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17853618261134821.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17853618261134821.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17853678187053834.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17853678187053834.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17853678187053834.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17853678187053834.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17853993256038922.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17853993256038922.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17853993256038922.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17853993256038922.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17855129158026932.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17855129158026932.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17855129158026932.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17855129158026932.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17855549824052612.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17855549824052612.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17855549824052612.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17855549824052612.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17858736322042175.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17858736322042175.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17858736322042175.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17858736322042175.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17859974908031814.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17859974908031814.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17859974908031814.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17859974908031814.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17860611781012015.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17860611781012015.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17860611781012015.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17860611781012015.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17863732429175191.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17863732429175191.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17863732429175191.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17863732429175191.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17868429988015668.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17868429988015668.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17868429988015668.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17868429988015668.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17870545477197527.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17870545477197527.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17870545477197527.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17870545477197527.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17884699135160757.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17884699135160757.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17884699135160757.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17884699135160757.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17901741250139204.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17901741250139204.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17901741250139204.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17901741250139204.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17910003022006203.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17910003022006203.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17910003022006203.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17910003022006203.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17917182994054974.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17917182994054974.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17917182994054974.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17917182994054974.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17935273183146520.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17935273183146520.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17935273183146520.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17935273183146520.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17950179250105242.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17950179250105242.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17950179250105242.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17950179250105242.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17950378357101127.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17950378357101127.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17950378357101127.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17950378357101127.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17996506861180942.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17996506861180942.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/17996506861180942.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/17996506861180942.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/18013220839023603.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/18013220839023603.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/18013220839023603.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/18013220839023603.jpg"
       ],
       "caption": "",
       "time": ""
     },
     {
-      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/18041138272221105.jpg",
+      "media": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/18041138272221105.jpg",
       "media_all": [
-        "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/other/18041138272221105.jpg"
+        "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/other/18041138272221105.jpg"
       ],
       "caption": "",
       "time": ""

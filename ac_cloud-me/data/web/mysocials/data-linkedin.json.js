@@ -1,5 +1,5 @@
 // GENERATED FROM linkedin.json by front-data-json-js-wrapper.sh — DO NOT EDIT BY HAND.
-// Re-generate with: bash a-Portals/linktree/src/data/build.sh
+// Re-generate with: bash a_Portals/linktree/src/data/build.sh
 (function () {
   var g = (typeof globalThis !== "undefined") ? globalThis : (typeof window !== "undefined" ? window : this);
   g.PORTAL_DATA = g.PORTAL_DATA || {};
@@ -14,7 +14,7 @@
   "open_to_work": "London Area, United Kingdom +4 more | On-site · Hybrid · Remote",
   "current": "LEAF.Y",
   "url": "linkedin.com/in/diegonmarcos",
-  "photo": "https://cdn.jsdelivr.net/gh/diegonmarcos/front-assets-cdn@main/b-Media/mySocials/static/media/profile-photo.jpg"
+  "photo": "https://cdn.jsdelivr.net/gh/diegonmarcos/cloudy_db_assets-cdn@main/b_Media/mySocials/static/media/profile-photo.jpg"
  },
  "about": "@tl;dr 🚲\n> ABOUT\n    \"At 38 years old holds a B.Sc. as a Civil Structural Engineer, Corporate Analyst for 3y, Investment Banker and Private Equity analyst for 10y, pivoting into Software and Product Engineering. For 5y lived in 5 EU cities, moved over 180+ cities across 45+ countries, with Spanish and Brazilian roots based in Berlin.\"\n\n@L E A F | @N E X U S | @S T A R K\n\n@experiences ⛵\n>> COMPUTER SCIENCE\n      In a three-years Software Engineering course pursuing a career shift. Projects handling: Data Structures in C, Algorithms in C, System Process in Unix, Network Architecture and Web Servers, Computer Graphics and Games.\n>> CAPITAL MARKETS\n      For 10 years in Capital Markets, played roles as Investment Banker, Venture Capital Analyst, Portfolio Manager in Wealth Management and Real Estate Private Equity Analyst.\n>> CORPORATE BUSINESS\n      For 4 years in Real Estate Development played roles in: Business Development, FP&A and Investor Relations.\n>> CIVIL ENGINEERING\n      For 2 years managed on-site construction of 2 residential towers and builded 9 emergency houses for poverty alleviation.\n\n>>> INTERNATIONAL EXPERIENCE\n      For 5 years travelled to 180+ cities over 45+ countries across 5 continents; Lived in 5 european cities, born and raised in São Paulo.\n>>> NGO\n      For 2 years worked at an NGO on social development and poverty alleviation.\n>>> ARMY\n      For 1 year forged as a cadet in the Army Reserve Officers' Training Corps; Commissioned as a 2nd Lieutenant, Ordnance Corps.\n\n@studies ✒️\n>> COMPUTER SCIENCE\n      Course Software Engineering (3 years); Course Product Management (3 months).\n>> CAPITAL MARKETS\n      Specialization in Investment Banking, Private Equity and Portfolio Management (1 year); Course Macro Economics Modeling (3 months).\n>> ENGINEERING\n      B.Sc. Civil Engineering (5 years). Majors: Structural, Water and Transportation. Minors: Math and Physics.\n>> LANGUAGES\n      Portuguese (Native), English (C1), Spanish (B2), Gallego (B1) and Deutsche (A1); Holds Spanish and Brazilian citizenship.\n\n@personal ⚖️\n•  INTERESTS\n      Modern Physics (Quantum and Particle), Global Macro, Mediterranean and Vegetarian Cooking, Backpacking, Jazzy Music.\n•  ENDURANCE\n      Hiking, Rock Climbing, Cycling, Skydiving and Bungee Jump.\n•  COMPETING\n      Tennis (5y), Handball (3y), Rugby (1y) and Waterpolo (1y).\n•  MINDFULNESS\n      Aikido, Yoga and Meditation.\n•  PURSUITS\n      Oceans Seven Endurance, pre-Tour de France cycling and Seven Summits hike.\n\n🔗 https://linktree.diegonmarcos.com",
  "featured": [
@@ -52,7 +52,7 @@
    "company": "Career break",
    "dates": "Jan 2024 - Present · 2 yrs 7 mos",
    "location": "Berlin, Berlin, Germany",
-   "description": "@brief\n\"Software Engineering, Computer Science, Product Management and Design\"\n(3 years | 3,024 hours | Berlin and Barcelona)\n\n(https://42berlin.de)\n\n---\n\n@projects\n> https://github.com/diegonmarcos/\n  - https://github.com/diegonmarcos/diegonmarcos.github.io\n  - https://github.com/diegonmarcos/cloudy-t-infra\n  - https://github.com/diegonmarcos/cloud-infra-desktop"
+   "description": "@brief\n\"Software Engineering, Computer Science, Product Management and Design\"\n(3 years | 3,024 hours | Berlin and Barcelona)\n\n(https://42berlin.de)\n\n---\n\n@projects\n> https://github.com/diegonmarcos/\n  - https://github.com/diegonmarcos/diegonmarcos.github.io\n  - https://github.com/diegonmarcos/cloud-infra\n  - https://github.com/diegonmarcos/cloud-infra-desktop"
   },
   {
    "title": "Capital Markets Advisor",
