@@ -243,7 +243,7 @@ check(reader is not None, "PdfReaderActivity is declared")
 if reader is not None:
     check(reader.get(A + "exported") == "true", "it is exported (cloud-mail's chooser reaches it)")
     check(handles_pdf(reader) == {"content", "file"}, "it takes VIEW application/pdf for content and file (%r)" % handles_pdf(reader))
-    check(pdf_filter_label(reader) == "@string/open_in_cloud_drive", "the chooser row other apps see is labelled by a declared string (%r)" % pdf_filter_label(reader))
+    check(pdf_filter_label(reader) == "@string/open_pdf_in_drive", "the chooser row other apps see is labelled by a declared string (%r)" % pdf_filter_label(reader))
 main = acts.get(".MainActivity")
 check(main is not None and handles_pdf(main) is None,
       "MainActivity no longer takes PDFs (one reader, not two doors)")

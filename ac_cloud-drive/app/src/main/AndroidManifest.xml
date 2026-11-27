@@ -173,11 +173,11 @@
         <activity
             android:name=".PdfReaderActivity"
             android:exported="true"
-            android:label="@string/open_in_cloud_drive"
+            android:label="@string/open_pdf_in_drive"
             android:theme="@style/Theme.CloudDrive"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode"
             android:windowSoftInputMode="adjustResize">
-            <intent-filter android:label="@string/open_in_cloud_drive">
+            <intent-filter android:label="@string/open_pdf_in_drive">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="content" android:mimeType="application/pdf" />

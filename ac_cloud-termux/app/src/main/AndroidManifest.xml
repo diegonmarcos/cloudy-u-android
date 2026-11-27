@@ -186,7 +186,7 @@
 
                 <category android:name="android.intent.category.DEFAULT" />
 
-                <data android:mimeType="application/*" />
+                <!-- #1949 no application/* here: a PDF (application/pdf) is opened by Cloud Drive and Cloud Notes, not offered to the terminal. SEND keeps it. -->
                 <data android:mimeType="audio/*" />
                 <data android:mimeType="image/*" />
                 <data android:mimeType="text/*" />

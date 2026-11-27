@@ -1,0 +1,65 @@
+# #1949 PDF manifest tests with mutations. The baseline must be green; each mutation applies ONE break to a manifest or a label and the
+# test must catch it. The verdict is read from the JUnit XML the test writes (a failure element = KILLED), never from the exit code alone.
+name: test-pdf-manifests-1949
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ac_cloud-drive/app/src/main/AndroidManifest.xml'
+      - 'ac_cloud-drive/app/src/main/res/values/strings.xml'
+      - 'ac_cloud-termux/app/src/main/AndroidManifest.xml'
+      - 'ac_cloud-nix-on-droid/app/src/main/AndroidManifest.xml'
+      - 'ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/AndroidManifest.xml'
+      - 'ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/res/values/strings.xml'
+      - '1_cicd/src/scripts/test-pdf-manifests-1949.py'
+      - '.github/workflows/test-pdf-manifests-1949.yml'
+permissions:
+  contents: read
+jobs:
+  manifests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Baseline is green
+        run: |
+          python3 1_cicd/src/scripts/test-pdf-manifests-1949.py --junit base.xml || true
+          python3 - <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          r = ET.parse("base.xml").getroot()
+          bad = [c.get("name") for c in r.iter("testcase") if c.find("failure") is not None]
+          print("tests:", r.get("tests"), "failed:", bad)
+          sys.exit(1 if bad or int(r.get("tests")) < 7 else 0)
+          PY
+      - name: Mutations are killed (verdict from the XML)
+        run: |
+          T=ac_cloud-termux/app/src/main/AndroidManifest.xml
+          N=ac_cloud-nix-on-droid/app/src/main/AndroidManifest.xml
+          D=ac_cloud-drive/app/src/main/AndroidManifest.xml
+          NS=ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/res/values/strings.xml
+          NM=ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/AndroidManifest.xml
+          fail=0
+          run_mut() { # name expected-test then the sed arguments for one file
+            name=$1; want=$2; file=$3; shift 3
+            cp "$file" "$file.orig"; sed -i "$@" "$file"
+            cmp -s "$file" "$file.orig" && { echo "::error::mutation $name changed nothing"; fail=1; mv "$file.orig" "$file"; return; }
+            python3 1_cicd/src/scripts/test-pdf-manifests-1949.py --junit "m-$name.xml" >/dev/null || true
+            python3 - "m-$name.xml" "$want" "$name" <<'PY' || fail=1
+          import sys, xml.etree.ElementTree as ET
+          r = ET.parse(sys.argv[1]).getroot()
+          hit = [c for c in r.iter("testcase") if c.get("name") == sys.argv[2] and c.find("failure") is not None]
+          print(sys.argv[3], "KILLED by", sys.argv[2]) if hit else (print("::error::mutation", sys.argv[3], "SURVIVED: ", sys.argv[2], "stayed green"), sys.exit(1))
+          PY
+            mv "$file.orig" "$file"
+          }
+          # Termux claims application/* for VIEW again
+          run_mut termux-app-star t_termux_not_offered_pdf $T 's#<!-- \#1949 no application/\* here.*-->#<data android:mimeType="application/*" />#'
+          # Nix claims application/pdf for VIEW again
+          run_mut nix-app-star t_nix_not_offered_pdf $N 's#<!-- \#1949 no application/\* here.*-->#<data android:mimeType="application/pdf" />#'
+          # Drive's PDF row goes back to the generic label
+          run_mut drive-label t_pdf_label_text_names_app_and_pdf $D 's#open_pdf_in_drive#open_in_cloud_drive#g'
+          # Notes' PDF label stops naming the app
+          run_mut notes-label-text t_pdf_label_text_names_app_and_pdf $NS 's#Cloud Notes: PDF viewer#PDF viewer#'
+          # Notes' PDF filter is dropped
+          run_mut notes-no-pdf t_notes_offers_pdf $NM 's#<data android:mimeType="application/pdf" />#<data android:mimeType="application/x-none" />#'
+          exit $fail
