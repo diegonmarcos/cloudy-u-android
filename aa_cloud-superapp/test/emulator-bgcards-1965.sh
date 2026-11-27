@@ -21,6 +21,9 @@ adb logcat -c
 # The hub opened once, as on a phone (a never-opened app is in the stopped state; cards are sent with INCLUDE_STOPPED anyway).
 adb shell am start -W -n "$H/.MainActivity" >/dev/null 2>&1 || adb shell monkey -p "$H" 1 >/dev/null 2>&1; sleep 8
 adb shell input keyevent KEYCODE_HOME
+# Nav: tracking switched on as the Start button leaves it (its prefs file), so the user-start intent is accepted.
+NU=$(adb shell stat -c %u "/data/data/$N" | tr -d '\r')
+adb shell "mkdir -p /data/data/$N/shared_prefs && echo '<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\" ?><map><boolean name=\"enabled\" value=\"true\" /></map>' > /data/data/$N/shared_prefs/maps_tracker_state.xml && chown -R $NU:$NU /data/data/$N/shared_prefs && restorecon -R /data/data/$N/shared_prefs"
 # Services: Nav tracker (the user's Start action), WebServer keep-alive (its switch file + launch), Mail push, Store batch.
 adb shell am start-foreground-service -a com.diegonmarcos.cloudnav.maps.ACTION_USER_START -n "$N/com.diegonmarcos.cloudnav.maps.LocationTrackerService" >"$OUT/start-nav.txt" 2>&1
 adb shell "mkdir -p /sdcard/Android/data/$W/files; echo '{\"server\":true,\"keep_alive\":true}' > /sdcard/Android/data/$W/files/power.json"

@@ -155,7 +155,7 @@ class LocationTrackerService : Service() {
         }
         if (!trackerPrefs.enabled) {
             Log.i(TAG, "Tracker enabled=false — stopping self")
-            stopSelf()
+            answerForegroundThenStop()
             return START_NOT_STICKY
         }
         // #1666 the tracker runs only from the user's Start: an intent without ACTION_USER_START (a revival, a stale
@@ -163,7 +163,7 @@ class LocationTrackerService : Service() {
         if (!isUserStart(intent?.action)) {
             Log.i(TAG, "Tracker start without the user's Start (${intent?.action}) — refused, tracking off")
             trackerPrefs.enabled = false
-            stopSelf()
+            answerForegroundThenStop()
             return START_NOT_STICKY
         }
         val card = buildNotification(lastSubtitle)
@@ -428,6 +428,17 @@ class LocationTrackerService : Service() {
     }
 
     // ── Notification plumbing ──────────────────────────────────────
+    /**
+     * #1965 A refused start still owes startForeground: every startForegroundService must be answered within the deadline, or
+     * Android kills the app (ForegroundServiceDidNotStartInTimeException, seen on the #1965 emulator walk for a start while
+     * tracking is off). Permissions are held on these paths, so the location-typed start is legal; it is removed at once.
+     */
+    private fun answerForegroundThenStop() {
+        runCatching { startForeground(NOTIF_ID, buildNotification(lastSubtitle)) }
+        runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
+        stopSelf()
+    }
+
     private fun ensureChannel() = NavCard.ensureChannel(this)
 
     /** #1944 the card, with Cloud Nav's navigation lines when the Navigation tab has published them ([NavCardState]). */
