@@ -142,7 +142,9 @@ class MeTabsTest {
     fun `#1901 Proj opens on Lnktree, Prof is Profiles | the company sites (More removed, #1937), and Tasks is off the bar but still declared`() {
         assertEquals("\uD83C\uDFE0 Home", Sections.byId("proj")!!.pages.first().label)   // #1918 the Linktree emoji prefix
         assertEquals(listOf("Profiles", "Leaf.y", "Nexus.z", "Stark.x"), Sections.byId("prof")!!.pages.map { it.label })   // #1937 More (Professional, Work, Study) removed by owner order
-        assertEquals(listOf("Personal", "ig0", "ig1", "ig2", "face0", "Pinterest", "YouTube", "Tidal", "LinkedIn", "Orkut"), Sections.byId("pers")!!.pages.first().pages.map { it.label })
+        assertEquals(listOf("Personal", "Instagram", "Social"), Sections.byId("pers")!!.pages.first().pages.map { it.label })   // #1976 Pers > Media holds the three social pages
+        assertEquals(listOf("ig0", "ig1", "ig2"), Sections.byId("pers")!!.pages.first().pages[1].pages.map { it.label })
+        assertEquals(listOf("face0", "Pinterest", "YouTube", "Tidal", "LinkedIn", "Orkut"), Sections.byId("pers")!!.pages.first().pages[2].pages.map { it.label })
         assertTrue("Tasks left the bar", Sections.bottom().none { it.id == "tasks" })
         assertEquals(listOf("roadmaps", "backlogs"), Sections.byId("tasks")!!.pages.map { it.id }.take(2))  // the baked vault row pages follow
     }

@@ -108,21 +108,21 @@ if "MeShell(" not in code(os.path.join(MAIN, "java/com/diegonmarcos/cloudme/Main
 ach = {}
 ACH_FILE = {"personal": "growth", "pursuits": "endurance", "international": "geo"}
 for pid in ("personal", "pursuits", "international"):
-    f = os.path.join(app, f"data/ui/pers/achieves/{ACH_FILE[pid]}.json")
+    f = os.path.join(app, f"data/ui/pers/{ACH_FILE[pid]}.json")
     ach[pid] = json.load(open(f, encoding="utf-8")) if os.path.exists(f) else []
     if not ach[pid]:
-        bad("achieves", f"data/ui/pers/achieves/{ACH_FILE[pid]}.json is missing or empty")
+        bad("achieves", f"data/ui/pers/{ACH_FILE[pid]}.json is missing or empty")
 ACH_TABS = ["geo", "endurance", "growth", "community", "by30", "by40", "by50"]
-# #1901 Personal Archives (the Achieves tabs) is a subpage of Pers: Profiles, Health, Astro, DD, Personal Archives; Study and Work stay under Prof > Profiles
+# #1976 Pers is two rows (groups): Profiles = Media, Health, Astro, DD; Achieves (was Personal Archives) = the Achieves tabs; Study and Work stay under Prof > Profiles
 _exp = secs.get("pers", {})
 _sub = {p["id"]: p for p in _exp.get("pages", [])}
-if [p["id"] for p in _exp.get("pages", [])] != ["pers-profiles", "health", "astro", "dd", "achieves"] or [p["label"] for p in _exp.get("pages", [])] != ["Profiles", "Health", "Astro", "DD", "Personal Archives"]:
-    bad("achieves", "Pers is not the five subpages Profiles, Health, Astro, DD, Personal Archives")
+if [p["id"] for p in _exp.get("pages", [])] != ["pers-media", "health", "astro", "dd"] + ACH_TABS or [g["label"] for g in _exp.get("groups", [])] != ["Profiles", "Achieves"]:
+    bad("achieves", "Pers is not the two rows Profiles (Media, Health, Astro, DD) and Achieves (the seven tabs)")
 if "study" in secs or "achieves" in secs or "experiences" in secs:
     bad("achieves", "Study, Achieves or Experiences is still a section of its own")
-_ach = _sub.get("achieves", {})
-if [p["id"] for p in _ach.get("pages", [])] != ACH_TABS or \
-   [p["label"] for p in _ach.get("pages", [])] != ["Geo", "Endurance", "Personal Growth", "Community", "By 30", "By 40", "By 50"]:
+_ach = [g for g in _exp.get("groups", []) if g["id"] == "achieves"]
+if not _ach or _ach[0]["pages"] != ACH_TABS or \
+   [_sub[t]["label"] for t in ACH_TABS if t in _sub] != ["Geo", "Endurance", "Personal Growth", "Community", "By 30", "By 40", "By 50"]:
     bad("achieves", "Achieves pages are not Geo, Endurance, Personal Growth, Community, By 30, By 40, By 50")
 EXPECT = {
  "personal": [
@@ -150,30 +150,28 @@ EXPECT = {
   "🎾 Tennis | 🏊🏻‍♂️ Swimming | 🚲 Cycling | 🏃🏻‍♂️ Running | 🚴🏻‍♂️🏊🏻‍♂️ Biathlon",
   "⛳ Golf | ⛸️ Ice Lake Skying"],
  "international": [
-  "B3) International Experience (Dec 2020 – Present)", "@brief", "@projects",
-  "For 5 years, travelled to 180+ cities (110+ NM regions) over 45+ countries across 5 continents; lived in 5 European cities, born and raised in São Paulo.",
-  "A ship in harbor is safer, but that is not what ships are built for.", "John A. Shedd",
-  "Portuguese, English and Spanish", "Gallego", "Deutsche", "Catalán, French and Italian.",
+  "B3) International Experience (Dec 2020 – Present)", "@projects",
+  # #1976 owner-named removals: the Brief (note and quote) and Languages blocks, so those sentences are not expected any more
   "Born and raised in São Paulo, the 5th biggest city in the world",
   "On long stays lived (studying and working remotely) in 5 European cities: Berlin and Barcelona; London, Valencia and Paris",
   "Also took long stays in: Rio de Janeiro, Casablanca and Chiang Mai",
   "On short stays traveled over 180+ cities, 110+ NomadMania Regions, 45+ countries across 5 continents",
   "Visited: World Heritage Sites (60+), New Seven Wonder+Pyramids (3/8) and The Seven Natural WW (1/7)",
   "Places {175 Cities (108 NM) | 43 Countries}",
-  "EU", "102 (70)", "⚙️ Germanic", "🪆 Slavic", "🏛️ Romanic-Greek", "🏔️ Non-Euro", "NORTH/SOUTH AMERICA", "51 (22)",
+  "EU", "102", "70", "⚙️ Germanic", "🪆 Slavic", "🏛️ Romanic-Greek", "🏔️ Non-Euro", "NORTH/SOUTH AMERICA", "51", "22",
   "🗽 Anglo-Franco", "🪭 Spanish-Aztec/Inca", "🎉 Romance-African", "OCEANIA", "🦘 Anglo-Aborigenal", "🪶 Anglo-Maori", "🗿 Poly-Micronesia",
-  "ASIA", "13 (9)", "🕯️ Abrahamic", "🧘🏻‍♂️ Hindu;Buddhist;Tao/Conf", "AFRICA", "9 (4)", "🫖 North-Maghreb", "🥁 Francosphere", "💎 Lusosphere", "🪨 Anglosphere"],
+  "ASIA", "13", "9", "🕯️ Abrahamic", "🧘🏻‍♂️ Hindu;Buddhist;Tao/Conf", "AFRICA", "9", "4", "🫖 North-Maghreb", "🥁 Francosphere", "💎 Lusosphere", "🪨 Anglosphere"],
 }
 for pid, want in EXPECT.items():
-    have = set(strings(ach[pid]))
+    have = set(strings(ach[pid])) | {x.strip("\u2003 ") for x in strings(ach[pid])}   # #1976 a region is indented under its continent
     for w in want:
         if w not in have:
             bad("achieves", f"{pid}: the owner's text is missing or altered: {w!r}")
-tbl = [b for b in ach["international"] if isinstance(b, dict) and b.get("kind") == "table"]
+tbl = [b for b in ach["international"] if isinstance(b, dict) and b.get("kind") == "table" and b.get("title", "").startswith("Places")]
 if not tbl or (tbl[0].get("link") or {}).get("url") != "https://nomadmania.com/profile/73889":
     bad("achieves", "the NomadMania region table has no link to https://nomadmania.com/profile/73889")
-elif len(tbl[0].get("rows", [])) != 21:
-    bad("achieves", f"the NomadMania table has {len(tbl[0].get('rows', []))} rows, the owner's text has 21")
+elif len(tbl[0].get("rows", [])) != 22:
+    bad("achieves", f"the NomadMania table has {len(tbl[0].get('rows', []))} rows, the owner's text has 21 and #1976 adds the TOTAL row")
 stack = code(os.path.join(MAIN, "java/com/diegonmarcos/cloudme/StackScreen.kt"))
 kinds = set(re.findall(r'^\s*"([a-z_]+)"(?:\s*,\s*"[a-z_]+")*\s*->', stack, flags=re.M))
 for pid, blocks in ach.items():
@@ -229,26 +227,26 @@ if [p["id"] for p in _pj.get("pages", [])] != ["pj-home", "pj-repos", "pj-unix",
     bad("pages", "Proj pages are not Home, Unix, CG, Capital, Hardtech, Wiki, Projects, 42 (#1914)")
 if ui.get("default_section") != "lnktree" or (_lt.get("pages") or [{}])[0].get("id") != "lt-lnktree-site" or (_pj.get("pages") or [{}])[0].get("id") != "pj-home":
     bad("pages", "the app does not open on Lnktree, the Lnktree entry on its Lnktree site, or Proj on its Home (#1914)")
-_pr = {p["id"]: p for p in _sub.get("pers-profiles", {}).get("pages", [])}
-if list(_pr) != ["personal", "ig0", "ig1", "ig2", "face0", "pinterest", "youtube", "tidal", "linkedin", "orkut"]:
-    bad("pages", "Pers > Profiles is not Personal, ig0, ig1, ig2, face0, Pinterest, YouTube, Tidal, LinkedIn, Orkut (#1913)")
+_pr = {p["id"]: p for p in _sub.get("pers-media", {}).get("pages", [])}
+if list(_pr) != ["personal", "pers-instagram", "pers-social"] or [p["id"] for p in _pr.get("pers-instagram", {}).get("pages", [])] + [p["id"] for p in _pr.get("pers-social", {}).get("pages", [])] != ["ig0", "ig1", "ig2", "face0", "pinterest", "youtube", "tidal", "linkedin", "orkut"]:
+    bad("pages", "Pers > Media is not Personal | Instagram (ig0, ig1, ig2) | Social (face0, Pinterest, YouTube, Tidal, LinkedIn, Orkut) (#1913, #1976)")
 if [p["id"] for p in _sub.get("health", {}).get("pages", [])] != ["trackers", "plan", "health-profile"]:
     bad("pages", "Pers > Health is not Trackers, Plan, Record")
-for _pid, _u, _rel in (("leafy", "https://diegonmarcos.github.io/leafy/", "prof/leafy"), ("nexus", "https://diegonmarcos.github.io/nexus/", "prof/nexus"), ("stark", "https://diegonmarcos.github.io/stark/", "prof/stark"), ("astro", "https://diegonmarcos.github.io/myAstro/", "pers/astro"), ("personal", "https://diegonmarcos.github.io/mySocials/", "pers/pers-profiles/personal"), ("lt-lnktree-site", "https://linktree.diegonmarcos.com/", "lnktree/lt-lnktree-site")):
+for _pid, _u, _rel in (("leafy", "https://diegonmarcos.github.io/leafy/", "prof/leafy"), ("nexus", "https://diegonmarcos.github.io/nexus/", "prof/nexus"), ("stark", "https://diegonmarcos.github.io/stark/", "prof/stark"), ("astro", "https://diegonmarcos.github.io/myAstro/", "pers/astro"), ("personal", "https://diegonmarcos.github.io/mySocials/", "pers/pers-media/personal"), ("lt-lnktree-site", "https://linktree.diegonmarcos.com/", "lnktree/lt-lnktree-site")):
     _f = os.path.join(app, f"data/ui/{_rel}.json")
     _b = json.load(open(_f, encoding="utf-8")) if os.path.exists(_f) else []
     if len(_b) != 1 or _b[0].get("id") != "web" or _b[0].get("url") != _u:
         bad("pages", f"{_rel} is not the embedded page {_u}")
-for _t in ACH_TABS:
-    _ex = os.path.join(app, f"data/ui/pers/achieves/{_t}.json")
+for _t in ACH_TABS[1:]:   # #1976 Geo's ledger view was removed by owner order (its records stay in experiences_user)
+    _ex = os.path.join(app, f"data/ui/pers/{_t}.json")
     _eb = [b for b in (json.load(open(_ex, encoding="utf-8")) if os.path.exists(_ex) else []) if b.get("kind") == "ledger"]
     _ls = _eb[0].get("ledgers", []) if len(_eb) == 1 else []
     if len(_eb) != 1 or _eb[0].get("store") != "experiences_user" or [l["collection"] for l in _ls] != [f"{_t}_done", f"{_t}_todo"] \
        or [l.get("move_to") for l in _ls] != [f"{_t}_todo", f"{_t}_done"] or _ls[1].get("move_stamp") != "date":
         bad("pages", f"Achieves > {_t} is not one Done/To do ledger over experiences_user that toggles both ways and stamps the date")
-_geo = [b for b in json.load(open(os.path.join(app, "data/ui/pers/achieves/geo.json"), encoding="utf-8")) if b.get("kind") == "ledger"]
-if not _geo or (_geo[0].get("geo") or {}).get("visited") != "geo_done" or (_geo[0].get("geo") or {}).get("wishlist") != "geo_todo":
-    bad("pages", "Achieves > Geo has no live stats over geo_done and its geo_todo wishlist")
+_geo = [b for b in json.load(open(os.path.join(app, "data/ui/pers/geo.json"), encoding="utf-8")) if b.get("kind") == "ledger"]
+if _geo or (_exp.get("migration") or {}).get("by_value", {}).get("🌐 Travel") != "geo":
+    bad("pages", "Achieves > Geo still has the Places ledger view, or the migration of the Travel records into geo_done/geo_todo is gone (#1976)")
 _m = _exp.get("migration") or {}
 if _m.get("store") != "experiences_user" or set(_m.get("legacy", {})) != {"done", "todo"} or \
    any(t not in ACH_TABS for t in list(_m.get("by_value", {}).values()) + [_m.get("default")]):
@@ -265,7 +263,7 @@ if [p["id"] for p in secs.get("tasks", {}).get("pages", [])] != ["roadmaps", "ba
 # both drawing the mysocials web pages; Tasks stays declared off the bar with every page, so nothing is dropped.
 if "socials" in secs or "socials" in ui.get("bottom_nav", []) or os.path.isdir(os.path.join(app, "data/ui/socials")):
     bad("pages", "the Socials section is declared again (it is Proj; its two tabs live in Prof and Pers)")
-for _pg, _url, _rel in (("ig0", "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html", "pers/pers-profiles/ig0"),):
+for _pg, _url, _rel in (("ig0", "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html", "pers/pers-media/pers-instagram/ig0"),):
     _sf = os.path.join(app, f"data/ui/{_rel}.json")
     _sj = json.load(open(_sf, encoding="utf-8")) if os.path.exists(_sf) else [{}]
     if _sj[0].get("kind") != "fragment" or _sj[0].get("id") != "web" or _sj[0].get("url") != _url:
@@ -393,7 +391,7 @@ if "roadmaps" not in [p["id"] for p in secs.get("tasks", {}).get("pages", [])] o
     bad("pages", "Tasks > RoadMaps does not draw the folder_tree")
 if '"folder_tree" -> FolderTreeScreen(' not in code(os.path.join(MAIN, "java/com/diegonmarcos/cloudme/SectionScreen.kt")):
     bad("pages", "SectionScreen does not draw folder_tree pages")
-for sid, pg in (("llc", "employed"), ("llc", "side-hustles"), ("tasks", "backlogs"), ("tasks", "roadmaps"), ("pers/achieves", "geo")):
+for sid, pg in (("llc", "employed"), ("llc", "side-hustles"), ("tasks", "backlogs"), ("tasks", "roadmaps"), ("pers", "geo")):
     f = os.path.join(app, f"data/ui/{sid}/{pg}.json")
     if not os.path.exists(f) or not json.load(open(f, encoding="utf-8")):
         bad("pages", f"data/ui/{sid}/{pg}.json is missing or empty")
@@ -553,18 +551,18 @@ mutant pages "an LLC group icon is not a ui-icons name" "sed -i 's/\"icon\": \"p
 mutant pages "a Buro ledger names the wrong store" "sed -i 's/\"store\": \"buro_user\"/\"store\": \"llc_user\"/' data/ui/buro/assets.json"
 mutant pages "a ledger names an unknown report" "sed -i 's/budget_vs_actual/made_up_report/' data/ui/buro/budgeting.json"
 mutant pages "the llc store is undeclared in fleet-config" "sed -i 's/\"llc_user\"/\"llc_gone\"/' ../fleet-private-data/fleet-config.json"
-mutant achieves "one owner sentence altered" "sed -i 's/Aikido, Yoga and Meditation\\./Aikido and Yoga./' data/ui/pers/achieves/growth.json"
-mutant achieves "NomadMania link dropped" "sed -i 's#https://nomadmania.com/profile/73889#https://example.com#' data/ui/pers/achieves/geo.json"
-mutant achieves "Trips tab comes back" "python3 -c \"import json;d=json.load(open('build.json'));[p['pages'].append({'id':'trips','label':'Trips'}) for s in d['ui']['sections'] if s['id']=='pers' for p in s['pages'] if p['id']=='achieves'];json.dump(d,open('build.json','w'))\""
-mutant achieves "Geo is not the first tab" "python3 -c \"import json;d=json.load(open('build.json'));[p['pages'].insert(1,p['pages'].pop(0)) for s in d['ui']['sections'] if s['id']=='pers' for p in s['pages'] if p['id']=='achieves'];json.dump(d,open('build.json','w'))\""
-mutant pages "a tab loses Mark undone" "sed -i 's/\"move_label\": \"Mark undone\"/\"x\": 1/;0,/\"move_to\": \"by40_todo\"/s//\"move_to\": \"\"/' data/ui/pers/achieves/by40.json"
-mutant pages "the done date is no longer stamped" "sed -i 's/\"move_stamp\": \"date\"/\"move_stamp\": \"\"/' data/ui/pers/achieves/community.json"
+mutant achieves "one owner sentence altered" "sed -i 's/Aikido, Yoga and Meditation\\./Aikido and Yoga./' data/ui/pers/growth.json"
+mutant achieves "NomadMania link dropped" "sed -i 's#https://nomadmania.com/profile/73889#https://example.com#' data/ui/pers/geo.json"
+mutant achieves "Trips tab comes back" "python3 -c \"import json;d=json.load(open('build.json'));[g['pages'].append('trips') for s in d['ui']['sections'] if s['id']=='pers' for g in s['groups'] if g['id']=='achieves'];json.dump(d,open('build.json','w'))\""
+mutant achieves "Geo is not the first tab" "python3 -c \"import json;d=json.load(open('build.json'));[g['pages'].insert(1,g['pages'].pop(0)) for s in d['ui']['sections'] if s['id']=='pers' for g in s['groups'] if g['id']=='achieves'];json.dump(d,open('build.json','w'))\""
+mutant pages "a tab loses Mark undone" "sed -i 's/\"move_label\": \"Mark undone\"/\"x\": 1/;0,/\"move_to\": \"by40_todo\"/s//\"move_to\": \"\"/' data/ui/pers/by40.json"
+mutant pages "the done date is no longer stamped" "sed -i 's/\"move_stamp\": \"date\"/\"move_stamp\": \"\"/' data/ui/pers/community.json"
 mutant achieves "Study is a section again" "python3 -c \"import json;d=json.load(open('build.json'));d['ui']['sections'].append({'id':'study','label':'Study','pages':[]});json.dump(d,open('build.json','w'))\""
 mutant pages "Work dropped from Prof" "python3 -c \"import json;d=json.load(open('build.json'));[s['pages'][0]['pages'].pop(1) for s in d['ui']['sections'] if s['id']=='prof'];json.dump(d,open('build.json','w'))\""
 mutant nav-order "Tasks after Lnktree" "python3 -c \"import json;d=json.load(open('build.json'));b=d['ui']['bottom_nav'];b[2],b[3]=b[3],b[2];json.dump(d,open('build.json','w'))\""
 
 mutant pages "RoadMaps page draws no tree" "sed -i 's/folder_tree/stack/' data/ui/tasks/roadmaps.json"
-mutant pages "Geo loses its stats" "sed -i 's/\"visited\": \"geo_done\"/\"visited\": \"nope\"/' data/ui/pers/achieves/geo.json"
+mutant pages "Geo gets its Places ledger view back" "python3 -c \"import json;f='data/ui/pers/geo.json';d=json.load(open(f));d.insert(0,{'kind':'ledger'});json.dump(d,open(f,'w'))\""
 mutant pages "migration sends records to an undeclared tab" "sed -i 's/\"default\": \"endurance\"/\"default\": \"trips\"/' build.json"
 mutant no-drawer "the drawer is back in the shell" "echo 'val d = ModalNavigationDrawer' >> app/src/main/java/com/diegonmarcos/cloudme/MainActivity.kt"
 mutant no-drawer "a drag handler is back in the shell" "echo 'val d = detectHorizontalDragGestures' >> app/src/main/java/com/diegonmarcos/cloudme/StackScreen.kt"

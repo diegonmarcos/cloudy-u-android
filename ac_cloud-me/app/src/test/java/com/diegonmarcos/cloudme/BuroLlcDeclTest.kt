@@ -41,8 +41,8 @@ class BuroLlcDeclTest {
         val ui = JSONObject(BuroLlcTestData.text("build.json")).getJSONObject("ui")
         val bar = ui.getJSONArray("bottom_nav").let { a -> (0 until a.length()).map { a.getString(it) } }
         assertFalse("tasks" in bar)
-        assertEquals("https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html", page("pers/pers-profiles", "ig0").getJSONObject(0).getString("url"))
-        for ((d, p) in listOf("pers/pers-profiles" to "ig0")) assertEquals("web", page(d, p).getJSONObject(0).getString("id"))
+        assertEquals("https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html", page("pers/pers-media/pers-instagram", "ig0").getJSONObject(0).getString("url"))
+        for ((d, p) in listOf("pers/pers-media/pers-instagram" to "ig0")) assertEquals("web", page(d, p).getJSONObject(0).getString("id"))
         // nothing dropped: Pers keeps Personal, Tasks keeps Tree and Due with their groups (#1937: Prof > More, with Professional, was removed by owner order)
         val profiles = { s: String -> sections.getValue(s).getJSONArray("pages").getJSONObject(0).getJSONArray("pages") }
         assertTrue("personal" in ids(profiles("pers")))
@@ -175,7 +175,7 @@ class BuroLlcDeclTest {
     @Test fun `the six embedded sites open by their https URL, each declared in its own page file`() {
         val want = mapOf("prof" to "leafy" to "https://diegonmarcos.github.io/leafy/", "prof" to "nexus" to "https://diegonmarcos.github.io/nexus/",
             "prof" to "stark" to "https://diegonmarcos.github.io/stark/", "pers" to "astro" to "https://diegonmarcos.github.io/myAstro/",
-            "pers/pers-profiles" to "personal" to "https://diegonmarcos.github.io/mySocials/", "lnktree" to "lt-lnktree-site" to "https://linktree.diegonmarcos.com/")
+            "pers/pers-media" to "personal" to "https://diegonmarcos.github.io/mySocials/", "lnktree" to "lt-lnktree-site" to "https://linktree.diegonmarcos.com/")
         for (entry in want) {
             val (loc, url) = entry.key to entry.value
             val b = page(loc.first, loc.second).getJSONObject(0)

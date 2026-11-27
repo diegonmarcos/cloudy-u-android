@@ -23,10 +23,11 @@ class AchievesTest {
     private val experiences = sections.first { it.getString("id") == "pers" }   // #1901 Personal Archives moved from Experiences to Pers
     private val prof = sections.first { it.getString("id") == "prof" }
     private fun sub(o: JSONObject) = o.getJSONArray("pages").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
-    private val section = sub(experiences).first { it.getString("id") == "achieves" }
+    private val achieves = experiences.getJSONArray("groups").let { g -> (0 until g.length()).map { g.getJSONObject(it) }.first { it.getString("id") == "achieves" } }   // #1976 the Achieves row of Pers
     /** Every page id of a section, at every depth (a deep link names any of them). */
     private fun flat(o: JSONObject): List<String> = if (!o.has("pages")) emptyList() else sub(o).flatMap { listOf(it.getString("id")) + flat(it) }
-    private fun page(p: String) = JSONArray(BuroLlcTestData.text("data/ui/pers/achieves/$p.json"))
+    private fun page(p: String) = JSONArray(BuroLlcTestData.text(if (p == "geo") "test/fixtures/geo-before-1976.json" else "data/ui/pers/$p.json"))   // Geo's ledger view was removed (#1976): its last form is the fixture
+    private val ledgerTabs = tabs - "geo"
     private fun ledger(p: String) = page(p).let { a -> (0 until a.length()).map { a.getJSONObject(it) }.single { it.optString("kind") == "ledger" } }
     private fun defs(p: String) = ledger(p).getJSONArray("ledgers").let { a -> (0 until a.length()).map { LedgerDef.parse(a.getJSONObject(it)) } }
     private val allSections = JSONObject(BuroLlcTestData.text("build.json")).getJSONObject("ui").getJSONArray("sections")
@@ -41,14 +42,16 @@ class AchievesTest {
     }
 
     @Test fun `the tabs are Geo Endurance Personal Growth Community By 30 By 40 By 50 and Trips is gone`() {
-        val pages = section.getJSONArray("pages").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
-        assertEquals(tabs, pages.map { it.getString("id") })
+        val ids = achieves.getJSONArray("pages").let { a -> (0 until a.length()).map { a.getString(it) } }
+        assertEquals(tabs, ids)
+        assertEquals("Achieves", achieves.getString("label"))   // #1976 renamed from Personal Archives
+        val pages = sub(experiences).filter { it.getString("id") in ids }
         assertEquals(listOf("Geo", "Endurance", "Personal Growth", "Community", "By 30", "By 40", "By 50"), pages.map { it.getString("label") })
         assertTrue(pages.none { it.getString("label").contains("Trips") || it.getString("label").contains("International") })
     }
 
-    @Test fun `every tab is a Done and To do ledger over experiences_user that toggles both ways and stamps the done date`() {
-        for (t in tabs) {
+    @Test fun `every tab but Geo is a Done and To do ledger over experiences_user that toggles both ways and stamps the done date`() {
+        for (t in ledgerTabs) {
             assertEquals(t, LedgerStore.EXP, ledger(t).getString("store"))
             val (done, todo) = defs(t)
             assertEquals(listOf("${t}_done", "${t}_todo"), listOf(done.collection, todo.collection))
@@ -99,8 +102,10 @@ class AchievesTest {
     }
 
     @Test fun `every migration target is a declared tab with that collection`() {
+        // Geo's view is gone (#1976) but its collections keep receiving the migrated Travel records: they are store-only and the last declaration is the fixture's
         for (tab in spec.byValue.values + spec.default) for (suffix in spec.legacy.values)
             assertTrue("$tab$suffix", defs(tab).any { it.collection == tab + suffix })
+        assertTrue("Geo has no ledger view any more", (0 until JSONArray(BuroLlcTestData.text("data/ui/pers/geo.json")).length()).none { JSONArray(BuroLlcTestData.text("data/ui/pers/geo.json")).getJSONObject(it).optString("kind") == "ledger" })
         assertNull(AchievesMigration.declared(allSections, LedgerStore.BURO))
     }
 
@@ -136,11 +141,11 @@ class AchievesTest {
     }
 
     @Test fun `the owner's old Achieves text moved into the new tabs`() {
-        val all = tabs.joinToString("") { BuroLlcTestData.text("data/ui/pers/achieves/$it.json") }
+        val all = tabs.joinToString("") { BuroLlcTestData.text("data/ui/pers/$it.json") }
         for (w in listOf("B1) Personal", "B2) Personal Pursuits", "B3) International Experience", "https://nomadmania.com/profile/73889",
                 "My Bucket 50 (things before 50)", "Oceans Seven endurance swims", "🪂 Skydiving"))
             assertTrue(w, all.contains(w))
-        assertTrue(BuroLlcTestData.text("data/ui/pers/achieves/geo.json").contains("B3) International Experience"))
+        assertTrue(BuroLlcTestData.text("data/ui/pers/geo.json").contains("B3) International Experience"))
         // #1975 the trip management blocks MOVED to Cloud Tasks > Files > RoadMap (its test-tasks-trip-parity.sh holds every field)
         for (w in listOf("Trip management", "Before you go", "Documents & visas")) assertTrue("$w left Geo", !all.contains(w))
     }
@@ -149,8 +154,8 @@ class AchievesTest {
         val bar = ui.getJSONArray("bottom_nav").let { a -> (0 until a.length()).map { a.getString(it) } }
         assertEquals(listOf("pers", "prof", "proj", "lnktree", "inventory", "buro", "llc"), bar)
         assertTrue(sections.none { it.getString("id") in setOf("study", "achieves", "experiences", "health", "socials") })
-        assertEquals(listOf("pers-profiles", "health", "astro", "dd", "achieves"), sub(experiences).map { it.getString("id") })
-        assertEquals(listOf("Profiles", "Health", "Astro", "DD", "Personal Archives"), sub(experiences).map { it.getString("label") })
+        assertEquals(listOf("pers-media", "health", "astro", "dd") + tabs, sub(experiences).map { it.getString("id") })   // #1976 two rows: Profiles | Media Health Astro DD, Achieves | the tabs
+        assertEquals(listOf("Media", "Health", "Astro", "DD", "Geo", "Endurance", "Personal Growth", "Community", "By 30", "By 40", "By 50"), sub(experiences).map { it.getString("label") })
         // #1937 owner-ordered removal: Prof > More (Professional, Work, Study > CV, Roadmap) is gone; Prof is Profiles (LinkedIn, CV) | Leaf.y, Nexus.z, Stark.x
         assertEquals(listOf("prof-web", "leafy", "nexus", "stark"), sub(prof).map { it.getString("id") })
         assertEquals(listOf("prof-professional", "prof-linkedin", "prof-portfolio", "prof-developer", "prof-cv"), sub(sub(prof)[0]).map { it.getString("id") })
@@ -178,6 +183,7 @@ class AchievesTest {
         // #1901 the Experiences ids of the layout in between: the Achieves tabs went to Pers; #1937 Work, Study, CV and Roadmap (removed by owner order) resolve to Prof > Profiles
         for (p in listOf("work", "study", "cv", "roadmap")) assertEquals("prof" to "prof-web", LegacyRoutes.resolve("experiences", p))
         for (p in listOf("prof-profiles", "professional", "work", "study", "cv", "roadmap")) assertEquals("prof" to "prof-web", LegacyRoutes.resolve("prof", p))
-        for (p in listOf("achieves", "geo", "endurance", "growth", "community", "by30", "by40", "by50")) assertEquals("pers" to p, LegacyRoutes.resolve("experiences", p))
+        for (p in tabs) assertEquals("pers" to p, LegacyRoutes.resolve("experiences", p))
+        assertEquals("pers" to "geo", LegacyRoutes.resolve("experiences", "achieves"))   // #1976 the Achieves container is a row now: its old id opens its first tab
     }
 }

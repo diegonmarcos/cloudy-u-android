@@ -53,7 +53,7 @@ class LnktreeCacheDeclTest {
 
     @Test fun `the pages the cache covers are the https web pages of the section`() {
         val files = mapOf("leafy" to "prof/leafy", "nexus" to "prof/nexus", "stark" to "prof/stark", "astro" to "pers/astro", "lt-lnktree-site" to "lnktree/lt-lnktree-site",
-            "personal" to "pers/pers-profiles/personal", "ig0" to "pers/pers-profiles/ig0", "orkut" to "pers/pers-profiles/orkut",
+            "personal" to "pers/pers-media/personal", "ig0" to "pers/pers-media/pers-instagram/ig0", "orkut" to "pers/pers-media/pers-social/orkut",
             "health-profile" to "pers/health/health-profile", "dd" to "pers/dd", "pj-cg-omniverse" to "proj/pj-cg/pj-cg-omniverse", "lt-area-unix" to "lnktree/lt-area-unix")
         val got = files.mapNotNull { (id, f) -> LnktreePages.fromStack(id, JSONArray(BuroLlcTestData.text("data/ui/$f.json")), cfg) }
         assertEquals(setOf("leafy", "nexus", "stark", "astro", "lt-lnktree-site", "personal", "ig0", "orkut", "pj-cg-omniverse"), got.map { it.id }.toSet())

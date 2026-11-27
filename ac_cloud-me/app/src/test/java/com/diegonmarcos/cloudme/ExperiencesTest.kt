@@ -16,14 +16,15 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class ExperiencesTest {
-    private val pages = /* #1937 Prof > Work and Study > Roadmap were removed by owner order */ listOf("geo", "endurance", "growth", "community", "by30", "by40", "by50").map { "pers/achieves/$it" }
-    private fun block(p: String): JSONObject = JSONArray(BuroLlcTestData.text("data/ui/$p.json")).let { a ->
+    private val pages = /* #1937 Prof > Work and Study > Roadmap were removed by owner order */ listOf("endurance", "growth", "community", "by30", "by40", "by50").map { "pers/$it" }   // #1976 Geo's ledger view was removed by owner order, its records stay in experiences_user
+    /** The Geo ledger block as it was before #1976 (test/fixtures/geo-before-1976.json): GeoStats and the Geo grouping are still tested against it. */
+    private fun block(p: String): JSONObject = JSONArray(BuroLlcTestData.text(if (p == "pers/geo") "test/fixtures/geo-before-1976.json" else "data/ui/$p.json")).let { a ->
         (0 until a.length()).map { a.getJSONObject(it) }.single { it.optString("kind") == "ledger" }
     }
     private fun defs(p: String) = block(p).getJSONArray("ledgers").let { a -> (0 until a.length()).map { LedgerDef.parse(a.getJSONObject(it)) } }
 
     /** By 30's two collections: two done, one planned, one in progress. */
-    private val by30 = defs("pers/achieves/by30")
+    private val by30 = defs("pers/by30")
     private val data = LedgerData()
         .added("by30_done", mapOf("title" to "Degree", "category" to "💼 Career and Finance", "date" to "2015-12-01"))
         .added("by30_done", mapOf("title" to "Marathon", "category" to "🌍 Health & Wellness", "date" to "2017-05-01"))
@@ -56,7 +57,7 @@ class ExperiencesTest {
         assertEquals(ExpStatus.IN_PROGRESS, planned.single { it.title == "Fund" }.status)
         assertEquals(ExpStatus.PLANNED, planned.single { it.title == "Pilot licence" }.status)
         // Declared rows land on their side read-only; an accepted suggestion stops showing as one.
-        val end = defs("pers/achieves/endurance")
+        val end = defs("pers/endurance")
         val (eDone, ePlan) = ExperiencesModel.split(ExperiencesModel.items(end, LedgerData()))
         assertEquals(end[0].builtin.size, eDone.size); assertTrue(eDone.all { it.readOnly })
         assertEquals(end[1].suggestions.size, ePlan.count { it.suggestion >= 0 })
@@ -94,7 +95,7 @@ class ExperiencesTest {
         assertEquals("💼 Career and Finance", ExperiencesModel.counts(ExperiencesModel.items(by30, data)).first().category)
         assertEquals(0.5f, ExperiencesModel.progress(2, 2)); assertEquals(0f, ExperiencesModel.progress(0, 0))
         // Geo groups by continent; a record with none is "Other".
-        val geo = defs("pers/achieves/geo")
+        val geo = defs("pers/geo")
         val g = ExperiencesModel.items(geo, LedgerData().added("geo_todo", mapOf("title" to "Tokyo", "country" to "Japan")), "continent")
         assertEquals("Other", g.single { it.title == "Tokyo" }.category)
         assertTrue(ExperiencesModel.counts(g).any { it.category == "Europe" && it.done > 0 })
@@ -131,9 +132,9 @@ class ExperiencesTest {
         // Planned: Pilot licence 2030 is past 40 (2028), so 50; Fund is undated, so its own 30; Planned 2027 -> 40; Someday -> 50.
         assertEquals(listOf(1, 1, 2), m.map { it.planned })
         assertEquals(listOf(true, false, false), m.map { it.reached })
-        val declared = block("pers/achieves/by40").getJSONObject("milestones")
+        val declared = block("pers/by40").getJSONObject("milestones")
         assertEquals(40, declared.getInt("current")); assertTrue(declared.getInt("born") in 1900..2026)
-        assertFalse(block("pers/achieves/geo").has("milestones"))
+        assertFalse(block("pers/geo").has("milestones"))
     }
 
     @Test fun `the category icon is the leading emoji, else the tab's`() {

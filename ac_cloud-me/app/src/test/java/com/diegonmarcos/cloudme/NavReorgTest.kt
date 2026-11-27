@@ -41,22 +41,30 @@ class NavReorgTest {
         for (gone in listOf("health", "experiences", "socials")) assertEquals("$gone moved, it is no section", null, Sections.byId(gone))
     }
 
-    @Test fun `Pers is Profiles Health Astro DD Personal Archives with Health holding the whole former Health section`() {
+    @Test fun `Pers is two rows, Profiles Media Health Astro DD over Achieves Geo to By 50, with Health holding the whole former Health section`() {
         val pers = Sections.byId("pers")!!
-        assertEquals(listOf("Profiles", "Health", "Astro", "DD", "Personal Archives"), pers.pages.map { it.label })
-        assertEquals(listOf("personal", "ig0", "ig1", "ig2", "face0", "pinterest", "youtube", "tidal", "linkedin", "orkut"), ids(pers.page("pers-profiles")!!.pages))
+        // #1976 one flat strip of pages, drawn as the two declared rows (nav_mode horizontal_two_rows, groups)
+        assertEquals(listOf("Media", "Health", "Astro", "DD", "Geo", "Endurance", "Personal Growth", "Community", "By 30", "By 40", "By 50"), pers.pages.map { it.label })
+        assertEquals(listOf(listOf("Profiles", "pers-media", "health", "astro", "dd"), listOf("Achieves", "geo", "endurance", "growth", "community", "by30", "by40", "by50")),
+            pers.nav.rowGroups().map { g -> listOf(g.label) + g.pages.map { it.id } })
+        assertEquals(listOf("personal", "pers-instagram", "pers-social"), ids(pers.page("pers-media")!!.pages))   // Media holds the three social pages as its tabs
+        assertEquals(listOf("ig0", "ig1", "ig2"), ids(pers.page("pers-instagram")!!.pages))
+        assertEquals(listOf("face0", "pinterest", "youtube", "tidal", "linkedin", "orkut"), ids(pers.page("pers-social")!!.pages))
         val health = pers.page("health")!!
         assertEquals(listOf("trackers", "plan", "health-profile"), ids(health.pages))
         assertEquals(listOf("tracked", "activities", "bodycomp", "hr", "sleep"), ids(pers.page("trackers")!!.pages))
         assertEquals(14, pers.page("plan")!!.pages.size)
-        assertEquals(listOf("geo", "endurance", "growth", "community", "by30", "by40", "by50"), ids(pers.page("achieves")!!.pages))
         // the page chain IS the folder path of the page's content file
         assertEquals(listOf("health", "trackers", "tracked"), pers.path("tracked").map { it.id })
-        assertEquals(listOf("achieves", "geo"), pers.path("geo").map { it.id })
-        // each container opens its first leaf; Pers opens on Profiles > Personal, Health on Tracked
+        assertEquals(listOf("geo"), pers.path("geo").map { it.id })
+        assertEquals(listOf("pers-media", "pers-instagram", "ig0"), pers.path("ig0").map { it.id })
+        // each container opens its first leaf; Pers opens on Media > Personal, Health on Tracked
         assertEquals("personal", leafOf("pers", null))
         assertEquals("tracked", leafOf("pers", "health"))
-        assertEquals("geo", leafOf("pers", "achieves"))
+        assertEquals("ig0", leafOf("pers", "pers-instagram"))
+        // the retired container ids resolve through ui.renamed
+        assertEquals("pers" to "pers-media", LegacyRoutes.resolve("pers", "pers-profiles"))
+        assertEquals("pers" to "geo", LegacyRoutes.resolve("pers", "achieves"))
     }
 
     @Test fun `Prof is Profiles then Leaf y Nexus z Stark x and Proj is Lnktree then the areas, Lnktree first and default`() {
@@ -101,7 +109,7 @@ class NavReorgTest {
         val want = mapOf(
             ("health" to "home") to ("pers" to "home"), ("health" to "tracked") to ("pers" to "tracked"), ("health" to "workout") to ("pers" to "workout"),
             ("health" to null) to ("pers" to null),
-            ("experiences" to "work") to ("prof" to "prof-web"), ("experiences" to "cv") to ("prof" to "prof-web"), ("prof" to "prof-profiles") to ("prof" to "prof-web"), ("prof" to "study") to ("prof" to "prof-web"), ("experiences" to "achieves") to ("pers" to "achieves"),
+            ("experiences" to "work") to ("prof" to "prof-web"), ("experiences" to "cv") to ("prof" to "prof-web"), ("prof" to "prof-profiles") to ("prof" to "prof-web"), ("prof" to "study") to ("prof" to "prof-web"), ("experiences" to "achieves") to ("pers" to "geo"),
             ("experiences" to "geo") to ("pers" to "geo"), ("experiences" to "by50") to ("pers" to "by50"),
             ("socials" to "socials-professional") to ("prof" to "prof-web"), ("socials" to "socials-personal") to ("pers" to "ig0"), ("pers" to "instagram") to ("pers" to "ig0"), ("pers" to "social") to ("pers" to "ig0"),
             ("lnktree" to "professional") to ("lnktree" to "lt-professional"), ("lnktree" to "personal") to ("lnktree" to "lt-personal"),

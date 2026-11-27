@@ -1,0 +1,442 @@
+[
+  {
+    "kind": "ledger",
+    "view": "done_plan",
+    "store": "experiences_user",
+    "currency": "",
+    "reports": [],
+    "title": "🌍 Places",
+    "emoji": "🌍",
+    "ledgers": [
+      {
+        "collection": "geo_done",
+        "title": "✅ Done",
+        "empty": "No place recorded yet. Add each city with its country, continent and visits.",
+        "fields": [
+          {
+            "id": "title",
+            "label": "City / place",
+            "type": "text",
+            "required": true
+          },
+          {
+            "id": "country",
+            "label": "Country",
+            "type": "text",
+            "required": true
+          },
+          {
+            "id": "continent",
+            "label": "Continent",
+            "type": "choice",
+            "options": [
+              "Europe",
+              "South America",
+              "North America",
+              "Asia",
+              "Africa",
+              "Oceania",
+              "Antarctica"
+            ],
+            "required": true
+          },
+          {
+            "id": "date",
+            "label": "First visit",
+            "type": "date"
+          },
+          {
+            "id": "last",
+            "label": "Last visit",
+            "type": "date"
+          },
+          {
+            "id": "note",
+            "label": "Note",
+            "type": "text"
+          },
+          {
+            "id": "link",
+            "label": "Link / evidence",
+            "type": "text"
+          }
+        ],
+        "move_to": "geo_todo",
+        "move_label": "Mark undone",
+        "builtin": [
+          {
+            "title": "São Paulo",
+            "country": "Brazil",
+            "continent": "South America",
+            "note": "Born and raised (International Experience)"
+          },
+          {
+            "title": "Berlin",
+            "country": "Germany",
+            "continent": "Europe",
+            "note": "Long stay (International Experience)"
+          },
+          {
+            "title": "Barcelona",
+            "country": "Spain",
+            "continent": "Europe",
+            "note": "Long stay (International Experience)"
+          },
+          {
+            "title": "London",
+            "country": "United Kingdom",
+            "continent": "Europe",
+            "note": "Long stay (International Experience)"
+          },
+          {
+            "title": "Valencia",
+            "country": "Spain",
+            "continent": "Europe",
+            "note": "Long stay (International Experience)"
+          },
+          {
+            "title": "Paris",
+            "country": "France",
+            "continent": "Europe",
+            "note": "Long stay (International Experience)"
+          },
+          {
+            "title": "Rio de Janeiro",
+            "country": "Brazil",
+            "continent": "South America",
+            "note": "Long stay (International Experience)"
+          },
+          {
+            "title": "Casablanca",
+            "country": "Morocco",
+            "continent": "Africa",
+            "note": "Long stay (International Experience)"
+          },
+          {
+            "title": "Chiang Mai",
+            "country": "Thailand",
+            "continent": "Asia",
+            "note": "Long stay (International Experience)"
+          }
+        ]
+      },
+      {
+        "collection": "geo_todo",
+        "title": "🎯 To do",
+        "empty": "Wishlist empty. Add the places to see next.",
+        "fields": [
+          {
+            "id": "title",
+            "label": "City / place",
+            "type": "text",
+            "required": true
+          },
+          {
+            "id": "country",
+            "label": "Country",
+            "type": "text",
+            "required": true
+          },
+          {
+            "id": "continent",
+            "label": "Continent",
+            "type": "choice",
+            "options": [
+              "Europe",
+              "South America",
+              "North America",
+              "Asia",
+              "Africa",
+              "Oceania",
+              "Antarctica"
+            ],
+            "required": true
+          },
+          {
+            "id": "status",
+            "label": "Status",
+            "type": "choice",
+            "options": [
+              "Planned",
+              "In progress"
+            ]
+          },
+          {
+            "id": "date",
+            "label": "Target date",
+            "type": "date"
+          },
+          {
+            "id": "last",
+            "label": "Last visit",
+            "type": "date"
+          },
+          {
+            "id": "note",
+            "label": "Note",
+            "type": "text"
+          },
+          {
+            "id": "link",
+            "label": "Link / evidence",
+            "type": "text"
+          }
+        ],
+        "move_to": "geo_done",
+        "move_label": "Mark done",
+        "move_stamp": "date"
+      }
+    ],
+    "geo": {
+      "visited": "geo_done",
+      "wishlist": "geo_todo",
+      "world_countries": 195,
+      "world_continents": 7,
+      "declared": {
+        "label": "NomadMania profile",
+        "cities": 175,
+        "countries": 43,
+        "continents": 5
+      }
+    },
+    "group": "continent"
+  },
+  {
+    "kind": "section_title",
+    "title": "B3) International Experience (Dec 2020 – Present)"
+  },
+  {
+    "kind": "section_title",
+    "title": "@brief"
+  },
+  {
+    "kind": "note",
+    "title": "",
+    "body": "For 5 years, travelled to 180+ cities (110+ NM regions) over 45+ countries across 5 continents; lived in 5 European cities, born and raised in São Paulo."
+  },
+  {
+    "kind": "quote",
+    "text": "A ship in harbor is safer, but that is not what ships are built for.",
+    "by": "John A. Shedd"
+  },
+  {
+    "kind": "section_title",
+    "title": "@projects"
+  },
+  {
+    "kind": "bullets",
+    "title": "Languages",
+    "items": [
+      {
+        "label": "Conversation Level",
+        "text": "Portuguese, English and Spanish"
+      },
+      {
+        "label": "Intermediate Level",
+        "text": "Gallego"
+      },
+      {
+        "label": "Beginner Level",
+        "text": "Deutsche"
+      },
+      {
+        "label": "Basic Knowledge",
+        "text": "Catalán, French and Italian."
+      }
+    ]
+  },
+  {
+    "kind": "bullets",
+    "title": "Long Stays",
+    "items": [
+      {
+        "text": "Born and raised in São Paulo, the 5th biggest city in the world"
+      },
+      {
+        "text": "On long stays lived (studying and working remotely) in 5 European cities: Berlin and Barcelona; London, Valencia and Paris"
+      },
+      {
+        "text": "Also took long stays in: Rio de Janeiro, Casablanca and Chiang Mai"
+      }
+    ]
+  },
+  {
+    "kind": "bullets",
+    "title": "Short Stays",
+    "items": [
+      {
+        "text": "On short stays traveled over 180+ cities, 110+ NomadMania Regions, 45+ countries across 5 continents"
+      },
+      {
+        "text": "Visited: World Heritage Sites (60+), New Seven Wonder+Pyramids (3/8) and The Seven Natural WW (1/7)"
+      }
+    ]
+  },
+  {
+    "kind": "table",
+    "title": "Places {175 Cities (108 NM) | 43 Countries}",
+    "columns": [
+      "Region",
+      "Cities (NM)",
+      "Countries"
+    ],
+    "rows": [
+      {
+        "cells": [
+          "EU",
+          "102 (70)",
+          "32"
+        ],
+        "group": true
+      },
+      {
+        "cells": [
+          "⚙️ Germanic",
+          "43",
+          "11"
+        ]
+      },
+      {
+        "cells": [
+          "🪆 Slavic",
+          "15",
+          "11"
+        ]
+      },
+      {
+        "cells": [
+          "🏛️ Romanic-Greek",
+          "44",
+          "10"
+        ]
+      },
+      {
+        "cells": [
+          "🏔️ Non-Euro",
+          "0",
+          "0"
+        ]
+      },
+      {
+        "cells": [
+          "NORTH/SOUTH AMERICA",
+          "51 (22)",
+          "4"
+        ],
+        "group": true
+      },
+      {
+        "cells": [
+          "🗽 Anglo-Franco",
+          "5",
+          "1"
+        ]
+      },
+      {
+        "cells": [
+          "🪭 Spanish-Aztec/Inca",
+          "2",
+          "2"
+        ]
+      },
+      {
+        "cells": [
+          "🎉 Romance-African",
+          "44",
+          "1"
+        ]
+      },
+      {
+        "cells": [
+          "OCEANIA",
+          "0 (0)",
+          "0"
+        ],
+        "group": true
+      },
+      {
+        "cells": [
+          "🦘 Anglo-Aborigenal",
+          "0",
+          "0"
+        ]
+      },
+      {
+        "cells": [
+          "🪶 Anglo-Maori",
+          "0",
+          "0"
+        ]
+      },
+      {
+        "cells": [
+          "🗿 Poly-Micronesia",
+          "0",
+          "0"
+        ]
+      },
+      {
+        "cells": [
+          "ASIA",
+          "13 (9)",
+          "4"
+        ],
+        "group": true
+      },
+      {
+        "cells": [
+          "🕯️ Abrahamic",
+          "5",
+          "3"
+        ]
+      },
+      {
+        "cells": [
+          "🧘🏻‍♂️ Hindu;Buddhist;Tao/Conf",
+          "8",
+          "1"
+        ]
+      },
+      {
+        "cells": [
+          "AFRICA",
+          "9 (4)",
+          "1"
+        ],
+        "group": true
+      },
+      {
+        "cells": [
+          "🫖 North-Maghreb",
+          "9",
+          "1"
+        ]
+      },
+      {
+        "cells": [
+          "🥁 Francosphere",
+          "0",
+          "0"
+        ]
+      },
+      {
+        "cells": [
+          "💎 Lusosphere",
+          "0",
+          "0"
+        ]
+      },
+      {
+        "cells": [
+          "🪨 Anglosphere",
+          "0",
+          "0"
+        ]
+      }
+    ],
+    "link": {
+      "label": "NomadMania profile",
+      "url": "https://nomadmania.com/profile/73889"
+    }
+  }
+]

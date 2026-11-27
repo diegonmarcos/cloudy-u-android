@@ -1,0 +1,52 @@
+# #1976 Cloud Me Pers two-row nav, Media, Geo (Long Stay, Short Stay, Places with NM and Days, per-continent map, MyTrips). Push runs the tester with its own mutation proofs
+# (every mutant red) and the generator drift check. Manual dispatch with `name` applies ONE deliberate break to the real tree and requires the tester to go RED (KILLED).
+# The dispatch input reaches the script only through env and an allow-list.
+name: me-geo-1976-mutation
+on:
+  push:
+    paths:
+      - 'ac_cloud-me/data/ui/pers/**'
+      - 'ac_cloud-me/data/web/geo-*.html'
+      - 'ac_cloud-me/data/geo/**'
+      - 'ac_cloud-me/data/regen-geo-1976.py'
+      - 'ac_cloud-me/build.json'
+      - 'ac_cloud-me/test/test-geo-1976.sh'
+      - 'ac_cloud-me/test/fixtures/geo-before-1976.json'
+      - 'ac_cloud-me/app/src/main/java/com/diegonmarcos/cloudme/StackScreen.kt'
+      - '.github/workflows/me-geo-1976-mutation.yml'
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'one-row | personal-archives | drop-social | drop-map | global-view | drop-mytrips-tab | invent-nm'
+        required: false
+permissions:
+  contents: read
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ac_cloud-me
+      - name: Tester (real tree green, every mutation red)
+        if: ${{ inputs.name == '' }}
+        run: bash ac_cloud-me/test/test-geo-1976.sh
+      - name: Mutation must be KILLED
+        if: ${{ inputs.name != '' }}
+        env:
+          MUTATION: ${{ inputs.name }}
+        run: |
+          set -eu
+          A=ac_cloud-me
+          case "$MUTATION" in
+            one-row)           python3 -c "import json;p='$A/build.json';d=json.load(open(p,encoding='utf-8'));P=[s for s in d['ui']['sections'] if s['id']=='pers'][0];P['nav_mode']='horizontal_one_row';json.dump(d,open(p,'w',encoding='utf-8'),ensure_ascii=False)" ;;
+            personal-archives) python3 -c "import json;p='$A/build.json';d=json.load(open(p,encoding='utf-8'));P=[s for s in d['ui']['sections'] if s['id']=='pers'][0];P['groups'][1]['label']='Personal Archives';json.dump(d,open(p,'w',encoding='utf-8'),ensure_ascii=False)" ;;
+            drop-social)       python3 -c "import json;p='$A/build.json';d=json.load(open(p,encoding='utf-8'));P=[s for s in d['ui']['sections'] if s['id']=='pers'][0];P['pages'][0]['pages'].pop();json.dump(d,open(p,'w',encoding='utf-8'),ensure_ascii=False)" ;;
+            drop-map)          python3 -c "import json;p='$A/data/ui/pers/geo.json';g=json.load(open(p,encoding='utf-8'));g=[b for b in g if b.get('id')!='geo-map'];json.dump(g,open(p,'w',encoding='utf-8'),ensure_ascii=False)" ;;
+            global-view)       sed -i 's#"order":\["Europe"#"order":["World","Europe"#' $A/data/web/geo-map.html ;;
+            drop-mytrips-tab)  sed -i "s#\['timeline','Timeline'\]#['timeline','Time']#" $A/data/web/geo-mytrips.html ;;
+            invent-nm)         python3 -c "import json;p='$A/data/ui/pers/geo.json';g=json.load(open(p,encoding='utf-8'));[r['cells'].__setitem__(2,'5') for b in g if b.get('id')=='geo-places' for r in b['rows'] if not r.get('group')][:1];json.dump(g,open(p,'w',encoding='utf-8'),ensure_ascii=False)" ;;
+            *) echo "unknown mutation"; exit 2 ;;
+          esac
+          if bash $A/test/test-geo-1976.sh --check $A; then echo "::error::MUTATION SURVIVED $MUTATION"; exit 1; else echo "KILLED $MUTATION"; fi

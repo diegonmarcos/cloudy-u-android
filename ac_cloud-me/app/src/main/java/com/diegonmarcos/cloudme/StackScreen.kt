@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.ScrollState
@@ -65,6 +66,7 @@ import org.json.JSONObject
  *   bullets        a card of rows, each an optional bold `label` and its `text` (Achieves)
  *   quote          a quotation with its `by` line
  *   table          `columns` and `rows` ({cells, group?}) with an optional `link` row (the NomadMania table)
+ *   web_asset      a bundled page of data/web drawn inside the stack at `height_dp` (#1976: the Geo map and MyTrips)
  *   link           one tappable row: `label` and `url`
  *   about          version, commit, build time and the update control
  *   permissions    the runtime permissions from build.json, requestable inline
@@ -118,6 +120,7 @@ private fun Block(o: JSONObject) {
         "bullets" -> BulletsCard(o)
         "quote" -> QuoteCard(o)
         "table" -> TableCard(o)
+        "web_asset" -> WebAssetBlock(o)
         "link" -> LinkRow(o.optString("label"), o.optString("url"))
         "about" -> AboutCard(o)
         "permissions" -> PermissionsCard(o)
@@ -212,6 +215,37 @@ private fun TableRow(cells: List<String>, group: Boolean, header: Boolean) {
                 textAlign = if (i == 0) TextAlign.Start else TextAlign.End)
         }
     }
+}
+
+/**
+ * #1976 `web_asset`: a bundled page (`url`, an asset under data/web, same-origin so it needs no network) drawn INSIDE the stack at a fixed `height_dp`,
+ * between native blocks (Pers > Geo: the visited-countries map and MyTrips). `capture_touch` stops the page scroll from taking the map's drags.
+ */
+@Composable
+private fun WebAssetBlock(o: JSONObject) {
+    val url = o.optString("url")
+    val capture = o.optBoolean("capture_touch")
+    androidx.compose.ui.viewinterop.AndroidView(
+        modifier = Modifier.fillMaxWidth().height(o.optInt("height_dp", 400).dp).padding(top = 8.dp).testTag("me:web_asset:" + o.optString("id", url)),
+        factory = { ctx ->
+            // the host keeps the page scroll from taking the page's own drags (the map pans, MyTrips scrolls inside)
+            val host = object : android.widget.FrameLayout(ctx) {
+                override fun dispatchTouchEvent(ev: android.view.MotionEvent): Boolean {
+                    if (capture) parent?.requestDisallowInterceptTouchEvent(true)
+                    return super.dispatchTouchEvent(ev)
+                }
+            }
+            val web = com.diegonmarcos.cloudlib.web.CloudWeb.create(ctx, com.diegonmarcos.cloudlib.web.WebProfile.APP_PAGE).apply {
+                setBackgroundColor(0xFF0B0414.toInt())
+                webViewClient = com.diegonmarcos.cloudlib.web.CloudWebClient(com.diegonmarcos.cloudlib.web.WebProfile.APP_PAGE, com.diegonmarcos.cloudlib.web.CloudWeb.assetLoader(ctx))
+                loadUrl(com.diegonmarcos.cloudlib.web.CloudWeb.assetUrl(url))
+            }
+            host.tag = web
+            host.addView(web, android.view.ViewGroup.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.MATCH_PARENT))
+            host
+        },
+        onRelease = { h -> (h.tag as? android.webkit.WebView)?.let { w -> w.stopLoading(); w.destroy() } },
+    )
 }
 
 @Composable

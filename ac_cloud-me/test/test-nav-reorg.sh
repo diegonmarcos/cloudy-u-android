@@ -55,17 +55,19 @@ if ui.get("default_section") != "lnktree": bad("tree", "the app does not open on
 for gone in ("health", "experiences", "socials"):
     if gone in secs: bad("tree", f"{gone} is a section again: it moved (ui.renamed keeps its ids working)")
 def labels(ps): return [(p["id"], p["label"]) for p in ps]
-if labels(secs.get("pers", {}).get("pages", [])) != [("pers-profiles", "Profiles"), ("health", "Health"), ("astro", "Astro"), ("dd", "DD"), ("achieves", "Personal Archives")]:
-    bad("tree", "Pers is not Profiles, Health, Astro, DD, Personal Archives")
-if labels(sub("pers", "pers-profiles").get("pages", [])) != [("personal", "Personal"), ("ig0", "ig0"), ("ig1", "ig1"), ("ig2", "ig2"), ("face0", "face0"), ("pinterest", "Pinterest"), ("youtube", "YouTube"), ("tidal", "Tidal"), ("linkedin", "LinkedIn"), ("orkut", "Orkut")]:
-    bad("tree", "Pers > Profiles is not Personal | ig0, ig1, ig2, face0, Pinterest, YouTube, Tidal, LinkedIn, Orkut (#1913)")
+if labels(secs.get("pers", {}).get("pages", [])) != [("pers-media", "Media"), ("health", "Health"), ("astro", "Astro"), ("dd", "DD"), ("geo", "Geo"), ("endurance", "Endurance"), ("growth", "Personal Growth"), ("community", "Community"), ("by30", "By 30"), ("by40", "By 40"), ("by50", "By 50")]:
+    bad("tree", "Pers is not Media, Health, Astro, DD, Geo, Endurance, Personal Growth, Community, By 30, By 40, By 50 (#1976)")
+if secs.get("pers", {}).get("nav_mode") != "horizontal_two_rows" or [(g["label"], g["pages"]) for g in secs.get("pers", {}).get("groups", [])] != [("Profiles", ["pers-media", "health", "astro", "dd"]), ("Achieves", ["geo", "endurance", "growth", "community", "by30", "by40", "by50"])]:
+    bad("tree", "Pers is not two rows: Profiles | Media Health Astro DD over Achieves | Geo Endurance Personal Growth Community By 30 By 40 By 50 (#1976)")
+if labels(sub("pers", "pers-media").get("pages", [])) != [("personal", "Personal"), ("pers-instagram", "Instagram"), ("pers-social", "Social")] or \
+   [p["id"] for p in sub("pers", "pers-media", "pers-instagram").get("pages", [])] != ["ig0", "ig1", "ig2"] or \
+   [p["id"] for p in sub("pers", "pers-media", "pers-social").get("pages", [])] != ["face0", "pinterest", "youtube", "tidal", "linkedin", "orkut"]:
+    bad("tree", "Pers > Media is not Personal | Instagram (ig0, ig1, ig2) | Social (face0, Pinterest, YouTube, Tidal, LinkedIn, Orkut) (#1976)")
 if labels(sub("pers", "health").get("pages", [])) != [("trackers", "Trackers"), ("plan", "Plan"), ("health-profile", "Record")]:
     bad("tree", "Pers > Health is not Trackers, Plan, Record")
 if [p["id"] for p in sub("pers", "health", "trackers").get("pages", [])] != ["tracked", "activities", "bodycomp", "hr", "sleep"] or \
    [p["id"] for p in sub("pers", "health", "plan").get("pages", [])] != ["home", "bio", "circadian", "biomarkers", "timeline", "objectives", "matrix", "culinary", "clash", "thermal", "hemo", "shop", "dossier", "workout"]:
     bad("tree", "Pers > Health does not hold the 5 Trackers and 14 Plan pages in their old order")
-if [p["id"] for p in sub("pers", "achieves").get("pages", [])] != ["geo", "endurance", "growth", "community", "by30", "by40", "by50"]:
-    bad("tree", "Pers > Personal Archives is not Geo, Endurance, Personal Growth, Community, By 30, By 40, By 50")
 if labels(secs.get("prof", {}).get("pages", [])) != [("prof-web", "Profiles"), ("leafy", "Leaf.y"), ("nexus", "Nexus.z"), ("stark", "Stark.x")] or \
    {g["id"]: g["pages"] for g in secs.get("prof", {}).get("groups", [])} != {"profiles": ["prof-web"], "companies": ["leafy", "nexus", "stark"]}:
     bad("tree", "Prof is not Profiles (Professional, LinkedIn, Portfolio, Developer, CV) | Leaf.y, Nexus.z, Stark.x (#1937: More is removed by owner order)")
@@ -106,9 +108,11 @@ def norm(leaf):
     s, p = resolve(m.group(3), m.group(4))
     return f'{m.group(1)}="{m.group(2)}:{s}' + (f"/{p}" if p else "") + '"'
 
-RELABELED = {  # the owner's renames of #1901, and the two pages whose name the move gave to another page
-    "experiences/achieves": "Personal Archives", "socials/socials-personal": "ig0",
+RELABELED = {  # the owner's renames of #1901, and the page whose name the move gave to another page
+    "socials/socials-personal": "ig0",
 }
+# #1976 the Achieves container (Personal Archives) is the second ROW of Pers now (ui.sections[pers].groups, label Achieves): its old ids resolve to its first tab Geo
+ROW_1976 = {"experiences/achieves": "pers/geo"}
 # #1911 owner order: these three tabs embed their real site (the declared me-links.json URL) instead of the bundled mysocials mirror; the
 # baseline value is compared through this table, ONLY on these pages (the Lnktree bottom-nav copies keep the mirrors)
 EMBED1911 = {"pers/ig0": {"mysocials/instagram-diegocnmarcos_.html": "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html"}}
@@ -121,6 +125,9 @@ OWNER_REMOVED_1937 = {"experiences/work", "experiences/study", "experiences/cv",
 for key, b in sorted(base["pages"].items()):
     sec, pid = key.split("/", 1)
     ns, np = resolve(sec, pid)
+    if key in ROW_1976:
+        if f"{ns}/{np}" != ROW_1976[key]: bad("parity", f"{key} (a row since #1976) resolves to {ns}/{np}, wanted {ROW_1976[key]}")
+        continue
     if key in OWNER_REMOVED_1937:
         if (ns, np) != ("prof", "prof-web"): bad("parity", f"{key} (owner-removed, #1937) resolves to {ns}/{np}, wanted prof/prof-web")
         continue
@@ -201,20 +208,20 @@ SITES = {  # tile -> (page file, the url it embeds)
     "Prof > Leaf.y": ("data/ui/prof/leafy.json", "https://diegonmarcos.github.io/leafy/"),
     "Prof > Nexus.z": ("data/ui/prof/nexus.json", "https://diegonmarcos.github.io/nexus/"),
     "Prof > Stark.x": ("data/ui/prof/stark.json", "https://diegonmarcos.github.io/stark/"),
-    "Pers > Profiles > Personal": ("data/ui/pers/pers-profiles/personal.json", "https://diegonmarcos.github.io/mySocials/"),
+    "Pers > Media > Personal": ("data/ui/pers/pers-media/personal.json", "https://diegonmarcos.github.io/mySocials/"),
     "Prof > Profiles > Professional": ("data/ui/prof/prof-web/prof-professional.json", "https://diegonmarcos.com/"),
     "Prof > Profiles > Portfolio": ("data/ui/prof/prof-web/prof-portfolio.json", "https://diegonmarcos.github.io/cv_web/"),
     "Prof > Profiles > Developer": ("data/ui/prof/prof-web/prof-developer.json", "https://github.com/diegonmarcos"),
     "Prof > Profiles > CV": ("data/ui/prof/prof-web/prof-cv.json", "https://diegonmarcos.github.io/cv_pdf/"),
-    "Pers > Profiles > ig0": ("data/ui/pers/pers-profiles/ig0.json", "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html"),
-    "Pers > Profiles > ig1": ("data/ui/pers/pers-profiles/ig1.json", "https://diegonmarcos.github.io/mySocials/instagram-diegocmarcos_.html"),
-    "Pers > Profiles > ig2": ("data/ui/pers/pers-profiles/ig2.json", "https://diegonmarcos.github.io/mySocials/instagram-diegonmarcos.html"),
-    "Pers > Profiles > face0": ("data/ui/pers/pers-profiles/face0.json", "https://diegonmarcos.github.io/mySocials/facebook-diegonmarcos.html"),
-    "Pers > Profiles > Pinterest": ("data/ui/pers/pers-profiles/pinterest.json", "https://diegonmarcos.github.io/mySocials/pinterest.html"),
-    "Pers > Profiles > YouTube": ("data/ui/pers/pers-profiles/youtube.json", "https://diegonmarcos.github.io/mySocials/youtube.html"),
-    "Pers > Profiles > Tidal": ("data/ui/pers/pers-profiles/tidal.json", "https://diegonmarcos.github.io/mySocials/tidal.html"),
-    "Pers > Profiles > LinkedIn": ("data/ui/pers/pers-profiles/linkedin.json", "https://diegonmarcos.github.io/mySocials/linkedin.html"),
-    "Pers > Profiles > Orkut": ("data/ui/pers/pers-profiles/orkut.json", "https://diegonmarcos.github.io/mySocials/orkut.html"),
+    "Pers > Media > ig0": ("data/ui/pers/pers-media/pers-instagram/ig0.json", "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html"),
+    "Pers > Media > ig1": ("data/ui/pers/pers-media/pers-instagram/ig1.json", "https://diegonmarcos.github.io/mySocials/instagram-diegocmarcos_.html"),
+    "Pers > Media > ig2": ("data/ui/pers/pers-media/pers-instagram/ig2.json", "https://diegonmarcos.github.io/mySocials/instagram-diegonmarcos.html"),
+    "Pers > Media > face0": ("data/ui/pers/pers-media/pers-social/face0.json", "https://diegonmarcos.github.io/mySocials/facebook-diegonmarcos.html"),
+    "Pers > Media > Pinterest": ("data/ui/pers/pers-media/pers-social/pinterest.json", "https://diegonmarcos.github.io/mySocials/pinterest.html"),
+    "Pers > Media > YouTube": ("data/ui/pers/pers-media/pers-social/youtube.json", "https://diegonmarcos.github.io/mySocials/youtube.html"),
+    "Pers > Media > Tidal": ("data/ui/pers/pers-media/pers-social/tidal.json", "https://diegonmarcos.github.io/mySocials/tidal.html"),
+    "Pers > Media > LinkedIn": ("data/ui/pers/pers-media/pers-social/linkedin.json", "https://diegonmarcos.github.io/mySocials/linkedin.html"),
+    "Pers > Media > Orkut": ("data/ui/pers/pers-media/pers-social/orkut.json", "https://diegonmarcos.github.io/mySocials/orkut.html"),
     "Pers > Astro": ("data/ui/pers/astro.json", "https://diegonmarcos.github.io/myAstro/"),
         "Lnktree (bottom nav) > Lnktree": ("data/ui/lnktree/lt-lnktree-site.json", "https://linktree.diegonmarcos.com/"),
     "Lnktree (bottom nav) > Leaf.y": ("data/ui/lnktree/lt-leafy.json", "https://diegonmarcos.github.io/leafy/"),
@@ -294,7 +301,7 @@ W_="json.dump(d,open('build.json','w'),indent=1)"
 # parity: a field, a page, a block, a value, a tile target, section data
 mutant parity "a field is dropped from a moved Leaf.y page" "$J \"import json;f='data/ui/prof/leafy.json';d=json.load(open(f));d[0].pop('url');json.dump(d,open(f,'w'))\""
 mutant parity "a page's content is emptied (DD)" "echo '[]' > data/ui/pers/dd.json"
-mutant parity "a ledger field is dropped from a moved Personal Archives tab" "$J \"import json;f='data/ui/pers/achieves/by40.json';d=json.load(open(f));l=d[0]['ledgers'][0];l['fields']=l['fields'][1:];json.dump(d,open(f,'w'))\""
+mutant parity "a ledger field is dropped from a moved Personal Archives tab" "$J \"import json;f='data/ui/pers/by40.json';d=json.load(open(f));l=d[0]['ledgers'][0];l['fields']=l['fields'][1:];json.dump(d,open(f,'w'))\""
 mutant renamed "a removed Prof page id (work) no longer resolves to Profiles (#1937)" "$J \"$BJ;U['renamed']['pages'].pop('prof/work');$W_\""
 mutant parity "an old experiences id (cv) resolves elsewhere than Profiles (#1937)" "$J \"$BJ;U['renamed']['pages']['experiences/cv']='pers/geo';$W_\""
 mutant tree "Prof > More is declared again (#1937)" "$J \"$BJ;S['prof']['pages'].insert(1,{'id':'prof-profiles','label':'More','icon':'ic_nav_me'});$W_\""
@@ -304,7 +311,7 @@ mutant parity "a page is dropped from Pers (Astro)" "rm data/ui/pers/astro.json;
 mutant parity "a tile target inside a page changes" "sed -i 's#\"extapp:cloud-account\"#\"extapp:cloud-mail\"#' data/ui/buro/account.json"
 mutant parity "the Health metric taxonomy loses a metric" "$J \"$BJ;S['pers']['metrics'].pop(0);$W_\""
 mutant parity "the Achieves migration is dropped" "$J \"$BJ;S['pers'].pop('migration');$W_\""
-mutant parity "the ig0 page (the old Instagram content) is dropped" "rm data/ui/pers/pers-profiles/ig0.json; $J \"$BJ;[p['pages'].pop(1) for p in S['pers']['pages'] if p['id']=='pers-profiles'];$W_\""
+mutant parity "the ig0 page (the old Instagram content) is dropped" "rm data/ui/pers/pers-media/pers-instagram/ig0.json; $J \"$BJ;[p['pages'].pop(0) for p in S['pers']['pages'][0]['pages'] if p['id']=='pers-instagram'];$W_\""
 mutant parity "a moved page is left behind as a copy in the old folder" "mkdir -p data/ui/health && cp data/ui/pers/health/trackers/tracked.json data/ui/health/tracked.json"
 mutant parity "a page is silently relabelled" "$J \"$BJ;[q.update(label='Moods') for p in S['pers']['pages'] if p['id']=='health' for t in p['pages'] if t['id']=='trackers' for q in t['pages'] if q['id']=='hr'];$W_\""
 mutant parity "the removed Prof > More folder is back (#1937)" "mkdir -p data/ui/prof/prof-profiles && echo '[]' > data/ui/prof/prof-profiles/work.json"
@@ -313,7 +320,7 @@ mutant renamed "an old page has no rename entry" "$J \"$BJ;U['renamed']['pages']
 mutant renamed "a rename names a page that does not exist" "$J \"$BJ;U['renamed']['pages']['health/home']='pers/nope';$W_\""
 mutant renamed "the old Instagram tab id no longer resolves" "$J \"$BJ;U['renamed']['pages'].pop('pers/instagram');$W_\""
 mutant renamed "the old Social tab id no longer resolves" "$J \"$BJ;U['renamed']['pages'].pop('pers/social');$W_\""
-mutant tree "a Pers Profiles tab (Orkut) is dropped" "rm data/ui/pers/pers-profiles/orkut.json; $J \"$BJ;[p['pages'].pop() for p in S['pers']['pages'] if p['id']=='pers-profiles'];$W_\""
+mutant tree "a Pers Media tab (Orkut) is dropped" "rm data/ui/pers/pers-media/pers-social/orkut.json; $J \"$BJ;[p['pages'].pop() for p in S['pers']['pages'][0]['pages'] if p['id']=='pers-social'];$W_\""
 mutant renamed "the section alias is gone" "$J \"$BJ;U['renamed']['sections'].pop('health');$W_\""
 mutant renamed "a rename sends a page to a section that is not declared" "$J \"$BJ;U['renamed']['sections']['socials']='social';$W_\""
 mutant renamed "LegacyRoutes stops applying ui.renamed" "sed -i 's/table.pages\\[key\\]/table.pagesX[key]/' app/src/main/java/com/diegonmarcos/cloudme/LegacyRoutes.kt"
@@ -326,7 +333,7 @@ mutant tree "Proj opens on Unix, not Lnktree" "$J \"$BJ;p=S['proj']['pages'];p.a
 mutant tree "the app opens on Pers" "$J \"$BJ;U['default_section']='pers';$W_\""
 mutant tree "the Lnktree tile is back under Pers" "$J \"$BJ;S['pers']['pages'].append({'id':'lnktree-site','label':'Lnktree','icon':'ic_link_tile'});$W_\""
 mutant tree "Prof loses its companies group" "$J \"$BJ;S['prof']['groups']=S['prof']['groups'][:1];$W_\""
-mutant tree "Personal Archives is called Achieves again" "$J \"$BJ;[p.update(label='Personal Achieves') for p in S['pers']['pages'] if p['id']=='achieves'];$W_\""
+mutant tree "the Achieves row is called Personal Archives again" "$J \"$BJ;[g.update(label='Personal Archives') for g in S['pers']['groups'] if g['id']=='achieves'];$W_\""
 mutant tree "Health holds Plan before Trackers" "$J \"$BJ;[p['pages'].reverse() for p in S['pers']['pages'] if p['id']=='health'];$W_\""
 mutant tree "the Lnktree bottom-nav entry is removed from the bar" "$J \"$BJ;U['bottom_nav'].remove('lnktree');$W_\""
 mutant tree "the Lnktree section loses a page" "$J \"$BJ;S['lnktree']['pages'].pop();$W_\""
@@ -336,7 +343,7 @@ mutant urls "the Lnktree bottom-nav page loses its default URL" "sed -i 's#https
 mutant parity "a Lnktree bottom-nav page file is emptied" "echo '[]' > data/ui/lnktree/lt-dd.json"
 mutant tree "the page cache covers only Proj" "$J \"$BJ;U['lnktree_cache']['sections']=['proj'];$W_\""
 # urls
-mutant urls "Pers > Personal opens another site" "sed -i 's#https://diegonmarcos.github.io/mySocials/#https://example.com/#' data/ui/pers/pers-profiles/personal.json"
+mutant urls "Pers > Personal opens another site" "sed -i 's#https://diegonmarcos.github.io/mySocials/#https://example.com/#' data/ui/pers/pers-media/personal.json"
 mutant urls "a Proj leaf embeds another site" "sed -i 's#https://diegonmarcos.github.io/galaxy/#https://example.com/#' data/ui/proj/pj-cg/pj-cg-omniverse.json"
 mutant tree "a Proj leaf is dropped (42 Dev)" "rm data/ui/proj/pj-lecole42/pj-lecole42-dev.json; $J \"$BJ;[g['pages'].pop() for p in [x for x in S['proj']['pages'] if x['id']=='pj-lecole42'] for g in [p]];$W_\""
 mutant tree "Lnktree opens on Professional again" "$J \"$BJ;p=S['lnktree']['pages'];p.append(p.pop(0));$W_\""

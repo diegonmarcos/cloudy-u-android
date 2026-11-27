@@ -1,0 +1,38 @@
+{
+  "_doc": "#1976 inputs of data/regen-geo-1976.py that are not in MyTrips: the long-stay cities the owner names (their time is looked up in travel-data.json by city and country; a city MyTrips has no trip for shows a dash, nothing is invented), the continents of the Geo map with their frames [lon0, lat0, lon1, lat1] and colours (there is no world view), the continent each Places subtotal row covers, the home base and the world totals of MyTrips.",
+  "long_stay_cities": [
+    {"city": "São Paulo", "country": "Brazil", "match": "Sao Paulo"},
+    {"city": "Berlin", "country": "Germany"},
+    {"city": "Barcelona", "country": "Spain"},
+    {"city": "London", "country": "United Kingdom"},
+    {"city": "Valencia", "country": "Spain"},
+    {"city": "Paris", "country": "France"},
+    {"city": "Rio de Janeiro", "country": "Brazil"},
+    {"city": "Casablanca", "country": "Morocco"},
+    {"city": "Chiang Mai", "country": "Thailand"}
+  ],
+  "long_stay_min_days": 45,
+  "places_group_continents": {
+    "EU": ["Europe"],
+    "NORTH/SOUTH AMERICA": ["North America", "South America"],
+    "OCEANIA": ["Oceania"],
+    "ASIA": ["Asia"],
+    "AFRICA": ["Africa"]
+  },
+  "map_continents": ["Europe", "Asia", "Africa", "North America", "South America", "Oceania"],
+  "map_default": "Europe",
+  "map_frames": {
+    "Europe": [-25, 33, 45, 72],
+    "Asia": [25, -12, 150, 56],
+    "Africa": [-20, -36, 52, 38],
+    "North America": [-170, 5, -50, 84],
+    "South America": [-82, -56, -34, 13],
+    "Oceania": [110, -48, 180, 0]
+  },
+  "map_colors": {
+    "Europe": "#60a5fa", "Asia": "#f59e0b", "Africa": "#a78bfa", "North America": "#34d399", "South America": "#f472b6", "Oceania": "#22d3ee"
+  },
+  "home": {"city": "Berlin", "country": "Germany", "lat": 52.52, "lng": 13.405},
+  "world_countries_un": 195,
+  "world_nomad_regions": 1301
+}
