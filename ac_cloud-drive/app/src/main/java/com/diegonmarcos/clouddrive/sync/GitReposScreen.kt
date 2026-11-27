@@ -1208,6 +1208,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     if (showBulkSheet) ModalBottomSheet(onDismissRequest = { showBulkSheet = false }, modifier = Modifier.testTag("git_bulk_sheet")) {
         val bLang = java.util.Locale.getDefault().language
         val bState = rememberGitSheetState(remember(bLang) { GitSheet.parse(Declarations.controlSheet, bLang) }, "bulk")
+        val bulkScroll = rememberScrollState()
         val bulk: @Composable (GitSheetPart) -> Unit = { part ->
             val bulkJob = jobsState.lastOrNull { bulkStartMs > 0 && it.startedMs >= bulkStartMs }
             val runningNames = entries.filter { e -> (e.cloned?.let { running.containsKey(it.id) } == true) || e.name in cloning }.map { it.name }.toSet()
@@ -1233,13 +1234,13 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                     val into = when (o.dest) { "workspace" -> File(SharedStore.root(), "workspace"); "mirror" -> File(SharedStore.gitRoot(), page.bareRoot); else -> null }
                     coordinator.cloneAll(sortedEntries.filter { it.name in bulkScopedNames && it.cloned == null }.map { e -> GitSyncCoordinator.CloneTarget(e.name, e.cloneUrl.ifBlank { page.cloneUrl(e.name, Declarations.REMOTE_HTTPS) }, GitSyncCoordinator.AUTH_HTTPS, "", "") }, o, into, bulkSheetDecl.concurrency)
                 },
-                part = part, sheetState = bState,
+                part = part, sheetState = bState, onTabSelected = { scope.launch { bulkScroll.scrollTo(0) } },
             )
         }
         // #1934 sticky tabs here too: the tab row is pinned, the groups scroll
         Column(Modifier.fillMaxWidth().semantics { testTagsAsResourceId = true }.padding(horizontal = DriveMetrics.sectionInset).padding(bottom = DriveMetrics.padWide)) {
             bulk(GitSheetPart.TOP)
-            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).testTag("git_bulk_scroll")) { bulk(GitSheetPart.BODY) }
+            Column(Modifier.weight(1f, fill = false).verticalScroll(bulkScroll).testTag("git_bulk_scroll")) { bulk(GitSheetPart.BODY) }
         }
     }
     if (showDepthReport) depthRun?.let { r -> DepthReportWindow(r, onCancel = { coordinator.cancelDepthRun() }, onClose = { showDepthReport = false }) }

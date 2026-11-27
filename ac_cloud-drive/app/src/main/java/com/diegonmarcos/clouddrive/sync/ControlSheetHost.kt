@@ -146,6 +146,8 @@ internal fun BulkControlSheet(
     onTop: (Declarations.GitTopItemDecl) -> Unit, onSync: (SyncOptions) -> Unit, onClone: (CloneOptions) -> Unit,
     onRun: (SheetControl) -> Unit, onAutoSync: (Boolean, Int) -> Unit,
     part: GitSheetPart = GitSheetPart.ALL, sheetState: GitSheetState? = null,
+    /** A tab was selected: the page scrolls the sheet back to its top (the tabs differ in length). */
+    onTabSelected: () -> Unit = {},
 ) {
     val ctx = LocalContext.current
     val lang = java.util.Locale.getDefault().language
@@ -174,7 +176,7 @@ internal fun BulkControlSheet(
         override fun togglePick(name: String) = onPick(name)
         override fun cancelRun() = onCancel()
     }
-    GitControlSheetView(sheet, state, host, actions, Modifier, part = part)
+    GitControlSheetView(sheet, state, host, actions, Modifier, onTabSelected = { onTabSelected() }, part = part)
 }
 
 /** #1934 the effects of the controls that touch the device, pure enough to be executed by ControlEffectsTest. */
