@@ -70,7 +70,8 @@ def need(cond, msg):
 
 if which == "S5":
     db = code(read(os.path.join(D, "db/SternaDatabase.kt")))
-    need("internal const val SCHEMA_VERSION = 34" in db, "the schema version is not 34")
+    sv = re.search(r"internal const val SCHEMA_VERSION = (\d+)", db)
+    need(sv and int(sv.group(1)) >= 34, "the schema version is below 34 (#1952 moved it to 35: one more index, additive)")
     m = re.search(r"internal val ALL_MIGRATIONS: Array<Migration> = arrayOf\((.*?)\)", db, re.S)
     reg = m.group(1) if m else ""
     need("MIGRATION_33_34" in reg, "the 33 to 34 step is not registered (destructive fallback: outbox and drafts wiped)")
