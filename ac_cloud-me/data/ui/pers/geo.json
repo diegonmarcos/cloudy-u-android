@@ -362,7 +362,7 @@
     "id": "geo-map",
     "url": "geo-map.html",
     "height_dp": 440,
-    "capture_touch": true
+    "capture_touch": false
   },
   {
     "kind": "section_title",

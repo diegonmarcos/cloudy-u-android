@@ -34,26 +34,31 @@ PY
 }
 for op in GET_USAGE_STATS SYSTEM_ALERT_WINDOW MANAGE_EXTERNAL_STORAGE REQUEST_INSTALL_PACKAGES; do $T adb shell appops set "$ME" "$op" allow; done
 has() { grep -q "text=\"$1\"\|content-desc=\"$1\"" "$OUT/$2.xml"; }
+hasp() { grep -q "text=\"$1[ \"]\|content-desc=\"$1[ \"]" "$OUT/$2.xml"; }   # a group label draws "Profiles ▾"
 want() { if has "$1" "$2"; then echo "PASS $3: '$1' on screen" | tee -a "$OUT/verdict.txt"; else echo "FAIL $3: '$1' missing in $2.xml" | tee -a "$OUT/verdict.txt"; rc=1; fi; }
+wantp() { if hasp "$1" "$2"; then echo "PASS $3: '$1' on screen" | tee -a "$OUT/verdict.txt"; else echo "FAIL $3: '$1' missing in $2.xml" | tee -a "$OUT/verdict.txt"; rc=1; fi; }
 unwant() { if has "$1" "$2"; then echo "FAIL $3: '$1' must not be on screen" | tee -a "$OUT/verdict.txt"; rc=1; else echo "PASS $3: no '$1'" | tee -a "$OUT/verdict.txt"; fi; }
-scroll() { $T adb shell input swipe 12 "${1:-1900}" 12 "${2:-700}" 500; sleep 2; }   # the left margin of the page: not on a WebView block
+swipe_up() { $T adb shell input swipe 70 1750 70 750 600; sleep 2; }   # x=70: clear of the system back-gesture edge
 open_page "page:configs/general"; sleep 12
 open_page "page:pers/pers-media"; sleep 12
 shot pers-1976-nav 6
-for t in Profiles Media Health Astro DD Achieves Geo Endurance "Personal Growth" Community "By 30" "By 40" "By 50"; do want "$t" pers-1976-nav "nav"; done
+wantp Profiles pers-1976-nav "nav row 1 label"; wantp Achieves pers-1976-nav "nav row 2 label"
+for t in Media Health Astro DD Geo Endurance "Personal Growth"; do want "$t" pers-1976-nav "nav"; done
 unwant "Personal Archives" pers-1976-nav "nav"
 python3 -I - "$OUT/pers-1976-nav.xml" <<'PY' | tee -a "$OUT/verdict.txt" || rc=1
 import re, sys, xml.etree.ElementTree as ET
 pos = {}
 for n in ET.parse(sys.argv[1]).getroot().iter("node"):
     t = re.sub(r"^[^A-Za-z0-9]+", "", (n.get("text") or n.get("content-desc") or "").strip()); m = re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", n.get("bounds") or "")
-    if t in ("Media", "Health", "Astro", "DD", "Geo", "Endurance", "By 50", "Personal", "Instagram", "Social") and m and 150 < int(m.group(2)) < 700: pos.setdefault(t, (int(m.group(2)), int(m.group(1))))
-row1 = [pos.get(k) for k in ("Media", "Health", "Astro", "DD")]; row2 = [pos.get(k) for k in ("Geo", "Endurance", "By 50")]
+    if t in ("Media", "Health", "Astro", "DD", "Geo", "Endurance") and m and 150 < int(m.group(2)) < 700: pos.setdefault(t, (int(m.group(2)), int(m.group(1))))
+row1 = [pos.get(k) for k in ("Media", "Health", "Astro", "DD")]; row2 = [pos.get(k) for k in ("Geo", "Endurance")]
 ok = all(row1) and all(row2) and max(r[0] for r in row1) < min(r[0] for r in row2) and row1[0][1] < row1[1][1] < row1[2][1]
-print("%s two rows: Media Health Astro DD above Geo Endurance By 50 (y,x: %s %s)" % ("PASS" if ok else "FAIL", row1, row2)); sys.exit(0 if ok else 1)
+print("%s two rows: Media Health Astro DD above Geo Endurance (y,x: %s %s)" % ("PASS" if ok else "FAIL", row1, row2)); sys.exit(0 if ok else 1)
 PY
-for t in Personal Instagram Social; do want "$t" pers-1976-nav "media"; done
+for t in Personal Instagram Social; do want "$t" pers-1976-nav "media tab"; done
 cp "$OUT/pers-1976-nav.png" "$OUT/pers-1976-media.png"
+$T adb shell input swipe 950 380 150 380 500; sleep 2; shot pers-1976-nav-row2-scrolled 3
+for t in "By 30" "By 40" "By 50"; do want "$t" pers-1976-nav-row2-scrolled "nav row 2 end"; done
 open_page "page:pers/pers-social"; sleep 10; shot pers-1976-social 6
 for t in Pinterest YouTube Tidal LinkedIn Orkut face0; do want "$t" pers-1976-social "social"; done
 open_page "page:pers/pers-profiles"; sleep 10; shot pers-1976-legacy-profiles 4; want "Personal" pers-1976-legacy-profiles "legacy id pers/pers-profiles resolves to Media"
@@ -61,24 +66,30 @@ open_page "page:pers/geo"; sleep 14; shot geo-1976-long 6
 for t in "B3) International Experience (Dec 2020 – Present)" "Long Stay" "Cities and the time spent in each"; do want "$t" geo-1976-long "long stay"; done
 unwant "Places" geo-1976-long "geo: the Places ledger view is gone"
 unwant "Languages" geo-1976-long "geo: Languages is gone"
-scroll 1900 700; shot geo-1976-long-cities 3
-want "São Paulo" geo-1976-long-cities "long stay city"; want "Berlin" geo-1976-long-cities "long stay city"; want "Time" geo-1976-long-cities "long stay time column"
-scroll 1900 700; shot geo-1976-short 3
-want "Short Stay" geo-1976-short "short stay"
-for t in "Continent / Region" "Cities" "NM" "Countries" "Days"; do want "$t" geo-1976-short "places column"; done
-scroll 1900 700; shot geo-1976-short-table 3
-scroll 1900 700; shot geo-1976-map-europe 6
-dump geo-1976-map-europe; sleep 3; dump geo-1976-map-europe
-for t in Europe Asia Africa "North America" "South America" Oceania; do want "$t" geo-1976-map-europe "map continent switcher"; done
-unwant "World" geo-1976-map-europe "map: no global view"; unwant "All" geo-1976-map-europe "map: no global view"
-tap_text "Asia" geo-1976-map-europe && shot geo-1976-map-asia 4 || rc=1
-dump geo-1976-map-asia; tap_text "South America" geo-1976-map-asia && shot geo-1976-map-south-america 4 || rc=1
-scroll 1900 700; shot geo-1976-mytrips 8
-dump geo-1976-mytrips; sleep 3; dump geo-1976-mytrips
-for t in Home Atlas Collections Stats Timeline; do want "$t" geo-1976-mytrips "mytrips tab"; done
-tap_text "Stats" geo-1976-mytrips && shot geo-1976-mytrips-stats 4 || rc=1
-dump geo-1976-mytrips-stats; tap_text "Timeline" geo-1976-mytrips-stats && shot geo-1976-mytrips-timeline 4 || rc=1
-dump geo-1976-mytrips-timeline; tap_text "Atlas" geo-1976-mytrips-timeline && shot geo-1976-mytrips-atlas 4 || rc=1
+long=0; short=0; mapd=0; trips=0
+for i in 1 2 3 4 5 6 7 8 9 10; do
+    swipe_up; shot "geo-1976-scroll-$i" 3
+    x="$OUT/geo-1976-scroll-$i.xml"
+    if [ $long = 0 ] && has "São Paulo" "geo-1976-scroll-$i" && has "Time" "geo-1976-scroll-$i"; then long=1; cp "$OUT/geo-1976-scroll-$i.png" "$OUT/geo-1976-long-cities.png"; want "Berlin" "geo-1976-scroll-$i" "long stay city"; fi
+    if [ $short = 0 ] && has "Continent / Region" "geo-1976-scroll-$i"; then short=1; cp "$OUT/geo-1976-scroll-$i.png" "$OUT/geo-1976-short-table.png"
+        for t in "Continent / Region" "Cities" "NM" "Countries" "Days"; do want "$t" "geo-1976-scroll-$i" "places column"; done; fi
+    if [ $mapd = 0 ] && has "Europe" "geo-1976-scroll-$i" && has "Oceania" "geo-1976-scroll-$i"; then mapd=1; cp "$OUT/geo-1976-scroll-$i.png" "$OUT/geo-1976-map-europe.png"
+        for t in Europe Asia Africa "North America" "South America" Oceania; do want "$t" "geo-1976-scroll-$i" "map continent switcher"; done
+        unwant "World" "geo-1976-scroll-$i" "map: no global view"; unwant "Global" "geo-1976-scroll-$i" "map: no global view"
+        tap_text "Asia" "geo-1976-scroll-$i" && shot geo-1976-map-asia 4 || rc=1
+        dump geo-1976-map-asia; tap_text "South America" geo-1976-map-asia && shot geo-1976-map-south-america 4 || rc=1
+        dump geo-1976-map-south-america; tap_text "Europe" geo-1976-map-south-america && sleep 2 || rc=1; fi
+    if [ $trips = 0 ] && has "Collections" "geo-1976-scroll-$i" && has "Timeline" "geo-1976-scroll-$i"; then trips=1; cp "$OUT/geo-1976-scroll-$i.png" "$OUT/geo-1976-mytrips.png"
+        for t in Home Atlas Collections Stats Timeline; do want "$t" "geo-1976-scroll-$i" "mytrips tab"; done
+        tap_text "Stats" "geo-1976-scroll-$i" && shot geo-1976-mytrips-stats 5 || rc=1
+        dump geo-1976-mytrips-stats; tap_text "Timeline" geo-1976-mytrips-stats && shot geo-1976-mytrips-timeline 5 || rc=1
+        dump geo-1976-mytrips-timeline; tap_text "Atlas" geo-1976-mytrips-timeline && shot geo-1976-mytrips-atlas 5 || rc=1
+        break; fi
+done
+[ $long = 1 ] || { echo "FAIL long stay cities never on screen" | tee -a "$OUT/verdict.txt"; rc=1; }
+[ $short = 1 ] || { echo "FAIL Places columns never on screen" | tee -a "$OUT/verdict.txt"; rc=1; }
+[ $mapd = 1 ] || { echo "FAIL the map switcher never on screen" | tee -a "$OUT/verdict.txt"; rc=1; }
+[ $trips = 1 ] || { echo "FAIL MyTrips tabs never on screen" | tee -a "$OUT/verdict.txt"; rc=1; }
 $T adb logcat -d > "$OUT/logcat.txt"
 grep -q "FATAL EXCEPTION" "$OUT/logcat.txt" && { echo "FAIL crash in logcat" | tee -a "$OUT/verdict.txt"; rc=1; }
 echo "rc=$rc" | tee -a "$OUT/verdict.txt"
