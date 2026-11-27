@@ -62,7 +62,7 @@ class NavReorgTest {
     @Test fun `Prof is Profiles then Leaf y Nexus z Stark x and Proj is Lnktree then the areas, Lnktree first and default`() {
         val prof = Sections.byId("prof")!!
         assertEquals(listOf("Profiles", "Leaf.y", "Nexus.z", "Stark.x"), prof.pages.map { it.label })   // #1937 More (and Professional, Work, Study) removed by owner order
-        assertEquals(listOf("prof-professional", "prof-linkedin", "prof-portfolio", "prof-cv"), ids(prof.page("prof-web")!!.pages))
+        assertEquals(listOf("prof-professional", "prof-linkedin", "prof-portfolio", "prof-developer", "prof-cv"), ids(prof.page("prof-web")!!.pages))
         for (gone in listOf("prof-profiles", "professional", "work", "study", "cv", "roadmap")) assertTrue("$gone is removed", prof.path(gone).isEmpty())
         assertEquals("prof-professional", leafOf("prof", null))   // #1948 Prof opens on Profiles > Professional
         val proj = Sections.byId("proj")!!

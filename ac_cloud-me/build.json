@@ -806,7 +806,7 @@
         ]
       },
       {
-        "_doc": "#1901 Prof: the section called Experiences became Prof. Two groups on one strip, Profiles | Leaf.y, Nexus.z, Stark.x. Profiles holds Professional (diegonmarcos.com), LinkedIn, Portfolio (cv_web) and CV (the cv_pdf PDF.js viewer page) (prof-web; #1948); Leaf.y, Nexus.z and Stark.x are their published sites embedded by https URL (data/ui/prof/<id>.json). #1937 owner-ordered removal: the page More (prof-profiles) with its subpages Professional, Work and Study (CV, Roadmap) is gone; every old id (page:prof/prof-profiles, professional, work, study, cv, roadmap and the experiences/* ones) resolves to Prof > Profiles (prof-web) through ui.renamed. Personal Archives moved to Pers. Old page:experiences/* and page:lnktree/<prof page> routes resolve through ui.renamed.",
+        "_doc": "#1901 Prof: the section called Experiences became Prof. Two groups on one strip, Profiles | Leaf.y, Nexus.z, Stark.x. Profiles holds Professional (diegonmarcos.com), LinkedIn, Portfolio (cv_web), Developer (the GitHub profile github.com/diegonmarcos, #1962) and CV (the cv_pdf PDF.js viewer page) (prof-web; #1948); Leaf.y, Nexus.z and Stark.x are their published sites embedded by https URL (data/ui/prof/<id>.json). #1937 owner-ordered removal: the page More (prof-profiles) with its subpages Professional, Work and Study (CV, Roadmap) is gone; every old id (page:prof/prof-profiles, professional, work, study, cv, roadmap and the experiences/* ones) resolves to Prof > Profiles (prof-web) through ui.renamed. Personal Archives moved to Pers. Old page:experiences/* and page:lnktree/<prof page> routes resolve through ui.renamed.",
         "id": "prof",
         "label": "Prof",
         "icon": "ic_nav_work",
@@ -849,6 +849,11 @@
               {
                 "id": "prof-portfolio",
                 "label": "Portfolio",
+                "icon": "ic_world"
+              },
+              {
+                "id": "prof-developer",
+                "label": "Developer",
                 "icon": "ic_world"
               },
               {

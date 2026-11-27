@@ -817,6 +817,21 @@
       "sot_url": "https://diegonmarcos.github.io/cv_web/"
     },
     {
+      "id": "prof-developer",
+      "section": "prof",
+      "kind": "site",
+      "label": "Developer",
+      "source": {
+        "literal": "https://github.com/diegonmarcos"
+      },
+      "path": [
+        "prof-web",
+        "prof-developer"
+      ],
+      "url": "https://github.com/diegonmarcos",
+      "sot_url": "https://github.com/diegonmarcos"
+    },
+    {
       "id": "prof-cv",
       "section": "prof",
       "kind": "site",

@@ -221,9 +221,9 @@ if "lnktree" not in ui.get("bottom_nav", []) or [p["id"] for p in _lt.get("pages
     bad("pages", "the Lnktree bottom-nav entry with its sixteen pages is missing")
 _pf = secs.get("prof", {})
 if [p["id"] for p in _pf.get("pages", [])] != ["prof-web", "leafy", "nexus", "stark"] or \
-   [p["id"] for p in (_pf.get("pages") or [{}])[0].get("pages", [])] != ["prof-professional", "prof-linkedin", "prof-portfolio", "prof-cv"] or \
+   [p["id"] for p in (_pf.get("pages") or [{}])[0].get("pages", [])] != ["prof-professional", "prof-linkedin", "prof-portfolio", "prof-developer", "prof-cv"] or \
    {g["id"]: g["pages"] for g in _pf.get("groups", [])} != {"profiles": ["prof-web"], "companies": ["leafy", "nexus", "stark"]}:
-    bad("pages", "Prof is not Profiles (Professional, LinkedIn, Portfolio, CV) | Leaf.y, Nexus.z, Stark.x (#1937: More, with Professional, Work and Study, removed by owner order)")
+    bad("pages", "Prof is not Profiles (Professional, LinkedIn, Portfolio, Developer, CV) | Leaf.y, Nexus.z, Stark.x (#1937: More, with Professional, Work and Study, removed by owner order)")
 _pj = secs.get("proj", {})
 if [p["id"] for p in _pj.get("pages", [])] != ["pj-home", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42", "pj-repos"]:
     bad("pages", "Proj pages are not Home, Unix, CG, Capital, Hardtech, Wiki, Projects, 42 (#1914)")

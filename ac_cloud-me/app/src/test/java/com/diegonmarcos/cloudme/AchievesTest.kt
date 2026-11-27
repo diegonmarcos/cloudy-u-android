@@ -151,7 +151,7 @@ class AchievesTest {
         assertEquals(listOf("Profiles", "Health", "Astro", "DD", "Personal Archives"), sub(experiences).map { it.getString("label") })
         // #1937 owner-ordered removal: Prof > More (Professional, Work, Study > CV, Roadmap) is gone; Prof is Profiles (LinkedIn, CV) | Leaf.y, Nexus.z, Stark.x
         assertEquals(listOf("prof-web", "leafy", "nexus", "stark"), sub(prof).map { it.getString("id") })
-        assertEquals(listOf("prof-professional", "prof-linkedin", "prof-portfolio", "prof-cv"), sub(sub(prof)[0]).map { it.getString("id") })
+        assertEquals(listOf("prof-professional", "prof-linkedin", "prof-portfolio", "prof-developer", "prof-cv"), sub(sub(prof)[0]).map { it.getString("id") })
         val ids = flat(experiences)
         assertEquals("page ids are unique in Pers, so page:pers/<id> is never ambiguous", ids.size, ids.toSet().size)
         val pids = flat(prof)

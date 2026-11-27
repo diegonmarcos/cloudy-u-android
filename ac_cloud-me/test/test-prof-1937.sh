@@ -2,7 +2,7 @@
 # Tester (#1937 point 5): OWNER-ORDERED REMOVAL of Prof > More (prof-profiles) and its subpages Professional, Work, Study (CV, Roadmap).
 #   P1 gone     none of the six page ids is declared in Prof, in a group, nor has a data/ui/prof/prof-profiles folder; the generator no longer writes them
 #   P2 aliases  every id of the removed pages (this layout's and the experiences/socials ones of #1901) resolves, through ui.renamed, to prof/prof-web (Prof > Profiles)
-#   P3 kept     every other Prof page is still declared with its page file: Profiles (Professional, LinkedIn, Portfolio, CV), Leaf.y, Nexus.z, Stark.x, in their two groups
+#   P3 kept     every other Prof page is still declared with its page file: Profiles (Professional, LinkedIn, Portfolio, Developer, CV), Leaf.y, Nexus.z, Stark.x, in their two groups
 #   P4 lnktree  the Lnktree section's own pages (lt-professional ...) are untouched
 # Each check is proven red by a mutation of a copy.
 set -u
@@ -29,9 +29,9 @@ ren = ui["renamed"]["pages"]
 for old in ["prof/" + r for r in REMOVED] + ["experiences/work", "experiences/study", "experiences/cv", "experiences/roadmap", "socials/socials-professional"]:
     if ren.get(old) != "prof/prof-web": print("P2\t%s does not resolve to prof/prof-web (%r)" % (old, ren.get(old)))
 if [p["id"] for p in prof.get("pages", [])] != ["prof-web", "leafy", "nexus", "stark"]: print("P3\tProf pages are not prof-web, leafy, nexus, stark")
-if [p["id"] for p in next((p for p in prof["pages"] if p["id"] == "prof-web"), {}).get("pages", [])] != ["prof-professional", "prof-linkedin", "prof-portfolio", "prof-cv"]: print("P3\tProf > Profiles is not Professional | LinkedIn | Portfolio | CV")
+if [p["id"] for p in next((p for p in prof["pages"] if p["id"] == "prof-web"), {}).get("pages", [])] != ["prof-professional", "prof-linkedin", "prof-portfolio", "prof-developer", "prof-cv"]: print("P3\tProf > Profiles is not Professional | LinkedIn | Portfolio | Developer | CV")
 if {g["id"]: g["pages"] for g in prof.get("groups", [])} != {"profiles": ["prof-web"], "companies": ["leafy", "nexus", "stark"]}: print("P3\tProf groups changed")
-for f in ("leafy", "nexus", "stark", "prof-web/prof-professional", "prof-web/prof-linkedin", "prof-web/prof-portfolio", "prof-web/prof-cv"):
+for f in ("leafy", "nexus", "stark", "prof-web/prof-professional", "prof-web/prof-linkedin", "prof-web/prof-portfolio", "prof-web/prof-developer", "prof-web/prof-cv"):
     if not os.path.isfile(os.path.join(app, "data/ui/prof", f + ".json")): print("P3\tdata/ui/prof/%s.json is missing" % f)
 lt = [p["id"] for p in secs["lnktree"]["pages"]]
 if "lt-professional" not in lt or not os.path.isfile(os.path.join(app, "data/ui/lnktree/lt-professional.json")): print("P4\tthe Lnktree page lt-professional is gone")

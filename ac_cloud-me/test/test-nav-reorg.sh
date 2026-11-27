@@ -68,9 +68,9 @@ if [p["id"] for p in sub("pers", "achieves").get("pages", [])] != ["geo", "endur
     bad("tree", "Pers > Personal Archives is not Geo, Endurance, Personal Growth, Community, By 30, By 40, By 50")
 if labels(secs.get("prof", {}).get("pages", [])) != [("prof-web", "Profiles"), ("leafy", "Leaf.y"), ("nexus", "Nexus.z"), ("stark", "Stark.x")] or \
    {g["id"]: g["pages"] for g in secs.get("prof", {}).get("groups", [])} != {"profiles": ["prof-web"], "companies": ["leafy", "nexus", "stark"]}:
-    bad("tree", "Prof is not Profiles (Professional, LinkedIn, Portfolio, CV) | Leaf.y, Nexus.z, Stark.x (#1937: More is removed by owner order)")
-if [p["id"] for p in sub("prof", "prof-web").get("pages", [])] != ["prof-professional", "prof-linkedin", "prof-portfolio", "prof-cv"]:
-    bad("tree", "Prof > Profiles is not Professional | LinkedIn | Portfolio | CV")
+    bad("tree", "Prof is not Profiles (Professional, LinkedIn, Portfolio, Developer, CV) | Leaf.y, Nexus.z, Stark.x (#1937: More is removed by owner order)")
+if [p["id"] for p in sub("prof", "prof-web").get("pages", [])] != ["prof-professional", "prof-linkedin", "prof-portfolio", "prof-developer", "prof-cv"]:
+    bad("tree", "Prof > Profiles is not Professional | LinkedIn | Portfolio | Developer | CV")
 for _gone in ("prof-profiles", "professional", "work", "study", "cv", "roadmap"):
     if _gone in set(ids(secs.get("prof", {}).get("pages"))): bad("tree", f"#1937 the removed Prof page {_gone} is declared again")
 PROJ = {"unix": ["superapp", "cloudme", "cloudy"], "cg": ["omniverse", "zirkusverse"], "capital": ["cb", "pm", "finterm"], "hardtech": ["biomed", "cad", "deepxtech"],
@@ -204,6 +204,7 @@ SITES = {  # tile -> (page file, the url it embeds)
     "Pers > Profiles > Personal": ("data/ui/pers/pers-profiles/personal.json", "https://diegonmarcos.github.io/mySocials/"),
     "Prof > Profiles > Professional": ("data/ui/prof/prof-web/prof-professional.json", "https://diegonmarcos.com/"),
     "Prof > Profiles > Portfolio": ("data/ui/prof/prof-web/prof-portfolio.json", "https://diegonmarcos.github.io/cv_web/"),
+    "Prof > Profiles > Developer": ("data/ui/prof/prof-web/prof-developer.json", "https://github.com/diegonmarcos"),
     "Prof > Profiles > CV": ("data/ui/prof/prof-web/prof-cv.json", "https://diegonmarcos.github.io/cv_pdf/"),
     "Pers > Profiles > ig0": ("data/ui/pers/pers-profiles/ig0.json", "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html"),
     "Pers > Profiles > ig1": ("data/ui/pers/pers-profiles/ig1.json", "https://diegonmarcos.github.io/mySocials/instagram-diegocmarcos_.html"),

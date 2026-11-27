@@ -1,0 +1,9 @@
+[
+  {
+    "kind": "fragment",
+    "id": "web",
+    "_doc": "#1962 Prof > Profiles > Developer: the owner's GitHub profile (github.com/diegonmarcos), embedded by its https URL from the declared table me-links.json. The profile page is public and renders without a login.",
+    "url": "https://github.com/diegonmarcos",
+    "link": "https://github.com/diegonmarcos"
+  }
+]

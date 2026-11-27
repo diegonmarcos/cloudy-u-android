@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'drop-portfolio | drop-professional | cv-back-to-web | drop-linkedin | personal-landpage'
+        description: 'drop-portfolio | drop-developer | drop-professional | cv-back-to-web | drop-linkedin | personal-landpage'
         required: false
 permissions:
   contents: read
@@ -28,17 +28,20 @@ jobs:
       - name: Tester (real tree green, every mutation red)
         if: ${{ inputs.name == '' }}
         run: bash ac_cloud-me/test/test-profiles-1948.sh
-      - name: Mutation ${{ inputs.name }} must be KILLED
+      - name: Mutation must be KILLED
         if: ${{ inputs.name != '' }}
+        env:
+          MUTATION: ${{ inputs.name }}
         run: |
           set -u
           D=ac_cloud-me/data/ui
-          case "${{ inputs.name }}" in
+          case "$MUTATION" in
             drop-portfolio)     rm $D/prof/prof-web/prof-portfolio.json ;;
+            drop-developer)     rm $D/prof/prof-web/prof-developer.json ;;
             drop-professional)  rm $D/prof/prof-web/prof-professional.json ;;
             cv-back-to-web)     sed -i 's#cv_pdf#cv_web#g' $D/prof/prof-web/prof-cv.json ;;
             drop-linkedin)      sed -i 's#mySocials/linkedin.html#mySocials/x.html#g' $D/prof/prof-web/prof-linkedin.json ;;
             personal-landpage)  sed -i 's#https://diegonmarcos.com/#https://example.com/#g' $D/prof/prof-web/prof-professional.json ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
-          if bash ac_cloud-me/test/test-profiles-1948.sh --check ac_cloud-me; then echo "::error::MUTATION SURVIVED ${{ inputs.name }}"; exit 1; else echo "KILLED ${{ inputs.name }}"; fi
+          if bash ac_cloud-me/test/test-profiles-1948.sh --check ac_cloud-me; then echo "::error::MUTATION SURVIVED $MUTATION"; exit 1; else echo "KILLED $MUTATION"; fi
