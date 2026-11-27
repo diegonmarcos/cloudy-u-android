@@ -18,8 +18,8 @@ import org.junit.Test
 
 /** #1955 C A2 / A3 The Health debugger's model: layers in the owner's order, no number for an unread status, a missing token blames no VM, parity with the old Health page, the X-ray scope. */
 class HealthModelTest {
-    private val pub = Services.publicServices()
-    private val priv = Services.privateServices()
+    private val pub = HealthFixtures.pub()
+    private val priv = HealthFixtures.priv()
     private val vantage = HealthModel.Vantage(true, true, null, false)
     private val slice = FleetFixtures.slice()
 

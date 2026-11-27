@@ -51,8 +51,8 @@ class HealthComposeTest {
     }).around(compose)
 
     private val palette = KitPalette(Color.Black, Color.DarkGray, Color.White, Color.LightGray, Color.Cyan, Color.Gray, Color.Black)
-    private val pub = Services.publicServices()
-    private val priv = Services.privateServices()
+    private val pub = HealthFixtures.pub()
+    private val priv = HealthFixtures.priv()
 
     private fun ui(): HealthUi {
         val v = HealthModel.Vantage(false, true, null, false)
