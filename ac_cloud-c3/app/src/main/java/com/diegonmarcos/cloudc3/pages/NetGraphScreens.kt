@@ -323,7 +323,8 @@ fun NetGraphScreen(
         }
         // the chip row: root cause, Isolate, dismiss, not read, device note; one line, absent when empty
         val chips = (root != null && !dismissed) || !st.anyRead || st.deviceNote.isNotBlank()
-        if (chips) Row(Modifier.fillMaxWidth().heightIn(max = 32.dp).horizontalScroll(rememberScrollState()).padding(horizontal = KitStoreRow.padH, vertical = 2.dp).testTag(NetTags.CHIPS),
+        // one line by construction: every chip is maxLines = 1 (no height cap that would hide a wrapped chip)
+        if (chips) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = KitStoreRow.padH, vertical = 2.dp).testTag(NetTags.CHIPS),
             verticalAlignment = Alignment.CenterVertically) {
             if (root != null && !dismissed) {
                 val shape = RoundedCornerShape(6.dp)
