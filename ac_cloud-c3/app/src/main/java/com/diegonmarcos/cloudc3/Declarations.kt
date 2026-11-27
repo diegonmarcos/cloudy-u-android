@@ -149,7 +149,7 @@ object Declarations {
     /** data/container_projects.json: which project each container belongs to (Containers sub-pages). */
     val containerProjects: com.diegonmarcos.cloudc3.pages.ContainerProjects.Decl by lazy {
         com.diegonmarcos.cloudc3.pages.ContainerProjects.parse(decode(BuildConfig.CONTAINER_PROJECTS_B64), decode(BuildConfig.REPOS_DECLARED_B64)).let { d ->
-            d.copy(hostIds = com.diegonmarcos.cloudc3.pages.ContainerHosts.derive(fleet, com.diegonmarcos.cloudc3.pages.ContainersSource.bundled).map { it.id })  // #1971 derived, not typed
+            d.copy(hostIds = com.diegonmarcos.cloudc3.pages.ContainerHosts.derive(fleet, com.diegonmarcos.cloudc3.pages.ContainersSource.bundled, d.vm.hostOrder).map { it.id })  // #1971 derived, not typed
         }
     }
 

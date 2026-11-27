@@ -555,6 +555,7 @@
   {
    "id": "surface-8-pro",
    "model": "Surface Pro 8",
+   "short": "SurfacePro8",
    "kind": "notebook",
    "os": "NixOS",
    "role": "Workstation: development laptop, mesh client",
@@ -564,6 +565,7 @@
   {
    "id": "samsung-s21plus",
    "model": "Samsung Galaxy S21+",
+   "short": "SamsungS21",
    "kind": "phone",
    "os": "Android",
    "role": "Primary phone: Termux host, mesh client",
@@ -573,6 +575,7 @@
   {
    "id": "samsung-a37",
    "model": "Samsung Galaxy A37",
+   "short": "SamsungA37",
    "kind": "phone",
    "os": "Android",
    "role": "Second phone: mesh client",

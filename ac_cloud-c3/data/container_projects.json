@@ -597,6 +597,9 @@
   "open_page": "{project}_topology"
  },
  "vm_view": {
+  "host_order": ["oci-apps", "oci-analytics", "oci-mail", "gcp-proxy", "surface-8-pro", "samsung-a37", "samsung-s21plus"],
+  "host_order_doc": "#1971 the order of the VM pages after All, as declared (never sorted in code); a derived host not listed here follows in the fleet's order, the unknown host is always last.",
+  "device_short": {"surface-8-pro": "SurfacePro8", "samsung-a37": "SamsungA37", "samsung-s21plus": "SamsungS21"},
   "_doc": "#1971 Containers has two top modes: Projects (the category strip, as before) and VM (the containers by the host they are deployed on). The VM pages (build.json containers pages with this id prefix) are one per DERIVED host: every fleet VM that holds a declared container (fleet_slice.json vms, alias = the container's host) plus every mesh-client device (fleet_slice.json electronics with a wg_ip), then `unknown` for a container whose host is none of them (each such host value is named with its reason). `all` is every container plus the repos; a repo has no host, so it shows in All only, under the repos band relabelled here, with its reason line. Page ids are `<page_prefix><host id>`.",
   "page_prefix": "vm-",
   "all": "all",

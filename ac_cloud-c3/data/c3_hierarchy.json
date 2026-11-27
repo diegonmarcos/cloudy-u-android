@@ -669,8 +669,8 @@
      ]
     },
     {
-     "id": "vm-oci-mail",
-     "label": "oci-mail",
+     "id": "vm-oci-apps",
+     "label": "oci-apps",
      "children": [
       {
        "id": "topology",
@@ -701,8 +701,8 @@
      ]
     },
     {
-     "id": "vm-oci-apps",
-     "label": "oci-apps",
+     "id": "vm-oci-mail",
+     "label": "oci-mail",
      "children": [
       {
        "id": "topology",
@@ -749,8 +749,8 @@
      ]
     },
     {
-     "id": "vm-samsung-s21plus",
-     "label": "SamsungGalaxyS21+",
+     "id": "vm-samsung-a37",
+     "label": "SamsungA37",
      "children": [
       {
        "id": "topology",
@@ -765,8 +765,8 @@
      ]
     },
     {
-     "id": "vm-samsung-a37",
-     "label": "SamsungGalaxyA37",
+     "id": "vm-samsung-s21plus",
+     "label": "SamsungS21",
      "children": [
       {
        "id": "topology",

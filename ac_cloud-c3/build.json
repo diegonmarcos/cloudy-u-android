@@ -667,13 +667,13 @@
             ]
           },
           {"id": "vm-all", "label": "All", "icon": "ic_p_c3_stack", "pages": [{"id": "vm-all_topology", "label": "Topology", "icon": "ic_p_c3_stack"}, {"id": "vm-all_table", "label": "Table", "icon": "ic_link_tile"}]},
-          {"id": "vm-oci-mail", "label": "oci-mail", "icon": "ic_p_c3_stack", "pages": [{"id": "vm-oci-mail_topology", "label": "Topology", "icon": "ic_p_c3_stack"}, {"id": "vm-oci-mail_table", "label": "Table", "icon": "ic_link_tile"}]},
-          {"id": "vm-oci-analytics", "label": "oci-analytics", "icon": "ic_p_c3_stack", "pages": [{"id": "vm-oci-analytics_topology", "label": "Topology", "icon": "ic_p_c3_stack"}, {"id": "vm-oci-analytics_table", "label": "Table", "icon": "ic_link_tile"}]},
           {"id": "vm-oci-apps", "label": "oci-apps", "icon": "ic_p_c3_stack", "pages": [{"id": "vm-oci-apps_topology", "label": "Topology", "icon": "ic_p_c3_stack"}, {"id": "vm-oci-apps_table", "label": "Table", "icon": "ic_link_tile"}]},
+          {"id": "vm-oci-analytics", "label": "oci-analytics", "icon": "ic_p_c3_stack", "pages": [{"id": "vm-oci-analytics_topology", "label": "Topology", "icon": "ic_p_c3_stack"}, {"id": "vm-oci-analytics_table", "label": "Table", "icon": "ic_link_tile"}]},
+          {"id": "vm-oci-mail", "label": "oci-mail", "icon": "ic_p_c3_stack", "pages": [{"id": "vm-oci-mail_topology", "label": "Topology", "icon": "ic_p_c3_stack"}, {"id": "vm-oci-mail_table", "label": "Table", "icon": "ic_link_tile"}]},
           {"id": "vm-gcp-proxy", "label": "gcp-proxy", "icon": "ic_p_c3_stack", "pages": [{"id": "vm-gcp-proxy_topology", "label": "Topology", "icon": "ic_p_c3_stack"}, {"id": "vm-gcp-proxy_table", "label": "Table", "icon": "ic_link_tile"}]},
           {"id": "vm-surface-8-pro", "label": "SurfacePro8", "icon": "ic_p_c3_stack", "pages": [{"id": "vm-surface-8-pro_topology", "label": "Topology", "icon": "ic_p_c3_stack"}, {"id": "vm-surface-8-pro_table", "label": "Table", "icon": "ic_link_tile"}]},
-          {"id": "vm-samsung-s21plus", "label": "SamsungGalaxyS21+", "icon": "ic_p_c3_stack", "pages": [{"id": "vm-samsung-s21plus_topology", "label": "Topology", "icon": "ic_p_c3_stack"}, {"id": "vm-samsung-s21plus_table", "label": "Table", "icon": "ic_link_tile"}]},
-          {"id": "vm-samsung-a37", "label": "SamsungGalaxyA37", "icon": "ic_p_c3_stack", "pages": [{"id": "vm-samsung-a37_topology", "label": "Topology", "icon": "ic_p_c3_stack"}, {"id": "vm-samsung-a37_table", "label": "Table", "icon": "ic_link_tile"}]},
+          {"id": "vm-samsung-a37", "label": "SamsungA37", "icon": "ic_p_c3_stack", "pages": [{"id": "vm-samsung-a37_topology", "label": "Topology", "icon": "ic_p_c3_stack"}, {"id": "vm-samsung-a37_table", "label": "Table", "icon": "ic_link_tile"}]},
+          {"id": "vm-samsung-s21plus", "label": "SamsungS21", "icon": "ic_p_c3_stack", "pages": [{"id": "vm-samsung-s21plus_topology", "label": "Topology", "icon": "ic_p_c3_stack"}, {"id": "vm-samsung-s21plus_table", "label": "Table", "icon": "ic_link_tile"}]},
           {"id": "vm-unknown", "label": "Unknown host", "icon": "ic_p_c3_stack", "pages": [{"id": "vm-unknown_topology", "label": "Topology", "icon": "ic_p_c3_stack"}, {"id": "vm-unknown_table", "label": "Table", "icon": "ic_link_tile"}]}
         ]
       },

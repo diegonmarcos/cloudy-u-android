@@ -167,7 +167,7 @@ def build(cons, zone, assets, users, gcloud=None):
         wc = pr.get("wg_client")
         w0 = (wg0.get("clients") or {}).get(wc) or {}
         w1 = (wgp.get("clients") or {}).get(wc) or {}
-        electronics.append({"id": pid, "model": pr["label"], "kind": pr["kind"], "os": e.get("os"), "role": e.get("role"),
+        electronics.append({"id": pid, "model": pr["label"], **({"short": SHORT[pid]} if pid in SHORT else {}), "kind": pr["kind"], "os": e.get("os"), "role": e.get("role"),
                             "wg_ip": w0.get("wg_ip"), "wg_public_ip": w1.get("wg_ip")})
     for e in assets["electronics"]:
         if "peer" not in e:
@@ -233,6 +233,10 @@ def zone_records(domain, z, sts):
     for r in dr.get("srv_records") or []:
         add("Other", r["name"], "SRV", "%s %s %s %s" % (r["priority"], r["weight"], r["port"], r["target"]), r.get("ttl"), None, r.get("comment"))
     return rows
+
+
+# #1971 the declared short label of a device (the Containers > VM chip), from container_projects.json::vm_view.device_short
+SHORT = json.load(open(os.path.join(HERE, "container_projects.json"), encoding="utf-8"))["vm_view"]["device_short"]
 
 
 def main():

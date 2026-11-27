@@ -47,7 +47,7 @@ object FleetModel {
 
     data class Device(
         val id: String, val model: String, val kind: String, val os: String?, val role: String?,
-        val wgIp: String?, val wgPublicIp: String?,
+        val wgIp: String?, val wgPublicIp: String?, val short: String? = null,
     )
 
     data class DnsRecord(
@@ -125,7 +125,7 @@ object FleetModel {
             devices = root.objs("electronics").map { o ->
                 Device(
                     id = o.str("id").orEmpty(), model = o.str("model").orEmpty(), kind = o.str("kind").orEmpty(),
-                    os = o.str("os"), role = o.str("role"), wgIp = o.str("wg_ip"), wgPublicIp = o.str("wg_public_ip"),
+                    os = o.str("os"), role = o.str("role"), wgIp = o.str("wg_ip"), wgPublicIp = o.str("wg_public_ip"), short = o.str("short"),
                 )
             },
             serverless = root.objs("serverless").map { o ->

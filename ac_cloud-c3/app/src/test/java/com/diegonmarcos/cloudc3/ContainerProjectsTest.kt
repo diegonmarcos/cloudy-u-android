@@ -31,7 +31,7 @@ class ContainerProjectsTest {
         .map { it.jsonObject }.first { it["id"]!!.jsonPrimitive.content == "containers" }["pages"]!!.jsonArray.map { it.jsonObject }
 
     private val slice = com.diegonmarcos.cloudc3.pages.FleetModel.parse(File(dir, "data/fleet_slice.json").readText())
-    private val hosts = com.diegonmarcos.cloudc3.pages.ContainerHosts.derive(slice, catalog)
+    private val hosts = com.diegonmarcos.cloudc3.pages.ContainerHosts.derive(slice, catalog, decl.vm.hostOrder)
     private val vdecl = decl.copy(hostIds = hosts.map { it.id })
     private fun vmPageIds() = listOf("${decl.vm.prefix}all") + hosts.map { decl.vm.prefix + it.id } + "${decl.vm.prefix}unknown"
 
@@ -343,7 +343,10 @@ class ContainerProjectsTest {
         val homeless = all - underProjects
         assertTrue("entities reachable through no project page: $homeless", homeless.all { n -> vdecl.projectOf(ContainerProjects.scope(vdecl, catalog, null).entries.first { it.name == n })?.id == vdecl.default })
         // the hosts are derived from the fleet, with the PC and the phones
-        assertTrue(hosts.map { it.id }.containsAll(listOf("oci-apps", "oci-analytics", "oci-mail", "gcp-proxy", "surface-8-pro", "samsung-a37", "samsung-s21plus")))
+        assertEquals("the VM row reads as declared: the VMs in the owner's order, then the devices by their declared short label",
+            listOf("oci-apps", "oci-analytics", "oci-mail", "gcp-proxy", "surface-8-pro", "samsung-a37", "samsung-s21plus"), hosts.map { it.id })
+        assertEquals(listOf("oci-apps", "oci-analytics", "oci-mail", "gcp-proxy", "SurfacePro8", "SamsungA37", "SamsungS21"), hosts.map { it.label })
+        assertEquals("the unknown host stays last", "${decl.vm.prefix}unknown", vmPageIds().last())
         // VM: every container is on exactly one VM page (a host or unknown); repos on none but All
         val pages = vmPageIds().filter { it != "${vdecl.vm.prefix}all" }
         val vmAll = ContainerProjects.scope(vdecl, catalog, "${vdecl.vm.prefix}all").entries

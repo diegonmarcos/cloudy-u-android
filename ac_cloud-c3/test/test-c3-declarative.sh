@@ -85,6 +85,11 @@ sys.path.insert(0, app + "/data")
 import gen_vm_hosts
 if [p["id"] for p in cont] != ["all"] + [p["id"] for p in cpj] + gen_vm_hosts.page_ids("vm-", app + "/data"):
     bad.append("the Containers strip reads %s, not All + the container_projects.json projects + the derived VM pages (#1971)" % [p["id"] for p in cont])
+want_vm = ["All"] + [l for _, l in gen_vm_hosts.derive(app + "/data")] + ["Unknown host"]
+if [p["label"] for p in cont if p["id"].startswith("vm-")] != want_vm:
+    bad.append("the VM row reads %s, not %s (declared order + short labels, Unknown host last; #1971)" % ([p["label"] for p in cont if p["id"].startswith("vm-")], want_vm))
+if [l for _, l in gen_vm_hosts.derive(app + "/data")] != ["oci-apps", "oci-analytics", "oci-mail", "gcp-proxy", "SurfacePro8", "SamsungA37", "SamsungS21"]:
+    bad.append("the derived VM hosts are not the owner's list: %s" % gen_vm_hosts.derive(app + "/data"))
 if [p["label"] for p in cont][0] != "All" or "Lib" in [p["label"] for p in cont] or "Wiki_ModernSc" not in [p["label"] for p in cpj]:
     bad.append("the Containers strip lacks All, still has Lib or lacks Wiki (#1968): %s" % [p["label"] for p in cont])
 def ids(pages): return [p["id"] for p in pages] + [i for p in pages for i in ids(p.get("pages") or [])]

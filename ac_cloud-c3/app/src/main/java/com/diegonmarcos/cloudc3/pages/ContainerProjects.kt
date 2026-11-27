@@ -33,6 +33,8 @@ object ContainerProjects {
     data class VmView(
         val prefix: String = "", val all: String = "all", val unknown: String = "unknown", val modes: List<Pair<String, String>> = emptyList(),
         val reposBand: String = "repos", val reposBandLabel: String = "", val reposReason: String = "", val unknownReason: String = "",
+        /** The declared order of the host pages and the declared short label per device (never sorted in code). */
+        val hostOrder: List<String> = emptyList(),
     )
 
     /** A kind chip (All | MCPs | APIs | Apps | DBs): matched by name first, then by category; no rule = the declared default kind. */
@@ -144,7 +146,7 @@ object ContainerProjects {
             ((o["projects_table"] as? JsonObject)?.get("columns") as? JsonArray).orEmpty().mapNotNull { c -> (c as? JsonObject)?.let { it.s("key").takeIf { k -> k.isNotBlank() }?.let { k -> k to it.s("label").ifBlank { k } } } },
             (o["projects_table"] as? JsonObject)?.l("filters").orEmpty(), (o["projects_table"] as? JsonObject)?.s("open_page").orEmpty(),
             (o["vm_view"] as? JsonObject)?.let { v -> VmView(v.s("page_prefix"), v.s("all").ifBlank { "all" }, v.s("unknown").ifBlank { "unknown" },
-                (v["modes"] as? JsonArray).orEmpty().mapNotNull { m -> (m as? JsonObject)?.let { it.s("id") to it.s("label") } }, v.s("repos_band"), v.s("repos_band_label"), v.s("repos_reason"), v.s("unknown_reason")) } ?: VmView(),
+                (v["modes"] as? JsonArray).orEmpty().mapNotNull { m -> (m as? JsonObject)?.let { it.s("id") to it.s("label") } }, v.s("repos_band"), v.s("repos_band_label"), v.s("repos_reason"), v.s("unknown_reason"), v.l("host_order")) } ?: VmView(),
         )
     }
 
