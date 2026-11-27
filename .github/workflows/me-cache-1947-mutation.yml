@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'serve-incomplete | blocking-subresource | no-replan | no-tombstone | cache-first | not-armed-uncached | no-hard-refresh | trim-by-age | release-clears-copy'
+        description: 'serve-incomplete | blocking-subresource | no-replan | no-tombstone | cache-first | not-armed-uncached | no-hard-refresh | trim-by-age | release-clears-copy | keep-ignored'
         required: true
 permissions:
   contents: read
@@ -40,6 +40,8 @@ jobs:
             trim-by-age)           sed -i 's/compareBy({ it.second }, { it.third })/compareBy({ 0 }, { it.third })/' $F ;;
             # the pager's release drops the cached copy under network_first too (the offline copy vanishes after the first open)
             release-clears-copy)   sed -i 's/val releaseDropsCache: Boolean get() = !networkFirst/val releaseDropsCache: Boolean get() = true/' $F ;;
+            # trim forgets the pages opened this session: the cap wipes the page just opened (the oldest)
+            keep-ignored)          sed -i 's/it.parentFile?.name in keep/false/' $F ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
           git diff --stat
@@ -92,6 +94,7 @@ jobs:
             not-armed-uncached)   C=WebPullRefresh1947Test; N="the refresh is armed for cached and non-cached pages" ;;
             trim-by-age)          C=WebPullRefresh1947Test; N="trim evicts images before a page's html, css and js, so an opened page keeps its offline copy" ;;
             release-clears-copy)  C=WebStrategy1947Test; N="a released page keeps its offline copy under network_first and drops it under stale_while_revalidate" ;;
+            keep-ignored)         C=WebPullRefresh1947Test; N="trim spares the pages opened this session, even when they are the oldest" ;;
             no-hard-refresh)      C=WebPullRefresh1947Test; N="a cached page runs the hard refresh, empties the cache and reloads, in that order" ;;
           esac
           X="$(find ac_cloud-me/app/build -path '*test-results*' -name "TEST-*.$C.xml" | head -1)"

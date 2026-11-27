@@ -101,4 +101,16 @@ class WebPullRefresh1947Test {
         assertTrue(s.get("pers", "https://p.example/a.css")!!.body.length() == 100L)
         assertTrue(s.get("pers", "https://p.example/a.js")!!.body.length() == 100L)
     }
+
+    @Test fun `trim spares the pages opened this session, even when they are the oldest`() {
+        val s = store()
+        s.put("opened", page, "text/html", "utf-8", 200, ByteArray(100)); s.metaFile("opened", page).setLastModified(1_000_000L)
+        for (i in 1..4) {
+            s.put("sib$i", "https://o.example/$i/", "text/html", "utf-8", 200, ByteArray(1000))
+            s.metaFile("sib$i", "https://o.example/$i/").setLastModified(2_000_000L + i)
+        }
+        s.keep.add(CacheKey.dirName("opened"))
+        s.trim(1_000)
+        assertTrue(s.get("opened", page)!!.body.length() == 100L)
+    }
 }

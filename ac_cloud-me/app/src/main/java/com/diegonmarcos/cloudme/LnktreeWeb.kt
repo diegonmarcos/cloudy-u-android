@@ -68,6 +68,7 @@ object LnktreeCache {
         val target = runCatching { java.net.URI(u) }.getOrNull() ?: return null
         if (target.scheme != "https" || !target.host.equals(base.host, true) || target.port != base.port) return null
         val s = store(ctx)
+        if (CacheKey.normalize(u) == CacheKey.normalize(pageUrl)) s.keep.add(CacheKey.dirName(pageId))   // #1947 a page the user opened is trimmed last
         val served = LnktreeResolver.serve(pageId, u, cfg, s, ::fetch, { stale -> revalidate(s, pageId, stale, pageUrl) }, pageUrl)
         if (CacheKey.normalize(u) == CacheKey.normalize(pageUrl)) {
             // #1947 the walk reads this: where the main frame came from; the offline note reads offlineSince

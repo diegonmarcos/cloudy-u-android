@@ -189,6 +189,8 @@ class LnktreeCacheStore(val root: File, private val clock: () -> Long = System::
 
     /** Hard refresh of one page: deletes every file under its directory. Returns the number of files removed. */
     /** #1947 diagnostics: told what was wiped and why (the Android side logs it with the call stack). */
+    /** #1947 dir names of the pages opened this session: [trim] evicts them last. */
+    val keep: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
     @Volatile var onWipe: ((String) -> Unit)? = null
     fun clearPage(pageId: String): Int { onWipe?.invoke("clearPage $pageId"); return deleteTree(pageDir(pageId)) }
 
@@ -208,7 +210,8 @@ class LnktreeCacheStore(val root: File, private val clock: () -> Long = System::
         }.getOrDefault(false)
         var total = files.sumOf(::size)
         // #1911 the mtimes are read ONCE: concurrent page loads touch the files while they sort, and a comparator reading lastModified() live broke TimSort's contract (crashed Proj > Cloudy)
-        for (m in files.map { Triple(it, if (critical(it)) 1 else 0, it.lastModified()) }.sortedWith(compareBy({ it.second }, { it.third })).map { it.first }) {
+        // pages the user opened this session (dir names) are evicted last of all: the cache over its cap (heavy pages x 12) used to wipe the page just opened, the OLDEST one
+        for (m in files.map { Triple(it, if (it.parentFile?.name in keep) 2 else if (critical(it)) 1 else 0, it.lastModified()) }.sortedWith(compareBy({ it.second }, { it.third })).map { it.first }) {
             if (total <= maxBytes) break
             total -= size(m)
             onWipe?.invoke("trim ${m.parentFile?.name} total=$total max=$maxBytes")
