@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'all | xo-off | sw-miss | complete-static | no-startup-fill | fresh-refetch | stale-skip | non-atomic | open-fetch | pull-noop | video-cap | version-keep'
+        description: 'all | xo-off | sw-miss | complete-static | no-startup-fill | fresh-refetch | stale-skip | non-atomic | open-fetch | pull-noop | video-cap | version-keep dedupe-off | dedupe-off | job-cap-off | plan-cap-off'
         required: true
         default: all
 permissions:
@@ -24,7 +24,7 @@ jobs:
         env:
           LEG: ${{ inputs.name }}
         run: |
-          ALL='xo-off sw-miss complete-static no-startup-fill fresh-refetch stale-skip non-atomic open-fetch pull-noop video-cap version-keep'
+          ALL='xo-off sw-miss complete-static no-startup-fill fresh-refetch stale-skip non-atomic open-fetch pull-noop video-cap version-keep dedupe-off job-cap-off plan-cap-off'
           if [ "$LEG" = all ]; then L="$ALL"; else case " $ALL " in *" $LEG "*) L="$LEG" ;; *) echo "::error::unknown leg"; exit 2 ;; esac; fi
           echo "legs=$(printf '%s\n' $L | python3 -c 'import json,sys;print(json.dumps(sys.stdin.read().split()))')" >> "$GITHUB_OUTPUT"
   mutate:
@@ -51,9 +51,12 @@ jobs:
             stale-skip) sed -i 's/CacheState.STALE -> Action.REFETCH/CacheState.STALE -> Action.SKIP/' "$D/LnktreeCache.kt" ;;
             non-atomic) sed -i 's/if (ok \&\& store.commit(p.id))/if (store.commit(p.id))/' "$D/LnktreeCache.kt" ;;
             open-fetch) sed -i 's/if (isMain \&\& store.state(pageId, url, cfg.ttlMs) == CacheState.STALE) revalidate(url)/if (isMain) revalidate(url)/' "$D/LnktreeCache.kt" ;;
-            pull-noop) sed -i 's/if (cfg.hardRefreshScope == "all") store.clearAll() else store.clearPage(pageId)/1/' "$D/LnktreeCache.kt" ;;
+            pull-noop) sed -i 's/if (cfg.hardRefreshScope == "all") store.clearAll() else store.clearPageWithShared(pageId)/1/' "$D/LnktreeCache.kt" ;;
             video-cap) sed -i 's/(cfg.videoMaxFileBytes > 0 \&\& r.body.size > cfg.videoMaxFileBytes)/false/' "$D/LnktreeCache.kt" ;;
             version-keep) sed -i 's/if (had) clearAll()/if (false) clearAll()/' "$D/LnktreeCache.kt" ;;
+            dedupe-off) sed -i 's/if (sharedFor(pageId, url) \&\& status == 200) {/if (false \&\& status == 200) {/' "$D/LnktreeCache.kt" ;;
+            job-cap-off) sed -i 's/if (cfg.maxBytes > 0 \&\& store.budget.used.get() + r.body.size > cfg.maxBytes)/if (false)/' "$D/LnktreeCache.kt" ;;
+            plan-cap-off) sed -i 's/cfg.maxScriptMediaPerPage > 0 \&\& ++scriptMedia/false \&\& ++scriptMedia/' "$D/LnktreeCache.kt" ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
           git diff --stat
@@ -110,6 +113,9 @@ jobs:
             pull-noop) N="pull-down always refetches" ;;
             video-cap) N="videos keep to the per-file and total caps and images are always stored" ;;
             version-keep) N="a new cache_version wipes the copies taken before it once" ;;
+            dedupe-off) N="a shared file is downloaded and stored once for every page and counted once" ;;
+            job-cap-off) N="the cache cap holds while the job runs, videos stop first and images still finish" ;;
+            plan-cap-off) N="the data-file scan plans at most max_script_media_per_page media files and marks the rest known-missing" ;;
           esac
           X="$(find ac_cloud-me/app/build -path '*test-results*' -name "TEST-*.Precache1957Test.xml" | head -1)"
           [ -n "$X" ] || { echo "::error::LEG ERROR $M: no result for Precache1957Test (did not compile or run); not a kill"; exit 1; }

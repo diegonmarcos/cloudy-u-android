@@ -8,7 +8,7 @@
 # Usage: emulator-me-precache-1957.sh ME_APK OUT_DIR [OLD_APK]. Screenshots OUT_DIR/precache-1957-*.png. Exit 1 on any failed assertion.
 set -uo pipefail
 ME_APK="$1"; OUT="$2"; OLD_APK="${3:-}"; mkdir -p "$OUT"
-T="timeout 120"; ME=com.diegonmarcos.cloudme; rc=0; WAIT_S="${WAIT_S:-900}"
+T="timeout 120"; ME=com.diegonmarcos.cloudme; rc=0; WAIT_S="${WAIT_S:-2400}"
 HERE="$(cd "$(dirname "$0")" && pwd)"; UI="${UI_DIR:-$HERE/../data/ui}"; CACHE="/data/data/$ME/cache/lnktree-cache"
 fail() { echo "FAIL $*" | tee -a "$OUT/verdict.txt"; rc=1; }
 ok() { echo "PASS $*" | tee -a "$OUT/verdict.txt"; }
@@ -59,6 +59,7 @@ wlog | grep -E "^CACHE_(PAGE|TOTAL|FETCH|HARVEST|VERSION|PROGRESS)" > "$OUT/cach
 $T adb shell "du -sk $CACHE; du -sk $CACHE/*" > "$OUT/cache-du.txt" 2>&1 || true
 TOT=$(grep "^CACHE_TOTAL" "$OUT/cache-report.txt" | tail -1); echo "after ${el}s: $TOT" | tee "$OUT/total.txt"; cat "$OUT/cache-du.txt"
 P=$(echo "$TOT" | sed -n 's/.*pages=\([0-9]*\).*/\1/p'); C=$(echo "$TOT" | sed -n 's/.* complete=\([0-9]*\).*/\1/p')
+B=$(echo "$TOT" | sed -n 's/.* bytes=\([0-9]*\) .*/\1/p'); MAXB=$((512 * 1024 * 1024)); [ -n "$B" ] && [ "$B" -lt "$MAXB" ] && ok "1d: the cache is under max_cache_mb: $B bytes" || fail "1d: cache bytes ${B:-?} not under $MAXB"
 [ -n "$P" ] && [ "$P" -gt 0 ] && [ "$P" = "$C" ] && ok "1: zero taps, every page complete on disk after ${el}s: $TOT" || fail "1: not every page complete: ${TOT:-no CACHE_TOTAL in ${WAIT_S}s}; incomplete: $(grep '^CACHE_PAGE.*complete=no' "$OUT/cache-report.txt" | tr '\n' ';')"
 grep -q "^CACHE_FETCH page=personal action=fill result=complete" "$OUT/cache-report.txt" && ok "1b: Personal filled by the startup job, never opened" || fail "1b: no complete startup fill of Personal"
 $T adb shell "for m in $CACHE/personal/*.meta; do sed -n 's/^url=//p' \$m; done" | tr -d '\r' | sed 's/\\:/:/g' > "$OUT/personal-urls.txt"

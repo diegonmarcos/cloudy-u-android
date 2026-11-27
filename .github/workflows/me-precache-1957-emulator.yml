@@ -23,7 +23,7 @@ permissions:
 jobs:
   render:
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 100
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -63,7 +63,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Boot emulator + timed cache walk
-        timeout-minutes: 55
+        timeout-minutes: 80
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34

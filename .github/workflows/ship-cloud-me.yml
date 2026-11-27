@@ -282,7 +282,7 @@ jobs:
           bad = [c.get("name") for c in cases if c.find("failure") is not None or c.find("error") is not None or c.find("skipped") is not None]
           print("Precache1957Test: %d cases, %d not passed" % (len(cases), len(bad)))
           for c in cases: print("  %s %s" % ("FAIL" if c.get("name") in bad else "PASS", c.get("name")))
-          sys.exit(1 if bad or len(cases) < 11 else 0)
+          sys.exit(1 if bad or len(cases) < 14 else 0)
           PY
 
       - name: Determine variant

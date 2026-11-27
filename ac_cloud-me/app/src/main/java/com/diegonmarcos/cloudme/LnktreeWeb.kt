@@ -43,7 +43,7 @@ object LnktreeCache {
     fun logReport(ctx: Context, pages: List<LnktreePage> = pages(ctx)) {
         val s = store(ctx); val reps = pages.map { s.report(it.id, it.url) }
         reps.forEach { android.util.Log.i("CloudMeWeb", it.line()) }
-        android.util.Log.i("CloudMeWeb", "CACHE_TOTAL pages=${reps.size} complete=${reps.count { it.complete }} bytes=${reps.sumOf { it.bytes }} max_bytes=${config.maxBytes}")
+        android.util.Log.i("CloudMeWeb", "CACHE_TOTAL pages=${reps.size} complete=${reps.count { it.complete }} bytes=${s.totalBytes()} pages_bytes=${reps.sumOf { it.bytes }} shared_bytes=${s.shared?.totalBytes() ?: 0} max_bytes=${config.maxBytes}")   // #1957 bytes = on disk, each shared file once
     }
 
     private val refreshing = ConcurrentHashMap.newKeySet<String>()
@@ -89,7 +89,7 @@ object LnktreeCache {
         val target = runCatching { java.net.URI(u) }.getOrNull() ?: return null
         // #1957 cross_origin: the page's CDN images and media come from its copy too
         if (target.scheme != "https" || (!cfg.crossOrigin && (!target.host.equals(base.host, true) || target.port != base.port))) return null
-        val s = store(ctx)
+        val s = store(ctx); s.registerPage(pageId, pageUrl)   // #1957 its other-origin files go to the shared store
         val range = req.requestHeaders.entries.firstOrNull { it.key.equals("Range", true) }?.value
         if (range != null) return if (cfg.cacheTtl) rangeOf(s.get(pageId, u), range) else null   // #1957 a stored video plays from its copy (206), offline too
         if (CacheKey.normalize(u) == CacheKey.normalize(pageUrl)) s.keep.add(CacheKey.dirName(pageId))   // #1947 a page the user opened is trimmed last

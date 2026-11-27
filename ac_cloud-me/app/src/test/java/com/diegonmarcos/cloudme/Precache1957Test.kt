@@ -185,4 +185,42 @@ class Precache1957Test {
         assertFalse(s.ensureVersion("1957")); assertNotNull(s.get("personal", site))
         assertTrue(File(s.root, ".version").readText() == "1957")
     }
+
+    @Test fun `a shared file is downloaded and stored once for every page and counted once`() {
+        val s = store(); val asked = Collections.synchronizedList(ArrayList<String>())
+        val img = "https://cdn.example/same.jpg"
+        val pages = listOf(LnktreePage("a", "https://a.example/"), LnktreePage("b", "https://b.example/"), LnktreePage("c", "https://c.example/"))
+        TtlPrefetch.run(pages, cfg.copy(prefetchConcurrency = 1), s) { u -> asked += u
+            if (u == img) Fetched("image/jpeg", null, 200, ByteArray(1000)) else Fetched("text/html", null, 200, "<img src=\"$img\">".toByteArray()) }
+        assertEquals("downloaded once", 1, asked.count { it == img })
+        assertEquals("stored once", 1, s.root.walkTopDown().count { it.isFile && it.name == CacheKey.of(img) + ".body" })
+        assertTrue(pages.all { s.complete(it.id, it.url) })
+        assertTrue("counted once: ${s.totalBytes()}", s.totalBytes() in 1000L..2900L)
+        assertEquals(1000L, s.shared!!.totalBytes() - s.shared!!.metaFile(LnktreeCacheStore.SHARED_ID, img).length())
+    }
+
+    @Test fun `the cache cap holds while the job runs, videos stop first and images still finish`() {
+        val s = store(); val c = cfg.copy(videoMaxFileBytes = 0, videoMaxTotalBytes = 0, maxBytes = 3000)
+        val imgs = (1..2).map { "https://cdn.example/i$it.jpg" }; val vids = (1..2).map { "https://cdn.example/v$it.mp4" }
+        val html = "<html>" + imgs.joinToString("") { "<img src=\"$it\">" } + vids.joinToString("") { "<video><source src=\"$it\"></video>" } + "</html>"
+        LnktreePrefetch.fill(LnktreePage("v", "https://v.example/"), c, s, { u -> when { u == "https://v.example/" -> Fetched("text/html", null, 200, html.toByteArray())
+            u.endsWith(".mp4") -> Fetched("video/mp4", null, 200, ByteArray(500)); else -> Fetched("image/jpeg", null, 200, ByteArray(1000)) } }, null)
+        imgs.forEach { assertEquals(200, s.get("v", it)!!.status) }
+        vids.forEach { assertEquals(LnktreePrefetch.VIDEO_CAPPED, s.get("v", it)!!.status); assertEquals("cache-cap", s.reason("v", it)) }
+        assertTrue("known-missing still counts as complete", s.complete("v", "https://v.example/"))
+        assertEquals(s.totalBytes(true), s.budget.used.get())
+    }
+
+    @Test fun `the data-file scan plans at most max_script_media_per_page media files and marks the rest known-missing`() {
+        val s = store(); val c = cfg.copy(maxScriptMediaPerPage = 2); val asked = Collections.synchronizedList(ArrayList<String>())
+        val media = (1..5).map { "https://cdn.example/m$it.jpg" }
+        LnktreePrefetch.fill(LnktreePage("d", "https://d.example/"), c, s, { u -> asked += u; when (u) {
+            "https://d.example/" -> Fetched("text/html", null, 200, "<script src=\"d.js\"></script>".toByteArray())
+            "https://d.example/d.js" -> Fetched("application/javascript", null, 200, media.joinToString(",", "var m=[", "]") { "\"$it\"" }.toByteArray())
+            else -> Fetched("image/jpeg", null, 200, ByteArray(10)) } }, null)
+        assertEquals(2, asked.count { it in media })
+        assertEquals(3, media.count { s.reason("d", it) == "plan-cap" })
+        assertTrue(s.complete("d", "https://d.example/"))
+        assertTrue(s.refs("d").containsAll(media))
+    }
 }
