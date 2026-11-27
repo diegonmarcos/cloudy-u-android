@@ -26,13 +26,21 @@ adb shell input keyevent KEYCODE_HOME
 # Nav: tracking switched on as the Start button leaves it (its prefs file), so the user-start intent is accepted.
 NU=$(adb shell stat -c %u "/data/data/$N" | tr -d '\r')
 adb shell "mkdir -p /data/data/$N/shared_prefs && echo '<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\" ?><map><boolean name=\"enabled\" value=\"true\" /></map>' > /data/data/$N/shared_prefs/maps_tracker_state.xml && chown -R $NU:$NU /data/data/$N/shared_prefs && restorecon -R /data/data/$N/shared_prefs"
-# Services: Nav tracker (the user's Start action), WebServer keep-alive (its switch file + launch), Mail push, Store batch.
-adb shell am start-foreground-service -a com.diegonmarcos.cloudnav.maps.ACTION_USER_START -n "$N/com.diegonmarcos.cloudnav.maps.LocationTrackerService" >"$OUT/start-nav.txt" 2>&1
-adb shell "mkdir -p /sdcard/Android/data/$W/files; echo '{\"server\":true,\"keep_alive\":true}' > /sdcard/Android/data/$W/files/power.json"
-adb shell am start -W -n "$W/.MainActivity" >/dev/null 2>&1; sleep 12; adb shell input keyevent KEYCODE_HOME
-adb shell am start-foreground-service -n "$M/app.sterna.push.PushService" >"$OUT/start-mail.txt" 2>&1
-adb shell am start-foreground-service -n "$S/com.diegonmarcos.superapp.updater.BatchForegroundService" >"$OUT/start-store.txt" 2>&1
-sleep 2
+countcheck() {   # the summary's "N running" equals the live child cards, in every snapshot taken so far
+python3 -I - "$OUT" "$H" <<'PY' || rc=1
+import json, glob, sys, re
+out, hub = sys.argv[1:]
+ok = True
+for f in sorted(glob.glob(out + '/notif-*.json')):
+    recs = json.load(open(f))
+    kids = [r for r in recs if r['pkg'] == hub and (r['tag'] or '').startswith('bg:') and r['tag'] != 'bg:summary']
+    summ = [r for r in recs if r['pkg'] == hub and r['tag'] == 'bg:summary']
+    n = int(re.match(r'(\d+)', summ[0]['summary_text']).group(1)) if summ and re.match(r'\d+', summ[0]['summary_text'] or '') else 0
+    print('==', f.rsplit('/', 1)[-1], 'summary says', summ[0]['summary_text'] if summ else None, 'live children', sorted(k['tag'] for k in kids))
+    if summ and n != len(kids): print('::error::%s: the summary counts %d, the group holds %d cards' % (f, n, len(kids))); ok = False
+sys.exit(0 if ok else 1)
+PY
+}
 snap() {   # $1 = label. Filtered, body-free view of our packages' notifications.
   adb shell dumpsys notification --noredact 2>/dev/null | tr -d '\r' > "$OUT/.raw-$1.txt"
   python3 -I - "$OUT/.raw-$1.txt" "$OUT/notif-$1.json" "$H" "$M" "$S" "$N" "$W" <<'PY'
@@ -54,18 +62,30 @@ for block in re.split(r"\n(?=\s+NotificationRecord\()", txt)[1:]:
                  "importance": g(r"importance=(-?\d+)"), "channel": g(r"channel=(\S+)"), "group": g(r"groupKey=(\S+?)[\s)]") or g(r"groupKey=(\S+?)[\s)]", block),
                  "summary": bool(flags & 0x200), "ongoing": bool(flags & 0x2), "no_clear": bool(flags & 0x20),
                  "title": (g(r"android\.title=\S+ \(([^)\n]{0,80})", block) or ""),
-                 "actions": g(r"actions=(\d+)")})
+                 "actions": g(r"actions=(\d+)"),
+                 # the summary's own count ("N running"): an app count, never a message body
+                 "summary_text": (g(r"android\.summaryText=\S+ \(([^)\n]{0,40})", block) or "")})
 json.dump(recs, open(out, "w"), indent=1)
 PY
   rm -f "$OUT/.raw-$1.txt"
 }
+# Services: Nav tracker (the user's Start action), WebServer keep-alive (its switch file + launch), Mail push, Store batch.
+adb shell am start-foreground-service -a com.diegonmarcos.cloudnav.maps.ACTION_USER_START -n "$N/com.diegonmarcos.cloudnav.maps.LocationTrackerService" >"$OUT/start-nav.txt" 2>&1
+adb shell "mkdir -p /sdcard/Android/data/$W/files; echo '{\"server\":true,\"keep_alive\":true}' > /sdcard/Android/data/$W/files/power.json"
+adb shell am start -W -n "$W/.MainActivity" >/dev/null 2>&1; sleep 12; adb shell input keyevent KEYCODE_HOME
+sleep 3; snap s1-before-mail
+adb shell am start-foreground-service -n "$M/app.sterna.push.PushService" >"$OUT/start-mail.txt" 2>&1
+sleep 8; snap s2-after-mail   # Mail with no account posts its card and stops at once: the summary count must follow
+adb shell am start-foreground-service -n "$S/com.diegonmarcos.superapp.updater.BatchForegroundService" >"$OUT/start-store.txt" 2>&1
+sleep 2
+countcheck
 snap t2
 adb shell input keyevent KEYCODE_BACK; adb shell input keyevent KEYCODE_HOME; sleep 2
 adb shell cmd statusbar expand-notifications; sleep 3; shoot bgcards-1965-shade-expanded
 # Scroll the open shade down to the Silent section, where the "Background Apps" group sits (up-swipes inside the list).
 SZ=$(adb shell wm size | tr -d '\r' | sed -n 's/.*: *\([0-9]*\)x\([0-9]*\).*/\1 \2/p' | tail -1); WD=${SZ% *}; HT=${SZ#* }
 for i in 1 2 3; do adb shell input swipe $((WD/2)) $((HT*80/100)) $((WD/2)) $((HT*35/100)) 500; sleep 2; shoot bgcards-1965-shade-scroll$i; done
-sleep 8; snap t12; shoot bgcards-1965-shade-t12
+sleep 8; snap t12; countcheck; shoot bgcards-1965-shade-t12
 adb shell cmd statusbar collapse
 python3 -I - "$OUT/notif-t12.json" "$OUT/notif-t2.json" "$H" <<'PY' || rc=1
 import json, sys
