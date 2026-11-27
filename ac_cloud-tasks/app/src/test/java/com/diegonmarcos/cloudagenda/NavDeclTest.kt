@@ -16,18 +16,20 @@ class NavDeclTest {
         assertEquals(Ids.HOME, nav.default()?.id)
     }
 
-    // #1964 the island has Clock in Library's place
-    @Test fun `the island has Clock and no Library`() {
-        assertEquals(listOf("inboxes", "backlogs", "home", "tasks", "clock"), nav.bottomNav)
-        assertTrue("library" !in nav.bottomNav)
+    // #1964 the island has Clock in Library's place; #1974 Files has Backlog's slot
+    @Test fun `the island is Inbox, Files, Home, Tasks, Clock`() {
+        assertEquals(listOf("inboxes", "files", "home", "tasks", "clock"), nav.bottomNav)
+        assertTrue("library" !in nav.bottomNav && "backlogs" !in nav.bottomNav)
         assertEquals("clock", nav.bottomSections().last().icon)
     }
 
-    // #1964 rule 16: Library's content and page stay reachable, and the old routes still resolve
-    @Test fun `Library is still reachable as a Home page and its old routes resolve`() {
-        assertEquals(listOf(Ids.PAGE_OVERVIEW, Ids.PAGE_PROJECTS, Ids.PAGE_LIBRARY), nav.section(Ids.HOME)!!.pages.map { it.id })
-        assertEquals(Ids.HOME to Ids.PAGE_LIBRARY, Ids.resolve("library").let { it.first to it.second })
-        assertEquals(Ids.HOME to Ids.PAGE_LIBRARY, Ids.resolve("library", "library").let { it.first to it.second })
+    // #1974 Home is the Overview only (Projects and Library are owner-named removals); every old route still resolves
+    @Test fun `old routes resolve and Home has no Projects or Library page`() {
+        assertEquals(listOf(Ids.PAGE_OVERVIEW), nav.section(Ids.HOME)!!.pages.map { it.id })
+        assertEquals(Ids.FILES to Ids.PAGE_ASSETS, Ids.resolve("library").let { it.first to it.second })
+        assertEquals(Ids.FILES to Ids.PAGE_ASSETS, Ids.resolve("home", "library").let { it.first to it.second })
+        assertEquals(Ids.TASKS to Ids.PAGE_BACKLOG, Ids.resolve("backlogs").let { it.first to it.second })
+        assertEquals(Ids.TASKS to Ids.PAGE_BACKLOG, Ids.resolve("backlogs", "backlogs").let { it.first to it.second })
         assertEquals(Ids.CLOCK to Ids.PAGE_CLOCK, Ids.resolve("tasks", "clock").let { it.first to it.second })
         for ((_, target) in Ids.ALIASES) assertTrue(nav.section(target.first)!!.pages.any { it.id == target.second })
     }
@@ -42,16 +44,16 @@ class NavDeclTest {
     }
 
     @Test fun `every id Kotlin dispatches on is declared and every declared section is dispatched`() {
-        assertEquals(setOf(Ids.INBOXES, Ids.BACKLOGS, Ids.HOME, Ids.TASKS, Ids.CLOCK, Ids.SETTINGS), nav.sections.map { it.id }.toSet())
-        assertEquals(listOf(Ids.PAGE_CALENDAR, Ids.PAGE_LIST, Ids.PAGE_GANTT, Ids.PAGE_KANBAN, Ids.PAGE_MINDMAP), nav.section(Ids.TASKS)!!.pages.map { it.id })
+        assertEquals(setOf(Ids.INBOXES, Ids.FILES, Ids.HOME, Ids.TASKS, Ids.CLOCK, Ids.SETTINGS), nav.sections.map { it.id }.toSet())
+        assertEquals(listOf(Ids.PAGE_BACKLOG, Ids.PAGE_CALENDAR, Ids.PAGE_LIST, Ids.PAGE_GANTT, Ids.PAGE_KANBAN, Ids.PAGE_MINDMAP), nav.section(Ids.TASKS)!!.pages.map { it.id })
         assertEquals(
             listOf(Ids.PAGE_APPEARANCE, Ids.PAGE_AGENT, Ids.PAGE_INBOX, Ids.PAGE_FEEDS, Ids.PAGE_GENERAL, Ids.PAGE_PERMS, Ids.PAGE_ABOUT),   // #1852 own pages first
             nav.section(Ids.SETTINGS)!!.pages.map { it.id },
         )
         assertEquals(listOf(Ids.PAGE_NOTES, Ids.PAGE_SYNCED), nav.section(Ids.INBOXES)!!.pages.map { it.id })
-        assertEquals(listOf(Ids.PAGE_BACKLOGS), nav.section(Ids.BACKLOGS)!!.pages.map { it.id })
+        assertEquals(listOf(Ids.PAGE_ROADMAP, Ids.PAGE_ASSETS), nav.section(Ids.FILES)!!.pages.map { it.id })
         assertEquals(listOf(Ids.PAGE_CLOCK), nav.section(Ids.CLOCK)!!.pages.map { it.id })
-        assertEquals(listOf(Ids.PAGE_OVERVIEW, Ids.PAGE_PROJECTS, Ids.PAGE_LIBRARY), nav.section(Ids.HOME)!!.pages.map { it.id })
+        assertEquals(listOf(Ids.PAGE_OVERVIEW), nav.section(Ids.HOME)!!.pages.map { it.id })
     }
 
     @Test fun `Inboxes has the sub-pages Notes then Synced, and opens on Notes`() {

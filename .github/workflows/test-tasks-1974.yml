@@ -1,9 +1,9 @@
-name: "Test -> Cloud Tasks #1964 (Home start, Clock on the island, Library reachable, Clock = Cloud Calc's; mutations + emulator shots)"
+name: "Test -> Cloud Tasks #1974/#1975 (Files, Backlog under Tasks, Home selection, trip roadmap; mutations + emulator shots)"
 
-# #1964. Job `nav-tests`: test/test-tasks-1964-nav.sh runs four tests and, for each, a mutation that must turn it red; the verdict is
-# read from the JUnit XML it writes, not from the script's exit code. Job `shots` (only when run_id is given): installs the x86_64 debug APK
-# of a Ship run on an API-34 emulator and screenshots launch (Home + island), the Clock with every subpage, and Library under Home.
-# Dispatch inputs reach the scripts through env only, behind an allow-list (digits).
+# #1974/#1975. Job `nav-tests`: test-tasks-1974-nav.sh (5 tests, 10 mutations), test-tasks-trip-parity.sh (4 tests, 7 mutations) and test-tasks-1964-nav.sh
+# (4 tests, 7 mutations) each write a JUnit XML; the verdict is read from the XML, never from the script's exit code. Job `shots` (only when run_id is given):
+# installs the x86_64 debug APK of a Ship run on an API-34 emulator and screenshots Home with a selection, Tasks > Backlog filtered, Files > RoadMap
+# (with the trip section) and Files > Assets. Dispatch inputs reach the scripts through env only, behind an allow-list (digits).
 
 on:
   workflow_dispatch:
@@ -17,7 +17,12 @@ on:
     branches: [main]
     paths:
       - "ac_cloud-tasks/test/test-tasks-1964-nav.sh"
-      - ".github/workflows/test-tasks-1964.yml"
+      - "ac_cloud-tasks/test/test-tasks-1974-nav.sh"
+      - "ac_cloud-tasks/test/test-tasks-trip-parity.sh"
+      - "ac_cloud-tasks/test/data/geo-trip-blocks-1975.json"
+      - "ac_cloud-tasks/app/src/main/assets/trip-roadmap.json"
+      - "ac_cloud-me/data/ui/pers/achieves/geo.json"
+      - ".github/workflows/test-tasks-1974.yml"
       - "ac_cloud-tasks/build.json"
       - "ac_cloud-calc/build.json"
       - "ab_cloud-libs-shared/libs/clock-tools/**"
@@ -32,25 +37,31 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Run the four tests and their mutations (writes JUnit XML)
-        run: JUNIT_OUT="$RUNNER_TEMP/tasks-1964-nav.xml" bash ac_cloud-tasks/test/test-tasks-1964-nav.sh || true
+      - name: Run the tests and their mutations (writes JUnit XML)
+        run: |
+          JUNIT_OUT="$RUNNER_TEMP/tasks-1974-nav.xml" bash ac_cloud-tasks/test/test-tasks-1974-nav.sh || true
+          JUNIT_OUT="$RUNNER_TEMP/tasks-trip.xml" bash ac_cloud-tasks/test/test-tasks-trip-parity.sh || true
+          JUNIT_OUT="$RUNNER_TEMP/tasks-1964-nav.xml" bash ac_cloud-tasks/test/test-tasks-1964-nav.sh || true
       - name: Verdict from the XML
         run: |
-          python3 -I - "$RUNNER_TEMP/tasks-1964-nav.xml" <<'PY'
+          python3 -I - "$RUNNER_TEMP/tasks-1974-nav.xml:5:10" "$RUNNER_TEMP/tasks-trip.xml:4:7" "$RUNNER_TEMP/tasks-1964-nav.xml:4:7" <<'PY'
           import sys, xml.etree.ElementTree as ET
-          cases = ET.parse(sys.argv[1]).getroot().findall("testcase")
-          tests = [c for c in cases if c.get("classname") == "tests"]
-          muts = [c for c in cases if c.get("classname") == "mutations"]
-          red = [c.get("name") + ": " + c.find("failure").get("message") for c in cases if c.find("failure") is not None]
-          for c in cases: print(("FAIL " if c.find("failure") is not None else "ok   ") + c.get("classname") + "/" + c.get("name"))
-          if len(tests) != 4 or len(muts) != 7: red.append("expected 4 tests and 7 mutations, got %d and %d" % (len(tests), len(muts)))
+          red = []
+          for arg in sys.argv[1:]:
+              path, nt, nm = arg.rsplit(":", 2)
+              cases = ET.parse(path).getroot().findall("testcase")
+              tests = [c for c in cases if c.get("classname") == "tests"]
+              muts = [c for c in cases if c.get("classname") == "mutations"]
+              for c in cases: print(("FAIL " if c.find("failure") is not None else "ok   ") + path.rsplit("/", 1)[-1] + " " + c.get("classname") + "/" + c.get("name"))
+              red += [c.get("name") + ": " + c.find("failure").get("message") for c in cases if c.find("failure") is not None]
+              if len(tests) != int(nt) or len(muts) != int(nm): red.append("%s: expected %s tests and %s mutations, got %d and %d" % (path, nt, nm, len(tests), len(muts)))
           if red: print("\n".join(red)); sys.exit(1)
           PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: tasks-1964-nav-xml
-          path: ${{ runner.temp }}/tasks-1964-nav.xml
+          name: tasks-1974-nav-xml
+          path: ${{ runner.temp }}/tasks-*.xml
 
   shots:
     needs: nav-tests
@@ -86,7 +97,7 @@ jobs:
           adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
           sleep 40
           adb install -r -g app-under-test.apk || { echo "::error::adb install failed"; exit 2; }
-          shot() { adb exec-out screencap -p > "walk-out/shots/tasks-1964-$1.png"; }
+          shot() { adb exec-out screencap -p > "walk-out/shots/tasks-1974-$1.png"; }
           dump() { for t in 1 2 3 4; do adb shell rm -f /sdcard/ui.xml; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > walk-out/ui.xml; grep -q "<hierarchy" walk-out/ui.xml && break; sleep 2; done; }
           tap() { # tap the first node whose text or content-desc is exactly $1
             dump
@@ -106,14 +117,12 @@ jobs:
           }
           adb shell am force-stop $PKG
           adb shell monkey -p $PKG -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
-          sleep 15; shot 01-launch-lands-on-home-and-bottom-nav
-          dump; cp walk-out/ui.xml walk-out/ui-launch.xml
-          tap Clock; shot 02-clock-world-clock
-          for p in "Alarms:03-clock-alarms" "Timers:04-clock-timers" "Stopwatch:05-clock-stopwatch" "Interval:06-clock-interval" "Bedtime:07-clock-bedtime" "World clock:08-clock-world-clock-again"; do
-            [ "${p%%:*}" = "Bedtime" ] && { adb shell input swipe 900 334 150 334 300; sleep 1; }   # the chip row scrolls sideways
-            tap "${p%%:*}"; shot "${p##*:}"
-          done
-          tap Home; tap Library; shot 09-library-now-under-home-library-tab
+          sleep 15
+          tap None; tap Galaxy; shot 01-home-selection-galaxy
+          tap Tasks; sleep 3; shot 02-tasks-backlog-filtered
+          tap Files; sleep 3; shot 03-files-roadmap
+          cp walk-out/shots/tasks-1974-03-files-roadmap.png walk-out/shots/tasks-1975-roadmap.png
+          tap Assets; sleep 2; tap 1842; shot 04-files-assets
           timeout 60 adb logcat -d -v threadtime "*:E" > walk-out/logcat-errors.txt || true
           SH
           chmod +x walk.sh
@@ -134,7 +143,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: tasks-1964-shots
+          name: tasks-1974-shots
           path: |
             walk-out/shots/*.png
             walk-out/summary.txt

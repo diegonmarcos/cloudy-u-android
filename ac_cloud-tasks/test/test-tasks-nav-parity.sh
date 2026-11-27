@@ -30,19 +30,31 @@ new_mock = json.load(open(os.path.join(APP, "app/src/debug/assets/mock-tasks.jso
 new_sections = {s["id"]: s for s in new["sections"]}
 mapping = {k: v for k, v in new.get("nav_mapping", {}).items() if not k.startswith("_")}
 
-# ── every old page is mapped, and the target exists with its label and icon ─────────────────────────────────
+# ── #1974 the OWNER-NAMED removals: exactly these two pages, written here too so editing build.json alone can not drop another ──────────────
+OWNER_REMOVED = {"projects/projects", "library/library"}
+removed = {k: v for k, v in new.get("nav_removed", {}).items() if not k.startswith("_")}
+check(set(removed) == OWNER_REMOVED and all("#1974" in v for v in removed.values()), "ui.nav_removed records exactly the owner-named removals (Home > Projects, Home > Library), ticket #1974")
+check([p["id"] for p in new_sections["home"]["pages"]] == ["overview"], "Home keeps only Overview: the two named pages are gone from it")
+check(all(not any(x["id"] in ("projects", "library") for x in s["pages"]) for s in new_sections.values()), "neither removed page id is declared anywhere (no silent second copy)")
+
+# ── every old page is mapped (or an owner-named removal), and the target exists with its label and icon ─────────────────────────────────────
 old_pages = {(s["id"], p["id"]): (s, p) for s in old["sections"] for p in s["pages"]}
-check(set(mapping) == {"%s/%s" % k for k in old_pages}, "nav_mapping holds every previous page and nothing else (%d pages)" % len(old_pages))
+check(set(mapping) == {"%s/%s" % k for k in old_pages} - OWNER_REMOVED, "nav_mapping holds every previous page except the owner-named removals, and nothing else (%d pages)" % (len(old_pages) - len(OWNER_REMOVED)))
 for (sid, pid), (s, p) in sorted(old_pages.items()):
+    if "%s/%s" % (sid, pid) in OWNER_REMOVED: continue
     tgt = mapping.get("%s/%s" % (sid, pid), "")
     ts, _, tp = tgt.partition("/")
     page = next((x for x in new_sections.get(ts, {}).get("pages", []) if x["id"] == tp), None)
     check(page is not None, "previous page %s/%s is reachable at %s" % (sid, pid, tgt))
     if page:
-        check(page["label"] == p["label"] and page["icon"] == p["icon"], "  %s keeps its label (%s) and icon (%s)" % (tgt, p["label"], p["icon"]))
+        # #1974 the one relabel: the Backlog section's page "Backlogs" is Tasks' tab "Backlog" (singular, as the ticket and the island named it); same icon
+        labels_ok = {p["label"]} | ({"Backlog"} if (sid, pid) == ("backlogs", "backlogs") else set())
+        check(page["label"] in labels_ok and page["icon"] == p["icon"], "  %s keeps its label (%s) and icon (%s)" % (tgt, "/".join(sorted(labels_ok)), p["icon"]))
 
 # ── every old section still declared, or folded into a named section ─────────────────────────────────────────
 for s in old["sections"]:
+    if all("%s/%s" % (s["id"], p["id"]) in OWNER_REMOVED for p in s["pages"]):
+        check(s["id"] not in new_sections, "previous section %s was only an owner-named removed page (#1974)" % s["id"]); continue
     targets = {v.split("/")[0] for k, v in mapping.items() if k.startswith(s["id"] + "/")}
     check(len(targets) >= 1 and all(t in new_sections for t in targets), "previous section %s lives on in %s" % (s["id"], sorted(targets)))
 # sections that kept their id keep their page order
@@ -57,13 +69,20 @@ for s in old["sections"]:
         check([i for i in oids if i not in SHARED] + [i for i in oids if i in SHARED] == nids, "section %s keeps its pages in the same order (the shared ones last, #1852)" % s["id"])
 
 # ── the new island: the five asked for, every old tab still one tap away ─────────────────────────────────────
-check(new["bottom_nav"] == ["inboxes", "backlogs", "home", "tasks", "clock"], "#1964 island = Inbox | Backlog | Home | Tasks | Clock (Library is Home's third page)")
+check(new["bottom_nav"] == ["inboxes", "files", "home", "tasks", "clock"], "#1974 island = Inbox | Files | Home | Tasks | Clock (Backlog is Tasks' first page)")
 labels = [new_sections[i]["label"] for i in new["bottom_nav"]]
-check(labels == ["Inbox", "Backlog", "Home", "Tasks", "Clock"], "island labels %s" % labels)
+check(labels == ["Inbox", "Files", "Home", "Tasks", "Clock"], "island labels %s" % labels)
 reach = {tuple(v.split("/")) for v in mapping.values()}
 check(all(s in new["bottom_nav"] or s == "settings" for s, _ in reach), "every previous page lives in a section on the island (or Settings, off the island as before)")
 check(set(new_sections) - set(new["bottom_nav"]) == {"settings"}, "Settings is the only section off the island, as before")
 check(old["default_section"] == "tasks" and new["default_section"] == "home", "#1964 the app opens on Home (it opened on Tasks in #1757)")
+
+# ── #1974 Backlog is Tasks' first page, the alias keeps the old id, Library's content is re-homed under Files ───────────────────────────────
+check([p["id"] for p in new_sections["tasks"]["pages"]] == ["backlog", "calendar", "list", "gantt", "kanban", "mindmap"], "#1974 Tasks = Backlog | Calendar | List | Gantt | Kanban | Mindmap")
+check(mapping.get("backlogs/backlogs") == "tasks/backlog", "#1974 backlogs/backlogs is aliased to tasks/backlog in nav_mapping")
+check([p["id"] for p in new_sections["files"]["pages"]] == ["roadmap", "assets"], "#1974 Files = RoadMap | Assets")
+al = new.get("route_aliases", {})
+check(al.get("backlogs") == ["tasks", "backlog"] and al.get("library") == ["files", "assets"], "#1974 the old routes backlogs and library still resolve (Backlog under Tasks, Library's content under Files > Assets)")
 
 # ── calendar views and the new styles ───────────────────────────────────────────────────────────────────────
 check(all(v in new["calendar_views"] for v in old["calendar_views"]), "the Month and Year views of the Calendar are kept")

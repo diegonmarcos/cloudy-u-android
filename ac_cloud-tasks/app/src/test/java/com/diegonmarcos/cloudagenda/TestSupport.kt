@@ -108,6 +108,9 @@ class FakeEnv(context: Context, seed: Boolean = true, samples: List<SampleProjec
     override val mock = MockTasks.parse(java.io.File("src/debug/assets/mock-tasks.json").readText())
     override val projectScope = ProjectScope(prefs.projectSelection, SampleProjects.loadConfigs(context)) { prefs.projectSelection = it }
     override val structure = Structure.load(context)
+    /** #1974 the backlog the Backlog, RoadMap and Assets pages read; a test sets it. */
+    override val trip = com.diegonmarcos.cloudagenda.data.TripRoadmap.parse(java.io.File("src/main/assets/trip-roadmap.json").readText())
+    override var backlog: com.diegonmarcos.cloudagenda.data.BacklogSource = com.diegonmarcos.cloudagenda.data.BacklogSource.EMPTY
     override val notes = NotesModel(MemoryNotesStore(), NotesDecl.load(context))
     override val chat = AiChatState(FakeAiHost())
     override val agents: List<AiAgent> = listOf(AiAgent("hermes", "Hermes", "tools", "hermes"))

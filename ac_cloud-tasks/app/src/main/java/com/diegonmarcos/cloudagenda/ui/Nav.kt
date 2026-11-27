@@ -10,9 +10,10 @@ import com.diegonmarcos.superapp.bottomnav.TopBarDecl
  */
 object Ids {
     const val INBOXES = "inboxes"
-    const val BACKLOGS = "backlogs"
     const val TASKS = "tasks"
-    /** #1964 the Clock section on the island (libs:clock-tools FullClock); Library is Home's third page now (PAGE_LIBRARY). */
+    /** #1974 the Files section on the island (Backlog's old slot): the RoadMap and the Assets of the backlog repo (Library's content lives under Assets). */
+    const val FILES = "files"
+    /** #1964 the Clock section on the island (libs:clock-tools FullClock). */
     const val CLOCK = "clock"
     /** #1757 the island's centre: the project selector and the status cards; the former Projects tab is its second page. */
     const val HOME = "home"
@@ -20,9 +21,10 @@ object Ids {
 
     const val PAGE_NOTES = "notes"
     const val PAGE_SYNCED = "synced"
-    const val PAGE_BACKLOGS = "backlogs"
-    const val PAGE_LIBRARY = "library"
-    const val PAGE_PROJECTS = "projects"
+    /** #1974 Tasks' first page (the former Backlog section's page "backlogs"). */
+    const val PAGE_BACKLOG = "backlog"
+    const val PAGE_ROADMAP = "roadmap"
+    const val PAGE_ASSETS = "assets"
     const val PAGE_OVERVIEW = "overview"
     const val PAGE_CALENDAR = "calendar"
     const val PAGE_LIST = "list"
@@ -39,9 +41,18 @@ object Ids {
     const val PAGE_INBOX = "inbox"
     const val PAGE_FEEDS = "feeds"
 
-    /** #1964 old routes that still resolve: "section" or "section/page" -> (section, page). build.json::ui.route_aliases declares them. */
+    /**
+     * #1964/#1974 old routes that still resolve: "section" or "section/page" -> (section, page). build.json::ui.route_aliases declares them.
+     * Backlog moved under Tasks, Library's content lives under Files > Assets; the owner-named removals (Home > Projects, Home > Library page) land on Home.
+     */
     val ALIASES: Map<String, Pair<String, String>> = mapOf(
-        "library" to (HOME to PAGE_LIBRARY),
+        "library" to (FILES to PAGE_ASSETS),
+        "library/library" to (FILES to PAGE_ASSETS),
+        "home/library" to (FILES to PAGE_ASSETS),
+        "home/projects" to (HOME to PAGE_OVERVIEW),
+        "projects" to (HOME to PAGE_OVERVIEW),
+        "backlogs" to (TASKS to PAGE_BACKLOG),
+        "backlogs/backlogs" to (TASKS to PAGE_BACKLOG),
         "tasks/clock" to (CLOCK to PAGE_CLOCK),
     )
 

@@ -24,6 +24,7 @@ import com.diegonmarcos.cloudagenda.ui.FilterTags
 import com.diegonmarcos.cloudagenda.ui.HomeTags
 import com.diegonmarcos.cloudagenda.ui.MockTags
 import com.diegonmarcos.cloudagenda.ui.Declarations
+import com.diegonmarcos.cloudagenda.ui.FilesTags
 import com.diegonmarcos.cloudagenda.ui.SettingsTags
 import com.diegonmarcos.cloudagenda.ui.TagTags
 import com.diegonmarcos.cloudagenda.ui.TasksApp
@@ -62,7 +63,9 @@ class TasksPageTest {
         compose.setContent { TasksApp(env, Declarations.nav) }
         // #1964 the app opens on Home; these tests are about the Tasks section, so they step into it first.
         if (openTasks) { compose.onNodeWithTag(BottomNavTags.item("tasks")).performClick(); compose.waitForIdle() }
+        // #1974 Tasks opens on Backlog now; the tests that are not about it step on to Calendar (the page they were written for) or List.
         if (list) { compose.onNodeWithTag(PageTabsTags.tab("list")).performClick(); compose.waitForIdle() }
+        else if (openTasks) { compose.onNodeWithTag(PageTabsTags.tab("calendar")).performClick(); compose.waitForIdle() }
         return env
     }
 
@@ -85,13 +88,16 @@ class TasksPageTest {
         compose.onNodeWithTag(TopBarTags.AI).assertIsDisplayed()
         compose.onNodeWithTag(TopBarTags.ACCOUNT).assertIsDisplayed()
         compose.onNodeWithTag(TopBarTags.CONFIGS).assertIsDisplayed()
-        for (id in listOf("inboxes", "backlogs", "home", "tasks", "clock")) compose.onNodeWithTag(BottomNavTags.item(id)).assertIsDisplayed()
+        for (id in listOf("inboxes", "files", "home", "tasks", "clock")) compose.onNodeWithTag(BottomNavTags.item(id)).assertIsDisplayed()
         compose.onNodeWithTag(BottomNavTags.item("library")).assertDoesNotExist()
+        compose.onNodeWithTag(BottomNavTags.item("backlogs")).assertDoesNotExist()   // #1974 Backlog moved under Tasks
         compose.onNodeWithTag(HomeTags.PAGE).assertIsDisplayed()
         compose.onNodeWithTag(BottomNavTags.item("settings")).assertDoesNotExist()
         compose.onNodeWithTag(BottomNavTags.item("tasks")).performClick(); compose.waitForIdle()
-        for (id in listOf("calendar", "list", "gantt", "kanban", "mindmap")) compose.onNodeWithTag(PageTabsTags.tab(id)).assertExists()
+        for (id in listOf("backlog", "calendar", "list", "gantt", "kanban", "mindmap")) compose.onNodeWithTag(PageTabsTags.tab(id)).assertExists()
         compose.onNodeWithTag(PageTabsTags.tab("clock")).assertDoesNotExist()
+        compose.onNodeWithTag(FilesTags.BACKLOG).assertIsDisplayed()   // #1974 Tasks opens on its first page, Backlog
+        compose.onNodeWithTag(PageTabsTags.tab("calendar")).performClick(); compose.waitForIdle()
         compose.onNodeWithTag(MockTags.page("calendar")).assertIsDisplayed()
     }
 
@@ -186,15 +192,15 @@ class TasksPageTest {
         // Each tab is Cloud Me's tree (a first node of it is a folder row); Expand all opens it down to the mock items.
         for ((id, node, item) in listOf(
             Triple("inboxes", "Mental-Models", "Mock screenshot: sample booking"), Triple("backlogs", "Due", "Mock due item: sample renewal"),
-            Triple("library", "Research-Dossiers", "Mock reference: fake template pack"), Triple("projects", "Unix", "Mock family task: sample port"),
+            Triple("library", "Research-Dossiers", "Mock reference: fake template pack"),
         )) {
-            // #1757 the former Projects tab is Home's second page.
-            compose.onNodeWithTag(BottomNavTags.item(if (id == "projects" || id == "library") "home" else id)).performClick()
+            // #1974 Backlog is Tasks' first page (its Structure view); Library is Files > Assets > Library; Home > Projects was removed (owner-named).
+            compose.onNodeWithTag(BottomNavTags.item(when (id) { "backlogs" -> "tasks"; "library" -> "files"; else -> id })).performClick()
             compose.waitForIdle()
             // Inboxes opens on Notes; its synced sources (the tree) are the Synced sub-page.
             if (id == "inboxes") { compose.onNodeWithTag(PageTabsTags.tab("synced")).performClick(); compose.waitForIdle() }
-            // #1964 Library left the island: it is Home's third page.
-            if (id == "projects" || id == "library") { compose.onNodeWithTag(PageTabsTags.tab(id)).performClick(); compose.waitForIdle() }
+            if (id == "backlogs") { compose.onNodeWithTag(PageTabsTags.tab("backlog")).performClick(); compose.onNodeWithTag(FilesTags.mode("structure")).performClick(); compose.waitForIdle() }
+            if (id == "library") { compose.onNodeWithTag(PageTabsTags.tab("assets")).performClick(); compose.onNodeWithTag(FilesTags.assetsMode("library")).performClick(); compose.waitForIdle() }
             compose.onNodeWithTag(MockTags.page(id)).assertIsDisplayed()
             compose.onNodeWithTag(MockTags.tree(id) + ":dir:" + node).assertExists()
             compose.onNodeWithTag(MockTags.expand(id)).performClick()

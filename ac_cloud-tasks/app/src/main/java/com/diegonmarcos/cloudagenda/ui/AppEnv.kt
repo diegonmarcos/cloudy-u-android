@@ -12,6 +12,8 @@ import com.diegonmarcos.cloudagenda.agent.CloudMailProvider
 import com.diegonmarcos.cloudagenda.agent.MailSource
 import com.diegonmarcos.cloudagenda.data.AgentConfig
 import com.diegonmarcos.cloudagenda.data.AgentSecrets
+import com.diegonmarcos.cloudagenda.data.BacklogSource
+import com.diegonmarcos.cloudagenda.data.DriveBacklogSource
 import com.diegonmarcos.cloudagenda.data.Attachment
 import com.diegonmarcos.cloudagenda.data.AttachmentKind
 import com.diegonmarcos.cloudagenda.data.MockTask
@@ -23,6 +25,7 @@ import com.diegonmarcos.cloudagenda.data.SampleProjects
 import com.diegonmarcos.cloudagenda.data.Structure
 import com.diegonmarcos.cloudagenda.data.ThemeMode
 import com.diegonmarcos.cloudagenda.data.TasksDb
+import com.diegonmarcos.cloudagenda.data.TripRoadmap
 import com.diegonmarcos.cloudagenda.data.TasksPrefs
 import com.diegonmarcos.cloudagenda.data.TasksRepository
 import com.diegonmarcos.cloudagenda.links.Links
@@ -73,6 +76,8 @@ class AppEnv(private val activity: ComponentActivity, private val launchPicker: 
     override val mock: List<MockTask> by lazy { MockTasks.load(app) }
     override val projectScope: ProjectScope by lazy { ProjectScope(prefs.projectSelection, SampleProjects.loadConfigs(app)) { prefs.projectSelection = it } }
     override val structure: Structure by lazy { Structure.load(app) }
+    override val trip: TripRoadmap by lazy { TripRoadmap.load(app) }
+    override val backlog: BacklogSource by lazy { DriveBacklogSource(app) }
     override val notes: NotesModel by lazy { NotesDecl.load(app).let { NotesModel(PrefsNotesStore(app, it), it) } }
 
     override val chat: AiChatState get() = TasksAi.chat(app, repo)

@@ -138,9 +138,11 @@ class AchievesTest {
     @Test fun `the owner's old Achieves text moved into the new tabs`() {
         val all = tabs.joinToString("") { BuroLlcTestData.text("data/ui/pers/achieves/$it.json") }
         for (w in listOf("B1) Personal", "B2) Personal Pursuits", "B3) International Experience", "https://nomadmania.com/profile/73889",
-                "Trip management", "Before you go", "My Bucket 50 (things before 50)", "Oceans Seven endurance swims", "🪂 Skydiving"))
+                "My Bucket 50 (things before 50)", "Oceans Seven endurance swims", "🪂 Skydiving"))
             assertTrue(w, all.contains(w))
         assertTrue(BuroLlcTestData.text("data/ui/pers/achieves/geo.json").contains("B3) International Experience"))
+        // #1975 the trip management blocks MOVED to Cloud Tasks > Files > RoadMap (its test-tasks-trip-parity.sh holds every field)
+        for (w in listOf("Trip management", "Before you go", "Documents & visas")) assertTrue("$w left Geo", !all.contains(w))
     }
 
     @Test fun `the bar is Pers Prof Proj Inventory then the rest, Pers holds Personal Archives and Prof holds Profiles (LinkedIn, CV) and the three company sites`() {

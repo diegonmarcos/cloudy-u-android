@@ -301,7 +301,7 @@ mutant tree "Prof > More is declared again (#1937)" "$J \"$BJ;S['prof']['pages']
 mutant parity "a Health plan page's content is changed" "sed -i 's/\"page\": \"circadian\"/\"page\": \"circadian2\"/' data/ui/pers/health/plan/circadian.json"
 mutant parity "a Health tracker page file is lost" "rm data/ui/pers/health/trackers/sleep.json; $J \"$BJ;h=[p for p in S['pers']['pages'] if p['id']=='health'][0];h['pages'][0]['pages']=[p for p in h['pages'][0]['pages'] if p['id']!='sleep'];$W_\""
 mutant parity "a page is dropped from Pers (Astro)" "rm data/ui/pers/astro.json; $J \"$BJ;S['pers']['pages']=[p for p in S['pers']['pages'] if p['id']!='astro'];$W_\""
-mutant parity "a tile target inside a page changes" "sed -i 's#\"page:pers/home\"#\"page:pers/bio\"#' data/ui/pers/achieves/geo.json"
+mutant parity "a tile target inside a page changes" "sed -i 's#\"extapp:cloud-account\"#\"extapp:cloud-mail\"#' data/ui/buro/account.json"
 mutant parity "the Health metric taxonomy loses a metric" "$J \"$BJ;S['pers']['metrics'].pop(0);$W_\""
 mutant parity "the Achieves migration is dropped" "$J \"$BJ;S['pers'].pop('migration');$W_\""
 mutant parity "the ig0 page (the old Instagram content) is dropped" "rm data/ui/pers/pers-profiles/ig0.json; $J \"$BJ;[p['pages'].pop(1) for p in S['pers']['pages'] if p['id']=='pers-profiles'];$W_\""

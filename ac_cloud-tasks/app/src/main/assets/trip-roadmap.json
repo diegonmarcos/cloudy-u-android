@@ -1,0 +1,71 @@
+{
+ "_doc": "#1975 the trip roadmap, MOVED from Cloud Me > Pers > Achieves > Geo (its last three blocks; test/data/geo-trip-blocks-1975.json is the frozen copy and test-tasks-trip-parity.sh holds every field against it). Same blocks, same labels, subtitles, icons, accents. Targets: `cloudme:page:<section>/<page>` opens that page of Cloud Me (a deep link: its MainActivity reads the shortcut_action extra), `tasks:<section>/<page>` opens a page of this app (the Calendar is Tasks' own), `extapp:<id>` launches the app of `apps`.",
+ "apps": {
+  "cloudme": "com.diegonmarcos.cloudme",
+  "cloud-nav": "com.diegonmarcos.cloudnav",
+  "cloud-myterminal": "com.diegonmarcos.ide"
+ },
+ "blocks": [
+  {
+   "kind": "link_grid",
+   "title": "Trip management",
+   "subtitle": "The apps a trip actually runs on",
+   "links": [
+    {
+     "label": "Bookings",
+     "icon": "ic_p_cal_day",
+     "target": "cloudme:page:buro/wallet"
+    },
+    {
+     "label": "Calendar",
+     "icon": "ic_nav_agenda",
+     "target": "tasks:tasks/calendar"
+    },
+    {
+     "label": "Maps",
+     "icon": "ic_map_pin",
+     "target": "extapp:cloud-nav"
+    },
+    {
+     "label": "Docs",
+     "icon": "ic_p_folder",
+     "target": "extapp:cloud-myterminal"
+    }
+   ]
+  },
+  {
+   "kind": "note",
+   "title": "Before you go",
+   "body": "The four checklists below are the parts of a trip that are forgettable and expensive to forget. Each opens the app that holds that piece — Cloud Me tracks the shape of a trip, not its contents."
+  },
+  {
+   "kind": "cards",
+   "items": [
+    {
+     "title": "Documents & visas",
+     "subtitle": "Passport validity · visa · vaccination record",
+     "accent": "#7E57C2",
+     "target": "cloudme:page:buro/wallet"
+    },
+    {
+     "title": "Bookings",
+     "subtitle": "Flights · stays · transfers · car",
+     "accent": "#42A5F5",
+     "target": "cloudme:page:buro/wallet"
+    },
+    {
+     "title": "Money",
+     "subtitle": "Cards accepted · cash · travel budget",
+     "accent": "#66BB6A",
+     "target": "cloudme:page:buro/budgeting"
+    },
+    {
+     "title": "Health",
+     "subtitle": "Insurance · prescriptions · pharmacy",
+     "accent": "#EC407A",
+     "target": "cloudme:page:pers/home"
+    }
+   ]
+  }
+ ]
+}

@@ -25,6 +25,11 @@
         <package android:name="${mailPackage}" />
         <!-- Cloud Account: Profile ▸ Account opens it (com.diegonmarcos.cloudaccount.OPEN). -->
         <package android:name="${accountPackage}" />
+        <!-- #1975 Files > RoadMap > Trip roadmap: Cloud Me (page deep links), Cloud Nav (Maps) and Cloud MyTerminal (Docs) open from its tiles
+             (assets/trip-roadmap.json::apps). -->
+        <package android:name="com.diegonmarcos.cloudme" />
+        <package android:name="com.diegonmarcos.cloudnav" />
+        <package android:name="com.diegonmarcos.ide" />
     </queries>
 
     <application

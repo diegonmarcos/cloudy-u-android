@@ -1,0 +1,255 @@
+{
+ "_fake": "MOCK DATA - FAKE: debug-only stand-in for the cloud-me-pvt-tasks clone",
+ "tickets": [
+  {
+   "id": "1900",
+   "subject": "#1900 Fake: reorganise the tasks navigation",
+   "status": "in_progress",
+   "metadata": {
+    "scope": {
+     "project": "1.1",
+     "family": "1.1.1",
+     "repos": [
+      "cloudy-u-android"
+     ],
+     "names": {
+      "project": "Cloudy",
+      "family": "Android"
+     }
+    }
+   }
+  },
+  {
+   "id": "1907",
+   "subject": "#1907 Fake: add a dark theme to the clock",
+   "status": "pending",
+   "metadata": {
+    "scope": {
+     "project": "1.1",
+     "family": "1.1.1",
+     "repos": [
+      "cloudy-u-android"
+     ],
+     "names": {
+      "project": "Cloudy",
+      "family": "Android"
+     }
+    }
+   }
+  },
+  {
+   "id": "1914",
+   "subject": "#1914 Fake: ship the weather tile",
+   "status": "completed",
+   "metadata": {
+    "scope": {
+     "project": "1.1",
+     "family": "1.1.1",
+     "repos": [
+      "cloudy-u-android"
+     ],
+     "names": {
+      "project": "Cloudy",
+      "family": "Android"
+     }
+    }
+   }
+  },
+  {
+   "id": "1921",
+   "subject": "#1921 Fake: fix the alarm ring",
+   "status": "completed",
+   "metadata": {
+    "scope": {
+     "project": "1.1",
+     "family": "1.1.1",
+     "repos": [
+      "cloudy-u-android"
+     ],
+     "names": {
+      "project": "Cloudy",
+      "family": "Android"
+     }
+    }
+   }
+  },
+  {
+   "id": "1928",
+   "subject": "#1928 Fake: vault index page",
+   "status": "in_progress",
+   "metadata": {
+    "scope": {
+     "project": "1.2",
+     "family": "1.2.1",
+     "repos": [
+      "cloud-me-pvt-tasks"
+     ],
+     "names": {
+      "project": "Cloud-Me",
+      "family": "Web"
+     }
+    }
+   }
+  },
+  {
+   "id": "1935",
+   "subject": "#1935 Fake: notes sync",
+   "status": "completed",
+   "metadata": {
+    "scope": {
+     "project": "1.2",
+     "family": "1.2.1",
+     "repos": [
+      "cloud-me-pvt-tasks"
+     ],
+     "names": {
+      "project": "Cloud-Me",
+      "family": "Web"
+     }
+    }
+   }
+  },
+  {
+   "id": "1942",
+   "subject": "#1942 Fake: backlog dashboard",
+   "status": "pending",
+   "metadata": {
+    "scope": {
+     "project": "1.2",
+     "family": "1.2.1",
+     "repos": [
+      "cloud-me-pvt-tasks"
+     ],
+     "names": {
+      "project": "Cloud-Me",
+      "family": "Web"
+     }
+    }
+   }
+  },
+  {
+   "id": "1949",
+   "subject": "#1949 Fake: star map",
+   "status": "completed",
+   "metadata": {
+    "scope": {
+     "project": "3.1",
+     "family": "3.1.1",
+     "repos": [
+      "galaxy"
+     ],
+     "names": {
+      "project": "Galaxy",
+      "family": "Pages"
+     }
+    }
+   }
+  },
+  {
+   "id": "1956",
+   "subject": "#1956 Fake: nebula shader",
+   "status": "pending",
+   "metadata": {
+    "scope": {
+     "project": "3.1",
+     "family": "3.1.1",
+     "repos": [
+      "galaxy"
+     ],
+     "names": {
+      "project": "Galaxy",
+      "family": "Pages"
+     }
+    }
+   }
+  },
+  {
+   "id": "1963",
+   "subject": "#1963 Fake: planet list",
+   "status": "completed",
+   "metadata": {
+    "scope": {
+     "project": "3.1",
+     "family": "3.1.1",
+     "repos": [
+      "galaxy"
+     ],
+     "names": {
+      "project": "Galaxy",
+      "family": "Pages"
+     }
+    }
+   }
+  },
+  {
+   "id": "1970",
+   "subject": "#1970 Fake: moon phases",
+   "status": "completed",
+   "metadata": {
+    "scope": {
+     "project": "1.1",
+     "family": "1.1.1",
+     "repos": [
+      "cloudy-u-android"
+     ],
+     "names": {
+      "project": "Cloudy",
+      "family": "Android"
+     }
+    }
+   }
+  },
+  {
+   "id": "1977",
+   "subject": "#1977 Fake: widget",
+   "status": "pending",
+   "metadata": {
+    "scope": {
+     "project": "1.1",
+     "family": "1.1.1",
+     "repos": [
+      "cloudy-u-android"
+     ],
+     "names": {
+      "project": "Cloudy",
+      "family": "Android"
+     }
+    }
+   }
+  }
+ ],
+ "assets": [
+  {
+   "path": "README.md",
+   "size": 2100
+  },
+  {
+   "path": "1842/spec.md",
+   "size": 5400
+  },
+  {
+   "path": "1842/shot-home.png",
+   "size": 182000
+  },
+  {
+   "path": "1845/shot-tasks.png",
+   "size": 204000
+  },
+  {
+   "path": "1850/notes.txt",
+   "size": 900
+  },
+  {
+   "path": "1862/design.pdf",
+   "size": 1250000
+  },
+  {
+   "path": "4.1.Bin/test-backlog-metadata.sh",
+   "size": 12000
+  },
+  {
+   "path": "4.1.Bin/build-root-index.sh",
+   "size": 3400
+  }
+ ]
+}

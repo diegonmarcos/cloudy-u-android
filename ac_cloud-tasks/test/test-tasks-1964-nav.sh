@@ -40,7 +40,7 @@ def t_start_is_home(f):
 def t_nav_has_clock_no_library(f):
     ui = json.loads(f["tasks"])["ui"]; bad = []
     bar = ui.get("bottom_nav", []); secs = {s["id"]: s for s in ui["sections"]}
-    if bar != ["inboxes", "backlogs", "home", "tasks", "clock"]: bad.append("island is %s" % bar)
+    if bar != ["inboxes", "files", "home", "tasks", "clock"]: bad.append("island is %s" % bar)   # #1974 Files took Backlog's slot
     if "library" in bar: bad.append("Library is still on the island")
     c = secs.get("clock", {})
     if c.get("label") != "Clock" or c.get("icon") != "clock": bad.append("Clock section is %r" % {k: c.get(k) for k in ("label", "icon")})
@@ -50,15 +50,16 @@ def t_nav_has_clock_no_library(f):
 def t_library_reachable(f):
     ui = json.loads(f["tasks"])["ui"]; bad = []
     secs = {s["id"]: s for s in ui["sections"]}
-    home = [p["id"] for p in secs.get("home", {}).get("pages", [])]
-    if "library" not in home: bad.append("Home has no Library page (%s)" % home)
+    # #1974 Library left Home (owner-named removal); its content is Files > Assets > Library and the old route resolves there
+    files = [p["id"] for p in secs.get("files", {}).get("pages", [])]
+    if "assets" not in files: bad.append("Files has no Assets page (%s)" % files)
     if "library" in secs: bad.append("a library section is still declared (it would be a second copy)")
     al = ui.get("route_aliases", {})
-    if al.get("library") != ["home", "library"] or al.get("tasks/clock") != ["clock", "clock"]: bad.append("build.json route_aliases lost an old route")
+    if al.get("library") != ["files", "assets"] or al.get("tasks/clock") != ["clock", "clock"]: bad.append("build.json route_aliases lost an old route")
     nav, app = code(f["nav"]), code(f["app"])
-    if not re.search(r'"library"\s+to\s+\(HOME\s+to\s+PAGE_LIBRARY\)', nav): bad.append("Ids.ALIASES does not resolve library")
+    if not re.search(r'"library"\s+to\s+\(FILES\s+to\s+PAGE_ASSETS\)', nav): bad.append("Ids.ALIASES does not resolve library")
     if not re.search(r'"tasks/clock"\s+to\s+\(CLOCK\s+to\s+PAGE_CLOCK\)', nav): bad.append("Ids.ALIASES does not resolve tasks/clock")
-    if not re.search(r"Ids\.PAGE_LIBRARY\s*->[^\n]*CollectionPage\(Ids\.PAGE_LIBRARY", app): bad.append("Home does not draw the Library collection")
+    if not re.search(r"Ids\.PAGE_ASSETS\s*->\s*AssetsPage\(", app): bad.append("Files does not draw the Assets page (Library's re-homed content)")
     if "Ids.resolve(" not in app: bad.append("the shell does not route through Ids.resolve")
     return bad
 
@@ -85,18 +86,17 @@ TESTS = [("start_page_is_home", t_start_is_home), ("nav_has_clock_and_no_library
 # (name, test that must go red, file key, old, new)
 MUTATIONS = [
     ("m1-opens-on-tasks", "start_page_is_home", "tasks", '"default_section": "home"', '"default_section": "tasks"'),
-    ("m2-library-back-on-island", "nav_has_clock_and_no_library", "tasks", '"bottom_nav": ["inboxes", "backlogs", "home", "tasks", "clock"]', '"bottom_nav": ["inboxes", "backlogs", "home", "tasks", "library"]'),
-    ("m3-home-loses-library", "library_still_reachable", "tasks", '''            "label": "Projects",
-            "icon": "folder"
-          },
-          {
-            "id": "library",
-            "label": "Library",
+    ("m2-library-back-on-island", "nav_has_clock_and_no_library", "tasks", '"bottom_nav": ["inboxes", "files", "home", "tasks", "clock"]', '"bottom_nav": ["inboxes", "files", "home", "tasks", "library"]'),
+    ("m3-files-loses-assets", "library_still_reachable", "tasks", '''          {
+            "id": "assets",
+            "label": "Assets",
             "icon": "folder_open"
-          }''', '''            "label": "Projects",
-            "icon": "folder"
+          }''', '''          {
+            "id": "assetsx",
+            "label": "Assets",
+            "icon": "folder_open"
           }'''),
-    ("m4-old-library-route-dead", "library_still_reachable", "nav", '"library" to (HOME to PAGE_LIBRARY),', ''),
+    ("m4-old-library-route-dead", "library_still_reachable", "nav", '"library" to (FILES to PAGE_ASSETS),', ''),
     ("m5-calc-clock-drifts", "clock_subpages_match_calc", "calc", '"id": "bedtime",\n        "label": "Bedtime",\n        "tab": "clock"', '"id": "bedtime",\n        "label": "Bedtime",\n        "tab": "clockx"'),
     ("m6-lib-list-drifts", "clock_subpages_match_calc", "subpages", ', "pomodoro")', ')'),
     ("m7-fullclock-own-list", "clock_subpages_match_calc", "full", 'com.diegonmarcos.clocktools.ClockSubpages.IDS.map { it to labels.getValue(it) }', 'listOf("world", "alarms").map { it to labels.getValue(it) }'),

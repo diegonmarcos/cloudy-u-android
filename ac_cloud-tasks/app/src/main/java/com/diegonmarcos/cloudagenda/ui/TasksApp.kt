@@ -35,12 +35,16 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.diegonmarcos.cloudagenda.data.AgentConfig
+import com.diegonmarcos.cloudagenda.data.Backlog
+import com.diegonmarcos.cloudagenda.data.BacklogSnapshot
+import com.diegonmarcos.cloudagenda.data.BacklogSource
 import com.diegonmarcos.cloudagenda.data.Attachment
 import com.diegonmarcos.cloudagenda.data.MockTask
 import com.diegonmarcos.cloudagenda.data.MockTasks
 import com.diegonmarcos.cloudagenda.data.NotesModel
 import com.diegonmarcos.cloudagenda.data.ProjectScopes
 import com.diegonmarcos.cloudagenda.data.Structure
+import com.diegonmarcos.cloudagenda.data.TripRoadmap
 import com.diegonmarcos.cloudagenda.data.ThemeMode
 import com.diegonmarcos.superapp.ai.AiAgent
 import com.diegonmarcos.superapp.ai.AiChatState
@@ -82,6 +86,10 @@ interface TasksEnv {
     val structure: Structure
     /** Inboxes > Notes: the card notes (data/Notes.kt), persisted in the prefs file declared by data/notes/notes.json. */
     val notes: NotesModel
+    /** #1974 Backlog tickets, RoadMap and Assets: the clone of cloud-me-pvt-tasks (data/BacklogData.kt). */
+    val backlog: BacklogSource get() = BacklogSource.EMPTY
+    /** #1975 Files > RoadMap's trip section (assets/trip-roadmap.json). */
+    val trip: TripRoadmap get() = TripRoadmap.EMPTY
     val chat: AiChatState
     val agents: List<AiAgent>
     fun loadModels(): List<AiModel>
@@ -145,7 +153,12 @@ fun TasksShell(env: TasksEnv, nav: NavDecl, themeMode: ThemeMode, onThemeMode: (
     // #1757 the Home selector: the fixture rows (and, for the Calendar, the database's tasks) of the selected projects only.
     val sel = env.projectScope.selection
     val scoped = ProjectScopes.filter(env.mock, sel)
-    val known = ProjectScopes.names(env.mock, env.controller.snapshot)
+    // #1974 the Product Backlog (tickets, RoadMap, Assets) read off the main thread; its scope names join the selector's chips.
+    var backlog by remember { mutableStateOf(BacklogSnapshot(reason = "Reading the backlog...")) }
+    LaunchedEffect(env) { backlog = withContext(Dispatchers.IO) { runCatching { env.backlog.load() }.getOrElse { BacklogSnapshot(reason = "The backlog could not be read: " + it.message) } } }
+    val ctxTrip = LocalContext.current
+    val backlogNames = remember(backlog) { Backlog.projectNames(backlog.tickets) }
+    val known = ProjectScopes.names(env.mock, env.controller.snapshot, backlogNames)
 
     fun go(id: String, pg: String? = null) {
         val (sec, p) = Ids.resolve(id, pg)   // #1964 an old route (Library, Tasks > Clock) lands on its new home
@@ -170,21 +183,29 @@ fun TasksShell(env: TasksEnv, nav: NavDecl, themeMode: ThemeMode, onThemeMode: (
                         Ids.PAGE_NOTES -> NotesPage(env.notes)
                         Ids.PAGE_SYNCED -> Column(Modifier.fillMaxSize()) { ScopeLine(sel); CollectionPage(Ids.INBOXES, env.structure, scoped, today, Modifier.weight(1f)) }
                     }
-                    Ids.BACKLOGS -> Column(Modifier.fillMaxSize()) { ScopeLine(sel); CollectionPage(Ids.PAGE_BACKLOGS, env.structure, scoped, today, Modifier.weight(1f)) }
+                    // #1974 Files (the old Backlog slot): RoadMap | Assets. Both read the Home selection, like the Backlog did.
+                    Ids.FILES -> Column(Modifier.fillMaxSize()) {
+                        SectionPagesDrawer(pages, page) { pageOf[section] = it.id }
+                        ScopeLine(sel)
+                        when (page) {
+                            Ids.PAGE_ROADMAP -> RoadMapPage(backlog, sel, env.trip, onTarget = { t -> openTripTarget(ctxTrip, t, env.trip, ::go) }, modifier = Modifier.weight(1f))
+                            Ids.PAGE_ASSETS -> AssetsPage(backlog, env.structure, scoped, today, Modifier.weight(1f))
+                        }
+                    }
                     // #1964 the Clock: libs:clock-tools' FullClock, its subpages ClockSubpages.IDS (Cloud Calc's Tools > Clock), shared BY REFERENCE.
                     Ids.CLOCK -> com.diegonmarcos.clocktools.ui.FullClock(Modifier.testTag("tasks:" + Ids.PAGE_CLOCK))
-                    // #1757 Home: Overview (the selector and the status cards) | Projects (the former Projects tab, in the selection too).
+                    // #1757 Home: Overview (the selector and the status cards).
                     Ids.HOME -> when (page) {
                         Ids.PAGE_OVERVIEW -> HomePage(
                             env.mock + MockTasks.fromSnapshot(env.controller.snapshot, today, includeUndated = true), env.controller.snapshot, env.projectScope, today,
-                            onDeleteProject = env.controller::deleteProject,
+                            backlog = backlog.tickets, onDeleteProject = env.controller::deleteProject,
                         )
-                        Ids.PAGE_PROJECTS -> Column(Modifier.fillMaxSize()) { ScopeLine(sel); CollectionPage(Ids.PAGE_PROJECTS, env.structure, scoped, today, Modifier.weight(1f)) }
-                        // #1964 Library moved off the island: the same collection page, now Home's third page.
-                        Ids.PAGE_LIBRARY -> Column(Modifier.fillMaxSize()) { ScopeLine(sel); CollectionPage(Ids.PAGE_LIBRARY, env.structure, scoped, today, Modifier.weight(1f)) }
+                        // #1974 Projects and Library are no longer Home pages (owner-named removals); Library's content is Files > Assets > Library.
                     }
                     Ids.TASKS -> {
-                        if (page == Ids.PAGE_LIST) TasksScreen(env.controller, env.host, env.pickedLink, onPickedConsumed = env::consumePicked, selection = sel)
+                        // #1974 Backlog is Tasks' first page: the tickets of the Home selection (and the Cloud Me structure it showed before).
+                        if (page == Ids.PAGE_BACKLOG) Column(Modifier.fillMaxSize()) { SectionPagesDrawer(pages, page) { pageOf[section] = it.id }; ScopeLine(sel); BacklogPage(backlog, sel, env.structure, scoped, today, Modifier.weight(1f)) }
+                        else if (page == Ids.PAGE_LIST) TasksScreen(env.controller, env.host, env.pickedLink, onPickedConsumed = env::consumePicked, selection = sel)
                         else {
                             SectionPagesDrawer(pages, page) { pageOf[section] = it.id }
                             val dated = ProjectScopes.filter(env.mock + MockTasks.fromSnapshot(env.controller.snapshot, today), sel)

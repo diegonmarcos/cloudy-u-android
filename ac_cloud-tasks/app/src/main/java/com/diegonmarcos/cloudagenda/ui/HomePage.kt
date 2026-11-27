@@ -30,6 +30,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.diegonmarcos.cloudagenda.data.Backlog
+import com.diegonmarcos.cloudagenda.data.BacklogTicket
 import com.diegonmarcos.cloudagenda.data.MockTask
 import com.diegonmarcos.cloudagenda.data.ProjectScopes
 import com.diegonmarcos.cloudagenda.data.ProjectSelection
@@ -75,16 +77,16 @@ fun ScopeLine(selection: ProjectSelection, modifier: Modifier = Modifier) {
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun HomePage(items: List<MockTask>, snapshot: Snapshot, scope: ProjectScope, today: LocalDate, onDeleteProject: (String) -> Unit, modifier: Modifier = Modifier) {
+fun HomePage(items: List<MockTask>, snapshot: Snapshot, scope: ProjectScope, today: LocalDate, onDeleteProject: (String) -> Unit, modifier: Modifier = Modifier, backlog: List<BacklogTicket> = emptyList()) {
     val p = LocalKitPalette.current
-    val names = remember(items, snapshot) { ProjectScopes.names(items, snapshot) }
+    val names = remember(items, snapshot, backlog) { ProjectScopes.names(items, snapshot, Backlog.projectNames(backlog)) }
     val cards = remember(items, snapshot, today) { ProjectScopes.statuses(items, snapshot, names, today) }
     val sel = scope.selection
     var deleting by remember { mutableStateOf<ProjectStatus?>(null) }
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = KitStoreRow.padH, vertical = KitStoreRow.padV).testTag(HomeTags.PAGE)) {
         MockNotice()
         Text("Projects", color = p.textPrimary, fontSize = KitStoreRow.title, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = KitStoreRow.padH))
-        Text("Pick one or several: they feed Inbox, Backlog, Tasks and Library.", color = p.textSecondary, fontSize = KitStoreRow.caption)
+        Text("Pick one or several: they feed Inbox, the Backlog, Tasks, the RoadMap and the Assets' Library.", color = p.textSecondary, fontSize = KitStoreRow.caption)
         FlowRow(
             Modifier.fillMaxWidth().padding(vertical = KitStoreRow.gap).testTag(HomeTags.SELECTOR),
             horizontalArrangement = Arrangement.spacedBy(KitStoreRow.gap), verticalArrangement = Arrangement.spacedBy(KitStoreRow.gap),
@@ -97,7 +99,7 @@ fun HomePage(items: List<MockTask>, snapshot: Snapshot, scope: ProjectScope, tod
         StatusCard(ProjectScopes.total(picked).copy(name = if (sel.all) "All projects" else "Selected (" + picked.size + ")"), true, today, Modifier.testTag(HomeTags.TOTAL), summary = true)
         for (c in cards) {
             val on = sel.includes(c.name)
-            StatusCard(c, on, today, Modifier.testTag(HomeTags.card(c.name)), onToggle = { scope.update(sel.toggle(c.name, names)) }, onDelete = { deleting = c })
+            StatusCard(c, on, today, Modifier.testTag(HomeTags.card(c.name)), backlog = backlog.filter { it.project == c.name }.takeIf { it.isNotEmpty() }?.let { b -> b.count { !it.done }.toString() + " open backlog tickets (" + b.count { it.inProgress } + " in progress)" }, onToggle = { scope.update(sel.toggle(c.name, names)) }, onDelete = { deleting = c })
         }
     }
     deleting?.let { c ->
@@ -109,7 +111,7 @@ fun HomePage(items: List<MockTask>, snapshot: Snapshot, scope: ProjectScope, tod
 }
 
 @Composable
-private fun Chip(label: String, on: Boolean, modifier: Modifier, onClick: () -> Unit) {
+internal fun Chip(label: String, on: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val p = LocalKitPalette.current
     val shape = RoundedCornerShape(KitDensity.small)
     Text(
@@ -120,7 +122,7 @@ private fun Chip(label: String, on: Boolean, modifier: Modifier, onClick: () -> 
 }
 
 @Composable
-private fun StatusCard(c: ProjectStatus, on: Boolean, today: LocalDate, modifier: Modifier, summary: Boolean = false, onToggle: (() -> Unit)? = null, onDelete: (() -> Unit)? = null) {
+private fun StatusCard(c: ProjectStatus, on: Boolean, today: LocalDate, modifier: Modifier, summary: Boolean = false, backlog: String? = null, onToggle: (() -> Unit)? = null, onDelete: (() -> Unit)? = null) {
     val p = LocalKitPalette.current
     val shape = RoundedCornerShape(KitDensity.small)
     Column(
@@ -152,6 +154,7 @@ private fun StatusCard(c: ProjectStatus, on: Boolean, today: LocalDate, modifier
             "Next due: " + (if (c.nextDue == null) "nothing dated" else (c.nextDueTitle ?: "") + "  ·  " + dayLabel(c.nextDue)),
             color = p.textSecondary, fontSize = KitStoreRow.meta, modifier = Modifier.padding(top = KitStoreRow.gap),
         )
+        if (backlog != null) Text(backlog, color = p.textSecondary, fontSize = KitStoreRow.meta)
         if (c.sample && onDelete != null) KitTextButton(onDelete, Modifier.testTag(HomeTags.delete(c.name))) { Text("Delete sample", color = KitStoreRow.BAD) }
     }
 }

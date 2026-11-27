@@ -57,9 +57,9 @@ data class ProjectStatus(
 
 /** The pure half of the Home page and of the project filter: which projects exist, their status counts, what a selection keeps. */
 object ProjectScopes {
-    /** Every project: the database's (in their order) then the fixture's, once each. */
-    fun names(items: List<MockTask>, snapshot: Snapshot): List<String> =
-        (snapshot.projects.sortedBy { it.position }.map { it.name } + items.map { it.projectName }.filter { it.isNotBlank() }.distinct().sorted()).distinct()
+    /** Every project: the database's (in their order), the fixture's, then the Product Backlog's (#1974: the scope names its tickets carry), once each. */
+    fun names(items: List<MockTask>, snapshot: Snapshot, backlog: Collection<String> = emptyList()): List<String> =
+        (snapshot.projects.sortedBy { it.position }.map { it.name } + items.map { it.projectName }.filter { it.isNotBlank() }.distinct().sorted() + backlog.filter { it.isNotBlank() }.distinct().sorted()).distinct()
 
     /** The rows a selection keeps (the project filter of Inbox, Backlog, Tasks and Library). */
     fun filter(items: List<MockTask>, sel: ProjectSelection): List<MockTask> = if (sel.all) items else items.filter { sel.includes(it.projectName) }

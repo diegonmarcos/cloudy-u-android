@@ -10,6 +10,7 @@ import androidx.compose.ui.test.performScrollTo
 import com.diegonmarcos.cloudagenda.data.ProjectSelection
 import com.diegonmarcos.cloudagenda.data.SampleProjects
 import com.diegonmarcos.cloudagenda.ui.Declarations
+import com.diegonmarcos.cloudagenda.ui.FilesTags
 import com.diegonmarcos.cloudagenda.ui.HomeTags
 import com.diegonmarcos.cloudagenda.ui.MockTags
 import com.diegonmarcos.cloudagenda.ui.TasksApp
@@ -45,7 +46,12 @@ class HomeShellTest {
         return env
     }
 
-    private fun tab(id: String) { compose.onNodeWithTag(BottomNavTags.item(id)).performClick(); compose.waitForIdle() }
+    // #1974 Tasks opens on Backlog; tab("tasks") lands on Calendar (the page these tests were written for), tab("backlog") on the Backlog page.
+    private fun tab(id: String) {
+        compose.onNodeWithTag(BottomNavTags.item(if (id == "backlog") "tasks" else id)).performClick(); compose.waitForIdle()
+        if (id == "tasks") { compose.onNodeWithTag(PageTabsTags.tab("calendar")).performClick(); compose.waitForIdle() }
+        if (id == "backlog") { compose.onNodeWithTag(PageTabsTags.tab("backlog")).performClick(); compose.waitForIdle() }
+    }
     private fun any(tag: String) = compose.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
 
     @Test fun `Home shows the selector with All and None and a status card per project, the sample flagged`() {
@@ -73,8 +79,10 @@ class HomeShellTest {
         compose.waitForIdle()
         assertEquals(ProjectSelection(false, setOf("Cloudy")), env.prefs.projectSelection)
         // Backlog: only Cloudy's rows hang under their nodes
-        tab("backlogs")
+        tab("backlog")
         compose.onNodeWithTag(HomeTags.SCOPE_LINE).assertIsDisplayed()
+        compose.onNodeWithTag(FilesTags.mode("structure")).performClick()
+        compose.waitForIdle()
         compose.onNodeWithTag(MockTags.expand("backlogs")).performClick()
         compose.waitForIdle()
         compose.onNodeWithTag(MockTags.tree("backlogs") + ":file:Mock due item: sample renewal").assertExists()
