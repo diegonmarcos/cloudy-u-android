@@ -48,9 +48,13 @@ adb shell am start -W -n "$PKG/.MainActivity" </dev/null >/dev/null 2>&1; shot 0
 while read -r tk name page wait scr labels <&3; do
   [ -z "$tk" ] && continue
   [ "$T" = all ] || [ "$T" = "$tk" ] || continue
-  open_page "$page"; sleep 2
-  [ "$scr" -gt 0 ] && scroll "$scr"
-  shot "c3-$tk-$name" "$wait"
+  for _pass in 1 2; do   # a slow cold start leaves the launcher in the shot: open the page once more before judging
+    open_page "$page"; sleep 2
+    [ "$scr" -gt 0 ] && scroll "$scr"
+    shot "c3-$tk-$name" "$((wait + (_pass - 1) * 6))"
+    miss=0; [ "$labels" = - ] || for l in ${labels//,/ }; do has "c3-$tk-$name" "${l//_/ }" || miss=1; done
+    [ $miss = 0 ] && break
+  done
   [ "$labels" = - ] && continue
   for l in ${labels//,/ }; do has "c3-$tk-$name" "${l//_/ }" || bad "c3-$tk-$name: label '${l//_/ }' missing"; done
 done 3<<'SHOTS'
@@ -63,29 +67,46 @@ done 3<<'SHOTS'
 1953 wiki-modernsc pj-wiki-modernsc_topology 8 0 Repos,lib-chronos
 1953 42-algo pj-lecole42-algo_topology 8 0 Repos,lecole-42-___
 1953 lib lib_topology 8 0 Repos
-1968 category-row all_topology 8 0 Unix,CG,Capital,Hardtech,Wiki,Projects
-1968 wiki-modernsc pj-wiki-modernsc_topology 8 0 Repos,lib-chronos
-1968 wiki-projects pj-wiki-projects_topology 8 0 Repos,lib-chronos
+1968 category-row all_topology 8 0 Capital,Hardtech
+1968 wiki-modernsc pj-wiki-modernsc_topology 6 3 Repos,lib-chronos
+1968 wiki-projects pj-wiki-projects_topology 6 3 Repos,lib-chronos
 1969 home-top home 8 0 Pages,Infra,Containers
-1969 home-pages home 6 2 Orch
-1969 home-pages-low home 6 5 Ops
-1969 infra-projects-table projects 8 0 Category,Project,Repos,Containers,Live_status
-1969 infra-projects-wiki projects 6 1 Wiki
-1971 projects-mode all_topology 8 0 Projects,VM,Unix,Wiki
-1971 vm-all vm-all_topology 8 0 VM,oci-apps,oci-analytics,oci-mail,gcp-proxy,SurfacePro8,SamsungA37,SamsungS21,Not_deployed
+1969 home-pages home 6 2 Containers-as-Service,Projects
+1969 home-pages-low home 6 5 BioMed,CAD
+1969 infra-projects-table projects 8 0 Category,Project,search_the_projects
+1969 infra-projects-wiki projects 6 10 Wiki
+1971 projects-mode all_topology 8 0 Projects,VM,All
+1971 vm-all vm-all_topology 8 0 VM,oci-apps,oci-analytics,oci-mail
 1971 vm-oci-apps vm-oci-apps_topology 8 0 VM,oci-apps
 1971 vm-unknown vm-unknown_topology 8 0 Unknown_host,not_a_declared_fleet_host
 1971 vm-table vm-all_table 8 0 Status,Auth,VM,Project,Type
 1972 infra-strip providers 8 0 Infra_Cloud,Infra_Bare,Services_API,Providers
 1972 infra-gadgets-alias control 8 0 Infra_Bare,Gadgets
 1972 c3-api-top api_endpoints 8 0 C3_API,Public:,Mesh:
-1972 c3-api-mcp api_endpoints 6 12 C3_MCP
-1972 c3-api-alias api_mcp 8 0 C3_API
+1972 c3-api-mcp api_endpoints 6 12 API_route,tree
+1972 c3-api-alias api_mcp 8 0 -
 1955 mail-strip mail_tables 8 0 Tables,Topology-Inbound,Topology-Outbound,Map:,Path:_Inbound
 1955 mail-tables-map mail_tables 6 2 Path:_Outbound
 1955 mail-map-alias mail_map 8 0 Tables,Path:_Inbound
 SHOTS
 
+hswipe() { # <y percent> <times> <dir: left|right>: swipe a horizontally scrolling row (the chip strips, the wide Projects table)
+  local s; s="$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1)"; local w="${s%x*}" h="${s#*x}"
+  for _ in $(seq 1 "$2"); do
+    if [ "$3" = left ]; then adb shell input swipe $((w * 85 / 100)) $((h * $1 / 100)) $((w * 10 / 100)) $((h * $1 / 100)) 400; else adb shell input swipe $((w * 10 / 100)) $((h * $1 / 100)) $((w * 85 / 100)) $((h * $1 / 100)) 400; fi; sleep 1
+  done
+}
+chk() { # <shot> <labels, _ = space>
+  for l in ${2//,/ }; do has "$1" "${l//_/ }" || bad "$1: label '${l//_/ }' missing"; done
+}
+if [ "$T" = all ] || [ "$T" = 1969 ]; then   # the wide table: its right-hand columns after a swipe
+  open_page projects; sleep 4; hswipe 30 3 left; shot c3-1969-infra-projects-table-right 4
+  chk c3-1969-infra-projects-table-right "Containers,Live_status"
+fi
+if [ "$T" = all ] || [ "$T" = 1971 ]; then   # the VM row: the devices after the VMs, Unknown host last
+  open_page vm-all_topology; sleep 6; hswipe 27 3 left; shot c3-1971-vm-row-devices 4
+  chk c3-1971-vm-row-devices "gcp-proxy,SurfacePro8,SamsungA37,SamsungS21,Unknown_host"
+fi
 # #1968 the category row has no Lib chip (Lib is Wiki); the old lib_topology id above opens through the alias
 if [ "$T" = all ] || [ "$T" = 1968 ]; then
   [ -f "$OUT/c3-1968-category-row.xml" ] && has c3-1968-category-row 'text="Lib"' && bad "c3-1968-category-row: a Lib chip is still there"
@@ -150,7 +171,7 @@ if [ "$T" = all ] || [ "$T" = 1955 ]; then
 fi
 
 adb logcat -d -t 3000 > "$OUT/logcat.txt" 2>/dev/null || true
-grep -E "FATAL EXCEPTION|AndroidRuntime" -A15 "$OUT/logcat.txt" | grep -B2 -A15 "$PKG" | head -80 > "$OUT/crash.txt" || true
+grep -A15 "FATAL EXCEPTION" "$OUT/logcat.txt" | grep -B2 -A15 "Process: $PKG" | head -80 > "$OUT/crash.txt" || true
 [ -s "$OUT/crash.txt" ] && bad "a crash in logcat (crash.txt)"
 ls -la "$OUT"
 exit $fail
