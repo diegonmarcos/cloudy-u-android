@@ -31,7 +31,7 @@ class LnktreeCacheDeclTest {
         assertEquals(400, cfg.maxSubresourcesPerPage)
         assertEquals(8, cfg.holderMaxWebViews)
         assertEquals("page", cfg.hardRefreshScope)
-        assertEquals(300L * 1024 * 1024, cfg.maxBytes)
+        assertEquals(160L * 1024 * 1024, cfg.maxBytes)   // #1951 measured: all 49 pages = 62 MB, with headroom
         assertTrue(cfg.excludePages.isEmpty())
         assertTrue(decl.getString("_doc").isNotBlank())
     }

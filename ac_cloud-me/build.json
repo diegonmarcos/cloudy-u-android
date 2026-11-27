@@ -1790,7 +1790,7 @@
       "section": "proj",
       "sections": ["pers", "prof", "tasks", "proj", "lnktree", "inventory", "buro", "llc", "profile", "configs"],
       "ttl_days": 7,
-      "max_cache_mb": 300,
+      "max_cache_mb": 160,
       "holder_max_webviews": 8,
       "hard_refresh_scope": "page",
       "exclude_pages": [],

@@ -88,6 +88,8 @@ object PageFetch {
                 val cfg = LnktreeCache.config
                 val page = LnktreePages.fromStack(pageId, stack, cfg)
                 if (page != null) {
+                    // #1951 a page that already has a complete copy gets the live compare (a changed page swaps into the one on screen), not a blind refetch
+                    if (cfg.cacheThenLive && LnktreeCache.store(ctx).complete(pageId, page.url)) { LnktreeCache.checkLive(LnktreeCache.store(ctx), pageId, page.url); return@runCatching }
                     val failed = LnktreePrefetch.run(listOf(page), cfg, LnktreeCache.store(ctx), LnktreeCache::fetch)
                     // offline with a cached copy is not a failure: the page shows from its copy
                     if (failed.isNotEmpty() && LnktreeCache.store(ctx).get(pageId, page.url) == null) error("could not fetch ${page.url}")

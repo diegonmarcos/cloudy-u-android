@@ -1,6 +1,5 @@
 package com.diegonmarcos.cloudme
 
-import android.app.Application
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -8,17 +7,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 /**
  * #1951 cache_then_live: a complete cached copy paints at once, the live page is compared in parallel and swapped in when it differs,
  * a page with no complete copy never waits on the app's own fetch, every page of every section is prefetched, completeness counts the
- * CSS/JS, and the blank probe judges only a settled page. Pure JVM (Robolectric only for org.json).
+ * CSS/JS, and the blank probe judges only a settled page. Pure JVM.
  */
-@RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], application = Application::class)
 class CacheThenLive1951Test {
     @get:Rule val tmp = TemporaryFolder()
     private val page = "https://p.example/a/"
@@ -34,17 +28,6 @@ class CacheThenLive1951Test {
     private val pageHtml = """<html><link rel="stylesheet" href="s.css"><body>v1</body></html>"""
     private fun fill(s: LnktreeCacheStore, p: String = "p", html: String = pageHtml, cssBody: String = "a{}") {
         s.put(p, page, "text/html", "utf-8", 200, html.toByteArray()); s.put(p, css, "text/css", "utf-8", 200, cssBody.toByteArray())
-    }
-
-    @Test fun `cache_then_live is a declared strategy next to the two others`() {
-        val o = { x: String -> org.json.JSONObject("""{"enabled":true,"section":"s","strategy":"$x","intercept_timeout_ms":2000,"prefetch":{"refresh_hours":6}}""") }
-        val a = LnktreeCacheConfig.parse(o("cache_then_live"))
-        assertTrue(a.cacheThenLive); assertFalse(a.networkFirst); assertFalse(a.releaseDropsCache)
-        assertEquals(2000, a.interceptTimeoutMs); assertEquals(6, a.prefetchRefreshHours)
-        assertTrue(LnktreeCacheConfig.parse(o("network_first")).networkFirst)
-        assertFalse(LnktreeCacheConfig.parse(o("stale_while_revalidate")).cacheThenLive)
-        val d = org.json.JSONObject(BuroLlcTestData.text("build.json")).getJSONObject("ui").getJSONObject("lnktree_cache")
-        assertEquals("cache_then_live", d.getString("strategy")); assertTrue(d.getString("_doc").contains("cache_then_live"))
     }
 
     @Test fun `a complete cached copy paints from the cache with no network wait, and the live check is started`() {

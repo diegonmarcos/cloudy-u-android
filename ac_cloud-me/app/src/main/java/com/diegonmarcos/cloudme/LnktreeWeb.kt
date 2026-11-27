@@ -99,15 +99,21 @@ object LnktreeCache {
         return WebResourceResponse(served.mime, served.encoding, served.status, if (served.status == 200) "OK" else "Not Found", mapOf("Access-Control-Allow-Origin" to "*"), served.body.inputStream())
     }
 
+    /** #1951 the live compare of a page: the cache is updated when the live content differs, and the shown page (its listener) swaps to it. Also what the section pager's fetch runs for a page that already has a copy. */
+    fun checkLive(s: LnktreeCacheStore, pageId: String, url: String): Int {
+        val changed = LiveSwap.refresh(LnktreePage(pageId, url), config, s, ::fetch)
+        android.util.Log.i("CloudMeWeb", "LIVE_CHECK page=$pageId changed=$changed ${s.report(pageId, url).line()}")
+        if (changed > 0 && config.cacheThenLive) swapListeners[pageId]?.invoke(changed)
+        return changed
+    }
+
     private fun revalidate(s: LnktreeCacheStore, pageId: String, url: String, pageUrl: String) {
         if (!refreshing.add("$pageId $url")) return
         background.execute {
             try {
                 // #1947 the page itself: refetch it WITH its CSS/JS (completes an incomplete entry); a file: just that file
                 if (CacheKey.normalize(url) == CacheKey.normalize(pageUrl)) {
-                    val changed = LiveSwap.refresh(LnktreePage(pageId, url), config, s, ::fetch)
-                    android.util.Log.i("CloudMeWeb", "LIVE_CHECK page=$pageId changed=$changed ${s.report(pageId, url).line()}")
-                    if (changed > 0 && config.cacheThenLive) swapListeners[pageId]?.invoke(changed)
+                    checkLive(s, pageId, url)
                 } else fetch(url)?.let { s.put(pageId, url, it.mime, it.encoding, it.status, it.body) }
             }
             finally { refreshing.remove("$pageId $url"); if (CacheKey.normalize(url) == CacheKey.normalize(pageUrl)) swapPending.remove(pageId) }
