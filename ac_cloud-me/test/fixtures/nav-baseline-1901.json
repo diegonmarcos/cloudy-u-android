@@ -2030,7 +2030,7 @@
     "/7/title=\"Places {175 Cities (108 NM) | 43 Countries}\"",
     "/8/kind=\"section_title\"",
     "/8/title=\"Visited countries by continent\"",
-    "/9/capture_touch=true",
+    "/9/capture_touch=false",
     "/9/height_dp=440",
     "/9/id=\"geo-map\"",
     "/9/kind=\"web_asset\"",
