@@ -70,11 +70,11 @@ done 3<<'SHOTS'
 1968 category-row all_topology 8 0 Capital,Hardtech
 1968 wiki-modernsc pj-wiki-modernsc_topology 6 3 Repos,lib-chronos
 1968 wiki-projects pj-wiki-projects_topology 6 3 Repos,lib-chronos
-1969 home-top home 8 0 Pages,Infra,Containers
+1969 home-top home 8 0 Down_containers,Refresh,Containers
 1969 home-pages home 6 2 Containers-as-Service,Projects
 1969 home-pages-low home 6 5 BioMed,CAD
 1969 infra-projects-table projects 8 0 Category,Project,search_the_projects
-1969 infra-projects-wiki projects 6 10 Wiki
+1969 infra-projects-wiki projects 6 7 Wiki
 1971 projects-mode all_topology 8 0 Projects,VM,All
 1971 vm-all vm-all_topology 8 0 VM,oci-apps,oci-analytics,oci-mail
 1971 vm-oci-apps vm-oci-apps_topology 8 0 VM,oci-apps
@@ -101,7 +101,7 @@ chk() { # <shot> <labels, _ = space>
 }
 if [ "$T" = all ] || [ "$T" = 1969 ]; then   # the wide table: its right-hand columns after a swipe
   open_page projects; sleep 4; hswipe 30 3 left; shot c3-1969-infra-projects-table-right 4
-  chk c3-1969-infra-projects-table-right "Containers,Live_status"
+  chk c3-1969-infra-projects-table-right "no_containers,GitHub"
 fi
 if [ "$T" = all ] || [ "$T" = 1971 ]; then   # the VM row: the devices after the VMs, Unknown host last
   open_page vm-all_topology; sleep 6; hswipe 27 3 left; shot c3-1971-vm-row-devices 4
