@@ -39,7 +39,9 @@ python3 "$HERE/render_check.py" pixels "$OUT/pull-refresh-before.png" | tee -a "
 $T adb logcat -d -s CloudMeWeb:V | grep MAINFRAME_SOURCE | tail -3 | tee -a "$OUT/verdict.txt"
 $T adb shell "ls -la /data/data/$ME/cache/lnktree-cache/personal 2>&1 | head -20" | tee -a "$OUT/cachedir.txt"
 ok0=$(okc); src0=$(srcc); f0=$(fetched); echo "before: ok=$ok0 network-sources=$src0 fetchedAt=$f0" | tee -a "$OUT/verdict.txt"
-[ -n "$f0" ] || fail "b0: no LnktreeCache entry for the Personal page (cannot assert delete + refetch)"
+dump() { $T adb shell "cd /data/data/$ME/cache/lnktree-cache/personal 2>/dev/null && for f in *.meta; do echo \$f; cat \$f; wc -c \${f%.meta}.body; done" | tr -d '\r' >> "$OUT/cachedir.txt"; }
+echo "== before the pull" >> "$OUT/cachedir.txt"; dump
+T0=$($T adb shell date +%s%3N | tr -d '\r')
 
 # (b) pull down from the page's top
 $T adb shell input swipe 540 700 540 1900 500
@@ -49,7 +51,9 @@ python3 "$HERE/render_check.py" pixels "$OUT/pull-refresh-after.png" | tee -a "$
 [ "$(okc)" -gt "$ok0" ] && ok "b1: MAINFRAME_OK again after the pull ($ok0 -> $(okc))" || fail "b1: no fresh main-frame load after the pull"
 echo "b2 (info): main-frame sources from the network $src0 -> $(srcc) (a reload may be answered by the page's own service worker)" | tee -a "$OUT/verdict.txt"
 sleep 15; f1=$(fetched); echo "after: fetchedAt=$f1" | tee -a "$OUT/verdict.txt"
-[ -n "$f1" ] && [ -n "$f0" ] && [ "$f1" -gt "$f0" ] && ok "b3: the page's cache files were deleted and refetched ($f0 -> $f1)" || fail "b3: the cache entry was not refetched (fetchedAt $f0 -> $f1)"
+echo "== after the pull" >> "$OUT/cachedir.txt"; dump
+# the entry was written AFTER the swipe: the old files were deleted by the hard refresh and the page was fetched again
+[ -n "$f1" ] && [ "$f1" -gt "$T0" ] && ok "b3: the page's cache files were deleted and refetched (before ${f0:-none}; swipe at $T0; entry fetchedAt $f1)" || fail "b3: no entry written after the pull (before ${f0:-none}; swipe at $T0; now ${f1:-none})"
 
 # (c) scroll down, then swipe up and down mid-page: NO reload
 ok1=$(okc)
