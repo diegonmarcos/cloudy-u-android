@@ -940,7 +940,8 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
             output = jobLine?.let { it.label + ": " + it.done + "/" + it.total },
             onScope = { bulkScope = it }, onPick = { n -> bulkPicked = if (n in bulkPicked) bulkPicked - n else bulkPicked + n },
             onCancel = { jobsState.filter { !it.finished }.forEach { coordinator.jobs.cancel(it.id) } },
-            onTop = { runTopItem(it) }, onRun = { runBulk(it) },
+            // #1934 a control that is a top-bar item and runs a job over the scope (Fetch status, Fetch, the Sync All / Manual Sync compounds, Pull) draws its per-repository rows and summary too
+            onTop = { item -> if (item.kind in setOf("fetch_status", "op", "compound", "pull")) beginBulk(true); runTopItem(item) }, onRun = { runBulk(it) },
             onAutoSync = { on, m -> scopeTargets.forEach { coordinator.setAutoSync(it, on, m.toLong()) } },
             onSync = { o -> beginBulk(true); coordinator.runPlanAll("sync", o.steps(), scopeTargets, bulkSheetDecl.concurrency) },
             onClone = { o ->
