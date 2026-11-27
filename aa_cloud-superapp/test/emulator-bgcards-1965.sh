@@ -96,5 +96,5 @@ if not ok: print("::error::neither snapshot shows one Background Apps group with
 sys.exit(0 if ok else 1)
 PY
 adb logcat -d -b crash > "$OUT/crash.txt" 2>/dev/null || true
-grep -E "FATAL EXCEPTION|DidNotStartInTime" "$OUT/crash.txt" | head -5 && fail "a crash in logcat"
+if grep -qE "FATAL EXCEPTION|DidNotStartInTime" "$OUT/crash.txt"; then grep -E "FATAL EXCEPTION|DidNotStartInTime" "$OUT/crash.txt" | head -5; fail "a crash in logcat"; fi
 exit $rc
