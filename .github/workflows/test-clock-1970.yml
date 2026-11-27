@@ -226,11 +226,14 @@ jobs:
           set -u
           mkdir -p walk-out/shots
           adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
-          sleep 30
+          # A system ANR dialog (the emulator's own launcher) once covered the app and blanked every uiautomator dump.
+          adb shell settings put global hide_error_dialogs 1 || true
+          sleep 60
           shot() { adb exec-out screencap -p > "walk-out/shots/clock-1970-$1.png"; echo "shot $1" >> walk-out/summary.txt; }
           dump() { for t in 1 2 3 4; do adb shell rm -f /sdcard/ui.xml; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > walk-out/ui.xml; grep -q "<hierarchy" walk-out/ui.xml && break; sleep 2; done; }
           tap() { # tap the first on-screen node whose text or content-desc is exactly $1
             dump
+            if grep -q "isn't responding" walk-out/ui.xml; then echo "ANR dialog dismissed" >> walk-out/summary.txt; adb shell input keyevent KEYCODE_BACK; sleep 2; dump; fi
             xy=$(python3 -I - walk-out/ui.xml "$1" <<'PY'
           import re, sys
           x = open(sys.argv[1], encoding="utf-8").read()
