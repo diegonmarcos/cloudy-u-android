@@ -14,14 +14,14 @@ adb shell content call --uri content://media/ --method scan_file --arg /sdcard/D
 adb shell cmd media_provider scan 2>/dev/null | head -2 || true
 ID=""
 for _ in $(seq 1 20); do
-  ID=$(adb shell content query --uri content://media/external/file --projection _id --where "_display_name='pdf-1949.pdf'" | tr -d '\r' | sed -n 's/.*_id=\([0-9]*\).*/\1/p' | head -1)
+  ID=$(adb shell content query --uri content://media/external/file --projection _id:_display_name | tr -d '\r' | grep 'pdf-1949.pdf' | sed -n 's/.*_id=\([0-9]*\),.*/\1/p' | head -1)
   [ -n "$ID" ] && break; sleep 2
 done
 if [ -z "$ID" ]; then  # the scan broadcast did not index it: insert the row through the Downloads collection and stream the bytes in
   echo "scan did not index the fixture; inserting through content://media/external/downloads"
   adb shell content insert --uri content://media/external/downloads --bind _display_name:s:pdf-1949.pdf --bind mime_type:s:application/pdf --bind relative_path:s:Download/ 2>&1 | head -5 || true
   adb shell content query --uri content://media/external/file --projection _id:_display_name:_data 2>&1 | head -20 || true
-  DID=$(adb shell content query --uri content://media/external/downloads --projection _id --where "_display_name='pdf-1949.pdf'" | tr -d '\r' | sed -n 's/.*_id=\([0-9]*\).*/\1/p' | tail -1)
+  DID=$(adb shell content query --uri content://media/external/downloads --projection _id:_display_name | tr -d '\r' | grep 'pdf-1949.pdf' | sed -n 's/.*_id=\([0-9]*\),.*/\1/p' | tail -1)
   [ -n "$DID" ] && adb shell "content write --uri content://media/external/downloads/$DID" < ac_cloud-notes/test/fixtures/pdf-1949.pdf
   ID="$DID"; URI="content://media/external/downloads/$ID"
 fi
