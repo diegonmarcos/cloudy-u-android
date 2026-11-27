@@ -105,7 +105,7 @@ fi
 if [ "$T" = all ] || [ "$T" = 1969 ]; then   # the search field narrows the table to the Wiki projects
   open_page projects; shot c3-1969-infra-projects-wiki-pre 8
   tap_text c3-1969-infra-projects-wiki-pre "search the projects"; sleep 1; adb shell input text ModernSc; sleep 1; adb shell input keyevent 66 </dev/null; shot c3-1969-infra-projects-wiki 4
-  chk c3-1969-infra-projects-wiki "Wiki,ModernSc"
+  chk c3-1969-infra-projects-wiki "ModernSc,1/26_projects"
   rm -f "$OUT/c3-1969-infra-projects-wiki-pre.png"
 fi
 if [ "$T" = all ] || [ "$T" = 1971 ]; then   # the VM row: the devices after the VMs, Unknown host last
