@@ -255,7 +255,7 @@
     }
   },
   "ui": {
-    "_doc": "#868 THE navigation declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island's ids, ui.sections the section each one opens, ui.default_section where the app opens. #1757 the island is Inbox | Backlog | Home | Tasks | Library (#1456 was Inboxes | Backlogs | Tasks | Library | Projects): Home is new (page Overview: the project selector and one status card per project; page Projects: the old Projects tab, unchanged) and carries the former Projects tab as its second page, so no page was removed (ui.nav_mapping holds the old-to-new map, test-tasks-nav-parity.sh holds it against test/data/previous-nav-1757.json). The Home selector decides which projects feed Inbox, Backlog, Tasks and Library. Tasks > Calendar has the styles ui.calendar_styles (Circles Day, the default; Linear Bars; Gantt Calendar) beside its Month | Year view. The four collection sections list their items in the Cloud Me Tasks row layout from the mock fixture (assets/mock-tasks.json, FAKE data); Tasks has the sub-pages Calendar, List (the native database list with the projects drawer), Gantt, Kanban, Mindmap and (#1668) Clock: the full clock of libs:clock-tools (World clock with the #1667 converter and day bars, Alarms, Timers, Stopwatch, Interval, Bedtime), the same lib Cloud Calc and the SuperApp carry. Settings is NOT on the island: it opens from the top bar's Settings > Configs and follows the fleet Configs pattern, General | Perms | About (libs:ui-nav-bars fleetconfigs) first, then the app's own Appearance, Agent, Proposals (mail-agent review) and Feeds. Every section's `background` is `theme`.",
+    "_doc": "#868 THE navigation declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island's ids, ui.sections the section each one opens, ui.default_section where the app opens. #1964 the island is Inbox | Backlog | Home | Tasks | Clock and the app opens on Home: Library left the island and is Home's third page (Overview | Projects | Library, same content), the Clock (libs:clock-tools FullClock, subpages ClockSubpages.IDS = Cloud Calc's Tools > Clock) took its place and left Tasks. #1757 the island was Inbox | Backlog | Home | Tasks | Library (#1456 was Inboxes | Backlogs | Tasks | Library | Projects): Home is new (page Overview: the project selector and one status card per project; page Projects: the old Projects tab, unchanged) and carries the former Projects tab as its second page, so no page was removed (ui.nav_mapping holds the old-to-new map, test-tasks-nav-parity.sh holds it against test/data/previous-nav-1757.json). The Home selector decides which projects feed Inbox, Backlog, Tasks and Library. Tasks > Calendar has the styles ui.calendar_styles (Circles Day, the default; Linear Bars; Gantt Calendar) beside its Month | Year view. The four collection sections list their items in the Cloud Me Tasks row layout from the mock fixture (assets/mock-tasks.json, FAKE data); Tasks has the sub-pages Calendar, List (the native database list with the projects drawer), Gantt, Kanban, Mindmap and (#1668) Clock: the full clock of libs:clock-tools (World clock with the #1667 converter and day bars, Alarms, Timers, Stopwatch, Interval, Bedtime), the same lib Cloud Calc and the SuperApp carry. Settings is NOT on the island: it opens from the top bar's Settings > Configs and follows the fleet Configs pattern, General | Perms | About (libs:ui-nav-bars fleetconfigs) first, then the app's own Appearance, Agent, Proposals (mail-agent review) and Feeds. Every section's `background` is `theme`.",
     "calendar_views": [
       {"id": "month", "label": "Month"},
       {"id": "year", "label": "Year"}
@@ -275,8 +275,8 @@
       "tasks/gantt": "tasks/gantt",
       "tasks/kanban": "tasks/kanban",
       "tasks/mindmap": "tasks/mindmap",
-      "tasks/clock": "tasks/clock",
-      "library/library": "library/library",
+      "tasks/clock": "clock/clock",
+      "library/library": "home/library",
       "projects/projects": "home/projects",
       "settings/general": "settings/general",
       "settings/perms": "settings/perms",
@@ -285,6 +285,11 @@
       "settings/agent": "settings/agent",
       "settings/inbox": "settings/inbox",
       "settings/feeds": "settings/feeds"
+    },
+    "route_aliases": {
+      "_doc": "#1964 old section routes that still resolve (ui/Nav.kt::Ids.ALIASES, held by test-tasks-1964-nav.sh): Library left the island and is Home's third page; Tasks > Clock became the Clock section. Value = [section, page].",
+      "library": ["home", "library"],
+      "tasks/clock": ["clock", "clock"]
     },
     "top_bar": {
       "_doc": "THE first row of the app (libs:bottomnav AppTopBar, declared once for the fleet): a hamburger that opens a side drawer the CURRENT page fills (the Tasks page: the projects and their lists; Calendar and Settings: their pages), the title, and two circular buttons: AI (libs:ai's chat in an anchored panel, one box for search and chat, history kept) and Settings (Account launches Cloud Account; Configs opens the Settings section: Appearance, Agent, Inbox, Feeds). No app draws its own copy of this row (cloud-android-top-bar-guard).",
@@ -295,8 +300,8 @@
         "configs"
       ]
     },
-    "bottom_nav": ["inboxes", "backlogs", "home", "tasks", "library"],
-    "default_section": "tasks",
+    "bottom_nav": ["inboxes", "backlogs", "home", "tasks", "clock"],
+    "default_section": "home",
     "configs_ui": ["nav_ui"],
     "sections": [
       {
@@ -345,6 +350,11 @@
             "id": "projects",
             "label": "Projects",
             "icon": "folder"
+          },
+          {
+            "id": "library",
+            "label": "Library",
+            "icon": "folder_open"
           }
         ]
       },
@@ -378,24 +388,19 @@
             "id": "mindmap",
             "label": "Mindmap",
             "icon": "account_tree"
-          },
-          {
-            "id": "clock",
-            "label": "Clock",
-            "icon": "clock"
           }
         ]
       },
       {
-        "id": "library",
-        "label": "Library",
-        "icon": "folder_open",
+        "id": "clock",
+        "label": "Clock",
+        "icon": "clock",
         "background": "theme",
         "pages": [
           {
-            "id": "library",
-            "label": "Library",
-            "icon": "folder_open"
+            "id": "clock",
+            "label": "Clock",
+            "icon": "clock"
           }
         ]
       },

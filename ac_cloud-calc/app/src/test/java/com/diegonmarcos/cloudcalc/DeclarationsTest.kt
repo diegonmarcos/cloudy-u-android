@@ -144,7 +144,7 @@ class DeclarationsTest {
         assertEquals(listOf("sensors", "phone", "camera", "wifi", "bluetooth", "nfc", "lfrfid"), Declarations.tabsOf("measure").map { it.id })
         assertEquals(listOf("light", "recorder", "tracker", "clock"), Declarations.tabsOf("toolkit").map { it.id })
         assertEquals(listOf("home"), Declarations.tabsOf("home").map { it.id })
-        assertEquals("the clock modes did not move or duplicate", listOf("world", "alarms", "timers", "stopwatch", "interval", "bedtime"), Declarations.modesOf("clock").map { it.id })
+        assertEquals("the clock modes did not move or duplicate", com.diegonmarcos.clocktools.ClockSubpages.IDS, Declarations.modesOf("clock").map { it.id })
         fun spec(id: String) = JSONObject(Declarations.mode(id)!!.spec)
         // the Sensors page: every sensor group has its mode, and every tool mode names real sensors
         val catalog = com.diegonmarcos.cloudcalc.sensors.SensorDecl.catalog

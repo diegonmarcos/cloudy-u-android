@@ -13,7 +13,7 @@ aa_cloud-superapp/test/test-superapp-clock-lib.sh), so every ship of a consumer 
      com.diegonmarcos.cloudcalc.clock, no AlarmManager alarm clock (setAlarmClock), no alarm ringtone / tone of its own,
      no stopwatch state of its own (an elapsed-time stopwatch field), no stopwatch formatter that does not hand off
      to ClockLogic; Cloud Calc's old clock/ module is gone
-  K4 Cloud Tasks declares the Clock sub-page in its Tasks section (build.json::ui) and draws libs:clock-tools' FullClock
+  K4 Cloud Tasks declares the Clock section on its island (build.json::ui) and draws libs:clock-tools' FullClock
   K5 the SuperApp's stopwatch is the lib's: the Home bar readout reads rememberStopwatch, the date dropdown drives
      ClockEngine.stopwatch
   K6 ALARM OWNERSHIP is stated where it is decided (the lib's build.gradle): one store per app, nothing exported
@@ -118,12 +118,12 @@ if os.path.isdir(os.path.join(ROOT, "ac_cloud-calc", "clock")):
 
 # K4
 tasks = json.loads(read(ROOT, "ac_cloud-tasks", "build.json") or "{}")
-sec = next((s for s in tasks.get("ui", {}).get("sections", []) if s.get("id") == "tasks"), {})
-if "clock" not in [p.get("id") for p in sec.get("pages", [])]:
-    bad.append("K4 Cloud Tasks' Tasks section does not declare the Clock sub-page (build.json::ui.sections[tasks].pages)")
+sec = next((s for s in tasks.get("ui", {}).get("sections", []) if s.get("id") == "clock"), {})
+if "clock" not in [p.get("id") for p in sec.get("pages", [])] or "clock" not in tasks.get("ui", {}).get("bottom_nav", []):
+    bad.append("K4 Cloud Tasks' island does not declare the Clock section (build.json::ui.sections[clock], #1964)")
 tapp = code(read(ROOT, "ac_cloud-tasks", "app", "src", "main", "java", "com", "diegonmarcos", "cloudagenda", "ui", "TasksApp.kt"))
-if not re.search(r"Ids\.PAGE_CLOCK\s*->\s*[\w.]*FullClock\(", tapp):
-    bad.append("K4 Cloud Tasks does not draw libs:clock-tools' FullClock on Ids.PAGE_CLOCK")
+if not re.search(r"Ids\.CLOCK\s*->\s*[\w.]*FullClock\(", tapp):
+    bad.append("K4 Cloud Tasks does not draw libs:clock-tools' FullClock on Ids.CLOCK")
 
 # K5
 sa = os.path.join(ROOT, "aa_cloud-superapp", "app", "src", "main", "java", "com", "diegonmarcos", "superapp")

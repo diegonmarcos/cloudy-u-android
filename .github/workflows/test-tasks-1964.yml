@@ -1,0 +1,142 @@
+name: "Test -> Cloud Tasks #1964 (Home start, Clock on the island, Library reachable, Clock = Cloud Calc's; mutations + emulator shots)"
+
+# #1964. Job `nav-tests`: test/test-tasks-1964-nav.sh runs four tests and, for each, a mutation that must turn it red; the verdict is
+# read from the JUnit XML it writes, not from the script's exit code. Job `shots` (only when run_id is given): installs the x86_64 debug APK
+# of a Ship run on an API-34 emulator and screenshots launch (Home + island), the Clock with every subpage, and Library under Home.
+# Dispatch inputs reach the scripts through env only, behind an allow-list (digits).
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Ship Cloud Tasks run whose x86_64 debug APK is screenshotted (digits; empty = tests only)"
+        required: false
+        type: string
+        default: ""
+  push:
+    branches: [main]
+    paths:
+      - "ac_cloud-tasks/test/test-tasks-1964-nav.sh"
+      - ".github/workflows/test-tasks-1964.yml"
+      - "ac_cloud-tasks/build.json"
+      - "ac_cloud-calc/build.json"
+      - "ab_cloud-libs-shared/libs/clock-tools/**"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  nav-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run the four tests and their mutations (writes JUnit XML)
+        run: JUNIT_OUT="$RUNNER_TEMP/tasks-1964-nav.xml" bash ac_cloud-tasks/test/test-tasks-1964-nav.sh || true
+      - name: Verdict from the XML
+        run: |
+          python3 -I - "$RUNNER_TEMP/tasks-1964-nav.xml" <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          cases = ET.parse(sys.argv[1]).getroot().findall("testcase")
+          tests = [c for c in cases if c.get("classname") == "tests"]
+          muts = [c for c in cases if c.get("classname") == "mutations"]
+          red = [c.get("name") + ": " + c.find("failure").get("message") for c in cases if c.find("failure") is not None]
+          for c in cases: print(("FAIL " if c.find("failure") is not None else "ok   ") + c.get("classname") + "/" + c.get("name"))
+          if len(tests) != 4 or len(muts) != 7: red.append("expected 4 tests and 7 mutations, got %d and %d" % (len(tests), len(muts)))
+          if red: print("\n".join(red)); sys.exit(1)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tasks-1964-nav-xml
+          path: ${{ runner.temp }}/tasks-1964-nav.xml
+
+  shots:
+    needs: nav-tests
+    if: ${{ inputs.run_id != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      RUN_ID_INPUT: ${{ inputs.run_id }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the APK of the Ship run (run id allow-listed to digits)
+        run: |
+          set -eu
+          case "$RUN_ID_INPUT" in ''|*[!0-9]*) echo "::error::run_id must be digits"; exit 1;; esac
+          mkdir apk-in
+          gh run download "$RUN_ID_INPUT" --repo "$GITHUB_REPOSITORY" --pattern 'Cloud-Tasks-x86_64-debug-*' --dir apk-in
+          apk=$(find apk-in -name '*.apk' | sort | head -1)
+          [ -n "$apk" ] || { echo "::error::no x86_64 APK in that run"; exit 1; }
+          cp "$apk" app-under-test.apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Write the scene script
+        run: |
+          cat > walk.sh <<'SH'
+          #!/bin/bash
+          set -u
+          mkdir -p walk-out/shots
+          PKG=com.diegonmarcos.cloudagenda
+          adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
+          sleep 40
+          adb install -r -g app-under-test.apk || { echo "::error::adb install failed"; exit 2; }
+          shot() { adb exec-out screencap -p > "walk-out/shots/tasks-1964-$1.png"; }
+          dump() { for t in 1 2 3 4; do adb shell rm -f /sdcard/ui.xml; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb exec-out cat /sdcard/ui.xml > walk-out/ui.xml; grep -q "<hierarchy" walk-out/ui.xml && break; sleep 2; done; }
+          tap() { # tap the first node whose text or content-desc is exactly $1
+            dump
+            xy=$(python3 -I - walk-out/ui.xml "$1" <<'PY'
+          import re, sys
+          x = open(sys.argv[1], encoding="utf-8").read()
+          for m in re.finditer(r'<node\b[^>]*>', x):
+              n = m.group(0)
+              t = re.search(r'\btext="([^"]*)"', n); d = re.search(r'content-desc="([^"]*)"', n); b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
+              if b and ((t and t.group(1) == sys.argv[2]) or (d and d.group(1) == sys.argv[2])):
+                  a, bb, c, dd = map(int, b.groups()); print((a + c) // 2, (bb + dd) // 2); break
+          PY
+          )
+            echo "tap '$1' -> '${xy:-NOT FOUND}'" | tee -a walk-out/summary.txt
+            [ -n "$xy" ] && adb shell input tap $xy
+            sleep 3
+          }
+          adb shell am force-stop $PKG
+          adb shell monkey -p $PKG -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
+          sleep 15; shot 01-launch-lands-on-home-and-bottom-nav
+          dump; cp walk-out/ui.xml walk-out/ui-launch.xml
+          tap Clock; shot 02-clock-world-clock
+          for p in "Alarms:03-clock-alarms" "Timers:04-clock-timers" "Stopwatch:05-clock-stopwatch" "Interval:06-clock-interval" "Bedtime:07-clock-bedtime" "World clock:08-clock-world-clock-again"; do
+            tap "${p%%:*}"; shot "${p##*:}"
+          done
+          tap Home; tap Library; shot 09-library-now-under-home-library-tab
+          timeout 60 adb logcat -d -v threadtime "*:E" > walk-out/logcat-errors.txt || true
+          SH
+          chmod +x walk.sh
+      - name: Boot emulator + scenes
+        timeout-minutes: 30
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: ./walk.sh
+      - name: Upload the PNGs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tasks-1964-shots
+          path: |
+            walk-out/shots/*.png
+            walk-out/summary.txt
+            walk-out/ui-launch.xml
+            walk-out/logcat-errors.txt
+          if-no-files-found: warn

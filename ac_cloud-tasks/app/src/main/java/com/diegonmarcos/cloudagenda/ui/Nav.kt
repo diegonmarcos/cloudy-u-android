@@ -12,7 +12,8 @@ object Ids {
     const val INBOXES = "inboxes"
     const val BACKLOGS = "backlogs"
     const val TASKS = "tasks"
-    const val LIBRARY = "library"
+    /** #1964 the Clock section on the island (libs:clock-tools FullClock); Library is Home's third page now (PAGE_LIBRARY). */
+    const val CLOCK = "clock"
     /** #1757 the island's centre: the project selector and the status cards; the former Projects tab is its second page. */
     const val HOME = "home"
     const val SETTINGS = "settings"
@@ -37,6 +38,16 @@ object Ids {
     const val PAGE_AGENT = "agent"
     const val PAGE_INBOX = "inbox"
     const val PAGE_FEEDS = "feeds"
+
+    /** #1964 old routes that still resolve: "section" or "section/page" -> (section, page). build.json::ui.route_aliases declares them. */
+    val ALIASES: Map<String, Pair<String, String>> = mapOf(
+        "library" to (HOME to PAGE_LIBRARY),
+        "tasks/clock" to (CLOCK to PAGE_CLOCK),
+    )
+
+    /** The (section, page) a route names; page null = the section's own first page. Aliases first, so an old id never dead-ends. */
+    fun resolve(section: String, page: String? = null): Pair<String, String?> =
+        (page?.let { ALIASES["$section/$it"] } ?: ALIASES[section])?.let { it.first to it.second } ?: (section to page)
 }
 
 /** The navigation declaration baked from build.json::ui (ui.bottom_nav, ui.sections, ui.default_section). */

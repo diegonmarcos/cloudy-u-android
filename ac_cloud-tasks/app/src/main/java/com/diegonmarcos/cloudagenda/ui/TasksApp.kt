@@ -147,7 +147,10 @@ fun TasksShell(env: TasksEnv, nav: NavDecl, themeMode: ThemeMode, onThemeMode: (
     val scoped = ProjectScopes.filter(env.mock, sel)
     val known = ProjectScopes.names(env.mock, env.controller.snapshot)
 
-    fun go(id: String) { section = id }
+    fun go(id: String, pg: String? = null) {
+        val (sec, p) = Ids.resolve(id, pg)   // #1964 an old route (Library, Tasks > Clock) lands on its new home
+        section = sec; if (p != null) pageOf[sec] = p
+    }
     BackHandler(enabled = section == Ids.SETTINGS) { go(returnTo) }
 
     val content: @Composable () -> Unit = {
@@ -168,7 +171,8 @@ fun TasksShell(env: TasksEnv, nav: NavDecl, themeMode: ThemeMode, onThemeMode: (
                         Ids.PAGE_SYNCED -> Column(Modifier.fillMaxSize()) { ScopeLine(sel); CollectionPage(Ids.INBOXES, env.structure, scoped, today, Modifier.weight(1f)) }
                     }
                     Ids.BACKLOGS -> Column(Modifier.fillMaxSize()) { ScopeLine(sel); CollectionPage(Ids.PAGE_BACKLOGS, env.structure, scoped, today, Modifier.weight(1f)) }
-                    Ids.LIBRARY -> Column(Modifier.fillMaxSize()) { ScopeLine(sel); CollectionPage(Ids.PAGE_LIBRARY, env.structure, scoped, today, Modifier.weight(1f)) }
+                    // #1964 the Clock: libs:clock-tools' FullClock, its subpages ClockSubpages.IDS (Cloud Calc's Tools > Clock), shared BY REFERENCE.
+                    Ids.CLOCK -> com.diegonmarcos.clocktools.ui.FullClock(Modifier.testTag("tasks:" + Ids.PAGE_CLOCK))
                     // #1757 Home: Overview (the selector and the status cards) | Projects (the former Projects tab, in the selection too).
                     Ids.HOME -> when (page) {
                         Ids.PAGE_OVERVIEW -> HomePage(
@@ -176,6 +180,8 @@ fun TasksShell(env: TasksEnv, nav: NavDecl, themeMode: ThemeMode, onThemeMode: (
                             onDeleteProject = env.controller::deleteProject,
                         )
                         Ids.PAGE_PROJECTS -> Column(Modifier.fillMaxSize()) { ScopeLine(sel); CollectionPage(Ids.PAGE_PROJECTS, env.structure, scoped, today, Modifier.weight(1f)) }
+                        // #1964 Library moved off the island: the same collection page, now Home's third page.
+                        Ids.PAGE_LIBRARY -> Column(Modifier.fillMaxSize()) { ScopeLine(sel); CollectionPage(Ids.PAGE_LIBRARY, env.structure, scoped, today, Modifier.weight(1f)) }
                     }
                     Ids.TASKS -> {
                         if (page == Ids.PAGE_LIST) TasksScreen(env.controller, env.host, env.pickedLink, onPickedConsumed = env::consumePicked, selection = sel)
@@ -183,15 +189,13 @@ fun TasksShell(env: TasksEnv, nav: NavDecl, themeMode: ThemeMode, onThemeMode: (
                             SectionPagesDrawer(pages, page) { pageOf[section] = it.id }
                             val dated = ProjectScopes.filter(env.mock + MockTasks.fromSnapshot(env.controller.snapshot, today), sel)
                             Column(Modifier.fillMaxSize()) {
-                                if (page != Ids.PAGE_CLOCK) ScopeLine(sel)
+                                ScopeLine(sel)
                                 Box(Modifier.weight(1f).fillMaxWidth()) {
                                     when (page) {
                                         Ids.PAGE_CALENDAR -> CalendarView(dated, today, projects = env.projectScope, known = known)
                                         Ids.PAGE_GANTT -> GanttView(ProjectScopes.filter(env.mock, sel), today)
                                         Ids.PAGE_KANBAN -> KanbanView(ProjectScopes.filter(env.mock, sel), today)
                                         Ids.PAGE_MINDMAP -> MindmapView(ProjectScopes.filter(env.mock, sel))
-                                        // #1668 the fleet's one clock, shared BY REFERENCE: World clock, Alarms, Timers, Stopwatch, Interval, Bedtime.
-                                        Ids.PAGE_CLOCK -> com.diegonmarcos.clocktools.ui.FullClock(Modifier.testTag("tasks:clock"))
                                     }
                                 }
                             }
@@ -231,7 +235,7 @@ fun TasksShell(env: TasksEnv, nav: NavDecl, themeMode: ThemeMode, onThemeMode: (
                 hierarchy = current?.let { titleHierarchy(it, page) }.orEmpty(),
                 // #1483 every declared section (bar and off-bar) is a peer in the title dropdown: a user reaches every page from it
                 sections = nav.sections,
-                onNavigate = { e -> go(e.sectionId); if (e.depth > 0) pageOf[e.sectionId] = e.id },
+                onNavigate = { e -> go(e.sectionId, if (e.depth > 0) e.id else null) },
                 onAccount = rememberAccountLauncher(),
                 onConfigs = { if (section != Ids.SETTINGS) returnTo = section; go(Ids.SETTINGS) },
                 aiPanel = { AiPanel(env.chat) },

@@ -50,18 +50,20 @@ for s in old["sections"]:
     if s["id"] in new_sections:
         # #1852 the shared pages (General, Perms, About) now follow the app's own pages; every page and the own pages' relative order stay
         SHARED = ("general", "perms", "about")
-        oids = [p["id"] for p in s["pages"]]
         nids = [p["id"] for p in new_sections[s["id"]]["pages"]]
+        # #1964 a page that moved to another section (tasks/clock, library/library) is held by nav_mapping above, not by this order
+        oids = [p["id"] for p in s["pages"] if mapping.get("%s/%s" % (s["id"], p["id"]), "").split("/")[0] == s["id"]]
+        nids = [i for i in nids if i in oids]
         check([i for i in oids if i not in SHARED] + [i for i in oids if i in SHARED] == nids, "section %s keeps its pages in the same order (the shared ones last, #1852)" % s["id"])
 
 # ── the new island: the five asked for, every old tab still one tap away ─────────────────────────────────────
-check(new["bottom_nav"] == ["inboxes", "backlogs", "home", "tasks", "library"], "island = Inbox | Backlog | Home | Tasks | Library")
+check(new["bottom_nav"] == ["inboxes", "backlogs", "home", "tasks", "clock"], "#1964 island = Inbox | Backlog | Home | Tasks | Clock (Library is Home's third page)")
 labels = [new_sections[i]["label"] for i in new["bottom_nav"]]
-check(labels == ["Inbox", "Backlog", "Home", "Tasks", "Library"], "island labels %s" % labels)
+check(labels == ["Inbox", "Backlog", "Home", "Tasks", "Clock"], "island labels %s" % labels)
 reach = {tuple(v.split("/")) for v in mapping.values()}
 check(all(s in new["bottom_nav"] or s == "settings" for s, _ in reach), "every previous page lives in a section on the island (or Settings, off the island as before)")
 check(set(new_sections) - set(new["bottom_nav"]) == {"settings"}, "Settings is the only section off the island, as before")
-check(old["default_section"] == new["default_section"], "the app still opens on %s" % new["default_section"])
+check(old["default_section"] == "tasks" and new["default_section"] == "home", "#1964 the app opens on Home (it opened on Tasks in #1757)")
 
 # ── calendar views and the new styles ───────────────────────────────────────────────────────────────────────
 check(all(v in new["calendar_views"] for v in old["calendar_views"]), "the Month and Year views of the Calendar are kept")

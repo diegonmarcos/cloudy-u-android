@@ -21,6 +21,7 @@ import com.diegonmarcos.superapp.bottomnav.TopBarTags
 import com.diegonmarcos.cloudagenda.ui.DrawerTags
 import com.diegonmarcos.cloudagenda.ui.EditorTags
 import com.diegonmarcos.cloudagenda.ui.FilterTags
+import com.diegonmarcos.cloudagenda.ui.HomeTags
 import com.diegonmarcos.cloudagenda.ui.MockTags
 import com.diegonmarcos.cloudagenda.ui.Declarations
 import com.diegonmarcos.cloudagenda.ui.SettingsTags
@@ -56,9 +57,11 @@ class TasksPageTest {
     val rules = composeChain(compose)
 
     /** [list] = open Tasks > List, the native database page (the Tasks section itself opens on Calendar, its first declared page). */
-    private fun launch(seed: Boolean = true, list: Boolean = true): FakeEnv {
+    private fun launch(seed: Boolean = true, list: Boolean = true, openTasks: Boolean = true): FakeEnv {
         val env = FakeEnv(RuntimeEnvironment.getApplication(), seed)
         compose.setContent { TasksApp(env, Declarations.nav) }
+        // #1964 the app opens on Home; these tests are about the Tasks section, so they step into it first.
+        if (openTasks) { compose.onNodeWithTag(BottomNavTags.item("tasks")).performClick(); compose.waitForIdle() }
         if (list) { compose.onNodeWithTag(PageTabsTags.tab("list")).performClick(); compose.waitForIdle() }
         return env
     }
@@ -75,22 +78,26 @@ class TasksPageTest {
 
     // ── chrome and island ───────────────────────────────────────────────────────────────────────────────
 
-    @Test fun `the shell draws the top row and the declared island, and opens on Tasks`() {
-        launch(list = false)
+    @Test fun `the shell draws the top row and the declared island, and opens on Home (#1964)`() {
+        launch(list = false, openTasks = false)
         compose.onNodeWithTag(TopBarTags.MENU).assertDoesNotExist()
         compose.onNodeWithTag(TopBarTags.TITLE).assertIsDisplayed()
         compose.onNodeWithTag(TopBarTags.AI).assertIsDisplayed()
         compose.onNodeWithTag(TopBarTags.ACCOUNT).assertIsDisplayed()
         compose.onNodeWithTag(TopBarTags.CONFIGS).assertIsDisplayed()
-        for (id in listOf("inboxes", "backlogs", "home", "tasks", "library")) compose.onNodeWithTag(BottomNavTags.item(id)).assertIsDisplayed()
+        for (id in listOf("inboxes", "backlogs", "home", "tasks", "clock")) compose.onNodeWithTag(BottomNavTags.item(id)).assertIsDisplayed()
+        compose.onNodeWithTag(BottomNavTags.item("library")).assertDoesNotExist()
+        compose.onNodeWithTag(HomeTags.PAGE).assertIsDisplayed()
         compose.onNodeWithTag(BottomNavTags.item("settings")).assertDoesNotExist()
-        for (id in listOf("calendar", "list", "gantt", "kanban", "mindmap", "clock")) compose.onNodeWithTag(PageTabsTags.tab(id)).assertExists()
+        compose.onNodeWithTag(BottomNavTags.item("tasks")).performClick(); compose.waitForIdle()
+        for (id in listOf("calendar", "list", "gantt", "kanban", "mindmap")) compose.onNodeWithTag(PageTabsTags.tab(id)).assertExists()
+        compose.onNodeWithTag(PageTabsTags.tab("clock")).assertDoesNotExist()
         compose.onNodeWithTag(MockTags.page("calendar")).assertIsDisplayed()
     }
 
     @Test fun `#1668 Tasks Clock is the shared clock - world clock first, every clock page one tap away, one store`() {
         launch(list = false)
-        compose.onNodeWithTag(PageTabsTags.tab("clock")).performScrollTo().performClick()
+        compose.onNodeWithTag(BottomNavTags.item("clock")).performClick()
         compose.waitForIdle()
         compose.onNodeWithTag("tasks:clock").assertExists()
         compose.onNodeWithTag(ClockTags.WORLD).assertExists()
@@ -182,11 +189,12 @@ class TasksPageTest {
             Triple("library", "Research-Dossiers", "Mock reference: fake template pack"), Triple("projects", "Unix", "Mock family task: sample port"),
         )) {
             // #1757 the former Projects tab is Home's second page.
-            compose.onNodeWithTag(BottomNavTags.item(if (id == "projects") "home" else id)).performClick()
+            compose.onNodeWithTag(BottomNavTags.item(if (id == "projects" || id == "library") "home" else id)).performClick()
             compose.waitForIdle()
             // Inboxes opens on Notes; its synced sources (the tree) are the Synced sub-page.
             if (id == "inboxes") { compose.onNodeWithTag(PageTabsTags.tab("synced")).performClick(); compose.waitForIdle() }
-            if (id == "projects") { compose.onNodeWithTag(PageTabsTags.tab("projects")).performClick(); compose.waitForIdle() }
+            // #1964 Library left the island: it is Home's third page.
+            if (id == "projects" || id == "library") { compose.onNodeWithTag(PageTabsTags.tab(id)).performClick(); compose.waitForIdle() }
             compose.onNodeWithTag(MockTags.page(id)).assertIsDisplayed()
             compose.onNodeWithTag(MockTags.tree(id) + ":dir:" + node).assertExists()
             compose.onNodeWithTag(MockTags.expand(id)).performClick()

@@ -313,10 +313,12 @@ const val CITY_LIST_TAG = "clock_city_list"
  */
 @Composable
 fun FullClock(modifier: Modifier = Modifier, initialTab: Int = 0) {
-    val tabs = listOf(
+    val labels = mapOf(
         "world" to R.string.clock_tab_world, "alarms" to R.string.clock_tab_alarms, "timers" to R.string.clock_tab_timers,
         "stopwatch" to R.string.clock_tab_stopwatch, "interval" to R.string.clock_tab_interval, "bedtime" to R.string.clock_tab_bedtime,
     )
+    // #1964 the subpage list is ClockSubpages.IDS, declared once for Cloud Calc and Cloud Tasks
+    val tabs = com.diegonmarcos.clocktools.ClockSubpages.IDS.map { it to labels.getValue(it) }
     var tab by rememberSaveable { mutableIntStateOf(initialTab.coerceIn(0, tabs.size - 1)) }
     Column(modifier.fillMaxSize().testTag(ClockTags.FULL)) {
         // A chip row, not a second tab bar: the host app's own nav (its top strip) stays the only navigation.
