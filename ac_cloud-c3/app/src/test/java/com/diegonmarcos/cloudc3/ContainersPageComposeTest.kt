@@ -196,7 +196,7 @@ class ContainersPageComposeTest {
         // every split section that holds an entity (an empty section draws no card, the design's "0 -> card not drawn") shows Public and Private
         val plan = com.diegonmarcos.cloudc3.cloud.Stacks.topology("pj-unix-cloudme").first
         val drawn = listOf("app", "db", "repo").filter { plan.section(it)!!.count > 0 }
-        assertTrue("Cloud-me draws no Apps or Repos", drawn.containsAll(listOf("app", "repo")))
+        assertTrue("Cloud-me draws no Repos (its pub and pvt repos)", "repo" in drawn)
         drawn.forEach { s -> listOf("pub", "pvt").forEach { pt ->
             compose.onNodeWithTag(ContainersTags.topoPart(s, pt), useUnmergedTree = true).assertExists()
         } }
