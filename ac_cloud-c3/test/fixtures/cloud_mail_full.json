@@ -29,7 +29,7 @@
     {
       "name": "IN→1 Cloudflare MX",
       "passed": true,
-      "details": "MX records present (1.1.1.1)",
+      "details": "MX records present (resolver redacted)",
       "duration_ms": 14,
       "error": null,
       "severity": "Info"
