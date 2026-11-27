@@ -109,7 +109,7 @@ jobs:
           done <<'MUTANTS'
           derive-drops-uncovered@ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitSheetModel.kt@val cs = g.controls.filter { it.id !in covered && it.id !in perRepoOnly }@val cs = g.controls.filter { false }
           twins-ignored@ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitSheetModel.kt@sheet.twins[it]?.let { t -> t in bulkIds } != true@false
-          scope-reasons-dropped@ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitBulkRun.kt@if (why != null) out[c.id] = why@if (false) out[c.id] = why
+          scope-reasons-dropped@ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitBulkRun.kt@if (why != null) out[c.id] = why@if (why != null) out[c.id] = ""
           confirm-not-forced@ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitSheetModel.kt@private val WRITES = setOf("compound", "depth", "hosting", "remote_mode")@private val WRITES = setOf("none")
           progress-never-running@ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitBulkRun.kt@n in running -> Row(n, State.RUNNING, "")@n in running -> Row(n, State.QUEUED, "")
           confirm-scope-dropped@ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitControlSheet.kt@if (scopeLabel.isNotBlank()) Text(@if (false) Text(

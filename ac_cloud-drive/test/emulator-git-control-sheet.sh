@@ -340,7 +340,7 @@ bulk_phase() {
   tap_ctl git_bulk_scope_$S >/dev/null; sleep 1
   # the Overview's aggregated counts are the oracle for the scope's repository count
   tap_ctl git_sheet_tab_overview >/dev/null; sleep 1
-  total=$(nodetext git_sheet_ctl_bo.count.total | head -1); clonedn=$(nodetext git_sheet_ctl_bo.count.cloned | head -1)
+  dump >/dev/null; total=$(readout git_sheet_ctl_bo.count.total Repos); clonedn=$(readout git_sheet_ctl_bo.count.cloned Cloned)
   cnt=$(nodetext git_bulk_scope_count)
   case $S in all) wantcnt="$total repos";; cloned) wantcnt="$clonedn repos";; selected) wantcnt="0 repos";; esac
   [ "$cnt" = "$wantcnt" ]; brec "$S" "scope.count" "$label count" $? "$cnt (want $wantcnt)"
