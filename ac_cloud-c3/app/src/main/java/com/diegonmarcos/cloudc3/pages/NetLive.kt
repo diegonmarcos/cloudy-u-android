@@ -26,6 +26,8 @@ object NetLive {
     data class Reading(
         val health: MailStack.Health, val word: String, val source: String, val at: Long = 0L,
         val unreadable: Boolean = false, val why: String = "",
+        /** The read failed on THIS device (no C3 token): it says nothing about the VM, so it is never a failing node or a root cause. */
+        val deviceSide: Boolean = false,
     ) {
         val positive get() = !unreadable && health != MailStack.Health.UNKNOWN
     }
@@ -85,6 +87,17 @@ object NetLive {
         else -> MailStack.Health.UNKNOWN
     }
 
+    /** A read that failed because the device has no Authelia token (OpsClient.Kind.NO_TOKEN): a device-side state, not a fleet failure. */
+    fun noToken(why: String) = why.startsWith("NO_TOKEN")
+    const val NO_TOKEN_NOTE = "this device has no C3 token: Configs → Profile → Config import"
+    private fun notRead(word: String, src: String, at: Long, why: String) =
+        if (noToken(why)) Reading(MailStack.Health.UNKNOWN, "not read: $NO_TOKEN_NOTE", src, at, unreadable = true, why = why, deviceSide = true)
+        else Reading(MailStack.Health.UNKNOWN, word, src, at, unreadable = true, why = why)
+
+    /** The device-side banner text when any source failed for want of a token, else blank. */
+    fun deviceNote(s: Snapshot): String =
+        if (noToken(s.apiWhy) || noToken(s.tunnelsWhy) || s.deployed.values.any { it is TopologyModel.Deployed.Blind && noToken(it.why) }) NO_TOKEN_NOTE else ""
+
     val DECLARED = Reading(MailStack.Health.UNKNOWN, "declared", "declaration")
 
     /** One binding's reading; null when the binding kind is unknown (it then counts as unbound). */
@@ -93,7 +106,7 @@ object NetLive {
         return when (kind) {
             "vm" -> when (val d = s.deployed[key] ?: s.deployed[s.vmAlias[key] ?: key]) {
                 is TopologyModel.Deployed.Seen -> Reading(MailStack.Health.OK, "docker ps read (${d.boxes.size})", "/health/deployed", s.at)
-                is TopologyModel.Deployed.Blind -> Reading(MailStack.Health.UNKNOWN, "not read: ${d.why}", "/health/deployed", s.at, unreadable = true, why = d.why)
+                is TopologyModel.Deployed.Blind -> notRead("not read: ${d.why}", "/health/deployed", s.at, d.why)
                 null -> if (s.deployed.isEmpty()) Reading(MailStack.Health.UNKNOWN, "not read yet", "/health/deployed")
                     else Reading(MailStack.Health.UNKNOWN, "no live read for this VM (no WG IP declared)", "/health/deployed")
             }
@@ -102,7 +115,7 @@ object NetLive {
             "host" -> s.hosts[key]?.let { (h, t) -> Reading(h, t, "device probe", s.at) } ?: Reading(MailStack.Health.UNKNOWN, "not probed", "device probe")
             "api" -> when (s.api) {
                 true -> Reading(MailStack.Health.OK, "answered", "c3 API", s.at)
-                false -> Reading(MailStack.Health.BAD, "unreachable: ${s.apiWhy}", "c3 API", s.at, why = s.apiWhy)
+                false -> if (noToken(s.apiWhy)) notRead("", "c3 API", s.at, s.apiWhy) else Reading(MailStack.Health.BAD, "unreachable: ${s.apiWhy}", "c3 API", s.at, why = s.apiWhy)
                 null -> Reading(MailStack.Health.UNKNOWN, "not asked yet", "c3 API")
             }
             "tunnel" -> tunnel(key.substringBefore("->"), key.substringAfter("->"), s, v)
@@ -112,7 +125,7 @@ object NetLive {
 
     private fun tunnel(a: String, b: String, s: Snapshot, v: NetGraph.Viewers): Reading {
         val src = WIREGUARD_PATH
-        val tun = s.tunnels ?: return if (s.tunnelsWhy.isNotBlank()) Reading(MailStack.Health.UNKNOWN, "not read: ${s.tunnelsWhy}", src, s.at, unreadable = true, why = s.tunnelsWhy)
+        val tun = s.tunnels ?: return if (s.tunnelsWhy.isNotBlank()) notRead("not read: ${s.tunnelsWhy}", src, s.at, s.tunnelsWhy)
             else Reading(MailStack.Health.UNKNOWN, "reading tunnels...", src)
         fun side(from: String, to: String): Reading? {
             val vm = tun.firstOrNull { it.vm == from || s.vmAlias[it.vm] == from } ?: return null
@@ -161,7 +174,7 @@ object NetLive {
     fun rootCause(g: NetGraph.Graph, readings: Map<String, Reading>, s: Snapshot): List<Root> {
         if (!s.anyRead) return emptyList()
         val deps = dependsOn(g)
-        fun failing(id: String) = readings[id]?.let { it.health == MailStack.Health.BAD || it.unreadable } == true
+        fun failing(id: String) = readings[id]?.let { !it.deviceSide && (it.health == MailStack.Health.BAD || it.unreadable) } == true
         fun closure(id: String): Set<String> {
             val seen = mutableSetOf<String>(); val todo = ArrayDeque(deps[id].orEmpty())
             while (todo.isNotEmpty()) { val x = todo.removeFirst(); if (seen.add(x)) todo.addAll(deps[x].orEmpty()) }

@@ -44,6 +44,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -169,6 +170,9 @@ fun PlanCanvas(
     under: (androidx.compose.ui.graphics.drawscope.DrawScope.(MailStack.View) -> Unit)? = null,
     over: (androidx.compose.ui.graphics.drawscope.DrawScope.(MailStack.View) -> Unit)? = null,
     description: String? = null,
+    /** #1955 A Network graphs: labels are placed so none touches a node or another label; [extraLabels] are bundle labels (world point, text). */
+    placeLabels: Boolean = false,
+    extraLabels: List<Pair<Offset, String>> = emptyList(),
     onOpen: (String) -> Unit,
 ) {
     val p = LocalKitPalette.current
@@ -212,9 +216,20 @@ fun PlanCanvas(
             }
             drawPath(arrow, e.color)
             if (pulses) MailStack.pulses(e, phase).forEach { w -> drawCircle(e.color, 4.5f * density * s.coerceIn(0.7f, 1.5f), v.toScreen(w)) }
-            if (s >= 0.6f && e.label.isNotBlank()) {
+            if (!placeLabels && s >= 0.6f && e.label.isNotBlank()) {
                 val m = v.toScreen(MailStack.bezier(e, 0.5f))
                 safeDrawText(measurer, e.label, Offset(m.x - 28f * s, m.y - 14f * density * s), mono(9f * s.coerceIn(0.8f, 1.4f), p.textSecondary), maxLines = 1, softWrap = false)
+            }
+        }
+        if (placeLabels && s >= 0.6f) {
+            val st = mono(9f * s.coerceIn(0.8f, 1.4f), p.textSecondary)
+            val items = plan.edges.filter { it.label.isNotBlank() }.map { e -> NetGraphLayout.LabelItem(e.id, e.label) { t -> v.toScreen(MailStack.bezier(e, t)) } } +
+                extraLabels.mapIndexed { i, (w, t) -> NetGraphLayout.LabelItem("bundle#$i", t) { _ -> v.toScreen(w) } }
+            val text = items.associate { it.id to it.text }
+            val rects = plan.nodes.map { n -> val a = v.toScreen(Offset(n.rect.l, n.rect.t)); val b = v.toScreen(Offset(n.rect.r, n.rect.b)); MailStack.Rect(a.x, a.y, b.x, b.y) }
+            val h = measurer.measure("Ag", st).size.height.toFloat()
+            NetGraphLayout.placeLabels(items, rects, { measurer.measure(it, st).size.width.toFloat() }, h).forEach { (id, r) ->
+                safeDrawText(measurer, text.getValue(id), Offset(r.l, r.t), st, maxLines = 1, softWrap = false)
             }
         }
         plan.nodes.forEach { n ->
@@ -227,8 +242,13 @@ fun PlanCanvas(
             drawRect(n.color, tl, Size(5f * density * s.coerceIn(0.6f, 1.2f), sz.height))
             if (s >= 0.45f) {
                 val fs = 12f * s.coerceIn(0.7f, 1.6f)
-                safeDrawText(measurer, n.label, Offset(tl.x + 12f * density * s, tl.y + 8f * density * s), mono(fs, p.textPrimary, FontWeight.Bold), maxLines = 1, softWrap = false)
-                safeDrawText(measurer, MailStack.healthLabel(n.health) + if (n.sub.isBlank()) "" else "  " + n.sub, Offset(tl.x + 12f * density * s, tl.y + sz.height * 0.55f), mono(fs * 0.8f, n.color), maxLines = 1, softWrap = false)
+                // Network graphs: the text is clipped to the node box and the sub line sits at 38%, above the status line at 70%
+                val subY = if (placeLabels) 0.38f else 0.55f
+                fun lines() {
+                    safeDrawText(measurer, n.label, Offset(tl.x + 12f * density * s, tl.y + 8f * density * s), mono(fs, p.textPrimary, FontWeight.Bold), maxLines = 1, softWrap = false)
+                    safeDrawText(measurer, MailStack.healthLabel(n.health) + if (n.sub.isBlank()) "" else "  " + n.sub, Offset(tl.x + 12f * density * s, tl.y + sz.height * subY), mono(fs * 0.8f, n.color), maxLines = 1, softWrap = false)
+                }
+                if (placeLabels) clipRect(tl.x, tl.y, br.x, br.y) { lines() } else lines()
             }
         }
         over?.invoke(this, v)

@@ -89,4 +89,41 @@ class NetGraphLayoutTest {
         assertTrue(NetGraphLayout.parity(g, l.copy(plan = l.plan.copy(edges = l.plan.edges.drop(1)))).isNotEmpty())
         assertTrue(NetGraphLayout.parity(g, l.copy(plan = l.plan.copy(nodes = l.plan.nodes + l.plan.nodes.first()))).isNotEmpty())
     }
+
+    private fun hit(a: com.diegonmarcos.cloudc3.pages.MailStack.Rect, b: com.diegonmarcos.cloudc3.pages.MailStack.Rect) = !(a.r <= b.l || b.r <= a.l || a.b <= b.t || b.b <= a.t)
+
+    @Test fun `a label whose wire midpoint lies inside a node is moved off every node`() {
+        val node = com.diegonmarcos.cloudc3.pages.MailStack.Rect(40f, 0f, 160f, 60f)
+        val item = NetGraphLayout.LabelItem("e", "wg_public") { _ -> androidx.compose.ui.geometry.Offset(100f, 30f) }
+        val r = NetGraphLayout.placeLabels(listOf(item), listOf(node), { it.length * 13f }, 20f)["e"]
+        assertTrue("the label is placed", r != null)
+        assertTrue("label ${r} touches the node", !hit(r!!, node))
+    }
+
+    @Test fun `no edge or bundle label touches a node or another label, on every page and cluster state, at phone density`() {
+        val unit = 2.6f
+        pages.forEach { id ->
+            val g = graph(id)
+            states(g).forEach { (name, c) ->
+                val l = NetGraphLayout.layout(g, v, c, pal, unit = unit)
+                assertEquals("$id $name", emptyList<String>(), NetGraphLayout.parity(g, l))
+                val view = NetGraphLayout.fitWidth(l.plan.bounds, 1080f)
+                val items = l.plan.edges.filter { it.label.isNotBlank() }.map { e -> NetGraphLayout.LabelItem(e.id, e.label) { t -> view.toScreen(com.diegonmarcos.cloudc3.pages.MailStack.bezier(e, t)) } } +
+                    l.extras.bundleLabels.mapIndexed { i, (w, t) -> NetGraphLayout.LabelItem("bundle#$i", t) { _ -> view.toScreen(w) } }
+                val nodes = l.plan.nodes.map { n -> val a = view.toScreen(androidx.compose.ui.geometry.Offset(n.rect.l, n.rect.t)); val b = view.toScreen(androidx.compose.ui.geometry.Offset(n.rect.r, n.rect.b)); com.diegonmarcos.cloudc3.pages.MailStack.Rect(a.x, a.y, b.x, b.y) }
+                val placed = NetGraphLayout.placeLabels(items, nodes, { it.length * 11f }, 20f)
+                val rs = placed.entries.toList()
+                rs.forEach { (lid, r) -> nodes.forEach { n -> assertTrue("$id $name: label $lid overlaps a node", !hit(r, n)) } }
+                for (i in rs.indices) for (j in i + 1 until rs.size) assertTrue("$id $name: labels ${rs[i].key} and ${rs[j].key} overlap", !hit(rs[i].value, rs[j].value))
+            }
+        }
+    }
+
+    @Test fun `at phone density a node is as large as its text - the unit scales every declared size`() {
+        val g = graph("net_wg")
+        val a = NetGraphLayout.layout(g, v, emptySet(), pal).plan.nodes.first().rect
+        val b = NetGraphLayout.layout(g, v, emptySet(), pal, unit = 2f).plan.nodes.first().rect
+        assertEquals((a.r - a.l) * 2f, b.r - b.l, 0.01f)
+        assertEquals((a.b - a.t) * 2f, b.b - b.t, 0.01f)
+    }
 }

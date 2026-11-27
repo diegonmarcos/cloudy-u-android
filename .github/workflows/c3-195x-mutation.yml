@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost | home-row-lost | home-zero-on-fail | projects-row-lost | projects-column-lost | vm-unknown-lost | vm-repo-on-host | vm-devices-dropped | control-back | c3mcp-field-lost | infra-order | orch-infra-back | net-edge-dropped | net-node-twice | net-node-undeclared | net-viewer-page-lost | net-section-match-lost | net-resolve-lost | net-unbound-ok | net-dns-depends-lost | net-bundle-weight | net-sheet-field-lost'
+        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost | home-row-lost | home-zero-on-fail | projects-row-lost | projects-column-lost | vm-unknown-lost | vm-repo-on-host | vm-devices-dropped | control-back | c3mcp-field-lost | infra-order | orch-infra-back | net-edge-dropped | net-node-twice | net-node-undeclared | net-viewer-page-lost | net-section-match-lost | net-resolve-lost | net-unbound-ok | net-dns-depends-lost | net-bundle-weight | net-sheet-field-lost | net-token-blames-vm | net-label-overlap'
         required: true
 permissions:
   contents: read
@@ -22,7 +22,7 @@ jobs:
       - name: Validate the mutation name against the allowed list
         run: |
           case "$MUT" in
-            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost|vm-unknown-lost|vm-repo-on-host|vm-devices-dropped|control-back|c3mcp-field-lost|infra-order|orch-infra-back|net-edge-dropped|net-node-twice|net-node-undeclared|net-viewer-page-lost|net-section-match-lost|net-resolve-lost|net-unbound-ok|net-dns-depends-lost|net-bundle-weight|net-sheet-field-lost) echo "leg: $MUT" ;;
+            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost|vm-unknown-lost|vm-repo-on-host|vm-devices-dropped|control-back|c3mcp-field-lost|infra-order|orch-infra-back|net-edge-dropped|net-node-twice|net-node-undeclared|net-viewer-page-lost|net-section-match-lost|net-resolve-lost|net-unbound-ok|net-dns-depends-lost|net-bundle-weight|net-sheet-field-lost|net-token-blames-vm|net-label-overlap) echo "leg: $MUT" ;;
             *) echo "::error::unknown mutation name"; exit 1 ;;
           esac
       - uses: actions/checkout@v4
@@ -104,6 +104,9 @@ jobs:
             net-dns-depends-lost) pyj $D/ops_maps.json 'del d["viewers"]["pages"]["net_dns"]["graph"]["depends"]' ;;
             net-bundle-weight) rep $K/pages/NetGraphLayout.kt 'es.all { it.dashed }, es.size.toFloat())' 'es.all { it.dashed }, 1f)' ;;
             net-sheet-field-lost) rep $K/pages/NetGraph.kt 'listOf("row" to r.section) + r.fields }' 'listOf("row" to r.section) + r.fields.drop(1) }' ;;
+            # #1955 A fixes: a missing device token blames a VM; a label may sit on a node
+            net-token-blames-vm) rep $K/pages/NetLive.kt '!it.deviceSide && (it.health == MailStack.Health.BAD || it.unreadable)' '(it.health == MailStack.Health.BAD || it.unreadable)' ;;
+            net-label-overlap) rep $K/pages/NetGraphLayout.kt 'r.takeIf { c -> nodes.none { hit(c, it) } && placed.values.none { hit(c, it) } }' 'r.takeIf { c -> placed.values.none { hit(c, it) } }' ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
           git diff --stat
@@ -179,6 +182,8 @@ jobs:
             net-dns-depends-lost) C=NetLiveTest; N="root cause - the hub unreadable is the suspected root of the WireGuard spokes and of every mesh name" ;;
             net-bundle-weight) C=NetGraphLayoutTest; N="a collapsed cluster's edge weighs exactly its members, and parity goes red when it does not" ;;
             net-sheet-field-lost) C=NetGraphTest; N="the node sheet prints every field of every row it stands for" ;;
+            net-token-blames-vm) C=NetLiveTest; N="a device with no token blames no VM - nodes are not read, the note is device-side" ;;
+            net-label-overlap) C=NetGraphLayoutTest; N="a label whose wire midpoint lies inside a node is moved off every node" ;;
             mail-alias-lost)   C=OrchOpsReorgTest; N="every old page id still resolves through the aliases to its new place" ;;
           esac
           X="$(find ac_cloud-c3/app/build -path '*test-results*' -name "TEST-*.$C.xml" | head -1)"

@@ -138,7 +138,7 @@ fun NetGraphHost(page: String, viewers: NetGraph.Viewers, onOpenTable: (NetGraph
     val roots = remember(readings) { NetLive.rootCause(built.second, readings, snapshot) }
     val why = listOf(net.apiWhy.takeIf { it.isNotBlank() }?.let { "c3 API: $it" },
         topo.live.deployed.values.filterIsInstance<TopologyModel.Deployed.Blind>().firstOrNull()?.why?.let { "docker ps: $it" }).filterNotNull().joinToString("; ")
-    NetGraphScreen(page, GraphState(built.second, readings, roots, snapshot.anyRead, why, if (net.at > 0) clock(net.at) else ""), viewers,
+    NetGraphScreen(page, GraphState(built.second, readings, roots, snapshot.anyRead, why, if (net.at > 0) clock(net.at) else "", NetLive.deviceNote(snapshot)), viewers,
         onOpenTable = onOpenTable,
         onOpenContainer = { container = it },
         onReprobe = { n ->

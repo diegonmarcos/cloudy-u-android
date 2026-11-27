@@ -46,7 +46,10 @@ object NetGraphLayout {
     fun layout(
         g: NetGraph.Graph, v: NetGraph.Viewers, collapsed: Set<String>, p: KitPalette,
         status: Map<String, MailStack.Health> = emptyMap(),
+        /** world unit in px: 1 for the JVM tests, the screen density on a device, so a node is as large as its text (declared sizes are dp). */
+        unit: Float = 1f,
     ): Layout {
+        val nodeW = v.nodeW * unit; val nodeH = v.nodeH * unit; val gapX = v.gapX * unit; val gapY = v.gapY * unit; val laneHeader = v.laneHeader * unit
         val closed = g.clusters.filter { it.id in collapsed }
         fun repr(c: NetGraph.GCluster) = c.head ?: aggId(c.id)
         val hiddenBy = mutableMapOf<String, MutableList<NetGraph.GCluster>>()
@@ -83,8 +86,8 @@ object NetGraphLayout {
             }
         }
         val laneOrder = (g.lanes.map { it.id } + items.values.map { it.lane }).distinct()
-        val colW = v.nodeW + v.gapX
-        val rowH = v.nodeH + v.gapY
+        val colW = nodeW + gapX
+        val rowH = nodeH + gapY
         val rects = mutableMapOf<String, MailStack.Rect>()
         val laneRects = LinkedHashMap<String, MailStack.Rect>()
         val maxCol = (items.values.maxOfOrNull { it.column } ?: 0).coerceAtLeast(g.columns.size - 1)
@@ -94,10 +97,10 @@ object NetGraphLayout {
             if (inLane.isEmpty() && g.lanes.none { it.id == lane }) return@forEach
             val byCol = inLane.groupBy { it.column }
             val tallest = byCol.values.maxOfOrNull { it.size } ?: 0
-            val top = y + v.laneHeader
-            byCol.forEach { (col, list) -> list.forEachIndexed { i, it -> rects[it.id] = MailStack.Rect(col * colW, top + i * rowH, col * colW + v.nodeW, top + i * rowH + v.nodeH) } }
-            val h = v.laneHeader + tallest.coerceAtLeast(1) * rowH + v.gapY
-            laneRects[lane] = MailStack.Rect(-v.gapX / 4, y, maxCol * colW + v.nodeW + v.gapX / 4, y + h)
+            val top = y + laneHeader
+            byCol.forEach { (col, list) -> list.forEachIndexed { i, it -> rects[it.id] = MailStack.Rect(col * colW, top + i * rowH, col * colW + nodeW, top + i * rowH + nodeH) } }
+            val h = laneHeader + tallest.coerceAtLeast(1) * rowH + gapY
+            laneRects[lane] = MailStack.Rect(-gapX / 4, y, maxCol * colW + nodeW + gapX / 4, y + h)
             y += h
         }
         val nodes = items.values.map { it ->
@@ -152,6 +155,32 @@ object NetGraphLayout {
         val hs = ids.map { status[it] ?: MailStack.Health.UNKNOWN }
         return listOf(MailStack.Health.OK to "up", MailStack.Health.WARN to "degraded", MailStack.Health.BAD to "down", MailStack.Health.UNKNOWN to "unknown")
             .mapNotNull { (h, w) -> hs.count { it == h }.takeIf { it > 0 }?.let { "$it $w" } }.joinToString(" ")
+    }
+
+    /** One label to place: its text and the wire it belongs to as a function of t in 0..1 (screen px), in drawing order. */
+    class LabelItem(val id: String, val text: String, val at: (Float) -> Offset)
+
+    /**
+     * #1955 A Edge and bundle labels in SCREEN space: for each label the first candidate (along the wire, above then below it) whose box
+     * touches no node box and no label already placed; a label with no free candidate is not drawn (the edge sheet still names it).
+     * [textW] and [textH] are the measured text size, so the result holds at any zoom and density.
+     */
+    fun placeLabels(items: List<LabelItem>, nodes: Collection<MailStack.Rect>, textW: (String) -> Float, textH: Float, gap: Float = 2f): Map<String, MailStack.Rect> {
+        val placed = LinkedHashMap<String, MailStack.Rect>()
+        fun hit(a: MailStack.Rect, b: MailStack.Rect) = !(a.r <= b.l || b.r <= a.l || a.b <= b.t || b.b <= a.t)
+        val ts = listOf(0.5f, 0.4f, 0.6f, 0.3f, 0.7f, 0.2f, 0.8f, 0.12f, 0.88f)
+        items.forEach { it ->
+            val w = textW(it.text)
+            val spot = ts.firstNotNullOfOrNull { t ->
+                val m = it.at(t)
+                listOf(m.y - textH - gap, m.y + gap).firstNotNullOfOrNull { top ->
+                    val r = MailStack.Rect(m.x - w / 2, top, m.x + w / 2, top + textH)
+                    r.takeIf { c -> nodes.none { hit(c, it) } && placed.values.none { hit(c, it) } }
+                }
+            }
+            if (spot != null) placed[it.id] = spot
+        }
+        return placed
     }
 
     /** Forward and same-column wires reuse Mail's anchors; a leftward wire is its mirror. [off] separates the two directions of a duplex link. */

@@ -98,4 +98,17 @@ class NetLiveTest {
         val wg = graph("net_wg")
         assertEquals(emptyList<NetLive.Root>(), NetLive.rootCause(wg, NetLive.applyLive(wg, s, v), s))
     }
+
+    @Test fun `a device with no token blames no VM - nodes are not read, the note is device-side`() {
+        val why = "NO_TOKEN: No Authelia token on this device."
+        val s = NetLive.Snapshot(deployed = slice.vms.filter { it.wgIp != null }.associate { it.alias to TopologyModel.Deployed.Blind(why) },
+            api = false, apiWhy = why, tunnelsWhy = why)
+        val wg = graph("net_wg")
+        val live = NetLive.applyLive(wg, s, v)
+        assertEquals("no VM is a root cause", emptyList<NetLive.Root>(), NetLive.rootCause(wg, live, s.copy(hosts = mapOf("x" to (MailStack.Health.OK to "ok")))))
+        assertTrue(live.values.none { it.health == MailStack.Health.BAD })
+        assertTrue(live.values.filter { it.unreadable }.all { it.word.startsWith("not read") && it.deviceSide })
+        assertEquals(NetLive.NO_TOKEN_NOTE, NetLive.deviceNote(s))
+        assertEquals("", NetLive.deviceNote(hubBlind()))
+    }
 }

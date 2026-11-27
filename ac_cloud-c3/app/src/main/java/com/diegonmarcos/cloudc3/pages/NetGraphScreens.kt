@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -60,6 +61,7 @@ object NetTags {
     const val SEARCH = "net_graph_search"
     const val BANNER = "net_graph_banner"
     const val NOT_READ = "net_graph_not_read"
+    const val DEVICE_NOTE = "net_graph_device_note"
     const val ISOLATE = "net_graph_isolate"
     const val FIT = "net_graph_fit"
     const val WIDTH = "net_graph_width"
@@ -120,6 +122,8 @@ fun pathThrough(g: NetGraph.Graph, e: NetGraph.GEdge): List<String> {
 data class GraphState(
     val graph: NetGraph.Graph, val readings: Map<String, NetLive.Reading>, val roots: List<NetLive.Root>,
     val anyRead: Boolean, val notReadWhy: String, val liveAt: String,
+    /** Device-side state (no C3 token); never a VM's fault. Blank when nothing is device-side. */
+    val deviceNote: String = "",
 )
 
 @Composable
@@ -144,7 +148,8 @@ fun NetGraphScreen(
     val root = st.roots.firstOrNull()
     val impacted = root?.impacted.orEmpty()
     val status = remember(st) { st.readings.mapValues { it.value.health } }
-    val layout = remember(g, collapsed, status, p) { NetGraphLayout.layout(g, v, collapsed, p, status) }
+    val unit = LocalDensity.current.density
+    val layout = remember(g, collapsed, status, p, unit) { NetGraphLayout.layout(g, v, collapsed, p, status, unit) }
     val hits = remember(g, query) { graphSearch(g, query) }
     val matchIds = hits.map { layout.extras.memberOf[it.id] ?: it.id }.toSet()
     fun centre(id: String) {
@@ -161,6 +166,8 @@ fun NetGraphScreen(
     Column(Modifier.fillMaxSize().testTag(NetTags.graph(page) + "_screen")) {
         if (!st.anyRead) Text("Live state not read: ${st.notReadWhy.ifBlank { "no source answered yet" }}. Showing the declared topology.",
             style = mono(11f, p.warn), modifier = Modifier.padding(KitStoreRow.padH, 3.dp).testTag(NetTags.NOT_READ))
+        if (st.deviceNote.isNotBlank()) Text("Device: ${st.deviceNote}. Nodes show \"not read\".",
+            style = mono(11f, p.warn), modifier = Modifier.padding(KitStoreRow.padH, 3.dp).testTag(NetTags.DEVICE_NOTE))
         if (root != null && !dismissed) {
             Row(Modifier.fillMaxWidth().background(p.bad.copy(alpha = 0.12f)).padding(horizontal = KitStoreRow.padH, vertical = 4.dp).testTag(NetTags.BANNER),
                 verticalAlignment = Alignment.CenterVertically) {
@@ -219,16 +226,13 @@ fun NetGraphScreen(
                         safeDrawText(measurer, head, Offset(tl.x + 6f * density, tl.y + 4f * density), mono(10f, p.textSecondary, FontWeight.Bold), maxLines = 1, softWrap = false)
                     }
                     g.columns.forEachIndexed { c, label ->
-                        val x = view.toScreen(Offset(c * (v.nodeW + v.gapX), 0f)).x
+                        val x = view.toScreen(Offset(c * (v.nodeW + v.gapX) * unit, 0f)).x
                         safeDrawText(measurer, label.uppercase(), Offset(x, 2f * density), mono(9f, p.accent), maxLines = 1, softWrap = false)
                     }
                     layout.extras.clusterRects.forEach { (_, r) ->
                         val tl = view.toScreen(Offset(r.l, r.t)); val br = view.toScreen(Offset(r.r, r.b))
                         drawRoundRect(p.accent.copy(alpha = 0.5f), tl, Size(br.x - tl.x, br.y - tl.y), CornerRadius(6f * density),
                             style = Stroke(1f * density, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f))))
-                    }
-                    layout.extras.bundleLabels.forEach { (at, label) ->
-                        safeDrawText(measurer, label, view.toScreen(at), mono(9f, p.textSecondary), maxLines = 1, softWrap = false)
                     }
                 },
                 over = { view ->
@@ -247,11 +251,14 @@ fun NetGraphScreen(
                         if (n.id in matchIds) drawRoundRect(p.accent, Offset(tl.x - 3f * density, tl.y - 3f * density), Size(sz.width + 6f * density, sz.height + 6f * density), CornerRadius(10f * density), style = Stroke(2.5f * density))
                         // the status glyph and word on every node: colour is never the only signal
                         val word = st.readings[n.id]?.word ?: if (n.kind == "cluster") "" else "declared"
-                        if (view.scale >= 0.45f) safeDrawText(measurer, "${statusGlyph(n.health)} ${statusWord(n.health)}" + if (word.isBlank()) "" else " · $word",
-                            Offset(tl.x + 12f * density * view.scale, br.y - 14f * density * view.scale.coerceIn(0.7f, 1.4f)), mono(8f * view.scale.coerceIn(0.8f, 1.4f), n.color), maxLines = 1, softWrap = false)
+                        // the line sits at 70% of the node and is clipped to the node box: it never runs into the sub line or a neighbour
+                        if (view.scale >= 0.45f) clipRect(tl.x, tl.y, br.x, br.y) { safeDrawText(measurer, "${statusGlyph(n.health)} ${statusWord(n.health)}" + if (word.isBlank()) "" else " · $word",
+                            Offset(tl.x + 12f * density * view.scale, tl.y + sz.height * 0.70f), mono(8f * view.scale.coerceIn(0.8f, 1.4f), n.color), maxLines = 1, softWrap = false) }
                     }
                 },
                 description = drawnSummary,
+                placeLabels = true,
+                extraLabels = layout.extras.bundleLabels,
             ) { id -> openNode(layout.extras.aggregates[id]?.let { _ -> id } ?: id) }
             MiniMap(layout, viewState.value ?: NetGraphLayout.fitWidth(layout.plan.bounds, box.width.toFloat().coerceAtLeast(1f)), box,
                 Modifier.align(Alignment.BottomEnd)) { at ->
