@@ -1,0 +1,21 @@
+# #1980 Repos explorer: state icons (Pvt/Pub, LFS/Code, HTML/NoHTML, Hub/NoHub) on List lines and as the Table's first column, name-only List lines, no role filter,
+# filter chips coloured apart from the view chips, kind and visibility on separate rows. Push runs the tester with its own mutation proofs (every mutant red).
+name: me-repos-1980-mutation
+on:
+  push:
+    paths:
+      - 'ac_cloud-me/data/web/repos-explorer.*'
+      - 'ac_cloud-me/test/test-repos-1980.sh'
+      - '.github/workflows/me-repos-1980-mutation.yml'
+permissions:
+  contents: read
+jobs:
+  icons:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ac_cloud-me
+      - name: Tester (real page green, every mutation red)
+        run: bash ac_cloud-me/test/test-repos-1980.sh
