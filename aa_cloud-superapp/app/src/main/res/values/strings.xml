@@ -494,6 +494,7 @@
     <string name="mesh_k_up">Up</string>
     <string name="mesh_k_hub">Hub</string>
     <string name="mesh_k_dns">Android</string>
+    <string name="mesh_k_dns_mode">DNS mode</string>
     <string name="mesh_k_fleet_dns">Fleet DNS</string>
     <string name="mesh_k_profile">Active</string>
     <string name="mesh_k_provider">Provider</string>

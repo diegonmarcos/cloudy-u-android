@@ -395,6 +395,7 @@
     <string name="mesh_k_up">Subida</string>
     <string name="mesh_k_hub">Hub</string>
     <string name="mesh_k_dns">Android</string>
+    <string name="mesh_k_dns_mode">Modo DNS</string>
     <string name="mesh_k_fleet_dns">DNS flota</string>
     <string name="mesh_k_profile">Activo</string>
     <string name="mesh_k_provider">Proveedor</string>

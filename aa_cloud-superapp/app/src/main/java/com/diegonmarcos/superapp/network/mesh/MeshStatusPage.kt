@@ -152,6 +152,8 @@ private fun StatusRow(id: String, store: MeshStore, s: MeshSnapshot) {
             KvRow(stringResource(R.string.mesh_k_fleet_dns), cfg.dns.ifBlank { "-" })
             // #1928 the servers Android really resolves with now (the active network's link), beside the fleet's configured ones
             KvRow(stringResource(R.string.mesh_k_dns_servers), store.dnsServers.joinToString(", ").ifBlank { "-" }, tag = "mesh:dns:servers")
+            // #1979 the real DNS mode: mesh DNS, or the public resolvers while the hub resolver is unreachable
+            KvRow(stringResource(R.string.mesh_k_dns_mode), com.diegonmarcos.superapp.network.FleetDns.failover.text(), tag = "mesh:dns:mode")
         }
         "profile" -> {
             MHeader(stringResource(R.string.mesh_row_profile))

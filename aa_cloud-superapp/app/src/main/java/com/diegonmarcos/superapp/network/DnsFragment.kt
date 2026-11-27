@@ -233,6 +233,7 @@ internal class DnsModel(
                 append("Preset: ${p.label}${if (prefs.chosen) "" else " (default, not chosen here)"}\nCloud Mesh: ${if (live.meshUp) "up" else "down"}\n")
                 append("Preset servers in use: ${v.promised.joinToString(" → ").ifEmpty { "Android's own (mirror)" }}\n")
                 append("${FleetDns.health.text()}\n")
+                append("DNS mode: ${FleetDns.failover.text()}\n")
                 append("Android resolves with: ${v.actual.joinToString(", ").ifEmpty { "—" }}${if (live.android.onVpn) " (VPN)" else " (network)"}\n")
                 append(if (v.ok) "✓ ${v.why}" else "✗ ${v.why}")
                 append("\nWithout the mesh: ${idleLabel(live.idle)}")

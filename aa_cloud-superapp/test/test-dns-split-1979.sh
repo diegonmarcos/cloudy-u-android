@@ -8,12 +8,15 @@ REPO="$(cd "$HERE/../.." && pwd)"
 REL=(aa_cloud-superapp/build.json
   aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/FleetDns.kt
   ab_cloud-libs-shared/libs/sysdns/src/main/java/com/diegonmarcos/cloudlib/sysdns/FleetDnsBridge.kt
-  aa_cloud-superapp/app/src/test/java/com/diegonmarcos/superapp/network/FleetDnsSplit1979Test.kt)
+  aa_cloud-superapp/app/src/test/java/com/diegonmarcos/superapp/network/FleetDnsSplit1979Test.kt
+  aa_cloud-superapp/app/src/test/java/com/diegonmarcos/superapp/network/FleetDnsFailover1979Test.kt
+  aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/DnsFragment.kt
+  aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/mesh/MeshStatusPage.kt)
 
 run() { # $1 = root; prints FAIL lines, returns 0 when green
   local R="$1" fails=0
-  local BJ="$R/${REL[0]}" DNS="$R/${REL[1]}" BR="$R/${REL[2]}" T="$R/${REL[3]}"
-  for f in "$BJ" "$DNS" "$BR" "$T"; do [ -f "$f" ] || { echo "FAIL: missing $f"; return 1; }; done
+  local BJ="$R/${REL[0]}" DNS="$R/${REL[1]}" BR="$R/${REL[2]}" T="$R/${REL[3]}" FT="$R/${REL[4]}" DF="$R/${REL[5]}" MS="$R/${REL[6]}"
+  for f in "$BJ" "$DNS" "$BR" "$T" "$FT" "$DF" "$MS"; do [ -f "$f" ] || { echo "FAIL: missing $f"; return 1; }; done
   bad() { echo "FAIL: $1"; fails=$((fails+1)); }
   local out; out="$(python3 - "$BJ" <<'PY'
 import json, sys
@@ -29,6 +32,10 @@ if not {'1.1.1.1', '1.0.0.1'} <= set(pu): pr.append('public_resolvers lacks 1.1.
 if any(a.startswith(('10.', 'fd')) for a in pu): pr.append('a public resolver is a mesh address')
 t = d.get('mesh_timeout_ms')
 if not isinstance(t, int) or not 0 < t <= 800: pr.append('mesh_timeout_ms %r is not within 1..800' % t)
+fo = d.get('failover', {})
+if not fo.get('probe_name', '').endswith('.mesh.diegonmarcos.com'): pr.append('failover.probe_name is not a mesh name')
+if (fo.get('fail_after'), fo.get('recover_after')) != (3, 3): pr.append('failover thresholds are not 3 and 3')
+if fo.get('timeout_ms') != 800 or fo.get('interval_s') != 30 or fo.get('min_reapply_s', 0) < 120: pr.append('failover timeout/interval/rate limit off: %r' % fo)
 print('; '.join(pr) or 'OK')
 PY
 )"
@@ -39,6 +46,18 @@ PY
   grep -qF 'up && fleet.isNotEmpty() && decl.publicResolvers.isNotEmpty() ->' "$DNS" || bad "bridgeRoutes asks Android's resolver (the hub) for a public name"
   grep -qF 'if (r.timeoutMs > 0) 1 else TRIES_PER_ROUTE' "$BR" || bad "a mesh route is retried instead of asked once"
   grep -qF 's.soTimeout = routeTimeout.get()' "$BR" || bad "the route timeout is not applied to the socket"
+  grep -qF 'if (streak < (if (publicMode) recoverAfter else failAfter)) return false' "$DNS" || bad "failover thresholds are not applied"
+  grep -qF 'nowMs - it < minReapplyMs' "$DNS" || bad "failover is not rate limited"
+  grep -qF 'if (ok != publicMode) { streak = 0; return false }' "$DNS" || bad "failover has no hysteresis"
+  grep -qF 'if (publicDns && d.publicResolvers.isNotEmpty()) return d.publicResolvers' "$DNS" || bad "the VPN DNS list does not switch to the public resolvers"
+  grep -qF 'failover.observe(ok, System.currentTimeMillis())' "$DNS" || bad "the probe does not drive the failover"
+  grep -qF 'failover.publicMode' "$DNS" || bad "the failover mode is not read by the tunnel config"
+  grep -qF 'FleetDns.failover.text()' "$DF" || bad "the DNS page does not show the DNS mode"
+  grep -qF 'FleetDns.failover.text()' "$MS" || bad "the mesh status page does not show the DNS mode"
+  for n in failsOverToPublicDnsAfterExactlyThreeMisses recoversToMeshDnsAfterThreeAnswersOnceTheRateLimitHasPassed \
+           aSwitchIsHeldBackWithinTheRateLimitAndTakenOnTheNextProbeAfterIt theStatusTextSaysTheRealMode; do
+    grep -qF "fun $n()" "$FT" || bad "test $n is gone"
+  done
   for n in publicPagesGoToThePublicResolversAndNeverToTheMesh meshAndPrivateNamesGoToTheMeshResolver \
            withTheMeshResolverStalledPublicNamesStillResolveWithinASecond aStalledMeshNameIsAskedOnceAndReportedUnreachable; do
     grep -qF "fun $n()" "$T" || bad "test $n is gone"
@@ -70,6 +89,19 @@ if [ "${1:-}" = "--mutants" ]; then
   mut mesh-retried             "$W" 's#if (r.timeoutMs > 0) 1 else TRIES_PER_ROUTE#TRIES_PER_ROUTE#'
   mut timeout-not-applied      "$W" 's#s.soTimeout = routeTimeout.get()#s.soTimeout = timeoutMs#'
   mut test-dropped             "$T" 's#fun aStalledMeshNameIsAskedOnceAndReportedUnreachable()#fun renamed()#'
+  FT_="${REL[4]}"; DF_="${REL[5]}"; MS_="${REL[6]}"
+  mut fail-after-2             "$D" 's#if (streak < (if (publicMode) recoverAfter else failAfter)) return false#if (streak < (if (publicMode) recoverAfter else failAfter - 1)) return false#'
+  mut recover-after-1          "$D" 's#if (publicMode) recoverAfter else failAfter#if (publicMode) 1 else failAfter#'
+  mut no-rate-limit            "$D" 's#nowMs - it < minReapplyMs#false#'
+  mut no-hysteresis            "$D" 's#if (ok != publicMode) { streak = 0; return false }#if (ok != publicMode) return false#'
+  mut list-not-switched        "$D" 's#if (publicDns \&\& d.publicResolvers.isNotEmpty()) return d.publicResolvers#if (false) return d.publicResolvers#'
+  mut probe-not-driving        "$D" 's#failover.observe(ok, System.currentTimeMillis())#false#'
+  mut mode-not-read            "$D" 's#failover.publicMode#false#g'
+  mut dns-page-no-mode         "$DF_" 's#FleetDns.failover.text()#"mesh DNS"#'
+  mut mesh-page-no-mode        "$MS_" 's#FleetDns.failover.text()#"mesh DNS"#'
+  mut fail-after-4-declared    "$B" 's#"fail_after": 3#"fail_after": 4#'
+  mut probe-not-mesh-name      "$B" 's#"probe_name": "maddy.mesh.diegonmarcos.com"#"probe_name": "linktree.diegonmarcos.com"#'
+  mut failover-test-dropped    "$FT_" 's#fun theStatusTextSaysTheRealMode()#fun renamed2()#'
   mut literal-resolver         "$D" 's#^object FleetDns {#object FleetDns {\n    private const val X = "1.1.1.1"#'
   [ $survived -eq 0 ] && { echo "ALL MUTANTS KILLED"; exit 0; } || { echo "$survived mutant(s) survived"; exit 1; }
 fi

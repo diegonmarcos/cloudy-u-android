@@ -9,6 +9,8 @@ on:
       - 'aa_cloud-superapp/test/test-dns-split-1979.sh'
       - 'aa_cloud-superapp/app/src/test/java/com/diegonmarcos/superapp/network/FleetDnsSplit1979Test.kt'
       - 'ab_cloud-libs-shared/libs/sysdns/src/main/java/com/diegonmarcos/cloudlib/sysdns/FleetDnsBridge.kt'
+      - 'aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/DnsFragment.kt'
+      - 'aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/mesh/MeshStatusPage.kt'
       - '.github/workflows/dns-split-1979-mutation.yml'
 permissions:
   contents: read
