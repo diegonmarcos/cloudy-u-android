@@ -230,18 +230,6 @@
    "mcp": []
   },
   "orch/pipeline/orch_home": {
-   "api": [],
-   "mcp": []
-  },
-  "orch/pipeline/orch_workflows": {
-   "api": [],
-   "mcp": []
-  },
-  "orch/pipeline/orch_deploys": {
-   "api": [],
-   "mcp": []
-  },
-  "orch/cicd/orch_flow": {
    "api": [
     "/workflows",
     "/workflows/gha",
@@ -254,6 +242,14 @@
     "devops.workflows.*",
     "obs.debug.report"
    ]
+  },
+  "orch/pipeline/orch_workflows": {
+   "api": [],
+   "mcp": []
+  },
+  "orch/pipeline/orch_deploys": {
+   "api": [],
+   "mcp": []
   },
   "orch/cicd/orch_agents": {
    "api": [],

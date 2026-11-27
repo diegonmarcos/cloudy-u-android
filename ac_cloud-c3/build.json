@@ -231,7 +231,7 @@
       "section_pages": {"containers": "containers_project"},
       "pages": {
         "machines": "infra_vms", "providers": "infra_vms", "domains": "infra_domains", "domains_public": "infra_domains", "projects": "projects_status",
-        "orch_home": "orch_runs", "orch_workflows": "orch_runs", "orch_flow": "orch_runs", "orch_gh_releases": "orch_runs", "orch_dagu": "dagu_runs",
+        "orch_home": "orch_runs", "orch_workflows": "orch_runs", "orch_gh_releases": "orch_runs", "orch_dagu": "dagu_runs",
         "mail": "mail_state", "mail_tables": "mail_state", "mail_topology_inbound": "mail_state", "mail_topology_outbound": "mail_state",
         "ops_health": "ops_uptime", "ops_health_uptime": "ops_uptime", "ops_health_health": "ops_reports", "ops_health_tests": "ops_reports"
       }
@@ -267,6 +267,7 @@
         "orch_service": "containers/all_table",
         "orch_orchestration": "containers/all_table",
         "orch_release": "orch/orch_gh_releases",
+        "orch_flow": "orch/orch_home",
         "control": "infra/gadgets"
       }
     },
@@ -684,7 +685,7 @@
         "id": "orch",
         "label": "Orch",
         "icon": "ic_p_c3_stack",
-        "_doc": "#1942 Orch is a bottom tab. #1954 it is the CI/CD orchestration page, in three groups (the strip's rows): Pipeline = Home (the flow with live status per stage), Workflows (GHA workflows and their last runs), Deploy history; Registries = GH Releases ([Table | Graph]; one page, the former Release page is an alias), GHCR; CI/CD = Flow, Dagu, Agents. What is DEPLOYED left Orch: the old Service and Declared pages are in Containers (Table: live state, drift 'running, not declared' / 'declared, not running', service, compose project, image tags) and their ids are ui.aliases.pages. Old ids (service, infrastructure, orchestration, orch_service, orch_orchestration, release, orch_release, agents, dagu) are aliases.",
+        "_doc": "#1942 Orch is a bottom tab. #1954 it is the CI/CD orchestration page, in three groups (the strip's rows): Pipeline = Home (the flow with live status per stage), Workflows (GHA workflows and their last runs), Deploy history; Registries = GH Releases ([Table | Graph]; one page, the former Release page is an alias), GHCR; CI/CD = Dagu, Agents (the static CI/CD flow map is the lower half of Home, orch_flow is an alias). What is DEPLOYED left Orch: the old Service and Declared pages are in Containers (Table: live state, drift 'running, not declared' / 'declared, not running', service, compose project, image tags) and their ids are ui.aliases.pages. Old ids (service, infrastructure, orchestration, orch_service, orch_orchestration, release, orch_release, agents, dagu) are aliases.",
         "nav_mode": "horizontal_two_rows",
         "groups": [
           {
@@ -711,7 +712,6 @@
             "label": "CI/CD",
             "icon": "ic_robot",
             "pages": [
-              "orch_flow",
               "orch_dagu",
               "orch_agents"
             ]
@@ -720,48 +720,49 @@
         "pages": [
           {
             "id": "orch_home",
+            "datasets": ["pipeline_stages", "flow_map"],
             "label": "Home",
             "icon": "ic_home",
-            "_doc": "#1954 the CI/CD pipeline flow first: sources -> workflows -> builds -> registries (GHCR/ORAS, GH Releases) -> deploys -> running, each stage with its live last-run status, then the lane matrix (declared pipelines x stages). Declared in data/orch_flow.json (baked as ORCH_FLOW_B64), folded by pages/OrchFlow.kt from the sources the other Orch pages read; a stage that cannot be read prints why and is never green."
+            "_doc": "#1954 the CI/CD pipeline flow first: sources -> workflows -> builds -> registries (GHCR/ORAS, GH Releases) -> deploys -> running, each stage with its live last-run status, then the lane matrix (declared pipelines x stages), then the declared CI/CD flow map of data/ops_maps.json (maps.flow, the former Flow page: every row and edge kept). Declared in data/orch_flow.json (baked as ORCH_FLOW_B64), folded by pages/OrchFlow.kt from the sources the other Orch pages read; a stage that cannot be read prints why and is never green."
           },
           {
             "id": "orch_workflows",
+            "datasets": ["gha_workflows"],
             "label": "Workflows",
             "icon": "ic_p_c3_workflows",
-            "_doc": "#1954 every GitHub Actions workflow of the pipeline repos (data/orch_flow.json) with its last run and, on a tap, its recent runs; then the Dagu DAGs with their last run. Same sources as Home (GitHubFeed, DaguRunsFeed)."
+            "_doc": "#1954 every GitHub Actions workflow of the pipeline repos (data/orch_flow.json) with its last run and, on a tap, its recent runs; GHA only: the Dagu DAGs stay on the Dagu page."
           },
           {
             "id": "orch_deploys",
+            "datasets": ["deploy_history"],
             "label": "Deploy history",
             "icon": "ic_p_c3_reports",
             "_doc": "#1954 the deploy history of c3-infra-api GET /db/deploy/history (deploy_log: ts, service, step, success, duration_ms, output), newest first, filtered by service."
           },
           {
             "id": "orch_gh_releases",
+            "datasets": ["releases_table", "release_topology"],
             "label": "GH Releases",
             "icon": "ic_code",
             "_doc": "#1954 ONE GH Releases page (the former Release page is merged in; the id orch_release is an alias). [Table | Graph]: Table = per repo (data/repos_declared.json) the GitHub release table: tag, assets, size, updated (each repo loads lazily when opened, GitHubFeed, 15-minute cache, anonymous 60/h quota; OrchRegistryFragment); Graph = the release topology view (the last Ship runs of ui.topology.release, then VM > service > declared vs running image tag; TopologyViewBody(release)). GhReleasesViewerFragment holds the switch."
           },
           {
             "id": "orch_ghcr",
+            "datasets": ["ghcr_packages"],
             "label": "GHCR",
             "icon": "ic_p_c3_stack",
             "_doc": "#1942 the GHCR package table: package, tags, visibility, updated. Packages are derived in the app by OrchRegistries.packages (pages/OrchRegistries.kt) from the fleet images of the Containers document plus cgc-db-<repo> for every registry repo, hubs excluded (#1953; #1954: there is no ghcr_declared.json or generator, the packages are derived in the app); tags are read anonymously, a private package shows as private. No token in the APK."
           },
           {
-            "id": "orch_flow",
-            "label": "Flow",
-            "icon": "ic_p_c3_workflows",
-            "_doc": "The static CI/CD flow map of data/ops_maps.json (maps.flow): every row and edge kept (#1954). The live pipeline view is Home."
-          },
-          {
             "id": "orch_dagu",
+            "datasets": ["dagu_dags"],
             "label": "Dagu",
             "icon": "ic_robot",
             "_doc": "#648 the SuperApp's page:c3/dagu — libs:ops DaguFragment, the native DAG list with per-row Run buttons and the Authelia-bearer login whose server URL pre-fills from ui.sections[c3].pages[dagu].dagu_default_server. The same fragment the Dagu feed card's rows and the More row target."
           },
           {
             "id": "orch_agents",
+            "datasets": ["agents"],
             "label": "Agents",
             "icon": "ic_robot",
             "_doc": "AgentsFragment (#1454): the launchable C3 siblings. Not a topology view."

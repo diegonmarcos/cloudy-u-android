@@ -154,7 +154,6 @@ class OrchFragment : PagedFragment() {
         "orch_home" -> OrchHomeFragment.newInstance()
         "orch_workflows" -> OrchWorkflowsFragment.newInstance()
         "orch_deploys" -> OrchDeploysFragment.newInstance()
-        "orch_flow" -> OpsMapFragment.newInstance("flow")
         "orch_agents" -> AgentsFragment()
         "orch_dagu" -> DaguFragment.newInstance()
         "orch_gh_releases" -> GhReleasesViewerFragment.newInstance()

@@ -566,9 +566,9 @@
     },
     {
      "tool": "obs.debug.report",
-     "tree": "c3_orch cicd.orch_flow.obs_debug_report",
-     "route": "/orch/cicd/orch_flow <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
-     "node": "orch/cicd/orch_flow"
+     "tree": "c3_orch pipeline.orch_home.obs_debug_report",
+     "route": "/orch/pipeline/orch_home <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
+     "node": "orch/pipeline/orch_home"
     },
     {
      "tool": "obs.debug.db_health_history",
@@ -1127,63 +1127,63 @@
     },
     {
      "tool": "devops.workflows.all",
-     "tree": "c3_orch cicd.orch_flow.devops_workflows_all",
-     "route": "/orch/cicd/orch_flow <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
-     "node": "orch/cicd/orch_flow"
+     "tree": "c3_orch pipeline.orch_home.devops_workflows_all",
+     "route": "/orch/pipeline/orch_home <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
+     "node": "orch/pipeline/orch_home"
     },
     {
      "tool": "devops.workflows.gha",
-     "tree": "c3_orch cicd.orch_flow.devops_workflows_gha",
-     "route": "/orch/cicd/orch_flow <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
-     "node": "orch/cicd/orch_flow"
+     "tree": "c3_orch pipeline.orch_home.devops_workflows_gha",
+     "route": "/orch/pipeline/orch_home <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
+     "node": "orch/pipeline/orch_home"
     },
     {
      "tool": "devops.workflows.gha_errors",
-     "tree": "c3_orch cicd.orch_flow.devops_workflows_gha_errors",
-     "route": "/orch/cicd/orch_flow <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
-     "node": "orch/cicd/orch_flow"
+     "tree": "c3_orch pipeline.orch_home.devops_workflows_gha_errors",
+     "route": "/orch/pipeline/orch_home <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
+     "node": "orch/pipeline/orch_home"
     },
     {
      "tool": "devops.workflows.gha_ok",
-     "tree": "c3_orch cicd.orch_flow.devops_workflows_gha_ok",
-     "route": "/orch/cicd/orch_flow <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
-     "node": "orch/cicd/orch_flow"
+     "tree": "c3_orch pipeline.orch_home.devops_workflows_gha_ok",
+     "route": "/orch/pipeline/orch_home <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
+     "node": "orch/pipeline/orch_home"
     },
     {
      "tool": "devops.workflows.gha_trigger",
-     "tree": "c3_orch cicd.orch_flow.devops_workflows_gha_trigger",
-     "route": "/orch/cicd/orch_flow <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
-     "node": "orch/cicd/orch_flow"
+     "tree": "c3_orch pipeline.orch_home.devops_workflows_gha_trigger",
+     "route": "/orch/pipeline/orch_home <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
+     "node": "orch/pipeline/orch_home"
     },
     {
      "tool": "devops.workflows.gha_definition",
-     "tree": "c3_orch cicd.orch_flow.devops_workflows_gha_definition",
-     "route": "/orch/cicd/orch_flow <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
-     "node": "orch/cicd/orch_flow"
+     "tree": "c3_orch pipeline.orch_home.devops_workflows_gha_definition",
+     "route": "/orch/pipeline/orch_home <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
+     "node": "orch/pipeline/orch_home"
     },
     {
      "tool": "devops.workflows.gha_runs",
-     "tree": "c3_orch cicd.orch_flow.devops_workflows_gha_runs",
-     "route": "/orch/cicd/orch_flow <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
-     "node": "orch/cicd/orch_flow"
+     "tree": "c3_orch pipeline.orch_home.devops_workflows_gha_runs",
+     "route": "/orch/pipeline/orch_home <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
+     "node": "orch/pipeline/orch_home"
     },
     {
      "tool": "devops.workflows.gha_run",
-     "tree": "c3_orch cicd.orch_flow.devops_workflows_gha_run",
-     "route": "/orch/cicd/orch_flow <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
-     "node": "orch/cicd/orch_flow"
+     "tree": "c3_orch pipeline.orch_home.devops_workflows_gha_run",
+     "route": "/orch/pipeline/orch_home <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
+     "node": "orch/pipeline/orch_home"
     },
     {
      "tool": "devops.workflows.gha_run_logs",
-     "tree": "c3_orch cicd.orch_flow.devops_workflows_gha_run_logs",
-     "route": "/orch/cicd/orch_flow <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
-     "node": "orch/cicd/orch_flow"
+     "tree": "c3_orch pipeline.orch_home.devops_workflows_gha_run_logs",
+     "route": "/orch/pipeline/orch_home <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
+     "node": "orch/pipeline/orch_home"
     },
     {
      "tool": "devops.workflows.gha_cancel",
-     "tree": "c3_orch cicd.orch_flow.devops_workflows_gha_cancel",
-     "route": "/orch/cicd/orch_flow <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
-     "node": "orch/cicd/orch_flow"
+     "tree": "c3_orch pipeline.orch_home.devops_workflows_gha_cancel",
+     "route": "/orch/pipeline/orch_home <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
+     "node": "orch/pipeline/orch_home"
     },
     {
      "tool": "devops.release.assets",
@@ -1199,21 +1199,21 @@
     },
     {
      "tool": "devops.workflows.gha_artifacts",
-     "tree": "c3_orch cicd.orch_flow.devops_workflows_gha_artifacts",
-     "route": "/orch/cicd/orch_flow <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
-     "node": "orch/cicd/orch_flow"
+     "tree": "c3_orch pipeline.orch_home.devops_workflows_gha_artifacts",
+     "route": "/orch/pipeline/orch_home <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
+     "node": "orch/pipeline/orch_home"
     },
     {
      "tool": "devops.workflows.gha_artifact_download",
-     "tree": "c3_orch cicd.orch_flow.devops_workflows_gha_artifact_download",
-     "route": "/orch/cicd/orch_flow <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
-     "node": "orch/cicd/orch_flow"
+     "tree": "c3_orch pipeline.orch_home.devops_workflows_gha_artifact_download",
+     "route": "/orch/pipeline/orch_home <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
+     "node": "orch/pipeline/orch_home"
     },
     {
      "tool": "devops.workflows.gha_rerun_job",
-     "tree": "c3_orch cicd.orch_flow.devops_workflows_gha_rerun_job",
-     "route": "/orch/cicd/orch_flow <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
-     "node": "orch/cicd/orch_flow"
+     "tree": "c3_orch pipeline.orch_home.devops_workflows_gha_rerun_job",
+     "route": "/orch/pipeline/orch_home <- /workflows /workflows/gha /workflows/dispatch /reports/* +2",
+     "node": "orch/pipeline/orch_home"
     },
     {
      "tool": "devops.workflows.dagu",

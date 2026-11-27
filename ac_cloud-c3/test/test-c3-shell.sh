@@ -556,7 +556,7 @@ for _p in (secs.get("containers") or {}).get("pages") or []:
     if [q["id"] for q in _p.get("pages") or []] != [_p["id"] + "_topology", _p["id"] + "_table"]:
         bad.append("Containers project %r lost its Topology | Table switch (nested pages %s)" % (_p["id"], [q["id"] for q in _p.get("pages") or []]))
 if pids("ops") != ["net", "mail", "ops_health", "obs"]: bad.append("Ops pages are %s, not Network Mail | Health Obsv (#1480, #1942)" % pids("ops"))
-if pids("orch") != ["orch_home", "orch_workflows", "orch_deploys", "orch_gh_releases", "orch_ghcr", "orch_flow", "orch_dagu", "orch_agents"]: bad.append("Orch pages are %s (#1942, #1954)" % pids("orch"))
+if pids("orch") != ["orch_home", "orch_workflows", "orch_deploys", "orch_gh_releases", "orch_ghcr", "orch_dagu", "orch_agents"]: bad.append("Orch pages are %s (#1942, #1954)" % pids("orch"))
 if "observ" in secs: bad.append("the observ section is merged into Ops and Orch (#1942)")
 _ops = (secs.get("ops") or {}).get("pages") or []
 if [p["id"] for p in _ops if p.get("separator_before")] != ["ops_health"]: bad.append("Ops sub-group divider is not before Health")

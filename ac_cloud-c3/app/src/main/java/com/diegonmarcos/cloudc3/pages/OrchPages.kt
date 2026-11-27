@@ -146,10 +146,24 @@ private fun orchClock(ms: Long): String = if (ms <= 0) "" else java.text.SimpleD
  * and "open" goes to the page that owns the stage; under it the lane matrix (rows = declared pipelines, columns = stages, sideways scroll). Pure of Android.
  */
 @Composable
-fun OrchHomeScreen(decl: OrchFlow.Decl, reading: OrchFlow.Reading?, loading: Boolean, at: Long, onOpen: (String) -> Unit, onRefresh: () -> Unit) {
+fun OrchHomeScreen(decl: OrchFlow.Decl, reading: OrchFlow.Reading?, loading: Boolean, at: Long, onOpen: (String) -> Unit, onRefresh: () -> Unit, flowMap: @Composable () -> Unit = {}) {
     val p = LocalKitPalette.current
     val expanded = remember { mutableStateMapOf<String, Boolean>() }
     val scroll = rememberScrollState()
+    // [Live | Flow]: the live pipeline, or the declared CI/CD flow map (the former Flow page, data/ops_maps.json maps.flow, every row and edge kept)
+    var mode by remember { mutableStateOf("live") }
+    Column(Modifier.fillMaxSize()) {
+        ViewerSwitch(OrchTags.HOME, listOf("live", "flow"), mode) { mode = it }
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            if (mode == "flow") flowMap() else OrchLiveBody(decl, reading, loading, at, onOpen, onRefresh, expanded, scroll)
+        }
+    }
+}
+
+@Composable
+private fun OrchLiveBody(decl: OrchFlow.Decl, reading: OrchFlow.Reading?, loading: Boolean, at: Long, onOpen: (String) -> Unit, onRefresh: () -> Unit,
+                         expanded: MutableMap<String, Boolean>, scroll: androidx.compose.foundation.ScrollState) {
+    val p = LocalKitPalette.current
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 8.dp, vertical = 4.dp).testTag(OrchTags.HOME)) {
         Row(Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
             Text(
@@ -225,13 +239,13 @@ class OrchHomeFragment : KitComposeFragment() {
         val decl = remember { Declarations.orchFlow }
         val (state, reread) = rememberOrchLive()
         val reading = remember(state.inputs) { state.inputs?.let { OrchFlow.fold(decl, it) } }
-        OrchHomeScreen(decl, reading, state.loading, state.at, { openDeclaredPage(parentFragment as? PagedFragment, activity, it) }, reread)
+        OrchHomeScreen(decl, reading, state.loading, state.at, { openDeclaredPage(parentFragment as? PagedFragment, activity, it) }, reread) { OpsMapBody("flow") }
     }
 
     companion object { fun newInstance() = OrchHomeFragment() }
 }
 
-/** Orch > Workflows: every GitHub Actions workflow of the pipeline repos with its last run (the distinct run names of the runs feed), a tap lists its recent runs; then the Dagu DAGs. */
+/** Orch > Workflows: every GitHub Actions workflow of the pipeline repos with its last run (the distinct run names of the runs feed), a tap lists its recent runs;  */
 @Composable
 fun OrchWorkflowsScreen(decl: OrchFlow.Decl, inputs: OrchFlow.Inputs?, onUrl: (String) -> Unit) {
     val p = LocalKitPalette.current
@@ -254,14 +268,6 @@ fun OrchWorkflowsScreen(decl: OrchFlow.Decl, inputs: OrchFlow.Inputs?, onUrl: (S
                     Text("${orchGlyph(OrchFlow.runHealth(r))} ${r.conclusion.ifBlank { r.status }}  ${GitHubFeed.ago(maxOf(0L, now - r.tsMillis))}  ${r.displayTitle}", color = orchColor(OrchFlow.runHealth(r)), fontSize = KitDensity.caption,
                         modifier = Modifier.fillMaxWidth().clickable(enabled = r.htmlUrl.isNotBlank()) { onUrl(r.htmlUrl) }.padding(start = 30.dp, top = 1.dp, bottom = 1.dp))
                 }
-            }
-        }
-        val dagu = inputs?.dagu
-        Text("Dagu DAGs" + ((dagu as? HomeLive.Live.Failed)?.let { " - ${it.why}" } ?: ""), color = p.accent, fontSize = KitDensity.body, modifier = Modifier.padding(top = 10.dp, bottom = 2.dp))
-        dagu?.let { OrchFlow.okOrNull(it) }?.let { rs ->
-            rs.groupBy { it.name }.values.map { g -> g.maxByOrNull { it.startedAtMs }!! }.forEach { r ->
-                val h = OrchFlow.daguHealth(r)
-                Text("${orchGlyph(h)} ${r.name}  status ${r.status}  ${GitHubFeed.ago(maxOf(0L, now - r.startedAtMs))}", color = orchColor(h), fontSize = KitDensity.caption, modifier = Modifier.padding(start = 14.dp, top = 2.dp))
             }
         }
     }

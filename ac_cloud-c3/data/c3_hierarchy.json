@@ -817,8 +817,18 @@
       {
        "id": "orch_home",
        "label": "Home",
-       "api": [],
-       "mcp": []
+       "api": [
+        "/workflows",
+        "/workflows/gha",
+        "/workflows/dispatch",
+        "/reports/*",
+        "/files/report/:",
+        "/ops/push-event"
+       ],
+       "mcp": [
+        "devops.workflows.*",
+        "obs.debug.report"
+       ]
       },
       {
        "id": "orch_workflows",
@@ -862,22 +872,6 @@
      "id": "cicd",
      "label": "CI/CD",
      "children": [
-      {
-       "id": "orch_flow",
-       "label": "Flow",
-       "api": [
-        "/workflows",
-        "/workflows/gha",
-        "/workflows/dispatch",
-        "/reports/*",
-        "/files/report/:",
-        "/ops/push-event"
-       ],
-       "mcp": [
-        "devops.workflows.*",
-        "obs.debug.report"
-       ]
-      },
       {
        "id": "orch_dagu",
        "label": "Dagu",

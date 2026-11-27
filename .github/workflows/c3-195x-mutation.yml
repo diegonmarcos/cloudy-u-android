@@ -125,7 +125,7 @@ jobs:
             orch-dup-back)     pyj ac_cloud-c3/build.json 'o = next(s for s in d["ui"]["sections"] if s["id"] == "orch"); o["pages"].append({"id": "orch_release", "label": "Release", "icon": "ic_code"})' ;;
             orch-home-lost)    pyj ac_cloud-c3/build.json 'o = next(s for s in d["ui"]["sections"] if s["id"] == "orch"); o["pages"] = [p for p in o["pages"] if p["id"] != "orch_home"]; [g.update(pages=[x for x in g["pages"] if x != "orch_home"]) for g in o["groups"]]' ;;
             deployed-field-lost) rep $K/pages/ContainersLive.kt 'r.copy(live = text, drift = drift, runningTag = running,' 'r.copy(live = text, drift = "", runningTag = running,' ;;
-            orch-page-twice)   pyj ac_cloud-c3/build.json 'o = next(s for s in d["ui"]["sections"] if s["id"] == "orch"); next(g for g in o["groups"] if g["id"] == "pipeline")["pages"].append("orch_ghcr")' ;;
+            orch-page-twice)   pyj ac_cloud-c3/build.json 'o = next(s for s in d["ui"]["sections"] if s["id"] == "orch"); next(g for g in o["groups"] if g["id"] == "pipeline")["pages"].append("orch_ghcr"); next(q for q in o["pages"] if q["id"] == "orch_workflows")["datasets"].append("dagu_dags")' ;;
             # #1955 C A4 the Health debugger and X-ray C3: each leg breaks one guarantee; the named test must catch it
             health-field-lost) rep $K/pages/HealthModel.kt '"scope" to "Public", "auth" to s.auth, ' '"scope" to "Public", ' ;;
             health-root-cause-on-vm-when-token-missing) rep $K/pages/HealthPhone.kt 'if (noToken(d.why)) base.copy(status = St.BLIND, details = HealthModel.NO_TOKEN_NOTE)' 'if (noToken(d.why)) base.copy(status = St.DOWN, details = "the API could not read this VM")' ;;

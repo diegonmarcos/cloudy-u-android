@@ -38,7 +38,7 @@ class OrchOpsReorgTest {
         "ops/net_network" to "ops/net_network", "ops/net_security" to "ops/net_security",
         "ops/mail" to "ops/mail", "ops/mail_tables" to "ops/mail_tables", "ops/mail_topology_inbound" to "ops/mail_topology_inbound",
         "ops/mail_topology_outbound" to "ops/mail_topology_outbound", "ops/mail_map" to "ops/mail_tables",
-        "ops/orch" to "orch", "ops/orch_flow" to "orch/orch_flow",
+        "ops/orch" to "orch", "ops/orch_flow" to "orch/orch_home",
         // #1954 what is deployed (the Service and Declared pages) is in the Containers Table; the Release page is the Graph of the one GH Releases page
         "ops/orch_service" to "containers/all_table",
         "ops/orch_infrastructure" to "containers/all_table", "ops/orch_orchestration" to "containers/all_table",
@@ -83,7 +83,7 @@ class OrchOpsReorgTest {
         assertEquals(listOf("infra", "orch", "home", "containers", "ops"), nav.bottomNav)
         assertNull("observ is off the bar and no longer a section", nav.section("observ"))
         assertEquals(
-            listOf("orch_home", "orch_workflows", "orch_deploys", "orch_gh_releases", "orch_ghcr", "orch_flow", "orch_dagu", "orch_agents"),
+            listOf("orch_home", "orch_workflows", "orch_deploys", "orch_gh_releases", "orch_ghcr", "orch_dagu", "orch_agents"),
             nav.section("orch")!!.pages.map { it.id },
         )
     }
@@ -106,12 +106,16 @@ class OrchOpsReorgTest {
         assertEquals(listOf("Pipeline", "Registries", "CI/CD"), groups.map { it["label"]!!.jsonPrimitive.content })
         assertEquals(listOf("orch_home", "orch_workflows", "orch_deploys"), groupPages(groups[0]))
         assertEquals(listOf("orch_gh_releases", "orch_ghcr"), groupPages(groups[1]))
-        assertEquals(listOf("orch_flow", "orch_dagu", "orch_agents"), groupPages(groups[2]))
+        assertEquals(listOf("orch_dagu", "orch_agents"), groupPages(groups[2]))
         val declared = nav.section("orch")!!.pages.map { it.id }
         val inGroups = groups.flatMap { groupPages(it) }
         assertEquals("a page is declared once", declared.size, declared.toSet().size)
         assertEquals("a page is in the groups once", inGroups.size, inGroups.toSet().size)
         assertEquals("every declared page is in a group and every group page is declared", declared.sorted(), inGroups.sorted())
+        // a dataset (what a page shows) is on exactly one Orch page: no second page lists the same thing
+        val sets = orchSection()["pages"]!!.jsonArray.map { it.jsonObject }.flatMap { pg -> (pg["datasets"]?.jsonArray.orEmpty()).map { it.jsonPrimitive.content to pg["id"]!!.jsonPrimitive.content } }
+        assertTrue("every Orch page declares what it shows", orchSection()["pages"]!!.jsonArray.all { it.jsonObject["datasets"]?.jsonArray?.isNotEmpty() == true })
+        assertEquals("a dataset is listed on two Orch pages: " + sets.groupBy({ it.first }, { it.second }).filter { it.value.size > 1 }, sets.size, sets.map { it.first }.toSet().size)
     }
 
     @Test

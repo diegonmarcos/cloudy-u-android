@@ -51,7 +51,7 @@ class HomeLiveTest {
             uptime = HomeLive.Live.Failed("uptime 503"), reports = HomeLive.Live.Failed("reports 503"), mail = HomeLive.Live.Failed("mail 503"),
         )
         val r = rows(failed)
-        listOf("orch_flow" to "GitHub unreachable", "orch_dagu" to "Dagu down", "ops_health_uptime" to "uptime 503", "ops_health_health" to "reports 503", "mail_tables" to "mail 503", "machines" to "NETWORK: no route")
+        listOf("orch_home" to "GitHub unreachable", "orch_dagu" to "Dagu down", "ops_health_uptime" to "uptime 503", "ops_health_health" to "reports 503", "mail_tables" to "mail 503", "machines" to "NETWORK: no route")
             .forEach { (page, why) ->
                 val row = r.first { it.page == page }
                 assertTrue("$page shows its reason: ${row.reading.text}", row.reading.text.contains(why)); assertEquals(StatusLight.State.UNKNOWN, row.reading.light)
