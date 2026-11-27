@@ -31,19 +31,20 @@ except Exception as e: print("FAIL tabs %s: no ui dump (%s)" % (sys.argv[1], e))
 got = []
 for n in nodes:
     t = n.get("text") or ""
-    if t in known:
+    if t in known and not (n.get("bounds") or "").startswith("[0,0][0,0]"):
         m = re.match(r"\[(\d+),(\d+)\]", n.get("bounds") or ""); got.append((int(m.group(2)) if m else 0, int(m.group(1)) if m else 0, t))
 row = min((g[0] for g in got), default=0); labels = [t for y, x, t in sorted(got, key=lambda g: (g[0], g[1])) if abs(y - row) < 40]
 ok = labels == want
 print("%s tabs %s: %s (want %s)" % ("PASS" if ok else "FAIL", sys.argv[1].rsplit("/", 1)[-1], labels, want)); sys.exit(0 if ok else 1)
 PY
 }
+open_page "page:proj/pj-cg-omniverse"; sleep 20   # warm-up: the first WebView of a cold start paints late
 for p in "cg-omniverse:pj-cg-omniverse:site" "unix-cloudme:pj-unix-cloudme:"; do
     id="${p%%:*}"; rest="${p#*:}"; page="${rest%%:*}"; site="${rest#*:}"
     open_page "page:proj/$page"; shot "proj-1961-$id-readme-html" 20
     if [ -n "$site" ]; then tabs "proj-1961-$id-readme-html" "README.html" "GH Repo Page" "README.canvas" "README.md" "Site" || rc=1
     else tabs "proj-1961-$id-readme-html" "README.html" "GH Repo Page" "README.canvas" "README.md" || rc=1; fi
-    for k in 1 2 3 4 5 6; do $T adb shell input swipe 540 1900 540 700 400; shot "proj-1961-$id-readme-html-s$k" 3; done
+    for k in 1 2 3 4 5 6; do $T adb shell input swipe 540 1500 540 600 400; shot "proj-1961-$id-readme-html-s$k" 3; done
 done
 $T adb logcat -d > "$OUT/logcat.txt"
 pip install --quiet pillow >/dev/null 2>&1 || true

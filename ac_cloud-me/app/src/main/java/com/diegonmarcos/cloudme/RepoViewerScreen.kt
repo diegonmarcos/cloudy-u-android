@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -137,7 +138,7 @@ fun RepoViewerScreen(block: JSONObject, ref: RepoViews.Ref, views: List<String>,
     val ctx = LocalContext.current
     var view by remember(ref) { mutableStateOf(RepoViews.initial(RepoViewMemory.get(ctx, ref)).takeIf { it in views } ?: views.first()) }
     Column(modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp).testTag(RepoViewerTags.SELECTOR), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp, vertical = 4.dp).testTag(RepoViewerTags.SELECTOR), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             for (v in views) FilterChip(
                 selected = view == v,
                 onClick = { view = v; RepoViewMemory.put(ctx, ref, v) },

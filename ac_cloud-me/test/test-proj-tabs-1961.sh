@@ -24,6 +24,7 @@ V = T("app/src/main/java/com/diegonmarcos/cloudme/RepoViewerScreen.kt")
 if 'block.optString("repo").ifEmpty { block.optString("url") }' not in V: print("T2\tthe viewer does not read the entry's repo")
 if "RepoViews.SITE -> WebPage(block, body, pageId = pageId)" not in V: print("T2\tthe site tab is not the entry's own page")
 if "?: views.first()" not in V: print("T1\tthe viewer does not open the first declared tab")
+if ".horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp, vertical = 4.dp).testTag(RepoViewerTags.SELECTOR)" not in V: print("T1\tthe tab row does not scroll (README.md and Site fall off a phone screen)")
 links = J("data/web/me-links.json")["entries"]; n = 0; cg = 0
 for e in links:
     if e.get("section") != "proj" or "repo" not in e["source"]: continue
@@ -67,6 +68,7 @@ mut "a CG entry drops its site tab" 'import json,sys;p=sys.argv[1]+"/data/ui/pro
 mut "an entry declares README.md before README.canvas" 'import json,sys;p=sys.argv[1]+"/data/ui/proj/pj-unix/pj-unix-superapp.json";d=json.load(open(p));d[0]["views"]=["html","gh","md","canvas"];json.dump(d,open(p,"w"))'
 mut "CG-galaxy lacks README.canvas" 'import json,sys;p=sys.argv[1]+"/test/fixtures/proj-readme-trio-1961.json";d=json.load(open(p));d["pj-cg-omniverse"]["files"]["README.canvas"]=0;json.dump(d,open(p,"w"))'
 mut "a project is missing from the trio fixture" 'import json,sys;p=sys.argv[1]+"/test/fixtures/proj-readme-trio-1961.json";d=json.load(open(p));del d["pj-cg-zirkusverse"];json.dump(d,open(p,"w"))'
+mut "the tab row stops scrolling" "import sys;p=sys.argv[1]+'/app/src/main/java/com/diegonmarcos/cloudme/RepoViewerScreen.kt';s=open(p).read().replace('.horizontalScroll(rememberScrollState())','');open(p,'w').write(s)"
 mut "the viewer ignores repo" "import sys;p=sys.argv[1]+'/app/src/main/java/com/diegonmarcos/cloudme/RepoViewerScreen.kt';s=open(p).read().replace('block.optString(\"repo\").ifEmpty { block.optString(\"url\") }','block.optString(\"url\")');open(p,'w').write(s)"
 mut "the XML verdict step is removed" 'import sys;p=sys.argv[1]+"/../.github/workflows/ship-cloud-me.yml";s=open(p).read().replace("ProjTabs1961Test.xml","Other.xml");open(p,"w").write(s)'
 mut "a dispatch input is expanded in run" 'import sys;p=sys.argv[1]+"/../.github/workflows/ship-cloud-me.yml";s=open(p).read().replace("echo \"variant=$INPUT_VARIANT\"","echo \"variant=${{ inputs.variant }}\"");open(p,"w").write(s)'
