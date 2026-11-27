@@ -1,0 +1,61 @@
+# #1934 RELEASE-APK walk of the Git top nav on an emulator: the APK of a push-triggered Ship Cloud Drive run (the build the phone installs), real clones of public repositories
+# seeded in its store, every scope x group opened and screenshotted, read-only bulk (Fetch status) run, destructive commands opened and cancelled. Dispatch only.
+# `run_id` (digits) = the Ship run whose x86_64 APK is tested (empty = the latest release asset). The input goes through env: only, checked as digits.
+name: "Test -> Drive Git top nav, shipped APK, real repos (emulator)"
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Ship cloud-drive run id (digits) whose x86_64 APK to test; empty = latest release asset"
+        required: false
+        default: ""
+permissions:
+  contents: read
+  actions: read
+jobs:
+  walk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch the shipped APK and pick two small public repositories
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ inputs.run_id }}
+        run: |
+          set -eu
+          case "$RUN_ID" in ''|*[!0-9]*) [ -z "$RUN_ID" ] || { echo "::error::run_id must be digits"; exit 1; } ;; esac
+          mkdir -p apk
+          if [ -n "$RUN_ID" ]; then
+            gh run download "$RUN_ID" -R "$REPO" -p 'Cloud-Drive-x86_64-*' -D apk/dl
+            cp "$(find apk/dl -name '*.apk' | sort | head -1)" apk/drive.apk
+          else
+            gh release download latest -R "$REPO" -p Cloud-Drive-x86_64.apk -O apk/drive.apk
+          fi
+          ls -l apk
+          gh api "users/diegonmarcos/repos?type=public&per_page=100" --jq '[.[]|select(.fork==false and .size>0 and .size<20000)|.name]|.[0:2]|join(" ")' > repos.txt
+          cat repos.txt
+          [ -s repos.txt ] || { echo "::error::no small public repository found"; exit 1; }
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - name: Boot emulator + top nav walk
+        timeout-minutes: 60
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-drive/test/emulator-drive-topnav-release.sh apk/drive.apk out $(cat repos.txt)
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drive-topnav-release-evidence
+          path: out/
+          if-no-files-found: warn
+          retention-days: 14
