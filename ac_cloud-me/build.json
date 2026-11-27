@@ -827,7 +827,7 @@
               {
                 "id": "geo-atlas",
                 "label": "Atlas",
-                "icon": "ic_map_pin"
+                "icon": "map"
               },
               {
                 "id": "geo-collections",
@@ -837,12 +837,12 @@
               {
                 "id": "geo-stats",
                 "label": "Stats",
-                "icon": "ic_nav_trips"
+                "icon": "bar_chart"
               },
               {
                 "id": "geo-timeline",
                 "label": "Timeline",
-                "icon": "ic_nav_agenda"
+                "icon": "timeline"
               }
             ]
           },
