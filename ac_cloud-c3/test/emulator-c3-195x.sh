@@ -38,7 +38,7 @@ PY
 adb shell am start -W -n "$PKG/.MainActivity" </dev/null >/dev/null 2>&1; shot 00-first-start 6
 
 # <ticket> <shot name> <page id> <wait> <scrolls> <labels that must be on screen, _ = space, - = none>
-while read -r tk name page wait scr labels; do
+while read -r tk name page wait scr labels <&3; do
   [ -z "$tk" ] && continue
   [ "$T" = all ] || [ "$T" = "$tk" ] || continue
   open_page "$page"; sleep 2
@@ -46,10 +46,10 @@ while read -r tk name page wait scr labels; do
   shot "c3-$tk-$name" "$wait"
   [ "$labels" = - ] && continue
   for l in ${labels//,/ }; do has "c3-$tk-$name" "${l//_/ }" || bad "c3-$tk-$name: label '${l//_/ }' missing"; done
-done <<'SHOTS'
+done 3<<'SHOTS'
 1953 all-topology-top all_topology 8 0 Topology,Table,Status,VM,Type,Apps_/_DB_/_MCP_/_API
-1953 cloudme-services pj-unix-cloudme_topology 8 0 Apps_/_DB_/_MCP_/_API,Public,Private
-1953 cloudme-repos pj-unix-cloudme_topology 6 4 Repos
+1953 cloudme-services pj-unix-cloudme_topology 8 0 Apps_/_DB_/_MCP_/_API,API_(1)
+1953 cloudme-repos pj-unix-cloudme_topology 6 3 Pvt
 1953 cloudy pj-unix-cloudy_topology 8 0 Apps_/_DB_/_MCP_/_API
 1953 cg-omniverse pj-cg-omniverse_topology 8 0 Repos
 1953 capital-cb pj-capital-cb_topology 8 0 Repos,Capital-___
@@ -65,7 +65,9 @@ SHOTS
 if [ "$T" = all ] || [ "$T" = 1953 ]; then
   open_page pj-unix-cloudy_table; shot c3-1953-cloudy-table-pre 8
   tap_text c3-1953-cloudy-table-pre "Db" ; shot c3-1953-cloudy-table-db 4
-  has c3-1953-cloudy-table-db cloudy_db_LFS || { scroll 3; shot c3-1953-cloudy-table-db-2 3; has c3-1953-cloudy-table-db-2 cloudy_db_LFS || bad "cloudy table Type=Db: cloudy_db_LFS missing"; }
+  found=0; has c3-1953-cloudy-table-db cloudy_db_LFS && found=1
+  for k in 2 3 4 5 6 7 8; do [ $found = 1 ] && break; scroll 2 </dev/null; shot c3-1953-cloudy-table-db-$k 2; has c3-1953-cloudy-table-db-$k cloudy_db_LFS && found=1; done
+  [ $found = 1 ] || bad "cloudy table Type=Db: cloudy_db_LFS missing"
   rm -f "$OUT/c3-1953-cloudy-table-pre.png"
 fi
 
