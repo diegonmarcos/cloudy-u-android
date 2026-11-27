@@ -6272,9 +6272,9 @@
           {
             "_doc_label": "#723 RENAMED KDE → Peer Control and moved, with WireGuard, out of Setup ▸ Apps into the new Setup ▸ Network sub-section. Only the label moved: the id stays `kde` because page:config/kde is spoken by KdeStatusNotifier and KdeConfigsPageTest, and a page id is identity, not a caption. Moved again, with C3, into the Configs ▸ Fleet group (Setup, Fleet, Observability): the id is unchanged, so page:config/kde still opens it.",
             "id": "kde",
-            "label": "Fleet Control",
+            "label": "Peer Control",
             "icon": "ic_hub",
-            "settings": ["Peer Control"],
+            "settings": ["Fleet Control"],
             "group": "C3",
             "subgroup": ""
           },

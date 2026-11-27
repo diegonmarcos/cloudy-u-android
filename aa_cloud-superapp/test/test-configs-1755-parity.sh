@@ -50,7 +50,7 @@ BEFORE_ROW = [   # (label, target) of the Cloud > Apps > Configs row before #175
     ('Account', 'extapp:cloud-account'),
     ('About', 'page:config/app-about'),
 ]
-RENAMED = {'logcat': 'Logcat app', 'kde': 'Fleet Control'}        # #1755 item 4; #1943 kde relabelled (label only)
+RENAMED = {'logcat': 'Logcat app'}        # #1755 item 4 (#1943 kde relabel reverted by #1967: kde is Peer Control again)
 MOVED = {'profile': 'Apps', 'agents-watchdog': 'Configs'}          # #1755 items 2 and 3 (Account -> Apps, Agents -> Configs)
 GROUP_RENAMED = {'Tools': 'C3', 'Connect': 'C3'}                   # #1755 item 3, then #1943 (Connect -> C3, Profiling merged into it)
 probs = []

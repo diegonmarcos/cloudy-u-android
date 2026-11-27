@@ -43,7 +43,7 @@ class SubgroupHubTest : KitPageHarness() {
         assertEquals(listOf(
             "Launcher" to "", "Network" to "", "Apps" to "", "C3" to "", "Configs" to ""), runs)   // #1943 Connect + Profiling = C3; Configs is still a Section.pages group (Home row, Canopus, Sirius), only the Setup grid skips it
         // C3 carries Cloudy C3, Peer Control (#1745), Watchdog, X-Ray Device and Logcat Fleet (#1943: Profiling merged in).
-        assertEquals(listOf("Cloudy C3", "Fleet Control", "Watchdog", "X-Ray Device", "Logcat Fleet"), grp("C3").map { it.label })
+        assertEquals(listOf("Cloudy C3", "Peer Control", "Watchdog", "X-Ray Device", "Logcat Fleet"), grp("C3").map { it.label })
         // #1755 Agents is the in-app agents-watchdog hub, now in the Configs group between Perms and Logcat app (the Tools group is Profiling);
         // the Launcher hub (launcher-hub) is the second hub page.
         assertEquals(listOf("launcher-hub", "agents-watchdog"), config.allPages.filter { it.hubSections.isNotEmpty() }.map { it.id })
@@ -148,7 +148,7 @@ class SubgroupHubTest : KitPageHarness() {
         // Tools is Profiling), each in a group; every pre-#1755 Cloud Apps Configs row item is still on the row or on the Configs page (Watchdog).
         val visible = config.allPages.filter { (!it.hidden || it.id in config.pages.flatMap { p -> p.hubPages }) && !it.separator && !it.isAction }.map { it.label }.toSet()   // #1943 incl. the Configs pages the Launcher hub lists
         val before = listOf("Quick Actions", "UI", "Folders", "One-Hand", "Notify", "NG Firewall", "Wi-Fi", "Bluetooth", "DNS", "VPN", "Firewall", "OS Perms",
-            "Webserver", "Proxy", "Store", "Cloudy C3", "Fleet Control", "Watchdog", "X-Ray Device", "Logcat Fleet", "Agents", "Account", "Perms", "Logcat app",
+            "Webserver", "Proxy", "Store", "Cloudy C3", "Peer Control", "Watchdog", "X-Ray Device", "Logcat Fleet", "Agents", "Account", "Perms", "Logcat app",
             "X-Ray App", "About")
         assertTrue("lost: ${before - visible}", visible.containsAll(before))
         val row = Sections.all().flatMap { it.tileGroups }.single { it.title == "Setup" }.tiles.filter { !it.separator }.map { it.label }.toSet()

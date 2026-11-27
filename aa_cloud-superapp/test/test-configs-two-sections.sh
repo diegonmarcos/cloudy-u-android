@@ -80,7 +80,7 @@ want = {
     ('Launcher', ''): ['Launcher', '|', 'Quick Actions', 'UI', 'Folders', 'One-Hand', '|', 'Notify', '|', 'Configs'],  # the | separates One-Hand from Notify; #1943 | Configs opens the Launcher page
     ('Network', ''):  ['NG Firewall', '|', 'Wi-Fi', 'Bluetooth', 'DNS', 'VPN', '|', 'Firewall', 'OS Perms', '|', 'Webserver', 'Proxy'],  # #1737 individual icons again (the #1719 unified Network page is retired into the NG Firewall hub)
     ('Apps', ''):     ['Store', '|', 'Account'],  # #1755 Account moved here from Configs
-    ('C3', ''):       ['Cloudy C3', '|', 'Fleet Control', '|', 'Watchdog', 'X-Ray Device', 'Logcat Fleet'],  # #1943 Connect renamed C3, Profiling merged in (nothing dropped)
+    ('C3', ''):       ['Cloudy C3', '|', 'Peer Control', '|', 'Watchdog', 'X-Ray Device', 'Logcat Fleet'],  # #1943 Connect renamed C3, Profiling merged in (nothing dropped)
     #  # #1755 Tools renamed Profiling, Agents moved to Configs; Watchdog -> extapp:c3-watchdog; the | before the observability pair; Agents is the in-app hub (the owner's dual listing, kept once here)
     ('Configs', ''):  ['Profile', '|', 'Perms', 'Agents', 'Logcat app', 'X-Ray App', 'About'],  # #1755 Profile | Perms, Agents, Logcat app, X-Ray App, About; #1943 shown as the Launcher page's Configs section
 }
@@ -450,7 +450,7 @@ want = ['H:LAUNCHER',
         'H:APPS',
         'Store[ic_storefront]', '|[None]', 'Account[ic_person]',
         'H:C3',   # #1943 Connect renamed C3, Profiling merged in; the Configs group left this page (it is the Launcher page's second section, T2 / test-setup-launcher-configs-c3-1943.sh)
-        'Cloudy C3[ic_cloud_control]', '|[None]', 'Fleet Control[ic_hub]', '|[None]', 'Watchdog[ic_watchtower]', 'X-Ray Device[ic_monitor_heart]', 'Logcat Fleet[ic_p_logs]',
+        'Cloudy C3[ic_cloud_control]', '|[None]', 'Peer Control[ic_hub]', '|[None]', 'Watchdog[ic_watchtower]', 'X-Ray Device[ic_monitor_heart]', 'Logcat Fleet[ic_p_logs]',
         'H:ACTIONS',
         'Update All[ic_system_update]', 'KDE Connect[ic_devices]', 'Animations[ic_animation]', 'Sync Clipboard[ic_copy]', 'Saving Mode[ic_settings]', 'Focus Mode[ic_nav_dnd]']
 if out == want: print('OK')
@@ -495,7 +495,7 @@ import json, sys
 by_id = {p['id']: p for p in next(s for s in json.load(open(sys.argv[1]))['ui']['sections']
                                   if s['id'] == 'config')['pages']}
 k = by_id.get('kde')
-print('OK' if k and k['label'] == 'Fleet Control' and 'Peer Control' in k.get('settings', []) and not k.get('hidden') and not k.get('action')
+print('OK' if k and k['label'] == 'Peer Control' and 'Fleet Control' in k.get('settings', []) and not k.get('hidden') and not k.get('action')
       else 'kde = %r' % (k,))
 PY
 )" "Peer Control is the kde page renamed — same id, so page:config/kde still opens KdeConnectFragment"

@@ -3,7 +3,7 @@
 #   P1  parity: every Setup + Launcher entry of the previous layout (listed below, with label, icon and action) is still declared and
 #       reachable at its NEW place: Launcher group -> Setup Launcher row; Connect + Profiling -> Setup C3 section; Configs group -> the
 #       Launcher page's Configs section (derived exactly as Sections.hubSections derives it); Actions row unchanged on Setup.
-#   P2  the Setup Connect section is named C3 and reads Cloudy C3 | Fleet Control (was Peer Control, label only) | Watchdog, X-Ray Device, Logcat Fleet; no Profiling
+#   P2  the Setup Connect section is named C3 and reads Cloudy C3 | Peer Control (label unchanged; #1967 reverted the interim Fleet Control) | Watchdog, X-Ray Device, Logcat Fleet; no Profiling
 #       group or heading remains; groups[] carries the same pages.
 #   P4  the Home Apps Configs row, Canopus arc and Sirius tree (all list Section.pages) still list every page they did before: the Configs pages are
 #       declared `hidden_on: [setup]` (only the Setup grid skips them), never `hidden`.
@@ -40,7 +40,7 @@ BEFORE = [
 ACTIONS = [('update', 'Update All', 'action:update_all'), ('kde_connect', 'KDE Connect', 'action:kde_connect_now'),
            ('animations', 'Animations', 'action:toggle_animations'), ('sync-clipboard', 'Sync Clipboard', 'action:sync_clipboard'),
            ('saving-mode', 'Saving Mode', 'action:saving_mode'), ('focus-mode', 'Focus Mode', 'page:config/focus')]
-C3_ORDER = ['Cloudy C3', '|', 'Fleet Control', '|', 'Watchdog', 'X-Ray Device', 'Logcat Fleet']
+C3_ORDER = ['Cloudy C3', '|', 'Peer Control', '|', 'Watchdog', 'X-Ray Device', 'Logcat Fleet']
 
 def setup_runs(bj):   # the Setup grid: visible (not hidden) non-action pages, by group, in declaration order
     runs = {}
@@ -59,7 +59,7 @@ def hub_sections(bj, hub_id='launcher-hub'):   # mirror of Sections.hubSections
         if tiles: out[sub] = tiles
     return out
 
-NEW_LABEL = {'kde': 'Fleet Control'}   # #1943 follow-up: label only; id, icon, action unchanged; 'Peer Control' kept as a search keyword (settings)
+NEW_LABEL = {}   # #1967: kde reads Peer Control again (label only; id, icon, action unchanged); 'Fleet Control' kept as a search synonym (settings)
 
 def check(n, bj):
     f = []; by = {p['id']: p for p in sec(bj)['pages']}; runs = setup_runs(bj); hub = hub_sections(bj)
@@ -82,7 +82,11 @@ def check(n, bj):
                 if pid not in [q['id'] for q in hub.get('Configs', [])]: f.append('%s not in the Launcher page Configs section' % pid)
         acts = [(p['id'], p['label'], p.get('action')) for p in sec(bj)['pages'] if p.get('is_action')]
         if acts != ACTIONS: f.append('Actions row changed: %r' % acts)
-        if 'Peer Control' not in by['kde'].get('settings', []): f.append('kde lost the Peer Control search keyword')
+        if 'Fleet Control' not in by['kde'].get('settings', []): f.append('kde lost the Fleet Control search synonym')
+    elif n == 'P5':   # #1967 the Setup C3 row and the page title (the page label, nothing hardcodes it) read Peer Control, never Fleet Control
+        if by['kde']['label'] != 'Peer Control': f.append('kde page title/label = %r' % by['kde']['label'])
+        if 'Peer Control' not in [q['label'] for q in runs.get('C3', [])]: f.append('Setup C3 row lacks Peer Control')
+        if any(q['label'] == 'Fleet Control' for q in sec(bj)['pages']): f.append('a Fleet Control label is still shown')
     elif n == 'P4':   # Home Apps Configs row, Canopus arc, Sirius tree all list Section.pages (= every page that is not `hidden`); the previous lists
         vis = {p['id'] for p in sec(bj)['pages'] if not p.get('hidden')}
         for pid, label, grp, action, icon in BEFORE:
@@ -114,6 +118,7 @@ def check(n, bj):
 fails = 0
 for n, t in (('P1', 'every old Setup + Launcher entry reachable at its new place'), ('P2', 'Connect is C3 with Profiling merged in'),
              ('P3', '| Configs after Notify opens the Launcher page; Configs is its second section, off Setup'),
+             ('P5', 'the Setup C3 row and the page title read Peer Control (#1967)'),
              ('P4', 'Home Apps Configs row, Canopus arc and Sirius tree list every page they listed before')):
     r = check(n, bj0); print('  %s: %s %s' % ('PASS' if not r else 'FAIL', n, t + ('' if not r else ' -> ' + '; '.join(r)))); fails += bool(r)
 print('== mutants: each must turn its check red ==')
@@ -123,10 +128,11 @@ def mut(name, s, fn):
     global fails
     bj = copy.deepcopy(bj0); fn(bj)
     red = bool(check(s, bj)); print('  %s: mutant %s turns %s red' % ('PASS' if red else 'FAIL', name, s)); fails += not red
+mut('the kde label is Fleet Control again (#1967)', 'P5', lambda b: page(b, 'kde').__setitem__('label', 'Fleet Control'))
 mut('Perms goes hidden (drops off Home row, Canopus arc, Sirius tree)', 'P4', lambda b: page(b, 'perms').__setitem__('hidden', True))
 mut('About goes hidden', 'P4', lambda b: page(b, 'app-about').__setitem__('hidden', True))
-mut('the Fleet Control label is reverted', 'P1', lambda b: page(b, 'kde').__setitem__('label', 'Peer Control'))
-mut('the Peer Control keyword is dropped', 'P1', lambda b: page(b, 'kde').pop('settings'))
+mut('the label is Fleet Control again', 'P1', lambda b: page(b, 'kde').__setitem__('label', 'Fleet Control'))
+mut('the Fleet Control synonym is dropped', 'P1', lambda b: page(b, 'kde').pop('settings'))
 mut('Perms is dropped', 'P1', lambda b: drop(b, 'perms'))
 mut('About goes hidden (leaves the hub)', 'P1', lambda b: page(b, 'app-about').__setitem__('hidden', True))
 mut('Logcat Fleet is dropped', 'P1', lambda b: drop(b, 'logcat-fleet'))
