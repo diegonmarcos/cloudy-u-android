@@ -45,6 +45,8 @@ for e in links:
     k = e["path"][-1]; v = fx.get(k)
     if not v: print("T3\t%s is not in the README trio fixture" % k); continue
     if v["repo"] != "diegonmarcos/" + e["source"]["repo"]: print("T3\t%s fixture repo %s" % (k, v["repo"]))
+    gp = J("data/ui/proj/" + "/".join(e["path"]) + ".json")[0].get("repo", "").split("/")
+    if gp[5:7] == ["tree", "main"] and v.get("dir") != "/".join(gp[7:]): print("T3\t%s is a folder entry (%s) but the fixture's trio dir is %r (the README tabs read <folder>/README.*)" % (k, "/".join(gp[7:]), v.get("dir")))
     for f in ("README.html", "README.canvas", "README.md"):
         if not v["files"].get(f): print("T3\t%s (%s) lacks %s on main" % (k, v["repo"], f))
 W = open(os.path.join(app, "..", ".github/workflows/ship-cloud-me.yml"), encoding="utf-8").read()
@@ -67,6 +69,8 @@ mut "a CG entry loses its repo" 'import json,sys;p=sys.argv[1]+"/data/ui/proj/pj
 mut "a CG entry drops its site tab" 'import json,sys;p=sys.argv[1]+"/data/ui/proj/pj-cg/pj-cg-zirkusverse.json";d=json.load(open(p));d[0]["views"]=d[0]["views"][:4];json.dump(d,open(p,"w"))'
 mut "an entry declares README.md before README.canvas" 'import json,sys;p=sys.argv[1]+"/data/ui/proj/pj-unix/pj-unix-superapp.json";d=json.load(open(p));d[0]["views"]=["html","gh","md","canvas"];json.dump(d,open(p,"w"))'
 mut "CG-galaxy lacks README.canvas" 'import json,sys;p=sys.argv[1]+"/test/fixtures/proj-readme-trio-1961.json";d=json.load(open(p));d["pj-cg-omniverse"]["files"]["README.canvas"]=0;json.dump(d,open(p,"w"))'
+mut "a Wiki folder entry's trio is read at the repo root" 'import json,sys;p=sys.argv[1]+"/test/fixtures/proj-readme-trio-1961.json";d=json.load(open(p));del d["pj-wiki-modernsc"]["dir"];json.dump(d,open(p,"w"))'
+mut "a Wiki folder has no README.md on main" 'import json,sys;p=sys.argv[1]+"/test/fixtures/proj-readme-trio-1961.json";d=json.load(open(p));d["pj-wiki-arcanum"]["files"]["README.md"]=0;json.dump(d,open(p,"w"))'
 mut "a project is missing from the trio fixture" 'import json,sys;p=sys.argv[1]+"/test/fixtures/proj-readme-trio-1961.json";d=json.load(open(p));del d["pj-cg-zirkusverse"];json.dump(d,open(p,"w"))'
 mut "the tab row stops scrolling" "import sys;p=sys.argv[1]+'/app/src/main/java/com/diegonmarcos/cloudme/RepoViewerScreen.kt';s=open(p).read().replace('.horizontalScroll(rememberScrollState())','');open(p,'w').write(s)"
 mut "the viewer ignores repo" "import sys;p=sys.argv[1]+'/app/src/main/java/com/diegonmarcos/cloudme/RepoViewerScreen.kt';s=open(p).read().replace('block.optString(\"repo\").ifEmpty { block.optString(\"url\") }','block.optString(\"url\")');open(p,'w').write(s)"

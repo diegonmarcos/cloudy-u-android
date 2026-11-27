@@ -20,11 +20,13 @@ def main():
     for p in sorted(glob.glob(os.path.join(HERE, "ui", "proj", "*", "*.json"))):
         b = json.load(open(p, encoding="utf-8"))[0]
         if "repo" not in b: continue
-        repo = "/".join(b["repo"].split("/")[3:5])   # the repo root: the engine writes the trio there
-        t[os.path.basename(p)[:-5]] = {"repo": repo, "files": {f: size(repo, f) for f in FILES}}
+        parts = b["repo"].split("/"); repo = "/".join(parts[3:5])   # the repo root: the engine writes the trio there
+        d = "/".join(parts[7:]) if parts[5:7] == ["tree", "main"] else ""   # #1961 a Wiki folder: the engine's folder targets write the trio into it
+        t[os.path.basename(p)[:-5]] = {"repo": repo, "files": {f: size(repo, (d + "/" if d else "") + f) for f in FILES}}
+        if d: t[os.path.basename(p)[:-5]]["dir"] = d
     if "--check" in sys.argv:
         old = json.load(open(OUT, encoding="utf-8"))
-        bad = ["%s: %s" % (k, v) for k, v in t.items() if not all(v["files"].values()) or k not in old or old[k]["repo"] != v["repo"]]
+        bad = ["%s: %s" % (k, v) for k, v in t.items() if not all(v["files"].values()) or k not in old or old[k]["repo"] != v["repo"] or old[k].get("dir") != v.get("dir")]
         if bad: sys.exit("README trio missing or fixture stale:\n" + "\n".join(bad))
         print("proj-readme-trio: %d entries, all three files on main" % len(t)); return
     open(OUT, "w", encoding="utf-8").write(json.dumps(t, indent=1, sort_keys=True) + "\n")

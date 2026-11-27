@@ -184,26 +184,29 @@
   "repo": "diegonmarcos/cloudy-u-android"
  },
  "pj-wiki-arcanum": {
+  "dir": "2.Arcanum-science",
   "files": {
-   "README.canvas": 2494,
-   "README.html": 139248,
-   "README.md": 2523
+   "README.canvas": 2530,
+   "README.html": 82906,
+   "README.md": 8431
   },
   "repo": "diegonmarcos/lib-chronos"
  },
  "pj-wiki-modernsc": {
+  "dir": "1.Modern-science",
   "files": {
-   "README.canvas": 2494,
-   "README.html": 139248,
-   "README.md": 2523
+   "README.canvas": 2528,
+   "README.html": 70997,
+   "README.md": 7883
   },
   "repo": "diegonmarcos/lib-chronos"
  },
  "pj-wiki-projects": {
+  "dir": "3.Projects",
   "files": {
-   "README.canvas": 2494,
-   "README.html": 139248,
-   "README.md": 2523
+   "README.canvas": 2516,
+   "README.html": 31230,
+   "README.md": 3617
   },
   "repo": "diegonmarcos/lib-chronos"
  }
