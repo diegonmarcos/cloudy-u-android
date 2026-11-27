@@ -159,10 +159,11 @@ jobs:
           calendar-disabled-kept@ClockCalendarTest@ClockCalendar.kt@fun wanted(a: Alarm): Boolean = a.calendar && a.enabled@fun wanted(a: Alarm): Boolean = a.calendar
           MUTANTS
           git checkout -- "$C"
-          printf '%s' "$cases" | python3 -I - "$OUT" <<'PY'
+          printf '%s' "$cases" > "$RUNNER_TEMP/cases.txt"
+          python3 -I - "$OUT" "$RUNNER_TEMP/cases.txt" <<'PY'
           import sys
           from xml.sax.saxutils import quoteattr
-          rows = [l.split("|", 2) for l in sys.stdin.read().splitlines() if l]
+          rows = [l.split("|", 2) for l in open(sys.argv[2]).read().splitlines() if l]
           with open(sys.argv[1], "w") as h:
               h.write('<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="clock-1970-jvm" tests="%d" failures="%d">\n' % (len(rows), sum(1 for r in rows if r[2])))
               for cl, n, m in rows:
