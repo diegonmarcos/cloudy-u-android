@@ -23,7 +23,7 @@ jobs:
             aa_cloud-superapp/build.json
             aa_cloud-superapp/app/src
             aa_cloud-superapp/test
-            ab_cloud-libs-shared/libs/sysdns
+            ab_cloud-libs-shared/libs
       - name: Tester (real tree green)
         run: bash aa_cloud-superapp/test/test-dns-split-1979.sh
       - name: Every mutant must be KILLED
