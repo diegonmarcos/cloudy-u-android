@@ -7939,6 +7939,12 @@
           "pkg:ott.alanwatts",
           "pkg:cn.com.aftershokz.app",
           "pkg:com.oceanwing.soundcore",
+          "pkg:com.samsung.accessory.berrymgr",
+          "pkg:com.samsung.accessory.neobeanmanager",
+          "pkg:com.google.android.apps.wearables.maestro.companion",
+          "pkg:com.sony.songpal.mdr",
+          "pkg:com.bose.bosemusic",
+          "pkg:com.jbl.oneapp",
           "pkg:com.mi.earphone"
         ],
         "match_metadata": [
