@@ -98,7 +98,7 @@ class FullSyncStep9Test {
         assertTrue("only ciphertext is written", keep.contains("if (runCatching { MimeParser.detectCrypto(raw) }.getOrNull() == null) return"))
         assertTrue(repo.contains("val batched = prefetchImapSources(credentials, ids)"))
         assertTrue(repo.contains("batched.forEach { (mailboxId, uids) -> imap.dropPrefetchedSources(credentials, mailboxId, uids) }"))
-        assertTrue(repo.contains("return syncSerial.withLock { FullSync(port, conditions, policy, stopRequested = stopRequested).run(window, nowMillis) }"))
+        assertTrue(repo.contains("return syncSerial.withLock { FullSync(port, conditions, policy, bodyCapBytes = bodyCacheLimit.bytes, stopRequested = stopRequested).run(window, nowMillis) }"))
         assertTrue(repo.contains("syncSerial.withLock { syncMailCoreSerial(credentials, budgetMs) }"))
         assertTrue(repo.contains("syncSerial.withLock { OfflineSync(offlinePort(credentials)).run(window, limit, nowMillis) }"))
         val membership = repo.substringAfter("suspend fun localMailboxMembership(").substringBefore("suspend fun mailboxMembership(")
