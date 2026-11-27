@@ -75,8 +75,8 @@ for _gone in ("prof-profiles", "professional", "work", "study", "cv", "roadmap")
     if _gone in set(ids(secs.get("prof", {}).get("pages"))): bad("tree", f"#1937 the removed Prof page {_gone} is declared again")
 PROJ = {"unix": ["superapp", "cloudme", "cloudy"], "cg": ["omniverse", "zirkusverse"], "capital": ["cb", "pm", "finterm"], "hardtech": ["biomed", "cad", "deepxtech"],
         "wiki": ["modernsc", "arcanum", "projects"], "projects": ["endeavours", "duckpeng"], "lecole42": ["algo", "graphic", "system", "mylibs", "curriculum", "agentic", "datascience", "machinelearning", "cyberwarfare", "dev"]}
-if [p["id"] for p in secs.get("proj", {}).get("pages", [])] != ["pj-home"] + ["pj-" + g for g in PROJ] + ["pj-repos"] or \
-   [re.sub(r"^[^\w]+ ", "", p["label"]) for p in secs.get("proj", {}).get("pages", [])] != ["Home", "Unix", "CG", "Capital", "Hardtech", "Wiki", "Projects", "42", "Repos"] or \
+if [p["id"] for p in secs.get("proj", {}).get("pages", [])] != ["pj-home", "pj-repos"] + ["pj-" + g for g in PROJ] or \
+   [re.sub(r"^[^\w]+ ", "", p["label"]) for p in secs.get("proj", {}).get("pages", [])] != ["Home", "Repos", "Unix", "CG", "Capital", "Hardtech", "Wiki", "Projects", "42"] or \
    any([c["id"] for c in next(p for p in secs["proj"]["pages"] if p["id"] == "pj-" + g).get("pages", [])] != [f"pj-{g}-{l}" for l in ls] for g, ls in PROJ.items()):
     bad("tree", "Proj is not Home | Unix, CG, Capital, Hardtech, Wiki, Projects, 42 with every project leaf (#1914)")
 for _o, _n in {"area-unix": "pj-unix", "area-cg": "pj-cg", "area-capital": "pj-capital", "area-hardtech": "pj-hardtech", "area-lecole42": "pj-lecole42", "area-front": "pj-projects"}.items():

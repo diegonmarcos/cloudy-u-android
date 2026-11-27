@@ -2,8 +2,8 @@
   {
     "kind": "fragment",
     "id": "web",
-    "_doc": "#1918 Proj > Repos: the repos tree of _git-repos-master (A0_repos-tree/dist/repos-tree.html), bundled as the asset repos-tree.html (data/web) (data/regen-repos-tree.py copies it, --check detects drift) and embedded by the page WebView.",
-    "url": "repos-tree.html",
-    "link": "repos-tree.html"
+    "_doc": "#1973 Proj > Repos (page name kept short: Repos): the Repos explorer of _git-repos-master (A0_repos-tree/dist/repos-explorer.html: List with child repos indented under their parent, Table of every registry field sortable by every column, Canvas of the parent/child graph), bundled as the asset repos-explorer.html (data/web) (data/regen-repos-explorer.py copies it, --check detects drift) and embedded by the page WebView. The former Dolphin tree (#1918, repos-tree.html, data/regen-repos-tree.py) stays bundled and is the explorer's Tree chip.",
+    "url": "repos-explorer.html",
+    "link": "repos-explorer.html"
   }
 ]

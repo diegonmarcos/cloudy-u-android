@@ -1,0 +1,48 @@
+# #1973 Cloud Me Proj nav order (Home | Repos | Unix | ...) and the Repos explorer field parity. Push runs the tester with its own mutation proofs (every mutant red).
+# Manual dispatch with `name` applies ONE deliberate break to the real tree and requires the tester to go RED (KILLED); a break that stays green fails the job.
+name: me-repos-1973-mutation
+on:
+  push:
+    paths:
+      - 'ac_cloud-me/data/ui/proj/**'
+      - 'ac_cloud-me/data/web/repos-explorer.*'
+      - 'ac_cloud-me/data/web/repos-tree.html'
+      - 'ac_cloud-me/build.json'
+      - 'ac_cloud-me/test/test-repos-1973.sh'
+      - '.github/workflows/me-repos-1973-mutation.yml'
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'repos-last | drop-separator | old-tree | drop-canvas | drop-stars | drop-school | drop-repo'
+        required: false
+permissions:
+  contents: read
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ac_cloud-me
+      - name: Tester (real tree green, every mutation red)
+        if: ${{ inputs.name == '' }}
+        run: bash ac_cloud-me/test/test-repos-1973.sh
+      - name: Mutation must be KILLED
+        if: ${{ inputs.name != '' }}
+        env:
+          MUTATION: ${{ inputs.name }}
+        run: |
+          set -eu
+          A=ac_cloud-me
+          case "$MUTATION" in
+            repos-last)     python3 -c "import json;p='$A/build.json';d=json.load(open(p,encoding='utf-8'));S=[s for s in d['ui']['sections'] if s['id']=='proj'][0]['pages'];S.append(S.pop(1));json.dump(d,open(p,'w',encoding='utf-8'),ensure_ascii=False)" ;;
+            drop-separator) python3 -c "import json;p='$A/build.json';d=json.load(open(p,encoding='utf-8'));S=[s for s in d['ui']['sections'] if s['id']=='proj'][0]['pages'];S[2].pop('separator_before');json.dump(d,open(p,'w',encoding='utf-8'),ensure_ascii=False)" ;;
+            old-tree)       sed -i 's#repos-explorer.html#repos-tree.html#' $A/data/ui/proj/pj-repos.json ;;
+            drop-canvas)    sed -i 's#data-m="canvas"#data-m="x"#' $A/data/web/repos-explorer.html ;;
+            drop-stars)     python3 -c "import json;p='$A/data/web/repos-explorer.json';d=json.load(open(p,encoding='utf-8'));[r['gh'].pop('stars') for r in d['rows']];json.dump(d,open(p,'w',encoding='utf-8'))" ;;
+            drop-school)    python3 -c "import json;p='$A/data/web/repos-explorer.json';d=json.load(open(p,encoding='utf-8'));[r.pop('school') for r in d['rows']];json.dump(d,open(p,'w',encoding='utf-8'))" ;;
+            drop-repo)      python3 -c "import json;p='$A/data/web/repos-explorer.json';d=json.load(open(p,encoding='utf-8'));d['rows']=[r for r in d['rows'] if r['name']!='cloudy-u-android'];d['count']-=1;json.dump(d,open(p,'w',encoding='utf-8'))" ;;
+            *) echo "unknown mutation"; exit 2 ;;
+          esac
+          if bash $A/test/test-repos-1973.sh --check $A; then echo "::error::MUTATION SURVIVED $MUTATION"; exit 1; else echo "KILLED $MUTATION"; fi

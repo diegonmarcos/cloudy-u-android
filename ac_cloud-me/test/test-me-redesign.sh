@@ -225,7 +225,7 @@ if [p["id"] for p in _pf.get("pages", [])] != ["prof-web", "leafy", "nexus", "st
    {g["id"]: g["pages"] for g in _pf.get("groups", [])} != {"profiles": ["prof-web"], "companies": ["leafy", "nexus", "stark"]}:
     bad("pages", "Prof is not Profiles (Professional, LinkedIn, Portfolio, Developer, CV) | Leaf.y, Nexus.z, Stark.x (#1937: More, with Professional, Work and Study, removed by owner order)")
 _pj = secs.get("proj", {})
-if [p["id"] for p in _pj.get("pages", [])] != ["pj-home", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42", "pj-repos"]:
+if [p["id"] for p in _pj.get("pages", [])] != ["pj-home", "pj-repos", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42"]:
     bad("pages", "Proj pages are not Home, Unix, CG, Capital, Hardtech, Wiki, Projects, 42 (#1914)")
 if ui.get("default_section") != "lnktree" or (_lt.get("pages") or [{}])[0].get("id") != "lt-lnktree-site" or (_pj.get("pages") or [{}])[0].get("id") != "pj-home":
     bad("pages", "the app does not open on Lnktree, the Lnktree entry on its Lnktree site, or Proj on its Home (#1914)")

@@ -32,7 +32,7 @@ class BuroLlcDeclTest {
         assertFalse("house" in sections); assertFalse("work" in sections); assertFalse("roadmap" in sections); assertFalse("duties" in sections)
         for (gone in listOf("health", "experiences", "socials")) assertFalse("$gone is a section of the layout before #1901", gone in sections)
         assertEquals("lnktree", ui.getString("default_section"))   // #1901 correction: the app opens on the restored Lnktree entry
-        assertEquals(listOf("pj-home", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42", "pj-repos"), ids(sections.getValue("proj").getJSONArray("pages")))
+        assertEquals(listOf("pj-home", "pj-repos", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42"), ids(sections.getValue("proj").getJSONArray("pages")))
         assertEquals(listOf("roadmaps", "backlogs"), ids(sections.getValue("tasks").getJSONArray("pages")))
         assertEquals("tasks", page("tasks", "backlogs").getJSONObject(0).getString("id"))
     }

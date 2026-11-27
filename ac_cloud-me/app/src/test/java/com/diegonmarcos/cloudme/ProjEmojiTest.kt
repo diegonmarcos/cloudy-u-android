@@ -49,8 +49,8 @@ class ProjEmojiTest {
 
     @Test fun `Repos follows 42 and embeds the bundled repos tree`() {
         val ids = (0 until section("proj").getJSONArray("pages").length()).map { section("proj").getJSONArray("pages").getJSONObject(it).getString("id") }
-        assertEquals("pj-repos", ids[ids.indexOf("pj-lecole42") + 1])
-        assertEquals("repos-tree.html", JSONArray(BuroLlcTestData.text("data/ui/proj/pj-repos.json")).getJSONObject(0).getString("url"))
+        assertEquals("pj-repos", ids[ids.indexOf("pj-home") + 1])   // #1973 Repos right after Home
+        assertEquals("repos-explorer.html", JSONArray(BuroLlcTestData.text("data/ui/proj/pj-repos.json")).getJSONObject(0).getString("url"))
         val html = BuroLlcTestData.text("data/web/repos-tree.html")
         assertTrue(html.length > 50_000 && html.contains("Repos"))
     }

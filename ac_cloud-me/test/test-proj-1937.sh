@@ -56,8 +56,8 @@ for p in flat(proj["pages"]):
 for p in flat(proj["pages"]):
     if p.get("emoji_only") is not True: print("V1\t%s is not emoji_only (it would draw a glyph)" % p["id"])
 ids = [p["id"] for p in proj["pages"]]
-if ids[0] != "pj-home" or not proj["pages"][1].get("separator_before") or any(p.get("separator_before") for p in proj["pages"][2:]) or proj["pages"][0].get("separator_before"):
-    print("V1\tthe separator is not declared after Home (separator_before on the page that follows Home)")
+if ids[0] != "pj-home" or ids[1] != "pj-repos" or not proj["pages"][1].get("separator_before") or not proj["pages"][2].get("separator_before") or any(p.get("separator_before") for p in proj["pages"][3:]) or proj["pages"][0].get("separator_before"):
+    print("V1\tthe separators are not declared after Home and after Repos (#1973: Home | Repos | Unix ...)")
 nd = T("../ab_cloud-libs-shared/libs/bottomnav/src/commonMain/kotlin/com/diegonmarcos/superapp/bottomnav/NavDecl.kt")
 row = T("../ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/navbartop2/NavBarTopSecondRow.kt")
 if not os.path.exists(os.path.join(app, "../ab_cloud-libs-shared")): nd = open(os.path.join(mono, "ab_cloud-libs-shared/libs/bottomnav/src/commonMain/kotlin/com/diegonmarcos/superapp/bottomnav/NavDecl.kt"), encoding="utf-8").read(); row = open(os.path.join(mono, "ab_cloud-libs-shared/libs/ui-nav-bars/src/main/kotlin/com/diegonmarcos/superapp/navbartop2/NavBarTopSecondRow.kt"), encoding="utf-8").read()
@@ -81,17 +81,17 @@ mut "a banner asset is deleted" 'import os,sys;os.remove(sys.argv[1]+"/data/web/
 mut "a banner asset is an HTML error page" 'import sys;open(sys.argv[1]+"/data/web/banners/circus.gif","w").write("<html>"+"x"*20000)' B1
 mut "the table drops a bundled asset" 'import json,sys;p=sys.argv[1]+"/data/web/me-proj-emoji.json";d=json.load(open(p));d["banners"]["pj-cg"].pop("asset");json.dump(d,open(p,"w"))' B1
 mut "ProjHome draws nothing when the banner fails" 'import sys;p=sys.argv[1]+"/app/src/main/java/com/diegonmarcos/cloudme/ProjHome.kt";s=open(p).read().replace("if (drawable == null)","if (false)");open(p,"w").write(s)' B1
-mut "a project falls back to the globe" "${BJ}S['proj']['pages'][1]['pages'][0]['tile_icon']='ic_world';$WR" I1
-mut "two projects share an icon" "${BJ}S['proj']['pages'][1]['pages'][1]['tile_icon']=S['proj']['pages'][1]['pages'][0]['tile_icon'];$WR" I1
+mut "a project falls back to the globe" "${BJ}S['proj']['pages'][2]['pages'][0]['tile_icon']='ic_world';$WR" I1
+mut "two projects share an icon" "${BJ}S['proj']['pages'][2]['pages'][1]['tile_icon']=S['proj']['pages'][2]['pages'][0]['tile_icon'];$WR" I1
 mut "two projects have the same artwork" 'import shutil,sys;d=sys.argv[1]+"/app/src/main/res/drawable/";shutil.copy(d+"ic_pj_cg_omniverse.xml",d+"ic_pj_cg_zirkusverse.xml")' I1
 mut "a project icon is not bundled" 'import os,sys;os.remove(sys.argv[1]+"/app/src/main/res/drawable/ic_pj_capital_cb.xml")' I1
-mut "a project declares no icon" "${BJ}S['proj']['pages'][2]['pages'][0].pop('tile_icon');$WR" I1
+mut "a project declares no icon" "${BJ}S['proj']['pages'][3]['pages'][0].pop('tile_icon');$WR" I1
 mut "ProjHome falls back to the declared page icon" 'import sys;p=sys.argv[1]+"/app/src/main/java/com/diegonmarcos/cloudme/ProjHome.kt";s=open(p).read().replace("ProjTileIcons.declared[leaf.id]","leaf.icon");open(p,"w").write(s)' I1
 mut "the tile label keeps its emoji" 'import sys;p=sys.argv[1]+"/app/src/main/java/com/diegonmarcos/cloudme/ProjHome.kt";s=open(p).read().replace("ProjTileIcons.plainLabel","String");open(p,"w").write(s)' B1
 mut "a top chip draws its glyph again" "${BJ}S['proj']['pages'][3].pop('emoji_only');$WR" V1
-mut "a sub chip draws its glyph again" "${BJ}S['proj']['pages'][1]['pages'][0].pop('emoji_only');$WR" V1
+mut "a sub chip draws its glyph again" "${BJ}S['proj']['pages'][2]['pages'][0].pop('emoji_only');$WR" V1
 mut "the separator after Home is gone" "${BJ}S['proj']['pages'][1].pop('separator_before');$WR" V1
-mut "the separator sits in the wrong place" "${BJ}S['proj']['pages'][1].pop('separator_before');S['proj']['pages'][2]['separator_before']=True;$WR" V1
+mut "the separator sits in the wrong place" "${BJ}S['proj']['pages'][1].pop('separator_before');S['proj']['pages'][3]['separator_before']=True;$WR" V1
 mut "the failed page panel is not drawn" 'import sys;p=sys.argv[1]+"/app/src/main/java/com/diegonmarcos/cloudme/WebPage.kt";s=open(p).read().replace("WebLoadErrorPanel(it, retry","Unit.let { retry");open(p,"w").write(s)' L1
 mut "an HTTP failure is not handled" 'import sys;p=sys.argv[1]+"/app/src/main/java/com/diegonmarcos/cloudme/WebPage.kt";s=open(p).read().replace("override fun onReceivedHttpError","fun onReceivedHttpErrorZ");open(p,"w").write(s)' L1
 echo "$PASS passed, $FAIL failed"; [ "$FAIL" -eq 0 ]

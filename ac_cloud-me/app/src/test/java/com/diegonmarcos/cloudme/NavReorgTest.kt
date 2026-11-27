@@ -66,8 +66,8 @@ class NavReorgTest {
         for (gone in listOf("prof-profiles", "professional", "work", "study", "cv", "roadmap")) assertTrue("$gone is removed", prof.path(gone).isEmpty())
         assertEquals("prof-professional", leafOf("prof", null))   // #1948 Prof opens on Profiles > Professional
         val proj = Sections.byId("proj")!!
-        assertEquals(listOf("pj-home", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42", "pj-repos"), ids(proj.pages))
-        assertEquals(listOf("Home", "Unix", "CG", "Capital", "Hardtech", "Wiki", "Projects", "42", "Repos"), proj.pages.map { Regex("^[^\\p{L}\\p{N}]+ ").replace(it.label, "") })   // #1918 each label carries its Linktree emoji
+        assertEquals(listOf("pj-home", "pj-repos", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42"), ids(proj.pages))
+        assertEquals(listOf("Home", "Repos", "Unix", "CG", "Capital", "Hardtech", "Wiki", "Projects", "42"), proj.pages.map { Regex("^[^\\p{L}\\p{N}]+ ").replace(it.label, "") })   // #1918 each label carries its Linktree emoji
         assertEquals("proj opens on its Home grid", "pj-home", leafOf("proj", null))
         assertEquals("the Lnktree bottom-nav entry opens on the Lnktree site", "lt-lnktree-site", leafOf("lnktree", null))
         // the groups are the declared rows: Prof is `Profiles | Leaf.y, Nexus.z, Stark.x`, Proj is `Lnktree` over the areas

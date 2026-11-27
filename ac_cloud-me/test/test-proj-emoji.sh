@@ -21,9 +21,9 @@ for g in ("pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projec
     u = tab["banners"].get(g, {}).get("url", "")
     if not u.startswith("https://linktree.diegonmarcos.com/public/images/banners/"): print("E2\t%s has no Linktree banner (%r)" % (g, u))
 ids = [p["id"] for p in secs["proj"]["pages"]]
-if "pj-repos" not in ids or ids.index("pj-repos") != ids.index("pj-lecole42") + 1: print("E3\tRepos does not follow 42")
+if "pj-repos" not in ids or ids.index("pj-repos") != ids.index("pj-home") + 1: print("E3\tRepos does not follow Home")
 try:
-    if J("data/ui/proj/pj-repos.json")[0].get("url") != "repos-tree.html" or len(open(os.path.join(app, "data/web/repos-tree.html"), encoding="utf-8").read()) < 50000: print("E3\tRepos does not embed the bundled tree")
+    if J("data/ui/proj/pj-repos.json")[0].get("url") != "repos-explorer.html" or len(open(os.path.join(app, "data/web/repos-explorer.html"), encoding="utf-8").read()) < 50000 or len(open(os.path.join(app, "data/web/repos-tree.html"), encoding="utf-8").read()) < 50000: print("E3\tRepos does not embed the bundled explorer (and keep the tree)")
 except Exception as x: print("E3\t%s" % x)
 prof = {p["id"]: p for p in flat(secs["prof"])}
 if [p["id"] for p in prof.get("prof-web", {}).get("pages", [])] != ["prof-professional", "prof-linkedin", "prof-portfolio", "prof-developer", "prof-cv"]: print("E4\tProf > Profiles is not Professional | LinkedIn | Portfolio | Developer | CV")
@@ -44,7 +44,7 @@ mut "a Proj label loses its emoji" 'import sys;p=sys.argv[1]+"/build.json";s=ope
 mut "a banner is dropped" 'import json,sys;p=sys.argv[1]+"/data/web/me-proj-emoji.json";d=json.load(open(p,encoding="utf-8"));del d["banners"]["pj-cg"];json.dump(d,open(p,"w",encoding="utf-8"))'
 mut "a banner leaves the Linktree site" 'import json,sys;p=sys.argv[1]+"/data/web/me-proj-emoji.json";d=json.load(open(p,encoding="utf-8"));d["banners"]["pj-cg"]["url"]="https://example.com/x.gif";json.dump(d,open(p,"w",encoding="utf-8"))'
 mut "Repos is dropped" 'import sys;p=sys.argv[1]+"/data/ui/proj/pj-repos.json";import os;os.remove(p)'
-mut "Repos tree is empty" 'import sys;open(sys.argv[1]+"/data/web/repos-tree.html","w").write("x")'
+mut "Repos explorer is empty" 'import sys;open(sys.argv[1]+"/data/web/repos-explorer.html","w").write("x")'
 mut "LinkedIn tab is dropped" 'import re,sys;p=sys.argv[1]+"/build.json";s=open(p,encoding="utf-8").read().replace("\"id\": \"prof-linkedin\"","\"id\": \"prof-x\"");open(p,"w",encoding="utf-8").write(s)'
 mut "the Leaf.y page is gone" 'import sys;p=sys.argv[1]+"/build.json";s=open(p,encoding="utf-8").read().replace("\"id\": \"leafy\"","\"id\": \"lfy\"");open(p,"w",encoding="utf-8").write(s)'
 mut "the removed More page is declared again" 'import sys;p=sys.argv[1]+"/build.json";s=open(p,encoding="utf-8").read().replace("\"id\": \"leafy\",\n            \"label\"","\"id\": \"prof-profiles\",\n            \"label\"",1);open(p,"w",encoding="utf-8").write(s)'

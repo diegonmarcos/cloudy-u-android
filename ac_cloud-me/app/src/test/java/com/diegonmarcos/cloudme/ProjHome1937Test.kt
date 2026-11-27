@@ -123,7 +123,7 @@ class ProjHome1937Test {
         fun all(ps: List<Page>): List<Page> = ps.flatMap { listOf(it) + all(it.pages) }
         for (p in all(proj.pages)) assertTrue("${p.id} still draws a glyph", p.emojiOnly)
         assertEquals("pj-home", proj.pages[0].id)
-        assertTrue("a separator follows Home", proj.pages[1].separatorBefore && proj.pages.drop(2).none { it.separatorBefore })
+        assertTrue("a separator follows Home and Repos (#1973)", proj.pages[1].separatorBefore && proj.pages[2].separatorBefore && proj.pages.drop(3).none { it.separatorBefore })
     }
 
     @Test fun `a failed remote page draws a visible error with Retry, and the rules that decide it`() {

@@ -905,7 +905,7 @@
         ]
       },
       {
-        "_doc": "#1914 Proj: Home (an icon grid of every group and leaf) | Unix, CG, Capital, Hardtech, Wiki, Projects, 42, each group holding its project leaves; every leaf embeds its site (me-links.json, derived from repos-pages.json and the registry) or its GitHub repo page. The Lnktree site is the default page of the Lnktree bottom-nav entry; the registry area trees stay on Lnktree > Proj (lt-area-*). #1937: every Proj page is `emoji_only` (its chip draws the emoji + name and no glyph: neither the grey link icon nor the default globe), `separator_before` on Unix puts a | after Home (the fleet convention), every project leaf declares its `tile_icon` (its own app icon where its repository has one in this monorepo, else a distinct vector; data/regen-proj-icons.py) and every banner is bundled (data/web/banners, me-proj-emoji.json `asset`)",
+        "_doc": "#1914 Proj: Home (an icon grid of every group and leaf) | Unix, CG, Capital, Hardtech, Wiki, Projects, 42, each group holding its project leaves; every leaf embeds its site (me-links.json, derived from repos-pages.json and the registry) or its GitHub repo page. The Lnktree site is the default page of the Lnktree bottom-nav entry; the registry area trees stay on Lnktree > Proj (lt-area-*). #1973: Repos moved right after Home (Home | Repos | Unix | CG | ...; separator_before on Repos and on Unix). #1937: every Proj page is `emoji_only` (its chip draws the emoji + name and no glyph: neither the grey link icon nor the default globe), `separator_before` on Unix puts a | after Home (the fleet convention), every project leaf declares its `tile_icon` (its own app icon where its repository has one in this monorepo, else a distinct vector; data/regen-proj-icons.py) and every banner is bundled (data/web/banners, me-proj-emoji.json `asset`)",
         "id": "proj",
         "label": "Proj",
         "icon": "ic_link_tile",
@@ -915,6 +915,13 @@
             "label": "🏠 Home",
             "icon": "ic_link_tile",
             "emoji_only": true
+          },
+          {
+            "id": "pj-repos",
+            "label": "📦 Repos",
+            "icon": "ic_link_tile",
+            "emoji_only": true,
+            "separator_before": true
           },
           {
             "id": "pj-unix",
@@ -1154,12 +1161,6 @@
                 "tile_icon": "ic_pj_lecole42_dev"
               }
             ]
-          },
-          {
-            "id": "pj-repos",
-            "label": "📦 Repos",
-            "icon": "ic_link_tile",
-            "emoji_only": true
           }
         ]
       },
