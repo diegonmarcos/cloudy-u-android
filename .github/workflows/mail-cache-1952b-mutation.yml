@@ -47,7 +47,7 @@ jobs:
             # the first load asks for the whole folder
             first-page-unbounded) sed -i 's/initialLoadSize = PAGE_SIZE \* 3,/initialLoadSize = Int.MAX_VALUE,/' $D/mail/MailRepository.kt ;;
             # a return to the list waits for the live pages again (no kept rows first)
-            return-requeries)   sed -i 's/    kept()?.let { emit(it) }/    kept()?.let { }/' $D/mail/ListReturn.kt ;;
+            return-requeries)   sed -i 's/if (away \&\& held != null) out.tryEmit(held) else out.tryEmit(pages)/out.tryEmit(pages)/' $D/mail/ListReturn.kt ;;
             # the pager starts on a placeholder view again
             placeholder-view)   sed -i 's/.stateIn(viewModelScope, SharingStarted.Eagerly, initialListView())/.stateIn(viewModelScope, SharingStarted.Eagerly, ListView())/' ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/inbox/InboxViewModel.kt ;;
             # the Rust core talks to the server before the rows are painted

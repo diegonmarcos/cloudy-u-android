@@ -1242,8 +1242,16 @@ class InboxViewModel(
         }
     }
 
-    val returningListRows: Flow<PagingData<InboxRow>> =
-        app.sterna.core.data.mail.keptFirst({ shownRows.takeIf { it.isNotEmpty() }?.let { PagingData.from(it) } }, keptListRows)
+    private val returning = app.sterna.core.data.mail.ReturnHolder<PagingData<InboxRow>>()
+
+    /** What the list screen collects: [keptListRows] through the holder that outlives the screen ([app.sterna.core.data.mail.ReturnHolder]). */
+    val returningListRows: kotlinx.coroutines.flow.SharedFlow<PagingData<InboxRow>> = returning.flow
+
+    /** The list screen left the composition (a page change): what it showed is what a return may draw first. */
+    fun onListLeft() = returning.left(shownRows.takeIf { it.isNotEmpty() }?.let { PagingData.from(it) })
+
+    /** The list screen is in the composition again. */
+    fun onListShown() = returning.shown()
 
     /** #1837: the (account, mailbox) folders that also list messages filed under another mailbox (a label holding an Inbox message):
      *  the rows guard cannot call such a row foreign by its mailbox ([rowsForeign]). */
@@ -1405,6 +1413,9 @@ class InboxViewModel(
         // #1952: the kept rows belong to one view; another view starts from its own.
         viewModelScope.launch { selection.drop(1).collect { shownRows = emptyList() } }
         resolveInboxFromTheStore()
+        // #1952: the rows kept from the last run are in the holder before the first frame; the live pages follow.
+        shownRows.takeIf { it.isNotEmpty() }?.let { returning.seed(PagingData.from(it)) }
+        viewModelScope.launch { keptListRows.collect { returning.live(it) } }
         // Remember the view so a cold start reopens on it. The account is read HERE, at the write:
         // switchAccount() calls setCurrent(id) BEFORE onAccountChanged(). That leaves a window
         // where a refreshFolder() stores a stale pair — never one crossed between accounts.

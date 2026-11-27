@@ -1,18 +1,52 @@
 package app.sterna.core.data.mail
 
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 /**
- * #1952 returning to the list: a NEW collector (the list screen back in the composition) is first handed what the screen
- * showed last ([kept], null when nothing was shown), before [upstream] is even subscribed; the live pages follow and replace
- * it. So the return paints the same rows in its first frame whatever the store query is doing (a generation still loading
- * at 40 000 messages took seconds and showed an empty list meanwhile), and the return itself starts no query.
+ * #1952 what the list screen collects, held ABOVE the screen (in the list's ViewModel, which outlives every page change).
+ * It is a [SharedFlow] with one replayed value on purpose: the paging list reads that value in its FIRST composition, so
+ * whatever sits in it is what a returning screen draws at once, with no store query.
+ *  - on screen: every live generation of pages ([live]) goes straight through;
+ *  - the screen leaves ([left], with the rows it showed): the replayed value stays the loaded generation, so the return
+ *    draws it in the first frame. Only if a NEW generation starts while away (a write invalidated the list and its query,
+ *    seconds long at 40 000 messages, is still running) the replayed value becomes the kept rows, never that loading
+ *    generation: this is the empty list the owner saw on every return;
+ *  - the screen is back ([shown]): the newest live generation is handed over and replaces the kept rows when it has loaded;
+ *  - a cold start ([seed]): the rows kept from the last run are drawn before the store has answered.
  */
-fun <T : Any> keptFirst(kept: () -> T?, upstream: Flow<T>): Flow<T> = flow {
-    kept()?.let { emit(it) }
-    emitAll(upstream)
+class ReturnHolder<P : Any> {
+    private val out = MutableSharedFlow<P>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val flow: SharedFlow<P> = out.asSharedFlow()
+
+    private var live: P? = null
+    private var kept: P? = null
+    private var away = false
+
+    @Synchronized fun seed(keptRows: P) {
+        kept = keptRows
+        away = true
+        out.tryEmit(keptRows)
+    }
+
+    @Synchronized fun live(pages: P) {
+        live = pages
+        val held = kept
+        if (away && held != null) out.tryEmit(held) else out.tryEmit(pages)
+    }
+
+    @Synchronized fun left(keptRows: P?) {
+        kept = keptRows
+        away = true
+    }
+
+    @Synchronized fun shown() {
+        away = false
+        val newest = live ?: return
+        if (out.replayCache.firstOrNull() !== newest) out.tryEmit(newest)
+    }
 }
 
 /** Longest a store invalidation of the list waits before it starts the next query. */

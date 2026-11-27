@@ -2,10 +2,6 @@ package app.sterna.core.data.mail
 
 import java.io.File
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
@@ -24,31 +20,43 @@ import org.junit.Test
 class ListReturn1952cTest {
     // -- warm return ----------------------------------------------------------------------------------------------
 
-    @Test fun `returning to the list shows the kept rows first and runs no store query for it`() = runTest {
-        var queries = 0
-        // the live pages: a generation that is still loading when the screen comes back (the store query takes 2 s)
-        val live = flow { queries++; delay(2_000); emit(listOf("row 1 (fresh)", "row 2")) }
-        val shown = listOf("row 1", "row 2")
-        val returning = keptFirst({ shown }, live)
-        assertEquals("the first frame of the return holds the rows shown before, not an empty list", shown, returning.first())
-        assertEquals("and no store query ran to produce it", 0, queries)
-        val all = mutableListOf<List<String>>()
-        val job = launch { returning.toList(all) }
-        runCurrent()
-        assertEquals("the kept rows are on screen while the live generation loads", listOf(shown), all)
-        advanceTimeBy(2_001); runCurrent()
-        assertEquals("then the live rows replace them, a diff in the background", listOf(shown, listOf("row 1 (fresh)", "row 2")), all)
-        job.join()
-        assertEquals("one live subscription, nothing started twice", 1, queries)
+    @Test fun `returning to the list shows the kept rows first and runs no store query for it`() {
+        val holder = ReturnHolder<String>()
+        fun firstFrame() = holder.flow.replayCache.firstOrNull() // what the paging list reads in its first composition
+        holder.shown()
+        holder.live("generation 1 (loaded)")
+        assertEquals("on screen the live pages go straight through", "generation 1 (loaded)", firstFrame())
+        // the screen leaves for another page; nothing changes in the store
+        holder.left("kept rows")
+        assertEquals("the return draws the loaded generation itself in its first frame: no query, no empty list", "generation 1 (loaded)", firstFrame())
+        // a write invalidates the list while away: generation 2 exists but its store query is still running
+        holder.live("generation 2 (loading: no rows yet)")
+        assertEquals("the return never draws a generation that is still loading: the rows shown before are kept", "kept rows", firstFrame())
+        holder.shown()
+        assertEquals("back on screen, the newest generation is handed over (a diff in the background)", "generation 2 (loading: no rows yet)", firstFrame())
+        holder.live("generation 3")
+        assertEquals("generation 3", firstFrame())
     }
 
-    @Test fun `nothing kept means the live pages only, and the screen and the view model are wired to the kept rows`() = runTest {
-        assertEquals(listOf(listOf("a")), keptFirst<List<String>>({ null }, flow { emit(listOf("a")) }).toList())
+    @Test fun `a cold start draws the rows kept from the last run, and the screen and the view model are wired to the holder`() {
+        val cold = ReturnHolder<String>()
+        cold.seed("top of the list, from the last run")
+        cold.live("generation 1 (loading)")
+        assertEquals("before the store has answered", "top of the list, from the last run", cold.flow.replayCache.firstOrNull())
+        cold.shown()
+        assertEquals("generation 1 (loading)", cold.flow.replayCache.firstOrNull())
+        val none = ReturnHolder<String>()
+        none.live("generation 1"); none.left(null); none.live("generation 2")
+        assertEquals("nothing kept: the live pages only", "generation 2", none.flow.replayCache.firstOrNull())
         val vm = code("app/src/main/kotlin/app/sterna/ui/inbox/InboxViewModel.kt")
-        assertTrue("app.sterna.core.data.mail.keptFirst({ shownRows.takeIf { it.isNotEmpty() }?.let { PagingData.from(it) } }, keptListRows)" in vm)
+        assertTrue("val returningListRows: kotlinx.coroutines.flow.SharedFlow<PagingData<InboxRow>> = returning.flow" in vm)
+        assertTrue("viewModelScope.launch { keptListRows.collect { returning.live(it) } }" in vm)
+        assertTrue("fun onListLeft() = returning.left(shownRows.takeIf { it.isNotEmpty() }?.let { PagingData.from(it) })" in vm)
+        assertTrue("shownRows.takeIf { it.isNotEmpty() }?.let { returning.seed(PagingData.from(it)) }" in vm)
         assertTrue("another view never shows these rows", "viewModelScope.launch { selection.drop(1).collect { shownRows = emptyList() } }" in vm)
         val screen = code("app/src/main/kotlin/app/sterna/ui/inbox/InboxScreen.kt")
         assertTrue("val listRows = viewModel.returningListRows.collectAsLazyPagingItems()" in screen)
+        assertTrue("DisposableEffect(viewModel) { viewModel.onListShown(); onDispose { viewModel.onListLeft() } }" in screen)
         assertTrue("LaunchedEffect(listRows) { snapshotFlow { listRows.itemSnapshotList.items }.collect { if (it.isNotEmpty()) viewModel.rememberShownRows(it) } }" in screen)
     }
 

@@ -101,8 +101,8 @@ class LocalDraftListWiringLintTest {
             "keptListRows must be exactly pagedListRows cached in the ViewModel's scope:",
             listOf(
                 "val keptListRows: Flow<PagingData<InboxRow>> = pagedListRows.cachedIn(viewModelScope)",
-                // #1952: the returning screen gets the rows it showed last first, then that same cache and nothing else.
-                "app.sterna.core.data.mail.keptFirst({ shownRows.takeIf { it.isNotEmpty() }?.let { PagingData.from(it) } }, keptListRows)",
+                // #1952: the screen collects that same cache and nothing else, through the holder that outlives the screen.
+                "viewModelScope.launch { keptListRows.collect { returning.live(it) } }",
             ),
             codeLines(INBOX_VIEW_MODEL).map { it.trim() }.filter { "keptListRows" in it },
         )
