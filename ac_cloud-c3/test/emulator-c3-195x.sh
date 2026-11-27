@@ -13,11 +13,18 @@ bad() { echo "FAIL  $*"; fail=1; }
 adb wait-for-device
 for _ in $(seq 1 60); do [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = 1 ] && break; sleep 2; done
 adb shell settings put global window_animation_scale 0; adb shell settings put global transition_animation_scale 0
-adb shell svc power stayon true; adb shell input keyevent 82 || true
+adb shell settings put global hide_error_dialogs 1; adb shell svc power stayon true; adb shell input keyevent 82 || true
 adb install -r -g "$APK" >/dev/null || { echo "FAIL  install"; exit 1; }
 adb logcat -c || true
 
-shot() { sleep "${2:-4}"; adb exec-out screencap -p > "$OUT/$1.png" 2>/dev/null; adb exec-out uiautomator dump /dev/tty > "$OUT/$1.xml" 2>/dev/null || true; }
+shot() { # a system "isn't responding" dialog is dismissed (Wait) and the shot retaken, so the dump is the app's, not the dialog's
+  sleep "${2:-4}"
+  for _try in 1 2 3; do
+    adb exec-out screencap -p > "$OUT/$1.png" 2>/dev/null; adb exec-out uiautomator dump /dev/tty > "$OUT/$1.xml" 2>/dev/null || true
+    grep -q "isn't responding" "$OUT/$1.xml" 2>/dev/null || break
+    tap_text "$1" "Wait"; sleep 3
+  done
+}
 has() { grep -q -- "$2" "$OUT/$1.xml"; }
 open_page() { adb shell am start -W -n "$PKG/.MainActivity" --es shortcut_action "page:$1" </dev/null >/dev/null 2>&1; }
 scroll() { # <times>
