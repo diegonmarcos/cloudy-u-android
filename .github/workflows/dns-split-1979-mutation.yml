@@ -1,0 +1,32 @@
+# #1979 Split DNS while the Cloud VPN is up (public pages never depend on the hub). Push runs the static tester and then every mutant
+# against a copy of the tree; each mutant must be KILLED. No dispatch input: nothing reaches the script from outside.
+name: dns-split-1979-mutation
+on:
+  push:
+    paths:
+      - 'aa_cloud-superapp/build.json'
+      - 'aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/network/FleetDns.kt'
+      - 'aa_cloud-superapp/test/test-dns-split-1979.sh'
+      - 'aa_cloud-superapp/app/src/test/java/com/diegonmarcos/superapp/network/FleetDnsSplit1979Test.kt'
+      - 'ab_cloud-libs-shared/libs/sysdns/src/main/java/com/diegonmarcos/cloudlib/sysdns/FleetDnsBridge.kt'
+      - '.github/workflows/dns-split-1979-mutation.yml'
+permissions:
+  contents: read
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            aa_cloud-superapp/build.json
+            aa_cloud-superapp/app/src
+            aa_cloud-superapp/test
+            ab_cloud-libs-shared/libs/sysdns
+      - name: Tester (real tree green)
+        run: bash aa_cloud-superapp/test/test-dns-split-1979.sh
+      - name: Every mutant must be KILLED
+        run: bash aa_cloud-superapp/test/test-dns-split-1979.sh --mutants
+      - name: Fleet DNS tester
+        run: bash aa_cloud-superapp/test/test-fleet-dns.sh

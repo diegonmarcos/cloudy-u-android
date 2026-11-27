@@ -66,6 +66,12 @@ object FleetDns {
     data class Decl(
         val defaultPreset: String,
         val meshZones: List<String>,
+        /** #1979 private names outside the mesh zones (ui.dns.private_names): they go to the fleet resolver too. */
+        val privateNames: List<String> = emptyList(),
+        /** #1979 where every other name goes while the mesh is up (ui.dns.public_resolvers). */
+        val publicResolvers: List<String> = emptyList(),
+        /** #1979 how long the fleet resolver may take before a mesh name is reported unreachable (ui.dns.mesh_timeout_ms). */
+        val meshTimeoutMs: Int = 800,
         val testPublic: String,
         val testMesh: String,
         val timeoutMs: Int,
@@ -106,6 +112,9 @@ object FleetDns {
         return Decl(
             defaultPreset = o.getString("default_preset"),
             meshZones = o.optJSONArray("mesh_zones").strings(),
+            privateNames = o.optJSONArray("private_names").strings(),
+            publicResolvers = o.optJSONArray("public_resolvers").strings(),
+            meshTimeoutMs = o.optInt("mesh_timeout_ms", 800),
             testPublic = tn.optString("public"),
             testMesh = tn.optString("mesh"),
             timeoutMs = o.optInt("lookup_timeout_ms", 2500),
@@ -189,6 +198,8 @@ object FleetDns {
         if (!meshUp) return if (chosen) meshDownServers(d, presetId, fallbacks, fleet) else emptyList()
         if (fleet.isNotEmpty() && isMeshName(d, name)) return fleet
         val own = presetServers(d, presetId, fallbacks, fleet)
+        // #1979 a public name never depends on the fleet resolver (the hub): the preset's own non-fleet servers, else the declared public resolvers
+        if (d.publicResolvers.isNotEmpty()) return own.filter { it !in fleet }.ifEmpty { d.publicResolvers }.distinct()
         return when (effective(d, presetId).kind) {
             KIND_PRIVATE -> { val fb = own.filter { it !in fleet }; if (meshHealthy) fleet + fb else fb + fleet }
             KIND_PUBLIC -> own
@@ -317,7 +328,7 @@ object FleetDns {
     /** True when [name] sits in one of the fleet resolver's own zones (zone boundary, not a suffix match). */
     fun isMeshName(d: Decl, name: String): Boolean {
         val n = name.trimEnd('.').lowercase()
-        return d.meshZones.any { z -> n == z || n.endsWith(".$z") }
+        return (d.meshZones + d.privateNames).any { z -> n == z || n.endsWith(".$z") }
     }
 
     /**
@@ -403,8 +414,11 @@ object FleetDns {
             // tunnel was never used for the fleet's own names. It stays only as the last
             // resort of a preset that allows fallbacks.
             up && fleet.isNotEmpty() && isMeshName(decl, name) ->
-                servers.map { FleetDnsBridge.Route("$label $it", listOf(it), mesh = true) } +
+                servers.map { FleetDnsBridge.Route("$label $it", listOf(it), mesh = true, timeoutMs = decl.meshTimeoutMs) } +
                     (if (effective(decl, p.preset).fallbackAllowed) listOf(android) else emptyList())
+            // #1979 a public name while the mesh is up skips Android's resolver (it holds only the fleet resolver then)
+            up && fleet.isNotEmpty() && decl.publicResolvers.isNotEmpty() ->
+                servers.map { FleetDnsBridge.Route("$label $it", listOf(it), mesh = it in fleet) }
             else -> listOf(android) + servers.map { FleetDnsBridge.Route("$label $it", listOf(it), mesh = it in fleet) }
         }
     }

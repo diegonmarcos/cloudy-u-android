@@ -55,24 +55,25 @@ class FleetDnsFallback1924Test {
     }
 
     @Test fun servfailFromTheMeshResolverFallsBackToPublicAndReportsUnhealthy() {
-        val (a, asked, seen) = walk({ q -> reply(q, 2) }, "private_fallbacks", listOf("public_open"))
-        assertNotNull("answered through the fallbacks", a)
-        assertEquals("140.82.112.3", DnsWire.addresses(a!!).single().hostAddress)
-        assertTrue(asked.toString(), asked.first() in MESH && asked.last() == "1.1.1.1")
+        // #1979 only a mesh name asks the mesh resolver now; a SERVFAIL there is reported unhealthy and the name is a miss
+        val (a, asked, seen) = walk({ q -> reply(q, 2) }, "private_fallbacks", listOf("public_open"), name = "x.mesh.diegonmarcos.com")
+        assertNull(a)
+        assertTrue(asked.toString(), asked.isNotEmpty() && asked.all { it in MESH })
         assertTrue(seen.toString(), seen.isNotEmpty() && seen.none { it })
+        val (b, asked2, _) = walk({ q -> reply(q, 2) }, "private_fallbacks", listOf("public_open"))
+        assertNotNull("a public name is answered without the mesh", b)
+        assertTrue(asked2.toString(), asked2.none { it in MESH })
     }
 
-    @Test fun refusedAndTimeoutAlsoFallBack() {
-        val (a, _, seen) = walk({ q -> reply(q, 5) }, "private_fallbacks", listOf("public_open"))
-        assertNotNull(a); assertTrue(seen.none { it })
+    @Test fun refusedAndTimeoutOnAMeshNameAreMissesAndPublicNamesStillResolve() {
+        val (a, _, seen) = walk({ q -> reply(q, 5) }, "private_fallbacks", listOf("public_open"), name = "x.mesh.diegonmarcos.com")
+        assertNull(a); assertTrue(seen.none { it })
         val (b, _, seen2) = walk({ _ -> throw java.net.SocketTimeoutException("timeout") }, "private_fallbacks", listOf("public_open"))
-        assertNotNull(b); assertTrue(seen2.none { it })
+        assertNotNull(b); assertTrue(seen2.isEmpty())
     }
 
-    @Test fun anUnhealthyMeshIsAskedLastAndAHealthyAnswerIsReported() {
-        val (_, asked, _) = walk({ q -> reply(q, 2) }, "private_fallbacks", listOf("public_open"), healthy = false)
-        assertEquals("1.1.1.1", asked.first())
-        val (a, _, seen) = walk({ q -> reply(q, 0, "10.0.0.9") }, "private_only", emptyList())
+    @Test fun aHealthyMeshAnswerIsReported() {
+        val (a, _, seen) = walk({ q -> reply(q, 0, "10.0.0.9") }, "private_only", emptyList(), name = "x.mesh.diegonmarcos.com")
         assertEquals("10.0.0.9", DnsWire.addresses(a!!).single().hostAddress)
         assertEquals(listOf(true), seen)
     }
@@ -83,7 +84,7 @@ class FleetDnsFallback1924Test {
     }
 
     @Test fun privateOnlyWithADeadMeshHasNowhereToFall() {
-        val (a, asked, _) = walk({ q -> reply(q, 2) }, "private_only", emptyList())
+        val (a, asked, _) = walk({ q -> reply(q, 2) }, "private_only", emptyList(), name = "x.mesh.diegonmarcos.com")
         assertNull(a); assertFalse(asked.any { it !in MESH })
     }
 }

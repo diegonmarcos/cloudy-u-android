@@ -79,9 +79,11 @@ class FleetDnsTest {
         assertEquals(FLEET, plan("public_open", "x.mesh.diegonmarcos.com", true))
         assertEquals(own, plan("public_open", "github.com", true))
         assertEquals(own, plan("public_open", "github.com", false))
-        assertEquals(FLEET + own, plan(privateFb.id, "github.com", true))
-        assertEquals(own + FLEET, plan(privateFb.id, "github.com", false))
-        assertEquals(FLEET, plan(privateOnly.id, "github.com", false))
+        // #1979 a public name never asks the fleet resolver, healthy or not
+        assertEquals(own, plan(privateFb.id, "github.com", true))
+        assertEquals(own, plan(privateFb.id, "github.com", false))
+        assertEquals(d.publicResolvers, plan(privateOnly.id, "github.com", false))
+        assertEquals(FLEET, plan(privateOnly.id, "x.mesh.diegonmarcos.com", false))
         assertEquals(own, FleetDns.queryPlan(d, "github.com", false, true, "public_open", fb, true, FLEET))
     }
 

@@ -52,7 +52,9 @@ object FleetDnsBridge {
     /** One way to an answer: [servers] empty = Android's resolver on [network] (null = the uid's default). */
     class Route(val label: String, val servers: List<String> = emptyList(), val network: Network? = null,
                 /** #1924 true = the servers are the fleet (mesh) resolver: every answer or miss is reported to [meshObserver]. */
-                val mesh: Boolean = false)
+                val mesh: Boolean = false,
+                /** #1979 > 0 = this route is asked ONCE and gives up after this long (the mesh resolver: a stalled hub is reported unreachable, not waited on). */
+                val timeoutMs: Int = 0)
 
     /** #1924 Called with false for a mesh route that gave no definitive answer (SERVFAIL, REFUSED, timeout), true when it answered. */
     @Volatile var meshObserver: ((healthy: Boolean) -> Unit)? = null
@@ -165,7 +167,7 @@ object FleetDnsBridge {
         var tries = 0
         for (r in runCatching { routes(name) }.getOrDefault(mirror())) {
             tried += r.label
-            for (attempt in 1..TRIES_PER_ROUTE) {
+            for (attempt in 1..(if (r.timeoutMs > 0) 1 else TRIES_PER_ROUTE)) {
                 if (attempt > 1) Thread.sleep(BACKOFF_MS * (attempt - 1))
                 tries++
                 val a = ask(q, r)
@@ -186,6 +188,7 @@ object FleetDnsBridge {
     private fun ask(q: ByteArray, r: Route): ByteArray? {
         inFlight.acquire()
         try {
+            routeTimeout.set(r.timeoutMs.takeIf { it > 0 } ?: timeoutMs)
             return runCatching {
                 if (r.servers.isEmpty()) android(q, r.network)
                 // in order; a SERVFAIL / REFUSED from one server moves on to the next (#900)
@@ -211,7 +214,7 @@ object FleetDnsBridge {
     /** [q] as it is to [server]:53 over UDP, on [network] when given. */
     private fun forward(q: ByteArray, server: String, network: Network?): ByteArray? = DatagramSocket().use { s ->
         network?.bindSocket(s)
-        s.soTimeout = timeoutMs
+        s.soTimeout = routeTimeout.get()
         s.send(DatagramPacket(q, q.size, InetAddress.getByName(server), 53))
         val buf = ByteArray(4096)
         val p = DatagramPacket(buf, buf.size)
@@ -245,6 +248,7 @@ object FleetDnsBridge {
             ",\"cached\":" + cached + ",\"cache_size\":" + cache.size + ",\"bind\":" + SystemDnsBridge.quote(bindError) + "}"
     }
 
+    private val routeTimeout = ThreadLocal.withInitial { 2500 }
     private val DEFINITIVE = setOf(0, 3)
     private const val TAG = "FleetDnsBridge"
 }
