@@ -23,6 +23,11 @@ object ContainersTags {
     fun topoLight(id: String) = "containers_topo_light_$id"
     fun topoVm(vm: String) = "containers_topo_vm_$vm"
     fun topoType(type: String) = "containers_topo_type_$type"
+    /** #1953 the Topology body: a band (services, repos), a section (app, db, mcp, api, other, repo), a part (pub, pvt, all), an empty band's line. */
+    fun topoBand(id: String) = "containers_topo_band_$id"
+    fun topoBandEmpty(id: String) = "containers_topo_band_empty_$id"
+    fun topoSection(id: String) = "containers_topo_section_$id"
+    fun topoPart(section: String, part: String) = "containers_topo_part_${section}_$part"
 }
 
 /**

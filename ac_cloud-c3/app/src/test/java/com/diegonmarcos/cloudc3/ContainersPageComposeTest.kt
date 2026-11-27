@@ -171,6 +171,46 @@ class ContainersPageComposeTest {
         assertEquals(listOf("Index", "More"), obs.filter { it.kind == "tile_row" }.map { it.title })
     }
 
+    /** #1953 the Topology body of [project] as the fragment draws it: band headings (or the empty line), then each section's parts and sub-headers. */
+    private fun showTopology(project: String) {
+        val plan = com.diegonmarcos.cloudc3.cloud.Stacks.topology(project).first
+        compose.setContent {
+            MaterialTheme(colorScheme = darkColorScheme()) {
+                Column {
+                    for (b in plan.bands) {
+                        com.diegonmarcos.cloudc3.pages.TopologyBandHeader(b)
+                        if (b.count == 0) com.diegonmarcos.cloudc3.pages.TopologyBandEmpty(b, project)
+                        for (sec in b.sections.filter { it.count > 0 }) com.diegonmarcos.cloudc3.pages.TopologySectionBody(sec) { names -> names.forEach { Text(it) } }
+                    }
+                }
+            }
+        }
+        compose.waitForIdle()
+    }
+
+    @Test
+    fun `the Topology body has a services band and a Repos band, with Public and Private under Apps, DB and Repos on Cloud-me`() {
+        showTopology("pj-unix-cloudme")
+        listOf("services", "repos").forEach { compose.onNodeWithTag(ContainersTags.topoBand(it)).assertExists() }
+        listOf("app", "db", "repo").forEach { s -> listOf("pub", "pvt").forEach { pt ->
+            compose.onNodeWithTag(ContainersTags.topoPart(s, pt), useUnmergedTree = true).assertExists()
+        } }
+        compose.onAllNodesWithText("Public", substring = true).fetchSemanticsNodes().let { assertTrue("no Public part", it.size >= 3) }
+        compose.onAllNodesWithText("Private", substring = true).fetchSemanticsNodes().let { assertTrue("no Private part", it.size >= 3) }
+        assertTrue("an Index node is drawn", compose.onAllNodesWithText("Index").fetchSemanticsNodes().isEmpty())
+        assertTrue(compose.onAllNodesWithText("Jump to a table on this page").fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
+    fun `a Capital project shows a Repos band with its repo and the Capital hub`() {
+        showTopology("pj-capital-cb")
+        compose.onNodeWithTag(ContainersTags.topoBand("repos")).assertExists()
+        compose.onNodeWithTag(ContainersTags.topoSection("repo"), useUnmergedTree = true).assertExists()
+        val repos = decl.repos.filter { r -> r.attached.any { it.project == "pj-capital-cb" } }.map { it.name }
+        assertTrue(repos.contains("Capital-___") && repos.size >= 2)
+        repos.forEach { compose.onNodeWithText(it).assertExists() }
+    }
+
     @Test
     fun `the old page-wide Filters row is gone`() {
         show()

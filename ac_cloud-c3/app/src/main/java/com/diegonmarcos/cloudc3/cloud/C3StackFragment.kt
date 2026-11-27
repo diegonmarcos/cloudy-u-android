@@ -69,6 +69,10 @@ import com.diegonmarcos.cloudc3.pages.c3KitPalette
 import com.diegonmarcos.superapp.uikit.KitComposeFragment
 import com.diegonmarcos.superapp.uikit.KitPalette
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
+import com.diegonmarcos.cloudc3.pages.ContainerTopology
+import com.diegonmarcos.cloudc3.pages.TopologyBandEmpty
+import com.diegonmarcos.cloudc3.pages.TopologyBandHeader
+import com.diegonmarcos.cloudc3.pages.TopologySectionBody
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -224,8 +228,13 @@ class C3StackFragment : KitComposeFragment() {
                         modifier = Modifier.padding(top = 8.dp).testTag("c3:stack:refresh-note"))
                 }
                 shownPanels(panels).forEachIndexed { i, panel ->
-                    if (panel.kind == "section_title") SectionTitle(panel.title, Modifier.then(anchors.mark(panel.anchor)))
-                    else PanelCard(i, panel)
+                    when (panel.kind) {
+                        "section_title" -> SectionTitle(panel.title, Modifier.then(anchors.mark(panel.anchor)))
+                        // #1953 the Topology bands: a heading with its count, and one line when a band holds nothing
+                        "topo_band" -> topologyPlan()?.bands?.firstOrNull { it.id == panel.dashSection }?.let { TopologyBandHeader(it, Modifier.then(anchors.mark(panel.anchor))) }
+                        "topo_band_empty" -> topologyPlan()?.bands?.firstOrNull { it.id == panel.dashSection }?.let { TopologyBandEmpty(it, panel.title) }
+                        else -> PanelCard(i, panel)
+                    }
                 }
                 ArchiveSection(panels)
             }
@@ -253,14 +262,36 @@ class C3StackFragment : KitComposeFragment() {
         val types = ContainerFilter.types
         val vms = ContainerFilter.vms
         return remember(ContainersSource.version, projectId, types, vms, panels) {
-            val dash = Stacks.cloudServices(projectId, null, types, vms)
-            val cards = dash.groups.filter { g -> g.subgroups.any { it.containers.isNotEmpty() } }
-                .map { g -> panels[first].copy(title = g.label, anchor = "containers-${g.id}", anchors = emptyList(), dashGroupIds = listOf(g.id)) }
+            val cards = if (stackId == STACK_TOPOLOGY) {
+                // #1953 the Topology body is the declared plan: per band a heading (or its one empty line), per non-empty section one card
+                val plan = Stacks.topology(projectId, types, vms).first
+                val label = Declarations.containerProjects.project(projectId)?.label ?: "All"
+                plan.bands.flatMap { b ->
+                    val head = Stacks.StackPanel("topo_band", b.label, anchor = "topo-band-${b.id}", dashSection = b.id)
+                    if (b.count == 0) listOf(head, Stacks.StackPanel("topo_band_empty", label, dashSection = b.id))
+                    else listOf(head) + b.sections.filter { it.count > 0 }.map { sec ->
+                        panels[first].copy(title = "${sec.label} (${sec.count})", anchor = "containers-${sec.id}", anchors = emptyList(), dashGroupIds = emptyList(), dashSection = sec.id)
+                    }
+                }
+            } else {
+                val dash = Stacks.cloudServices(projectId, null, types, vms)
+                dash.groups.filter { g -> g.subgroups.any { it.containers.isNotEmpty() } }
+                    .map { g -> panels[first].copy(title = g.label, anchor = "containers-${g.id}", anchors = emptyList(), dashGroupIds = listOf(g.id)) }
+            }
             // #1953 the Index tile row is gone from the Topology pages, so no jump tiles are rebuilt here
             val shown = panels.take(first) + cards + panels.drop(first).filter { it.kind != "cloud_dashboard" }
-            shown.forEachIndexed { i, pn -> if (pn.kind == "cloud_dashboard") anchors.register(pn.anchor, i) }
+            shown.forEachIndexed { i, pn -> if (pn.kind == "cloud_dashboard" || pn.kind == "topo_band") anchors.register(pn.anchor, i) }
             shown
         }
+    }
+
+    /** #1953 the Topology plan of this page under the current Type / VM filters (null off the Topology stack). */
+    @Composable
+    private fun topologyPlan(): ContainerTopology.Plan? {
+        if (stackId != STACK_TOPOLOGY) return null
+        val types = ContainerFilter.types
+        val vms = ContainerFilter.vms
+        return remember(ContainersSource.version, projectId, types, vms) { Stacks.topology(projectId, types, vms).first }
     }
 
     /** kind=section_title — a plain heading between cards (NOT a card). */
@@ -1211,11 +1242,21 @@ class C3StackFragment : KitComposeFragment() {
 
     /** The TCP-ping lights of a card's tiles, at most eight in flight (green up / red down). */
     private suspend fun pingAll(panel: Stacks.StackPanel) {
+        if (panel.dashSection.isNotBlank()) {
+            // #1953 a section card pings its own entities only
+            val (plan, byName) = Stacks.topology(projectId)
+            val names = plan.section(panel.dashSection)?.parts.orEmpty().flatMap { p -> p.subs.flatMap { it.names } }
+            return pingTargets(containerTiles(Stacks.CloudSub("", "", names.mapNotNull { byName[it] })).mapNotNull { it.ping }.distinct())
+        }
         val dash = Stacks.cloudServices()
         val wanted = panel.dashGroupIds.ifEmpty { dash.groups.map { it.id } }
         val pings = dash.groups.filter { it.id in wanted }
             .flatMap { g -> g.subgroups.flatMap { containerTiles(it) } }
             .mapNotNull { it.ping }.distinct()
+        pingTargets(pings)
+    }
+
+    private suspend fun pingTargets(pings: List<Pair<String, Int>>) {
         val gate = Semaphore(8)
         coroutineScope {
             for ((host, port) in pings) launch {
@@ -1241,6 +1282,20 @@ class C3StackFragment : KitComposeFragment() {
         val types = ContainerFilter.types
         val vms = ContainerFilter.vms
         val lightIds = ContainerFilter.lights
+        if (panel.dashSection.isNotBlank()) {
+            // #1953 one Topology section: its Public / Private parts and `<group> · <category>` sub-headers, the same tiles, lights and tap
+            val (plan, byName) = remember(ContainersSource.version, projectId, types, vms) { Stacks.topology(projectId, types, vms) }
+            val section = plan.section(panel.dashSection) ?: return
+            val cols = Stacks.tileColumns()
+            TopologySectionBody(section) { names ->
+                val sub = Stacks.CloudSub("", "", names.mapNotNull { n -> byName[n]?.let { c -> plan.paths[n]?.let { c.copy(label = c.label + "\n" + it) } ?: c } })
+                val tiles = containerTiles(sub).filter { t ->
+                    lightIds.isEmpty() || when (t.ping?.let { (host, port) -> lights["$host:$port"] }) { true -> "green"; false -> "red"; null -> "grey" } in lightIds
+                }
+                if (tiles.isNotEmpty()) CloudGrid(cols, tiles)
+            }
+            return
+        }
         val dash = remember(ContainersSource.version, projectId, types, vms) { Stacks.cloudServices(projectId, null, types, vms) }
         val cols = Stacks.tileColumns()
         val wanted = panel.dashGroupIds.ifEmpty { dash.groups.map { it.id } }

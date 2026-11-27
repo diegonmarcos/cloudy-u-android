@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo'
+        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored'
         required: true
 permissions:
   contents: read
@@ -37,6 +37,14 @@ jobs:
             scope-primary)     sed -i 's/decl.projectsOf(it).any { p -> p.id == projectId }/decl.projectOf(it)?.id == projectId/' $K/pages/ContainerProjects.kt ;;
             # #1953-b a project_repos attachment is lost (Wiki ModernSc draws no lib-chronos)
             drop-project-repo) pyj $D/repos_declared.json 'r = next(x for x in d["repos"] if x["name"] == "lib-chronos"); r["attached"] = [a for a in r["attached"] if a["project"] != "pj-wiki-modernsc"]' ;;
+            # #1953-d a layout section is dropped (its Type falls outside every section)
+            drop-section)      pyj $D/container_projects.json 'b = d["topology_layout"]["bands"][0]; b["sections"] = [x for x in b["sections"] if x["id"] != "other"]' ;;
+            # #1953-d the Topology scopes repos to their primary project only (the hubs leave the other projects)
+            hub-primary-only)  sed -i 's/decl.projectsOf(it).any { p -> p.id == projectId }/decl.projectOf(it)?.id == projectId/' $K/pages/ContainerProjects.kt ;;
+            # #1953-d an attached repo loses its path (Wiki ModernSc draws lib-chronos without 1.Modern-science)
+            drop-wiki-path)    pyj $D/repos_declared.json 'r = next(x for x in d["repos"] if x["name"] == "lib-chronos"); [a.update(path="") for a in r["attached"] if a["project"] == "pj-wiki-modernsc"]' ;;
+            # #1953-d the Public / Private split is ignored
+            split-ignored)     sed -i 's/val parts = if (s.id in splitHere) listOf(/val parts = if (false) listOf(/' $K/pages/ContainerTopology.kt ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
           git diff --stat
@@ -86,6 +94,10 @@ jobs:
             lfs-ignored)       C=ContainerProjectsTest; N="an LFS repo is Type Db with the git-lfs engine, and is not a Repo" ;;
             scope-primary)     C=ContainerProjectsTest; N="scope keeps a repo on every attached project, not only its primary one" ;;
             drop-project-repo) C=ContainerProjectsTest; N="projects the registry cannot place get their declared repos, Wiki with its lib-chronos path" ;;
+            drop-section)      C=ContainerTopologyTest; N="the section types are the declared Types, each in exactly one section" ;;
+            hub-primary-only)  C=ContainerTopologyTest; N="a hub is drawn in the Repos band of every project under its code" ;;
+            drop-wiki-path)    C=ContainerTopologyTest; N="each Wiki project carries lib-chronos with its path" ;;
+            split-ignored)     C=ContainersPageComposeTest; N="the Topology body has a services band and a Repos band, with Public and Private under Apps, DB and Repos on Cloud-me" ;;
           esac
           X="$(find ac_cloud-c3/app/build -path '*test-results*' -name "TEST-*.$C.xml" | head -1)"
           [ -n "$X" ] || { echo "::error::LEG ERROR $M: no result for $C (did not compile or run); not a kill"; exit 1; }
