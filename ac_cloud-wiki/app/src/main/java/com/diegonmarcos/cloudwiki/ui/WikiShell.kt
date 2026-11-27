@@ -23,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import com.diegonmarcos.cloudwiki.Chronos
 import com.diegonmarcos.cloudwiki.ChronosRepo
 import com.diegonmarcos.cloudwiki.Decl
+import com.diegonmarcos.cloudwiki.HomeIndex
 import com.diegonmarcos.cloudwiki.LibraryTree
 import com.diegonmarcos.cloudwiki.MenuState
 import com.diegonmarcos.cloudwiki.WikiMenu
