@@ -8,6 +8,9 @@ aa_cloud-superapp/build.json	analytics.umami.endpoint	pending	request endpoint r
 aa_cloud-superapp/build.json	diagnostics.log_sink_url	pending	request endpoint read from build config; its consumer is not yet routed through libs:fleet-endpoints
 aa_cloud-superapp/build.json	onehand.circular_menu.actions.*.target	link	a link the user opens in the browser or a WebView page; no request is made by the app
 aa_cloud-superapp/build.json	ui.c3_ops.base_url	pending	request endpoint read from build config; its consumer is not yet routed through libs:fleet-endpoints
+aa_cloud-superapp/build.json	ui.dns.failover.probe_name	link	a DNS zone or probe name the VPN resolver matches against (#1979 split DNS); no HTTP request is made through this value
+aa_cloud-superapp/build.json	ui.dns.mesh_zones.*	link	a DNS zone or probe name the VPN resolver matches against (#1979 split DNS); no HTTP request is made through this value
+aa_cloud-superapp/build.json	ui.dns.private_names.*	link	a DNS zone or probe name the VPN resolver matches against (#1979 split DNS); no HTTP request is made through this value
 aa_cloud-superapp/build.json	ui.import_schema.mail.imap_url	pending	request endpoint read from build config; its consumer is not yet routed through libs:fleet-endpoints
 aa_cloud-superapp/build.json	ui.import_schema.mail.jmap_url	pending	request endpoint read from build config; its consumer is not yet routed through libs:fleet-endpoints
 aa_cloud-superapp/build.json	ui.import_schema.mail.smtps_url	pending	request endpoint read from build config; its consumer is not yet routed through libs:fleet-endpoints
