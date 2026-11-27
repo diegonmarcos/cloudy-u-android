@@ -120,7 +120,7 @@ object OrchLive {
 }
 
 @Composable
-private fun healthColor(h: TopologyModel.Health): Color {
+private fun orchColor(h: TopologyModel.Health): Color {
     val p = LocalKitPalette.current
     return when (h) {
         TopologyModel.Health.OK -> p.ok
@@ -139,7 +139,7 @@ fun orchGlyph(h: TopologyModel.Health): String = when (h) {
     TopologyModel.Health.NONE -> "-"
 }
 
-private fun clock(ms: Long): String = if (ms <= 0) "" else java.text.SimpleDateFormat("HH:mm", java.util.Locale.US).format(java.util.Date(ms))
+private fun orchClock(ms: Long): String = if (ms <= 0) "" else java.text.SimpleDateFormat("HH:mm", java.util.Locale.US).format(java.util.Date(ms))
 
 /**
  * Orch > Home (#1954): the pipeline flow, one numbered row per declared stage with its live status and headline, a tap lists the stage's items in place
@@ -153,7 +153,7 @@ fun OrchHomeScreen(decl: OrchFlow.Decl, reading: OrchFlow.Reading?, loading: Boo
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 8.dp, vertical = 4.dp).testTag(OrchTags.HOME)) {
         Row(Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
             Text(
-                (reading?.summary() ?: "Pipeline  reading...") + if (at > 0) "   updated ${clock(at)}" else "",
+                (reading?.summary() ?: "Pipeline  reading...") + if (at > 0) "   updated ${orchClock(at)}" else "",
                 color = p.textSecondary, fontSize = KitDensity.caption, modifier = Modifier.weight(1f).testTag(OrchTags.SUMMARY),
             )
             Text(if (loading) "Reading..." else "Refresh", color = p.accent, fontSize = KitDensity.caption,
@@ -167,14 +167,14 @@ fun OrchHomeScreen(decl: OrchFlow.Decl, reading: OrchFlow.Reading?, loading: Boo
                 Row(Modifier.fillMaxWidth().clickable { expanded[st.id] = expanded[st.id] != true }.padding(8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text("${n + 1} ${st.label.uppercase()}", color = p.textPrimary, fontSize = KitDensity.body)
-                        Text(sr?.text ?: "reading...", color = healthColor(h), fontSize = KitDensity.caption)
+                        Text(sr?.text ?: "reading...", color = orchColor(h), fontSize = KitDensity.caption)
                     }
-                    Text(orchGlyph(h), color = healthColor(h), fontSize = KitDensity.body, modifier = Modifier.padding(horizontal = 6.dp))
+                    Text(orchGlyph(h), color = orchColor(h), fontSize = KitDensity.body, modifier = Modifier.padding(horizontal = 6.dp))
                     Text(">", color = p.accent, fontSize = KitDensity.body,
                         modifier = Modifier.clickable { onOpen(st.open) }.padding(horizontal = 8.dp, vertical = 4.dp).testTag(OrchTags.stageOpen(st.id)))
                 }
                 if (expanded[st.id] == true) sr?.items.orEmpty().forEachIndexed { k, item ->
-                    Text("${orchGlyph(item.health)} ${item.label}  ${item.detail}", color = healthColor(item.health), fontSize = KitDensity.caption,
+                    Text("${orchGlyph(item.health)} ${item.label}  ${item.detail}", color = orchColor(item.health), fontSize = KitDensity.caption,
                         modifier = Modifier.fillMaxWidth().padding(start = 18.dp, end = 8.dp, bottom = 2.dp).testTag(OrchTags.stageItem(st.id, k)))
                 }
                 if (expanded[st.id] == true && sr?.items.isNullOrEmpty()) Text("nothing to list", color = p.textSecondary, fontSize = KitDensity.caption, modifier = Modifier.padding(start = 18.dp, bottom = 4.dp))
@@ -192,7 +192,7 @@ fun OrchHomeScreen(decl: OrchFlow.Decl, reading: OrchFlow.Reading?, loading: Boo
                     decl.stages.forEach { st ->
                         val c = if (st.id in pl.stages) reading?.cells?.firstOrNull { it.pipeline == pl.id && it.stage == st.id } else null
                         Box(Modifier.width(120.dp).padding(2.dp).let { m -> if (st.id in pl.stages) m.testTag(OrchTags.lane(pl.id, st.id)) else m }) {
-                            Text(if (st.id !in pl.stages) "" else if (c == null) "..." else "${orchGlyph(c.health)} ${c.text}", color = healthColor(c?.health ?: TopologyModel.Health.NONE), fontSize = KitDensity.caption, maxLines = 2)
+                            Text(if (st.id !in pl.stages) "" else if (c == null) "..." else "${orchGlyph(c.health)} ${c.text}", color = orchColor(c?.health ?: TopologyModel.Health.NONE), fontSize = KitDensity.caption, maxLines = 2)
                         }
                     }
                 }
@@ -248,10 +248,10 @@ fun OrchWorkflowsScreen(decl: OrchFlow.Decl, inputs: OrchFlow.Inputs?, onUrl: (S
             if (open[repo] != false) wfs.forEach { w ->
                 val h = OrchFlow.runHealth(w)
                 val key = "$repo/${w.name}"
-                Text("${orchGlyph(h)} ${w.name}  ${w.conclusion.ifBlank { w.status }}  ${GitHubFeed.ago(maxOf(0L, now - w.tsMillis))}  ${w.displayTitle}", color = healthColor(h), fontSize = KitDensity.caption,
+                Text("${orchGlyph(h)} ${w.name}  ${w.conclusion.ifBlank { w.status }}  ${GitHubFeed.ago(maxOf(0L, now - w.tsMillis))}  ${w.displayTitle}", color = orchColor(h), fontSize = KitDensity.caption,
                     modifier = Modifier.fillMaxWidth().clickable { open[key] = open[key] != true }.padding(start = 14.dp, top = 2.dp, bottom = 2.dp).testTag(OrchTags.wf(repo, w.name)))
                 if (open[key] == true) runs.filter { it.name == w.name }.take(8).forEach { r ->
-                    Text("${orchGlyph(OrchFlow.runHealth(r))} ${r.conclusion.ifBlank { r.status }}  ${GitHubFeed.ago(maxOf(0L, now - r.tsMillis))}  ${r.displayTitle}", color = healthColor(OrchFlow.runHealth(r)), fontSize = KitDensity.caption,
+                    Text("${orchGlyph(OrchFlow.runHealth(r))} ${r.conclusion.ifBlank { r.status }}  ${GitHubFeed.ago(maxOf(0L, now - r.tsMillis))}  ${r.displayTitle}", color = orchColor(OrchFlow.runHealth(r)), fontSize = KitDensity.caption,
                         modifier = Modifier.fillMaxWidth().clickable(enabled = r.htmlUrl.isNotBlank()) { onUrl(r.htmlUrl) }.padding(start = 30.dp, top = 1.dp, bottom = 1.dp))
                 }
             }
@@ -261,7 +261,7 @@ fun OrchWorkflowsScreen(decl: OrchFlow.Decl, inputs: OrchFlow.Inputs?, onUrl: (S
         dagu?.let { OrchFlow.okOrNull(it) }?.let { rs ->
             rs.groupBy { it.name }.values.map { g -> g.maxByOrNull { it.startedAtMs }!! }.forEach { r ->
                 val h = OrchFlow.daguHealth(r)
-                Text("${orchGlyph(h)} ${r.name}  status ${r.status}  ${GitHubFeed.ago(maxOf(0L, now - r.startedAtMs))}", color = healthColor(h), fontSize = KitDensity.caption, modifier = Modifier.padding(start = 14.dp, top = 2.dp))
+                Text("${orchGlyph(h)} ${r.name}  status ${r.status}  ${GitHubFeed.ago(maxOf(0L, now - r.startedAtMs))}", color = orchColor(h), fontSize = KitDensity.caption, modifier = Modifier.padding(start = 14.dp, top = 2.dp))
             }
         }
     }
@@ -306,7 +306,7 @@ fun OrchDeploysScreen(inputs: OrchFlow.Inputs?) {
             val h = if (d.ok) TopologyModel.Health.OK else TopologyModel.Health.BAD
             val whenText = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.US).format(java.util.Date(d.tsMillis))
             Column(Modifier.fillMaxWidth().padding(vertical = 2.dp).testTag(OrchTags.deploy(n))) {
-                Text("${orchGlyph(h)} $whenText  ${d.service}  ${d.step}  ${if (d.ok) "ok" else "FAILED"}  ${d.durationMs} ms", color = healthColor(h), fontSize = KitDensity.caption)
+                Text("${orchGlyph(h)} $whenText  ${d.service}  ${d.step}  ${if (d.ok) "ok" else "FAILED"}  ${d.durationMs} ms", color = orchColor(h), fontSize = KitDensity.caption)
                 if (d.output.isNotBlank()) Text(d.output.lineSequence().first().take(160), color = p.textSecondary, fontSize = KitDensity.caption, modifier = Modifier.padding(start = 14.dp))
             }
         }
