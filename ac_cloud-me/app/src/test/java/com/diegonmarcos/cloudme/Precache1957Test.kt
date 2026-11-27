@@ -190,8 +190,8 @@ class Precache1957Test {
         val s = store(); val asked = Collections.synchronizedList(ArrayList<String>())
         val img = "https://cdn.example/same.jpg"
         val pages = listOf(LnktreePage("a", "https://a.example/"), LnktreePage("b", "https://b.example/"), LnktreePage("c", "https://c.example/"))
-        TtlPrefetch.run(pages, cfg.copy(prefetchConcurrency = 1), s) { u -> asked += u
-            if (u == img) Fetched("image/jpeg", null, 200, ByteArray(1000)) else Fetched("text/html", null, 200, "<img src=\"$img\">".toByteArray()) }
+        TtlPrefetch.run(pages, cfg.copy(prefetchConcurrency = 1), s, { u: String -> asked += u
+            if (u == img) Fetched("image/jpeg", null, 200, ByteArray(1000)) else Fetched("text/html", null, 200, "<img src=\"$img\">".toByteArray()) })
         assertEquals("downloaded once", 1, asked.count { it == img })
         assertEquals("stored once", 1, s.root.walkTopDown().count { it.isFile && it.name == CacheKey.of(img) + ".body" })
         assertTrue(pages.all { s.complete(it.id, it.url) })
