@@ -193,11 +193,15 @@ class ContainersPageComposeTest {
     fun `the Topology body has a services band and a Repos band, with Public and Private under Apps, DB and Repos on Cloud-me`() {
         showTopology("pj-unix-cloudme")
         listOf("services", "repos").forEach { compose.onNodeWithTag(ContainersTags.topoBand(it)).assertExists() }
-        listOf("app", "db", "repo").forEach { s -> listOf("pub", "pvt").forEach { pt ->
+        // every split section that holds an entity (an empty section draws no card, the design's "0 -> card not drawn") shows Public and Private
+        val plan = com.diegonmarcos.cloudc3.cloud.Stacks.topology("pj-unix-cloudme").first
+        val drawn = listOf("app", "db", "repo").filter { plan.section(it)!!.count > 0 }
+        assertTrue("Cloud-me draws no Apps or Repos", drawn.containsAll(listOf("app", "repo")))
+        drawn.forEach { s -> listOf("pub", "pvt").forEach { pt ->
             compose.onNodeWithTag(ContainersTags.topoPart(s, pt), useUnmergedTree = true).assertExists()
         } }
-        compose.onAllNodesWithText("Public", substring = true).fetchSemanticsNodes().let { assertTrue("no Public part", it.size >= 3) }
-        compose.onAllNodesWithText("Private", substring = true).fetchSemanticsNodes().let { assertTrue("no Private part", it.size >= 3) }
+        compose.onAllNodesWithText("Public", substring = true).fetchSemanticsNodes().let { assertTrue("no Public part", it.size >= drawn.size) }
+        compose.onAllNodesWithText("Private", substring = true).fetchSemanticsNodes().let { assertTrue("no Private part", it.size >= drawn.size) }
         assertTrue("an Index node is drawn", compose.onAllNodesWithText("Index").fetchSemanticsNodes().isEmpty())
         assertTrue(compose.onAllNodesWithText("Jump to a table on this page").fetchSemanticsNodes().isEmpty())
     }
