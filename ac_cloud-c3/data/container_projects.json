@@ -439,5 +439,120 @@
   "Dev-Builders",
   "Ops-Infra",
   "Ops-Backup"
- ]
+ ],
+ "topology_layout": {
+  "_doc": "#1953 the Topology body of every project page (and All) is two bands: services (Apps, DB, MCP, API, Other) and Repos. Every Type of `types` sits in exactly one section (a test pins the union). `split` declares a Public / Private part split per project and section, by visibility (a repo's `visibility`, a container's isPublic). A section with nothing in it draws no card; a band with nothing in it prints one line, never vanishes. Each part shows the old `<group> · <category>` sub-headers.",
+  "bands": [
+   {
+    "id": "services",
+    "label": "Apps / DB / MCP / API",
+    "sections": [
+     {
+      "id": "app",
+      "label": "Apps",
+      "types": [
+       "App"
+      ]
+     },
+     {
+      "id": "db",
+      "label": "DB",
+      "types": [
+       "Db"
+      ]
+     },
+     {
+      "id": "mcp",
+      "label": "MCP",
+      "types": [
+       "MCP"
+      ]
+     },
+     {
+      "id": "api",
+      "label": "API",
+      "types": [
+       "API"
+      ]
+     },
+     {
+      "id": "other",
+      "label": "Other",
+      "types": [
+       "Other"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "repos",
+    "label": "Repos",
+    "sections": [
+     {
+      "id": "repo",
+      "label": "Repos",
+      "types": [
+       "Repo"
+      ]
+     }
+    ]
+   }
+  ],
+  "split_labels": {
+   "pub": "Public",
+   "pvt": "Private"
+  },
+  "split": {
+   "pj-unix-cloudme": {
+    "by": "visibility",
+    "sections": [
+     "app",
+     "db",
+     "repo"
+    ]
+   }
+  }
+ },
+ "lfs": {
+  "_doc": "#1953 E a repo the registry flags `lfs: true` is a git-lfs DATABASE: its Type is type_of_kind[type_kind] (Db) and its db engine `db_engine`; it is drawn under DB only, not also under Repos.",
+  "type_kind": "db",
+  "db_engine": "git-lfs"
+ },
+ "project_repos_doc": "#1953 C repos the registry code cannot place on a project (its code is blank or holds no registry repo): data/gen_repos_slice.py attaches them (via \"declared\") with an optional path inside the repo. Same answer as Cloud Me's proj-repo-urls-1932.json (a drift test compares both).",
+ "project_repos": {
+  "pj-unix-superapp": [
+   {
+    "repo": "cloudy-u-android",
+    "path": "aa_cloud-superapp"
+   }
+  ],
+  "pj-wiki-modernsc": [
+   {
+    "repo": "lib-chronos",
+    "path": "1.Modern-science"
+   }
+  ],
+  "pj-wiki-arcanum": [
+   {
+    "repo": "lib-chronos",
+    "path": "2.Arcanum-science"
+   }
+  ],
+  "pj-wiki-projects": [
+   {
+    "repo": "lib-chronos",
+    "path": "3.Projects"
+   }
+  ],
+  "pj-hardtech-biomed": [
+   {
+    "repo": "HardTech-___"
+   }
+  ],
+  "pj-projects-duckpeng": [
+   {
+    "repo": "DuckPeng-___"
+   }
+  ]
+ }
 }

@@ -247,7 +247,7 @@ class OrchRegistryFragment : KitComposeFragment() {
     @Composable
     override fun Content() {
         val src = remember { OrchRegistries.Live(requireContext().applicationContext) }
-        if (arguments?.getString(ARG_KIND) == KIND_GHCR) OrchGhcrScreen(OrchRegistries.packages(ContainersSource.current().entries.map { it.image }, Declarations.containerProjects.repos.map { it.name }), src)
+        if (arguments?.getString(ARG_KIND) == KIND_GHCR) OrchGhcrScreen(OrchRegistries.packages(ContainersSource.current().entries.map { it.image }, Declarations.containerProjects.repos.filter { it.role == "repo" }.map { it.name }), src)
         else OrchReleasesScreen(Declarations.containerProjects.repos.map { it.name }, src)
     }
 

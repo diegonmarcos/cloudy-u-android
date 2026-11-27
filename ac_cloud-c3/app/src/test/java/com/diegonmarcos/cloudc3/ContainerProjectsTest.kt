@@ -10,6 +10,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -140,7 +141,8 @@ class ContainerProjectsTest {
         fun t(n: String) = decl.typeOf(catalog.entry(n)!!)
         assertEquals("MCP", t("cloud-infra-mcp")); assertEquals("API", t("c3-infra-api")); assertEquals("Db", t("umami-db"))
         assertEquals("App", t("dbgate")); assertEquals("Other", t("caddy"))
-        decl.repos.forEach { assertEquals("Repo", decl.typeOf(ContainerProjects.entryOf(decl, it))) }
+        // #1953 E an LFS repo is a Db (the declared lfs.type_kind), every other repo a Repo
+        decl.repos.forEach { assertEquals(it.name, if (it.lfs) "Db" else "Repo", decl.typeOf(ContainerProjects.entryOf(decl, it))) }
         val rows = ContainerProjects.rows(decl, catalog, null)
         assertTrue("a row has no type", rows.all { it.type in decl.types })
         decl.types.forEach { ty -> assertTrue("no container of type $ty", rows.any { it.type == ty }) }
@@ -160,7 +162,7 @@ class ContainerProjectsTest {
         decl.repos.forEach { r ->
             val e = ContainerProjects.entryOf(decl, r)
             assertEquals(listOf("db", "repo"), decl.kindsOf(e).map { it.id }.sorted())
-            assertEquals("git", e.dbEngine)
+            assertEquals(if (r.lfs) "git-lfs" else "git", e.dbEngine)
             listOf("db", "repo").forEach { k -> assertTrue(ContainerProjects.scope(decl, catalog, r.project, k).entries.any { it.name == r.name }) }
         }
     }
@@ -172,12 +174,12 @@ class ContainerProjectsTest {
             val c = ContainerProjects.scope(decl, catalog, p.id)
             assertTrue("${p.id} repeats a Cloudy macro group", c.entries.none { it.group in macro })
             val fams = decl.families[p.id].orEmpty()
-            assertTrue("${p.id} groups are not its families", c.groups.filter { g -> g.categories.isNotEmpty() }.all { it.label in fams || it.label == decl.containerGroup })
+            assertTrue("${p.id} groups are not its families", c.groups.filter { g -> g.categories.isNotEmpty() }.all { it.label in fams || it.label == decl.containerGroup || it.label == "Hub" })
         }
         val cloudy = ContainerProjects.scope(decl, catalog, "pj-unix-cloudy")
         assertTrue(cloudy.groups.none { it.label == "Project Apps" } && cloudy.entries.none { it.group == "Project Apps" })
         assertEquals("Cloud Apps", cloudy.entry("send_app")!!.group)
-        assertEquals(listOf("Infra Apps", "Cloud Apps", "Repos"), cloudy.groups.filter { it.categories.isNotEmpty() }.map { it.label })
+        assertEquals(listOf("Infra Apps", "Cloud Apps", "Repos", "Hub"), cloudy.groups.filter { it.categories.isNotEmpty() }.map { it.label })
     }
 
     @Test
@@ -187,12 +189,75 @@ class ContainerProjectsTest {
         val r = decl.repos.first { it.name == "CG-galaxy" }
         assertEquals("pj-cg-omniverse", r.project); assertEquals("https://github.com/diegonmarcos/CG-galaxy", r.githubUrl)
         assertEquals("pj-cg-zirkusverse", decl.repos.first { it.name == "CG-circus" }.project)
-        assertTrue(decl.repos.all { it.visibility in listOf("pub", "pvt") && it.githubUrl.endsWith("/${it.name}") })
+        assertTrue(decl.repos.all { it.visibility in listOf("pub", "pvt") && it.githubUrl.endsWith("/${it.github}") })
         assertTrue(decl.repos.filter { it.name.startsWith("cloud-me-p") }.all { it.project == "pj-unix-cloudme" })
         assertTrue(decl.repos.filter { it.name.startsWith("cloudy-") }.all { it.project == "pj-unix-cloudy" })
         val e = ContainerProjects.scope(decl, catalog, "pj-cg-omniverse", "repo").entry("CG-galaxy")!!
         assertEquals("repo", e.role)
         assertTrue(e.fields().any { it.first == "github_url" })
+    }
+
+    // ── #1953 hubs, LFS, attached repos ───────────────────────────────────────────────────────────────────────
+
+    @Test
+    fun `an LFS repo is Type Db with the git-lfs engine, and is not a Repo`() {
+        val lfs = decl.repos.first { it.name == "cloudy_db_LFS" }
+        assertTrue(lfs.lfs)
+        val e = ContainerProjects.entryOf(decl, lfs)
+        assertEquals("Db", decl.typeOf(e)); assertEquals("git-lfs", e.dbEngine)
+        assertTrue(e.fields().contains("lfs" to "true"))
+        val dbs = ContainerProjects.scope(decl, catalog, "pj-unix-cloudy", null, setOf("Db")).entries.map { it.name }
+        assertTrue("the Type=Db filter of Cloudy lists cloudy_db_LFS", "cloudy_db_LFS" in dbs)
+        assertFalse("cloudy_db_LFS" in ContainerProjects.scope(decl, catalog, "pj-unix-cloudy", null, setOf("Repo")).entries.map { it.name })
+    }
+
+    @Test
+    fun `a hub is attached to every project under its code and drawn there`() {
+        val hub = decl.repos.first { it.name == "lecole-42-___" }
+        assertEquals("hub", hub.role)
+        val ids = decl.projects.filter { it.code.startsWith("5.") }.map { it.id }
+        assertTrue(ids.size >= 10)
+        ids.forEach { id -> assertTrue("$id lost the 42 hub", ContainerProjects.scope(decl, catalog, id).entries.any { it.name == hub.name }) }
+        assertEquals(ids, decl.projectsOf(ContainerProjects.entryOf(decl, hub)).map { it.id }.filter { it in ids })
+    }
+
+    @Test
+    fun `projects the registry cannot place get their declared repos, Wiki with its lib-chronos path`() {
+        val chronos = decl.repos.first { it.name == "lib-chronos" }
+        mapOf("pj-wiki-modernsc" to "1.Modern-science", "pj-wiki-arcanum" to "2.Arcanum-science", "pj-wiki-projects" to "3.Projects").forEach { (id, path) ->
+            assertEquals(path, chronos.attached.first { it.project == id }.path)
+            assertTrue("$id draws lib-chronos", ContainerProjects.scope(decl, catalog, id).entries.any { it.name == "lib-chronos" })
+        }
+        listOf("pj-unix-superapp" to "cloudy-u-android", "pj-hardtech-biomed" to "HardTech-___", "pj-projects-duckpeng" to "DuckPeng-___").forEach { (id, n) ->
+            assertTrue("$id draws $n", ContainerProjects.scope(decl, catalog, id).entries.any { it.name == n })
+        }
+        assertEquals("the primary project stays the registry one", "lib", decl.projectOf(ContainerProjects.entryOf(decl, chronos))?.id)
+    }
+
+    @Test
+    fun `scope keeps a repo on every attached project, not only its primary one`() {
+        val multi = decl.repos.filter { it.attached.size > 1 }
+        assertTrue(multi.isNotEmpty())
+        multi.forEach { r -> r.attached.forEach { a ->
+            assertTrue("${r.name} missing on ${a.project}", ContainerProjects.scope(decl, catalog, a.project).entries.any { it.name == r.name })
+        } }
+    }
+
+    @Test
+    fun `every project and All draw at least the entities they drew before #1953`() {
+        // the previous rule: the primary project only, no hubs
+        val before = { id: String? -> ContainerProjects.full(decl, catalog).entries.filter { e ->
+            (id == null || decl.projectOf(e)?.id == id) && (decl.repoOf(e)?.role ?: "repo") == "repo" }.map { it.name }.toSet() }
+        (decl.projects.map { it.id } + listOf<String?>(null)).forEach { id ->
+            val now = ContainerProjects.scope(decl, catalog, id).entries.map { it.name }.toSet()
+            assertTrue("$id lost ${before(id) - now}", now.containsAll(before(id)))
+        }
+    }
+
+    @Test
+    fun `hubs get no GHCR cgc-db row, every registry repo does`() {
+        val src = File(dir, "app/src/main/java/com/diegonmarcos/cloudc3/pages/OrchRegistries.kt").readText()
+        assertTrue(src.contains("repos.filter { it.role == \"repo\" }.map { it.name })"))
     }
 
     // ── #1941 field parity: the previous column set against the new one ───────────────────────────────────────

@@ -8,7 +8,12 @@ registry code, else to the declared default (Others). The Archived area is skipp
   python3 data/gen_repos_slice.py [--registry F] [--pages F] [--check]   (default: git-repos-master / front-html main, raw)
 
 Output: {_meta, projects: {<id>: {families: [registry top-level family names]}}, repos: [{name, project, group, category, code,
-visibility pub|pvt, default_branch, pages_url, github_url}]}. group = the repo's top-level registry family, except a project that
+visibility pub|pvt, default_branch, pages_url, github_url, lfs, role repo|hub, github, attached: [{project, path, via}]}]}.
+#1953: a registry `hub` node (and the root _git-repos-master) is emitted too, role "hub", group "Hub", category its node label; a hub
+at code X.0 is attached (via "hub") to every declared project whose code is X or starts with X.; the root goes to `lib`.
+container_projects.json `project_repos` attaches a repo (with a path) to a project the registry cannot place (via "declared").
+`lfs` is the registry flag (the declaration of a git-lfs repo); `github` is the registry `github` name (else `name`) and
+github_url is built from it. group = the repo's top-level registry family, except a project that
 declares `repo_group` in container_projects.json (Cloudy keeps its own macro groups) where every repo sits in that group and the
 family is its category. default_branch is read from the Pages source when the repo has one; the registry carries no other branch.
 """
@@ -36,7 +41,20 @@ def derive(reg, pages, cp):
     projects, default = cp["projects"], cp["default"]
     pg = {p["repo"]: p for p in pages.get("pages", [])}
     fam = {p["id"]: [] for p in projects}
-    repos = []
+    repos, hubs = [], []
+
+    def entry(n, pid, group, cat, role):
+        p = pg.get(n["name"]) or {}
+        gh = n.get("github") or n["name"]
+        return {
+            "name": n["name"], "project": pid, "group": group, "category": cat, "code": n["code"],
+            "visibility": "pvt" if n.get("visibility") == "private" else "pub",
+            "default_branch": (p.get("source") or {}).get("branch", ""),
+            "pages_url": p.get("url", ""),
+            "github_url": "https://github.com/%s/%s" % (OWNER, gh),
+            "lfs": bool(n.get("lfs", False)), "role": role, "github": gh,
+            "attached": [{"project": pid, "path": "", "via": "code"}],
+        }
 
     def walk(n, area, trail):
         k = n.get("kind")
@@ -54,14 +72,9 @@ def derive(reg, pages, cp):
             group = decl.get("repo_group") or top
             if decl.get("repo_group"):
                 cat = top
-            p = pg.get(n["name"]) or {}
-            repos.append({
-                "name": n["name"], "project": pid, "group": group, "category": cat, "code": n["code"],
-                "visibility": "pvt" if n.get("visibility") == "private" else "pub",
-                "default_branch": (p.get("source") or {}).get("branch", ""),
-                "pages_url": p.get("url", ""),
-                "github_url": "https://github.com/%s/%s" % (OWNER, n["name"]),
-            })
+            repos.append(entry(n, pid, group, cat, "repo"))
+        if n.get("hub") and k != "repo":
+            hubs.append((n["hub"], n.get("label") or n["name"]))
         for c in n.get("children", []):
             walk(c, area, trail + [n])
 
@@ -69,6 +82,27 @@ def derive(reg, pages, cp):
         if a["name"] in SKIP_AREAS or a.get("kind") != "area":
             continue
         walk(a, a["name"], [])
+    for h, label in hubs:
+        x = h["code"][:-2] if h["code"].endswith(".0") else h["code"]
+        under = [p["id"] for p in projects if p.get("code") and (p["code"] == x or p["code"].startswith(x + "."))]
+        by_code = project_of(h["code"], projects, default)
+        primary = by_code if by_code != default or not under else under[0]
+        e = entry(h, primary, "Hub", label, "hub")
+        if primary != by_code:
+            e["attached"][0]["via"] = "hub"
+        e["attached"] += [{"project": q, "path": "", "via": "hub"} for q in under if q != primary]
+        repos.append(e)
+    root = reg.get("root") or {}
+    if root.get("name"):
+        repos.append(entry(dict(root, code=root.get("code", "0")), "lib", "Hub", root.get("label") or root["name"], "hub"))
+        repos[-1]["attached"][0]["via"] = "hub"
+    byname = {r["name"]: r for r in repos}
+    for pid, items in (cp.get("project_repos") or {}).items():
+        for it in items:
+            r = byname[it["repo"]]  # a KeyError here is a project_repos entry naming no registry repo: fail the generation
+            a = next((x for x in r["attached"] if x["project"] == pid), None)
+            if a: a["path"] = a["path"] or it.get("path", "")
+            else: r["attached"].append({"project": pid, "path": it.get("path", ""), "via": "declared"})
     return {"_meta": {"generated_by": "data/gen_repos_slice.py", "source": "git-repos-master 0_registry/projects-repos.json + front-html pages.json"},
             "projects": {k: {"families": v} for k, v in fam.items()}, "repos": repos}
 

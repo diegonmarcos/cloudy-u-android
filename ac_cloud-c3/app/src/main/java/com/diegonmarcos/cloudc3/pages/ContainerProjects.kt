@@ -22,7 +22,12 @@ object ContainerProjects {
     data class Repo(
         val name: String, val project: String, val group: String, val category: String, val code: String,
         val visibility: String, val defaultBranch: String, val pagesUrl: String, val githubUrl: String,
+        /** #1953 the registry lfs flag, role repo | hub, the GitHub name, and every project the repo is attached to (primary first). */
+        val lfs: Boolean = false, val role: String = "repo", val github: String = "", val attached: List<Attach> = emptyList(),
     )
+
+    /** #1953 one project a repo is drawn on: [via] code (registry prefix) | hub (a hub under that code) | declared (project_repos), [path] inside the repo. */
+    data class Attach(val project: String, val path: String = "", val via: String = "code")
 
     /** A kind chip (All | MCPs | APIs | Apps | DBs): matched by name first, then by category; no rule = the declared default kind. */
     data class Kind(val id: String, val label: String, val nameSuffix: List<String>, val nameContains: List<String>, val categoryPrefix: List<String>, val role: List<String> = emptyList())
@@ -36,6 +41,10 @@ object ContainerProjects {
         val repos: List<Repo> = emptyList(), val families: Map<String, List<String>> = emptyMap(),
         /** #1941 Type (App | Db | MCP | API | Repo | Other), all declared in data/container_projects.json: the labels in order, kind id -> label, and the App categories that are Other. */
         val types: List<String> = emptyList(), val typeOfKind: Map<String, String> = emptyMap(), val otherCategories: List<String> = emptyList(),
+        /** #1953 E the kind whose Type an LFS repo takes (db) and its db engine (git-lfs), declared under `lfs`. */
+        val lfsKind: String = "", val lfsEngine: String = "",
+        /** #1953 the Topology layout (bands, sections, the Public / Private split), declared under `topology_layout`; the raw object, read by [ContainerTopology]. */
+        val layout: JsonObject? = null,
     ) {
         /** The first-row categories (the Cloud Me > Proj groups, then Lib), in the declared order. */
         fun categories(): List<String> = projects.map { it.category }.filter { it.isNotBlank() }.distinct()
@@ -43,9 +52,12 @@ object ContainerProjects {
         /** The projects of the first-row category [category], in the declared order. */
         fun projectsOf(category: String): List<Project> = projects.filter { it.category == category }
 
-        /** The Type of [e]: a git repo is Repo, else its kind's declared type, and an App in an `otherCategories` category is Other. */
+        /** The repo behind a role-repo entity [e] (null for a container). */
+        fun repoOf(e: ContainersModel.Entry): Repo? = if (e.role == "repo") repos.firstOrNull { it.name == e.name } else null
+
+        /** The Type of [e]: a git repo is Repo (an LFS repo is the declared `lfs.type_kind` type, Db), else its kind's declared type, and an App in an `otherCategories` category is Other. */
         fun typeOf(e: ContainersModel.Entry): String {
-            if (e.role == "repo") return typeOfKind["repo"].orEmpty()
+            if (e.role == "repo") return if (repoOf(e)?.lfs == true && lfsKind.isNotBlank()) typeOfKind[lfsKind].orEmpty() else typeOfKind["repo"].orEmpty()
             val t = typeOfKind[kindOf(e)?.id].orEmpty()
             return if (t == typeOfKind["apps"] && e.category in otherCategories) types.lastOrNull().orEmpty() else t
         }
@@ -59,6 +71,10 @@ object ContainerProjects {
                 ?: project(nameOverrides[e.name])
                 ?: projects.firstOrNull { p -> p.folderPrefix.any { e.folder.startsWith(it) } || p.namePrefix.any { e.name.startsWith(it) } }
                 ?: project(default)
+
+        /** #1953 every project [e] is drawn on: a repo's attached projects (primary first: code, hub, declared), else its one [projectOf]. */
+        fun projectsOf(e: ContainersModel.Entry): List<Project> =
+            repoOf(e)?.attached?.mapNotNull { project(it.project) }?.distinct()?.takeIf { it.isNotEmpty() } ?: listOfNotNull(projectOf(e))
 
         /** Every kind of [e]: each kind whose `role` names the entity's role (a git repo is a Repo AND a DB, a data store), else the one kind its name rule, category rule or the declared default gives. */
         fun kindsOf(e: ContainersModel.Entry): List<Kind> {
@@ -94,7 +110,9 @@ object ContainerProjects {
         val repos = (ro?.get("repos") as? JsonArray).orEmpty().mapNotNull { e ->
             val r = e as? JsonObject ?: return@mapNotNull null
             r.s("name").takeIf { it.isNotBlank() }?.let {
-                Repo(it, r.s("project"), r.s("group"), r.s("category"), r.s("code"), r.s("visibility"), r.s("default_branch"), r.s("pages_url"), r.s("github_url"))
+                val att = (r["attached"] as? JsonArray).orEmpty().mapNotNull { a -> (a as? JsonObject)?.let { x -> x.s("project").takeIf { it.isNotBlank() }?.let { Attach(it, x.s("path"), x.s("via").ifBlank { "code" }) } } }
+                Repo(it, r.s("project"), r.s("group"), r.s("category"), r.s("code"), r.s("visibility"), r.s("default_branch"), r.s("pages_url"), r.s("github_url"),
+                    (r["lfs"] as? JsonPrimitive)?.contentOrNull == "true", r.s("role").ifBlank { "repo" }, r.s("github").ifBlank { it }, att)
             }
         }
         val fams = (ro?.get("projects") as? JsonObject).orEmpty().mapValues { (_, v) -> ((v as? JsonObject)?.l("families")).orEmpty() }
@@ -102,14 +120,23 @@ object ContainerProjects {
             o.s("default"), ps, o.m("name_overrides"), ks, o.s("default_kind"), o.m("group_remap"),
             o.m("container_family"), o.s("container_group").ifBlank { "Containers" }, repos, fams,
             o.l("types"), o.m("type_of_kind"), o.l("other_categories"),
+            (o["lfs"] as? JsonObject)?.s("type_kind").orEmpty(), (o["lfs"] as? JsonObject)?.s("db_engine").orEmpty(), o["topology_layout"] as? JsonObject,
         )
     }
 
     /** A repo as a Containers entity (role "repo"): the Table row and the Topology tile read it like any container. */
     fun entryOf(decl: Decl, r: Repo): ContainersModel.Entry = ContainersModel.Entry(
         r.name, "", "repo", r.group, r.category, "${decl.project(r.project)?.label.orEmpty()} repo, ${r.visibility}", "", "", "", null,
-        r.visibility == "pub", "", "git", "", r.code, r.pagesUrl, "", "",
-        listOf("project" to r.project, "visibility" to r.visibility, "default_branch" to r.defaultBranch, "pages_url" to r.pagesUrl, "github_url" to r.githubUrl),
+        r.visibility == "pub", "", if (r.lfs) decl.lfsEngine.ifBlank { "git" } else "git", "", r.code, r.pagesUrl, "", "",
+        listOf("project" to r.project, "visibility" to r.visibility, "default_branch" to r.defaultBranch, "pages_url" to r.pagesUrl, "github_url" to r.githubUrl) +
+            repoExtras(r),
+    )
+
+    /** #1953 the added facts of a repo entity (and its Table row meta): lfs, repo role, every attached project, the paths inside the repo. */
+    fun repoExtras(r: Repo): List<Pair<String, String>> = listOf(
+        "lfs" to r.lfs.toString(), "repo_role" to r.role,
+        "attached_projects" to r.attached.joinToString(", ") { it.project },
+        "path" to r.attached.filter { it.path.isNotBlank() }.joinToString(", ") { "${it.project}:${it.path}" },
     )
 
     /** The one document the pages draw: [c0] plus every declared repo, then the macro groups remapped (group_remap) and, in a project whose groups are registry families, each container regrouped by its family. */
@@ -153,7 +180,7 @@ object ContainerProjects {
     fun scope(decl: Decl, c0: ContainersModel.Catalog, projectId: String?, kindId: String? = null, types: Set<String> = emptySet(), vms: Set<String> = emptySet()): ContainersModel.Catalog {
         val c = full(decl, c0)
         val keep = c.entries.filter {
-            (projectId == null || decl.projectOf(it)?.id == projectId) && (kindId == null || decl.kindsOf(it).any { k -> k.id == kindId }) &&
+            (projectId == null || decl.projectsOf(it).any { p -> p.id == projectId }) && (kindId == null || decl.kindsOf(it).any { k -> k.id == kindId }) &&
                 (types.isEmpty() || decl.typeOf(it) in types) && (vms.isEmpty() || it.host in vms)
         }
         val names = keep.map { it.name }.toSet()
@@ -175,6 +202,7 @@ object ContainerProjects {
             val e = byName[r.container]
             val p = e?.let { decl.projectOf(it) }
             val type = e?.let { decl.typeOf(it) }.orEmpty()
+            // #1953 a repo row's meta carries lfs, repo_role, attached_projects, path through Entry.fields() (entryOf's extras)
             r.copy(project = p?.label.orEmpty(), type = type, meta = r.meta + listOf("project_name" to p?.label.orEmpty(), "type" to type))
         }
         if (projectId != null) return rows

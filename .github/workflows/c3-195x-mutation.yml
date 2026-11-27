@@ -1,0 +1,104 @@
+# #1953 #1954 #1955 Cloud C3 mutation runs: each leg applies ONE deliberate break and runs Cloud C3's JVM suite (JVM + Robolectric Compose),
+# whose NAMED test must catch it. The JVM suite itself is RED (expected); the JOB is green only when the verdict step finds the named test failed
+# (KILLED); a mutation whose named test stayed green, or never ran, fails the job. Manual only.
+name: c3-195x-mutation
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo'
+        required: true
+permissions:
+  contents: read
+env:
+  WORK_DIR: ac_cloud-c3
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply mutation ${{ inputs.name }}
+        run: |
+          K=ac_cloud-c3/app/src/main/java/com/diegonmarcos/cloudc3
+          D=ac_cloud-c3/data
+          pyj() { python3 -I - "$1" "$2" <<'PY'
+          import json, sys
+          p, code = sys.argv[1:]
+          d = json.load(open(p)); exec(code); open(p, "w").write(json.dumps(d, indent=1, ensure_ascii=False) + "\n")
+          PY
+          }
+          case "${{ inputs.name }}" in
+            # #1953-a the Index tile row is back on the Topology pages
+            index-back)        pyj ac_cloud-c3/build.json 'd["ui"]["carried_c3"]["stack_topology"].insert(0, {"kind": "tile_row", "title": "Index", "subtitle": "Jump to a table on this page", "tiles": []})' ;;
+            # #1953-c an LFS repo is a Repo again (the registry flag is ignored)
+            lfs-ignored)       sed -i 's/if (repoOf(e)?.lfs == true \&\& lfsKind.isNotBlank())/if (false)/' $K/pages/ContainerProjects.kt ;;
+            # #1953-c scope keeps a repo on its primary project only (hubs and declared repos vanish from the others)
+            scope-primary)     sed -i 's/decl.projectsOf(it).any { p -> p.id == projectId }/decl.projectOf(it)?.id == projectId/' $K/pages/ContainerProjects.kt ;;
+            # #1953-b a project_repos attachment is lost (Wiki ModernSc draws no lib-chronos)
+            drop-project-repo) pyj $D/repos_declared.json 'r = next(x for x in d["repos"] if x["name"] == "lib-chronos"); r["attached"] = [a for a in r["attached"] if a["project"] != "pj-wiki-modernsc"]' ;;
+            *) echo "unknown mutation"; exit 2 ;;
+          esac
+          git diff --stat
+          test -n "$(git diff --name-only)" || { echo "mutation target missing"; exit 3; }
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
+      - name: Set up Gradle 8.10.2 (cached)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.10.2"
+      # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
+      # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
+      - name: Checkout vault (shared Android signing key, read by app/build.gradle at configuration)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+      - name: Install ORAS + sops (pinned)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: oras sops
+      - name: JVM unit tests (RED expected; the verdict step reads the XML)
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+        run: sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR" || true
+      - name: Verdict (KILLED = the named test failed)
+        env:
+          M: ${{ inputs.name }}
+        run: |
+          case "$M" in
+            index-back)        C=ContainersPageComposeTest; N="no Topology page carries the Index row, and the Ops Obsv Index stays" ;;
+            lfs-ignored)       C=ContainerProjectsTest; N="an LFS repo is Type Db with the git-lfs engine, and is not a Repo" ;;
+            scope-primary)     C=ContainerProjectsTest; N="scope keeps a repo on every attached project, not only its primary one" ;;
+            drop-project-repo) C=ContainerProjectsTest; N="projects the registry cannot place get their declared repos, Wiki with its lib-chronos path" ;;
+          esac
+          X="$(find ac_cloud-c3/app/build -path '*test-results*' -name "TEST-*.$C.xml" | head -1)"
+          [ -n "$X" ] || { echo "::error::LEG ERROR $M: no result for $C (did not compile or run); not a kill"; exit 1; }
+          python3 -I - "$X" "$N" "$M" <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          path, want, leg = sys.argv[1:]
+          cases = {c.get("name"): c for c in ET.parse(path).getroot().iter("testcase")}
+          failed = sorted(n for n, c in cases.items() if c.find("failure") is not None or c.find("error") is not None)
+          print("failed tests:", failed)
+          if want not in cases: print("::error::LEG ERROR %s: the named test did not run: %s" % (leg, want)); sys.exit(1)
+          if want not in failed: print("::error::LEG SURVIVED %s: the named test stayed green: %s" % (leg, want)); sys.exit(1)
+          print("KILLED %s by: %s" % (leg, want))
+          PY
+      - name: Failed tests
+        if: always()
+        run: grep -rl "<failure" --include="TEST-*.xml" ac_cloud-c3/app/build 2>/dev/null | xargs -r grep -h -o 'testcase name="[^"]*"' | head -40 || true

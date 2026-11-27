@@ -314,7 +314,9 @@ for p in cp["projects"]:
     if tuple(fams) in seen and seen[tuple(fams)][1] != p.get("category"): bad.append("projects %r and %r share one family list" % (p["id"], seen[tuple(fams)][0]))
     seen[tuple(fams)] = (p["id"], p.get("category"))
     for r in rd["repos"]:
-        if r["project"] == p["id"] and r["group"] not in fams: bad.append("repo %r sits in %r, not a family of %r" % (r["name"], r["group"], p["id"]))
+        # #1953 a registry hub (role hub) sits in the declared Hub group, every other repo in a family of its project
+        if r["project"] == p["id"] and r.get("role") == "hub" and r["group"] != "Hub": bad.append("hub %r sits in %r, not Hub" % (r["name"], r["group"]))
+        if r["project"] == p["id"] and r.get("role", "repo") == "repo" and r["group"] not in fams: bad.append("repo %r sits in %r, not a family of %r" % (r["name"], r["group"], p["id"]))
 for n, f in cp.get("container_family", {}).items():
     pid = cp["name_overrides"].get(n)
     if pid and f not in (rd["projects"].get(pid, {}).get("families") or []): bad.append("container %r family %r is not a registry family of %r" % (n, f, pid))
