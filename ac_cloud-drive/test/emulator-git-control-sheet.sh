@@ -221,8 +221,9 @@ fi
 # 3. the all-repos sheet over the 3 fixture repositories: More is pinned in the toolbar (tag sync_git_top_group_more)
 if want all-repos; then
   tap_rid sync_git_top_group_more >/dev/null || { snap no-more; fail "no More menu"; }; sleep 1
-  tap_text '^All repos sheet$' || { snap no-bulk-item; fail "no All repos sheet item"; }; sleep 3
-  sheet_open || { snap no-bulk; fail "the all-repos sheet did not open"; }
+  # the More menu is a long scrolling dropdown: the item sits below the fold
+  for i in 1 2 3 4 5; do tap_text '^All repos sheet$' && break; adb shell input swipe $((W*2/3)) $((H*70/100)) $((W*2/3)) $((H*30/100)) 300 < /dev/null; sleep 1; done
+  sleep 3; sheet_open || { snap no-bulk; fail "the all-repos sheet did not open"; }
   walk bulk yes "$NAME"
 fi
 
