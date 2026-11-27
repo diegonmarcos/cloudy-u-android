@@ -200,7 +200,9 @@ class RoutesTableComposeTest {
 
     private fun showWithOpen() {
         compose.setContent {
-            MaterialTheme(colorScheme = darkColorScheme()) { RoutesTableScreen(rows, onState = { states += it }, onOpen = { opened += it }) }
+            // #1954 the deployed-state columns carry a value, as they do once docker ps answered
+            val live = rows.map { it.copy(service = "svc", role = "app", compose = "proj", tag = "1.0", runningTag = "1.0", live = "Up 1h", drift = "in sync") }
+            MaterialTheme(colorScheme = darkColorScheme()) { RoutesTableScreen(live, onState = { states += it }, onOpen = { opened += it }) }
         }
         compose.waitForIdle()
     }
