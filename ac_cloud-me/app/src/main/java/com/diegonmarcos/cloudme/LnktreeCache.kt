@@ -188,10 +188,12 @@ class LnktreeCacheStore(val root: File, private val clock: () -> Long = System::
     }
 
     /** Hard refresh of one page: deletes every file under its directory. Returns the number of files removed. */
-    fun clearPage(pageId: String): Int = deleteTree(pageDir(pageId))
+    /** #1947 diagnostics: told what was wiped and why (the Android side logs it with the call stack). */
+    @Volatile var onWipe: ((String) -> Unit)? = null
+    fun clearPage(pageId: String): Int { onWipe?.invoke("clearPage $pageId"); return deleteTree(pageDir(pageId)) }
 
     /** Hard refresh of the whole Lnktree cache. */
-    fun clearAll(): Int = (root.listFiles() ?: emptyArray()).sumOf { deleteTree(it) }
+    fun clearAll(): Int { onWipe?.invoke("clearAll"); return (root.listFiles() ?: emptyArray()).sumOf { deleteTree(it) } }
 
     /**
      * Keeps the cache under [maxBytes] by deleting the oldest entries first. #1947 images, fonts and data go BEFORE any page HTML, stylesheet or script:
@@ -209,6 +211,7 @@ class LnktreeCacheStore(val root: File, private val clock: () -> Long = System::
         for (m in files.map { Triple(it, if (critical(it)) 1 else 0, it.lastModified()) }.sortedWith(compareBy({ it.second }, { it.third })).map { it.first }) {
             if (total <= maxBytes) break
             total -= size(m)
+            onWipe?.invoke("trim ${m.parentFile?.name} total=$total max=$maxBytes")
             File(m.parentFile, m.nameWithoutExtension + ".body").delete(); m.delete()
         }
     }

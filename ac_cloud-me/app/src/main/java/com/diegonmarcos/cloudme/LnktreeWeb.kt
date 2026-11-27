@@ -26,7 +26,7 @@ object LnktreeCache {
 
     @Volatile private var store: LnktreeCacheStore? = null
     fun store(ctx: Context): LnktreeCacheStore =
-        store ?: synchronized(this) { store ?: LnktreeCacheStore(File(ctx.applicationContext.cacheDir, "lnktree-cache")).also { store = it } }
+        store ?: synchronized(this) { store ?: LnktreeCacheStore(File(ctx.applicationContext.cacheDir, "lnktree-cache")).also { st -> st.onWipe = { w -> android.util.Log.i("CloudMeWeb", "CACHE_WIPE $w at ${Throwable().stackTrace.drop(2).take(7).joinToString(" < ") { it.className.substringAfterLast('.') + '.' + it.methodName }}") }; store = st } }
 
     /** #1947 page id -> when the offline copy now shown was fetched; absent = the page came from the network. */
     val offlineSince = ConcurrentHashMap<String, Long>()
