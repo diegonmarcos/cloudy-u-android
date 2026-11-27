@@ -67,6 +67,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
@@ -949,7 +950,19 @@ class InboxViewModel(
     /** The choices of the view on screen. */
     internal val listView: StateFlow<ListView> =
         combine(listViewKey, viewOverrides) { key, overrides -> currentViewKey = key; viewFor(key, overrides) }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, ListView())
+            // #1952: seeded with the stored view of the selection restored above, never a placeholder: a placeholder made the
+            // pager start on a key the real view replaced a moment later (three keys, three pagers, on every cold start).
+            .stateIn(viewModelScope, SharingStarted.Eagerly, initialListView())
+
+    private fun initialListView(): ListView {
+        val key = when (val sel = selection.value) {
+            is Sel.Folder -> ListViewPrefs.keyFor(currentAccountId.value, sel.id)
+            Sel.Unified -> ListViewPrefs.keyFor(null, "unified")
+            Sel.Unread -> ListViewPrefs.keyFor(currentAccountId.value, "unread")
+        }
+        currentViewKey = key
+        return ListViewPrefs.load(getApplication<Application>(), key)
+    }
 
     private fun updateView(change: (ListView) -> ListView) {
         val key = currentViewKey
@@ -1001,7 +1014,7 @@ class InboxViewModel(
     /** The unread filter of the view on screen (one of the four filters). */
     private val unreadOnly: StateFlow<Boolean> =
         listView.map { ListFilter.UNREAD in it.filters }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+            .stateIn(viewModelScope, SharingStarted.Eagerly, ListFilter.UNREAD in listView.value.filters)
 
     /** Multi-select mode: which messages are selected (empty + inactive = off). Account-qualified
      *  keys, not bare ids: the unified inbox can show two accounts' same-id rows, and a bare-id
@@ -1173,6 +1186,18 @@ class InboxViewModel(
      */
     val keptListRows: Flow<PagingData<InboxRow>> = pagedListRows.cachedIn(viewModelScope)
 
+    /**
+     * #1952 the rows the list screen showed last, reported by the screen itself ([rememberShownRows]). A returning screen is
+     * handed them FIRST ([returningListRows]): the same rows in its first frame, with no store query, whatever generation the
+     * cache above is still loading. Dropped when the view changes, so a return never shows another folder's rows.
+     */
+    @Volatile private var shownRows: List<InboxRow> = emptyList()
+
+    fun rememberShownRows(rows: List<InboxRow>) { shownRows = rows }
+
+    val returningListRows: Flow<PagingData<InboxRow>> =
+        app.sterna.core.data.mail.keptFirst({ shownRows.takeIf { it.isNotEmpty() }?.let { PagingData.from(it) } }, keptListRows)
+
     /** #1837: the (account, mailbox) folders that also list messages filed under another mailbox (a label holding an Inbox message):
      *  the rows guard cannot call such a row foreign by its mailbox ([rowsForeign]). */
     val extraFolders: StateFlow<Set<Pair<String, String>>> =
@@ -1330,6 +1355,8 @@ class InboxViewModel(
         viewModelScope.launch {
             selection.collect { PushController.unifiedInboxVisible = it is Sel.Unified }
         }
+        // #1952: the kept rows belong to one view; another view starts from its own.
+        viewModelScope.launch { selection.drop(1).collect { shownRows = emptyList() } }
         // Remember the view so a cold start reopens on it. The account is read HERE, at the write:
         // switchAccount() calls setCurrent(id) BEFORE onAccountChanged(). That leaves a window
         // where a refreshFolder() stores a stale pair — never one crossed between accounts.

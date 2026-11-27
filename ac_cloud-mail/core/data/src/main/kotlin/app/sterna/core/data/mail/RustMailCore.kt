@@ -79,6 +79,8 @@ class RustMailEngine(
             log("sync $localAccountId: coalesced into the pass of ${System.currentTimeMillis() - last.first} ms ago")
             return@withLock last.second
         }
+        ColdStart.awaitRows() // #1952 cold start: every pass of the core talks to the server, so it waits for the painted rows
+        ColdStart.network("core")
         withContext(Dispatchers.IO) {
             val transport = transportFor(client, session, jmapAccountId, auth)
             val batch = session.getBatchSize()

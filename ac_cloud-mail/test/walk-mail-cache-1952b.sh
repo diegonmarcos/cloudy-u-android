@@ -12,7 +12,7 @@ PORT=8099
 UI="python3 -I ac_cloud-mail/test/mail-offline-ui.py"
 FAIL=0
 COLD_LIMIT_MS=${COLD_LIMIT_MS:-1500}
-WARM_LIMIT_MS=${WARM_LIMIT_MS:-800}
+WARM_LIMIT_MS=${WARM_LIMIT_MS:-300}
 BULK=${FAKE_JMAP_BULK:-40000}
 FILL_MINUTES=${FILL_MINUTES:-30}
 READING_ENTRY=${READING_ENTRY:-Reading}
@@ -149,7 +149,7 @@ for round in 1 2 3; do
   ms=$(sed -n 's/.*first-row ms=\([0-9]*\) rows=\([0-9]*\).*/\1/p' "$OUT/cold-$round.log" | head -1)
   rows=$(sed -n 's/.*first-row ms=\([0-9]*\) rows=\([0-9]*\).*/\2/p' "$OUT/cold-$round.log" | head -1)
   lp=$(grep -n "cold-start rows-painted" "$OUT/cold-$round.log" | head -1 | cut -d: -f1)
-  ln=$(grep -n -E "cold-start first-network|MailCore: sync .* requests=[1-9]" "$OUT/cold-$round.log" | head -1 | cut -d: -f1)
+  ln=$(grep -n -E "cold-start first-network|MailCore: sync .* requests=[1-9]|ForegroundPush: foreground" "$OUT/cold-$round.log" | head -1 | cut -d: -f1)
   order=unknown
   if [ -n "$lp" ] && [ -z "$ln" ]; then order="yes (no server call in 12 s)"; fi
   if [ -n "$lp" ] && [ -n "$ln" ]; then
@@ -167,11 +167,14 @@ for w in 1 2; do
   n0=$(grep -c -E "MailList.*first-row" "$OUT/logcat.txt")
   tapt "Alerts" exact || fail "warm $w: no Alerts item in the bottom bar"
   sleep 4
+  l0=$(grep -c "" "$OUT/logcat.txt")
   tapt "Mail" exact || fail "warm $w: no Mail item in the bottom bar"
-  sleep 4
+  sleep 1; shot "05-warm$w-after-1s"; sleep 3
+  # store queries that finished between the tap and the first row (0 = the return was served from the kept rows)
+  wq=$(tail -n +$((l0 + 1)) "$OUT/logcat.txt" | grep -E "MailList.*(page-load kind|first-row)" | awk '/first-row/{exit} /page-load kind/{n++} END{print n+0}')
   n1=$(grep -c -E "MailList.*first-row" "$OUT/logcat.txt")
   wms=missing; [ "$n1" -gt "$n0" ] && wms=$(grep -E "MailList.*first-row" "$OUT/logcat.txt" | tail -1 | sed -n 's/.*first-row ms=\([0-9]*\).*/\1/p')
-  echo "| warm return $w from Alerts | $wms | | - | |" >> "$OUT/timing.md"
+  echo "| warm return $w from Alerts | $wms | | - | $wq store queries before the row |" >> "$OUT/timing.md"
   [ "$wms" != missing ] || fail "warm $w: the list logged no first row"
   [ "${wms:-99999}" -le "$WARM_LIMIT_MS" ] 2>/dev/null || fail "warm $w: first row after $wms ms (limit $WARM_LIMIT_MS)"
 done

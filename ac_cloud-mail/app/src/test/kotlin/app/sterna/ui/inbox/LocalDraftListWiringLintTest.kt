@@ -93,13 +93,17 @@ class LocalDraftListWiringLintTest {
     fun `the list screen pages the merged property and the reader pages the bare one`() {
         assertEquals(
             "InboxScreen must collect the merged property, and it is the only screen that may:",
-            listOf("val listRows = viewModel.keptListRows.collectAsLazyPagingItems()"),
+            listOf("val listRows = viewModel.returningListRows.collectAsLazyPagingItems()"),
             codeLines(INBOX_SCREEN).map { it.trim() }.filter { "collectAsLazyPagingItems()" in it },
         )
         // #1952: the screen pages the merged property THROUGH its cache, and that cache is the merged property and nothing else.
         assertEquals(
             "keptListRows must be exactly pagedListRows cached in the ViewModel's scope:",
-            listOf("val keptListRows: Flow<PagingData<InboxRow>> = pagedListRows.cachedIn(viewModelScope)"),
+            listOf(
+                "val keptListRows: Flow<PagingData<InboxRow>> = pagedListRows.cachedIn(viewModelScope)",
+                // #1952: the returning screen gets the rows it showed last first, then that same cache and nothing else.
+                "app.sterna.core.data.mail.keptFirst({ shownRows.takeIf { it.isNotEmpty() }?.let { PagingData.from(it) } }, keptListRows)",
+            ),
             codeLines(INBOX_VIEW_MODEL).map { it.trim() }.filter { "keptListRows" in it },
         )
         assertEquals(

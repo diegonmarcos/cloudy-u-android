@@ -294,7 +294,9 @@ fun InboxScreen(
     detail: (@Composable () -> Unit)? = null,
 ) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
-    val listRows = viewModel.keptListRows.collectAsLazyPagingItems()
+    val listRows = viewModel.returningListRows.collectAsLazyPagingItems()
+    // #1952: what is on screen is what a return to this screen shows first.
+    LaunchedEffect(listRows) { snapshotFlow { listRows.itemSnapshotList.items }.collect { if (it.isNotEmpty()) viewModel.rememberShownRows(it) } }
     // #1952: the time from this screen entering the composition to its first frame with rows, once per entry (tag MailList).
     val listEnteredAt = remember { FirstRowTiming.now() }
     val firstRowTimed = remember { mutableStateOf(false) }

@@ -1,5 +1,7 @@
 package app.sterna.core.data.mail
 
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 
@@ -17,6 +19,8 @@ internal fun refreshOffsetForAnchor(
     return (windowStart + anchorPosition - initialLoadSize / 2).coerceAtLeast(0)
 }
 
+private val invalidateScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Default)
+
 /** Loads exactly what [delegate] loads but answers [refreshOffsetForAnchor]'s key: the key is the
  *  only thing wrong with Room's generated `LimitOffsetPagingSource`, which cannot be subclassed per
  *  query. Invalidation is forwarded both ways, or one side serves a generation the other dropped. */
@@ -24,8 +28,14 @@ internal class AnchoredRefreshPagingSource<Value : Any>(
     private val delegate: PagingSource<Int, Value>,
 ) : PagingSource<Int, Value>() {
 
+    @Volatile private var lastLoadMs = 0L
+
     init {
-        delegate.registerInvalidatedCallback(::invalidate)
+        // #1952: a slow list coalesces the writes of one query span into one new generation ([listInvalidateDelayMs]).
+        delegate.registerInvalidatedCallback {
+            val wait = listInvalidateDelayMs(lastLoadMs)
+            if (wait == 0L) invalidate() else invalidateScope.launch { delay(wait); invalidate() }
+        }
         registerInvalidatedCallback(delegate::invalidate)
     }
 
@@ -34,6 +44,9 @@ internal class AnchoredRefreshPagingSource<Value : Any>(
         val t0 = System.nanoTime()
         ColdStart.mark("page-load-start")
         val result = delegate.load(params)
+        lastLoadMs = (System.nanoTime() - t0) / 1_000_000
+        // An empty store has nothing to paint: the cold-start gate must not hold its first sync.
+        if (params is LoadParams.Refresh && (result as? LoadResult.Page)?.data?.isEmpty() == true) ColdStart.nothingToPaint()
         runCatching {
             android.util.Log.i(
                 "MailList",

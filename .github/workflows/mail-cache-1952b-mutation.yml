@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'none | evict-newest-first | window-ignored | shrink-no-evict | default-drift | setting-not-stored | resume-from-zero | metered-no-chain | network-before-rows | index-not-covering | first-page-unbounded'
+        description: 'none | evict-newest-first | window-ignored | shrink-no-evict | default-drift | setting-not-stored | resume-from-zero | metered-no-chain | network-before-rows | index-not-covering | first-page-unbounded | return-requeries | placeholder-view | core-ungated | query-per-write'
         required: true
 permissions:
   contents: read
@@ -46,6 +46,14 @@ jobs:
             index-not-covering) sed -i 's/(`accountId`, `mailboxId`, `fromDomain`, `sortKey`, `seen`, `id`)"/(`accountId`, `mailboxId`, `fromDomain`, `sortKey`, `seen`)"/' $D/db/Migrations.kt ;;
             # the first load asks for the whole folder
             first-page-unbounded) sed -i 's/initialLoadSize = PAGE_SIZE \* 3,/initialLoadSize = Int.MAX_VALUE,/' $D/mail/MailRepository.kt ;;
+            # a return to the list waits for the live pages again (no kept rows first)
+            return-requeries)   sed -i 's/    kept()?.let { emit(it) }/    kept()?.let { }/' $D/mail/ListReturn.kt ;;
+            # the pager starts on a placeholder view again
+            placeholder-view)   sed -i 's/.stateIn(viewModelScope, SharingStarted.Eagerly, initialListView())/.stateIn(viewModelScope, SharingStarted.Eagerly, ListView())/' ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/inbox/InboxViewModel.kt ;;
+            # the Rust core talks to the server before the rows are painted
+            core-ungated)       sed -i '/ColdStart.awaitRows() \/\/ #1952 cold start: every pass of the core/d' $D/mail/RustMailCore.kt ;;
+            # every write starts a full query, however slow the list
+            query-per-write)    sed -i 's/if (lastLoadMs < LIST_INVALIDATE_FAST_QUERY_MS) 0L else minOf(lastLoadMs, LIST_INVALIDATE_MAX_DELAY_MS)/0L/' $D/mail/ListReturn.kt ;;
             *) echo "::error::unknown mutation (not in the allow-list)"; exit 2 ;;
           esac
           git diff --stat
@@ -88,7 +96,7 @@ jobs:
         run: |
           cd ac_cloud-mail
           chmod +x gradlew
-          ./gradlew --no-daemon :core:data:testDebugUnitTest -PtestApp --tests "app.sterna.core.data.mail.MailCache1952bTest" --tests "app.sterna.core.data.db.ListQueryPlan1952bTest" || true
+          ./gradlew --no-daemon :core:data:testDebugUnitTest -PtestApp --tests "app.sterna.core.data.mail.MailCache1952bTest" --tests "app.sterna.core.data.db.ListQueryPlan1952bTest" --tests "app.sterna.core.data.mail.ListReturn1952cTest" || true
       - name: Verdict (KILLED = the named test failed; none = every test green)
         env:
           M: ${{ inputs.name }}
@@ -105,6 +113,10 @@ jobs:
             network-before-rows) N="on a cold start the first network call waits for the painted rows" ;;
             index-not-covering)  N="the domain list's aggregates read the covering index, not the message rows" ;;
             first-page-unbounded) N="the first page is a bounded read of the store" ;;
+            return-requeries)    N="returning to the list shows the kept rows first and runs no store query for it" ;;
+            placeholder-view)    N="the pager's first key carries the stored view, never a placeholder" ;;
+            core-ungated)        N="every pass of the Rust core and the push connection wait for the painted rows" ;;
+            query-per-write)     N="a slow list coalesces invalidations into one query and a fast list follows every write" ;;
             *) echo "::error::unknown mutation (not in the allow-list)"; exit 2 ;;
           esac
           ls ac_cloud-mail/core/data/build/test-results/*/TEST-*MailCache1952bTest.xml ac_cloud-mail/core/data/build/test-results/*/TEST-*ListQueryPlan1952bTest.xml >/dev/null 2>&1 \
@@ -115,12 +127,12 @@ jobs:
           path, want, leg = sys.argv[1:]
           import glob
           cases = {}
-          for f in glob.glob(path + "/test-results/*/TEST-*MailCache1952bTest.xml") + glob.glob(path + "/test-results/*/TEST-*ListQueryPlan1952bTest.xml"):
+          for f in glob.glob(path + "/test-results/*/TEST-*MailCache1952bTest.xml") + glob.glob(path + "/test-results/*/TEST-*ListQueryPlan1952bTest.xml") + glob.glob(path + "/test-results/*/TEST-*ListReturn1952cTest.xml"):
               cases.update({c.get("name"): c for c in ET.parse(f).getroot().iter("testcase")})
           failed = sorted(n for n, c in cases.items() if c.find("failure") is not None or c.find("error") is not None)
           print("tests:", len(cases), "failed:", failed)
           if leg == "none":
-              if failed or len(cases) < 12: print("::error::the unbroken tree is not green (or tests are missing)"); sys.exit(1)
+              if failed or len(cases) < 18: print("::error::the unbroken tree is not green (or tests are missing)"); sys.exit(1)
               print("GREEN: %d tests" % len(cases)); sys.exit(0)
           if want not in cases: print("::error::LEG ERROR %s: the named test did not run: %s" % (leg, want)); sys.exit(1)
           if want not in failed: print("::error::LEG SURVIVED %s: the named test stayed green: %s" % (leg, want)); sys.exit(1)

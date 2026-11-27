@@ -79,6 +79,8 @@ class AppContainer(context: Context) {
     }
 
     init {
+        // #1952: armed at process start, so a sync the process starts before its activity exists waits for the list's rows too.
+        app.sterna.core.data.mail.ColdStart.armProcess()
         // #1925 what the error log reads at failure time: the account behind a host, and whether a VPN is up.
         val log = com.diegonmarcos.superapp.fleetendpoints.errors.ErrorLog.shared
         val ctx = context.applicationContext

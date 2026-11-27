@@ -25,7 +25,7 @@
     "folders": "all",
     "headers": {"inbox": "all", "other_folders": "all", "backfill_batch": 400, "other_folders_pages_per_run": 20, "other_folders_pages_per_run_metered": 4, "list_page_size": 50},
     "bodies": {"default_window_days": 0, "window_choices_days": "0,30,90,180,365", "cap_mb": 3072, "cap_choices_mb": "512,1024,2048,3072,5120,10240", "eviction": "oldest_first", "headers_evicted": false, "prefetch": "any_connection", "prefetch_concurrency": 2, "attachments_cap_mb": 250},
-    "list": {"first_paint": "store", "initial_network_refresh": false, "tab_return": "same_entry", "cold_start": "rows_before_network", "domain_index": "accountId,mailboxId,fromDomain,sortKey,seen,id", "cold_start_paint_wait_ms": 2500}
+    "list": {"first_paint": "store", "initial_network_refresh": false, "tab_return": "same_entry", "cold_start": "rows_before_network", "domain_index": "accountId,mailboxId,fromDomain,sortKey,seen,id", "cold_start_paint_wait_ms": 5000, "warm_return": "kept_rows_first", "invalidate_max_delay_ms": 1000}
   },
   "mail_list_defaults": {
     "_doc": "The view EVERY folder opens with until the reader overrides it (overrides persist per account and folder in the list_view preferences; the list menu's Reset puts a folder back on these). group is a GroupMode name (SUBJECT, SENDER, DOMAIN, NONE), rank a RankMode name (NEWEST, SENDER, SUBJECT), filter a ListFilter name; ALL means no filter and is the first entry of the filter menu. Baked as BuildConfig.LIST_DEFAULT_*; read by ListViewDefaults.",
