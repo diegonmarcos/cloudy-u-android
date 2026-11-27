@@ -18,6 +18,10 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout private fleet data (app/build.gradle reads it at configuration, as in Ship Cloud C3)
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
       - name: Apply mutation ${{ inputs.name }}
         run: |
           K=ac_cloud-c3/app/src/main/java/com/diegonmarcos/cloudc3
