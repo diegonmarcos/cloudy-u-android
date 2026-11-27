@@ -1,5 +1,5 @@
 # #1934 control sheet mutation proof: the Compose test "every greyed control on a not-cloned repo carries its own reason line"
-# (ControlSheetRenderTest) must go RED when the header reason line, one header action's reason, or the fields-layout reason is dropped.
+# (ControlSheetRenderTest) must go RED when the header reason line, one header action's reason, or the card groups reason line (Stage & Commit) is dropped.
 # Runs the suite once on the real tree (GREEN expected), then once per planted mutant (RED expected). Manual only.
 name: drive-control-sheet-mutation
 on:
@@ -81,7 +81,7 @@ jobs:
           done <<'MUTANTS'
           header-reason-dropped@if (headerWhy.isNotEmpty()) Column(@if (false) Column(
           one-header-action-reason-dropped@blocked(a)?.let { a.label to it } }.groupBy@blocked(a)?.takeIf { a.id != "hd.check_full" }?.let { a.label to it } }.groupBy
-          fields-reason-dropped@}.also { Reasons(@}.also { if (false) Reasons(
+          group-reason-dropped@                Reasons(g.controls.mapNotNull { c -> blocked(c)?.takeIf@                if (false) Reasons(g.controls.mapNotNull { c -> blocked(c)?.takeIf
           MUTANTS
           git checkout -- "$V"
           [ "$stayed" -eq 0 ] || { echo "::error::$stayed mutant(s) stayed green"; exit 1; }
