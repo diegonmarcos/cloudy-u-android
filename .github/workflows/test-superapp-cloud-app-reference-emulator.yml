@@ -1,0 +1,105 @@
+# #1958 reference screenshots of SuperApp Cloud > App (the native page the cloud-webapps site mirrors): top, middle and bottom.
+# Runs the x86_64 APK of a Ship Cloud SuperApp run as the default home app. Evidence (cloud-app-reference): app-top.png, app-middle.png,
+# app-bottom.png, every scroll step app-step-N.png, ui dumps. Screenshots only: no assertion beyond "the page rendered" (Calc is on screen).
+name: "Test -> SuperApp Cloud App reference screenshots (emulator)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      superapp_run_id:
+        description: "Ship Cloud SuperApp run id whose x86_64 APK artifact to shoot"
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Fetch the Cloud SuperApp APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          W_RUN: ${{ inputs.superapp_run_id }}
+        run: |
+          set -eu
+          case "$W_RUN" in ''|*[!0-9]*) echo "::error::superapp_run_id must be digits"; exit 1 ;; esac
+          mkdir -p apk
+          gh api "repos/$REPO/actions/runs/$W_RUN/artifacts" --paginate --jq '.artifacts[] | select(.name|startswith("Cloud-SuperApp")) | .name' |
+          while read -r name; do gh run download "$W_RUN" -R "$REPO" -n "$name" -D "apk/$name"; done
+          pick=""
+          for want in x86_64 universal ''; do
+            pick=$(find apk -name '*.apk' | sort | grep -i -- "$want" | head -1 || true)
+            [ -n "$pick" ] && break
+          done
+          [ -n "$pick" ] || { echo "::error::no Cloud SuperApp APK"; exit 1; }
+          cp "$pick" superapp.apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Write the script
+        run: |
+          cat > shoot.sh <<'EOF2'
+          set -u
+          mkdir -p out
+          adb install -r -g superapp.apk || exit 2
+          aapt2=$(ls -d "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          PKG=$("$aapt2" dump packagename superapp.apk)
+          adb shell appops set "$PKG" SYSTEM_ALERT_WINDOW deny || true
+          adb shell appops set "$PKG" REQUEST_INSTALL_PACKAGES allow || true
+          adb shell cmd package set-home-activity "$PKG/.HomeActivity" || true
+          adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher >/dev/null 2>&1 || true
+          adb shell settings put global hide_error_dialogs 1 || true
+          adb shell settings put system screen_off_timeout 2147483647; adb shell svc power stayon true
+          adb shell locksettings set-disabled true || true
+          adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS || true
+          awake() { adb shell am stopservice -n "$PKG/.floatingnav.ScreensaverService" >/dev/null 2>&1 || true; adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard; adb shell input keyevent 82; }
+          dump() { adb shell uiautomator dump /sdcard/ui.xml >/dev/null || true; adb pull /sdcard/ui.xml "$1" >/dev/null || true; }
+          awake
+          adb shell am force-stop "$PKG"
+          adb shell am start -W -n "$PKG/.HomeActivity" >/dev/null; sleep 10; awake
+          adb shell am start -n "$PKG/.HomeActivity" --es shortcut_action section:cloud >/dev/null; awake; sleep 8
+          sleep 12
+          adb exec-out screencap -p > out/app-top.png
+          dump out/ui-top.xml
+          # scroll down one screen at a time until the page stops moving (two identical dumps in a row = bottom)
+          prev=""; n=0
+          for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
+            adb shell input swipe 540 1700 540 700 500; sleep 2
+            dump out/ui-step-$i.xml
+            adb exec-out screencap -p > out/app-step-$i.png
+            n=$i
+            cur=$(md5sum < out/app-step-$i.png)
+            [ "$cur" = "$prev" ] && break
+            prev=$cur
+          done
+          mid=$(( (n + 1) / 2 )); [ "$mid" -ge 1 ] || mid=1
+          cp out/app-step-$mid.png out/app-middle.png
+          cp out/app-step-$n.png out/app-bottom.png
+          echo "steps=$n middle=$mid" | tee out/result.txt
+          grep -q 'text="Calc"' out/ui-top.xml out/ui-step-*.xml && echo "PASS the Cloud App page rendered" | tee -a out/result.txt || { echo "FAIL the page did not render" | tee -a out/result.txt; echo failed > out/FAILED; }
+          EOF2
+          chmod +x shoot.sh
+      - name: Boot emulator and shoot
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_7
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash shoot.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cloud-app-reference
+          path: out/
+          if-no-files-found: warn
+      - name: Fail when the page did not render
+        run: '[ ! -e out/FAILED ]'
