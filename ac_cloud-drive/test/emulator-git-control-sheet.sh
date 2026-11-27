@@ -126,7 +126,7 @@ ensure_sheet() {
   adb shell am force-stop "$PKG" < /dev/null; sleep 1; timeout 120 adb shell am start -W -n "$act" < /dev/null >/dev/null; sleep 6
   for i in 1 2 3; do tap_text '^Continue with local files$' && break; sleep 2; done; sleep 2
   tap_text '^Git$'; sleep 4; find_row "$1"; tap_text "^$1\$"; sleep 3; sheet_open; }
-open_row() { find_row "$1" || { snap no-row; fail "the row $1 never appeared"; }; tap_text "^$1\$" || fail "cannot open the row $1"; sleep 3; sheet_open || { snap no-sheet; fail "the sheet of $1 did not open"; }; }
+open_row() { find_row "$1" || { snap no-row; fail "the row $1 never appeared"; }; tap_text "^$1\$" || fail "cannot open the row $1"; sleep 3; sheet_open || { sleep 4; sheet_open || { find_row "$1"; tap_text "^$1\$"; sleep 4; }; }; sheet_open || { snap no-sheet; fail "the sheet of $1 did not open"; }; }
 
 mkdir -p "$OUT/walk"; : > "$OUT/walk.tsv"; miss=0; ok=0
 python3 -I - "$BJ" > "$OUT/lists.txt" <<'PY'
