@@ -93,8 +93,14 @@ class LocalDraftListWiringLintTest {
     fun `the list screen pages the merged property and the reader pages the bare one`() {
         assertEquals(
             "InboxScreen must collect the merged property, and it is the only screen that may:",
-            listOf("val listRows = viewModel.pagedListRows.collectAsLazyPagingItems()"),
+            listOf("val listRows = viewModel.keptListRows.collectAsLazyPagingItems()"),
             codeLines(INBOX_SCREEN).map { it.trim() }.filter { "collectAsLazyPagingItems()" in it },
+        )
+        // #1952: the screen pages the merged property THROUGH its cache, and that cache is the merged property and nothing else.
+        assertEquals(
+            "keptListRows must be exactly pagedListRows cached in the ViewModel's scope:",
+            listOf("val keptListRows: Flow<PagingData<InboxRow>> = pagedListRows.cachedIn(viewModelScope)"),
+            codeLines(INBOX_VIEW_MODEL).map { it.trim() }.filter { "keptListRows" in it },
         )
         assertEquals(
             "⛔ SternaApp must keep handing MessageScreen the BARE pagedEmails. Routing the reader " +

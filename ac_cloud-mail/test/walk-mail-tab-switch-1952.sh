@@ -50,7 +50,7 @@ skip_welcome() { if tapt "Skip" exact; then sleep 4; fi; }
 row() { grep -E "MailList.*first-row" "$OUT/logcat.txt" | sed -n "${1}p" | sed -n 's/.*first-row ms=\([0-9]*\) rows=\([0-9]*\) view-models=\([0-9]*\).*/\1 \2 \3/p'; }
 rows_logged() { grep -c -E "MailList.*first-row" "$OUT/logcat.txt"; }
 # the subjects on screen, in order
-subjects() { grep -E "^(Bulk message|Plain hello|Weekly Digest|Receipt 1001|Espa)" "$OUT/$1.texts.txt" | head -4 | tr '\n' '|'; }
+subjects() { grep -E "^(Bulk message|Plain hello|Weekly Digest|Receipt 1001|Espa)" "$OUT/$1.texts.txt" | head -3 | tr '\n' '|'; }
 
 adb shell am broadcast -n "$PKG/app.sterna.navwalk.NavWalkSeedReceiver" -a app.sterna.test.navwalk.SEED --es jmap "http://10.0.2.2:$PORT"
 sleep 3
@@ -69,6 +69,7 @@ shot 01-inbox-synced
 curl -s -m 5 "http://127.0.0.1:$PORT/__stats" > "$OUT/stats-01-synced.json" || true
 # scroll, so a kept position is distinguishable from a list rebuilt at the top
 for j in 1 2 3; do adb shell input swipe 700 1500 700 600 400; sleep 1; done
+adb shell input swipe 700 900 700 1150 600 # a short drag back: the bottom bar hides while the list moves down and returns on this
 sleep 2
 dump 02-scrolled; shot 02-scrolled
 BEFORE=$(subjects 02-scrolled)

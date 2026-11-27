@@ -294,7 +294,7 @@ fun InboxScreen(
     detail: (@Composable () -> Unit)? = null,
 ) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
-    val listRows = viewModel.pagedListRows.collectAsLazyPagingItems()
+    val listRows = viewModel.keptListRows.collectAsLazyPagingItems()
     // #1952: the time from this screen entering the composition to its first frame with rows, once per entry (tag MailList).
     val listEnteredAt = remember { FirstRowTiming.now() }
     val firstRowTimed = remember { mutableStateOf(false) }

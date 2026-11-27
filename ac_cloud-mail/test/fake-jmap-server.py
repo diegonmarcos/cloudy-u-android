@@ -110,7 +110,7 @@ def seed():
         text="See you on Friday at noon.\n", seen=True)
     # #1952: FAKE_JMAP_BULK=N adds N older Inbox messages, so a walk can prove the list of a folder larger than one page.
     for i in range(1, int(os.environ.get("FAKE_JMAP_BULK", "0")) + 1):
-        add("m-bulk%d" % i, ["mb-inbox"], 20 + i, "Bulk message %d" % i, "Bulk %d" % (i % 7), "bulk%d@bulk.example" % (i % 7),
+        add("m-bulk%d" % i, ["mb-inbox"], 20 + i, "Bulk message %d" % i, "Bulk %d" % i, "bulk@bulk%03d.example" % (i % 60),
             text="Bulk body %d.\n" % i, seen=True)
     return out
 
