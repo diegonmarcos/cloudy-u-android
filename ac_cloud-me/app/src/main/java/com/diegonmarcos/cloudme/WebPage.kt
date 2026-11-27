@@ -217,7 +217,7 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
                     refreshing = true
                     scope.launch {
                         // #1323 a cached page: its cache files (scope: build.json) are deleted first; every page: WebView cache emptied, reloaded from the network
-                        WebPullRefresh.run(cached, { withContext(Dispatchers.IO) { LnktreeCache.hardRefresh(ctx, pageId) } }, { view.clearCache(true) }, { view.reload() })
+                        WebPullRefresh.run(cached, { withContext(Dispatchers.IO) { LnktreeCache.hardRefresh(ctx, pageId); LnktreeCache.refill(ctx, pageId, url) } }, { view.clearCache(true) }, { view.reload() })
                     }
                 }
             }

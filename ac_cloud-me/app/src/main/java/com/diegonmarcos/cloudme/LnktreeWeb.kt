@@ -92,6 +92,9 @@ object LnktreeCache {
 
     /** Hard refresh: deletes the cache files (scope from build.json), then empties the WebView's own cache. Call off the UI thread for the deletion. */
     fun hardRefresh(ctx: Context, pageId: String): Int = LnktreeResolver.hardRefresh(pageId, config, store(ctx))
+
+    /** #1947 after a hard refresh the offline fallback is filled again in the background: the page and its CSS/JS are refetched from the network. */
+    fun refill(ctx: Context, pageId: String, pageUrl: String) = revalidate(store(ctx), pageId, pageUrl, pageUrl)
 }
 
 /** Background fill of the pages that have no valid entry; enqueued once per app start. */
