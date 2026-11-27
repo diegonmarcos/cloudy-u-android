@@ -36,7 +36,7 @@ for op in GET_USAGE_STATS SYSTEM_ALERT_WINDOW MANAGE_EXTERNAL_STORAGE REQUEST_IN
 has() { grep -q "text=\"$1\"\|content-desc=\"$1\"" "$OUT/$2.xml"; }
 want() { if has "$1" "$2"; then echo "PASS $3: '$1' on screen" | tee -a "$OUT/verdict.txt"; else echo "FAIL $3: '$1' missing in $2.xml" | tee -a "$OUT/verdict.txt"; rc=1; fi; }
 unwant() { if has "$1" "$2"; then echo "FAIL $3: '$1' must not be on screen" | tee -a "$OUT/verdict.txt"; rc=1; else echo "PASS $3: no '$1'" | tee -a "$OUT/verdict.txt"; fi; }
-swipe_up() { $T adb shell input swipe 70 1750 70 750 600; sleep 2; }
+swipe_up() { $T adb shell input swipe 70 1600 70 600 600; sleep 2; }
 warm() { dump "$1"; sleep 4; dump "$1"; }   # the first dump switches the WebView accessibility tree on
 open_page "page:configs/general"; sleep 12
 open_page "page:pers/geo-summary"; sleep 14; shot geo-1981-summary 6
@@ -64,7 +64,7 @@ warm geo-1981-atlas-asia; tap_text "South America" geo-1981-atlas-asia && shot g
 open_page "page:pers/geo-collections"; sleep 18; shot geo-1981-collections 8; warm geo-1981-collections
 for t in "Curated Collections" "Financial Capitals" "Ancient History"; do want "$t" geo-1981-collections "collections card"; done
 tap_text "Financial Capitals" geo-1981-collections && shot geo-1981-collections-overlay 8 || rc=1
-warm geo-1981-collections-overlay; want "Cities Included" geo-1981-collections-overlay "collections overlay"
+warm geo-1981-collections-overlay; want "CITIES INCLUDED" geo-1981-collections-overlay "collections overlay"
 open_page "page:pers/geo-stats"; sleep 14; shot geo-1981-stats 6; warm geo-1981-stats
 for t in Overview Continents Countries "NomadMania Regions"; do want "$t" geo-1981-stats "stats"; done
 open_page "page:pers/geo-timeline"; sleep 14; shot geo-1981-timeline 6; warm geo-1981-timeline

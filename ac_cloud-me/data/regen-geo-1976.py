@@ -94,7 +94,7 @@ def rewrite_geo(blocks, cfg, trips):
 
 
 # ---------------------------------------------------------------- HTML
-CSS = """*{box-sizing:border-box}html,body{margin:0;height:100%;background:#0B0414;color:#E8E4F3;font:13px/1.4 system-ui,sans-serif}
+CSS = """:root{color-scheme:dark}*{box-sizing:border-box}html,body{margin:0;height:100%;background:#0B0414;color:#E8E4F3;font:13px/1.4 system-ui,sans-serif}
 button{font:inherit;color:inherit;background:#1A0F2E;border:1px solid #3a2a5c;border-radius:999px;padding:6px 12px;cursor:pointer}
 button.on{background:#7C3AED;border-color:#A78BFA;color:#fff}.row{display:flex;gap:6px;flex-wrap:wrap;padding:8px}
 .card{background:#150B26;border:1px solid #2a1c46;border-radius:12px;padding:10px;margin:8px}.dim{color:#9d93b8}
@@ -104,7 +104,7 @@ table{border-collapse:collapse;width:100%}th,td{padding:4px 6px;text-align:left;
 .chip{display:inline-block;margin:2px;padding:2px 8px;border-radius:999px;background:#1A0F2E;border:1px solid #3a2a5c}.chip.v{background:#4c1d95;border-color:#A78BFA}
 """
 
-ATLAS_HTML = r"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Atlas</title>
+ATLAS_HTML = r"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Atlas</title>
 <style>__CSS__svg{width:100%;height:auto;display:block;background:#0E0720;border-radius:12px}.c{fill:#1a1230;stroke:#4b3b74;stroke-width:.5}.c.v{stroke:#fff;stroke-width:.9}
 .m{stroke:#fff;stroke-width:1}.sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}.sw.n{background:#1a1230;border:1px solid #4b3b74}
 .bar{height:10px;border-radius:5px;background:#1a1230;border:1px solid #4b3b74;overflow:hidden}.bar i{display:block;height:100%}#list{padding:0 8px 12px}.pt{stroke:#fff;stroke-width:1}</style></head><body style="overflow:auto">
@@ -143,7 +143,7 @@ MODES.forEach(function(m){var b=document.createElement('button');b.textContent=m
 </script></body></html>
 """
 
-COLL_CSS = """*{box-sizing:border-box}html,body{margin:0;background:#020617;color:#f8fafc;font:14px/1.5 system-ui,sans-serif}.page{padding:16px}
+COLL_CSS = """:root{color-scheme:dark}*{box-sizing:border-box}html,body{margin:0;background:#020617;color:#f8fafc;font:14px/1.5 system-ui,sans-serif}.page{padding:16px}
 .collections-header{margin-bottom:20px}.collections-header__title{font-size:26px;font-weight:300;margin:0 0 6px;color:#f8fafc}.collections-header__subtitle{color:#94a3b8;margin:0}
 .themes-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;padding-bottom:32px}@media(min-width:700px){.themes-grid{grid-template-columns:repeat(4,1fr);gap:24px}}
 .theme-card{position:relative;height:200px;border-radius:16px;overflow:hidden;cursor:pointer;border:1px solid rgba(255,255,255,.05);box-shadow:0 10px 40px rgba(0,0,0,.3);background:#0f172a}
@@ -161,7 +161,7 @@ COLL_CSS = """*{box-sizing:border-box}html,body{margin:0;background:#020617;colo
 canvas{display:block;width:100%}.theme-overlay__map-label{position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,.8);padding:4px 12px;border-radius:4px;font-size:12px;color:#94a3b8}
 """
 
-COLL_HTML = r"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Collections</title>
+COLL_HTML = r"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Collections</title>
 <script src="https://unpkg.com/@phosphor-icons/web"></script><style>__CSS__</style></head><body>
 <div class="page" id="grid"></div>
 <div class="theme-overlay" id="ov"><div class="theme-overlay__slideshow" id="ss"><div class="theme-overlay__gradient"></div></div>
@@ -172,10 +172,11 @@ COLL_HTML = r"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta
 <script>
 var D=JSON.parse(document.getElementById('d').textContent),$=function(i){return document.getElementById(i)},tmr=null;
 var img=function(t,w,h){return 'https://loremflickr.com/'+w+'/'+h+'/'+t.img.split(',')[0]+'/all'};
-$('grid').innerHTML='<div class="collections-header"><h3 class="collections-header__title">Curated Collections</h3><p class="collections-header__subtitle">Explore the world through '+D.themes.length+' unique lenses.</p></div><div class="themes-grid">'+D.themes.map(function(t){return '<div class="theme-card" data-t="'+t.id+'"><img class="theme-card__img" loading="lazy" alt="" src="'+img(t,600,400)+'" onerror="this.style.display=\'none\'"><div class="theme-card__overlay"></div><div class="theme-card__content"><div class="theme-card__header"><i class="ph-fill ph-'+t.icon+' theme-card__icon"></i><h4 class="theme-card__title">'+t.title+'</h4></div><p class="theme-card__desc">'+t.desc+'</p></div></div>'}).join('')+'</div>';
+function alt(e,t,w,h){if(e.dataset.f){e.style.display='none';return}e.dataset.f=1;e.src='https://picsum.photos/seed/'+t.img.split(',')[0]+'/'+w+'/'+h}   /* the same keyword, when the image service of MyTrips does not answer */
+$('grid').innerHTML='<div class="collections-header"><h3 class="collections-header__title">Curated Collections</h3><p class="collections-header__subtitle">Explore the world through '+D.themes.length+' unique lenses.</p></div><div class="themes-grid">'+D.themes.map(function(t){return '<div class="theme-card" data-t="'+t.id+'"><img class="theme-card__img" loading="lazy" alt="" src="'+img(t,600,400)+'" data-k="'+t.id+'" onerror="alt(this,D.themes.filter(function(x){return x.id===this.dataset.k},this)[0],600,400)"><div class="theme-card__overlay"></div><div class="theme-card__content"><div class="theme-card__header"><i class="ph-fill ph-'+t.icon+' theme-card__icon"></i><h4 class="theme-card__title">'+t.title+'</h4></div><p class="theme-card__desc">'+t.desc+'</p></div></div>'}).join('')+'</div>';
 function ring(g,r,X){g.beginPath();r.forEach(function(p,i){var q=X(p[0],p[1]);i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1])});g.closePath()}
 function open(t){var ss=$('ss');[].slice.call(ss.querySelectorAll('img')).forEach(function(i){i.remove()});
-[img(t,1920,1080),'https://loremflickr.com/1920/1080/travel/all','https://loremflickr.com/1920/1080/landscape/all'].forEach(function(u,i){var m=document.createElement('img');m.className='slide-img'+(i?'':' active');m.src=u;m.onerror=function(){m.style.display='none'};ss.appendChild(m)});
+[img(t,1920,1080),'https://loremflickr.com/1920/1080/travel/all','https://loremflickr.com/1920/1080/landscape/all'].forEach(function(u,i){var m=document.createElement('img');m.className='slide-img'+(i?'':' active');m.src=u;m.onerror=function(){if(m.dataset.f){m.style.display='none';return}m.dataset.f=1;m.src='https://picsum.photos/seed/'+(i?(i==1?'travel':'landscape'):t.img.split(',')[0])+'/1920/1080'};ss.appendChild(m)});
 var k=0;clearInterval(tmr);tmr=setInterval(function(){var l=ss.querySelectorAll('img');if(!l.length)return;l[k%l.length].className='slide-img';k++;l[k%l.length].className='slide-img active'},4000);
 $('oi').className='ph-fill ph-'+t.icon;$('ot').textContent=t.title;$('od').textContent=t.desc;$('oc').textContent=t.query.length;$('ov').className='theme-overlay theme-overlay--visible';
 var c=$('tm'),w=c.clientWidth||340,h=Math.round(w*.55);c.width=w*2;c.height=h*2;c.style.height=h+'px';var g=c.getContext('2d');g.scale(2,2);g.fillStyle='#0f172a';g.fillRect(0,0,w,h);var s=w/360;function X(lo,la){return [(lo+180)*s,(90-la)*s]}
@@ -187,7 +188,7 @@ $('bk').onclick=function(){$('ov').className='theme-overlay';clearInterval(tmr)}
 """
 
 
-TRIPS_HTML = r"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MyTrips __VIEW__</title>
+TRIPS_HTML = r"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>MyTrips __VIEW__</title>
 <style>__CSS__body{display:flex;flex-direction:column}#main{flex:1;overflow:auto}canvas{display:block;width:100%;background:#0E0720;border-radius:12px;touch-action:none}
 .tabs{display:flex;gap:6px;padding:8px;overflow-x:auto}.tabs button{flex:none}.bar{height:8px;border-radius:4px;background:#7C3AED}.lg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px}</style></head><body>
 <div id="main"></div>
