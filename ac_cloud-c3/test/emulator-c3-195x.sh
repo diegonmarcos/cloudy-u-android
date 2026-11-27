@@ -155,7 +155,7 @@ fi
 if [ "$T" = all ] || [ "$T" = 1953 ]; then
   open_page pj-unix-cloudy_table; shot c3-1953-cloudy-table-pre 8
   tap_text c3-1953-cloudy-table-pre "Db" ; shot c3-1953-cloudy-table-db 4
-  hswipe 50 2 left; shot c3-1953-cloudy-table-db-right 3   # the Name column sits right of Project / Cat1
+  hswipe 50 1 left; shot c3-1953-cloudy-table-db-right 3   # the Name column sits right of Project / Cat1
   found=0; has c3-1953-cloudy-table-db-right cloudy_db_LFS && found=1
   for k in 2 3 4 5 6 7 8; do [ $found = 1 ] && break; scroll 2 </dev/null; shot c3-1953-cloudy-table-db-$k 2; has c3-1953-cloudy-table-db-$k cloudy_db_LFS && found=1; done
   [ $found = 1 ] || bad "cloudy table Type=Db: cloudy_db_LFS missing"
