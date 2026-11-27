@@ -1,0 +1,179 @@
+# #1966 the Media card's buds-app button on an emulator. The companion app cannot be installed there, so FAKE packages stand in: a tiny
+# signed APK per package id (Tidal, Spotify and the declared default buds app, com.oceanwing.soundcore), each with a launcher activity and a
+# distinct icon. A last-played session (Tidal, "In a Silent Way" / Miles Davis) is written into the app's own prefs (debuggable build, run-as).
+# Phase 1: the expanded Media card carries FOUR actions (Play last, Tidal, Spotify, Buds app); a screenshot is saved. Phase 2: the buds
+# package is uninstalled and the card must show THREE (no dead button). Runs after a Ship Cloud SuperApp run completes, or by dispatch with
+# that run id (env + numeric allow-list). Evidence: media-buds-1966-evidence (screenshots, dumpsys, verdict).
+name: "Test -> SuperApp Media card buds-app button (emulator)"
+
+on:
+  workflow_run:
+    workflows: ["Ship → Cloud SuperApp APK (build + push to GHCR via ORAS + attach to GH Release)"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      superapp_run_id:
+        description: "Ship Cloud SuperApp run id whose x86_64 APK artifact to test"
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  media:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Fetch the Cloud SuperApp APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          W_RUN: ${{ inputs.superapp_run_id || github.event.workflow_run.id }}
+        run: |
+          set -eu
+          case "$W_RUN" in ''|*[!0-9]*) echo "::error::run id must be numeric"; exit 2 ;; esac
+          mkdir -p apk
+          gh api "repos/$REPO/actions/runs/$W_RUN/artifacts" --paginate --jq '.artifacts[] | select(.name|startswith("Cloud-SuperApp")) | .name' |
+          while read -r name; do gh run download "$W_RUN" -R "$REPO" -n "$name" -D "apk/$name"; done
+          pick=""
+          for want in x86_64 universal ''; do
+            pick=$(find apk -name '*.apk' | sort | grep -i -- "$want" | head -1 || true)
+            [ -n "$pick" ] && break
+          done
+          [ -n "$pick" ] || { echo "::error::no Cloud SuperApp APK in run $W_RUN"; exit 1; }
+          cp "$pick" superapp.apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Build the fake companion apps
+        run: |
+          set -eu
+          aapt2=$(ls -d "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          bt=$(dirname "$aapt2")
+          jar=$(ls -d "$ANDROID_HOME"/platforms/android-*/android.jar | sort -V | tail -1)
+          keytool -genkeypair -keystore fake.jks -storepass fakefake -keypass fakefake -alias k -keyalg RSA -keysize 2048 -validity 2 -dname "CN=fake" >/dev/null 2>&1
+          mkdir -p fake
+          while read -r pkg r g b; do
+            d=fake/$pkg; mkdir -p "$d/res/drawable" "$d/out"
+            python3 -I - "$d/icon.png" "$r" "$g" "$b" <<'PY'
+          import struct, sys, zlib
+          path, r, g, b = sys.argv[1], *map(int, sys.argv[2:])
+          row = b"\x00" + bytes([r, g, b, 255]) * 96
+          raw = row * 96
+          def ch(t, d): return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
+          open(path, "wb").write(b"\x89PNG\r\n\x1a\n" + ch(b"IHDR", struct.pack(">IIBBBBB", 96, 96, 8, 6, 0, 0, 0)) + ch(b"IDAT", zlib.compress(raw)) + ch(b"IEND", b""))
+          PY
+            cp "$d/icon.png" "$d/res/drawable/ic.png"
+            cat > "$d/AndroidManifest.xml" <<XML
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="$pkg">
+            <application android:label="$pkg" android:icon="@drawable/ic" android:hasCode="false">
+              <activity android:name="$pkg.Main" android:exported="true">
+                <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
+              </activity>
+            </application>
+          </manifest>
+          XML
+            "$aapt2" compile -o "$d/out/res.zip" --dir "$d/res"
+            "$aapt2" link -o "$d/unsigned.apk" --manifest "$d/AndroidManifest.xml" -I "$jar" "$d/out/res.zip" --min-sdk-version 26 --target-sdk-version 34
+            "$bt/apksigner" sign --ks fake.jks --ks-pass pass:fakefake --key-pass pass:fakefake --out "fake/$pkg.apk" "$d/unsigned.apk"
+          done <<'PKGS'
+          com.aspiro.tidal 0 200 200
+          com.spotify.music 30 215 96
+          com.oceanwing.soundcore 255 140 0
+          PKGS
+          ls -la fake/*.apk
+      - name: Write the scripts
+        run: |
+          cat > check.py <<'PY'
+          import sys
+          txt = open(sys.argv[1], encoding="utf-8", errors="replace").read()
+          pkg, want_buds = sys.argv[2], sys.argv[3] == "yes"
+          recs = ["NotificationRecord(" + r for r in txt.split("NotificationRecord(")[1:]]
+          child = [r for r in recs if ("pkg=%s " % pkg) in r.split("\n", 1)[0] and "channel=floating_nav_media" in r.split("\n", 1)[0]]
+          ok = True
+          def check(c, m):
+              global ok
+              print(("PASS " if c else "FAIL ") + m); ok = ok and c
+          check(len(child) == 1, "the Media child is posted (%d)" % len(child))
+          if child:
+              c = child[0]
+              for t in ("Play last", "Tidal", "Spotify"):
+                  check(('"%s"' % t) in c or t in c.split("actions=", 1)[-1], "action: " + t)
+              has = "Buds app" in c.split("actions=", 1)[-1] or '"Buds app"' in c
+              check(has == want_buds, "Buds app action %s (expected %s)" % ("present" if has else "absent", "present" if want_buds else "absent"))
+              check("In a Silent Way" in c, "the card carries the last track")
+          sys.exit(0 if ok else 1)
+          PY
+          cat > run.sh <<'EOF2'
+          set -u
+          mkdir -p out
+          adb install -r -g superapp.apk || exit 2
+          for p in com.aspiro.tidal com.spotify.music com.oceanwing.soundcore; do adb install -r "fake/$p.apk" || exit 2; done
+          aapt2=$(ls -d "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          PKG=$("$aapt2" dump packagename superapp.apk)
+          ACT=$(adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)
+          adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS || true
+          adb shell appops set "$PKG" SYSTEM_ALERT_WINDOW allow || true
+          # the last played session: Tidal, the owner's track
+          cat > last.xml <<'XML'
+          <?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+          <map>
+              <string name="pkg">com.aspiro.tidal</string>
+              <string name="title">In a Silent Way</string>
+              <string name="artist">Miles Davis</string>
+              <long name="pos" value="1000" />
+              <long name="dur" value="1200000" />
+              <long name="at" value="1700000000000" />
+          </map>
+          XML
+          start() {
+            adb shell am force-stop "$PKG"
+            adb shell "run-as $PKG sh -c 'mkdir -p shared_prefs && cat > shared_prefs/last_media_session.xml'" < last.xml
+            adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
+            adb shell am start -W -n "$ACT" >/dev/null
+          }
+          prove() { # $1 phase, $2 yes|no
+            rc=1
+            for i in $(seq 1 12); do
+              sleep 10
+              adb shell dumpsys notification --noredact > "out/dumpsys-$1.txt"
+              if python3 check.py "out/dumpsys-$1.txt" "$PKG" "$2" > "out/verdict-$1.txt"; then rc=0; break; fi
+            done
+            cat "out/verdict-$1.txt"
+            return $rc
+          }
+          start
+          prove with-app yes; r1=$?
+          adb shell cmd statusbar expand-notifications; sleep 3
+          adb exec-out screencap -p > out/media-1966-shade.png
+          adb shell input swipe 540 500 540 1100 300; sleep 2
+          adb exec-out screencap -p > out/media-1966-expanded.png
+          adb shell cmd statusbar collapse
+          adb uninstall com.oceanwing.soundcore
+          start
+          prove without-app no; r2=$?
+          timeout 60 adb logcat -d > out/logcat.txt || true
+          echo "phase1=$r1 phase2=$r2"
+          [ "$r1" = 0 ] && [ "$r2" = 0 ]
+          EOF2
+      - name: Boot emulator and prove
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_7
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash run.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: media-buds-1966-evidence
+          path: out/
+          if-no-files-found: warn

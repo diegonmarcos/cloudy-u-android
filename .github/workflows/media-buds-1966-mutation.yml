@@ -1,0 +1,129 @@
+# #1966 the Media card's buds-app button. The real tree runs BudsApp1966Test GREEN once; then each planted mutant must turn its NAMED
+# test RED. The verdict is read from the JUnit XML (the named testcase failed), never from gradle's exit text; a build that did not
+# compile or a missing test is an ERROR, not a kill. The dispatch input reaches the shell through env only and is checked against
+# the allow-list below. Runs on a push touching the button's files, or by dispatch.
+name: media-buds-1966-mutation
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/media-buds-1966-mutation.yml"
+      - "aa_cloud-superapp/app/src/main/java/com/diegonmarcos/superapp/media/BudsApp.kt"
+      - "aa_cloud-superapp/app/src/test/java/com/diegonmarcos/superapp/media/BudsApp1966Test.kt"
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "all | button-absent | map-ends-with | default-in-code | default-in-json | no-reason"
+        required: false
+        default: "all"
+permissions:
+  contents: read
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the dispatch input (allow-list)
+        env:
+          NAME: ${{ inputs.name || 'all' }}
+        run: |
+          case "$NAME" in
+            all|button-absent|map-ends-with|default-in-code|default-in-json|no-reason) ;;
+            *) echo "::error::name not in the allow-list"; exit 2 ;;
+          esac
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
+      - name: Set up Gradle 8.10.2 (cached)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.10.2"
+      # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
+      # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
+      - name: Checkout vault (shared Android signing key, read by app/build.gradle at configuration)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+      - name: Install ORAS + sops (pinned)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: oras sops
+      - name: Real tree GREEN, every mutant RED (verdict from the JUnit XML)
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+          ONLY: ${{ inputs.name || 'all' }}
+        run: |
+          set -u
+          APP=aa_cloud-superapp
+          CLS=com.diegonmarcos.superapp.media.BudsApp1966Test
+          M=$APP/app/src/main/java/com/diegonmarcos/superapp/media
+          suite() {
+            rm -rf "$APP"/app/build/test-results
+            UNIT_TEST_FILTER="$CLS" sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$APP" > /tmp/suite.log 2>&1 || true
+          }
+          xml() { find "$APP" -path '*build/test-results*' -name "TEST-$CLS.xml" 2>/dev/null | head -1; }
+          # prints the failed testcase names; exit 1 when there is no XML or no test ran
+          failed() {
+            python3 -I - "$(xml)" <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          if not sys.argv[1]: sys.exit(1)
+          r = ET.parse(sys.argv[1]).getroot()
+          cases = list(r.iter("testcase"))
+          if len(cases) < 4: sys.exit(1)
+          for c in cases:
+              if c.find("failure") is not None or c.find("error") is not None: print(c.get("name"))
+          PY
+          }
+          sub() { python3 -I -c 'import sys; p, a, b = sys.argv[1:]; s = open(p).read(); assert a in s, "anchor missing: " + a; open(p, "w").write(s.replace(a, b, 1))' "$1" "$2" "$3"; }
+          suite
+          failed > /tmp/f.txt || { tail -80 /tmp/suite.log; echo "::error::no XML or too few tests ran on the real tree"; exit 1; }
+          [ ! -s /tmp/f.txt ] || { cat /tmp/f.txt; echo "::error::the real tree is RED"; exit 1; }
+          echo "real tree: GREEN"
+          stayed=0
+          while IFS='@' read -r path name a b want; do
+            [ -z "$name" ] && continue
+            [ "$ONLY" != "all" ] && [ "$ONLY" != "$name" ] && continue
+            git checkout -- "$M/MediaLaunchers.kt" "$M/BudsApp.kt" "$APP/build.json"
+            case "$path" in L) P=$M/MediaLaunchers.kt ;; B) P=$M/BudsApp.kt ;; *) P=$APP/build.json ;; esac
+            sub "$P" "$a" "$b" || { echo "::error::$name: mutation anchor missing"; stayed=$((stayed + 1)); continue; }
+            suite
+            if ! failed >/tmp/f.txt; then tail -40 /tmp/suite.log; echo "::error::$name: no verdict (compile error?)"; stayed=$((stayed + 1)); continue; fi
+            cat /tmp/f.txt
+            if grep -qxF "$want" /tmp/f.txt; then echo "KILLED $name by: $want"; else echo "::error::mutant survived (the named test stayed green): $name"; stayed=$((stayed + 1)); fi
+          done <<'MUTANTS'
+          L@button-absent@Kind.BUDS_APP -> budsApp?.takeIf(installed)@Kind.BUDS_APP -> null@the button is present after spotify when the app is installed
+          B@map-ends-with@startsWith(it, ignoreCase = true)@endsWith(it, ignoreCase = true)@the device map picks the right app
+          B@default-in-code@listOfNotNull(setting.takeIf { it.isNotBlank() })@listOf(setting.ifBlank { "com.oceanwing.soundcore" })@the default comes from the declaration not from code
+          J@default-in-json@"default": "com.oceanwing.soundcore"@"default": "com.example.other"@the default comes from the declaration not from code
+          B@no-reason@if (resolve(setting, connected, rules, installed) != null) return null@return null@the button is hidden with a reason when the app is not installed
+          MUTANTS
+          git checkout -- "$M/MediaLaunchers.kt" "$M/BudsApp.kt" "$APP/build.json"
+          [ "$stayed" -eq 0 ] || { echo "::error::$stayed mutant(s) survived or gave no verdict"; exit 1; }
+          echo "every mutant RED"
+      - name: Upload the JUnit XML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: media-buds-1966-junit
+          path: aa_cloud-superapp/app/build/test-results/
+          if-no-files-found: warn

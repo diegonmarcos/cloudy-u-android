@@ -1,5 +1,6 @@
 package com.diegonmarcos.superapp.configs
 
+import com.diegonmarcos.superapp.media.BudsApp
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -200,7 +201,28 @@ object BadgePanes {
             if (persistentOpt != null) LabelSwitch(
                 persistentOpt.label, BadgeCustomization.bool(ctx, b, BadgeCustomization.KEY_PERSISTENT), 13, "persistent:${b.id}",
             ) { v -> BadgeCustomization.set(ctx, b, BadgeCustomization.KEY_PERSISTENT, v); apply(ctx, redraw) }
+            budsAppSetting(ctx, b, redraw)
         }
+    }
+
+    /** #1966 the Media card's buds-app setting: the chosen app (declared default), tap to cycle the declared choices, and, when
+     *  that app is not installed, the reason the card shows no button for it. */
+    @Composable
+    private fun budsAppSetting(ctx: Context, b: BadgeDeclaration.Badge, redraw: () -> Unit) {
+        val opt = b.customization.firstOrNull { it.key == BudsApp.KEY } ?: return
+        val cur = BadgeCustomization.text(ctx, b, BudsApp.KEY)
+        val pm = ctx.packageManager
+        val reason = BudsApp.reason(cur, emptyList(), emptyList()) { p -> runCatching { pm.getLaunchIntentForPackage(p) != null }.getOrDefault(false) }
+        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("${opt.label}: $cur", fontSize = 13.sp, color = LocalKitPalette.current.textPrimary,
+                modifier = Modifier.weight(1f).testTag("buds-app:${b.id}"))
+            PaneButton("Change", tag = "buds-app-next:${b.id}") {
+                val all = opt.options.ifEmpty { listOf(cur) }
+                BadgeCustomization.set(ctx, b, BudsApp.KEY, all[(all.indexOf(cur) + 1) % all.size])
+                apply(ctx, redraw)
+            }
+        }
+        if (reason != null) Text(reason, fontSize = 12.sp, color = Color(0xFFE05252), modifier = Modifier.testTag("buds-app-reason:${b.id}"))
     }
 
     /** A switch that launched: a refusal is never silent (one toast naming each badge and why). */

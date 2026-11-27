@@ -23,7 +23,10 @@ import com.diegonmarcos.superapp.notificationcenter.NotifyGroups
 import com.diegonmarcos.superapp.notificationcenter.PhoneNotificationListenerService
 import com.diegonmarcos.superapp.R
 import com.diegonmarcos.superapp.media.LastMediaSession
+import com.diegonmarcos.superapp.media.BudsApp
 import com.diegonmarcos.superapp.media.MediaLaunchers
+import com.diegonmarcos.superapp.network.BtLinks
+import androidx.core.graphics.drawable.toBitmap
 
 /**
  * "Cloud SuperApp - Notification Center Media Session" — a rich media-control
@@ -144,14 +147,31 @@ class MediaProxy(private val ctx: Context) {
     /** #1923 the launcher actions for the notification: absent apps hidden, Play last only with a known player. */
     private fun launcherActions(lastPkg: String?): List<BadgeModel.Action> {
         val pm = ctx.packageManager
-        return MediaLaunchers.visible({ p -> runCatching { pm.getLaunchIntentForPackage(p) != null }.getOrDefault(false) }, lastPkg).map { (e, pkg) ->
+        val installed = { p: String -> runCatching { pm.getLaunchIntentForPackage(p) != null }.getOrDefault(false) }
+        val budsApp = budsAppPkg(installed)
+        return MediaLaunchers.visible(installed, lastPkg, budsApp).map { (e, pkg) ->
             val intent = if (e.kind == MediaLaunchers.Kind.PLAY_LAST) pi(PLAY_LAST)
             else PendingIntent.getActivity(ctx, e.id.hashCode(),
                 pm.getLaunchIntentForPackage(pkg)!!.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-            BadgeModel.Action(e.id, e.icon, e.label, intent)
+            // #1966 the buds app shows its own launcher icon
+            val icon = if (e.kind == MediaLaunchers.Kind.BUDS_APP) launcherIcon(pm, pkg) else null
+            BadgeModel.Action(e.id, e.icon, e.label, intent, icon)
         }
     }
+
+    /** #1966 the buds app to open: the setting (declared default) unless matching earbuds are connected; null when not installed. */
+    private fun budsAppPkg(installed: (String) -> Boolean): String? {
+        val d = decl ?: return null
+        val connected = runCatching { BtLinks.read(ctx).links.map { it.name } }.getOrDefault(emptyList())
+        return BudsApp.resolve(BadgeCustomization.text(ctx, d, BudsApp.KEY), connected, d.budsApps, installed)
+    }
+
+    private fun launcherIcon(pm: android.content.pm.PackageManager, pkg: String): android.graphics.Bitmap? = runCatching {
+        val d = pm.getApplicationIcon(pkg)
+        val px = (48 * ctx.resources.displayMetrics.density).toInt()
+        d.toBitmap(px, px)
+    }.getOrNull()
 
     /** The `media_now_playing` entry of build.json::ui.notification_center —
      *  this badge's own declaration, which is where its persistence now comes

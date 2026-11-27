@@ -63,6 +63,10 @@ object BadgeDeclaration {
      */
     data class Card(val kind: String = "text", val accent: String = "", val rank: Int = Int.MAX_VALUE)
 
+    /** #1966 one declared companion-app rule: a connected Bluetooth audio device whose name starts with any of [prefixes]
+     *  (case-insensitive) is served by the first installed of [packages]. [label] names the app in the setting's reason. */
+    data class BudsRule(val prefixes: List<String>, val label: String, val packages: List<String>)
+
     data class Badge(
         val id: String,
         val label: String,
@@ -90,6 +94,8 @@ object BadgeDeclaration {
         val card: Card = Card(),
         /** Retired ids (and old deep-link names) that still resolve to this badge. */
         val aliases: List<String> = emptyList(),
+        /** #1966 the device -> companion app map (`buds_apps`); empty for every badge but Media. */
+        val budsApps: List<BudsRule> = emptyList(),
     )
 
     /**
@@ -160,6 +166,7 @@ object BadgeDeclaration {
                 instruments = instruments(o.optJSONArray("instruments")),
                 card = o.optJSONObject("card")?.let { Card(it.optString("kind", "text"), it.optString("accent", ""), it.optInt("rank", Int.MAX_VALUE)) } ?: Card(),
                 aliases = strings(o.optJSONArray("aliases")),
+                budsApps = budsRules(o.optJSONArray("buds_apps")),
             )
         }
         return out
@@ -232,6 +239,16 @@ object BadgeDeclaration {
             )
         }
         return out
+    }
+
+    private fun budsRules(a: JSONArray?): List<BudsRule> {
+        if (a == null) return emptyList()
+        return (0 until a.length()).mapNotNull { i ->
+            val o = a.optJSONObject(i) ?: return@mapNotNull null
+            val prefixes = strings(o.optJSONArray("name_prefixes"))
+            val pkgs = strings(o.optJSONArray("packages"))
+            if (prefixes.isEmpty() || pkgs.isEmpty()) null else BudsRule(prefixes, o.optString("label", pkgs.first()), pkgs)
+        }
     }
 
     private fun options(a: JSONArray?): List<Option> {

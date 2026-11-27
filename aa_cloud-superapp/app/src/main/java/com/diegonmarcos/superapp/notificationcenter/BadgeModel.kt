@@ -15,13 +15,17 @@ import androidx.core.app.NotificationCompat
 object BadgeModel {
 
     /** One tappable action: [id] is stable per action (also its test tag), [icon] a thin-line drawable (never 0). */
-    data class Action(val id: String, @DrawableRes val icon: Int, val label: String, val intent: PendingIntent)
+    data class Action(val id: String, @DrawableRes val icon: Int, val label: String, val intent: PendingIntent,
+                      /** #1966 an app's real launcher icon; [icon] stays the non-zero fallback the Notify card reads. */
+                      val iconBitmap: android.graphics.Bitmap? = null)
 
     /** The only `addAction` of a badge notification. An icon-less action is a bug here, not a blank button on the card. */
     fun add(b: NotificationCompat.Builder, actions: List<Action>): NotificationCompat.Builder {
         for (a in actions) {
             require(a.icon != 0) { "badge action '${a.label}' has no icon" }
-            b.addAction(a.icon, a.label, a.intent)
+            if (a.iconBitmap != null) b.addAction(NotificationCompat.Action.Builder(
+                androidx.core.graphics.drawable.IconCompat.createWithBitmap(a.iconBitmap), a.label, a.intent).build())
+            else b.addAction(a.icon, a.label, a.intent)
         }
         return b
     }

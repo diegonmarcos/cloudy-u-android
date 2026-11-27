@@ -13,8 +13,8 @@ class MediaLaunchersTest {
     private fun ids(installed: (String) -> Boolean, last: String? = "com.aspiro.tidal") =
         MediaLaunchers.visible(installed, last).map { it.first.id }
 
-    @Test fun `the action set is play last, tidal, spotify, buds in that order with icons`() {
-        assertEquals(listOf("play-last", "open-tidal", "open-spotify", "open-buds"), MediaLaunchers.ALL.map { it.id })
+    @Test fun `the action set is play last, tidal, spotify, buds app, buds in that order with icons`() {
+        assertEquals(listOf("play-last", "open-tidal", "open-spotify", "open-buds-app", "open-buds"), MediaLaunchers.ALL.map { it.id })
         assertTrue(MediaLaunchers.ALL.all { it.icon != 0 })
         assertEquals(listOf("com.aspiro.tidal"), MediaLaunchers.ALL[1].packages)
         assertEquals(listOf("com.spotify.music"), MediaLaunchers.ALL[2].packages)

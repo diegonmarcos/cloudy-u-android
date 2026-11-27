@@ -11926,7 +11926,23 @@
               "type": "toggle",
               "label": "Show album art",
               "default": true
+            },
+            {
+              "key": "buds_app",
+              "type": "choice",
+              "label": "Buds app (button after Spotify)",
+              "options": ["com.oceanwing.soundcore", "com.samsung.android.app.watchmanager", "com.google.android.apps.wearables.maestro.companion", "com.sony.songpal.mdr", "com.bose.bosemusic", "com.jbl.oneapp"],
+              "default": "com.oceanwing.soundcore"
             }
+          ],
+          "_doc_buds_apps": "#1966 the Media card's buds-app button opens the companion app of the owner's earbuds (the real launcher icon; hidden, with the reason in this setting, when the app is not installed). The `buds_app` customization is the app shown when no matching earbuds are connected (default Anker Soundcore, com.oceanwing.soundcore, in the declaration only). `buds_apps` maps a connected Bluetooth audio device to its companion app: the first connected device whose name starts with any of name_prefixes (case-insensitive) selects the first installed of packages.",
+          "buds_apps": [
+            {"name_prefixes": ["Soundcore", "Anker", "Liberty", "Space One", "Life "], "label": "Anker Soundcore", "packages": ["com.oceanwing.soundcore"]},
+            {"name_prefixes": ["Galaxy Buds"], "label": "Galaxy Wearable", "packages": ["com.samsung.android.app.watchmanager", "com.samsung.accessory.berrymgr", "com.samsung.accessory.neobeanmanager"]},
+            {"name_prefixes": ["Pixel Buds"], "label": "Pixel Buds", "packages": ["com.google.android.apps.wearables.maestro.companion"]},
+            {"name_prefixes": ["WF-", "WH-", "LinkBuds"], "label": "Sony Sound Connect", "packages": ["com.sony.songpal.mdr"]},
+            {"name_prefixes": ["Bose"], "label": "Bose Music", "packages": ["com.bose.bosemusic"]},
+            {"name_prefixes": ["JBL"], "label": "JBL One", "packages": ["com.jbl.oneapp"]}
           ]
         },
         {

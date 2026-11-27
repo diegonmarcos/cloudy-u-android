@@ -9,7 +9,7 @@ import com.diegonmarcos.superapp.R
  * check is a lambda, so the Android parts are only the notification builder and the transport in MediaProxy.
  */
 object MediaLaunchers {
-    enum class Kind { PLAY_LAST, TIDAL, SPOTIFY, BUDS }
+    enum class Kind { PLAY_LAST, TIDAL, SPOTIFY, BUDS_APP, BUDS }
 
     /** [packages] are tried in order; a PLAY_LAST entry has none (it targets the last player, see [lastPlayer]). */
     data class Entry(val kind: Kind, val id: String, val label: String, @DrawableRes val icon: Int, val packages: List<String>)
@@ -29,6 +29,8 @@ object MediaLaunchers {
         Entry(Kind.PLAY_LAST, "play-last", "Play last", android.R.drawable.ic_media_play, emptyList()),
         Entry(Kind.TIDAL, "open-tidal", "Tidal", R.drawable.ic_media_tidal, listOf(TIDAL_PKG)),
         Entry(Kind.SPOTIFY, "open-spotify", "Spotify", R.drawable.ic_media_spotify, listOf(SPOTIFY_PKG)),
+        // #1966 the declared buds app (setting + device map, see BudsApp): resolved by the caller and passed to [visible] as budsApp
+        Entry(Kind.BUDS_APP, "open-buds-app", "Buds app", R.drawable.ic_bluetooth, emptyList()),
         Entry(Kind.BUDS, "open-buds", "Buds", R.drawable.ic_bluetooth, BUDS_PKGS),
     )
 
@@ -36,8 +38,14 @@ object MediaLaunchers {
     fun resolve(e: Entry, installed: (String) -> Boolean): String? = e.packages.firstOrNull(installed)
 
     /** The entries to show with the resolved package ([lastPkg] for Play last), absent apps hidden, order kept. */
-    fun visible(installed: (String) -> Boolean, lastPkg: String?): List<Pair<Entry, String>> = ALL.mapNotNull { e ->
-        val pkg = if (e.kind == Kind.PLAY_LAST) lastPkg?.takeIf(installed) else resolve(e, installed)
+    fun visible(installed: (String) -> Boolean, lastPkg: String?, budsApp: String? = null): List<Pair<Entry, String>> = ALL.mapNotNull { e ->
+        val pkg = when (e.kind) {
+            Kind.PLAY_LAST -> lastPkg?.takeIf(installed)
+            Kind.BUDS_APP -> budsApp?.takeIf(installed)
+            // the Galaxy Buds entry is not repeated when the declared buds app already is that app
+            Kind.BUDS -> resolve(e, installed)?.takeIf { budsApp == null || budsApp !in BUDS_PKGS }
+            else -> resolve(e, installed)
+        }
         pkg?.let { e to it }
     }
 
