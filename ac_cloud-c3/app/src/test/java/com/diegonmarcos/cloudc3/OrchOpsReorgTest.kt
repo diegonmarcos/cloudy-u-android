@@ -93,7 +93,7 @@ class OrchOpsReorgTest {
         assertFalse("orch_infrastructure is back in Orch", nav.section("orch")!!.pages.any { it.id == "orch_infrastructure" })
         assertEquals(Target("containers", "all_table"), C3Nav.resolve(nav, aliases, "orch_infrastructure"))
         assertEquals(Target("containers", "all_table"), C3Nav.resolve(nav, aliases, "infrastructure"))
-        assertEquals("Orch has the eight #1954 pages", 8, nav.section("orch")!!.pages.size)
+        assertEquals("Orch has the seven #1954 pages", 7, nav.section("orch")!!.pages.size)
     }
 
     private fun orchSection() = ui()["sections"]!!.jsonArray.map { it.jsonObject }.first { it["id"]!!.jsonPrimitive.content == "orch" }
