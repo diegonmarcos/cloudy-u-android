@@ -52,8 +52,8 @@ object EnginesModel {
         "services" to listOf("daily", "url", "mail"),
     )
 
-    const val BODY_GAP = "report body not served: cloud-data is a private repo (no token in the APK) and c3-infra-api has no GET /reports/data/<family> route yet (#1977)"
-    const val STATUS_GAP = "freshness not served: GET /reports/status does not list this family"
+    const val BODY_GAP = "report body route not served yet (#1977): needs the main-server restart (cloud-data is a private repo, no token in the APK, and c3-infra-api has no GET /reports/data/<family> route yet)"
+    const val STATUS_GAP = "freshness unknown: GET /reports/status does not list this family yet (#1977)"
 
     // ── what was read ───────────────────────────────────────────────────────
 
