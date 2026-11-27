@@ -116,7 +116,7 @@ ACH_TABS = ["geo", "endurance", "growth", "community", "by30", "by40", "by50"]
 # #1976 Pers is two rows (groups): Profiles = Media, Health, Astro, DD; Achieves (was Personal Archives) = the Achieves tabs; Study and Work stay under Prof > Profiles
 _exp = secs.get("pers", {})
 _sub = {p["id"]: p for p in _exp.get("pages", [])}
-if [p["id"] for p in _exp.get("pages", [])] != ["pers-media", "health", "astro", "dd"] + ACH_TABS or [g["label"] for g in _exp.get("groups", [])] != ["Profiles", "Achieves"]:
+if [p["id"] for p in _exp.get("pages", [])] != ["pers-profiles", "health", "astro", "dd"] + ACH_TABS or [g["label"] for g in _exp.get("groups", [])] != ["Profiles", "Achieves"]:
     bad("achieves", "Pers is not the two rows Profiles (Media, Health, Astro, DD) and Achieves (the seven tabs)")
 if "study" in secs or "achieves" in secs or "experiences" in secs:
     bad("achieves", "Study, Achieves or Experiences is still a section of its own")
@@ -227,12 +227,12 @@ if [p["id"] for p in _pj.get("pages", [])] != ["pj-home", "pj-repos", "pj-unix",
     bad("pages", "Proj pages are not Home, Unix, CG, Capital, Hardtech, Wiki, Projects, 42 (#1914)")
 if ui.get("default_section") != "lnktree" or (_lt.get("pages") or [{}])[0].get("id") != "lt-lnktree-site" or (_pj.get("pages") or [{}])[0].get("id") != "pj-home":
     bad("pages", "the app does not open on Lnktree, the Lnktree entry on its Lnktree site, or Proj on its Home (#1914)")
-_pr = {p["id"]: p for p in _sub.get("pers-media", {}).get("pages", [])}
-if list(_pr) != ["personal", "pers-instagram", "pers-social"] or [p["id"] for p in _pr.get("pers-instagram", {}).get("pages", [])] + [p["id"] for p in _pr.get("pers-social", {}).get("pages", [])] != ["ig0", "ig1", "ig2", "face0", "pinterest", "youtube", "tidal", "linkedin", "orkut"]:
-    bad("pages", "Pers > Media is not Personal | Instagram (ig0, ig1, ig2) | Social (face0, Pinterest, YouTube, Tidal, LinkedIn, Orkut) (#1913, #1976)")
+_pr = {p["id"]: p for p in _sub.get("pers-profiles", {}).get("pages", [])}
+if list(_pr) != ["personal", "ig0", "ig1", "ig2", "face0", "pinterest", "youtube", "tidal", "linkedin", "orkut"] or any(p.get("pages") for p in _pr.values()):
+    bad("pages", "Pers > Media is not ONE flat strip Personal | ig0 | ig1 | ig2 | face0 | Pinterest | YouTube | Tidal | LinkedIn | Orkut (#1913, #1976)")
 if [p["id"] for p in _sub.get("health", {}).get("pages", [])] != ["trackers", "plan", "health-profile"]:
     bad("pages", "Pers > Health is not Trackers, Plan, Record")
-for _pid, _u, _rel in (("leafy", "https://diegonmarcos.github.io/leafy/", "prof/leafy"), ("nexus", "https://diegonmarcos.github.io/nexus/", "prof/nexus"), ("stark", "https://diegonmarcos.github.io/stark/", "prof/stark"), ("astro", "https://diegonmarcos.github.io/myAstro/", "pers/astro"), ("personal", "https://diegonmarcos.github.io/mySocials/", "pers/pers-media/personal"), ("lt-lnktree-site", "https://linktree.diegonmarcos.com/", "lnktree/lt-lnktree-site")):
+for _pid, _u, _rel in (("leafy", "https://diegonmarcos.github.io/leafy/", "prof/leafy"), ("nexus", "https://diegonmarcos.github.io/nexus/", "prof/nexus"), ("stark", "https://diegonmarcos.github.io/stark/", "prof/stark"), ("astro", "https://diegonmarcos.github.io/myAstro/", "pers/astro"), ("personal", "https://diegonmarcos.github.io/mySocials/", "pers/pers-profiles/personal"), ("lt-lnktree-site", "https://linktree.diegonmarcos.com/", "lnktree/lt-lnktree-site")):
     _f = os.path.join(app, f"data/ui/{_rel}.json")
     _b = json.load(open(_f, encoding="utf-8")) if os.path.exists(_f) else []
     if len(_b) != 1 or _b[0].get("id") != "web" or _b[0].get("url") != _u:
@@ -263,7 +263,7 @@ if [p["id"] for p in secs.get("tasks", {}).get("pages", [])] != ["roadmaps", "ba
 # both drawing the mysocials web pages; Tasks stays declared off the bar with every page, so nothing is dropped.
 if "socials" in secs or "socials" in ui.get("bottom_nav", []) or os.path.isdir(os.path.join(app, "data/ui/socials")):
     bad("pages", "the Socials section is declared again (it is Proj; its two tabs live in Prof and Pers)")
-for _pg, _url, _rel in (("ig0", "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html", "pers/pers-media/pers-instagram/ig0"),):
+for _pg, _url, _rel in (("ig0", "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html", "pers/pers-profiles/ig0"),):
     _sf = os.path.join(app, f"data/ui/{_rel}.json")
     _sj = json.load(open(_sf, encoding="utf-8")) if os.path.exists(_sf) else [{}]
     if _sj[0].get("kind") != "fragment" or _sj[0].get("id") != "web" or _sj[0].get("url") != _url:

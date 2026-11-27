@@ -45,11 +45,11 @@ class NavReorgTest {
         val pers = Sections.byId("pers")!!
         // #1976 one flat strip of pages, drawn as the two declared rows (nav_mode horizontal_two_rows, groups)
         assertEquals(listOf("Media", "Health", "Astro", "DD", "Geo", "Endurance", "Personal Growth", "Community", "By 30", "By 40", "By 50"), pers.pages.map { it.label })
-        assertEquals(listOf(listOf("Profiles", "pers-media", "health", "astro", "dd"), listOf("Achieves", "geo", "endurance", "growth", "community", "by30", "by40", "by50")),
+        assertEquals(listOf(listOf("Profiles", "pers-profiles", "health", "astro", "dd"), listOf("Achieves", "geo", "endurance", "growth", "community", "by30", "by40", "by50")),
             pers.nav.rowGroups().map { g -> listOf(g.label) + g.pages.map { it.id } })
-        assertEquals(listOf("personal", "pers-instagram", "pers-social"), ids(pers.page("pers-media")!!.pages))   // Media holds the three social pages as its tabs
-        assertEquals(listOf("ig0", "ig1", "ig2"), ids(pers.page("pers-instagram")!!.pages))
-        assertEquals(listOf("face0", "pinterest", "youtube", "tidal", "linkedin", "orkut"), ids(pers.page("pers-social")!!.pages))
+        // Media is ONE flat strip, Personal (the mySocials home of the others) first, no Instagram / Social grouping level
+        assertEquals(listOf("personal", "ig0", "ig1", "ig2", "face0", "pinterest", "youtube", "tidal", "linkedin", "orkut"), ids(pers.page("pers-profiles")!!.pages))
+        assertTrue(pers.page("pers-profiles")!!.pages.all { it.pages.isEmpty() })
         val health = pers.page("health")!!
         assertEquals(listOf("trackers", "plan", "health-profile"), ids(health.pages))
         assertEquals(listOf("tracked", "activities", "bodycomp", "hr", "sleep"), ids(pers.page("trackers")!!.pages))
@@ -57,13 +57,13 @@ class NavReorgTest {
         // the page chain IS the folder path of the page's content file
         assertEquals(listOf("health", "trackers", "tracked"), pers.path("tracked").map { it.id })
         assertEquals(listOf("geo"), pers.path("geo").map { it.id })
-        assertEquals(listOf("pers-media", "pers-instagram", "ig0"), pers.path("ig0").map { it.id })
+        assertEquals(listOf("pers-profiles", "ig0"), pers.path("ig0").map { it.id })
         // each container opens its first leaf; Pers opens on Media > Personal, Health on Tracked
         assertEquals("personal", leafOf("pers", null))
         assertEquals("tracked", leafOf("pers", "health"))
-        assertEquals("ig0", leafOf("pers", "pers-instagram"))
         // the retired container ids resolve through ui.renamed
-        assertEquals("pers" to "pers-media", LegacyRoutes.resolve("pers", "pers-profiles"))
+        assertEquals("pers" to "pers-profiles", LegacyRoutes.resolve("pers", "pers-profiles"))   // the SuperApp Me-Pers tile target stays a declared page
+        assertEquals("pers" to "ig0", LegacyRoutes.resolve("pers", "pers-instagram")); assertEquals("pers" to "face0", LegacyRoutes.resolve("pers", "pers-social"))
         assertEquals("pers" to "geo", LegacyRoutes.resolve("pers", "achieves"))
     }
 

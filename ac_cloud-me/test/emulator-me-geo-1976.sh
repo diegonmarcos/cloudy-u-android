@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # emulator-me-geo-1976 — #1976 on a booted emulator, from the Ship APK: Pers is two rows (Profiles | Media Health Astro DD over Achieves | Geo ... By 50), Media shows its three tabs
-# (Personal | Instagram | Social), Geo shows Long Stay, the Short Stay Places table (Continent / Region, Cities, NM, Countries, Days), the visited-countries map with a continent
+# (ONE flat strip Personal | ig0 | ig1 | ig2 | face0 | Pinterest | ...), Geo shows Long Stay, the Short Stay Places table (Continent / Region, Cities, NM, Countries, Days), the visited-countries map with a continent
 # switcher (no world button) and MyTrips; each is screenshotted (pers-1976-nav.png, pers-1976-media.png, geo-1976-*.png).
 # Usage: emulator-me-geo-1976.sh ME_APK OUT_DIR. Exit 1 on any failed assertion.
 set -uo pipefail
@@ -40,7 +40,7 @@ wantp() { if hasp "$1" "$2"; then echo "PASS $3: '$1' on screen" | tee -a "$OUT/
 unwant() { if has "$1" "$2"; then echo "FAIL $3: '$1' must not be on screen" | tee -a "$OUT/verdict.txt"; rc=1; else echo "PASS $3: no '$1'" | tee -a "$OUT/verdict.txt"; fi; }
 swipe_up() { $T adb shell input swipe 70 1750 70 750 600; sleep 2; }   # x=70: clear of the system back-gesture edge
 open_page "page:configs/general"; sleep 12
-open_page "page:pers/pers-media"; sleep 12
+open_page "page:pers/pers-profiles"; sleep 12
 shot pers-1976-nav 6
 wantp Profiles pers-1976-nav "nav row 1 label"; wantp Achieves pers-1976-nav "nav row 2 label"
 for t in Media Health Astro DD Geo Endurance "Personal Growth"; do want "$t" pers-1976-nav "nav"; done
@@ -55,7 +55,7 @@ row1 = [pos.get(k) for k in ("Media", "Health", "Astro", "DD")]; row2 = [pos.get
 ok = all(row1) and all(row2) and max(r[0] for r in row1) < min(r[0] for r in row2) and row1[0][1] < row1[1][1] < row1[2][1]
 print("%s two rows: Media Health Astro DD above Geo Endurance (y,x: %s %s)" % ("PASS" if ok else "FAIL", row1, row2)); sys.exit(0 if ok else 1)
 PY
-for t in Personal Instagram Social; do want "$t" pers-1976-nav "media tab"; done
+for t in Personal ig0 ig1 ig2 face0 Pinterest; do want "$t" pers-1976-nav "media tab (one flat strip)"; done; unwant Instagram pers-1976-nav "media: no Instagram grouping"
 cp "$OUT/pers-1976-nav.png" "$OUT/pers-1976-media.png"
 $T adb shell input swipe 950 380 150 380 500; sleep 2; shot pers-1976-nav-row2-scrolled 3
 for t in "By 30" "By 40" "By 50"; do want "$t" pers-1976-nav-row2-scrolled "nav row 2 end"; done

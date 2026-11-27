@@ -23,34 +23,26 @@ def flat(ps):
     for p in ps or []:
         yield p; yield from flat(p.get("pages"))
 # N: nav order, two rows, rename
-PROFILES = ["pers-media", "health", "astro", "dd"]; ACH = ["geo", "endurance", "growth", "community", "by30", "by40", "by50"]
+PROFILES = ["pers-profiles", "health", "astro", "dd"]; ACH = ["geo", "endurance", "growth", "community", "by30", "by40", "by50"]
 if [p["id"] for p in pers["pages"]] != PROFILES + ACH: E("N1", "Pers pages are %r" % [p["id"] for p in pers["pages"]])
 if pers.get("nav_mode") != "horizontal_two_rows": E("N2", "Pers is not a two-row nav (nav_mode %r)" % pers.get("nav_mode"))
 if [(g["label"], g["pages"]) for g in pers.get("groups", [])] != [("Profiles", PROFILES), ("Achieves", ACH)]: E("N3", "rows are %r" % [(g["label"], g["pages"]) for g in pers.get("groups", [])])
 if [byid[i]["label"] for i in PROFILES + ACH if i in byid] != ["Media", "Health", "Astro", "DD", "Geo", "Endurance", "Personal Growth", "Community", "By 30", "By 40", "By 50"]: E("N4", "tab labels differ")
 if any("Personal Archives" in json.dumps(g) for g in pers.get("groups", [])) or "Personal Archives" in json.dumps(pers["pages"]): E("N5", "Personal Archives is not renamed to Achieves")
 ren = ui["renamed"]["pages"]
-for old, to in (("pers/pers-profiles", "pers/pers-media"), ("pers/achieves", "pers/geo"), ("experiences/achieves", "pers/geo")):
+for old, to in (("pers/pers-instagram", "pers/ig0"), ("pers/pers-social", "pers/face0"), ("pers/achieves", "pers/geo"), ("experiences/achieves", "pers/geo")):
     if ren.get(old) != to: E("R1", "ui.renamed.pages[%s] is %r, want %s" % (old, ren.get(old), to))
 live = {s["id"]: {p["id"] for p in flat(s.get("pages"))} for s in ui["sections"]}
 for old, to in ren.items():
     s, _, p = to.partition("/")
     if s not in live or (p and p not in live[s]): E("R2", "ui.renamed.pages[%s] names %s, which is not a live page" % (old, to))
 # M: Media holds the three social pages, every old profile page kept with its file
-media = byid.get("pers-media", {}); mp = {p["id"]: p for p in media.get("pages", [])}
-if list(mp) != ["personal", "pers-instagram", "pers-social"]: E("M1", "Media tabs are %r, want Personal | Instagram | Social" % list(mp))
-if [p["id"] for p in mp.get("pers-instagram", {}).get("pages", [])] != ["ig0", "ig1", "ig2"]: E("M2", "Instagram is not ig0, ig1, ig2")
-if [p["id"] for p in mp.get("pers-social", {}).get("pages", [])] != ["face0", "pinterest", "youtube", "tidal", "linkedin", "orkut"]: E("M3", "Social is not face0, pinterest, youtube, tidal, linkedin, orkut")
+media = byid.get("pers-profiles", {}); mp = [p["id"] for p in media.get("pages", [])]
+if mp != ["personal", "ig0", "ig1", "ig2", "face0", "pinterest", "youtube", "tidal", "linkedin", "orkut"]: E("M1", "Media tabs are %r, want ONE flat strip Personal | ig0 | ig1 | ig2 | face0 | Pinterest | YouTube | Tidal | LinkedIn | Orkut" % mp)
+if any(p.get("pages") for p in media.get("pages", [])): E("M2", "a Media page is nested again (Instagram / Social grouping)")
 for pid in ("personal", "ig0", "ig1", "ig2", "face0", "pinterest", "youtube", "tidal", "linkedin", "orkut"):
-    chain = None
-    def find(ps, ch):
-        for p in ps:
-            if p["id"] == pid: return ch + [p["id"]]
-            r = find(p.get("pages", []), ch + [p["id"]])
-            if r: return r
-    chain = find(media.get("pages", []), ["pers-media"])
-    f = "data/ui/pers/" + "/".join(chain) + ".json" if chain else ""
-    try: b = J(f[len(""):])
+    f = "data/ui/pers/pers-profiles/%s.json" % pid
+    try: b = J(f)
     except Exception: E("M4", "page %s has no file %s" % (pid, f)); continue
     if not b or b[0].get("id") != "web" or not str(b[0].get("url", "")).startswith(("https://", "mysocials/")): E("M5", "%s does not embed its page" % pid)
 # F: field parity of Geo minus the owner-named removals
@@ -170,9 +162,12 @@ mut "Pers is one row again" "${BJ}P['nav_mode']='horizontal_one_row';$WB"
 mut "By 50 left the Achieves row" "${BJ}P['groups'][1]['pages'].pop();$WB"
 mut "the old Achieves id no longer resolves" "${BJ}U['renamed']['pages'].pop('pers/achieves');$WB"
 mut "the old Profiles id resolves to a page that does not exist" "${BJ}U['renamed']['pages']['pers/pers-profiles']='pers/pers-gone';$WB"
-mut "Media loses its Social page" "${BJ}P['pages'][0]['pages'].pop();$WB"
-mut "Instagram loses ig2" "${BJ}P['pages'][0]['pages'][1]['pages'].pop();$WB"
-mut "a Media page file is gone (Pinterest)" 'import os,sys;os.remove(sys.argv[1]+"/data/ui/pers/pers-media/pers-social/pinterest.json")'
+mut "Media loses its last page (Orkut)" "${BJ}P['pages'][0]['pages'].pop();$WB"
+mut "Media is re-nested: ig1 and ig2 sit under ig0" "${BJ}m=P['pages'][0]['pages'];m[1].setdefault('pages',[]).extend([m.pop(2),m.pop(2)]);$WB"
+mut "Media order changed: Personal is not first" "${BJ}m=P['pages'][0]['pages'];m.append(m.pop(0));$WB"
+mut "the SuperApp target pers-profiles is no longer a declared page" "${BJ}P['pages'][0]['id']='pers-media';P['groups'][0]['pages'][0]='pers-media';$WB"
+mut "the Instagram alias is dropped" "${BJ}U['renamed']['pages'].pop('pers/pers-instagram');$WB"
+mut "a Media page file is gone (Pinterest)" 'import os,sys;os.remove(sys.argv[1]+"/data/ui/pers/pers-profiles/pinterest.json")'
 mut "the Places ledger view is back" "${GJ}g.insert(0,{'kind':'ledger','title':'Places'});$WG"
 mut "the Languages block is back" "${GJ}g.append({'kind':'bullets','title':'Languages','items':[]});$WG"
 mut "a kept block (Short Stays) is altered" "$(SUB data/ui/pers/geo.json 'On short stays traveled over 180+ cities' 'On short stays traveled over 18 cities')"

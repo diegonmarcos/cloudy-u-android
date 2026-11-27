@@ -35,7 +35,7 @@ tabs = [p["id"] for p in web.get("pages", [])]
 if tabs != ["prof-professional", "prof-linkedin", "prof-portfolio", "prof-developer", "prof-cv"]: print("R2\tProf > Profiles tabs are %r" % tabs)
 want = {"prof/prof-web/prof-professional": "https://diegonmarcos.com/", "prof/prof-web/prof-linkedin": "https://diegonmarcos.github.io/mySocials/linkedin.html",
         "prof/prof-web/prof-portfolio": "https://diegonmarcos.github.io/cv_web/", "prof/prof-web/prof-developer": "https://github.com/diegonmarcos", "prof/prof-web/prof-cv": "https://diegonmarcos.github.io/cv_pdf/",
-        "pers/pers-media/personal": "https://diegonmarcos.github.io/mySocials/"}
+        "pers/pers-profiles/personal": "https://diegonmarcos.github.io/mySocials/"}
 table = {}
 for e in json.load(open(os.path.join(app, "data/web/me-links.json"), encoding="utf-8"))["entries"]:
     if "path" in e: table["%s/%s" % (e["section"], "/".join(e["path"]))] = e["url"]

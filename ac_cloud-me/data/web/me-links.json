@@ -10,7 +10,7 @@
         "literal": "https://diegonmarcos.github.io/mySocials/"
       },
       "path": [
-        "pers-media",
+        "pers-profiles",
         "personal"
       ],
       "url": "https://diegonmarcos.github.io/mySocials/",
@@ -25,8 +25,7 @@
         "literal": "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html"
       },
       "path": [
-        "pers-media",
-        "pers-instagram",
+        "pers-profiles",
         "ig0"
       ],
       "url": "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html",
@@ -41,8 +40,7 @@
         "literal": "https://diegonmarcos.github.io/mySocials/instagram-diegocmarcos_.html"
       },
       "path": [
-        "pers-media",
-        "pers-instagram",
+        "pers-profiles",
         "ig1"
       ],
       "url": "https://diegonmarcos.github.io/mySocials/instagram-diegocmarcos_.html",
@@ -57,8 +55,7 @@
         "literal": "https://diegonmarcos.github.io/mySocials/instagram-diegonmarcos.html"
       },
       "path": [
-        "pers-media",
-        "pers-instagram",
+        "pers-profiles",
         "ig2"
       ],
       "url": "https://diegonmarcos.github.io/mySocials/instagram-diegonmarcos.html",
@@ -73,8 +70,7 @@
         "literal": "https://diegonmarcos.github.io/mySocials/facebook-diegonmarcos.html"
       },
       "path": [
-        "pers-media",
-        "pers-social",
+        "pers-profiles",
         "face0"
       ],
       "url": "https://diegonmarcos.github.io/mySocials/facebook-diegonmarcos.html",
@@ -89,8 +85,7 @@
         "literal": "https://diegonmarcos.github.io/mySocials/pinterest.html"
       },
       "path": [
-        "pers-media",
-        "pers-social",
+        "pers-profiles",
         "pinterest"
       ],
       "url": "https://diegonmarcos.github.io/mySocials/pinterest.html",
@@ -105,8 +100,7 @@
         "literal": "https://diegonmarcos.github.io/mySocials/youtube.html"
       },
       "path": [
-        "pers-media",
-        "pers-social",
+        "pers-profiles",
         "youtube"
       ],
       "url": "https://diegonmarcos.github.io/mySocials/youtube.html",
@@ -121,8 +115,7 @@
         "literal": "https://diegonmarcos.github.io/mySocials/tidal.html"
       },
       "path": [
-        "pers-media",
-        "pers-social",
+        "pers-profiles",
         "tidal"
       ],
       "url": "https://diegonmarcos.github.io/mySocials/tidal.html",
@@ -137,8 +130,7 @@
         "literal": "https://diegonmarcos.github.io/mySocials/linkedin.html"
       },
       "path": [
-        "pers-media",
-        "pers-social",
+        "pers-profiles",
         "linkedin"
       ],
       "url": "https://diegonmarcos.github.io/mySocials/linkedin.html",
@@ -153,8 +145,7 @@
         "literal": "https://diegonmarcos.github.io/mySocials/orkut.html"
       },
       "path": [
-        "pers-media",
-        "pers-social",
+        "pers-profiles",
         "orkut"
       ],
       "url": "https://diegonmarcos.github.io/mySocials/orkut.html",

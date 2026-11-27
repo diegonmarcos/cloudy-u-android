@@ -380,7 +380,8 @@
         "experiences/cv": "prof/prof-web",
         "experiences/roadmap": "prof/prof-web",
         "experiences/achieves": "pers/geo",
-        "pers/pers-profiles": "pers/pers-media",
+        "pers/pers-instagram": "pers/ig0",
+        "pers/pers-social": "pers/face0",
         "pers/achieves": "pers/geo",
         "experiences/geo": "pers/geo",
         "experiences/endurance": "pers/endurance",
@@ -427,7 +428,7 @@
     "configs_ui": ["nav_ui"],
     "sections": [
       {
-        "_doc": "#1976 Pers is a two-row nav (nav_mode horizontal_two_rows, groups): row 1 Profiles = Media | Health | Astro | DD, row 2 Achieves (was Personal Archives) = Geo | Endurance | Personal Growth | Community | By 30 | By 40 | By 50. Media (pers-media) holds the former Profiles pages as three tabs: Personal, Instagram (ig0, ig1, ig2) and Social (face0, pinterest, youtube, tidal, linkedin, orkut); the Achieves tabs are top-level pages of the section now (files data/ui/pers/<id>.json), the old container ids pers-profiles and achieves resolve through ui.renamed. Geo: Long Stay (brief and the cities with the time in each), Short Stay (brief and the Places table with NM and Days), the visited-countries map per continent and MyTrips, generated from MyTrips data by data/regen-geo-1976.py (test/test-geo-1976.sh). The text below is the #1901 description, the page names Profiles and Personal Archives in it are the pre-#1976 containers. #1901 Pers: the section called Health became Pers, and it now holds every page of the person. Five subpages: Profiles (Personal, Instagram, Social: the three public profile pages), Health (the WHOLE former Health section moved in as one subpage: Trackers and Plan with every page, Tracked first, plus the health record page that was Lnktree > Health), Astro, DD (the shareholder due-diligence record) and Personal Archives (the Achieves tabs, moved whole from Experiences with their experiences_user ledgers). Personal is the mySocials home page (#1948; the diegonmarcos.com landpage moved to Prof > Profiles > Professional), embedded by its https URL (data/ui/pers/pers-profiles/personal.json); Instagram is the page the old Personal tab drew. Every page keeps its id; the old section ids and page ids resolve through ui.renamed (LegacyRoutes). The Health page content is drawn by the app's own Compose HealthPage from data/health/*.json and the user's entries (SharedPreferences health_user, a declared fleet-config store); the trackers read Health Connect live. The metric taxonomy stays on this section because libs:health's build.gradle looks it up on the section that declares `metrics` (it used to be looked up by the id health). Health opens on Tracked (#1390): Tracked is the first leaf of Health, Trackers its first strip. Personal Archives: the Achieves tabs: each tab is one kind of experience, holding a Done and a To do list of the owner's own records (add, edit, mark done with today's date, mark undone), all in the declared config store experiences_user so the backup and the new-phone migration carry them. Geo is first: every place visited with live stats (cities, countries, continents, % of world, grouped by continent and country, first and last visit) and a wishlist; the International Experience text and the old Trips tools moved into it. Endurance holds Travel & Adventure (the old Experiences rows and the Personal Pursuits text), Personal Growth holds Personal Growth, Health & Wellness, Creativity & Fun and Career and Finance (with the B1 Personal text), Community holds Relationship & Community, By 30 / By 40 / By 50 hold the Bucket 50 age goals. ui.sections[achieves].migration moves the old done/todo records into the matching tab on first load; LegacyRoutes sends the old page ids to their new tab. Every page id is unique in the section, so page:experiences/<id> reaches any of them; LegacyRoutes maps the old study and achieves routes here.",
+        "_doc": "#1976 Pers is a two-row nav (nav_mode horizontal_two_rows, groups): row 1 Profiles = Media | Health | Astro | DD, row 2 Achieves (was Personal Archives) = Geo | Endurance | Personal Growth | Community | By 30 | By 40 | By 50. Media (page id pers-profiles, the Profiles container renamed in the label only, so deep links to it still land) is ONE flat strip: Personal (the mySocials home of the others) | ig0 | ig1 | ig2 | face0 | Pinterest | YouTube | Tidal | LinkedIn | Orkut; the Achieves tabs are top-level pages of the section now (files data/ui/pers/<id>.json), the old container id achieves resolves through ui.renamed. Geo: Long Stay (brief and the cities with the time in each), Short Stay (brief and the Places table with NM and Days), the visited-countries map per continent and MyTrips, generated from MyTrips data by data/regen-geo-1976.py (test/test-geo-1976.sh). The text below is the #1901 description, the page names Profiles and Personal Archives in it are the pre-#1976 containers. #1901 Pers: the section called Health became Pers, and it now holds every page of the person. Five subpages: Profiles (Personal, Instagram, Social: the three public profile pages), Health (the WHOLE former Health section moved in as one subpage: Trackers and Plan with every page, Tracked first, plus the health record page that was Lnktree > Health), Astro, DD (the shareholder due-diligence record) and Personal Archives (the Achieves tabs, moved whole from Experiences with their experiences_user ledgers). Personal is the mySocials home page (#1948; the diegonmarcos.com landpage moved to Prof > Profiles > Professional), embedded by its https URL (data/ui/pers/pers-profiles/personal.json); Instagram is the page the old Personal tab drew. Every page keeps its id; the old section ids and page ids resolve through ui.renamed (LegacyRoutes). The Health page content is drawn by the app's own Compose HealthPage from data/health/*.json and the user's entries (SharedPreferences health_user, a declared fleet-config store); the trackers read Health Connect live. The metric taxonomy stays on this section because libs:health's build.gradle looks it up on the section that declares `metrics` (it used to be looked up by the id health). Health opens on Tracked (#1390): Tracked is the first leaf of Health, Trackers its first strip. Personal Archives: the Achieves tabs: each tab is one kind of experience, holding a Done and a To do list of the owner's own records (add, edit, mark done with today's date, mark undone), all in the declared config store experiences_user so the backup and the new-phone migration carry them. Geo is first: every place visited with live stats (cities, countries, continents, % of world, grouped by continent and country, first and last visit) and a wishlist; the International Experience text and the old Trips tools moved into it. Endurance holds Travel & Adventure (the old Experiences rows and the Personal Pursuits text), Personal Growth holds Personal Growth, Health & Wellness, Creativity & Fun and Career and Finance (with the B1 Personal text), Community holds Relationship & Community, By 30 / By 40 / By 50 hold the Bucket 50 age goals. ui.sections[achieves].migration moves the old done/todo records into the matching tab on first load; LegacyRoutes sends the old page ids to their new tab. Every page id is unique in the section, so page:experiences/<id> reaches any of them; LegacyRoutes maps the old study and achieves routes here.",
         "_doc_metrics": "Data-driven metric taxonomy \u2014 read by SummaryPage / TimelinePage / ConfigsPage to render the per-metric tiles + drill-downs. Each metric maps to one-or-more Health Connect record types via `records` (matched at runtime by class simple-name) + the perm subset via `perm_keys`. Add a metric = one entry here + tile icon. Removing a metric here removes it from all 3 top-level pages.",
         "migration": {
           "_doc": "Achieves migration (store experiences_user): the old Experiences page kept its records in the collections done and todo. On load, each record moves to <tab>_done or <tab>_todo by its category; a category this map does not name goes to the default tab, so nothing is dropped. The old collections are then removed, which makes the migration run once.",
@@ -452,7 +453,7 @@
         "icon": "ic_nav_health",
         "nav_mode": "horizontal_two_rows",
         "groups": [
-          {"id": "profiles", "label": "Profiles", "icon": "ic_p_identities", "pages": ["pers-media", "health", "astro", "dd"]},
+          {"id": "profiles", "label": "Profiles", "icon": "ic_p_identities", "pages": ["pers-profiles", "health", "astro", "dd"]},
           {"id": "achieves", "label": "Achieves", "icon": "ic_nav_achieves", "pages": ["geo", "endurance", "growth", "community", "by30", "by40", "by50"]}
         ],
         "metrics": [
@@ -581,7 +582,7 @@
         ],
         "pages": [
           {
-            "id": "pers-media",
+            "id": "pers-profiles",
             "label": "Media",
             "icon": "ic_p_identities",
             "pages": [
@@ -591,63 +592,49 @@
                 "icon": "ic_p_identities"
               },
               {
-                "id": "pers-instagram",
-                "label": "Instagram",
-                "icon": "ic_p_identities",
-                "pages": [
-                  {
-                    "id": "ig0",
-                    "label": "ig0",
-                    "icon": "ic_p_identities"
-                  },
-                  {
-                    "id": "ig1",
-                    "label": "ig1",
-                    "icon": "ic_p_identities"
-                  },
-                  {
-                    "id": "ig2",
-                    "label": "ig2",
-                    "icon": "ic_p_identities"
-                  }
-                ]
+                "id": "ig0",
+                "label": "ig0",
+                "icon": "ic_p_identities"
               },
               {
-                "id": "pers-social",
-                "label": "Social",
-                "icon": "ic_p_identities",
-                "pages": [
-                  {
-                    "id": "face0",
-                    "label": "face0",
-                    "icon": "ic_p_identities"
-                  },
-                  {
-                    "id": "pinterest",
-                    "label": "Pinterest",
-                    "icon": "ic_p_identities"
-                  },
-                  {
-                    "id": "youtube",
-                    "label": "YouTube",
-                    "icon": "ic_p_identities"
-                  },
-                  {
-                    "id": "tidal",
-                    "label": "Tidal",
-                    "icon": "ic_p_identities"
-                  },
-                  {
-                    "id": "linkedin",
-                    "label": "LinkedIn",
-                    "icon": "ic_p_identities"
-                  },
-                  {
-                    "id": "orkut",
-                    "label": "Orkut",
-                    "icon": "ic_p_identities"
-                  }
-                ]
+                "id": "ig1",
+                "label": "ig1",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "ig2",
+                "label": "ig2",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "face0",
+                "label": "face0",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "pinterest",
+                "label": "Pinterest",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "youtube",
+                "label": "YouTube",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "tidal",
+                "label": "Tidal",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "linkedin",
+                "label": "LinkedIn",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "orkut",
+                "label": "Orkut",
+                "icon": "ic_p_identities"
               }
             ]
           },

@@ -154,7 +154,7 @@ class AchievesTest {
         val bar = ui.getJSONArray("bottom_nav").let { a -> (0 until a.length()).map { a.getString(it) } }
         assertEquals(listOf("pers", "prof", "proj", "lnktree", "inventory", "buro", "llc"), bar)
         assertTrue(sections.none { it.getString("id") in setOf("study", "achieves", "experiences", "health", "socials") })
-        assertEquals(listOf("pers-media", "health", "astro", "dd") + tabs, sub(experiences).map { it.getString("id") })   // #1976 two rows: Profiles | Media Health Astro DD, Achieves | the tabs
+        assertEquals(listOf("pers-profiles", "health", "astro", "dd") + tabs, sub(experiences).map { it.getString("id") })   // #1976 two rows: Profiles | Media Health Astro DD, Achieves | the tabs
         assertEquals(listOf("Media", "Health", "Astro", "DD", "Geo", "Endurance", "Personal Growth", "Community", "By 30", "By 40", "By 50"), sub(experiences).map { it.getString("label") })
         // #1937 owner-ordered removal: Prof > More (Professional, Work, Study > CV, Roadmap) is gone; Prof is Profiles (LinkedIn, CV) | Leaf.y, Nexus.z, Stark.x
         assertEquals(listOf("prof-web", "leafy", "nexus", "stark"), sub(prof).map { it.getString("id") })
