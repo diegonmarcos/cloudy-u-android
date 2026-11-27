@@ -21,10 +21,13 @@ launcher() { $T adb shell cmd package resolve-activity --brief -c android.intent
 launch() { wake; $T adb shell am start -W -n "$(launcher "$ME")" >/dev/null; }
 open_route() { wake; $T adb shell am start -W -n "$(launcher "$ME")" -f 0x14000000 --es shortcut_action "$1" >/dev/null; }
 perms() { for op in GET_USAGE_STATS SYSTEM_ALERT_WINDOW MANAGE_EXTERNAL_STORAGE REQUEST_INSTALL_PACKAGES; do $T adb shell appops set "$ME" "$op" allow; done; }
-# a live logcat file (adb logcat -d of a full buffer took minutes per poll on a loaded emulator); wlog greps it locally, and it is uploaded even when the step times out
-LIVE="$OUT/logcat-live.txt"; : > "$LIVE"; (adb logcat -v threadtime >> "$LIVE" 2>/dev/null &)
-wlog() { grep -a ' CloudMeWeb: ' "$LIVE" | sed 's/.*CloudMeWeb: //'; }
-clear_log() { clear_log; : > "$LIVE"; }
+# a FILTERED logcat written ON THE DEVICE (a host-side background `adb logcat` reader plus buffer resizing and clearing segfaulted the adb
+# client, exit 139); wlog reads it (small: the app's tag, crashes, process deaths) and starts after the last WALK_MARK
+LIVE_DEV=/data/local/tmp/cm-live.txt; LIVE="$OUT/logcat-live.txt"
+$T adb shell "rm -f $LIVE_DEV; nohup logcat -v threadtime -f $LIVE_DEV -s CloudMeWeb:V AndroidRuntime:E ActivityManager:I WorkManager:V >/dev/null 2>&1 &"
+liveall() { $T adb shell cat "$LIVE_DEV" | tr -d '\r'; }
+wlog() { liveall | awk '/CloudMeWeb: WALK_MARK/{buf=""; next} {buf=buf $0 "\n"} END{printf "%s", buf}' | grep -a ' CloudMeWeb: ' | sed 's/.*CloudMeWeb: //'; }
+clear_log() { $T adb shell log -t CloudMeWeb WALK_MARK; sleep 1; }
 shot() { $T adb exec-out screencap -p > "$OUT/precache-1957-$1.png"; echo "shot $1"; }
 img_wait() { for _ in $(seq 1 40); do wlog | grep -q "IMG_CHECK page=$1 " && return 0; sleep 2; done; return 1; }
 pip install --quiet pillow >/dev/null 2>&1 || true
@@ -53,11 +56,11 @@ fi
 # 1. fresh install, launch, touch nothing
 $T adb uninstall "$ME" >/dev/null 2>&1 || true
 $T adb install -r -g "$ME_APK" || { echo "install failed"; exit 1; }
-perms; $T adb logcat -G 16M >/dev/null 2>&1 || true; clear_log
+perms; clear_log
 t0=$(date +%s); launch
 NP=$(echo "$PAGES" | grep -c .)
-for _ in $(seq 1 $((WAIT_S / 10))); do wlog | grep -q "^CACHE_TOTAL" && break; wlog | grep -E "^CACHE_(PROGRESS|FETCH)" | tail -1; grep -a -E "FATAL EXCEPTION|ANR in|Process com.diegonmarcos.cloudme .*died" "$LIVE" | tail -2; sleep 10; done
-grep -a -E "FATAL EXCEPTION|ANR in" -A12 "$LIVE" | cut -c1-240 > "$OUT/crashes.txt"; [ -s "$OUT/crashes.txt" ] && { echo "app crashes:"; head -40 "$OUT/crashes.txt"; }
+for _ in $(seq 1 $((WAIT_S / 10))); do wlog | grep -q "^CACHE_TOTAL" && break; wlog | grep -E "^CACHE_(PROGRESS|FETCH)" | tail -1; liveall | grep -a -E "FATAL EXCEPTION|ANR in|Process com.diegonmarcos.cloudme .*died" | tail -2; liveall > "$LIVE"; sleep 10; done
+liveall | grep -a -E "FATAL EXCEPTION|ANR in|has died|OutOfMemory" -A12 | cut -c1-240 > "$OUT/crashes.txt"; [ -s "$OUT/crashes.txt" ] && { echo "app crashes:"; head -40 "$OUT/crashes.txt"; }
 el=$(( $(date +%s) - t0 ))
 wlog | grep -E "^CACHE_(PAGE|TOTAL|FETCH|HARVEST|VERSION|PROGRESS)" > "$OUT/cache-report.txt"
 $T adb shell "du -sk $CACHE; du -sk $CACHE/*" > "$OUT/cache-du.txt" 2>&1 || true
@@ -99,5 +102,5 @@ for id in $(echo "$PAGES" | awk '$2!="personal"{print $2}' | head -3); do
     python3 -I "$HERE/render_check.py" pixels "$OUT/precache-1957-airplane-$id.png" | tee -a "$OUT/verdict.txt" | grep -q '^PASS' || rc=1
 done
 $T adb shell cmd connectivity airplane-mode disable; $T adb shell svc wifi enable; $T adb shell svc data enable
-cp "$LIVE" "$OUT/logcat.txt"
+liveall > "$LIVE"
 echo "rc=$rc" | tee -a "$OUT/verdict.txt"; exit $rc
