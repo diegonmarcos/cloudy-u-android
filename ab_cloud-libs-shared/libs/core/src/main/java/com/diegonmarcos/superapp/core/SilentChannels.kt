@@ -22,6 +22,8 @@ object SilentChannels {
     val LEGACY_IDS = listOf("fleet_alerts", "superapp-updater", "store_batch", "adb_pairing", "host_shell_channel", "wd_keeper_channel",
         // FleetNotify's two shared channels: a silent app always posts on the suffixed id.
         "fleet_keep_alive", "fleet_data_widget",
+        // #1965 the "Background service" keep-alive channel and the hub's "Background Apps" channel (fleet-notify).
+        "fleet_background_service", "fleet_background_apps",
         // Cloud Store's torrent download service (TorrentService).
         "torrent_downloads")
 

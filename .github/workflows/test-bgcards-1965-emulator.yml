@@ -1,0 +1,98 @@
+name: "Test -> Background Apps group (emulator, #1965)"
+
+# #1965 Emulator walk of the ONE "Background Apps" notification group: SuperApp (hub), Cloud Mail, Cloud Store, Cloud Nav and the
+# WebServer installed from their latest green Ship runs on main, their background services started, the shade read from
+# `dumpsys notification --noredact` (filtered to our packages, keys only, no text bodies) and screenshotted expanded.
+# Runs on a push of this file or its script, or by hand (run ids optional; each goes through env and must be all digits).
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/test-bgcards-1965-emulator.yml"
+      - "aa_cloud-superapp/test/emulator-bgcards-1965.sh"
+  workflow_dispatch:
+    inputs:
+      superapp_run_id: { description: 'Ship SuperApp run id (default: latest green on main)', required: false, default: '' }
+      mail_run_id: { description: 'Ship Mail run id', required: false, default: '' }
+      store_run_id: { description: 'Ship Store run id', required: false, default: '' }
+      nav_run_id: { description: 'Ship Nav run id', required: false, default: '' }
+      webserver_run_id: { description: 'Ship WebServer run id', required: false, default: '' }
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  walk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: aa_cloud-superapp/test
+
+      - name: Fetch the five APKs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          IN_SUPERAPP: ${{ github.event.inputs.superapp_run_id }}
+          IN_MAIL: ${{ github.event.inputs.mail_run_id }}
+          IN_STORE: ${{ github.event.inputs.store_run_id }}
+          IN_NAV: ${{ github.event.inputs.nav_run_id }}
+          IN_WEBSERVER: ${{ github.event.inputs.webserver_run_id }}
+        run: |
+          set -eu
+          mkdir -p apks dl
+          fetch() {   # name workflow input-run-id artifact-regex
+            n="$1"; wf="$2"; run="$3"; re="$4"
+            case "$run" in ''|*[!0-9]*) [ -z "$run" ] || { echo "::error::$n run id must be digits"; exit 2; }
+              # A Ship of THIS commit is waited for (it carries the code under test); else the latest green Ship on main.
+              run=$(gh run list -R "$REPO" --workflow "$wf" --commit "$GITHUB_SHA" -L 1 --json databaseId --jq '.[0].databaseId // empty')
+              if [ -n "$run" ]; then
+                echo "$n: waiting for ship run $run of this commit"
+                gh run watch "$run" -R "$REPO" --interval 60 --exit-status >/dev/null || { echo "::error::$n ship run $run is not green"; exit 1; }
+              else
+                run=$(gh run list -R "$REPO" --workflow "$wf" --branch main --status success -L 1 --json databaseId --jq '.[0].databaseId // empty')
+              fi ;; esac
+            [ -n "$run" ] || { echo "::error::no green $wf run"; exit 1; }
+            sha=$(gh api "repos/$REPO/actions/runs/$run" --jq .head_sha)
+            echo "$n: ship run $run on ${sha}"
+            echo "$n $run $sha" >> apks/runs.txt
+            gh api "repos/$REPO/actions/runs/$run/artifacts" --paginate --jq '.artifacts[] | select(.expired|not) | .name' | grep -E "$re" | head -1 |
+            while read -r a; do gh run download "$run" -R "$REPO" -n "$a" -D "dl/$n"; done
+            pick=$(find "dl/$n" -name '*.apk' | sort | head -1); [ -n "$pick" ] || { echo "::error::no APK for $n in run $run"; exit 1; }
+            cp "$pick" "apks/$n.apk"
+          }
+          fetch superapp ship-cloud-superapp.yml "$IN_SUPERAPP" '^Cloud-SuperApp-x86_64'
+          fetch mail ship-cloud-mail.yml "$IN_MAIL" '^cloud-comms-mail-(x86_64|arm64)'
+          fetch store ship-cloud-store.yml "$IN_STORE" '^Cloud-Store-x86_64'
+          fetch nav ship-cloud-nav.yml "$IN_NAV" '^Cloud-Nav-x86_64'
+          fetch webserver ship-cloud-c3-webserver.yml "$IN_WEBSERVER" '^Cloud-C3-WebServer-x86_64'
+          ls -la apks; cat apks/runs.txt
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot emulator, walk the shade
+        timeout-minutes: 25
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash aa_cloud-superapp/test/emulator-bgcards-1965.sh apks out
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bgcards-1965-evidence
+          path: |
+            out/
+            apks/runs.txt
+          if-no-files-found: warn

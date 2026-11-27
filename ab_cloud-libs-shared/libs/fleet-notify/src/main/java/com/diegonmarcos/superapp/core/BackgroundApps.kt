@@ -140,7 +140,8 @@ object BackgroundApps {
     fun publish(ctx: Context, card: Card) {
         runCatching {
             if (ctx.packageName == HUB_PACKAGE) { hubPost(ctx, card); return }
-            val i = Intent(ACTION_CARD).setPackage(HUB_PACKAGE).putExtra(X_MARK, toBundle(card))
+            // INCLUDE_STOPPED: a hub never opened since its install is in the stopped state and would get nothing.
+            val i = Intent(ACTION_CARD).setPackage(HUB_PACKAGE).addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES).putExtra(X_MARK, toBundle(card))
             ctx.sendBroadcast(i, PERMISSION)
         }
     }
@@ -149,7 +150,7 @@ object BackgroundApps {
     fun retract(ctx: Context, id: Int? = null) {
         runCatching {
             if (ctx.packageName == HUB_PACKAGE) { hubRetract(ctx, ctx.packageName, id); return }
-            val i = Intent(ACTION_RETRACT).setPackage(HUB_PACKAGE).putExtra(X_PKG, ctx.packageName)
+            val i = Intent(ACTION_RETRACT).setPackage(HUB_PACKAGE).addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES).putExtra(X_PKG, ctx.packageName)
             if (id != null) i.putExtra(X_ID, id)
             ctx.sendBroadcast(i, PERMISSION)
         }
