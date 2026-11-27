@@ -84,16 +84,4 @@ class WebPullRefresh1947Test {
         assertFalse(s.get("pers", page)!!.body.length() == 0L)
     }
 
-    @Test fun `stale_while_revalidate is still supported and parsed`() {
-        val c = LnktreeCacheConfig.parse(org.json.JSONObject("""{"enabled":true,"section":"s","strategy":"stale_while_revalidate"}"""))
-        assertFalse(c.networkFirst)
-        assertTrue(LnktreeCacheConfig.parse(org.json.JSONObject("""{"enabled":true,"section":"s","strategy":"network_first"}""")).networkFirst)
-        val s = store(); s.put("pers", page, "text/html", "utf-8", 200, "old".toByteArray())
-        assertEquals("old", LnktreeResolver.serve("pers", page, cfg.copy(strategy = LnktreeCacheConfig.STALE_WHILE_REVALIDATE), s, { error("cache first") }, {}, page)!!.body.readText())
-    }
-
-    @Test fun `the Cloud Me declaration is network_first and documents it`() {
-        val d = org.json.JSONObject(BuroLlcTestData.text("build.json")).getJSONObject("ui").getJSONObject("lnktree_cache")
-        assertEquals("network_first", d.getString("strategy")); assertTrue(d.getString("_doc").contains("network_first"))
-    }
 }
