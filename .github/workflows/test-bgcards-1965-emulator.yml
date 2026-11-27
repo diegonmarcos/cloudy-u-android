@@ -3,6 +3,8 @@ name: "Test -> Background Apps group (emulator, #1965)"
 # #1965 Emulator walk of the ONE "Background Apps" notification group: SuperApp (hub), Cloud Mail, Cloud Store, Cloud Nav and the
 # WebServer installed from their latest green Ship runs on main, their background services started, the shade read from
 # `dumpsys notification --noredact` (filtered to our packages, keys only, no text bodies) and screenshotted expanded.
+# Cloud Mail's card is not asserted here: the emulator has no mail account, so its push service stops at once (no account to
+# watch); the Mail card's fields are proven by KeepAliveBadgeTest (JVM) and stay an on-phone check.
 # Runs on a push of this file or its script, or by hand (run ids optional; each goes through env and must be all digits).
 on:
   push:
