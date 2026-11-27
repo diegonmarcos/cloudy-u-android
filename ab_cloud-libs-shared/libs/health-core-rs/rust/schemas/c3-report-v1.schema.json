@@ -1,0 +1,289 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "c3-report/v1",
+ "title": "c3-report/v1: one engine run (cloud-health-layers, cloud-xray, health-core on the phone)",
+ "type": "object",
+ "required": [
+  "schema",
+  "engine",
+  "engine_version",
+  "run",
+  "status",
+  "summary",
+  "checks",
+  "attribution",
+  "missing"
+ ],
+ "properties": {
+  "schema": {
+   "const": "c3-report/v1"
+  },
+  "engine": {
+   "type": "string",
+   "enum": [
+    "cloud-health-layers",
+    "cloud-xray",
+    "health-core"
+   ]
+  },
+  "engine_version": {
+   "type": "string"
+  },
+  "run": {
+   "type": "object",
+   "required": [
+    "id",
+    "started",
+    "finished",
+    "runner",
+    "vantage"
+   ],
+   "properties": {
+    "id": {
+     "type": "string"
+    },
+    "started": {
+     "type": "string"
+    },
+    "finished": {
+     "type": "string"
+    },
+    "runner": {
+     "type": "string"
+    },
+    "vantage": {
+     "type": "string"
+    }
+   }
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "GREEN",
+    "YELLOW",
+    "RED",
+    "UNKNOWN",
+    "STALE"
+   ]
+  },
+  "summary": {
+   "type": "object",
+   "required": [
+    "total_checks",
+    "passed",
+    "failed",
+    "warnings",
+    "critical",
+    "unknown",
+    "not_served",
+    "gated"
+   ],
+   "properties": {
+    "total_checks": {
+     "type": "integer"
+    },
+    "passed": {
+     "type": "integer"
+    },
+    "failed": {
+     "type": "integer"
+    },
+    "warnings": {
+     "type": "integer"
+    },
+    "critical": {
+     "type": "integer"
+    },
+    "unknown": {
+     "type": "integer"
+    },
+    "not_served": {
+     "type": "integer"
+    },
+    "gated": {
+     "type": "integer"
+    }
+   }
+  },
+  "sections": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "id",
+     "title",
+     "rows"
+    ],
+    "properties": {
+     "rows": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "key",
+        "value"
+       ]
+      }
+     }
+    }
+   }
+  },
+  "checks": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "id",
+     "layer",
+     "entity",
+     "name",
+     "status",
+     "details"
+    ],
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "layer": {
+      "type": "string"
+     },
+     "entity": {
+      "type": "object",
+      "required": [
+       "kind",
+       "id"
+      ]
+     },
+     "name": {
+      "type": "string"
+     },
+     "passed": {
+      "type": "boolean"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "ok",
+       "warn",
+       "down",
+       "pending",
+       "blind",
+       "unknown",
+       "not_served",
+       "gated"
+      ]
+     },
+     "details": {
+      "type": "string"
+     },
+     "duration_ms": {
+      "type": [
+       "integer",
+       "null"
+      ]
+     },
+     "phases": {
+      "type": "object",
+      "properties": {
+       "dns": {
+        "type": [
+         "integer",
+         "null"
+        ]
+       },
+       "tcp": {
+        "type": [
+         "integer",
+         "null"
+        ]
+       },
+       "tls": {
+        "type": [
+         "integer",
+         "null"
+        ]
+       },
+       "http": {
+        "type": [
+         "integer",
+         "null"
+        ]
+       }
+      }
+     },
+     "code": {
+      "type": [
+       "integer",
+       "null"
+      ]
+     },
+     "needs": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "evidence": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "explained_by": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "confidence": {
+      "type": "string",
+      "enum": [
+       "measured",
+       "inferred"
+      ]
+     },
+     "vantage": {
+      "type": "string"
+     },
+     "at": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "findings": {
+   "type": "array"
+  },
+  "attribution": {
+   "type": "object",
+   "required": [
+    "roots",
+    "chains"
+   ],
+   "properties": {
+    "roots": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "chains": {
+     "type": "object"
+    }
+   }
+  },
+  "missing": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "id",
+     "text"
+    ]
+   }
+  },
+  "redactions": {
+   "type": "integer"
+  }
+ }
+}

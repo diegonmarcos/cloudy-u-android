@@ -1,0 +1,66 @@
+# #1955 C health-core (ab_cloud-libs-shared/libs/health-core-rs/rust): the Rust check logic of Cloud C3 Health and X-ray.
+# Two jobs on every push that touches the crate: the cargo suite (unit tests, the phased prober against local sockets, the c3-report/v1
+# contract over the shared fixtures), then the mutation proof: cargo-mutants over the graph, the redactor and the budget, gated on NO
+# surviving mutant (a missed or timed-out mutant fails the job and is listed). std only: no registry crate, no lock to keep.
+name: "Test -> health-core (cargo test + cargo-mutants gate)"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ab_cloud-libs-shared/libs/health-core-rs/**"
+      - ".github/workflows/health-core-rs.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: health-core-rs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: ab_cloud-libs-shared/libs/health-core-rs/rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: cargo test
+        run: cargo test -- --nocapture
+
+  mutants:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: ab_cloud-libs-shared/libs/health-core-rs/rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-mutants
+        run: cargo install --locked cargo-mutants
+      - name: cargo mutants on graph, redact, budget (no surviving mutant)
+        run: |
+          set +e
+          cargo mutants --no-shuffle -f src/graph.rs -f src/redact.rs -f src/budget.rs --timeout 120
+          rc=$?
+          set -e
+          for f in caught missed timeout unviable; do
+            [ -f mutants.out/$f.txt ] && echo "$f: $(wc -l < mutants.out/$f.txt)"
+          done
+          if [ -s mutants.out/missed.txt ] || [ -s mutants.out/timeout.txt ]; then
+            echo "::error::surviving mutants:"; cat mutants.out/missed.txt mutants.out/timeout.txt 2>/dev/null; exit 1
+          fi
+          exit $rc
+      - name: Upload the mutants report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-core-mutants
+          path: ab_cloud-libs-shared/libs/health-core-rs/rust/mutants.out/
+          if-no-files-found: warn

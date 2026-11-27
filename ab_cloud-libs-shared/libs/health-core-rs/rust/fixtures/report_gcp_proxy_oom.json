@@ -1,0 +1,208 @@
+{
+ "schema": "c3-report/v1",
+ "engine": "health-core",
+ "engine_version": "0.1.0",
+ "run": {
+  "id": "fixture-gcp-proxy-oom",
+  "started": "2026-11-27T12:00:00Z",
+  "finished": "2026-11-27T12:00:04Z",
+  "runner": "phone",
+  "vantage": "phone:fixture"
+ },
+ "status": "RED",
+ "summary": {
+  "total_checks": 6,
+  "passed": 1,
+  "failed": 3,
+  "warnings": 0,
+  "critical": 1,
+  "unknown": 0,
+  "not_served": 1,
+  "gated": 1
+ },
+ "sections": [],
+ "checks": [
+  {
+   "id": "vms.alive:gcp-E2-f_0",
+   "layer": "vms",
+   "entity": {
+    "kind": "",
+    "id": ""
+   },
+   "name": "vms.alive:gcp-E2-f_0",
+   "passed": false,
+   "status": "down",
+   "details": "inferred: 3 of 3 probes fail",
+   "duration_ms": null,
+   "phases": {
+    "dns": null,
+    "tcp": null,
+    "tls": null,
+    "http": null
+   },
+   "code": null,
+   "needs": [],
+   "evidence": [],
+   "explained_by": null,
+   "confidence": "inferred",
+   "vantage": "phone",
+   "at": "2026-11-27T12:00:00Z"
+  },
+  {
+   "id": "mesh.hub:wg0",
+   "layer": "mesh",
+   "entity": {
+    "kind": "",
+    "id": ""
+   },
+   "name": "mesh.hub:wg0",
+   "passed": false,
+   "status": "down",
+   "details": "",
+   "duration_ms": null,
+   "phases": {
+    "dns": null,
+    "tcp": null,
+    "tls": null,
+    "http": null
+   },
+   "code": null,
+   "needs": [
+    "vms.alive:gcp-E2-f_0"
+   ],
+   "evidence": [],
+   "explained_by": "vms.alive:gcp-E2-f_0",
+   "confidence": "measured",
+   "vantage": "phone",
+   "at": "2026-11-27T12:00:00Z"
+  },
+  {
+   "id": "control.api_public",
+   "layer": "control",
+   "entity": {
+    "kind": "",
+    "id": ""
+   },
+   "name": "control.api_public",
+   "passed": false,
+   "status": "down",
+   "details": "",
+   "duration_ms": null,
+   "phases": {
+    "dns": 12,
+    "tcp": 31,
+    "tls": null,
+    "http": 88
+   },
+   "code": 502,
+   "needs": [
+    "vms.alive:gcp-E2-f_0"
+   ],
+   "evidence": [],
+   "explained_by": "vms.alive:gcp-E2-f_0",
+   "confidence": "measured",
+   "vantage": "phone",
+   "at": "2026-11-27T12:00:00Z"
+  },
+  {
+   "id": "lights.private:gitea",
+   "layer": "lights",
+   "entity": {
+    "kind": "",
+    "id": ""
+   },
+   "name": "lights.private:gitea",
+   "passed": false,
+   "status": "gated",
+   "details": "not probed: blocked by vms.alive:gcp-E2-f_0",
+   "duration_ms": null,
+   "phases": {
+    "dns": null,
+    "tcp": null,
+    "tls": null,
+    "http": null
+   },
+   "code": null,
+   "needs": [
+    "mesh.hub:wg0"
+   ],
+   "evidence": [],
+   "explained_by": "vms.alive:gcp-E2-f_0",
+   "confidence": "measured",
+   "vantage": "phone",
+   "at": "2026-11-27T12:00:00Z"
+  },
+  {
+   "id": "lights.public:apex",
+   "layer": "lights",
+   "entity": {
+    "kind": "",
+    "id": ""
+   },
+   "name": "lights.public:apex",
+   "passed": true,
+   "status": "ok",
+   "details": "",
+   "duration_ms": null,
+   "phases": {
+    "dns": 10,
+    "tcp": 20,
+    "tls": null,
+    "http": 40
+   },
+   "code": 200,
+   "needs": [],
+   "evidence": [],
+   "explained_by": null,
+   "confidence": "measured",
+   "vantage": "phone",
+   "at": "2026-11-27T12:00:00Z"
+  },
+  {
+   "id": "data.backups",
+   "layer": "data",
+   "entity": {
+    "kind": "",
+    "id": ""
+   },
+   "name": "data.backups",
+   "passed": false,
+   "status": "not_served",
+   "details": "not served: report family not published yet",
+   "duration_ms": null,
+   "phases": {
+    "dns": null,
+    "tcp": null,
+    "tls": null,
+    "http": null
+   },
+   "code": null,
+   "needs": [],
+   "evidence": [],
+   "explained_by": null,
+   "confidence": "measured",
+   "vantage": "phone",
+   "at": "2026-11-27T12:00:00Z"
+  }
+ ],
+ "findings": [],
+ "attribution": {
+  "roots": [
+   "vms.alive:gcp-E2-f_0"
+  ],
+  "chains": {
+   "vms.alive:gcp-E2-f_0": [
+    "mesh.hub:wg0",
+    "control.api_public",
+    "lights.private:gitea"
+   ]
+  }
+ },
+ "missing": [
+  {
+   "id": "R1",
+   "text": "GET /reports/data/:family is not served yet"
+  }
+ ],
+ "redactions": 0
+}

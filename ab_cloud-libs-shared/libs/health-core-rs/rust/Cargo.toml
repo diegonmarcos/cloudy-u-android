@@ -1,0 +1,17 @@
+[package]
+name = "health-core"
+version = "0.1.0"
+edition = "2021"
+description = "#1955 C Cloud C3 health engine core (std only): the c3-report/v1 envelope, the dependency graph (expand, attribute, infer, gate, layer light), redact, diff, budget, merge, the phased prober and the mesh prober matrix. Shared by the phone (JNI, libs:health-core-rs) and, later, the fleet reports workspace (git dependency by rev)."
+publish = false
+
+[lib]
+name = "health_core"
+path = "src/lib.rs"
+
+# std only on purpose: no third-party crate, so no Cargo.lock licence entries and nothing to audit; TLS is reported "not served" until a TLS engine is added.
+[dependencies]
+
+[profile.release]
+opt-level = 3
+panic = "unwind"
