@@ -110,6 +110,7 @@ jobs:
           dump; cp walk-out/ui.xml walk-out/ui-launch.xml
           tap Clock; shot 02-clock-world-clock
           for p in "Alarms:03-clock-alarms" "Timers:04-clock-timers" "Stopwatch:05-clock-stopwatch" "Interval:06-clock-interval" "Bedtime:07-clock-bedtime" "World clock:08-clock-world-clock-again"; do
+            [ "${p%%:*}" = "Bedtime" ] && { adb shell input swipe 900 334 150 334 300; sleep 1; }   # the chip row scrolls sideways
             tap "${p%%:*}"; shot "${p##*:}"
           done
           tap Home; tap Library; shot 09-library-now-under-home-library-tab
