@@ -260,7 +260,7 @@ header_checks() {
     if [ "$3" = 0 ]; then ok=$((ok+1)); printf 'per:%s\t%s\t%s\tshown (value ok)\t%s\n' "$cloned" "$1" "$2" "$4" >> "$OUT/walk.tsv"
     else miss=$((miss+1)); printf 'per:%s\t%s\t%s\tVALUE MISMATCH (got "%s")\t-\n' "$cloned" "$1" "$2" "$4" >> "$OUT/walk.tsv"; fi; }
   local cs sm; cs=$(nt git_sheet_clone_state); sm=$(grep -o ' text="[^"]*diegonmarcos · [^"]*"' "$OUT/ui.xml" | head -1 | sed 's/^ text="//; s/"$//')
-  if [ "$cloned" = yes ]; then wcs='^Cloned$'; wsm='^diegonmarcos · main · '; else wcs='^Not Cloned$'; wsm='^diegonmarcos · '; fi
+  if [ "$cloned" = yes ]; then wcs='^Cloned$'; wsm='^diegonmarcos · '; else wcs='^Not Cloned$'; wsm='^diegonmarcos · '; fi   # the branch is read by the first check, so the summary opens as owner · — · —
   grep -q " text=\"$row\"" "$OUT/ui.xml"; rec hd.name Name $? "$row"
   v=$(nt git_sheet_visibility); [ -n "$v" ]; rec hd.visibility Visibility $? "$v"
   printf '%s' "$cs" | grep -Eq "$wcs"; rec hd.clone_state "Clone state" $? "$cs"

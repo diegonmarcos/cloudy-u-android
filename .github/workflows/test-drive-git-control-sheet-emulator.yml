@@ -95,6 +95,11 @@ jobs:
           path: out/
           if-no-files-found: warn
 
+      # attempt 1 finished with failing controls (so attempt 2 was skipped): that is a real RED, not a pass
+      - name: Fail when the walk finished with failing controls
+        if: steps.try1.outcome == 'failure' && steps.fin.outputs.done == 'true'
+        run: cat out/summary.txt; echo "::error::the ${{ matrix.phase }} walk finished with failing controls (see walk.tsv in the evidence)"; exit 1
+
   combine:
     name: "Combined result table (JVM observed + three walks)"
     needs: walk
