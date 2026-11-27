@@ -271,13 +271,15 @@ object MailStack {
     data class EdgePrim(
         val id: String, val from: String, val to: String, val label: String, val p0: Offset, val p1: Offset, val p2: Offset, val p3: Offset,
         val health: Health, val color: Color, val dashed: Boolean,
+        /** #1955 A how many table edges this wire stands for (a bundle trunk); Mail's wires are 1. */
+        val weight: Float = 1f,
     ) {
         /** UNKNOWN wires carry no light: grey and still says "no data is known to flow". */
         val flowing get() = health != Health.UNKNOWN
     }
     data class Plan(val nodes: List<NodePrim>, val edges: List<EdgePrim>, val bounds: Rect)
 
-    private fun anchors(f: Rect, t: Rect): List<Offset> {
+    internal fun anchors(f: Rect, t: Rect): List<Offset> {
         val dx = ((t.l - f.r).coerceAtLeast(40f)) * 0.5f
         return if (t.l >= f.r - 1f) listOf(Offset(f.r, f.cy), Offset(f.r + dx, f.cy), Offset(t.l - dx, t.cy), Offset(t.l, t.cy))
         else if (t.t >= f.b) { val m = (t.t - f.b) / 2f + 10f; listOf(Offset(f.cx, f.b), Offset(f.cx, f.b + m), Offset(t.cx, t.t - m), Offset(t.cx, t.t)) }
@@ -317,6 +319,8 @@ object MailStack {
         fun toScreen(w: Offset) = Offset(w.x * scale + ox, w.y * scale + oy)
         fun toWorld(s: Offset) = Offset((s.x - ox) / scale, (s.y - oy) / scale)
         /** Zoom by [factor] about the screen point [c] (it stays under the finger), then pan by [pan]. */
+        /** #1955 A the same scale, panned so [r] sits in the centre of a [w] x [h] canvas (search and sheet jumps). */
+        fun centerOn(r: Rect, w: Float, h: Float): View = View(scale, w / 2 - r.cx * scale, h / 2 - r.cy * scale)
         fun transform(c: Offset, pan: Offset, factor: Float): View {
             val s = (scale * factor).coerceIn(MIN_SCALE, MAX_SCALE)
             val k = s / scale
@@ -348,6 +352,20 @@ object MailStack {
 
     /** The node under the screen point (the last drawn wins), null on empty canvas. */
     fun hit(plan: Plan, v: View, screen: Offset): String? = v.toWorld(screen).let { w -> plan.nodes.lastOrNull { it.rect.contains(w) }?.id }
+
+    /** #1955 A The edge under the screen point: 16 samples along each wire, within [tolPx] screen px; null when none (nodes win, the caller asks [hit] first). */
+    fun hitEdge(plan: Plan, v: View, screen: Offset, tolPx: Float): String? {
+        var best: String? = null
+        var bestD = tolPx * tolPx
+        plan.edges.forEach { e ->
+            for (i in 0..16) {
+                val q = v.toScreen(bezier(e, i / 16f))
+                val d = (q.x - screen.x) * (q.x - screen.x) + (q.y - screen.y) * (q.y - screen.y)
+                if (d <= bestD) { bestD = d; best = e.id }
+            }
+        }
+        return best
+    }
 
     /** What the canvas exposes to accessibility and the tests: the ids it draws, in order. */
     fun drawnSummary(plan: Plan): String = "nodes:" + plan.nodes.joinToString(",") { it.id } + " edges:" + plan.edges.joinToString(",") { it.id }

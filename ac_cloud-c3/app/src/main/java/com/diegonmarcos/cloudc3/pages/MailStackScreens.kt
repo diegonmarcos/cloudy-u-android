@@ -49,6 +49,8 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -157,17 +159,35 @@ fun MailTopologyCanvas(topology: MailStack.Topology, decl: MailStack.Decl, answe
 
 /** #1955 A The node-edge canvas of any [MailStack.Plan] (Mail's topologies, the Network Graph views): grid, bezier wires with arrows, pulses, labels, pan, pinch zoom, tap a node. */
 @Composable
-fun PlanCanvas(plan: MailStack.Plan, tag: String, modifier: Modifier = Modifier, onOpen: (String) -> Unit) {
+fun PlanCanvas(
+    plan: MailStack.Plan, tag: String, modifier: Modifier = Modifier,
+    /** #1955 A optional, all defaulting to Mail's behaviour: an edge tap, a hoisted view, pulses off, layers drawn under / over the plan, the a11y text. */
+    onEdge: ((String) -> Unit)? = null,
+    viewState: androidx.compose.runtime.MutableState<MailStack.View?>? = null,
+    initialView: ((Float, Float) -> MailStack.View)? = null,
+    pulses: Boolean = true,
+    under: (androidx.compose.ui.graphics.drawscope.DrawScope.(MailStack.View) -> Unit)? = null,
+    over: (androidx.compose.ui.graphics.drawscope.DrawScope.(MailStack.View) -> Unit)? = null,
+    description: String? = null,
+    onOpen: (String) -> Unit,
+) {
     val p = LocalKitPalette.current
     var box by remember { mutableStateOf(IntSize.Zero) }
-    var view by remember { mutableStateOf<MailStack.View?>(null) }
-    val v = view ?: MailStack.fit(plan.bounds, box.width.toFloat().coerceAtLeast(1f), box.height.toFloat().coerceAtLeast(1f))
+    val own = remember { mutableStateOf<MailStack.View?>(null) }
+    val viewHolder = viewState ?: own
+    var view by viewHolder
+    val bw = box.width.toFloat().coerceAtLeast(1f); val bh = box.height.toFloat().coerceAtLeast(1f)
+    val v = view ?: initialView?.invoke(bw, bh) ?: MailStack.fit(plan.bounds, bw, bh)
     val phase by rememberInfiniteTransition(label = "mail-flow").animateFloat(0f, 1f, infiniteRepeatable(tween(3200, easing = LinearEasing), RepeatMode.Restart), label = "phase")
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current.density
     Canvas(modifier.onSizeChanged { box = it }.background(p.surface).testTag(tag)
         .pointerInput(plan) { detectTransformGestures { c, pan, z, _ -> view = (view ?: v).transform(c, pan, z) } }
-        .pointerInput(plan, v) { detectTapGestures { at -> MailStack.hit(plan, view ?: v, at)?.let(onOpen) } }) {
+        .pointerInput(plan, v) { detectTapGestures { at ->
+            val vv = view ?: v
+            MailStack.hit(plan, vv, at)?.let(onOpen) ?: onEdge?.let { cb -> MailStack.hitEdge(plan, vv, at, 12f * density)?.let(cb) }
+        } }
+        .then(if (description == null) Modifier else Modifier.semantics { contentDescription = description })) {
         val s = v.scale
         val grid = 40f * s
         if (grid > 8f) {
@@ -176,10 +196,11 @@ fun PlanCanvas(plan: MailStack.Plan, tag: String, modifier: Modifier = Modifier,
             var gy = ((v.oy % grid) + grid) % grid
             while (gy < size.height) { drawLine(p.hairline.copy(alpha = 0.25f), Offset(0f, gy), Offset(size.width, gy)); gy += grid }
         }
+        under?.invoke(this, v)
         plan.edges.forEach { e ->
             val a = v.toScreen(e.p0); val b = v.toScreen(e.p1); val c = v.toScreen(e.p2); val d = v.toScreen(e.p3)
             val path = Path().apply { moveTo(a.x, a.y); cubicTo(b.x, b.y, c.x, c.y, d.x, d.y) }
-            drawPath(path, e.color.copy(alpha = 0.75f), style = Stroke(width = 2f * density * s.coerceIn(0.6f, 1.6f),
+            drawPath(path, e.color.copy(alpha = 0.75f), style = Stroke(width = 2f * density * s.coerceIn(0.6f, 1.6f) * (if (e.weight > 1f) (1f + kotlin.math.ln(e.weight)).coerceAtMost(5f) else 1f),
                 pathEffect = if (e.dashed) PathEffect.dashPathEffect(floatArrayOf(14f, 10f)) else null))
             val tip = MailStack.bezier(e, 0.98f); val ctr = v.toScreen(tip); val back = v.toScreen(MailStack.bezier(e, 0.92f))
             val dir = (ctr - back).let { o -> val l = kotlin.math.sqrt(o.x * o.x + o.y * o.y).coerceAtLeast(0.001f); Offset(o.x / l, o.y / l) }
@@ -190,7 +211,7 @@ fun PlanCanvas(plan: MailStack.Plan, tag: String, modifier: Modifier = Modifier,
                 lineTo(d.x - dir.x * k - dir.y * k * 0.5f, d.y - dir.y * k + dir.x * k * 0.5f); close()
             }
             drawPath(arrow, e.color)
-            MailStack.pulses(e, phase).forEach { w -> drawCircle(e.color, 4.5f * density * s.coerceIn(0.7f, 1.5f), v.toScreen(w)) }
+            if (pulses) MailStack.pulses(e, phase).forEach { w -> drawCircle(e.color, 4.5f * density * s.coerceIn(0.7f, 1.5f), v.toScreen(w)) }
             if (s >= 0.6f && e.label.isNotBlank()) {
                 val m = v.toScreen(MailStack.bezier(e, 0.5f))
                 safeDrawText(measurer, e.label, Offset(m.x - 28f * s, m.y - 14f * density * s), mono(9f * s.coerceIn(0.8f, 1.4f), p.textSecondary), maxLines = 1, softWrap = false)
@@ -199,6 +220,8 @@ fun PlanCanvas(plan: MailStack.Plan, tag: String, modifier: Modifier = Modifier,
         plan.nodes.forEach { n ->
             val tl = v.toScreen(Offset(n.rect.l, n.rect.t)); val br = v.toScreen(Offset(n.rect.r, n.rect.b))
             val sz = Size(br.x - tl.x, br.y - tl.y)
+            // #1955 A cull: a node wholly outside the canvas is not drawn (nothing changes on screen)
+            if (br.x < 0f || br.y < 0f || tl.x > size.width || tl.y > size.height) return@forEach
             drawRoundRect(p.surfaceSelected, tl, sz, CornerRadius(8f * density * s))
             drawRoundRect(n.color, tl, sz, CornerRadius(8f * density * s), style = Stroke(2f * density))
             drawRect(n.color, tl, Size(5f * density * s.coerceIn(0.6f, 1.2f), sz.height))
@@ -208,6 +231,7 @@ fun PlanCanvas(plan: MailStack.Plan, tag: String, modifier: Modifier = Modifier,
                 safeDrawText(measurer, MailStack.healthLabel(n.health) + if (n.sub.isBlank()) "" else "  " + n.sub, Offset(tl.x + 12f * density * s, tl.y + sz.height * 0.55f), mono(fs * 0.8f, n.color), maxLines = 1, softWrap = false)
             }
         }
+        over?.invoke(this, v)
     }
 }
 
