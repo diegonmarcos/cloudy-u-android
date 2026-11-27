@@ -135,7 +135,7 @@ class ExchangeScreenTest {
         compose.onNodeWithTag(ExchangeTags.AMOUNT).assertIsNotSelected()
         // the unit-rate lines now read from USD
         waitText(ExchangeTags.targetRate("EUR"), "1 USD → 0.9259 EUR")
-        waitText(ExchangeTags.targetRate("USD"), "1 USD → ")
+        waitText(ExchangeTags.targetRate("USD"), "1 USD → 92.5926 INR")
         assertEquals(Exchange.State("INR", "100", listOf("USD", "EUR", "GBP", "BRL"), 1), Exchange.Store(prefs).load(Exchange.defaults(mode)))
     }
 
@@ -165,7 +165,8 @@ class ExchangeScreenTest {
 
     @Test fun `a long press removes a target and the removal persists`() {
         launch()
-        compose.onNodeWithTag(ExchangeTags.target("EUR")).performTouchInput { longClick() }
+        // the amount is a text field now (a long press there selects text): the menu opens from the currency chip
+        compose.onNodeWithTag(ExchangeTags.targetCode("EUR"), useUnmergedTree = true).performTouchInput { longClick() }
         compose.onNodeWithTag(ExchangeTags.remove("EUR")).performClick()
         compose.waitForIdle()
         assertEquals(0, compose.onAllNodesWithTag(ExchangeTags.target("EUR")).fetchSemanticsNodes().size)

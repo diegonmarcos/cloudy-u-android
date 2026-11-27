@@ -277,7 +277,7 @@ private fun TargetCard(
     SwipeToDismissBox(swipe, backgroundContent = {}, modifier = Modifier.testTag(ExchangeTags.target(code))) {
         ExchangeCard(Modifier.combinedClickable(onClick = {}, onLongClick = { menu = true }), active = active) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                CurrencyChip(code, Modifier.testTag(ExchangeTags.targetCode(code)), onPick)
+                CurrencyChip(code, Modifier.testTag(ExchangeTags.targetCode(code)), onPick, onLongClick = { menu = true })
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
                     AmountField(amountText, onAmount, onFocus, active, MaterialTheme.typography.titleLarge, Modifier.fillMaxWidth().testTag(ExchangeTags.targetAmount(code)))
                     Text(rateLine, Modifier.testTag(ExchangeTags.targetRate(code)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
@@ -309,8 +309,8 @@ private fun AmountField(value: String, onChange: (String) -> Unit, onFocus: () -
 
 /** Round flag, code and a chevron: opens the picker. */
 @Composable
-private fun CurrencyChip(code: String, modifier: Modifier, onClick: () -> Unit) {
-    Row(modifier.clickable(onClick = onClick).padding(vertical = CalcMetrics.small), verticalAlignment = Alignment.CenterVertically) {
+private fun CurrencyChip(code: String, modifier: Modifier, onClick: () -> Unit, onLongClick: (() -> Unit)? = null) {
+    Row(modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick).padding(vertical = CalcMetrics.small), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(CalcMetrics.exchangeFlag).clip(CircleShape).background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
             Text(Exchange.flag(code), style = MaterialTheme.typography.titleLarge)
         }
