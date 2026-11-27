@@ -18,6 +18,16 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
+private val KEY_BODY_CACHE_LIMIT = stringPreferencesKey("body_cache_limit")
+
+/** #1952 the stored "Body cache limit" (the declared default when nothing or an unknown name is stored). */
+internal fun bodyCacheLimitFrom(prefs: androidx.datastore.preferences.core.Preferences): app.sterna.core.data.mail.BodyCacheLimit =
+    app.sterna.core.data.mail.BodyCacheLimit.from(prefs[KEY_BODY_CACHE_LIMIT])
+
+internal fun writeBodyCacheLimit(prefs: androidx.datastore.preferences.core.MutablePreferences, limit: app.sterna.core.data.mail.BodyCacheLimit) {
+    prefs[KEY_BODY_CACHE_LIMIT] = limit.name
+}
+
 /** How the app picks light vs dark colours. */
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
@@ -256,6 +266,14 @@ class SettingsRepository(context: Context) {
 
     suspend fun setOfflineWindow(window: OfflineWindow) {
         dataStore.edit { it[KEY_OFFLINE_WINDOW] = window.name }
+    }
+
+    /** #1952 "Body cache limit": stored body bytes per account before the oldest go. */
+    val bodyCacheLimit: Flow<app.sterna.core.data.mail.BodyCacheLimit> =
+        dataStore.data.map(::bodyCacheLimitFrom)
+
+    suspend fun setBodyCacheLimit(limit: app.sterna.core.data.mail.BodyCacheLimit) {
+        dataStore.edit { writeBodyCacheLimit(it, limit) }
     }
 
     /** Largest attachment the offline sync downloads. */

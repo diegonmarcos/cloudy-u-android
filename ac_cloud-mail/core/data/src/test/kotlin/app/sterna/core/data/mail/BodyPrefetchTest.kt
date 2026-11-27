@@ -138,11 +138,12 @@ class BodyPrefetchTest {
 
     // -- the 90-day window ------------------------------------------------------------------------------
 
-    @Test fun `the default cached history is 90 days of list and bodies`() {
+    @Test fun `the list window defaults to 90 days and the bodies to every message`() {
         assertEquals(SyncWindow.DAYS_90, StoredAccount(id = "a", server = "s", username = "u").syncWindow)
         assertEquals(90, SyncWindow.DAYS_90.maxAgeDays)
-        assertEquals(OfflineWindow.THREE, OfflineWindow.DEFAULT)
-        assertEquals(90, OfflineWindow.DEFAULT.days)
+        assertEquals("#1952 fully cached: every body, whatever its age", OfflineWindow.ALL, OfflineWindow.DEFAULT)
+        assertNull(OfflineWindow.DEFAULT.cutoffMillis(1_000L * 86_400_000L))
+        assertEquals(90, OfflineWindow.THREE.days)
     }
 
     @Test fun `an age window is not capped at 200 messages`() {

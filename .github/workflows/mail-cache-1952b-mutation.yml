@@ -1,0 +1,118 @@
+# #1952 fully cached, mutation runs: each applies ONE deliberate break to the body cache (cap, eviction order, day window, the two settings,
+# the resume after a restart, the cold-start order) and runs MailCache1952bTest, whose named test must catch it. The JVM run is RED
+# (expected); the JOB is green only when the verdict step finds the named test failed (KILLED). `none` runs the unbroken tree and must be
+# green. The dispatch input reaches the scripts through env only and is matched against an allow-list. Manual only.
+name: mail-cache-1952b-mutation
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'none | evict-newest-first | window-ignored | shrink-no-evict | default-drift | setting-not-stored | resume-from-zero | metered-no-chain | network-before-rows'
+        required: true
+permissions:
+  contents: read
+env:
+  WORK_DIR: ac_cloud-mail
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply the mutation
+        env:
+          M: ${{ inputs.name }}
+        run: |
+          D=ac_cloud-mail/core/data/src/main/kotlin/app/sterna/core/data
+          case "$M" in
+            none) echo "no mutation: the tree must be green"; exit 0 ;;
+            # past the cap the NEWEST bodies go
+            evict-newest-first) sed -i 's/for (row in kept.sortedBy { it.sortKey }) {/for (row in kept.sortedByDescending { it.sortKey }) {/' $D/mail/BodyPrefetch.kt ;;
+            # a day window keeps the older bodies
+            window-ignored)     sed -i 's/rows.partition { cutoffMillis != null \&\& it.sortKey < cutoffMillis }/rows.partition { false }/' $D/mail/BodyPrefetch.kt ;;
+            # a smaller limit is not applied until some later sync
+            shrink-no-evict)    sed -i 's/mailRepository.bodyCacheLimit = it; if (!first) mailRepository.applyCacheLimits(); first = false/mailRepository.bodyCacheLimit = it; first = false/' ac_cloud-mail/app/src/main/kotlin/app/sterna/SternaApplication.kt ;;
+            # the engine's default leaves the declaration
+            default-drift)      sed -i 's/val DEFAULT = GB_3/val DEFAULT = GB_1/' $D/mail/OfflineCache.kt ;;
+            # the chosen limit is not what is stored
+            setting-not-stored) sed -i 's/prefs\[KEY_BODY_CACHE_LIMIT\] = limit.name/prefs[KEY_BODY_CACHE_LIMIT] = app.sterna.core.data.mail.BodyCacheLimit.DEFAULT.name/' $D/settings/SettingsRepository.kt ;;
+            # the header backfill starts again from the top
+            resume-from-zero)   sed -i 's/HeaderResume(oldestCachedId, if (oldestCachedId != null) 1 else 0)/HeaderResume(oldestCachedId?.let { null }, 0)/' $D/mail/FullSync.kt ;;
+            # a metered link no longer chains the fill
+            metered-no-chain)   sed -i 's/if (port.missingBodies(folder, 1).isNotEmpty()) pending = true/if (c0.unmetered \&\& port.missingBodies(folder, 1).isNotEmpty()) pending = true/' $D/mail/FullSync.kt ;;
+            # the first server call no longer waits for the painted rows
+            network-before-rows) sed -i 's/withTimeoutOrNull(timeoutMs) { painted.await() }/withTimeoutOrNull(0L) { }/' $D/mail/ColdStart.kt ;;
+            *) echo "::error::unknown mutation (not in the allow-list)"; exit 2 ;;
+          esac
+          git diff --stat
+          test -n "$(git diff --name-only)" || { echo "::error::mutation target missing"; exit 3; }
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
+      - name: Set up Gradle 8.10.2 (cached)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.10.2"
+      # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
+      # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
+      - name: Checkout vault (shared Android signing key, read by app/build.gradle at configuration)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+      - name: Install ORAS + sops (pinned)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: oras sops
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+      - name: JVM unit tests of MailCache1952bTest (RED expected under a mutation; the verdict step reads the XML)
+        run: |
+          cd ac_cloud-mail
+          chmod +x gradlew
+          ./gradlew --no-daemon :core:data:testDebugUnitTest -PtestApp --tests "app.sterna.core.data.mail.MailCache1952bTest" || true
+      - name: Verdict (KILLED = the named test failed; none = every test green)
+        env:
+          M: ${{ inputs.name }}
+        run: |
+          case "$M" in
+            none)                N="" ;;
+            evict-newest-first)  N="past the cap the oldest bodies go first and the newest stay" ;;
+            window-ignored)      N="a day window excludes older bodies and All keeps every one" ;;
+            shrink-no-evict)     N="shrinking the limit evicts at once" ;;
+            default-drift)       N="the defaults and the choices are the declaration's" ;;
+            setting-not-stored)  N="the body cache limit round-trips through the settings store" ;;
+            resume-from-zero)    N="the header backfill resumes after the oldest header held, never from zero" ;;
+            metered-no-chain)    N="the background fill continues on any connection" ;;
+            network-before-rows) N="on a cold start the first network call waits for the painted rows" ;;
+            *) echo "::error::unknown mutation (not in the allow-list)"; exit 2 ;;
+          esac
+          X="$(find ac_cloud-mail/core/data/build -path '*test-results*' -name "TEST-*.MailCache1952bTest.xml" | head -1)"
+          [ -n "$X" ] || { echo "::error::LEG ERROR: no result for MailCache1952bTest (did not compile or run); not a kill"; exit 1; }
+          python3 -I - "$X" "$N" "$M" <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          path, want, leg = sys.argv[1:]
+          cases = {c.get("name"): c for c in ET.parse(path).getroot().iter("testcase")}
+          failed = sorted(n for n, c in cases.items() if c.find("failure") is not None or c.find("error") is not None)
+          print("tests:", len(cases), "failed:", failed)
+          if leg == "none":
+              if failed or len(cases) < 9: print("::error::the unbroken tree is not green (or tests are missing)"); sys.exit(1)
+              print("GREEN: %d tests" % len(cases)); sys.exit(0)
+          if want not in cases: print("::error::LEG ERROR %s: the named test did not run: %s" % (leg, want)); sys.exit(1)
+          if want not in failed: print("::error::LEG SURVIVED %s: the named test stayed green: %s" % (leg, want)); sys.exit(1)
+          print("KILLED %s by: %s" % (leg, want))
+          PY

@@ -47,6 +47,7 @@ internal object FirstRowTiming {
     fun now(): Long = SystemClock.elapsedRealtime()
 
     fun painted(enteredAt: Long, rows: Int) {
+        app.sterna.core.data.mail.ColdStart.rowsPainted()
         runCatching { Log.i(TAG, "first-row ms=${now() - enteredAt} rows=$rows view-models=${created.get()}") }
     }
 }

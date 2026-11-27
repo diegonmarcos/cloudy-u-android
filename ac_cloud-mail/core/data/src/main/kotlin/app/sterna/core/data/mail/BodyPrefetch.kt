@@ -151,8 +151,9 @@ class BodyPrefetcher(
 
 // ---- eviction ---------------------------------------------------------------------------------------
 
-/** Stored body bytes one account may hold before the oldest go, even inside the window. */
-internal const val BODY_CACHE_MAX_BYTES_PER_ACCOUNT = 250L * 1024 * 1024
+/** Stored body bytes one account may hold before the oldest go, even inside the window: the default of the
+ *  "Body cache limit" setting ([BodyCacheLimit.DEFAULT], build.json::mail_cache.bodies.cap_mb). */
+internal const val BODY_CACHE_MAX_BYTES_PER_ACCOUNT = 3072L * 1024 * 1024
 
 /**
  * Which stored bodies to drop: every body of a message received before [cutoffMillis] (null = no age limit:

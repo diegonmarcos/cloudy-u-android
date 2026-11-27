@@ -6,7 +6,7 @@ import kotlinx.coroutines.CancellationException
 /**
  * How far back every message body is kept readable offline ("Keep mail offline for"): 30, 90, 180, 365 days or
  * all. [months] is the persisted-name scale (ONE..TWELVE keep their names), [days] the real span. The default is
- * [DEFAULT], 90 days (#1763).
+ * [DEFAULT], every message (#1952: fully cached; build.json::mail_cache.bodies.default_window_days = 0).
  */
 enum class OfflineWindow(val months: Int, val days: Int) {
     ONE(1, 30), THREE(3, 90), SIX(6, 180), TWELVE(12, 365), ALL(0, 0);
@@ -16,10 +16,27 @@ enum class OfflineWindow(val months: Int, val days: Int) {
         if (days == 0) null else nowMillis - days * DAY_MILLIS
 
     companion object {
-        val DEFAULT = THREE
+        val DEFAULT = ALL
         private const val DAY_MILLIS = 24L * 60 * 60 * 1000
 
         fun from(stored: String?): OfflineWindow =
+            stored?.let { runCatching { valueOf(it) }.getOrNull() } ?: DEFAULT
+    }
+}
+
+/**
+ * #1952 "Body cache limit": stored body bytes one account may hold. Past it the OLDEST bodies go first; headers never.
+ * The names are the persisted format. The default is build.json::mail_cache.bodies.cap_mb.
+ */
+enum class BodyCacheLimit(val mb: Int) {
+    MB_512(512), GB_1(1024), GB_2(2048), GB_3(3072), GB_5(5120), GB_10(10240);
+
+    val bytes: Long get() = mb * 1024L * 1024L
+
+    companion object {
+        val DEFAULT = GB_3
+
+        fun from(stored: String?): BodyCacheLimit =
             stored?.let { runCatching { valueOf(it) }.getOrNull() } ?: DEFAULT
     }
 }

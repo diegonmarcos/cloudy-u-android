@@ -1307,9 +1307,10 @@ class InboxViewModel(
             }
         }
         // Backfill the "G0 _ Auth" class of rows cached before it existed (bounded batches, once per row).
-        viewModelScope.launch(Dispatchers.IO) { runCatching { repo.indexAuth() } }
+        // #1952 cold start: both index passes wait for the first painted rows (they scan the whole store).
+        viewModelScope.launch(Dispatchers.IO) { app.sterna.core.data.mail.ColdStart.awaitRows(); runCatching { repo.indexAuth() } }
         // And the sender domain ("Group by Domain"), the same way.
-        viewModelScope.launch(Dispatchers.IO) { runCatching { repo.indexDomains() } }
+        viewModelScope.launch(Dispatchers.IO) { app.sterna.core.data.mail.ColdStart.awaitRows(); runCatching { repo.indexDomains() } }
         refreshUnlessFresh()
         connectivity.start()
         observeThreadMembers()

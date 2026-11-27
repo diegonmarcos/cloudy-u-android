@@ -48,7 +48,7 @@ class FullSyncStep9Test {
         assertEquals(200, FULL_SYNC_METERED_TEXT_PER_RUN)
         assertTrue(port.bodies.all { it.size <= PREFETCH_BATCH })
         assertEquals(FullSyncStop.BUDGET, r.stop)
-        assertFalse("no continuation on mobile data", r.morePending)
+        assertTrue("#1952 any link: 300 bodies are still missing, the run chains a continuation", r.morePending)
         assertEquals(PrefetchBudget(200, PREFETCH_BATCH, 1), fullSyncBodyBudget(metered))
         assertEquals("unmetered keeps the list-sync throttle", prefetchBudget(wifi, PrefetchTrigger.LIST_SYNC), fullSyncBodyBudget(wifi))
         assertFalse("battery saver: nothing", fullSyncBodyBudget(saver).allowed)

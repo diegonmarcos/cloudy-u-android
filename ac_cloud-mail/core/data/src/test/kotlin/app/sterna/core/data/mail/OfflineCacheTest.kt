@@ -75,11 +75,11 @@ class OfflineCacheTest {
     // ---- Window setting ------------------------------------------------------------------------
 
     @Test
-    fun `the offline window defaults to 90 days and offers 30 90 180 365 and all`() {
-        assertEquals(OfflineWindow.THREE, OfflineWindow.DEFAULT)
-        assertEquals(OfflineWindow.THREE, OfflineWindow.from(null))
-        assertEquals(OfflineWindow.THREE, OfflineWindow.from("garbage"))
-        assertEquals(90, OfflineWindow.DEFAULT.days)
+    fun `the offline window defaults to all and offers 30 90 180 365 and all`() {
+        assertEquals("#1952 fully cached", OfflineWindow.ALL, OfflineWindow.DEFAULT)
+        assertEquals(OfflineWindow.ALL, OfflineWindow.from(null))
+        assertEquals(OfflineWindow.ALL, OfflineWindow.from("garbage"))
+        assertEquals(90, OfflineWindow.THREE.days)
         assertEquals(listOf(1, 3, 6, 12, 0), OfflineWindow.entries.map { it.months })
         assertEquals(listOf(30, 90, 180, 365, 0), OfflineWindow.entries.map { it.days })
         assertNull(OfflineWindow.ALL.cutoffMillis(1_000L))
@@ -131,7 +131,7 @@ class OfflineCacheTest {
             ),
             cached = setOf("new2", "old1", "old2"),
         )
-        val result = OfflineSync(port, batch = 1).run(OfflineWindow.DEFAULT, OfflineAttachmentLimit.DEFAULT, now)
+        val result = OfflineSync(port, batch = 1).run(OfflineWindow.THREE, OfflineAttachmentLimit.DEFAULT, now)
         assertEquals(now - 90 * day, port.askedCutoff)
         assertEquals(setOf("new1", "edge"), port.fetched.toSet())
         assertEquals(setOf("new1", "new2", "edge"), port.stored)

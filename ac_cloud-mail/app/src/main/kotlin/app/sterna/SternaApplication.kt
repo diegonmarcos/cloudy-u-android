@@ -191,7 +191,16 @@ class AppContainer(context: Context) {
         }
         // Body prefetch (#1763): throttled by the device (Wi-Fi, battery saver), windowed by "Keep mail offline for".
         mailRepository.prefetchConditions = { app.sterna.mail.DevicePrefetchConditions.read(appContext) }
-        appScope.launch { settingsRepository.offlineWindow.collect { mailRepository.offlineWindow = it } }
+        // #1952 the two cache limits are applied live: the first value of each only sets the engine, a later one (the user
+        // changed it) evicts at once what no longer fits, oldest first; a wider limit is filled by the background sync.
+        appScope.launch {
+            var first = true
+            settingsRepository.offlineWindow.collect { mailRepository.offlineWindow = it; if (!first) mailRepository.applyCacheLimits(); first = false }
+        }
+        appScope.launch {
+            var first = true
+            settingsRepository.bodyCacheLimit.collect { mailRepository.bodyCacheLimit = it; if (!first) mailRepository.applyCacheLimits(); first = false }
+        }
         // #1837 remote images load by default; a stored "off" of the old default flips to on, once.
         appScope.launch { runCatching { settingsRepository.migrateRemoteImagesDefault() } }
         // Catch-up sweep of cached mail belonging to accounts that no longer exist (#121). The

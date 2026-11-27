@@ -16,7 +16,9 @@
 #       without ever opening ciphertext
 #   I5  no spinner over cached rows: the tern reads ternShowing (pull gesture or empty list), a hairline otherwise
 #   I6  the start runs of both sync workers are expedited on Android 12+, network-only constraints
-#   I7  the window stays a declared setting with default 90 days (OfflineWindow.DEFAULT = THREE, SyncWindow.DAYS_90)
+#   I7  the body window stays a declared setting whose default is the one build.json::mail_cache declares
+#       (bodies.default_window_days; 0 = every message, #1952 fully cached) and the 90-day choice is still offered;
+#       the per-account list window default stays SyncWindow.DAYS_90
 #   P   rule 16 parity against test/mail-1869-parity-freeze.json (frozen from the tree before #1869): every Configs
 #       row, screen, offline window, attachment limit, sync window and attachment policy is still there
 #   M   mutation-proof: each defence undone in a COPY turns its check red; the real tree is green
@@ -130,7 +132,10 @@ elif which == "I6":
     need(".setConstraints(expeditedConstraints())" in body(w, "fun runNow(context: Context) {"), "the expedited request carries battery-not-low (WorkManager rejects it)")
 elif which == "I7":
     oc = code(read(os.path.join(D, "mail/OfflineCache.kt")))
-    need("val DEFAULT = THREE" in oc and "THREE(3, 90)" in oc, "the offline window default is not 90 days")
+    days = json.load(open(os.path.join(app, "build.json"), encoding="utf-8"))["mail_cache"]["bodies"]["default_window_days"]
+    m = re.search(r"val DEFAULT = ([A-Z]+)", oc)
+    need(m and re.search(r"\b%s\(\d+, %d\)" % (m.group(1), days), oc), "the offline window default is not the declared %s days" % days)
+    need("THREE(3, 90)" in oc, "the 90-day choice is gone")
     sa = code(read(os.path.join(D, "account/StoredAccount.kt")))
     need("val syncWindow: SyncWindow = SyncWindow.DAYS_90," in sa, "the per-account window default is not 90 days")
 elif which == "P":
@@ -175,7 +180,7 @@ declare -A LABEL=(
   [I4]="the full sync prefetches inline images (unmetered, capped, budgeted, never ciphertext)"
   [I5]="no spinner over cached rows: tern for the pull or an empty list, a hairline otherwise"
   [I6]="start sync expedited on Android 12+, network-only constraints"
-  [I7]="the window is a declared setting with default 90 days"
+  [I7]="the body window default is the declared one (build.json::mail_cache), 90 days still offered"
   [P]="rule 16 parity: every Configs row, screen and window/attachment choice kept"
 )
 
@@ -192,6 +197,7 @@ copy_tree() {
   for d in app/src/main/kotlin core/data/src/main/kotlin; do
     mkdir -p "$WORK/app/$d"; cp -R "$APP/$d/." "$WORK/app/$d/"
   done
+  cp "$APP/build.json" "$WORK/app/build.json"
 }
 # mutate <check> <file relative to APP> <python old> <python new> <what>
 mutate() {
@@ -232,7 +238,8 @@ mutate I5 "$SCR" 'isRefreshing = ternShowing,' 'isRefreshing = ui.showRefreshInd
 mutate I5 "$SCR" 'if (syncLineShowing) {' 'if (false) {' "the hairline never drawn"
 mutate I6 "$OW" 'builder.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)' 'Unit' "offline sync start not expedited"
 mutate I6 "$CW" 'if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {' 'if (true) {' "core sync expedited below Android 12"
-mutate I7 "$OC" 'val DEFAULT = THREE' 'val DEFAULT = ONE' "the window default cut to 30 days"
+mutate I7 "$OC" 'val DEFAULT = ALL' 'val DEFAULT = ONE' "the window default cut to 30 days"
+mutate I7 "$OC" 'val DEFAULT = ALL' 'val DEFAULT = THREE' "the window default back to 90 days against the declaration"
 mutate P "$OC" 'TWELVE(12, 365), ' '' "a keep-offline choice removed"
 mutate P "$SET" 'R.string.settings_offline_attach_policy_title' 'R.string.app_name' "the Download attachments row removed"
 

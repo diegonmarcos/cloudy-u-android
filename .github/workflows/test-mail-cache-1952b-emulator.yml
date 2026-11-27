@@ -1,0 +1,132 @@
+name: "Test -> Cloud Mail fully cached (emulator: first full sync of a 40k Inbox, cache settings, cold start rows-before-network, scroll jank, airplane mode opens an old body)"
+
+# #1952 fully cached, on a device. The Cloud Mail test variant (-PtestApp, with libmail_core.so for x86_64) syncs a fake JMAP server on
+# this runner holding `bulk` older Inbox messages (FAKE_JMAP_BULK, default 40000). The walk (ac_cloud-mail/test/walk-mail-cache-1952b.sh)
+# lets the first full sync run for `fill_minutes`, records the store's size, screenshots the Configs section with the two cache settings
+# and the usage line, then kills the app and measures a COLD start at that fixture: the first rows must be painted from the store BEFORE
+# the first server call (logcat tag MailList: `cold-start rows-painted` before `cold-start first-network ... after-rows=true`), with the
+# time to the first row and the scroll jank (dumpsys gfxinfo) written to timing.md. Last, in airplane mode, an old message is opened and
+# its body must show from the store. Evidence: the artifact mail-1952b-evidence. Dispatch only; the inputs are digits, checked, env only.
+
+on:
+  workflow_dispatch:
+    inputs:
+      bulk:
+        description: 'older Inbox messages the fake JMAP server holds (digits only, at most 60000)'
+        required: false
+        default: '40000'
+      fill_minutes:
+        description: 'minutes the walk lets the first full sync run before the cold start (digits only, at most 60)'
+        required: false
+        default: '30'
+
+permissions:
+  contents: read
+
+jobs:
+  mail-cache-1952b:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      # The Rust core is REQUIRED here: without it the proof would silently run on the Kotlin sync and prove nothing about #1837.
+      MAIL_CORE_RS_REQUIRED: "1"
+      MAIL_CORE_ABIS: "x86_64"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+
+      - name: The testers of the fake server and of the walk
+        run: |
+          set -eu
+          python3 -I ac_cloud-mail/test/fake-jmap-server.py --selftest
+          bash -n ac_cloud-mail/test/walk-mail-cache-1952b.sh
+
+      # The dispatch inputs reach the walk through env only, and only as digits inside a range (an allow-list by shape).
+      - name: Check the dispatch inputs
+        env:
+          IN_BULK: ${{ inputs.bulk }}
+          IN_FILL: ${{ inputs.fill_minutes }}
+        run: |
+          set -eu
+          case "$IN_BULK" in ''|*[!0-9]*) echo "::error::bulk is not a number"; exit 2 ;; esac
+          case "$IN_FILL" in ''|*[!0-9]*) echo "::error::fill_minutes is not a number"; exit 2 ;; esac
+          [ "${#IN_BULK}" -le 5 ] && [ "$IN_BULK" -le 60000 ] || { echo "::error::bulk out of range"; exit 2; }
+          [ "${#IN_FILL}" -le 2 ] && [ "$IN_FILL" -le 60 ] || { echo "::error::fill_minutes out of range"; exit 2; }
+          { echo "FAKE_JMAP_BULK=$IN_BULK"; echo "FILL_MINUTES=$IN_FILL"; } >> "$GITHUB_ENV"
+
+      - name: Resolve the native core toolchain (build.json::native_core.toolchain)
+        id: native
+        working-directory: ac_cloud-mail
+        run: |
+          set -eu
+          targets="$(jq -r '.native_core.toolchain.rust_targets | join(",")' build.json)"
+          ndk="$(jq -r '.native_core.toolchain.ndk' build.json)"
+          [ -n "$targets" ] && [ "$ndk" != "null" ] || { echo "::error::build.json::native_core.toolchain is incomplete"; exit 1; }
+          { echo "targets=$targets"; echo "ndk=$ndk"; } >> "$GITHUB_OUTPUT"
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ steps.native.outputs.targets }}
+
+      - name: Point the build at the NDK
+        run: |
+          set -eu
+          ndk="${{ steps.native.outputs.ndk }}"
+          if [ ! -d "$ANDROID_HOME/ndk/$ndk" ]; then
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$ndk" >/dev/null
+          fi
+          [ -x "$ANDROID_HOME/ndk/$ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/clang" ] || { echo "::error::NDK $ndk is not installed"; exit 1; }
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ndk" >> "$GITHUB_ENV"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Build the test variant (with the x86_64 Rust core)
+        run: |
+          set -eu
+          cd ac_cloud-mail
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:assembleDebug -PtestApp
+          apk=$(find app/build/outputs/apk/debug -name '*.apk' | sort | head -1)
+          [ -n "$apk" ] || { echo "::error::no APK built"; exit 1; }
+          cp "$apk" "$GITHUB_WORKSPACE/app-under-test.apk"
+          unzip -l "$GITHUB_WORKSPACE/app-under-test.apk" | grep -E 'lib/x86_64/libmail_core\.so' || { echo "::error::the APK carries no libmail_core.so"; exit 1; }
+          AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          echo "PKG=$("$AAPT" dump packagename "$GITHUB_WORKSPACE/app-under-test.apk")" >> "$GITHUB_ENV"
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot emulator + the fully cached walk
+        timeout-minutes: 100
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          ram-size: 4096M
+          disk-size: 6000M
+          cores: 4
+          emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-mail/test/walk-mail-cache-1952b.sh
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mail-1952b-evidence
+          path: walk-out-1952b
+          if-no-files-found: warn

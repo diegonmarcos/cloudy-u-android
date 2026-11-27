@@ -3358,6 +3358,18 @@ class MailRepository(
     @Volatile
     var offlineWindow: OfflineWindow = OfflineWindow.DEFAULT
 
+    /** #1952 the "Body cache limit" setting, pushed in by the app layer; the declared default until it says otherwise. */
+    @Volatile
+    var bodyCacheLimit: BodyCacheLimit = BodyCacheLimit.DEFAULT
+
+    /** #1952 a changed window or limit is applied at once: what no longer fits goes now, oldest first (headers stay). */
+    suspend fun applyCacheLimits(): Int = accountStore.accounts().sumOf { evictBodies(it.id) }
+
+    /** #1952 stored bodies of every account: bytes and how many (the usage line next to the limit). */
+    suspend fun bodyCacheUsage(): Pair<Long, Int> = accountStore.accounts().fold(0L to 0) { (b, n), a ->
+        (b + emailBodyDao.bytesForAccount(a.id)) to (n + emailBodyDao.countForAccount(a.id))
+    }
+
     /** Wi-Fi / metered / battery saver, read by the app layer from the device. Unrestricted until it is wired. */
     @Volatile
     var prefetchConditions: () -> PrefetchConditions = { PrefetchConditions.UNRESTRICTED }
@@ -3569,7 +3581,7 @@ class MailRepository(
      *  Headers stay (#1752). Offline attachments of the dropped messages go with them. */
     suspend fun evictBodies(accountId: String): Int = runCatching {
         val cutoff = offlineWindow.cutoffMillis(System.currentTimeMillis())
-        val drop = planBodyEviction(emailBodyDao.bodyRows(accountId), cutoff)
+        val drop = planBodyEviction(emailBodyDao.bodyRows(accountId), cutoff, bodyCacheLimit.bytes)
         drop.chunked(500).forEach { emailBodyDao.deleteIds(accountId, it) }
         val accountDir = offlineAttachmentFile(accountId, "x", EmailBodyPart(blobId = "x"))?.parentFile?.parentFile
         drop.forEach { id -> accountDir?.let { java.io.File(it, id.replace(Regex("[^A-Za-z0-9._-]"), "_")).deleteRecursively() } }
@@ -6550,6 +6562,8 @@ class MailRepository(
 
     private suspend fun connect(credentials: AccountCredentials): Context {
         NoNetwork.check("connect")
+        ColdStart.awaitRows() // #1952 cold start: the cached rows are painted before the first server call
+        ColdStart.network("connect")
         context?.let { if (it.credentials == credentials && !tokenRefresher.isExpiring(credentials)) return it }
         // A 401 (expired/revoked bearer, or the edge gate refusing it) refreshes the token and the
         // session ONCE; a second refusal surfaces as SignInRequiredException, never a raw HTTP code.
@@ -6648,7 +6662,7 @@ class MailRepository(
         val port = fullSyncPort(credentials, window, limit)
         // #1869 step 11: read states queued offline go first, before any header sync can read the server's older ones.
         runCatching { flushReadQueue(credentials) }
-        return syncSerial.withLock { FullSync(port, conditions, policy, stopRequested = stopRequested).run(window, nowMillis) }
+        return syncSerial.withLock { FullSync(port, conditions, policy, bodyCapBytes = bodyCacheLimit.bytes, stopRequested = stopRequested).run(window, nowMillis) }
     }
 
     /** Bytes of downloaded attachments one account holds (Configs shows it per account). */
@@ -6675,17 +6689,18 @@ class MailRepository(
             val oldest = emailDao.oldestSortKey(credentials.id, folder.id)
             if (cutoffMillis != null && oldest != null && oldest < cutoffMillis) return true
             val ctx = connect(credentials)
-            val anchorId = emailDao.oldestRepresentativeEmailId(credentials.id, folder.id)
+            val resume = HeaderResume.after(emailDao.oldestRepresentativeEmailId(credentials.id, folder.id))
+            val anchorId = resume.anchorId
             val page = try {
                 client.queryEmailsPage(
                     ctx.session, ctx.accountId, folder.id, FULL_SYNC_PAGE, ctx.auth,
-                    calculateTotal = true, anchorId = anchorId, anchorOffset = if (anchorId != null) 1 else 0,
+                    calculateTotal = true, anchorId = anchorId, anchorOffset = resume.anchorOffset,
                 )
             } catch (e: JmapException) {
                 if (e.errorType != "anchorNotFound") throw e
                 client.queryEmailsPage(
                     ctx.session, ctx.accountId, folder.id, FULL_SYNC_PAGE, ctx.auth,
-                    position = emailDao.countForMailbox(credentials.id, folder.id), calculateTotal = true,
+                    position = HeaderResume.positionWithoutAnchor(emailDao.countForMailbox(credentials.id, folder.id)), calculateTotal = true,
                 )
             }
             if (page.emails.isNotEmpty()) {

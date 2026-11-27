@@ -2869,8 +2869,11 @@ private fun OfflineSection(viewModel: SettingsViewModel) {
     val bytes by viewModel.offlineCacheBytes.collectAsStateWithLifecycle()
     val attachmentPolicy by viewModel.attachmentPolicy.collectAsStateWithLifecycle()
     val attachmentStorage by viewModel.attachmentStorage.collectAsStateWithLifecycle()
+    val bodyLimit by viewModel.bodyCacheLimit.collectAsStateWithLifecycle()
+    val bodyUsage by viewModel.bodyCacheUsage.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    androidx.compose.runtime.LaunchedEffect(lastSync) {
+    androidx.compose.runtime.LaunchedEffect(lastSync, window, bodyLimit) {
+        viewModel.refreshBodyCacheUsage()
         viewModel.refreshOfflineCacheSize()
         viewModel.refreshAttachmentStorage()
     }
@@ -2881,6 +2884,25 @@ private fun OfflineSection(viewModel: SettingsViewModel) {
             selected = window,
             optionLabel = { offlineWindowLabel(context, it) },
             onSelect = viewModel::setOfflineWindow,
+        )
+        // #1952: stored body bytes per account before the oldest go, and what is stored now.
+        SettingChoiceRow(
+            title = stringResource(R.string.settings_body_cache_limit_title),
+            options = app.sterna.core.data.mail.BodyCacheLimit.entries.toList(),
+            selected = bodyLimit,
+            optionLabel = { bodyCacheLimitLabel(it) },
+            onSelect = viewModel::setBodyCacheLimit,
+        )
+        Text(
+            stringResource(
+                R.string.settings_body_cache_usage,
+                android.text.format.Formatter.formatShortFileSize(context, bodyUsage.first),
+                bodyCacheLimitLabel(bodyLimit),
+                bodyCountLabel(bodyUsage.second),
+            ),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = MailMetrics.s16, vertical = MailMetrics.s8),
         )
         // #1768: which attachments the background sync downloads (a tap always downloads).
         SettingChoiceRow(
@@ -2926,6 +2948,13 @@ private fun OfflineSection(viewModel: SettingsViewModel) {
         )
     }
 }
+
+/** "0.5 GB", "3 GB": the limit as the picker and the usage line say it. */
+internal fun bodyCacheLimitLabel(l: app.sterna.core.data.mail.BodyCacheLimit): String =
+    if (l.mb % 1024 == 0) "${l.mb / 1024} GB" else "${l.mb / 1024.0} GB"
+
+/** "412", "41k": how many bodies are stored. */
+internal fun bodyCountLabel(n: Int): String = if (n < 1000) n.toString() else "${n / 1000}k"
 
 private fun offlineWindowLabel(context: Context, w: app.sterna.core.data.mail.OfflineWindow): String = when (w) {
     app.sterna.core.data.mail.OfflineWindow.ONE -> context.getString(R.string.settings_offline_window_1)

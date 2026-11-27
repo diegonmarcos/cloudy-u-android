@@ -1554,12 +1554,14 @@
     <string name="ep_sync_missing">Cloud Account is not installed.</string>
     <string name="ep_sync_refused">Cloud Account did not share the endpoints. Allow Cloud Mail under Secrets in Cloud Account.</string>
     <string name="settings_offline_section">Offline</string>
-    <string name="settings_offline_window_title">Keep mail offline for</string>
+    <string name="settings_offline_window_title">Keep message bodies for</string>
+    <string name="settings_body_cache_limit_title">Body cache limit</string>
+    <string name="settings_body_cache_usage">%1$s of %2$s · %3$s bodies</string>
     <string name="settings_offline_window_1">30 days</string>
-    <string name="settings_offline_window_3">90 days (default)</string>
+    <string name="settings_offline_window_3">90 days</string>
     <string name="settings_offline_window_6">180 days</string>
     <string name="settings_offline_window_12">365 days</string>
-    <string name="settings_offline_window_all">All mail</string>
+    <string name="settings_offline_window_all">All (default)</string>
     <string name="settings_offline_attachments_title">Download attachments up to</string>
     <string name="settings_offline_attachments_none">None</string>
     <string name="settings_offline_attachments_5">5 MB</string>

@@ -515,6 +515,30 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    /** #1952 "Body cache limit" and the usage shown next to it (bytes, bodies). */
+    val bodyCacheLimit = settings.bodyCacheLimit.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = app.sterna.core.data.mail.BodyCacheLimit.DEFAULT,
+    )
+
+    fun setBodyCacheLimit(limit: app.sterna.core.data.mail.BodyCacheLimit) {
+        viewModelScope.launch {
+            settings.setBodyCacheLimit(limit)
+            app.sterna.mail.OfflineSyncWorker.runNow(getApplication())
+            refreshBodyCacheUsage()
+        }
+    }
+
+    private val _bodyCacheUsage = MutableStateFlow(0L to 0)
+    val bodyCacheUsage = _bodyCacheUsage.asStateFlow()
+
+    fun refreshBodyCacheUsage() {
+        viewModelScope.launch {
+            _bodyCacheUsage.value = runCatching { getApplication<Application>().container.mailRepository.bodyCacheUsage() }.getOrDefault(0L to 0)
+        }
+    }
+
     val offlineAttachmentLimit = settings.offlineAttachmentLimit.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

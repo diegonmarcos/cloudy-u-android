@@ -77,15 +77,15 @@ class FullSyncPlanner1869Test {
 
     // -- the 90-day window --------------------------------------------------------------------------------------
 
-    @Test fun `the declared window defaults to 90 days and the walk stops at exactly 90 days back`() = runTest {
-        assertEquals(OfflineWindow.THREE, OfflineWindow.DEFAULT)
-        assertEquals(90, OfflineWindow.DEFAULT.days)
+    @Test fun `the declared window defaults to every message and the 90-day choice stops the walk at exactly 90 days back`() = runTest {
+        assertEquals("#1952 fully cached", OfflineWindow.ALL, OfflineWindow.DEFAULT)
+        assertEquals(90, OfflineWindow.THREE.days)
         assertEquals("an unknown or missing stored value reads as the default, never less", OfflineWindow.DEFAULT, OfflineWindow.from(null))
         assertEquals(OfflineWindow.DEFAULT, OfflineWindow.from("NOT_A_WINDOW"))
         assertEquals("the per-account window defaults to 90 days too", SyncWindow.DAYS_90, StoredAccount(id = "a", server = "s", username = "u").syncWindow)
         assertTrue("and the picker still offers it", SyncWindow.DAYS_90 in syncWindowChoices())
         val port = Port(listOf(inbox, archive), mutableMapOf("inbox" to 3, "archive" to 2))
-        engine(port).run(OfflineWindow.DEFAULT, now)
+        engine(port).run(OfflineWindow.THREE, now)
         assertEquals("every folder's backfill is bounded by now - 90 days", listOf(now - 90 * day, now - 90 * day), port.cutoffs)
     }
 
@@ -142,13 +142,13 @@ class FullSyncPlanner1869Test {
         assertFalse(second.morePending)
     }
 
-    @Test fun `a metered run takes a text-only window, no backfill, no inline images, no continuation`() = runTest {
+    @Test fun `a metered run takes a text-only window and the bounded header backfill, no inline images`() = runTest {
         val port = Port(listOf(inbox), mutableMapOf("inbox" to 100), inlineOf = setOf("inbox-1"), edgeAfterPages = 3)
         val r = engine(port, { metered }).run(OfflineWindow.THREE, now)
         assertEquals(minOf(100, FULL_SYNC_METERED_TEXT_PER_RUN), r.bodies)
-        assertEquals(0, r.headerPages)
+        assertEquals("#1952 the header backfill runs on a metered link too, up to its far edge", 3, r.headerPages)
         assertEquals(0, r.inlineImages)
-        assertFalse(r.morePending)
+        assertFalse("nothing is left: no continuation", r.morePending)
     }
 
     // -- inline images ------------------------------------------------------------------------------------------------

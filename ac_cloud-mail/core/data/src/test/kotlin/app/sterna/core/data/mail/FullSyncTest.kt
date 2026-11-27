@@ -185,8 +185,8 @@ class FullSyncTest {
         val port = FakePort(listOf(inbox), mapOf("inbox" to 100), pagesNeeded = 4, attachments = 3)
         val r = engine(port, { metered }).run(OfflineWindow.THREE, now)
         assertEquals(minOf(100, FULL_SYNC_METERED_TEXT_PER_RUN), r.bodies)
-        assertEquals("no backfill on a metered link", 0, r.headerPages)
-        assertFalse("the next period tries again, nothing is chained on mobile data", r.morePending)
+        assertEquals("#1952 a metered link backfills its bounded pages", FULL_SYNC_PAGES_PER_FOLDER_METERED, r.headerPages)
+        assertFalse("everything landed: nothing is chained", r.morePending)
         assertEquals("Wi-Fi only default: no attachments on a metered link", 0, r.attachments)
     }
 

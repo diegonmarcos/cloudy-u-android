@@ -10,7 +10,9 @@ import kotlinx.coroutines.CancellationException
  * downloaded, headers, full bodies and, by [AttachmentPolicy], attachments, so opening the app needs no fetch. This file
  * is the pure engine (no Android, no Room): [FullSync] drives a [FullSyncPort] that [MailRepository] implements over JMAP
  * and Room. It builds on #1752 (cache-first, never a delete on a short answer: the engine only ever ADDS) and #1763
- * (the throttle [prefetchBudget], the 250 MB cap [BODY_CACHE_MAX_BYTES_PER_ACCOUNT], the 90-day window).
+ * (the throttle [prefetchBudget], the cap [BODY_CACHE_MAX_BYTES_PER_ACCOUNT], the window). #1952: the window defaults to
+ * every message, the header backfill and the bodies continue on ANY link until the store is whole, and every step resumes
+ * from what the store holds ([HeaderResume], [FullSyncPort.missingBodies]), so a restart never starts again from zero.
  */
 
 /** Which attachments the background sync downloads. A tap always downloads, whatever this says. */
@@ -74,6 +76,22 @@ internal const val FULL_SYNC_CIPHERTEXT_PER_RUN = 50
 
 /** Header pages (100 messages each) one folder backfills per run. A longer window continues in the next run. */
 internal const val FULL_SYNC_PAGES_PER_FOLDER = 20
+
+/** #1952 the same on a metered link: 4 pages, the 400 headers the Inbox backfills per refresh ([JMAP_BACKFILL_BATCH]). */
+internal const val FULL_SYNC_PAGES_PER_FOLDER_METERED = 4
+
+/**
+ * #1952 where the next OLDER header page of a folder starts: right after the oldest header the store holds, never at the
+ * top again. [anchorId] null (an empty folder) is the only case that reads from position 0.
+ */
+internal data class HeaderResume(val anchorId: String?, val anchorOffset: Int) {
+    companion object {
+        fun after(oldestCachedId: String?): HeaderResume = HeaderResume(oldestCachedId, if (oldestCachedId != null) 1 else 0)
+
+        /** The server no longer knows the anchor: continue at the count of headers held, still not at zero. */
+        fun positionWithoutAnchor(cachedCount: Int): Int = cachedCount.coerceAtLeast(0)
+    }
+}
 
 /** How often the job runs. Push state changes and connectivity regain trigger a run on top of this. */
 object FullSyncSchedule {
@@ -220,16 +238,17 @@ class FullSync(
             halted()?.let { stop = it; return finish(folderCount, pages, bodies, attachments, evicted, errors, stop, false) }
             try {
                 port.syncHeaders(folder)
-                if (conditions().unmetered) {
+                run {
                     var done = false
                     var n = 0
-                    while (!done && n < FULL_SYNC_PAGES_PER_FOLDER) {
+                    val pagesThisRun = if (conditions().unmetered) FULL_SYNC_PAGES_PER_FOLDER else FULL_SYNC_PAGES_PER_FOLDER_METERED
+                    while (!done && n < pagesThisRun) {
                         halted()?.let { stop = it; return finish(folderCount, pages, bodies, attachments, evicted, errors, stop, false) }
                         done = port.backfillHeaders(folder, cutoff)
                         n++
                         pages++
                     }
-                    if (!done) pending = true // unmetered only: a longer window continues in the next run
+                    if (!done) pending = true // #1952 any link: the folder continues in the next run from its oldest header
                 }
             } catch (c: CancellationException) {
                 throw c
@@ -249,7 +268,7 @@ class FullSync(
                 if (h != null) { stop = h; break@bodyLoop }
                 if (remaining <= 0) {
                     stop = FullSyncStop.BUDGET
-                    if (c0.unmetered && port.missingBodies(folder, 1).isNotEmpty()) pending = true
+                    if (port.missingBodies(folder, 1).isNotEmpty()) pending = true // #1952 any link
                     break
                 }
                 if ((guarded { port.bodyBytes() } ?: 0L) >= bodyCeiling) { stop = FullSyncStop.CAP; break@bodyLoop }

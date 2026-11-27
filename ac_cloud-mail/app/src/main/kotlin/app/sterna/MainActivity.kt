@@ -51,6 +51,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        app.sterna.core.data.mail.ColdStart.arm() // #1952: rows from the store before the first server call
         super.onCreate(savedInstanceState)
         FleetChrome.apply(this)
         // Only on a real launch. The activity is singleTask, so the intent that opened a
