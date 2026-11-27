@@ -95,7 +95,7 @@
       "ui": "compose",
       "size": "S",
       "screens_left": [],
-      "notes": "All Compose (2026-10-15): PdfReaderActivity is a ComponentActivity under DriveTheme; its toolbar, search bar, menu, dialogs and status are composables. PdfReaderView stays the one custom View, hosted by AndroidView — a canvas renderer gains nothing from a rewrite.",
+      "notes": "All Compose (2026-10-15): PdfReaderActivity is a thin subclass of libs:pdf's PdfReaderActivityBase (#1949: the reader moved into the shared lib, the one custom View, PdfReaderView, counted under libs:pdf); it adds DriveTheme and the conversions.",
       "risks": [
         "PdfRenderer page cache lifecycle must survive the move into a composable"
       ],
@@ -103,7 +103,7 @@
         "view_screens": 0,
         "layout_xml": 0,
         "view_ui_files": 0,
-        "custom_views": 1
+        "custom_views": 0
       }
     },
     {
@@ -118,6 +118,20 @@
         "layout_xml": 0,
         "view_ui_files": 0,
         "custom_views": 0
+      }
+    },
+    {
+      "id": "libs:pdf",
+      "scope": "in",
+      "wave": 1,
+      "ui": "compose",
+      "size": "-",
+      "notes": "#1949 the shared PDF reader (moved from ac_cloud-drive): the screen is Compose (PdfReaderActivityBase); PdfReaderView stays the one custom View, hosted by AndroidView - a canvas renderer gains nothing from a rewrite. Its count moved here from Cloud Drive, not up.",
+      "baseline": {
+        "view_screens": 0,
+        "layout_xml": 0,
+        "view_ui_files": 0,
+        "custom_views": 1
       }
     },
     {

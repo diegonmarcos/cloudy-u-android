@@ -433,13 +433,12 @@ open class PdfReaderActivityBase : ComponentActivity(), PdfReaderView.Host {
         val f = editFile ?: return
         io.execute {
             try {
-                val bytes = f.readBytes()
                 val wrote = try {
-                    if (source.scheme == "file") { File(source.path ?: "").writeBytes(bytes); true }
-                    else contentResolver.openOutputStream(source, "wt")?.use { it.write(bytes); true } ?: false
+                    if (source.scheme == "file") { f.inputStream().use { i -> File(source.path ?: "").outputStream().use { o -> i.copyTo(o) } }; true }
+                    else contentResolver.openOutputStream(source, "wt")?.use { o -> f.inputStream().use { i -> i.copyTo(o) }; true } ?: false
                 } catch (_: Exception) { false }
                 if (wrote) savedOriginal = true
-                val message = if (wrote) "Saved to the original file." else "Saved a copy: " + saveCopy(bytes)
+                val message = if (wrote) "Saved to the original file." else "Saved a copy: " + saveCopy(f)
                 runOnUiThread { toast(message) }
             } catch (error: Exception) {
                 runOnUiThread { toast("Cannot save (" + (error.message ?: "error") + ").") }
@@ -447,7 +446,7 @@ open class PdfReaderActivityBase : ComponentActivity(), PdfReaderView.Host {
         }
     }
 
-    private fun saveCopy(bytes: ByteArray): String {
+    private fun saveCopy(edited: File): String {
         val base = displayName.removeSuffix(".pdf") + "-edited.pdf"
         if (android.os.Build.VERSION.SDK_INT >= 29) {
             val values = android.content.ContentValues().apply {
@@ -455,11 +454,11 @@ open class PdfReaderActivityBase : ComponentActivity(), PdfReaderView.Host {
                 put(android.provider.MediaStore.Downloads.MIME_TYPE, "application/pdf")
             }
             val dest = contentResolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values) ?: throw java.io.IOException("no Downloads")
-            contentResolver.openOutputStream(dest)?.use { it.write(bytes) } ?: throw java.io.IOException("no stream")
+            contentResolver.openOutputStream(dest)?.use { o -> edited.inputStream().use { i -> i.copyTo(o) } } ?: throw java.io.IOException("no stream")
             return "Downloads/$base"
         }
         val dir = getExternalFilesDir(android.os.Environment.DIRECTORY_DOCUMENTS) ?: filesDir
-        File(dir, base).writeBytes(bytes)
+        edited.copyTo(File(dir, base), overwrite = true)
         return File(dir, base).path
     }
 

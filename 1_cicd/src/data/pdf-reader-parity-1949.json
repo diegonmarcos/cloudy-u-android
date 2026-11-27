@@ -22,7 +22,7 @@
     {"id": "paged-toggle", "file": "PdfReaderActivityBase.kt", "needle": "fun toggleMode()"},
     {"id": "paged-render", "file": "PdfReaderView.kt", "needle": "fun setPaged("},
     {"id": "more-menu", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_more"},
-    {"id": "share", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_share"},
+    {"id": "share", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_share)"},
     {"id": "print", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_print"},
     {"id": "print-adapter", "file": "PdfReaderActivityBase.kt", "needle": "PrintDocumentAdapter()"},
     {"id": "goto-menu", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_goto)"},
@@ -44,7 +44,8 @@
     {"id": "worker-thread-open", "file": "PdfReaderActivityBase.kt", "needle": "io.execute"},
     {"id": "private-copy-share", "file": "PdfReaderActivityBase.kt", "needle": "PdfEngine.spool"},
     {"id": "engine-text-search", "file": "PdfEngine.kt", "needle": "findStart"},
-    {"id": "edit-toggle", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_edit"},
+    {"id": "edit-toggle", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_edit)"},
+    {"id": "edit-save-button", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_save)"},
     {"id": "edit-opens-pdfbox-editor", "file": "PdfReaderActivityBase.kt", "needle": "PdfViewer(ef, editing = true"},
     {"id": "edit-save", "file": "PdfReaderActivityBase.kt", "needle": "fun saveEdited()"}
   ],

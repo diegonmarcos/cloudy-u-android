@@ -263,7 +263,7 @@ echo "── D9 dark is the default ──"
 if grep -qE 'parent="Theme\.Material3\.Dark\.NoActionBar"' "$THEMES" && grep -qE 'darkColorScheme\(' "$THEME" && grep -qE 'colorResource\(R\.color\.drive_background\)' "$THEME"; then pass "forced dark in both halves, colours from resources"; else fail "the theme is not the forced-dark, resource-driven one"; fi
 
 echo "── D10 the JVM suite and the layout-tree test exist and name the tags ──"
-for t in "$TESTS/files/FilesStateTest.kt" "$TESTS/files/FileOpsTest.kt" "$TESTS/sync/SyncHistoryTest.kt" "$TESTS/DeclarationsTest.kt" "$TESTS/ui/DriveShellTest.kt" "$TESTS/PdfConvertTest.kt" "$TESTS/PdfLayoutTest.kt"; do
+for t in "$TESTS/files/FilesStateTest.kt" "$TESTS/files/FileOpsTest.kt" "$TESTS/sync/SyncHistoryTest.kt" "$TESTS/DeclarationsTest.kt" "$TESTS/ui/DriveShellTest.kt" "$TESTS/PdfConvertTest.kt" "$APP/../ab_cloud-libs-shared/libs/pdf/src/test/java/com/diegonmarcos/cloudlib/pdf/PdfLayoutTest.kt"; do
     [ -f "$t" ] && pass "exists: ${t#$APP/}" || fail "missing: ${t#$APP/}"
 done
 if grep -qE 'RobolectricTestRunner' "$TESTS/ui/DriveShellTest.kt" && grep -qE 'BottomNavTags\.item\(' "$TESTS/ui/DriveShellTest.kt" && grep -qE 'DriveTags\.FILES_TAB_STRIP' "$TESTS/ui/DriveShellTest.kt" && grep -qE 'DriveTags\.FILES_SELECTION_BAR' "$TESTS/ui/DriveShellTest.kt"; then pass "DriveShellTest renders the island and the Files tree under Robolectric"; else fail "DriveShellTest does not measure the declared tree"; fi

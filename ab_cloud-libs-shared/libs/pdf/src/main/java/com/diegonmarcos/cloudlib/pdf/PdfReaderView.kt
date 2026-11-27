@@ -797,7 +797,7 @@ class PdfReaderView(context: Context) : View(context) {
             val index = e.charAt(hit.page, hit.fx, hit.fy)
             if (index < 0) return@execute
             val text = e.pageText(hit.page)
-            val range = PdfConvert.wordRange(text, index) ?: return@execute
+            val range = PdfWords.wordRange(text, index) ?: return@execute
             val word = text.substring(range.first, range.last + 1)
             val rects = e.rangeRects(hit.page, range.first, range.last - range.first + 1)
             mainHandler.post {
