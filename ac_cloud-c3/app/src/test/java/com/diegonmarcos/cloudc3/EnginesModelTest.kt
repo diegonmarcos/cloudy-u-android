@@ -78,7 +78,7 @@ class EnginesModelTest {
     @Test fun `a missing report says why and carries no number`() {
         val gap = EnginesModel.classify(mail, FleetLive.Result.Failed("NOT_FOUND: HTTP 404"))
         assertEquals(EnginesModel.Body.Why(EnginesModel.BODY_GAP), gap)
-        assertTrue(EnginesModel.verdictText(gap).startsWith("no verdict: report body not served"))
+        assertTrue(EnginesModel.verdictText(gap).startsWith("no verdict: report body route not served yet (#1977)"))
         assertTrue(EnginesModel.verdictText(EnginesModel.classify(mail, FleetLive.Result.Body("<html>"))).startsWith("no verdict"))
         assertEquals(EnginesModel.STATUS_GAP, EnginesModel.freshText(null))
         assertEquals("duration n/a", EnginesModel.durationText(null))
