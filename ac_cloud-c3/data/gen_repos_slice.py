@@ -84,9 +84,10 @@ def derive(reg, pages, cp):
         walk(a, a["name"], [])
     for h, label in hubs:
         x = h["code"][:-2] if h["code"].endswith(".0") else h["code"]
-        under = [p["id"] for p in sorted((p for p in projects if p.get("code")), key=lambda p: p["code"]) if p["code"] == x or p["code"].startswith(x + ".")]  # by code: the primary stays the lowest code
+        under = [p["id"] for p in projects if p.get("code") and (p["code"] == x or p["code"].startswith(x + "."))]
         by_code = project_of(h["code"], projects, default)
-        primary = by_code if by_code != default or not under else under[0]
+        lowest = min(under, key=lambda i: tuple(int(c) for c in next(p["code"] for p in projects if p["id"] == i).split("."))) if under else None  # the primary stays the lowest code (numeric), the attached order the declared one
+        primary = by_code if by_code != default or not under else lowest
         e = entry(h, primary, "Hub", label, "hub")
         if primary != by_code:
             e["attached"][0]["via"] = "hub"

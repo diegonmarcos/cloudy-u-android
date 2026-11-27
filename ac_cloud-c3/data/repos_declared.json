@@ -1443,11 +1443,6 @@
      "via": "hub"
     },
     {
-     "project": "pj-lecole42-dev",
-     "path": "",
-     "via": "hub"
-    },
-    {
      "project": "pj-lecole42-graphic",
      "path": "",
      "via": "hub"
@@ -1486,6 +1481,11 @@
      "project": "pj-lecole42-cyberwarfare",
      "path": "",
      "via": "hub"
+    },
+    {
+     "project": "pj-lecole42-dev",
+     "path": "",
+     "via": "hub"
     }
    ]
   },
@@ -1509,12 +1509,12 @@
      "via": "hub"
     },
     {
-     "project": "pj-projects-duckpeng",
+     "project": "pj-wiki-modernsc",
      "path": "",
      "via": "hub"
     },
     {
-     "project": "pj-wiki-modernsc",
+     "project": "pj-projects-duckpeng",
      "path": "",
      "via": "hub"
     }
