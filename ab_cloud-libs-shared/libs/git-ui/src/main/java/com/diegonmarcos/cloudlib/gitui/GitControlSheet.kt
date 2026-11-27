@@ -141,6 +141,11 @@ private fun Header(sheet: GitSheet, host: GitSheetHost, actions: GitSheetActions
         FlowRow(horizontalArrangement = Arrangement.spacedBy(k.gapWide), verticalArrangement = Arrangement.spacedBy(k.gapWide)) {
             h.actions.forEach { a -> val why = blocked(a); k.pill(GitPill(a.label, { actions.action(a) }, Modifier.testTag("git_sheet_" + a.id), enabled = why == null)) }
         }
+        // #1934 every greyed header action says why (one line per reason: the labels that share it)
+        val headerWhy = h.actions.mapNotNull { a -> blocked(a)?.let { a.label to it } }.groupBy({ it.second }, { it.first })
+        if (headerWhy.isNotEmpty()) Column(Modifier.testTag("git_sheet_header_reasons")) {
+            headerWhy.forEach { (why, labels) -> Text(labels.joinToString(", ") + ": " + why, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        }
         if (!host.cloned) {
             h.banner?.let { b ->
                 Row(Modifier.testTag("git_sheet_banner"), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(k.pad)) {
@@ -182,7 +187,7 @@ private fun GroupView(
                     Text(c.label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(host.values[c.source] ?: GitTable.DASH, style = MaterialTheme.typography.labelMedium, fontFamily = FontFamily.Monospace)
                 }
-            }
+            }.also { Reasons(g.controls.filter { it.kind == "action" }.mapNotNull { c -> blocked(c)?.let { c.label to it } }) }
             "run" -> RunGroup(sheet, g, state, host, actions, blocked)
             "output" -> Column(Modifier.testTag("git_sheet_output")) {
                 Text(host.output ?: "", style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace)

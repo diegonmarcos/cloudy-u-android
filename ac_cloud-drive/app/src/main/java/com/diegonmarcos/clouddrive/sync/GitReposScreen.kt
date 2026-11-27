@@ -1105,7 +1105,7 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     }
     // #1315 THE DETAIL IS A SHEET: a tap on a row opens its actions over the table (the list never changes height); a second tap or a swipe closes it.
     sortedEntries.firstOrNull { it.key == expanded }?.let { e ->
-        ModalBottomSheet(onDismissRequest = { expanded = "" }, modifier = Modifier.testTag(DriveTags.SYNC_GIT_DETAIL_SHEET)) {
+        ModalBottomSheet(onDismissRequest = { expanded = "" }, sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true), modifier = Modifier.testTag(DriveTags.SYNC_GIT_DETAIL_SHEET)) {
             val sheetScroll = rememberScrollState()
             val sheetScope = rememberCoroutineScope()
             val toTop: () -> Unit = { sheetScope.launch { sheetScroll.animateScrollTo(0) } }

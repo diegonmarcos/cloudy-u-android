@@ -110,6 +110,20 @@ class ControlSheetRenderTest {
         compose.onNodeWithTag("git_sheet_ctl_wf.prs").assertIsEnabled()
     }
 
+    // #1934 walk finding: the greyed header actions and the greyed Stage & Commit showed no reason of their own (only the generic banner)
+    @Test fun everyGreyedControlOnANotClonedRepoCarriesItsOwnReasonLine() {
+        show(cloned = false)
+        compose.onNodeWithTag("git_sheet_header_reasons").assertExists()
+        compose.onAllNodesWithText("Fetch status, Check lite, Check full: Needs a local clone", substring = true).onFirst().assertExists()
+        click("git_sheet_tab_workflow")
+        compose.onAllNodesWithText("Stage & Commit: Needs a local clone", substring = true).onFirst().assertExists()
+    }
+
+    @Test fun aClonedRepoShowsNoReasonLines() {
+        show(cloned = true)
+        compose.onNodeWithTag("git_sheet_header_reasons").assertDoesNotExist()
+    }
+
     @Test fun syncTabPreviewFollowsTheOptions() {
         show(cloned = true)
         click("git_sheet_tab_sync")

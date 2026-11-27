@@ -7,9 +7,10 @@
 #   2. pull to refresh (= Light check all): within 15 s the three icons of the row must be terminal
 #      (local clean, server in_sync, sync never) and "last check: ... / 1 of 1 done" must show;
 #   3. none of the three icons may say "reading" or "not_checked" after that.
-# Usage: emulator-git-status.sh <drive.apk> <outdir>
+# Usage: emulator-git-control-sheet.sh <drive.apk> <outdir> [cloned|notcloned|all-repos|all]   (one phase per CI job, each with its own emulator;
+# WALK_BUDGET = seconds the phase may spend on controls, default 2400: a control reached after that is recorded NOT RUN (time budget) and fails the phase)
 set -u
-APK=${1:?drive apk}; OUT=${2:-out}
+APK=${1:?drive apk}; OUT=${2:-out}; PHASE=${3:-all}; BUDGET=${WALK_BUDGET:-2400}; T0=$(date +%s)
 PKG=com.diegonmarcos.clouddrive
 NAME=cloudy-fixture
 BJ=$(dirname "$0")/../build.json
@@ -150,30 +151,48 @@ PY
 rm -f "$BJ.per" "$BJ.bulk" 2>/dev/null
 
 # walk <per|bulk> <cloned: yes|no> <row name for recovery>
+# One uiautomator dump per control (probe reads it): the node's bounds and enabled flag, the open tab, and the reason text, all from the same dump.
+probe() { python3 -I -c '
+import re,sys
+x=open(sys.argv[1]).read(); rid=sys.argv[2]; hit=None
+for m in re.finditer(r"<node [^>]*>",x):
+    n=m.group(0)
+    if re.search(r"resource-id=\"%s\"" % re.escape(rid), n):
+        b=re.search(r"bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"",n); a=list(map(int,b.groups()))
+        hit=((a[0]+a[2])//2,(a[1]+a[3])//2,"disabled" if "enabled=\"false\"" in n else "enabled")
+if hit: print(*hit)
+else: sys.exit(1)' "$OUT/ui.xml" "$1"; }
 walk() {
-  local phase=$1 cloned=$2 row=$3
+  local phase=$1 cloned=$2 row=$3 curtab=overview t1=$(date +%s)
   exec 3< <(grep -P "^$phase\t" "$OUT/lists.txt" | cut -f2-)
   while IFS=$'\t' read -r -u 3 tab rid id label needs confirm disabled; do
+    if [ $(( $(date +%s) - t1 )) -gt "$BUDGET" ]; then miss=$((miss+1)); printf '%s:%s\t%s\t%s\tNOT RUN (time budget)\t-\n' "$phase" "$cloned" "$id" "$label" >> "$OUT/walk.tsv"; continue; fi
     case "$id" in tab:*)
+      curtab=${id#tab:}
       ensure_sheet "$row" || fail "cannot get the sheet back before $id"
       for k in 1 2; do tap_rid "$rid" >/dev/null && break; sleep 1; done; sleep 1
       adb exec-out screencap -p > "$OUT/walk/$phase-$cloned-${id#tab:}.png"; dump >/dev/null; snap "$phase-$cloned-tab-${id#tab:}"
       printf '%s:%s\t%s\ttab\tshown\twalk/%s-%s-%s.png\n' "$phase" "$cloned" "$id" "$phase" "$cloned" "${id#tab:}" >> "$OUT/walk.tsv"; continue;; esac
     [ "$disabled" = True ] && { printf '%s:%s\t%s\t%s\tgreyed (declared disabled)\t-\n' "$phase" "$cloned" "$id" "$label" >> "$OUT/walk.tsv"; continue; }
-    ensure_sheet "$row" || fail "cannot get the sheet back before $id"
+    dump >/dev/null
+    # a recovery (web viewer, relaunch) lands on the Overview tab: go back to the tab this control lives on
+    if ! grep -q 'resource-id="git_sheet_tab_overview"' "$OUT/ui.xml"; then
+      ensure_sheet "$row" || fail "cannot get the sheet back before $id"
+      [ "$tab" != header ] && { tap_rid "git_sheet_tab_$curtab" >/dev/null; sleep 1; }; dump >/dev/null
+    fi
     # conditional groups (shown_when / hidden_when): put the option model in a state that shows them
-    case "$id" in sy.strategy.*|sy.dirty.*) tap_rid git_sheet_tab_sync >/dev/null; sleep 1; tap_rid git_sheet_ctl_sy.direction.pull >/dev/null; sleep 1;;
-      sy.winner.*) tap_rid git_sheet_tab_sync >/dev/null; sleep 1; tap_rid git_sheet_ctl_sy.direction.pull >/dev/null; sleep 1; tap_rid git_sheet_ctl_sy.strategy.merge >/dev/null; sleep 1;; esac
+    case "$id" in sy.strategy.*|sy.dirty.*) tap_rid git_sheet_tab_sync >/dev/null; sleep 1; tap_rid git_sheet_ctl_sy.direction.pull >/dev/null; sleep 1; dump >/dev/null;;
+      sy.winner.*) tap_rid git_sheet_tab_sync >/dev/null; sleep 1; tap_rid git_sheet_ctl_sy.direction.pull >/dev/null; sleep 1; tap_rid git_sheet_ctl_sy.strategy.merge >/dev/null; sleep 1; dump >/dev/null;; esac
     st=""; found=0
     for n in 0 1 2 3 4 5 6; do
-      st=$(tap_rid "$rid") && { found=1; break; }
-      scroll_body || break; sleep 1
+      if pos=$(probe "$rid"); then found=1; set -- $pos; st=$3; [ "$st" = enabled ] && adb shell input tap "$1" "$2" < /dev/null; break; fi
+      scroll_body || break; sleep 1; dump >/dev/null
     done
-    if [ $found = 0 ]; then miss=$((miss+1)); printf '%s:%s\t%s\t%s\tNOT FOUND\t-\n' "$phase" "$cloned" "$id" "$label" >> "$OUT/walk.tsv"; continue; fi
+    if [ $found = 0 ]; then miss=$((miss+1)); printf '%s:%s\t%s\t%s\tNOT FOUND\t-\n' "$phase" "$cloned" "$id" "$label" >> "$OUT/walk.tsv"; snap "notfound-$phase-$cloned-$id"; continue; fi
     sleep 1; adb exec-out screencap -p > "$OUT/walk/$phase-$cloned-$id.png"
     if [ "$cloned" = no ] && [ "$needs" = True ]; then
       # not cloned: the control must be greyed, and the declared reason must be on screen
-      if [ "$st" = disabled ] && { dump | grep -q 'Needs a local clone' || { scroll_body; sleep 1; dump | grep -q 'Needs a local clone'; }; }; then ok=$((ok+1)); printf '%s:%s\t%s\t%s\tgreyed with its reason\twalk/%s-%s-%s.png\n' "$phase" "$cloned" "$id" "$label" "$phase" "$cloned" "$id" >> "$OUT/walk.tsv"
+      if [ "$st" = disabled ] && { grep -q 'Needs a local clone' "$OUT/ui.xml" || { scroll_body; sleep 1; dump | grep -q 'Needs a local clone'; }; }; then ok=$((ok+1)); printf '%s:%s\t%s\t%s\tgreyed with its reason\twalk/%s-%s-%s.png\n' "$phase" "$cloned" "$id" "$label" "$phase" "$cloned" "$id" >> "$OUT/walk.tsv"
       else miss=$((miss+1)); printf '%s:%s\t%s\t%s\tNOT GREYED WITH A REASON\t-\n' "$phase" "$cloned" "$id" "$label" >> "$OUT/walk.tsv"; fi
       continue
     fi
@@ -189,23 +208,25 @@ walk() {
   exec 3<&-
 }
 
+want() { [ "$PHASE" = all ] || [ "$PHASE" = "$1" ]; }
 # 1. the cloned fixture
-open_row "$NAME"; walk per yes "$NAME"
+if want cloned; then open_row "$NAME"; walk per yes "$NAME"; close_sheet cloned; fi
 # 2. the not-cloned fixture: its row comes from the offline listing cache
-close_sheet cloned
-if open_row "$NOTCLONED"; then
+if want notcloned; then
+  open_row "$NOTCLONED"
   has_rid git_sheet_banner || { miss=$((miss+1)); printf 'per:no\tbanner\tNot cloned banner\tNOT FOUND\t-\n' >> "$OUT/walk.tsv"; }
   tap_rid git_sheet_hd.clone_now >/dev/null || { miss=$((miss+1)); printf 'per:no\thd.clone_now\tClone Now\tNOT FOUND\t-\n' >> "$OUT/walk.tsv"; }
-  walk per no "$NOTCLONED"
+  walk per no "$NOTCLONED"; close_sheet notcloned
 fi
 # 3. the all-repos sheet over the 3 fixture repositories: More is pinned in the toolbar (tag sync_git_top_group_more)
-close_sheet notcloned
-tap_rid sync_git_top_group_more >/dev/null || { snap no-more; fail "no More menu"; }; sleep 1
-tap_text '^All repos sheet$' || { snap no-bulk-item; fail "no All repos sheet item"; }; sleep 3
-sheet_open || { snap no-bulk; fail "the all-repos sheet did not open"; }
-walk bulk yes "$NAME"
+if want all-repos; then
+  tap_rid sync_git_top_group_more >/dev/null || { snap no-more; fail "no More menu"; }; sleep 1
+  tap_text '^All repos sheet$' || { snap no-bulk-item; fail "no All repos sheet item"; }; sleep 3
+  sheet_open || { snap no-bulk; fail "the all-repos sheet did not open"; }
+  walk bulk yes "$NAME"
+fi
 
-echo "control sheet walk: $ok controls verified, $miss failed"
+echo "control sheet walk: $ok controls verified, $miss failed" | tee "$OUT/summary.txt"
 adb logcat -d -v threadtime > "$OUT/logcat.txt"
 grep -q "FATAL EXCEPTION" "$OUT/logcat.txt" && grep -A5 "FATAL EXCEPTION" "$OUT/logcat.txt" | grep -q "$PKG" && fail "Drive crashed during the walk"
 [ "$miss" = 0 ] || fail "$miss control(s) were not found or did not behave (see walk.tsv; NOT FOUND counts as FAIL)"
