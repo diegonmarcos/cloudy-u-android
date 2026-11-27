@@ -46,7 +46,7 @@ for pid in ("personal", "shelf", "vinyl", "bar", "menu", "theater", "story", "ig
     except Exception: E("M4", "page %s has no file %s" % (pid, f)); continue
     if not b or b[0].get("id") != "web" or not str(b[0].get("url", "")).startswith(("https://", "mysocials/")): E("M5", "%s does not embed its page" % pid)
 # F: field parity of Geo minus the owner-named removals
-old = J("test/fixtures/geo-before-1976.json"); new = J("data/ui/pers/geo.json")
+old = J("test/fixtures/geo-before-1976.json"); GP = lambda n: J("data/ui/pers/geo/%s.json" % n); new = GP("geo-summary")
 removed = {0, 2, 3, 4, 6}   # the Places ledger, @brief, the Brief note, the quote, Languages
 if old[0].get("kind") != "ledger" or old[2].get("title") != "@brief" or old[6].get("title") != "Languages": E("F0", "the frozen Geo fixture is not the pre-#1976 page")
 if any(b.get("kind") == "ledger" for b in new): E("F1", "the Places ledger view is still in Geo")
@@ -94,8 +94,10 @@ if iLt >= 0:
         r = rows.get(c["city"])
         if r is None: E("S3", "the long-stay city %s is not listed" % c["city"]); continue
         d = city.get((nm(c.get("match", c["city"])), nm(c["country"])))
-        if d is None and r[2] != DASH: E("S4", "%s has no MyTrips trip, its time must be a dash, not %r" % (c["city"], r[2]))
-        if d is not None and not r[2].startswith(format(d, ",") + " days"): E("S4", "%s: time %r is not the %d days of MyTrips" % (c["city"], r[2], d))
+        want = DASH if d is None else ("Up to 1 m" if d <= 30 else "Up to 3 m" if d <= 90 else "Up to 1 y" if d <= 365 else "More than 1 y")
+        if r[2] != want: E("S4", "%s: time %r, want the bucket %r (MyTrips days %r; a city without a trip shows a dash)" % (c["city"], r[2], want, d))
+    for r in rows.values():
+        if r[2] not in ("Up to 1 m", "Up to 3 m", "Up to 1 y", "More than 1 y", DASH): E("S5", "%s: time %r is not a bucket" % (r[0], r[2]))
 # P: Places columns and values
 if iSt >= 0:
     P = new[iSt]
@@ -109,34 +111,59 @@ if iSt >= 0:
             if conts is None or c[4] != str(sum(cont.get(x, 0) for x in conts)): E("P4", "%s: Days %r is not the MyTrips sum for %r" % (c[0], c[4], conts))
         if not r.get("group") and (c[2] != DASH or c[4] != DASH): E("P5", "region %r shows an NM or Days value nothing in the data gives (invented)" % c[0])
         if c[0] == "TOTAL" and c[4] != str(sum(cont.values())): E("P4", "TOTAL days %r is not %d" % (c[4], sum(cont.values())))
-# C: the map, per continent, no global view
-H = T("data/web/geo-map.html"); m = re.search(r'<script id="d" type="application/json">(.*?)</script>', H, re.S)
+# T: Geo is a container, Summary | Globe | Atlas | Collections | Stats | Timeline, each page a bundled web page but Summary
+geo = byid.get("geo", {}); SUB = [("geo-summary", "Summary"), ("geo-globe", "Globe"), ("geo-atlas", "Atlas"), ("geo-collections", "Collections"), ("geo-stats", "Stats"), ("geo-timeline", "Timeline")]
+if [(p["id"], p["label"]) for p in geo.get("pages", [])] != SUB: E("T1", "Geo subpages are %r" % [(p["id"], p["label"]) for p in geo.get("pages", [])])
+for pid, url in (("geo-globe", "geo-globe.html"), ("geo-atlas", "geo-atlas.html"), ("geo-collections", "geo-collections.html"), ("geo-stats", "geo-stats.html"), ("geo-timeline", "geo-timeline.html")):
+    try: b = GP(pid)
+    except Exception: E("T2", "%s has no page file" % pid); continue
+    if len(b) != 1 or b[0].get("kind") != "fragment" or b[0].get("id") != "web" or b[0].get("url") != url or not os.path.exists(os.path.join(app, "data/web", url)): E("T2", "%s does not embed the bundled %s" % (pid, url))
+if any(b.get("kind") == "web_asset" for b in new): E("T3", "Summary still carries a web_asset block (the map and MyTrips are subpages now)")
+# C: the Atlas, per continent, no global view, three layers
+H = T("data/web/geo-atlas.html"); m = re.search(r'<script id="d" type="application/json">(.*?)</script>', H, re.S)
 try: MD = json.loads(m.group(1).replace("\\u003c", "<"))
-except Exception as e: MD = {}; E("C0", "geo-map.html data unreadable (%s)" % e)
+except Exception as e: MD = {}; E("C0", "geo-atlas.html data unreadable (%s)" % e)
 if MD:
     CONT = ["Europe", "Asia", "Africa", "North America", "South America", "Oceania"]
-    if MD["order"] != CONT: E("C1", "map continents are %r" % MD["order"])
-    if any(c.lower() in ("world", "global", "all", "globe", "earth") for c in MD["order"]) or re.search(r'data-continent="(world|global|all)"', H, re.I): E("C2", "the map has a global view")
+    if MD["order"] != CONT: E("C1", "atlas continents are %r" % MD["order"])
+    if any(c.lower() in ("world", "global", "all", "globe", "earth") for c in MD["order"]) or re.search(r'data-continent="(world|global|all)"', H, re.I): E("C2", "the atlas has a global view")
     if MD["default"] not in MD["order"] or set(MD["frames"]) != set(CONT): E("C3", "default or frames do not cover the continents")
     vis = {}
     for t in td: vis.setdefault(t["countryISO"], t["continent"])
     if {k: v["continent"] for k, v in MD["visited"].items()} != vis: E("C4", "the painted countries differ from the MyTrips visited countries")
-    if any(v["continent"] not in CONT for v in MD["visited"].values()): E("C5", "a visited country belongs to no map continent")
-    if 'id="sw"' not in H or "data-continent" in H and "dataset.continent" not in H: E("C6", "no continent switcher")
-mt = T("data/web/geo-mytrips.html")
-for need in ("'Home'", "'Atlas'", "'Collections'", "'Stats'", "'Timeline'", "Cultural Regions", "NomadMania Regions", "Extended Stays", "Hemisphere Distribution", "Geographic Extremes", "Date In"):
-    if need not in mt: E("Y1", "MyTrips page lacks %s" % need)
-m2 = re.search(r'<script id="d" type="application/json">(.*?)</script>', mt, re.S)
+    cities = {(t["city"], t["country"]) for t in td}
+    if {(c["city"], c["country"]) for c in MD["cities"]} != cities: E("C5", "the atlas cities differ from the MyTrips visited cities")
+    if {c["name"] for c in MD["regions"]} != {t["nomadRegion"] for t in td}: E("C6", "the atlas NomadMania regions differ from the MyTrips regions")
+    if any(k not in c for c in MD["regions"] for k in ("lat", "lng", "days")) or "rings" in json.dumps(MD["regions"]): E("C7", "NomadMania regions carry invented geometry (the data has points only)")
+    for need in ("['country','Countries']", "['city','Cities']", "['region','NomadMania regions']", "<b>Visited</b>", "<b>Not visited</b>", 'id="sw"', "data-visited"):
+        if need not in H: E("C8", "the atlas lacks %s" % need)
+mt = {n: T("data/web/geo-%s.html" % n) for n in ("globe", "stats", "timeline", "collections")}
+for n, need in (("globe", "show('home')"), ("stats", "show('stats')"), ("timeline", "show('timeline')")):
+    if need not in mt[n]: E("Y1", "geo-%s.html does not open its MyTrips view" % n)
+for need in ("Cultural", "Geographic Extremes", "Hemisphere Distribution", "Extended Stays"):
+    if need not in mt["stats"] + H: E("Y1", "MyTrips content %r is gone" % need)
+if "Date In" not in mt["timeline"]: E("Y1", "the Timeline table is gone")
+col = mt["collections"]
+for need in ("theme-card", "theme-card__img", "loremflickr.com", "Curated Collections", "unique lenses", "theme-overlay", "Cities Included", "Filtered View", "slide-img", "ph-fill ph-"):
+    if need not in col: E("Y3", "the Collections page lacks %s (the MyTrips web UI)" % need)
 try:
-    YD = json.loads(m2.group(1).replace("\\u003c", "<"))
-    if len(YD["trips"]) != len(td) or [t[4] for t in YD["trips"]] != [t["city"] for t in td]: E("Y2", "MyTrips trips differ from the data")
-    if len(YD["themes"]) < 16: E("Y3", "MyTrips collections missing")
-except Exception as e: E("Y2", "geo-mytrips.html data unreadable (%s)" % e)
-# W: web_asset blocks and renderer
-for b in new:
-    if b.get("kind") == "web_asset" and not os.path.exists(os.path.join(app, "data/web", b.get("url", "x"))): E("W1", "web_asset %s is missing" % b.get("url"))
-if [b.get("url") for b in new if b.get("kind") == "web_asset"] != ["geo-map.html", "geo-mytrips.html"] or iSt < 0 or idx(lambda b: b.get("url") == "geo-map.html") < iSt: E("W2", "Geo does not end with the map then MyTrips")
-if '"web_asset" -> WebAssetBlock' not in T("app/src/main/java/com/diegonmarcos/cloudme/StackScreen.kt"): E("W3", "StackScreen does not render web_asset")
+    cd = json.loads(re.search(r'<script id="d" type="application/json">(.*?)</script>', col, re.S).group(1).replace("\\u003c", "<"))
+    th = J("data/geo/mytrips-themes.json")
+    if len(cd["themes"]) != 16 or cd["themes"] != th or any(not t.get("img") for t in cd["themes"]): E("Y3", "the Collections cards are not the 16 MyTrips themes with their image keywords")
+except Exception as e: E("Y3", "geo-collections.html data unreadable (%s)" % e)
+for n in ("globe", "stats", "timeline"):
+    try:
+        YD = json.loads(re.search(r'<script id="d" type="application/json">(.*?)</script>', mt[n], re.S).group(1).replace("\\u003c", "<"))
+        if len(YD["trips"]) != len(td) or [t[4] for t in YD["trips"]] != [t["city"] for t in td]: E("Y2", "geo-%s.html trips differ from the data" % n)
+    except Exception as e: E("Y2", "geo-%s.html data unreadable (%s)" % (n, e))
+# P1981 parity against the page before #1981: every block stays but the web_asset blocks and their two headings (moved into the subpages); the Long Stay times are buckets now
+before = J("test/fixtures/geo-before-1981.json")
+for b in before:
+    if b.get("kind") == "web_asset" or b.get("title") in ("Visited countries by continent", "MyTrips"): continue
+    if b.get("id") == "geo-long-stay-cities":
+        n2 = next((x for x in new if x.get("id") == b["id"]), None)
+        if n2 is None or [r["cells"][:2] for r in n2["rows"]] != [r["cells"][:2] for r in b["rows"]] or n2["columns"] != b["columns"]: E("P6", "the Long Stay cities or columns changed")
+    elif not any(same(b, x) for x in new): E("P6", "block %r of Geo before #1981 is not in Summary with every field" % (b.get("title") or b.get("kind")))
 # G: the generated outputs match their inputs
 r = subprocess.run([sys.executable, os.path.join(app, "data/regen-geo-1976.py"), "--check"], capture_output=True, text=True, env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"))
 if r.returncode != 0: E("G1", (r.stderr or r.stdout).strip()[:200])
@@ -148,12 +175,12 @@ PY
 if [ "${1:-}" = --check ]; then o=$(MUTANT=1 check "${2:-$APP}"); [ -z "$o" ] && exit 0; echo "$o"; exit 1; fi   # CI mutation job: exit 1 = the tree is red
 out=$(check "$APP"); if [ -z "$out" ]; then ok "N/R/M/F/S/P/C/Y/W/G: nav rows, rename, Media, Geo parity, Long/Short split, Places columns, per-continent map, MyTrips, generated pages"; else bad "$out"; fi
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
-mut() { rm -rf "$T/app"; mkdir -p "$T/app/data" "$T/app/test" "$T/app/app/src/main/java/com/diegonmarcos/cloudme"; cp "$APP/build.json" "$T/app/"; cp -r "$APP/data/web" "$APP/data/ui" "$APP/data/geo" "$T/app/data/"; cp "$APP/data/regen-geo-1976.py" "$T/app/data/"
-  cp -r "$APP/test/fixtures" "$T/app/test/"; cp "$APP/app/src/main/java/com/diegonmarcos/cloudme/StackScreen.kt" "$T/app/app/src/main/java/com/diegonmarcos/cloudme/"
+mut() { rm -rf "$T/app"; mkdir -p "$T/app/data" "$T/app/test"; cp "$APP/build.json" "$T/app/"; cp -r "$APP/data/web" "$APP/data/ui" "$APP/data/geo" "$T/app/data/"; cp "$APP/data/regen-geo-1976.py" "$T/app/data/"
+  cp -r "$APP/test/fixtures" "$T/app/test/"
   MUTANT=1 python3 -c "$2" "$T/app"; r=$(MUTANT=1 check "$T/app"); if [ -n "$r" ]; then ok "mutation red: $1"; else bad "mutation stayed green: $1"; fi; }
 BJ='import json,sys;p=sys.argv[1]+"/build.json";d=json.load(open(p,encoding="utf-8"));U=d["ui"];P=[s for s in U["sections"] if s["id"]=="pers"][0];'
 WB='json.dump(d,open(p,"w",encoding="utf-8"),ensure_ascii=False)'
-GJ='import json,sys;p=sys.argv[1]+"/data/ui/pers/geo.json";g=json.load(open(p,encoding="utf-8"));'
+GJ='import json,sys;p=sys.argv[1]+"/data/ui/pers/geo/geo-summary.json";g=json.load(open(p,encoding="utf-8"));'
 WG='json.dump(g,open(p,"w",encoding="utf-8"),ensure_ascii=False)'
 SUB() { echo "import sys;p=sys.argv[1]+\"/$1\";s=open(p,encoding='utf-8').read();assert '''$2''' in s;open(p,'w',encoding='utf-8').write(s.replace('''$2''','''$3''',1))"; }
 mut "Media is not first in row 1" "${BJ}P['groups'][0]['pages'].append(P['groups'][0]['pages'].pop(0));$WB"
@@ -170,7 +197,7 @@ mut "the Instagram alias is dropped" "${BJ}U['renamed']['pages'].pop('pers/pers-
 mut "a Media page file is gone (Pinterest)" 'import os,sys;os.remove(sys.argv[1]+"/data/ui/pers/pers-profiles/pinterest.json")'
 mut "the Places ledger view is back" "${GJ}g.insert(0,{'kind':'ledger','title':'Places'});$WG"
 mut "the Languages block is back" "${GJ}g.append({'kind':'bullets','title':'Languages','items':[]});$WG"
-mut "a kept block (Short Stays) is altered" "$(SUB data/ui/pers/geo.json 'On short stays traveled over 180+ cities' 'On short stays traveled over 18 cities')"
+mut "a kept block (Short Stays) is altered" "$(SUB data/ui/pers/geo/geo-summary.json 'On short stays traveled over 180+ cities' 'On short stays traveled over 18 cities')"
 mut "the NomadMania link is dropped" "${GJ}[b.pop('link') for b in g if b.get('id')=='geo-places'];$WG"
 mut "a Places city count is altered" "${GJ}[r['cells'].__setitem__(1,'101') for b in g if b.get('id')=='geo-places' for r in b['rows'] if r['cells'][0]=='EU'];$WG"
 mut "a Places NM value of the table is altered" "${GJ}[r['cells'].__setitem__(2,'71') for b in g if b.get('id')=='geo-places' for r in b['rows'] if r['cells'][0]=='EU'];$WG"
@@ -184,13 +211,25 @@ mut "the Days column is dropped from Places" "${GJ}[b.__setitem__('columns',['Co
 mut "a region is not indented" "${GJ}[r['cells'].__setitem__(0,r['cells'][0].lstrip(' ')) for b in g if b.get('id')=='geo-places' for r in b['rows'] if not r.get('group')];$WG"
 mut "a continent Days value is invented" "${GJ}[r['cells'].__setitem__(4,'999') for b in g if b.get('id')=='geo-places' for r in b['rows'] if r['cells'][0]=='ASIA'];$WG"
 mut "a region gets an invented NM value" "${GJ}[r['cells'].__setitem__(2,'5') for b in g if b.get('id')=='geo-places' for r in b['rows'] if not r.get('group')][:1];$WG"
-mut "the map gets a global view" "$(SUB data/web/geo-map.html '"order":["Europe"' '"order":["World","Europe"')"
-mut "the map loses a continent" "$(SUB data/web/geo-map.html '"order":["Europe","Asia","Africa","North America","South America","Oceania"]' '"order":["Europe","Asia","Africa","North America","South America"]')"
-mut "the map paints a country MyTrips never visited" "$(SUB data/web/geo-map.html '"visited":{' '"visited":{"JP":{"name":"Japan","flag":"x","continent":"Asia","days":1,"lat":1,"lng":1},')"
-mut "MyTrips loses its Timeline view" "$(SUB data/web/geo-mytrips.html "['timeline','Timeline']" "['timeline','Time']")"
-mut "MyTrips loses its Stats extremes" "$(SUB data/web/geo-mytrips.html 'Geographic Extremes' 'Extremes')"
-mut "the map page is out of sync with the data" "$(SUB data/web/geo-map.html 'No visit recorded in' 'Nothing in')"
-mut "the MyTrips data copy drifts from the page" "$(SUB data/geo/travel-data.json '"city": "Sao Caetano do Sul"' '"city": "Sao Caetano"')"
-mut "StackScreen cannot draw web_asset" "$(SUB app/src/main/java/com/diegonmarcos/cloudme/StackScreen.kt '"web_asset" -> WebAssetBlock' '"web_assetx" -> WebAssetBlock')"
-mut "Geo does not end with the map and MyTrips" "${GJ}g=[b for b in g if b.get('id')!='geo-mytrips'];$WG"
+mut "the atlas gets a global view" "$(SUB data/web/geo-atlas.html '"order":["Europe"' '"order":["World","Europe"')"
+mut "the atlas loses a continent" "$(SUB data/web/geo-atlas.html '"order":["Europe","Asia","Africa","North America","South America","Oceania"]' '"order":["Europe","Asia","Africa","North America","South America"]')"
+mut "the atlas paints a country MyTrips never visited" "$(SUB data/web/geo-atlas.html '"visited":{' '"visited":{"JP":{"name":"Japan","flag":"x","continent":"Asia","days":1,"lat":1,"lng":1},')"
+mut "the atlas loses its Cities layer" "$(SUB data/web/geo-atlas.html "['city','Cities']" "['city','Towns']")"
+mut "the atlas loses its NomadMania regions layer" "$(SUB data/web/geo-atlas.html "['region','NomadMania regions']" "['region','Regions']")"
+mut "the atlas legend loses the not-visited count" "$(SUB data/web/geo-atlas.html '<b>Not visited</b>' '<b>Other</b>')"
+mut "a NomadMania region gets invented borders" "$(SUB data/web/geo-atlas.html '"regions":[{' '"regions":[{"rings":[[[0,0]]],')"
+mut "the Globe page does not open the Home view" "$(SUB data/web/geo-globe.html "show('home')" "show('stats')")"
+mut "the Timeline page loses its table" "$(SUB data/web/geo-timeline.html 'Date In' 'Date')"
+mut "the Stats page loses its extremes" "$(SUB data/web/geo-stats.html 'Geographic Extremes' 'Extremes')"
+mut "the Collections cards lose their images" "$(SUB data/web/geo-collections.html 'theme-card__img' 'theme-card__pic')"
+mut "the Collections overlay is gone" "$(SUB data/web/geo-collections.html 'Cities Included' 'Cities')"
+mut "a Collections theme is dropped" 'import json,sys;p=sys.argv[1]+"/data/geo/mytrips-themes.json";d=json.load(open(p));d.pop();json.dump(d,open(p,"w"))'
+mut "the atlas page is out of sync with the data" "$(SUB data/web/geo-atlas.html 'Nothing recorded in' 'Nothing in')"
+mut "the MyTrips data copy drifts from the pages" "$(SUB data/geo/travel-data.json '"city": "Sao Caetano do Sul"' '"city": "Sao Caetano"')"
+mut "Geo loses its Timeline subpage" "${BJ}g=[p for p in P['pages'] if p['id']=='geo'][0];g['pages'].pop();$WB"
+mut "Geo subpages are reordered (Atlas first)" "${BJ}g=[p for p in P['pages'] if p['id']=='geo'][0];g['pages'].insert(0,g['pages'].pop(2));$WB"
+mut "Summary gets the map block back" "${GJ}g.append({'kind':'web_asset','url':'geo-atlas.html'});$WG"
+mut "a Long Stay time is a day count again" "${GJ}[r['cells'].__setitem__(2,'268 days') for b in g if b.get('id')=='geo-long-stay-cities' for r in b['rows'] if r['cells'][0]=='Berlin'];$WG"
+mut "a Long Stay bucket is wrong (Berlin up to 1 m)" "${GJ}[r['cells'].__setitem__(2,'Up to 1 m') for b in g if b.get('id')=='geo-long-stay-cities' for r in b['rows'] if r['cells'][0]=='Berlin'];$WG"
+mut "a block of Geo before #1981 is lost (Long Stays bullets)" "${GJ}g=[b for b in g if b.get('title')!='Long Stays'];$WG"
 echo "$PASS passed, $FAIL failed"; [ "$FAIL" -eq 0 ]

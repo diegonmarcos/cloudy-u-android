@@ -110,7 +110,7 @@ RELABELED = {  # the owner's renames of #1901, and the page whose name the move 
     "socials/socials-personal": "ig0",
 }
 # #1976 the Achieves container (Personal Archives) is the second ROW of Pers now (ui.sections[pers].groups, label Achieves): its old ids resolve to its first tab Geo
-ROW_1976 = {"experiences/achieves": "pers/geo"}
+ROW_1976 = {"experiences/achieves": "pers/geo", "experiences/geo": "pers/geo"}   # #1981 Geo is a container too (Summary | Globe | Atlas | Collections | Stats | Timeline): its leaves are held by test-geo-1976.sh over test/fixtures/geo-before-1981.json
 # #1911 owner order: these three tabs embed their real site (the declared me-links.json URL) instead of the bundled mysocials mirror; the
 # baseline value is compared through this table, ONLY on these pages (the Lnktree bottom-nav copies keep the mirrors)
 EMBED1911 = {"pers/ig0": {"mysocials/instagram-diegocnmarcos_.html": "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html"}}

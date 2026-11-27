@@ -1,0 +1,378 @@
+[
+  {
+    "kind": "section_title",
+    "title": "B3) International Experience (Dec 2020 – Present)"
+  },
+  {
+    "kind": "section_title",
+    "title": "@projects"
+  },
+  {
+    "kind": "section_title",
+    "title": "Long Stay"
+  },
+  {
+    "kind": "bullets",
+    "title": "Long Stays",
+    "items": [
+      {
+        "text": "Born and raised in São Paulo, the 5th biggest city in the world"
+      },
+      {
+        "text": "On long stays lived (studying and working remotely) in 5 European cities: Berlin and Barcelona; London, Valencia and Paris"
+      },
+      {
+        "text": "Also took long stays in: Rio de Janeiro, Casablanca and Chiang Mai"
+      }
+    ]
+  },
+  {
+    "kind": "table",
+    "id": "geo-long-stay-cities",
+    "title": "Cities and the time spent in each",
+    "columns": [
+      "City",
+      "Country",
+      "Time"
+    ],
+    "rows": [
+      {
+        "cells": [
+          "São Paulo",
+          "Brazil",
+          "3,164 days (8.7 y)"
+        ]
+      },
+      {
+        "cells": [
+          "Berlin",
+          "Germany",
+          "268 days (8.8 mo)"
+        ]
+      },
+      {
+        "cells": [
+          "Barcelona",
+          "Spain",
+          "292 days (9.6 mo)"
+        ]
+      },
+      {
+        "cells": [
+          "London",
+          "United Kingdom",
+          "75 days (2.5 mo)"
+        ]
+      },
+      {
+        "cells": [
+          "Valencia",
+          "Spain",
+          "31 days"
+        ]
+      },
+      {
+        "cells": [
+          "Paris",
+          "France",
+          "20 days"
+        ]
+      },
+      {
+        "cells": [
+          "Rio de Janeiro",
+          "Brazil",
+          "51 days"
+        ]
+      },
+      {
+        "cells": [
+          "Casablanca",
+          "Morocco",
+          "—"
+        ]
+      },
+      {
+        "cells": [
+          "Chiang Mai",
+          "Thailand",
+          "3 days"
+        ]
+      },
+      {
+        "cells": [
+          "Taghazout",
+          "Morocco",
+          "79 days (2.6 mo)"
+        ]
+      },
+      {
+        "cells": [
+          "Pai",
+          "Thailand",
+          "63 days (2.1 mo)"
+        ]
+      }
+    ]
+  },
+  {
+    "kind": "section_title",
+    "title": "Short Stay"
+  },
+  {
+    "kind": "bullets",
+    "title": "Short Stays",
+    "items": [
+      {
+        "text": "On short stays traveled over 180+ cities, 110+ NomadMania Regions, 45+ countries across 5 continents"
+      },
+      {
+        "text": "Visited: World Heritage Sites (60+), New Seven Wonder+Pyramids (3/8) and The Seven Natural WW (1/7)"
+      }
+    ]
+  },
+  {
+    "kind": "table",
+    "title": "Places {175 Cities (108 NM) | 43 Countries}",
+    "columns": [
+      "Continent / Region",
+      "Cities",
+      "NM",
+      "Countries",
+      "Days"
+    ],
+    "rows": [
+      {
+        "cells": [
+          "EU",
+          "102",
+          "70",
+          "32",
+          "1067"
+        ],
+        "group": true
+      },
+      {
+        "cells": [
+          " ⚙️ Germanic",
+          "43",
+          "—",
+          "11",
+          "—"
+        ]
+      },
+      {
+        "cells": [
+          " 🪆 Slavic",
+          "15",
+          "—",
+          "11",
+          "—"
+        ]
+      },
+      {
+        "cells": [
+          " 🏛️ Romanic-Greek",
+          "44",
+          "—",
+          "10",
+          "—"
+        ]
+      },
+      {
+        "cells": [
+          " 🏔️ Non-Euro",
+          "0",
+          "—",
+          "0",
+          "—"
+        ]
+      },
+      {
+        "cells": [
+          "NORTH/SOUTH AMERICA",
+          "51",
+          "22",
+          "4",
+          "3478"
+        ],
+        "group": true
+      },
+      {
+        "cells": [
+          " 🗽 Anglo-Franco",
+          "5",
+          "—",
+          "1",
+          "—"
+        ]
+      },
+      {
+        "cells": [
+          " 🪭 Spanish-Aztec/Inca",
+          "2",
+          "—",
+          "2",
+          "—"
+        ]
+      },
+      {
+        "cells": [
+          " 🎉 Romance-African",
+          "44",
+          "—",
+          "1",
+          "—"
+        ]
+      },
+      {
+        "cells": [
+          "OCEANIA",
+          "0",
+          "0",
+          "0",
+          "0"
+        ],
+        "group": true
+      },
+      {
+        "cells": [
+          " 🦘 Anglo-Aborigenal",
+          "0",
+          "—",
+          "0",
+          "—"
+        ]
+      },
+      {
+        "cells": [
+          " 🪶 Anglo-Maori",
+          "0",
+          "—",
+          "0",
+          "—"
+        ]
+      },
+      {
+        "cells": [
+          " 🗿 Poly-Micronesia",
+          "0",
+          "—",
+          "0",
+          "—"
+        ]
+      },
+      {
+        "cells": [
+          "ASIA",
+          "13",
+          "9",
+          "4",
+          "132"
+        ],
+        "group": true
+      },
+      {
+        "cells": [
+          " 🕯️ Abrahamic",
+          "5",
+          "—",
+          "3",
+          "—"
+        ]
+      },
+      {
+        "cells": [
+          " 🧘🏻‍♂️ Hindu;Buddhist;Tao/Conf",
+          "8",
+          "—",
+          "1",
+          "—"
+        ]
+      },
+      {
+        "cells": [
+          "AFRICA",
+          "9",
+          "4",
+          "1",
+          "96"
+        ],
+        "group": true
+      },
+      {
+        "cells": [
+          " 🫖 North-Maghreb",
+          "9",
+          "—",
+          "1",
+          "—"
+        ]
+      },
+      {
+        "cells": [
+          " 🥁 Francosphere",
+          "0",
+          "—",
+          "0",
+          "—"
+        ]
+      },
+      {
+        "cells": [
+          " 💎 Lusosphere",
+          "0",
+          "—",
+          "0",
+          "—"
+        ]
+      },
+      {
+        "cells": [
+          " 🪨 Anglosphere",
+          "0",
+          "—",
+          "0",
+          "—"
+        ]
+      },
+      {
+        "cells": [
+          "TOTAL",
+          "175",
+          "108",
+          "43",
+          "4773"
+        ],
+        "group": true
+      }
+    ],
+    "link": {
+      "label": "NomadMania profile",
+      "url": "https://nomadmania.com/profile/73889"
+    },
+    "id": "geo-places"
+  },
+  {
+    "kind": "section_title",
+    "title": "Visited countries by continent"
+  },
+  {
+    "kind": "web_asset",
+    "id": "geo-map",
+    "url": "geo-map.html",
+    "height_dp": 440,
+    "capture_touch": false
+  },
+  {
+    "kind": "section_title",
+    "title": "MyTrips"
+  },
+  {
+    "kind": "web_asset",
+    "id": "geo-mytrips",
+    "url": "geo-mytrips.html",
+    "height_dp": 640,
+    "capture_touch": true
+  }
+]

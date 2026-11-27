@@ -106,7 +106,7 @@ if "MeShell(" not in code(os.path.join(MAIN, "java/com/diegonmarcos/cloudme/Main
 
 # ---- N4 achieves: the owner's text, byte for byte, now inside the #1350 tabs (B1 in Personal Growth, B2 in Endurance, B3 in Geo)
 ach = {}
-ACH_FILE = {"personal": "growth", "pursuits": "endurance", "international": "geo"}
+ACH_FILE = {"personal": "growth", "pursuits": "endurance", "international": "geo/geo-summary"}   # #1981 Geo is a container, its Summary holds the B3 text
 for pid in ("personal", "pursuits", "international"):
     f = os.path.join(app, f"data/ui/pers/{ACH_FILE[pid]}.json")
     ach[pid] = json.load(open(f, encoding="utf-8")) if os.path.exists(f) else []
@@ -244,7 +244,7 @@ for _t in ACH_TABS[1:]:   # #1976 Geo's ledger view was removed by owner order (
     if len(_eb) != 1 or _eb[0].get("store") != "experiences_user" or [l["collection"] for l in _ls] != [f"{_t}_done", f"{_t}_todo"] \
        or [l.get("move_to") for l in _ls] != [f"{_t}_todo", f"{_t}_done"] or _ls[1].get("move_stamp") != "date":
         bad("pages", f"Achieves > {_t} is not one Done/To do ledger over experiences_user that toggles both ways and stamps the date")
-_geo = [b for b in json.load(open(os.path.join(app, "data/ui/pers/geo.json"), encoding="utf-8")) if b.get("kind") == "ledger"]
+_geo = [b for b in json.load(open(os.path.join(app, "data/ui/pers/geo/geo-summary.json"), encoding="utf-8")) if b.get("kind") == "ledger"]
 if _geo or (_exp.get("migration") or {}).get("by_value", {}).get("🌐 Travel") != "geo":
     bad("pages", "Achieves > Geo still has the Places ledger view, or the migration of the Travel records into geo_done/geo_todo is gone (#1976)")
 _m = _exp.get("migration") or {}
@@ -391,7 +391,7 @@ if "roadmaps" not in [p["id"] for p in secs.get("tasks", {}).get("pages", [])] o
     bad("pages", "Tasks > RoadMaps does not draw the folder_tree")
 if '"folder_tree" -> FolderTreeScreen(' not in code(os.path.join(MAIN, "java/com/diegonmarcos/cloudme/SectionScreen.kt")):
     bad("pages", "SectionScreen does not draw folder_tree pages")
-for sid, pg in (("llc", "employed"), ("llc", "side-hustles"), ("tasks", "backlogs"), ("tasks", "roadmaps"), ("pers", "geo")):
+for sid, pg in (("llc", "employed"), ("llc", "side-hustles"), ("tasks", "backlogs"), ("tasks", "roadmaps"), ("pers/geo", "geo-summary")):
     f = os.path.join(app, f"data/ui/{sid}/{pg}.json")
     if not os.path.exists(f) or not json.load(open(f, encoding="utf-8")):
         bad("pages", f"data/ui/{sid}/{pg}.json is missing or empty")
@@ -552,7 +552,7 @@ mutant pages "a Buro ledger names the wrong store" "sed -i 's/\"store\": \"buro_
 mutant pages "a ledger names an unknown report" "sed -i 's/budget_vs_actual/made_up_report/' data/ui/buro/budgeting.json"
 mutant pages "the llc store is undeclared in fleet-config" "sed -i 's/\"llc_user\"/\"llc_gone\"/' ../fleet-private-data/fleet-config.json"
 mutant achieves "one owner sentence altered" "sed -i 's/Aikido, Yoga and Meditation\\./Aikido and Yoga./' data/ui/pers/growth.json"
-mutant achieves "NomadMania link dropped" "sed -i 's#https://nomadmania.com/profile/73889#https://example.com#' data/ui/pers/geo.json"
+mutant achieves "NomadMania link dropped" "sed -i 's#https://nomadmania.com/profile/73889#https://example.com#' data/ui/pers/geo/geo-summary.json"
 mutant achieves "Trips tab comes back" "python3 -c \"import json;d=json.load(open('build.json'));[g['pages'].append('trips') for s in d['ui']['sections'] if s['id']=='pers' for g in s['groups'] if g['id']=='achieves'];json.dump(d,open('build.json','w'))\""
 mutant achieves "Geo is not the first tab" "python3 -c \"import json;d=json.load(open('build.json'));[g['pages'].insert(1,g['pages'].pop(0)) for s in d['ui']['sections'] if s['id']=='pers' for g in s['groups'] if g['id']=='achieves'];json.dump(d,open('build.json','w'))\""
 mutant pages "a tab loses Mark undone" "sed -i 's/\"move_label\": \"Mark undone\"/\"x\": 1/;0,/\"move_to\": \"by40_todo\"/s//\"move_to\": \"\"/' data/ui/pers/by40.json"
@@ -562,7 +562,7 @@ mutant pages "Work dropped from Prof" "python3 -c \"import json;d=json.load(open
 mutant nav-order "Tasks after Lnktree" "python3 -c \"import json;d=json.load(open('build.json'));b=d['ui']['bottom_nav'];b[2],b[3]=b[3],b[2];json.dump(d,open('build.json','w'))\""
 
 mutant pages "RoadMaps page draws no tree" "sed -i 's/folder_tree/stack/' data/ui/tasks/roadmaps.json"
-mutant pages "Geo gets its Places ledger view back" "python3 -c \"import json;f='data/ui/pers/geo.json';d=json.load(open(f));d.insert(0,{'kind':'ledger'});json.dump(d,open(f,'w'))\""
+mutant pages "Geo gets its Places ledger view back" "python3 -c \"import json;f='data/ui/pers/geo/geo-summary.json';d=json.load(open(f));d.insert(0,{'kind':'ledger'});json.dump(d,open(f,'w'))\""
 mutant pages "migration sends records to an undeclared tab" "sed -i 's/\"default\": \"endurance\"/\"default\": \"trips\"/' build.json"
 mutant no-drawer "the drawer is back in the shell" "echo 'val d = ModalNavigationDrawer' >> app/src/main/java/com/diegonmarcos/cloudme/MainActivity.kt"
 mutant no-drawer "a drag handler is back in the shell" "echo 'val d = detectHorizontalDragGestures' >> app/src/main/java/com/diegonmarcos/cloudme/StackScreen.kt"

@@ -105,7 +105,7 @@ class AchievesTest {
         // Geo's view is gone (#1976) but its collections keep receiving the migrated Travel records: they are store-only and the last declaration is the fixture's
         for (tab in spec.byValue.values + spec.default) for (suffix in spec.legacy.values)
             assertTrue("$tab$suffix", defs(tab).any { it.collection == tab + suffix })
-        assertTrue("Geo has no ledger view any more", (0 until JSONArray(BuroLlcTestData.text("data/ui/pers/geo.json")).length()).none { JSONArray(BuroLlcTestData.text("data/ui/pers/geo.json")).getJSONObject(it).optString("kind") == "ledger" })
+        assertTrue("Geo has no ledger view any more", (0 until JSONArray(BuroLlcTestData.text("data/ui/pers/geo/geo-summary.json")).length()).none { JSONArray(BuroLlcTestData.text("data/ui/pers/geo/geo-summary.json")).getJSONObject(it).optString("kind") == "ledger" })
         assertNull(AchievesMigration.declared(allSections, LedgerStore.BURO))
     }
 
@@ -141,11 +141,11 @@ class AchievesTest {
     }
 
     @Test fun `the owner's old Achieves text moved into the new tabs`() {
-        val all = tabs.joinToString("") { BuroLlcTestData.text("data/ui/pers/$it.json") }
+        val all = tabs.joinToString("") { BuroLlcTestData.text("data/ui/pers/${if (it == "geo") "geo/geo-summary" else it}.json") }
         for (w in listOf("B1) Personal", "B2) Personal Pursuits", "B3) International Experience", "https://nomadmania.com/profile/73889",
                 "My Bucket 50 (things before 50)", "Oceans Seven endurance swims", "🪂 Skydiving"))
             assertTrue(w, all.contains(w))
-        assertTrue(BuroLlcTestData.text("data/ui/pers/geo.json").contains("B3) International Experience"))
+        assertTrue(BuroLlcTestData.text("data/ui/pers/geo/geo-summary.json").contains("B3) International Experience"))
         // #1975 the trip management blocks MOVED to Cloud Tasks > Files > RoadMap (its test-tasks-trip-parity.sh holds every field)
         for (w in listOf("Trip management", "Before you go", "Documents & visas")) assertTrue("$w left Geo", !all.contains(w))
     }

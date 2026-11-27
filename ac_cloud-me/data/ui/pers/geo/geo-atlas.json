@@ -1,0 +1,8 @@
+[
+  {
+    "kind": "fragment",
+    "id": "web",
+    "_doc": "#1981 Geo > Atlas: visited countries (visited vs not visited, legend with counts and %), visited cities (points) and visited NomadMania regions (points), per continent, no global view (data/regen-geo-1976.py).",
+    "url": "geo-atlas.html"
+  }
+]

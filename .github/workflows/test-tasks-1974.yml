@@ -21,7 +21,7 @@ on:
       - "ac_cloud-tasks/test/test-tasks-trip-parity.sh"
       - "ac_cloud-tasks/test/data/geo-trip-blocks-1975.json"
       - "ac_cloud-tasks/app/src/main/assets/trip-roadmap.json"
-      - "ac_cloud-me/data/ui/pers/geo.json"
+      - "ac_cloud-me/data/ui/pers/geo/geo-summary.json"
       - ".github/workflows/test-tasks-1974.yml"
       - "ac_cloud-tasks/build.json"
       - "ac_cloud-calc/build.json"

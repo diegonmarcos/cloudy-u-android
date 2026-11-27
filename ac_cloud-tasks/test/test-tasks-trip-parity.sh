@@ -14,7 +14,7 @@ ROOT, JUNIT = os.environ["ROOT"], os.environ.get("JUNIT_OUT", "")
 def rd(p):
     with open(os.path.join(ROOT, p), encoding="utf-8") as h: return h.read()
 FILES = {"old": "ac_cloud-tasks/test/data/geo-trip-blocks-1975.json", "new": "ac_cloud-tasks/app/src/main/assets/trip-roadmap.json",
-         "geo": "ac_cloud-me/data/ui/pers/geo.json", "kt": "ac_cloud-tasks/app/src/main/java/com/diegonmarcos/cloudagenda/ui/FilesPages.kt",
+         "geo": "ac_cloud-me/data/ui/pers/geo/geo-summary.json", "kt": "ac_cloud-tasks/app/src/main/java/com/diegonmarcos/cloudagenda/ui/FilesPages.kt",
          "app": "ac_cloud-tasks/app/src/main/java/com/diegonmarcos/cloudagenda/ui/TasksApp.kt"}
 def load(): return {k: rd(p) for k, p in FILES.items()}
 

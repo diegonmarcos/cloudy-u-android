@@ -40,49 +40,49 @@
         "cells": [
           "São Paulo",
           "Brazil",
-          "3,164 days (8.7 y)"
+          "More than 1 y"
         ]
       },
       {
         "cells": [
           "Berlin",
           "Germany",
-          "268 days (8.8 mo)"
+          "Up to 1 y"
         ]
       },
       {
         "cells": [
           "Barcelona",
           "Spain",
-          "292 days (9.6 mo)"
+          "Up to 1 y"
         ]
       },
       {
         "cells": [
           "London",
           "United Kingdom",
-          "75 days (2.5 mo)"
+          "Up to 3 m"
         ]
       },
       {
         "cells": [
           "Valencia",
           "Spain",
-          "31 days"
+          "Up to 3 m"
         ]
       },
       {
         "cells": [
           "Paris",
           "France",
-          "20 days"
+          "Up to 1 m"
         ]
       },
       {
         "cells": [
           "Rio de Janeiro",
           "Brazil",
-          "51 days"
+          "Up to 3 m"
         ]
       },
       {
@@ -96,21 +96,21 @@
         "cells": [
           "Chiang Mai",
           "Thailand",
-          "3 days"
+          "Up to 1 m"
         ]
       },
       {
         "cells": [
           "Taghazout",
           "Morocco",
-          "79 days (2.6 mo)"
+          "Up to 3 m"
         ]
       },
       {
         "cells": [
           "Pai",
           "Thailand",
-          "63 days (2.1 mo)"
+          "Up to 3 m"
         ]
       }
     ]
@@ -352,27 +352,5 @@
       "url": "https://nomadmania.com/profile/73889"
     },
     "id": "geo-places"
-  },
-  {
-    "kind": "section_title",
-    "title": "Visited countries by continent"
-  },
-  {
-    "kind": "web_asset",
-    "id": "geo-map",
-    "url": "geo-map.html",
-    "height_dp": 440,
-    "capture_touch": false
-  },
-  {
-    "kind": "section_title",
-    "title": "MyTrips"
-  },
-  {
-    "kind": "web_asset",
-    "id": "geo-mytrips",
-    "url": "geo-mytrips.html",
-    "height_dp": 640,
-    "capture_touch": true
   }
 ]

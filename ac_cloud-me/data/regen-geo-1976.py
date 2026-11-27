@@ -7,9 +7,10 @@ Inputs (data/geo/):
   ne110-countries.min.json    Natural Earth 1:110m Admin 0 Countries (public domain), reduced (see --from-ne)
   geo-config.json             the owner's declared long-stay cities, the continents of the map and their frames
 Outputs:
-  data/web/geo-map.html       visited countries painted per continent, a continent switcher (no global view), offline SVG
-  data/web/geo-mytrips.html   MyTrips natively: Home (globe) | Atlas | Collections | Stats | Timeline, offline canvas, same data
-  data/ui/pers/geo.json       the blocks with id geo-long-stay-cities and geo-places (Long Stay cities with the time in each; Places with NM and Days)
+  data/web/geo-atlas.html     (#1981) per continent with a switcher (no global view): visited countries, visited cities, visited NomadMania regions, cultural regions; offline SVG
+  data/web/geo-globe.html, geo-stats.html, geo-timeline.html   the MyTrips Home, Stats and Timeline views, offline, same data
+  data/web/geo-collections.html   the MyTrips Collections cards with images (loremflickr, as MyTrips) and the theme overlay
+  data/ui/pers/geo/geo-summary.json   the blocks with id geo-long-stay-cities (time as a bucket) and geo-places (NM and Days); geo-<page>.json the five web subpages
 
   regen-geo-1976.py             rewrite the outputs from the inputs
   regen-geo-1976.py --check     exit 1 when an output differs from what the inputs give; with the MyTrips clone beside this repo (or --mytrips DIR), also when the
@@ -21,7 +22,7 @@ import json, math, os, re, sys, unicodedata
 from datetime import date
 
 HERE = os.path.dirname(os.path.abspath(__file__)); W = os.path.join(HERE, "web"); G = os.path.join(HERE, "geo")
-GEO_JSON = os.path.join(HERE, "ui", "pers", "geo.json")
+GEO_DIR = os.path.join(HERE, "ui", "pers", "geo"); GEO_JSON = os.path.join(GEO_DIR, "geo-summary.json")
 DASH = "\u2014"
 IND = "\u2003"  # em space: the indent of a region under its continent
 
@@ -34,12 +35,17 @@ def esc(o): return json.dumps(o, ensure_ascii=False, separators=(",", ":")).repl
 
 
 # ---------------------------------------------------------------- derived data
+def bucket(d):
+    """#1981 the time spent in a city, as text: Up to 1 m (30 days), Up to 3 m (90), Up to 1 y (365), More than 1 y."""
+    return "Up to 1 m" if d <= 30 else "Up to 3 m" if d <= 90 else "Up to 1 y" if d <= 365 else "More than 1 y"
+
+
 def derive(cfg, trips, geo_blocks):
     """Long stay rows and Places rows (pure: the same inputs give the same rows)."""
     by_city = {}
     for t in trips:
         by_city[(norm(t["city"]), norm(t["country"]))] = by_city.get((norm(t["city"]), norm(t["country"])), 0) + days(t)
-    def span(d): return "%d days" % d if d < 60 else ("%d days (%.1f mo)" % (d, d / 30.4) if d < 730 else "%s days (%.1f y)" % (format(d, ","), d / 365.25))
+    def span(d): return bucket(d)
     rows, seen = [], set()
     for c in cfg["long_stay_cities"]:
         k = (norm(c.get("match", c["city"])), norm(c["match_country"] if "match_country" in c else c["country"]))
@@ -98,37 +104,93 @@ table{border-collapse:collapse;width:100%}th,td{padding:4px 6px;text-align:left;
 .chip{display:inline-block;margin:2px;padding:2px 8px;border-radius:999px;background:#1A0F2E;border:1px solid #3a2a5c}.chip.v{background:#4c1d95;border-color:#A78BFA}
 """
 
-MAP_HTML = """<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Visited countries</title>
-<style>__CSS__svg{width:100%;height:auto;display:block;background:#0E0720;border-radius:12px}.c{fill:#241638;stroke:#0B0414;stroke-width:.4}.c.v{stroke:#fff;stroke-width:.5}
-.m{stroke:#fff;stroke-width:1}#list{padding:0 8px 8px}</style></head><body>
-<div class="row" id="sw" role="tablist" aria-label="continent"></div>
-<div style="padding:0 8px"><svg id="map" role="img" aria-label="visited countries"></svg></div>
-<div id="sum" class="dim" style="padding:6px 10px"></div><div id="list"></div>
+ATLAS_HTML = r"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Atlas</title>
+<style>__CSS__svg{width:100%;height:auto;display:block;background:#0E0720;border-radius:12px}.c{fill:#1a1230;stroke:#4b3b74;stroke-width:.5}.c.v{stroke:#fff;stroke-width:.9}
+.m{stroke:#fff;stroke-width:1}.sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}.sw.n{background:#1a1230;border:1px solid #4b3b74}
+.bar{height:10px;border-radius:5px;background:#1a1230;border:1px solid #4b3b74;overflow:hidden}.bar i{display:block;height:100%}#list{padding:0 8px 12px}.pt{stroke:#fff;stroke-width:1}</style></head><body style="overflow:auto">
+<div class="row" id="sw" role="tablist" aria-label="continent"></div><div class="row" id="md" role="tablist" aria-label="layer" style="padding-top:0"></div>
+<div style="padding:0 8px"><svg id="map" role="img" aria-label="atlas"></svg></div>
+<div class="card" id="lg"></div><div id="list"></div>
 <script id="d" type="application/json">__DATA__</script>
 <script>
-var D=JSON.parse(document.getElementById('d').textContent),NS='http://www.w3.org/2000/svg',cur=D.default;
+var D=JSON.parse(document.getElementById('d').textContent),NS='http://www.w3.org/2000/svg',cur=D.default,mode='country',$=function(i){return document.getElementById(i)};
+var MODES=[['country','Countries'],['city','Cities'],['region','NomadMania regions'],['culture','Cultural regions']];
 function el(n,a){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);return e}
-function draw(){var f=D.frames[cur],W=360,k=W/((f[2]-f[0])*Math.cos((f[1]+f[3])/2*Math.PI/180)),H=Math.round((f[3]-f[1])*k),cx=Math.cos((f[1]+f[3])/2*Math.PI/180),s=document.getElementById('map');
+var cul={},pal=['#60a5fa','#f59e0b','#f472b6','#34d399','#a78bfa','#22d3ee','#fb7185','#facc15','#4ade80','#c084fc'];D.cultures.forEach(function(c,i){cul[c]=pal[i%pal.length]});
+function draw(){var f=D.frames[cur],W=360,cx=Math.cos((f[1]+f[3])/2*Math.PI/180),k=W/((f[2]-f[0])*cx),H=Math.round((f[3]-f[1])*k),s=$('map'),col=D.colors[cur],vis=D.visited,total=0,nv=0,names=[];
 s.setAttribute('viewBox','0 0 '+W+' '+H);s.textContent='';
-function P(o){return ((o[0]-f[0])*cx*k).toFixed(1)+','+((f[3]-o[1])*k).toFixed(1)}
-var col=D.colors[cur],vis=D.visited,n=0,names=[];
-D.countries.forEach(function(c){var v=vis[c.iso],eff=v?v.continent:c.continent;if(eff!==cur)return;
-var d=c.rings.map(function(r){return 'M'+r.map(P).join('L')+'Z'}).join('');var p=el('path',{d:d,'class':'c'+(v?' v':''),'data-iso':c.iso,'data-visited':v?1:0});if(v)p.setAttribute('fill',col);
-var t=el('title',{});t.textContent=c.name+(v?' ('+v.days+' days)':'');p.appendChild(t);s.appendChild(p)});
-for(var iso in vis){var v=vis[iso];if(v.continent!==cur)continue;n++;names.push(v);if(!D.countries.some(function(c){return c.iso===iso}))
-{var m=el('circle',{cx:((v.lng-f[0])*cx*k).toFixed(1),cy:((f[3]-v.lat)*k).toFixed(1),r:3.5,fill:col,'class':'m','data-iso':iso,'data-visited':1});var t=el('title',{});t.textContent=v.name;m.appendChild(t);s.appendChild(m)}}
-document.getElementById('sum').textContent=cur+': '+n+' visited '+(n==1?'country':'countries');
-names.sort(function(a,b){return b.days-a.days});
-document.getElementById('list').innerHTML=names.map(function(v){return '<span class="chip v">'+v.flag+' '+v.name+' \\u00b7 '+v.days+'d</span>'}).join('')||'<span class="dim">No visit recorded in '+cur+' yet.</span>';
-[].forEach.call(document.querySelectorAll('#sw button'),function(b){b.className=b.dataset.continent===cur?'on':''})}
-var sw=document.getElementById('sw');D.order.forEach(function(c){var b=document.createElement('button');b.textContent=c;b.dataset.continent=c;b.setAttribute('role','tab');b.onclick=function(){cur=c;draw()};sw.appendChild(b)});draw();
+function X(lo){return ((lo-f[0])*cx*k).toFixed(1)}function Y(la){return ((f[3]-la)*k).toFixed(1)}
+var paintC=mode==='country'||mode==='culture';
+D.countries.forEach(function(c){var v=vis[c.iso],eff=v?v.continent:c.continent;if(eff!==cur)return;total++;if(v){nv++;names.push(v)}
+var d=c.rings.map(function(r){return 'M'+r.map(function(q){return X(q[0])+','+Y(q[1])}).join('L')+'Z'}).join('');var on=v&&paintC;
+var p=el('path',{d:d,'class':'c'+(on?' v':''),'data-iso':c.iso,'data-visited':v?1:0});if(on)p.setAttribute('fill',mode==='culture'?(cul[D.culture[c.iso]]||col):col);
+var t=el('title',{});t.textContent=c.name+(v?' (visited, '+v.days+' days)':' (not visited)');p.appendChild(t);s.appendChild(p)});
+for(var iso in vis){var v=vis[iso];if(v.continent!==cur)continue;if(!D.countries.some(function(c){return c.iso===iso})){total++;nv++;names.push(v);if(paintC){var m=el('circle',{cx:X(v.lng),cy:Y(v.lat),r:3.5,fill:col,'class':'m','data-iso':iso,'data-visited':1});s.appendChild(m)}}}
+var pts=[],lg='';
+if(mode==='city'){pts=D.cities.filter(function(c){return c.continent===cur});pts.forEach(function(c){var q=el('circle',{cx:X(c.lng),cy:Y(c.lat),r:(1.8+Math.min(4,c.days/80)).toFixed(1),fill:col,'class':'pt','data-city':c.city,'fill-opacity':.9});var t=el('title',{});t.textContent=c.city+', '+c.country+' ('+c.days+' days)';q.appendChild(t);s.appendChild(q)})}
+if(mode==='region'){pts=D.regions.filter(function(c){return c.continent===cur});pts.forEach(function(c){var q=el('circle',{cx:X(c.lng),cy:Y(c.lat),r:(3+Math.min(7,c.days/40)).toFixed(1),fill:col,'fill-opacity':.35,stroke:col,'stroke-width':1.6,'data-region':c.name});var t=el('title',{});t.textContent=c.name+' ('+c.days+' days)';q.appendChild(t);s.appendChild(q)})}
+var pct=total?Math.round(nv/total*100):0;
+if(mode==='country')lg='<div><span class="sw" style="background:'+col+'"></span><b>Visited</b> '+nv+' &nbsp; <span class="sw n"></span><b>Not visited</b> '+(total-nv)+'</div><div class="bar" style="margin:8px 0"><i style="width:'+pct+'%;background:'+col+'"></i></div><div class="dim">'+cur+': '+nv+' of '+total+' countries on the map ('+pct+'%)</div>';
+if(mode==='city')lg='<b>'+pts.length+' visited '+(pts.length==1?'city':'cities')+'</b> in '+cur+' <span class="dim">(point size = days, land is not painted)</span>';
+if(mode==='region')lg='<b>'+pts.length+' NomadMania '+(pts.length==1?'region':'regions')+'</b> in '+cur+' <span class="dim">of '+D.regions.length+' visited worldwide, '+D.world_regions+' in the world (point = the region centre of its trips; no region borders in the data)</span>';
+if(mode==='culture'){var seen={};names.forEach(function(v){});lg='<b>Cultural regions</b> '+D.cultures.map(function(c){return '<span class="chip"><i class="sw" style="background:'+cul[c]+'"></i>'+c+'</span>'}).join('')}
+$('lg').innerHTML=lg;
+var L=mode==='city'?pts.slice().sort(function(a,b){return b.days-a.days}).map(function(c){return '<span class="chip v">'+c.city+' · '+c.days+'d</span>'}):mode==='region'?pts.slice().sort(function(a,b){return b.days-a.days}).map(function(c){return '<span class="chip v">'+c.name+' · '+c.days+'d</span>'}):names.slice().sort(function(a,b){return b.days-a.days}).map(function(v){return '<span class="chip v">'+v.flag+' '+v.name+' · '+v.days+'d</span>'});
+$('list').innerHTML=L.join('')||'<span class="dim">Nothing recorded in '+cur+' yet.</span>';
+[].forEach.call(document.querySelectorAll('#sw button'),function(b){b.className=b.dataset.continent===cur?'on':''});[].forEach.call(document.querySelectorAll('#md button'),function(b){b.className=b.dataset.mode===mode?'on':''})}
+D.order.forEach(function(c){var b=document.createElement('button');b.textContent=c;b.dataset.continent=c;b.setAttribute('role','tab');b.onclick=function(){cur=c;draw()};$('sw').appendChild(b)});
+MODES.forEach(function(m){var b=document.createElement('button');b.textContent=m[1];b.dataset.mode=m[0];b.setAttribute('role','tab');b.onclick=function(){mode=m[0];draw()};$('md').appendChild(b)});draw();
 </script></body></html>
 """
 
-TRIPS_HTML = r"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MyTrips</title>
+COLL_CSS = """*{box-sizing:border-box}html,body{margin:0;background:#020617;color:#f8fafc;font:14px/1.5 system-ui,sans-serif}.page{padding:16px}
+.collections-header{margin-bottom:20px}.collections-header__title{font-size:26px;font-weight:300;margin:0 0 6px;color:#f8fafc}.collections-header__subtitle{color:#94a3b8;margin:0}
+.themes-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;padding-bottom:32px}@media(min-width:700px){.themes-grid{grid-template-columns:repeat(4,1fr);gap:24px}}
+.theme-card{position:relative;height:200px;border-radius:16px;overflow:hidden;cursor:pointer;border:1px solid rgba(255,255,255,.05);box-shadow:0 10px 40px rgba(0,0,0,.3);background:#0f172a}
+.theme-card__img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.6}.theme-card__overlay{position:absolute;inset:0;background:linear-gradient(to top,#020617,transparent,transparent)}
+.theme-card__content{position:absolute;bottom:0;left:0;right:0;padding:14px}.theme-card__header{display:flex;align-items:center;gap:8px;margin-bottom:6px}.theme-card__icon{color:#06b6d4;font-size:18px}
+.theme-card__title{font-size:16px;font-weight:700;margin:0;color:#f8fafc}.theme-card__desc{font-size:12px;color:#94a3b8;margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.theme-overlay{position:fixed;inset:0;z-index:100;background:#020617;display:none;flex-direction:column;overflow:auto}.theme-overlay--visible{display:flex}
+.theme-overlay__slideshow{position:absolute;inset:0;z-index:0;background:#000}.slide-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1s}.slide-img.active{opacity:.5}
+.theme-overlay__gradient{position:absolute;inset:0;background:linear-gradient(to bottom,#020617,rgba(2,6,23,.9),transparent);z-index:10}
+.theme-overlay__left{position:relative;z-index:20;padding:56px 20px 12px}.theme-overlay__back{position:absolute;top:16px;left:16px;display:flex;gap:8px;color:#94a3b8;background:none;border:none;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;cursor:pointer;padding:0}
+.theme-overlay__icon{width:56px;height:56px;border-radius:14px;background:rgba(6,182,212,.2);color:#06b6d4;display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:16px;border:1px solid rgba(6,182,212,.3)}
+.theme-overlay__title{font-size:30px;font-weight:300;margin:0 0 12px;line-height:1}.theme-overlay__desc{font-size:16px;color:#cbd5e1;font-weight:300;margin:0 0 16px;padding-left:14px;border-left:2px solid #06b6d4}
+.theme-overlay__count{padding:14px;border-radius:12px;width:fit-content;background:rgba(255,255,255,.06)}.theme-overlay__count-label{font-size:12px;color:#94a3b8;text-transform:uppercase;font-weight:700}.theme-overlay__count-value{font-size:26px;font-weight:300;margin-top:2px}
+.theme-overlay__right{position:relative;z-index:20;padding:12px 20px 28px}.theme-overlay__map-container{border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.1);box-shadow:0 25px 50px -12px rgba(0,0,0,.5);background:#0f172a;position:relative}
+canvas{display:block;width:100%}.theme-overlay__map-label{position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,.8);padding:4px 12px;border-radius:4px;font-size:12px;color:#94a3b8}
+"""
+
+COLL_HTML = r"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Collections</title>
+<script src="https://unpkg.com/@phosphor-icons/web"></script><style>__CSS__</style></head><body>
+<div class="page" id="grid"></div>
+<div class="theme-overlay" id="ov"><div class="theme-overlay__slideshow" id="ss"><div class="theme-overlay__gradient"></div></div>
+<div class="theme-overlay__left"><button class="theme-overlay__back" id="bk"><i class="ph-bold ph-arrow-left"></i> Back</button><div class="theme-overlay__icon"><i id="oi"></i></div><h1 class="theme-overlay__title" id="ot"></h1><p class="theme-overlay__desc" id="od"></p>
+<div class="theme-overlay__count"><div class="theme-overlay__count-label">Cities Included</div><div class="theme-overlay__count-value" id="oc"></div></div></div>
+<div class="theme-overlay__right"><div class="theme-overlay__map-container"><canvas id="tm"></canvas><div class="theme-overlay__map-label">Filtered View</div></div></div></div>
+<script id="d" type="application/json">__DATA__</script>
+<script>
+var D=JSON.parse(document.getElementById('d').textContent),$=function(i){return document.getElementById(i)},tmr=null;
+var img=function(t,w,h){return 'https://loremflickr.com/'+w+'/'+h+'/'+t.img.split(',')[0]+'/all'};
+$('grid').innerHTML='<div class="collections-header"><h3 class="collections-header__title">Curated Collections</h3><p class="collections-header__subtitle">Explore the world through '+D.themes.length+' unique lenses.</p></div><div class="themes-grid">'+D.themes.map(function(t){return '<div class="theme-card" data-t="'+t.id+'"><img class="theme-card__img" loading="lazy" alt="" src="'+img(t,600,400)+'" onerror="this.style.display=\'none\'"><div class="theme-card__overlay"></div><div class="theme-card__content"><div class="theme-card__header"><i class="ph-fill ph-'+t.icon+' theme-card__icon"></i><h4 class="theme-card__title">'+t.title+'</h4></div><p class="theme-card__desc">'+t.desc+'</p></div></div>'}).join('')+'</div>';
+function ring(g,r,X){g.beginPath();r.forEach(function(p,i){var q=X(p[0],p[1]);i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1])});g.closePath()}
+function open(t){var ss=$('ss');[].slice.call(ss.querySelectorAll('img')).forEach(function(i){i.remove()});
+[img(t,1920,1080),'https://loremflickr.com/1920/1080/travel/all','https://loremflickr.com/1920/1080/landscape/all'].forEach(function(u,i){var m=document.createElement('img');m.className='slide-img'+(i?'':' active');m.src=u;m.onerror=function(){m.style.display='none'};ss.appendChild(m)});
+var k=0;clearInterval(tmr);tmr=setInterval(function(){var l=ss.querySelectorAll('img');if(!l.length)return;l[k%l.length].className='slide-img';k++;l[k%l.length].className='slide-img active'},4000);
+$('oi').className='ph-fill ph-'+t.icon;$('ot').textContent=t.title;$('od').textContent=t.desc;$('oc').textContent=t.query.length;$('ov').className='theme-overlay theme-overlay--visible';
+var c=$('tm'),w=c.clientWidth||340,h=Math.round(w*.55);c.width=w*2;c.height=h*2;c.style.height=h+'px';var g=c.getContext('2d');g.scale(2,2);g.fillStyle='#0f172a';g.fillRect(0,0,w,h);var s=w/360;function X(lo,la){return [(lo+180)*s,(90-la)*s]}
+g.fillStyle='#1e293b';D.world.forEach(function(k){k.rings.forEach(function(r){ring(g,r,X);g.fill()})});
+var q=t.query;D.cities.forEach(function(x){if(q.indexOf(x.city)<0)return;var p=X(x.lng,x.lat);g.fillStyle='#fff';g.strokeStyle='#06b6d4';g.lineWidth=2;g.beginPath();g.arc(p[0],p[1],5,0,6.3);g.fill();g.stroke()})}
+[].forEach.call(document.querySelectorAll('.theme-card'),function(e){e.onclick=function(){open(D.themes.filter(function(t){return t.id===e.dataset.t})[0])}});
+$('bk').onclick=function(){$('ov').className='theme-overlay';clearInterval(tmr)};
+</script></body></html>
+"""
+
+
+TRIPS_HTML = r"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MyTrips __VIEW__</title>
 <style>__CSS__body{display:flex;flex-direction:column}#main{flex:1;overflow:auto}canvas{display:block;width:100%;background:#0E0720;border-radius:12px;touch-action:none}
 .tabs{display:flex;gap:6px;padding:8px;overflow-x:auto}.tabs button{flex:none}.bar{height:8px;border-radius:4px;background:#7C3AED}.lg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px}</style></head><body>
-<div class="tabs" id="tabs" role="tablist" aria-label="MyTrips"></div><div id="main"></div>
+<div id="main"></div>
 <script id="d" type="application/json">__DATA__</script>
 <script>
 var D=JSON.parse(document.getElementById('d').textContent),C=D.cols,T=D.trips.map(function(a){var o={};C.forEach(function(k,i){o[k]=a[i]});o.days=Math.round((new Date(o.dateOut)-new Date(o.dateIn))/864e5);return o}),
@@ -143,7 +205,7 @@ function srt(a,f){return a.slice().sort(function(x,y){return f(y)-f(x)})}
 function kpi(l){return '<div class="kpi">'+l.map(function(x){return '<div><b>'+x[1]+'</b><span>'+x[0]+'</span></div>'}).join('')+'</div>'}
 function tier(title,a,v,lo,hi,fmt){var r=srt(a,v).filter(function(x){return v(x)>=lo&&v(x)<hi});if(!r.length)return '';return '<div class="card"><b>'+title+'</b>'+r.map(function(x){return '<div>'+(x.city||x.k)+' <span class="dim">'+fmt(x)+'</span></div>'}).join('')+'</div>'}
 function bars(a,v,fmt){var m=Math.max.apply(null,a.map(v));return a.map(function(x){return '<div style="margin:6px 8px"><div style="display:flex;justify-content:space-between"><span>'+x.k+'</span><span class="dim">'+fmt(x)+'</span></div><div class="bar" style="width:'+Math.max(2,v(x)/m*100)+'%;background:'+(CC[x.k]||'#7C3AED')+'"></div></div>'}).join('')}
-var W=D.world,pan={x:0,y:0,z:1},mode='country';
+var W=D.world,pan={x:0,y:0,z:1};
 function ring(g,r,X){g.beginPath();var st=false;r.forEach(function(p){var q=X(p[0],p[1]);if(!q){st=false;return}st?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]);st=true});g.closePath()}
 function fitCanvas(c){var w=c.clientWidth||340,h=Math.round(w*(c.dataset.r||.62));c.width=w*2;c.height=h*2;c.style.height=h+'px';var g=c.getContext('2d');g.scale(2,2);return [g,w,h]}
 function flat(c,paint,dots,lines){var a=fitCanvas(c),g=a[0],w=a[1],h=a[2],s=w/360*pan.z;function X(lo,la){return [(lo+180)*s+pan.x,(90-la)*s+pan.y]}g.fillStyle='#0E0720';g.fillRect(0,0,w,h);
@@ -159,19 +221,6 @@ function X(lo2,la2){var l=(lo2)*Math.PI/180-l0,p=la2*Math.PI/180,cc=Math.sin(p0)
 W.forEach(function(k){g.fillStyle=vis[k.iso]?CC[vis[k.iso]]:'#2d1f4a';g.globalAlpha=vis[k.iso]?.75:1;k.rings.forEach(function(r){ring(g,r,X);g.fill()})});g.globalAlpha=1;
 cities.forEach(function(x){var t=T.filter(function(t){return t.city===x.city&&t.country===x.country})[0],p=X(t.lng,t.lat);if(!p)return;g.fillStyle=CC[t.continent];g.beginPath();g.arc(p[0],p[1],2,0,6.3);g.fill()})}
 paint();drag(c,function(dx,dy){lo-=dx/2;la=Math.max(-80,Math.min(80,la+dy/2));paint()})},
-atlas:function(){var modes=[['political','Cultural Regions'],['country','Countries'],['region','NomadMania Regions'],['pin','Cities']];
-M.innerHTML='<div class="row" id="mm">'+modes.map(function(m){return '<button data-m="'+m[0]+'" class="'+(m[0]===mode?'on':'')+'">'+m[1]+'</button>'}).join('')+'<button id="zi">+</button><button id="zo">\u2212</button></div><div style="padding:0 8px"><canvas id="a" data-r=".52"></canvas></div><div id="lg" class="card"></div>';
-var pal=['#60a5fa','#f59e0b','#f472b6','#34d399','#a78bfa','#22d3ee','#fb7185','#facc15','#4ade80','#c084fc'],cul={};cults.forEach(function(c,i){cul[c.k]=pal[i%pal.length]});
-var isoCul={},isoCont={};T.forEach(function(t){isoCul[t.countryISO]=t.culture;isoCont[t.countryISO]=t.continent});
-function go(){var paint=function(k){return mode==='political'&&isoCul[k.iso]?cul[isoCul[k.iso]]:(mode==='country'&&isoCont[k.iso]?CC[isoCont[k.iso]]:(isoCont[k.iso]?'#3b2a63':null))},dots=[];
-if(mode==='pin')cities.forEach(function(x){var t=T.filter(function(t){return t.city===x.city&&t.country===x.country})[0];dots.push({lat:t.lat,lng:t.lng,continent:t.continent,r:2})});
-if(mode==='region')regions.forEach(function(x){var ts=T.filter(function(t){return t.nomadRegion===x.k}),la=0,lo=0;ts.forEach(function(t){la+=t.lat;lo+=t.lng});dots.push({lat:la/ts.length,lng:lo/ts.length,continent:ts[0].continent,r:2+Math.min(5,x.days/60)})});
-flat($('a'),paint,dots);
-$('lg').innerHTML=mode==='political'?cults.map(function(c){return '<span class="chip"><i style="background:'+cul[c.k]+'" class="lg"></i>'+c.k+' \u00b7 '+c.days+'d</span>'}).join(''):mode==='region'?'<b>'+regions.length+' NomadMania regions</b> <span class="dim">of '+D.world_regions+'</span>':mode==='pin'?'<b>'+cities.length+' cities</b>':'<b>'+countries.length+' countries</b> <span class="dim">of '+D.world_countries+' (UN)</span>'}
-go();[].forEach.call(document.querySelectorAll('#mm [data-m]'),function(b){b.onclick=function(){mode=b.dataset.m;VIEWS.atlas()}});$('zi').onclick=function(){pan.z=Math.min(8,pan.z*1.5);go()};$('zo').onclick=function(){pan.z=Math.max(1,pan.z/1.5);go()};drag($('a'),function(dx,dy){pan.x+=dx;pan.y+=dy;go()})},
-collections:function(){var sel=null;function r(){M.innerHTML=D.themes.map(function(t){var v=t.query.filter(function(q){return CITY[q.toLowerCase()]});return '<div class="card" data-t="'+t.id+'"><b>'+t.title+'</b> <span class="dim">'+v.length+'/'+t.query.length+' visited</span><div class="dim">'+t.desc+'</div>'+(sel===t.id?'<div>'+t.query.map(function(q){return '<span class="chip'+(CITY[q.toLowerCase()]?' v':'')+'">'+q+'</span>'}).join('')+'</div><div class="dim">Filtered view</div><canvas id="tm" data-r=".5"></canvas>':'')+'</div>'}).join('');
-[].forEach.call(M.querySelectorAll('[data-t]'),function(e){e.onclick=function(){sel=sel===e.dataset.t?null:e.dataset.t;r()}});
-if(sel){var t=D.themes.filter(function(x){return x.id===sel})[0],q=t.query.map(function(s){return s.toLowerCase()}),dots=[];T.forEach(function(x){if(q.indexOf(x.city.toLowerCase())>=0)dots.push({lat:x.lat,lng:x.lng,continent:x.continent,r:3})});pan={x:0,y:0,z:1};flat($('tm'),function(){return null},dots)}}r()},
 stats:function(){var h='<h3>Overview</h3>'+kpi([['Continents',conts.length],['Countries',countries.length],['NomadMania Regions',regions.length],['Cities',cities.length],['Time Abroad',(total/365).toFixed(1)+'y'],['% Countries (UN)',Math.round(countries.length/D.world_countries*100)+'%'],['% NomadMania Regions',Math.round(regions.length/D.world_regions*100)+'%']]);
 var f=function(x){return x.days+'d'};
 h+='<h3>Long Stay Cities</h3>'+tier('Extended Stays (6+ months)',cities,function(x){return x.days},180,1e9,function(x){return Math.round(x.days/30)+' months'})+tier('Long Stays (1.5-6 months)',cities,function(x){return x.days},45,180,function(x){return x.days>=60?Math.round(x.days/30)+' months':x.days+' days'})+tier('Medium Stays (2-5 weeks)',cities,function(x){return x.days},14,36,f);
@@ -195,9 +244,8 @@ var co=Object.keys(CC).filter(function(c){return conts.some(function(x){return x
 M.innerHTML=kpi([['Continents',new Set(rows.map(function(t){return t.continent})).size],['Countries',new Set(rows.map(function(t){return t.country})).size],['Cities',new Set(rows.map(function(t){return t.city+t.country})).size]])+'<div class="row"><select id="fc"><option value="">All Continents</option>'+co.map(function(c){return '<option'+(c===fc?' selected':'')+'>'+c+'</option>'}).join('')+'</select><select id="fk"><option value="">All Countries</option>'+ks.map(function(c){return '<option'+(c===fk?' selected':'')+'>'+c+'</option>'}).join('')+'</select><button id="rs">Reset</button></div>'+
 '<div style="overflow:auto"><table><tr>'+[['continent','Continent'],['country','Country'],['state','State'],['city','City'],['dateIn','Date In'],['days','Days']].map(function(c){return '<th data-s="'+c[0]+'">'+c[1]+(sk===c[0]?(sd>0?' \u25b2':' \u25bc'):'')+'</th>'}).join('')+'</tr>'+rows.map(function(t){return '<tr><td>'+t.continent+'</td><td>'+t.countryFlag+' '+t.country+'</td><td>'+t.state+'</td><td>'+t.city+'</td><td>'+t.dateIn+'</td><td>'+t.days+'d</td></tr>'}).join('')+'</table></div>';
 $('fc').onchange=function(){fc=this.value;r()};$('fk').onchange=function(){fk=this.value;r()};$('rs').onclick=function(){fc=fk='';r()};[].forEach.call(M.querySelectorAll('th[data-s]'),function(h){h.onclick=function(){sd=sk===h.dataset.s?-sd:1;sk=h.dataset.s;r()}})}r()}};
-var tabs=[['home','Home'],['atlas','Atlas'],['collections','Collections'],['stats','Stats'],['timeline','Timeline']];
-function show(v){view=v;$('tabs').innerHTML=tabs.map(function(t){return '<button role="tab" data-v="'+t[0]+'" class="'+(t[0]===v?'on':'')+'">'+t[1]+'</button>'}).join('');[].forEach.call(document.querySelectorAll('#tabs button'),function(b){b.onclick=function(){show(b.dataset.v)}});M.scrollTop=0;VIEWS[v]()}
-show('home');
+function show(v){view=v;M.scrollTop=0;VIEWS[v]()}
+show('__VIEW__');
 </script></body></html>
 """
 
@@ -208,22 +256,39 @@ def build_pages(cfg, trips, world, themes):
         v = vis.setdefault(t["countryISO"], {"name": t["country"], "flag": t["countryFlag"], "continent": t["continent"], "days": 0,
                                              "lat": t["countryCapital"]["lat"], "lng": t["countryCapital"]["lng"]})
         v["days"] += days(t)
-    ne = {c["iso"]: c for c in world["countries"]}
+    cit, reg, cul = {}, {}, {}
+    for t in trips:
+        c = cit.setdefault((t["city"], t["country"]), {"city": t["city"], "country": t["country"], "continent": t["continent"], "iso": t["countryISO"], "lat": t["lat"], "lng": t["lng"], "days": 0})
+        c["days"] += days(t)
+        r = reg.setdefault(t["nomadRegion"], {"name": t["nomadRegion"], "continent": t["continent"], "days": 0, "n": 0, "la": 0.0, "lo": 0.0, "cities": set()})
+        r["days"] += days(t); r["n"] += 1; r["la"] += t["lat"]; r["lo"] += t["lng"]; r["cities"].add(t["city"])
+        cul[t["countryISO"]] = t["culture"]
+    regions = [{"name": r["name"], "continent": r["continent"], "days": r["days"], "lat": round(r["la"] / r["n"], 3), "lng": round(r["lo"] / r["n"], 3), "cities": len(r["cities"])} for r in reg.values()]
     order = cfg["map_continents"]
-    mp = {"default": cfg["map_default"], "order": order, "frames": cfg["map_frames"], "colors": cfg["map_colors"], "visited": vis,
-          "countries": [{"iso": c["iso"], "name": c["name"], "continent": c["continent"], "rings": c["rings"]} for c in world["countries"]
-                        if (vis.get(c["iso"], {}).get("continent") or c["continent"]) in order]}
+    wc = [{"iso": c["iso"], "name": c["name"], "continent": c["continent"], "rings": c["rings"]} for c in world["countries"]]
+    at = {"default": cfg["map_default"], "order": order, "frames": cfg["map_frames"], "colors": cfg["map_colors"], "visited": vis,
+          "countries": [c for c in wc if (vis.get(c["iso"], {}).get("continent") or c["continent"]) in order],
+          "cities": list(cit.values()), "regions": regions, "culture": cul, "cultures": sorted(set(cul.values())), "world_regions": cfg["world_nomad_regions"]}
     cols = ["continent", "country", "nomadRegion", "state", "city", "dateIn", "dateOut", "lat", "lng", "language", "culture", "countryISO", "countryFlag"]
     th = {"cols": cols, "trips": [[t[k] for k in cols] for t in trips], "home": cfg["home"], "themes": themes,
           "world_countries": cfg["world_countries_un"], "world_regions": cfg["world_nomad_regions"],
           "world": [{"iso": c["iso"], "rings": c["rings"]} for c in world["countries"]]}
-    return MAP_HTML.replace("__CSS__", CSS).replace("__DATA__", esc(mp)), TRIPS_HTML.replace("__CSS__", CSS).replace("__DATA__", esc(th))
+    co = {"themes": themes, "cities": list(cit.values()), "world": th["world"]}
+    mk = lambda view: TRIPS_HTML.replace("__CSS__", CSS).replace("__DATA__", esc(th)).replace("__VIEW__", view)
+    return {"geo-atlas.html": ATLAS_HTML.replace("__CSS__", CSS).replace("__DATA__", esc(at)), "geo-globe.html": mk("home"), "geo-stats.html": mk("stats"), "geo-timeline.html": mk("timeline"),
+            "geo-collections.html": COLL_HTML.replace("__CSS__", COLL_CSS).replace("__DATA__", esc(co))}
+
+
+SUBPAGES = [("geo-globe", "geo-globe.html", "Globe: MyTrips Home, the trips on a globe you turn with a finger"),
+            ("geo-atlas", "geo-atlas.html", "Atlas: visited countries (visited vs not visited, legend with counts and %), visited cities (points) and visited NomadMania regions (points), per continent, no global view"),
+            ("geo-collections", "geo-collections.html", "Collections: the MyTrips Curated Collections cards with images and the theme overlay"),
+            ("geo-stats", "geo-stats.html", "Stats: the MyTrips Stats view"), ("geo-timeline", "geo-timeline.html", "Timeline: the MyTrips Timeline view")]
 
 
 def parse_themes(ts):
     out = []
     for m in re.finditer(r"\{\s*id:\s*'([^']+)',\s*title:\s*'([^']+)',\s*icon:\s*'([^']+)',\s*query:\s*\[([^\]]*)\],\s*img:\s*'([^']*)',\s*desc:\s*'([^']*)'\s*\}", ts):
-        out.append({"id": m.group(1), "title": m.group(2), "icon": m.group(3), "query": re.findall(r"'([^']*)'", m.group(4)), "desc": m.group(6)})
+        out.append({"id": m.group(1), "title": m.group(2), "icon": m.group(3), "query": re.findall(r"'([^']*)'", m.group(4)), "img": m.group(5), "desc": m.group(6)})
     return out
 
 
@@ -231,9 +296,11 @@ def outputs():
     cfg = rd(os.path.join(G, "geo-config.json")); trips = rd(os.path.join(G, "travel-data.json"))["trips"]
     world = rd(os.path.join(G, "ne110-countries.min.json")); themes = rd(os.path.join(G, "mytrips-themes.json"))
     geo = rewrite_geo(rd(GEO_JSON), cfg, trips)
-    m, t = build_pages(cfg, trips, world, themes)
-    return {os.path.join(W, "geo-map.html"): m, os.path.join(W, "geo-mytrips.html"): t,
-            GEO_JSON: json.dumps(geo, ensure_ascii=False, indent=2) + "\n"}
+    out = {os.path.join(W, k): v for k, v in build_pages(cfg, trips, world, themes).items()}
+    out[GEO_JSON] = json.dumps(geo, ensure_ascii=False, indent=2) + "\n"
+    for pid, url, doc in SUBPAGES:
+        out[os.path.join(GEO_DIR, pid + ".json")] = json.dumps([{"kind": "fragment", "id": "web", "_doc": "#1981 Geo > " + doc + " (data/regen-geo-1976.py).", "url": url}], ensure_ascii=False, indent=2) + "\n"
+    return out
 
 
 def main():
