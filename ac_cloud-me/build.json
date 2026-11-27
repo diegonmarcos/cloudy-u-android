@@ -1832,7 +1832,9 @@
         "subresource_concurrency": 8,
         "script_urls": true,
         "harvest_timeout_s": 20,
-        "max_script_media_per_page": 2500
+        "max_script_media_per_page": 2500,
+        "fetch_deadline_s": 60,
+        "max_file_mb": 32
       }
     },
     "settings": [

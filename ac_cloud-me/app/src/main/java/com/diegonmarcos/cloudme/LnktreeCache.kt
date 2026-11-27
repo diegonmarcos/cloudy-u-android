@@ -69,6 +69,10 @@ data class LnktreeCacheConfig(
     val harvestTimeoutSeconds: Int = 0,
     /** #1957 the most media files (images, videos) one page's data-file scan may plan; the rest are known-missing (reason plan-cap). 0 = no cap. */
     val maxScriptMediaPerPage: Int = 0,
+    /** #1957 the longest one download may take, whole body included (a trickling or endless response is dropped); 0 = no deadline. */
+    val fetchDeadlineMs: Long = 0,
+    /** #1957 the largest body any one download may read into memory (a video with no Content-Length is cut off here, never read whole); 0 = no cap. */
+    val maxFileBytes: Long = 0,
 ) {
     val networkFirst: Boolean get() = strategy == NETWORK_FIRST
     /** #1951 a complete cached copy paints at once and the live page is fetched in parallel (swapped in when its hash differs); a page with no complete copy loads straight through the WebView's own network. */
@@ -124,6 +128,8 @@ data class LnktreeCacheConfig(
                 cacheVersion = o.optString("cache_version"),
                 harvestTimeoutSeconds = p.optInt("harvest_timeout_s", 0).coerceAtLeast(0),
                 maxScriptMediaPerPage = p.optInt("max_script_media_per_page", 0).coerceAtLeast(0),
+                fetchDeadlineMs = (p.optDouble("fetch_deadline_s", 0.0) * 1000).toLong().coerceAtLeast(0),
+                maxFileBytes = (p.optDouble("max_file_mb", 0.0) * MB).toLong().coerceAtLeast(0),
                 excludePages = if (ex == null) emptySet() else (0 until ex.length()).map { ex.getString(it) }.toSet(),
             )
         }
@@ -479,6 +485,24 @@ object RefScan {
             .filter { (it.scheme == "https" || it.scheme == "http") && it.host != null && (crossOrigin || (it.host.equals(b.host, true) && it.port == b.port)) }
             .map { URI(it.scheme, it.authority, it.path, it.query, null).toString() }
             .distinct().toList()
+    }
+}
+
+/**
+ * #1957 a body read with a byte cap and a wall-clock deadline. Unbounded readBytes() let one video served without Content-Length
+ * (chunked) be read whole into memory or trickle for ever, which stalls the page, or the job, for good.
+ */
+object BoundedRead {
+    sealed class Result { class Ok(val bytes: ByteArray) : Result(); object TooLarge : Result(); object Timeout : Result() }
+    fun read(input: java.io.InputStream, maxBytes: Long, deadlineMs: Long, now: () -> Long = System::currentTimeMillis): Result {
+        val end = if (deadlineMs > 0) now() + deadlineMs else Long.MAX_VALUE
+        val out = java.io.ByteArrayOutputStream(); val buf = ByteArray(64 * 1024)
+        while (true) {
+            if (now() > end) return Result.Timeout
+            val n = input.read(buf); if (n < 0) return Result.Ok(out.toByteArray())
+            out.write(buf, 0, n)
+            if (maxBytes > 0 && out.size() > maxBytes) return Result.TooLarge
+        }
     }
 }
 

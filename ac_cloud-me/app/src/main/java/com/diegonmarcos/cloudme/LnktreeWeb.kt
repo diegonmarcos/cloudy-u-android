@@ -73,7 +73,12 @@ object LnktreeCache {
             // #1957 a video larger than the declared per-file cap is not downloaded at all
             val cap = config.videoMaxFileBytes
             if (code == 200 && cap > 0 && RefScan.isVideo(url, mime) && c.contentLengthLong > cap) return@runCatching Fetched(mime, null, LnktreePrefetch.VIDEO_CAPPED, ByteArray(0))
-            val body = (if (code == 200) c.inputStream else null)?.use { it.readBytes() }
+            // #1957 bounded: a video stops at its per-file cap (known-missing, not read whole), any body at max_file_mb or the fetch deadline
+            val lim = if (cap > 0 && RefScan.isVideo(url, mime)) cap else config.maxFileBytes
+            val r = if (code == 200) c.inputStream.use { BoundedRead.read(it, lim, config.fetchDeadlineMs) } else null
+            if (r is BoundedRead.Result.TooLarge) return@runCatching if (RefScan.isVideo(url, mime)) Fetched(mime, "video-file-cap", LnktreePrefetch.VIDEO_CAPPED, ByteArray(0)) else null
+            if (r is BoundedRead.Result.Timeout) { android.util.Log.w("CloudMeWeb", "FETCH_DEADLINE url=$url"); return@runCatching null }
+            val body = (r as? BoundedRead.Result.Ok)?.bytes
             if (body != null) Fetched(mime, enc, 200, body)
             else if (code in 400..499 && code != 408 && code != 429) Fetched(mime, enc, code, ByteArray(0))   // #1947 a definite "not there" (a tombstone); #1957 any definite 4xx (jsDelivr answers 403 for a file over its size limit); every other failure stays null
             else null

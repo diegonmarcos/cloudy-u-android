@@ -227,4 +227,16 @@ class Precache1957Test {
         assertTrue(s.complete("d", "https://d.example/"))
         assertTrue(s.refs("d").containsAll(media))
     }
+
+    @Test(timeout = 10_000) fun `a download that trickles for ever or never ends is cut off and never stalls the job`() {
+        // a body that sends one byte per read and never ends (a stalled CDN): the deadline ends it
+        var t = 0L
+        val trickle = object : java.io.InputStream() { override fun read() = 1; override fun read(b: ByteArray, o: Int, n: Int): Int { b[o] = 1; return 1 } }
+        assertTrue(BoundedRead.read(trickle, 0, 1_000) { t += 10; t } is BoundedRead.Result.Timeout)
+        // an endless fast body (a video served with no Content-Length): the byte cap ends it, it is never read whole into memory
+        val endless = object : java.io.InputStream() { override fun read() = 1; override fun read(b: ByteArray, o: Int, n: Int) = n }
+        assertTrue(BoundedRead.read(endless, 1_000_000, 0) is BoundedRead.Result.TooLarge)
+        val ok = BoundedRead.read(java.io.ByteArrayInputStream(ByteArray(5000) { 7 }), 1_000_000, 1_000)
+        assertEquals(5000, (ok as BoundedRead.Result.Ok).bytes.size)
+    }
 }
