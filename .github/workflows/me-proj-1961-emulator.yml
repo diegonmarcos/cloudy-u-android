@@ -1,0 +1,71 @@
+name: "Test -> Cloud Me Proj README tabs: CG Omniverse and Cloud Me README.html first (#1961, emulator)"
+
+# #1961: opens Proj > CG > Omniverse and Proj > Unix > Cloud Me from a Ship APK on a real emulator: the tab row must read README.html, GH Repo Page, README.canvas, README.md (+ Site for CG),
+# README.html must be the open tab, and its sections are screenshotted while scrolling. ac_cloud-me/test/emulator-me-proj-1961.sh.
+
+on:
+  workflow_dispatch:
+    inputs:
+      me_run_id:
+        description: "Ship Cloud Me run id whose x86_64 APK artifact to test"
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: ac_cloud-me/test
+
+      - name: Fetch the APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          ME_RUN: ${{ inputs.me_run_id }}
+        run: |
+          set -eu
+          case "$ME_RUN" in release) ;; *[!0-9]*|'') echo "::error::me_run_id must be a run id or release"; exit 1 ;; esac
+          fetch() {  # fetch RUN PREFIX OUT
+            mkdir -p "dl/$2"
+            if [ "$1" = release ]; then gh release download latest -R "$REPO" -p "$2*.apk" -D "dl/$2"; else
+            gh api "repos/$REPO/actions/runs/$1/artifacts" --paginate --jq ".artifacts[] | select(.name|startswith(\"$2-x86_64\")) | .name" |
+            while read -r name; do gh run download "$1" -R "$REPO" -n "$name" -D "dl/$2/$name"; done
+            fi
+            pick=$(find "dl/$2" -name '*.apk' | sort | grep -i -- x86_64 | head -1); [ -n "$pick" ] || pick=$(find "dl/$2" -name '*.apk' | sort | grep -vi arm | head -1)
+            [ -n "$pick" ] || { echo "::error::no $2 x86_64 APK in run $1"; exit 1; }
+            cp "$pick" "$3"
+          }
+          fetch "$ME_RUN" Cloud-Me me.apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot emulator + render proof
+        timeout-minutes: 25
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-me/test/emulator-me-proj-1961.sh me.apk out
+
+      - name: Upload evidence (screenshots, ui dumps, logcat, verdict)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: me-proj-1961-evidence
+          path: out/
+          if-no-files-found: warn
