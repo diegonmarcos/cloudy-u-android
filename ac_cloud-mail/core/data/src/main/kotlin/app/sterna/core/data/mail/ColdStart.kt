@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 const val COLD_START_PAINT_WAIT_MS = 5_000L
 
 /** How long a sync started at process start waits to learn whether an activity (and so a list to paint) follows. */
-const val COLD_START_ACTIVITY_WAIT_MS = 1_500L
+const val COLD_START_ACTIVITY_WAIT_MS = 4_000L
 
 /**
  * #1952 cold start: the list's first rows are painted from the store BEFORE any network call. The activity [arm]s the
