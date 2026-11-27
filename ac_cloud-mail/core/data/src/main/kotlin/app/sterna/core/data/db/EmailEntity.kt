@@ -11,10 +11,7 @@ import androidx.room.Index
     primaryKeys = ["accountId", "id"],
     // #1952: the last index COVERS the three aggregates of the domain-grouped list (the default view), so they read the
     // narrow index and never the wide message rows; `id` is in it because the grouping key falls back to it.
-    indices = [
-        Index("mailboxId"), Index(value = ["accountId", "mailboxId", "sortKey"]),
-        Index(value = ["accountId", "mailboxId", "fromDomain", "sortKey", "seen", "id"]),
-    ],
+    indices = [Index("mailboxId"), Index(value = ["accountId", "mailboxId", "sortKey"]), Index(value = ["accountId", "mailboxId", "fromDomain", "sortKey", "seen", "id"])],
 )
 data class EmailEntity(
     val id: String,

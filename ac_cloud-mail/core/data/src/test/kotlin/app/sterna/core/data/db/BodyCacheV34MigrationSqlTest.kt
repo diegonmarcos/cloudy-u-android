@@ -68,7 +68,7 @@ class BodyCacheV34MigrationSqlTest {
         assertTrue("an unregistered step is the destructive fallback: outbox and drafts wiped", SternaDatabase.ALL_MIGRATIONS.any { it === MIGRATION_33_34 })
         assertEquals(33, MIGRATION_33_34.startVersion)
         assertEquals(34, MIGRATION_33_34.endVersion)
-        assertEquals(34, SCHEMA_VERSION)
+        assertTrue("the schema is at v34 or later (#1952 added v35, one index)", SCHEMA_VERSION >= 34)
     }
 
     @Test fun `every row survives and the new columns read their lazy defaults`() {

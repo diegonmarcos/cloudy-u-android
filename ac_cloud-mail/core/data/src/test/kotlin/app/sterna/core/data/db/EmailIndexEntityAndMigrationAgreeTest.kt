@@ -52,7 +52,9 @@ class EmailIndexEntityAndMigrationAgreeTest {
                 "without a matching migration step breaks every UPDATED install at open time, and " +
                 "removing the composite index brings back the blank list on a folder switch with " +
                 "the conversation view on.",
-            "indices = [Index(\"mailboxId\"), Index(value = [\"accountId\", \"mailboxId\", \"sortKey\"])],",
+            // #1952: a third index (v35, MIGRATION_34_35, ListQueryPlan1952bTest) covers the domain-grouped list; the two before it are unchanged.
+            "indices = [Index(\"mailboxId\"), Index(value = [\"accountId\", \"mailboxId\", \"sortKey\"]), " +
+                "Index(value = [\"accountId\", \"mailboxId\", \"fromDomain\", \"sortKey\", \"seen\", \"id\"])],",
             indicesLine(),
         )
     }

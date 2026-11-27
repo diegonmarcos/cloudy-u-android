@@ -74,7 +74,7 @@ class ListQueryPlan1952bTest {
 
     @Test fun `the entity, the migration and the schema version declare that index`() {
         val entity = code("core/data/src/main/kotlin/app/sterna/core/data/db/EmailEntity.kt")
-        assertTrue("Index(value = [\"accountId\", \"mailboxId\", \"fromDomain\", \"sortKey\", \"seen\", \"id\"])," in entity)
+        assertTrue(entity.any { "Index(value = [\"accountId\", \"mailboxId\", \"fromDomain\", \"sortKey\", \"seen\", \"id\"])" in it })
         assertTrue(index in EMAILS_DOMAIN_LIST_INDEX_SQL && "(`accountId`, `mailboxId`, `fromDomain`, `sortKey`, `seen`, `id`)" in EMAILS_DOMAIN_LIST_INDEX_SQL)
         assertTrue(SCHEMA_VERSION >= 35)
         assertTrue(SternaDatabase.ALL_MIGRATIONS.any { it.startVersion == 34 && it.endVersion == 35 })
