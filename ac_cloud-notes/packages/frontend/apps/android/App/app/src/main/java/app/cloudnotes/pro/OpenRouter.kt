@@ -49,6 +49,17 @@ object OpenRouter {
         }
     }
 
+    /** The first bytes of a PDF: "%PDF-". A file with no name and a generic type is still routed to the reader when it starts so. */
+    fun isPdfMagic(head: ByteArray): Boolean =
+        head.size >= 5 && head[0] == '%'.code.toByte() && head[1] == 'P'.code.toByte() && head[2] == 'D'.code.toByte() && head[3] == 'F'.code.toByte() && head[4] == '-'.code.toByte()
+
+    /** Up to [n] leading bytes (InputStream.readNBytes needs API 33; minSdk is 26). */
+    fun readHead(i: java.io.InputStream, n: Int): ByteArray {
+        val b = ByteArray(n); var got = 0
+        while (got < n) { val r = i.read(b, got, n - got); if (r < 0) break; got += r }
+        return b.copyOf(got)
+    }
+
     /** An EDIT of a content:// URI whose sender granted write access saves back to the source. */
     fun canWriteBack(action: String?, scheme: String?, flags: Int): Boolean =
         action == "android.intent.action.EDIT" && scheme == "content" && (flags and GRANT_WRITE) != 0

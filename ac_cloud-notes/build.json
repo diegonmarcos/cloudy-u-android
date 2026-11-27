@@ -103,6 +103,11 @@
       "dir": "../ab_cloud-libs-shared/libs/ui-kit",
       "type": "library"
     },
+    "libs:pdf": {
+      "_doc": "#1949 owner order: Cloud Notes carries the PDF viewer and the PDF edit lib itself (PdfViewActivity: open, draw, note, text, rotate, move, delete, form fill, save back or save a copy). Shared BY REFERENCE; the PDF no longer leaves for another app.",
+      "dir": "../ab_cloud-libs-shared/libs/pdf",
+      "type": "library"
+    },
     "libs:wysiwyg": {
       "_doc": "#1484 THE shared WYSIWYG engine (the same one Cloud-Drive's Editor uses): the native Markdown view of this app is its WysiwygView. The BlockSuite web editor in the WebView is untouched. Shared BY REFERENCE.",
       "dir": "../ab_cloud-libs-shared/libs/wysiwyg",

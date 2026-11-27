@@ -58,4 +58,12 @@ class OpenRouterTest {
         assertEquals("", OpenRouter.hexPreview(ByteArray(0)))
         assertTrue(OpenRouter.hexPreview("Hi\u0000".toByteArray()).startsWith("00000000  48 69 00"))
     }
+
+    // #1949 a PDF with a generic type and no extension is recognised by its first bytes.
+    @Test fun pdfMagicIsRecognised() {
+        assertTrue(OpenRouter.isPdfMagic("%PDF-1.7".toByteArray()))
+        assertFalse(OpenRouter.isPdfMagic("PK\u0003\u0004zip".toByteArray()))
+        assertFalse(OpenRouter.isPdfMagic(ByteArray(2)))
+        assertEquals(5, OpenRouter.readHead(java.io.ByteArrayInputStream("%PDF-1.7".toByteArray()), 5).size)
+    }
 }
