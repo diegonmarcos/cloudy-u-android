@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # #1953 #1954 #1955 Cloud C3 on an emulator: the screenshots the design lists per ticket, each page opened through the launcher's
 # `shortcut_action` extra (page:<id>), a ui dump beside each shot, scrolled shots taken with a swipe up on the body.
-# Usage: emulator-c3-195x.sh <apk> <out-dir> <ticket: 1953|1954|1955|1968|1969|1971|1972|all>. Run by .github/workflows/c3-195x-emulator.yml.
+# Usage: emulator-c3-195x.sh <apk> <out-dir> <ticket: 1953|1954|1955|1968|1969|1971|1972|1982|all>. Run by .github/workflows/c3-195x-emulator.yml.
 # Exit 1 when the app does not start, a declared label is missing, or it crashes.
 set -u
 APK="$1"; OUT="$2"; T="${3:-all}"
@@ -106,6 +106,15 @@ hswipe() { # <y percent> <times> <dir: left|right>: swipe a horizontally scrolli
 chk() { # <shot> <labels, _ = space>
   for l in ${2//,/ }; do has "$1" "${l//_/ }" || bad "$1: label '${l//_/ }' missing"; done
 }
+ypct() { # <shot> <text>: the vertical centre (percent of the screen height) of the first node whose text starts with <text>
+  local s h; s="$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1)"; h="${s#*x}"
+  python3 - "$OUT/$1.xml" "$2" "$h" <<'PY'
+import re, sys
+x = open(sys.argv[1], errors="ignore").read()
+m = re.search(r'text="%s[^"]*"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"' % re.escape(sys.argv[2]), x)
+print(((int(m.group(2)) + int(m.group(4))) // 2) * 100 // int(sys.argv[3]) if m else 20)
+PY
+}
 if [ "$T" = all ] || [ "$T" = 1969 ]; then   # the wide table: its right-hand columns after a swipe
   open_page projects; sleep 4; hswipe 30 3 left; shot c3-1969-infra-projects-table-right 4
   chk c3-1969-infra-projects-table-right "no_containers,GitHub"
@@ -117,8 +126,23 @@ if [ "$T" = all ] || [ "$T" = 1969 ]; then   # the search field narrows the tabl
   rm -f "$OUT/c3-1969-infra-projects-wiki-pre.png"
 fi
 if [ "$T" = all ] || [ "$T" = 1971 ]; then   # the VM row: the devices after the VMs, Unknown host last
-  open_page vm-all_topology; sleep 6; hswipe 27 3 left; shot c3-1971-vm-row-devices 4
+  open_page vm-all_topology; sleep 6; shot c3-1971-vm-row-pre 3; hswipe "$(ypct c3-1971-vm-row-pre VM)" 3 left; shot c3-1971-vm-row-devices 4; rm -f "$OUT/c3-1971-vm-row-pre.png"
   chk c3-1971-vm-row-devices "gcp-proxy,SurfacePro8,SamsungA37,SamsungS21,Unknown_host"
+fi
+# #1982 the Projects row and the VM row, both always drawn, combined as AND: All/All, Unix only, oci-apps only, Unix + oci-apps, then both rows scrolled on the narrow screen
+if [ "$T" = all ] || [ "$T" = 1982 ]; then
+  open_page all_topology; sleep 6; shot c3-1982-all-all 4
+  chk c3-1982-all-all "Projects,VM,All,Unix,CG,Capital,Hardtech,Wiki,oci-apps,Topology,Table,Status,Type"
+  has c3-1982-all-all 'text="Projects"' && bad "c3-1982-all-all: the old Projects | VM toggle is still there"
+  tap_text c3-1982-all-all "Unix"; shot c3-1982-unix-only 4
+  chk c3-1982-unix-only "Unix,SuperApp,Cloud-me,Cloudy"
+  tap_text c3-1982-unix-only "oci-apps"; shot c3-1982-unix-oci-apps 4
+  chk c3-1982-unix-oci-apps "Unix,SuperApp,oci-apps"
+  tap_text c3-1982-unix-oci-apps "All"; shot c3-1982-oci-apps-only 4
+  chk c3-1982-oci-apps-only "oci-apps,Projects,VM"
+  py="$(ypct c3-1982-oci-apps-only Projects)"; vy="$(ypct c3-1982-oci-apps-only VM)"
+  hswipe "$py" 3 left; hswipe "$vy" 3 left; shot c3-1982-narrow-scrolled 3
+  chk c3-1982-narrow-scrolled "Projects,VM,Unknown_host"
 fi
 # #1968 the category row has no Lib chip (Lib is Wiki); the old lib_topology id above opens through the alias
 if [ "$T" = all ] || [ "$T" = 1968 ]; then

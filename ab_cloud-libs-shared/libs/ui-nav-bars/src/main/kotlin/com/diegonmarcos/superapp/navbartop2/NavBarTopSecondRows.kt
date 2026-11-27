@@ -102,6 +102,8 @@ public fun NavBarTopSecondRows(
     compact: Boolean = LocalNavChromeCollapse.current?.collapsed ?: false,
     hidden: Boolean = LocalNavChromeCollapse.current?.hidden ?: false,
     onGroupIndex: (NavGroup) -> Boolean = { false },
+    /** #1982 pages marked selected besides [selectedId]: rows that filter independently (Cloud C3 Containers: Projects AND VM) each keep their own selection. */
+    selectedIds: Set<String> = emptySet(),
 ) {
     if (section.rows != SecondRowMode.ManyRows) {
         NavBarTopSecondRow(section.pages, selectedId, onSelect, modifier, dark, onReselect, underTopChrome, flushTop, surface, iconFor, compact, hidden)
@@ -151,7 +153,7 @@ public fun NavBarTopSecondRows(
                     Text("|", Modifier.testTag(SecondRowGroupTags.divider(g.id)), color = palette.inkDim)
                     Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()).selectableGroup(), verticalAlignment = Alignment.CenterVertically) {
                         g.pages.forEachIndexed { i, page ->
-                            val on = page.id == selectedId
+                            val on = page.id == selectedId || page.id in selectedIds
                             // A declared boundary inside the row (`separator_before`): a "|" like the label's.
                             if (i > 0 && page.separatorBefore) Text("|", color = palette.inkDim)
                             SecondRowTab(

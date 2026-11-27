@@ -58,7 +58,8 @@ object ContainerTopology {
         val fallback = all.firstOrNull { decl.types.lastOrNull() in it.types }?.id ?: all.lastOrNull()?.id
         val sectionOf = scoped.entries.associate { e -> e.name to (all.firstOrNull { decl.typeOf(e) in it.types }?.id ?: fallback) }
         val byName = scoped.entries.associateBy { it.name }
-        val splitHere = projectId?.let { lay.split[it] }.orEmpty()
+        val sc = decl.scopeOf(projectId)
+        val splitHere = sc.project?.let { lay.split[it] }.orEmpty()
         fun subsOf(sectionId: String, keep: (ContainersModel.Entry) -> Boolean): List<Sub> = scoped.groups.flatMap { g ->
             g.categories.mapNotNull { cat ->
                 val names = cat.names.filter { n -> sectionOf[n] == sectionId && byName[n]?.let(keep) == true }
@@ -74,15 +75,15 @@ object ContainerTopology {
                 Section(s.id, s.label, s.types, parts)
             })
         }
-        val paths = if (projectId == null) emptyMap() else scoped.entries.mapNotNull { e ->
-            decl.repoOf(e)?.attached?.firstOrNull { it.project == projectId && it.path.isNotBlank() }?.let { e.name to it.path }
+        val paths = if (sc.project == null) emptyMap() else scoped.entries.mapNotNull { e ->
+            decl.repoOf(e)?.attached?.firstOrNull { it.project == sc.project && it.path.isNotBlank() }?.let { e.name to it.path }
         }.toMap()
         // #1971 VM pages: the repos band is "Not deployed (repos)" with its reason (All only); the unknown-host band names each undeclared host with its reason
         val vm = decl.vm
-        val out = if (projectId == null || !decl.isVmPage(projectId)) bands else bands.map { b ->
+        val out = if (sc.vm == null) bands else bands.map { b ->
             when {
                 b.id == vm.reposBand && vm.reposBandLabel.isNotBlank() -> b.copy(label = vm.reposBandLabel, note = vm.reposReason)
-                projectId == vm.prefix + vm.unknown && b.id != vm.reposBand ->
+                sc.vm == vm.prefix + vm.unknown && b.id != vm.reposBand ->
                     b.copy(note = scoped.entries.groupBy { it.host }.entries.joinToString(" ") { (h, es) -> vm.unknownReason.replace("{host}", "\"$h\"") + " (${es.size})" })
                 else -> b
             }

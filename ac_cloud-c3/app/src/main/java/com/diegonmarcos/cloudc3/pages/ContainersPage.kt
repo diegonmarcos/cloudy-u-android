@@ -9,12 +9,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import com.diegonmarcos.superapp.bottomnav.NavGroup
 import com.diegonmarcos.superapp.bottomnav.NavPage
+import com.diegonmarcos.superapp.bottomnav.NavSection
+import com.diegonmarcos.superapp.bottomnav.SecondRowMode
 import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow
+import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRows
 
-/** Test tags of the Containers page's four rows (#1941). */
+/** Test tags of the Containers page's rows (#1941; #1982 the Projects and VM rows are one two-row strip, tagged ROW_CATEGORY). */
 object ContainersTags {
-    const val ROW_MODE = "containers_row_mode"
+    const val ROW_VM = "containers_row_vm"
     const val ROW_CATEGORY = "containers_row_category"
     const val ROW_PROJECT = "containers_row_project"
     const val ROW_VIEW = "containers_row_view"
@@ -42,14 +46,24 @@ fun ContainersChrome(
     projects: List<NavPage>, selectedProject: String?, onProject: (NavPage) -> Unit,
     views: List<NavPage>, selectedView: String?, onView: (NavPage) -> Unit,
     filters: @Composable () -> Unit = {},
-    modes: List<NavPage> = emptyList(), selectedMode: String? = null, onMode: (NavPage) -> Unit = {},
+    /** #1982 the VM row (its first chip is All): shown together with the categories as the two labelled rows Projects | ... and VM | ... (they filter together, AND). */
+    vmPages: List<NavPage> = emptyList(), selectedVm: String? = null, onVm: (NavPage) -> Unit = {},
+    projectsLabel: String = "Projects", vmLabel: String = "VM",
     content: @Composable ColumnScope.(Modifier) -> Unit,
 ) {
     Column(Modifier.fillMaxWidth()) {
-        if (modes.isNotEmpty()) Box(Modifier.testTag(ContainersTags.ROW_MODE)) {
-            NavBarTopSecondRow(pages = modes, selectedId = selectedMode, onSelect = onMode, underTopChrome = false)
-        }
-        if (categories.isNotEmpty()) Box(Modifier.testTag(ContainersTags.ROW_CATEGORY)) {
+        if (categories.isNotEmpty() && vmPages.isNotEmpty()) Box(Modifier.testTag(ContainersTags.ROW_CATEGORY)) {
+            // #1982 the fleet's labelled many-rows strip (libs:ui-nav-bars, as Cloud Me Pers): "Projects | All | Unix | ..." over "VM | All | oci-apps | ...", both always drawn, each with its own selection
+            val catPages = categories.map { NavPage(it, it, "ic_p_c3_stack") }
+            val section = NavSection(
+                "containers_rows", "Containers", "ic_p_c3_stack", catPages + vmPages, rows = SecondRowMode.ManyRows,
+                groups = listOf(NavGroup("projects", projectsLabel, catPages), NavGroup("vm", vmLabel, vmPages)),
+            )
+            NavBarTopSecondRows(
+                section = section, selectedId = null, selectedIds = setOfNotNull(selectedCategory, selectedVm),
+                onSelect = { p -> if (vmPages.any { it.id == p.id }) onVm(p) else onCategory(p.id) }, underTopChrome = false,
+            )
+        } else if (categories.isNotEmpty()) Box(Modifier.testTag(ContainersTags.ROW_CATEGORY)) {
             NavBarTopSecondRow(
                 pages = categories.map { NavPage(it, it, "ic_p_c3_stack") }, selectedId = selectedCategory,
                 onSelect = { onCategory(it.id) }, underTopChrome = false,
@@ -87,6 +101,20 @@ fun TopologyFilters(vms: List<String>, types: List<String>) {
 /** The first two rows' logic, pure: which category a page is in and which pages a category lists. The All page (the one that is no declared project) is its own category, named by its label. */
 object ContainersNav {
     private fun allPage(decl: ContainerProjects.Decl, declared: List<NavPage>) = declared.firstOrNull { decl.project(it.id) == null }
+
+    /** The All page (the declared page that is no project). */
+    fun allPageOf(decl: ContainerProjects.Decl, declared: List<NavPage>): NavPage = allPage(decl, declared) ?: declared.first()
+
+    /** #1982 the scope id of the two rows: the project page, or the category when the All page is chosen, AND the VM page ([vmPage] blank or the All VM page = no filter on the VM row); blank = no filter at all. */
+    fun scope(decl: ContainerProjects.Decl, projectPage: String, category: String, vmPage: String): String =
+        listOfNotNull(
+            projectPage.takeIf { decl.project(it) != null } ?: category.takeIf { it.isNotBlank() }?.let { ContainerProjects.CAT + it },
+            vmPage.takeIf { it.isNotBlank() && it != decl.vm.prefix + decl.vm.all },
+        ).joinToString(ContainerProjects.SCOPE_SEP)
+
+    /** #1982 the project-name row under the Projects row: the declared projects of [category]; none for All (no filter on the row). */
+    fun subProjects(decl: ContainerProjects.Decl, declared: List<NavPage>, category: String): List<NavPage> =
+        if (category == allPage(decl, declared)?.label) emptyList() else pagesOf(decl, declared, category)
 
     /** Row 1: All first, then the declared categories (the Cloud Me Proj groups; Lib is Wiki since #1968). */
     fun categories(decl: ContainerProjects.Decl, declared: List<NavPage>): List<String> = listOfNotNull(allPage(decl, declared)?.label) + decl.categories()

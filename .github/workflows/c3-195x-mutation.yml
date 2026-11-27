@@ -22,7 +22,7 @@ jobs:
       - name: Validate the mutation name against the allowed list
         run: |
           case "$MUT" in
-            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost|vm-unknown-lost|vm-repo-on-host|vm-devices-dropped|control-back|c3mcp-field-lost|infra-order|orch-infra-back|net-edge-dropped|net-node-twice|net-node-undeclared|net-viewer-page-lost|net-section-match-lost|net-resolve-lost|net-unbound-ok|net-dns-depends-lost|net-bundle-weight|net-sheet-field-lost|net-token-blames-vm|net-label-overlap|orch-dup-back|orch-home-lost|deployed-field-lost|orch-page-twice|health-field-lost|health-root-cause-on-vm-when-token-missing|health-layer-order|xray-scope-lost|health-number-on-blind|xray-run-unvalidated) echo "leg: $MUT" ;;
+            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost|vm-unknown-lost|vm-repo-on-host|vm-devices-dropped|control-back|c3mcp-field-lost|infra-order|orch-infra-back|net-edge-dropped|net-node-twice|net-node-undeclared|net-viewer-page-lost|net-section-match-lost|net-resolve-lost|net-unbound-ok|net-dns-depends-lost|net-bundle-weight|net-sheet-field-lost|net-token-blames-vm|net-label-overlap|orch-dup-back|orch-home-lost|deployed-field-lost|orch-page-twice|health-field-lost|health-root-cause-on-vm-when-token-missing|health-layer-order|xray-scope-lost|health-number-on-blind|xray-run-unvalidated|two-rows-label-lost|two-rows-or|two-rows-vm-order|two-rows-parity) echo "leg: $MUT" ;;
             *) echo "::error::unknown mutation name"; exit 1 ;;
           esac
       - uses: actions/checkout@v4
@@ -54,13 +54,13 @@ jobs:
             # #1953-c an LFS repo is a Repo again (the registry flag is ignored)
             lfs-ignored)       sed -i 's/if (repoOf(e)?.lfs == true \&\& lfsKind.isNotBlank())/if (false)/' $K/pages/ContainerProjects.kt ;;
             # #1953-c scope keeps a repo on its primary project only (hubs and declared repos vanish from the others)
-            scope-primary)     sed -i 's/decl.projectsOf(it).any { p -> p.id == projectId }/decl.projectOf(it)?.id == projectId/' $K/pages/ContainerProjects.kt ;;
+            scope-primary)     sed -i 's/else -> projectsOf(e).any { it.id == p }/else -> projectOf(e)?.id == p/' $K/pages/ContainerProjects.kt ;;
             # #1953-b a project_repos attachment is lost (Wiki ModernSc draws no lib-chronos)
             drop-project-repo) pyj $D/repos_declared.json 'r = next(x for x in d["repos"] if x["name"] == "lib-chronos"); r["attached"] = [a for a in r["attached"] if a["project"] != "pj-wiki-modernsc"]' ;;
             # #1953-d a layout section is dropped (its Type falls outside every section)
             drop-section)      pyj $D/container_projects.json 'b = d["topology_layout"]["bands"][0]; b["sections"] = [x for x in b["sections"] if x["id"] != "other"]' ;;
             # #1953-d the Topology scopes repos to their primary project only (the hubs leave the other projects)
-            hub-primary-only)  sed -i 's/decl.projectsOf(it).any { p -> p.id == projectId }/decl.projectOf(it)?.id == projectId/' $K/pages/ContainerProjects.kt ;;
+            hub-primary-only)  sed -i 's/else -> projectsOf(e).any { it.id == p }/else -> projectOf(e)?.id == p/' $K/pages/ContainerProjects.kt ;;
             # #1953-d an attached repo loses its path (Wiki ModernSc draws lib-chronos without 1.Modern-science)
             drop-wiki-path)    pyj $D/repos_declared.json 'r = next(x for x in d["repos"] if x["name"] == "lib-chronos"); [a.update(path="") for a in r["attached"] if a["project"] == "pj-wiki-modernsc"]' ;;
             # #1953-d the Public / Private split is ignored
@@ -71,6 +71,14 @@ jobs:
             mail-alias-lost)   pyj ac_cloud-c3/build.json 'del d["ui"]["aliases"]["pages"]["mail_map"]' ;;
             # #1968 a former Lib entity (the root _git-repos-master) loses its Wiki attachment (the parity test must catch it)
             wiki-lost)         pyj $D/repos_declared.json 'r = next(x for x in d["repos"] if x["name"] == "_git-repos-master"); r["attached"] = []; r["project"] = ""' ;;
+            # #1982 the VM row loses its label (the row is not led by VM)
+            two-rows-label-lost) sed -i 's/NavGroup("vm", vmLabel, vmPages)/NavGroup("vm", "", vmPages)/' $K/pages/ContainersPage.kt ;;
+            # #1982 the two rows combine as OR instead of AND
+            two-rows-or)       sed -i 's/filter { it.isNotBlank() }.all { p ->/filter { it.isNotBlank() }.any { p ->/' $K/pages/ContainerProjects.kt ;;
+            # #1982 the VM chips swap the first two hosts (not the declared order)
+            two-rows-vm-order) pyj ac_cloud-c3/build.json 's = [x for x in d["ui"]["sections"] if x["id"] == "containers"][0]; ps = s["pages"]; i = [k for k, p in enumerate(ps) if p["id"] == "vm-oci-apps"][0]; ps[i], ps[i + 1] = ps[i + 1], ps[i]' ;;
+            # #1982 the project-name row under the Projects row is gone (the projects of a category are unreachable)
+            two-rows-parity)   sed -i 's/emptyList() else pagesOf(decl, declared, category)/emptyList() else emptyList()/' $K/pages/ContainersPage.kt ;;
             # #1969 Home loses the row of the first page of every section (a declared page has no row)
             home-row-lost)     sed -i 's/flat(s.pages).map { (p, depth) ->/flat(s.pages).drop(1).map { (p, depth) ->/' $K/pages/HomeLive.kt ;;
             # #1969 a Home source that failed shows a zero instead of its reason
@@ -206,6 +214,10 @@ jobs:
             xray-scope-lost)   C=HealthModelTest; N="X-ray - the tabs, the allow-list and the not-served states" ;;
             health-number-on-blind) C=HealthModelTest; N="an unread status never carries a number or a phase bar" ;;
             xray-run-unvalidated) C=HealthModelTest; N="X-ray - the tabs, the allow-list and the not-served states" ;;
+            two-rows-label-lost) C=ContainersTwoRowsComposeTest; N="#1982 both rows render with their labels, Projects over VM, no toggle" ;;
+            two-rows-or)       C=ContainersTwoRowsFilterTest; N="#1982 AND filtering - a project or category row and a VM row narrow together, All in a row is no filter" ;;
+            two-rows-vm-order) C=ContainersTwoRowsComposeTest; N="#1982 the VM chips are drawn left to right in the declared host_order" ;;
+            two-rows-parity)   C=ContainersTwoRowsFilterTest; N="#1982 parity with 1971 - every page, view, project, VM and filter row of the toggle UI is still there" ;;
             mail-alias-lost)   C=OrchOpsReorgTest; N="every old page id still resolves through the aliases to its new place" ;;
           esac
           X="$(find ac_cloud-c3/app/build -path '*test-results*' -name "TEST-*.$C.xml" | head -1)"

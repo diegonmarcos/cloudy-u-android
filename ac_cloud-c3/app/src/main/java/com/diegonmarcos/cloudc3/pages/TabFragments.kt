@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -69,6 +71,10 @@ class InfraFragment : PagedFragment() {
  * moved to Ops (#1454).
  */
 class ContainersFragment : PagedFragment() {
+    /** #1982 the VM row's choice (a VM page id; blank = All) and the Projects row's category (blank = All); the project is the selected page. */
+    private var vmSel by androidx.compose.runtime.mutableStateOf("")
+    private var catSel by androidx.compose.runtime.mutableStateOf("")
+
     override fun pages(): List<NavPage> = Declarations.containersPages
     override fun pageFragment(pageId: String): Fragment? = null
 
@@ -76,33 +82,44 @@ class ContainersFragment : PagedFragment() {
     override fun Content() {
         val decl = Declarations.containerProjects
         val allPages = remember { pages() }
-        // #1971 two modes: Projects (the pages that are All or a project) and VM (the `vm-` pages, one per derived host)
+        // #1982 the Projects row and the VM row are both always drawn and filter together (project AND VM; All = no filter on that row)
         val declared = remember { allPages.filterNot { decl.isVmPage(it.id) } }
         val vmPages = remember { allPages.filter { decl.isVmPage(it.id) } }
+        val allPage = remember { ContainersNav.allPageOf(decl, declared) }
         val top = selectedTop ?: declared.first().id
-        val vmMode = decl.isVmPage(top)
-        val leaf = selectedLeaf
+        val vmAll = decl.vm.prefix + decl.vm.all
+        // a VM page opened by id (a pivot link) is the All project page with that VM chosen
+        val vmTop = decl.isVmPage(top)
+        val projTop = if (vmTop) allPage.id else top
+        val leaf = selectedLeaf?.let { if (vmTop) projTop + it.removePrefix(top) else it }
+        val vmNow = if (vmTop) top else vmSel
+        val catNow = if (vmTop || decl.project(top) == null) catSel else ""
         LaunchedEffect(top, leaf) {
             val tab = arguments?.getString(PagedFragment.ARG_TAB)
             val page = leaf ?: top
             if (tab != null) (activity as? PagedFragment.PageListener)?.onPageShown(tab, page)
         }
-        val category = if (vmMode) "" else ContainersNav.categoryOf(decl, declared, top)
-        val categories = if (vmMode) emptyList() else ContainersNav.categories(decl, declared)
-        fun pagesOf(c: String): List<NavPage> = ContainersNav.pagesOf(decl, declared, c)
-        val views = allPages.firstOrNull { it.id == top }?.pages.orEmpty()
+        val category = decl.project(projTop)?.category ?: catNow.ifBlank { ContainersNav.categoryOf(decl, declared, projTop) }
+        val categories = ContainersNav.categories(decl, declared)
+        val view = leaf?.removePrefix("${projTop}_")?.let { "_$it" }.orEmpty()
+        // pick a page keeping the Topology | Table view; the VM choice is carried across a project pick
+        fun go(page: String) { if (vmTop) vmSel = top; openPage(page + view) }
+        // the scope the leaf pages draw: the AND of the chosen project (or category) and the chosen VM
+        val scope = ContainersNav.scope(decl, projTop, catNow, vmNow).ifBlank { projTop }
+        val views = allPages.firstOrNull { it.id == projTop }?.pages.orEmpty()
         val topology = leaf?.endsWith("_topology") == true
         val version = ContainersSource.version
         ContainersChrome(
             categories = categories, selectedCategory = category,
-            onCategory = { c -> pagesOf(c).firstOrNull()?.let { openPage(it.id) } },
-            projects = if (vmMode) vmPages else pagesOf(category), selectedProject = top, onProject = { openPage(it.id) },
-            modes = if (vmPages.isEmpty()) emptyList() else decl.vm.modes.map { (id, label) -> NavPage(id, label, "ic_p_c3_stack") }, selectedMode = if (vmMode) "vm" else "projects",
-            onMode = { m -> (if (m.id == "vm") vmPages else declared).firstOrNull()?.let { openPage(it.id) } },
-            views = views, selectedView = leaf, onView = { selectLeaf(it.id) },
+            onCategory = { c -> catSel = if (c == allPage.label) "" else c; go(allPage.id) },
+            projects = ContainersNav.subProjects(decl, declared, category), selectedProject = projTop.takeIf { decl.project(it) != null },
+            onProject = { catSel = ""; go(it.id) },
+            vmPages = vmPages, selectedVm = vmNow.ifBlank { vmAll }, onVm = { v -> vmSel = if (v.id == vmAll) "" else v.id; if (vmTop) openPage(allPage.id + view) },
+            projectsLabel = decl.vm.modes.firstOrNull { it.first == "projects" }?.second ?: "Projects", vmLabel = decl.vm.modes.firstOrNull { it.first == "vm" }?.second ?: "VM",
+            views = views, selectedView = leaf, onView = { if (vmTop) { vmSel = top; openPage(it.id) } else selectLeaf(it.id) },
             filters = {
                 if (topology) {
-                    val scoped = remember(version, top) { ContainerProjects.scope(decl, ContainersSource.current(), top.takeIf { decl.scopeKnown(it) }) }
+                    val scoped = remember(version, scope) { ContainerProjects.scope(decl, ContainersSource.current(), scope.takeIf { decl.scopeKnown(it) }) }
                     TopologyFilters(
                         vms = remember(scoped) { RoutesTableModel.vmOptions(scoped.entries.map { RoutesTableModel.Row("", "", "", "", "", it.host, "") }) },
                         types = remember(scoped) { RoutesTableModel.typeOptions(scoped.entries.map { RoutesTableModel.Row("", "", "", "", "", "", "", type = decl.typeOf(it)) }, decl.types) },
@@ -111,13 +128,13 @@ class ContainersFragment : PagedFragment() {
             },
         ) { modifier ->
             if (leaf != null) C3FragmentHost(
-                fm = childFragmentManager, containerId = R.id.page_container, key = leaf, modifier = modifier,
-            ) { leafFragment(top, leaf) ?: UndeclaredPageFragment.newInstance(leaf) }
+                fm = childFragmentManager, containerId = R.id.page_container, key = "$leaf|$vmNow|$catNow", modifier = modifier,
+            ) { leafFragment(scope, leaf) ?: UndeclaredPageFragment.newInstance(leaf) }
         }
     }
 
     /** A nested page `<project>_<view>` (build.json): the project is its parent page, the view the rest of its id. */
-    override fun leafFragment(parentId: String, leafId: String): Fragment? = when (leafId.removePrefix("${parentId}_")) {
+    override fun leafFragment(parentId: String, leafId: String): Fragment? = when (leafId.substringAfterLast("_")) {
         "topology" -> C3StackFragment.newInstance(C3StackFragment.STACK_TOPOLOGY, parentId)
         "table" -> RoutesTableFragment.newInstance(parentId)
         else -> null

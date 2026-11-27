@@ -568,7 +568,7 @@ class RoutesTableFragment : KitComposeFragment() {
                     ContainerProjects.rows(decl, ContainersSource.current(), scope),
                     TopologyModel.Inputs(ContainersSource.current(), slice, TopologyModel.parseInfra(Declarations.infraSlice), live, Declarations.topology),
                     // the undeclared containers belong to All and to the VM page of their host
-                    extras = { vm -> scope == null || (decl.isVmPage(scope) && scope.removePrefix(decl.vm.prefix).let { it == decl.vm.all || it == vm }) },
+                    extras = { vm -> decl.scopeOf(scope).let { sc -> scope == null || (sc.project == null && sc.category == null && (sc.vm == null || sc.vm.removePrefix(decl.vm.prefix).let { it == decl.vm.all || it == vm })) } },
                 )
             },
             initial = initial,
