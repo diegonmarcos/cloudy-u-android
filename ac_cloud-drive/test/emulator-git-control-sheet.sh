@@ -325,16 +325,6 @@ bshot() { adb exec-out screencap -p > "$OUT/walk/drive-bulk-1934-$1-$2.png" 2>/d
 fixfile() { adb shell "run-as $PKG cat files/fixtures/$1/a.txt" < /dev/null 2>/dev/null | tr -d '\r\n'; }
 find_ctl() { # <rid>: scroll the body until the control is on screen; prints "x y state"
   local n pos; for n in 0 1 2 3 4 5 6 7; do dump >/dev/null; pos=$(probe "$1") && { echo "$pos"; return 0; }; scroll_body || return 1; sleep 1; done; return 1; }
-scroll_body_up() { dump | python3 -I -c '
-import re,sys
-x=sys.stdin.read(); H=int(sys.argv[2]); best=None
-for m in re.finditer(r"<node [^>]*>",x):
-    n=m.group(0)
-    if re.search(r"resource-id=\"git_bulk_scroll\"",n):
-        b=re.search(r"bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"",n); best=list(map(int,b.groups()))
-if not best: sys.exit(1)
-top=max(best[1],0); bot=min(best[3],H); cx=(best[0]+best[2])//2
-print(cx, top+(bot-top)//4, top+(bot-top)*3//4)' x "$H" | { read -r cx y1 y2 && adb shell input swipe "$cx" "$y1" "$cx" "$y2" 300 < /dev/null; }; }
 tap_ctl() { local pos; pos=$(find_ctl "$1") || return 1; set -- $pos; [ "$3" = enabled ] && adb shell input tap "$1" "$2" < /dev/null; echo "$3"; }
 open_bulk() {
   tap_rid sync_git_top_group_more >/dev/null || { snap no-more; fail "no More menu"; }; sleep 1
@@ -348,25 +338,31 @@ bulk_phase() {
   adb shell "run-as $PKG sh -c 'echo dirty > files/fixtures/$NAME-2/a.txt; echo dirty > files/fixtures/$NAME-3/a.txt'" < /dev/null
   open_bulk; bshot "$S" open
   tap_ctl git_bulk_scope_$S >/dev/null; sleep 1
-  # the Overview's aggregated counts are the oracle for the scope's repository count
-  tap_ctl git_sheet_tab_overview >/dev/null; sleep 1
-  dump >/dev/null; total=$(readout git_sheet_ctl_bo.count.total Repos); clonedn=$(readout git_sheet_ctl_bo.count.cloned Cloned)
-  cnt=$(nodetext git_bulk_scope_count)
-  case $S in all) wantcnt="$total repos";; cloned) wantcnt="$clonedn repos";; selected) wantcnt="0 repos";; esac
-  [ "$cnt" = "$wantcnt" ]; brec "$S" "scope.count" "$label count" $? "$cnt (want $wantcnt)"
-  [ "$clonedn" = 3 ]; brec "$S" "scope.fixtures" "cloned fixtures" $? "cloned=$clonedn total=$total"
   if [ $S = selected ]; then
+    # the multi-select FIRST, before anything scrolls the body (the pick boxes sit at its top; a drag down would close the sheet, so the walk never scrolls up)
+    cnt=$(nodetext git_bulk_scope_count); [ "$cnt" = "0 repos" ]; brec "$S" "scope.count" "$label count (nothing picked)" $? "$cnt (want 0 repos)"
+    tap_ctl git_bulk_pick_$NAME-2 >/dev/null; sleep 1
+    cnt=$(nodetext git_bulk_scope_count); [ "$cnt" = "1 repos" ]; brec "$S" "scope.pick" "pick one repo" $? "$cnt (want 1 repos)"
+    bshot "$S" picked
+    tap_ctl git_bulk_pick_$NAME-2 >/dev/null; sleep 1
+    cnt=$(nodetext git_bulk_scope_count); [ "$cnt" = "0 repos" ]; brec "$S" "scope.unpick" "unpick it again" $? "$cnt (want 0 repos)"
     # nothing picked: every run control is greyed and says why
     tap_ctl git_sheet_tab_sync >/dev/null; sleep 1
     st=$(find_ctl git_sheet_ctl_bo.sync.run | awk '{print $3}'); [ "$st" = disabled ]; brec "$S" "bo.sync.run" "Sync selected greyed" $? "$st"
     dump | grep -q 'No repository is selected'; brec "$S" "reason.no_selection" "reason line (no selection)" $? "on screen"
     bshot "$S" nopick
-    # the multi-select: pick fixture -2 (a pick box), the count follows
-    tap_ctl git_sheet_tab_overview >/dev/null; sleep 1
-    for k in 1 2 3; do scroll_body_up; sleep 1; done   # the pick boxes sit at the top of the body: never tap one under the pinned scope bar
+    # reopen the sheet (the scope and the picks live in the page, the scroll does not) and pick -2 for the runs
+    close_bulk; open_bulk
     tap_ctl git_bulk_pick_$NAME-2 >/dev/null; sleep 1
-    cnt=$(nodetext git_bulk_scope_count); [ "$cnt" = "1 repos" ]; brec "$S" "scope.pick" "pick one repo" $? "$cnt"
-    bshot "$S" picked
+    cnt=$(nodetext git_bulk_scope_count); [ "$cnt" = "1 repos" ]; brec "$S" "scope.repick" "pick -2 for the runs" $? "$cnt (want 1 repos)"
+  else
+    # the Overview's aggregated counts are the oracle for the scope's repository count
+    tap_ctl git_sheet_tab_overview >/dev/null; sleep 1
+    dump >/dev/null; total=$(readout git_sheet_ctl_bo.count.total Repos); clonedn=$(readout git_sheet_ctl_bo.count.cloned Cloned)
+    cnt=$(nodetext git_bulk_scope_count)
+    case $S in all) wantcnt="$total repos";; cloned) wantcnt="$clonedn repos";; esac
+    [ "$cnt" = "$wantcnt" ]; brec "$S" "scope.count" "$label count" $? "$cnt (want $wantcnt)"
+    [ "$clonedn" = 3 ]; brec "$S" "scope.fixtures" "cloned fixtures" $? "cloned=$clonedn total=$total"
   fi
   if [ $S = cloned ]; then
     tap_ctl git_sheet_tab_clone >/dev/null; sleep 1
