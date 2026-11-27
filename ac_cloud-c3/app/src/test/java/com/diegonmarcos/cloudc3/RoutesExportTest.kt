@@ -41,7 +41,8 @@ class RoutesExportTest {
         val state = M.State(sort = M.Column.CONTAINER, ascending = false, auth = setOf("bearer"))
         val shown = M.view(rows, state)
         val g = X.grid(shown) { ProbeModel.Light.GREEN }
-        assertEquals(listOf("Status", "Project", "Cat1", "Cat2", "Type", "Container", "Public URL", "Auth Type", "Private URL", "VM Name", "VM IP:PORT"), g.first())
+        assertEquals(listOf("Status", "Project", "Cat1", "Cat2", "Type", "Container", "Public URL", "Auth Type", "Private URL", "VM Name", "VM IP:PORT",
+            "Service", "Role", "Compose project", "Image tag", "Running tag", "Live state", "Drift"), g.first())
         assertEquals(listOf("delta", "charlie"), g.drop(1).map { it[5] })
         assertEquals(List(2) { "Green" }, g.drop(1).map { it[0] })
         assertEquals(listOf("Bearer", "Bearer"), g.drop(1).map { it[7] })

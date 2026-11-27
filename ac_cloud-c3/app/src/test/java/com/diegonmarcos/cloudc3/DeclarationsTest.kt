@@ -208,8 +208,8 @@ class DeclarationsTest {
         val leaves = nav().section("ops")!!.pages.flatMap { it.pages }.map { it.id } + nav().section("orch")!!.allPages().map { it.id }
         topo.views.forEach {
             assertTrue("${it.id} lacks grouping/metric/question/missing", it.grouping.isNotBlank() && it.metric.isNotBlank() && it.question.isNotBlank() && it.missing.isNotEmpty())
-            // #1972 the owner removed the Orch Infrastructure page: the view stays declared and its ids alias to Declared
-            assertEquals("${it.id} is shown by exactly one Ops or Orch page", if (it.id in setOf("infrastructure")) 0 else 1, leaves.count { id -> id.endsWith("_${it.id}") })
+            // #1972 the owner removed the Orch Infrastructure page; #1954 Service and Declared (orchestration) are Containers columns and Release is the Graph of GH Releases: the views stay declared, their ids are aliases
+            assertEquals("${it.id} is shown by exactly one Ops or Orch page", if (it.id in setOf("infrastructure", "service", "orchestration", "release")) 0 else 1, leaves.count { id -> id.endsWith("_${it.id}") })
         }
         assertEquals("Ship", topo.release?.workflow)
         (nav().section("ops")!!.allPages() + nav().section("orch")!!.allPages()).forEach {

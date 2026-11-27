@@ -40,7 +40,7 @@ import org.robolectric.annotation.GraphicsMode
 
 /** The Containers > Table page, DRIVEN: header taps sort, chips filter, the count follows, the state is handed out. */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], qualifiers = "w2000dp-h900dp-mdpi")
+@Config(sdk = [34], qualifiers = "w3000dp-h900dp-mdpi")
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class RoutesTableComposeTest {
 
