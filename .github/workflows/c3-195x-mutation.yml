@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost | home-row-lost | home-zero-on-fail | projects-row-lost | projects-column-lost | vm-unknown-lost | vm-repo-on-host | vm-devices-dropped | control-back | c3mcp-field-lost | infra-order | orch-infra-back'
+        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost | home-row-lost | home-zero-on-fail | projects-row-lost | projects-column-lost | vm-unknown-lost | vm-repo-on-host | vm-devices-dropped | control-back | c3mcp-field-lost | infra-order | orch-infra-back | net-edge-dropped | net-node-twice | net-node-undeclared | net-viewer-page-lost | net-section-match-lost | net-resolve-lost | net-unbound-ok | net-dns-depends-lost | net-bundle-weight | net-sheet-field-lost'
         required: true
 permissions:
   contents: read
@@ -22,7 +22,7 @@ jobs:
       - name: Validate the mutation name against the allowed list
         run: |
           case "$MUT" in
-            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost|vm-unknown-lost|vm-repo-on-host|vm-devices-dropped|control-back|c3mcp-field-lost|infra-order|orch-infra-back) echo "leg: $MUT" ;;
+            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost|vm-unknown-lost|vm-repo-on-host|vm-devices-dropped|control-back|c3mcp-field-lost|infra-order|orch-infra-back|net-edge-dropped|net-node-twice|net-node-undeclared|net-viewer-page-lost|net-section-match-lost|net-resolve-lost|net-unbound-ok|net-dns-depends-lost|net-bundle-weight|net-sheet-field-lost) echo "leg: $MUT" ;;
             *) echo "::error::unknown mutation name"; exit 1 ;;
           esac
       - uses: actions/checkout@v4
@@ -38,6 +38,14 @@ jobs:
           import json, sys
           p, code = sys.argv[1:]
           d = json.load(open(p)); exec(code); open(p, "w").write(json.dumps(d, indent=1, ensure_ascii=False) + "\n")
+          PY
+          }
+          # rep <file> <old> <new>: an exact one-time replacement (the target must exist exactly once)
+          rep() { python3 -I - "$1" "$2" "$3" <<'PY'
+          import sys
+          p, a, b = sys.argv[1:]
+          s = open(p).read(); assert s.count(a) == 1, "target not found once: " + a
+          open(p, "w").write(s.replace(a, b))
           PY
           }
           case "$MUT" in
@@ -85,6 +93,17 @@ jobs:
             infra-order)       pyj ac_cloud-c3/build.json 'i = next(s for s in d["ui"]["sections"] if s["id"] == "infra"); g = i["groups"]; g[1], g[2] = g[2], g[1]' ;;
             # #1972 the Orch Infrastructure page is back
             orch-infra-back)   pyj ac_cloud-c3/build.json 'o = next(s for s in d["ui"]["sections"] if s["id"] == "orch"); o["pages"].insert(2, {"id": "orch_infrastructure", "label": "Infrastructure", "icon": "ic_p_c3_vms"})' ;;
+            # #1955 A Network Graph: each leg breaks one guarantee of the graph; the named test must catch it
+            net-edge-dropped)  rep $K/pages/NetGraphLayout.kt 'val finalEdges = prims.map { e ->' 'val finalEdges = prims.drop(1).map { e ->' ;;
+            net-node-twice)    rep $K/pages/NetGraphLayout.kt 'return Layout(MailStack.Plan(nodes, finalEdges, bounds),' 'return Layout(MailStack.Plan(nodes + nodes.take(1), finalEdges, bounds),' ;;
+            net-node-undeclared) rep $K/pages/NetGraph.kt 'emptyList(), nodes.values.toList(), edges.values.toList(), depends)' 'emptyList(), nodes.values.toList() + nodes.values.first().copy(id = "x:undeclared", rows = emptyList(), declared = "made-up"), edges.values.toList(), depends)' ;;
+            net-viewer-page-lost) pyj $D/ops_maps.json 'del d["viewers"]["pages"]["net_mesh"]' ;;
+            net-section-match-lost) pyj $D/ops_maps.json 'del d["viewers"]["pages"]["net_auth"]["graph"]["sections"][0]["match"]' ;;
+            net-resolve-lost)  pyj $D/ops_maps.json 'del d["viewers"]["pages"]["net_wg"]["graph"]["resolve"]' ;;
+            net-unbound-ok)    rep $K/pages/NetLive.kt 'val DECLARED = Reading(MailStack.Health.UNKNOWN,' 'val DECLARED = Reading(MailStack.Health.OK,' ;;
+            net-dns-depends-lost) pyj $D/ops_maps.json 'del d["viewers"]["pages"]["net_dns"]["graph"]["depends"]' ;;
+            net-bundle-weight) rep $K/pages/NetGraphLayout.kt 'es.all { it.dashed }, es.size.toFloat())' 'es.all { it.dashed }, 1f)' ;;
+            net-sheet-field-lost) rep $K/pages/NetGraph.kt 'listOf("row" to r.section) + r.fields }' 'listOf("row" to r.section) + r.fields.drop(1) }' ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
           git diff --stat
@@ -150,6 +169,16 @@ jobs:
             infra-order)       C=OrchOpsReorgTest; N="#1972 the Infra groups are Infra Cloud, Infra Bare, Services API, Services Domains and Projects in the declared order" ;;
             orch-infra-back)   C=OrchOpsReorgTest; N="#1972 Orch has no Infrastructure page and its old ids resolve to the next page, Declared" ;;
             wiki-lost)         C=ContainerProjectsTest; N="#1968 parity every entity under Lib before is under Wiki now, the All total is unchanged and the old ids resolve to Wiki" ;;
+            net-edge-dropped)  C=NetGraphLayoutTest; N="parity - every node and edge is drawn exactly once, expanded and collapsed, on every page" ;;
+            net-node-twice)    C=NetGraphLayoutTest; N="parity - every node and edge is drawn exactly once, expanded and collapsed, on every page" ;;
+            net-node-undeclared) C=NetGraphTest; N="parity - each page's graph draws exactly its table" ;;
+            net-viewer-page-lost) C=NetGraphTest; N="every Network page declared in build json has a viewers entry, and the six are there" ;;
+            net-section-match-lost) C=NetGraphTest; N="every section of a bound map matches exactly one rule, every rule matches a section, binds name real rows and containers" ;;
+            net-resolve-lost)  C=NetGraphTest; N="WireGuard - a host on two subnets is one node with two rows, and the hub edge lands on it through the id resolve" ;;
+            net-unbound-ok)    C=NetLiveTest; N="an unbound node is never OK" ;;
+            net-dns-depends-lost) C=NetLiveTest; N="root cause - the hub unreadable is the suspected root of the WireGuard spokes and of every mesh name" ;;
+            net-bundle-weight) C=NetGraphLayoutTest; N="a collapsed cluster's edge weighs exactly its members, and parity goes red when it does not" ;;
+            net-sheet-field-lost) C=NetGraphTest; N="the node sheet prints every field of every row it stands for" ;;
             mail-alias-lost)   C=OrchOpsReorgTest; N="every old page id still resolves through the aliases to its new place" ;;
           esac
           X="$(find ac_cloud-c3/app/build -path '*test-results*' -name "TEST-*.$C.xml" | head -1)"

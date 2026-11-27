@@ -94,6 +94,54 @@ if [ "$T" = all ] || [ "$T" = 1953 ]; then
   rm -f "$OUT/c3-1953-cloudy-table-pre.png"
 fi
 
+# #1955 A every Network page in Table, then Graph (the switch is remembered per page); canvas text is not in the UI dump, so the checks
+# read the toolbar, the sheets and the canvas content-description ("nodes:... edges:...").
+tap_edit() { # <shot>: tap the first text field (the Graph search)
+  local xy; xy="$(python3 - "$OUT/$1.xml" <<'PY'
+import re, sys
+x = open(sys.argv[1], errors="ignore").read()
+m = re.search(r'class="android.widget.EditText"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', x)
+if m: print((int(m.group(1)) + int(m.group(3))) // 2, (int(m.group(2)) + int(m.group(4))) // 2)
+PY
+)"
+  [ -n "$xy" ] && adb shell input tap $xy
+}
+if [ "$T" = all ] || [ "$T" = 1955 ]; then
+  for pg in net_wg net_auth net_dns net_network net_security net_mesh; do
+    n="${pg#net_}"
+    open_page "$pg"; sleep 2; shot "c3-1955-net-$n-table" 8
+    for l in Table Graph; do has "c3-1955-net-$n-table" "text=\"$l\"" || bad "c3-1955-net-$n-table: switch '$l' missing"; done
+    tap_text "c3-1955-net-$n-table" "Graph"; shot "c3-1955-net-$n-graph" 6
+    has "c3-1955-net-$n-graph" 'content-desc="nodes:' || bad "c3-1955-net-$n-graph: no canvas drawn"
+    for l in Fit +all Legend Re-read; do has "c3-1955-net-$n-graph" "text=\"$l\"" || bad "c3-1955-net-$n-graph: toolbar '$l' missing"; done
+    has "c3-1955-net-$n-graph" "ROOT CAUSE" && cp "$OUT/c3-1955-net-$n-graph.png" "$OUT/c3-1955-net-$n-root-banner.png"
+  done
+  # WireGuard: search the hub, open its sheet, then one of its edges
+  open_page net_wg; sleep 2; shot c3-1955-net-wg-pre 5
+  tap_edit c3-1955-net-wg-pre; sleep 1; adb shell input text gcp-proxy; shot c3-1955-net-wg-search 3
+  tap_text c3-1955-net-wg-search "gcp-proxy"; shot c3-1955-net-wg-node-sheet 3
+  has c3-1955-net-wg-node-sheet "out-edges" || bad "c3-1955-net-wg-node-sheet: no node sheet"
+  tap_text c3-1955-net-wg-node-sheet "  <-"; shot c3-1955-net-wg-edge-sheet 3
+  has c3-1955-net-wg-edge-sheet "Highlight path" || bad "c3-1955-net-wg-edge-sheet: no edge sheet"
+  # DNS: expand every cluster, then Fit all (the minimap shows on a tall world)
+  open_page net_dns; sleep 2; shot c3-1955-net-dns-pre 5
+  tap_text c3-1955-net-dns-pre "+all"; shot c3-1955-net-dns-expanded 4
+  tap_text c3-1955-net-dns-expanded "Fit"; shot c3-1955-net-dns-fit 4
+  # Auth: a search is active
+  open_page net_auth; sleep 2; shot c3-1955-net-auth-pre 5
+  tap_edit c3-1955-net-auth-pre; sleep 1; adb shell input text two; shot c3-1955-net-auth-search 3
+  # Routes: one Caddy group opened from its search hit
+  open_page net_network; sleep 2; shot c3-1955-net-network-pre 5
+  tap_edit c3-1955-net-network-pre; sleep 1; adb shell input text Caddy; shot c3-1955-net-network-search 3
+  tap_text c3-1955-net-network-search "Caddy"; shot c3-1955-net-network-sheet 3
+  tap_text c3-1955-net-network-sheet "Expand"; shot c3-1955-net-network-group-expanded 4
+  # the legend
+  open_page net_mesh; sleep 2; shot c3-1955-net-mesh-pre 5
+  tap_text c3-1955-net-mesh-pre "Legend"; shot c3-1955-net-legend 3
+  has c3-1955-net-legend "ROOT = root cause" || bad "c3-1955-net-legend: legend not open"
+  rm -f "$OUT"/c3-1955-net-*-pre.png
+fi
+
 adb logcat -d -t 3000 > "$OUT/logcat.txt" 2>/dev/null || true
 grep -E "FATAL EXCEPTION|AndroidRuntime" -A15 "$OUT/logcat.txt" | grep -B2 -A15 "$PKG" | head -80 > "$OUT/crash.txt" || true
 [ -s "$OUT/crash.txt" ] && bad "a crash in logcat (crash.txt)"
