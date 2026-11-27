@@ -27,7 +27,7 @@ class NetGraphTest {
     private val src = OpsMaps.Sources(opsMaps, json("mesh.json"), infra, json("infra_slice.json"), catalog, slice.domains)
     private val inputs = NetGraph.Inputs(src, slice, TopologyModel.Inputs(catalog, slice, infra), json("mesh.json"))
     private val viewers = NetGraph.parseViewers(opsMaps)
-    private fun page(id: String) = assertNotNull("$id declares a graph", NetGraph.page(viewers, id, inputs))!!
+    private fun page(id: String): Pair<NetGraph.Table, NetGraph.Graph> = NetGraph.page(viewers, id, inputs) ?: error("$id declares no graph")
 
     /** The net_* leaves build.json declares under Ops > Network. */
     private val netPages: List<String> = run {
