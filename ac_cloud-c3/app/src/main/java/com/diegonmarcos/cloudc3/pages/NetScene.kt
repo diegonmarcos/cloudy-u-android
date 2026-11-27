@@ -138,7 +138,8 @@ object NetScene {
         val frames = l.extras.frames.mapNotNull { f ->
             val r = clipTop(screen(view, f.rect)) ?: return@mapNotNull null
             val hb = screen(view, MailStack.Rect(f.rect.l, f.rect.t, f.rect.r, f.rect.t + f.header))
-            val header = clipTop(hb)?.takeIf { it.t == hb.t }
+            // a frame whose head is a drawn node: the node IS the header band (its name is the header text)
+            val header = if (f.owner.isNotEmpty() && l.plan.nodes.any { it.id == f.owner }) null else clipTop(hb)?.takeIf { it.t == hb.t }
             val dim = focusDrawn != null && f.owner.isNotEmpty() && f.owner !in focusDrawn && (members[f.owner].orEmpty().none { it in (st.focus ?: emptySet()) })
             FrameBox(f.id, r, header, f.depth, f.owner, dim)
         }
@@ -148,7 +149,8 @@ object NetScene {
             if (full.r < 0f || full.b < 0f || full.l > w || full.t > h) return@mapNotNull null
             val box = clipTop(full) ?: return@mapNotNull null
             val ms = members[n.id].orEmpty()
-            val content = MailStack.Rect(full.l + (sp.pad * 2 + sp.shape) * dp, full.t + sp.padV * dp, full.r - sp.padR * dp, full.b - sp.padV * dp)
+            val pv = (if (n.kind == "frame") 1f else sp.padV) * dp
+            val content = MailStack.Rect(full.l + (sp.pad * 2 + sp.shape) * dp, full.t + pv, full.r - sp.padR * dp, full.b - pv)
             NodeBox(n.id, box, content, n.health, n.kind, n.id in l.extras.aggregates, n.id == rootDrawn,
                 ms.any { it in st.impacted }, n.id in matchDrawn, n.id == selDrawn,
                 focusDrawn != null && n.id !in focusDrawn && ms.none { it in st.focus!! }, cut = box.t > full.t)
@@ -156,7 +158,7 @@ object NetScene {
         val nodeBy = nodes.associateBy { it.id }
 
         // wires
-        val wires = l.plan.edges.map { e ->
+        val wires = l.plan.edges.filter { e -> e.id !in l.extras.onDemand || (focusDrawn != null && (e.from in focusDrawn || e.to in focusDrawn) && (selDrawn == null || e.from == selDrawn || e.to == selDrawn)) }.map { e ->
             val wBase = when (tier) { Tier.FAR -> 1f; Tier.MID -> 1.25f; Tier.NEAR -> 1.5f }
             val width = (if (e.weight > 1f) (1.25f + ln(e.weight)).coerceAtMost(4f) else wBase) * dp
             val dim = focusDrawn != null && (e.from !in focusDrawn || e.to !in focusDrawn)
@@ -185,13 +187,14 @@ object NetScene {
                 val nb = nodeBy[n.id] ?: return@forEach
                 val c = nb.content
                 if (c.r - c.l <= 0f || !free(nb.box) || !free(c)) return@forEach
-                var nameTxt = NetLabel.fit(shorts[n.id].orEmpty(), c.r - c.l) { measure.size(it, sp.nameSp, true).first }
+                val nsp = if (n.kind == "frame") sp.headerSp else sp.nameSp
+                var nameTxt = NetLabel.fit(shorts[n.id].orEmpty(), c.r - c.l) { measure.size(it, nsp, true).first }
                 // two different names that the measured fit made equal: the later one keeps its last 3 characters, else it is not drawn
                 if (drawnNames[nameTxt]?.let { it != n.label } == true)
-                    nameTxt = NetLabel.fit(NetLabel.middle(n.label, cap(n.id)), c.r - c.l) { measure.size(it, sp.nameSp, true).first }
+                    nameTxt = NetLabel.fit(NetLabel.middle(n.label, cap(n.id)), c.r - c.l) { measure.size(it, nsp, true).first }
                 if (nameTxt.isEmpty() || drawnNames[nameTxt]?.let { it != n.label } == true) return@forEach
                 drawnNames[nameTxt] = n.label
-                val (nw, nh) = measure.size(nameTxt, sp.nameSp, true)
+                val (nw, nh) = measure.size(nameTxt, nsp, true)
                 if (nh > c.b - c.t) return@forEach
                 var metricBox: TextBox? = null
                 var nameTop = c.t + (c.b - c.t - nh) / 2
@@ -207,7 +210,7 @@ object NetScene {
                         }
                     }
                 }
-                texts += TextBox("name:${n.id}", Cls.NAME, MailStack.Rect(c.l, nameTop, c.l + nw, nameTop + nh), nameTxt, sp.nameSp, true, n.id, n.label)
+                texts += TextBox("name:${n.id}", Cls.NAME, MailStack.Rect(c.l, nameTop, c.l + nw, nameTop + nh), nameTxt, nsp, true, n.id, n.label)
                 metricBox?.let { texts += it }
                 names++
             }
@@ -283,8 +286,8 @@ object NetScene {
         } else {
             val selEdges = if (selDrawn != null) l.plan.edges.filter { it.from == selDrawn || it.to == selDrawn } else emptyList()
             val pool = when {
-                selDrawn != null -> selEdges
-                tier == Tier.NEAR -> l.plan.edges
+                selDrawn != null -> selEdges.filter { e -> wires.any { it.id == e.id } }
+                tier == Tier.NEAR -> l.plan.edges.filter { e -> wires.any { it.id == e.id } }
                 else -> emptyList()
             }
             val max = if (selDrawn != null) sp.maxPillsSelected else sp.maxPills

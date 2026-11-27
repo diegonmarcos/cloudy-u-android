@@ -520,7 +520,13 @@
     "frame_pad": 8,
     "frame_gap": 12,
     "collapse_over": 9,
-    "fit_all_pages": [],
+    "fit_all_pages": [
+      "net_mesh",
+      "net_wg",
+      "net_auth",
+      "net_security",
+      "net_dns"
+    ],
     "scene": {
       "far_below": 0.6,
       "near_from": 1.4,
@@ -573,6 +579,13 @@
     },
     "pages": {
       "net_wg": {
+        "layout": "star",
+        "gap_x": 32,
+        "frame_pad": 6,
+        "grid_lanes": [
+          "transport"
+        ],
+        "grid_across": 3,
         "graph": {
           "from": "map",
           "map": "wg",
@@ -645,6 +658,9 @@
         }
       },
       "net_auth": {
+        "layout": "layered",
+        "gap_x": 32,
+        "frame_pad": 6,
         "graph": {
           "from": "map",
           "map": "auth",
@@ -712,6 +728,9 @@
         }
       },
       "net_dns": {
+        "layout": "dns_bands",
+        "wide_w": 158,
+        "wide_gap": 40,
         "collapse_over": 4,
         "graph": {
           "from": "map",
@@ -774,6 +793,11 @@
         }
       },
       "net_network": {
+        "layout": "clusters",
+        "tree_kinds": [
+          "tree"
+        ],
+        "content_w": 388,
         "graph": {
           "from": "topology",
           "view": "network",
@@ -807,6 +831,15 @@
         }
       },
       "net_security": {
+        "layout": "clusters",
+        "tree_kinds": [
+          "root"
+        ],
+        "hub_kinds": [
+          "root"
+        ],
+        "leaf_w": 180,
+        "content_w": 388,
         "graph": {
           "from": "map",
           "map": "hier_net_security",
@@ -858,6 +891,13 @@
         }
       },
       "net_mesh": {
+        "layout": "radial",
+        "ring_max": 8,
+        "ring_rx": 134,
+        "ring_ry": 170,
+        "hub_w": 120,
+        "hub_h": 40,
+        "content_w": 388,
         "graph": {
           "from": "mesh",
           "columns": [

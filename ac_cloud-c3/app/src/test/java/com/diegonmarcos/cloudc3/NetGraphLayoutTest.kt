@@ -52,8 +52,11 @@ class NetGraphLayoutTest {
                     val a = ns[i].rect; val b = ns[j].rect
                     assertTrue("$id $name: ${ns[i].id} overlaps ${ns[j].id}", a.r <= b.l || b.r <= a.l || a.b <= b.t || b.b <= a.t)
                 }
-                val lanes = l.extras.laneRects.values
-                ns.forEach { n -> assertTrue("$id $name: ${n.id} outside every lane", lanes.any { r -> n.rect.l >= r.l && n.rect.r <= r.r && n.rect.t >= r.t && n.rect.b <= r.b }) }
+                // #1955 A rev2 lane-framed layouts keep every node inside its lane; radial (strips under the ring) and clusters (nested frames) are checked by NetSceneOverlapTest T1e
+                if (v.layoutOf(id) in setOf("lanes", "layered", "star", "dns_bands")) {
+                    val lanes = l.extras.laneRects.values
+                    ns.forEach { n -> assertTrue("$id $name: ${n.id} outside every lane", lanes.any { r -> n.rect.l >= r.l && n.rect.r <= r.r && n.rect.t >= r.t && n.rect.b <= r.b }) }
+                }
             }
         }
     }

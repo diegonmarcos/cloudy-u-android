@@ -35,6 +35,8 @@ object NetGraphLayout {
         val bundleOf: Map<String, String> = emptyMap(),
         /** frame node id to the graph edge ids drawn as containment (no wire): counted once by [parity] */
         val contained: Map<String, List<String>> = emptyMap(),
+        /** plan edges that are only declared `depends`: drawn dashed only when one end is selected or Isolate is on */
+        val onDemand: Set<String> = emptySet(),
     )
 
     /** One frame: world rect, header band height (world), header text, the node it stands for ("" = a lane), nesting depth. */
@@ -64,7 +66,7 @@ object NetGraphLayout {
         /** world unit in px: 1 for the JVM tests, the screen density on a device, so a node is as large as its text (declared sizes are dp). */
         unit: Float = 1f,
     ): Layout {
-        val nodeW = v.nodeW * unit; val nodeH = v.nodeH * unit; val gapX = v.gapX * unit; val gapY = v.gapY * unit; val laneHeader = v.laneHeader * unit
+        val nodeW = v.nodeW * unit; val nodeH = v.nodeH * unit; val gapX = v.num(g.page, "gap_x", v.gapX) * unit; val gapY = v.gapY * unit; val laneHeader = v.laneHeader * unit
         val framePad = v.num(g.page, "frame_pad", 8f) * unit; val frameGap = v.num(g.page, "frame_gap", 12f) * unit
         val closed = g.clusters.filter { it.id in collapsed }
         fun repr(c: NetGraph.GCluster) = c.head ?: aggId(c.id)
@@ -109,47 +111,231 @@ object NetGraphLayout {
         val maxCol = (items.values.maxOfOrNull { it.column } ?: 0).coerceAtLeast(g.columns.size - 1)
         val frames = mutableListOf<Frame>()
         val frameOf = mutableMapOf<String, String>()
-        var y = 0f
-        laneOrder.forEach { lane ->
-            val inLane = items.values.filter { it.lane == lane }
-            if (inLane.isEmpty() && g.lanes.none { it.id == lane }) return@forEach
-            val byCol = inLane.groupBy { it.column }
-            val tallest = byCol.values.maxOfOrNull { it.size } ?: 0
-            val top = y + laneHeader + framePad / 2
-            byCol.forEach { (col, list) -> list.forEachIndexed { i, it -> rects[it.id] = MailStack.Rect(col * colW, top + i * rowH, col * colW + nodeW, top + i * rowH + nodeH); frameOf[it.id] = "lane:$lane" } }
-            val h = laneHeader + framePad / 2 + tallest.coerceAtLeast(1) * rowH - gapY + framePad
-            laneRects[lane] = MailStack.Rect(-framePad, y, maxCol * colW + nodeW + framePad, y + h)
+        var columns: List<Pair<String, Pair<Float, Float>>> = emptyList()
+        val contained = LinkedHashMap<String, MutableList<String>>()
+        var straight = false
+        fun laneFrame(lane: String, r: MailStack.Rect) {
             val gl = g.lanes.firstOrNull { it.id == lane }
-            frames += Frame("lane:$lane", laneRects.getValue(lane), laneHeader, (gl?.label ?: lane).ifBlank { g.page }, gl?.sub.orEmpty(), "", 0)
-            y += h + frameGap
+            laneRects[lane] = r
+            frames += Frame("lane:$lane", r, laneHeader, (gl?.label ?: lane).ifBlank { g.page }, gl?.sub.orEmpty(), "", 0)
         }
-        val columns = g.columns.mapIndexed { c, label -> label to (c * colW to c * colW + colW) }
-        val nodes = items.values.map { it ->
-            MailStack.NodePrim(it.id, it.label, it.sub, rects.getValue(it.id), it.health, MailStack.healthColor(it.health, p), it.kind)
-        }
-        val clusterRects = g.clusters.filter { it.id !in collapsed }.mapNotNull { c ->
-            val rs = c.members.mapNotNull { rects[it] }
-            if (rs.isEmpty()) null else c.id to MailStack.Rect(rs.minOf { it.l } - 4f, rs.minOf { it.t } - 4f, rs.maxOf { it.r } + 4f, rs.maxOf { it.b } + 4f)
-        }.toMap()
 
-        // edges: each graph edge to its drawn pair; one plan edge per pair (weight = members); a pair inside one aggregate is absorbed
+        // edges first (the layouts read who is wired to whom): each graph edge to its drawn pair; a pair inside one aggregate is absorbed;
+        // #1955 A rev2 both directions of one pair (a duplex peering, a depends beside it) are ONE wire
         val absorbed = mutableMapOf<String, MutableList<String>>()
         val pairs = LinkedHashMap<Pair<String, String>, MutableList<NetGraph.GEdge>>()
         (g.edges + g.depends).forEach { e ->
             val a = drawnEnd(e.from); val b = drawnEnd(e.to)
             if (a == b) absorbed.getOrPut(a) { mutableListOf() } += e.id
-            else pairs.getOrPut(a to b) { mutableListOf() } += e
+            else pairs.getOrPut(if (pairs.containsKey(b to a)) b to a else a to b) { mutableListOf() } += e
         }
+        val nbrs = HashMap<String, MutableSet<String>>()
+        pairs.keys.forEach { (a, b) -> nbrs.getOrPut(a) { mutableSetOf() } += b; nbrs.getOrPut(b) { mutableSetOf() } += a }
+        val order = items.keys.withIndex().associate { it.value to it.index }
+
+        /** Columns of [list] left to right, each ordered by the barycentre of its placed neighbours and row-aligned to them (straight wires). */
+        fun layered(list: List<Item>, colOf: (Item) -> Int, xOf: (Int) -> Float, w: Float, top: Float): Float {
+            val cols = list.groupBy(colOf).toSortedMap()
+            val cy = HashMap<String, Float>()
+            fun place(c: Int, l: List<Item>) {
+                val want = l.associate { it.id to nbrs[it.id].orEmpty().mapNotNull { n -> cy[n] }.takeIf { it.isNotEmpty() }?.average()?.toFloat() }
+                val sorted = l.sortedWith(compareBy<Item>({ want[it.id] ?: Float.MAX_VALUE }, { order[it.id] ?: 0 }))
+                var cur = top
+                val tops = sorted.map { it ->
+                    val d = want[it.id]
+                    val t = if (d == null) cur else maxOf(cur, d - nodeH / 2)
+                    cur = t + rowH; it to t
+                }
+                val over = tops.mapNotNull { (it, t) -> want[it.id]?.let { d -> t - (d - nodeH / 2) } }
+                val shift = if (over.isEmpty()) 0f else minOf(over.average().toFloat(), (tops.firstOrNull()?.second ?: top) - top).coerceAtLeast(0f)
+                tops.forEach { (it, t) -> rects[it.id] = MailStack.Rect(xOf(c), t - shift, xOf(c) + w, t - shift + nodeH); cy[it.id] = t - shift + nodeH / 2 }
+            }
+            cols.forEach { (c, l) -> place(c, l) }
+            // a first column smaller than the next (gates) is centred on what it feeds
+            val keys = cols.keys.toList()
+            if (keys.size > 1 && cols.getValue(keys[0]).size < cols.getValue(keys[1]).size) { cols.getValue(keys[0]).forEach { cy.remove(it.id) }; place(keys[0], cols.getValue(keys[0])) }
+            return list.mapNotNull { rects[it.id]?.b }.maxOrNull() ?: top
+        }
+
+        fun placeLanes() {
+            var y = 0f
+            laneOrder.forEach { lane ->
+                val inLane = items.values.filter { it.lane == lane }
+                if (inLane.isEmpty() && g.lanes.none { it.id == lane }) return@forEach
+                val byCol = inLane.groupBy { it.column }
+                val tallest = byCol.values.maxOfOrNull { it.size } ?: 0
+                val top = y + laneHeader + framePad / 2
+                byCol.forEach { (col, list) -> list.forEachIndexed { i, it -> rects[it.id] = MailStack.Rect(col * colW, top + i * rowH, col * colW + nodeW, top + i * rowH + nodeH); frameOf[it.id] = "lane:$lane" } }
+                val h = laneHeader + framePad / 2 + tallest.coerceAtLeast(1) * rowH - gapY + framePad
+                laneFrame(lane, MailStack.Rect(-framePad, y, maxCol * colW + nodeW + framePad, y + h))
+                y += h + frameGap
+            }
+            columns = g.columns.mapIndexed { c, label -> label to (c * colW to c * colW + colW) }
+        }
+
+        /** layered / star / dns_bands: one frame per lane; columns row-aligned; declared grid lanes three across; dns_bands folds 4 columns to two bands of 2. */
+        fun placeLayered(fold: Boolean) {
+            val grid = v.strs(g.page, "grid_lanes").toSet()
+            val across = v.num(g.page, "grid_across", 3f).toInt().coerceAtLeast(1)
+            val wideW = v.num(g.page, "wide_w", 158f) * unit; val wideGap = v.num(g.page, "wide_gap", 40f) * unit
+            val contentW = if (fold) 2 * wideW + wideGap + 2 * framePad else maxCol * colW + nodeW
+            var y = 0f
+            laneOrder.forEach { lane ->
+                val inLane = items.values.filter { it.lane == lane }
+                if (inLane.isEmpty() && g.lanes.none { it.id == lane }) return@forEach
+                val at = frames.size
+                val top = y + laneHeader + framePad / 2
+                var bottom = top
+                when {
+                    lane in grid -> {
+                        val gap = if (across > 1) ((contentW - across * nodeW) / (across - 1)).coerceAtLeast(gapY) else 0f
+                        inLane.forEachIndexed { i, it -> val r = i / across; val c = i % across
+                            rects[it.id] = MailStack.Rect(c * (nodeW + gap), top + r * rowH, c * (nodeW + gap) + nodeW, top + r * rowH + nodeH) }
+                        bottom = inLane.mapNotNull { rects[it.id]?.b }.maxOrNull() ?: top
+                        inLane.forEach { frameOf[it.id] = "lane:$lane" }
+                    }
+                    fold -> {
+                        var by = top
+                        inLane.groupBy { it.column / 2 }.toSortedMap().forEach { (b, list) ->
+                            val bid = "band:$lane:$b"
+                            val bAt = frames.size
+                            val inTop = by + laneHeader + framePad / 2
+                            val bBottom = layered(list, { it.column % 2 }, { c -> framePad + c * (wideW + wideGap) }, wideW, inTop) + framePad
+                            val label = listOfNotNull(g.columns.getOrNull(2 * b), g.columns.getOrNull(2 * b + 1)).joinToString(" → ")
+                            frames.add(bAt, Frame(bid, MailStack.Rect(0f, by, contentW, bBottom), laneHeader, label, "", "", 1))
+                            list.forEach { frameOf[it.id] = bid }
+                            bottom = bBottom; by = bBottom + frameGap
+                        }
+                    }
+                    else -> {
+                        bottom = layered(inLane, { it.column }, { c -> c * colW }, nodeW, top)
+                        inLane.forEach { frameOf[it.id] = "lane:$lane" }
+                    }
+                }
+                val h = bottom + framePad - y
+                laneFrame(lane, MailStack.Rect(-framePad, y, contentW + framePad, y + h))
+                frames.add(at, frames.removeAt(frames.size - 1))
+                y += h + frameGap
+            }
+            if (!fold) columns = g.columns.mapIndexed { c, label -> label to (c * colW to c * colW + colW) }
+        }
+
+        /** radial: the hub in the centre, every other node on an ellipse round it (spokes then clients, by name); the lanes become strips under the ring. */
+        fun placeRadial(): Boolean {
+            val hub = items.values.firstOrNull { it.kind == "hub" } ?: return false
+            val ring = items.values.filter { it.id != hub.id }.sortedWith(compareBy<Item>({ when (it.kind) { "spoke" -> 0; "client" -> 1; else -> 2 } }, { it.label }))
+            if (ring.isEmpty() || ring.size > v.num(g.page, "ring_max", 8f).toInt()) return false
+            val rx = v.num(g.page, "ring_rx", 134f) * unit; val ry = v.num(g.page, "ring_ry", 170f) * unit
+            val hw = v.num(g.page, "hub_w", 120f) * unit; val hh = v.num(g.page, "hub_h", 40f) * unit
+            val contentW = v.num(g.page, "content_w", 388f) * unit
+            val cx = contentW / 2; val cyR = ry + nodeH / 2
+            rects[hub.id] = MailStack.Rect(cx - hw / 2, cyR - hh / 2, cx + hw / 2, cyR + hh / 2)
+            ring.forEachIndexed { i, it ->
+                val a = -Math.PI / 2 + 2 * Math.PI * i / ring.size
+                val x = cx + rx * kotlin.math.cos(a).toFloat(); val yy = cyR + ry * kotlin.math.sin(a).toFloat()
+                rects[it.id] = MailStack.Rect(x - nodeW / 2, yy - nodeH / 2, x + nodeW / 2, yy + nodeH / 2)
+            }
+            var y = cyR + ry + nodeH / 2 + frameGap
+            laneOrder.forEach { lane -> laneFrame(lane, MailStack.Rect(0f, y, contentW, y + laneHeader)); y += laneHeader + frameGap }
+            straight = true
+            return true
+        }
+
+        /** clusters: a node that heads drawn children is drawn as that cluster's frame (the node is the header band); leaves three across. */
+        fun placeClusters() {
+            val treeKinds = v.strs(g.page, "tree_kinds").ifEmpty { listOf("tree") }.toSet()
+            val hubKinds = v.strs(g.page, "hub_kinds").toSet()
+            val leafW = v.num(g.page, "leaf_w", nodeW / unit) * unit
+            val contentW = v.num(g.page, "content_w", 388f) * unit
+            val hw = v.num(g.page, "hub_w", 120f) * unit; val hh = v.num(g.page, "hub_h", 40f) * unit
+            val parent = LinkedHashMap<String, String>()
+            pairs.values.forEach { es ->
+                es.filter { it.kind in treeKinds }.forEach { e ->
+                    val a = drawnEnd(e.from); val b = drawnEnd(e.to)
+                    if (a in items && b in items && a != b && b !in parent) {
+                        var x: String? = a; var cyc = false
+                        while (x != null) { if (x == b) { cyc = true; break }; x = parent[x] }
+                        if (!cyc) parent[b] = a
+                    }
+                }
+            }
+            val kids = items.keys.groupBy { parent[it] }
+            val hubs = items.values.filter { it.kind in hubKinds && parent[it.id] == null }
+            fun kidsOf(id: String) = kids[id].orEmpty()
+            fun place(id: String, x: Float, top: Float, w: Float, depth: Int): Float {
+                val fid = "frame:$id"
+                val at = frames.size
+                rects[id] = MailStack.Rect(x, top, x + w, top + laneHeader)
+                frameOf[id] = fid
+                var cy = top + laneHeader + gapY
+                val inner = x + framePad; val iw = w - 2 * framePad
+                val (framed, leaves) = kidsOf(id).partition { kidsOf(it).isNotEmpty() }
+                framed.forEach { c -> cy = place(c, inner, cy, iw, depth + 1) + frameGap }
+                if (leaves.isNotEmpty()) {
+                    val n = maxOf(1, ((iw + gapY) / (leafW + gapY)).toInt())
+                    val lw = minOf(leafW, iw)
+                    leaves.forEachIndexed { i, c -> val r = i / n; val k = i % n
+                        rects[c] = MailStack.Rect(inner + k * (lw + gapY), cy + r * rowH, inner + k * (lw + gapY) + lw, cy + r * rowH + nodeH); frameOf[c] = fid }
+                    cy += ((leaves.size + n - 1) / n) * rowH - gapY
+                } else cy -= frameGap
+                val bottom = cy + framePad
+                val it0 = items.getValue(id)
+                frames.add(at, Frame(fid, MailStack.Rect(x, top, x + w, bottom), laneHeader, it0.label, it0.sub, id, depth))
+                kidsOf(id).forEach { c ->
+                    val es = pairs[id to c] ?: pairs[c to id] ?: return@forEach
+                    if (es.all { it.kind in treeKinds }) contained.getOrPut(id) { mutableListOf() } += es.map { it.id }
+                }
+                return bottom
+            }
+            var y = 0f
+            if (hubs.isNotEmpty()) {
+                val span = hubs.size * hw + (hubs.size - 1) * gapX
+                hubs.forEachIndexed { i, h -> val l = (contentW - span) / 2 + i * (hw + gapX); rects[h.id] = MailStack.Rect(l, y, l + hw, y + hh) }
+                y += hh + 2 * gapY
+            }
+            val tops = items.keys.filter { id -> id !in hubs.map { it.id } && (parent[id] == null || parent[id] in hubs.map { it.id }) }
+            val (framed, leaves) = tops.partition { kidsOf(it).isNotEmpty() }
+            framed.forEach { id -> y = place(id, 0f, y, contentW, 0) + frameGap }
+            if (leaves.isNotEmpty()) {
+                val n = maxOf(1, ((contentW + gapY) / (leafW + gapY)).toInt())
+                leaves.forEachIndexed { i, c -> val r = i / n; val k = i % n
+                    rects[c] = MailStack.Rect(k * (leafW + gapY), y + r * rowH, k * (leafW + gapY) + leafW, y + r * rowH + nodeH) }
+            }
+            // a lane per tree root keeps its frame as the lane (the sheets name it)
+            frames.filter { it.depth == 0 && it.owner.isNotEmpty() }.forEach { f -> laneRects[items.getValue(f.owner).lane] = f.rect }
+        }
+
+        when (v.layoutOf(g.page)) {
+            "radial" -> if (!placeRadial()) placeLayered(false)
+            "layered", "star" -> placeLayered(false)
+            "dns_bands" -> placeLayered(true)
+            "clusters" -> placeClusters()
+            else -> placeLanes()
+        }
+        val heads = frames.mapNotNull { it.owner.takeIf { o -> o.isNotEmpty() } }.toSet()
+        val nodes = items.values.map { it ->
+            MailStack.NodePrim(it.id, it.label, it.sub, rects.getValue(it.id), it.health, MailStack.healthColor(it.health, p), if (it.id in heads) "frame" else it.kind)
+        }
+        val clusterRects = if (v.layoutOf(g.page) != "lanes") emptyMap() else g.clusters.filter { it.id !in collapsed }.mapNotNull { c ->
+            val rs = c.members.mapNotNull { rects[it] }
+            if (rs.isEmpty()) null else c.id to MailStack.Rect(rs.minOf { it.l } - 4f, rs.minOf { it.t } - 4f, rs.maxOf { it.r } + 4f, rs.maxOf { it.b } + 4f)
+        }.toMap()
+        // containment (frame-as-node): the head's tree edges to its direct children are the frame itself, never a wire; counted once
+        val inFrames = contained.values.flatten().toSet()
+        contained.keys.toList().forEach { owner -> val inside = contained.getValue(owner).distinct(); contained[owner] = inside.toMutableList() }
+
         val edgeMembers = LinkedHashMap<String, List<String>>()
+        val onDemand = mutableSetOf<String>()
         val prims = pairs.mapNotNull { (ab, es) ->
+            if (es.all { it.id in inFrames }) return@mapNotNull null
             val f = rects[ab.first] ?: return@mapNotNull null
             val t = rects[ab.second] ?: return@mapNotNull null
             val plain = es.size == 1 && ab.first == es[0].from && ab.second == es[0].to
-            val id = if (plain) es[0].id else "bundle:${ab.first}->${ab.second}"
+            val duplex = es.any { drawnEnd(it.from) == ab.second }
+            val id = if (plain) es[0].id else if (duplex) "pair:${ab.first}<->${ab.second}" else "bundle:${ab.first}->${ab.second}"
             edgeMembers[id] = es.map { it.id }
-            val back = pairs.containsKey(ab.second to ab.first)
-            val off = if (back) (if (ab.first < ab.second) -6f else 6f) else 0f
-            val pts = route(f, t, off)
+            if (es.all { it.declared == "depends" }) onDemand += id
+            val pts = if (straight) straightLine(f, t) else route(f, t, 0f)
             val h = worst(es.map { status[it.id] ?: MailStack.Health.UNKNOWN })
             val label = if (es.size == 1) es[0].label else "${es.size} ${es[0].kind.replace('_', ' ')}"
             MailStack.EdgePrim(id, ab.first, ab.second, label, pts[0], pts[1], pts[2], pts[3], h, MailStack.healthColor(h, p),
@@ -159,7 +345,7 @@ object NetGraphLayout {
         val bundleLabels = mutableListOf<Pair<Offset, String>>()
         val bundleOf = mutableMapOf<String, String>()
         val clusterOfNode = g.nodes.associate { it.id to it.cluster }
-        val bundled = prims.groupBy { (clusterOfNode[it.from].orEmpty()) to it.to }.filter { (k, es) -> k.first.isNotBlank() && es.size >= v.bundleMin }
+        val bundled = if (straight) emptyMap() else prims.groupBy { (clusterOfNode[it.from].orEmpty()) to it.to }.filter { (k, es) -> k.first.isNotBlank() && es.size >= v.bundleMin }
         val shared = bundled.flatMap { (_, es) ->
             val p2 = Offset(es.map { it.p2.x }.average().toFloat(), es.map { it.p2.y }.average().toFloat())
             bundleLabels += p2 to "${es.size} ${es[0].label.ifBlank { "edges" }}"
@@ -167,11 +353,23 @@ object NetGraphLayout {
             es.map { it.id to p2 }
         }.toMap()
         val finalEdges = prims.map { e -> shared[e.id]?.let { e.copy(p2 = it, label = "") } ?: e }
-        val all = nodes.map { it.rect } + laneRects.values
+        val all = nodes.map { it.rect } + laneRects.values + frames.map { it.rect }
         val bounds = if (all.isEmpty()) MailStack.Rect(0f, 0f, 1f, 1f) else MailStack.Rect(all.minOf { it.l }, all.minOf { it.t }, all.maxOf { it.r }, all.maxOf { it.b })
         return Layout(MailStack.Plan(nodes, finalEdges, bounds),
             Extras(laneRects, clusterRects, bundleLabels, memberOf, aggregates + items.keys.filter { it.startsWith("agg:") }.associateWith { it.removePrefix("agg:") },
-                edgeMembers, absorbed, frames, frameOf, columns, bundleOf), unit)
+                edgeMembers, absorbed, frames, frameOf, columns, bundleOf, contained, onDemand), unit)
+    }
+
+    /** A straight wire from the edge of [f] to the edge of [t] along the line between their centres (controls at thirds). */
+    fun straightLine(f: MailStack.Rect, t: MailStack.Rect): List<Offset> {
+        fun exit(r: MailStack.Rect, dx: Float, dy: Float): Offset {
+            val hx = (r.r - r.l) / 2; val hy = (r.b - r.t) / 2
+            val k = minOf(if (dx == 0f) Float.MAX_VALUE else hx / kotlin.math.abs(dx), if (dy == 0f) Float.MAX_VALUE else hy / kotlin.math.abs(dy))
+            return Offset(r.cx + dx * k, r.cy + dy * k)
+        }
+        val dx = t.cx - f.cx; val dy = t.cy - f.cy
+        val a = exit(f, dx, dy); val b = exit(t, -dx, -dy)
+        return listOf(a, Offset(a.x + (b.x - a.x) / 3, a.y + (b.y - a.y) / 3), Offset(a.x + (b.x - a.x) * 2 / 3, a.y + (b.y - a.y) * 2 / 3), b)
     }
 
     private fun counts(ids: List<String>, status: Map<String, MailStack.Health>): String {

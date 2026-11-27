@@ -362,4 +362,33 @@ class NetSceneOverlapTest {
             assertTrue("$page: the selected node's centre $cy is above the sheet", cy < cv.h - 132f * cv.density)
         }
     }
+
+    @Test fun `T5 the radial ring keeps 12 dp between any two boxes for 2 to 8 ring nodes`() {
+        (2..8).forEach { n ->
+            val nodes = listOf(NetGraph.GNode("node:hub", "node", "hub", "", "hub", "wg0", 0, "", emptyList(), emptyList(), "row")) +
+                (1..n).map { i -> NetGraph.GNode("node:s$i", "node", "spoke-$i", "", "spoke", "wg0", 1, "", emptyList(), emptyList(), "row") }
+            val g = NetGraph.Graph("net_mesh", listOf(NetGraph.GLane("wg0", "wg0")), emptyList(), emptyList(), nodes, emptyList(), emptyList())
+            val rs = NetGraphLayout.layout(g, v, emptySet(), pal).plan.nodes.map { it.rect }
+            for (i in rs.indices) for (j in i + 1 until rs.size) {
+                val a = rs[i]; val b = rs[j]
+                val gap = maxOf(b.l - a.r, a.l - b.r, b.t - a.b, a.t - b.b)
+                assertTrue("n=$n: boxes $i and $j are $gap dp apart", gap >= 12f - 0.01f)
+            }
+            assertTrue("n=$n: the ring fits the 388 dp content", rs.all { it.l >= 0f && it.r <= 388f })
+        }
+    }
+
+    @Test fun `T5 containment - a frame's tree edges are drawn as the frame, counted once, and parity goes red when one is dropped`() {
+        val g = graph("net_network")
+        val l = NetGraphLayout.layout(g, v, NetGraphLayout.defaultCollapsed(g, v), pal)
+        assertTrue("Routes draws its subnets and peers as frames", l.extras.contained.isNotEmpty())
+        val inFrames = l.extras.contained.values.flatten().toSet()
+        assertTrue("a contained edge is no wire", l.extras.edgeMembers.values.flatten().none { it in inFrames })
+        assertEquals(emptyList<String>(), NetGraphLayout.parity(g, l))
+        val (k, es) = l.extras.contained.entries.first()
+        val bad = l.copy(extras = l.extras.copy(contained = l.extras.contained + (k to es.drop(1))))
+        assertTrue(NetGraphLayout.parity(g, bad).isNotEmpty())
+        assertTrue("WG Mesh merges each duplex peering into one wire", graph("net_mesh").let { m ->
+            NetGraphLayout.layout(m, v, emptySet(), pal).plan.edges.any { it.id.startsWith("pair:") } })
+    }
 }

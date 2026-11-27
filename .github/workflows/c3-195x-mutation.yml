@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost | home-row-lost | home-zero-on-fail | projects-row-lost | projects-column-lost | vm-unknown-lost | vm-repo-on-host | vm-devices-dropped | control-back | c3mcp-field-lost | infra-order | orch-infra-back | net-edge-dropped | net-node-twice | net-node-undeclared | net-viewer-page-lost | net-section-match-lost | net-resolve-lost | net-unbound-ok | net-dns-depends-lost | net-bundle-weight | net-sheet-field-lost | net-token-blames-vm | net-label-overlap | orch-dup-back | orch-home-lost | deployed-field-lost | orch-page-twice | health-field-lost | health-root-cause-on-vm-when-token-missing | health-layer-order | xray-scope-lost | health-number-on-blind | xray-run-unvalidated | engine-card-lost | engine-field-lost | engine-run-unlisted | net-placer-all | net-short-identity | net-chip-lines | net-reading-on-node | net-pills-at-mid'
+        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost | home-row-lost | home-zero-on-fail | projects-row-lost | projects-column-lost | vm-unknown-lost | vm-repo-on-host | vm-devices-dropped | control-back | c3mcp-field-lost | infra-order | orch-infra-back | net-edge-dropped | net-node-twice | net-node-undeclared | net-viewer-page-lost | net-section-match-lost | net-resolve-lost | net-unbound-ok | net-dns-depends-lost | net-bundle-weight | net-sheet-field-lost | net-token-blames-vm | net-label-overlap | orch-dup-back | orch-home-lost | deployed-field-lost | orch-page-twice | health-field-lost | health-root-cause-on-vm-when-token-missing | health-layer-order | xray-scope-lost | health-number-on-blind | xray-run-unvalidated | engine-card-lost | engine-field-lost | engine-run-unlisted | net-placer-all | net-short-identity | net-chip-lines | net-reading-on-node | net-pills-at-mid | net-contained-dropped'
         required: true
 permissions:
   contents: read
@@ -22,7 +22,7 @@ jobs:
       - name: Validate the mutation name against the allowed list
         run: |
           case "$MUT" in
-            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost|vm-unknown-lost|vm-repo-on-host|vm-devices-dropped|control-back|c3mcp-field-lost|infra-order|orch-infra-back|net-edge-dropped|net-node-twice|net-node-undeclared|net-viewer-page-lost|net-section-match-lost|net-resolve-lost|net-unbound-ok|net-dns-depends-lost|net-bundle-weight|net-sheet-field-lost|net-token-blames-vm|net-label-overlap|orch-dup-back|orch-home-lost|deployed-field-lost|orch-page-twice|health-field-lost|health-root-cause-on-vm-when-token-missing|health-layer-order|xray-scope-lost|health-number-on-blind|xray-run-unvalidated|two-rows-label-lost|two-rows-or|two-rows-vm-order|two-rows-parity|engine-card-lost|engine-field-lost|engine-run-unlisted|net-placer-all|net-short-identity|net-chip-lines|net-reading-on-node|net-pills-at-mid) echo "leg: $MUT" ;;
+            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost|vm-unknown-lost|vm-repo-on-host|vm-devices-dropped|control-back|c3mcp-field-lost|infra-order|orch-infra-back|net-edge-dropped|net-node-twice|net-node-undeclared|net-viewer-page-lost|net-section-match-lost|net-resolve-lost|net-unbound-ok|net-dns-depends-lost|net-bundle-weight|net-sheet-field-lost|net-token-blames-vm|net-label-overlap|orch-dup-back|orch-home-lost|deployed-field-lost|orch-page-twice|health-field-lost|health-root-cause-on-vm-when-token-missing|health-layer-order|xray-scope-lost|health-number-on-blind|xray-run-unvalidated|two-rows-label-lost|two-rows-or|two-rows-vm-order|two-rows-parity|engine-card-lost|engine-field-lost|engine-run-unlisted|net-placer-all|net-short-identity|net-chip-lines|net-reading-on-node|net-pills-at-mid|net-contained-dropped) echo "leg: $MUT" ;;
             *) echo "::error::unknown mutation name"; exit 1 ;;
           esac
       - uses: actions/checkout@v4
@@ -115,6 +115,8 @@ jobs:
             # #1955 A fixes: a missing device token blames a VM; a label may sit on a node
             net-token-blames-vm) rep $K/pages/NetLive.kt '!it.deviceSide && (it.health == MailStack.Health.BAD || it.unreadable)' '(it.health == MailStack.Health.BAD || it.unreadable)' ;;
             net-label-overlap) rep $K/pages/NetGraphLayout.kt 'r.takeIf { c -> nodes.none { hit(c, it) } && placed.values.none { hit(c, it) } }' 'r.takeIf { c -> placed.values.none { hit(c, it) } }' ;;
+            # #1955 A rev2 (M1-M6): the placer, the shortening, the chip, the node text, the pill budget, containment parity
+            net-contained-dropped) rep $K/pages/NetGraphLayout.kt 'contained[owner] = inside.toMutableList()' 'contained[owner] = inside.drop(1).toMutableList()' ;;
             # #1955 A rev2 (M1-M6): the placer, the shortening, the chip, the node text, the pill budget, containment parity
             net-placer-all)    rep $K/pages/NetScene.kt 'inside(r, canvas) && obstacles.none { hit(r, it) } && (own == null || !hit(r, inflate(own, 2f * dp)))' 'true' ;;
             net-short-identity) rep $K/pages/NetLabel.kt '        return end(base, maxChars)' '        return label' ;;
@@ -214,6 +216,7 @@ jobs:
             net-sheet-field-lost) C=NetGraphTest; N="the node sheet prints every field of every row it stands for" ;;
             net-token-blames-vm) C=NetLiveTest; N="a device with no token blames no VM - nodes are not read, the note is device-side" ;;
             net-label-overlap) C=NetGraphLayoutTest; N="a label whose wire midpoint lies inside a node is moved off every node" ;;
+            net-contained-dropped) C=NetSceneOverlapTest; N="T5 determinism and parity - equal scenes on two runs, parity in every state" ;;
             net-placer-all) C=NetSceneOverlapTest; N="T1 geometric no-overlap - every text box on all six pages, six states, two canvases, opening and 2x views" ;;
             net-short-identity) C=NetSceneOverlapTest; N="T3 caps and sizes - nothing under 10 sp, names, metrics, pills and headers within their caps, distinct names stay distinct" ;;
             net-chip-lines) C=NetViewerComposeTest; N="T6 the root cause is a one-line chip at most 32 dp, chrome at most 104 dp, the canvas at least 68 percent at 412 dp" ;;

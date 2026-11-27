@@ -524,6 +524,14 @@ fun DrawScope.drawNetScene(sc: NetScene.Scene, p: KitPalette, measurer: TextMeas
         val sz = Size(b.r - b.l, b.b - b.t)
         val hub = n.kind == "hub" || n.kind == "root" || n.kind == "server"
         val rad = CornerRadius((if (hub) 8f else if (n.kind == "client") 16f else 6f) * dp)
+        if (n.kind == "frame") {
+            // a frame's head node is its header band: tinted, no box outline (the frame draws the outline)
+            drawRect(p.hairline.copy(alpha = 0.18f * a), Offset(b.l, b.t), sz)
+            if (sz.height >= 12f * dp && !n.cut) statusShape(n.health, false, Offset(b.l + 11f * dp, (b.t + b.b) / 2), 10f * dp, p, a)
+            if (n.root) drawRect(p.bad, Offset(b.l, b.t), sz, style = Stroke(2f * dp))
+            if (n.match || n.selected) drawRect(p.accent, Offset(b.l, b.t), sz, style = Stroke(2f * dp))
+            return@forEach
+        }
         if (n.aggregate) drawRoundRect(p.hairline.copy(alpha = a), Offset(b.l + 3f * dp, b.t + 3f * dp), sz, rad, style = Stroke(1.5f * dp))
         drawRoundRect(p.surfaceSelected.copy(alpha = if (n.dim) 0.5f else 1f), Offset(b.l, b.t), sz, rad)
         val declared = readings[n.id]?.source == NetLive.DECLARED.source && !n.aggregate

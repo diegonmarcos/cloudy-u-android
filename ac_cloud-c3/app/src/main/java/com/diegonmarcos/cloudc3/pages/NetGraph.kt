@@ -93,6 +93,8 @@ object NetGraph {
             val k = key.split('.')
             return (page?.let { at(pages[it], k) }) ?: at(raw, k) ?: d
         }
+        /** A declared string list of a page (`pages.<page>.<key>`), empty when absent. */
+        fun strs(page: String, key: String): List<String> = (pages[page]?.get(key) as? JsonArray).orEmpty().mapNotNull { (it as? JsonPrimitive)?.contentOrNull }
         /** The declared layout of a page: radial | star | layered | dns_bands | clusters | lanes (the swimlane fallback). */
         fun layoutOf(page: String): String = (pages[page]?.get("layout") as? JsonPrimitive)?.contentOrNull ?: "lanes"
     }

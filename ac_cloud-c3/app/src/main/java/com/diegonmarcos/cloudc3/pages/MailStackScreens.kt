@@ -182,7 +182,8 @@ fun PlanCanvas(
     var view by viewHolder
     val bw = box.width.toFloat().coerceAtLeast(1f); val bh = box.height.toFloat().coerceAtLeast(1f)
     val v = view ?: initialView?.invoke(bw, bh) ?: MailStack.fit(plan.bounds, bw, bh)
-    val phase by rememberInfiniteTransition(label = "mail-flow").animateFloat(0f, 1f, infiniteRepeatable(tween(3200, easing = LinearEasing), RepeatMode.Restart), label = "phase")
+    // #1955 A rev2 a canvas without pulses (Network graphs) runs no animation: it is static and redraws only when its state changes
+    val phaseState = if (pulses) rememberInfiniteTransition(label = "mail-flow").animateFloat(0f, 1f, infiniteRepeatable(tween(3200, easing = LinearEasing), RepeatMode.Restart), label = "phase") else null
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current.density
     Canvas(modifier.onSizeChanged { box = it }.background(p.surface).testTag(tag)
@@ -216,7 +217,7 @@ fun PlanCanvas(
                 lineTo(d.x - dir.x * k - dir.y * k * 0.5f, d.y - dir.y * k + dir.x * k * 0.5f); close()
             }
             drawPath(arrow, e.color)
-            if (pulses) MailStack.pulses(e, phase).forEach { w -> drawCircle(e.color, 4.5f * density * s.coerceIn(0.7f, 1.5f), v.toScreen(w)) }
+            if (phaseState != null) MailStack.pulses(e, phaseState.value).forEach { w -> drawCircle(e.color, 4.5f * density * s.coerceIn(0.7f, 1.5f), v.toScreen(w)) }
             if (s >= 0.6f && e.label.isNotBlank()) {
                 val m = v.toScreen(MailStack.bezier(e, 0.5f))
                 safeDrawText(measurer, e.label, Offset(m.x - 28f * s, m.y - 14f * density * s), mono(9f * s.coerceIn(0.8f, 1.4f), p.textSecondary), maxLines = 1, softWrap = false)
