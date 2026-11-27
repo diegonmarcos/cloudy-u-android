@@ -252,6 +252,8 @@ walk() {
       for b in 1 2 3; do adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 2; has_rid git_bulk_scope_bar && break; done
       has_rid git_bulk_scope_bar || { open_bulk; tap_rid "git_sheet_tab_$curtab" >/dev/null; sleep 1; }
     fi
+    # #1934 a control that runs a job over the scope switches the nav to Workflow (its per-repo rows): back to this control's tab for the next one
+    if [ "$phase" = bulk ]; then case "$id" in bo.fetch_status|bo.sync.*|bo.mg.shrink_all) tap_rid "git_sheet_tab_$curtab" >/dev/null; sleep 1;; esac; fi
     ok=$((ok+1)); printf '%s:%s\t%s\t%s\ttapped\twalk/%s-%s-%s.png\n' "$phase" "$cloned" "$id" "$label" "$phase" "$cloned" "$id" >> "$OUT/walk.tsv"
   done
   exec 3<&-
