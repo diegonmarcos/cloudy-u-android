@@ -195,6 +195,22 @@ if [ "$T" = all ] || [ "$T" = 1955 ]; then
   tap_text c3-1955-net-mesh-pre "Legend"; shot c3-1955-net-legend 3
   has c3-1955-net-legend "ROOT = root cause" || bad "c3-1955-net-legend: legend not open"
   rm -f "$OUT"/c3-1955-net-*-pre.png
+  # #1955 C the Health debugger: every tab, then X-ray C3. The emulator has no token: the device-side state and the not-served routes must be said, not hidden.
+  open_page ops_health_health; sleep 2; shot c3-1955-health-overview 8
+  chk c3-1955-health-overview "Probe_now,Overview,Lights,Containers,VMs,Network_/_Mesh,This_phone,C3_token"
+  has c3-1955-health-overview "ROOT CAUSE" && bad "c3-1955-health-overview: a root cause is blamed on a token-less device"
+  for t in Lights Containers VMs "Network / Mesh" "More layers" Profile Cause; do
+    n="$(printf '%s' "$t" | tr 'A-Z /' 'a-z--' | tr -s -)"
+    tap_text c3-1955-health-overview "$t"; shot "c3-1955-health-$n" 4
+  done
+  chk c3-1955-health-more-layers "route_not_served_yet"
+  chk c3-1955-health-lights "public,private"
+  open_page ops_health_tests; sleep 2; shot c3-1955-health-xray-full 8
+  chk c3-1955-health-xray-full "C3_full,VMs,Services,Suites,X-ray"
+  for t in VMs Services Suites; do
+    n="$(printf '%s' "$t" | tr 'A-Z' 'a-z')"
+    tap_text c3-1955-health-xray-full "$t"; shot "c3-1955-health-xray-$n" 4
+  done
 fi
 
 # #1954 the GH Releases Graph (the former Release page) behind the Table | Graph switch, and the Containers Table's deployed-state columns
