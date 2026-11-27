@@ -347,7 +347,7 @@ object LnktreePrefetch {
      * Returns null when the page itself could not be fetched, else how many ALREADY stored HTML/CSS/JS files came back different (a live change). [main] = the page body when the caller fetched it.
      */
     fun fill(p: LnktreePage, cfg: LnktreeCacheConfig, store: LnktreeCacheStore, fetch: (String) -> Fetched?, main: Fetched?): Int? {
-        val m = (main ?: fetch(p.url))?.takeIf { it.status == 200 && it.body.isNotEmpty() } ?: return null
+        val m = (main ?: fetch(p.url))?.takeIf { it.status == 200 } ?: return null
         var changed = 0
         fun save(u: String, r: Fetched) {
             val old = store.get(p.id, u)
