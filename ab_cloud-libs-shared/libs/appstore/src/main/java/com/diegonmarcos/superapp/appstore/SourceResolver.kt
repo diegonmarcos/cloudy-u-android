@@ -183,6 +183,9 @@ object SourceResolver {
         fun kind(id: String?): Kind? = kinds.firstOrNull { it.id == id }
     }
 
+    /** The config of a phone that has not been served the install-source map: no kinds, no declared external apps, no ladders. */
+    fun unserved(): Config = Config(emptyList(), emptyList(), JSONObject(), "", emptyMap())
+
     fun config(sources: JSONObject): Config {
         val r = sources.getJSONObject("resolver")
         val order = r.getJSONArray("order").let { a -> (0 until a.length()).map { a.getString(it) } }

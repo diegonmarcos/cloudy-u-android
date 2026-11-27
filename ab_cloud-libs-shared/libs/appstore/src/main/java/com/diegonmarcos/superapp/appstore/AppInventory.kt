@@ -115,10 +115,10 @@ object AppInventory {
      * cannot make a foreign package installable by claiming to be ours. The
      * store link comes from the one map ([PhoneAppActions.storePage]).
      */
-    fun plan(wanted: List<Entry>, installed: Set<String>, fleet: Set<String>, sources: JSONObject): Plan {
+    fun plan(wanted: List<Entry>, installed: Set<String>, fleet: Set<String>, sources: JSONObject?): Plan {
         val have = ArrayList<Entry>(); val ours = ArrayList<Entry>(); val direct = ArrayList<Entry>()
         val store = ArrayList<StoreLink>(); val manual = ArrayList<Entry>()
-        val cfg = PhoneAppActions.resolver(sources)
+        val cfg = PhoneAppActions.resolverOrEmpty(sources)
         for (e in wanted.distinctBy { it.pkg }.sortedBy { it.pkg }) {
             val page = PhoneAppActions.storePage(sources, e.origin, e.pkg)
             when {

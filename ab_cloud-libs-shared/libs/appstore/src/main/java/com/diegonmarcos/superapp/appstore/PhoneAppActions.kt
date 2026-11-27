@@ -49,6 +49,12 @@ object PhoneAppActions {
     /** #571 the external-app ladders, from the SAME asset: one map, one file. */
     fun resolver(sources: JSONObject): SourceResolver.Config = SourceResolver.config(sources)
 
+    /** [resolver], or the empty config when the map is not served: the parts that need it degrade, the rest keeps drawing. */
+    fun resolverOrEmpty(sources: JSONObject?): SourceResolver.Config = sources?.let { resolver(it) } ?: SourceResolver.unserved()
+
+    /** The greyed controls' one reason line: names the dataset and why it is missing. */
+    fun notServedReason(ctx: Context): String = ctx.getString(R.string.store_phone_why_not_served)
+
     /**
      * #571 the buttons a row offers for an app the phone does NOT have yet.
      * A fleet app installs through the fleet path; an external app with a
@@ -57,9 +63,15 @@ object PhoneAppActions {
      * deep-link is the official Play path, and nothing here pretends otherwise.
      */
     fun forMissing(ctx: Context, app: SourceResolver.External, fleetApp: Fleet.App?,
-                   sources: JSONObject, cfg: SourceResolver.Config): List<Action> {
+                   sources: JSONObject?, cfg: SourceResolver.Config): List<Action> {
         fun s(id: Int) = ctx.getString(id)
         val out = mutableListOf<Action>()
+        // No map served: an external app's ladder and store page are unknown, so both controls stay drawn, greyed, with the reason.
+        if (sources == null && fleetApp == null) {
+            out += Action(Kind.INSTALL, s(R.string.store_phone_install), null, notServedReason(ctx))
+            out += Action(Kind.ORIGIN, s(R.string.store_phone_origin_store), null, notServedReason(ctx))
+            return out
+        }
         when {
             fleetApp != null -> {
                 out += Action(Kind.INSTALL, s(R.string.store_phone_install), null,
@@ -117,7 +129,7 @@ object PhoneAppActions {
         fleet.flatMap { app -> listOfNotNull(app.pkg, app.altId).map { it to app } }.toMap()
 
     fun of(ctx: Context, pkg: String, fleetApp: Fleet.App?, shellReady: Boolean,
-           sources: JSONObject = sources(ctx)): List<Action> {
+           sources: JSONObject? = sourcesOrNull(ctx)): List<Action> {
         val pm = ctx.packageManager
         fun s(id: Int) = ctx.getString(id)
         val out = mutableListOf<Action>()
@@ -149,15 +161,15 @@ object PhoneAppActions {
      *  intent aimed at the installer, so market:// lands in the store that
      *  installed the app rather than whichever market handler the chooser
      *  prefers. Null = [installer] is not a declared store. */
-    fun storePage(sources: JSONObject, installer: String?, pkg: String): Pair<String, Intent>? {
-        val store = installer?.let { sources.getJSONObject("sources").optJSONObject(it) } ?: return null
+    fun storePage(sources: JSONObject?, installer: String?, pkg: String): Pair<String, Intent>? {
+        val store = installer?.let { sources?.getJSONObject("sources")?.optJSONObject(it) } ?: return null
         return store.getString("label") to
             Intent(Intent.ACTION_VIEW, Uri.parse(store.getString("deeplink").replace("{pkg}", pkg))).setPackage(installer)
     }
 
     /** Ours -> the host's Store ▸ Cloud page, the same target the update notification opens. */
-    private fun hostPage(ctx: Context, sources: JSONObject): Action {
-        val label = sources.getJSONObject("ours").getString("label")
+    private fun hostPage(ctx: Context, sources: JSONObject?): Action {
+        val label = sources?.getJSONObject("ours")?.getString("label") ?: ctx.applicationInfo.loadLabel(ctx.packageManager).toString()
         val target = AppStoreHost.launchActivity
             ?: return Action(Kind.ORIGIN, label, null, ctx.getString(R.string.store_phone_why_no_host))
         val open = Intent(ctx, target).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
@@ -165,9 +177,10 @@ object PhoneAppActions {
         return Action(Kind.ORIGIN, label, open, null)
     }
 
-    private fun origin(ctx: Context, pkg: String, fleetMember: Boolean, sources: JSONObject): Action {
+    private fun origin(ctx: Context, pkg: String, fleetMember: Boolean, sources: JSONObject?): Action {
         val installer = installerOf(ctx, pkg)
         if (isOurs(ctx, fleetMember, installer)) return hostPage(ctx, sources)
+        if (sources == null) return Action(Kind.ORIGIN, ctx.getString(R.string.store_phone_origin_store), null, notServedReason(ctx))
         val (label, page) = storePage(sources, installer, pkg)
             ?: return Action(Kind.ORIGIN, sources.getJSONObject("unknown").getString("label"), appInfo(pkg), null)
         return Action(Kind.ORIGIN, label, page, null)

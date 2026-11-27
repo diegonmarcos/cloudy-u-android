@@ -9,14 +9,15 @@ package com.diegonmarcos.superapp.appstore
  */
 object StoreKeepAliveText {
 
-    fun lines(progress: String?, pending: Int?, lastPassAt: Long, now: Long): List<String> {
+    fun lines(progress: String?, pending: Int?, lastPassAt: Long, now: Long, notChecked: String? = null): List<String> {
         val ago = if (lastPassAt > 0L) "last check " + ago(now - lastPassAt) else null
         val waiting = when {
             pending == null -> null
+            pending == 0 && notChecked != null -> "Not checked: $notChecked"
             pending == 0 -> "All up to date"
             else -> "$pending update${if (pending == 1) "" else "s"} pending"
         }
-        if (!progress.isNullOrBlank()) return listOfNotNull(progress, waiting?.takeIf { pending != 0 })
+        if (!progress.isNullOrBlank()) return listOfNotNull(progress, waiting?.takeIf { pending != 0 || notChecked != null })
         if (waiting == null) return listOf("Checking…")
         return listOf(listOfNotNull(waiting, ago).joinToString(" · "))
     }

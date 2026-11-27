@@ -1,0 +1,120 @@
+# #1946 Phone-page-without-install-sources mutation runs: each matrix leg applies ONE deliberate break (the page goes back to the
+# throwing PhoneAppActions.sources(), the pill's "Not checked" wording is dropped, the greyed controls lose their reason) and runs
+# Cloud Store's StorePhoneUnservedTest. Every leg must go RED; a green leg means the suite is blind to that break. Manual only.
+#
+# A leg is a KILL only when the build COMPILED and the NAMED test of the targeted class failed (read from the JUnit XML);
+# anything else (a resolution error, a compile error, another test failing, no result) is a leg ERROR and the job is red
+# for that reason, never a kill. Only the targeted class runs; dependency resolution is retried once.
+name: store-phone-unserved-mutation
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [throwing-sources, pill-all-up-to-date, reason-dropped]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply mutation ${{ matrix.name }}
+        env:
+          M: ${{ matrix.name }}
+        run: |
+          python3 - <<'PY'
+          import os
+          D = "ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/"
+          m = {
+              "throwing-sources": [(D + "StorePhoneFragment.kt", "PhoneAppActions.sourcesOrNull(ctx)   // null = not served", "PhoneAppActions.sources(ctx)   // null = not served")],
+              "pill-all-up-to-date": [(D + "StoreActivity.kt", ' else if (notChecked != null) "Not checked: $notChecked" else "All up to date"', ' else "All up to date"')],
+              "reason-dropped": [(D + "PhoneAppActions.kt", "s(R.string.store_phone_install), null, notServedReason(ctx))", "s(R.string.store_phone_install), null, null)")],
+          }[os.environ["M"]]
+          for p, a, b in m:
+              s = open(p).read()
+              assert a in s, "mutation target missing: " + a
+              open(p, "w").write(s.replace(a, b, 1))
+          PY
+          git diff --stat
+          test -n "$(git diff --name-only)" || { echo "mutation target missing"; exit 3; }
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
+      - name: Set up Gradle 8.10.2 (cached)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.10.2"
+      # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
+      # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
+      - name: Checkout vault (shared Android signing key, read by app/build.gradle at configuration)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+      - name: Install ORAS + sops (pinned)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: oras sops
+      - name: Targeted test, RED expected (kill = compiled AND the named test failed)
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+          APP: ac_cloud-store
+          M: ${{ matrix.name }}
+        run: |
+          set -u
+          CLS=com.diegonmarcos.cloudstore.StorePhoneUnservedTest
+          case "$M" in
+            throwing-sources) T="the phone rows still list the installed launchable apps when the dataset is not served" ;;
+            pill-all-up-to-date) T="the status never says all up to date while nothing was checked" ;;
+            reason-dropped) T="controls that need the map are greyed with a reason naming the dataset" ;;
+            *) echo "::error::unknown leg $M"; exit 2 ;;
+          esac
+          run_tests() {
+            rm -rf "$APP"/app/build/test-results
+            UNIT_TEST_FILTER="$CLS" sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$APP"
+          }
+          xml() { find "$APP" -path '*build/test-results*' -name "TEST-$CLS.xml" 2>/dev/null | head -1; }
+          run_tests > /tmp/leg.log 2>&1 || true
+          if [ -z "$(xml)" ] && grep -qE 'Could not (resolve|GET|HEAD|download)|Connection (reset|timed out)|Read timed out|Failed to fetch maven|Could not find' /tmp/leg.log; then
+            echo "dependency resolution failed; retrying once"
+            run_tests > /tmp/leg.log 2>&1 || true
+          fi
+          tail -60 /tmp/leg.log | cut -c1-300
+          X="$(xml)"
+          if [ -z "$X" ]; then echo "::error::LEG ERROR $M: no result for $CLS (the build did not compile or did not run the class); not a kill"; exit 1; fi
+          python3 -I - "$X" "$T" "$M" <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          path, want, leg = sys.argv[1:]
+          root = ET.parse(path).getroot()
+          cases = {c.get("name"): c for c in root.iter("testcase")}
+          failed = sorted(n for n, c in cases.items() if c.find("failure") is not None or c.find("error") is not None)
+          print("failed tests:", failed)
+          if want not in cases:
+              print("::error::LEG ERROR %s: the named test did not run: %s" % (leg, want)); sys.exit(1)
+          if want not in failed:
+              print("::error::LEG SURVIVED %s: the named test stayed green: %s" % (leg, want)); sys.exit(1)
+          print("KILLED %s by: %s" % (leg, want))
+          PY
+      - name: Failed tests
+        if: always()
+        run: grep -rl "<failure" --include="TEST-*.xml" ac_cloud-store/app/build 2>/dev/null | xargs -r grep -h -o 'testcase name="[^"]*"' | head -40 || true

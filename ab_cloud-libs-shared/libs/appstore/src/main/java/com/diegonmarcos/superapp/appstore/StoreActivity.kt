@@ -100,6 +100,8 @@ object StoreActivity {
         val percent: Int, val bytesPerSec: Long, val etaSec: Long, val updates: Int = 0,
         /** #1551 waiting for the user's tap, and waiting for an install retry. */
         val confirming: Int = 0, val retrying: Int = 0,
+        /** Why nothing was checked (install sources not served, list failed): idle never says "All up to date" while this is set. */
+        val notChecked: String? = null,
     ) {
         val active get() = downloading + installing + queued + confirming + retrying
         val busy get() = active > 0
@@ -111,7 +113,7 @@ object StoreActivity {
         }
         /** "3 downloading · 1 installing · 2 queued · 45% · 12.3 MB/s · ~1 min left"; idle: "All up to date" or "N updates available". */
         fun text(): String {
-            if (active == 0 && paused == 0) return if (updates > 0) "$updates update${if (updates == 1) "" else "s"} available" else "All up to date"
+            if (active == 0 && paused == 0) return if (updates > 0) "$updates update${if (updates == 1) "" else "s"} available" else if (notChecked != null) "Not checked: $notChecked" else "All up to date"
             return listOf(
                 if (downloading > 0) "$downloading downloading" else "",
                 if (installing > 0) "$installing installing" else "",
@@ -201,7 +203,7 @@ object StoreActivity {
     }
 
     /** The collapsed line: counts, weighted percent, combined speed and ETA over [items]. */
-    fun overall(items: List<Item>, updates: Int = 0): Overall {
+    fun overall(items: List<Item>, updates: Int = 0, notChecked: String? = null): Overall {
         fun n(p: Phase) = items.count { it.phase == p }
         val downloading = n(Phase.DOWNLOADING) + n(Phase.VERIFYING)
         val confirming = n(Phase.WAITING_CONFIRM)
@@ -234,7 +236,7 @@ object StoreActivity {
         }
         val pct = if (den <= 0.0) 0 else Math.round(100 * num / den).toInt().coerceIn(0, 100)
         return Overall(downloading, n(Phase.INSTALLING), n(Phase.QUEUED), n(Phase.PAUSED), n(Phase.FAILED), n(Phase.DONE), pct, speed, eta, updates,
-            confirming, retrying)
+            confirming, retrying, notChecked)
     }
 
     /** The expanded list's section [g]: Active and Queued as they come; Finished lists failures first, at most [RECENT], newest first. */

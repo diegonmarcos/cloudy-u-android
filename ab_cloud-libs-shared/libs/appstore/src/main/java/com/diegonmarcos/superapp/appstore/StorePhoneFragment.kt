@@ -75,7 +75,18 @@ class StorePhoneFragment : KitComposeFragment() {
 
     /** What one enumeration found: the rows, their resolved state and what the APK cache holds. */
     private class Loaded(val rows: List<AppRow>, val cfg: SourceResolver.Config,
-                         val states: Map<String, SourceResolver.Check>, val cached: Map<String, ApkCache.Entry>)
+                         val states: Map<String, SourceResolver.Check>, val cached: Map<String, ApkCache.Entry>,
+                         /** The install-source map was not served: the rows still draw, the map-dependent controls are greyed. */
+                         val sourcesMissing: Boolean = false)
+
+    /** What a test reads of one enumeration: package, installed, and each control's label and disabled reason. */
+    class Probe(val rows: List<ProbeRow>, val sourcesMissing: Boolean)
+    class ProbeRow(val pkg: String, val installed: Boolean, val controls: List<Pair<String, String?>>)
+
+    /** The rows exactly as the page builds them (local PackageManager reads plus whatever the map adds). Blocking. */
+    fun probe(ctx: Context): Probe = rows(ctx).let { l ->
+        Probe(l.rows.map { r -> ProbeRow(r.pkg, r.installed, r.actions.map { it.label to it.disabledReason }) }, l.sourcesMissing)
+    }
 
     private val cDim = Ink.DIM
     private val cHead = 0xFFED8936.toInt()
@@ -90,6 +101,7 @@ class StorePhoneFragment : KitComposeFragment() {
     private var loading by mutableStateOf(true)
     private var loaded by mutableStateOf(false)
     private var failure by mutableStateOf<String?>(null)
+    private var sourcesMissing by mutableStateOf(false)
     // #619 the row filter. Declared (the full set rows() builds: installed ∪ fleet ∪ external) is the
     // default, and the mode Profile ▸ Store deep-links into; Installed is only rows already on the
     // device. No second list: it filters AppRow.installed, the state rows() already resolved through
@@ -228,11 +240,12 @@ class StorePhoneFragment : KitComposeFragment() {
         StoreBar.Bar(StoreBar.Verbs(
             checkAll = { checkAll() }, installAll = { installAll() }, updateAll = { updateAll() }), resume = resume)
         // #1524 THE one Activity panel: every download and install, collapsed to one Overall line (Update all when idle).
-        StoreActivityPanel(updates = rows.count { states[it.pkg] is SourceResolver.Check.UpdateAvailable && it.direct }, onUpdateAll = { updateAll() })
+        val notChecked = StoreTally.notChecked(failure != null, sourcesMissing)
+        StoreActivityPanel(updates = rows.count { states[it.pkg] is SourceResolver.Check.UpdateAvailable && it.direct }, onUpdateAll = { updateAll() }, notChecked = notChecked)
         // The status area: declared rows vs installed and the updates' cached / to-download split, from
         // the rows and checks this page already holds. Re-read on every progress event.
         val tallyRows = rows; val tallyStates = states.toMap()
-        StoreTally.Area(listOf(progress.tick, tallyRows, tallyStates, resume), { c -> tallyItems(c, tallyRows, tallyStates) })
+        StoreTally.Area(listOf(progress.tick, tallyRows, tallyStates, resume, notChecked), { c -> tallyItems(c, tallyRows, tallyStates) }, notChecked = notChecked)
         // The page's file verbs: the SAME shared action buttons, laid out by StoreRow.Actions as every row's are.
         // Installed owns Export and the APK cache (what is on this phone); Declared owns Import (a list to install).
         StoreRow.Actions(buildList {
@@ -248,6 +261,7 @@ class StorePhoneFragment : KitComposeFragment() {
         })
         if (loaded) Controls(ctx, installedOnly)
         StoreCaption(ctx.getString(R.string.store_phone_caption))
+        if (sourcesMissing && failure == null) StoreCaption(ctx.getString(R.string.store_phone_not_served_notice))
         when {
             loading && !loaded -> StoreCaption(ctx.getString(R.string.store_phone_loading))
             failure != null -> StoreCaption(ctx.getString(R.string.store_phone_list_failed, failure))
@@ -461,6 +475,11 @@ class StorePhoneFragment : KitComposeFragment() {
                 maxLines = 1, overflow = TextOverflow.MiddleEllipsis)
             Text(if (r.installed) StoreSizes.breakdown(StoreSizeProbe.cached(r.pkg)) else StoreSizes.NONE,
                 color = cDim.ink(), fontSize = StoreDensity.T_CAPTION.sp, modifier = Modifier.testTag(SIZE_DETAIL_TAG_PREFIX + r.pkg))
+            // A control greyed because the install-source map is not served keeps its reason on screen, not only in a tap toast.
+            if (sourcesMissing) r.actions.filter { it.disabledReason == PhoneAppActions.notServedReason(ctx) }.forEach { a ->
+                Text("${a.label}: ${a.disabledReason}", color = cDim.ink(), fontSize = StoreDensity.T_CAPTION.sp,
+                    modifier = Modifier.testTag("store-phone:why:${a.kind.name}:${r.pkg}"))
+            }
             val verbs = ArrayList<StoreVerb>()
             r.actions.forEach { a ->
                 verbs += StoreVerb(a.label, null, { act(ctx, r, a) }, "store-phone:verb:${a.kind.name}:${r.pkg}",
@@ -556,7 +575,7 @@ class StorePhoneFragment : KitComposeFragment() {
                 if (!isAdded) return@post
                 loading = false
                 built.onSuccess { l ->
-                    rows = l.rows; cfg = l.cfg; failure = null; loaded = true
+                    rows = l.rows; cfg = l.cfg; failure = null; sourcesMissing = l.sourcesMissing; loaded = true
                     states.clear(); states.putAll(l.states)
                     cached.clear(); cached.putAll(l.cached)
                     refreshCacheLabel(); measureSizes(); then?.invoke()
@@ -603,7 +622,7 @@ class StorePhoneFragment : KitComposeFragment() {
                 val wanted = AppInventory.parse(text)
                 val pm = app.packageManager
                 val installed = wanted.map { it.pkg }.filter { runCatching { pm.getPackageInfo(it, 0) }.isSuccess }.toSet()
-                AppInventory.plan(wanted, installed, AppInventory.fleetPackages(), PhoneAppActions.sources(app))
+                AppInventory.plan(wanted, installed, AppInventory.fleetPackages(), PhoneAppActions.sourcesOrNull(app))
             }
             main.post {
                 if (!isAdded) return@post
@@ -622,8 +641,8 @@ class StorePhoneFragment : KitComposeFragment() {
         val pm = ctx.packageManager
         val fleetList = Fleet.parse(BuildConfig.CONSTELLATION_FLEET_B64)
         val fleet = PhoneAppActions.fleetByPackage(fleetList)
-        val sources = PhoneAppActions.sources(ctx)
-        val resolver = PhoneAppActions.resolver(sources)
+        val sources = PhoneAppActions.sourcesOrNull(ctx)   // null = not served: the installed apps still draw, only the map's parts degrade
+        val resolver = PhoneAppActions.resolverOrEmpty(sources)
         val shellReady = StoreShell.status(ctx).armed
         // The Phone page is the FOREIGN apps' page: a fleet app — installed or not — is the Cloud
         // page's (constellation install / update all), never declared, listed or installed here.
@@ -650,6 +669,9 @@ class StorePhoneFragment : KitComposeFragment() {
             val actions = if (installed) PhoneAppActions.of(ctx, pkg, fa, shellReady, sources)
                           else PhoneAppActions.forMissing(ctx, ext ?: SourceResolver.resolve(resolver, pkg), fa, sources, resolver)
             states[pkg] = when {
+                // No map: whether the app is declared is unknown, so say that instead of a false "undeclared".
+                ext != null && sources == null -> SourceResolver.installed(ctx, pkg)?.let { SourceResolver.Check.Unknown(it.first, "install sources not served") }
+                    ?: SourceResolver.Check.NotInstalled(SourceResolver.VIA_FLEET, needsPlay = false)
                 ext != null -> SourceResolver.local(ctx, ext)
                 installed -> SourceResolver.installed(ctx, pkg)?.let { SourceResolver.Check.Installed(it.first, it.second, null, SourceResolver.Note.NONE) }
                     ?: SourceResolver.Check.Unknown(null, "")
@@ -657,7 +679,7 @@ class StorePhoneFragment : KitComposeFragment() {
             }
             AppRow(pkg, label, shelves[pkg], fa, ext, installed, actions)
         }.sortedWith(SHELF_ORDER)
-        return Loaded(list, resolver, states, cached)
+        return Loaded(list, resolver, states, cached, sources == null)
     }
 
     /** The declared rows as [StoreTally] items: PackageManager APK bytes, the checks' verdicts, the APK cache.
@@ -740,7 +762,7 @@ class StorePhoneFragment : KitComposeFragment() {
      */
     private fun batch(ctx: Context, targets: List<AppRow>) {
         val app = ctx.applicationContext
-        val resolver = cfg ?: PhoneAppActions.resolver(PhoneAppActions.sources(app))
+        val resolver = cfg ?: PhoneAppActions.resolverOrEmpty(PhoneAppActions.sourcesOrNull(app))
         thread(name = "store-phone-batch") {
             val outcomes = BatchInstall.run(
                 app,
@@ -829,7 +851,7 @@ class StorePhoneFragment : KitComposeFragment() {
 
     /** The ONE path per kind. Blocking. */
     private fun installOne(app: Context, r: AppRow): String? {
-        val resolver = cfg ?: PhoneAppActions.resolver(PhoneAppActions.sources(app))
+        val resolver = cfg ?: PhoneAppActions.resolverOrEmpty(PhoneAppActions.sourcesOrNull(app))
         // Not `fleetApp?.let { } ?: external`: a fleet install that SUCCEEDS
         // returns null, and that elvis would have gone on to run the external path.
         val fleetApp = r.fleetApp

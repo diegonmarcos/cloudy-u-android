@@ -50,7 +50,7 @@ import kotlinx.coroutines.withContext
  * (EngineGuardTest holds that nothing else may).
  */
 @Composable
-fun StoreActivityPanel(updates: Int, onUpdateAll: () -> Unit, modifier: Modifier = Modifier) {
+fun StoreActivityPanel(updates: Int, onUpdateAll: () -> Unit, modifier: Modifier = Modifier, notChecked: String? = null) {
     val ctx = LocalContext.current
     val app = ctx.applicationContext
     var engine by remember { mutableStateOf(StoreEngine.engineOrNull()) }
@@ -71,7 +71,7 @@ fun StoreActivityPanel(updates: Int, onUpdateAll: () -> Unit, modifier: Modifier
             java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(t))
         })
     }
-    val all = StoreActivity.overall(items, updates)
+    val all = StoreActivity.overall(items, updates, notChecked)
 
     val prefs = remember { StoreActivity.Prefs(PrefsFlags(app)) }
     var expanded by remember { mutableStateOf(prefs.expanded) }
@@ -163,7 +163,7 @@ private fun toneInk(o: StoreActivity.Overall): Color = when (o.tone) {
     StoreActivity.Tone.ACTIVE -> KitStoreRow.UP
     StoreActivity.Tone.PAUSED -> KitStoreRow.UPDATE
     StoreActivity.Tone.ERROR -> KitStoreRow.BAD
-    StoreActivity.Tone.IDLE -> if (o.updates > 0) KitStoreRow.UPDATE else DIM
+    StoreActivity.Tone.IDLE -> if (o.updates > 0 || o.notChecked != null) KitStoreRow.UPDATE else DIM
 }
 
 /** The app's launcher icon when it is on the device (the PackageManager already has it), else nothing. */

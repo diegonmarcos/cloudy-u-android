@@ -18,6 +18,9 @@
     <string name="store_phone_size_grant">Permissions needed: Usage access. Open Permissions</string>
     <string name="store_phone_size_grant_caption">Without usage access the sizes are the APK alone (labelled APK); data and cache need it.</string>
     <string name="store_phone_count">%1$d apps</string>
+    <string name="store_phone_not_served_notice">Install sources not served: fleet/appstore-install-sources has not reached this phone, so external sources, store pages and update checks are unavailable. Installed apps and fleet apps still list.</string>
+    <string name="store_phone_why_not_served">Needs fleet/appstore-install-sources, which this phone has not been served (the fleet data route gave no copy).</string>
+    <string name="store_phone_origin_store">Origin store</string>
     <string name="store_phone_list_failed">Could not list apps: %1$s</string>
     <string name="store_phone_other">Other</string>
 

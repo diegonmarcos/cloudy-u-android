@@ -53,7 +53,8 @@ object StoreStages {
             val st = StoreAuto.load(ctx)
             // #1944 the per-app progress (name, phase, percent, bytes, queue position, last error) and the totals lead; the former lines follow.
             StoreProgressCard.lines(StoreJobs.board.rows(), StoreJobs.board.overall()) +
-                StoreKeepAliveText.lines(progress()?.text, st?.let { StoreAuto.pending(it) }, st?.finishedAt ?: 0L, System.currentTimeMillis())
+                StoreKeepAliveText.lines(progress()?.text, st?.let { StoreAuto.pending(it) }, st?.finishedAt ?: 0L, System.currentTimeMillis(),
+                    StoreTally.notChecked(false, PhoneAppActions.sourcesOrNull(ctx) == null))
         }
         BatchForeground.icon = { AppStoreHost.notificationIcon }
         BatchForeground.launch = { ctx ->

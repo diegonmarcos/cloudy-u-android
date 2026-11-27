@@ -64,13 +64,16 @@ object StoreTally {
         val toDownload: Int, val toDownloadBytes: Long,
         /** Every size in the declared total was known. */
         val sizesComplete: Boolean,
+        /** Why nothing was checked (list failed, install sources not served), or null. Never "all current" while this is set. */
+        val notChecked: String? = null,
     ) {
         fun installedLine(): String =
             "Installed $installed / $declared apps · ${StoreSizes.format(installedBytes)} / " +
                 StoreSizes.format(declaredBytes) + if (sizesComplete) "" else "+"
 
         fun updatesLine(): String =
-            if (updates == 0) "Updates 0 — all current"
+            if (updates == 0 && notChecked != null) "Updates not checked: $notChecked"
+            else if (updates == 0) "Updates 0 — all current"
             else "Updates $updates · ${StoreSizes.format(updateBytes)} — " +
                 "$cached cached (${StoreSizes.format(cachedBytes)}) · $toDownload to download (${StoreSizes.format(toDownloadBytes)})"
     }
@@ -80,7 +83,7 @@ object StoreTally {
      * An update is CACHED when its download is already on disk (count and size: the cached file);
      * otherwise it is TO DOWNLOAD (size: the release asset). Update total = cached + to download.
      */
-    fun aggregate(items: List<Item>): Tally {
+    fun aggregate(items: List<Item>, notChecked: String? = null): Tally {
         var installed = 0; var instBytes = 0L; var declBytes = 0L; var complete = true
         var updates = 0; var cached = 0; var cachedBytes = 0L; var todo = 0; var todoBytes = 0L
         for (i in items) {
@@ -94,7 +97,14 @@ object StoreTally {
             }
         }
         return Tally(items.size, installed, instBytes, declBytes, updates, cachedBytes + todoBytes,
-            cached, cachedBytes, todo, todoBytes, complete)
+            cached, cachedBytes, todo, todoBytes, complete, notChecked)
+    }
+
+    /** Why the Phone page has checked nothing: the list failed, or the install-source map is not served. Null = nothing missing. */
+    fun notChecked(listFailed: Boolean, sourcesMissing: Boolean): String? = when {
+        listFailed -> "app list failed"
+        sourcesMissing -> "install sources not served"
+        else -> null
     }
 
     // ── device glue: local reads only ──────────────────────────────────────────
@@ -139,12 +149,12 @@ object StoreTally {
      * download finishing moves an update from "to download" to "cached" without a fetch.
      */
     @Composable
-    fun Area(key: Any?, compute: (Context) -> List<Item>, modifier: Modifier = Modifier) {
+    fun Area(key: Any?, compute: (Context) -> List<Item>, modifier: Modifier = Modifier, notChecked: String? = null) {
         val ctx = androidx.compose.ui.platform.LocalContext.current
         var tally by remember { mutableStateOf<Tally?>(null) }
         LaunchedEffect(key) {
             if (tally != null) delay(SETTLE_MS)
-            tally = withContext(Dispatchers.IO) { runCatching { aggregate(compute(ctx.applicationContext)) }.getOrNull() }
+            tally = withContext(Dispatchers.IO) { runCatching { aggregate(compute(ctx.applicationContext), notChecked) }.getOrNull() }
         }
         val t = tally
         Column(modifier.fillMaxWidth().padding(vertical = sdp(StoreDensity.S4))
