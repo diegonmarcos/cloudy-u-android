@@ -157,7 +157,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "z-ai/glm-5.3-flash",
-        "pricing_as_of": "2026-11-26",
+        "pricing_as_of": "2026-11-27",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -217,7 +217,7 @@
             ],
             "trained_for": [],
             "prompt": 0.08,
-            "completion": 0.45,
+            "completion": 0.16,
             "note": "Ranked for marketing/SEO only; light and predictable on short rewrites."
           },
           {
@@ -248,8 +248,8 @@
               "fp16",
               "fp8"
             ],
-            "prompt": 0.71,
-            "completion": 0.71,
+            "prompt": 0.59,
+            "completion": 0.79,
             "note": "70B open weights, no category ranking — a general fallback, not a specialist."
           },
           {
@@ -293,8 +293,10 @@
               "academia",
               "finance",
               "health",
+              "legal",
               "marketing",
               "marketing/seo",
+              "programming",
               "roleplay",
               "science",
               "technology",
@@ -314,6 +316,7 @@
               "fp8"
             ],
             "trained_for": [
+              "academia",
               "legal",
               "programming",
               "roleplay"
@@ -353,7 +356,7 @@
             "id": "moonshotai/kimi-k2-0905",
             "name": "Kimi K2 0905",
             "open": true,
-            "quant": [],
+            "quant": ["fp8"],
             "prompt": 0.6,
             "completion": 2.5,
             "note": "Priciest open row; a single fp8 endpoint, aimed at long-context rewriting."
