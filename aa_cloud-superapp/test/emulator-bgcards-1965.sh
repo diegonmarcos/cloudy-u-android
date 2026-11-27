@@ -16,6 +16,8 @@ for a in superapp mail store nav webserver; do
   [ -f "$D/$a.apk" ] || { fail "missing $a.apk"; continue; }
   adb install -r -g "$D/$a.apk" >"$OUT/install-$a.txt" 2>&1 || { fail "install $a"; tail -3 "$OUT/install-$a.txt"; }
 done
+# The SuperApp is also a launcher: keep the stock one as Home, so HOME never opens the "Select a Home app" chooser over the shade.
+adb shell cmd package set-home-activity com.google.android.apps.nexuslauncher/.NexusLauncherActivity >/dev/null 2>&1 || true
 for p in $H $M $S $N $W; do adb shell pm grant "$p" android.permission.POST_NOTIFICATIONS >/dev/null 2>&1 || true; done
 adb logcat -c
 # The hub opened once, as on a phone (a never-opened app is in the stopped state; cards are sent with INCLUDE_STOPPED anyway).
@@ -58,6 +60,7 @@ PY
   rm -f "$OUT/.raw-$1.txt"
 }
 snap t2
+adb shell input keyevent KEYCODE_BACK; adb shell input keyevent KEYCODE_HOME; sleep 2
 adb shell cmd statusbar expand-notifications; sleep 3; shoot bgcards-1965-shade-expanded
 adb shell input swipe 540 600 540 1800 400; sleep 2; shoot bgcards-1965-shade-full
 sleep 8; snap t12; shoot bgcards-1965-shade-t12
