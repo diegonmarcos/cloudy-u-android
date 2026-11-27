@@ -325,6 +325,16 @@ bshot() { adb exec-out screencap -p > "$OUT/walk/drive-bulk-1934-$1-$2.png" 2>/d
 fixfile() { adb shell "run-as $PKG cat files/fixtures/$1/a.txt" < /dev/null 2>/dev/null | tr -d '\r\n'; }
 find_ctl() { # <rid>: scroll the body until the control is on screen; prints "x y state"
   local n pos; for n in 0 1 2 3 4 5 6 7; do dump >/dev/null; pos=$(probe "$1") && { echo "$pos"; return 0; }; scroll_body || return 1; sleep 1; done; return 1; }
+scroll_body_up() { dump | python3 -I -c '
+import re,sys
+x=sys.stdin.read(); H=int(sys.argv[2]); best=None
+for m in re.finditer(r"<node [^>]*>",x):
+    n=m.group(0)
+    if re.search(r"resource-id=\"git_bulk_scroll\"",n):
+        b=re.search(r"bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"",n); best=list(map(int,b.groups()))
+if not best: sys.exit(1)
+top=max(best[1],0); bot=min(best[3],H); cx=(best[0]+best[2])//2
+print(cx, top+(bot-top)//4, top+(bot-top)*3//4)' x "$H" | { read -r cx y1 y2 && adb shell input swipe "$cx" "$y1" "$cx" "$y2" 300 < /dev/null; }; }
 tap_ctl() { local pos; pos=$(find_ctl "$1") || return 1; set -- $pos; [ "$3" = enabled ] && adb shell input tap "$1" "$2" < /dev/null; echo "$3"; }
 open_bulk() {
   tap_rid sync_git_top_group_more >/dev/null || { snap no-more; fail "no More menu"; }; sleep 1
@@ -353,6 +363,7 @@ bulk_phase() {
     bshot "$S" nopick
     # the multi-select: pick fixture -2 (a pick box), the count follows
     tap_ctl git_sheet_tab_overview >/dev/null; sleep 1
+    for k in 1 2 3; do scroll_body_up; sleep 1; done   # the pick boxes sit at the top of the body: never tap one under the pinned scope bar
     tap_ctl git_bulk_pick_$NAME-2 >/dev/null; sleep 1
     cnt=$(nodetext git_bulk_scope_count); [ "$cnt" = "1 repos" ]; brec "$S" "scope.pick" "pick one repo" $? "$cnt"
     bshot "$S" picked

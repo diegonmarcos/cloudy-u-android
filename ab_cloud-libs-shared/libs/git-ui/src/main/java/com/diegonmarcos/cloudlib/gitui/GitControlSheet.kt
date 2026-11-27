@@ -200,7 +200,7 @@ private fun GroupView(
             }.also { Reasons(g.controls.filter { it.kind == "action" }.mapNotNull { c -> blocked(c)?.let { c.label to it } }) }
             "run" -> RunGroup(sheet, g, state, host, actions, blocked)
             "output" -> Column(Modifier.testTag("git_sheet_output")) {
-                Text(host.output ?: "", style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace)
+                Text(host.output?.takeIf { it.isNotBlank() } ?: GitTable.DASH, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace)
                 host.results.forEach { (n, r) -> Text("$n  $r", style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace) }
                 host.progress.forEach { r -> Text(r.name + "  " + r.line(), Modifier.testTag("git_bulk_row_" + r.name), style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace) }
             }
@@ -347,8 +347,8 @@ private fun BulkScopeBar(sheet: GitSheet, host: GitSheetHost, actions: GitSheetA
         Text(stringResource(R.string.git_bulk_scope_title), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(k.gapWide), verticalAlignment = Alignment.CenterVertically) {
             sheet.scopes.forEach { sc -> k.pill(GitPill(sc.label, { actions.setScope(sc.id) }, Modifier.testTag("git_bulk_scope_" + sc.id), filled = sc.id == host.scope)) }
-            Text(stringResource(R.string.git_bulk_scope_count, host.targets.size), Modifier.testTag("git_bulk_scope_count"), style = MaterialTheme.typography.labelMedium, fontFamily = FontFamily.Monospace)
         }
+        Text(stringResource(R.string.git_bulk_scope_count, host.targets.size), Modifier.testTag("git_bulk_scope_count"), style = MaterialTheme.typography.labelMedium, fontFamily = FontFamily.Monospace)
         if (host.progress.isNotEmpty()) {
             val sum = BulkProgress.summary(host.progress)
             Row(horizontalArrangement = Arrangement.spacedBy(k.gapWide), verticalAlignment = Alignment.CenterVertically) {
