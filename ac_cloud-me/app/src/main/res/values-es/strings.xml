@@ -16,6 +16,7 @@
     <string name="repo_view_md">README.md</string>
     <string name="repo_view_html">README.html</string>
     <string name="repo_view_canvas">README.canvas</string>
+    <string name="repo_view_site">Sitio</string>
     <string name="repo_view_loading">Cargando %1$s</string>
     <string name="repo_view_failed_title">No se pudo mostrar %1$s</string>
     <string name="repo_view_detail_url">URL: %1$s</string>

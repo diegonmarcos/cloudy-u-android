@@ -285,13 +285,34 @@ jobs:
           sys.exit(1 if bad or len(cases) < 14 else 0)
           PY
 
+      # #1961 the Proj tab-order tests' verdict is read from the JUnit XML: every named test ran and passed (a skipped or missing test fails)
+      - name: Proj tabs 1961 verdict (JUnit XML)
+        working-directory: ${{ github.workspace }}
+        run: |
+          X="$(find ac_cloud-me/app/build -path '*test-results*' -name 'TEST-*.ProjTabs1961Test.xml' | head -1)"
+          [ -n "$X" ] || { echo "::error::no ProjTabs1961Test result"; exit 1; }
+          python3 -I - "$X" <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          cases = list(ET.parse(sys.argv[1]).getroot().iter("testcase"))
+          bad = [c.get("name") for c in cases if c.find("failure") is not None or c.find("error") is not None or c.find("skipped") is not None]
+          print("ProjTabs1961Test: %d cases, %d not passed" % (len(cases), len(bad)))
+          for c in cases: print("  %s %s" % ("FAIL" if c.get("name") in bad else "PASS", c.get("name")))
+          sys.exit(1 if bad or len(cases) < 5 else 0)
+          PY
+
       - name: Determine variant
         if: steps.gate.outputs.skip != 'true'
         id: variant
+        # #1961 the dispatch input reaches the script through env only and is allow-listed (debug|release)
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          GIT_REF: ${{ github.ref }}
+          INPUT_VARIANT: ${{ inputs.variant }}
         run: |
-          if   [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "variant=${{ inputs.variant }}" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          if   [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            case "$INPUT_VARIANT" in debug|release) ;; *) echo "::error::variant not allowed"; exit 1 ;; esac
+            echo "variant=$INPUT_VARIANT" >> "$GITHUB_OUTPUT"
+          elif [[ "$GIT_REF" == refs/tags/* ]]; then
             echo "variant=release" >> "$GITHUB_OUTPUT"
           else
             echo "variant=debug" >> "$GITHUB_OUTPUT"

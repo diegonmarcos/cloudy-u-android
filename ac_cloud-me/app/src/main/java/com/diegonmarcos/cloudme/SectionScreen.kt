@@ -188,7 +188,7 @@ private fun PageContent(section: Section, page: Page, modifier: Modifier) {
             "files" -> FilesScreen(single, modifier)
             "proj_home" -> ProjHomeScreen(modifier)
             "web" -> {
-                // #1932 a repo entry of Proj declares `views`: GH Repo Page | README.md | README.html | README.canvas (GH Repo Page is the entry's own WebPage, unchanged)
+                // #1932 a repo entry of Proj declares `views` (#1961 order: README.html | GH Repo Page | README.canvas | README.md [| Site]); GH Repo Page is the entry's own WebPage, unchanged
                 val repo = RepoViewerDecl.of(single)
                 if (repo != null) RepoViewerScreen(single, repo.first, repo.second, modifier, pageId = page.id) else WebPage(single, modifier, pageId = page.id)
             }

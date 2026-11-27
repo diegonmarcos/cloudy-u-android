@@ -5,6 +5,12 @@
     "url": "https://github.com/diegonmarcos/lecole-42_ops-Mylibs",
     "_doc": "#1914 Proj > 42 > Mylibs: the project's site (or its GitHub repo page when it has none), embedded by its https URL from the declared table me-links.json (derived from _front-html___ repos-pages.json and the registry by data/regen-me-links.py).",
     "link": "https://github.com/diegonmarcos/lecole-42_ops-Mylibs",
-    "views": ["gh", "md", "html", "canvas"]
+    "views": [
+      "html",
+      "gh",
+      "canvas",
+      "md"
+    ],
+    "repo": "https://github.com/diegonmarcos/lecole-42_ops-Mylibs"
   }
 ]

@@ -116,18 +116,26 @@ object RepoFetch {
 object RepoViewerDecl {
     /** The repo and the declared views of a page block, or null when the block is not a repo entry with `views` (it then stays the plain WebPage). */
     fun of(block: JSONObject): Pair<RepoViews.Ref, List<String>>? {
-        val ref = RepoViews.parse(block.optString("url")) ?: return null
+        // #1961 `repo` is the entry's GitHub page (regen-me-links.py); an entry whose url is its site (CG's overlays) reads its README tabs from it
+        val ref = RepoViews.parse(block.optString("repo").ifEmpty { block.optString("url") }) ?: return null
         val arr = block.optJSONArray("views") ?: return null
         val views = RepoViews.declared((0 until arr.length()).map { arr.optString(it) })
         return if (RepoViews.GH in views) ref to views else null
     }
+
+    /** #1961 true when the entry's own url is its GitHub page (no separate `repo`), so GH Repo Page is today's WebPage of the block. */
+    fun ownsGh(block: JSONObject): Boolean = block.optString("repo").let { it.isEmpty() || it == block.optString("url") }
+
+    /** #1961 the block GH Repo Page shows for a site entry: the same block with url and link set to its `repo`. */
+    fun ghPage(block: JSONObject): JSONObject = if (ownsGh(block)) block
+        else JSONObject(block.toString()).put("url", block.optString("repo")).put("link", block.optString("repo"))
 }
 
-/** The view selector (GH Repo Page | README.md | README.html | README.canvas) over the chosen view of one repo entry. */
+/** The view selector (README.html | GH Repo Page | README.canvas | README.md [| Site]) over the chosen view of one repo entry (#1961 order). */
 @Composable
 fun RepoViewerScreen(block: JSONObject, ref: RepoViews.Ref, views: List<String>, modifier: Modifier = Modifier, pageId: String = block.optString("url")) {
     val ctx = LocalContext.current
-    var view by remember(ref) { mutableStateOf(RepoViews.initial(RepoViewMemory.get(ctx, ref)).takeIf { it in views } ?: RepoViews.GH) }
+    var view by remember(ref) { mutableStateOf(RepoViews.initial(RepoViewMemory.get(ctx, ref)).takeIf { it in views } ?: views.first()) }
     Column(modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp).testTag(RepoViewerTags.SELECTOR), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             for (v in views) FilterChip(
@@ -139,7 +147,9 @@ fun RepoViewerScreen(block: JSONObject, ref: RepoViews.Ref, views: List<String>,
         }
         val body = Modifier.weight(1f).fillMaxWidth()
         when (view) {
-            RepoViews.GH -> WebPage(block, body, pageId = pageId)   // today's page, unchanged
+            RepoViews.GH -> if (RepoViewerDecl.ownsGh(block)) WebPage(block, body, pageId = pageId)   // today's page, unchanged
+                else WebPage(RepoViewerDecl.ghPage(block), body, pageId = "$pageId:gh")                   // #1961 a site entry: its repo's GitHub page
+            RepoViews.SITE -> WebPage(block, body, pageId = pageId) // #1961 the entry's site (its url), unchanged
             else -> RepoFileView(ctx, ref, view, body)
         }
     }
@@ -150,6 +160,7 @@ private fun viewLabel(id: String) = when (id) {
     RepoViews.GH -> stringResource(R.string.repo_view_gh)
     RepoViews.MD -> stringResource(R.string.repo_view_md)
     RepoViews.HTML -> stringResource(R.string.repo_view_html)
+    RepoViews.SITE -> stringResource(R.string.repo_view_site)
     else -> stringResource(R.string.repo_view_canvas)
 }
 

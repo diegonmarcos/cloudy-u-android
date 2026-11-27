@@ -37,6 +37,15 @@ def repo_site(root, s):
         if pg.get("pages_url"): return pg["pages_url"]
     base = "https://github.com/" + reg[name]["url"].split(":", 1)[1][:-4]
     return base + ("/" + s["github_path"] if "github_path" in s else "")
+# #1961 the Proj tabs of a repo entry, in order (README.html first); an entry whose url is its site (an overlay page) also keeps the site as a last tab
+VIEWS = ["html", "gh", "canvas", "md"]
+def repo_page(root, s):
+    """#1961 the GitHub page of a Proj leaf's repo (a folder of it with `github_path`), whatever its url is: the README tabs read from it."""
+    reg = {r["name"]: r for r in load(root, "git-repos-master/0_registry/repos.json")["repos"]}
+    return "https://github.com/" + reg[s["repo"]]["url"].split(":", 1)[1][:-4] + ("/" + s["github_path"] if "github_path" in s else "")
+def tabs(e, v):
+    if e.get("section") != "proj" or "repo" not in e["source"]: return None
+    return VIEWS + ([] if v.startswith("https://github.com/") else ["site"])
 def sot_value(root, e):
     s = e["source"]
     if "repo" in s: return repo_site(root, s)
@@ -49,10 +58,14 @@ def main():
         v = sot_value(root, e)
         if "--check" in sys.argv:
             if v != e["url"] or v != e["sot_url"]: bad.append("%s: table %s / snapshot %s / SoT %s" % (e["id"], e["url"], e["sot_url"], v))
+            if "path" in e and tabs(e, v):
+                b = json.load(open(page_file(e), encoding="utf-8"))[0]
+                if b.get("repo") != repo_page(root, e["source"]) or b.get("views") != tabs(e, v): bad.append("%s: page repo/views %s %s" % (e["id"], b.get("repo"), b.get("views")))
             continue
         e["url"] = e["sot_url"] = v
         if "path" in e:
             f = page_file(e); a = json.load(open(f, encoding="utf-8")); a[0]["link"] = v
+            if tabs(e, v): a[0]["repo"] = repo_page(root, e["source"]); a[0]["views"] = tabs(e, v)
             open(f, "w", encoding="utf-8").write(json.dumps(a, indent=2, ensure_ascii=False) + "\n")
     if "--check" in sys.argv:
         if bad: sys.exit("DIFFERS FROM SoT:\n" + "\n".join(bad))

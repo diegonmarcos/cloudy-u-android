@@ -8,12 +8,14 @@ package com.diegonmarcos.cloudme
  */
 object RepoViews {
     const val GH = "gh"; const val MD = "md"; const val HTML = "html"; const val CANVAS = "canvas"
+    /** #1961 the entry's own site (an overlay page such as CG's), kept as a last tab when the entry's url is not its GitHub page. */
+    const val SITE = "site"
 
     /** One view: [id] is the declared name, [file] the repo file it shows (null for the GitHub page). */
     data class View(val id: String, val file: String?)
 
-    /** Declared order; GH Repo Page first and the default. */
-    val VIEWS = listOf(View(GH, null), View(MD, "README.md"), View(HTML, "README.html"), View(CANVAS, "README.canvas"))
+    /** #1961 tab order: README.html first and the default, then GH Repo Page, README.canvas, README.md (and the entry's site, when it has one). */
+    val VIEWS = listOf(View(HTML, "README.html"), View(GH, null), View(CANVAS, "README.canvas"), View(MD, "README.md"), View(SITE, null))
     val IDS: List<String> = VIEWS.map { it.id }
 
     data class Ref(val owner: String, val repo: String, val dir: String = "", val branch: String = "main") {
@@ -36,11 +38,11 @@ object RepoViews {
         Ref(m.groupValues[1], m.groupValues[2], m.groupValues[4])
     }
 
-    /** The views a block declares, in declared order, restricted to the four known ids; empty when it declares none. */
+    /** The views a block declares, in the tab order of [VIEWS], restricted to the known ids; empty when it declares none. */
     fun declared(views: List<String>): List<String> = IDS.filter { it in views }
 
-    /** The view to open: the remembered one when it is one of the four, else GH Repo Page. */
-    fun initial(remembered: String?): String = if (remembered != null && remembered in IDS) remembered else GH
+    /** The view to open: the remembered one when it is a known view, else the first tab (README.html). */
+    fun initial(remembered: String?): String = if (remembered != null && remembered in IDS) remembered else IDS.first()
 
     fun fileOf(view: String): String? = VIEWS.firstOrNull { it.id == view }?.file
 

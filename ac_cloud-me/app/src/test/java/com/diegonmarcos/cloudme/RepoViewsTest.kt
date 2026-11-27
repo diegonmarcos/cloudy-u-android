@@ -44,11 +44,11 @@ class RepoViewsTest {
         val d = RepoViews.parse("https://github.com/diegonmarcos/lib-chronos/tree/main/1.Modern-science")!!
         assertEquals("1.Modern-science", d.dir); assertEquals("https://raw.githubusercontent.com/diegonmarcos/lib-chronos/main/1.Modern-science/README.md", d.rawUrl("README.md"))
         assertNull(RepoViews.parse("https://diegonmarcos.github.io/games/")); assertNull(RepoViews.parse("repos-tree.html"))
-        assertEquals(listOf("gh", "md", "html", "canvas"), RepoViews.IDS)
+        assertEquals(listOf("html", "gh", "canvas", "md", "site"), RepoViews.IDS)   // #1961 tab order
     }
 
-    @Test fun `the remembered view wins, else GH Repo Page`() {
-        assertEquals("gh", RepoViews.initial(null)); assertEquals("gh", RepoViews.initial("bogus"))
+    @Test fun `the remembered view wins, else README html`() {
+        assertEquals("html", RepoViews.initial(null)); assertEquals("html", RepoViews.initial("bogus"))   // #1961 README.html first
         for (v in RepoViews.IDS) assertEquals(v, RepoViews.initial(v))
     }
 
@@ -59,7 +59,7 @@ class RepoViewsTest {
         for ((id, b) in repos) {
             val d = RepoViewerDecl.of(b)
             assertNotNull("$id declares views", d)
-            assertEquals("$id declares all four", RepoViews.IDS, d!!.second)
+            assertEquals("$id declares all four", listOf("html", "gh", "canvas", "md"), d!!.second)
         }
     }
 
@@ -73,7 +73,7 @@ class RepoViewsTest {
     }
 
     @Test fun `entries that are not repos stay the plain page`() {
-        for ((id, b) in projBlocks().filter { RepoViews.parse(it.second.optString("url")) == null }) assertNull("$id", RepoViewerDecl.of(b))
+        for ((id, b) in projBlocks().filter { RepoViews.parse(it.second.optString("url")) == null && !it.second.has("repo") }) assertNull("$id", RepoViewerDecl.of(b))
     }
 
     @Test fun `failures are classified, never blank`() {

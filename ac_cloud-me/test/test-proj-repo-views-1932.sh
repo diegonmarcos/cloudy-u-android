@@ -29,7 +29,7 @@ for p in leaves(proj, []):
     b = J(f)[0]; u = b.get("url", ""); urls[p[-1]] = u
     if b.get("id") == "web" and R.match(u):
         n += 1
-        if b.get("views") != ["gh", "md", "html", "canvas"]: print("V1\t%s does not declare the four views (%r)" % (p[-1], b.get("views")))
+        if b.get("views") != ["html", "gh", "canvas", "md"]: print("V1\t%s does not declare the four views (%r)" % (p[-1], b.get("views")))
         if b.get("link") != u: print("V2\t%s GH Repo Page (link) is not its own url" % p[-1])
 if n < 20: print("V1\tonly %d Proj repo entries found" % n)
 base = J("test/fixtures/proj-repo-urls-1932.json")
@@ -38,9 +38,9 @@ for k, u in base.items():
 S = T("app/src/main/java/com/diegonmarcos/cloudme/SectionScreen.kt")
 if "WebPage(single, modifier, pageId = page.id)" not in S or "RepoViewerScreen(" not in S: print("V2\tSectionScreen lost the bare WebPage or does not host the viewer")
 V = T("app/src/main/java/com/diegonmarcos/cloudme/RepoViewerScreen.kt")
-if "RepoViews.GH -> WebPage(block, body, pageId = pageId)" not in V: print("V2\tthe GH view is not the entry's WebPage")
+if "RepoViews.GH -> if (RepoViewerDecl.ownsGh(block)) WebPage(block, body, pageId = pageId)" not in V: print("V2\tthe GH view is not the entry's WebPage")
 K = T("app/src/main/java/com/diegonmarcos/cloudme/RepoViews.kt")
-for need in ('https://raw.githubusercontent.com/$owner/$repo/$branch/', '"README.md"', '"README.html"', '"README.canvas"', 'View(GH, null)'):
+for need in ('https://raw.githubusercontent.com/$owner/$repo/$branch/', '"README.md"', '"README.html"', '"README.canvas"', 'View(GH, null)'):  # #1961 order is asserted by test-proj-tabs-1961.sh
     if need not in K: print("V3\tRepoViews lacks %s" % need)
 if re.search(r"diegonmarcos/(?!\$)", K.replace("diegonmarcos/_", "")) and "github.com/diegonmarcos" in K: print("V3\tRepoViews hard-codes a repo")
 for need in ("RepoViewMemory.put(ctx, ref, v)", "RepoViewMemory.get(ctx, ref)", "repo_view_detail_url", "repo_view_retry", "repo_view_detail_status", "repo_view_detail_error"):
@@ -72,11 +72,11 @@ mut() { rm -rf "$T/r"; mkdir -p "$T/r/ac_cloud-me/app/src/main" "$T/r/ab_cloud-l
   cp "$APP/../ab_cloud-libs-shared/libs/json-canvas/build.gradle" "$T/r/ab_cloud-libs-shared/libs/json-canvas/"; cp -r "$APP/../.github/workflows" "$T/r/.github/workflows"
   python3 -c "$2" "$T/r/ac_cloud-me"; r=$(check "$T/r/ac_cloud-me" x); if [ -n "$r" ]; then ok "mutation red: $1"; else bad "mutation stayed green: $1"; fi; }
 mut "an entry loses its views" 'import json,sys;p=sys.argv[1]+"/data/ui/proj/pj-unix/pj-unix-superapp.json";d=json.load(open(p,encoding="utf-8"));del d[0]["views"];json.dump(d,open(p,"w",encoding="utf-8"))'
-mut "an entry declares only three views" 'import json,sys;p=sys.argv[1]+"/data/ui/proj/pj-capital/pj-capital-pm.json";d=json.load(open(p,encoding="utf-8"));d[0]["views"]=["gh","md","html"];json.dump(d,open(p,"w",encoding="utf-8"))'
+mut "an entry declares only three views" 'import json,sys;p=sys.argv[1]+"/data/ui/proj/pj-capital/pj-capital-pm.json";d=json.load(open(p,encoding="utf-8"));d[0]["views"]=["html","gh","canvas"];json.dump(d,open(p,"w",encoding="utf-8"))'
 mut "the GH page diverges from the entry url" 'import json,sys;p=sys.argv[1]+"/data/ui/proj/pj-unix/pj-unix-cloudy.json";d=json.load(open(p,encoding="utf-8"));d[0]["link"]="https://github.com/x/y";json.dump(d,open(p,"w",encoding="utf-8"))'
 mut "an entry url is dropped" 'import json,sys;p=sys.argv[1]+"/data/ui/proj/pj-hardtech/pj-hardtech-cad.json";d=json.load(open(p,encoding="utf-8"));d[0]["url"]="https://github.com/diegonmarcos/other";d[0]["link"]=d[0]["url"];json.dump(d,open(p,"w",encoding="utf-8"))'
 mut "a Proj page file is deleted" 'import os,sys;os.remove(sys.argv[1]+"/data/ui/proj/pj-wiki/pj-wiki-arcanum.json")'
-mut "the GH view stops being the WebPage" 'import sys;p=sys.argv[1]+"/app/src/main/java/com/diegonmarcos/cloudme/RepoViewerScreen.kt";s=open(p,encoding="utf-8").read().replace("RepoViews.GH -> WebPage(block, body, pageId = pageId)","RepoViews.GH -> Unit");open(p,"w",encoding="utf-8").write(s)'
+mut "the GH view stops being the WebPage" 'import sys;p=sys.argv[1]+"/app/src/main/java/com/diegonmarcos/cloudme/RepoViewerScreen.kt";s=open(p,encoding="utf-8").read().replace("RepoViews.GH -> if (RepoViewerDecl.ownsGh(block)) WebPage(block, body, pageId = pageId)","RepoViews.GH -> Unit");open(p,"w",encoding="utf-8").write(s)'
 mut "SectionScreen drops the bare WebPage" 'import sys;p=sys.argv[1]+"/app/src/main/java/com/diegonmarcos/cloudme/SectionScreen.kt";s=open(p,encoding="utf-8").read().replace("WebPage(single, modifier, pageId = page.id)","Unit");open(p,"w",encoding="utf-8").write(s)'
 mut "the canvas view is hard-coded to a repo" 'import sys;p=sys.argv[1]+"/app/src/main/java/com/diegonmarcos/cloudme/RepoViews.kt";s=open(p,encoding="utf-8").read().replace("\"README.canvas\"","\"canvas.json\"");open(p,"w",encoding="utf-8").write(s)'
 mut "the choice is not remembered" 'import sys;p=sys.argv[1]+"/app/src/main/java/com/diegonmarcos/cloudme/RepoViewerScreen.kt";s=open(p,encoding="utf-8").read().replace("RepoViewMemory.put(ctx, ref, v)","Unit");open(p,"w",encoding="utf-8").write(s)'
