@@ -5,6 +5,7 @@
 set -u
 OUT=walk-out; mkdir -p "$OUT"
 adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
+adb shell settings put global hide_error_dialogs 1 || true  # the slow emulator raises "Pixel Launcher isn't responding" over the screenshots
 adb install -r app-under-test.apk || { echo "::error::adb install failed"; exit 2; }
 adb shell pm revoke "$PKG" android.permission.READ_EXTERNAL_STORAGE 2>/dev/null || true
 adb shell pm revoke "$PKG" android.permission.READ_MEDIA_IMAGES 2>/dev/null || true
