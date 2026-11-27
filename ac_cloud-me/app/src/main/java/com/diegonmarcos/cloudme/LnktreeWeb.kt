@@ -28,6 +28,9 @@ object LnktreeCache {
     fun store(ctx: Context): LnktreeCacheStore =
         store ?: synchronized(this) { store ?: LnktreeCacheStore(File(ctx.applicationContext.cacheDir, "lnktree-cache")).also { store = it } }
 
+    /** #1947 page id -> when the offline copy now shown was fetched; absent = the page came from the network. */
+    val offlineSince = ConcurrentHashMap<String, Long>()
+
     private val refreshing = ConcurrentHashMap.newKeySet<String>()
     private val background by lazy { Executors.newFixedThreadPool(config.prefetchConcurrency) }
 
@@ -65,7 +68,13 @@ object LnktreeCache {
         val target = runCatching { java.net.URI(u) }.getOrNull() ?: return null
         if (target.scheme != "https" || !target.host.equals(base.host, true) || target.port != base.port) return null
         val s = store(ctx)
-        val served = LnktreeResolver.serve(pageId, u, cfg, s, ::fetch, { stale -> revalidate(s, pageId, stale, pageUrl) }, pageUrl) ?: return null
+        val served = LnktreeResolver.serve(pageId, u, cfg, s, ::fetch, { stale -> revalidate(s, pageId, stale, pageUrl) }, pageUrl)
+        if (CacheKey.normalize(u) == CacheKey.normalize(pageUrl)) {
+            // #1947 the walk reads this: where the main frame came from; the offline note reads offlineSince
+            android.util.Log.i("CloudMeWeb", "MAINFRAME_SOURCE page=$pageId source=${served?.source ?: "webview-network"} strategy=${cfg.strategy}")
+            if (served?.source == "offline-cache") offlineSince[pageId] = served.fetchedAt else offlineSince.remove(pageId)
+        }
+        if (served == null) return null
         return WebResourceResponse(served.mime, served.encoding, served.status, if (served.status == 200) "OK" else "Not Found", mapOf("Access-Control-Allow-Origin" to "*"), served.body.inputStream())
     }
 

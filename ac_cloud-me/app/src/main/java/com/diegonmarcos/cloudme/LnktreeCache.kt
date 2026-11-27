@@ -46,7 +46,11 @@ data class LnktreeCacheConfig(
     /** #1938 the section pager's background queue (`queue` block): every subpage of the shown section fetched one at a time, at most [queueMaxRetained] kept (least recently viewed released first). */
     val queueEnabled: Boolean = false,
     val queueMaxRetained: Int = 0,
+    /** #1947 "network_first" (the live page is shown; the cache is the offline fallback) or "stale_while_revalidate" (the cache is shown at once and refreshed in the background). */
+    val strategy: String = STALE_WHILE_REVALIDATE,
 ) {
+    val networkFirst: Boolean get() = strategy == NETWORK_FIRST
+
     fun caches(pageId: String): Boolean = enabled && pageId !in excludePages
 
     /** The sections whose pages are cached: the declared `sections`, else the one `section`. */
@@ -54,6 +58,8 @@ data class LnktreeCacheConfig(
 
     companion object {
         const val DAY_MS = 24L * 60 * 60 * 1000
+        const val NETWORK_FIRST = "network_first"
+        const val STALE_WHILE_REVALIDATE = "stale_while_revalidate"
         private const val MB = 1024L * 1024
 
         val OFF = LnktreeCacheConfig(false, "", 0, false, 1, "connected", 0, 0, 0, 1, "page", emptySet())
@@ -75,6 +81,7 @@ data class LnktreeCacheConfig(
                 maxBytes = (o.optDouble("max_cache_mb", 0.0) * MB).toLong(),
                 holderMaxWebViews = o.optInt("holder_max_webviews", 1).coerceAtLeast(1),
                 hardRefreshScope = o.optString("hard_refresh_scope", "page"),
+                strategy = o.optString("strategy", STALE_WHILE_REVALIDATE).ifEmpty { STALE_WHILE_REVALIDATE },
                 queueEnabled = o.optJSONObject("queue")?.optBoolean("enabled", false) ?: false,
                 queueMaxRetained = o.optJSONObject("queue")?.optInt("max_retained_pages", 0)?.coerceAtLeast(1) ?: 0,
                 excludePages = if (ex == null) emptySet() else (0 until ex.length()).map { ex.getString(it) }.toSet(),
@@ -313,7 +320,13 @@ object LnktreePrefetch {
 }
 
 /** A cached body ready to hand to the WebView. */
-class Served(val mime: String, val encoding: String?, val status: Int, val body: File)
+class Served(
+    val mime: String, val encoding: String?, val status: Int, val body: File,
+    /** #1947 "network" (fetched just now), "cache" (an entry served by the cache-first rule) or "offline-cache" (the network failed, the stored copy is the fallback). */
+    val source: String = "cache",
+    /** When the served copy was fetched (ms); the "offline copy from <age>" note reads it. */
+    val fetchedAt: Long = 0L,
+)
 
 /** shouldInterceptRequest's decision, with the network and the background refresh injected. */
 object LnktreeResolver {
@@ -325,18 +338,43 @@ object LnktreeResolver {
         pageId: String, url: String, cfg: LnktreeCacheConfig, store: LnktreeCacheStore,
         fetch: (String) -> Fetched?, revalidate: (String) -> Unit, pageUrl: String? = null,
     ): Served? {
+        // #1947 network_first: the live page (and its same-origin CSS/JS) comes from the network; a good answer refreshes the entry; the stored copy
+        // is served ONLY when the network failed (offline, DNS, timeout, 5xx) and never an empty body
+        if (cfg.networkFirst && networkFirstTarget(url, pageUrl)) {
+            val r = fetch(url)?.takeIf { it.status == 200 && it.body.isNotEmpty() }
+            if (r != null) {
+                store.put(pageId, url, r.mime, r.encoding, r.status, r.body)
+                store.trim(cfg.maxBytes)
+                return store.get(pageId, url)?.let { Served(it.mime, it.encoding, it.status, it.body, "network", it.fetchedAt) }
+            }
+            return store.get(pageId, url)?.takeIf { it.status == 200 && it.body.length() > 0 }
+                ?.let { Served(it.mime, it.encoding, it.status, it.body, "offline-cache", it.fetchedAt) }
+        }
         store.get(pageId, url)?.let { e ->
             // #1947 cached HTML without its CSS/JS is incomplete: not served (the WebView's network loads the whole page); it is completed in the background
             if (!store.complete(pageId, url)) { revalidate(url); return null }
             if (store.state(pageId, url, cfg.ttlMs) == CacheState.STALE) revalidate(url)
-            return Served(e.mime, e.encoding, e.status, e.body)
+            return Served(e.mime, e.encoding, e.status, e.body, "cache", e.fetchedAt)
         }
         // #1947 a sub-resource miss never blocks the WebView (a 10 s connect + 20 s read wait, then the network again): it goes to the WebView's network at once and is filled in the background
         if (pageUrl != null && CacheKey.normalize(url) != CacheKey.normalize(pageUrl)) { revalidate(url); return null }
         val r = fetch(url)?.takeIf { it.status == 200 } ?: return null
         store.put(pageId, url, r.mime, r.encoding, r.status, r.body)
         store.trim(cfg.maxBytes)
-        return store.get(pageId, url)?.let { Served(it.mime, it.encoding, it.status, it.body) }
+        return store.get(pageId, url)?.let { Served(it.mime, it.encoding, it.status, it.body, "network", it.fetchedAt) }
+    }
+
+    /** #1947 the requests network_first applies to: the main frame and the page's stylesheets and scripts (images stay cache-first). */
+    fun networkFirstTarget(url: String, pageUrl: String?): Boolean {
+        if (pageUrl != null && CacheKey.normalize(url) == CacheKey.normalize(pageUrl)) return true
+        val path = runCatching { URI(url).path.orEmpty().lowercase() }.getOrDefault("")
+        return path.endsWith(".css") || path.endsWith(".js") || path.endsWith(".mjs")
+    }
+
+    /** #1947 "2 h", "3 d": the age the offline note shows. */
+    fun age(fetchedAt: Long, now: Long): String {
+        val m = ((now - fetchedAt).coerceAtLeast(0)) / 60_000
+        return when { m < 60 -> "${m.coerceAtLeast(1)} min"; m < 48 * 60 -> "${m / 60} h"; else -> "${m / (24 * 60)} d" }
     }
 
     /** Hard refresh: what to delete for [pageId] under the declared scope. Returns files removed. */

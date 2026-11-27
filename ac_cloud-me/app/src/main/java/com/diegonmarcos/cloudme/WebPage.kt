@@ -70,6 +70,7 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
     val holder = LocalLnktreeHolder.current
     val cached = holder != null && inject.isBlank() && url.startsWith("https://") && cfg.caches(pageId)
     var refreshing by remember { mutableStateOf(false) }
+    var offlineNote by remember(url, pageId) { mutableStateOf<String?>(null) }
     var atTop by remember { mutableStateOf(true) }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     /** The page's WebView state (history, scroll), refreshed whenever a page finishes loading. */
@@ -110,7 +111,10 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
     val page: @Composable (Modifier) -> Unit = { mod ->
     AndroidView(
         modifier = mod,
-        update = { com.diegonmarcos.superapp.bottomnav.ChromeWebScroll.attach(it, collapse) },
+        update = { sr ->
+            sr.isRefreshing = refreshing   // #1947 the spinner follows the page's state: it stops on onPageFinished, on an error and after the 20 s cap
+            (sr.tag as? WebView)?.let { com.diegonmarcos.superapp.bottomnav.ChromeWebScroll.attach(it, collapse) }
+        },
         factory = { ctx ->
             var fresh = false
             val make = {
@@ -160,6 +164,7 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
                     override fun onPageFinished(view: WebView?, url: String?) {
                         android.util.Log.i("CloudMeWeb", "MAINFRAME_OK page=$pageId url=$url title=${view?.title}")
                         refreshing = false
+                        offlineNote = if (cached) LnktreeCache.offlineSince[pageId]?.let { "Offline copy from ${LnktreeResolver.age(it, System.currentTimeMillis())}" } else null
                         // #1937 a page that finished with nothing in it (an empty 200 from a half-up edge) is the black page: show the error instead
                         if (loadError == null && url?.startsWith("https://") == true) view?.postDelayed({
                             view.evaluateJavascript(WebLoadState.PROBE_JS) { r -> if (WebLoadState.isBlank(r) && loadError == null) loadError = WebLoadState.describe("the page loaded empty", null) }
@@ -191,51 +196,48 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
                 if (!fresh) onResume()
                 else if (!saved.isEmpty) restoreState(saved) else loadUrl(if (url.startsWith("https://")) url else CloudWeb.assetUrl(url))
             }
+            // #1947 pull-down at the top of the page reloads it, cached or not. SwipeRefreshLayout reads the WebView's real scroll state;
+            // a page that scrolls inside an inner element is asked through JS on touch-down, so a pull while scrolling up inside the page never refreshes.
+            var innerScrolled = false
+            view.setOnTouchListener { v, ev ->
+                if (ev.actionMasked == android.view.MotionEvent.ACTION_DOWN) {
+                    val d = v.resources.displayMetrics.density
+                    (v as WebView).evaluateJavascript(WebPullRefresh.innerScrolledJs(ev.x / d, ev.y / d)) { r -> innerScrolled = r?.trim() == "true" }
+                }
+                false
+            }
+            androidx.swiperefreshlayout.widget.SwipeRefreshLayout(ctx).also { sr ->
+                sr.addView(view, android.view.ViewGroup.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.MATCH_PARENT))
+                sr.tag = view
+                sr.setColorSchemeColors(0xFF7C3AED.toInt())
+                sr.setProgressBackgroundColorSchemeColor(0xFF1A0033.toInt())
+                sr.isEnabled = WebPullRefresh.armed(cached)
+                sr.setOnChildScrollUpCallback { _, _ -> WebPullRefresh.canChildScrollUp(view.scrollY, view.canScrollVertically(-1), innerScrolled) }
+                sr.setOnRefreshListener {
+                    refreshing = true
+                    scope.launch {
+                        // #1323 a cached page: its cache files (scope: build.json) are deleted first; every page: WebView cache emptied, reloaded from the network
+                        WebPullRefresh.run(cached, { withContext(Dispatchers.IO) { LnktreeCache.hardRefresh(ctx, pageId) } }, { view.clearCache(true) }, { view.reload() })
+                    }
+                }
+            }
         },
-        onRelease = {
-            (it.parent as? android.view.ViewGroup)?.removeView(it)
-            if (cached && holder!!.peek(url) === it) it.onPause() else { it.stopLoading(); it.destroy() }
+        onRelease = { sr ->
+            val w = sr.tag as WebView
+            if ((w.parent as? android.view.ViewGroup) === sr) sr.removeView(w)
+            if (cached && holder!!.peek(url) === w) w.onPause() else { w.stopLoading(); w.destroy() }
         },
     )
     }
-    if (cached) {
-        // #1323 pull-down = HARD refresh. Only armed when the finger lands with the page scrolled to its top, so it never
-        // fights the WebView's own scrolling. Deletes the page's cache files (scope: build.json), empties the WebView cache, reloads.
-        // Material3's pull-to-refresh building block: PullToRefreshBox is this modifier plus the indicator, without the `enabled` switch.
-        val ptr = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState()
-        androidx.compose.foundation.layout.Box(
-            modifier = modifier.fillMaxSize()
-                .pointerInput(Unit) {
-                    awaitPointerEventScope {
-                        while (true) {
-                            val e = awaitPointerEvent(PointerEventPass.Initial)
-                            if (e.changes.any { it.pressed && !it.previousPressed }) atTop = web.value?.let { !it.canScrollVertically(-1) } ?: true
-                        }
-                    }
-                }
-                .pullToRefresh(
-                    isRefreshing = refreshing,
-                    state = ptr,
-                    enabled = atTop,
-                    onRefresh = {
-                        refreshing = true
-                        scope.launch {
-                            withContext(Dispatchers.IO) { LnktreeCache.hardRefresh(ctx, pageId) }
-                            val w = web.value
-                            if (w == null) refreshing = false else { w.clearCache(true); w.reload() }
-                        }
-                    },
-                ),
-        ) {
-            page(Modifier.fillMaxSize())
-            androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator(
-                state = ptr, isRefreshing = refreshing,
-                modifier = Modifier.align(androidx.compose.ui.Alignment.TopCenter),
-            )
-            loadError?.let { WebLoadErrorPanel(it, retry, Modifier.fillMaxSize()) }
-        }
-    } else androidx.compose.foundation.layout.Box(modifier.fillMaxSize()) {
+    // #1323/#1947 pull-down at the page's top is a HARD refresh on every embedded page (the SwipeRefreshLayout in `page`); the old Compose
+    // pullToRefresh never fired over a WebView (no nested scroll), so its indicator is gone: the layout's own spinner is the one indicator.
+    androidx.compose.foundation.layout.Box(modifier.fillMaxSize()) {
         page(Modifier.fillMaxSize())
+        // #1947 network_first: the live page is shown; only when the network failed is the stored copy shown, with its age
+        offlineNote?.let {
+            androidx.compose.material3.Text(it, color = androidx.compose.ui.graphics.Color(0xFFB8B3C7), style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                modifier = Modifier.align(androidx.compose.ui.Alignment.TopCenter).background(androidx.compose.ui.graphics.Color(0xCC0B0414)).padding(horizontal = 8.dp, vertical = 2.dp).testTag("me:web:offline"))
+        }
         loadError?.let { WebLoadErrorPanel(it, retry, Modifier.fillMaxSize()) }
     }
     }

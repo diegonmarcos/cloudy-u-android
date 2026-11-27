@@ -388,6 +388,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.fragment:fragment-ktx:1.8.5'
     implementation 'androidx.activity:activity-ktx:1.9.3'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'   // #1947 pull-down-to-refresh around an embedded page's WebView (as Cloud Browser)
     implementation 'androidx.activity:activity-compose:1.9.3'
     implementation 'androidx.work:work-runtime-ktx:2.12.0'   // #1323 Lnktree prefetch (the version libs:updater pins; >= 2.10 handles the dataSync onTimeout)
     // Health trackers read Health Connect live (libs:health keeps the SDK private).
