@@ -10,6 +10,8 @@ adb shell pm revoke "$PKG" android.permission.READ_EXTERNAL_STORAGE 2>/dev/null 
 adb shell pm revoke "$PKG" android.permission.READ_MEDIA_IMAGES 2>/dev/null || true
 adb push ac_cloud-notes/test/fixtures/pdf-1949.pdf /sdcard/Download/pdf-1949.pdf
 adb shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/Download/pdf-1949.pdf >/dev/null
+adb shell content call --uri content://media/ --method scan_file --arg /sdcard/Download/pdf-1949.pdf || true  # MediaStore.scanFile's own call
+adb shell cmd media_provider scan 2>/dev/null | head -2 || true
 ID=""
 for _ in $(seq 1 20); do
   ID=$(adb shell content query --uri content://media/external/file --projection _id --where "_display_name='pdf-1949.pdf'" | tr -d '\r' | sed -n 's/.*_id=\([0-9]*\).*/\1/p' | head -1)
@@ -17,7 +19,8 @@ for _ in $(seq 1 20); do
 done
 if [ -z "$ID" ]; then  # the scan broadcast did not index it: insert the row through the Downloads collection and stream the bytes in
   echo "scan did not index the fixture; inserting through content://media/external/downloads"
-  adb shell content insert --uri content://media/external/downloads --bind _display_name:s:pdf-1949.pdf --bind mime_type:s:application/pdf --bind relative_path:s:Download/ || true
+  adb shell content insert --uri content://media/external/downloads --bind _display_name:s:pdf-1949.pdf --bind mime_type:s:application/pdf --bind relative_path:s:Download/ 2>&1 | head -5 || true
+  adb shell content query --uri content://media/external/file --projection _id:_display_name:_data 2>&1 | head -20 || true
   DID=$(adb shell content query --uri content://media/external/downloads --projection _id --where "_display_name='pdf-1949.pdf'" | tr -d '\r' | sed -n 's/.*_id=\([0-9]*\).*/\1/p' | tail -1)
   [ -n "$DID" ] && adb shell "content write --uri content://media/external/downloads/$DID" < ac_cloud-notes/test/fixtures/pdf-1949.pdf
   ID="$DID"; URI="content://media/external/downloads/$ID"
