@@ -69,12 +69,17 @@ jobs:
         uses: ./.github/actions/install-pinned-tools
         with:
           tools: oras sops
-      - name: JVM unit tests (RED expected; the verdict step reads the XML)
-        env:
-          BYPASS_NIX: "1"
-          VAULT_DIR: ${{ github.workspace }}/.vault
-          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
-        run: sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR" || true
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+      # The app's own two test classes, straight through its gradlew: the fleet unit engine stops at the first failing shared library
+      # test, which is not this app's and would leave the named test unrun (LEG ERROR).
+      - name: JVM unit tests of the two 1952 classes (RED expected; the verdict step reads the XML)
+        run: |
+          cd ac_cloud-mail
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:testDebugUnitTest -PtestApp --tests "app.sterna.ui.TabMove1952Test" --tests "app.sterna.ui.inbox.CacheFirst1952Test" || true
       - name: Verdict (KILLED = the named test failed)
         env:
           M: ${{ inputs.name }}
