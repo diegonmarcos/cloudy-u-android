@@ -147,7 +147,7 @@ class BulkSheetRenderTest {
         compose.onNodeWithTag("git_sheet_confirm").assertExists()
         compose.onNodeWithTag("git_sheet_confirm_scope").assertTextEquals("Scope: All Repos \u00b7 3 repositories")
         assertTrue("nothing ran before the confirm", seen.isEmpty())
-        click("git_sheet_confirm_yes")
+        compose.onNodeWithTag("git_sheet_confirm_yes").performClick()   // a dialog window: no scrolling parent
         assertEquals(listOf("mg.life.delete_remote"), seen)
     }
 
