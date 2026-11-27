@@ -74,7 +74,6 @@ done 3<<'SHOTS'
 1969 home-pages home 6 2 declared
 1969 home-pages-low home 6 5 containers
 1969 infra-projects-table projects 8 0 Category,Project,search_the_projects
-1969 infra-projects-wiki projects 6 4 Wiki
 1971 projects-mode all_topology 8 0 Projects,VM,All
 1971 vm-all vm-all_topology 8 0 VM,oci-apps,oci-analytics,oci-mail
 1971 vm-oci-apps vm-oci-apps_topology 8 0 VM,oci-apps
@@ -102,6 +101,12 @@ chk() { # <shot> <labels, _ = space>
 if [ "$T" = all ] || [ "$T" = 1969 ]; then   # the wide table: its right-hand columns after a swipe
   open_page projects; sleep 4; hswipe 30 3 left; shot c3-1969-infra-projects-table-right 4
   chk c3-1969-infra-projects-table-right "no_containers,GitHub"
+fi
+if [ "$T" = all ] || [ "$T" = 1969 ]; then   # the search field narrows the table to the Wiki projects
+  open_page projects; shot c3-1969-infra-projects-wiki-pre 8
+  tap_text c3-1969-infra-projects-wiki-pre "search the projects"; sleep 1; adb shell input text ModernSc; sleep 1; adb shell input keyevent 66 </dev/null; shot c3-1969-infra-projects-wiki 4
+  chk c3-1969-infra-projects-wiki "Wiki,ModernSc"
+  rm -f "$OUT/c3-1969-infra-projects-wiki-pre.png"
 fi
 if [ "$T" = all ] || [ "$T" = 1971 ]; then   # the VM row: the devices after the VMs, Unknown host last
   open_page vm-all_topology; sleep 6; hswipe 27 3 left; shot c3-1971-vm-row-devices 4
