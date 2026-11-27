@@ -27,7 +27,13 @@ jobs:
   pages:
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    env:
+      # the input reaches the scripts through the environment only (no expression injection), validated first
+      TICKET: ${{ inputs.ticket }}
     steps:
+      - name: Validate the ticket input
+        run: |
+          case "$TICKET" in 1953|1954|1955|all) echo "ticket: $TICKET" ;; *) echo "::error::unknown ticket"; exit 1 ;; esac
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -75,7 +81,7 @@ jobs:
           target: google_apis
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
-          script: bash ac_cloud-c3/test/emulator-c3-195x.sh c3.apk out ${{ inputs.ticket }}
+          script: bash ac_cloud-c3/test/emulator-c3-195x.sh c3.apk out "$TICKET"
 
       - name: Boot emulator + walk the pages (attempt 2)
         if: steps.try1.outcome != 'success'
@@ -87,7 +93,7 @@ jobs:
           target: google_apis
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
-          script: bash ac_cloud-c3/test/emulator-c3-195x.sh c3.apk out ${{ inputs.ticket }}
+          script: bash ac_cloud-c3/test/emulator-c3-195x.sh c3.apk out "$TICKET"
 
       - name: Upload evidence (screenshots, ui dumps, logcat)
         if: always()

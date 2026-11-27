@@ -12,17 +12,25 @@ permissions:
   contents: read
 env:
   WORK_DIR: ac_cloud-c3
+  # the input reaches the scripts through the environment only, never interpolated into a run: script (expression injection)
+  MUT: ${{ inputs.name }}
 jobs:
   mutate:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
+      - name: Validate the mutation name against the allowed list
+        run: |
+          case "$MUT" in
+            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost) echo "leg: $MUT" ;;
+            *) echo "::error::unknown mutation name"; exit 1 ;;
+          esac
       - uses: actions/checkout@v4
       - name: Checkout private fleet data (app/build.gradle reads it at configuration, as in Ship Cloud C3)
         uses: ./.github/actions/fleet-private
         with:
           token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
-      - name: Apply mutation ${{ inputs.name }}
+      - name: Apply the mutation
         run: |
           K=ac_cloud-c3/app/src/main/java/com/diegonmarcos/cloudc3
           D=ac_cloud-c3/data
@@ -32,7 +40,7 @@ jobs:
           d = json.load(open(p)); exec(code); open(p, "w").write(json.dumps(d, indent=1, ensure_ascii=False) + "\n")
           PY
           }
-          case "${{ inputs.name }}" in
+          case "$MUT" in
             # #1953-a the Index tile row is back on the Topology pages
             index-back)        pyj ac_cloud-c3/build.json 'd["ui"]["carried_c3"]["stack_topology"].insert(0, {"kind": "tile_row", "title": "Index", "subtitle": "Jump to a table on this page", "tiles": []})' ;;
             # #1953-c an LFS repo is a Repo again (the registry flag is ignored)
@@ -94,9 +102,8 @@ jobs:
           SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
         run: sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR" || true
       - name: Verdict (KILLED = the named test failed)
-        env:
-          M: ${{ inputs.name }}
         run: |
+          M="$MUT"
           case "$M" in
             index-back)        C=ContainersPageComposeTest; N="no Topology page carries the Index row, and the Ops Obsv Index stays" ;;
             lfs-ignored)       C=ContainerProjectsTest; N="an LFS repo is Type Db with the git-lfs engine, and is not a Repo" ;;
