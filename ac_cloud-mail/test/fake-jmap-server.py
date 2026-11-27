@@ -19,6 +19,7 @@ variant seeds, and any Authorization header is accepted.
 """
 import json
 import re
+import os
 import sys
 import urllib.parse
 from email.utils import format_datetime
@@ -107,12 +108,18 @@ def seed():
         text="The documents for 2025 are archived here.\n", seen=True)
     add("m-sent", ["mb-sent"], 10, "Sent: re lunch on Friday", "Me", "me@example.org",
         text="See you on Friday at noon.\n", seen=True)
+    # #1952: FAKE_JMAP_BULK=N adds N older Inbox messages, so a walk can prove the list of a folder larger than one page.
+    for i in range(1, int(os.environ.get("FAKE_JMAP_BULK", "0")) + 1):
+        add("m-bulk%d" % i, ["mb-inbox"], 20 + i, "Bulk message %d" % i, "Bulk %d" % (i % 7), "bulk%d@bulk.example" % (i % 7),
+            text="Bulk body %d.\n" % i, seen=True)
     return out
 
 
 MESSAGES = seed()
 BY_ID = {m["id"]: m for m in MESSAGES}
 STATS = {"requests": 0, "session": 0, "api": 0, "download": 0, "methods": {}}
+# #1952: GET /__fail?code=502 makes every later answer that status (the hub out of memory); /__fail?code=0 heals it.
+FAIL = {"code": 0}
 
 
 def mailbox_json(box):
@@ -277,6 +284,12 @@ class Handler(BaseHTTPRequestHandler):
         path = urllib.parse.urlparse(self.path).path
         if path == "/__stats":
             return self.send(200, STATS)
+        if path == "/__fail":
+            FAIL["code"] = int(urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query).get("code", ["0"])[0])
+            return self.send(200, FAIL)
+        if FAIL["code"]:
+            STATS["failed"] = STATS.get("failed", 0) + 1
+            return self.send(FAIL["code"], b"<html>502 Bad Gateway</html>", "text/html")
         if not self.authorised():
             return
         if path in ("/.well-known/jmap", "/jmap/session"):
@@ -295,6 +308,9 @@ class Handler(BaseHTTPRequestHandler):
         STATS["requests"] += 1
         n = int(self.headers.get("Content-Length") or 0)
         body = self.rfile.read(n) if n else b"{}"
+        if FAIL["code"]:
+            STATS["failed"] = STATS.get("failed", 0) + 1
+            return self.send(FAIL["code"], b"<html>502 Bad Gateway</html>", "text/html")
         if not self.authorised():
             return
         if urllib.parse.urlparse(self.path).path == "/jmap/api":

@@ -969,6 +969,13 @@ class AccountStore(context: Context) {
 
     fun setRefreshFreshness(value: String?) = prefs.edit().putString(KEY_FRESHNESS, value).apply()
 
+    /** #1952: when [accountId]'s list was last reconciled with the server successfully (epoch ms), null when never. Kept for good,
+     *  unlike the 30 s [refreshFreshness] register: the stale/offline banner over the cached list says it. */
+    fun lastSyncAt(accountId: String?): Long? =
+        accountId?.let { prefs.getLong(KEY_LAST_SYNC_PREFIX + it, 0L) }?.takeIf { it > 0L }
+
+    fun setLastSyncAt(accountId: String, at: Long) = prefs.edit().putLong(KEY_LAST_SYNC_PREFIX + accountId, at).apply()
+
     // ---- internals ----
 
     /**
@@ -1076,6 +1083,7 @@ class AccountStore(context: Context) {
         // When each (account, folder) pair was last reconciled successfully, as an OPAQUE string,
         // exactly like KEY_VIEW: written and parsed by RefreshFreshness in the :app module.
         const val KEY_FRESHNESS = "refresh_freshness"
+        const val KEY_LAST_SYNC_PREFIX = "last_sync_at_"
 
         // The settings of shared mailboxes the server has pruned, keyed by login, so a re-granted
         // share is not minted factory-fresh (LinkedAccountMemory). Comfort state on its own key: it

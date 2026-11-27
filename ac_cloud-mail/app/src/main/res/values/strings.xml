@@ -1683,4 +1683,6 @@
     <string name="settings_navigation_child_pages">Navigation of child pages</string>
     <string name="settings_navigation_default">default</string>
     <string name="settings_tree_configs">Configs</string>
+    <string name="banner_last_sync">Last sync %1$s</string>
+    <string name="banner_never_synced">Never synced</string>
 </resources>

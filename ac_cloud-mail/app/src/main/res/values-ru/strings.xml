@@ -1599,4 +1599,6 @@
     <string name="settings_navigation_child_pages">Навигация по подстраницам</string>
     <string name="settings_navigation_default">по умолчанию</string>
     <string name="settings_tree_configs">Конфигурация</string>
+    <string name="banner_last_sync">Последняя синхронизация: %1$s</string>
+    <string name="banner_never_synced">Синхронизации ещё не было</string>
 </resources>

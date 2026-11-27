@@ -1574,4 +1574,6 @@
     <string name="settings_navigation_child_pages">Navigation der Unterseiten</string>
     <string name="settings_navigation_default">Standard</string>
     <string name="settings_tree_configs">Konfiguration</string>
+    <string name="banner_last_sync">Letzte Synchronisierung: %1$s</string>
+    <string name="banner_never_synced">Noch nie synchronisiert</string>
 </resources>

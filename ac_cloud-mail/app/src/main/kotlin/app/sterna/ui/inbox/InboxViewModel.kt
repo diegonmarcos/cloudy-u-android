@@ -117,6 +117,9 @@ data class MailUi(
     /** Event-driven "no usable network" flag from [ConnectivityWatcher] (#65): true the moment
      *  WiFi/mobile drops, without waiting for a refresh to fail. Drives the offline banner. */
     val offline: Boolean = false,
+    /** #1952: when the account last reconciled with the server successfully (epoch ms; null = never). The banner over the cached
+     *  list says it whenever the refresh did not land. */
+    val lastSyncAt: Long? = null,
     /** Inline search-on-the-list state. */
     val searching: Boolean = false,
     val searchQuery: String = "",
@@ -145,6 +148,8 @@ private data class Base(
     val error: String?,
     /** Folded in after the five-flow combine below, from [refreshIndicatorVisibility]. */
     val showRefreshIndicator: Boolean = false,
+    /** #1952: the account's last successful reconcile, for the banner over the cached list. */
+    val lastSyncAt: Long? = null,
 )
 
 private data class SearchUi(
@@ -1213,6 +1218,8 @@ class InboxViewModel(
             unread = if (sel is Sel.Unified) unifiedUnread else meta.unread,
             refreshing = status.refreshing,
             error = status.error,
+            // Read at every status change: the Delivered arm of [refresh] stamps it BEFORE it publishes the status.
+            lastSyncAt = store.lastSyncAt(store.currentId()),
         )
     }
 
@@ -1249,6 +1256,7 @@ class InboxViewModel(
             error = base.error,
             showRefreshIndicator = base.showRefreshIndicator,
             offline = !online,
+            lastSyncAt = base.lastSyncAt,
             searching = search.active,
             searchQuery = search.query,
             searchLoading = search.loading,
@@ -1275,10 +1283,13 @@ class InboxViewModel(
             showRefreshIndicator = false,
             error = null,
             offline = !connectivity.online.value,
+            lastSyncAt = store.lastSyncAt(store.currentId()),
         ),
     )
 
     init {
+        // #1952: ONE list ViewModel per process run is the design; a second one means a page change rebuilt the list.
+        FirstRowTiming.viewModelCreated()
         // Backfill the "G0 _ Auth" class of rows cached before it existed (bounded batches, once per row).
         viewModelScope.launch(Dispatchers.IO) { runCatching { repo.indexAuth() } }
         // And the sender domain ("Group by Domain"), the same way.
@@ -1445,6 +1456,8 @@ class InboxViewModel(
                 (outcome as? RefreshOutcome.Failed)?.let { com.diegonmarcos.superapp.fleetendpoints.errors.ErrorLog.shared.record("sync", currentAccountLabel(), it.cause) }
                 when (outcome) {
                     RefreshOutcome.Delivered -> {
+                        // #1952: stamped before the status is published, so the state built from it reads the new time.
+                        reconciled.map { it.first }.distinct().forEach { store.setLastSyncAt(it, System.currentTimeMillis()) }
                         status.value = Status(refreshing = false, error = null)
                         // #65: every refresh doubles as the connectivity probe. A killswitch VPN is
                         // invisible to the framework; only what the requests live can correct it.

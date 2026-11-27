@@ -1596,4 +1596,6 @@
     <string name="settings_navigation_child_pages">Nawigacja podstron</string>
     <string name="settings_navigation_default">domyślny</string>
     <string name="settings_tree_configs">Konfiguracja</string>
+    <string name="banner_last_sync">Ostatnia synchronizacja: %1$s</string>
+    <string name="banner_never_synced">Nigdy nie zsynchronizowano</string>
 </resources>

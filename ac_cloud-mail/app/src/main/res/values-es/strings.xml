@@ -1630,4 +1630,6 @@
     <string name="settings_navigation_child_pages">Navegación de las subpáginas</string>
     <string name="settings_navigation_default">predeterminado</string>
     <string name="settings_tree_configs">Configuración</string>
+    <string name="banner_last_sync">Última sincronización: %1$s</string>
+    <string name="banner_never_synced">Nunca sincronizado</string>
 </resources>

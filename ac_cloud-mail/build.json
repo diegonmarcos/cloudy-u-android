@@ -33,6 +33,13 @@
     "alert_local_parts": ["alert", "alerts", "alarm", "monitoring", "notification", "notifications", "noreply", "no-reply", "donotreply", "do-not-reply", "security", "status", "uptime"],
     "alert_sender_domains": ["github.com", "sentry.io", "pagerduty.com", "statuspage.io", "uptimerobot.com", "grafana.com", "cloudflare.com"]
   },
+  "mail_cache": {
+    "_doc": "#1952 The offline-first contract of the mail list, declared. The list of every folder is a query over the on-device store (Room); the network only reconciles in the background and a failure only adds a banner (reason, last sync, Retry) over the cached rows. The values below are the ones the sync engine runs with (core/data: JmapInboxBacklog.kt, FullSync.kt, BodyPrefetch.kt, OfflineCache.kt, MailRepository.kt); MailCacheDeclaration1952Test fails when this block and the engine disagree, so neither can move alone. folders=all: every mailbox of the account. headers.inbox=all: the Inbox converges on every message, backfill_batch older ones per refresh, never restarting (the plan only asks for ids the store lacks). headers.other_folders: pages_per_run pages of page_size per background run inside the body window, more on scroll. bodies: the window (a Configs setting, default_window_days) under cap_mb per account, fetched in the background by the full sync and the Rust mail core's prefetch.",
+    "folders": "all",
+    "headers": {"inbox": "all", "backfill_batch": 400, "other_folders_pages_per_run": 20, "list_page_size": 50},
+    "bodies": {"default_window_days": 90, "cap_mb": 250, "attachments_cap_mb": 250},
+    "list": {"first_paint": "store", "initial_network_refresh": false, "tab_return": "same_entry"}
+  },
   "ui": {
     "_doc": "#868 THE navigation declaration (libs:bottomnav NavDecl): ui.bottom_nav is the island's five ids, ui.sections the section each one opens, ui.default_section where the app opens. Each section's FIRST page is what its island item does: a page with no `action` is a DESTINATION of SternaApp's NavHost and its id IS the route (inbox / home / rss); a page whose `action` is `launch:<package>` is a LAUNCH hand-off to another app (Telegram, WhatsApp Business) that leaves mail's selected pill where it was. The labels shown on the island are the localised nav_bar_* strings keyed by section id; Home stays the centre. Reordering bottom_nav reorders the bar and changes nothing else.",
     "bottom_nav": [

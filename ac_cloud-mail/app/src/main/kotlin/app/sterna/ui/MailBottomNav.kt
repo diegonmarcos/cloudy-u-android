@@ -108,9 +108,11 @@ private fun onItemTap(
             val route = item.route ?: return
             // Re-tapping the screen already on top is a no-op, not a second copy on the back stack.
             if (route == currentRoute) return
+            // #1952: Mail goes BACK to the list entry (its ViewModel, pages and scroll kept); any other page opens directly above it.
+            val move = tabMove(route, currentRoute)
             // Settled-only, like every other navigation action here: a double tap mid-slide lands once.
             val top = nav.currentBackStackEntry
-            top?.navigateOnce { nav.navigate(route) }
+            top?.navigateOnce { nav.moveToTab(move) }
         }
         BottomNavAction.LAUNCH -> item.packageName?.let {
             leaveOnce { launchInstalledApp(context, it, missingMessage) }

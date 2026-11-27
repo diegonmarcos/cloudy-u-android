@@ -1577,4 +1577,6 @@
     <string name="settings_navigation_child_pages">Navigatie van subpagina\'s</string>
     <string name="settings_navigation_default">standaard</string>
     <string name="settings_tree_configs">Configuratie</string>
+    <string name="banner_last_sync">Laatste synchronisatie: %1$s</string>
+    <string name="banner_never_synced">Nooit gesynchroniseerd</string>
 </resources>

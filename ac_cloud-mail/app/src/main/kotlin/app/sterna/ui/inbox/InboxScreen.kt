@@ -152,6 +152,7 @@ import app.sterna.ui.errors.ErrorActionsWithLog
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -294,6 +295,12 @@ fun InboxScreen(
 ) {
     val ui by viewModel.state.collectAsStateWithLifecycle()
     val listRows = viewModel.pagedListRows.collectAsLazyPagingItems()
+    // #1952: the time from this screen entering the composition to its first frame with rows, once per entry (tag MailList).
+    val listEnteredAt = remember { FirstRowTiming.now() }
+    val firstRowTimed = remember { mutableStateOf(false) }
+    if (listRows.itemCount > 0 && !firstRowTimed.value) {
+        SideEffect { if (!firstRowTimed.value) { firstRowTimed.value = true; FirstRowTiming.painted(listEnteredAt, listRows.itemCount) } }
+    }
     val swipe by viewModel.swipeConfig.collectAsStateWithLifecycle()
     // Which attachment is downloading, and the question asked before a large one is fetched over a
     // metered network. Collected once here rather than per row: one download runs at a time.
@@ -1545,10 +1552,12 @@ fun InboxScreen(
             val notice = refreshNotice(ui.offline, ui.error)
             // Thin line above the list, but only when there are cached rows to sit above (WYSIWYG).
             // The zero-rows case shows the matching centred state below instead.
-            if (listRows.itemCount > 0) {
-                when (notice) {
-                    RefreshNotice.OFFLINE -> OfflineBanner()
-                    RefreshNotice.ERROR -> SyncErrorBanner(ui.error.orEmpty())
+            // #1952: the cached rows stay; the line says offline or failed, the reason, the last sync and offers Retry ([cacheBanner]).
+            cacheBanner(listRows.itemCount, ui.offline, ui.error, ui.lastSyncAt)?.let { banner ->
+                val lastSync = lastSyncLabel(banner.lastSyncAt)
+                when (banner.notice) {
+                    RefreshNotice.OFFLINE -> OfflineBanner(lastSync, viewModel::refreshRequested)
+                    RefreshNotice.ERROR -> SyncErrorBanner(banner.reason.orEmpty(), lastSync, viewModel::refreshRequested)
                     RefreshNotice.NONE -> Unit
                 }
             }
@@ -3148,7 +3157,7 @@ fun mailboxDisplayName(role: String?, name: String): String =
 /** A discreet, non-tappable banner shown above the list while there's no usable network (#65).
  *  Calmer surface tone than [OutboxFailureBanner]: offline is a state, not a failure. */
 @Composable
-private fun OfflineBanner() {
+private fun OfflineBanner(lastSync: String, onRetry: () -> Unit) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant,
         contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -3160,19 +3169,32 @@ private fun OfflineBanner() {
         ) {
             Icon(Icons.Filled.CloudOff, contentDescription = null)
             Spacer(Modifier.width(MailMetrics.s12))
-            Text(
-                stringResource(R.string.offline_banner),
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            Column(Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.offline_banner),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Text(lastSync, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            TextButton(onClick = onRetry) { Text(stringResource(R.string.inbox_retry)) }
         }
     }
 }
+
+/** #1952: "Last sync 5 minutes ago" / "Never synced", for the banners over the cached list. */
+@Composable
+private fun lastSyncLabel(at: Long?): String =
+    if (at == null) stringResource(R.string.banner_never_synced)
+    else stringResource(
+        R.string.banner_last_sync,
+        android.text.format.DateUtils.getRelativeTimeSpanString(at, System.currentTimeMillis(), android.text.format.DateUtils.MINUTE_IN_MILLIS).toString(),
+    )
 
 /**
  * A discreet banner for a refresh that FAILED while the device is online — the error surface, not
  */
 @Composable
-private fun SyncErrorBanner(message: String) {
+private fun SyncErrorBanner(message: String, lastSync: String, onRetry: () -> Unit) {
     Surface(
         color = MaterialTheme.colorScheme.errorContainer,
         contentColor = MaterialTheme.colorScheme.onErrorContainer,
@@ -3184,15 +3206,17 @@ private fun SyncErrorBanner(message: String) {
         ) {
             Icon(Icons.Filled.Warning, contentDescription = null)
             Spacer(Modifier.width(MailMetrics.s12))
-            Column {
+            Column(Modifier.weight(1f)) {
                 Text(
                     stringResource(R.string.sync_error_banner, message),
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
+                Text(lastSync, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 ErrorActionsWithLog()
             }
+            TextButton(onClick = onRetry) { Text(stringResource(R.string.inbox_retry)) }
         }
     }
 }
