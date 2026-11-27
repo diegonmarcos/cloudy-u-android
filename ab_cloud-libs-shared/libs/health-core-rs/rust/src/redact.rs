@@ -77,7 +77,7 @@ fn redact_line(line: &str) -> (String, usize) {
             let mut ve = vs;
             let stop = |x: char| if quote { x == b[k] } else { x.is_whitespace() || x == ',' || x == ';' };
             while ve < b.len() && !stop(b[ve]) { ve += 1; }
-            if secret && ve > vs && !(c == ':' && b.get(i + 1) == Some(&'/')) {
+            if secret && ve > vs {
                 s.push(c);
                 s.extend(b[i + 1..vs].iter());
                 s.push_str(MASK);
@@ -132,6 +132,21 @@ mod tests {
         assert_eq!(redact("mail from owner@example.com ok"), ("mail from [redacted] ok".to_string(), 1));
         assert_eq!(redact("not@mail and a@b. and @x.y").1, 0);
         assert_eq!(redact("plain line").0, "plain line");
+    }
+
+    #[test]
+    fn edge_shapes_kill_the_mutants() {
+        // a bearer line whose rest also holds a secret: both are counted
+        assert_eq!(redact("Bearer abc password=x"), ("Bearer [redacted] password=[redacted]".to_string(), 2));
+        // a dashed secret name is read whole, a path value is masked
+        assert_eq!(redact("secret-id=v").0, "secret-id=[redacted]");
+        assert_eq!(redact("password=/run/x").0, "password=[redacted]");
+        // JWT segments may hold - and _; a quoted JWT with a trailing comma is still one
+        assert_eq!(redact("eyJa-b_c.eyJd_e-f.g-h_i").1, 1);
+        assert_eq!(redact("\"eyJabcd.eyJefgh.ijkl\",").1, 1);
+        assert_eq!(redact("'eyJabcd.eyJefgh.ijkl'").1, 1);
+        assert_eq!(redact("eyJabcd.eyJef+h.ijkl").1, 0, "a + is not base64url");
+        assert_eq!(redact("eyJabcd.eyJefgh").1, 0, "two segments are not a JWT");
     }
 
     #[test]

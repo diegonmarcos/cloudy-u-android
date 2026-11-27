@@ -30,7 +30,7 @@ pub fn cap(b: &Budget, out: &str) -> String {
     let max = b.section_cap_kb * 1024;
     if out.len() <= max { return out.to_string(); }
     let mut end = max;
-    while end > 0 && !out.is_char_boundary(end) { end -= 1; }
+    while !out.is_char_boundary(end) { end -= 1; }   // index 0 is always a boundary
     format!("{}\n[cut: {} of {} bytes kept]", &out[..end], end, out.len())
 }
 
