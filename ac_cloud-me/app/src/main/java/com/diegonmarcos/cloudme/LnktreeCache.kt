@@ -54,12 +54,27 @@ data class LnktreeCacheConfig(
     val prefetchRefreshHours: Int = 0,
     /** #1951 the app-start prefetch waits this long, so the first page opened paints before the downloads compete with it. */
     val prefetchStartDelaySeconds: Int = 0,
+    /** #1957 cross-origin subresources (CDN images, media, scripts) are planned and stored too, not only the page's own origin. */
+    val crossOrigin: Boolean = false,
+    /** #1957 the absolute media/asset URLs named inside the page's scripts and data files (data-*.json.js) are planned too. */
+    val scriptUrls: Boolean = false,
+    /** #1957 subresources fetched in parallel per page (1 = one at a time). */
+    val subresourceConcurrency: Int = 1,
+    /** #1957 videos: the largest single file stored and the most all videos together may take (0 = no cap); images are always stored. */
+    val videoMaxFileBytes: Long = 0,
+    val videoMaxTotalBytes: Long = 0,
+    /** #1957 a different value than the one stored with the cache wipes every copy once (copies taken before a site fix). */
+    val cacheVersion: String = "",
+    /** #1957 the offscreen WebView pass per page that records every URL the page loads at run time (scripts, lazy images); 0 = off. */
+    val harvestTimeoutSeconds: Int = 0,
 ) {
     val networkFirst: Boolean get() = strategy == NETWORK_FIRST
     /** #1951 a complete cached copy paints at once and the live page is fetched in parallel (swapped in when its hash differs); a page with no complete copy loads straight through the WebView's own network. */
     val cacheThenLive: Boolean get() = strategy == CACHE_THEN_LIVE
+    /** #1957 cache_ttl (the Cloud Me default): a cached copy is shown at once and never compared live while it is younger than ttl_days; the startup job refetches a copy older than that and swaps it in atomically once the new copy is complete. */
+    val cacheTtl: Boolean get() = strategy == CACHE_TTL
     /** #1947 the pager's release of a page past max_retained_pages drops its cached copy only when the cache is the PRIMARY source; under network_first the copy is the offline fallback and stays (max_cache_mb bounds it). */
-    val releaseDropsCache: Boolean get() = !networkFirst && !cacheThenLive
+    val releaseDropsCache: Boolean get() = !networkFirst && !cacheThenLive && !cacheTtl
 
     fun caches(pageId: String): Boolean = enabled && pageId !in excludePages
 
@@ -70,6 +85,7 @@ data class LnktreeCacheConfig(
         const val DAY_MS = 24L * 60 * 60 * 1000
         const val NETWORK_FIRST = "network_first"
         const val CACHE_THEN_LIVE = "cache_then_live"
+        const val CACHE_TTL = "cache_ttl"
         const val STALE_WHILE_REVALIDATE = "stale_while_revalidate"
         private const val MB = 1024L * 1024
 
@@ -98,6 +114,13 @@ data class LnktreeCacheConfig(
                 strategy = o.optString("strategy", STALE_WHILE_REVALIDATE).ifEmpty { STALE_WHILE_REVALIDATE },
                 queueEnabled = o.optJSONObject("queue")?.optBoolean("enabled", false) ?: false,
                 queueMaxRetained = o.optJSONObject("queue")?.optInt("max_retained_pages", 0)?.coerceAtLeast(1) ?: 0,
+                crossOrigin = o.optBoolean("cross_origin", false),
+                scriptUrls = p.optBoolean("script_urls", false),
+                subresourceConcurrency = p.optInt("subresource_concurrency", 1).coerceAtLeast(1),
+                videoMaxFileBytes = ((o.optJSONObject("video")?.optDouble("max_file_mb", 0.0) ?: 0.0) * MB).toLong(),
+                videoMaxTotalBytes = ((o.optJSONObject("video")?.optDouble("max_total_mb", 0.0) ?: 0.0) * MB).toLong(),
+                cacheVersion = o.optString("cache_version"),
+                harvestTimeoutSeconds = p.optInt("harvest_timeout_s", 0).coerceAtLeast(0),
                 excludePages = if (ex == null) emptySet() else (0 until ex.length()).map { ex.getString(it) }.toSet(),
             )
         }
@@ -170,10 +193,65 @@ class LnktreeCacheStore(val root: File, private val clock: () -> Long = System::
      * #1947 a cached HTML page is COMPLETE only when every stylesheet and script it names is stored too (a 404 tombstone counts: the file
      * is known to be absent). HTML cached without its CSS/JS is what drew Personal unstyled on a slow network. Non-HTML entries are complete.
      */
-    fun complete(pageId: String, url: String): Boolean {
+    fun paintable(pageId: String, url: String): Boolean {
         val e = get(pageId, url) ?: return false
         if (!e.mime.contains("html", ignoreCase = true)) return true
         return RefScan.critical(runCatching { String(e.body.readBytes(), Charsets.UTF_8) }.getOrDefault(""), url).all { get(pageId, it) != null }
+    }
+
+    /**
+     * #1957 COMPLETE = paintable (#1947: HTML + CSS/JS) AND every file the page's manifest names is stored: images, media, data files and
+     * the cross-origin ones, those its scripts load at run time included. A video over the declared cap and a definite 404 are stored as
+     * tombstones, so they count as known. Non-HTML entries are complete.
+     */
+    fun complete(pageId: String, url: String): Boolean = paintable(pageId, url) && missing(pageId, url).isEmpty()
+
+    /** #1957 the manifest's files that are not stored yet (the reason a page is complete=no). */
+    fun missing(pageId: String, url: String): List<String> = refs(pageId).filter { CacheKey.normalize(it) != CacheKey.normalize(url) && get(pageId, it) == null }
+
+    /** #1957 the page's manifest: every URL the last fill planned (static refs, script-named URLs, the runtime pass, misses seen while open). */
+    fun refsFile(pageId: String) = File(pageDir(pageId), "_refs.txt")
+    fun refs(pageId: String): List<String> = runCatching { refsFile(pageId).readLines().filter { it.isNotBlank() } }.getOrDefault(emptyList())
+    @Synchronized fun writeRefs(pageId: String, urls: Collection<String>) {
+        val f = refsFile(pageId); f.parentFile?.mkdirs()
+        val tmp = File(f.parentFile, "_refs.${System.nanoTime()}.tmp"); tmp.writeText(urls.distinct().joinToString("\n")); f.delete(); tmp.renameTo(f)
+    }
+    /** #1957 a URL the open page asked for that the copy does not hold: added to the manifest, so the page is incomplete until the next fill stores it. */
+    @Synchronized fun addRef(pageId: String, url: String) { val r = refs(pageId); if (r.none { CacheKey.normalize(it) == CacheKey.normalize(url) }) writeRefs(pageId, r + url) }
+
+    /** #1957 any page's stored copy of [url] (the service worker's requests carry no page): the first page directory that holds it. */
+    fun findAny(url: String): Pair<String, CacheEntry>? = (root.listFiles() ?: emptyArray()).filter { it.isDirectory && !it.name.startsWith(".") }.sortedBy { it.name }
+        .firstNotNullOfOrNull { d -> get(d.name, url)?.let { d.name to it } }
+
+    /** #1957 the cache's declared version (build.json cache_version): a different one wipes every copy once. Returns true when it wiped. */
+    fun ensureVersion(version: String): Boolean {
+        if (version.isEmpty()) return false
+        val f = File(root, ".version")
+        if (runCatching { f.readText().trim() }.getOrNull() == version) return false
+        val had = (root.listFiles() ?: emptyArray()).any { it.isDirectory }
+        if (had) clearAll()
+        root.mkdirs(); f.writeText(version)
+        return had
+    }
+
+    /** #1957 the staging area a refetch fills: a store of its own; [commit] swaps a page's staged copy in place of the old one. */
+    /** #1957 bytes of the videos stored (the total video cap), counted once from disk. */
+    val videoBytes: java.util.concurrent.atomic.AtomicLong by lazy {
+        java.util.concurrent.atomic.AtomicLong(root.walkTopDown().filter { it.isFile && it.name.endsWith(".meta") }.sumOf { m ->
+            runCatching { val pr = Properties().apply { m.inputStream().use { load(it) } }; if (RefScan.isVideo(pr.getProperty("url", ""), pr.getProperty("mime", ""))) File(m.parentFile, m.nameWithoutExtension + ".body").length() else 0L }.getOrDefault(0L)
+        })
+    }
+
+    val staging: LnktreeCacheStore by lazy { LnktreeCacheStore(File(root, ".staging"), clock) }
+
+    /** #1957 atomic replace: the old directory moves aside, the staged one takes its name, then the old one is deleted. */
+    @Synchronized fun commit(pageId: String): Boolean {
+        val staged = staging.pageDir(pageId).takeIf { it.isDirectory } ?: return false
+        val live = pageDir(pageId); val old = File(File(root, ".old").also { it.mkdirs() }, live.name + "." + System.nanoTime())
+        if (live.exists() && !live.renameTo(old)) return false
+        if (!staged.renameTo(live)) { old.renameTo(live); return false }
+        old.deleteRecursively()
+        return true
     }
 
     /** #1951 what the page holds: entries, bytes and whether it is complete (the line the walk and the owner read). */
@@ -217,23 +295,30 @@ class LnktreeCacheStore(val root: File, private val clock: () -> Long = System::
     fun clearPage(pageId: String): Int { onWipe?.invoke("clearPage $pageId"); return deleteTree(pageDir(pageId)) }
 
     /** Hard refresh of the whole Lnktree cache. */
-    fun clearAll(): Int { onWipe?.invoke("clearAll"); return (root.listFiles() ?: emptyArray()).sumOf { deleteTree(it) } }
+    fun clearAll(): Int { onWipe?.invoke("clearAll"); return (root.listFiles() ?: emptyArray()).filter { it.name != ".version" }.sumOf { deleteTree(it) } }
 
     /**
      * Keeps the cache under [maxBytes] by deleting the oldest entries first. #1947 images, fonts and data go BEFORE any page HTML, stylesheet or script:
      * the offline copy of a page is its HTML + CSS/JS, so a section's worth of images must never evict the page that was opened (the Personal copy was empty after the pager fetched its siblings).
      */
     fun trim(maxBytes: Long) {
-        val files = (root.walkTopDown().filter { it.isFile && it.name.endsWith(".meta") }.toList())
+        val files = (root.walkTopDown().onEnter { it == root || !it.name.startsWith(".") }.filter { it.isFile && it.name.endsWith(".meta") }.toList())
         fun size(m: File) = m.length() + File(m.parentFile, m.nameWithoutExtension + ".body").length()
-        fun critical(m: File): Boolean = runCatching {
-            val mime = Properties().apply { m.inputStream().use { load(it) } }.getProperty("mime", "").lowercase()
-            mime.contains("html") || mime.contains("css") || mime.contains("javascript") || mime.contains("ecmascript")
-        }.getOrDefault(false)
+        // #1957 the eviction class: videos go first, then other files, then images (always cached), then page HTML/CSS/JS
+        fun critical(m: File): Int = runCatching {
+            val pr = Properties().apply { m.inputStream().use { load(it) } }
+            val mime = pr.getProperty("mime", "").lowercase()
+            when {
+                mime.contains("html") || mime.contains("css") || mime.contains("javascript") || mime.contains("ecmascript") -> 3
+                RefScan.isVideo(pr.getProperty("url", ""), mime) -> 0
+                mime.startsWith("image/") -> 2
+                else -> 1
+            }
+        }.getOrDefault(1)
         var total = files.sumOf(::size)
         // #1911 the mtimes are read ONCE: concurrent page loads touch the files while they sort, and a comparator reading lastModified() live broke TimSort's contract (crashed Proj > Cloudy)
         // pages the user opened this session (dir names) are evicted last of all: the cache over its cap (heavy pages x 12) used to wipe the page just opened, the OLDEST one
-        for (m in files.map { Triple(it, if (it.parentFile?.name in keep) 2 else if (critical(it)) 1 else 0, it.lastModified()) }.sortedWith(compareBy({ it.second }, { it.third })).map { it.first }) {
+        for (m in files.map { Triple(it, (if (it.parentFile?.name in keep) 10 else 0) + critical(it), it.lastModified()) }.sortedWith(compareBy({ it.second }, { it.third })).map { it.first }) {
             if (total <= maxBytes) break
             total -= size(m)
             onWipe?.invoke("trim ${m.parentFile?.name} total=$total max=$maxBytes")
@@ -286,7 +371,7 @@ object RefScan {
     private val cssUrl = Regex("url\\(\\s*['\"]?([^'\")]+)['\"]?\\s*\\)|@import\\s+['\"]([^'\"]+)['\"]", RegexOption.IGNORE_CASE)
 
     /** The CSS, JS and images an HTML page references, same-origin as [base], absolute, de-duplicated, in document order. */
-    fun html(html: String, base: String): List<String> {
+    fun html(html: String, base: String, crossOrigin: Boolean = false): List<String> {
         val raw = ArrayList<String>()
         for (t in tag.findAll(html)) {
             val text = t.value
@@ -298,7 +383,7 @@ object RefScan {
                 if (a.groupValues[1].lowercase() == "srcset") v.split(',').forEach { raw += it.trim().substringBefore(' ') } else raw += v
             }
         }
-        return resolve(raw, base)
+        return resolve(raw, base, crossOrigin)
     }
 
     /** #1947 the render-critical subset of [html]: stylesheets and scripts (what the page cannot be drawn or run without). */
@@ -308,15 +393,25 @@ object RefScan {
     }
 
     /** The files a stylesheet pulls in (`url(...)`, `@import`), same-origin as [cssUrl]. */
-    fun css(css: String, cssUrl: String): List<String> =
-        resolve(this.cssUrl.findAll(css).map { it.groupValues[1].ifEmpty { it.groupValues[2] } }.toList(), cssUrl)
+    fun css(css: String, cssUrl: String, crossOrigin: Boolean = false): List<String> =
+        resolve(this.cssUrl.findAll(css).map { it.groupValues[1].ifEmpty { it.groupValues[2] } }.toList(), cssUrl, crossOrigin)
 
-    private fun resolve(raw: List<String>, base: String): List<String> {
+    private val absUrl = Regex("""https?:(?:\\?/){2}(?:[^\s"'`<>()\\]|\\/)+?\.(?:jpe?g|png|webp|gif|svg|avif|ico|mp4|webm|m4v|mov|mp3|ogg|woff2?|ttf|css|m?js)(?:\?(?:[^\s"'`<>()\\]|\\/)*)?(?=[\s"'`<>()\\,;]|$)""", RegexOption.IGNORE_CASE)
+
+    /** #1957 the absolute asset URLs (images, media, fonts, scripts, styles) named inside a script or data file: what the page's own code loads at run time. */
+    fun scriptUrls(text: String, base: String): List<String> =
+        resolve(absUrl.findAll(text).map { it.value.replace("\\/", "/") }.toList(), base, true)
+
+    /** #1957 a video by its path (the per-file and total caps of build.json apply to these only). */
+    fun isVideo(url: String, mime: String = ""): Boolean = mime.startsWith("video/", true) ||
+        runCatching { URI(url).path.orEmpty().lowercase() }.getOrDefault("").let { p -> listOf(".mp4", ".webm", ".m4v", ".mov").any { p.endsWith(it) } }
+
+    private fun resolve(raw: List<String>, base: String, crossOrigin: Boolean = false): List<String> {
         val b = runCatching { URI(base) }.getOrNull() ?: return emptyList()
         return raw.asSequence().map { it.trim() }
             .filter { it.isNotEmpty() && !it.startsWith("data:") && !it.startsWith("#") && !it.startsWith("javascript:") }
             .mapNotNull { runCatching { b.resolve(it.replace(" ", "%20")) }.getOrNull() }
-            .filter { (it.scheme == "https" || it.scheme == "http") && it.host.equals(b.host, true) && it.port == b.port }
+            .filter { (it.scheme == "https" || it.scheme == "http") && it.host != null && (crossOrigin || (it.host.equals(b.host, true) && it.port == b.port)) }
             .map { URI(it.scheme, it.authority, it.path, it.query, null).toString() }
             .distinct().toList()
     }
@@ -349,7 +444,7 @@ object LnktreePrefetch {
      * Stores the page and its subresources (all of them when max_subresources_per_page is 0). Cached images that are still fresh are not downloaded again; the HTML, CSS and JS always are.
      * Returns null when the page itself could not be fetched, else how many ALREADY stored HTML/CSS/JS files came back different (a live change). [main] = the page body when the caller fetched it.
      */
-    fun fill(p: LnktreePage, cfg: LnktreeCacheConfig, store: LnktreeCacheStore, fetch: (String) -> Fetched?, main: Fetched?): Int? {
+    fun fill(p: LnktreePage, cfg: LnktreeCacheConfig, store: LnktreeCacheStore, fetch: (String) -> Fetched?, main: Fetched?, extra: Collection<String> = emptyList()): Int? {
         val m = (main ?: fetch(p.url))?.takeIf { it.status == 200 } ?: return null
         var changed = 0
         fun save(u: String, r: Fetched) {
@@ -360,19 +455,117 @@ object LnktreePrefetch {
         save(p.url, m)
         var budget = if (cfg.maxSubresourcesPerPage > 0) cfg.maxSubresourcesPerPage else Int.MAX_VALUE
         val seen = HashSet<String>().apply { add(CacheKey.normalize(p.url)) }
-        val queue = ArrayDeque(RefScan.html(String(m.body, Charsets.UTF_8), p.url))
-        while (queue.isNotEmpty() && budget > 0) {
-            val u = queue.removeFirst()
-            if (!seen.add(CacheKey.normalize(u))) continue
-            val have = store.get(p.id, u)
-            if (have != null && have.status == 200 && !criticalMime(have.mime) && store.state(p.id, u, cfg.ttlMs) == CacheState.FRESH) continue
-            val r = fetch(u) ?: continue
-            budget--
-            if (r.status != 200) { if (r.status == 404 || r.status == 410) store.put(p.id, u, r.mime, r.encoding, r.status, r.body); continue }   // #1947 a definite 404 is stored as a tombstone, so one dead reference does not make the page incomplete for ever
-            save(u, r)
-            if (r.mime.contains("css")) queue.addAll(RefScan.css(String(r.body, Charsets.UTF_8), u))
-        }
+        // #1957 the manifest: every URL planned for the page (what completeness is judged against)
+        val planned = LinkedHashSet<String>()
+        val queue = ArrayDeque(RefScan.html(String(m.body, Charsets.UTF_8), p.url, cfg.crossOrigin) + extra)
+        val pool = if (cfg.subresourceConcurrency > 1) Executors.newFixedThreadPool(cfg.subresourceConcurrency) else null
+        try {
+            while (queue.isNotEmpty() && budget > 0) {
+                // #1957 one batch of up to subresource_concurrency files is fetched in parallel; the results are stored in order
+                val batch = ArrayList<String>()
+                while (queue.isNotEmpty() && batch.size < cfg.subresourceConcurrency.coerceAtMost(budget)) {
+                    val u = queue.removeFirst()
+                    if (!seen.add(CacheKey.normalize(u))) continue
+                    planned += u
+                    val have = store.get(p.id, u)
+                    if (have != null && (have.status == 200 || have.status == VIDEO_CAPPED) && !criticalMime(have.mime) && store.state(p.id, u, cfg.ttlMs) == CacheState.FRESH) continue
+                    batch += u
+                }
+                if (batch.isEmpty()) continue
+                val got: List<Fetched?> = if (pool == null) batch.map { fetchCapped(it, cfg, store, fetch) }
+                    else batch.map { u -> pool.submit(Callable { fetchCapped(u, cfg, store, fetch) }) }.map { f -> runCatching { f.get() }.getOrNull() }
+                for ((u, r) in batch.zip(got)) {
+                    if (r == null) continue
+                    budget--
+                    if (r.status == VIDEO_CAPPED) { store.put(p.id, u, r.mime, r.encoding, r.status, ByteArray(0)); continue }   // #1957 a video over the declared cap: a known skip, not a missing file
+                    if (r.status != 200) { if (r.status == 404 || r.status == 410) store.put(p.id, u, r.mime, r.encoding, r.status, r.body); continue }   // #1947 a definite 404 is stored as a tombstone, so one dead reference does not make the page incomplete for ever
+                    if (RefScan.isVideo(u, r.mime)) {
+                        // #1957 the total video cap is judged here, in order (the batch was fetched in parallel)
+                        if (cfg.videoMaxTotalBytes > 0 && store.videoBytes.get() + r.body.size > cfg.videoMaxTotalBytes) { store.put(p.id, u, r.mime, null, VIDEO_CAPPED, ByteArray(0)); continue }
+                        store.videoBytes.addAndGet(r.body.size.toLong())
+                    }
+                    save(u, r)
+                    if (r.mime.contains("css")) queue.addAll(RefScan.css(String(r.body, Charsets.UTF_8), u, cfg.crossOrigin))
+                    // #1957 the URLs a script or data file names (data-*.json.js media, a CDN library) are what the page loads at run time
+                    if (cfg.scriptUrls && (r.mime.contains("javascript", true) || r.mime.contains("ecmascript", true) || r.mime.contains("json", true)))
+                        queue.addAll(RefScan.scriptUrls(String(r.body, Charsets.UTF_8), u))
+                }
+            }
+        } finally { pool?.shutdown() }
+        planned.addAll(queue.filter { CacheKey.normalize(it) !in seen })   // over the per-page cap: still referenced, so the page stays incomplete
+        store.writeRefs(p.id, planned)
         return changed
+    }
+
+    /** #1957 the stored status of a video skipped by the per-file or total cap of build.json ui.lnktree_cache.video. */
+    const val VIDEO_CAPPED = 413
+
+    /** #1957 a video over the per-file cap, or one that would pass the total cap, is not downloaded (images are always stored). */
+    fun fetchCapped(u: String, cfg: LnktreeCacheConfig, store: LnktreeCacheStore, fetch: (String) -> Fetched?): Fetched? {
+        val video = RefScan.isVideo(u)
+        if (video && cfg.videoMaxTotalBytes > 0 && store.videoBytes.get() >= cfg.videoMaxTotalBytes) return Fetched("video/mp4", null, VIDEO_CAPPED, ByteArray(0))
+        val r = fetch(u) ?: return null
+        if (RefScan.isVideo(u, r.mime) && r.status == 200 && ((cfg.videoMaxFileBytes > 0 && r.body.size > cfg.videoMaxFileBytes) ||
+                (cfg.videoMaxTotalBytes > 0 && store.videoBytes.get() + r.body.size > cfg.videoMaxTotalBytes))) return Fetched(r.mime, null, VIDEO_CAPPED, ByteArray(0))
+        return r
+    }
+}
+
+/**
+ * #1957 the startup job of cache_ttl (owner policy): for every page of every section,
+ *  - no copy                       -> FILL (downloaded into the cache)
+ *  - copy younger than ttl_days, complete   -> SKIP (nothing is downloaded)
+ *  - copy younger than ttl_days, incomplete -> COMPLETE (only the files it lacks)
+ *  - copy older than ttl_days      -> REFETCH: the whole page is downloaded into staging and swapped in ATOMICALLY only once the new copy
+ *                                     is complete; a failed or partial refetch leaves the old copy as it was.
+ */
+object TtlPrefetch {
+    enum class Action { SKIP, FILL, COMPLETE, REFETCH }
+    data class Outcome(val page: String, val action: Action, val result: String) {
+        fun line() = "CACHE_FETCH page=$page action=${action.name.lowercase()} result=$result"
+    }
+
+    fun decide(p: LnktreePage, cfg: LnktreeCacheConfig, store: LnktreeCacheStore): Action = when (store.state(p.id, p.url, cfg.ttlMs)) {
+        CacheState.MISSING -> Action.FILL
+        CacheState.STALE -> Action.REFETCH
+        CacheState.FRESH -> if (store.complete(p.id, p.url)) Action.SKIP else Action.COMPLETE
+    }
+
+    /** One page by its action. [extra] = the URLs the runtime pass saw (null = not harvested). */
+    fun page(p: LnktreePage, cfg: LnktreeCacheConfig, store: LnktreeCacheStore, fetch: (String) -> Fetched?, action: Action = decide(p, cfg, store), extra: Collection<String> = emptyList()): Outcome = when (action) {
+        Action.SKIP -> Outcome(p.id, action, "fresh")
+        Action.FILL -> Outcome(p.id, action, when { LnktreePrefetch.fill(p, cfg, store, fetch, null, extra) == null -> "failed"; store.complete(p.id, p.url) -> "complete"; else -> "partial" })
+        Action.COMPLETE -> {
+            // the copy is fresh: its stored files stay as they are (no network for them); only the files it lacks are fetched
+            val want = (store.missing(p.id, p.url) + extra.filter { store.get(p.id, it) == null }).distinctBy { CacheKey.normalize(it) }
+            val pool = Executors.newFixedThreadPool(cfg.subresourceConcurrency)
+            try {
+                want.map { u -> u to pool.submit(Callable { LnktreePrefetch.fetchCapped(u, cfg, store, fetch) }) }.forEach { (u, f) ->
+                    val r = runCatching { f.get() }.getOrNull() ?: return@forEach
+                    if (r.status == 200 || r.status == 404 || r.status == 410 || r.status == LnktreePrefetch.VIDEO_CAPPED) store.put(p.id, u, r.mime, r.encoding, r.status, if (r.status == 200) r.body else ByteArray(0))
+                }
+            } finally { pool.shutdown() }
+            store.writeRefs(p.id, store.refs(p.id) + want)
+            Outcome(p.id, action, if (store.complete(p.id, p.url)) "complete" else "partial")
+        }
+        Action.REFETCH -> {
+            val st = store.staging; st.clearPage(p.id)
+            val ok = LnktreePrefetch.fill(p, cfg, st, fetch, null, extra) != null && st.complete(p.id, p.url)
+            if (ok && store.commit(p.id)) Outcome(p.id, action, "replaced") else { st.clearPage(p.id); Outcome(p.id, action, "kept-old") }
+        }
+    }
+
+    /** Bounded by prefetch.concurrency pages at once; every page's outcome is returned (and logged by the caller). */
+    fun run(pages: List<LnktreePage>, cfg: LnktreeCacheConfig, store: LnktreeCacheStore, fetch: (String) -> Fetched?, extra: (LnktreePage) -> Collection<String> = { emptyList() }, onPage: (Outcome) -> Unit = {}): List<Outcome> {
+        if (!cfg.enabled || !cfg.prefetchEnabled) return emptyList()
+        val todo = pages.filter { cfg.caches(it.id) }.let { if (cfg.prefetchMaxPages > 0) it.take(cfg.prefetchMaxPages) else it }
+        val pool = Executors.newFixedThreadPool(cfg.prefetchConcurrency)
+        try {
+            return todo.map { p -> pool.submit(Callable {
+                val a = decide(p, cfg, store)
+                runCatching { page(p, cfg, store, fetch, a, if (a == Action.SKIP) emptyList() else extra(p)) }.getOrElse { Outcome(p.id, a, "error ${it.javaClass.simpleName}") }.also(onPage)
+            }) }.map { it.get() }
+        } finally { pool.shutdown(); store.trim(cfg.maxBytes) }
     }
 }
 
@@ -405,10 +598,23 @@ object LnktreeResolver {
         // #1947 network_first: the live page (and its same-origin CSS/JS) comes from the network; a good answer refreshes the entry; the stored copy
         // is served ONLY when the network failed (offline, DNS, timeout, 5xx) and never an empty body
         // #1951 cache_then_live: a COMPLETE copy paints from the cache at once, the live page is compared in the background (revalidate); no complete copy = the WebView's own network, filled afterwards. Nothing here waits on the network.
+        // #1957 cache_ttl: a stored copy is served at once and NOTHING is fetched for it while it is younger than ttl_days; an older main frame
+        // asks for the background refetch (staged, swapped in atomically by the job, no live swap of the shown page). A miss (no copy, or a file
+        // the copy lacks) goes to the WebView's own network and is reported through [revalidate] so the cache gets it afterwards.
+        if (cfg.cacheTtl) {
+            val e = store.get(pageId, url)
+            val isMain = pageUrl == null || CacheKey.normalize(url) == CacheKey.normalize(pageUrl)
+            if (e != null && e.status != LnktreePrefetch.VIDEO_CAPPED && store.paintable(pageId, url)) {
+                if (isMain && store.state(pageId, url, cfg.ttlMs) == CacheState.STALE) revalidate(url)
+                return Served(e.mime, e.encoding, e.status, e.body, "cache", e.fetchedAt)
+            }
+            if (e == null || isMain) revalidate(url)
+            return null
+        }
         if (cfg.cacheThenLive) {
             val e = store.get(pageId, url)
             val isMain = pageUrl != null && CacheKey.normalize(url) == CacheKey.normalize(pageUrl)
-            if (e != null && store.complete(pageId, url)) {
+            if (e != null && store.paintable(pageId, url)) {
                 if (isMain || store.state(pageId, url, cfg.ttlMs) == CacheState.STALE) revalidate(url)
                 return Served(e.mime, e.encoding, e.status, e.body, "cache-live", e.fetchedAt)
             }
@@ -427,7 +633,7 @@ object LnktreeResolver {
         }
         store.get(pageId, url)?.let { e ->
             // #1947 cached HTML without its CSS/JS is incomplete: not served (the WebView's network loads the whole page); it is completed in the background
-            if (!store.complete(pageId, url)) { revalidate(url); return null }
+            if (!store.paintable(pageId, url)) { revalidate(url); return null }
             if (store.state(pageId, url, cfg.ttlMs) == CacheState.STALE) revalidate(url)
             return Served(e.mime, e.encoding, e.status, e.body, "cache", e.fetchedAt)
         }
@@ -455,6 +661,32 @@ object LnktreeResolver {
     /** Hard refresh: what to delete for [pageId] under the declared scope. Returns files removed. */
     fun hardRefresh(pageId: String, cfg: LnktreeCacheConfig, store: LnktreeCacheStore): Int =
         if (cfg.hardRefreshScope == "all") store.clearAll() else store.clearPage(pageId)
+}
+
+/**
+ * #1957 the embedded sites' own service workers (mySocials is a PWA). Decision: they are BLOCKED inside Cloud Me's WebViews and any
+ * registration left from an earlier version is removed, instead of routing them through the app cache. Why: a service worker answers the
+ * page's requests from its own CacheStorage before any client hook runs, so with one installed the app cache could neither serve nor see
+ * them (the walk logged source=none), and its CacheStorage kept pre-fix data files with dead media URLs that no app-side refresh could
+ * replace. With it gone the app cache is the ONE copy, page-scoped and ttl-aged. The ServiceWorkerClient is still installed as the
+ * backstop: a worker that runs anyway (the first load before the removal, a site that ignores the refusal) is answered from the app cache.
+ */
+object SwPolicy {
+    /** Runs at document start in every cached page: refuses register(), unregisters what is there and empties CacheStorage; a page that was
+     *  still controlled by an old worker reloads once, so its requests reach the app. */
+    const val BLOCK_JS = "(function(){try{var n=navigator.serviceWorker;if(!n)return;" +
+        "try{Object.defineProperty(n,'register',{configurable:true,value:function(){return Promise.reject(new DOMException('service workers are off in Cloud Me (#1957)','SecurityError'))}})}catch(e){}" +
+        "var had=!!n.controller;n.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}).then(function(){" +
+        "return self.caches?caches.keys().then(function(k){return Promise.all(k.map(function(x){return caches.delete(x)}))}):0}).then(function(){" +
+        "if(had&&!sessionStorage.getItem('cm-sw-off')){sessionStorage.setItem('cm-sw-off','1');location.reload()}}).catch(function(){})}catch(e){}})();"
+
+    /** A request a service worker made: served from whichever page's copy holds it; null = the worker's own network. */
+    fun serve(url: String, method: String, cfg: LnktreeCacheConfig, store: LnktreeCacheStore): Served? {
+        if (!cfg.enabled || method != "GET" || !url.startsWith("https://")) return null
+        val (_, e) = store.findAny(url) ?: return null
+        if (e.status != 200) return null
+        return Served(e.mime, e.encoding, e.status, e.body, "sw-cache", e.fetchedAt)
+    }
 }
 
 /** A bounded most-recently-used holder: the oldest entry is [onEvict]ed when [max] is exceeded. */

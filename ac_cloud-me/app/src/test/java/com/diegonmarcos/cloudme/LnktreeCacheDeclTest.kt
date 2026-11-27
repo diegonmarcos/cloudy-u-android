@@ -28,10 +28,10 @@ class LnktreeCacheDeclTest {
         assertEquals(3, cfg.prefetchConcurrency)
         assertEquals("connected", cfg.prefetchNetwork)   // #1951
         assertEquals(0, cfg.prefetchMaxPages)   // #1951 0 = every page
-        assertEquals(400, cfg.maxSubresourcesPerPage)
+        assertEquals(0, cfg.maxSubresourcesPerPage)   // #1957 0 = every file of the page
         assertEquals(8, cfg.holderMaxWebViews)
         assertEquals("page", cfg.hardRefreshScope)
-        assertEquals(160L * 1024 * 1024, cfg.maxBytes)   // #1951 measured: all 49 pages = 62 MB, with headroom
+        assertEquals(512L * 1024 * 1024, cfg.maxBytes)   // #1957 every file of every page, cross-origin media included (#1951 measured 62 MB same-origin only)
         assertTrue(cfg.excludePages.isEmpty())
         assertTrue(decl.getString("_doc").isNotBlank())
     }

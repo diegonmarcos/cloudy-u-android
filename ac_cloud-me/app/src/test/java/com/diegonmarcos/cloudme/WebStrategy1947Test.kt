@@ -32,9 +32,9 @@ class WebStrategy1947Test {
         assertEquals("old", LnktreeResolver.serve("pers", page, cfg.copy(strategy = LnktreeCacheConfig.STALE_WHILE_REVALIDATE), s, { error("cache first") }, {}, page)!!.body.readText())
     }
 
-    @Test fun `the Cloud Me declaration documents network_first and is cache_then_live since 1951`() {
+    @Test fun `the Cloud Me declaration documents network_first and is cache_ttl since 1957`() {
         val d = org.json.JSONObject(BuroLlcTestData.text("build.json")).getJSONObject("ui").getJSONObject("lnktree_cache")
-        assertEquals("cache_then_live", d.getString("strategy")); assertTrue(d.getString("_doc").contains("network_first"))
+        assertEquals("cache_ttl", d.getString("strategy")); assertTrue(d.getString("_doc").contains("network_first"))   // #1957 cache_ttl since the owner policy
     }
 
     @Test fun `a released page keeps its offline copy under network_first and drops it under stale_while_revalidate`() {

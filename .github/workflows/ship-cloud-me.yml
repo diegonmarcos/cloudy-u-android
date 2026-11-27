@@ -270,6 +270,21 @@ jobs:
           SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
         run: sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR"
 
+      # #1957 the precache tests' verdict is read from the JUnit XML: every named test ran and passed (a skipped or missing test fails)
+      - name: Precache 1957 verdict (JUnit XML)
+        working-directory: ${{ github.workspace }}
+        run: |
+          X="$(find ac_cloud-me/app/build -path '*test-results*' -name 'TEST-*.Precache1957Test.xml' | head -1)"
+          [ -n "$X" ] || { echo "::error::no Precache1957Test result"; exit 1; }
+          python3 -I - "$X" <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          cases = list(ET.parse(sys.argv[1]).getroot().iter("testcase"))
+          bad = [c.get("name") for c in cases if c.find("failure") is not None or c.find("error") is not None or c.find("skipped") is not None]
+          print("Precache1957Test: %d cases, %d not passed" % (len(cases), len(bad)))
+          for c in cases: print("  %s %s" % ("FAIL" if c.get("name") in bad else "PASS", c.get("name")))
+          sys.exit(1 if bad or len(cases) < 11 else 0)
+          PY
+
       - name: Determine variant
         if: steps.gate.outputs.skip != 'true'
         id: variant

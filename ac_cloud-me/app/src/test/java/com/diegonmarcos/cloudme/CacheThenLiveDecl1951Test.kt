@@ -21,6 +21,6 @@ class CacheThenLiveDecl1951Test {
         assertTrue(LnktreeCacheConfig.parse(o("network_first")).networkFirst)
         assertFalse(LnktreeCacheConfig.parse(o("stale_while_revalidate")).cacheThenLive)
         val d = org.json.JSONObject(BuroLlcTestData.text("build.json")).getJSONObject("ui").getJSONObject("lnktree_cache")
-        assertEquals("cache_then_live", d.getString("strategy")); assertTrue(d.getString("_doc").contains("cache_then_live"))
+        assertEquals("cache_ttl", d.getString("strategy")); assertTrue(d.getString("_doc").contains("cache_then_live"))   // #1957 the owner policy replaced it as the default; the value stays available
     }
 }

@@ -1,0 +1,82 @@
+name: "Test -> Cloud Me zero-tap precache walk (#1957, emulator)"
+
+# #1957: zero-tap precache walk from a Ship APK on a real emulator: install, launch, touch nothing, every page complete on disk (CACHE_TOTAL);
+# one copy aged past ttl_days is the only page refetched after a restart; airplane mode: Personal with 0 broken images and its WebGL banner, three
+# other pages offline. old_apk=release first reproduces the phone's state with the published app (the broken URLs and their reasons).
+# The inputs reach the script only through env and are checked (run id digits, old_apk release|none).
+
+on:
+  workflow_dispatch:
+    inputs:
+      me_run_id:
+        description: "Ship Cloud Me run id whose x86_64 APK artifact to test"
+        required: true
+      old_apk:
+        description: "release = reproduce first with the published Cloud Me APK; none = skip"
+        required: false
+        default: release
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ac_cloud-me/test
+            ac_cloud-me/data/ui
+
+      - name: Fetch the APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          ME_RUN: ${{ inputs.me_run_id }}
+          OLD: ${{ inputs.old_apk }}
+        run: |
+          set -eu
+          case "$ME_RUN" in ''|*[!0-9]*) echo "::error::me_run_id must be a run id"; exit 2 ;; esac
+          case "$OLD" in release|none) ;; *) echo "::error::old_apk must be release or none"; exit 2 ;; esac
+          fetch() {  # fetch RUN PREFIX OUT
+            mkdir -p "dl/$2"
+            if [ "$1" = release ]; then gh release download latest -R "$REPO" -p "$2*.apk" -D "dl/$2"; else
+            gh api "repos/$REPO/actions/runs/$1/artifacts" --paginate --jq ".artifacts[] | select(.name|startswith(\"$2-x86_64\")) | .name" |
+            while read -r name; do gh run download "$1" -R "$REPO" -n "$name" -D "dl/$2/$name"; done
+            fi
+            pick=$(find "dl/$2" -name '*.apk' | sort | grep -i -- x86_64 | head -1); [ -n "$pick" ] || pick=$(find "dl/$2" -name '*.apk' | sort | grep -vi arm | head -1)
+            [ -n "$pick" ] || { echo "::error::no $2 x86_64 APK in run $1"; exit 1; }
+            cp "$pick" "$3"
+          }
+          fetch "$ME_RUN" Cloud-Me me.apk
+          if [ "$OLD" = release ]; then rm -rf dl; fetch release Cloud-Me old.apk || echo "no release APK: no reproduction"; fi
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot emulator + timed cache walk
+        timeout-minutes: 55
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-me/test/emulator-me-precache-1957.sh me.apk out old.apk
+
+      - name: Upload evidence (screenshots, ui dumps, logcat, verdict)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: me-precache-1957-evidence
+          path: out/
+          if-no-files-found: warn

@@ -25,7 +25,7 @@ jobs:
             # cache_then_live switched off: a page with no copy blocks on its own fetch again
             ctl-off)              sed -i 's/if (cfg.cacheThenLive) {/if (false) {/' $F ;;
             # an incomplete copy (HTML without its css/js) is painted
-            ctl-serve-incomplete) sed -i 's/if (e != null \&\& store.complete(pageId, url)) {/if (e != null) {/' $F ;;
+            ctl-serve-incomplete) sed -i 's/if (e != null \&\& store.paintable(pageId, url)) {/if (e != null) {/' $F ;;
             # a changed live page is never detected: no swap
             no-swap)              sed -i 's/!sha(old.body.readBytes()).equals(sha(r.body))/false/' $F ;;
             # the prefetch is capped by max_pages again even when it is 0 (= all)

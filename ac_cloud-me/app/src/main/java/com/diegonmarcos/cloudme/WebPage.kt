@@ -126,7 +126,7 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
                 fresh = true
                 // a fleet page (APP_PAGE, #1371); bundled pages come from the https asset origin, so they fetch their own
                 // stylesheets and data same-origin with no file:// access at all
-                CloudWeb.create(ctx, WebProfile.APP_PAGE).apply { setBackgroundColor(0xFF0B0414.toInt()); WebDarkMode.apply(settings) }   // #1938 readable in the dark theme: the site's own scheme, else algorithmic darkening
+                CloudWeb.create(ctx, WebProfile.APP_PAGE).apply { setBackgroundColor(0xFF0B0414.toInt()); WebDarkMode.apply(settings); if (cached) LnktreeSw.block(this, url) }   // #1957 the site's service worker is off: the app cache answers   // #1938 readable in the dark theme: the site's own scheme, else algorithmic darkening
             }
             // A kept WebView comes back as it was left (page, scroll, history): no reload, so switching is instant.
             val view = if (cached) holder!!.web(url, make) else make()
@@ -150,6 +150,7 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
 
                     // #1911 the emulator walk reads these from logcat: a main-frame error is MAINFRAME_ERROR, a loaded page MAINFRAME_OK with its title
                     override fun onReceivedError(view: WebView?, request: android.webkit.WebResourceRequest?, error: android.webkit.WebResourceError?) {
+                        if (request?.isForMainFrame != true && request != null) android.util.Log.w("CloudMeWeb", "SUBRES_ERROR page=$pageId url=${request.url} err=${error?.errorCode}:${error?.description}")   // #1957 the reason behind a broken image
                         if (request?.isForMainFrame == true) {
                             android.util.Log.e("CloudMeWeb", "MAINFRAME_ERROR page=$pageId url=${request.url} err=${error?.description}")
                             if (url.startsWith("https://")) { refreshing = false; loadError = WebLoadState.describe(error?.description?.toString(), null) }
@@ -159,6 +160,7 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
 
                     // #1937 an edge that answers 5xx/4xx for the page itself (the fleet edge down) is an error too, not a page to draw
                     override fun onReceivedHttpError(view: WebView?, request: android.webkit.WebResourceRequest?, errorResponse: android.webkit.WebResourceResponse?) {
+                        if (request?.isForMainFrame != true && request != null) android.util.Log.w("CloudMeWeb", "SUBRES_HTTP page=$pageId url=${request.url} status=${errorResponse?.statusCode}")
                         if (request?.isForMainFrame == true && url.startsWith("https://") && WebLoadState.isHttpFailure(errorResponse?.statusCode ?: 0)) {
                             android.util.Log.e("CloudMeWeb", "MAINFRAME_HTTP page=$pageId url=${request.url} status=${errorResponse?.statusCode}")
                             refreshing = false; loadError = WebLoadState.describe(null, errorResponse?.statusCode)
@@ -194,8 +196,9 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
                         if (swapScrollY >= 0) { val y = swapScrollY; swapScrollY = -1; view?.postDelayed({ view.scrollTo(0, y) }, 150); updatedNote = true; android.util.Log.i("CloudMeWeb", "LIVE_SWAPPED page=$pageId scrollY=$y") }
                         // #1913 the walk's image check: once the page had time to fetch its images, count those that finished with naturalWidth 0
                         view?.postDelayed({
-                            view.evaluateJavascript("(function(){var n=document.images,b=[];for(var i=0;i<n.length;i++){if(n[i].complete&&n[i].naturalWidth==0&&n[i].getAttribute('data-fb')!='done')b.push(n[i].currentSrc||n[i].src)}return n.length+' '+b.length+' '+(b[0]||'')})()") { r ->
-                                android.util.Log.i("CloudMeWeb", "IMG_CHECK page=$pageId images_broken=$r")
+                            view.evaluateJavascript(WebLoadState.IMG_CHECK_JS) { r ->
+                                android.util.Log.i("CloudMeWeb", "IMG_CHECK page=$pageId images_broken=\"${WebLoadState.imgSummary(r)}\"")
+                                WebLoadState.imgBroken(r).forEach { android.util.Log.i("CloudMeWeb", "IMG_BROKEN page=$pageId url=$it") }
                             }
                         }, 8000)
                         view?.evaluateJavascript(WebReveal.JS, null)   // #1938 a section the page keeps hidden until a 95% intersection is shown while any part of it is on screen
@@ -292,6 +295,19 @@ object WebLoadState {
     }
     fun isBlank(jsResult: String?): Boolean = jsResult == null || jsResult.trim().trim('"') in setOf("0", "null", "")
     fun isHttpFailure(status: Int): Boolean = status >= 400
+    /**
+     * #1957 the image check: every <img> that finished with no pixels, by URL. An img with no src at all (a hidden modal's empty slot) is
+     * not an image the page asked for and is not counted; one the site's own fallback already replaced (data-fb=done) neither.
+     * The JS answers a JSON string {"total":n,"empty":k,"broken":[url...]}.
+     */
+    const val IMG_CHECK_JS = "(function(){var n=document.images,b=[],e=0;for(var i=0;i<n.length;i++){var x=n[i],s=x.getAttribute('src');" +
+        "if(!s&&!x.getAttribute('srcset')){e++;continue}if(x.complete&&x.naturalWidth==0&&x.getAttribute('data-fb')!='done')b.push(x.currentSrc||x.src)}" +
+        "var h=document.getElementById('me-hero3d'),g=null;if(h){var c=document.createElement('canvas');g=!!(c.getContext('webgl2')||c.getContext('webgl'))}" +
+        "return JSON.stringify({total:n.length,empty:e,broken:b,hero:h?h.width+'x'+h.height:null,webgl:g})})()"
+    private fun imgJson(r: String?): org.json.JSONObject? = runCatching { org.json.JSONObject(org.json.JSONTokener(r ?: "").nextValue() as String) }.getOrNull()
+    fun imgBroken(r: String?): List<String> = imgJson(r)?.optJSONArray("broken")?.let { a -> (0 until a.length()).map { a.getString(it) } }.orEmpty()
+    /** The IMG_CHECK line: "<total> <broken> <first broken url>" (the walks read the second number), then empty=<k>. */
+    fun imgSummary(r: String?): String { val o = imgJson(r) ?: return "? ? $r"; val b = imgBroken(r); return "${o.optInt("total")} ${b.size} ${b.firstOrNull() ?: ""} empty=${o.optInt("empty")} hero=${o.opt("hero")} webgl=${o.opt("webgl")}" }
     fun describe(reason: String?, status: Int?): String = when {
         status != null && status >= 400 -> "The server answered HTTP $status."
         !reason.isNullOrBlank() -> reason

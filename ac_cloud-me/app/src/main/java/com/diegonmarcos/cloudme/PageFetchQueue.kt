@@ -88,6 +88,13 @@ object PageFetch {
                 val cfg = LnktreeCache.config
                 val page = LnktreePages.fromStack(pageId, stack, cfg)
                 if (page != null) {
+                    // #1957 cache_ttl: the pager runs the page's startup action (a fresh complete copy = nothing fetched; older than ttl_days = staged refetch)
+                    if (cfg.cacheTtl) {
+                        val s = LnktreeCache.store(ctx); val o = TtlPrefetch.page(page, cfg, s, LnktreeCache::fetch)
+                        android.util.Log.i("CloudMeWeb", o.line() + " trigger=pager")
+                        if (o.result == "failed" && s.get(pageId, page.url) == null) error("could not fetch ${page.url}")
+                        return@runCatching
+                    }
                     // #1951 a page that already has a complete copy gets the live compare (a changed page swaps into the one on screen), not a blind refetch
                     if (cfg.cacheThenLive && LnktreeCache.store(ctx).complete(pageId, page.url)) { LnktreeCache.checkLive(LnktreeCache.store(ctx), pageId, page.url); return@runCatching }
                     val failed = LnktreePrefetch.run(listOf(page), cfg, LnktreeCache.store(ctx), LnktreeCache::fetch)

@@ -150,5 +150,14 @@
         <receiver
             android:name="com.diegonmarcos.superapp.updater.PackageInstallerReceiver"
             android:exported="false" />
+
+        <!-- #1957 an app update starts the Lnktree cache job at once (LnktreeWeb.kt) -->
+        <receiver
+            android:name=".LnktreeUpdateReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

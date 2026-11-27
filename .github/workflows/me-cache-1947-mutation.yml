@@ -23,7 +23,7 @@ jobs:
           F=ac_cloud-me/app/src/main/java/com/diegonmarcos/cloudme/LnktreeCache.kt
           case "${{ inputs.name }}" in
             # cached HTML without its CSS/JS is served again (the unstyled page)
-            serve-incomplete)      sed -i 's/if (!store.complete(pageId, url)) { revalidate(url); return null }//' $F ;;
+            serve-incomplete)      sed -i 's/if (!store.paintable(pageId, url)) { revalidate(url); return null }//' $F ;;
             # a sub-resource miss blocks on its own fetch again
             blocking-subresource)  sed -i 's/if (pageUrl != null \&\& CacheKey.normalize(url) != CacheKey.normalize(pageUrl)) { revalidate(url); return null }//' $F ;;
             # an incomplete fresh page is not planned for a refetch
