@@ -40,8 +40,10 @@ jobs:
               t = s.replace('FolderTile(folder.label, contents, null, folder.iconRes)', 'FolderTile(folder.label, contents, contents.firstOrNull { it.installed }, "")')
               assert s != t
               open(K, 'w').write(t); sys.exit(0)
-          s = open(P).read(); d = json.loads(s)
-          ph = [x for x in d['ui']['sections'] if 'phone_app_groups' in x][0]['phone_app_groups']
+          s = open(P).read()
+          # only the phone_app_groups array is rewritten; the rest of build.json stays byte-identical (other suites read it as text)
+          i = s.index('"phone_app_groups": [') + len('"phone_app_groups": ')
+          ph, j = json.JSONDecoder().raw_decode(s, i)
           fo = lambda g, l: [f for x in ph if x['title'] == g for f in x['folders'] if f['label'] == l][0]
           def drop(g, l, p): f = fo(g, l); f['packages'] = [x for x in f['packages'] if x['pkg'] != p]
           def add(g, l, p): fo(g, l)['packages'].append({'pkg': p, 'label': p})
@@ -54,7 +56,8 @@ jobs:
           elif m == 'gemini-dropped': drop('AGI', 'AI', 'com.google.android.apps.bard')
           elif m == 'github-in-code': drop('Data', 'Drive', 'com.github.android'); add('AGI', 'Code', 'com.github.android')
           elif m == 'icon-swapped': fo('Me', 'Me-Prj')['icon_res'] = 'ic_file_stack'
-          open(P, 'w').write(json.dumps(d, indent=2, ensure_ascii=False) + '\n')
+          out = json.dumps(ph, indent=2, ensure_ascii=False).replace('\n', '\n        ')
+          open(P, 'w').write(s[:i] + out + s[j:])
           PY
           git diff --stat
           test -n "$(git diff --name-only)" || { echo "mutation target missing"; exit 3; }
