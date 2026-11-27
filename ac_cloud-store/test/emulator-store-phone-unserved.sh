@@ -28,13 +28,18 @@ check() {  # name
   if grep -q 'All up to date' "$OUT/$1.xml"; then echo "::error::$1: the status says All up to date with no check behind it"; rc=1; fi
   if grep -qE 'text="Installed 0 / 0' "$OUT/$1.xml"; then echo "::error::$1: lists no app"; rc=1; fi
 }
+read -r W H < <(adb shell wm size | tr -d '\r' | grep -oE '[0-9]+x[0-9]+' | tail -1 | tr x ' ')
+down() { for i in $(seq 1 "$1"); do adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H*3/10)) 250; sleep 1; done; sleep 2; }
+up()   { for i in 1 2 3 4 5 6 7 8; do adb shell input swipe $((W/2)) $((H*3/10)) $((W/2)) $((H*4/5)) 100; done; sleep 2; }
 tap_text Installed || true
 check store-1946-installed
+down 2; shoot store-1946-installed-rows; dump installed-rows
+# the list itself: the Summary line counts at least one app, and no row is missing for want of the dataset
+if ! grep -qE 'text="[1-9][0-9]* apps' "$OUT/installed-rows.xml"; then echo "::error::Installed lists 0 apps while the phone has launchable apps"; rc=1; fi
+down 3; shoot store-1946-installed-rows-2
+up
 tap_text Declared || { echo "::error::no Declared tab"; rc=1; }
 check store-1946-declared
-read -r W H < <(adb shell wm size | tr -d '\r' | grep -oE '[0-9]+x[0-9]+' | tail -1 | tr x ' ')
-adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H*3/10)) 250; sleep 2; shoot store-1946-declared-scrolled
-tap_text Installed || true; sleep 3
-adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H*3/10)) 250; sleep 2; shoot store-1946-installed-scrolled
+down 2; shoot store-1946-declared-rows
 adb logcat -d -t 400 > "$OUT/logcat.txt" 2>/dev/null || true
 exit $rc
