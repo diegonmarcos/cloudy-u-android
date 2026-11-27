@@ -840,7 +840,10 @@
        "api": [
         "/mail/*"
        ],
-       "mcp": []
+       "mcp": [
+        "obs.health.mail*",
+        "devops.mail.*"
+       ]
       },
       {
        "id": "topology_inbound",
@@ -853,15 +856,6 @@
        "label": "Topology-Outbound",
        "api": [],
        "mcp": []
-      },
-      {
-       "id": "map",
-       "label": "Mail",
-       "api": [],
-       "mcp": [
-        "obs.health.mail*",
-        "devops.mail.*"
-       ]
       }
      ]
     },

@@ -56,6 +56,9 @@ done <<'SHOTS'
 1953 wiki-modernsc pj-wiki-modernsc_topology 8 0 Repos,lib-chronos
 1953 42-algo pj-lecole42-algo_topology 8 0 Repos,lecole-42-___
 1953 lib lib_topology 8 0 Repos
+1955 mail-strip mail_tables 8 0 Tables,Topology-Inbound,Topology-Outbound,Map:,Path:_Inbound
+1955 mail-tables-map mail_tables 6 2 Path:_Outbound
+1955 mail-map-alias mail_map 8 0 Tables,Path:_Inbound
 SHOTS
 
 # the Cloudy Table filtered to Type=Db shows the LFS repo

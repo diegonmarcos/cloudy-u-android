@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored'
+        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost'
         required: true
 permissions:
   contents: read
@@ -45,6 +45,10 @@ jobs:
             drop-wiki-path)    pyj $D/repos_declared.json 'r = next(x for x in d["repos"] if x["name"] == "lib-chronos"); [a.update(path="") for a in r["attached"] if a["project"] == "pj-wiki-modernsc"]' ;;
             # #1953-d the Public / Private split is ignored
             split-ignored)     sed -i 's/val parts = if (s.id in splitHere) listOf(/val parts = if (false) listOf(/' $K/pages/ContainerTopology.kt ;;
+            # #1955-B a Tables path row loses the first edge of each map node
+            map-edge-dropped)  sed -i 's/else r.edges.map { e -> base/else r.edges.drop(1).map { e -> base/' $K/pages/MailStack.kt ;;
+            # #1955-B the mail_map alias is dropped (a deep link to the old Mail subpage opens nothing)
+            mail-alias-lost)   pyj ac_cloud-c3/build.json 'del d["ui"]["aliases"]["pages"]["mail_map"]' ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
           git diff --stat
@@ -98,6 +102,8 @@ jobs:
             hub-primary-only)  C=ContainerTopologyTest; N="a hub is drawn in the Repos band of every project under its code" ;;
             drop-wiki-path)    C=ContainerTopologyTest; N="each Wiki project carries lib-chronos with its path" ;;
             split-ignored)     C=ContainersPageComposeTest; N="the Topology body has a services band and a Repos band, with Public and Private under Apps, DB and Repos on Cloud-me" ;;
+            map-edge-dropped)  C=MailStackTest; N="parity - every section, row and edge of the old Mail map is in a Tables table" ;;
+            mail-alias-lost)   C=OrchOpsReorgTest; N="every old page id still resolves through the aliases to its new place" ;;
           esac
           X="$(find ac_cloud-c3/app/build -path '*test-results*' -name "TEST-*.$C.xml" | head -1)"
           [ -n "$X" ] || { echo "::error::LEG ERROR $M: no result for $C (did not compile or run); not a kill"; exit 1; }

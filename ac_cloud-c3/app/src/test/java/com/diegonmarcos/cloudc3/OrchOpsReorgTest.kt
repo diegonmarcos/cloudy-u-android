@@ -37,7 +37,7 @@ class OrchOpsReorgTest {
         "ops/net" to "ops/net", "ops/net_wg" to "ops/net_wg", "ops/net_auth" to "ops/net_auth", "ops/net_dns" to "ops/net_dns",
         "ops/net_network" to "ops/net_network", "ops/net_security" to "ops/net_security",
         "ops/mail" to "ops/mail", "ops/mail_tables" to "ops/mail_tables", "ops/mail_topology_inbound" to "ops/mail_topology_inbound",
-        "ops/mail_topology_outbound" to "ops/mail_topology_outbound", "ops/mail_map" to "ops/mail_map",
+        "ops/mail_topology_outbound" to "ops/mail_topology_outbound", "ops/mail_map" to "ops/mail_tables",
         "ops/orch" to "orch", "ops/orch_flow" to "orch/orch_flow", "ops/orch_service" to "orch/orch_service",
         "ops/orch_infrastructure" to "orch/orch_infrastructure", "ops/orch_orchestration" to "orch/orch_orchestration",
         "ops/orch_release" to "orch/orch_release", "ops/orch_agents" to "orch/orch_agents",
@@ -70,7 +70,7 @@ class OrchOpsReorgTest {
             "observability" to Target("ops", "obs_stack"), "health" to Target("ops", "ops_health_health"), "dagu" to Target("orch", "orch_dagu"),
             "mesh" to Target("ops", "net_mesh"), "service" to Target("orch", "orch_service"), "infrastructure" to Target("orch", "orch_infrastructure"),
             "orchestration" to Target("orch", "orch_orchestration"), "release" to Target("orch", "orch_release"), "agents" to Target("orch", "orch_agents"),
-            "network" to Target("ops", "net_network"), "observ" to Target("ops"),
+            "network" to Target("ops", "net_network"), "observ" to Target("ops"), "mail_map" to Target("ops", "mail_tables"),
         )
         moved.forEach { (old, to) -> assertEquals(old, to, C3Nav.resolve(nav, aliases, old)) }
     }

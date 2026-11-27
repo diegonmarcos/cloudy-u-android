@@ -60,6 +60,23 @@ class MailStackComposeTest {
         compose.onNodeWithTag(MailTags.SEARCH).assertExists()
     }
 
+    @Test fun `Tables carries the old Mail map first, with its summary line`() {
+        val infra = Json.parseToJsonElement(File(dir, "data/infra_slice.json").readText()) as JsonObject
+        val ops = Json.parseToJsonElement(File(dir, "data/ops_maps.json").readText()) as JsonObject
+        val maps = com.diegonmarcos.cloudc3.pages.OpsMaps.Sources(ops, Json.parseToJsonElement(File(dir, "data/mesh.json").readText()) as JsonObject,
+            com.diegonmarcos.cloudc3.pages.TopologyModel.parseInfra(infra), infra,
+            com.diegonmarcos.cloudc3.pages.ContainersModel.parse(File(dir, "data/containers_declared.json").readText())!!, FleetFixtures.slice().domains)
+        compose.setContent { CloudKitTheme(palette) { MailTablesScreen(decl, null, "banner", infra, FleetFixtures.slice().domains, maps) } }
+        listOf("map_inbound", "map_outbound", "map_containers").forEach { compose.onNodeWithTag(MailTags.section(it)).assertExists() }
+        compose.onNodeWithTag(MailTags.MAP_SUMMARY).assertExists()
+        compose.onNodeWithTag(MailTags.row("map_inbound", 0)).assertExists()
+        compose.onNodeWithTag(MailTags.row("map_containers", 0)).assertExists()
+        // the Mail strip has three chips: no fourth "Mail" subpage
+        val ui = Json.parseToJsonElement(File(dir, "build.json").readText()) as JsonObject
+        val mail = (ui["ui"] as JsonObject)["sections"].toString()
+        assertTrue(!mail.contains("\"id\":\"mail_map\""))
+    }
+
     @Test fun `a topology page draws its canvas and a node detail opens on request`() {
         val t = decl.topology("inbound")!!
         compose.setContent { CloudKitTheme(palette) { MailTopologyScreen(t, decl, null, "", initialOpen = t.nodes[1].id) } }

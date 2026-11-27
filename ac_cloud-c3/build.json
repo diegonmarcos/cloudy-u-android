@@ -233,6 +233,7 @@
         "infrastructure": "orch/orch_infrastructure",
         "orchestration": "orch/orch_orchestration",
         "network": "ops/net_network",
+        "mail_map": "ops/mail_tables",
         "release": "orch/orch_release",
         "agents": "orch/orch_agents",
         "observability": "ops/obs_stack",
@@ -777,12 +778,6 @@
                 "label": "Topology-Outbound",
                 "icon": "mail",
                 "_doc": "#1926 The outbound path as a canvas map (data/mail_stack.json topologies.outbound), drawn by the one generic MailTopologyCanvas."
-              },
-              {
-                "id": "mail_map",
-                "label": "Mail",
-                "icon": "mail",
-                "_doc": "The Mail map of data/ops_maps.json (#1480), unchanged: kept reachable as the fourth subpage (#1926, rule 16)."
               }
             ]
           },

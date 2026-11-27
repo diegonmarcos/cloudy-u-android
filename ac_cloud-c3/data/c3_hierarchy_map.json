@@ -212,7 +212,10 @@
    "api": [
     "/mail/*"
    ],
-   "mcp": []
+   "mcp": [
+    "obs.health.mail*",
+    "devops.mail.*"
+   ]
   },
   "ops/mail/topology_inbound": {
    "api": [],
@@ -221,13 +224,6 @@
   "ops/mail/topology_outbound": {
    "api": [],
    "mcp": []
-  },
-  "ops/mail/map": {
-   "api": [],
-   "mcp": [
-    "obs.health.mail*",
-    "devops.mail.*"
-   ]
   },
   "orch/orch_flow": {
    "api": [

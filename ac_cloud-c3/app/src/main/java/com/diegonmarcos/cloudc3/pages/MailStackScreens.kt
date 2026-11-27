@@ -68,6 +68,7 @@ import com.diegonmarcos.superapp.uikit.safeDrawText
 object MailTags {
     const val TABLES = "mail_tables"
     const val SEARCH = "mail_tables_search"
+    const val MAP_SUMMARY = "mail_tables_map_summary"
     fun section(id: String) = "mail_table_$id"
     fun row(id: String, i: Int) = "mail_row_${id}_$i"
     fun filter(table: String, key: String, v: String) = "mail_filter_${table}_${key}_$v"
@@ -82,7 +83,8 @@ private fun mono(size: Float, c: Color, w: FontWeight = FontWeight.Normal) = Tex
 
 /** Every declared table of data/mail_stack.json: one search box, per-table filter chips, dense monospaced rows, "not served" for a missing key. */
 @Composable
-fun MailTablesScreen(decl: MailStack.Decl, answer: MailStack.Answer?, banner: String, infraRaw: kotlinx.serialization.json.JsonObject, domains: List<FleetModel.Domain>) {
+fun MailTablesScreen(decl: MailStack.Decl, answer: MailStack.Answer?, banner: String, infraRaw: kotlinx.serialization.json.JsonObject, domains: List<FleetModel.Domain>,
+                     maps: OpsMaps.Sources? = null) {
     val p = LocalKitPalette.current
     var query by remember { mutableStateOf("") }
     val picked = remember { mutableStateMapOf<String, String>() }
@@ -91,8 +93,14 @@ fun MailTablesScreen(decl: MailStack.Decl, answer: MailStack.Answer?, banner: St
         BasicTextField(query, { query = it }, singleLine = true, textStyle = mono(13f, p.textPrimary), cursorBrush = SolidColor(p.accent),
             modifier = Modifier.fillMaxWidth().padding(KitStoreRow.padH, 4.dp).border(1.dp, p.hairline, RoundedCornerShape(6.dp)).padding(8.dp).testTag(MailTags.SEARCH),
             decorationBox = { inner -> if (query.isEmpty()) Text("search every table", style = mono(13f, p.textSecondary)); inner() })
+        // #1955 B the old Mail subpage merged into Tables: its summary line heads the map-bound tables
+        decl.tables.firstOrNull { it.map.isNotBlank() }?.let { t ->
+            val sum = maps?.let { OpsMaps.summary(it.decl, t.map) }.orEmpty()
+            Text("Map: ${sum.ifBlank { MailStack.NOT_SERVED }}", color = p.accent, fontSize = KitStoreRow.meta,
+                modifier = Modifier.padding(start = KitStoreRow.padH, top = KitStoreRow.gap).testTag(MailTags.MAP_SUMMARY))
+        }
         decl.tables.forEach { t ->
-            val all = MailStack.rows(t, answer, infraRaw, domains)
+            val all = MailStack.rows(t, answer, infraRaw, domains, maps)
             val keys = t.filters.associateWith { picked["${t.id}.$it"] }.filterValues { it != null }.mapValues { it.value!! }
             val shown = MailStack.filter(t, all, query, keys)
             Column(Modifier.testTag(MailTags.section(t.id))) {
@@ -271,7 +279,14 @@ class MailStackFragment : KitComposeFragment() {
         }
         val topo = decl.topology(view)
         if (topo != null) MailTopologyScreen(topo, decl, answer, banner)
-        else MailTablesScreen(decl, answer, banner, Declarations.infraSlice, Declarations.fleet.domains)
+        else {
+            val version = ContainersSource.version
+            val maps = remember(version) {
+                OpsMaps.Sources(Declarations.opsMaps, Declarations.meshJson, TopologyModel.parseInfra(Declarations.infraSlice),
+                    Declarations.infraSlice, ContainersSource.current(), Declarations.fleet.domains)
+            }
+            MailTablesScreen(decl, answer, banner, Declarations.infraSlice, Declarations.fleet.domains, maps)
+        }
     }
 
     companion object {

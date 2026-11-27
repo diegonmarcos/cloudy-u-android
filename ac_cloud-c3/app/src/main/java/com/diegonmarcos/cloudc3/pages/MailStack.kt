@@ -24,7 +24,8 @@ object MailStack {
     // ── declaration ────────────────────────────────────────────────────────
 
     data class Column(val key: String, val label: String)
-    data class Table(val id: String, val title: String, val source: String, val filters: List<String>, val columns: List<Column>)
+    /** [map] / [section] (#1955 B): a declared table read from that section of data/ops_maps.json maps.<map> (the old Mail subpage, merged into Tables). */
+    data class Table(val id: String, val title: String, val source: String, val filters: List<String>, val columns: List<Column>, val map: String = "", val section: String = "")
     data class Node(
         val id: String, val label: String, val kind: String, val x: Float, val y: Float, val role: String, val host: String, val vm: String,
         val container: String, val ports: List<Int>, val tls: List<String>, val probes: List<String>, val queueProbe: String, val logs: List<String>,
@@ -48,7 +49,7 @@ object MailStack {
     fun parseDecl(text: String): Decl {
         val o = runCatching { json.parseToJsonElement(text) as? JsonObject }.getOrNull() ?: return Decl("/mail/stack", 360, 168f, 72f, emptyList(), emptyList())
         val tables = o.objs("tables").map { t ->
-            Table(t.str("id"), t.str("title"), t.str("source"), t.strs("filters"), t.objs("columns").map { Column(it.str("key"), it.str("label")) })
+            Table(t.str("id"), t.str("title"), t.str("source"), t.strs("filters"), t.objs("columns").map { Column(it.str("key"), it.str("label")) }, t.str("map"), t.str("section"))
         }
         val topos = (o["topologies"] as? JsonObject).orEmpty().mapNotNull { (id, v) ->
             val t = v as? JsonObject ?: return@mapNotNull null
@@ -208,9 +209,33 @@ object MailStack {
         else -> emptyList()
     }
 
-    /** The rows a section shows: declared sources from the app's data, the rest from the API answer (empty when it has none). */
-    fun rows(t: Table, a: Answer?, infraRaw: JsonObject, domains: List<FleetModel.Domain>): List<Row> =
-        if (t.source == "declared") declaredRows(t.id, infraRaw, domains) else a?.tables?.get(t.id).orEmpty()
+    /**
+     * #1955 B the rows of a map-bound table: a path section (Inbound, Outbound) gives one row per edge (node, note, state, to, label, edge_state;
+     * a node with no edge is one row with a blank edge), the Containers section the catalog entries it names (name, host, port, auth_type).
+     */
+    fun mapRows(t: Table, src: OpsMaps.Sources): List<Row> {
+        val sec = (src.decl["maps"] as? JsonObject)?.let { it[t.map] as? JsonObject }?.objs("sections").orEmpty().firstOrNull { it.str("title") == t.section }
+        if (sec?.str("from") == "containers") {
+            val want = sec.strs("names")
+            return want.mapNotNull { n -> src.catalog.entry(n) }.map { e ->
+                mapOf("name" to e.name, "host" to e.host, "port" to (e.port?.toString() ?: ""), "auth_type" to e.authType)
+            }
+        }
+        return OpsMaps.build(t.map, src).filter { it.title == t.section }.flatMap { section ->
+            section.rows.flatMap { r ->
+                val base = mapOf("node" to r.name, "note" to r.note, "state" to r.state)
+                if (r.edges.isEmpty()) listOf(base + mapOf("to" to "", "label" to "", "edge_state" to ""))
+                else r.edges.map { e -> base + mapOf("to" to e.to, "label" to e.label, "edge_state" to e.state) }
+            }
+        }
+    }
+
+    /** The rows a section shows: declared sources from the app's data (a map-bound table from [maps]), the rest from the API answer (empty when it has none). */
+    fun rows(t: Table, a: Answer?, infraRaw: JsonObject, domains: List<FleetModel.Domain>, maps: OpsMaps.Sources? = null): List<Row> = when {
+        t.source == "declared" && t.map.isNotBlank() -> maps?.let { mapRows(t, it) }.orEmpty()
+        t.source == "declared" -> declaredRows(t.id, infraRaw, domains)
+        else -> a?.tables?.get(t.id).orEmpty()
+    }
 
     /** Case-insensitive search over every declared column of the row, then the exact-value filters (column key to value). */
     fun filter(t: Table, rows: List<Row>, query: String, picked: Map<String, String>): List<Row> {

@@ -30,7 +30,61 @@ class MailStackTest {
         assertEquals(emptyList<String>(), MailStack.validate(decl))
         assertEquals(setOf("inbound", "outbound"), decl.topologies.map { it.id }.toSet())
         assertTrue(decl.tables.size >= 14)
-        listOf("mail_tables", "mail_topology_inbound", "mail_topology_outbound", "mail_map").forEach { assertTrue(it, File(dir, "build.json").readText().contains("\"$it\"")) }
+        listOf("mail_tables", "mail_topology_inbound", "mail_topology_outbound").forEach { assertTrue(it, File(dir, "build.json").readText().contains("\"$it\"")) }
+        // #1955 B the Mail subpage merged into Tables: no page object, only the alias
+        assertTrue(File(dir, "build.json").readText().contains("\"mail_map\": \"ops/mail_tables\""))
+        assertTrue(!File(dir, "build.json").readText().contains("\"id\": \"mail_map\""))
+    }
+
+    // ── #1955 B the old Mail map is inside Tables ──────────────────────────────────────────────────────────────
+
+    private fun json(f: String): JsonObject = kotlinx.serialization.json.Json.parseToJsonElement(File(dir, "data/$f").readText()) as JsonObject
+    private val src by lazy {
+        com.diegonmarcos.cloudc3.pages.OpsMaps.Sources(json("ops_maps.json"), json("mesh.json"), com.diegonmarcos.cloudc3.pages.TopologyModel.parseInfra(json("infra_slice.json")),
+            json("infra_slice.json"), com.diegonmarcos.cloudc3.pages.ContainersModel.parse(File(dir, "data/containers_declared.json").readText())!!, FleetFixtures.slice().domains)
+    }
+
+    /** Every (section, name, note, state, to, label, edge state) of the old Mail map that the mapped Tables table does not carry; empty = nothing lost. */
+    private fun mapParity(tables: (MailStack.Table) -> List<MailStack.Row>): List<String> {
+        val rowsOf = { id: String -> tables(decl.table(id)!!) }
+        val lost = mutableListOf<String>()
+        for (sec in com.diegonmarcos.cloudc3.pages.OpsMaps.build("mail", src)) for (r in sec.rows) {
+            val ok = when (sec.title) {
+                "Inbound", "Outbound" -> {
+                    val t = rowsOf(if (sec.title == "Inbound") "map_inbound" else "map_outbound")
+                    val want = if (r.edges.isEmpty()) listOf(Triple("", "", "")) else r.edges.map { Triple(it.to, it.label, it.state) }
+                    want.all { (to, label, st) -> t.any { it["node"] == r.name && it["note"] == r.note && it["state"] == r.state && it["to"] == to && it["label"] == label && it["edge_state"] == st } }
+                }
+                "Containers" -> rowsOf("map_containers").any { "${it["host"]} - ${it["port"]} - ${it["auth_type"]}".split(" - ").filter { x -> x.isNotBlank() }.joinToString(" - ") == r.note && it["name"] == r.name }
+                "Hosts" -> rowsOf("hosts_declared").any { it["host"] == r.name && it["service"] == r.note && it["vm"] == r.edges.firstOrNull()?.to }
+                "Relays" -> rowsOf("relays_declared").any { it["kind"] == "relay" && it["name"] == r.name && "${it["address"]}:${it["port"]}" == r.note }
+                "MX hosts" -> rowsOf("relays_declared").any { it["kind"] == "mx" && it["name"] == r.name }
+                "DNS records" -> rowsOf("dns_declared").any { it["name"] == r.name && it["type"] == r.note && it["group"] == r.state }
+                else -> false
+            }
+            if (!ok) lost += "${sec.title}: ${r.name}"
+        }
+        return lost
+    }
+
+    private fun tableRows(t: MailStack.Table) = MailStack.rows(t, null, json("infra_slice.json"), FleetFixtures.slice().domains, src)
+
+    @Test fun `parity - every section, row and edge of the old Mail map is in a Tables table`() {
+        val secs = com.diegonmarcos.cloudc3.pages.OpsMaps.build("mail", src)
+        assertEquals(listOf("Inbound", "Outbound", "Containers", "Hosts", "Relays", "MX hosts", "DNS records").filter { t -> secs.any { it.title == t } }, secs.map { it.title })
+        assertTrue(secs.sumOf { it.rows.size } > 8)
+        assertEquals(emptyList<String>(), mapParity(::tableRows))
+    }
+
+    @Test fun `MUTATION - a Tables row that loses a map edge fails the map parity`() {
+        assertTrue(mapParity { t -> tableRows(t).let { rs -> if (t.id == "map_inbound") rs.drop(1) else rs } }.isNotEmpty())
+    }
+
+    @Test fun `the map tables come first, declared, with the path columns`() {
+        assertEquals(listOf("map_inbound", "map_outbound", "map_containers"), decl.tables.take(3).map { it.id })
+        decl.tables.take(3).forEach { assertEquals("declared", it.source); assertEquals("mail", it.map) }
+        assertEquals(listOf("node", "note", "state", "to", "label", "edge_state"), decl.table("map_inbound")!!.columns.map { it.key })
+        assertEquals(listOf("state"), decl.table("map_inbound")!!.filters)
     }
 
     @Test fun `the inbound and outbound maps name every hop the ticket lists`() {
@@ -132,7 +186,7 @@ class MailStackTest {
 
     @Test fun `the ticket's data points each have a table`() {
         val ids = decl.tables.map { it.id }
-        listOf("dns", "dns_declared", "inbound", "outbound", "accounts", "mailboxes", "ports", "tls", "health", "queues", "freshness", "pullers", "failures", "tests").forEach { assertTrue(it, it in ids) }
+        listOf("map_inbound", "map_outbound", "map_containers", "dns", "dns_declared", "inbound", "outbound", "accounts", "mailboxes", "ports", "tls", "health", "queues", "freshness", "pullers", "failures", "tests").forEach { assertTrue(it, it in ids) }
         assertTrue(decl.table("tls")!!.columns.any { it.key == "days_left" } && decl.table("tls")!!.columns.any { it.key == "not_after" })
         val tests = File(dir, "data/mail_stack.json").readText()
         listOf("mail_inbound", "mail_outbound", "mail_distribution", "mail_ingest", "mail_puller").forEach { assertTrue(it, tests.contains(it) || decl.table("tests") != null) }

@@ -155,7 +155,6 @@ class OpsFragment : PagedFragment() {
         "auth" -> OpsMapFragment.newInstance("auth")
         "dns" -> OpsMapFragment.newInstance("dns")
         "network" -> TopologyViewFragment.newInstance(TopologyModel.NETWORK)
-        "map" -> OpsMapFragment.newInstance(parentId)
         "tables" -> MailStackFragment.newInstance("tables")
         "topology_inbound" -> MailStackFragment.newInstance("inbound")
         "topology_outbound" -> MailStackFragment.newInstance("outbound")

@@ -1,10 +1,108 @@
 {
- "_doc": "#1926 THE DECLARATION of Cloud C3 > Ops > Mail > Tables, Topology-Inbound and Topology-Outbound. `tables`: each section with its columns (key = the field of a row served by cloudy-c3-api GET /mail/stack tables.<id>, or of the declared source named in `source`) and the filter columns offered; a key the API does not serve prints as 'not served', never as a blank. `topologies`: the graph (nodes with x/y in a world grid, edges with a direction from->to) and the PROBE BINDINGS: every node and edge lists probe ids served in /mail/stack probes[]; its colour is the worst served state (grey when none is served). One generic canvas (MailTopologyCanvas) renders any topology of this file; names of hosts live here and in the API, never in Kotlin. Edit this file by hand: MailStackTest pins the tables, the node and edge parity and the probe bindings.",
+ "_doc": "#1926 THE DECLARATION of Cloud C3 > Ops > Mail > Tables, Topology-Inbound and Topology-Outbound. `tables`: each section with its columns (key = the field of a row served by cloudy-c3-api GET /mail/stack tables.<id>, or of the declared source named in `source`) and the filter columns offered; a key the API does not serve prints as 'not served', never as a blank. `topologies`: the graph (nodes with x/y in a world grid, edges with a direction from->to) and the PROBE BINDINGS: every node and edge lists probe ids served in /mail/stack probes[]; its colour is the worst served state (grey when none is served). One generic canvas (MailTopologyCanvas) renders any topology of this file; names of hosts live here and in the API, never in Kotlin. Edit this file by hand: MailStackTest pins the tables, the node and edge parity and the probe bindings. #1955 B the old Mail subpage (ops_maps.json maps.mail) is merged in: map_inbound, map_outbound and map_containers come first (source declared, map + section), Hosts, Relays + MX and DNS were already hosts_declared, relays_declared and dns_declared.",
  "api_path": "/mail/stack",
  "stale_after_minutes": 360,
  "node_w": 168,
  "node_h": 72,
  "tables": [
+  {
+   "id": "map_inbound",
+   "title": "Path: Inbound",
+   "source": "declared",
+   "map": "mail",
+   "section": "Inbound",
+   "filters": [
+    "state"
+   ],
+   "columns": [
+    {
+     "key": "node",
+     "label": "Node"
+    },
+    {
+     "key": "note",
+     "label": "Note"
+    },
+    {
+     "key": "state",
+     "label": "State"
+    },
+    {
+     "key": "to",
+     "label": "To"
+    },
+    {
+     "key": "label",
+     "label": "Label"
+    },
+    {
+     "key": "edge_state",
+     "label": "Edge state"
+    }
+   ]
+  },
+  {
+   "id": "map_outbound",
+   "title": "Path: Outbound",
+   "source": "declared",
+   "map": "mail",
+   "section": "Outbound",
+   "filters": [
+    "state"
+   ],
+   "columns": [
+    {
+     "key": "node",
+     "label": "Node"
+    },
+    {
+     "key": "note",
+     "label": "Note"
+    },
+    {
+     "key": "state",
+     "label": "State"
+    },
+    {
+     "key": "to",
+     "label": "To"
+    },
+    {
+     "key": "label",
+     "label": "Label"
+    },
+    {
+     "key": "edge_state",
+     "label": "Edge state"
+    }
+   ]
+  },
+  {
+   "id": "map_containers",
+   "title": "Containers on the mail path",
+   "source": "declared",
+   "map": "mail",
+   "section": "Containers",
+   "filters": [],
+   "columns": [
+    {
+     "key": "name",
+     "label": "Name"
+    },
+    {
+     "key": "host",
+     "label": "Host"
+    },
+    {
+     "key": "port",
+     "label": "Port"
+    },
+    {
+     "key": "auth_type",
+     "label": "Auth type"
+    }
+   ]
+  },
   {
    "id": "dns",
    "title": "DNS records (live)",
