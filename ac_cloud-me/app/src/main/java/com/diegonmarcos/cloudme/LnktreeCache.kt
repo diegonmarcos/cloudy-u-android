@@ -178,7 +178,7 @@ data class CacheEntry(val url: String, val mime: String, val encoding: String?, 
  * root/<page dir>/<key>.body + <key>.meta. The meta file is written LAST, so an entry exists only when both are whole.
  * Everything is scoped by page id: a hard refresh of one page can never touch another page's files.
  */
-class LnktreeCacheStore(val root: File, private val clock: () -> Long = System::currentTimeMillis, private val parent: LnktreeCacheStore? = null, private val isShared: Boolean = false) {
+class LnktreeCacheStore(val root: File, private val clock: () -> Long = System::currentTimeMillis, private val parent: LnktreeCacheStore? = null, private val isShared: Boolean = false, private val staged: Boolean = false) {
     fun pageDir(pageId: String) = File(root, CacheKey.dirName(pageId))
 
     /**
@@ -186,7 +186,7 @@ class LnktreeCacheStore(val root: File, private val clock: () -> Long = System::
      * URL, whichever pages name it; a page's [get] falls back to it, its manifest lists it, size caps and the trim count it once. A fresh
      * shared file is reused by every page (the fill skips it), never downloaded again per page. Staging uses the live store's shared files.
      */
-    val shared: LnktreeCacheStore? by lazy { if (isShared) null else parent?.shared ?: LnktreeCacheStore(File(root, SHARED_DIR), clock, this, true) }
+    val shared: LnktreeCacheStore? by lazy { if (isShared) null else if (staged) LnktreeCacheStore(File(root, SHARED_DIR), clock, this, true) else parent?.shared ?: LnktreeCacheStore(File(root, SHARED_DIR), clock, this, true) }
     private val hosts = java.util.concurrent.ConcurrentHashMap<String, String>()
     /** The page's own host: files of any other host go to the shared store. */
     fun registerPage(pageId: String, url: String) { runCatching { URI(url).host?.lowercase() }.getOrNull()?.let { hosts[CacheKey.dirName(pageId)] = it } }
@@ -210,7 +210,9 @@ class LnktreeCacheStore(val root: File, private val clock: () -> Long = System::
         val own = getOwn(pageId, url)
         if (own != null && own.status == 200) return own
         // #1957 the shared copy (a page-local known-missing mark never hides a stored shared file)
-        return shared?.getOwn(SHARED_ID, url)?.takeIf { it.status == 200 } ?: own
+        return shared?.getOwn(SHARED_ID, url)?.takeIf { it.status == 200 }
+            ?: (if (staged) parent?.shared?.getOwn(SHARED_ID, url)?.takeIf { it.status == 200 } else null)   // a refetch reuses the live shared copy
+            ?: own
     }
 
     /** #1957 why a file is a known-missing mark: video-file-cap, video-total-cap, cache-cap, plan-cap (null = stored or a 4xx). */
@@ -276,15 +278,21 @@ class LnktreeCacheStore(val root: File, private val clock: () -> Long = System::
     /** #1957 bytes of the videos stored (the total video cap), counted once from disk. */
     val videoBytes: java.util.concurrent.atomic.AtomicLong get() = budget.video
 
-    val staging: LnktreeCacheStore by lazy { LnktreeCacheStore(File(root, ".staging"), clock, this) }
+    /** #1957 one page's staging area: its own files AND the shared files it refetched; nothing reaches the live store before [commit]. */
+    fun stagingFor(pageId: String): LnktreeCacheStore = LnktreeCacheStore(File(File(root, ".staging"), CacheKey.dirName(pageId)), clock, this, false, true)
 
-    /** #1957 atomic replace: the old directory moves aside, the staged one takes its name, then the old one is deleted. */
-    @Synchronized fun commit(pageId: String): Boolean {
-        val staged = staging.pageDir(pageId).takeIf { it.isDirectory } ?: return false
+    /** #1957 atomic replace: the staged shared files move into the live shared store, the old page directory moves aside, the staged one takes its name. */
+    @Synchronized fun commit(pageId: String, st: LnktreeCacheStore = stagingFor(pageId)): Boolean {
+        val staged = st.pageDir(pageId).takeIf { it.isDirectory } ?: return false
+        val liveShared = shared?.pageDir(SHARED_ID)?.also { it.mkdirs() }
+        st.shared?.pageDir(SHARED_ID)?.listFiles()?.filter { it.name.endsWith(".body") }?.forEach { b ->
+            val m = File(b.parentFile, b.nameWithoutExtension + ".meta"); if (liveShared == null || !m.isFile) return@forEach
+            File(liveShared, b.name).delete(); b.renameTo(File(liveShared, b.name)); File(liveShared, m.name).delete(); m.renameTo(File(liveShared, m.name))
+        }
         val live = pageDir(pageId); val old = File(File(root, ".old").also { it.mkdirs() }, live.name + "." + System.nanoTime())
         if (live.exists() && !live.renameTo(old)) return false
         if (!staged.renameTo(live)) { old.renameTo(live); return false }
-        old.deleteRecursively(); recount()
+        old.deleteRecursively(); st.root.deleteRecursively(); recount()
         return true
     }
 
@@ -621,9 +629,9 @@ object TtlPrefetch {
             Outcome(p.id, action, if (store.complete(p.id, p.url)) "complete" else "partial")
         }
         Action.REFETCH -> {
-            val st = store.staging; st.clearPage(p.id)
+            val st = store.stagingFor(p.id); st.root.deleteRecursively()
             val ok = LnktreePrefetch.fill(p, cfg, st, fetch, null, extra) != null && st.complete(p.id, p.url)
-            if (ok && store.commit(p.id)) Outcome(p.id, action, "replaced") else { st.clearPage(p.id); Outcome(p.id, action, "kept-old") }
+            if (ok && store.commit(p.id, st)) Outcome(p.id, action, "replaced") else { st.root.deleteRecursively(); store.recount(); Outcome(p.id, action, "kept-old") }   // nothing of a failed refetch, shared files included, reaches the live copy
         }
     }
 

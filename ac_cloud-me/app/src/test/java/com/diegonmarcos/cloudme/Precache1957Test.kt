@@ -119,7 +119,7 @@ class Precache1957Test {
         assertTrue(s.get("personal", site)!!.body.readText().contains("v2"))
         assertEquals("v2$cdnImg", s.get("personal", cdnImg)!!.body.readText())
         assertTrue(s.complete("personal", site)); assertEquals(CacheState.FRESH, s.state("personal", site, cfg.ttlMs))
-        assertFalse("staging is emptied", s.staging.pageDir("personal").exists())
+        assertFalse("staging is emptied", s.stagingFor("personal").root.exists())
     }
 
     @Test fun `a failed refetch keeps the old copy`() {
@@ -131,6 +131,7 @@ class Precache1957Test {
         // the page comes, one of its own files does not: the new copy is incomplete and is NOT swapped in
         assertEquals("kept-old", TtlPrefetch.run(listOf(page), cfg, s, net("v2", down = setOf(site + "bg.png"))).single().result)
         assertTrue(s.get("personal", site)!!.body.readText().contains("v1")); assertNotNull(s.get("personal", site + "bg.png"))
+        assertEquals("a kept-old refetch changes no shared file either", "v1$cdnImg", s.get("personal", cdnImg)!!.body.readText())
         // a shared file whose refetch fails keeps its stored copy: the page stays whole
         TtlPrefetch.run(listOf(page), cfg, s, net("v2", down = setOf(rawImg)))
         assertEquals("v1$rawImg", s.get("personal", rawImg)!!.body.readText())

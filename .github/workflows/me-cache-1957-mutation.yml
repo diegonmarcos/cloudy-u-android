@@ -49,7 +49,7 @@ jobs:
             no-startup-fill) sed -i 's/CacheState.MISSING -> Action.FILL/CacheState.MISSING -> Action.SKIP/' "$D/LnktreeCache.kt" ;;
             fresh-refetch) sed -i 's/if (store.complete(p.id, p.url)) Action.SKIP else Action.COMPLETE/Action.REFETCH/' "$D/LnktreeCache.kt" ;;
             stale-skip) sed -i 's/CacheState.STALE -> Action.REFETCH/CacheState.STALE -> Action.SKIP/' "$D/LnktreeCache.kt" ;;
-            non-atomic) sed -i 's/if (ok \&\& store.commit(p.id))/if (store.commit(p.id))/' "$D/LnktreeCache.kt" ;;
+            non-atomic) sed -i 's/if (ok \&\& store.commit(p.id, st))/if (store.commit(p.id, st))/' "$D/LnktreeCache.kt" ;;
             open-fetch) sed -i 's/if (isMain \&\& store.state(pageId, url, cfg.ttlMs) == CacheState.STALE) revalidate(url)/if (isMain) revalidate(url)/' "$D/LnktreeCache.kt" ;;
             pull-noop) sed -i 's/if (cfg.hardRefreshScope == "all") store.clearAll() else store.clearPageWithShared(pageId)/1/' "$D/LnktreeCache.kt" ;;
             video-cap) sed -i 's/(cfg.videoMaxFileBytes > 0 \&\& r.body.size > cfg.videoMaxFileBytes)/false/' "$D/LnktreeCache.kt" ;;
