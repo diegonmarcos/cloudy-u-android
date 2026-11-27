@@ -80,7 +80,7 @@ fun SectionScreen(sectionId: String, requestedPage: String?, modifier: Modifier 
         PagePrefetcher(
             PageFetchQueue(section.nav.allPages().filter { it.pages.isEmpty() && it.action.isBlank() }.map { it.id }, qcfg.queueMaxRetained),
             fetchSeam ?: PageFetch.default(ctx, section.id),
-            onRelease = { LnktreeCache.store(ctx).clearPage(it) },
+            onRelease = { android.util.Log.i("CloudMeWeb", "PAGE_RELEASED page=$it dropsCache=${qcfg.releaseDropsCache}"); if (qcfg.releaseDropsCache) LnktreeCache.store(ctx).clearPage(it) },
             onChange = { queueVersion++ },
         )
     } else null

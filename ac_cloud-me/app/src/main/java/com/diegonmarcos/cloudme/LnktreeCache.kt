@@ -50,6 +50,8 @@ data class LnktreeCacheConfig(
     val strategy: String = STALE_WHILE_REVALIDATE,
 ) {
     val networkFirst: Boolean get() = strategy == NETWORK_FIRST
+    /** #1947 the pager's release of a page past max_retained_pages drops its cached copy only when the cache is the PRIMARY source; under network_first the copy is the offline fallback and stays (max_cache_mb bounds it). */
+    val releaseDropsCache: Boolean get() = !networkFirst
 
     fun caches(pageId: String): Boolean = enabled && pageId !in excludePages
 
