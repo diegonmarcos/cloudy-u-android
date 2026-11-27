@@ -652,7 +652,7 @@ object TtlPrefetch {
             try {
                 want.map { u -> u to pool.submit(Callable { LnktreePrefetch.fetchCapped(u, cfg, store, fetch) }) }.forEach { (u, f) ->
                     val r = runCatching { f.get() }.getOrNull() ?: Fetched("application/octet-stream", "fetch-failed", LnktreePrefetch.VIDEO_CAPPED, ByteArray(0))
-                    if (r.status == 200 || (Tombstone1980.definite(r.status))) store.put(p.id, u, r.mime, if (r.status == 200) r.encoding else null, r.status, if (r.status == 200) r.body else ByteArray(0), if (r.status == LnktreePrefetch.VIDEO_CAPPED) r.encoding else null)
+                    if (r.status == 200 || Tombstone1980.definite(r.status) || r.status == LnktreePrefetch.VIDEO_CAPPED /* #1957 a cap or twice-failed mark, with its reason; #1980 keeps CDN refusals out */) store.put(p.id, u, r.mime, if (r.status == 200) r.encoding else null, r.status, if (r.status == 200) r.body else ByteArray(0), if (r.status == LnktreePrefetch.VIDEO_CAPPED) r.encoding else null)
                 }
             } finally { pool.shutdown() }
             store.writeRefs(p.id, store.refs(p.id) + want)
