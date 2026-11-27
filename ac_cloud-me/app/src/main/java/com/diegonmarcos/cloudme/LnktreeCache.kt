@@ -202,7 +202,7 @@ class LnktreeCacheStore(val root: File, private val clock: () -> Long = System::
         runCatching { val pr = Properties().apply { m.inputStream().use { load(it) } }; if (RefScan.isVideo(pr.getProperty("url", ""), pr.getProperty("mime", ""))) File(m.parentFile, m.nameWithoutExtension + ".body").length() else 0L }.getOrDefault(0L)
     }
     /** After deletions the used-bytes counter is read from disk again. */
-    fun recount() { val b = budget; val main = parent ?: this; b.used.set(main.totalBytes(true)) }
+    fun recount() { val b = budget; var main = this; while (main.parent != null) main = main.parent!!; b.used.set(main.totalBytes(true)) }   // always the top store (a staged shared store's parent is its staging)
     fun bodyFile(pageId: String, url: String) = File(pageDir(pageId), CacheKey.of(url) + ".body")
     fun metaFile(pageId: String, url: String) = File(pageDir(pageId), CacheKey.of(url) + ".meta")
 

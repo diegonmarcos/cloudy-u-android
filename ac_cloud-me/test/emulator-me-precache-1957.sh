@@ -8,7 +8,7 @@
 # Usage: emulator-me-precache-1957.sh ME_APK OUT_DIR [OLD_APK]. Screenshots OUT_DIR/precache-1957-*.png. Exit 1 on any failed assertion.
 set -uo pipefail
 ME_APK="$1"; OUT="$2"; OLD_APK="${3:-}"; mkdir -p "$OUT"
-T="timeout 120"; ME=com.diegonmarcos.cloudme; rc=0; WAIT_S="${WAIT_S:-2400}"
+T="timeout 120"; ME=com.diegonmarcos.cloudme; rc=0; WAIT_S="${WAIT_S:-2700}"
 HERE="$(cd "$(dirname "$0")" && pwd)"; UI="${UI_DIR:-$HERE/../data/ui}"; CACHE="/data/data/$ME/cache/lnktree-cache"
 fail() { echo "FAIL $*" | tee -a "$OUT/verdict.txt"; rc=1; }
 ok() { echo "PASS $*" | tee -a "$OUT/verdict.txt"; }
@@ -21,7 +21,10 @@ launcher() { $T adb shell cmd package resolve-activity --brief -c android.intent
 launch() { wake; $T adb shell am start -W -n "$(launcher "$ME")" >/dev/null; }
 open_route() { wake; $T adb shell am start -W -n "$(launcher "$ME")" -f 0x14000000 --es shortcut_action "$1" >/dev/null; }
 perms() { for op in GET_USAGE_STATS SYSTEM_ALERT_WINDOW MANAGE_EXTERNAL_STORAGE REQUEST_INSTALL_PACKAGES; do $T adb shell appops set "$ME" "$op" allow; done; }
-wlog() { $T adb logcat -d -v threadtime -s CloudMeWeb:V | sed 's/.*CloudMeWeb: //'; }
+# a live logcat file (adb logcat -d of a full buffer took minutes per poll on a loaded emulator); wlog greps it locally, and it is uploaded even when the step times out
+LIVE="$OUT/logcat-live.txt"; : > "$LIVE"; (adb logcat -v threadtime >> "$LIVE" 2>/dev/null &)
+wlog() { grep -a ' CloudMeWeb: ' "$LIVE" | sed 's/.*CloudMeWeb: //'; }
+clear_log() { clear_log; : > "$LIVE"; }
 shot() { $T adb exec-out screencap -p > "$OUT/precache-1957-$1.png"; echo "shot $1"; }
 img_wait() { for _ in $(seq 1 40); do wlog | grep -q "IMG_CHECK page=$1 " && return 0; sleep 2; done; return 1; }
 pip install --quiet pillow >/dev/null 2>&1 || true
@@ -42,7 +45,7 @@ echo "$PAGES" > "$OUT/pages.txt"; echo "pages: $(echo "$PAGES" | wc -l)"
 # 0. reproduction with the previous app (the phone's state): Personal online, the broken images by URL and the request errors behind them
 if [ -n "$OLD_APK" ] && [ -f "$OLD_APK" ]; then
     $T adb uninstall "$ME" >/dev/null 2>&1 || true; $T adb install -r -g "$OLD_APK" && perms
-    $T adb logcat -c; open_route "page:pers/personal"; img_wait personal; sleep 4; shot repro-old-personal
+    clear_log; open_route "page:pers/personal"; img_wait personal; sleep 4; shot repro-old-personal
     wlog | grep -E "IMG_CHECK|IMG_BROKEN|SUBRES_|MAINFRAME_SOURCE|SW_" | grep "page=personal\|SW_" | tee "$OUT/repro-old-personal.txt"
     $T adb logcat -d | grep -iE "chromium.*(console|Uncaught)|hero3d|img-fallback" | tail -60 > "$OUT/repro-old-console.txt"
 fi
@@ -50,10 +53,11 @@ fi
 # 1. fresh install, launch, touch nothing
 $T adb uninstall "$ME" >/dev/null 2>&1 || true
 $T adb install -r -g "$ME_APK" || { echo "install failed"; exit 1; }
-perms; $T adb logcat -G 16M >/dev/null 2>&1 || true; $T adb logcat -c
+perms; $T adb logcat -G 16M >/dev/null 2>&1 || true; clear_log
 t0=$(date +%s); launch
 NP=$(echo "$PAGES" | grep -c .)
-for _ in $(seq 1 $((WAIT_S / 10))); do wlog | grep -q "^CACHE_TOTAL" && break; wlog | grep "^CACHE_PROGRESS" | tail -1; sleep 10; done
+for _ in $(seq 1 $((WAIT_S / 10))); do wlog | grep -q "^CACHE_TOTAL" && break; wlog | grep -E "^CACHE_(PROGRESS|FETCH)" | tail -1; grep -a -E "FATAL EXCEPTION|ANR in|Process com.diegonmarcos.cloudme .*died" "$LIVE" | tail -2; sleep 10; done
+grep -a -E "FATAL EXCEPTION|ANR in" -A12 "$LIVE" | cut -c1-240 > "$OUT/crashes.txt"; [ -s "$OUT/crashes.txt" ] && { echo "app crashes:"; head -40 "$OUT/crashes.txt"; }
 el=$(( $(date +%s) - t0 ))
 wlog | grep -E "^CACHE_(PAGE|TOTAL|FETCH|HARVEST|VERSION|PROGRESS)" > "$OUT/cache-report.txt"
 $T adb shell "du -sk $CACHE; du -sk $CACHE/*" > "$OUT/cache-du.txt" 2>&1 || true
@@ -71,7 +75,7 @@ AGED=$(echo "$PAGES" | awk '$2!="personal"{print $2; exit}'); AURL=$(echo "$PAGE
 lit="url=$(printf '%s' "$AURL" | sed 's/:/\\:/')"
 old=$(( ($(date +%s) - 8 * 86400) * 1000 ))
 $T adb shell "m=\$(grep -lxF '$lit' $CACHE/$AGED/*.meta | head -1); sed -i 's/^fetchedAt=.*/fetchedAt=$old/' \"\$m\"; grep fetchedAt \"\$m\"" | tee "$OUT/aged.txt"
-$T adb shell am force-stop "$ME"; $T adb logcat -c; launch
+$T adb shell am force-stop "$ME"; clear_log; launch
 for _ in $(seq 1 60); do wlog | grep -q "^CACHE_TOTAL" && break; sleep 5; done
 wlog | grep -E "^CACHE_FETCH|^CACHE_TOTAL" | tee "$OUT/restart-fetch.txt"
 grep -q "^CACHE_FETCH page=$AGED action=refetch result=replaced" "$OUT/restart-fetch.txt" && ok "2a: the aged page $AGED was refetched and replaced" || fail "2a: $AGED not refetched+replaced"
@@ -80,7 +84,7 @@ NS=$(grep -c "^CACHE_FETCH .*action=skip" "$OUT/restart-fetch.txt"); NO=$(grep "
 
 # 3. airplane mode: Personal with every image, then three other pages
 $T adb shell cmd connectivity airplane-mode enable; $T adb shell svc wifi disable; $T adb shell svc data disable; sleep 5
-$T adb logcat -c; open_route "page:pers/personal"; img_wait personal; sleep 3; shot airplane-personal
+clear_log; open_route "page:pers/personal"; img_wait personal; sleep 3; shot airplane-personal
 wlog | grep -E "page=personal |SW_REQUEST" > "$OUT/airplane-personal.txt"; L=$(grep "IMG_CHECK page=personal " "$OUT/airplane-personal.txt" | tail -1); echo "$L"
 grep -E "IMG_BROKEN|SUBRES_" "$OUT/airplane-personal.txt" | head -40
 echo "$L" | grep -qE 'images_broken="[0-9]+ 0 ' && ok "3a: Personal offline, 0 broken images: $L" || fail "3a: Personal offline has broken images: $L"
@@ -89,11 +93,11 @@ grep -q "MAINFRAME_SOURCE page=personal source=cache" "$OUT/airplane-personal.tx
 python3 -I "$HERE/render_check.py" pixels "$OUT/precache-1957-airplane-personal.png" | tee -a "$OUT/verdict.txt" | grep -q '^PASS' || rc=1
 for id in $(echo "$PAGES" | awk '$2!="personal"{print $2}' | head -3); do
     sec=$(echo "$PAGES" | awk -v a="$id" '$2==a{print $1}')
-    $T adb logcat -c; open_route "page:$sec/$id"; img_wait "$id"; sleep 2; shot "airplane-$id"
+    clear_log; open_route "page:$sec/$id"; img_wait "$id"; sleep 2; shot "airplane-$id"
     wlog | grep "page=$id " > "$OUT/airplane-$id.txt"
     if grep -q "MAINFRAME_ERROR page=$id " "$OUT/airplane-$id.txt"; then fail "3d: $id shows an error offline"; else ok "3d: $id opened offline: $(grep IMG_CHECK "$OUT/airplane-$id.txt" | tail -1)"; fi
     python3 -I "$HERE/render_check.py" pixels "$OUT/precache-1957-airplane-$id.png" | tee -a "$OUT/verdict.txt" | grep -q '^PASS' || rc=1
 done
 $T adb shell cmd connectivity airplane-mode disable; $T adb shell svc wifi enable; $T adb shell svc data enable
-$T adb logcat -d > "$OUT/logcat.txt"
+cp "$LIVE" "$OUT/logcat.txt"
 echo "rc=$rc" | tee -a "$OUT/verdict.txt"; exit $rc
