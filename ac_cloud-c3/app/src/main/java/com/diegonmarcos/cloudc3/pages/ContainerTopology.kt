@@ -25,7 +25,7 @@ object ContainerTopology {
     data class Sub(val label: String, val names: List<String>)
     data class Part(val id: String, val label: String, val subs: List<Sub>) { val count: Int get() = subs.sumOf { it.names.size } }
     data class Section(val id: String, val label: String, val types: List<String>, val parts: List<Part>) { val count: Int get() = parts.sumOf { it.count } }
-    data class Band(val id: String, val label: String, val sections: List<Section>) { val count: Int get() = sections.sumOf { it.count } }
+    data class Band(val id: String, val label: String, val sections: List<Section>, val note: String = "") { val count: Int get() = sections.sumOf { it.count } }
     /** [paths] = an attached repo's path inside the repo on this project (lib-chronos -> 1.Modern-science), drawn as the tile's second line. */
     data class Plan(val bands: List<Band>, val paths: Map<String, String> = emptyMap()) {
         fun section(id: String): Section? = bands.flatMap { it.sections }.firstOrNull { it.id == id }
@@ -77,7 +77,17 @@ object ContainerTopology {
         val paths = if (projectId == null) emptyMap() else scoped.entries.mapNotNull { e ->
             decl.repoOf(e)?.attached?.firstOrNull { it.project == projectId && it.path.isNotBlank() }?.let { e.name to it.path }
         }.toMap()
-        return Plan(bands, paths)
+        // #1971 VM pages: the repos band is "Not deployed (repos)" with its reason (All only); the unknown-host band names each undeclared host with its reason
+        val vm = decl.vm
+        val out = if (projectId == null || !decl.isVmPage(projectId)) bands else bands.map { b ->
+            when {
+                b.id == vm.reposBand && vm.reposBandLabel.isNotBlank() -> b.copy(label = vm.reposBandLabel, note = vm.reposReason)
+                projectId == vm.prefix + vm.unknown && b.id != vm.reposBand ->
+                    b.copy(note = scoped.entries.groupBy { it.host }.entries.joinToString(" ") { (h, es) -> vm.unknownReason.replace("{host}", "\"$h\"") + " (${es.size})" })
+                else -> b
+            }
+        }
+        return Plan(out, paths)
     }
 
     /** The one line a band with nothing in it prints (the separation always shows). */
@@ -100,6 +110,7 @@ fun TopologyBandHeader(band: ContainerTopology.Band, modifier: Modifier = Modifi
     val p = LocalKitPalette.current
     Text("${band.label}  ${band.count}", color = p.accent, fontSize = 20.sp, fontWeight = FontWeight.Bold,
         modifier = modifier.testTag(ContainersTags.topoBand(band.id)).padding(start = 4.dp, top = 12.dp, end = 4.dp, bottom = 6.dp))
+    if (band.note.isNotBlank()) Text(band.note, color = p.textSecondary, fontSize = 12.sp, modifier = Modifier.testTag(ContainersTags.topoBand(band.id) + "_note").padding(start = 4.dp, bottom = 6.dp))
 }
 
 /** #1953 the line a band with no entity prints instead of vanishing. */

@@ -14,6 +14,7 @@ import com.diegonmarcos.superapp.navbartop2.NavBarTopSecondRow
 
 /** Test tags of the Containers page's four rows (#1941). */
 object ContainersTags {
+    const val ROW_MODE = "containers_row_mode"
     const val ROW_CATEGORY = "containers_row_category"
     const val ROW_PROJECT = "containers_row_project"
     const val ROW_VIEW = "containers_row_view"
@@ -41,10 +42,14 @@ fun ContainersChrome(
     projects: List<NavPage>, selectedProject: String?, onProject: (NavPage) -> Unit,
     views: List<NavPage>, selectedView: String?, onView: (NavPage) -> Unit,
     filters: @Composable () -> Unit = {},
+    modes: List<NavPage> = emptyList(), selectedMode: String? = null, onMode: (NavPage) -> Unit = {},
     content: @Composable ColumnScope.(Modifier) -> Unit,
 ) {
     Column(Modifier.fillMaxWidth()) {
-        Box(Modifier.testTag(ContainersTags.ROW_CATEGORY)) {
+        if (modes.isNotEmpty()) Box(Modifier.testTag(ContainersTags.ROW_MODE)) {
+            NavBarTopSecondRow(pages = modes, selectedId = selectedMode, onSelect = onMode, underTopChrome = false)
+        }
+        if (categories.isNotEmpty()) Box(Modifier.testTag(ContainersTags.ROW_CATEGORY)) {
             NavBarTopSecondRow(
                 pages = categories.map { NavPage(it, it, "ic_p_c3_stack") }, selectedId = selectedCategory,
                 onSelect = { onCategory(it.id) }, underTopChrome = false,

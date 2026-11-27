@@ -651,6 +651,150 @@
        "same_as": "containers/all/table"
       }
      ]
+    },
+    {
+     "id": "vm-all",
+     "label": "All",
+     "children": [
+      {
+       "id": "topology",
+       "label": "Topology",
+       "same_as": "containers/all/topology"
+      },
+      {
+       "id": "table",
+       "label": "Table",
+       "same_as": "containers/all/table"
+      }
+     ]
+    },
+    {
+     "id": "vm-oci-mail",
+     "label": "oci-mail",
+     "children": [
+      {
+       "id": "topology",
+       "label": "Topology",
+       "same_as": "containers/all/topology"
+      },
+      {
+       "id": "table",
+       "label": "Table",
+       "same_as": "containers/all/table"
+      }
+     ]
+    },
+    {
+     "id": "vm-oci-analytics",
+     "label": "oci-analytics",
+     "children": [
+      {
+       "id": "topology",
+       "label": "Topology",
+       "same_as": "containers/all/topology"
+      },
+      {
+       "id": "table",
+       "label": "Table",
+       "same_as": "containers/all/table"
+      }
+     ]
+    },
+    {
+     "id": "vm-oci-apps",
+     "label": "oci-apps",
+     "children": [
+      {
+       "id": "topology",
+       "label": "Topology",
+       "same_as": "containers/all/topology"
+      },
+      {
+       "id": "table",
+       "label": "Table",
+       "same_as": "containers/all/table"
+      }
+     ]
+    },
+    {
+     "id": "vm-gcp-proxy",
+     "label": "gcp-proxy",
+     "children": [
+      {
+       "id": "topology",
+       "label": "Topology",
+       "same_as": "containers/all/topology"
+      },
+      {
+       "id": "table",
+       "label": "Table",
+       "same_as": "containers/all/table"
+      }
+     ]
+    },
+    {
+     "id": "vm-surface-8-pro",
+     "label": "SurfacePro8",
+     "children": [
+      {
+       "id": "topology",
+       "label": "Topology",
+       "same_as": "containers/all/topology"
+      },
+      {
+       "id": "table",
+       "label": "Table",
+       "same_as": "containers/all/table"
+      }
+     ]
+    },
+    {
+     "id": "vm-samsung-s21plus",
+     "label": "SamsungGalaxyS21+",
+     "children": [
+      {
+       "id": "topology",
+       "label": "Topology",
+       "same_as": "containers/all/topology"
+      },
+      {
+       "id": "table",
+       "label": "Table",
+       "same_as": "containers/all/table"
+      }
+     ]
+    },
+    {
+     "id": "vm-samsung-a37",
+     "label": "SamsungGalaxyA37",
+     "children": [
+      {
+       "id": "topology",
+       "label": "Topology",
+       "same_as": "containers/all/topology"
+      },
+      {
+       "id": "table",
+       "label": "Table",
+       "same_as": "containers/all/table"
+      }
+     ]
+    },
+    {
+     "id": "vm-unknown",
+     "label": "Unknown host",
+     "children": [
+      {
+       "id": "topology",
+       "label": "Topology",
+       "same_as": "containers/all/topology"
+      },
+      {
+       "id": "table",
+       "label": "Table",
+       "same_as": "containers/all/table"
+      }
+     ]
     }
    ]
   },

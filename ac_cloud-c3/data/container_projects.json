@@ -595,5 +595,25 @@
    "status"
   ],
   "open_page": "{project}_topology"
+ },
+ "vm_view": {
+  "_doc": "#1971 Containers has two top modes: Projects (the category strip, as before) and VM (the containers by the host they are deployed on). The VM pages (build.json containers pages with this id prefix) are one per DERIVED host: every fleet VM that holds a declared container (fleet_slice.json vms, alias = the container's host) plus every mesh-client device (fleet_slice.json electronics with a wg_ip), then `unknown` for a container whose host is none of them (each such host value is named with its reason). `all` is every container plus the repos; a repo has no host, so it shows in All only, under the repos band relabelled here, with its reason line. Page ids are `<page_prefix><host id>`.",
+  "page_prefix": "vm-",
+  "all": "all",
+  "unknown": "unknown",
+  "modes": [
+   {
+    "id": "projects",
+    "label": "Projects"
+   },
+   {
+    "id": "vm",
+    "label": "VM"
+   }
+  ],
+  "repos_band": "repos",
+  "repos_band_label": "Not deployed (repos)",
+  "repos_reason": "Repos are git repositories: they are deployed on no host, so they are listed here, in All only.",
+  "unknown_reason": "host {host} is not a declared fleet host (no VM or mesh-client device has it), so its containers are kept here, never dropped."
  }
 }

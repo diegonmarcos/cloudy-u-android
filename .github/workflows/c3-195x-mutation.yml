@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost | home-row-lost | home-zero-on-fail | projects-row-lost | projects-column-lost'
+        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost | home-row-lost | home-zero-on-fail | projects-row-lost | projects-column-lost | vm-unknown-lost | vm-repo-on-host | vm-devices-dropped'
         required: true
 permissions:
   contents: read
@@ -22,7 +22,7 @@ jobs:
       - name: Validate the mutation name against the allowed list
         run: |
           case "$MUT" in
-            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost) echo "leg: $MUT" ;;
+            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost|vm-unknown-lost|vm-repo-on-host|vm-devices-dropped) echo "leg: $MUT" ;;
             *) echo "::error::unknown mutation name"; exit 1 ;;
           esac
       - uses: actions/checkout@v4
@@ -71,6 +71,12 @@ jobs:
             projects-row-lost) sed -i 's/decl.projects.map { p ->/decl.projects.drop(1).map { p ->/' $K/pages/InfraProjects.kt ;;
             # #1969 Infra Projects loses a declared column
             projects-column-lost) pyj $D/container_projects.json 'd["projects_table"]["columns"] = [c for c in d["projects_table"]["columns"] if c["key"] != "domains"]' ;;
+            # #1971 a container whose host is none of the derived ones vanishes from the VM pages
+            vm-unknown-lost)   sed -i 's/(if (h == vm.unknown) e.host !in hostIds else e.host == h)/(if (h == vm.unknown) false else e.host == h)/' $K/pages/ContainerProjects.kt ;;
+            # #1971 a repo is listed under a host
+            vm-repo-on-host)   sed -i 's/h == vm.all || (e.role != "repo" \&\& (/h == vm.all || ((/' $K/pages/ContainerProjects.kt ;;
+            # #1971 the mesh-client devices are no longer derived as hosts
+            vm-devices-dropped) sed -i 's/slice.devices.filter { !it.wgIp.isNullOrBlank() }/slice.devices.filter { false }/' $K/pages/ContainerHosts.kt ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
           git diff --stat
@@ -128,6 +134,9 @@ jobs:
             home-zero-on-fail) C=HomeLiveTest; N="a failed source shows its reason on the row, never a zero" ;;
             projects-row-lost) C=InfraProjectsTest; N="every declared project is a row and the columns match the declaration" ;;
             projects-column-lost) C=InfraProjectsTest; N="every declared project is a row and the columns match the declaration" ;;
+            vm-unknown-lost   ) C=ContainerProjectsTest; N="#1971 parity Projects keeps every entity reachable, VM lists every container under exactly one host or the unknown host with a reason" ;;
+            vm-repo-on-host   ) C=ContainerProjectsTest; N="#1971 parity Projects keeps every entity reachable, VM lists every container under exactly one host or the unknown host with a reason" ;;
+            vm-devices-dropped) C=ContainerProjectsTest; N="#1971 parity Projects keeps every entity reachable, VM lists every container under exactly one host or the unknown host with a reason" ;;
             wiki-lost)         C=ContainerProjectsTest; N="#1968 parity every entity under Lib before is under Wiki now, the All total is unchanged and the old ids resolve to Wiki" ;;
             mail-alias-lost)   C=OrchOpsReorgTest; N="every old page id still resolves through the aliases to its new place" ;;
           esac

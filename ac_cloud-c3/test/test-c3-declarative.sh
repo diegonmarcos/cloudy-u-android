@@ -81,8 +81,10 @@ for p in cont:
     labels = [q["label"] for q in p.get("pages") or []]
     if labels != ["Topology", "Table"]: bad.append("Containers page %r labels its switch %s" % (p["id"], labels))
 cpj = json.load(open(app + "/data/container_projects.json", encoding="utf-8"))["projects"]
-if [p["id"] for p in cont] != ["all"] + [p["id"] for p in cpj]:
-    bad.append("the Containers strip reads %s, not All + the container_projects.json projects" % [p["id"] for p in cont])
+sys.path.insert(0, app + "/data")
+import gen_vm_hosts
+if [p["id"] for p in cont] != ["all"] + [p["id"] for p in cpj] + gen_vm_hosts.page_ids("vm-", app + "/data"):
+    bad.append("the Containers strip reads %s, not All + the container_projects.json projects + the derived VM pages (#1971)" % [p["id"] for p in cont])
 if [p["label"] for p in cont][0] != "All" or "Lib" in [p["label"] for p in cont] or "Wiki_ModernSc" not in [p["label"] for p in cpj]:
     bad.append("the Containers strip lacks All, still has Lib or lacks Wiki (#1968): %s" % [p["label"] for p in cont])
 def ids(pages): return [p["id"] for p in pages] + [i for p in pages for i in ids(p.get("pages") or [])]
@@ -103,7 +105,7 @@ strip = [p["id"] for p in next(s for s in ui["sections"] if s["id"] == "containe
 cp = json.load(open(app + "/data/container_projects.json", encoding="utf-8"))
 declared = [p["id"] for p in cp["projects"]]
 bad = []
-if sorted(declared) != sorted(i for i in strip if i != "all"): bad.append("the strip %s and container_projects.json %s name different projects" % (strip, declared))
+if sorted(declared) != sorted(i for i in strip if i != "all" and not i.startswith("vm-")): bad.append("the strip %s and container_projects.json %s name different projects" % (strip, declared))
 if cp.get("default") not in declared: bad.append("the default project %r is not declared" % cp.get("default"))
 for p in cp["projects"]:
     if p.get("code", "") and not re.fullmatch(r"\d+(\.\d+)*", p["code"]): bad.append("project %r has a malformed registry code" % p["id"])

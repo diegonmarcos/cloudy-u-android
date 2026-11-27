@@ -265,7 +265,7 @@ class C3StackFragment : KitComposeFragment() {
             val cards = if (stackId == STACK_TOPOLOGY) {
                 // #1953 the Topology body is the declared plan: per band a heading (or its one empty line), per non-empty section one card
                 val plan = Stacks.topology(projectId, types, vms).first
-                val label = Declarations.containerProjects.project(projectId)?.label ?: "All"
+                val label = Declarations.containerProjects.scopeLabel(projectId)
                 plan.bands.flatMap { b ->
                     val head = Stacks.StackPanel("topo_band", b.label, anchor = "topo-band-${b.id}", dashSection = b.id)
                     if (b.count == 0) listOf(head, Stacks.StackPanel("topo_band_empty", label, dashSection = b.id))

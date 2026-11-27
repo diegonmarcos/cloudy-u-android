@@ -238,13 +238,13 @@ object Stacks {
     fun cloudServices(project: String? = null, kind: String? = null, types: Set<String> = emptySet(), vms: Set<String> = emptySet()): CloudDash {
         val c = ContainersSource.current()
         val d = Declarations.containerProjects
-        return dashOf(ContainerProjects.scope(d, c, project?.takeIf { d.project(it) != null }, kind, types, vms))
+        return dashOf(ContainerProjects.scope(d, c, project?.takeIf { d.scopeKnown(it) }, kind, types, vms))
     }
 
     /** #1953 the Topology plan of [project] (null = All) under the Type / VM filters, and every drawn entity's dashboard entry by name. */
     fun topology(project: String? = null, types: Set<String> = emptySet(), vms: Set<String> = emptySet()): Pair<com.diegonmarcos.cloudc3.pages.ContainerTopology.Plan, Map<String, CloudContainer>> {
         val d = Declarations.containerProjects
-        val pid = project?.takeIf { d.project(it) != null }
+        val pid = project?.takeIf { d.scopeKnown(it) }
         val scoped = ContainerProjects.scope(d, ContainersSource.current(), pid, null, types, vms)
         val byName = dashOf(scoped).groups.flatMap { g -> g.subgroups.flatMap { it.containers } }.associateBy { it.name }
         return com.diegonmarcos.cloudc3.pages.ContainerTopology.plan(d, scoped, pid) to byName

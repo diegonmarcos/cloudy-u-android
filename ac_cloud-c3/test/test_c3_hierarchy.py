@@ -1,5 +1,8 @@
 """#1495 hierarchy guard (app side): the committed data/c3_hierarchy.json IS the app tree of build.json ui.sections plus the declared
 route/tool mapping; no route or tool pattern has two owners; every new category has its fragment arm and catalog map."""
+import sys, os as _o
+sys.path.insert(0, _o.path.join(_o.path.dirname(_o.path.abspath(__file__)), "..", "data"))
+import gen_vm_hosts
 import json, os, re, subprocess, sys, unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -60,7 +63,7 @@ class Hierarchy(unittest.TestCase):
         by = {s["id"]: s for s in self.h["sections"]}
         self.assertEqual([g["id"] for g in by["infra"]["children"]], ["bare", "apis", "personal", "domains_row", "projects_row"])
         self.assertEqual([g["id"] for g in by["ops"]["children"]], ["net", "mail", "ops_health", "obs"])
-        self.assertEqual([g["id"] for g in by["containers"]["children"]], ["all"] + [p["id"] for p in json.load(open(os.path.join(os.path.dirname(__file__), "..", "data", "container_projects.json")))["projects"]])
+        self.assertEqual([g["id"] for g in by["containers"]["children"]], ["all"] + [p["id"] for p in json.load(open(os.path.join(os.path.dirname(__file__), "..", "data", "container_projects.json")))["projects"]] + __import__("sys").modules["gen_vm_hosts"].page_ids("vm-", os.path.join(os.path.dirname(__file__), "..", "data")))
         self.assertEqual([f["id"] for f in self.h["containers"]["filters"]], ["mcp", "api", "apps", "db", "repo"])
 
     def test_every_leaf_owns_or_inherits(self):

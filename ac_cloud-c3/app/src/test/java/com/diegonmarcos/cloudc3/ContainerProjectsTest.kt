@@ -30,6 +30,11 @@ class ContainerProjectsTest {
     private fun containersPages() = Json.parseToJsonElement(File(dir, "build.json").readText()).jsonObject["ui"]!!.jsonObject["sections"]!!.jsonArray
         .map { it.jsonObject }.first { it["id"]!!.jsonPrimitive.content == "containers" }["pages"]!!.jsonArray.map { it.jsonObject }
 
+    private val slice = com.diegonmarcos.cloudc3.pages.FleetModel.parse(File(dir, "data/fleet_slice.json").readText())
+    private val hosts = com.diegonmarcos.cloudc3.pages.ContainerHosts.derive(slice, catalog)
+    private val vdecl = decl.copy(hostIds = hosts.map { it.id })
+    private fun vmPageIds() = listOf("${decl.vm.prefix}all") + hosts.map { decl.vm.prefix + it.id } + "${decl.vm.prefix}unknown"
+
     private fun navTopIds() = containersPages().map { it["id"]!!.jsonPrimitive.content }
 
     /** The Cloud Me Proj tree: (category label, [(page id, label)]), emoji stripped from the labels. */
@@ -44,7 +49,7 @@ class ContainerProjectsTest {
     @Test
     fun `every project page of the Containers strip is All or a declared project, in the declared order`() {
         val declared = decl.projects.map { it.id }
-        assertEquals("All first, then every declared project in order", listOf("all") + declared, navTopIds())
+        assertEquals("All first, then every declared project in order, then the VM pages (#1971)", listOf("all") + declared + vmPageIds(), navTopIds())
         assertNotNull("the default project is declared", decl.project(decl.default))
     }
 
@@ -53,7 +58,7 @@ class ContainerProjectsTest {
         val want = cloudMeProj().flatMap { (cat, ps) -> ps.map { (id, label) -> Triple(id, cat, "${cat}_$label") } }
         assertEquals(want, decl.projects.map { Triple(it.id, it.category, it.label) })
         // the page labels of build.json are the Cloud Me names without the category prefix
-        val pageLabels = containersPages().drop(1).map { it["label"]!!.jsonPrimitive.content }
+        val pageLabels = containersPages().drop(1).filterNot { it["id"]!!.jsonPrimitive.content.startsWith("vm-") }.map { it["label"]!!.jsonPrimitive.content }
         assertEquals(decl.projects.map { it.label.removePrefix("${it.category}_") }, pageLabels)
         // the owner's names, as the Cloud Me data spells them (DeepXTech, FinTerm, ModernSc: the data wins over a typed list)
         listOf("Unix_SuperApp", "Unix_Cloud-me", "Unix_Cloudy", "CG_Omniverse", "CG_Zirkusverse", "Capital_CB", "Capital_PM", "Capital_FinTerm",
@@ -328,5 +333,33 @@ class ContainerProjectsTest {
         val al = Json.parseToJsonElement(File(dir, "data/container_projects.json").readText()).jsonObject["aliases"]!!.jsonObject
         assertEquals("Wiki", decl.project(al["lib"]!!.jsonPrimitive.content)?.category)
         assertEquals("Wiki", decl.project(al["pj-lib"]!!.jsonPrimitive.content)?.category)
+    }
+
+    @Test
+    fun `#1971 parity Projects keeps every entity reachable, VM lists every container under exactly one host or the unknown host with a reason`() {
+        // Projects: every entity of All is under at least one project page (nothing lost by the mode switch)
+        val all = ContainerProjects.scope(vdecl, catalog, null).entries.map { it.name }.toSet()
+        val underProjects = vdecl.projects.flatMap { p -> ContainerProjects.scope(vdecl, catalog, p.id).entries.map { it.name } }.toSet()
+        val homeless = all - underProjects
+        assertTrue("entities reachable through no project page: $homeless", homeless.all { n -> vdecl.projectOf(ContainerProjects.scope(vdecl, catalog, null).entries.first { it.name == n })?.id == vdecl.default })
+        // the hosts are derived from the fleet, with the PC and the phones
+        assertTrue(hosts.map { it.id }.containsAll(listOf("oci-apps", "oci-analytics", "oci-mail", "gcp-proxy", "surface-8-pro", "samsung-a37", "samsung-s21plus")))
+        // VM: every container is on exactly one VM page (a host or unknown); repos on none but All
+        val pages = vmPageIds().filter { it != "${vdecl.vm.prefix}all" }
+        val vmAll = ContainerProjects.scope(vdecl, catalog, "${vdecl.vm.prefix}all").entries
+        assertEquals("VM All lists every entity", all, vmAll.map { it.name }.toSet())
+        vmAll.filter { it.role != "repo" }.forEach { e ->
+            val on = pages.filter { p -> ContainerProjects.scope(vdecl, catalog, p).entries.any { it.name == e.name } }
+            assertEquals("${e.name} (host '${e.host}') is on exactly one VM page: $on", 1, on.size)
+        }
+        vmAll.filter { it.role == "repo" }.forEach { e -> assertTrue("${e.name} is a repo and is on a host page", pages.none { p -> ContainerProjects.scope(vdecl, catalog, p).entries.any { it.name == e.name } }) }
+        // the unknown host and the repos band carry their reason
+        val plan = com.diegonmarcos.cloudc3.pages.ContainerTopology.plan(vdecl, ContainerProjects.scope(vdecl, catalog, "${vdecl.vm.prefix}unknown"), "${vdecl.vm.prefix}unknown")
+        assertTrue("the unknown host has a reason", plan.bands.first { it.id != vdecl.vm.reposBand }.note.contains("is not a declared fleet host"))
+        val allPlan = com.diegonmarcos.cloudc3.pages.ContainerTopology.plan(vdecl, ContainerProjects.scope(vdecl, catalog, "${vdecl.vm.prefix}all"), "${vdecl.vm.prefix}all")
+        assertEquals("Not deployed (repos)", allPlan.bands.first { it.id == vdecl.vm.reposBand }.label)
+        assertTrue(allPlan.bands.first { it.id == vdecl.vm.reposBand }.note.isNotBlank())
+        val oci = com.diegonmarcos.cloudc3.pages.ContainerTopology.plan(vdecl, ContainerProjects.scope(vdecl, catalog, "${vdecl.vm.prefix}oci-apps"), "${vdecl.vm.prefix}oci-apps")
+        assertEquals("a host page draws no repo", 0, oci.bands.first { it.id == vdecl.vm.reposBand }.count)
     }
 }

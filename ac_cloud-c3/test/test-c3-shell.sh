@@ -549,6 +549,8 @@ bad = []
 secs = {x["id"]: x for x in ui.get("sections") or []}
 def pids(i): return [p["id"] for p in (secs.get(i) or {}).get("pages") or []]
 _cp = [p["id"] for p in json.load(open(os.path.join(os.path.dirname(os.path.abspath(sys.argv[1])), "data", "container_projects.json"), encoding="utf-8"))["projects"]]
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(sys.argv[1])), "data")); import gen_vm_hosts
+_cp = _cp + gen_vm_hosts.page_ids("vm-", os.path.join(os.path.dirname(os.path.abspath(sys.argv[1])), "data"))   # #1971 + the derived VM pages
 if pids("containers") != ["all"] + _cp: bad.append("Containers pages are %s, not All + the container_projects.json projects %s" % (pids("containers"), _cp))
 for _p in (secs.get("containers") or {}).get("pages") or []:
     if [q["id"] for q in _p.get("pages") or []] != [_p["id"] + "_topology", _p["id"] + "_table"]:

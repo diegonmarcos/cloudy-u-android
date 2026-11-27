@@ -89,7 +89,7 @@ def build():
     if extra:
         raise SystemExit(f"c3_hierarchy_map.json names nodes the app does not declare: {sorted(extra)}")
     proj = [p["id"] for p in cp["projects"]]
-    declared = [n["id"] for s in secs if s["id"] in base for n in s["children"] if n["id"] != base[s["id"]]]
+    declared = [n["id"] for s in secs if s["id"] in base for n in s["children"] if n["id"] != base[s["id"]] and not n["id"].startswith(cp.get("vm_view", {}).get("page_prefix") or "\0")]  # #1971 the vm- pages are not projects
     if proj != declared:
         raise SystemExit(f"container_projects.json projects {proj} differ from build.json containers pages {declared}")
     h = {

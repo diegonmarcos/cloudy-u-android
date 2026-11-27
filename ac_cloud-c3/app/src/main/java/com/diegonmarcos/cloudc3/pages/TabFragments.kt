@@ -76,28 +76,34 @@ class ContainersFragment : PagedFragment() {
     @Composable
     override fun Content() {
         val decl = Declarations.containerProjects
-        val declared = remember { pages() }
+        val allPages = remember { pages() }
+        // #1971 two modes: Projects (the pages that are All or a project) and VM (the `vm-` pages, one per derived host)
+        val declared = remember { allPages.filterNot { decl.isVmPage(it.id) } }
+        val vmPages = remember { allPages.filter { decl.isVmPage(it.id) } }
         val top = selectedTop ?: declared.first().id
+        val vmMode = decl.isVmPage(top)
         val leaf = selectedLeaf
         LaunchedEffect(top, leaf) {
             val tab = arguments?.getString(PagedFragment.ARG_TAB)
             val page = leaf ?: top
             if (tab != null) (activity as? PagedFragment.PageListener)?.onPageShown(tab, page)
         }
-        val category = ContainersNav.categoryOf(decl, declared, top)
-        val categories = ContainersNav.categories(decl, declared)
+        val category = if (vmMode) "" else ContainersNav.categoryOf(decl, declared, top)
+        val categories = if (vmMode) emptyList() else ContainersNav.categories(decl, declared)
         fun pagesOf(c: String): List<NavPage> = ContainersNav.pagesOf(decl, declared, c)
-        val views = declared.firstOrNull { it.id == top }?.pages.orEmpty()
+        val views = allPages.firstOrNull { it.id == top }?.pages.orEmpty()
         val topology = leaf?.endsWith("_topology") == true
         val version = ContainersSource.version
         ContainersChrome(
             categories = categories, selectedCategory = category,
             onCategory = { c -> pagesOf(c).firstOrNull()?.let { openPage(it.id) } },
-            projects = pagesOf(category), selectedProject = top, onProject = { openPage(it.id) },
+            projects = if (vmMode) vmPages else pagesOf(category), selectedProject = top, onProject = { openPage(it.id) },
+            modes = if (vmPages.isEmpty()) emptyList() else decl.vm.modes.map { (id, label) -> NavPage(id, label, "ic_p_c3_stack") }, selectedMode = if (vmMode) "vm" else "projects",
+            onMode = { m -> (if (m.id == "vm") vmPages else declared).firstOrNull()?.let { openPage(it.id) } },
             views = views, selectedView = leaf, onView = { selectLeaf(it.id) },
             filters = {
                 if (topology) {
-                    val scoped = remember(version, top) { ContainerProjects.scope(decl, ContainersSource.current(), top.takeIf { decl.project(it) != null }) }
+                    val scoped = remember(version, top) { ContainerProjects.scope(decl, ContainersSource.current(), top.takeIf { decl.scopeKnown(it) }) }
                     TopologyFilters(
                         vms = remember(scoped) { RoutesTableModel.vmOptions(scoped.entries.map { RoutesTableModel.Row("", "", "", "", "", it.host, "") }) },
                         types = remember(scoped) { RoutesTableModel.typeOptions(scoped.entries.map { RoutesTableModel.Row("", "", "", "", "", "", "", type = decl.typeOf(it)) }, decl.types) },

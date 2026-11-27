@@ -528,7 +528,7 @@ internal fun Chip(label: String, selected: Boolean, tag: String, onClick: () -> 
 class RoutesTableFragment : KitComposeFragment() {
 
     /** The Containers sub-page's project (ContainerProjects); an id the declaration does not know is All. */
-    private val project: String? get() = arguments?.getString(ARG_PROJECT)?.takeIf { Declarations.containerProjects.project(it) != null }
+    private val project: String? get() = arguments?.getString(ARG_PROJECT)?.takeIf { Declarations.containerProjects.scopeKnown(it) }
 
     override fun palette(): KitPalette = c3KitPalette(requireContext())
 

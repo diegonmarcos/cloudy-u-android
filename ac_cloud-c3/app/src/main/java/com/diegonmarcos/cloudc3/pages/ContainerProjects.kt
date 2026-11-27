@@ -29,6 +29,12 @@ object ContainerProjects {
     /** #1953 one project a repo is drawn on: [via] code (registry prefix) | hub (a hub under that code) | declared (project_repos), [path] inside the repo. */
     data class Attach(val project: String, val path: String = "", val via: String = "code")
 
+    /** #1971 the VM view's declared words: page id prefix, the All / unknown host ids, the mode labels, the repos band and its reason, the unknown-host reason (`{host}`). */
+    data class VmView(
+        val prefix: String = "", val all: String = "all", val unknown: String = "unknown", val modes: List<Pair<String, String>> = emptyList(),
+        val reposBand: String = "repos", val reposBandLabel: String = "", val reposReason: String = "", val unknownReason: String = "",
+    )
+
     /** A kind chip (All | MCPs | APIs | Apps | DBs): matched by name first, then by category; no rule = the declared default kind. */
     data class Kind(val id: String, val label: String, val nameSuffix: List<String>, val nameContains: List<String>, val categoryPrefix: List<String>, val role: List<String> = emptyList())
 
@@ -47,7 +53,19 @@ object ContainerProjects {
         val layout: JsonObject? = null,
         /** #1969 Infra > Projects: the declared columns (key, label), filter chips (column keys) and the page a row tap opens (`{project}` = the project id), under `projects_table`. */
         val projectsColumns: List<Pair<String, String>> = emptyList(), val projectsFilters: List<String> = emptyList(), val openPage: String = "",
+        /** #1971 the VM mode (container_projects.json::vm_view) and the derived host ids (ContainerHosts.derive; set by Declarations). */
+        val vm: VmView = VmView(), val hostIds: List<String> = emptyList(),
     ) {
+        /** A VM-mode page id (`vm-<host>`): not a project, scoped by host. */
+        fun isVmPage(id: String): Boolean = vm.prefix.isNotBlank() && id.startsWith(vm.prefix)
+        /** A page id the scope knows: a project or a VM page. */
+        fun scopeKnown(id: String): Boolean = project(id) != null || isVmPage(id)
+        /** The label of a scope id: the project label, the VM page's host, else All. */
+        fun scopeLabel(id: String?): String = id?.let { project(it)?.label ?: if (isVmPage(it)) it.removePrefix(vm.prefix) else null } ?: "All"
+        private fun vmMatch(e: ContainersModel.Entry, h: String): Boolean =
+            h == vm.all || (e.role != "repo" && (if (h == vm.unknown) e.host !in hostIds else e.host == h))
+        fun vmScopeMatches(e: ContainersModel.Entry, pageId: String): Boolean = vmMatch(e, pageId.removePrefix(vm.prefix))
+
         /** The first-row categories (the Cloud Me > Proj groups; Lib is Wiki since #1968), in the declared order. */
         fun categories(): List<String> = projects.map { it.category }.filter { it.isNotBlank() }.distinct()
 
@@ -125,6 +143,8 @@ object ContainerProjects {
             (o["lfs"] as? JsonObject)?.s("type_kind").orEmpty(), (o["lfs"] as? JsonObject)?.s("db_engine").orEmpty(), o["topology_layout"] as? JsonObject,
             ((o["projects_table"] as? JsonObject)?.get("columns") as? JsonArray).orEmpty().mapNotNull { c -> (c as? JsonObject)?.let { it.s("key").takeIf { k -> k.isNotBlank() }?.let { k -> k to it.s("label").ifBlank { k } } } },
             (o["projects_table"] as? JsonObject)?.l("filters").orEmpty(), (o["projects_table"] as? JsonObject)?.s("open_page").orEmpty(),
+            (o["vm_view"] as? JsonObject)?.let { v -> VmView(v.s("page_prefix"), v.s("all").ifBlank { "all" }, v.s("unknown").ifBlank { "unknown" },
+                (v["modes"] as? JsonArray).orEmpty().mapNotNull { m -> (m as? JsonObject)?.let { it.s("id") to it.s("label") } }, v.s("repos_band"), v.s("repos_band_label"), v.s("repos_reason"), v.s("unknown_reason")) } ?: VmView(),
         )
     }
 
@@ -184,7 +204,7 @@ object ContainerProjects {
     fun scope(decl: Decl, c0: ContainersModel.Catalog, projectId: String?, kindId: String? = null, types: Set<String> = emptySet(), vms: Set<String> = emptySet()): ContainersModel.Catalog {
         val c = full(decl, c0)
         val keep = c.entries.filter {
-            (projectId == null || decl.projectsOf(it).any { p -> p.id == projectId }) && (kindId == null || decl.kindsOf(it).any { k -> k.id == kindId }) &&
+            (projectId == null || (if (decl.isVmPage(projectId)) decl.vmScopeMatches(it, projectId) else decl.projectsOf(it).any { p -> p.id == projectId })) && (kindId == null || decl.kindsOf(it).any { k -> k.id == kindId }) &&
                 (types.isEmpty() || decl.typeOf(it) in types) && (vms.isEmpty() || it.host in vms)
         }
         val names = keep.map { it.name }.toSet()
@@ -205,7 +225,7 @@ object ContainerProjects {
         val rows = ContainersModel.rows(scoped).map { r ->
             val e = byName[r.container]
             // #1953 a project table names its own project (an attached repo is on it too); All names each row's primary project
-            val p = if (projectId != null) decl.project(projectId) else e?.let { decl.projectOf(it) }
+            val p = (if (projectId != null) decl.project(projectId) else null) ?: e?.let { decl.projectOf(it) }
             val type = e?.let { decl.typeOf(it) }.orEmpty()
             // #1953 a repo row's meta carries lfs, repo_role, attached_projects, path through Entry.fields() (entryOf's extras)
             r.copy(project = p?.label.orEmpty(), type = type, meta = r.meta + listOf("project_name" to p?.label.orEmpty(), "type" to type))
