@@ -77,8 +77,8 @@ else:
 kdir = c3 + "/app/src/main/java/com/diegonmarcos/cloudc3/"
 ip = open(kdir + "pages/InfraPages.kt", encoding="utf-8").read()
 fk = open(kdir + "pages/FleetEndpoints.kt", encoding="utf-8").read()
-if "if (it.id == fleet.group) FleetEndpointsScreen(section, it, fleet)" not in ip or "Declarations.fleetEndpoints" not in ip:
-    bad.append("F3 InfraPages.kt does not draw the fleet group through FleetEndpointsScreen")
+if "if (it.id == fleet.group) C3ApiScreen(section, it, fleet," not in ip or "Declarations.fleetEndpoints" not in ip:
+    bad.append("F3 InfraPages.kt does not draw the fleet group through C3ApiScreen")
 if "FleetEndpoints.lines(s), links = FleetEndpoints.links(s)" not in ip or "listOf(s.kind, s.policy)" not in ip:
     bad.append("F3 the row does not draw every field (kind, policy, lines, links)")
 for field in ("s.publicUrl", "s.meshUrl", "s.health", "s.auth", "s.aliases", "s.routePaths", "s.source"):
@@ -127,7 +127,7 @@ mutate "a mesh URL changed in the move"            ac_cloud-c3/data/api_provider
 mutate "a service dropped in the move"             ac_cloud-c3/data/api_providers.json '{"id": "languagetool", ' '{"id": "languagetool-x", '
 mutate "a new fleet service not regenerated"       ac_cloud-account/build.json '"id": "gitea"' '"id": "gitea2"'
 mutate "the health path lost"                      ac_cloud-c3/data/api_providers.json '"health": "/api/healthz"' '"health": ""'
-mutate "the group no longer drawn"                 ac_cloud-c3/app/src/main/java/com/diegonmarcos/cloudc3/pages/InfraPages.kt 'if (it.id == fleet.group) FleetEndpointsScreen(section, it, fleet) else ' ''
+mutate "the group no longer drawn"                 ac_cloud-c3/app/src/main/java/com/diegonmarcos/cloudc3/pages/InfraPages.kt 'if (it.id == fleet.group) C3ApiScreen(section, it, fleet, apis.groups.firstOrNull { g -> g.id == mcp.group } ?: it.copy(id = mcp.group), mcp) else ' ''
 mutate "a field dropped from the row"              ac_cloud-c3/app/src/main/java/com/diegonmarcos/cloudc3/pages/FleetEndpoints.kt '        "Health: ${s.health.ifBlank { "not declared" }}",' ''
 mutate "the page left the APIs row"                ac_cloud-c3/build.json '              "api_scraper",
               "api_endpoints"' '              "api_scraper"'

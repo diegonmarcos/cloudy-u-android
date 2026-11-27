@@ -44,11 +44,10 @@ object InfraSections {
     const val DESKTOP = "desktop"
     const val MOBILE = "mobile"
     const val GADGETS = "gadgets"
-    const val CONTROL = "control"
     const val DOMAINS = "domains"
     const val DOMAINS_PUBLIC = "domains_public"
     const val PROJECTS = "projects"
-    val ALL = listOf(PROVIDERS, MACHINES, SERVERLESS, NODE_PYTHON, STORAGE, DESKTOP, MOBILE, GADGETS, CONTROL, DOMAINS, DOMAINS_PUBLIC, PROJECTS)
+    val ALL = listOf(PROVIDERS, MACHINES, SERVERLESS, NODE_PYTHON, STORAGE, DESKTOP, MOBILE, GADGETS, DOMAINS, DOMAINS_PUBLIC, PROJECTS)
 }
 
 /** Test tags of the Infra pages, for the declaration-to-screen suite. */
@@ -80,11 +79,10 @@ fun InfraSectionScreen(
         InfraSections.DESKTOP -> DevicesScreen(InfraSections.DESKTOP, slice)
         InfraSections.MOBILE -> DevicesScreen(InfraSections.MOBILE, slice)
         InfraSections.GADGETS -> DevicesScreen(InfraSections.GADGETS, slice)
-        InfraSections.CONTROL -> OpsCatalogScreen(InfraTags.screen(InfraSections.CONTROL), "hier_control")
         InfraSections.DOMAINS_PUBLIC -> PublicDomainsScreen(slice, identities, onToken)
         InfraSections.DOMAINS -> DomainsScreen(slice, live, today)
         InfraSections.PROJECTS -> ProjectsScreen(Declarations.containerProjects, ContainersSource.current(), slice.domains.map { it.name }, down, measured, onOpen)
-        else -> apis.groupOfPage(section)?.let { if (it.id == fleet.group) FleetEndpointsScreen(section, it, fleet) else if (it.id == mcp.group) C3McpScreen(section, it, mcp) else ApiProvidersScreen(section, it, apis) }
+        else -> apis.groupOfPage(section)?.let { if (it.id == fleet.group) C3ApiScreen(section, it, fleet, apis.groups.firstOrNull { g -> g.id == mcp.group } ?: it.copy(id = mcp.group), mcp) else if (it.id == mcp.group) C3McpScreen(section, it, mcp) else ApiProvidersScreen(section, it, apis) }
             ?: Text("Unknown Infra page: $section", color = LocalKitPalette.current.bad)
     }
 }
@@ -117,7 +115,12 @@ fun ApiProvidersScreen(section: String, group: ApiProviders.Group, apis: ApiProv
 
 @Composable
 fun FleetEndpointsScreen(section: String, group: ApiProviders.Group, fleet: FleetEndpoints.Decl) {
-    Page(section, fleet.summary()) {
+    Page(section, fleet.summary()) { FleetEndpointsRows(section, group, fleet) }
+}
+
+@Composable
+private fun FleetEndpointsRows(section: String, group: ApiProviders.Group, fleet: FleetEndpoints.Decl) {
+    run {
         if (fleet.services.isEmpty()) {
             DenseRow(InfraTags.row(section, "none"), "None declared", "", listOf("No ${group.label} endpoint is declared (data/api_providers.json::fleet_endpoints is empty)"))
         }
@@ -131,7 +134,22 @@ fun FleetEndpointsScreen(section: String, group: ApiProviders.Group, fleet: Flee
 
 @Composable
 fun C3McpScreen(section: String, group: ApiProviders.Group, mcp: C3Mcp.Decl) {
-    Page(section, mcp.summary()) {
+    Page(section, mcp.summary()) { C3McpRows(section, group, mcp) }
+}
+
+/** #1972 the C3 API page: the former C3 Endpoints page (the fleet services' URLs) and the former C3 MCP page (the MCP servers, tools and routes) in one scroll, every row of both. */
+@Composable
+fun C3ApiScreen(section: String, fleetGroup: ApiProviders.Group, fleet: FleetEndpoints.Decl, mcpGroup: ApiProviders.Group, mcp: C3Mcp.Decl) {
+    Page(section, "${fleet.summary()} | ${mcp.summary()}") {
+        FleetEndpointsRows(section, fleetGroup, fleet)
+        GroupHeader(InfraTags.head(section, mcpGroup.id), "C3 MCP: ${mcp.summary()}")
+        C3McpRows(section, mcpGroup, mcp)
+    }
+}
+
+@Composable
+private fun C3McpRows(section: String, group: ApiProviders.Group, mcp: C3Mcp.Decl) {
+    run {
         if (mcp.servers.isEmpty()) {
             DenseRow(InfraTags.row(section, "none"), "None declared", "", listOf("No ${group.label} server is declared (data/api_providers.json::mcp_catalogue is empty)"))
         }

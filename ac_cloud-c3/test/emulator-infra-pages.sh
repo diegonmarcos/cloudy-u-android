@@ -60,15 +60,14 @@ while read -r page wait labels; do
   open_page "$page"; shot "infra-$page" "$wait"
   for l in ${labels//,/ }; do has "infra-$page" "${l//_/ }" || bad "infra-$page: label '${l//_/ }' missing"; done
 done <<'PAGES'
-providers 6 Bare,APIs,Personal,Domains,Providers,VMs
+providers 6 Infra_Cloud,Infra_Bare,Services_API,Services_Domains,Providers,VMs
 machines 4 VMs
 serverless 6 Containers-as-Service,Google_Cloud_Run,Project:,Region:
 node_python 4 Containers-Node-Python,GitHub_Pages,GitHub_Actions,Google_Firebase
 storage 4 Storage
 api_ai 4 AI,OpenRouter,Claude
 api_scraper 4 Scraper,Apify,Cloudy_Crawlee
-api_endpoints 4 C3_Endpoints,ai-gateway,Public:,Mesh:
-api_mcp 4 C3_MCP,cloudy-all-mcp,Endpoint:,Tools:
+api_endpoints 4 C3_API,ai-gateway,Public:,Mesh:,cloudy-all-mcp,Tools:
 desktop 4 Desktop,Mobile,Gadgets
 mobile 4 Mobile
 gadgets 4 Gadgets

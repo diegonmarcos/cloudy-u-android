@@ -6,8 +6,7 @@
   }
  },
  "catalog_pages": [
-  "infra/personal/control",
-  "ops/net/security",
+   "ops/net/security",
   "ops/ops_health/tests",
   "ops/obs/metrics",
   "ops/obs/alerts",
@@ -84,10 +83,6 @@
    "api": [],
    "mcp": []
   },
-  "infra/apis/api_mcp": {
-   "api": [],
-   "mcp": []
-  },
   "infra/personal/desktop": {
    "api": [],
    "mcp": []
@@ -97,10 +92,6 @@
    "mcp": []
   },
   "infra/personal/gadgets": {
-   "api": [],
-   "mcp": []
-  },
-  "infra/personal/control": {
    "api": [],
    "mcp": [
     "peers.*",
@@ -244,10 +235,6 @@
    ]
   },
   "orch/orch_service": {
-   "api": [],
-   "mcp": []
-  },
-  "orch/orch_infrastructure": {
    "api": [],
    "mcp": []
   },

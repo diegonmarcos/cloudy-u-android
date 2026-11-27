@@ -53,7 +53,6 @@ class InfraFragment : PagedFragment() {
         "desktop" -> InfraSectionFragment.newInstance(InfraSections.DESKTOP)
         "mobile" -> InfraSectionFragment.newInstance(InfraSections.MOBILE)
         "gadgets" -> InfraSectionFragment.newInstance(InfraSections.GADGETS)
-        "control" -> InfraSectionFragment.newInstance(InfraSections.CONTROL)
         "domains_public" -> InfraSectionFragment.newInstance(InfraSections.DOMAINS_PUBLIC)
         "domains" -> InfraSectionFragment.newInstance(InfraSections.DOMAINS)
         "projects" -> InfraSectionFragment.newInstance(InfraSections.PROJECTS)
@@ -135,7 +134,6 @@ class OrchFragment : PagedFragment() {
     override fun pageFragment(pageId: String): Fragment? = when (pageId) {
         "orch_flow" -> OpsMapFragment.newInstance("flow")
         "orch_service" -> TopologyViewFragment.newInstance(TopologyModel.SERVICE)
-        "orch_infrastructure" -> TopologyViewFragment.newInstance(TopologyModel.INFRASTRUCTURE)
         "orch_orchestration" -> TopologyViewFragment.newInstance(TopologyModel.ORCHESTRATION)
         "orch_release" -> TopologyViewFragment.newInstance(TopologyModel.RELEASE)
         "orch_agents" -> AgentsFragment()

@@ -15,7 +15,7 @@
    "children": [
     {
      "id": "bare",
-     "label": "Bare",
+     "label": "Infra Cloud",
      "children": [
       {
        "id": "providers",
@@ -72,8 +72,35 @@
      ]
     },
     {
+     "id": "personal",
+     "label": "Infra Bare",
+     "children": [
+      {
+       "id": "desktop",
+       "label": "Desktop",
+       "api": [],
+       "mcp": []
+      },
+      {
+       "id": "mobile",
+       "label": "Mobile",
+       "api": [],
+       "mcp": []
+      },
+      {
+       "id": "gadgets",
+       "label": "Gadgets",
+       "api": [],
+       "mcp": [
+        "peers.*",
+        "obs.debug.phone_*"
+       ]
+      }
+     ]
+    },
+    {
      "id": "apis",
-     "label": "APIs",
+     "label": "Services API",
      "children": [
       {
        "id": "api_ai",
@@ -94,54 +121,15 @@
       },
       {
        "id": "api_endpoints",
-       "label": "C3 Endpoints",
+       "label": "C3 API",
        "api": [],
        "mcp": []
-      },
-      {
-       "id": "api_mcp",
-       "label": "C3 MCP",
-       "api": [],
-       "mcp": []
-      }
-     ]
-    },
-    {
-     "id": "personal",
-     "label": "Personal",
-     "children": [
-      {
-       "id": "desktop",
-       "label": "Desktop",
-       "api": [],
-       "mcp": []
-      },
-      {
-       "id": "mobile",
-       "label": "Mobile",
-       "api": [],
-       "mcp": []
-      },
-      {
-       "id": "gadgets",
-       "label": "Gadgets",
-       "api": [],
-       "mcp": []
-      },
-      {
-       "id": "control",
-       "label": "Control",
-       "api": [],
-       "mcp": [
-        "peers.*",
-        "obs.debug.phone_*"
-       ]
       }
      ]
     },
     {
      "id": "domains_row",
-     "label": "Domains",
+     "label": "Services Domains",
      "children": [
       {
        "id": "domains",
@@ -833,12 +821,6 @@
     {
      "id": "orch_service",
      "label": "Service",
-     "api": [],
-     "mcp": []
-    },
-    {
-     "id": "orch_infrastructure",
-     "label": "Infrastructure",
      "api": [],
      "mcp": []
     },

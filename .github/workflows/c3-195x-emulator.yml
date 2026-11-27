@@ -11,7 +11,7 @@ on:
         required: false
         default: ""
       ticket:
-        description: "1953 | 1954 | 1955 | 1968 | 1969 | 1971 | all"
+        description: "1953 | 1954 | 1955 | 1968 | 1969 | 1971 | 1972 | all"
         required: false
         default: "all"
       release_tag:
@@ -33,7 +33,7 @@ jobs:
     steps:
       - name: Validate the ticket input
         run: |
-          case "$TICKET" in 1953|1954|1955|1968|1969|1971|all) echo "ticket: $TICKET" ;; *) echo "::error::unknown ticket"; exit 1 ;; esac
+          case "$TICKET" in 1953|1954|1955|1968|1969|1971|1972|all) echo "ticket: $TICKET" ;; *) echo "::error::unknown ticket"; exit 1 ;; esac
       - name: Checkout
         uses: actions/checkout@v4
         with:

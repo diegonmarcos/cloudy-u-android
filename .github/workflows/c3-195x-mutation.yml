@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost | home-row-lost | home-zero-on-fail | projects-row-lost | projects-column-lost | vm-unknown-lost | vm-repo-on-host | vm-devices-dropped'
+        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost | home-row-lost | home-zero-on-fail | projects-row-lost | projects-column-lost | vm-unknown-lost | vm-repo-on-host | vm-devices-dropped | control-back | c3mcp-field-lost | infra-order | orch-infra-back'
         required: true
 permissions:
   contents: read
@@ -22,7 +22,7 @@ jobs:
       - name: Validate the mutation name against the allowed list
         run: |
           case "$MUT" in
-            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost|vm-unknown-lost|vm-repo-on-host|vm-devices-dropped) echo "leg: $MUT" ;;
+            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost|vm-unknown-lost|vm-repo-on-host|vm-devices-dropped|control-back|c3mcp-field-lost|infra-order|orch-infra-back) echo "leg: $MUT" ;;
             *) echo "::error::unknown mutation name"; exit 1 ;;
           esac
       - uses: actions/checkout@v4
@@ -77,6 +77,14 @@ jobs:
             vm-repo-on-host)   sed -i 's/h == vm.all || (e.role != "repo" \&\& (/h == vm.all || ((/' $K/pages/ContainerProjects.kt ;;
             # #1971 the mesh-client devices are no longer derived as hosts
             vm-devices-dropped) sed -i 's/slice.devices.filter { !it.wgIp.isNullOrBlank() }/slice.devices.filter { false }/' $K/pages/ContainerHosts.kt ;;
+            # #1972 the Control page is back under Infra Bare
+            control-back)      pyj ac_cloud-c3/build.json 'i = next(s for s in d["ui"]["sections"] if s["id"] == "infra"); i["pages"].append({"id": "control", "label": "Control", "icon": "ic_robot"}); next(g for g in i["groups"] if g["id"] == "personal")["pages"].append("control")' ;;
+            # #1972 the merged C3 API page loses a field of the former C3 MCP tool row
+            c3mcp-field-lost)  sed -i '/"tree [$]{t.tree/d' $K/pages/C3Mcp.kt ;;
+            # #1972 the API group is back before Personal
+            infra-order)       pyj ac_cloud-c3/build.json 'i = next(s for s in d["ui"]["sections"] if s["id"] == "infra"); g = i["groups"]; g[1], g[2] = g[2], g[1]' ;;
+            # #1972 the Orch Infrastructure page is back
+            orch-infra-back)   pyj ac_cloud-c3/build.json 'o = next(s for s in d["ui"]["sections"] if s["id"] == "orch"); o["pages"].insert(2, {"id": "orch_infrastructure", "label": "Infrastructure", "icon": "ic_p_c3_vms"})' ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
           git diff --stat
@@ -137,6 +145,10 @@ jobs:
             vm-unknown-lost   ) C=ContainerProjectsTest; N="#1971 parity Projects keeps every entity reachable, VM lists every container under exactly one host or the unknown host with a reason" ;;
             vm-repo-on-host   ) C=ContainerProjectsTest; N="#1971 parity Projects keeps every entity reachable, VM lists every container under exactly one host or the unknown host with a reason" ;;
             vm-devices-dropped) C=ContainerProjectsTest; N="#1971 parity Projects keeps every entity reachable, VM lists every container under exactly one host or the unknown host with a reason" ;;
+            control-back)      C=OrchOpsReorgTest; N="#1972 Infra Bare has no Control page, the old id resolves to Gadgets and every other page is still there" ;;
+            c3mcp-field-lost)  C=OrchOpsReorgTest; N="#1972 parity the merged C3 API page keeps every field of C3 Endpoints and C3 MCP, and both old ids resolve to it" ;;
+            infra-order)       C=OrchOpsReorgTest; N="#1972 the Infra groups are Infra Cloud, Infra Bare, Services API, Services Domains and Projects in the declared order" ;;
+            orch-infra-back)   C=OrchOpsReorgTest; N="#1972 Orch has no Infrastructure page and its old ids resolve to the next page, Declared" ;;
             wiki-lost)         C=ContainerProjectsTest; N="#1968 parity every entity under Lib before is under Wiki now, the All total is unchanged and the old ids resolve to Wiki" ;;
             mail-alias-lost)   C=OrchOpsReorgTest; N="every old page id still resolves through the aliases to its new place" ;;
           esac

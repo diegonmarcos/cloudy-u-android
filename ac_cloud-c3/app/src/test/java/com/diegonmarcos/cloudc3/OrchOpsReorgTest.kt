@@ -39,7 +39,7 @@ class OrchOpsReorgTest {
         "ops/mail" to "ops/mail", "ops/mail_tables" to "ops/mail_tables", "ops/mail_topology_inbound" to "ops/mail_topology_inbound",
         "ops/mail_topology_outbound" to "ops/mail_topology_outbound", "ops/mail_map" to "ops/mail_tables",
         "ops/orch" to "orch", "ops/orch_flow" to "orch/orch_flow", "ops/orch_service" to "orch/orch_service",
-        "ops/orch_infrastructure" to "orch/orch_infrastructure", "ops/orch_orchestration" to "orch/orch_orchestration",
+        "ops/orch_infrastructure" to "orch/orch_orchestration", "ops/orch_orchestration" to "orch/orch_orchestration",
         "ops/orch_release" to "orch/orch_release", "ops/orch_agents" to "orch/orch_agents",
         "ops/ops_health" to "ops/ops_health", "ops/ops_health_uptime" to "ops/ops_health_uptime", "ops/ops_health_tests" to "ops/ops_health_tests",
         "ops/obs" to "ops/obs", "ops/obs_logs" to "ops/obs_logs", "ops/obs_metrics" to "ops/obs_metrics", "ops/obs_alerts" to "ops/obs_alerts", "ops/obs_notify" to "ops/obs_notify",
@@ -68,7 +68,7 @@ class OrchOpsReorgTest {
     fun `every old page id still resolves through the aliases to its new place`() {
         val moved = mapOf(
             "observability" to Target("ops", "obs_stack"), "health" to Target("ops", "ops_health_health"), "dagu" to Target("orch", "orch_dagu"),
-            "mesh" to Target("ops", "net_mesh"), "service" to Target("orch", "orch_service"), "infrastructure" to Target("orch", "orch_infrastructure"),
+            "mesh" to Target("ops", "net_mesh"), "service" to Target("orch", "orch_service"), "infrastructure" to Target("orch", "orch_orchestration"), "orch_infrastructure" to Target("orch", "orch_orchestration"),
             "orchestration" to Target("orch", "orch_orchestration"), "release" to Target("orch", "orch_release"), "agents" to Target("orch", "orch_agents"),
             "network" to Target("ops", "net_network"), "observ" to Target("ops"), "mail_map" to Target("ops", "mail_tables"),
         )
@@ -80,9 +80,53 @@ class OrchOpsReorgTest {
         assertEquals(listOf("infra", "orch", "home", "containers", "ops"), nav.bottomNav)
         assertNull("observ is off the bar and no longer a section", nav.section("observ"))
         assertEquals(
-            listOf("orch_flow", "orch_service", "orch_infrastructure", "orch_orchestration", "orch_release", "orch_agents", "orch_dagu", "orch_gh_releases", "orch_ghcr"),
+            listOf("orch_flow", "orch_service", "orch_orchestration", "orch_release", "orch_agents", "orch_dagu", "orch_gh_releases", "orch_ghcr"),
             nav.section("orch")!!.pages.map { it.id },
         )
+    }
+
+    @Test
+    fun `#1972 Orch has no Infrastructure page and its old ids resolve to the next page, Declared`() {
+        assertFalse("orch_infrastructure is back in Orch", nav.section("orch")!!.pages.any { it.id == "orch_infrastructure" })
+        assertEquals(Target("orch", "orch_orchestration"), C3Nav.resolve(nav, aliases, "orch_infrastructure"))
+        assertEquals(Target("orch", "orch_orchestration"), C3Nav.resolve(nav, aliases, "infrastructure"))
+        assertEquals("only that page left Orch", 8, nav.section("orch")!!.pages.size)
+    }
+
+    private fun infraGroups() = ui()["sections"]!!.jsonArray.map { it.jsonObject }.first { it["id"]!!.jsonPrimitive.content == "infra" }["groups"]!!.jsonArray.map { it.jsonObject }
+
+    @Test
+    fun `#1972 the Infra groups are Infra Cloud, Infra Bare, Services API, Services Domains and Projects in the declared order`() {
+        assertEquals(listOf("Infra Cloud", "Infra Bare", "Services API", "Services Domains", "Projects"), infraGroups().map { it["label"]!!.jsonPrimitive.content })
+        assertEquals(listOf("bare", "personal", "apis", "domains_row", "projects_row"), infraGroups().map { it["id"]!!.jsonPrimitive.content })
+    }
+
+    @Test
+    fun `#1972 Infra Bare has no Control page, the old id resolves to Gadgets and every other page is still there`() {
+        val bare = infraGroups().first { it["id"]!!.jsonPrimitive.content == "personal" }["pages"]!!.jsonArray.map { it.jsonPrimitive.content }
+        assertEquals(listOf("desktop", "mobile", "gadgets"), bare)
+        assertNull("control is a page again", nav.section("infra")!!.pages.firstOrNull { it.id == "control" })
+        assertEquals(Target("infra", "gadgets"), C3Nav.resolve(nav, aliases, "control"))
+    }
+
+    @Test
+    fun `#1972 parity the merged C3 API page keeps every field of C3 Endpoints and C3 MCP, and both old ids resolve to it`() {
+        val pages = nav.section("infra")!!.pages
+        assertEquals("C3 API", pages.single { it.id == "api_endpoints" }.label)
+        assertNull("api_mcp is its own page again", pages.firstOrNull { it.id == "api_mcp" })
+        assertEquals(Target("infra", "api_endpoints"), C3Nav.resolve(nav, aliases, "api_mcp"))
+        val apis = Declarations.apiProviders
+        assertEquals("both former groups answer the merged page", listOf("api_endpoints", "api_endpoints"), listOf(Declarations.fleetEndpoints.group, Declarations.c3Mcp.group).map { g -> apis.groups.single { it.id == g }.page })
+        // what the two old pages showed per row: a service row (C3 Endpoints), a server row and a tool row (C3 MCP); the merged page draws the same lines
+        val fleet = Declarations.fleetEndpoints
+        assertTrue(fleet.services.isNotEmpty())
+        fleet.services.forEach { s -> listOf("Public:", "Mesh:", "Health:", "Auth:").forEach { f -> assertTrue("${s.id} lost $f", com.diegonmarcos.cloudc3.pages.FleetEndpoints.lines(s).any { it.startsWith(f) }) } }
+        val mcp = Declarations.c3Mcp
+        assertTrue(mcp.servers.isNotEmpty())
+        mcp.servers.forEach { s ->
+            listOf("Endpoint:", "Auth:", "API:", "Aliases:", "Tools:", "c3-api nodes:").forEach { f -> assertTrue("${s.name} lost $f", com.diegonmarcos.cloudc3.pages.C3Mcp.lines(s).any { it.startsWith(f) }) }
+            s.tools.forEach { t -> listOf("API route", "tree", "node").forEach { f -> assertTrue("${t.tool} lost $f", com.diegonmarcos.cloudc3.pages.C3Mcp.lines(t).any { it.startsWith(f) }) } }
+        }
     }
 
     @Test

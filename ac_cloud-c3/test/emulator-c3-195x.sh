@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # #1953 #1954 #1955 Cloud C3 on an emulator: the screenshots the design lists per ticket, each page opened through the launcher's
 # `shortcut_action` extra (page:<id>), a ui dump beside each shot, scrolled shots taken with a swipe up on the body.
-# Usage: emulator-c3-195x.sh <apk> <out-dir> <ticket: 1953|1954|1955|1968|1969|1971|all>. Run by .github/workflows/c3-195x-emulator.yml.
+# Usage: emulator-c3-195x.sh <apk> <out-dir> <ticket: 1953|1954|1955|1968|1969|1971|1972|all>. Run by .github/workflows/c3-195x-emulator.yml.
 # Exit 1 when the app does not start, a declared label is missing, or it crashes.
 set -u
 APK="$1"; OUT="$2"; T="${3:-all}"
@@ -69,6 +69,11 @@ done 3<<'SHOTS'
 1971 vm-oci-apps vm-oci-apps_topology 8 0 VM,oci-apps
 1971 vm-unknown vm-unknown_topology 8 0 Unknown_host,not_a_declared_fleet_host
 1971 vm-table vm-all_table 8 0 Status,Auth,VM,Project,Type
+1972 infra-strip providers 8 0 Infra_Cloud,Infra_Bare,Services_API,Providers
+1972 infra-gadgets-alias control 8 0 Infra_Bare,Gadgets
+1972 c3-api-top api_endpoints 8 0 C3_API,Public:,Mesh:
+1972 c3-api-mcp api_endpoints 6 12 C3_MCP
+1972 c3-api-alias api_mcp 8 0 C3_API
 1955 mail-strip mail_tables 8 0 Tables,Topology-Inbound,Topology-Outbound,Map:,Path:_Inbound
 1955 mail-tables-map mail_tables 6 2 Path:_Outbound
 1955 mail-map-alias mail_map 8 0 Tables,Path:_Inbound

@@ -350,24 +350,6 @@
         }
       ]
     },
-    "hier_control": {
-      "summary": "Control: the API routes and MCP tools of this page, from the one hierarchy (data/c3_hierarchy.json, #1495). Old route paths and tool names stay as aliases.",
-      "sections": [
-        {
-          "title": "cloudy-c3-mcp tools",
-          "rows": [
-            {
-              "name": "c3_infra personal.control.peers_*",
-              "note": "legacy peers.*"
-            },
-            {
-              "name": "c3_infra personal.control.obs_debug_phone_*",
-              "note": "legacy obs.debug.phone_*"
-            }
-          ]
-        }
-      ]
-    },
     "hier_net_security": {
       "summary": "Security: the API routes and MCP tools of this page, from the one hierarchy (data/c3_hierarchy.json, #1495). Old route paths and tool names stay as aliases.",
       "sections": [

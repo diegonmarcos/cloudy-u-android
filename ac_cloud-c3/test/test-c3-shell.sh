@@ -556,12 +556,12 @@ for _p in (secs.get("containers") or {}).get("pages") or []:
     if [q["id"] for q in _p.get("pages") or []] != [_p["id"] + "_topology", _p["id"] + "_table"]:
         bad.append("Containers project %r lost its Topology | Table switch (nested pages %s)" % (_p["id"], [q["id"] for q in _p.get("pages") or []]))
 if pids("ops") != ["net", "mail", "ops_health", "obs"]: bad.append("Ops pages are %s, not Network Mail | Health Obsv (#1480, #1942)" % pids("ops"))
-if pids("orch") != ["orch_flow", "orch_service", "orch_infrastructure", "orch_orchestration", "orch_release", "orch_agents", "orch_dagu", "orch_gh_releases", "orch_ghcr"]: bad.append("Orch pages are %s (#1942)" % pids("orch"))
+if pids("orch") != ["orch_flow", "orch_service", "orch_orchestration", "orch_release", "orch_agents", "orch_dagu", "orch_gh_releases", "orch_ghcr"]: bad.append("Orch pages are %s (#1942)" % pids("orch"))
 if "observ" in secs: bad.append("the observ section is merged into Ops and Orch (#1942)")
 _ops = (secs.get("ops") or {}).get("pages") or []
 if [p["id"] for p in _ops if p.get("separator_before")] != ["ops_health"]: bad.append("Ops sub-group divider is not before Health")
 if not all(p.get("pages") for p in _ops): bad.append("an Ops page nests no views")
-if pids("infra") != ["providers", "machines", "serverless", "node_python", "storage", "api_ai", "api_scraper", "api_endpoints", "api_mcp", "desktop", "mobile", "gadgets", "control", "domains", "domains_public", "projects"]: bad.append("Infra pages are %s, not the five declared rows (Bare, APIs, Personal, Domains, Projects)" % pids("infra"))
+if pids("infra") != ["providers", "machines", "serverless", "node_python", "storage", "desktop", "mobile", "gadgets", "api_ai", "api_scraper", "api_endpoints", "domains", "domains_public", "projects"]: bad.append("Infra pages are %s, not the five declared rows (Bare, APIs, Personal, Domains, Projects)" % pids("infra"))
 c3 = ui["carried_c3"]
 topo, infra = c3.get("stack_topology") or [], []
 for k in ("c3_public", "c3_private"):

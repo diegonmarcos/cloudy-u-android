@@ -71,7 +71,7 @@ class HierarchyTest {
     fun `the new categories are declared pages with a catalog map`() {
         val ops = Json.parseToJsonElement(File(appDir(), "data/ops_maps.json").readText()).jsonObject["maps"]!!.jsonObject
         val nav = nav()
-        listOf("infra" to "control", "ops" to "net_security", "ops" to "ops_health_tests", "ops" to "obs_metrics", "ops" to "obs_alerts", "ops" to "obs_notify", "configs" to "plugins")
+        listOf("ops" to "net_security", "ops" to "ops_health_tests", "ops" to "obs_metrics", "ops" to "obs_alerts", "ops" to "obs_notify", "configs" to "plugins")
             .forEach { (sec, page) ->
                 val ids = nav.section(sec)!!.pages.flatMap { listOf(it.id) + it.pages.map { q -> q.id } }
                 assertTrue("$page is not declared in $sec", page in ids)

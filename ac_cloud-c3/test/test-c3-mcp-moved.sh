@@ -95,7 +95,7 @@ else:
 kdir = c3 + "/app/src/main/java/com/diegonmarcos/cloudc3/"
 ip = open(kdir + "pages/InfraPages.kt", encoding="utf-8").read()
 mk = open(kdir + "pages/C3Mcp.kt", encoding="utf-8").read()
-if "else if (it.id == mcp.group) C3McpScreen(section, it, mcp)" not in ip or "Declarations.c3Mcp" not in ip: bad.append("P4 InfraPages.kt does not draw the group through C3McpScreen")
+if "C3McpRows(section, mcpGroup, mcp)" not in ip or "Declarations.c3Mcp" not in ip: bad.append("P4 InfraPages.kt does not draw the group through C3McpRows")
 if "C3Mcp.lines(s))" not in ip or "C3Mcp.lines(t))" not in ip or "s.tools.forEach { t ->" not in ip: bad.append("P4 the page does not draw every server and every tool")
 srv = mk.split("fun lines(s: Server)")[1].split("fun lines(t: Tool)")[0]; tool = mk.split("fun lines(t: Tool)")[1]
 for f in ("s.endpoint.", "s.auth.", "s.api.", "s.aliases.", "s.toolsCount}", "s.deviceTools"):
@@ -140,12 +140,11 @@ mutate "a server endpoint changed in the move"   ac_cloud-c3/data/api_providers.
 mutate "a remote topology node lost"             ac_cloud-c3/data/api_providers.json '"node": "ops/' '"node": "'
 mutate "a device tool listed in both apps"       data/fleet/device-access.json '"tool": "peers.shell"' '"tool": "peers.shell2"'
 mutate "a new catalogue tool not regenerated"    ac_cloud-c3-webserver/data/mcp-catalogue.json '"tool": "devops.cf.api_write"' '"tool": "devops.cf.api_write2"'
-mutate "the group no longer drawn"               $K/InfraPages.kt 'else if (it.id == mcp.group) C3McpScreen(section, it, mcp) ' ''
+mutate "the group no longer drawn"               $K/InfraPages.kt '        C3McpRows(section, mcpGroup, mcp)' ''
 mutate "the tools no longer drawn"               $K/InfraPages.kt 'C3Mcp.lines(t))' 'emptyList())'
 mutate "a tool field dropped from the row"       $K/C3Mcp.kt '        "tree ${t.tree.ifBlank { "not declared" }}",' ''
 mutate "a server field dropped from the row"     $K/C3Mcp.kt '        "API: ${s.api.ifBlank { "no API of its own" }}",' ''
-mutate "the page left the APIs row"              ac_cloud-c3/build.json '              "api_endpoints",
-              "api_mcp"' '              "api_endpoints"'
+mutate "the c3_mcp group left the merged page"   ac_cloud-c3/data/api_providers.json '"id": "c3_mcp", "label": "C3 MCP", "page": "api_endpoints"' '"id": "c3_mcp", "label": "C3 MCP", "page": "api_mcp"'
 mutate "Kotlin spells a server"                  $K/C3Mcp.kt 'object C3Mcp {' 'object C3Mcp {
     val first = "cloudy-c3-mcp"'
 mutate "the webserver MCP page lists the whole catalogue again" ac_cloud-c3-webserver/server/src/sub.rs 'apis::device_mcp_page(apis::data())' 'apis::mcp_page(apis::data())'

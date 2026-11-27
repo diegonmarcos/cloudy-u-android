@@ -274,6 +274,17 @@ class InfraScreensComposeTest {
     }
 
     @Test
+    fun `#1972 the C3 API page draws every service row of C3 Endpoints and every server and tool row of C3 MCP`() {
+        val fleet = Declarations.fleetEndpoints; val mcp = Declarations.c3Mcp
+        compose.setContent { CloudKitTheme(palette) { InfraSectionScreen("api_endpoints", slice, FleetLiveState(), today) } }
+        fleet.services.forEach { s -> row("api_endpoints", s.id).assertExists() }
+        mcp.servers.forEach { s ->
+            compose.onNodeWithTag(InfraTags.head("api_endpoints", s.name)).assertExists()
+            s.tools.forEach { t -> row("api_endpoints", s.name + "/" + t.tool).assertExists() }
+        }
+    }
+
+    @Test
     fun `every declared page id has a screen`() {
         var current by mutableStateOf(InfraSections.ALL.first())
         compose.setContent { CloudKitTheme(palette) { InfraSectionScreen(current, slice, FleetLiveState(), today) } }

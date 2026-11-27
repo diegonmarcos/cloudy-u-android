@@ -21,7 +21,7 @@ class ApiProvidersTest {
     @Test
     fun `the AI and Scraper groups are declared and each provider sits in one of them`() {
         // #1718 the third group, C3 Endpoints, lists no provider: its page draws data/api_providers.json::fleet_endpoints (FleetEndpointsTest).
-        assertEquals(listOf("AI", "Scraper", "C3 Endpoints", "C3 MCP"), decl.groups.map { it.label })
+        assertEquals(listOf("AI", "Scraper", "C3 API", "C3 MCP"), decl.groups.map { it.label })
         assertTrue(decl.of(decl.groups[2]).isEmpty() && decl.of(decl.groups[3]).isEmpty())
         assertTrue(decl.providers.all { p -> decl.groups.any { it.id == p.group } })
         assertEquals(setOf("OpenRouter", "Claude (Anthropic API)"), decl.of(decl.groups[0]).map { it.label }.toSet())
@@ -39,16 +39,16 @@ class ApiProvidersTest {
     }
 
     @Test
-    fun `every group page is a page the Infra section declares, and the APIs row lists exactly those pages between Bare and Personal`() {
+    fun `every group page is a page the Infra section declares, and the Services API row lists exactly those pages (the C3 MCP group draws on the merged C3 API page)`() {
         val infra = Json.parseToJsonElement(File(FleetFixtures.moduleDir(), "build.json").readText()).jsonObject["ui"]!!.jsonObject["sections"]!!.jsonArray
             .map { it.jsonObject }.first { it["id"]!!.jsonPrimitive.content == "infra" }
         val pages = infra["pages"]!!.jsonArray.map { it.jsonObject["id"]!!.jsonPrimitive.content }
         val rows = infra["groups"]!!.jsonArray.map { it.jsonObject }
-        assertEquals(listOf("Bare", "APIs", "Personal", "Domains"), rows.map { it["label"]!!.jsonPrimitive.content })
-        assertEquals(decl.groups.map { it.page }, rows[1]["pages"]!!.jsonArray.map { it.jsonPrimitive.content })
+        assertEquals(listOf("Infra Cloud", "Infra Bare", "Services API", "Services Domains", "Projects"), rows.map { it["label"]!!.jsonPrimitive.content })
+        assertEquals(decl.groups.map { it.page }.distinct(), rows[2]["pages"]!!.jsonArray.map { it.jsonPrimitive.content })
         decl.groups.forEach { g ->
             assertTrue("${g.page} is declared", g.page in pages)
-            assertEquals(g.id, decl.groupOfPage(g.page)!!.id)
+            assertTrue(decl.groupOfPage(g.page)!!.id == g.id || g.id == "c3_mcp")
         }
         assertNull(decl.groupOfPage("providers"))
     }

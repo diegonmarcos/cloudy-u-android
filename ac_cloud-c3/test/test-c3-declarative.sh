@@ -189,12 +189,13 @@ ap = json.load(open(app + "/data/api_providers.json", encoding="utf-8"))
 infra = next(s for s in bj["ui"]["sections"] if s["id"] == "infra")
 rows = [g["label"] for g in infra["groups"]]
 bad = []
-if rows != ["Bare", "APIs", "Personal", "Domains", "Projects"]: bad.append("the Infra rows read %s, not Bare | APIs | Personal | Domains | Projects (#1969)" % rows)
+if rows != ["Infra Cloud", "Infra Bare", "Services API", "Services Domains", "Projects"]: bad.append("the Infra rows read %s, not Infra Cloud | Infra Bare | Services API | Services Domains | Projects (#1972)" % rows)
 row = next((g for g in infra["groups"] if g["id"] == "apis"), {})
 pages = {p["id"] for p in infra["pages"]}
 gids = [g["id"] for g in ap["groups"]]
 if gids[:2] != ["ai", "scraper"]: bad.append("the API groups read %s, not AI then Scraper" % gids)
-if (row.get("pages") or []) != [g["page"] for g in ap["groups"]]: bad.append("the APIs row lists %s, not the page of each declared group %s" % (row.get("pages"), [g["page"] for g in ap["groups"]]))
+if (row.get("pages") or []) != list(dict.fromkeys(g["page"] for g in ap["groups"])):  # #1972 the c3_mcp group shares the merged C3 API page
+    bad.append("the APIs row lists %s, not the page of each declared group %s" % (row.get("pages"), [g["page"] for g in ap["groups"]]))
 for g in ap["groups"]:
     if g["page"] not in pages: bad.append("group %r answers page %r that build.json does not declare" % (g["id"], g["page"]))
 ids = [p["id"] for p in ap["providers"]]
