@@ -39,7 +39,11 @@ class NetViewerPrefs(context: Context) : ModeStore {
 /** What the six Network pages' Table mode is: the SAME body each page had before the switch (same composable, same inputs). */
 object NetPages {
     /** The map id an Ops map page reads, or null when the page is not a map page. */
-    fun mapOf(view: String): String? = when (view) { "wg", "auth", "dns" -> view; "security" -> "hier_$view"; else -> null }
+    fun mapOf(view: String): String? = when (view) {
+        "wg", "auth", "dns" -> view
+        "security" -> "hier_net_$view"   // the catalog page reads maps.hier_net_security, as OpsMapFragment("hier_" + leafId) did
+        else -> null
+    }
     val VIEWS = listOf("wg", "auth", "dns", "network", "security", "mesh")
 }
 
