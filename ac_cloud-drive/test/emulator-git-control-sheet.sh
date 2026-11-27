@@ -251,6 +251,29 @@ walk() {
 }
 
 want() { [ "$PHASE" = all ] || [ "$PHASE" = "$1" ]; }
+# the header's readouts and its not-cloned banner / Clone Now, read from ONE dump of the freshly opened sheet (no extra taps)
+header_checks() {
+  local phase=$1 cloned=$2 row=$3 v wantv ok1 id label
+  dump >/dev/null
+  nt() { grep -o "<node [^>]*resource-id=\"$1\"[^>]*>" "$OUT/ui.xml" | head -1 | grep -o ' text="[^"]*"' | head -1 | sed 's/^ text="//; s/"$//'; }
+  rec() { # id label ok(0/1) value
+    if [ "$3" = 0 ]; then ok=$((ok+1)); printf 'per:%s\t%s\t%s\tshown (value ok)\t%s\n' "$cloned" "$1" "$2" "$4" >> "$OUT/walk.tsv"
+    else miss=$((miss+1)); printf 'per:%s\t%s\t%s\tVALUE MISMATCH (got "%s")\t-\n' "$cloned" "$1" "$2" "$4" >> "$OUT/walk.tsv"; fi; }
+  local cs sm; cs=$(nt git_sheet_clone_state); sm=$(grep -o ' text="[^"]*diegonmarcos · [^"]*"' "$OUT/ui.xml" | head -1 | sed 's/^ text="//; s/"$//')
+  if [ "$cloned" = yes ]; then wcs='^Cloned$'; wsm='^diegonmarcos · main · '; else wcs='^Not Cloned$'; wsm='^diegonmarcos · '; fi
+  grep -q " text=\"$row\"" "$OUT/ui.xml"; rec hd.name Name $? "$row"
+  v=$(nt git_sheet_visibility); [ -n "$v" ]; rec hd.visibility Visibility $? "$v"
+  printf '%s' "$cs" | grep -Eq "$wcs"; rec hd.clone_state "Clone state" $? "$cs"
+  printf '%s' "$sm" | grep -Eq "$wsm"; rec hd.summary "Owner · branch · size" $? "$sm"
+  if [ "$cloned" = no ]; then
+    has_rid git_sheet_banner; rec hd.not_cloned "Not cloned banner" $? "banner on screen"
+    # Clone Now: present and enabled (the walk taps it once in this phase; the clone target is unreachable, so nothing is created)
+    has_rid git_sheet_hd.clone_now; rec hd.clone_now "Clone Now" $? "on screen"
+  else
+    ! has_rid git_sheet_banner; rec hd.not_cloned "Not cloned banner" $? "absent on a cloned repo"
+    ! has_rid git_sheet_hd.clone_now; rec hd.clone_now "Clone Now" $? "absent on a cloned repo"
+  fi
+}
 # Repo list closes the sheet (back to the repository list), Close dismisses it: both must leave the sheet gone
 closers() {
   local phase=$1 cloned=$2 row=$3 id rid label
@@ -264,11 +287,12 @@ closers() {
   done
 }
 # 1. the cloned fixture
-if want cloned; then open_row "$NAME"; walk per yes "$NAME"; closers per yes "$NAME"; close_sheet cloned; fi
+if want cloned; then open_row "$NAME"; header_checks per yes "$NAME"; walk per yes "$NAME"; closers per yes "$NAME"; close_sheet cloned; fi
 # 2. the not-cloned fixture: its row comes from the offline listing cache
 if want notcloned; then
   open_row "$NOTCLONED"
   has_rid git_sheet_banner || { miss=$((miss+1)); printf 'per:no\tbanner\tNot cloned banner\tNOT FOUND\t-\n' >> "$OUT/walk.tsv"; }
+  header_checks per no "$NOTCLONED"
   tap_rid git_sheet_hd.clone_now >/dev/null || { miss=$((miss+1)); printf 'per:no\thd.clone_now\tClone Now\tNOT FOUND\t-\n' >> "$OUT/walk.tsv"; }
   walk per no "$NOTCLONED"; closers per no "$NOTCLONED"; close_sheet notcloned
 fi
