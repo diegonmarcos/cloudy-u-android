@@ -62,7 +62,9 @@ PY
 snap t2
 adb shell input keyevent KEYCODE_BACK; adb shell input keyevent KEYCODE_HOME; sleep 2
 adb shell cmd statusbar expand-notifications; sleep 3; shoot bgcards-1965-shade-expanded
-adb shell input swipe 540 600 540 1800 400; sleep 2; shoot bgcards-1965-shade-full
+# Scroll the open shade down to the Silent section, where the "Background Apps" group sits (up-swipes inside the list).
+SZ=$(adb shell wm size | tr -d '\r' | sed -n 's/.*: *\([0-9]*\)x\([0-9]*\).*/\1 \2/p' | tail -1); WD=${SZ% *}; HT=${SZ#* }
+for i in 1 2 3; do adb shell input swipe $((WD/2)) $((HT*80/100)) $((WD/2)) $((HT*35/100)) 500; sleep 2; shoot bgcards-1965-shade-scroll$i; done
 sleep 8; snap t12; shoot bgcards-1965-shade-t12
 adb shell cmd statusbar collapse
 python3 -I - "$OUT/notif-t12.json" "$OUT/notif-t2.json" "$H" <<'PY' || rc=1
