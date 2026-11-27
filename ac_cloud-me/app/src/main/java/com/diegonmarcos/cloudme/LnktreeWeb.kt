@@ -282,7 +282,14 @@ object RuntimeHarvest {
         "return JSON.stringify(Object.keys(u))})()"
     private const val SCROLL_JS = "(function(){var y=0,h=function(){return document.documentElement.scrollHeight};var t=setInterval(function(){y+=900;window.scrollTo(0,y);if(y>h()){clearInterval(t);window.scrollTo(0,0)}},120)})()"
 
-    fun urls(ctx: Context, p: LnktreePage, timeoutS: Int): Collection<String> {
+    /** #1957 the pass needs URLs, not pixels: no WebGL in the hidden view (many 3D canvases in parallel offscreen WebViews crashed the emulator's GPU renderer and took the device down). */
+    const val NO_WEBGL_JS = "(function(){var g=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(t){if(/webgl/i.test(String(t)))return null;return g.apply(this,arguments)}})();"
+    private val one = Any()
+
+    /** One page at a time (the job runs pages in parallel; only one hidden WebView exists at once). */
+    fun urls(ctx: Context, p: LnktreePage, timeoutS: Int): Collection<String> = synchronized(one) { urlsOne(ctx, p, timeoutS) }
+
+    private fun urlsOne(ctx: Context, p: LnktreePage, timeoutS: Int): Collection<String> {
         if (timeoutS <= 0) return emptyList()
         val seen = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
         val done = java.util.concurrent.CountDownLatch(1)
@@ -292,6 +299,9 @@ object RuntimeHarvest {
             runCatching {
                 val w = com.diegonmarcos.cloudlib.web.CloudWeb.create(ctx.applicationContext, com.diegonmarcos.cloudlib.web.WebProfile.APP_PAGE); wv = w
                 LnktreeSw.block(w, p.url)
+                if (androidx.webkit.WebViewFeature.isFeatureSupported(androidx.webkit.WebViewFeature.DOCUMENT_START_SCRIPT)) {
+                    androidx.webkit.WebViewCompat.addDocumentStartJavaScript(w, NO_WEBGL_JS, setOf("*"))
+                }
                 w.measure(android.view.View.MeasureSpec.makeMeasureSpec(1080, android.view.View.MeasureSpec.EXACTLY), android.view.View.MeasureSpec.makeMeasureSpec(2400, android.view.View.MeasureSpec.EXACTLY))
                 w.layout(0, 0, 1080, 2400)
                 w.webViewClient = object : android.webkit.WebViewClient() {
