@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost | home-row-lost | home-zero-on-fail | projects-row-lost | projects-column-lost | vm-unknown-lost | vm-repo-on-host | vm-devices-dropped | control-back | c3mcp-field-lost | infra-order | orch-infra-back | net-edge-dropped | net-node-twice | net-node-undeclared | net-viewer-page-lost | net-section-match-lost | net-resolve-lost | net-unbound-ok | net-dns-depends-lost | net-bundle-weight | net-sheet-field-lost | net-token-blames-vm | net-label-overlap | orch-dup-back | orch-home-lost | deployed-field-lost | orch-page-twice'
+        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost | home-row-lost | home-zero-on-fail | projects-row-lost | projects-column-lost | vm-unknown-lost | vm-repo-on-host | vm-devices-dropped | control-back | c3mcp-field-lost | infra-order | orch-infra-back | net-edge-dropped | net-node-twice | net-node-undeclared | net-viewer-page-lost | net-section-match-lost | net-resolve-lost | net-unbound-ok | net-dns-depends-lost | net-bundle-weight | net-sheet-field-lost | net-token-blames-vm | net-label-overlap | orch-dup-back | orch-home-lost | deployed-field-lost | orch-page-twice | health-field-lost | health-root-cause-on-vm-when-token-missing | health-layer-order | xray-scope-lost | health-number-on-blind | xray-run-unvalidated'
         required: true
 permissions:
   contents: read
@@ -22,7 +22,7 @@ jobs:
       - name: Validate the mutation name against the allowed list
         run: |
           case "$MUT" in
-            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost|vm-unknown-lost|vm-repo-on-host|vm-devices-dropped|control-back|c3mcp-field-lost|infra-order|orch-infra-back|net-edge-dropped|net-node-twice|net-node-undeclared|net-viewer-page-lost|net-section-match-lost|net-resolve-lost|net-unbound-ok|net-dns-depends-lost|net-bundle-weight|net-sheet-field-lost|net-token-blames-vm|net-label-overlap|orch-dup-back|orch-home-lost|deployed-field-lost|orch-page-twice) echo "leg: $MUT" ;;
+            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost|vm-unknown-lost|vm-repo-on-host|vm-devices-dropped|control-back|c3mcp-field-lost|infra-order|orch-infra-back|net-edge-dropped|net-node-twice|net-node-undeclared|net-viewer-page-lost|net-section-match-lost|net-resolve-lost|net-unbound-ok|net-dns-depends-lost|net-bundle-weight|net-sheet-field-lost|net-token-blames-vm|net-label-overlap|orch-dup-back|orch-home-lost|deployed-field-lost|orch-page-twice|health-field-lost|health-root-cause-on-vm-when-token-missing|health-layer-order|xray-scope-lost|health-number-on-blind|xray-run-unvalidated) echo "leg: $MUT" ;;
             *) echo "::error::unknown mutation name"; exit 1 ;;
           esac
       - uses: actions/checkout@v4
@@ -112,6 +112,13 @@ jobs:
             orch-home-lost)    pyj ac_cloud-c3/build.json 'o = next(s for s in d["ui"]["sections"] if s["id"] == "orch"); o["pages"] = [p for p in o["pages"] if p["id"] != "orch_home"]; [g.update(pages=[x for x in g["pages"] if x != "orch_home"]) for g in o["groups"]]' ;;
             deployed-field-lost) rep $K/pages/ContainersLive.kt 'r.copy(live = text, drift = drift, runningTag = running,' 'r.copy(live = text, drift = "", runningTag = running,' ;;
             orch-page-twice)   pyj ac_cloud-c3/build.json 'o = next(s for s in d["ui"]["sections"] if s["id"] == "orch"); next(g for g in o["groups"] if g["id"] == "pipeline")["pages"].append("orch_ghcr")' ;;
+            # #1955 C A4 the Health debugger and X-ray C3: each leg breaks one guarantee; the named test must catch it
+            health-field-lost) rep $K/pages/HealthModel.kt '"scope" to "Public", "auth" to s.auth, ' '"scope" to "Public", ' ;;
+            health-root-cause-on-vm-when-token-missing) rep $K/pages/HealthPhone.kt 'if (noToken(d.why)) base.copy(status = St.BLIND, details = HealthModel.NO_TOKEN_NOTE)' 'if (noToken(d.why)) base.copy(status = St.DOWN, details = "the API could not read this VM")' ;;
+            health-layer-order) rep $K/pages/HealthModel.kt $'        Layer("lights", "Lights (Public / Private URLs)", 9, listOf("edge", "auth", "mesh", "containers", "certs")),\n        Layer("containers", "Containers", 3, listOf("vms")),' $'        Layer("containers", "Containers", 3, listOf("vms")),\n        Layer("lights", "Lights (Public / Private URLs)", 9, listOf("edge", "auth", "mesh", "containers", "certs")),' ;;
+            xray-scope-lost)   rep $K/pages/XrayModel.kt 'val KINDS = listOf("xray-vm", "xray-service", "xray-full")' 'val KINDS = listOf("xray-vm", "xray-full")' ;;
+            health-number-on-blind) rep $K/pages/HealthModel.kt 'if (status.carriesNumber && phases.any) "${phases.total} ms"' 'if (phases.any) "${phases.total} ms"' ;;
+            xray-run-unvalidated) rep $K/pages/XrayModel.kt 'if (!SUBJECT.matches(subject) || subject !in declared) return null' 'if (false) return null' ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
           git diff --stat
@@ -193,6 +200,12 @@ jobs:
             orch-home-lost)    C=OrchOpsReorgTest; N="#1954 Home is the first Orch page and the first of the Pipeline group, and its flow is declared" ;;
             deployed-field-lost) C=ContainersLiveTest; N="#1954 parity - every field of the removed Service and Declared pages is a column or a row of Containers" ;;
             orch-page-twice)   C=OrchOpsReorgTest; N="#1954 every Orch page appears exactly once, in Pipeline, Registries or CI-CD" ;;
+            health-field-lost) C=HealthModelTest; N="parity - every field of the old Health page rows is on its Lights row" ;;
+            health-root-cause-on-vm-when-token-missing) C=HealthModelTest; N="a device with no token is a device-side state - no VM and no container is down, none is blamed" ;;
+            health-layer-order) C=HealthModelTest; N="the layers are in the owner's order and the attribution ranks are distinct" ;;
+            xray-scope-lost)   C=HealthModelTest; N="X-ray - the tabs, the allow-list and the not-served states" ;;
+            health-number-on-blind) C=HealthModelTest; N="an unread status never carries a number or a phase bar" ;;
+            xray-run-unvalidated) C=HealthModelTest; N="X-ray - the tabs, the allow-list and the not-served states" ;;
             mail-alias-lost)   C=OrchOpsReorgTest; N="every old page id still resolves through the aliases to its new place" ;;
           esac
           X="$(find ac_cloud-c3/app/build -path '*test-results*' -name "TEST-*.$C.xml" | head -1)"

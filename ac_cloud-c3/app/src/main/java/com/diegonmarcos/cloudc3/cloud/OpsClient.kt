@@ -63,6 +63,13 @@ object OpsClient {
         post("/vms/$vm/services/$service/$action", bearer, "service $service: $action")
 
     /**
+     * #1955 C A2 Ask the API to run one health engine report (`POST /reports/run`). [kind] and [subject] are validated by the caller against the
+     * allow-list (XrayModel); the API's own answer, including a refusal of a kind it does not serve yet (#1977), is returned verbatim.
+     */
+    fun runReport(kind: String, subject: String, bearer: String): Outcome =
+        post("/reports/run", bearer, "run $kind", "{\"report\":\"$kind\",\"subject\":\"$subject\"}")
+
+    /**
      * Trigger a GitHub Actions `workflow_dispatch` run.
      *
      * The GitHub token is NOT in this app, deliberately. GitHub only accepts a

@@ -94,7 +94,7 @@ class NetGraphLayoutTest {
 
     @Test fun `a label whose wire midpoint lies inside a node is moved off every node`() {
         val node = com.diegonmarcos.cloudc3.pages.MailStack.Rect(40f, 0f, 160f, 60f)
-        val item = NetGraphLayout.LabelItem("e", "wg_public") { _ -> androidx.compose.ui.geometry.Offset(100f, 30f) }
+        val item = NetGraphLayout.LabelItem("e", "wg_public") { t -> androidx.compose.ui.geometry.Offset(300f * t, 30f) }
         val r = NetGraphLayout.placeLabels(listOf(item), listOf(node), { it.length * 13f }, 20f)["e"]
         assertTrue("the label is placed", r != null)
         assertTrue("label ${r} touches the node", !hit(r!!, node))
