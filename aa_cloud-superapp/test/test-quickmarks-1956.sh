@@ -29,6 +29,7 @@ def checks(d):
     r['tidal'] = 'com.aspiro.tidal' in mem(ph, 'Services · Leisure', 'Media Center')
     r['gemini'] = 'com.google.android.apps.bard' in mem(ph, 'AGI', 'AI')
     r['github'] = 'com.github.android' in mem(ph, 'Data', 'Drive') and 'com.github.android' not in mem(ph, 'AGI', 'Code')
+    r['jobs'] = mem(ph, 'Services · City', 'Jobs & Business') == ['com.indeed.android.jobsearch', 'com.linkedin.android'] and 'com.linkedin.android' in mem(ph, 'Me', 'Me-Pers')
     ren = {'Nav': 'Navigation', 'Agenda': 'Tasks'}; ok = True; n = 0
     for g in ph:
         cg = [c for c in cl if c['title'] == g['title']]
@@ -59,6 +60,7 @@ mut('Prime Video back in Media Center', 'parity', lambda ph, cl: fo(ph, 'Service
 mut('a quickmark dropped', 'parity', lambda ph, cl: mv(ph, 'Me', 'Me-Pers', 'com.strava', None))
 mut('Gemini dropped', 'gemini', lambda ph, cl: mv(ph, 'AGI', 'AI', 'com.google.android.apps.bard', None))
 mut('GitHub back in Code', 'github', lambda ph, cl: mv(ph, 'Data', 'Drive', 'com.github.android', ('AGI', 'Code')))
+mut('LinkedIn dropped from Jobs & Business (#1960)', 'jobs', lambda ph, cl: mv(ph, 'Services · City', 'Jobs & Business', 'com.linkedin.android', None))
 mut('Me-Prj icon swapped', 'icons', lambda ph, cl: fo(ph, 'Me', 'Me-Prj').__setitem__('icon_res', 'ic_file_stack'))
 print('== test-quickmarks-1956: %d failed ==' % fail)
 sys.exit(1 if fail else 0)

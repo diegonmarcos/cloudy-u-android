@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'social-back-in-prj | link-dropped | lnktree-differs | tidal-dropped | prime-back | quickmark-dropped | gemini-dropped | github-in-code | icon-swapped | face-first-installed'
+        description: 'social-back-in-prj | link-dropped | lnktree-differs | tidal-dropped | prime-back | quickmark-dropped | gemini-dropped | github-in-code | icon-swapped | face-first-installed | linkedin-dropped'
         required: true
 permissions:
   contents: read
@@ -23,7 +23,7 @@ jobs:
           M: ${{ inputs.name }}
         run: |
           case "$M" in
-            social-back-in-prj|link-dropped|lnktree-differs|tidal-dropped|prime-back|quickmark-dropped|gemini-dropped|github-in-code|icon-swapped|face-first-installed) ;;
+            social-back-in-prj|link-dropped|lnktree-differs|tidal-dropped|prime-back|quickmark-dropped|gemini-dropped|github-in-code|icon-swapped|face-first-installed|linkedin-dropped) ;;
             *) echo "::error::unknown mutation"; exit 2 ;;
           esac
       - name: Apply the mutation
@@ -55,6 +55,7 @@ jobs:
           elif m == 'quickmark-dropped': drop('Me', 'Me-Pers', 'com.strava')
           elif m == 'gemini-dropped': drop('AGI', 'AI', 'com.google.android.apps.bard')
           elif m == 'github-in-code': drop('Data', 'Drive', 'com.github.android'); add('AGI', 'Code', 'com.github.android')
+          elif m == 'linkedin-dropped': drop('Services · City', 'Jobs & Business', 'com.linkedin.android')
           elif m == 'icon-swapped': fo('Me', 'Me-Prj')['icon_res'] = 'ic_file_stack'
           out = json.dumps(ph, indent=2, ensure_ascii=False).replace('\n', '\n        ')
           open(P, 'w').write(s[:i] + out + s[j:])
@@ -111,6 +112,7 @@ jobs:
             quickmark-dropped)    N="every quickmark that existed before is still present, except Prime Video in Media Center" ;;
             gemini-dropped)       N="Gemini is in AI" ;;
             github-in-code)       N="GitHub is in the Drive folder and not in Code" ;;
+            linkedin-dropped)     N="LinkedIn is in Jobs and Business after Indeed and stays in Me-Pers" ;;
             icon-swapped)         N="every folder icon equals the icon of the same tile on the Cloud page" ;;
             face-first-installed) N="the folder face draws the declared Cloud icon and not the first installed app" ;;
             *) echo "::error::unknown mutation"; exit 2 ;;

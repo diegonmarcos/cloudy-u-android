@@ -176,7 +176,10 @@ for g in phone:
         if f['label'] in EXPECT_RES:
             check(f.get('icon_res') == EXPECT_RES[f['label']] and not ip, '%s / %s wears the Cloud tile drawable %s' % (g['title'], f['label'], EXPECT_RES[f['label']]))
 allq = [t['pkg'] for g in phone for f in g.get('folders', []) for t in f['packages']] + [t['pkg'] for g in phone for t in g['packages']]
-check(len(allq) == len(set(allq)), 'no app sits in two phone folders (apps that do the same job share one folder)')
+# #1960 declared exception: LinkedIn sits in Me-Pers (social) AND in Jobs & Business (owner order); any other repeat stays a failure
+DECLARED_TWICE = {'com.linkedin.android'}
+dupq = sorted(p_ for p_, n_ in collections.Counter(allq).items() if n_ > 1)
+check(set(dupq) <= DECLARED_TWICE, 'no app sits in two phone folders except the declared %s (apps that do the same job share one folder)%s' % (sorted(DECLARED_TWICE), ' BAD %s' % dupq if set(dupq) - DECLARED_TWICE else ''))
 before = json.load(open(A + 'test/data/phone-quickmarks-before-1764.json'))['packages']
 # #1769 minimal folders: an app dropped from Quickmarks (a duplicate of another app in its folder) stays in All Apps, so no app disappears from the launcher.
 gone = sorted(p_ for p_ in set(before) - set(allq) if p_ in {e['package'] for e in inv} and cls(p_) is None)

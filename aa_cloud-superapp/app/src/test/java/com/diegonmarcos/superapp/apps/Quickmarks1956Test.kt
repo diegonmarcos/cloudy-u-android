@@ -62,6 +62,11 @@ class Quickmarks1956Test {
         assertTrue(primeVideo !in members("Services · Leisure", "Media Center"))
     }
 
+    @Test fun `LinkedIn is in Jobs and Business after Indeed and stays in Me-Pers`() {
+        assertEquals(listOf("com.indeed.android.jobsearch", "com.linkedin.android"), members("Services · City", "Jobs & Business"))
+        assertTrue("com.linkedin.android" in members("Me", "Me-Pers"))
+    }
+
     @Test fun `Gemini is in AI`() {
         assertTrue("com.google.android.apps.bard" in members("AGI", "AI"))
     }

@@ -4274,6 +4274,10 @@
                 {
                   "pkg": "com.indeed.android.jobsearch",
                   "label": "Indeed"
+                },
+                {
+                  "pkg": "com.linkedin.android",
+                  "label": "LinkedIn"
                 }
               ],
               "icon_res": "ic_suite"
