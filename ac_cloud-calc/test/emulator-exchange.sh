@@ -5,7 +5,7 @@
 # Two cases on one emulator: OFFLINE (Cloud-Lib-Calc not installed: no engine, cached/never state) then ONLINE (Cloud-Lib-Calc installed, the page
 # loads the ECB rates through the engine: a numeric amount, a "1 INR -> 0.0xxx" line and a real Last-updated date are asserted).
 # #1963 every box is editable: after the ONLINE case the walk types 100 into the USD box (not the first) and asserts the other boxes
-# recompute from it (EUR against the "1 USD -> r EUR" line, INR against the earlier INR->USD rate), that USD is the selected input, and that
+# recompute from it (EUR against the "1 USD -> r EUR" line, INR against the earlier INR->USD rate), that USD is the focused input (the active box; its highlight is in the shot), and that
 # switching the input to INR reads 100.00 back in USD (no round-trip drift). Shots: online-02-usd-input, online-03-inr-input.
 # Usage: emulator-exchange.sh <calc.apk> <outdir> [<lib-calc.apk>]  (no lib apk = the offline case only)
 set -u
@@ -102,13 +102,13 @@ x=sys.stdin.read(); rows=[]
 for m in re.finditer(r"<node [^>]*>",x):
     n=m.group(0)
     if "android.widget.EditText" not in n: continue
-    t=re.search(r"\btext=\"([^\"]*)\"",n); b=re.search(r"bounds=\"\[(\d+),(\d+)\]",n); sel=re.search(r"\bselected=\"(\w+)\"",n)
+    t=re.search(r"\btext=\"([^\"]*)\"",n); b=re.search(r"bounds=\"\[(\d+),(\d+)\]",n); sel=re.search(r"\bfocused=\"(\w+)\"",n)
     rows.append((int(b.group(2)),t.group(1) if t else "",sel.group(1) if sel else "?"))
 for y,t,sel in sorted(rows): print(t+"|"+sel)'; }
 num() { printf '%s' "$1" | tr -d ','; }
 swipe 30 80; sleep 2
 n=$(edits | wc -l); [ "$n" -ge 5 ] || fail "usd-input: expected 5 editable amount boxes, found $n: $(edits | tr '\n' ' ')"
-inr0=$(edits | sed -n 1p | cut -d'|' -f1); [ "$(edits | sed -n 1p | cut -d'|' -f2)" = true ] || echo "note: first box not reported selected before the switch: $(edits | tr '\n' ' ')"
+inr0=$(edits | sed -n 1p | cut -d'|' -f1); [ "$(edits | sed -n 1p | cut -d'|' -f2)" = true ] || echo "note: first box not reported focused before the switch: $(edits | tr '\n' ' ')"
 tap_edit() { dump | python3 -I -c '
 import re,sys
 x=sys.stdin.read(); rows=[]
@@ -123,8 +123,8 @@ adb shell input text 100; sleep 3
 shot online-02-usd-input
 rows=$(edits); echo "$rows" | tr '\n' ' '
 [ "$(echo "$rows" | sed -n 2p | cut -d'|' -f1)" = 100 ] || fail "usd-input: the USD box does not show 100: $(echo "$rows" | tr '\n' ' ')"
-[ "$(echo "$rows" | sed -n 2p | cut -d'|' -f2)" = true ] || fail "usd-input: the USD box is not the selected input: $(echo "$rows" | tr '\n' ' ')"
-[ "$(echo "$rows" | sed -n 1p | cut -d'|' -f2)" = true ] && fail "usd-input: the first box is still the selected input"
+[ "$(echo "$rows" | sed -n 2p | cut -d'|' -f2)" = true ] || fail "usd-input: the USD box is not the focused input (the active box; its highlight is in the shot): $(echo "$rows" | tr '\n' ' ')"
+[ "$(echo "$rows" | sed -n 1p | cut -d'|' -f2)" = true ] && fail "usd-input: the first box is still the focused input (the active box; its highlight is in the shot)"
 inr=$(num "$(echo "$rows" | sed -n 1p | cut -d'|' -f1)"); eur=$(num "$(echo "$rows" | sed -n 3p | cut -d'|' -f1)")
 reur=$(grep -oE 'text="1 USD . [0-9.]+ EUR"' "$OUT/ui.xml" | grep -oE ' [0-9.]+ EUR' | grep -oE '[0-9.]+' | head -1)
 [ -n "$reur" ] || fail "usd-input: no '1 USD -> r EUR' unit-rate line: $(texts)"
@@ -139,6 +139,6 @@ echo "USD input: INR=$inr EUR=$eur (1 USD = $reur EUR)"
 tap_edit 0; sleep 2; shot online-03-inr-input
 rows=$(edits); echo "$rows" | tr '\n' ' '
 [ "$(echo "$rows" | sed -n 2p | cut -d'|' -f1)" = "100.00" ] || fail "round trip: USD did not read back 100.00 after switching the input to INR: $(echo "$rows" | tr '\n' ' ')"
-[ "$(echo "$rows" | sed -n 1p | cut -d'|' -f2)" = true ] || fail "round trip: the INR box is not the selected input: $(echo "$rows" | tr '\n' ' ')"
+[ "$(echo "$rows" | sed -n 1p | cut -d'|' -f2)" = true ] || fail "round trip: the INR box is not the focused input (the active box; its highlight is in the shot): $(echo "$rows" | tr '\n' ' ')"
 logcat_tail
 echo "NON-FIRST INPUT: USD typed, INR/EUR recomputed, input switch keeps 100.00"
