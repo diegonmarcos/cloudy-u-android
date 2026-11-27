@@ -47,6 +47,15 @@ class C3MeshFragment : KitComposeFragment() {
 
     @Composable
     override fun Content() {
+        MeshBody()
+    }
+
+    companion object { fun newInstance() = C3MeshFragment() }
+}
+
+/** #1955 A The WG Mesh page body (lifted from [C3MeshFragment] so the Network viewer's Table mode is the same composable). */
+@Composable
+fun MeshBody() {
         val p = LocalKitPalette.current
         val ctx = LocalContext.current
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp)) {
@@ -57,7 +66,4 @@ class C3MeshFragment : KitComposeFragment() {
                 modifier = Modifier.padding(top = 2.dp, bottom = 12.dp))
             MeshView.Render()
         }
-    }
-
-    companion object { fun newInstance() = C3MeshFragment() }
 }

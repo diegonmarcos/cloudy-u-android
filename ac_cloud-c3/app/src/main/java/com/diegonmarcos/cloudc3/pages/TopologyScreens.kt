@@ -256,6 +256,20 @@ class TopologyViewFragment : KitComposeFragment() {
     @Composable
     override fun Content() {
         val view = remember { arguments?.getString(ARG_VIEW).orEmpty() }
+        TopologyViewBody(view, parentFragment as? PagedFragment, activity)
+    }
+
+    companion object {
+        private const val ARG_VIEW = "topology_view"
+        fun newInstance(view: String) = TopologyViewFragment().apply {
+            arguments = Bundle().apply { putString(ARG_VIEW, view) }
+        }
+    }
+}
+
+/** #1955 A The topology view page body (lifted from [TopologyViewFragment] so the Network viewer's Table mode is the same composable); a pivot opens the other view's page on [host], else asks [activity]. */
+@Composable
+fun TopologyViewBody(view: String, host: PagedFragment?, activity: android.app.Activity?) {
         val ctx = LocalContext.current
         val slice = remember { Declarations.fleet }
         val decl = remember { Declarations.topology }
@@ -276,18 +290,9 @@ class TopologyViewFragment : KitComposeFragment() {
             onPivot = { to, key ->
                 TopologyFocus.key = key
                 val page = Declarations.opsViewPage(to)?.id ?: to
-                val host = parentFragment as? PagedFragment
                 // #1942 the views live on two tabs (Orch and Ops > Network): a pivot to the other tab goes through the host's page: seam
                 if (host != null && host.hasPage(page)) host.openPage(page)
                 else (activity as? com.diegonmarcos.cloudc3.cloud.C3StackFragment.TargetListener)?.onTargetClicked("page:c3/$page")
             },
         )
-    }
-
-    companion object {
-        private const val ARG_VIEW = "topology_view"
-        fun newInstance(view: String) = TopologyViewFragment().apply {
-            arguments = Bundle().apply { putString(ARG_VIEW, view) }
-        }
-    }
 }

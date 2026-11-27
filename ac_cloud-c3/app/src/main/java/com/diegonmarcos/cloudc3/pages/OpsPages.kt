@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
@@ -83,9 +84,12 @@ private fun stateInk(state: String): Color = when (state) {
 
 /** One node of a map: its name, note and state, then one line per outgoing edge. */
 @Composable
-private fun MapRow(id: String, r: OpsMaps.Row) {
+private fun MapRow(id: String, r: OpsMaps.Row, focused: Boolean = false) {
     val p = LocalKitPalette.current
-    KitStoreRowLine(Modifier.testTag(OpsTags.row(id, r.name))) {
+    val bring = remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }
+    if (focused) LaunchedEffect(r.name) { runCatching { bring.bringIntoView() } }
+    KitStoreRowLine(Modifier.testTag(OpsTags.row(id, r.name)).bringIntoViewRequester(bring)
+        .then(if (focused) Modifier.border(1.dp, p.accent, RoundedCornerShape(KitStoreRow.tight)) else Modifier)) {
         KitStoreDot(if (r.state == "planned") GLYPH_PLANNED else GLYPH_DOT, stateInk(r.state).takeIf { it != Color.Unspecified } ?: p.textSecondary)
         Column(Modifier.weight(1f)) {
             KitStoreName(r.name, color = p.textPrimary)
@@ -100,12 +104,12 @@ private fun MapRow(id: String, r: OpsMaps.Row) {
 
 /** A map: sections of nodes with their edges. Pure of Android so the JVM suite renders it. */
 @Composable
-fun OpsMapScreen(id: String, summary: String, sections: List<OpsMaps.Section>) {
+fun OpsMapScreen(id: String, summary: String, sections: List<OpsMaps.Section>, focusRow: String? = null) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).testTag(OpsTags.map(id))) {
         Summary(summary)
         sections.forEach { s ->
             SectionTitle("${s.title} (${s.rows.size})")
-            s.rows.forEach { MapRow(id, it) }
+            s.rows.forEach { MapRow(id, it, focused = focusRow != null && it.name == focusRow) }
         }
     }
 }
@@ -130,6 +134,20 @@ fun OpsCatalogScreen(tag: String, mapId: String, decl: JsonObject = Declarations
     }
 }
 
+/** #1955 A The map page body (the fragment's, lifted so the Network viewer's Table mode is the same composable with the same inputs). */
+@Composable
+fun OpsMapBody(id: String, focusRow: String? = null) {
+    val ctx = LocalContext.current
+    val version = ContainersSource.version
+    LaunchedEffect(Unit) { ContainersSource.refresh(ApiFleetLive(ctx.applicationContext)) }
+    val sections = remember(version) { OpsMaps.build(id, opsMapSources()) }
+    OpsMapScreen(id, OpsMaps.summary(Declarations.opsMaps, id), sections, focusRow)
+}
+
+/** The sources every Ops map reads on the phone (baked declarations and the current containers catalog). */
+fun opsMapSources(): OpsMaps.Sources = OpsMaps.Sources(Declarations.opsMaps, Declarations.meshJson, TopologyModel.parseInfra(Declarations.infraSlice),
+    Declarations.infraSlice, ContainersSource.current(), Declarations.fleet.domains)
+
 /** The Ops maps as a page: the map id names a map of data/ops_maps.json; the live catalog is the API copy when it answered. */
 class OpsMapFragment : KitComposeFragment() {
 
@@ -138,14 +156,7 @@ class OpsMapFragment : KitComposeFragment() {
     @Composable
     override fun Content() {
         val id = remember { arguments?.getString(ARG_MAP).orEmpty() }
-        val ctx = LocalContext.current
-        val version = ContainersSource.version
-        LaunchedEffect(Unit) { ContainersSource.refresh(ApiFleetLive(ctx.applicationContext)) }
-        val sections = remember(version) {
-            OpsMaps.build(id, OpsMaps.Sources(Declarations.opsMaps, Declarations.meshJson, TopologyModel.parseInfra(Declarations.infraSlice),
-                Declarations.infraSlice, ContainersSource.current(), Declarations.fleet.domains))
-        }
-        OpsMapScreen(id, OpsMaps.summary(Declarations.opsMaps, id), sections)
+        OpsMapBody(id)
     }
 
     companion object {
