@@ -81,7 +81,10 @@ class ProjHome1937Test {
 
     private fun showHome() {
         compose.setContent {
-            CloudKitTheme(KitPalette(Color.Black, Color.DarkGray, Color.White, Color.LightGray, Color.Magenta, Color.Gray, Color.Black)) { ProjHomeScreen() }
+            // #1937 banners load on the composition's own thread here: no state is produced from an IO thread while the test scrolls (deterministic)
+            androidx.compose.runtime.CompositionLocalProvider(LocalBannerLoadContext provides kotlin.coroutines.EmptyCoroutineContext) {
+                CloudKitTheme(KitPalette(Color.Black, Color.DarkGray, Color.White, Color.LightGray, Color.Magenta, Color.Gray, Color.Black)) { ProjHomeScreen() }
+            }
         }
         compose.waitForIdle()
     }

@@ -99,11 +99,15 @@ class BannerImageView(c: android.content.Context) : android.widget.ImageView(c) 
     }
 }
 
+/** Where a banner is read and decoded: IO in the app; a render test provides the composition's own context, so no state is produced off its thread (#1937 a Robolectric run hit 'recordModificationsOf and applyChanges concurrently'). */
+val LocalBannerLoadContext = androidx.compose.runtime.staticCompositionLocalOf<kotlin.coroutines.CoroutineContext> { kotlinx.coroutines.Dispatchers.IO }
+
 @Composable
 private fun BannerImage(entry: ProjBanners.Entry, title: String, tag: String) {
     val ctx = LocalContext.current
+    val loadCtx = LocalBannerLoadContext.current
     val drawable = androidx.compose.runtime.produceState<android.graphics.drawable.Drawable?>(null, entry) {
-        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        value = kotlinx.coroutines.withContext(loadCtx) {
             ProjBanners.bytes(entry, { ctx.assets.open(it) }, { u -> java.net.URL(u).openStream().use { it.readBytes() } })?.let { ProjBanners.decode(it) }
         }
     }.value
