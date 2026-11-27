@@ -244,7 +244,7 @@ class C3StackFragment : KitComposeFragment() {
     /**
      * The panels as drawn: the cloud_dashboard cards are replaced by ONE card per group of the scoped, filtered document
      * (Stacks.cloudServices), so a project shows its own groups (Cloudy: Infra Apps, Cloud Apps, Repos; the others: their registry
-     * families), none repeats another's and an empty group draws no card; the Index tiles that jump to those cards follow the shown cards.
+     * families), none repeats another's and an empty group draws no card (#1953: no Index tile row on these pages).
      */
     @Composable
     private fun shownPanels(panels: List<Stacks.StackPanel>): List<Stacks.StackPanel> {
@@ -256,13 +256,8 @@ class C3StackFragment : KitComposeFragment() {
             val dash = Stacks.cloudServices(projectId, null, types, vms)
             val cards = dash.groups.filter { g -> g.subgroups.any { it.containers.isNotEmpty() } }
                 .map { g -> panels[first].copy(title = g.label, anchor = "containers-${g.id}", anchors = emptyList(), dashGroupIds = listOf(g.id)) }
-            val jump = { t: Stacks.AggTile -> t.target.startsWith("anchor:containers-") }
-            val out = panels.map { pn ->
-                if (pn.kind == "tile_row" && pn.tiles.isNotEmpty() && pn.tiles.all(jump)) {
-                    pn.copy(tiles = cards.map { c -> Stacks.AggTile(c.anchor, c.title, pn.tiles.first().iconName, "anchor:${c.anchor}") })
-                } else pn
-            }
-            val shown = out.take(first) + cards + out.drop(first).filter { it.kind != "cloud_dashboard" }
+            // #1953 the Index tile row is gone from the Topology pages, so no jump tiles are rebuilt here
+            val shown = panels.take(first) + cards + panels.drop(first).filter { it.kind != "cloud_dashboard" }
             shown.forEachIndexed { i, pn -> if (pn.kind == "cloud_dashboard") anchors.register(pn.anchor, i) }
             shown
         }

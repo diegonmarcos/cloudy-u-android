@@ -92,8 +92,12 @@ dash_groups = sorted(tuple(sorted(([p.get("group")] if p.get("group") else []) +
 if dash_groups != sorted([("infra",), ("cloud",)]):
     bad.append("the dashboards' group bindings are %s, not infra / cloud" % dash_groups)
 for _name, _stack in (("stack_topology", topo),):
-    if not any(p.get("kind") == "tile_row" and p.get("title") == "Index" for p in _stack):
-        bad.append("%s lost its Index row" % _name)
+    # #1953 the owner removed the Index row from the Containers > Topology pages (the Ops > Obsv Index stays, pinned below)
+    if any(p.get("kind") == "tile_row" and p.get("title") == "Index" for p in _stack):
+        bad.append("%s carries an Index row again - #1953 removed it from the Topology pages" % _name)
+_obs = c3.get("stack_observability") or []
+if [p.get("title") for p in _obs if p.get("kind") == "tile_row"] != ["Index", "More"]:
+    bad.append("stack_observability lost its Index / More rows (#1953 removed only the Topology Index)")
     if any(p.get("kind") == "tile_row" and p.get("title") == "More" for p in _stack):
         bad.append("%s has a More row - owner item 10 removed the More table" % _name)
 if not (ui.get("ntfy") or {}).get("channels"):
@@ -301,7 +305,7 @@ PYTHON
 }
 
 echo "── #648 cloud-c3: the WHOLE c3 surface, and 'lost nothing' as a property ──"
-t1 "$APP" && pass "T1 the carried declaration is complete: every page id, five feed cards, the NTFY centre, two dashboards, both address cards, Index+More rows" || fail "T1 the carried declaration lost something"
+t1 "$APP" && pass "T1 the carried declaration is complete: every page id, five feed cards, the NTFY centre, two dashboards, both address cards, no Topology Index (#1953), Obsv Index+More rows" || fail "T1 the carried declaration lost something"
 t2 "$APP" && pass "T2 every declared panel kind and feed source has a renderer arm" || fail "T2 a declared card has no renderer"
 t3 "$APP" && pass "T3 the copy manifest holds: every enumerated artifact has its counterpart, with its content" || fail "T3 a copied artifact is lost or hollow"
 t4 "$APP" && pass "T4 the data travelled and every carried blob is baked into BuildConfig" || fail "T4 data missing or a blob unbaked"
@@ -359,7 +363,9 @@ open(p,"w").write(s)
 PY
 }
 m_table_row_lost() { pyjson "$1/data/routes.json" 'd[:]=d[1:]'; }
-m_dead_anchor() { pyjson "$1/build.json" 'c3=d["ui"]["carried_c3"]; c3["stack_topology"][0]["tiles"][0]["target"]="anchor:no-such-card"'; }
+m_dead_anchor() { pyjson "$1/build.json" 'c3=d["ui"]["carried_c3"]; c3["stack_observability"][0]["tiles"][0]["target"]="anchor:no-such-card"'; }
+m_index_back()  { pyjson "$1/build.json" 'c3=d["ui"]["carried_c3"]; c3["stack_topology"].insert(0, {"kind":"tile_row","title":"Index","tiles":[]})'; }
+m_obs_index_lost() { pyjson "$1/build.json" 'c3=d["ui"]["carried_c3"]; c3["stack_observability"].pop(0)'; }
 m_orphan_page() { pyjson "$1/build.json" 'c3=d["ui"]["carried_c3"]; c3["stack_observability"][-1]["tiles"][0]["target"]="page:c3/nowhere"'; }
 m_drop_module() { pyjson "$1/build.json" 'del d["modules"]["libs:ops"]'; }
 
@@ -372,6 +378,8 @@ mutate "a carried blob is no longer baked"                  t4 m_unbake
 mutate "the Table page loses a row the address cards showed" t1 m_table_row_lost
 mutate "an Index tile targets an undeclared anchor"         t5 m_dead_anchor
 mutate "a More tile targets a page nothing dispatches"      t5 m_orphan_page
+mutate "the Topology Index row is back (#1953)"             t1 m_index_back
+mutate "the Ops > Obsv Index row is dropped (#1953 keeps it)" t1 m_obs_index_lost
 
 echo
 if [ "$FAILURES" -ne 0 ] || [ "$MUT_FAIL" -ne 0 ]; then

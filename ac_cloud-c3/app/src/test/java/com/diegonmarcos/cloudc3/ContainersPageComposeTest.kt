@@ -161,6 +161,17 @@ class ContainersPageComposeTest {
     }
 
     @Test
+    fun `no Topology page carries the Index row, and the Ops Obsv Index stays`() {
+        // #1953 every project's Topology page and All draw C3StackFragment over the baked stack_topology: no Index tile row, no jump subtitle
+        val topo = com.diegonmarcos.cloudc3.cloud.Stacks.stackTopology()
+        assertFalse("stack_topology still carries a tile_row Index", topo.any { it.kind == "tile_row" && it.title == "Index" })
+        assertFalse("stack_topology still carries the jump subtitle", topo.any { it.subtitle == "Jump to a table on this page" })
+        assertTrue("the Containers dashboards are still drawn", topo.any { it.kind == "cloud_dashboard" })
+        val obs = com.diegonmarcos.cloudc3.cloud.Stacks.stackObservability()
+        assertEquals(listOf("Index", "More"), obs.filter { it.kind == "tile_row" }.map { it.title })
+    }
+
+    @Test
     fun `the old page-wide Filters row is gone`() {
         show()
         compose.onNodeWithTag("filters").assertDoesNotExist()
