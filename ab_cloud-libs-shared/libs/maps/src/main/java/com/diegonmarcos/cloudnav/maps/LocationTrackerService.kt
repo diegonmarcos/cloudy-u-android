@@ -1,5 +1,6 @@
 package com.diegonmarcos.cloudnav.maps
 
+import com.diegonmarcos.superapp.core.FleetNotify
 import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
@@ -165,10 +166,12 @@ class LocationTrackerService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
-        startForeground(NOTIF_ID, buildNotification(lastSubtitle))
+        val card = buildNotification(lastSubtitle)
+        startForeground(NOTIF_ID, card)
+        NavCard.publish(this, NOTIF_ID, card)   // #1965 the Background Apps group
         NavCard.postSummary(this)
         // #1944 a published navigation change refreshes the card (throttled in NavCardState); cleared again in onDestroy.
-        NavCardState.onChange = { main.post { runCatching { (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).notify(NOTIF_ID, buildNotification(lastSubtitle)) } } }
+        NavCardState.onChange = { main.post { runCatching { FleetNotify.post(this, NOTIF_ID, buildNotification(lastSubtitle)) } } }
         instance = this
         gate = GateState(lastAccepted = db.recentPoints(1).lastOrNull()?.let { GateFix(it.lat, it.lon, it.accuracy, it.ts) })
         armWake?.invoke(applicationContext)
@@ -297,9 +300,8 @@ class LocationTrackerService : Service() {
         detectStop(row)
         // Refresh the persistent notification's subtitle so the user
         // sees the live point count + accuracy as proof of life.
-        val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         lastSubtitle = "Points: ${db.pointCount()} · acc: ${row.accuracy?.toInt() ?: "?"}m"
-        nm.notify(NOTIF_ID, buildNotification(lastSubtitle))
+        FleetNotify.post(this, NOTIF_ID, buildNotification(lastSubtitle))   // #1965 also refreshes the Background Apps card
     }
 
     /** Ring-buffer Stop detector. Holds the last [bufSize] points;

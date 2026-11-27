@@ -40,6 +40,19 @@ class PhoneNotificationListenerService : NotificationListenerService() {
         runCatching {
             for (sbn in activeNotifications.orEmpty()) record(sbn)
         }
+        // #1965 a fleet app that died while this listener was away left its "Background Apps" card behind: keep only live sources.
+        runCatching {
+            com.diegonmarcos.superapp.core.BackgroundApps.reconcile(this, activeNotifications.orEmpty()
+                .filter { it.notification.extras.containsKey(com.diegonmarcos.superapp.core.BackgroundApps.X_MARK) }
+                .map { it.packageName to it.id }.toSet())
+        }
+    }
+
+    /** #1965 a fleet keep-alive left the shade (its service stopped or its process died): its "Background Apps" card goes too. */
+    override fun onNotificationRemoved(sbn: StatusBarNotification?) {
+        if (sbn == null || sbn.packageName == packageName) return
+        if (!sbn.notification.extras.containsKey(com.diegonmarcos.superapp.core.BackgroundApps.X_MARK)) return
+        runCatching { com.diegonmarcos.superapp.core.BackgroundApps.hubRetract(this, sbn.packageName, sbn.id) }
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {

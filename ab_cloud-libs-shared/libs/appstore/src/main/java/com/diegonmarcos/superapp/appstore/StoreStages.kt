@@ -49,17 +49,24 @@ object StoreStages {
         // #903 the foreground service's notification IS the Store bar line.
         BatchForeground.text = { progress()?.text }
         // The badge's body: what runs now, how many updates wait, when the last pass ended (StoreKeepAliveText).
-        BatchForeground.statusLines = { ctx ->
-            val st = StoreAuto.load(ctx)
-            // #1944 the per-app progress (name, phase, percent, bytes, queue position, last error) and the totals lead; the former lines follow.
-            StoreProgressCard.lines(StoreJobs.board.rows(), StoreJobs.board.overall()) +
-                StoreKeepAliveText.lines(progress()?.text, st?.let { StoreAuto.pending(it) }, st?.finishedAt ?: 0L, System.currentTimeMillis(),
-                    StoreTally.notChecked(false, PhoneAppActions.sourcesOrNull(ctx) == null))
-        }
+        BatchForeground.statusLines = { ctx -> storeCard(ctx).first }
+        // #1965 the same data as the declared "Background Apps" fields: Progress, Speed, one App per row, State.
+        BatchForeground.cardFields = { ctx -> storeCard(ctx).second }
         BatchForeground.icon = { AppStoreHost.notificationIcon }
         BatchForeground.launch = { ctx ->
             AppStoreHost.launchActivity?.let { Intent(ctx, it).apply { AppStoreHost.launchExtras.forEach { (k, v) -> putExtra(k, v) } } }
         }
+    }
+
+    /** #1944 the card lines (per-app progress and totals first, the former lines after) and #1965 its fields, from ONE read. */
+    private fun storeCard(ctx: Context): Pair<List<String>, List<Pair<String, String>>> {
+        val st = StoreAuto.load(ctx)
+        val rows = StoreJobs.board.rows()
+        val overall = StoreJobs.board.overall()
+        val speeds = StoreProgressCard.speeds(rows)
+        val state = StoreKeepAliveText.lines(progress()?.text, st?.let { StoreAuto.pending(it) }, st?.finishedAt ?: 0L, System.currentTimeMillis(),
+            StoreTally.notChecked(false, PhoneAppActions.sourcesOrNull(ctx) == null))
+        return (StoreProgressCard.lines(rows, overall, speeds) + state) to StoreProgressCard.fields(rows, overall, speeds, state)
     }
 
     const val DOWNLOAD = "download"

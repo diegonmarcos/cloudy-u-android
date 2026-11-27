@@ -174,12 +174,12 @@ else:
 
 # ── L3 quiet progress ────────────────────────────────────────────────────────
 n = body(B, "fun notification(ctx: Context)") or ""
-# The progress line is the fleet keep-alive badge: its channel (LOW, made through SilentChannels.ensure) and its silent, alert-once
+# The progress line is the fleet keep-alive badge: its channel (#1965 MIN "Background service", made through SilentChannels.ensure) and its silent, alert-once
 # builder are libs:fleet-notify FleetNotify's, which the Store's line goes through.
 fn = strip(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(core)))))))), "fleet-notify/src/main/java/com/diegonmarcos/superapp/core/FleetNotify.kt"))   # #1660 FleetNotify lives in libs:fleet-notify
-kc = body(fn, "private fun keepAliveChannel(")
+kc = body(fn, "fun keepAliveChannel(")
 ka = body(fn, "fun keepAliveNotification(")
-if "FleetNotify.keepAliveNotification(" in n and re.search(r"SilentChannels\.ensure\(ctx, CHANNEL_KEEP_ALIVE, CHANNEL_KEEP_ALIVE_NAME, NotificationManager\.IMPORTANCE_LOW\)", fn) and kc:
+if "FleetNotify.keepAliveNotification(" in n and re.search(r"SilentChannels\.ensure\(ctx, CHANNEL_BACKGROUND_SERVICE, CHANNEL_BACKGROUND_SERVICE_NAME, NotificationManager\.IMPORTANCE_(LOW|MIN)\)", fn) and kc:
     ok("L3 the progress line's channel is LOW at most (the keep-alive channel, silent in Cloud Store)")
 else:
     bad("L3 the progress line's channel is above LOW")

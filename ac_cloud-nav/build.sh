@@ -253,7 +253,8 @@ step_test() {
     _resolve_signing
   fi
   _export_variant_abis
-  in_nix gradle :app:testDebugUnitTest :libs:maps:testDebugUnitTest
+  # #1965 libs:fleet-notify's suite too: the one "Background Apps" group (BackgroundAppsTest) and the keep-alive channel.
+  in_nix gradle :app:testDebugUnitTest :libs:maps:testDebugUnitTest :libs:fleet-notify:testDebugUnitTest
 }
 step_instrument() {
   # connectedAndroidTest builds the debug + androidTest APKs, so it needs the

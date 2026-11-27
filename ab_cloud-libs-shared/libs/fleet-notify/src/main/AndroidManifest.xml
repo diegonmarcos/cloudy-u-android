@@ -1,4 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- libs:fleet-notify declares nothing: the notification channels are created at runtime (FleetNotify), and the
-     foreground-service types and permissions belong to the app that holds the service. -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" />
+<!-- libs:fleet-notify: the notification channels are created at runtime (FleetNotify), and the foreground-service types and
+     permissions belong to the app that holds the service.
+     #1965 The one thing it declares: the fleet's signature permission that guards the "Background Apps" card broadcasts in both
+     directions (a fleet app sends its card to the hub, the SuperApp, whose receiver requires it; the sender requires the hub to
+     hold it). Every fleet app links this library, so every one defines and holds the same permission under the one shared
+     signing key (SIGNING.md): the definition never depends on which app was installed first. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <permission
+        android:name="com.diegonmarcos.fleet.permission.BACKGROUND_CARD"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="com.diegonmarcos.fleet.permission.BACKGROUND_CARD" />
+</manifest>

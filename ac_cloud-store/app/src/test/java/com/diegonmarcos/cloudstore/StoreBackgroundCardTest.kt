@@ -8,6 +8,9 @@ import com.diegonmarcos.superapp.appstore.JobBoard
 import com.diegonmarcos.superapp.appstore.StoreJobs
 import com.diegonmarcos.superapp.appstore.StoreProgressCard
 import com.diegonmarcos.superapp.appstore.StoreStages
+import android.content.Intent
+import com.diegonmarcos.superapp.core.BackgroundApps
+import com.diegonmarcos.superapp.core.BackgroundCards
 import com.diegonmarcos.superapp.core.FleetNotify
 import com.diegonmarcos.superapp.updater.BatchForeground
 import org.junit.After
@@ -89,5 +92,52 @@ class StoreBackgroundCardTest {
         assertNull(shadowOf(nm).getNotification(FleetNotify.SUMMARY_ID))
         assertNull(shadowOf(nm).getNotification(BatchForeground.ID))
         assertFalse(BatchForeground.isHeld())
+    }
+
+    // ── #1965 the "Background Apps" card: declared fields and buttons, per-app speed, the silent FGS channel, nothing lost ──
+
+    private fun wired() {
+        Class.forName(StoreStages::class.java.name)
+        BatchForeground.launch = { ctx -> Intent(Intent.ACTION_MAIN).setPackage(ctx.packageName) }
+    }
+
+    @Test fun `the Background Apps card carries every declared Store field and button`() {
+        wired(); board()
+        val card = BackgroundApps.fromNotification(BatchForeground.notification(app), BatchForeground.ID)!!
+        assertEquals(BackgroundCards.STORE, card.kind)
+        assertEquals(emptyList<String>(), BackgroundCards.missingFields(card))
+        assertEquals(emptyList<String>(), BackgroundCards.missingButtons(card))
+        val apps = card.fields.filter { it.key == BackgroundCards.Store.APP }.map { it.value }
+        assertTrue(apps.any { it.startsWith("Maps · downloading · 40%") })
+        assertTrue(apps.any { it.startsWith("Nav · failed") && it.contains("error: DNS: cannot resolve") })
+        assertTrue(card.fields.first { it.key == BackgroundCards.Store.PROGRESS }.value.startsWith("4 apps"))
+    }
+
+    @Test fun `each downloading app shows its speed from two refreshes`() {
+        board()
+        StoreProgressCard.speeds(StoreJobs.board.rows(), now = 10_000)
+        StoreJobs.board.download("pkg.maps", 24_000_000, 50_000_000)
+        val sp = StoreProgressCard.speeds(StoreJobs.board.rows(), now = 12_000)
+        assertEquals(2_000_000L, sp["pkg.maps"])
+        val f = StoreProgressCard.fields(StoreJobs.board.rows(), StoreJobs.board.overall(), sp, listOf("2 pending"))
+        assertEquals(StoreProgressCard.speedText(2_000_000), f.first { it.first == StoreProgressCard.F_SPEED }.second)
+        assertTrue(f.any { it.first == StoreProgressCard.F_APP && it.second.startsWith("Maps · downloading · 48% · " + StoreProgressCard.speedText(2_000_000)) })
+        assertEquals(listOf("2 pending"), f.filter { it.first == StoreProgressCard.F_STATE }.map { it.second })
+        assertEquals(null, StoreProgressCard.speed(0, 0, 5, 10))
+    }
+
+    @Test fun `the store FGS card is on the silent MIN Background service channel`() {
+        val n = BatchForeground.notification(app)
+        assertTrue(n.channelId, n.channelId.startsWith(FleetNotify.CHANNEL_BACKGROUND_SERVICE))   // the Store posts on the _silent_v2 id
+        assertEquals(NotificationManager.IMPORTANCE_MIN, nm.getNotificationChannel(n.channelId).importance)
+    }
+
+    @Test fun `rule 16 every line of the Store app card is in the Background Apps card`() {
+        wired(); board()
+        val n = BatchForeground.notification(app)
+        val card = BackgroundApps.fromNotification(n, BatchForeground.ID)!!
+        val values = card.fields.map { it.value }
+        n.extras.getCharSequence(Notification.EXTRA_BIG_TEXT).toString().split("\n").filter { it.isNotBlank() }
+            .forEach { assertTrue("lost from the card: $it", it in values) }
     }
 }

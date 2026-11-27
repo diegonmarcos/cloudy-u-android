@@ -1,0 +1,196 @@
+# #1965 The ONE "Background Apps" notification group: JVM suites + mutation legs, verdict read from the JUnit XML.
+#
+# BASELINE legs run the named #1965 tests unmutated: every named test must be present and green.
+# MUTATION legs apply ONE deliberate break each (grouping, a card field, the FGS channel move, the publish to the hub) and
+# run the suite that holds the named test: a KILL is "the build compiled AND the named test failed" (read from the XML);
+# no result, a missing test or a green named test is a red leg. Push runs every leg; a manual run takes `legs`, a comma
+# list checked against the allow-list below (the input goes through env, never into the script text).
+name: background-apps-1965
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/background-apps-1965.yml"
+      - "ab_cloud-libs-shared/libs/fleet-notify/**"
+      - "ab_cloud-libs-shared/libs/maps/src/main/java/com/diegonmarcos/cloudnav/maps/NavCard.kt"
+      - "ab_cloud-libs-shared/libs/appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreProgressCard.kt"
+      - "ac_cloud-mail/app/src/main/kotlin/app/sterna/push/KeepAliveBadge.kt"
+      - "ac_cloud-mail/app/src/main/kotlin/app/sterna/push/Notifications.kt"
+      - "ac_cloud-mail/app/src/test/kotlin/app/sterna/push/KeepAliveBadgeTest.kt"
+      - "ac_cloud-store/app/src/test/java/com/diegonmarcos/cloudstore/StoreBackgroundCardTest.kt"
+      - "ac_cloud-nav/app/src/test/java/com/diegonmarcos/cloudnav/maps/NavBackgroundCardTest.kt"
+  workflow_dispatch:
+    inputs:
+      legs:
+        description: "Comma list of legs (empty = all)"
+        required: false
+        type: string
+        default: ""
+permissions:
+  contents: read
+concurrency:
+  group: background-apps-1965-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.p.outputs.matrix }}
+    steps:
+      - id: p
+        env:
+          LEGS: ${{ github.event.inputs.legs }}
+        run: |
+          python3 -I - <<'PY'
+          import json, os, re
+          ALL = ["baseline-lib-nav", "baseline-mail", "baseline-store",
+                 "hub-grouping", "hub-publish", "fgs-channel", "webserver-fields",
+                 "mail-fields", "mail-channel", "store-fields", "nav-fields", "nav-channel"]
+          raw = os.environ.get("LEGS", "").strip()
+          want = [x.strip() for x in raw.split(",") if x.strip()] if raw else ALL
+          bad = [x for x in want if x not in ALL or not re.fullmatch(r"[a-z0-9-]+", x)]
+          if bad:
+              print("::error::legs not in the allow-list"); raise SystemExit(2)
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write("matrix=" + json.dumps({"leg": want}) + "\n")
+          PY
+  leg:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply the leg's mutation (none for a baseline)
+        env:
+          M: ${{ matrix.leg }}
+        run: |
+          python3 -I - <<'PY'
+          import os
+          L = "ab_cloud-libs-shared/libs/"
+          FN = L + "fleet-notify/src/main/java/com/diegonmarcos/superapp/core/"
+          MK = "ac_cloud-mail/app/src/main/kotlin/app/sterna/push/"
+          NC = L + "maps/src/main/java/com/diegonmarcos/cloudnav/maps/NavCard.kt"
+          SP = L + "appstore/src/main/java/com/diegonmarcos/superapp/appstore/StoreProgressCard.kt"
+          m = {
+              "hub-grouping": [(FN + "BackgroundApps.kt", ".setGroup(GROUP)\n            .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)\n            .setSortKey",
+                                ".setGroup(card.pkg)\n            .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)\n            .setSortKey")],
+              "hub-publish": [(FN + "FleetNotify.kt", "BackgroundApps.fromNotification(notification, id)?.let { BackgroundApps.publish(ctx, it) }   // #1965 a keep-alive refresh", "Unit")],
+              "fgs-channel": [(FN + "FleetNotify.kt", "CHANNEL_BACKGROUND_SERVICE_NAME, NotificationManager.IMPORTANCE_MIN)", "CHANNEL_BACKGROUND_SERVICE_NAME, NotificationManager.IMPORTANCE_LOW)")],
+              "webserver-fields": [(FN + "BackgroundCards.kt", "BackgroundApps.Field(Webserver.UPTIME,", "BackgroundApps.Field(Webserver.MESH,")],
+              "mail-fields": [(MK + "KeepAliveBadge.kt", "add(BackgroundApps.Field(BackgroundCards.Mail.LAST_SYNC, lastSync ?: texts.never))", "Unit")],
+              "mail-channel": [(MK + "Notifications.kt", "cardKind = BackgroundCards.MAIL,", "channelId = CHANNEL_SERVICE, cardKind = BackgroundCards.MAIL,")],
+              "store-fields": [(SP, "out += F_SPEED to", "out += F_STATE to")],
+              "nav-fields": [(NC, "out += BackgroundApps.Field(BackgroundCards.Nav.NEXT_TURN, it)", "out += BackgroundApps.Field(BackgroundCards.Nav.TRACKING, it)")],
+              "nav-channel": [(NC, "NotificationCompat.Builder(ctx, FleetNotify.keepAliveChannel(ctx))", "NotificationCompat.Builder(ctx, CHANNEL_ID)")],
+          }.get(os.environ["M"], [])
+          for p, a, b in m:
+              s = open(p).read()
+              assert s.count(a) == 1, "mutation target missing or ambiguous: " + a
+              open(p, "w").write(s.replace(a, b, 1))
+          PY
+          git diff --stat
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
+      - name: Set up Gradle 8.10.2 (cached)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.10.2"
+      # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
+      # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
+      - name: Checkout vault (shared Android signing key, read by app/build.gradle at configuration)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+      - name: Install ORAS + sops (pinned)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: oras sops
+      - name: Run the suite, read the verdict from the JUnit XML
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+          M: ${{ matrix.leg }}
+        run: |
+          set -u
+          LIB=com.diegonmarcos.superapp.core.BackgroundAppsTest
+          MAIL=app.sterna.push.KeepAliveBadgeTest
+          STORE=com.diegonmarcos.cloudstore.StoreBackgroundCardTest
+          NAV=com.diegonmarcos.cloudnav.maps.NavBackgroundCardTest
+          case "$M" in
+            baseline-lib-nav) APP=ac_cloud-nav; MODE=baseline; WANT="$LIB|every background app lands in the one Background Apps group;$LIB|the FGS card moves to the silent MIN Background service channel;$LIB|the webserver card says state, URL, ports, mesh, clients and uptime;$LIB|a keep-alive carries its card and posting it sends the card to the hub;$NAV|the Background Apps card carries every declared Nav field and button;$NAV|the nav FGS card is on the silent MIN Background service channel;$NAV|rule 16 every nav line of the app card is in the Background Apps card" ;;
+            baseline-mail) APP=ac_cloud-mail; MODE=baseline; WANT="$MAIL|the Background Apps card carries every declared Mail field and button;$MAIL|the mail FGS card is on the silent MIN Background service channel;$MAIL|rule 16 every line of the app card is in the Background Apps card" ;;
+            baseline-store) APP=ac_cloud-store; MODE=baseline; WANT="$STORE|the Background Apps card carries every declared Store field and button;$STORE|each downloading app shows its speed from two refreshes;$STORE|the store FGS card is on the silent MIN Background service channel;$STORE|rule 16 every line of the Store app card is in the Background Apps card" ;;
+            hub-grouping) APP=ac_cloud-nav; MODE=kill; WANT="$LIB|every background app lands in the one Background Apps group" ;;
+            hub-publish) APP=ac_cloud-nav; MODE=kill; WANT="$LIB|a keep-alive carries its card and posting it sends the card to the hub" ;;
+            fgs-channel) APP=ac_cloud-nav; MODE=kill; WANT="$LIB|the FGS card moves to the silent MIN Background service channel" ;;
+            webserver-fields) APP=ac_cloud-nav; MODE=kill; WANT="$LIB|the webserver card says state, URL, ports, mesh, clients and uptime" ;;
+            mail-fields) APP=ac_cloud-mail; MODE=kill; WANT="$MAIL|the Background Apps card carries every declared Mail field and button" ;;
+            mail-channel) APP=ac_cloud-mail; MODE=kill; WANT="$MAIL|the mail FGS card is on the silent MIN Background service channel" ;;
+            store-fields) APP=ac_cloud-store; MODE=kill; WANT="$STORE|the Background Apps card carries every declared Store field and button" ;;
+            nav-fields) APP=ac_cloud-nav; MODE=kill; WANT="$NAV|the Background Apps card carries every declared Nav field and button" ;;
+            nav-channel) APP=ac_cloud-nav; MODE=kill; WANT="$NAV|the nav FGS card is on the silent MIN Background service channel" ;;
+            *) echo "::error::unknown leg"; exit 2 ;;
+          esac
+          run_tests() {
+            rm -rf "$APP"/app/build/test-results ab_cloud-libs-shared/libs/fleet-notify/build/test-results
+            case "$APP" in
+              ac_cloud-store) UNIT_TEST_FILTER="$STORE" sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$APP" ;;
+              ac_cloud-nav) sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$APP" ;;
+              ac_cloud-mail) ( cd "$APP" && chmod +x gradlew && ./gradlew --no-daemon :app:testReleaseUnitTest --tests "$MAIL" ) ;;
+            esac
+          }
+          run_tests > /tmp/leg.log 2>&1 || true
+          if ! find "$APP" ab_cloud-libs-shared/libs/fleet-notify -path '*build/test-results*' -name 'TEST-*.xml' 2>/dev/null | grep -q . \
+             && grep -qE 'Could not (resolve|GET|HEAD|download)|Connection (reset|timed out)|Read timed out|Failed to fetch maven|Could not find' /tmp/leg.log; then
+            echo "dependency resolution failed; retrying once"
+            run_tests > /tmp/leg.log 2>&1 || true
+          fi
+          tail -60 /tmp/leg.log | cut -c1-300
+          python3 -I - "$MODE" "$WANT" "$M" "$APP" <<'PY'
+          import glob, sys, xml.etree.ElementTree as ET
+          mode, want, leg, app = sys.argv[1:]
+          files = glob.glob(app + "/**/build/test-results/**/TEST-*.xml", recursive=True) + \
+                  glob.glob("ab_cloud-libs-shared/libs/fleet-notify/build/test-results/**/TEST-*.xml", recursive=True)
+          cases = {}
+          for f in files:
+              for c in ET.parse(f).getroot().iter("testcase"):
+                  cases[(c.get("classname"), c.get("name"))] = c.find("failure") is not None or c.find("error") is not None
+          rc = 0
+          for item in want.split(";"):
+              cls, name = item.split("|", 1)
+              if (cls, name) not in cases:
+                  print("::error::LEG ERROR %s: the named test did not run: %s / %s" % (leg, cls, name)); rc = 1; continue
+              failed = cases[(cls, name)]
+              if mode == "baseline":
+                  print(("RED  " if failed else "GREEN ") + name)
+                  if failed: rc = 1
+              else:
+                  if failed: print("KILLED %s by: %s" % (leg, name))
+                  else: print("::error::LEG SURVIVED %s: the named test stayed green: %s" % (leg, name)); rc = 1
+          sys.exit(rc)
+          PY
+      - name: Failed tests
+        if: always()
+        run: grep -rl "<failure" --include="TEST-*.xml" ac_cloud-mail ac_cloud-store ac_cloud-nav ab_cloud-libs-shared/libs/fleet-notify 2>/dev/null | xargs -r grep -h -o 'testcase name="[^"]*"' | head -40 || true

@@ -46,7 +46,7 @@ jobs:
           ONGOING = [(FN, ".setOngoing(true)", ".setOngoing(false)"),
                      (FN, "return b.build().apply { flags = flags or Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT }", "return b.build()")]
           m = {
-              "store-group-key": [(BF, "groupKey = FleetNotify.GROUP_RUNNING)", "groupKey = null)")],
+              "store-group-key": [(BF, "groupKey = FleetNotify.GROUP_RUNNING,", "groupKey = null,")],
               "store-ongoing": ONGOING,
               "store-removal-on-stop": [(BF, "runCatching { FleetNotify.cancelBackgroundSummary(app) }", "runCatching { }")],
               "mail-folder-filter": [(MK + "KeepAliveBadge.kt", "it in '0'..'9'", "it in '0'..'8'")],
@@ -55,7 +55,7 @@ jobs:
               "mail-removal-on-stop": [(MK + "PushService.kt", "runCatching { FleetNotify.cancelBackgroundSummary(this) }", "runCatching { }")],
               "nav-group-key": [(NC, ".setGroup(FleetNotify.GROUP_RUNNING)", ".setGroup(\"nc_maps\")")],
               "nav-ongoing": [(NC, ".setOngoing(true)", ".setOngoing(false)"),
-                              (NC, "return b.build().apply { flags = flags or Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT }", "return b.build()")],
+                              (NC, "val n = b.build().apply { flags = flags or Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT }", "val n = b.build()")],
               "nav-removal-on-stop": [(LT, "NavCard.cancelSummary(this)", "Unit")],
           }[os.environ["M"]]
           for p, a, b in m:

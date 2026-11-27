@@ -8,6 +8,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.diegonmarcos.superapp.core.BackgroundApps
+import com.diegonmarcos.superapp.core.BackgroundCards
 import com.diegonmarcos.superapp.core.FleetNotify
 
 /**
@@ -45,6 +47,23 @@ object NavCardState {
 
     fun clear() = publish(null)
 
+    /**
+     * #1965 The declared "Background Apps" Nav fields: Route (destination and mode), Next turn (instruction and hint), Distance,
+     * ETA while a route runs, and Tracking (the tracker's own state line) always. Unknown parts ("—", blank) are left out.
+     */
+    fun fields(i: NavInfo?, tracking: String): List<BackgroundApps.Field> {
+        val out = mutableListOf<BackgroundApps.Field>()
+        if (i != null && i.destination.isNotBlank()) {
+            out += BackgroundApps.Field(BackgroundCards.Nav.ROUTE, i.destination + if (i.mode.isNotBlank()) " · ${i.mode}" else "")
+            listOf(i.instruction, i.hint).filter { it.isNotBlank() }.joinToString(" · ").takeIf { it.isNotEmpty() }
+                ?.let { out += BackgroundApps.Field(BackgroundCards.Nav.NEXT_TURN, it) }
+            i.distance.takeIf { it.isNotBlank() && it != "—" }?.let { out += BackgroundApps.Field(BackgroundCards.Nav.DISTANCE, it) }
+            i.eta.takeIf { it.isNotBlank() && it != "—" }?.let { out += BackgroundApps.Field(BackgroundCards.Nav.ETA, it) }
+        }
+        out += BackgroundApps.Field(BackgroundCards.Nav.TRACKING, tracking)
+        return out
+    }
+
     /** One line each: where to, the next instruction, distance and ETA. A blank part is left out; no info is no lines. */
     fun lines(i: NavInfo?): List<String> {
         if (i == null || i.destination.isBlank()) return emptyList()
@@ -78,7 +97,8 @@ object NavCard {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val navLines = NavCardState.lines(nav)
-        val b = NotificationCompat.Builder(ctx, CHANNEL_ID)
+        // #1965 the silent MIN "Background service" channel of every fleet keep-alive (was its own LOW maps_tracker channel).
+        val b = NotificationCompat.Builder(ctx, FleetNotify.keepAliveChannel(ctx))
             .setSmallIcon(R.drawable.ic_maps_notif)
             .setContentTitle(if (navLines.isNotEmpty()) navLines.first() else "Cloud Maps tracker")
             .setContentText(if (navLines.size > 1) navLines[1] else subtitle)
@@ -90,7 +110,16 @@ object NavCard {
             .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
         if (navLines.isNotEmpty()) b.setStyle(NotificationCompat.BigTextStyle().bigText((navLines.drop(1) + subtitle).joinToString("\n")))
         // Persistent in the notification centre: FLAG_NO_CLEAR blocks swipe-to-dismiss + "clear all" while tracking is active.
-        return b.build().apply { flags = flags or Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT }
+        val n = b.build().apply { flags = flags or Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT }
+        // #1965 the "Background Apps" card: the declared Nav fields and Open; published by [FleetNotify.post] / [publish].
+        return FleetNotify.attachCard(n, BackgroundApps.Card(ctx.packageName, 0, BackgroundCards.NAV, "Cloud Nav",
+            if (navLines.isNotEmpty()) navLines.first() else "Tracker running", NavCardState.fields(nav, subtitle),
+            listOf(BackgroundApps.Button(BackgroundCards.OPEN, "Open", openMain)), openMain))
+    }
+
+    /** #1965 After startForeground (which does not go through FleetNotify): send the card to the hub's group. */
+    fun publish(ctx: Context, id: Int, n: Notification) {
+        BackgroundApps.fromNotification(n, id)?.let { BackgroundApps.publish(ctx, it) }
     }
 
     fun summary(ctx: Context): Notification =

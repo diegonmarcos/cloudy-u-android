@@ -5,6 +5,9 @@ import android.app.Notification
 import app.sterna.R
 import app.sterna.core.data.db.RecentEmailRow
 import app.sterna.core.data.settings.NotificationContent
+import android.app.NotificationManager
+import com.diegonmarcos.superapp.core.BackgroundApps
+import com.diegonmarcos.superapp.core.BackgroundCards
 import com.diegonmarcos.superapp.core.FleetNotify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -64,9 +67,10 @@ class KeepAliveBadgeTest {
         val n = Notifications.serviceNotification(app, badge)
         assertTrue(n.flags and Notification.FLAG_ONGOING_EVENT != 0)
         assertTrue(n.flags and Notification.FLAG_NO_CLEAR != 0)
-        assertEquals(FleetNotify.CHANNEL_KEEP_ALIVE, n.channelId)
+        assertEquals(FleetNotify.CHANNEL_BACKGROUND_SERVICE, n.channelId)   // #1965 the silent channel (was CHANNEL_KEEP_ALIVE)
         assertTrue("a tap must open the app", n.contentIntent != null)
-        assertEquals(listOf(app.getString(R.string.notif_keepalive_stop)), n.actions.map { it.title.toString() })
+        // #1965 Stop stays first and unchanged; Sync now is added after it.
+        assertEquals(listOf(app.getString(R.string.notif_keepalive_stop), Notifications.SYNC_LABEL), n.actions.map { it.title.toString() })
         assertEquals(badge.title, n.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
         assertTrue(n.extras.getCharSequence(Notification.EXTRA_TITLE).toString().contains("3"))
         assertTrue(n.extras.getCharSequence(Notification.EXTRA_BIG_TEXT).toString().contains("Alice"))
@@ -76,7 +80,8 @@ class KeepAliveBadgeTest {
     @Test fun `the first frame, before the data lands, is still a keep-alive with Stop`() {
         val n = Notifications.serviceNotification(app)
         assertTrue(n.flags and Notification.FLAG_ONGOING_EVENT != 0)
-        assertEquals(1, n.actions.size)
+        assertEquals(app.getString(R.string.notif_keepalive_stop), n.actions.first().title.toString())
+        assertEquals(2, n.actions.size)   // #1965 Stop + Sync now
     }
 
     @Test fun `the push service starts foreground through the shared helper and refreshes the badge from mail`() {
@@ -129,5 +134,63 @@ class KeepAliveBadgeTest {
         assertTrue(svc.contains("FleetNotify.SUMMARY_ID, Notifications.backgroundSummary("))
         assertTrue(svc.substringAfter("override fun onDestroy()").contains("FleetNotify.cancelBackgroundSummary("))
         assertTrue(File("src/main/kotlin/app/sterna/push/KeepAliveBadge.kt").readText().contains("observeMailboxes("))
+    }
+
+    // ── #1965 the "Background Apps" card: declared fields and buttons, the silent FGS channel, nothing lost ──
+
+    private fun richBadge() = KeepAliveBadge.content(
+        7, row(), NotificationContent.SENDER_AND_SUBJECT, false, texts,
+        folders = listOf("0_Inbox" to 5, "3_Bills" to 2, "Archive" to 9), lastSync = "18:34",
+    )
+
+    @Test fun `the Background Apps card carries every declared Mail field and button`() {
+        val card = BackgroundApps.fromNotification(Notifications.serviceNotification(app, richBadge()), Notifications.SERVICE_ID)!!
+        assertEquals(BackgroundCards.MAIL, card.kind)
+        assertEquals(emptyList<String>(), BackgroundCards.missingFields(card))
+        assertEquals(emptyList<String>(), BackgroundCards.missingButtons(card))
+        assertEquals(listOf(BackgroundCards.SYNC, BackgroundCards.OPEN, BackgroundCards.PAUSE), card.buttonKinds())
+        val v = card.fields.groupBy({ it.key }, { it.value })
+        assertEquals(listOf("7 unread"), v[BackgroundCards.Mail.UNREAD])
+        assertEquals(listOf("0_Inbox · 5 unread", "3_Bills · 2 unread"), v[BackgroundCards.Mail.FOLDER])
+        assertEquals(listOf("18:34"), v[BackgroundCards.Mail.LAST_SYNC])
+        assertEquals(listOf("Alice - Lunch on Friday"), v[BackgroundCards.Mail.LATEST])
+    }
+
+    @Test fun `an unknown count says counting, never the in-flight headline as the unread field`() {
+        val c = KeepAliveBadge.content(null, null, NotificationContent.SENDER_AND_SUBJECT, false, texts, folders = listOf("1_a" to 1))
+        assertEquals("counting…", c.fields.first { it.key == BackgroundCards.Mail.UNREAD }.value)
+        assertEquals("never", c.fields.first { it.key == BackgroundCards.Mail.LAST_SYNC }.value)
+        assertEquals(listOf("1_a · 1 unread"), c.fields.filter { it.key == BackgroundCards.Mail.FOLDER }.map { it.value })
+    }
+
+    @Test fun `a category folder inside an IMAP path counts by its own name`() {
+        assertTrue(KeepAliveBadge.isCategoryFolder("INBOX/4_Travel"))
+        assertEquals(listOf("4_Travel · 3 unread"), KeepAliveBadge.folderLines(listOf("INBOX/4_Travel" to 3), texts))
+        assertTrue(KeepAliveBadge.isCategoryFolder("1. Urgent"))
+    }
+
+    @Test fun `the mail FGS card is on the silent MIN Background service channel`() {
+        val n = Notifications.serviceNotification(app, richBadge())
+        assertEquals(FleetNotify.CHANNEL_BACKGROUND_SERVICE, n.channelId)
+        val ch = app.getSystemService(NotificationManager::class.java).getNotificationChannel(n.channelId)
+        assertEquals(NotificationManager.IMPORTANCE_MIN, ch.importance)
+        assertEquals(null, ch.sound)
+    }
+
+    @Test fun `rule 16 every line of the app card is in the Background Apps card`() {
+        val badge = richBadge()
+        val card = BackgroundApps.fromNotification(Notifications.serviceNotification(app, badge), Notifications.SERVICE_ID)!!
+        val shown = card.fields.map { it.value } + BackgroundApps.lines(card)
+        badge.lines.forEach { assertTrue("lost from the card: $it", it in shown) }
+        assertTrue(badge.title in shown)
+        // the app card keeps every former line and gained the last sync
+        assertTrue(badge.lines.contains("Watching for new mail"))
+        assertTrue(badge.lines.contains("Last sync: 18:34"))
+    }
+
+    @Test fun `the Sync now action reaches the running service`() {
+        val svc = File("src/main/kotlin/app/sterna/push/PushService.kt").readText()
+        assertTrue(svc.contains("intent?.action == ACTION_SYNC"))
+        assertTrue(svc.substringAfter("intent?.action == ACTION_SYNC").substringBefore("return START_STICKY").contains("OfflineSyncWorker.runNow(this)"))
     }
 }

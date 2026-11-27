@@ -4,6 +4,8 @@ import android.app.Application
 import android.app.Notification
 import android.app.NotificationManager
 import android.content.Context
+import com.diegonmarcos.superapp.core.BackgroundApps
+import com.diegonmarcos.superapp.core.BackgroundCards
 import com.diegonmarcos.superapp.core.FleetNotify
 import java.io.File
 import org.junit.After
@@ -98,5 +100,46 @@ class NavBackgroundCardTest {
         val tab = File("src/main/java/com/diegonmarcos/cloudnav/routes/NavigationFragment.kt").readText()
         assertTrue(tab.contains("NavCardState.publish("))
         assertTrue(tab.substringAfter("override fun onDestroy()").contains("NavCardState.clear()"))
+    }
+
+    // ── #1965 the "Background Apps" card: route, next turn, distance, ETA, tracking; the silent FGS channel; nothing lost ──
+
+    @Test fun `the Background Apps card carries every declared Nav field and button`() {
+        val card = BackgroundApps.fromNotification(NavCard.notification(app, "Points: 12 · acc: 8m", info), 0xA1)!!
+        assertEquals(BackgroundCards.NAV, card.kind)
+        assertEquals(emptyList<String>(), BackgroundCards.missingFields(card))
+        assertEquals(emptyList<String>(), BackgroundCards.missingButtons(card))
+        val v = card.fields.associate { it.key to it.value }
+        assertEquals("Central Station · Car", v[BackgroundCards.Nav.ROUTE])
+        assertEquals("Head to Central Station · Car · follow the route", v[BackgroundCards.Nav.NEXT_TURN])
+        assertEquals("3.2 km", v[BackgroundCards.Nav.DISTANCE])
+        assertEquals("14:05", v[BackgroundCards.Nav.ETA])
+        assertEquals("Points: 12 · acc: 8m", v[BackgroundCards.Nav.TRACKING])
+    }
+
+    @Test fun `with no route the card still says the tracking state`() {
+        val card = BackgroundApps.fromNotification(NavCard.notification(app, "Tracking", null), 0xA1)!!
+        assertEquals(listOf(BackgroundCards.Nav.TRACKING), card.keys())
+    }
+
+    @Test fun `the nav FGS card is on the silent MIN Background service channel`() {
+        val n = NavCard.notification(app, "Tracking", info)
+        assertEquals(FleetNotify.CHANNEL_BACKGROUND_SERVICE, n.channelId)
+        assertEquals(NotificationManager.IMPORTANCE_MIN, nm.getNotificationChannel(n.channelId).importance)
+    }
+
+    @Test fun `rule 16 every nav line of the app card is in the Background Apps card`() {
+        val n = NavCard.notification(app, "Points: 12 · acc: 8m", info)
+        val card = BackgroundApps.fromNotification(n, 0xA1)!!
+        val text = BackgroundApps.lines(card).joinToString("\n")
+        listOf("Central Station", "Car", "Head to Central Station", "3.2 km", "14:05", "Points: 12").forEach { assertTrue(it, text.contains(it)) }
+        assertTrue(n.contentIntent != null && card.content != null)
+    }
+
+    @Test fun `the tracker publishes its card to the hub after startForeground and on every refresh`() {
+        val dirs = listOf("../../ab_cloud-libs-shared/libs/maps/src/main/java/com/diegonmarcos/cloudnav/maps", "../ab_cloud-libs-shared/libs/maps/src/main/java/com/diegonmarcos/cloudnav/maps")
+        val svc = dirs.map { File(it, "LocationTrackerService.kt") }.first { it.exists() }.readText()
+        assertTrue(svc.contains("NavCard.publish(this, NOTIF_ID, card)"))
+        assertFalse("a refresh must go through FleetNotify.post, which republishes", svc.contains(".notify(NOTIF_ID"))
     }
 }

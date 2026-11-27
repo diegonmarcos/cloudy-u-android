@@ -15,6 +15,8 @@ import app.sterna.R
 import app.sterna.core.data.settings.NotificationContent
 import app.sterna.core.jmap.model.Email
 import app.sterna.ui.message.verificationCodeFromMessage
+import com.diegonmarcos.superapp.core.BackgroundApps
+import com.diegonmarcos.superapp.core.BackgroundCards
 import com.diegonmarcos.superapp.core.FleetNotify
 
 enum class MailNotificationAction { REPLY, COPY_CODE, REMIND }
@@ -191,12 +193,31 @@ object Notifications {
             context, 0, Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
+        // #1965 Sync now: a full sync of the watched accounts, through the running service (no activity, no trampoline).
+        val sync = PendingIntent.getService(
+            context, 1, Intent(context, PushService::class.java).setAction(PushService.ACTION_SYNC), PendingIntent.FLAG_IMMUTABLE,
+        )
         return FleetNotify.keepAliveNotification(
             context, R.drawable.ic_stat_mail, shown.title, shown.lines, stop, open,
             stopLabel = context.getString(R.string.notif_keepalive_stop),
             groupKey = FleetNotify.GROUP_RUNNING,   // #1944 one "running in the background" group
+            extraActions = listOf(FleetNotify.Action(0, SYNC_LABEL, sync)),
+            // #1965 the "Background Apps" card: the declared Mail fields and Sync now / Open / Pause. Pause is the Stop action
+            // (push ends, the periodic sync keeps mail coming); the app's own card keeps its Stop button as it was.
+            cardKind = BackgroundCards.MAIL,
+            cardApp = context.getString(R.string.app_name),
+            cardFields = shown.fields.ifEmpty { listOf(BackgroundApps.Field(BackgroundCards.Mail.PUSH, shown.title)) },
+            cardButtons = listOf(
+                BackgroundApps.Button(BackgroundCards.SYNC, SYNC_LABEL, sync),
+                BackgroundApps.Button(BackgroundCards.OPEN, OPEN_LABEL, open),
+                BackgroundApps.Button(BackgroundCards.PAUSE, PAUSE_LABEL, stop),
+            ),
         )
     }
+
+    const val SYNC_LABEL = "Sync now"
+    const val OPEN_LABEL = "Open"
+    const val PAUSE_LABEL = "Pause"
 
     /** #1944 The group summary of the push service's background card: posted while the service runs, cancelled when it stops. */
     fun backgroundSummary(context: Context): Notification =

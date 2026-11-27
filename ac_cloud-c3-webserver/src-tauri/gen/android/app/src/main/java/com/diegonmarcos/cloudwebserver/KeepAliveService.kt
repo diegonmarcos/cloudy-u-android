@@ -6,6 +6,7 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import android.util.Log
+import com.diegonmarcos.superapp.core.BackgroundCards
 import com.diegonmarcos.superapp.core.FleetNotify
 import com.diegonmarcos.superapp.core.KeepAliveStatus
 
@@ -24,6 +25,9 @@ class KeepAliveService : Service() {
 
     /** False once the service is stopping: a late status probe must not put the notification back. */
     @Volatile private var alive = true
+
+    /** #1965 when the servers were started (the card's Uptime), 0 before. */
+    @Volatile private var startedAt = 0L
 
     override fun onCreate() {
         super.onCreate()
@@ -55,7 +59,7 @@ class KeepAliveService : Service() {
         androidx.core.app.NotificationCompat.Builder(this, FleetNotify.keepAliveChannel(this))
             .setSmallIcon(android.R.drawable.stat_notify_sync).setContentTitle("Cloud C3 WebServer").setOngoing(true).build()
 
-    private fun notification(lines: List<String>): Notification {
+    private fun notification(lines: List<String>, up: Boolean? = null, ports: String = "", mesh: String = ""): Notification {
         val stop = PendingIntent.getService(
             this, 0, Intent(this, KeepAliveService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE,
         )
@@ -65,19 +69,31 @@ class KeepAliveService : Service() {
             Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        return FleetNotify.keepAliveNotification(this, R.mipmap.ic_launcher, "Cloud C3 WebServer", lines, stop, open)
+        // #1965 the "Background Apps" card: state, URL, ports, mesh, clients, uptime; Stop and Open (the default card buttons).
+        val now = System.currentTimeMillis()
+        val since = if (startedAt > 0) java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(startedAt)) else ""
+        val fields = BackgroundCards.webserverFields(
+            up, "http://127.0.0.1:$PORT_APP", ports.ifEmpty { "not probed yet" }, mesh.ifEmpty { "not probed yet" },
+            BackgroundCards.clientsOn(PORT_APP, listOf("/proc/net/tcp", "/proc/net/tcp6").map { runCatching { java.io.File(it).readText() }.getOrNull() }),
+            if (startedAt > 0) now - startedAt else 0L, since,
+        ) + com.diegonmarcos.superapp.core.BackgroundApps.freeFields(lines.filter { it != ports && it != mesh })   // rule 16: every line kept
+        return FleetNotify.keepAliveNotification(this, R.mipmap.ic_launcher, "Cloud C3 WebServer", lines, stop, open,
+            cardKind = BackgroundCards.WEBSERVER, cardFields = fields)
     }
 
     /** One-shot probe of the two doors and the tunnel, then one notification update. Waits for the app port a few seconds at most. */
     private fun refreshStatus() {
         for (i in 0 until 5) { if (KeepAliveStatus.portUp(PORT_APP)) break; Thread.sleep(1000) }
         val ports = linkedMapOf(PORT_APP to KeepAliveStatus.portUp(PORT_APP), PORT_SSHD to KeepAliveStatus.portUp(PORT_SSHD))
-        val lines = listOf("Server and Keep alive are ON", KeepAliveStatus.portsLine("Ports", ports), KeepAliveStatus.meshLine(KeepAliveStatus.meshUp()))
-        if (alive) FleetNotify.post(this, NOTIFICATION_ID, notification(lines))
+        val portsLine = KeepAliveStatus.portsLine("Ports", ports)
+        val meshLine = KeepAliveStatus.meshLine(KeepAliveStatus.meshUp())
+        val lines = listOf("Server and Keep alive are ON", portsLine, meshLine)
+        if (alive) FleetNotify.post(this, NOTIFICATION_ID, notification(lines, ports[PORT_APP] == true, portsLine, meshLine))
     }
 
     override fun onDestroy() {
         alive = false
+        runCatching { FleetNotify.retractCard(this, NOTIFICATION_ID) }   // #1965 the Background Apps card goes with the service
         super.onDestroy()
     }
 
@@ -98,6 +114,7 @@ class KeepAliveService : Service() {
         }
         override fun startServers() {
             // Off the main thread: loading the library and binding must not hold the 5 s foreground deadline.
+            if (startedAt == 0L) startedAt = System.currentTimeMillis()
             Thread {
                 runCatching {
                     System.loadLibrary("cloud_c3_webserver_lib")

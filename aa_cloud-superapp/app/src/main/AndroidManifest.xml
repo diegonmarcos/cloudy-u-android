@@ -264,6 +264,18 @@
         <receiver
             android:name=".notificationcenter.KdeQuickActionReceiver"
             android:exported="false" />
+        <!-- #1965 the hub of the ONE "Background Apps" notification group: every fleet app with a background service sends its
+             card here (fields + its own PendingIntents), the SuperApp posts it as a child of the group. Exported to fleet apps only:
+             the signature permission is defined by libs:fleet-notify in every app (one shared signing key). -->
+        <receiver
+            android:name="com.diegonmarcos.superapp.core.BackgroundApps$Receiver"
+            android:exported="true"
+            android:permission="com.diegonmarcos.fleet.permission.BACKGROUND_CARD">
+            <intent-filter>
+                <action android:name="com.diegonmarcos.fleet.action.BACKGROUND_CARD" />
+                <action android:name="com.diegonmarcos.fleet.action.BACKGROUND_CARD_RETRACT" />
+            </intent-filter>
+        </receiver>
         <!-- #515 — the declared restart path for every PERSISTENT badge in
              build.json::ui.notification_center.
 
