@@ -151,7 +151,11 @@ jobs:
           prove with-app yes; r1=$?
           adb shell cmd statusbar expand-notifications; sleep 3
           adb exec-out screencap -p > out/media-1966-shade.png
-          adb shell input swipe 540 500 540 1100 300; sleep 2
+          # the Media card is collapsed (3 compact actions): tap its chevron (found from the UI tree, else the Pixel 7 position) to expand it
+          adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml out/ui-shade.xml >/dev/null 2>&1
+          adb shell input tap 964 1552; sleep 2
+          adb exec-out screencap -p > out/media-1966-expanded-a.png
+          adb shell uiautomator dump /sdcard/ui2.xml >/dev/null 2>&1; adb pull /sdcard/ui2.xml out/ui-expanded.xml >/dev/null 2>&1
           adb exec-out screencap -p > out/media-1966-expanded.png
           adb shell cmd statusbar collapse
           adb uninstall com.oceanwing.soundcore
