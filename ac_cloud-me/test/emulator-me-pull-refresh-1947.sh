@@ -75,7 +75,10 @@ sleep 10
 $T adb logcat -d > "$OUT/logcat-online.txt"
 # (d) airplane mode: the page opened before is shown from its offline copy, with the note
 $T adb shell cmd connectivity airplane-mode enable; $T adb shell svc wifi disable; $T adb shell svc data disable; sleep 5
-$T adb shell am force-stop "$ME"; $T adb logcat -c
+$T adb shell am force-stop "$ME"
+# the page's own service worker and the WebView's HTTP cache would answer offline and hide the app's cache: empty them, so ONLY the app-owned offline copy can show the page
+$T adb shell "find /data/data/$ME/app_webview -type d \( -name 'Service Worker' -o -name 'HTTP Cache' -o -name Cache -o -name 'Code Cache' \) -prune -exec rm -rf {} + 2>&1 | head -3"
+$T adb logcat -c
 $T adb shell am start -W -n "$(launcher "$ME")" -f 0x14000000 --es shortcut_action "section:pers" >/dev/null
 t=0; while [ $t -lt 45 ] && [ "$(n "MAINFRAME_(OK|ERROR) page=personal ")" -lt 1 ]; do sleep 3; t=$((t+3)); done; sleep 5
 shot pull-refresh-offline
