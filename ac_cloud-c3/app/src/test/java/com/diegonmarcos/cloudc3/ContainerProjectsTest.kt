@@ -73,8 +73,11 @@ class ContainerProjectsTest {
     fun `every container and every repo belongs to exactly one project and the projects partition the document`() {
         val seen = decl.projects.associate { p -> p.id to ContainerProjects.scope(decl, catalog, p.id).entries.map { it.name } }
         val all = (catalog.names + decl.repos.map { it.name }).sorted()
-        assertEquals("every container is reachable under some project", all, seen.values.flatten().sorted())
-        assertEquals("no container or repo is in two projects", all.size, seen.values.flatten().toSet().size)
+        assertEquals("every container and repo is reachable under some project", all, seen.values.flatten().toSet().sorted())
+        // #1953 a container is in exactly one project; a repo is in exactly its attached projects (the primary first), so the primaries partition the document
+        val containers = catalog.names.toSet()
+        assertEquals("no container is in two projects", containers.size, seen.values.flatten().filter { it in containers }.size)
+        decl.repos.forEach { r -> assertEquals(r.name, r.attached.map { it.project }.toSet(), seen.filterValues { r.name in it }.keys) }
         assertTrue("the All view has them all", ContainerProjects.rows(decl, catalog, null).map { it.container }.sorted() == all)
     }
 
@@ -121,8 +124,12 @@ class ContainerProjectsTest {
 
     @Test
     fun `Lib holds the library repo and the empty projects say so, none is invented`() {
-        assertEquals(listOf("lib-chronos"), ContainerProjects.scope(decl, catalog, "lib").entries.map { it.name })
-        assertTrue(ContainerProjects.scope(decl, catalog, "pj-wiki-arcanum").entries.isEmpty())
+        // #1953 Lib holds the library repo plus the hubs over it (Projects-___, the root _git-repos-master); Wiki Arcanum holds only its declared lib-chronos path
+        val lib = ContainerProjects.scope(decl, catalog, "lib").entries
+        assertTrue(lib.all { it.role == "repo" } && lib.any { it.name == "lib-chronos" })
+        assertEquals(listOf("lib-chronos"), lib.filter { decl.repoOf(it)?.role == "repo" }.map { it.name })
+        assertEquals(listOf("lib-chronos"), ContainerProjects.scope(decl, catalog, "pj-wiki-arcanum").entries.map { it.name })
+        assertTrue("none is invented", decl.projects.all { p -> ContainerProjects.scope(decl, catalog, p.id).entries.all { e -> e.role != "repo" || decl.repoOf(e)!!.attached.any { it.project == p.id } } })
     }
 
     @Test
@@ -174,7 +181,8 @@ class ContainerProjectsTest {
             val c = ContainerProjects.scope(decl, catalog, p.id)
             assertTrue("${p.id} repeats a Cloudy macro group", c.entries.none { it.group in macro })
             val fams = decl.families[p.id].orEmpty()
-            assertTrue("${p.id} groups are not its families", c.groups.filter { g -> g.categories.isNotEmpty() }.all { it.label in fams || it.label == decl.containerGroup || it.label == "Hub" })
+            assertTrue("${p.id} groups are not its families", c.groups.filter { g -> g.categories.isNotEmpty() }.all { g -> g.label in fams || g.label == decl.containerGroup || g.label == "Hub" ||
+                decl.repos.any { r -> r.group == g.label && r.attached.any { it.project == p.id && it.via != "code" } } })
         }
         val cloudy = ContainerProjects.scope(decl, catalog, "pj-unix-cloudy")
         assertTrue(cloudy.groups.none { it.label == "Project Apps" } && cloudy.entries.none { it.group == "Project Apps" })

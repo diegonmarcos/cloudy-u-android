@@ -175,7 +175,8 @@ class ContainersPageComposeTest {
     private fun showTopology(project: String) {
         val plan = com.diegonmarcos.cloudc3.cloud.Stacks.topology(project).first
         compose.setContent {
-            MaterialTheme(colorScheme = darkColorScheme()) {
+            com.diegonmarcos.superapp.uikit.CloudKitTheme(com.diegonmarcos.superapp.uikit.KitPalette(androidx.compose.ui.graphics.Color.Black, androidx.compose.ui.graphics.Color.DarkGray,
+                androidx.compose.ui.graphics.Color.White, androidx.compose.ui.graphics.Color.LightGray, androidx.compose.ui.graphics.Color.Cyan, androidx.compose.ui.graphics.Color.Gray, androidx.compose.ui.graphics.Color.Black)) {
                 Column {
                     for (b in plan.bands) {
                         com.diegonmarcos.cloudc3.pages.TopologyBandHeader(b)

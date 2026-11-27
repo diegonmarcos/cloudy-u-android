@@ -200,7 +200,8 @@ object ContainerProjects {
         // #1941 the Project and Type columns (the Cat1 column is the old Group, Cat2 the Category); the old "<Project> / <group>" prefix of the All table is the Project column now.
         val rows = ContainersModel.rows(scoped).map { r ->
             val e = byName[r.container]
-            val p = e?.let { decl.projectOf(it) }
+            // #1953 a project table names its own project (an attached repo is on it too); All names each row's primary project
+            val p = if (projectId != null) decl.project(projectId) else e?.let { decl.projectOf(it) }
             val type = e?.let { decl.typeOf(it) }.orEmpty()
             // #1953 a repo row's meta carries lfs, repo_role, attached_projects, path through Entry.fields() (entryOf's extras)
             r.copy(project = p?.label.orEmpty(), type = type, meta = r.meta + listOf("project_name" to p?.label.orEmpty(), "type" to type))
