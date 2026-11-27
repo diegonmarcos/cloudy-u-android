@@ -94,7 +94,7 @@ class GitListAndRefresh1679Test {
         assertEquals("other-id1", GitSheetKeys.follow("own-gh-o/a", after, before))
         assertNull("nothing open", GitSheetKeys.follow("", before, after))
         // ONE sheet: a single ModalBottomSheet; #1934 the Refresh row and the STATUS block are the control sheet's header and Overview (ControlSheetBody) in both states.
-        assertEquals(1, Regex("""ModalBottomSheet\(onDismissRequest = \{ expanded = "" \}, modifier = Modifier\.testTag\(DriveTags\.SYNC_GIT_DETAIL_SHEET\)\)""").findAll(screen).count())
+        assertEquals(1, Regex("""ModalBottomSheet\(onDismissRequest = \{ expanded = "" \}, sheetState = androidx\.compose\.material3\.rememberModalBottomSheetState\(skipPartiallyExpanded = true\), modifier = Modifier\.testTag\(DriveTags\.SYNC_GIT_DETAIL_SHEET\)\)""").findAll(screen).count())
         val sheet = screen.substringAfter("DriveTags.SYNC_GIT_DETAIL_SHEET)) {").substringBefore("repos.firstOrNull { settingsFor")
         // #1934 GitSheetRefreshRow is superseded: its Fetch status / Check lite / Check full are the header's action row (declared), drawn inside both boxes.
         assertTrue(sheet.contains("if (e.cloned == null)"))
