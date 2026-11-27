@@ -60,7 +60,8 @@ var st={mode:"list",q:"",vis:"",kind:"",role:"",sk:"",sd:1,sel:"",col:{}};
 var m0=/mode=(list|table|canvas)/.exec(location.hash);if(m0)st.mode=m0[1];
 // columns = every key of the rows (nested objects flattened as parent.child), in row order: no registry field is left out
 function flat(r){var o={};Object.keys(r).forEach(function(k){var v=r[k];if(v&&typeof v==="object"&&!Array.isArray(v)){Object.keys(v).forEach(function(k2){o[k+"."+k2]=v[k2]})}else o[k]=v});return o}
-var F=R.map(flat),COLS=[];F.forEach(function(o){Object.keys(o).forEach(function(k){if(COLS.indexOf(k)<0)COLS.push(k)})});
+var F=R.map(flat),COLS=[];F.forEach(function(o){Object.keys(o).forEach(function(k){if(COLS.indexOf(k)<0)COLS.push(k)})});COLS.splice(COLS.indexOf("name"),1);COLS.unshift("name");   // the name column leads (sticky)
+
 var NUM={};COLS.forEach(function(k){NUM[k]=F.every(function(o){var v=o[k];return v===""||v==null||typeof v==="number"})&&F.some(function(o){return typeof o[k]==="number"})});
 function cell(v){if(v==null)return"";if(Array.isArray(v))return v.join(", ");if(typeof v==="boolean")return v?"yes":"no";return String(v)}
 function hay(i){var o=F[i];return COLS.map(function(k){return cell(o[k])}).join("\u0001").toLowerCase()}

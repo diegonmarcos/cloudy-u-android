@@ -34,15 +34,17 @@ PY
 for op in GET_USAGE_STATS SYSTEM_ALERT_WINDOW MANAGE_EXTERNAL_STORAGE REQUEST_INSTALL_PACKAGES; do $T adb shell appops set "$ME" "$op" allow; done
 open_page "page:configs/general"; sleep 12
 open_page "page:proj/pj-repos"; sleep 20   # warm-up: the first WebView of a cold start paints late
-shot repos-1973-list 15
+dump warm; sleep 5   # the first uiautomator dump switches the WebView accessibility tree on; the second one carries its nodes
+shot repos-1973-list 6
 for want in "Table" "Canvas" "List"; do grep -q "text=\"$want\"\|content-desc=\"$want\"" "$OUT/repos-1973-list.xml" && echo "PASS chip $want present" | tee -a "$OUT/verdict.txt" || { echo "FAIL chip $want missing" | tee -a "$OUT/verdict.txt"; rc=1; }; done
-grep -q "text=\"📦\|Repos" "$OUT/repos-1973-list.xml" && echo "PASS Repos chip present in the Proj strip" | tee -a "$OUT/verdict.txt" || { echo "FAIL Repos chip not found" | tee -a "$OUT/verdict.txt"; rc=1; }
 python3 -I - "$OUT/repos-1973-list.xml" <<'PY' | tee -a "$OUT/verdict.txt" || rc=1
-import re, sys
-s = open(sys.argv[1], encoding="utf-8").read()
-a, b = s.find("Home"), s.find("Repos")
-ok = 0 <= a < b and (s.find("Unix") < 0 or b < s.find("Unix"))
-print("%s Proj strip order: Home at %d, Repos at %d, Unix at %d" % ("PASS" if ok else "FAIL", a, b, s.find("Unix"))); sys.exit(0 if ok else 1)
+import re, sys, xml.etree.ElementTree as ET
+nodes = list(ET.parse(sys.argv[1]).getroot().iter("node")); pos = {}
+for n in nodes:
+    t = (n.get("text") or "").strip(); m = re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", n.get("bounds") or "")
+    if t in ("Home", "Repos", "Unix") and m and 200 < int(m.group(2)) < 360: pos.setdefault(t, int(m.group(1)))   # the Proj strip row, left edge
+ok = "Home" in pos and "Repos" in pos and "Unix" in pos and pos["Home"] < pos["Repos"] < pos["Unix"]
+print("%s Proj strip order Home | Repos | Unix: x=%s" % ("PASS" if ok else "FAIL", pos)); sys.exit(0 if ok else 1)
 PY
 $T adb shell input swipe 540 1700 540 900 400; shot repos-1973-list-scrolled 3
 $T adb shell input swipe 540 900 540 1700 400; sleep 1; dump repos-1973-list
