@@ -31,7 +31,11 @@ done
 grep -q 'UI_LNKTREE_CACHE_B64' app/build.gradle || bad "app/build.gradle does not bake ui.lnktree_cache"
 grep -q 'androidx.work:work-runtime' app/build.gradle || bad "app/build.gradle lacks WorkManager (the prefetch)"
 grep -q 'LnktreePrefetchScheduler.schedule' "$K/MainActivity.kt" || bad "MainActivity does not schedule the prefetch at start"
-grep -q 'pullToRefresh(' "$K/WebPage.kt" || bad "WebPage has no pull-to-refresh"
+# #1947 the pull-down is a SwipeRefreshLayout around the WebView (Compose pullToRefresh never fired over a WebView), armed on cached AND non-cached pages
+grep -q 'SwipeRefreshLayout' "$K/WebPage.kt" || bad "WebPage has no pull-to-refresh (SwipeRefreshLayout)"
+grep -q 'LnktreeCache.hardRefresh' "$K/WebPage.kt" || bad "WebPage's pull-down does not run the hard refresh"
+grep -q 'swiperefreshlayout' app/build.gradle || bad "app/build.gradle lacks swiperefreshlayout"
+jq -e '.ui.lnktree_cache.strategy | IN("network_first","stale_while_revalidate")' "$J" >/dev/null || bad "ui.lnktree_cache.strategy must be network_first or stale_while_revalidate"
 # nothing hard-coded: no TTL, concurrency, size or day literal in the cache Kotlin
 if grep -nE '604800|TimeUnit\.DAYS|\b7 \* |\b7L\b|ttlMs = [0-9]|newFixedThreadPool\([0-9]|Semaphore\([0-9]' "$K/LnktreeCache.kt" "$K/LnktreeWeb.kt" | grep -vE '^\S+:\s*[0-9]+:\s*(//|\*)'; then
   bad "a cache number is hard-coded in Kotlin (it belongs in build.json::ui.lnktree_cache)"
