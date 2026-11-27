@@ -134,7 +134,7 @@ class ContainersFragment : PagedFragment() {
     }
 
     /** A nested page `<project>_<view>` (build.json): the project is its parent page, the view the rest of its id. */
-    override fun leafFragment(parentId: String, leafId: String): Fragment? = when (leafId.substringAfterLast("_")) {
+    override fun leafFragment(parentId: String, leafId: String): Fragment? = when (leafId.removePrefix(leafId.substringBeforeLast("_") + "_")) {
         "topology" -> C3StackFragment.newInstance(C3StackFragment.STACK_TOPOLOGY, parentId)
         "table" -> RoutesTableFragment.newInstance(parentId)
         else -> null
