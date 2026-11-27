@@ -41,7 +41,7 @@ python3 -I - "$OUT/repos-1973-list.xml" <<'PY' | tee -a "$OUT/verdict.txt" || rc
 import re, sys, xml.etree.ElementTree as ET
 nodes = list(ET.parse(sys.argv[1]).getroot().iter("node")); pos = {}
 for n in nodes:
-    t = (n.get("text") or "").strip(); m = re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", n.get("bounds") or "")
+    t = re.sub(r"^[^A-Za-z0-9]+", "", (n.get("text") or "").strip()); m = re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", n.get("bounds") or "")
     if t in ("Home", "Repos", "Unix") and m and 200 < int(m.group(2)) < 360: pos.setdefault(t, int(m.group(1)))   # the Proj strip row, left edge
 ok = "Home" in pos and "Repos" in pos and "Unix" in pos and pos["Home"] < pos["Repos"] < pos["Unix"]
 print("%s Proj strip order Home | Repos | Unix: x=%s" % ("PASS" if ok else "FAIL", pos)); sys.exit(0 if ok else 1)
