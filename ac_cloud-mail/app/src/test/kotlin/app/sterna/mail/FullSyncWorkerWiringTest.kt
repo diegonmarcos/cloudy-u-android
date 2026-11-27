@@ -59,7 +59,7 @@ class FullSyncWorkerWiringTest {
         assertTrue("app open", "OfflineSyncWorker.runNow(this)" in src("MainActivity.kt"))
         assertTrue("process start arms the periodic run with the push state", "OfflineSyncWorker.ensureScheduled(this, hasPush = app.sterna.push.PushService.isRunning)" in src("SternaApplication.kt"))
         val vm = src("ui/settings/SettingsViewModel.kt")
-        assertEquals("the window, the size limit and the policy each start a run when changed", 3, Regex("""OfflineSyncWorker\.runNow\(getApplication\(\)\)""").findAll(vm).count())
+        assertEquals("the window, the body cache limit (#1952), the size limit and the policy each start a run when changed", 4, Regex("""OfflineSyncWorker\.runNow\(getApplication\(\)\)""").findAll(vm).count())
     }
 
     @Test fun `the Configs section lists Download attachments with all three options, defaulting to Wi-Fi only, and the storage used per account`() {

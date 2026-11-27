@@ -1446,6 +1446,8 @@
     <string name="ep_sync_refused">Cloud Account hat die Endpunkte nicht freigegeben. Cloud Mail unter „Geheimnisse“ in Cloud Account erlauben.</string>
     <string name="settings_offline_section">Offline</string>
     <string name="settings_offline_window_title">E-Mails offline behalten für</string>
+    <string name="settings_body_cache_limit_title">Limit des Nachrichtentext-Cache</string>
+    <string name="settings_body_cache_usage">%1$s von %2$s · %3$s Nachrichten</string>
     <string name="settings_offline_window_1">1 Monat</string>
     <string name="settings_offline_window_3">3 Monate</string>
     <string name="settings_offline_window_6">6 Monate</string>

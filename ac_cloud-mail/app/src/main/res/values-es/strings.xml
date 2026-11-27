@@ -1502,6 +1502,8 @@
     <string name="ep_sync_refused">Cloud Account no compartió los endpoints. Permite Cloud Mail en «Secretos» de Cloud Account.</string>
     <string name="settings_offline_section">Sin conexión</string>
     <string name="settings_offline_window_title">Guardar correo sin conexión durante</string>
+    <string name="settings_body_cache_limit_title">Límite de la caché de mensajes</string>
+    <string name="settings_body_cache_usage">%1$s de %2$s · %3$s mensajes</string>
     <string name="settings_offline_window_1">1 mes</string>
     <string name="settings_offline_window_3">3 meses</string>
     <string name="settings_offline_window_6">6 meses</string>

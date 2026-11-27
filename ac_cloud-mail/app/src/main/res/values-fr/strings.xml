@@ -1458,6 +1458,8 @@
     <string name="ep_sync_refused">Cloud Account n’a pas partagé les points d’accès. Autorisez Cloud Mail dans « Secrets » de Cloud Account.</string>
     <string name="settings_offline_section">Hors ligne</string>
     <string name="settings_offline_window_title">Garder les e-mails hors ligne pendant</string>
+    <string name="settings_body_cache_limit_title">Limite du cache des messages</string>
+    <string name="settings_body_cache_usage">%1$s sur %2$s · %3$s messages</string>
     <string name="settings_offline_window_1">1 mois</string>
     <string name="settings_offline_window_3">3 mois</string>
     <string name="settings_offline_window_6">6 mois</string>

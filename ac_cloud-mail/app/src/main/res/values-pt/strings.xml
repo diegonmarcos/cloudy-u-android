@@ -1456,6 +1456,8 @@
     <string name="ep_sync_refused">O Cloud Account não partilhou os endpoints. Permita o Cloud Mail em «Segredos» no Cloud Account.</string>
     <string name="settings_offline_section">Offline</string>
     <string name="settings_offline_window_title">Manter e-mails offline por</string>
+    <string name="settings_body_cache_limit_title">Limite da cache de mensagens</string>
+    <string name="settings_body_cache_usage">%1$s de %2$s · %3$s mensagens</string>
     <string name="settings_offline_window_1">1 mês</string>
     <string name="settings_offline_window_3">3 meses</string>
     <string name="settings_offline_window_6">6 meses</string>
