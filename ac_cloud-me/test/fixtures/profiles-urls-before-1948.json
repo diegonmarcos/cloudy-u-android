@@ -1,0 +1,139 @@
+{
+ "_doc": "#1948 every https URL embedded or linked by a data/ui page file at the commit before the Profiles move (url -> the page files that carried it). test-profiles-1948.sh: each must still be reachable from some page file now (rule 16, nothing removed).",
+ "urls": {
+  "https://diegonmarcos.com/": [
+   "pers/pers-profiles/personal"
+  ],
+  "https://diegonmarcos.github.io/Warehouse/": [
+   "proj/pj-projects/pj-projects-endeavours"
+  ],
+  "https://diegonmarcos.github.io/cv_web/": [
+   "prof/prof-web/prof-cv"
+  ],
+  "https://diegonmarcos.github.io/galaxy/": [
+   "proj/pj-cg/pj-cg-omniverse"
+  ],
+  "https://diegonmarcos.github.io/games/": [
+   "proj/pj-cg/pj-cg-zirkusverse"
+  ],
+  "https://diegonmarcos.github.io/leafy/": [
+   "lnktree/lt-leafy",
+   "prof/leafy"
+  ],
+  "https://diegonmarcos.github.io/myAstro/": [
+   "lnktree/lt-astro",
+   "pers/astro"
+  ],
+  "https://diegonmarcos.github.io/mySocials/facebook-diegonmarcos.html": [
+   "pers/pers-profiles/face0"
+  ],
+  "https://diegonmarcos.github.io/mySocials/instagram-diegocmarcos_.html": [
+   "pers/pers-profiles/ig1"
+  ],
+  "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html": [
+   "pers/pers-profiles/ig0"
+  ],
+  "https://diegonmarcos.github.io/mySocials/instagram-diegonmarcos.html": [
+   "pers/pers-profiles/ig2"
+  ],
+  "https://diegonmarcos.github.io/mySocials/linkedin.html": [
+   "pers/pers-profiles/linkedin",
+   "prof/prof-web/prof-linkedin"
+  ],
+  "https://diegonmarcos.github.io/mySocials/orkut.html": [
+   "pers/pers-profiles/orkut"
+  ],
+  "https://diegonmarcos.github.io/mySocials/pinterest.html": [
+   "pers/pers-profiles/pinterest"
+  ],
+  "https://diegonmarcos.github.io/mySocials/tidal.html": [
+   "pers/pers-profiles/tidal"
+  ],
+  "https://diegonmarcos.github.io/mySocials/youtube.html": [
+   "pers/pers-profiles/youtube"
+  ],
+  "https://diegonmarcos.github.io/nexus/": [
+   "lnktree/lt-nexus",
+   "prof/nexus"
+  ],
+  "https://diegonmarcos.github.io/stark/": [
+   "lnktree/lt-stark",
+   "prof/stark"
+  ],
+  "https://github.com/diegonmarcos/Capital-Macro-Central-Bank": [
+   "proj/pj-capital/pj-capital-cb"
+  ],
+  "https://github.com/diegonmarcos/Capital-Micro-Asset-Management": [
+   "proj/pj-capital/pj-capital-pm"
+  ],
+  "https://github.com/diegonmarcos/Capital-Stack-Fin-Terminal": [
+   "proj/pj-capital/pj-capital-finterm"
+  ],
+  "https://github.com/diegonmarcos/DuckPeng-___": [
+   "proj/pj-projects/pj-projects-duckpeng"
+  ],
+  "https://github.com/diegonmarcos/HardTech-DeepXTech": [
+   "proj/pj-hardtech/pj-hardtech-deepxtech"
+  ],
+  "https://github.com/diegonmarcos/HardTech-Stack-CAD-Simulators": [
+   "proj/pj-hardtech/pj-hardtech-cad"
+  ],
+  "https://github.com/diegonmarcos/HardTech-___": [
+   "proj/pj-hardtech/pj-hardtech-biomed"
+  ],
+  "https://github.com/diegonmarcos/cloud-me-___": [
+   "proj/pj-unix/pj-unix-cloudme"
+  ],
+  "https://github.com/diegonmarcos/cloudy-___": [
+   "proj/pj-unix/pj-unix-cloudy"
+  ],
+  "https://github.com/diegonmarcos/cloudy-u-android": [
+   "proj/pj-unix/pj-unix-superapp"
+  ],
+  "https://github.com/diegonmarcos/lecole-42-projects": [
+   "proj/pj-lecole42/pj-lecole42-curriculum"
+  ],
+  "https://github.com/diegonmarcos/lecole-42_back-Algo": [
+   "proj/pj-lecole42/pj-lecole42-algo"
+  ],
+  "https://github.com/diegonmarcos/lecole-42_back-Graphic": [
+   "proj/pj-lecole42/pj-lecole42-graphic"
+  ],
+  "https://github.com/diegonmarcos/lecole-42_back-System": [
+   "proj/pj-lecole42/pj-lecole42-system"
+  ],
+  "https://github.com/diegonmarcos/lecole-42_cyber-Cyberwarfare": [
+   "proj/pj-lecole42/pj-lecole42-cyberwarfare"
+  ],
+  "https://github.com/diegonmarcos/lecole-42_dev": [
+   "proj/pj-lecole42/pj-lecole42-dev"
+  ],
+  "https://github.com/diegonmarcos/lecole-42_ml-Agentic": [
+   "proj/pj-lecole42/pj-lecole42-agentic"
+  ],
+  "https://github.com/diegonmarcos/lecole-42_ml-DataScience": [
+   "proj/pj-lecole42/pj-lecole42-datascience"
+  ],
+  "https://github.com/diegonmarcos/lecole-42_ml-MachineLearning": [
+   "proj/pj-lecole42/pj-lecole42-machinelearning"
+  ],
+  "https://github.com/diegonmarcos/lecole-42_ops-Mylibs": [
+   "proj/pj-lecole42/pj-lecole42-mylibs"
+  ],
+  "https://github.com/diegonmarcos/lib-chronos/tree/main/1.Modern-science": [
+   "proj/pj-wiki/pj-wiki-modernsc"
+  ],
+  "https://github.com/diegonmarcos/lib-chronos/tree/main/2.Arcanum-science": [
+   "proj/pj-wiki/pj-wiki-arcanum"
+  ],
+  "https://github.com/diegonmarcos/lib-chronos/tree/main/3.Projects": [
+   "proj/pj-wiki/pj-wiki-projects"
+  ],
+  "https://linktree.diegonmarcos.com/": [
+   "lnktree/lt-lnktree-site"
+  ],
+  "https://nomadmania.com/profile/73889": [
+   "pers/achieves/geo"
+  ]
+ }
+}

@@ -221,9 +221,9 @@ if "lnktree" not in ui.get("bottom_nav", []) or [p["id"] for p in _lt.get("pages
     bad("pages", "the Lnktree bottom-nav entry with its sixteen pages is missing")
 _pf = secs.get("prof", {})
 if [p["id"] for p in _pf.get("pages", [])] != ["prof-web", "leafy", "nexus", "stark"] or \
-   [p["id"] for p in (_pf.get("pages") or [{}])[0].get("pages", [])] != ["prof-linkedin", "prof-cv"] or \
+   [p["id"] for p in (_pf.get("pages") or [{}])[0].get("pages", [])] != ["prof-professional", "prof-linkedin", "prof-portfolio", "prof-cv"] or \
    {g["id"]: g["pages"] for g in _pf.get("groups", [])} != {"profiles": ["prof-web"], "companies": ["leafy", "nexus", "stark"]}:
-    bad("pages", "Prof is not Profiles (LinkedIn, CV) | Leaf.y, Nexus.z, Stark.x (#1937: More, with Professional, Work and Study, removed by owner order)")
+    bad("pages", "Prof is not Profiles (Professional, LinkedIn, Portfolio, CV) | Leaf.y, Nexus.z, Stark.x (#1937: More, with Professional, Work and Study, removed by owner order)")
 _pj = secs.get("proj", {})
 if [p["id"] for p in _pj.get("pages", [])] != ["pj-home", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42", "pj-repos"]:
     bad("pages", "Proj pages are not Home, Unix, CG, Capital, Hardtech, Wiki, Projects, 42 (#1914)")
@@ -234,7 +234,7 @@ if list(_pr) != ["personal", "ig0", "ig1", "ig2", "face0", "pinterest", "youtube
     bad("pages", "Pers > Profiles is not Personal, ig0, ig1, ig2, face0, Pinterest, YouTube, Tidal, LinkedIn, Orkut (#1913)")
 if [p["id"] for p in _sub.get("health", {}).get("pages", [])] != ["trackers", "plan", "health-profile"]:
     bad("pages", "Pers > Health is not Trackers, Plan, Record")
-for _pid, _u, _rel in (("leafy", "https://diegonmarcos.github.io/leafy/", "prof/leafy"), ("nexus", "https://diegonmarcos.github.io/nexus/", "prof/nexus"), ("stark", "https://diegonmarcos.github.io/stark/", "prof/stark"), ("astro", "https://diegonmarcos.github.io/myAstro/", "pers/astro"), ("personal", "https://diegonmarcos.com/", "pers/pers-profiles/personal"), ("lt-lnktree-site", "https://linktree.diegonmarcos.com/", "lnktree/lt-lnktree-site")):
+for _pid, _u, _rel in (("leafy", "https://diegonmarcos.github.io/leafy/", "prof/leafy"), ("nexus", "https://diegonmarcos.github.io/nexus/", "prof/nexus"), ("stark", "https://diegonmarcos.github.io/stark/", "prof/stark"), ("astro", "https://diegonmarcos.github.io/myAstro/", "pers/astro"), ("personal", "https://diegonmarcos.github.io/mySocials/", "pers/pers-profiles/personal"), ("lt-lnktree-site", "https://linktree.diegonmarcos.com/", "lnktree/lt-lnktree-site")):
     _f = os.path.join(app, f"data/ui/{_rel}.json")
     _b = json.load(open(_f, encoding="utf-8")) if os.path.exists(_f) else []
     if len(_b) != 1 or _b[0].get("id") != "web" or _b[0].get("url") != _u:

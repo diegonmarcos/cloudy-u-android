@@ -175,7 +175,7 @@ class BuroLlcDeclTest {
     @Test fun `the six embedded sites open by their https URL, each declared in its own page file`() {
         val want = mapOf("prof" to "leafy" to "https://diegonmarcos.github.io/leafy/", "prof" to "nexus" to "https://diegonmarcos.github.io/nexus/",
             "prof" to "stark" to "https://diegonmarcos.github.io/stark/", "pers" to "astro" to "https://diegonmarcos.github.io/myAstro/",
-            "pers/pers-profiles" to "personal" to "https://diegonmarcos.com/", "lnktree" to "lt-lnktree-site" to "https://linktree.diegonmarcos.com/")
+            "pers/pers-profiles" to "personal" to "https://diegonmarcos.github.io/mySocials/", "lnktree" to "lt-lnktree-site" to "https://linktree.diegonmarcos.com/")
         for (entry in want) {
             val (loc, url) = entry.key to entry.value
             val b = page(loc.first, loc.second).getJSONObject(0)

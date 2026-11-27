@@ -68,9 +68,9 @@ if [p["id"] for p in sub("pers", "achieves").get("pages", [])] != ["geo", "endur
     bad("tree", "Pers > Personal Archives is not Geo, Endurance, Personal Growth, Community, By 30, By 40, By 50")
 if labels(secs.get("prof", {}).get("pages", [])) != [("prof-web", "Profiles"), ("leafy", "Leaf.y"), ("nexus", "Nexus.z"), ("stark", "Stark.x")] or \
    {g["id"]: g["pages"] for g in secs.get("prof", {}).get("groups", [])} != {"profiles": ["prof-web"], "companies": ["leafy", "nexus", "stark"]}:
-    bad("tree", "Prof is not Profiles (LinkedIn, CV) | Leaf.y, Nexus.z, Stark.x (#1937: More is removed by owner order)")
-if [p["id"] for p in sub("prof", "prof-web").get("pages", [])] != ["prof-linkedin", "prof-cv"]:
-    bad("tree", "Prof > Profiles is not LinkedIn | CV")
+    bad("tree", "Prof is not Profiles (Professional, LinkedIn, Portfolio, CV) | Leaf.y, Nexus.z, Stark.x (#1937: More is removed by owner order)")
+if [p["id"] for p in sub("prof", "prof-web").get("pages", [])] != ["prof-professional", "prof-linkedin", "prof-portfolio", "prof-cv"]:
+    bad("tree", "Prof > Profiles is not Professional | LinkedIn | Portfolio | CV")
 for _gone in ("prof-profiles", "professional", "work", "study", "cv", "roadmap"):
     if _gone in set(ids(secs.get("prof", {}).get("pages"))): bad("tree", f"#1937 the removed Prof page {_gone} is declared again")
 PROJ = {"unix": ["superapp", "cloudme", "cloudy"], "cg": ["omniverse", "zirkusverse"], "capital": ["cb", "pm", "finterm"], "hardtech": ["biomed", "cad", "deepxtech"],
@@ -201,7 +201,10 @@ SITES = {  # tile -> (page file, the url it embeds)
     "Prof > Leaf.y": ("data/ui/prof/leafy.json", "https://diegonmarcos.github.io/leafy/"),
     "Prof > Nexus.z": ("data/ui/prof/nexus.json", "https://diegonmarcos.github.io/nexus/"),
     "Prof > Stark.x": ("data/ui/prof/stark.json", "https://diegonmarcos.github.io/stark/"),
-    "Pers > Profiles > Personal": ("data/ui/pers/pers-profiles/personal.json", "https://diegonmarcos.com/"),
+    "Pers > Profiles > Personal": ("data/ui/pers/pers-profiles/personal.json", "https://diegonmarcos.github.io/mySocials/"),
+    "Prof > Profiles > Professional": ("data/ui/prof/prof-web/prof-professional.json", "https://diegonmarcos.com/"),
+    "Prof > Profiles > Portfolio": ("data/ui/prof/prof-web/prof-portfolio.json", "https://diegonmarcos.github.io/cv_web/"),
+    "Prof > Profiles > CV": ("data/ui/prof/prof-web/prof-cv.json", "https://diegonmarcos.github.io/cv_pdf/"),
     "Pers > Profiles > ig0": ("data/ui/pers/pers-profiles/ig0.json", "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html"),
     "Pers > Profiles > ig1": ("data/ui/pers/pers-profiles/ig1.json", "https://diegonmarcos.github.io/mySocials/instagram-diegocmarcos_.html"),
     "Pers > Profiles > ig2": ("data/ui/pers/pers-profiles/ig2.json", "https://diegonmarcos.github.io/mySocials/instagram-diegonmarcos.html"),
@@ -332,7 +335,7 @@ mutant urls "the Lnktree bottom-nav page loses its default URL" "sed -i 's#https
 mutant parity "a Lnktree bottom-nav page file is emptied" "echo '[]' > data/ui/lnktree/lt-dd.json"
 mutant tree "the page cache covers only Proj" "$J \"$BJ;U['lnktree_cache']['sections']=['proj'];$W_\""
 # urls
-mutant urls "Pers > Personal opens another site" "sed -i 's#https://diegonmarcos.com/#https://example.com/#' data/ui/pers/pers-profiles/personal.json"
+mutant urls "Pers > Personal opens another site" "sed -i 's#https://diegonmarcos.github.io/mySocials/#https://example.com/#' data/ui/pers/pers-profiles/personal.json"
 mutant urls "a Proj leaf embeds another site" "sed -i 's#https://diegonmarcos.github.io/galaxy/#https://example.com/#' data/ui/proj/pj-cg/pj-cg-omniverse.json"
 mutant tree "a Proj leaf is dropped (42 Dev)" "rm data/ui/proj/pj-lecole42/pj-lecole42-dev.json; $J \"$BJ;[g['pages'].pop() for p in [x for x in S['proj']['pages'] if x['id']=='pj-lecole42'] for g in [p]];$W_\""
 mutant tree "Lnktree opens on Professional again" "$J \"$BJ;p=S['lnktree']['pages'];p.append(p.pop(0));$W_\""

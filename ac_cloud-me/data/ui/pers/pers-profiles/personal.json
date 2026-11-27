@@ -2,8 +2,8 @@
   {
     "kind": "fragment",
     "id": "web",
-    "url": "https://diegonmarcos.com/",
-    "_doc": "#1901 Pers > Profiles > Personal: the owner's own site, embedded by its https URL (the same page the browser opens). The Instagram page that used to be called Personal is the next tab, Instagram.",
-    "link": "https://diegonmarcos.com/"
+    "url": "https://diegonmarcos.github.io/mySocials/",
+    "_doc": "#1948 Pers > Profiles > Personal: the mySocials home page (My Socials, Media Aggregator), embedded by its https URL. The diegonmarcos.com landpage that was here moved to Prof > Profiles > Professional. The Instagram page that used to be called Personal is the next tab, Instagram.",
+    "link": "https://diegonmarcos.github.io/mySocials/"
   }
 ]

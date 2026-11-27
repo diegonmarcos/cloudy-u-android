@@ -1,0 +1,44 @@
+# #1948 Pers/Prof Profiles page parity (rule 16: every URL Cloud Me showed before is still reachable from some tab). Push runs the tester with its own mutation
+# proofs. Manual dispatch with `name` applies ONE deliberate break to the real tree and requires the parity checker to go RED (KILLED); a break that stays green fails the job.
+name: me-profiles-1948-parity
+on:
+  push:
+    paths:
+      - 'ac_cloud-me/data/ui/**'
+      - 'ac_cloud-me/data/web/me-links.json'
+      - 'ac_cloud-me/build.json'
+      - 'ac_cloud-me/test/test-profiles-1948.sh'
+      - 'ac_cloud-me/test/fixtures/profiles-urls-before-1948.json'
+      - '.github/workflows/me-profiles-1948-parity.yml'
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'drop-portfolio | drop-professional | cv-back-to-web | drop-linkedin | personal-landpage'
+        required: false
+permissions:
+  contents: read
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ac_cloud-me
+      - name: Tester (real tree green, every mutation red)
+        if: ${{ inputs.name == '' }}
+        run: bash ac_cloud-me/test/test-profiles-1948.sh
+      - name: Mutation ${{ inputs.name }} must be KILLED
+        if: ${{ inputs.name != '' }}
+        run: |
+          set -u
+          D=ac_cloud-me/data/ui
+          case "${{ inputs.name }}" in
+            drop-portfolio)     rm $D/prof/prof-web/prof-portfolio.json ;;
+            drop-professional)  rm $D/prof/prof-web/prof-professional.json ;;
+            cv-back-to-web)     sed -i 's#cv_pdf#cv_web#g' $D/prof/prof-web/prof-cv.json ;;
+            drop-linkedin)      sed -i 's#mySocials/linkedin.html#mySocials/x.html#g' $D/prof/prof-web/prof-linkedin.json ;;
+            personal-landpage)  sed -i 's#https://diegonmarcos.com/#https://example.com/#g' $D/prof/prof-web/prof-professional.json ;;
+            *) echo "unknown mutation"; exit 2 ;;
+          esac
+          if bash ac_cloud-me/test/test-profiles-1948.sh --check ac_cloud-me; then echo "::error::MUTATION SURVIVED ${{ inputs.name }}"; exit 1; else echo "KILLED ${{ inputs.name }}"; fi

@@ -2,8 +2,8 @@
   {
     "kind": "fragment",
     "id": "web",
-    "_doc": "#1918 Prof > Profiles > CV: the cv_web site (it shows the PDF), embedded by its https URL from the declared table me-links.json (_front-html___ repos-pages.json overlay cv_web).",
-    "url": "https://diegonmarcos.github.io/cv_web/",
-    "link": "https://diegonmarcos.github.io/cv_web/"
+    "_doc": "#1948 Prof > Profiles > CV: the cv_pdf viewer page (Diego's CV), embedded by its https URL from the declared table me-links.json (overlay cv_pdf). The page draws assets/DiegoNMarcos_CurriculumVitae_en.pdf itself with PDF.js onto canvases, so it renders in the Android WebView (which has no built-in PDF viewer); emulator-me-render-1948.sh proves it.",
+    "url": "https://diegonmarcos.github.io/cv_pdf/",
+    "link": "https://diegonmarcos.github.io/cv_pdf/"
   }
 ]

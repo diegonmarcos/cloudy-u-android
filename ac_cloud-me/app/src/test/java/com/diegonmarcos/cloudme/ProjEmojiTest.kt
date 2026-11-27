@@ -55,12 +55,14 @@ class ProjEmojiTest {
         assertTrue(html.length > 50_000 && html.contains("Repos"))
     }
 
-    @Test fun `Profiles is LinkedIn and CV and every old Profiles page is still a page of Prof`() {
+    @Test fun `Profiles is Professional, LinkedIn, Portfolio and CV and every old Profiles page is still a page of Prof`() {
         val prof = section("prof")
         val web = flat(prof).first { it.getString("id") == "prof-web" }
-        assertEquals(listOf("prof-linkedin", "prof-cv"), flat(web).map { it.getString("id") })
+        assertEquals(listOf("prof-professional", "prof-linkedin", "prof-portfolio", "prof-cv"), flat(web).map { it.getString("id") })
         assertEquals("https://diegonmarcos.github.io/mySocials/linkedin.html", JSONArray(BuroLlcTestData.text("data/ui/prof/prof-web/prof-linkedin.json")).getJSONObject(0).getString("url"))
-        assertEquals("https://diegonmarcos.github.io/cv_web/", JSONArray(BuroLlcTestData.text("data/ui/prof/prof-web/prof-cv.json")).getJSONObject(0).getString("url"))
+        assertEquals("https://diegonmarcos.com/", JSONArray(BuroLlcTestData.text("data/ui/prof/prof-web/prof-professional.json")).getJSONObject(0).getString("url"))
+        assertEquals("https://diegonmarcos.github.io/cv_web/", JSONArray(BuroLlcTestData.text("data/ui/prof/prof-web/prof-portfolio.json")).getJSONObject(0).getString("url"))
+        assertEquals("https://diegonmarcos.github.io/cv_pdf/", JSONArray(BuroLlcTestData.text("data/ui/prof/prof-web/prof-cv.json")).getJSONObject(0).getString("url"))
         val ids = flat(prof).map { it.getString("id") }
         // #1937 owner-ordered removal: More (prof-profiles) with Professional, Work and Study (CV, Roadmap) is gone; the company sites stay
         for (kept in listOf("leafy", "nexus", "stark")) assertTrue("$kept is gone from Prof", kept in ids)

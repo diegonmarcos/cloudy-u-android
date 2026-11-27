@@ -26,7 +26,7 @@ try:
     if J("data/ui/proj/pj-repos.json")[0].get("url") != "repos-tree.html" or len(open(os.path.join(app, "data/web/repos-tree.html"), encoding="utf-8").read()) < 50000: print("E3\tRepos does not embed the bundled tree")
 except Exception as x: print("E3\t%s" % x)
 prof = {p["id"]: p for p in flat(secs["prof"])}
-if [p["id"] for p in prof.get("prof-web", {}).get("pages", [])] != ["prof-linkedin", "prof-cv"]: print("E4\tProf > Profiles is not LinkedIn | CV")
+if [p["id"] for p in prof.get("prof-web", {}).get("pages", [])] != ["prof-professional", "prof-linkedin", "prof-portfolio", "prof-cv"]: print("E4\tProf > Profiles is not Professional | LinkedIn | Portfolio | CV")
 for old in ("leafy", "nexus", "stark"):
     if old not in prof: print("E4\told page %s is gone from Prof" % old)
 for gone in ("prof-profiles", "professional", "work", "study", "cv", "roadmap"):   # #1937 owner-ordered removal

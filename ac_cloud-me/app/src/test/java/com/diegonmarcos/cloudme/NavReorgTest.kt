@@ -62,9 +62,9 @@ class NavReorgTest {
     @Test fun `Prof is Profiles then Leaf y Nexus z Stark x and Proj is Lnktree then the areas, Lnktree first and default`() {
         val prof = Sections.byId("prof")!!
         assertEquals(listOf("Profiles", "Leaf.y", "Nexus.z", "Stark.x"), prof.pages.map { it.label })   // #1937 More (and Professional, Work, Study) removed by owner order
-        assertEquals(listOf("prof-linkedin", "prof-cv"), ids(prof.page("prof-web")!!.pages))
+        assertEquals(listOf("prof-professional", "prof-linkedin", "prof-portfolio", "prof-cv"), ids(prof.page("prof-web")!!.pages))
         for (gone in listOf("prof-profiles", "professional", "work", "study", "cv", "roadmap")) assertTrue("$gone is removed", prof.path(gone).isEmpty())
-        assertEquals("prof-linkedin", leafOf("prof", null))   // #1918 Prof opens on Profiles > LinkedIn
+        assertEquals("prof-professional", leafOf("prof", null))   // #1948 Prof opens on Profiles > Professional
         val proj = Sections.byId("proj")!!
         assertEquals(listOf("pj-home", "pj-unix", "pj-cg", "pj-capital", "pj-hardtech", "pj-wiki", "pj-projects", "pj-lecole42", "pj-repos"), ids(proj.pages))
         assertEquals(listOf("Home", "Unix", "CG", "Capital", "Hardtech", "Wiki", "Projects", "42", "Repos"), proj.pages.map { Regex("^[^\\p{L}\\p{N}]+ ").replace(it.label, "") })   // #1918 each label carries its Linktree emoji
@@ -140,7 +140,7 @@ class NavReorgTest {
         val want = listOf(
             Triple("prof", "leafy", "https://diegonmarcos.github.io/leafy/"), Triple("prof", "nexus", "https://diegonmarcos.github.io/nexus/"),
             Triple("prof", "stark", "https://diegonmarcos.github.io/stark/"),
-            Triple("pers", "personal", "https://diegonmarcos.com/"), Triple("pers", "ig0", "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html"),
+            Triple("pers", "personal", "https://diegonmarcos.github.io/mySocials/"), Triple("pers", "ig0", "https://diegonmarcos.github.io/mySocials/instagram-diegocnmarcos_.html"),
             Triple("pers", "astro", "https://diegonmarcos.github.io/myAstro/"), Triple("lnktree", "lt-lnktree-site", "https://linktree.diegonmarcos.com/"),
         )
         for ((section, page, url) in want) {
