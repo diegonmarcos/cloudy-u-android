@@ -2,7 +2,7 @@
  "pj-capital-cb": {
   "files": {
    "README.canvas": 2955,
-   "README.html": 14572,
+   "README.html": 80960,
    "README.md": 2398
   },
   "repo": "diegonmarcos/Capital-Macro-Central-Bank"
@@ -10,7 +10,7 @@
  "pj-capital-finterm": {
   "files": {
    "README.canvas": 2963,
-   "README.html": 15346,
+   "README.html": 105949,
    "README.md": 3000
   },
   "repo": "diegonmarcos/Capital-Stack-Fin-Terminal"
@@ -18,7 +18,7 @@
  "pj-capital-pm": {
   "files": {
    "README.canvas": 2536,
-   "README.html": 11633,
+   "README.html": 61417,
    "README.md": 1676
   },
   "repo": "diegonmarcos/Capital-Micro-Asset-Management"
@@ -26,7 +26,7 @@
  "pj-cg-omniverse": {
   "files": {
    "README.canvas": 4186,
-   "README.html": 13499,
+   "README.html": 103639,
    "README.md": 2070
   },
   "repo": "diegonmarcos/CG-galaxy"
@@ -34,7 +34,7 @@
  "pj-cg-zirkusverse": {
   "files": {
    "README.canvas": 3041,
-   "README.html": 15163,
+   "README.html": 267017,
    "README.md": 3126
   },
   "repo": "diegonmarcos/CG-circus"
@@ -42,7 +42,7 @@
  "pj-hardtech-biomed": {
   "files": {
    "README.canvas": 4265,
-   "README.html": 17149,
+   "README.html": 68199,
    "README.md": 4302
   },
   "repo": "diegonmarcos/HardTech-___"
@@ -50,7 +50,7 @@
  "pj-hardtech-cad": {
   "files": {
    "README.canvas": 2539,
-   "README.html": 15880,
+   "README.html": 84121,
    "README.md": 4401
   },
   "repo": "diegonmarcos/HardTech-Stack-CAD-Simulators"
@@ -58,7 +58,7 @@
  "pj-hardtech-deepxtech": {
   "files": {
    "README.canvas": 2914,
-   "README.html": 13438,
+   "README.html": 62137,
    "README.md": 2157
   },
   "repo": "diegonmarcos/HardTech-DeepXTech"
@@ -66,7 +66,7 @@
  "pj-lecole42-agentic": {
   "files": {
    "README.canvas": 2524,
-   "README.html": 26213,
+   "README.html": 114986,
    "README.md": 11329
   },
   "repo": "diegonmarcos/lecole-42_ml-Agentic"
@@ -74,7 +74,7 @@
  "pj-lecole42-algo": {
   "files": {
    "README.canvas": 2534,
-   "README.html": 14087,
+   "README.html": 188309,
    "README.md": 2078
   },
   "repo": "diegonmarcos/lecole-42_back-Algo"
@@ -82,7 +82,7 @@
  "pj-lecole42-curriculum": {
   "files": {
    "README.canvas": 2434,
-   "README.html": 39923,
+   "README.html": 381892,
    "README.md": 16063
   },
   "repo": "diegonmarcos/lecole-42-projects"
@@ -90,7 +90,7 @@
  "pj-lecole42-cyberwarfare": {
   "files": {
    "README.canvas": 2486,
-   "README.html": 12589,
+   "README.html": 62603,
    "README.md": 1264
   },
   "repo": "diegonmarcos/lecole-42_cyber-Cyberwarfare"
@@ -98,7 +98,7 @@
  "pj-lecole42-datascience": {
   "files": {
    "README.canvas": 2553,
-   "README.html": 23690,
+   "README.html": 73089,
    "README.md": 10868
   },
   "repo": "diegonmarcos/lecole-42_ml-DataScience"
@@ -106,7 +106,7 @@
  "pj-lecole42-dev": {
   "files": {
    "README.canvas": 2396,
-   "README.html": 13495,
+   "README.html": 72512,
    "README.md": 1212
   },
   "repo": "diegonmarcos/lecole-42_dev"
@@ -114,7 +114,7 @@
  "pj-lecole42-graphic": {
   "files": {
    "README.canvas": 2555,
-   "README.html": 13787,
+   "README.html": 197600,
    "README.md": 1643
   },
   "repo": "diegonmarcos/lecole-42_back-Graphic"
@@ -122,7 +122,7 @@
  "pj-lecole42-machinelearning": {
   "files": {
    "README.canvas": 2551,
-   "README.html": 34757,
+   "README.html": 88551,
    "README.md": 15253
   },
   "repo": "diegonmarcos/lecole-42_ml-MachineLearning"
@@ -130,7 +130,7 @@
  "pj-lecole42-mylibs": {
   "files": {
    "README.canvas": 2544,
-   "README.html": 19310,
+   "README.html": 177361,
    "README.md": 6020
   },
   "repo": "diegonmarcos/lecole-42_ops-Mylibs"
@@ -138,7 +138,7 @@
  "pj-lecole42-system": {
   "files": {
    "README.canvas": 2551,
-   "README.html": 14365,
+   "README.html": 124346,
    "README.md": 1957
   },
   "repo": "diegonmarcos/lecole-42_back-System"
@@ -146,7 +146,7 @@
  "pj-projects-duckpeng": {
   "files": {
    "README.canvas": 2239,
-   "README.html": 15973,
+   "README.html": 66919,
    "README.md": 3888
   },
   "repo": "diegonmarcos/DuckPeng-___"
@@ -154,7 +154,7 @@
  "pj-projects-endeavours": {
   "files": {
    "README.canvas": 2514,
-   "README.html": 13027,
+   "README.html": 66406,
    "README.md": 2333
   },
   "repo": "diegonmarcos/Projects-endeavours"
@@ -162,7 +162,7 @@
  "pj-unix-cloudme": {
   "files": {
    "README.canvas": 13145,
-   "README.html": 19130,
+   "README.html": 70210,
    "README.md": 4313
   },
   "repo": "diegonmarcos/cloud-me-___"
@@ -170,7 +170,7 @@
  "pj-unix-cloudy": {
   "files": {
    "README.canvas": 10737,
-   "README.html": 22355,
+   "README.html": 85373,
    "README.md": 6909
   },
   "repo": "diegonmarcos/cloudy-___"
@@ -178,7 +178,7 @@
  "pj-unix-superapp": {
   "files": {
    "README.canvas": 10754,
-   "README.html": 66028,
+   "README.html": 480276,
    "README.md": 35926
   },
   "repo": "diegonmarcos/cloudy-u-android"
@@ -186,7 +186,7 @@
  "pj-wiki-arcanum": {
   "files": {
    "README.canvas": 2494,
-   "README.html": 14292,
+   "README.html": 139248,
    "README.md": 2523
   },
   "repo": "diegonmarcos/lib-chronos"
@@ -194,7 +194,7 @@
  "pj-wiki-modernsc": {
   "files": {
    "README.canvas": 2494,
-   "README.html": 14292,
+   "README.html": 139248,
    "README.md": 2523
   },
   "repo": "diegonmarcos/lib-chronos"
@@ -202,7 +202,7 @@
  "pj-wiki-projects": {
   "files": {
    "README.canvas": 2494,
-   "README.html": 14292,
+   "README.html": 139248,
    "README.md": 2523
   },
   "repo": "diegonmarcos/lib-chronos"
