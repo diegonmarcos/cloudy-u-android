@@ -155,7 +155,7 @@ class MediaProxy(private val ctx: Context) {
                 pm.getLaunchIntentForPackage(pkg)!!.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
             // #1966 the buds app shows its own launcher icon
-            val icon = if (e.kind == MediaLaunchers.Kind.BUDS_APP) launcherIcon(pm, pkg) else null
+            val icon = if (e.kind == MediaLaunchers.Kind.BUDS_APP) launcherIcon(pkg) else null
             BadgeModel.Action(e.id, e.icon, e.label, intent, icon)
         }
     }
@@ -167,8 +167,8 @@ class MediaProxy(private val ctx: Context) {
         return BudsApp.resolve(BadgeCustomization.text(ctx, d, BudsApp.KEY), connected, d.budsApps, installed)
     }
 
-    private fun launcherIcon(pm: android.content.pm.PackageManager, pkg: String): android.graphics.Bitmap? = runCatching {
-        val d = pm.getApplicationIcon(pkg)
+    private fun launcherIcon(pkg: String): android.graphics.Bitmap? = runCatching {
+        val d = com.diegonmarcos.superapp.ui.AppIconCache.load(ctx, pkg)!!
         val px = (48 * ctx.resources.displayMetrics.density).toInt()
         d.toBitmap(px, px)
     }.getOrNull()
