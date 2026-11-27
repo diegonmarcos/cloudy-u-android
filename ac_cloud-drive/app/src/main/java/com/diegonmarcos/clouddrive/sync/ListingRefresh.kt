@@ -3,7 +3,7 @@ package com.diegonmarcos.clouddrive.sync
 /**
  * #1934 THE LIST'S AGE, ROOT-CAUSED. The repo list is cached (#1679) and was re-read ONLY on a tap (Refresh, pull-to-refresh): nothing re-read it by itself,
  * there was no time limit on the cache, and a refresh that found no credential (or failed) said nothing and left the old time on screen, so a phone could show a
- * list ten days old. Now: a read older than [TTL_MINUTES] is re-read once per page session (the cache stays drawn at once), a refresh that cannot read says why
+ * list ten days old. Now: a read older than [TTL_MINUTES] is re-read once per page session, never on a fresh cache (the cache stays drawn at once), a refresh that cannot read says why
  * next to the time, a failed read keeps the cached rows, and every successful read stamps its own time ([record]).
  */
 internal object ListingRefresh {
