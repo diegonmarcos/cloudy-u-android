@@ -79,12 +79,12 @@ jobs:
           jq '.tests.unit.task = ":app:testDebugUnitTest"' "$WORK_DIR/build.json" > /tmp/b.json && mv /tmp/b.json "$WORK_DIR/build.json"
           L=ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui
           # only the suites under proof run: an unrelated test must not decide whether these mutants are caught
-          find ac_cloud-drive/app/src/test -name '*.kt' ! -name 'Bulk*Test.kt' -delete
-          suite() { rm -rf "$R"; sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR" > /tmp/suite.log 2>&1; true; }
-          # verdict: "tests failures" read from the Bulk*Test XML files; prints "N F" (F = failures + errors), "0 -1" when no XML exists (compile failure, not a verdict)
+          find ac_cloud-drive/app/src/test -name '*.kt' ! -name 'BulkSheet*Test.kt' -delete
+          suite() { rm -rf "$R"; sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR" > /tmp/suite.log 2>&1 || true; }
+          # verdict: "tests failures" read from the BulkSheet*Test XML files; prints "N F" (F = failures + errors), "0 -1" when no XML exists (compile failure, not a verdict)
           verdict() { python3 - "$R" <<'PY'
           import glob, sys, xml.etree.ElementTree as ET
-          t = f = 0; files = glob.glob(sys.argv[1] + "/TEST-*Bulk*Test.xml")
+          t = f = 0; files = glob.glob(sys.argv[1] + "/TEST-*BulkSheet*Test.xml")
           for p in files:
               r = ET.parse(p).getroot(); t += int(r.get("tests", 0)); f += int(r.get("failures", 0)) + int(r.get("errors", 0))
           print(t, f if files else -1)
