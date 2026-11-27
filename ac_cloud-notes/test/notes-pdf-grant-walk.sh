@@ -28,6 +28,36 @@ rc=0
 grep -q "pdf-1949.pdf" "$OUT/ui.xml" || { echo "::error::the reader title is not on screen"; rc=1; }
 grep -q 'text="Save"' "$OUT/ui.xml" || { echo "::error::the reader chrome (Save) is not on screen"; rc=1; }
 grep -qE 'Cannot (read|open|show)|it is not a PDF' "$OUT/ui.xml" && { echo "::error::the reader shows an error"; rc=1; }
+# EDIT + SAVE: the temporary grant is read-only, so Save must fall back to a copy in Downloads, and the copy must differ.
+tap() { # tap the first node whose text or content-desc equals $1 (uiautomator bounds centre)
+  adb shell uiautomator dump /sdcard/ui.xml >/dev/null; adb pull /sdcard/ui.xml "$OUT/ui-step.xml" >/dev/null
+  python3 - "$OUT/ui-step.xml" "$1" <<'PY'
+import re, sys, xml.etree.ElementTree as ET
+for n in ET.parse(sys.argv[1]).iter("node"):
+    if sys.argv[2] in (n.get("text"), n.get("content-desc")):
+        x1, y1, x2, y2 = map(int, re.findall(r"\d+", n.get("bounds")))
+        print((x1 + x2) // 2, (y1 + y2) // 2); sys.exit(0)
+sys.exit(1)
+PY
+}
+XY=$(tap "Text") || { echo "::error::no Text tool in the reader"; rc=1; XY=""; }
+if [ -n "$XY" ]; then
+  adb shell input tap $XY; sleep 2
+  adb shell input tap 540 1000; sleep 3
+  adb shell input text "Edited1949"; sleep 1
+  adb exec-out screencap -p > "$OUT/pdf-1949-notes-edit-dialog.png"
+  OXY=$(tap "OK") && adb shell input tap $OXY; sleep 4
+  adb exec-out screencap -p > "$OUT/pdf-1949-notes-edit.png"
+  SXY=$(tap "Save") && adb shell input tap $SXY; sleep 5
+  adb exec-out screencap -p > "$OUT/pdf-1949-notes-saved.png"
+  adb shell ls -l /sdcard/Download/ | tee "$OUT/downloads.txt"
+  adb pull /sdcard/Download/pdf-1949-edited.pdf "$OUT/edited.pdf" >/dev/null 2>&1 || { echo "::error::no saved copy in Downloads"; rc=1; }
+  if [ -f "$OUT/edited.pdf" ]; then
+    cmp -s "$OUT/edited.pdf" ac_cloud-notes/test/fixtures/pdf-1949.pdf && { echo "::error::the saved file did not change"; rc=1; }
+    [ "$(stat -c %s "$OUT/edited.pdf")" -gt "$(stat -c %s ac_cloud-notes/test/fixtures/pdf-1949.pdf)" ] || { echo "::error::the saved file did not grow"; rc=1; }
+    head -c 5 "$OUT/edited.pdf" | grep -q '%PDF-' || { echo "::error::the saved file is not a PDF"; rc=1; }
+  fi
+fi
 python3 -m pip install -q pillow
 python3 - "$OUT/pdf-1949-notes-grant.png" <<'PY' || rc=1
 import sys
