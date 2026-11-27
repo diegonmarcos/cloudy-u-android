@@ -239,4 +239,15 @@ class Precache1957Test {
         val ok = BoundedRead.read(java.io.ByteArrayInputStream(ByteArray(5000) { 7 }), 1_000_000, 1_000)
         assertEquals(5000, (ok as BoundedRead.Result.Ok).bytes.size)
     }
+
+    @Test fun `a file that fails twice is known-missing so the page completes, and a refetch keeps it known-missing`() {
+        val s = store(); val dead = "https://cdn.example/dead.jpg"; val k = LnktreePage("k", "https://k.example/")
+        val f = { u: String -> if (u == k.url) Fetched("text/html", null, 200, "<img src=\"$dead\"><img src=\"ok.png\">".toByteArray()) else if (u == dead) null else Fetched("image/png", null, 200, byteArrayOf(1)) }
+        val out = TtlPrefetch.run(listOf(k), cfg, s, f)
+        assertEquals("complete", out.single().result)
+        assertEquals("fetch-failed", s.reason("k", dead)); assertTrue(s.complete(k.id, k.url))
+        now += 8 * day
+        assertEquals("replaced", TtlPrefetch.run(listOf(k), cfg, s, f).single().result)
+        assertEquals("fetch-failed", s.reason("k", dead)); assertTrue(s.complete(k.id, k.url))
+    }
 }

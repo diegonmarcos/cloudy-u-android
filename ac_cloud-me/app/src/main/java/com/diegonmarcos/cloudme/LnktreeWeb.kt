@@ -296,7 +296,7 @@ object RuntimeHarvest {
                 w.layout(0, 0, 1080, 2400)
                 w.webViewClient = object : android.webkit.WebViewClient() {
                     override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
-                        request?.url?.toString()?.takeIf { it.startsWith("http") }?.let { seen += it }
+                        if (request?.method == "GET") request.url?.toString()?.takeIf { it.startsWith("http") }?.let { seen += it }   // #1957 GET only: a beacon or POST is not a file of the page
                         return null
                     }
                     override fun onPageFinished(view: WebView?, url: String?) {

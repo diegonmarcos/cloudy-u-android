@@ -285,6 +285,10 @@ class LnktreeCacheStore(val root: File, private val clock: () -> Long = System::
     val videoBytes: java.util.concurrent.atomic.AtomicLong get() = budget.video
 
     /** #1957 one page's staging area: its own files AND the shared files it refetched; nothing reaches the live store before [commit]. */
+    /** #1957 the live store's copy of [url] for this page when this is a staging store; null otherwise. */
+    fun liveCopy(pageId: String, url: String): CacheEntry? = if (staged) parent?.get(pageId, url) else null
+    fun parentReason(pageId: String, url: String): String? = parent?.reason(pageId, url)
+
     fun stagingFor(pageId: String): LnktreeCacheStore = LnktreeCacheStore(File(File(root, ".staging"), CacheKey.dirName(pageId)), clock, this, false, true)
 
     /** #1957 atomic replace: the staged shared files move into the live shared store, the old page directory moves aside, the staged one takes its name. */
@@ -303,15 +307,15 @@ class LnktreeCacheStore(val root: File, private val clock: () -> Long = System::
     }
 
     /** #1951 what the page holds: entries, bytes and whether it is complete (the line the walk and the owner read). */
-    data class PageReport(val pageId: String, val entries: Int, val bytes: Long, val complete: Boolean) {
-        fun line() = "CACHE_PAGE page=$pageId entries=$entries bytes=$bytes complete=${if (complete) "yes" else "no"}"
+    data class PageReport(val pageId: String, val entries: Int, val bytes: Long, val complete: Boolean, val missing: List<String> = emptyList()) {
+        fun line() = "CACHE_PAGE page=$pageId entries=$entries bytes=$bytes" + (if (missing.isEmpty()) "" else " missing=${missing.size} ${missing.take(3).joinToString(" ")}") + " complete=${if (complete) "yes" else "no"}"
     }
     fun report(pageId: String, url: String): PageReport {
         val metas = (pageDir(pageId).listFiles() ?: emptyArray()).filter { it.name.endsWith(".meta") }
         // #1957 the page's share: its own files plus the shared files its manifest names (a shared file shows in every page that uses it; CACHE_TOTAL counts it once)
         val sh = shared?.let { sh -> refs(pageId).mapNotNull { u -> sh.metaFile(SHARED_ID, u).takeIf { it.isFile } } }.orEmpty()
         val bytes = (metas + sh).sumOf { it.length() + File(it.parentFile, it.nameWithoutExtension + ".body").length() }
-        return PageReport(pageId, metas.size + sh.size, bytes, complete(pageId, url))
+        return PageReport(pageId, metas.size + sh.size, bytes, complete(pageId, url), missing(pageId, url))
     }
 
     fun state(pageId: String, url: String, ttlMs: Long): CacheState =
@@ -566,7 +570,9 @@ object LnktreePrefetch {
                 val got: List<Fetched?> = if (pool == null) batch.map { fetchCapped(it, cfg, store, fetch) }
                     else batch.map { u -> pool.submit(Callable { fetchCapped(u, cfg, store, fetch) }) }.map { f -> runCatching { f.get() }.getOrNull() }
                 for ((u, r) in batch.zip(got)) {
-                    if (r == null) continue
+                    // #1957 a first failure leaves the file missing (the page is incomplete and its COMPLETE pass tries again); in a refetch, a file the live copy
+                    // already holds as known-missing stays known-missing, while one the live copy HAS keeps the staged copy incomplete (kept-old)
+                    if (r == null) { store.liveCopy(p.id, u)?.takeIf { it.status != 200 }?.let { store.put(p.id, u, it.mime, null, it.status, ByteArray(0), store.parentReason(p.id, u) ?: "fetch-failed") }; continue }
                     budget--
                     if (r.status == VIDEO_CAPPED) { store.put(p.id, u, r.mime, r.encoding, r.status, ByteArray(0), r.encoding ?: "video-file-cap"); continue }   // #1957 a video over the declared cap: a known skip, not a missing file
                     if (r.status != 200) { if (r.status in 400..499 && r.status != 408 && r.status != 429) store.put(p.id, u, r.mime, r.encoding, r.status, r.body); continue }   // #1947 a definite 404 is stored as a tombstone, so one dead reference does not make the page incomplete for ever
@@ -645,7 +651,7 @@ object TtlPrefetch {
             val pool = Executors.newFixedThreadPool(cfg.subresourceConcurrency)
             try {
                 want.map { u -> u to pool.submit(Callable { LnktreePrefetch.fetchCapped(u, cfg, store, fetch) }) }.forEach { (u, f) ->
-                    val r = runCatching { f.get() }.getOrNull() ?: return@forEach
+                    val r = runCatching { f.get() }.getOrNull() ?: Fetched("application/octet-stream", "fetch-failed", LnktreePrefetch.VIDEO_CAPPED, ByteArray(0))
                     if (r.status == 200 || (r.status in 400..499 && r.status != 408 && r.status != 429)) store.put(p.id, u, r.mime, if (r.status == 200) r.encoding else null, r.status, if (r.status == 200) r.body else ByteArray(0), if (r.status == LnktreePrefetch.VIDEO_CAPPED) r.encoding else null)
                 }
             } finally { pool.shutdown() }
@@ -665,11 +671,15 @@ object TtlPrefetch {
         val todo = pages.filter { cfg.caches(it.id) }.let { if (cfg.prefetchMaxPages > 0) it.take(cfg.prefetchMaxPages) else it }
         val pool = Executors.newFixedThreadPool(cfg.prefetchConcurrency)
         try {
-            return todo.map { p -> pool.submit(Callable {
+            val first = todo.map { p -> pool.submit(Callable {
                 val a = decide(p, cfg, store)
                 runCatching { page(p, cfg, store, fetch, a, if (a == Action.SKIP) emptyList() else extra(p)) }.getOrElse { Outcome(p.id, a, "error ${it.javaClass.simpleName}") }
                     .also { if (cfg.maxBytes > 0 && store.budget.used.get() > cfg.maxBytes) store.trim(cfg.maxBytes) }.also(onPage)   // #1957 the cap holds during the job, not only at its end
             }) }.map { it.get() }
+            // #1957 second pass in the same job: a page left incomplete tries its missing files once more; what fails twice is known-missing (fetch-failed)
+            val again = todo.filter { decide(it, cfg, store) == Action.COMPLETE }
+            val second = again.map { p -> pool.submit(Callable { runCatching { page(p, cfg, store, fetch, Action.COMPLETE) }.getOrElse { Outcome(p.id, Action.COMPLETE, "error ${it.javaClass.simpleName}") }.also(onPage) }) }.map { it.get() }
+            return first.map { o -> second.firstOrNull { it.page == o.page } ?: o }
         } finally { pool.shutdown(); store.trim(cfg.maxBytes) }
     }
 }
