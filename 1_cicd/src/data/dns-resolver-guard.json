@@ -79,6 +79,8 @@
     {"path": "ac_cloud-vault/network/src/test/kotlin/com/bitwarden/network/interceptor/PermissionInterceptorTest.kt", "match": "8.8.8.8", "reason": "Upstream Bitwarden test of its permission interceptor against a public host, mocked."},
     {"path": "ac_cloud-vault/network/src/test/kotlin/com/bitwarden/network/service/AuthRequestsServiceTest.kt", "match": "1.0.0.1\"", "reason": "Upstream Bitwarden fixture: the IP a login request came from."},
     {"path": "ac_cloud-vault/network/src/test/kotlin/com/bitwarden/network/service/NewAuthRequestServiceTest.kt", "match": "1.0.0.1\"", "reason": "Upstream Bitwarden fixture: the IP a login request came from."},
+    {"path": "ac_cloud-me/data/web/repos-explorer.json", "match": "\"code\": \"1.1.1.1\"", "reason": "The registry hierarchy code of the cloudy-u-android repo (project 1.1, family 1, repo 1) in the Repos explorer data, not a DNS server."},
+    {"path": "ac_cloud-me/data/web/repos-explorer.html", "match": "\"code\":\"1.1.1.1\"", "reason": "The same hierarchy code inlined in the Repos explorer page, not a DNS server."},
     {"path": "ac_cloud-notes/blocksuite/cloud-notes/shared/src/__tests__/utils/url.unit.spec.ts", "match": "expect(isValidUrl('1.", "reason": "Upstream BlockSuite test that a bare IP is not a URL."}
   ]
 }
