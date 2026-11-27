@@ -24,13 +24,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -107,6 +105,9 @@ open class PdfReaderActivityBase : ComponentActivity(), PdfReaderView.Host {
     /** The app's theme around the reader (Drive: DriveTheme). */
     @Composable
     protected open fun ReaderTheme(content: @Composable () -> Unit) { MaterialTheme { Surface(Modifier.fillMaxSize()) { content() } } }
+
+    /** The window insets of this full-screen activity, applied by the app (the shell top-inset rule keeps bar handling out of shared libs): Drive and Notes pass their bar and cutout padding. */
+    protected open fun Modifier.screenInsets(): Modifier = this
 
     /** The app's own More-menu entries, after Share, Print and Go to page. */
     protected open fun extraActions(): List<ReaderAction> = emptyList()
@@ -540,7 +541,7 @@ open class PdfReaderActivityBase : ComponentActivity(), PdfReaderView.Host {
 
     @Composable
     private fun ReaderScreen() {
-        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface).systemBarsPadding().displayCutoutPadding()) {
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface).screenInsets()) {
             Column(Modifier.fillMaxSize()) {
                 ReaderBar()
                 if (searchOpen) SearchBar()

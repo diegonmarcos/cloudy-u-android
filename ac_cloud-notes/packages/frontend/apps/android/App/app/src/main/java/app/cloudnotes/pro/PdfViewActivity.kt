@@ -4,6 +4,9 @@ import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
 import android.util.Base64
+import androidx.compose.foundation.layout.displayCutoutPadding
+import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.ui.Modifier
 import androidx.core.content.FileProvider
 import com.diegonmarcos.cloudlib.pdf.PdfEngine
 import com.diegonmarcos.cloudlib.pdf.PdfReaderActivityBase
@@ -18,6 +21,8 @@ import java.security.MessageDigest
  * writes back to the source URI when it is writable, else saves a copy to Downloads. An unreadable or non-PDF file shows the reason.
  */
 class PdfViewActivity : PdfReaderActivityBase() {
+
+    override fun Modifier.screenInsets(): Modifier = this.systemBarsPadding().displayCutoutPadding()
 
     override val prefsName: String get() = "cloud-notes-pdf-reader"
 

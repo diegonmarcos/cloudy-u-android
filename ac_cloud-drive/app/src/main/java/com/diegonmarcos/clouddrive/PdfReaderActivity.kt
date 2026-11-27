@@ -3,7 +3,10 @@ package com.diegonmarcos.clouddrive
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.layout.displayCutoutPadding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import com.diegonmarcos.clouddrive.ui.DriveTheme
 import com.diegonmarcos.cloudlib.pdf.PdfReaderActivityBase
 import java.io.File
@@ -18,6 +21,8 @@ internal class PdfReaderActivity : PdfReaderActivityBase() {
 
     @Composable
     override fun ReaderTheme(content: @Composable () -> Unit) { DriveTheme { content() } }
+
+    override fun Modifier.screenInsets(): Modifier = this.systemBarsPadding().displayCutoutPadding()
 
     override val fileAuthority: String get() = "$packageName.files"
     override val prefsName: String get() = PREFS
