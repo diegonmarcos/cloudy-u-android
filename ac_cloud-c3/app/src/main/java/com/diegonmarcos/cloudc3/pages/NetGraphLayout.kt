@@ -31,6 +31,9 @@ object NetGraphLayout {
 
     fun aggId(clusterId: String) = "agg:$clusterId"
 
+    /** The smallest default scale at which node and edge labels are drawn. */
+    const val READABLE_SCALE = 0.6f
+
     /** The clusters collapsed when the page opens: a tree cluster from the declared open depth, any other one over `collapse_over` members. */
     fun defaultCollapsed(g: NetGraph.Graph, v: NetGraph.Viewers): Set<String> =
         g.clusters.filter { c -> if (c.head != null) !c.openByDefault else c.members.size > v.collapseOver }.map { it.id }.toSet()
@@ -160,10 +163,11 @@ object NetGraphLayout {
         return if (off == 0f) pts else pts.map { Offset(it.x, it.y + off) }
     }
 
-    /** The default view: the whole width fills the canvas and the rest pans vertically. */
-    fun fitWidth(b: MailStack.Rect, w: Float, pad: Float = 16f): MailStack.View {
+    /** The default view: the whole width fills the canvas and the rest pans vertically; never below [minScale], so node text stays
+     *  drawn on a narrow screen (labels start at 0.45, edge labels at 0.6) and the rest of the width pans sideways. */
+    fun fitWidth(b: MailStack.Rect, w: Float, pad: Float = 16f, minScale: Float = READABLE_SCALE): MailStack.View {
         val bw = (b.r - b.l).coerceAtLeast(1f)
-        val s = ((w - 2 * pad) / bw).coerceIn(MailStack.MIN_SCALE, MailStack.MAX_SCALE)
+        val s = ((w - 2 * pad) / bw).coerceIn(minScale.coerceAtLeast(MailStack.MIN_SCALE), MailStack.MAX_SCALE)
         return MailStack.View(s, pad - b.l * s, pad - b.t * s)
     }
 

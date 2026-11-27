@@ -148,8 +148,8 @@ if [ "$T" = all ] || [ "$T" = 1955 ]; then
   open_page net_wg; sleep 2; shot c3-1955-net-wg-pre 5
   tap_edit c3-1955-net-wg-pre; sleep 1; adb shell input text gcp-proxy; shot c3-1955-net-wg-search 3
   tap_text c3-1955-net-wg-search "gcp-proxy"; shot c3-1955-net-wg-node-sheet 3
-  has c3-1955-net-wg-node-sheet "out-edges" || bad "c3-1955-net-wg-node-sheet: no node sheet"
-  tap_text c3-1955-net-wg-node-sheet "  <-"; shot c3-1955-net-wg-edge-sheet 3
+  has c3-1955-net-wg-node-sheet "Open in Table" || bad "c3-1955-net-wg-node-sheet: no node sheet"
+  tap_text c3-1955-net-wg-node-sheet "  -"; shot c3-1955-net-wg-edge-sheet 3
   has c3-1955-net-wg-edge-sheet "Highlight path" || bad "c3-1955-net-wg-edge-sheet: no edge sheet"
   # DNS: expand every cluster, then Fit all (the minimap shows on a tall world)
   open_page net_dns; sleep 2; shot c3-1955-net-dns-pre 5

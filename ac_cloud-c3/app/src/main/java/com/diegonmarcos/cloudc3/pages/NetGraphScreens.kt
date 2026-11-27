@@ -178,10 +178,14 @@ fun NetGraphScreen(
                 Tab("net_graph_prev", "<", false) { hitAt = (hitAt - 1 + hits.size) % hits.size; openNode(hits[hitAt].id); centre(hits[hitAt].id) }
                 Tab("net_graph_next", ">", false) { hitAt = (hitAt + 1) % hits.size; openNode(hits[hitAt].id); centre(hits[hitAt].id) }
             }
+        }
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = KitStoreRow.padH, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
             Tab(NetTags.FIT, "Fit", false) { viewState.value = MailStack.fit(layout.plan.bounds, box.width.toFloat(), box.height.toFloat()) }
             Tab(NetTags.WIDTH, "Width", false) { viewState.value = NetGraphLayout.fitWidth(layout.plan.bounds, box.width.toFloat()) }
             Tab(NetTags.EXPAND_ALL, "+all", false) { collapsed = emptySet() }
             Tab(NetTags.COLLAPSE_ALL, "-all", false) { collapsed = g.clusters.map { it.id }.toSet() }
+        }
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = KitStoreRow.padH, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
             Tab(NetTags.LEGEND, "Legend", legend) { legend = !legend }
             Tab(NetTags.REREAD, "Re-read", false, onReread)
             Text("live ${st.liveAt.ifBlank { "-" }}", style = mono(11f, p.textSecondary))
@@ -362,12 +366,12 @@ fun NetNodeSheet(
         Line("reading", r.word); Line("source", r.source + if (r.at > 0) "  at ${clock(r.at)}" else "")
         roots.firstOrNull { it.id == n.id }?.let { Line("root cause", "${NetLive.verdict(it)}, impacts ${it.impacted.size}") }
         roots.firstOrNull { n.id in it.impacted }?.let { Line("impacted via", g.node(it.id)?.label ?: it.id) }
-        NetGraph.sheet(n, g).forEach { (k, v) -> if (k != "in" && k != "out") Line(k, v) }
         val ins = g.inEdges(n.id); val outs = g.outEdges(n.id)
         Line("in-edges", "${ins.size}")
         ins.forEach { e -> Line("  <-", "${g.node(e.from)?.label ?: e.from}  ${e.label}", NetTags.neighbour(e.from)) { onEdge(e.id) } }
         Line("out-edges", "${outs.size}")
         outs.forEach { e -> Line("  ->", "${g.node(e.to)?.label ?: e.to}  ${e.label}", NetTags.neighbour(e.to)) { onEdge(e.id) } }
+        NetGraph.sheet(n, g).forEach { (k, v) -> if (k != "in" && k != "out") Line(k, v) }
         val dependents = NetLive.dependsOn(g).filterValues { n.id in it }.keys
         Line("impacts", "${dependents.size} depend on this")
         dependents.take(20).forEach { d -> Line("  ", g.node(d)?.label ?: d) { onPick(d) } }
