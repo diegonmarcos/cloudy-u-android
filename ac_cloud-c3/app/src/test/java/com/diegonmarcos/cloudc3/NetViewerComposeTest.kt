@@ -7,12 +7,9 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.click
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.text.TextLayoutResult
@@ -282,10 +279,17 @@ class NetViewerComposeTest {
         compose.setContent { CloudKitTheme(palette) { NetGraphScreen("net_dns", st, v, {}, {}, {}, {}) } }
         compose.waitForIdle()
         val box = compose.onNodeWithTag(NetTags.CANVAS_BOX).fetchSemanticsNode().boundsInRoot
+        // the window drawn into a bitmap (software draw of the real view tree, layer clips included); captureToImage hangs under Robolectric
         fun toolbar(): List<Int> {
-            val img = compose.onRoot().captureToImage().asAndroidBitmap()
-            val rows = (box.top.toInt() - 1).coerceAtLeast(1)
-            return (0 until rows step 2).flatMap { y -> (0 until img.width step 3).map { x -> img.getPixel(x, y) } }
+            var px: List<Int> = emptyList()
+            compose.runOnUiThread {
+                val view = compose.activity.window.decorView
+                val img = android.graphics.Bitmap.createBitmap(view.width, view.height, android.graphics.Bitmap.Config.ARGB_8888)
+                view.draw(android.graphics.Canvas(img))
+                val rows = (box.top.toInt() - 1).coerceAtLeast(1)
+                px = (0 until rows step 2).flatMap { y -> (0 until img.width step 3).map { x -> img.getPixel(x, y) } }
+            }
+            return px
         }
         val before = toolbar()
         compose.onNodeWithTag(NetTags.graph("net_dns")).performTouchInput { swipeUp(startY = centerY, endY = top + 2f) }
