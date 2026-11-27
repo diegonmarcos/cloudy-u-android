@@ -4,7 +4,7 @@ Usage: merge-walk-into-results.py <observed.md> <walk.tsv[,walk.tsv...]> <out.md
 import sys
 md, walk, out = sys.argv[1:4]
 meta = " (JVM column from Ship run %s at %s; emulator column from this walk)" % (sys.argv[4], sys.argv[5]) if len(sys.argv) > 5 else ""
-GOOD = ("tapped", "shown", "greyed with its reason", "greyed (disabled by state)", "greyed (declared disabled)")
+GOOD = ("tapped", "shown", "greyed with its reason", "greyed (disabled by state)", "greyed (declared disabled)", "shown (value ok)", "tapped (sheet closed)")
 w = {}   # (bulk?, control id) -> every walk status seen (the cloned and the not-cloned phase both walk the per-repo ids)
 for path in walk.split(","):
     for l in open(path):

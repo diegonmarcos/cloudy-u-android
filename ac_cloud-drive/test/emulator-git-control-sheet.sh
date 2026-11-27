@@ -135,14 +135,17 @@ d = json.load(open(sys.argv[1]))["ui"]["git_control_sheet"]; h = d["header"]
 def rows(tag, tabs, header):
     out = []
     if header:
-        for c in [x for x in h["actions"] if x["id"] != "hd.repo_list"] + [h["refresh"]]: out.append(("header", "git_sheet_" + c["id"], c["id"], c["label"], c.get("needs_clone", False), c.get("confirm") or c.get("danger"), c.get("disabled", False)))
+        for c in [x for x in h["actions"] if x["id"] != "hd.repo_list"] + [h["refresh"]]: out.append(("header", "git_sheet_" + c["id"], c["id"], c["label"], c.get("needs_clone", False), c.get("confirm") or c.get("danger"), c.get("disabled", False), "control"))
     for t in tabs:
-        out.append((t["label"], "git_sheet_tab_" + t["id"], "tab:" + t["id"], t["label"], False, False, False))
+        out.append((t["label"], "git_sheet_tab_" + t["id"], "tab:" + t["id"], t["label"], False, False, False, "control"))
         for g in t["groups"]:
             for c in g["controls"]:
-                if c.get("kind") in ("field", "preview", "output"): continue
+                if c.get("kind") in ("field", "preview", "output"):
+                    # a readout: verified on screen (fields by their own row, preview / output by their group)
+                    out.append((t["label"], "git_sheet_ctl_" + c["id"] if c["kind"] == "field" else "git_sheet_group_" + g["id"], c["id"], c["label"], False, False, False, "readout"))
+                    continue
                 rid = "git_sheet_interval_" + str(c["values"][0]) if c.get("kind") == "select" and c.get("values") else "git_sheet_ctl_" + c["id"]
-                out.append((t["label"], rid, c["id"], c["label"], c.get("needs_clone", False), c.get("confirm") or c.get("danger"), c.get("disabled", False)))
+                out.append((t["label"], rid, c["id"], c["label"], c.get("needs_clone", False), c.get("confirm") or c.get("danger"), c.get("disabled", False), "control"))
     return out
 for name, tabs, header in (("per", d["tabs"], True), ("bulk", d["bulk"]["tabs"], False)):
     with open(sys.argv[1] + "." + name, "w") as f: pass
@@ -162,10 +165,34 @@ for m in re.finditer(r"<node [^>]*>",x):
         hit=((a[0]+a[2])//2,(a[1]+a[3])//2,"disabled" if "enabled=\"false\"" in n else "enabled")
 if hit: print(*hit)
 else: sys.exit(1)' "$OUT/ui.xml" "$1"; }
+# readout <rid> <label>: the texts inside the node's bounds except its label, joined by " | "; exit 1 = not on screen, 2 = nothing but the label
+readout() { python3 -I -c '
+import re,sys
+x=open(sys.argv[1]).read(); rid=sys.argv[2]; label=sys.argv[3]; box=None; nodes=[]
+for m in re.finditer(r"<node [^>]*>",x):
+    n=m.group(0); b=re.search(r"bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"",n); t=re.search(r"\btext=\"([^\"]*)\"",n)
+    if not b: continue
+    a=list(map(int,b.groups()))
+    if re.search(r"resource-id=\"%s\"" % re.escape(rid), n): box=a
+    elif t and t.group(1): nodes.append((a,t.group(1)))
+if not box: sys.exit(1)
+v=[t for a,t in nodes if a[0]>=box[0] and a[1]>=box[1] and a[2]<=box[2] and a[3]<=box[3] and t!=label]
+lab=any(a[0]>=box[0] and a[1]>=box[1] and a[2]<=box[2] and a[3]<=box[3] and t==label for a,t in nodes)
+print(" | ".join(v))
+sys.exit(0 if (v or lab) else 2)' "$OUT/ui.xml" "$1" "$2"; }
+# the value the fixture makes deterministic, as an extended regex ("" = any non-empty text)
+expect() { case "$1:$2" in
+  per:yes:ov.cloned) echo '^yes$';; per:no:ov.cloned) echo '^no$';;
+  per:yes:ov.branch) echo '^main$';; per:yes:ov.detached) echo '^no$';; per:yes:ov.unpushed) echo '^0$';; per:yes:ov.divergence) echo '^\+0/-0$';;
+  per:yes:ov.meta.name) echo '^cloudy-fixture$';; per:no:ov.meta.name) echo '^cloudy-notcloned$';;
+  per:*:ov.meta.owner) echo '^diegonmarcos$';;
+  per:yes:ov.meta.remote_url) echo 'example\.invalid/diegonmarcos/cloudy-fixture';; per:no:ov.meta.remote_url) echo 'example\.invalid/diegonmarcos/cloudy-notcloned';;
+  bulk:*:bo.count.*) echo '^[0-9]+$';;
+  *) echo '';; esac; }
 walk() {
   local phase=$1 cloned=$2 row=$3 curtab=overview t1=$(date +%s)
   exec 3< <(grep -P "^$phase\t" "$OUT/lists.txt" | cut -f2-)
-  while IFS=$'\t' read -r -u 3 tab rid id label needs confirm disabled; do
+  while IFS=$'\t' read -r -u 3 tab rid id label needs confirm disabled kind; do
     if [ $(( $(date +%s) - t1 )) -gt "$BUDGET" ]; then miss=$((miss+1)); printf '%s:%s\t%s\t%s\tNOT RUN (time budget)\t-\n' "$phase" "$cloned" "$id" "$label" >> "$OUT/walk.tsv"; continue; fi
     case "$id" in tab:*)
       curtab=${id#tab:}
@@ -173,6 +200,21 @@ walk() {
       for k in 1 2; do tap_rid "$rid" >/dev/null && break; sleep 1; done; sleep 1
       adb exec-out screencap -p > "$OUT/walk/$phase-$cloned-${id#tab:}.png"; dump >/dev/null; snap "$phase-$cloned-tab-${id#tab:}"
       printf '%s:%s\t%s\ttab\tshown\twalk/%s-%s-%s.png\n' "$phase" "$cloned" "$id" "$phase" "$cloned" "${id#tab:}" >> "$OUT/walk.tsv"; continue;; esac
+    if [ "$kind" = readout ]; then
+      v=""; found=0
+      for n in 0 1 2 3 4 5 6; do
+        dump >/dev/null
+        v=$(readout "$rid" "$label"); rc=$?
+        [ $rc -ne 1 ] && { found=1; break; }
+        scroll_body || break; sleep 1
+      done
+      wantv=$(expect "$phase:$cloned" "$id")
+      if [ $found = 0 ]; then miss=$((miss+1)); printf '%s:%s\t%s\t%s\tNOT FOUND\t-\n' "$phase" "$cloned" "$id" "$label" >> "$OUT/walk.tsv"; snap "notfound-$phase-$cloned-$id"
+      elif [ $rc -ne 0 ]; then miss=$((miss+1)); printf '%s:%s\t%s\t%s\tEMPTY\t-\n' "$phase" "$cloned" "$id" "$label" >> "$OUT/walk.tsv"
+      elif [ -n "$wantv" ] && ! printf "%s" "$v" | grep -Eq "$wantv"; then miss=$((miss+1)); printf '%s:%s\t%s\t%s\tVALUE MISMATCH (got "%s", want %s)\t-\n' "$phase" "$cloned" "$id" "$label" "$v" "$wantv" >> "$OUT/walk.tsv"
+      else ok=$((ok+1)); printf '%s:%s\t%s\t%s\tshown (value ok)\t%s\n' "$phase" "$cloned" "$id" "$label" "$v" >> "$OUT/walk.tsv"; fi
+      continue
+    fi
     [ "$disabled" = True ] && { printf '%s:%s\t%s\t%s\tgreyed (declared disabled)\t-\n' "$phase" "$cloned" "$id" "$label" >> "$OUT/walk.tsv"; continue; }
     dump >/dev/null
     # a recovery (web viewer, relaunch) lands on the Overview tab: go back to the tab this control lives on
@@ -209,14 +251,26 @@ walk() {
 }
 
 want() { [ "$PHASE" = all ] || [ "$PHASE" = "$1" ]; }
+# Repo list closes the sheet (back to the repository list), Close dismisses it: both must leave the sheet gone
+closers() {
+  local phase=$1 cloned=$2 row=$3 id rid label
+  for spec in "hd.repo_list|git_sheet_hd.repo_list|Repo list" "hd.close|git_sheet_hd.close|Close"; do
+    IFS='|' read -r id rid label <<< "$spec"
+    sheet_open || open_row "$row"
+    tap_rid "$rid" >/dev/null; sleep 2
+    sheet_open && { sleep 3; }
+    if sheet_open; then miss=$((miss+1)); printf '%s:%s\t%s\t%s\tNOT CLOSED\t-\n' "$phase" "$cloned" "$id" "$label" >> "$OUT/walk.tsv"; close_sheet "closer-$id"
+    else ok=$((ok+1)); printf '%s:%s\t%s\t%s\ttapped (sheet closed)\t-\n' "$phase" "$cloned" "$id" "$label" >> "$OUT/walk.tsv"; fi
+  done
+}
 # 1. the cloned fixture
-if want cloned; then open_row "$NAME"; walk per yes "$NAME"; close_sheet cloned; fi
+if want cloned; then open_row "$NAME"; walk per yes "$NAME"; closers per yes "$NAME"; close_sheet cloned; fi
 # 2. the not-cloned fixture: its row comes from the offline listing cache
 if want notcloned; then
   open_row "$NOTCLONED"
   has_rid git_sheet_banner || { miss=$((miss+1)); printf 'per:no\tbanner\tNot cloned banner\tNOT FOUND\t-\n' >> "$OUT/walk.tsv"; }
   tap_rid git_sheet_hd.clone_now >/dev/null || { miss=$((miss+1)); printf 'per:no\thd.clone_now\tClone Now\tNOT FOUND\t-\n' >> "$OUT/walk.tsv"; }
-  walk per no "$NOTCLONED"; close_sheet notcloned
+  walk per no "$NOTCLONED"; closers per no "$NOTCLONED"; close_sheet notcloned
 fi
 # 3. the all-repos sheet over the 3 fixture repositories: More is pinned in the toolbar (tag sync_git_top_group_more)
 if want all-repos; then
