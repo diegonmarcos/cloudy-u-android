@@ -125,17 +125,17 @@ object Declarations {
 
     /** data/api_providers.json (#1471): the third-party API providers of Infra > APIs, with secret NAMES only. */
     val apiProviders: com.diegonmarcos.cloudc3.pages.ApiProviders.Decl by lazy {
-        com.diegonmarcos.cloudc3.pages.ApiProviders.parse(decode(BuildConfig.API_PROVIDERS_B64))
+        com.diegonmarcos.cloudc3.pages.ApiProviders.parse(decodeChunks(BuildConfig.API_PROVIDERS_B64))
     }
 
     /** data/api_providers.json::fleet_endpoints (#1718): the fleet services with their public and mesh URLs, Infra > APIs > C3 Endpoints. */
     val fleetEndpoints: com.diegonmarcos.cloudc3.pages.FleetEndpoints.Decl by lazy {
-        com.diegonmarcos.cloudc3.pages.FleetEndpoints.parse(decode(BuildConfig.API_PROVIDERS_B64))
+        com.diegonmarcos.cloudc3.pages.FleetEndpoints.parse(decodeChunks(BuildConfig.API_PROVIDERS_B64))
     }
 
     /** data/api_providers.json::mcp_catalogue (#1725): the C3 MCP servers, their tools and c3-api routes, Infra > APIs > C3 MCP. */
     val c3Mcp: com.diegonmarcos.cloudc3.pages.C3Mcp.Decl by lazy {
-        com.diegonmarcos.cloudc3.pages.C3Mcp.parse(decode(BuildConfig.API_PROVIDERS_B64))
+        com.diegonmarcos.cloudc3.pages.C3Mcp.parse(decodeChunks(BuildConfig.API_PROVIDERS_B64))
     }
 
     /** data/orch_flow.json (#1954): the Orch > Home pipeline stages and pipelines. */
