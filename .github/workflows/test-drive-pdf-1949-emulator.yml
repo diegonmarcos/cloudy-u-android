@@ -1,0 +1,78 @@
+name: "Test -> Cloud Drive PDF reader, temporary-grant content URI (#1949, emulator screenshot)"
+
+# #1949: the same walk as Cloud Notes' for Cloud Drive, with the same PDF: a content:// URI with ONLY a temporary read grant must render
+# page 1 in the shared libs:pdf reader, then Edit, add text, Save. Dispatch only. `run` pins a ship-cloud-drive.yml run (a number, checked).
+
+on:
+  workflow_dispatch:
+    inputs:
+      run:
+        description: 'Ship run id to take the APK from (optional, digits only)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  drive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+
+      - name: Fetch the APK and read its package
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN: ${{ inputs.run }}
+        run: |
+          set -eu
+          case "$RUN" in ''|*[!0-9]*) [ -z "$RUN" ] || { echo "::error::the run input must be digits"; exit 1; } ;; esac
+          if [ -z "$RUN" ]; then
+            RUN=$(gh run list -R "$REPO" --workflow ship-cloud-drive.yml --branch main --status success -L 1 --json databaseId --jq '.[0].databaseId // empty')
+          fi
+          [ -n "$RUN" ] || { echo "::error::no green ship-cloud-drive.yml run on main"; exit 1; }
+          echo "APK from run $RUN"
+          mkdir -p dl
+          gh run download "$RUN" -R "$REPO" -p 'Cloud-Drive-x86_64-debug*' -D dl
+          pick=$(find dl -name '*.apk' | sort | head -1)
+          [ -n "$pick" ] || { echo "::error::no APK in run $RUN"; exit 1; }
+          cp "$pick" app-under-test.apk
+          AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          echo "PKG=$("$AAPT" dump packagename app-under-test.apk)" >> "$GITHUB_ENV"
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Boot emulator + walk
+        timeout-minutes: 70
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          ram-size: 4096M
+          cores: 4
+          emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ac_cloud-drive/test/drive-pdf-grant-walk.sh
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drive-pdf-1949-evidence
+          path: walk-out
+          if-no-files-found: warn

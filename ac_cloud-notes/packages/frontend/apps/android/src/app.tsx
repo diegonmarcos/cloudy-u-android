@@ -353,10 +353,14 @@ const notifyAuthenticationError = (error: unknown, fallback: string) => {
 };
 
 CapacitorApp.addListener('appUrlOpen', ({ url }) => {
-  // try to close browser if it's open
-  InAppBrowser.close().catch(e => console.error('Failed to close browser', e));
-
   const urlObj = new URL(url);
+
+  // #1949 close the auth browser only for the authentication deep link. Capacitor also reports every VIEW intent with a data URI
+  // (a content:// PDF handed in by another app) here; InAppBrowser.close() relaunches MainActivity with CLEAR_TOP, which finished
+  // the PDF reader above it about 4 s after it opened.
+  if (urlObj.hostname === 'authentication') {
+    InAppBrowser.close().catch(e => console.error('Failed to close browser', e));
+  }
 
   if (urlObj.hostname === 'authentication') {
     const method = urlObj.searchParams.get('method');

@@ -14,6 +14,7 @@ on:
       - 'ab_cloud-libs-shared/libs/pdf/**'
       - 'ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/PdfReaderActivity.kt'
       - 'ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/PdfViewActivity.kt'
+      - 'ac_cloud-notes/packages/frontend/apps/android/src/app.tsx'
       - '1_cicd/src/data/pdf-reader-parity-1949.json'
       - '1_cicd/src/scripts/test-pdf-parity-1949.py'
       - '.github/workflows/test-pdf-parity-1949.yml'
@@ -41,7 +42,7 @@ jobs:
         run: |
           set -u
           case "$ONLY" in
-            ''|outline|paged|zoom|search|goto|night|share|print|edit|drive-convert|drive-own-engine|notes-own-reader|notes-not-lib) ;;
+            ''|outline|paged|zoom|search|goto|night|share|print|edit|drive-convert|drive-own-engine|notes-own-reader|notes-not-lib|notes-takeover) ;;
             *) echo "::error::unknown mutation name"; exit 1 ;;
           esac
           L=ab_cloud-libs-shared/libs/pdf/src/main/java/com/diegonmarcos/cloudlib/pdf
@@ -72,6 +73,7 @@ jobs:
           run_mut print lib_print-adapter "$L/PdfReaderActivityBase.kt" 's/PrintDocumentAdapter()/PrintDocumentAdapterX()/'
           run_mut edit lib_edit-toggle "$L/PdfReaderActivityBase.kt" 's/R\.string\.pdf_edit/R.string.pdf_edit_x/'
           run_mut drive-convert drive_activity_2 "$D/PdfReaderActivity.kt" 's/PdfConversion\.convertPdf(/PdfConversion.convertPdfX(/'
+          run_mut notes-takeover notes_takeover_guard ac_cloud-notes/packages/frontend/apps/android/src/app.tsx "s/if (urlObj.hostname === 'authentication') {/{/"
           run_mut notes-not-lib notes_activity_0 "$N/PdfViewActivity.kt" 's/class PdfViewActivity : PdfReaderActivityBase()/class PdfViewActivity : androidx.activity.ComponentActivity()/'
           # Drive grows its own engine file again
           if [ -z "$ONLY" ] || [ "$ONLY" = drive-own-engine ]; then

@@ -40,6 +40,10 @@ def main(argv):
             for d, _, fs in os.walk(src):
                 for fn in fs:
                     if fn.endswith(".kt"): body += open(os.path.join(d, fn), encoding="utf-8").read()
+            tg = s.get("takeover_guard")
+            if tg:
+                t = read(tg["file"])
+                check("notes_takeover_guard", t is not None and tg["needle"] in t, "Notes' appUrlOpen closes the auth browser for any URL again (it relaunches MainActivity with CLEAR_TOP over the PDF reader)")
             for n in s["own_reader_forbidden"]:
                 check(f"notes_no_second_reader_{n}", n not in body, f"Notes carries its own reader code ({n})")
     bad = [(n, m) for n, m in cases if m]

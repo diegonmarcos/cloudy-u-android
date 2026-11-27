@@ -2,69 +2,275 @@
   "_doc": "#1949 PDF reader parity. Every control and feature of Cloud Drive's pdfium reader as it was BEFORE the reader moved into ab_cloud-libs-shared/libs/pdf (the baseline: ac_cloud-drive PdfReaderActivity.kt, PdfReaderView.kt, PdfEngine.kt at 3bf0797e4) must be present in the shared lib, hence in Cloud Drive, and Cloud Notes must open the very same screen. 1_cicd/src/scripts/test-pdf-parity-1949.py reads this list (NEVER SIMPLIFY: a feature is added here, never removed; removing a line is the reduction the test exists to stop). Each feature names the lib file and the fixed string that proves it; the Drive and Notes entries prove the two apps host the same lib screen.",
   "lib_dir": "ab_cloud-libs-shared/libs/pdf/src/main/java/com/diegonmarcos/cloudlib/pdf",
   "lib_features": [
-    {"id": "back", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_back"},
-    {"id": "title", "file": "PdfReaderActivityBase.kt", "needle": "titleText,"},
-    {"id": "search-button", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_search)"},
-    {"id": "search-field-hint", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_search_hint"},
-    {"id": "search-prev", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_prev_match"},
-    {"id": "search-next", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_next_match"},
-    {"id": "search-close", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_close_search"},
-    {"id": "search-run", "file": "PdfReaderActivityBase.kt", "needle": "e.findOnPage(page, query, false)"},
-    {"id": "search-highlights", "file": "PdfReaderView.kt", "needle": "fun setHits("},
-    {"id": "search-jump", "file": "PdfReaderView.kt", "needle": "fun showHit("},
-    {"id": "outline-button", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_outline)"},
-    {"id": "outline-read", "file": "PdfReaderActivityBase.kt", "needle": "e.outline()"},
-    {"id": "outline-engine", "file": "PdfEngine.kt", "needle": "fun outline()"},
-    {"id": "night-button", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_night"},
-    {"id": "night-toggle", "file": "PdfReaderActivityBase.kt", "needle": "fun toggleNight()"},
-    {"id": "night-render", "file": "PdfReaderView.kt", "needle": "fun setNight("},
-    {"id": "paged-button", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_mode"},
-    {"id": "paged-toggle", "file": "PdfReaderActivityBase.kt", "needle": "fun toggleMode()"},
-    {"id": "paged-render", "file": "PdfReaderView.kt", "needle": "fun setPaged("},
-    {"id": "more-menu", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_more"},
-    {"id": "share", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_share)"},
-    {"id": "print", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_print"},
-    {"id": "print-adapter", "file": "PdfReaderActivityBase.kt", "needle": "PrintDocumentAdapter()"},
-    {"id": "goto-menu", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_goto)"},
-    {"id": "goto-dialog", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_goto_title"},
-    {"id": "goto-run", "file": "PdfReaderView.kt", "needle": "fun goToPage("},
-    {"id": "convert-menu", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_convert)"},
-    {"id": "convert-dialog", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_convert_title"},
-    {"id": "convert-no-folder", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_convert_no_folder"},
-    {"id": "password-dialog", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_password_title"},
-    {"id": "password-retry", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_password_retry"},
-    {"id": "password-engine", "file": "PdfEngine.kt", "needle": "class PasswordRequired"},
-    {"id": "page-pill", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_page_pill"},
-    {"id": "copy-word", "file": "PdfReaderActivityBase.kt", "needle": "override fun onWordSelected("},
-    {"id": "open-links", "file": "PdfReaderActivityBase.kt", "needle": "override fun onOpenLink("},
-    {"id": "resume-last-page", "file": "PdfReaderActivityBase.kt", "needle": "LAST_PAGE + source"},
-    {"id": "pinch-zoom", "file": "PdfReaderView.kt", "needle": "ScaleGestureDetector("},
-    {"id": "double-tap-zoom", "file": "PdfReaderView.kt", "needle": "override fun onDoubleTap("},
-    {"id": "zoom-ceiling", "file": "PdfReaderView.kt", "needle": "MAX_ZOOM = 6f"},
-    {"id": "worker-thread-open", "file": "PdfReaderActivityBase.kt", "needle": "io.execute"},
-    {"id": "private-copy-share", "file": "PdfReaderActivityBase.kt", "needle": "PdfEngine.spool"},
-    {"id": "engine-text-search", "file": "PdfEngine.kt", "needle": "findStart"},
-    {"id": "edit-toggle", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_edit)"},
-    {"id": "edit-save-button", "file": "PdfReaderActivityBase.kt", "needle": "R.string.pdf_save)"},
-    {"id": "edit-opens-pdfbox-editor", "file": "PdfReaderActivityBase.kt", "needle": "PdfViewer(ef, editing = true"},
-    {"id": "edit-save", "file": "PdfReaderActivityBase.kt", "needle": "fun saveEdited()"}
+    {
+      "id": "back",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_back"
+    },
+    {
+      "id": "title",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "titleText,"
+    },
+    {
+      "id": "search-button",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_search)"
+    },
+    {
+      "id": "search-field-hint",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_search_hint"
+    },
+    {
+      "id": "search-prev",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_prev_match"
+    },
+    {
+      "id": "search-next",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_next_match"
+    },
+    {
+      "id": "search-close",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_close_search"
+    },
+    {
+      "id": "search-run",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "e.findOnPage(page, query, false)"
+    },
+    {
+      "id": "search-highlights",
+      "file": "PdfReaderView.kt",
+      "needle": "fun setHits("
+    },
+    {
+      "id": "search-jump",
+      "file": "PdfReaderView.kt",
+      "needle": "fun showHit("
+    },
+    {
+      "id": "outline-button",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_outline)"
+    },
+    {
+      "id": "outline-read",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "e.outline()"
+    },
+    {
+      "id": "outline-engine",
+      "file": "PdfEngine.kt",
+      "needle": "fun outline()"
+    },
+    {
+      "id": "night-button",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_night"
+    },
+    {
+      "id": "night-toggle",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "fun toggleNight()"
+    },
+    {
+      "id": "night-render",
+      "file": "PdfReaderView.kt",
+      "needle": "fun setNight("
+    },
+    {
+      "id": "paged-button",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_mode"
+    },
+    {
+      "id": "paged-toggle",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "fun toggleMode()"
+    },
+    {
+      "id": "paged-render",
+      "file": "PdfReaderView.kt",
+      "needle": "fun setPaged("
+    },
+    {
+      "id": "more-menu",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_more"
+    },
+    {
+      "id": "share",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_share)"
+    },
+    {
+      "id": "print",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_print"
+    },
+    {
+      "id": "print-adapter",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "PrintDocumentAdapter()"
+    },
+    {
+      "id": "goto-menu",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_goto)"
+    },
+    {
+      "id": "goto-dialog",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_goto_title"
+    },
+    {
+      "id": "goto-run",
+      "file": "PdfReaderView.kt",
+      "needle": "fun goToPage("
+    },
+    {
+      "id": "convert-menu",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_convert)"
+    },
+    {
+      "id": "convert-dialog",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_convert_title"
+    },
+    {
+      "id": "convert-no-folder",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_convert_no_folder"
+    },
+    {
+      "id": "password-dialog",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_password_title"
+    },
+    {
+      "id": "password-retry",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_password_retry"
+    },
+    {
+      "id": "password-engine",
+      "file": "PdfEngine.kt",
+      "needle": "class PasswordRequired"
+    },
+    {
+      "id": "page-pill",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_page_pill"
+    },
+    {
+      "id": "copy-word",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "override fun onWordSelected("
+    },
+    {
+      "id": "open-links",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "override fun onOpenLink("
+    },
+    {
+      "id": "resume-last-page",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "LAST_PAGE + source"
+    },
+    {
+      "id": "pinch-zoom",
+      "file": "PdfReaderView.kt",
+      "needle": "ScaleGestureDetector("
+    },
+    {
+      "id": "double-tap-zoom",
+      "file": "PdfReaderView.kt",
+      "needle": "override fun onDoubleTap("
+    },
+    {
+      "id": "zoom-ceiling",
+      "file": "PdfReaderView.kt",
+      "needle": "MAX_ZOOM = 6f"
+    },
+    {
+      "id": "worker-thread-open",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "io.execute"
+    },
+    {
+      "id": "private-copy-share",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "PdfEngine.spool"
+    },
+    {
+      "id": "engine-text-search",
+      "file": "PdfEngine.kt",
+      "needle": "findStart"
+    },
+    {
+      "id": "edit-toggle",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_edit)"
+    },
+    {
+      "id": "edit-save-button",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "R.string.pdf_save)"
+    },
+    {
+      "id": "edit-opens-pdfbox-editor",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "PdfViewer(ef, editing = true"
+    },
+    {
+      "id": "edit-save",
+      "file": "PdfReaderActivityBase.kt",
+      "needle": "fun saveEdited()"
+    }
   ],
   "drive": {
     "activity_file": "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/PdfReaderActivity.kt",
-    "needles": ["class PdfReaderActivity : PdfReaderActivityBase()", "DriveTheme { content() }", "PdfConversion.convertPdf(", "conversionTargets", "fun intent("],
+    "needles": [
+      "class PdfReaderActivity : PdfReaderActivityBase()",
+      "DriveTheme { content() }",
+      "PdfConversion.convertPdf(",
+      "conversionTargets",
+      "fun intent("
+    ],
     "manifest": "ac_cloud-drive/app/src/main/AndroidManifest.xml",
     "manifest_needle": ".PdfReaderActivity",
-    "must_not_contain_files": ["PdfEngine.kt", "PdfReaderView.kt", "PdfLayout.kt"],
+    "must_not_contain_files": [
+      "PdfEngine.kt",
+      "PdfReaderView.kt",
+      "PdfLayout.kt"
+    ],
     "source_dir": "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive"
   },
   "notes": {
     "activity_file": "ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/PdfViewActivity.kt",
-    "needles": ["class PdfViewActivity : PdfReaderActivityBase()", "import com.diegonmarcos.cloudlib.pdf.PdfReaderActivityBase"],
+    "needles": [
+      "class PdfViewActivity : PdfReaderActivityBase()",
+      "import com.diegonmarcos.cloudlib.pdf.PdfReaderActivityBase"
+    ],
     "manifest": "ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/AndroidManifest.xml",
     "manifest_needle": ".PdfViewActivity",
     "gradle": "ac_cloud-notes/packages/frontend/apps/android/App/app/build.gradle",
     "gradle_needle": "project(':libs:pdf')",
     "source_dir": "ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro",
-    "own_reader_forbidden": ["PdfReaderView(", "PdfEngine.open(", "ScaleGestureDetector"]
+    "own_reader_forbidden": [
+      "PdfReaderView(",
+      "PdfEngine.open(",
+      "ScaleGestureDetector"
+    ],
+    "takeover_guard": {
+      "file": "ac_cloud-notes/packages/frontend/apps/android/src/app.tsx",
+      "needle": "if (urlObj.hostname === 'authentication') {\n    InAppBrowser.close()",
+      "_doc": "Root cause of the reader takeover: appUrlOpen fires for a content:// PDF VIEW intent too; an unconditional InAppBrowser.close() relaunched MainActivity with CLEAR_TOP and finished the reader about 4 s in."
+    }
   }
 }

@@ -34,6 +34,7 @@ jobs:
           RUN: ${{ inputs.run }}
         run: |
           set -eu
+          case "$RUN" in ''|*[!0-9]*) [ -z "$RUN" ] || { echo "::error::the run input must be digits"; exit 1; } ;; esac
           if [ -z "$RUN" ]; then
             RUN=$(gh run list -R "$REPO" --workflow ship-cloud-notes.yml --branch main --status success -L 1 --json databaseId --jq '.[0].databaseId // empty')
           fi
