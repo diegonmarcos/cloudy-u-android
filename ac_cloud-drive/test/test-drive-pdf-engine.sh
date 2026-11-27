@@ -28,11 +28,18 @@ ROOT="${CLOUD_ANDROID_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && while [ "$P
 APP="$ROOT/ac_cloud-drive"
 SRC="$APP/app/src/main/java/com/diegonmarcos/clouddrive"
 TESTSRC="$APP/app/src/test/java/com/diegonmarcos/clouddrive"
-ENGINE="$SRC/PdfEngine.kt"
-VIEW="$SRC/PdfReaderView.kt"
-ACTIVITY="$SRC/PdfReaderActivity.kt"
+# #1949 the reader (PdfEngine, PdfLayout, PdfReaderView, the reader screen) lives in libs:pdf, shared with Cloud Notes; Drive's own
+# PdfReaderActivity is the thin subclass that adds its theme, its FileProvider and the PDF to text conversions.
+LIB="$ROOT/ab_cloud-libs-shared/libs/pdf"
+LIBSRC="$LIB/src/main/java/com/diegonmarcos/cloudlib/pdf"
+LIBTEST="$LIB/src/test/java/com/diegonmarcos/cloudlib/pdf"
+ENGINE="$LIBSRC/PdfEngine.kt"
+VIEW="$LIBSRC/PdfReaderView.kt"
+ACTIVITY="$LIBSRC/PdfReaderActivityBase.kt"
+DRIVE_ACTIVITY="$SRC/PdfReaderActivity.kt"
+LIB_GRADLE="$LIB/build.gradle"
 CONVERT="$SRC/PdfConvert.kt"
-LAYOUT="$SRC/PdfLayout.kt"
+LAYOUT="$LIBSRC/PdfLayout.kt"
 CONVERSION="$SRC/PdfConversion.kt"
 FILES="$SRC/files/FilesScreen.kt"
 MAIN="$SRC/MainActivity.kt"
@@ -47,7 +54,7 @@ pass() { printf '  PASS  %s\n' "$1"; }
 fail() { printf '  FAIL  %s\n' "$1"; FAILURES=$((FAILURES + 1)); }
 
 for required in "$ENGINE" "$VIEW" "$ACTIVITY" "$CONVERT" "$LAYOUT" "$CONVERSION" "$FILES" "$MAIN" "$MANIFEST" "$GRADLE" "$BUILD_JSON" \
-                "$TESTSRC/PdfConvertTest.kt" "$TESTSRC/PdfLayoutTest.kt"; do
+                "$TESTSRC/PdfConvertTest.kt" "$LIBTEST/PdfLayoutTest.kt" "$DRIVE_ACTIVITY" "$LIB_GRADLE"; do
     [ -f "$required" ] || { echo "ERROR missing source: $required"; exit 1; }
 done
 
@@ -82,7 +89,7 @@ PYTHON
 [ $? -eq 0 ] || FAILURES=$((FAILURES + 1))
 
 echo "── P2 exactly ONE engine (#463): one file names the library, no second renderer, no pdf.js left ──"
-IMPORTERS="$(grep -rlE 'io\.legere' "$APP/app/src/main/java" | sort)"
+IMPORTERS="$(grep -rlE 'io\.legere' "$APP/app/src/main/java" "$LIBSRC" | sort)"
 if [ "$IMPORTERS" = "$ENGINE" ]; then
     pass "only PdfEngine.kt names io.legere — every other file goes through it"
 else
@@ -181,7 +188,7 @@ echo "── P9 conversion still works against the new engine ──"
 has "$CONVERSION" "fun convertPdf(" "PdfConversion.convertPdf exists — the ONE conversion path (#579)"
 has "$CONVERSION" "engine.pageText(" "conversion reads its text from the SAME engine as the reader"
 has "$CONVERSION" "writeText(File(directory, name)" "conversion writes through the core's atomic save path (no second writer)"
-has "$ACTIVITY" "PdfConversion.convertPdf(" "the reader's Convert menu calls the same function the Files tab does"
+has "$DRIVE_ACTIVITY" "PdfConversion.convertPdf(" "the reader's Convert menu calls the same function the Files tab does"
 has "$FILES" "EntryAction.CONVERT_PDF" "the Files tab offers Convert on a PDF row"
 has "$SRC/files/FilesController.kt" "PdfConversion.convertPdf(" "the Files tab converts through the same path"
 python3 - "$CONVERSION" "$CONVERT" <<'PYTHON'
@@ -255,7 +262,9 @@ has "$MAIN" "PdfReaderActivity.intent(" "the chrome opens a PDF row in the same 
 has "$FILES" "EditorHook.open(" "the Files tab hands a PDF row to the Editor tab, whose PDF viewer is libs:pdf (#1537: every file tap opens the Editor)"
 
 echo "── P11 the executable tests exist and are wired ──"
-python3 - "$TESTSRC" "$BUILD_JSON" <<'PYTHON'
+has "$LIB_GRADLE" "ac_cloud-drive/build.json" "libs:pdf reads the engine pin from build.json::pdf.engine (#1949: the pin stays in data, the lib owns the engine)"
+has "$LIB_GRADLE" "pdfEngineCoordinates.each { api it }" "libs:pdf adds every declared engine artifact"
+python3 - "$TESTSRC" "$BUILD_JSON" "$LIBTEST" <<'PYTHON'
 import re, sys, os, json
 tests = sys.argv[1]
 build = json.load(open(sys.argv[2], encoding="utf-8"))
@@ -265,7 +274,7 @@ def check(ok, message):
     print(("  PASS  " if ok else "  FAIL  ") + message)
     failed = failed or not ok
 for name, floor in (("PdfConvertTest.kt", 10), ("PdfLayoutTest.kt", 6)):
-    src = open(os.path.join(tests, name), encoding="utf-8").read()
+    src = open(os.path.join(sys.argv[3] if name == "PdfLayoutTest.kt" else tests, name), encoding="utf-8").read()
     n = len(re.findall(r"^\s*@Test\s*$", src, re.M))
     check(n >= floor, "%s carries %d @Test methods (floor %d)" % (name, n, floor))
     check(src.count("assert") >= n * 2, "%s asserts something in every test (%d assertions for %d tests)" % (name, src.count("assert"), n))

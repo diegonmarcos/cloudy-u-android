@@ -19,7 +19,7 @@ object LifecycleProbe : Application.ActivityLifecycleCallbacks {
         Log.w(TAG, "${who.javaClass.simpleName} $what ${intent?.toString() ?: ""}", Throwable("caller"))
     }
 
-    private fun log(a: Activity, ev: String) = Log.i(TAG, "${a.javaClass.simpleName}@${System.identityHashCode(a)} $ev task=${a.taskId} finishing=${a.isFinishing} intent=${a.intent}")
+    private fun log(a: Activity, ev: String) { Log.i(TAG, "${a.javaClass.simpleName}@${System.identityHashCode(a)} $ev task=${a.taskId} finishing=${a.isFinishing} intent=${a.intent}") }
     override fun onActivityCreated(a: Activity, s: Bundle?) = log(a, "created saved=${s != null}")
     override fun onActivityStarted(a: Activity) = log(a, "started")
     override fun onActivityResumed(a: Activity) = log(a, "resumed")

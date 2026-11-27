@@ -19,12 +19,26 @@ if (project.extensions.findByName('kotlin') == null) {
 }
 apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 
+// #1949 THE ONE PDF ENGINE lives here now (owner order 2026-11-27): the pdfium binding is pinned by ac_cloud-drive/build.json::pdf.engine,
+// read here so the pin stays in data; a missing or partial declaration fails the build instead of shipping a reader with no engine.
+def pdfEngine = new groovy.json.JsonSlurper().parse(file("${projectDir}/../../../ac_cloud-drive/build.json")).pdf?.engine ?: [:]
+['group', 'version'].each { key ->
+    if (!(pdfEngine[key] ?: '').toString().trim()) {
+        throw new GradleException("ac_cloud-drive/build.json::pdf.engine.${key} is required (libs:pdf's one engine, #1949)")
+    }
+}
+if (!(pdfEngine.artifacts ?: [])) {
+    throw new GradleException("ac_cloud-drive/build.json::pdf.engine.artifacts is required (libs:pdf's one engine, #1949)")
+}
+def pdfEngineCoordinates = pdfEngine.artifacts.collect { "${pdfEngine.group}:${it}:${pdfEngine.version}".toString() }
+
 android {
     namespace 'com.diegonmarcos.cloudlib.pdf'
     compileSdk 36
 
     defaultConfig {
         minSdk 26
+        consumerProguardFiles 'consumer-rules.pro'
     }
 
     buildFeatures {
@@ -66,6 +80,10 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
     // The editing engine, Apache-2.0.
     implementation 'com.tom-roush:pdfbox-android:2.0.27.0'
+
+    // The pdfium reader engine (Apache-2.0 binding, BSD-3 PDFium): the JNI half's .so files ride in the consumer's APK for the ABIs it keeps.
+    pdfEngineCoordinates.each { api it }
+    implementation 'androidx.activity:activity-compose:1.9.3'
 
     testImplementation 'junit:junit:4.13.2'
 }

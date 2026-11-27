@@ -1,0 +1,100 @@
+# #1949 PDF reader parity with mutations. Baseline: every Cloud Drive reader control and feature is in libs:pdf, Drive hosts it, and Notes hosts the
+# same screen. Each mutation breaks ONE thing and the test must catch it. The verdict is read from the JUnit XML the test writes (a failure element
+# = KILLED), never from the exit code alone. The dispatch input `only` reaches the shell through env: and is checked against an allow-list.
+name: test-pdf-parity-1949
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: 'Run one mutation (name) or leave empty for all'
+        required: false
+        default: ''
+  push:
+    paths:
+      - 'ab_cloud-libs-shared/libs/pdf/**'
+      - 'ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/PdfReaderActivity.kt'
+      - 'ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro/PdfViewActivity.kt'
+      - '1_cicd/src/data/pdf-reader-parity-1949.json'
+      - '1_cicd/src/scripts/test-pdf-parity-1949.py'
+      - '.github/workflows/test-pdf-parity-1949.yml'
+permissions:
+  contents: read
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Baseline is green
+        run: |
+          python3 1_cicd/src/scripts/test-pdf-parity-1949.py --junit base.xml || true
+          python3 - <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          r = ET.parse("base.xml").getroot()
+          bad = [c.get("name") for c in r.iter("testcase") if c.find("failure") is not None]
+          print("tests:", r.get("tests"), "failed:", bad)
+          sys.exit(1 if bad or int(r.get("tests")) < 55 else 0)
+          PY
+      - name: Mutations are killed (verdict from the XML)
+        env:
+          ONLY: ${{ inputs.only }}
+        run: |
+          set -u
+          case "$ONLY" in
+            ''|outline|paged|zoom|search|goto|night|share|print|edit|drive-convert|drive-own-engine|notes-own-reader|notes-not-lib) ;;
+            *) echo "::error::unknown mutation name"; exit 1 ;;
+          esac
+          L=ab_cloud-libs-shared/libs/pdf/src/main/java/com/diegonmarcos/cloudlib/pdf
+          D=ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive
+          N=ac_cloud-notes/packages/frontend/apps/android/App/app/src/main/java/app/cloudnotes/pro
+          fail=0
+          run_mut() { # name expected-testcase file then the sed arguments
+            name=$1; want=$2; file=$3; shift 3
+            if [ -n "$ONLY" ] && [ "$ONLY" != "$name" ]; then return; fi
+            cp "$file" "$file.orig"; sed -i "$@" "$file"
+            cmp -s "$file" "$file.orig" && { echo "::error::mutation $name changed nothing"; fail=1; mv "$file.orig" "$file"; return; }
+            python3 1_cicd/src/scripts/test-pdf-parity-1949.py --junit "m-$name.xml" >/dev/null || true
+            python3 - "m-$name.xml" "$want" "$name" <<'PY' || fail=1
+          import sys, xml.etree.ElementTree as ET
+          r = ET.parse(sys.argv[1]).getroot()
+          hit = [c for c in r.iter("testcase") if c.get("name") == sys.argv[2] and c.find("failure") is not None]
+          print(sys.argv[3], "KILLED by", sys.argv[2]) if hit else (print("::error::mutation", sys.argv[3], "SURVIVED:", sys.argv[2], "stayed green"), sys.exit(1))
+          PY
+            mv "$file.orig" "$file"
+          }
+          run_mut outline lib_outline-button "$L/PdfReaderActivityBase.kt" 's/R\.string\.pdf_outline)/R.string.pdf_gone)/'
+          run_mut paged lib_paged-toggle "$L/PdfReaderActivityBase.kt" 's/fun toggleMode()/fun toggleModeX()/'
+          run_mut zoom lib_pinch-zoom "$L/PdfReaderView.kt" 's/ScaleGestureDetector(/ScaleGestureDetectorX(/'
+          run_mut search lib_search-highlights "$L/PdfReaderView.kt" 's/fun setHits(/fun setHitsX(/'
+          run_mut goto lib_goto-dialog "$L/PdfReaderActivityBase.kt" 's/R\.string\.pdf_goto_title/R.string.pdf_goto_x/'
+          run_mut night lib_night-render "$L/PdfReaderView.kt" 's/fun setNight(/fun setNightX(/'
+          run_mut share lib_share "$L/PdfReaderActivityBase.kt" 's/R\.string\.pdf_share/R.string.pdf_share_x/'
+          run_mut print lib_print-adapter "$L/PdfReaderActivityBase.kt" 's/PrintDocumentAdapter()/PrintDocumentAdapterX()/'
+          run_mut edit lib_edit-toggle "$L/PdfReaderActivityBase.kt" 's/R\.string\.pdf_edit/R.string.pdf_edit_x/'
+          run_mut drive-convert drive_activity_2 "$D/PdfReaderActivity.kt" 's/PdfConversion\.convertPdf(/PdfConversion.convertPdfX(/'
+          run_mut notes-not-lib notes_activity_0 "$N/PdfViewActivity.kt" 's/class PdfViewActivity : PdfReaderActivityBase()/class PdfViewActivity : androidx.activity.ComponentActivity()/'
+          # Drive grows its own engine file again
+          if [ -z "$ONLY" ] || [ "$ONLY" = drive-own-engine ]; then
+            : > "$D/PdfEngine.kt"
+            python3 1_cicd/src/scripts/test-pdf-parity-1949.py --junit m-own.xml >/dev/null || true
+            python3 - m-own.xml <<'PY' || fail=1
+          import sys, xml.etree.ElementTree as ET
+          r = ET.parse(sys.argv[1]).getroot()
+          hit = [c for c in r.iter("testcase") if c.get("name") == "drive_no_own_PdfEngine.kt" and c.find("failure") is not None]
+          print("drive-own-engine KILLED") if hit else (print("::error::drive-own-engine SURVIVED"), sys.exit(1))
+          PY
+            rm -f "$D/PdfEngine.kt"
+          fi
+          # Notes grows its own reader view
+          if [ -z "$ONLY" ] || [ "$ONLY" = notes-own-reader ]; then
+            printf 'class X { val v = PdfReaderView(null) }\n' > "$N/Own.kt"
+            python3 1_cicd/src/scripts/test-pdf-parity-1949.py --junit m-nown.xml >/dev/null || true
+            python3 - m-nown.xml <<'PY' || fail=1
+          import sys, xml.etree.ElementTree as ET
+          r = ET.parse(sys.argv[1]).getroot()
+          hit = [c for c in r.iter("testcase") if c.get("name").startswith("notes_no_second_reader_") and c.find("failure") is not None]
+          print("notes-own-reader KILLED") if hit else (print("::error::notes-own-reader SURVIVED"), sys.exit(1))
+          PY
+            rm -f "$N/Own.kt"
+          fi
+          exit $fail

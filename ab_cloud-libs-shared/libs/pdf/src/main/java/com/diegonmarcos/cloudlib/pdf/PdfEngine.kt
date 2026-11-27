@@ -1,4 +1,4 @@
-package com.diegonmarcos.clouddrive
+package com.diegonmarcos.cloudlib.pdf
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -31,7 +31,7 @@ import java.io.IOException
  * here may be called from any thread. Callers keep long work (render, search, extraction) off
  * the UI thread themselves.
  */
-internal class PdfEngine private constructor(
+class PdfEngine private constructor(
     private val document: PdfDocument,
     private val descriptor: ParcelFileDescriptor,
     private val spooled: File?

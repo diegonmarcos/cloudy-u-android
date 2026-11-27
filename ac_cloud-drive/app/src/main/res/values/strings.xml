@@ -647,31 +647,6 @@
     <string name="editor_empty_title">No file open</string>
     <string name="editor_empty_hint">Open a file from Explorer to edit or view it here</string>
     <!-- #577 the PDF reader's chrome, now Compose: every caption a resource (test-drive-shell.sh D7). -->
-    <string name="pdf_back">Back</string>
-    <string name="pdf_search">Search</string>
-    <string name="pdf_outline">Outline</string>
-    <string name="pdf_night">Night mode</string>
-    <string name="pdf_mode">Continuous or paged</string>
-    <string name="pdf_more">More</string>
-    <string name="pdf_share">Share</string>
-    <string name="pdf_print">Print</string>
-    <string name="pdf_goto">Go to page…</string>
-    <string name="pdf_convert">Convert…</string>
-    <string name="pdf_search_hint">Search in document</string>
-    <string name="pdf_prev_match">Previous match</string>
-    <string name="pdf_next_match">Next match</string>
-    <string name="pdf_close_search">Close search</string>
-    <string name="pdf_page_pill">%1$d / %2$d</string>
-    <string name="pdf_password_title">This PDF is password protected</string>
-    <string name="pdf_password_retry">Wrong password — try again</string>
-    <string name="pdf_open">Open</string>
-    <string name="pdf_cancel">Cancel</string>
-    <string name="pdf_go">Go</string>
-    <string name="pdf_ok">OK</string>
-    <string name="pdf_goto_title">Go to page</string>
-    <string name="pdf_goto_hint">1 – %1$d</string>
-    <string name="pdf_convert_title">Convert to</string>
-    <string name="pdf_convert_no_folder">A document handed in from another app has no folder to save next to — copy it into Files first.</string>
     <!-- cloud-shared-store: the one-time notice after the shared-uid reinstall (DataMigration). -->
     <string name="shared_store_migration_title">Cloud shared store</string>
     <string name="shared_store_migration_body">Cloud Drive now runs as the same Linux user as Cloud Terminal, so every sync and clone uses ~/cloud-shared-store directly. That change needed a reinstall, which cleared this app\'s data.</string>

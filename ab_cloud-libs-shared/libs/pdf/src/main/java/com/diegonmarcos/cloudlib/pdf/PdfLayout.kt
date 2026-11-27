@@ -1,4 +1,4 @@
-package com.diegonmarcos.clouddrive
+package com.diegonmarcos.cloudlib.pdf
 
 /**
  * Where every page sits in the reader's scroll space (#577), as pure arithmetic with no Android
@@ -16,7 +16,7 @@ package com.diegonmarcos.clouddrive
  * opens at once on that guess and the true sizes are fed in by [setSize] as a background scan
  * reads them; a uniform document never shifts, a mixed one is re-anchored by the view.
  */
-internal class PdfLayout(
+class PdfLayout(
     val pageCount: Int,
     private val viewW: Int,
     private val viewH: Int,

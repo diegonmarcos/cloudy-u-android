@@ -67,7 +67,13 @@ def scan_roots(repo, cfg):
 
 
 def excluded_paths(cfg):
-    return [(_norm(x["path"])) for x in cfg.get("exclusions", [])]
+    """The named exclusions plus the engine owner itself: an owner nested below a top-level tree
+    (#1949: ab_cloud-libs-shared/libs/pdf) is carved out of the scan of that tree, not skipped with it."""
+    paths = [(_norm(x["path"])) for x in cfg.get("exclusions", [])]
+    owner = cfg.get("allowed_owner")
+    if owner:
+        paths.append(_norm(owner))
+    return paths
 
 
 def is_excluded(rel, excls):

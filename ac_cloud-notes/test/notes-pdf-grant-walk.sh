@@ -42,7 +42,10 @@ adb shell uiautomator dump /sdcard/ui.xml >/dev/null; adb pull /sdcard/ui.xml "$
 timeout 60 adb logcat -d -v threadtime > "$OUT/logcat.txt" || true
 rc=0
 grep -q "pdf-1949.pdf" "$OUT/ui.xml" || { echo "::error::the reader title is not on screen"; rc=1; }
-grep -q 'text="Save"' "$OUT/ui.xml" || { echo "::error::the reader chrome (Save) is not on screen"; rc=1; }
+grep -q 'content-desc="Edit"' "$OUT/ui.xml" || { echo "::error::the reader chrome (the Edit toggle) is not on screen"; rc=1; }
+for d in Search Outline "Night mode" "Continuous or paged" More; do
+  grep -q "content-desc=\"$d\"" "$OUT/ui.xml" || { echo "::error::the shared reader control '$d' is not on screen"; rc=1; }
+done
 grep -qE 'Cannot (read|open|show)|it is not a PDF' "$OUT/ui.xml" && { echo "::error::the reader shows an error"; rc=1; }
 # EDIT + SAVE: the temporary grant is read-only, so Save must fall back to a copy in Downloads, and the copy must differ.
 tap() { # tap the first node whose text or content-desc equals $1 (uiautomator bounds centre)
@@ -56,6 +59,8 @@ for n in ET.parse(sys.argv[1]).iter("node"):
 sys.exit(1)
 PY
 }
+EXY=$(tap "Edit") && { adb shell input tap $EXY; sleep 3; } || { echo "::error::no Edit toggle in the reader"; rc=1; }
+adb exec-out screencap -p > "$OUT/pdf-1949-notes-editmode.png"
 XY=$(tap "Text") || { echo "::error::no Text tool in the reader"; rc=1; XY=""; }
 if [ -n "$XY" ]; then
   adb shell input tap $XY; sleep 2

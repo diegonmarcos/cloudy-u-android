@@ -53,14 +53,17 @@ trap 'rm -rf "$WORK"' EXIT
 # exclusion paths.
 build_fixture() {
   local t="$1"
-  mkdir -p "$t/ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive"
-  cat > "$t/ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/PdfEngine.kt" <<'EOF'
+  # #1949 the engine's owner is ab_cloud-libs-shared/libs/pdf (the policy's allowed_owner); Cloud Drive is an ordinary app that consumes it.
+  mkdir -p "$t/ab_cloud-libs-shared/libs/pdf/src/main/java/com/diegonmarcos/cloudlib/pdf"
+  cat > "$t/ab_cloud-libs-shared/libs/pdf/src/main/java/com/diegonmarcos/cloudlib/pdf/PdfEngine.kt" <<'EOF'
 import io.legere.pdfiumandroid.PdfiumCore
 class PdfEngine { val core = PdfiumCore(null) }
 EOF
-  cat > "$t/ac_cloud-drive/app/build.gradle" <<'EOF'
-dependencies { implementation 'io.legere:pdfiumandroid:2.0.0' }
+  cat > "$t/ab_cloud-libs-shared/libs/pdf/build.gradle" <<'EOF'
+dependencies { api 'io.legere:pdfiumandroid:2.0.0' }
 EOF
+  mkdir -p "$t/ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive"
+  : > "$t/ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/PdfReaderActivity.kt"
   mkdir -p "$t/ac_cloud-mail/app/src/main"
   : > "$t/ac_cloud-mail/app/src/main/Attachment.kt"
   mkdir -p "$t/ac_cloud-libs-shared/app"
@@ -259,6 +262,38 @@ else
 fi
 
 echo
+# ── case N1 (#1949): a second engine in Cloud Drive (the former owner) → FAIL ─────
+# Drive is scanned like any app now: the reader moved to libs:pdf, so a pdfium binding or a PdfRenderer back in Drive is a second engine.
+T="$WORK/n1_drive_second_engine"; build_fixture "$T"
+cat > "$T/ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/PdfEngine.kt" <<'EOF'
+import io.legere.pdfiumandroid.PdfiumCore
+class PdfEngine { val core = PdfiumCore(null) }
+EOF
+OUT="$(run_guard "$T")"; RC=$?
+if [ "$RC" -ne 1 ]; then fail "drive second engine: expected exit 1, got $RC: $OUT"
+elif ! contains "$OUT" "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/PdfEngine.kt"; then fail "drive second engine: guard did not name the file: $OUT"
+else ok "drive second engine: exit 1 (Drive is no longer the owner)"; fi
+
+# ── case N2 (#1949): a second engine in Cloud Notes → FAIL ──
+T="$WORK/n2_notes_second_engine"; build_fixture "$T"
+mkdir -p "$T/ac_cloud-notes/app/src/main/java"
+cat > "$T/ac_cloud-notes/app/src/main/java/Viewer.kt" <<'EOF'
+import android.graphics.pdf.PdfRenderer
+class Viewer { val r: PdfRenderer? = null }
+EOF
+OUT="$(run_guard "$T")"; RC=$?
+if [ "$RC" -ne 1 ] || ! contains "$OUT" "ac_cloud-notes/app/src/main/java/Viewer.kt"; then fail "notes second engine: expected exit 1 naming Viewer.kt, got $RC: $OUT"; else ok "notes second engine: exit 1"; fi
+
+# ── case N3 (#1949): an engine in a sibling shared lib → FAIL (only libs/pdf itself is the owner) ──
+T="$WORK/n3_sibling_lib_engine"; build_fixture "$T"
+mkdir -p "$T/ab_cloud-libs-shared/libs/pdf-other/src"
+cat > "$T/ab_cloud-libs-shared/libs/pdf-other/src/Second.kt" <<'EOF'
+import io.legere.pdfiumandroid.PdfiumCore
+class Second { val core = PdfiumCore(null) }
+EOF
+OUT="$(run_guard "$T")"; RC=$?
+if [ "$RC" -ne 1 ] || ! contains "$OUT" "libs/pdf-other/src/Second.kt"; then fail "sibling lib engine: expected exit 1 naming Second.kt, got $RC: $OUT"; else ok "sibling lib engine: exit 1"; fi
+
 if [ "$FAILURES" -eq 0 ]; then
   echo "PASS   10/10 cases"; exit 0
 else

@@ -1,4 +1,4 @@
-package com.diegonmarcos.clouddrive
+package com.diegonmarcos.cloudlib.pdf
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

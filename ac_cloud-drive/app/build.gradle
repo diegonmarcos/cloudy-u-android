@@ -805,9 +805,8 @@ dependencies {
     // user already granted. Kept so a later remote back end has somewhere to put a token
     // that is not SharedPreferences in the clear.
     implementation 'androidx.security:security-crypto:1.1.0'
-    // #577 the PDF reader's engine: pdfium through io.legere:pdfiumandroid, the ONLY in-process
-    // PDF renderer in the fleet (#463). The coordinate is build.json::pdf.engine, read above —
-    // and PdfEngine.kt is the only source file allowed to import it.
+    // #577 the PDF reader's engine (pdfium): since #1949 it lives in libs:pdf, which also reads build.json::pdf.engine; this app
+    // keeps the same declared coordinates on its own classpath. PdfEngine.kt (libs:pdf) is the only source file allowed to import the binding.
     pdfEngineCoordinates.each { implementation it }
 
     // The JVM unit phase (build.json::tests.unit) runs these on every ship: PdfConvertTest and

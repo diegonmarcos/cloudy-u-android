@@ -2,6 +2,7 @@ package com.diegonmarcos.clouddrive
 
 import android.content.Context
 import android.net.Uri
+import com.diegonmarcos.cloudlib.pdf.PdfEngine
 import com.diegonmarcos.clouddrive.files.FileOps
 import java.io.File
 import java.io.IOException
