@@ -1805,7 +1805,8 @@
         "network": "connected",
         "max_pages": 0,
         "max_subresources_per_page": 400,
-        "refresh_hours": 6
+        "refresh_hours": 6,
+        "start_delay_s": 20
       }
     },
     "settings": [

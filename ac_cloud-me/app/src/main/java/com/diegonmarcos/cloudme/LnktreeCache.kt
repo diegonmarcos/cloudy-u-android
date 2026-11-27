@@ -52,6 +52,8 @@ data class LnktreeCacheConfig(
     val interceptTimeoutMs: Int = 0,
     /** #1951 the periodic prefetch (WorkManager); 0 = at app start only. */
     val prefetchRefreshHours: Int = 0,
+    /** #1951 the app-start prefetch waits this long, so the first page opened paints before the downloads compete with it. */
+    val prefetchStartDelaySeconds: Int = 0,
 ) {
     val networkFirst: Boolean get() = strategy == NETWORK_FIRST
     /** #1951 a complete cached copy paints at once and the live page is fetched in parallel (swapped in when its hash differs); a page with no complete copy loads straight through the WebView's own network. */
@@ -92,6 +94,7 @@ data class LnktreeCacheConfig(
                 hardRefreshScope = o.optString("hard_refresh_scope", "page"),
                 interceptTimeoutMs = o.optInt("intercept_timeout_ms", 0).coerceAtLeast(0),
                 prefetchRefreshHours = p.optInt("refresh_hours", 0).coerceAtLeast(0),
+                prefetchStartDelaySeconds = p.optInt("start_delay_s", 0).coerceAtLeast(0),
                 strategy = o.optString("strategy", STALE_WHILE_REVALIDATE).ifEmpty { STALE_WHILE_REVALIDATE },
                 queueEnabled = o.optJSONObject("queue")?.optBoolean("enabled", false) ?: false,
                 queueMaxRetained = o.optJSONObject("queue")?.optInt("max_retained_pages", 0)?.coerceAtLeast(1) ?: 0,

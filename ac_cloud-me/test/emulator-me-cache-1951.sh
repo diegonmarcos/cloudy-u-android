@@ -58,6 +58,7 @@ measure() {  # SEC ID [TAG] -> sets MS SRC
     local line=""; for _ in $(seq 1 60); do line=$(wlog | grep "MAINFRAME_PAINT page=$id " | head -1); [ -n "$line" ] && break; sleep 0.5; done
     if [ -z "$line" ]; then MS=-1; else MS=$(awk -v a="$(echo "$line" | awk '{print $1}')" -v b="$t0" 'BEGIN{printf "%d",(a-b)*1000}'); fi
     wlog | grep "page=$id " | sed 's/.*CloudMeWeb: //' > "$OUT/page-$id-$TAG.log"
+    $T adb logcat -d | grep -E "FATAL EXCEPTION|Process $ME .*died|ANR in|Fatal signal" -A8 | cut -c1-220 > "$OUT/page-$id-$TAG.crash"; [ -s "$OUT/page-$id-$TAG.crash" ] || rm -f "$OUT/page-$id-$TAG.crash"
     SRC=$(wlog | grep "MAINFRAME_SOURCE page=$id " | tail -1 | sed 's/.*source=\([^ ]*\).*/\1/'); SRC="${SRC:-none}"
 }
 echo "| section | page | warm ms | warm source | cold ms | cold source |" > "$OUT/timings.md"; echo "|---|---|---|---|---|---|" >> "$OUT/timings.md"

@@ -150,7 +150,8 @@ object LnktreePrefetchScheduler {
         if (!cfg.enabled || !cfg.prefetchEnabled) return
         val net = if (cfg.prefetchNetwork == "unmetered") NetworkType.UNMETERED else NetworkType.CONNECTED
         val req = OneTimeWorkRequestBuilder<LnktreePrefetchWorker>()
-            .setConstraints(Constraints.Builder().setRequiredNetworkType(net).build()).build()
+            .setConstraints(Constraints.Builder().setRequiredNetworkType(net).build())
+            .setInitialDelay(cfg.prefetchStartDelaySeconds.toLong(), java.util.concurrent.TimeUnit.SECONDS).build()
         WorkManager.getInstance(ctx.applicationContext).enqueueUniqueWork(UNIQUE, ExistingWorkPolicy.KEEP, req)
         // #1951 and again every prefetch.refresh_hours, so a changed live page is stored before it is opened
         if (cfg.prefetchRefreshHours > 0) WorkManager.getInstance(ctx.applicationContext).enqueueUniquePeriodicWork(UNIQUE + "-periodic", androidx.work.ExistingPeriodicWorkPolicy.KEEP,
