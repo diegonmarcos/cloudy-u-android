@@ -57,7 +57,7 @@ measure() {  # SEC ID [TAG] -> sets MS SRC
     $T adb shell am start -W -n "$(launcher "$ME")" -f 0x14000000 --es shortcut_action "page:$sec/$id" >/dev/null
     local line=""; for _ in $(seq 1 60); do line=$(wlog | grep "MAINFRAME_PAINT page=$id " | head -1); [ -n "$line" ] && break; sleep 0.5; done
     if [ -z "$line" ]; then MS=-1; else MS=$(awk -v a="$(echo "$line" | awk '{print $1}')" -v b="$t0" 'BEGIN{printf "%d",(a-b)*1000}'); fi
-    wlog | grep "page=$id " | sed 's/.*CloudMeWeb: //' > "$OUT/page-$id-$TAG.log"
+    wlog | grep "page=$id " | awk -v b="$t0" '{m=$0; sub(/.*CloudMeWeb: /,"",m); printf "+%dms %s\n", ($1-b)*1000, m}' > "$OUT/page-$id-$TAG.log"   # ms after the am start
     $T adb logcat -d | grep -E "FATAL EXCEPTION|Process $ME .*died|ANR in|Fatal signal" -A8 | cut -c1-220 > "$OUT/page-$id-$TAG.crash"; [ -s "$OUT/page-$id-$TAG.crash" ] || rm -f "$OUT/page-$id-$TAG.crash"
     SRC=$(wlog | grep "MAINFRAME_SOURCE page=$id " | tail -1 | sed 's/.*source=\([^ ]*\).*/\1/'); SRC="${SRC:-none}"
 }
@@ -65,7 +65,9 @@ echo "| section | page | warm ms | warm source | cold ms | cold source |" > "$OU
 # pass 1, WARM: every page opened with its copy complete and the WebView's own data intact (nothing cleared yet, so no page pays for another's cold pass)
 while read -r sec id url <&3; do
     [ -n "$id" ] || continue
-    measure "$sec" "$id" warm; echo "$MS $SRC" > "$OUT/warm-$id.txt"; wms=$MS; wsrc=$SRC; sleep 3; { [ "$id" = personal ] || [ "$id" = prof-professional ]; } && shot "warm-$id"
+    # median of 3 opens (the shared emulator jitters); a failed open counts as 99999
+    vals=""; for k in 1 2 3; do measure "$sec" "$id" "warm$k"; [ "$MS" -ge 0 ] || MS=99999; vals="$vals $MS"; sleep 2; done
+    wms=$(echo $vals | tr ' ' '\n' | sort -n | sed -n 2p); wsrc=$SRC; echo "$wms $wsrc" > "$OUT/warm-$id.txt"; echo "warm opens of $id (ms):$vals" >> "$OUT/warm-all.txt"; sleep 1; { [ "$id" = personal ] || [ "$id" = prof-professional ]; } && shot "warm-$id"
     # source none = the page's own service worker answered the main frame before the app's cache (the mySocials pages are PWAs): reported, judged against a looser bound
     if [ "$wsrc" = cache-live ]; then
         if [ "$wms" -ge 0 ] && [ "$wms" -lt "$WARM_MAX_MS" ]; then ok "2: $id warm first paint ${wms} ms from the app cache"; else fail "2: $id warm ${wms} ms source=$wsrc (want < ${WARM_MAX_MS} ms)"; fi
