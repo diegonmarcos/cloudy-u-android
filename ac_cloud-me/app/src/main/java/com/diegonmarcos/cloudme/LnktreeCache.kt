@@ -478,7 +478,7 @@ object LnktreePrefetch {
                     if (r == null) continue
                     budget--
                     if (r.status == VIDEO_CAPPED) { store.put(p.id, u, r.mime, r.encoding, r.status, ByteArray(0)); continue }   // #1957 a video over the declared cap: a known skip, not a missing file
-                    if (r.status != 200) { if (r.status == 404 || r.status == 410) store.put(p.id, u, r.mime, r.encoding, r.status, r.body); continue }   // #1947 a definite 404 is stored as a tombstone, so one dead reference does not make the page incomplete for ever
+                    if (r.status != 200) { if (r.status in 400..499 && r.status != 408 && r.status != 429) store.put(p.id, u, r.mime, r.encoding, r.status, r.body); continue }   // #1947 a definite 404 is stored as a tombstone, so one dead reference does not make the page incomplete for ever
                     if (RefScan.isVideo(u, r.mime)) {
                         // #1957 the total video cap is judged here, in order (the batch was fetched in parallel)
                         if (cfg.videoMaxTotalBytes > 0 && store.videoBytes.get() + r.body.size > cfg.videoMaxTotalBytes) { store.put(p.id, u, r.mime, null, VIDEO_CAPPED, ByteArray(0)); continue }

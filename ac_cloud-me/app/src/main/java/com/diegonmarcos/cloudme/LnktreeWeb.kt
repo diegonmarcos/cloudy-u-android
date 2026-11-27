@@ -75,7 +75,7 @@ object LnktreeCache {
             if (code == 200 && cap > 0 && RefScan.isVideo(url, mime) && c.contentLengthLong > cap) return@runCatching Fetched(mime, null, LnktreePrefetch.VIDEO_CAPPED, ByteArray(0))
             val body = (if (code == 200) c.inputStream else null)?.use { it.readBytes() }
             if (body != null) Fetched(mime, enc, 200, body)
-            else if (code == 404 || code == 410) Fetched(mime, enc, code, ByteArray(0))   // #1947 a definite "not there" (a tombstone); every other failure stays null
+            else if (code in 400..499 && code != 408 && code != 429) Fetched(mime, enc, code, ByteArray(0))   // #1947 a definite "not there" (a tombstone); #1957 any definite 4xx (jsDelivr answers 403 for a file over its size limit); every other failure stays null
             else null
         } finally { c.disconnect() }
     }.getOrNull()
