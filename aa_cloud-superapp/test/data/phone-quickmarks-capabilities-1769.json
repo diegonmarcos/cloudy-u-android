@@ -456,6 +456,12 @@
     "pkg": "com.indeed.android.jobsearch",
     "label": "Indeed",
     "suggested": true
+   },
+   {
+    "capability": "professional network",
+    "pkg": "com.linkedin.android",
+    "label": "LinkedIn",
+    "suggested": true
    }
   ],
   "Real Estate": [

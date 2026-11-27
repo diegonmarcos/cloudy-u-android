@@ -200,7 +200,7 @@ for g in phone:
         check(all(r['pkg'] in {t['pkg'] for t in f['packages']} for r in miss), '%s / %s: every capability not installed is shown as a suggestion tile %s' % (g['title'], f['label'], [r['label'] for r in miss]))
 socials = [t['pkg'] for g in phone for f in g.get('folders', []) if f['label'] == 'Me-Pers' for t in f['packages']]   # #1956 the socials moved from Me-Prj to Me-Pers
 check(all(p_ in socials for p_ in ['com.instagram.android', 'com.instagram.barcelona', 'com.facebook.katana', 'com.linkedin.android', 'com.pinterest', 'com.bereal.ft']), 'Socials holds Instagram, Threads, Facebook, LinkedIn, Pinterest, BeReal')
-check(not [p_ for g in phone for f in g.get('folders', []) if f['label'] != 'Me-Pers' for t in f['packages'] for p_ in [t['pkg']] if p_ in socials], 'no social app sits in another folder')
+check(not [p_ for g in phone for f in g.get('folders', []) if f['label'] not in ('Me-Pers', 'Jobs & Business') for t in f['packages'] for p_ in [t['pkg']] if p_ in socials], 'no social app sits in another folder')  # #1960 LinkedIn is also in Jobs & Business (declared)
 want_pick = {'Mail': ['com.google.android.gm'], 'Chat': ['com.Slack'], 'Messenger': ['com.whatsapp.w4b'], 'Drive': ['com.google.android.apps.docs'], 'Browser': ['com.brave.browser'], 'Nav': ['com.google.android.apps.maps']}
 for st, pl in want_pick.items():
     got = [t['pkg'] for g in phone for f in g.get('folders', []) if f['label'] == st for t in f['packages']]
