@@ -62,14 +62,10 @@ measure() {  # SEC ID [TAG] -> sets MS SRC
     SRC=$(wlog | grep "MAINFRAME_SOURCE page=$id " | tail -1 | sed 's/.*source=\([^ ]*\).*/\1/'); SRC="${SRC:-none}"
 }
 echo "| section | page | warm ms | warm source | cold ms | cold source |" > "$OUT/timings.md"; echo "|---|---|---|---|---|---|" >> "$OUT/timings.md"
+# pass 1, WARM: every page opened with its copy complete and the WebView's own data intact (nothing cleared yet, so no page pays for another's cold pass)
 while read -r sec id url <&3; do
     [ -n "$id" ] || continue
-    measure "$sec" "$id" warm; wms=$MS; wsrc=$SRC; sleep 4; { [ "$id" = personal ] || [ "$id" = prof-professional ]; } && shot "warm-$id"
-    # truly cold: the app is stopped, the page's cache copy AND the WebView's own data (HTTP cache, service workers) are gone
-    $T adb shell am force-stop "$ME"; $T adb shell "rm -rf $CACHE/$id /data/data/$ME/app_webview"
-    measure "$sec" "$id" cold; cms=$MS; csrc=$SRC; sleep 2; { [ "$id" = personal ] || [ "$id" = prof-professional ]; } && shot "cold-$id"
-    for _ in $(seq 1 30); do wlog | grep -q "LIVE_CHECK page=$id " && break; sleep 2; done   # the background fill of the cache
-    echo "| $sec | $id | $wms | $wsrc | $cms | $csrc |" | tee -a "$OUT/timings.md"
+    measure "$sec" "$id" warm; echo "$MS $SRC" > "$OUT/warm-$id.txt"; wms=$MS; wsrc=$SRC; sleep 3; { [ "$id" = personal ] || [ "$id" = prof-professional ]; } && shot "warm-$id"
     # source none = the page's own service worker answered the main frame before the app's cache (the mySocials pages are PWAs): reported, judged against a looser bound
     if [ "$wsrc" = cache-live ]; then
         if [ "$wms" -ge 0 ] && [ "$wms" -lt "$WARM_MAX_MS" ]; then ok "2: $id warm first paint ${wms} ms from the app cache"; else fail "2: $id warm ${wms} ms source=$wsrc (want < ${WARM_MAX_MS} ms)"; fi
@@ -77,6 +73,15 @@ while read -r sec id url <&3; do
         if [ "$wms" -ge 0 ] && [ "$wms" -lt 6000 ]; then ok "2s: $id warm first paint ${wms} ms, source=$wsrc (service worker or WebView, not the app cache)"; else fail "2s: $id warm ${wms} ms source=$wsrc"; fi
     fi
 done 3<<<"$PAGES" > "$OUT/walk.log" 2>&1
+# pass 2, COLD: the app is stopped, the page's cache copy AND the WebView's own data (HTTP cache, service workers) are gone; then the background fill is awaited
+while read -r sec id url <&3; do
+    [ -n "$id" ] || continue
+    $T adb shell am force-stop "$ME"; $T adb shell "rm -rf $CACHE/$id /data/data/$ME/app_webview"
+    measure "$sec" "$id" cold; cms=$MS; csrc=$SRC; sleep 2; { [ "$id" = personal ] || [ "$id" = prof-professional ]; } && shot "cold-$id"
+    for _ in $(seq 1 30); do wlog | grep -q "LIVE_CHECK page=$id " && break; sleep 2; done
+    read -r wms wsrc < "$OUT/warm-$id.txt"
+    echo "| $sec | $id | $wms | $wsrc | $cms | $csrc |" | tee -a "$OUT/timings.md"
+done 3<<<"$PAGES" >> "$OUT/walk.log" 2>&1
 cat "$OUT/walk.log"; grep -q '^FAIL' "$OUT/walk.log" && rc=1
 
 # 4. a changed live page swaps in
