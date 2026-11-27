@@ -48,8 +48,11 @@ object LnktreeCache {
             val ct = c.contentType.orEmpty()
             val mime = ct.substringBefore(';').trim().ifEmpty { "application/octet-stream" }
             val enc = Regex("charset=([^;\\s]+)", RegexOption.IGNORE_CASE).find(ct)?.groupValues?.get(1)
-            val body = (if (c.responseCode == 200) c.inputStream else null)?.use { it.readBytes() }
-            if (body == null) null else Fetched(mime, enc, 200, body)
+            val code = c.responseCode
+            val body = (if (code == 200) c.inputStream else null)?.use { it.readBytes() }
+            if (body != null) Fetched(mime, enc, 200, body)
+            else if (code == 404 || code == 410) Fetched(mime, enc, code, ByteArray(0))   // #1947 a definite "not there" (a tombstone); every other failure stays null
+            else null
         } finally { c.disconnect() }
     }.getOrNull()
 
@@ -62,14 +65,18 @@ object LnktreeCache {
         val target = runCatching { java.net.URI(u) }.getOrNull() ?: return null
         if (target.scheme != "https" || !target.host.equals(base.host, true) || target.port != base.port) return null
         val s = store(ctx)
-        val served = LnktreeResolver.serve(pageId, u, cfg, s, ::fetch) { stale -> revalidate(s, pageId, stale) } ?: return null
-        return WebResourceResponse(served.mime, served.encoding, served.status, "OK", mapOf("Access-Control-Allow-Origin" to "*"), served.body.inputStream())
+        val served = LnktreeResolver.serve(pageId, u, cfg, s, ::fetch, { stale -> revalidate(s, pageId, stale, pageUrl) }, pageUrl) ?: return null
+        return WebResourceResponse(served.mime, served.encoding, served.status, if (served.status == 200) "OK" else "Not Found", mapOf("Access-Control-Allow-Origin" to "*"), served.body.inputStream())
     }
 
-    private fun revalidate(s: LnktreeCacheStore, pageId: String, url: String) {
+    private fun revalidate(s: LnktreeCacheStore, pageId: String, url: String, pageUrl: String) {
         if (!refreshing.add("$pageId $url")) return
         background.execute {
-            try { fetch(url)?.let { s.put(pageId, url, it.mime, it.encoding, it.status, it.body) } }
+            try {
+                // #1947 the page itself: refetch it WITH its CSS/JS (completes an incomplete entry); a file: just that file
+                if (url == pageUrl) LnktreePrefetch.run(listOf(LnktreePage(pageId, url)), config, s, ::fetch)
+                else fetch(url)?.let { s.put(pageId, url, it.mime, it.encoding, it.status, it.body) }
+            }
             finally { refreshing.remove("$pageId $url") }
         }
     }

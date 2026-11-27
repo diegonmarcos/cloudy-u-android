@@ -219,6 +219,46 @@ class LnktreeCacheTest {
         assertEquals(CacheState.FRESH, s.state("leafy", "https://l.example/", cfg.ttlMs))
     }
 
+    // ---- #1947 incomplete pages (HTML cached, CSS/JS not) are never served
+
+    private val page = "https://p.example/"
+    private val pageHtml = "<link rel=\"stylesheet\" href=\"style.css?v=1.1\"><script src=\"/app.js\"></script>"
+
+    @Test fun `cached html without its css or js is incomplete and is not served`() {
+        val s = store(); put(s, "pers", page, pageHtml)
+        assertFalse(s.complete("pers", page))
+        val refreshed = ArrayList<String>()
+        assertNull(LnktreeResolver.serve("pers", page, cfg, s, { error("no blocking fetch") }, { refreshed += it }, page))
+        assertEquals("the page is completed in the background", listOf(page), refreshed)
+    }
+
+    @Test fun `html is complete only once every stylesheet and script is stored under the key the page asks for`() {
+        val s = store(); put(s, "pers", page, pageHtml)
+        s.put("pers", "https://p.example/style.css", "text/css", null, 200, "a{}".toByteArray())   // another key than style.css?v=1.1
+        assertFalse(s.complete("pers", page))
+        s.put("pers", "https://p.example/style.css?v=1.1", "text/css", null, 200, "a{}".toByteArray())
+        s.put("pers", "https://p.example/app.js", "application/javascript", null, 200, "1".toByteArray())
+        assertTrue(s.complete("pers", page))
+        assertNotNull(LnktreeResolver.serve("pers", page, cfg, s, { error("complete: served from disk") }, {}, page))
+    }
+
+    @Test fun `a sub-resource miss goes to the network at once and is filled in the background, never a blocking fetch`() {
+        val s = store(); val refreshed = ArrayList<String>()
+        assertNull(LnktreeResolver.serve("pers", "https://p.example/data.json", cfg, s, { error("blocking fetch") }, { refreshed += it }, page))
+        assertEquals(listOf("https://p.example/data.json"), refreshed)
+    }
+
+    @Test fun `a prefetch whose css failed leaves the page planned again, and a 404 tombstone does not`() {
+        val s = store()
+        LnktreePrefetch.run(listOf(LnktreePage("pers", page)), cfg, s) { if (it == page) html(pageHtml) else null }
+        assertEquals(listOf("pers"), PrefetchPlanner.plan(listOf(LnktreePage("pers", page)), cfg, s).map { it.id })
+        LnktreePrefetch.run(listOf(LnktreePage("pers", page)), cfg, s) {
+            if (it == page) html(pageHtml) else Fetched("text/plain", null, 404, ByteArray(0))
+        }
+        assertTrue(s.complete("pers", page))
+        assertTrue(PrefetchPlanner.plan(listOf(LnktreePage("pers", page)), cfg, s).isEmpty())
+    }
+
     // ---- reference scan
 
     @Test fun `RefScan keeps only same-origin css, js and images`() {

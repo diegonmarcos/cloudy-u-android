@@ -145,6 +145,16 @@ class LnktreeCacheStore(val root: File, private val clock: () -> Long = System::
             p.getProperty("fetchedAt").toLong(), body)
     }.getOrNull()
 
+    /**
+     * #1947 a cached HTML page is COMPLETE only when every stylesheet and script it names is stored too (a 404 tombstone counts: the file
+     * is known to be absent). HTML cached without its CSS/JS is what drew Personal unstyled on a slow network. Non-HTML entries are complete.
+     */
+    fun complete(pageId: String, url: String): Boolean {
+        val e = get(pageId, url) ?: return false
+        if (!e.mime.contains("html", ignoreCase = true)) return true
+        return RefScan.critical(runCatching { String(e.body.readBytes(), Charsets.UTF_8) }.getOrDefault(""), url).all { get(pageId, it) != null }
+    }
+
     fun state(pageId: String, url: String, ttlMs: Long): CacheState =
         CacheTtl.decide(get(pageId, url)?.fetchedAt, clock(), ttlMs)
 
@@ -214,7 +224,9 @@ object PrefetchPlanner {
     fun plan(pages: List<LnktreePage>, cfg: LnktreeCacheConfig, store: LnktreeCacheStore): List<LnktreePage> {
         if (!cfg.enabled || !cfg.prefetchEnabled) return emptyList()
         val byState = pages.filter { cfg.caches(it.id) }.associateWith { store.state(it.id, it.url, cfg.ttlMs) }
-        val missing = byState.filterValues { it == CacheState.MISSING }.keys
+        // #1947 a fresh page whose CSS/JS never arrived is not valid: it is planned again
+        val incomplete = byState.filter { (p, st) -> st == CacheState.FRESH && !store.complete(p.id, p.url) }.keys
+        val missing = byState.filterValues { it == CacheState.MISSING }.keys + incomplete
         val stale = byState.filterValues { it == CacheState.STALE }.keys
         return (missing + stale).take(cfg.prefetchMaxPages)
     }
@@ -240,6 +252,12 @@ object RefScan {
             }
         }
         return resolve(raw, base)
+    }
+
+    /** #1947 the render-critical subset of [html]: stylesheets and scripts (what the page cannot be drawn or run without). */
+    fun critical(html: String, base: String): List<String> = html(html, base).filter {
+        val path = runCatching { URI(it).path.orEmpty().lowercase() }.getOrDefault("")
+        path.endsWith(".css") || path.endsWith(".js") || path.endsWith(".mjs")
     }
 
     /** The files a stylesheet pulls in (`url(...)`, `@import`), same-origin as [cssUrl]. */
@@ -284,8 +302,9 @@ object LnktreePrefetch {
         while (queue.isNotEmpty() && budget > 0) {
             val u = queue.removeFirst()
             if (!seen.add(CacheKey.normalize(u))) continue
-            val r = fetch(u)?.takeIf { it.status == 200 } ?: continue
+            val r = fetch(u) ?: continue
             budget--
+            if (r.status != 200) { if (r.status == 404 || r.status == 410) store.put(p.id, u, r.mime, r.encoding, r.status, r.body); continue }   // #1947 a definite 404 is stored as a tombstone, so one dead reference does not make the page incomplete for ever
             store.put(p.id, u, r.mime, r.encoding, r.status, r.body)
             if (r.mime.contains("css")) queue.addAll(RefScan.css(String(r.body, Charsets.UTF_8), u))
         }
@@ -304,12 +323,16 @@ object LnktreeResolver {
      */
     fun serve(
         pageId: String, url: String, cfg: LnktreeCacheConfig, store: LnktreeCacheStore,
-        fetch: (String) -> Fetched?, revalidate: (String) -> Unit,
+        fetch: (String) -> Fetched?, revalidate: (String) -> Unit, pageUrl: String? = null,
     ): Served? {
         store.get(pageId, url)?.let { e ->
+            // #1947 cached HTML without its CSS/JS is incomplete: not served (the WebView's network loads the whole page); it is completed in the background
+            if (!store.complete(pageId, url)) { revalidate(url); return null }
             if (store.state(pageId, url, cfg.ttlMs) == CacheState.STALE) revalidate(url)
             return Served(e.mime, e.encoding, e.status, e.body)
         }
+        // #1947 a sub-resource miss never blocks the WebView (a 10 s connect + 20 s read wait, then the network again): it goes to the WebView's network at once and is filled in the background
+        if (pageUrl != null && CacheKey.normalize(url) != CacheKey.normalize(pageUrl)) { revalidate(url); return null }
         val r = fetch(url)?.takeIf { it.status == 200 } ?: return null
         store.put(pageId, url, r.mime, r.encoding, r.status, r.body)
         store.trim(cfg.maxBytes)
