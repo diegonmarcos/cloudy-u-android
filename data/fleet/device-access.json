@@ -93,117 +93,138 @@
    "cloud-superapp-mcp",
    "cloudy-android-mcp"
   ],
-  "node": "infra/personal/control",
+  "node": "infra/personal/gadgets",
   "tools": [
+   {
+    "tool": "peers.mesh_health",
+    "legacy": "superapp_mesh_health",
+    "tree": "c3_infra personal.gadgets.peers_mesh_health",
+    "door": "debug",
+    "routes": []
+   },
+   {
+    "tool": "peers.mesh_tools",
+    "legacy": "superapp_mesh_tools",
+    "tree": "c3_infra personal.gadgets.peers_mesh_tools",
+    "door": "debug",
+    "routes": []
+   },
+   {
+    "tool": "peers.mesh_call",
+    "legacy": "superapp_mesh_call",
+    "tree": "c3_infra personal.gadgets.peers_mesh_call",
+    "door": "debug",
+    "routes": []
+   },
    {
     "tool": "peers.apps",
     "legacy": "superapp_apps",
-    "tree": "c3_infra personal.control.peers_apps",
+    "tree": "c3_infra personal.gadgets.peers_apps",
     "door": "debug",
     "routes": []
    },
    {
     "tool": "peers.logcat",
     "legacy": "superapp_logcat",
-    "tree": "c3_infra personal.control.peers_logcat",
+    "tree": "c3_infra personal.gadgets.peers_logcat",
     "door": "debug",
     "routes": []
    },
    {
     "tool": "peers.crashes",
     "legacy": "superapp_crashes",
-    "tree": "c3_infra personal.control.peers_crashes",
+    "tree": "c3_infra personal.gadgets.peers_crashes",
     "door": "debug",
     "routes": []
    },
    {
     "tool": "peers.docs",
     "legacy": "superapp_docs",
-    "tree": "c3_infra personal.control.peers_docs",
+    "tree": "c3_infra personal.gadgets.peers_docs",
     "door": "debug",
     "routes": []
    },
    {
     "tool": "peers.wake",
     "legacy": "superapp_wake",
-    "tree": "c3_infra personal.control.peers_wake",
+    "tree": "c3_infra personal.gadgets.peers_wake",
     "door": "debug",
     "routes": []
    },
    {
     "tool": "peers.call",
     "legacy": "superapp_call",
-    "tree": "c3_infra personal.control.peers_call",
+    "tree": "c3_infra personal.gadgets.peers_call",
     "door": "debug",
     "routes": []
    },
    {
     "tool": "peers.shell",
     "legacy": "superapp_shell",
-    "tree": "c3_infra personal.control.peers_shell",
+    "tree": "c3_infra personal.gadgets.peers_shell",
     "door": "debug",
     "routes": []
    },
    {
     "tool": "peers.logcat_full",
     "legacy": "superapp_logcat_full",
-    "tree": "c3_infra personal.control.peers_logcat_full",
+    "tree": "c3_infra personal.gadgets.peers_logcat_full",
     "door": "debug",
     "routes": []
    },
    {
     "tool": "peers.grant",
     "legacy": "superapp_grant",
-    "tree": "c3_infra personal.control.peers_grant",
+    "tree": "c3_infra personal.gadgets.peers_grant",
     "door": "debug",
     "routes": []
    },
    {
     "tool": "peers.force_stop",
     "legacy": "superapp_force_stop",
-    "tree": "c3_infra personal.control.peers_force_stop",
+    "tree": "c3_infra personal.gadgets.peers_force_stop",
     "door": "debug",
     "routes": []
    },
    {
     "tool": "peers.input",
     "legacy": "superapp_input",
-    "tree": "c3_infra personal.control.peers_input",
+    "tree": "c3_infra personal.gadgets.peers_input",
     "door": "debug",
     "routes": []
    },
    {
     "tool": "peers.screencap",
     "legacy": "superapp_screencap",
-    "tree": "c3_infra personal.control.peers_screencap",
+    "tree": "c3_infra personal.gadgets.peers_screencap",
     "door": "debug",
     "routes": []
    },
    {
     "tool": "peers.adb_pair",
     "legacy": "superapp_adb_pair",
-    "tree": "c3_infra personal.control.peers_adb_pair",
+    "tree": "c3_infra personal.gadgets.peers_adb_pair",
     "door": "debug",
     "routes": []
    },
    {
     "tool": "peers.adb_autoconnect",
     "legacy": "superapp_adb_autoconnect",
-    "tree": "c3_infra personal.control.peers_adb_autoconnect",
+    "tree": "c3_infra personal.gadgets.peers_adb_autoconnect",
     "door": "debug",
     "routes": []
    },
    {
     "tool": "peers.adb_status",
     "legacy": "superapp_adb_status",
-    "tree": "c3_infra personal.control.peers_adb_status",
+    "tree": "c3_infra personal.gadgets.peers_adb_status",
     "door": "debug",
     "routes": []
    },
    {
     "tool": "obs.debug.phone_public",
     "legacy": null,
-    "tree": "c3_infra personal.control.obs_debug_phone_public",
+    "tree": "c3_infra personal.gadgets.obs_debug_phone_public",
     "door": "mesh",
     "routes": [
      {
@@ -216,7 +237,7 @@
    {
     "tool": "obs.debug.phone_mesh",
     "legacy": null,
-    "tree": "c3_infra personal.control.obs_debug_phone_mesh",
+    "tree": "c3_infra personal.gadgets.obs_debug_phone_mesh",
     "door": "mesh",
     "routes": [
      {
@@ -235,7 +256,7 @@
    {
     "tool": "obs.debug.phone_logs",
     "legacy": null,
-    "tree": "c3_infra personal.control.obs_debug_phone_logs",
+    "tree": "c3_infra personal.gadgets.obs_debug_phone_logs",
     "door": "mesh",
     "routes": [
      {

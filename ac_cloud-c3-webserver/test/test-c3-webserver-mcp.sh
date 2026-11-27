@@ -5,6 +5,7 @@
 #   MC2 data/mcp-catalogue.json is the generator's output shape: every server has name, auth, tools_count; cloudy-c3-mcp lists every tool
 #       with the API route (tree path) of its page, a tree method and a node that exists in ac_cloud-c3/data/c3_hierarchy.json.
 #   MC3 the merged phone tools are the peers-control group of cloudy-c3-mcp, and cloudy-android-mcp / cloud-superapp-mcp are its aliases.
+#       #1835 added peers.mesh_call / mesh_health / mesh_tools to that group (cloudy-u-containers 8032e295); the set stays exact.
 #   MC4 when CONTAINERS_DIR (cloudy-u-containers) and LINUX_REPO (the cloudy-u-linux da_my-ai/data/claude dir) are set, the committed file
 #       equals a fresh run of data/gen_mcp_catalogue.py (the page is generated, never typed).
 #   M   a mutation of each fails the check.
@@ -50,7 +51,7 @@ else:
         if t["node"] not in nodes: bad.append("MC2 tool %s names node %s which the hierarchy does not have" % (t["tool"], t["node"]))
         if not t["route"].startswith("/" + t["node"]) or not t["tree"].startswith("c3_"): bad.append("MC2 tool %s has no route or tree method" % t["tool"])
     peers = {t["tool"] for t in c3["tools"] if t["tool"].startswith("peers.")}
-    want = {"peers." + x for x in "apps logcat crashes docs wake call shell logcat_full grant force_stop input screencap adb_pair adb_autoconnect adb_status".split()}
+    want = {"peers." + x for x in "apps logcat crashes docs wake call shell logcat_full grant force_stop input screencap adb_pair adb_autoconnect adb_status mesh_call mesh_health mesh_tools".split()}
     if peers != want: bad.append("MC3 the peers-control tools are %s, want %s" % (sorted(peers), sorted(want)))
     if not {"cloudy-android-mcp", "cloud-superapp-mcp"} <= set(c3["aliases"]): bad.append("MC3 cloudy-android-mcp and cloud-superapp-mcp are not aliases of cloudy-c3-mcp")
 if "cloudy-android-mcp" in srv: bad.append("MC3 cloudy-android-mcp is still a server of its own")
@@ -77,7 +78,7 @@ PY
   if python3 -I "$WORK/check.py" "$d" >/dev/null 2>&1; then fail "M: '$1' stayed GREEN"; else pass "M: '$1' goes red"; fi
 }
 mutate "MCP no longer first"            build.json '{ "tab": "api", "id": "mcp", "label": "MCP", "route": "/__app__/api/sub/api-mcp" },' ''
-mutate "a tool on a node that is gone"  data/mcp-catalogue.json '"node": "infra/personal/control"' '"node": "infra/personal/gone"'
+mutate "a tool on a node that is gone"  data/mcp-catalogue.json '"node": "infra/personal/gadgets"' '"node": "infra/personal/gone"'
 mutate "an alias dropped"               data/mcp-catalogue.json '"cloudy-android-mcp"' '"cloudy-android-x"'
 mutate "the route row lost"             server/src/app.rs 'path: "/__app__/api/sub/api-mcp"' 'path: "/__app__/api/sub/api-gone"'
 

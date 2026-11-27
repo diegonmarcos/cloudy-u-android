@@ -8,7 +8,7 @@ Nothing is typed here. Every row is read from a declaration that already exists:
   1_cicd/src/data/debug-ports.json                  the on-phone API gateway and each member's port
   ac_cloud-c3-webserver/data/api-ipc-map.json       the webserver's own routes, the unified /ipc holder (scopes, peers, registry)
   ac_cloud-c3-webserver/build.json                  api.ipc (the per-app IPC templates), api.engine_action, mesh (the listener's routes)
-  ac_cloud-c3-webserver/data/mcp-catalogue.json     the MCP tools that act on this device (node infra/personal/control)
+  ac_cloud-c3-webserver/data/mcp-catalogue.json     the MCP tools that act on this device (node infra/personal/gadgets, #1972)
   */build.json::api_endpoints                       each app's declared endpoints (cloud-android-apps-mcp-api.py consolidates them)
   aa_cloud-superapp/data/fleet-identity.json        the shared-uid groups (apps that reach each other's files with no IPC)
   1_cicd/src/data/adb-owner.json                    the one app that owns the ADB shell
@@ -36,7 +36,7 @@ HOLDER = "ac_cloud-c3-webserver/build.json"
 CATALOGUE = "ac_cloud-c3-webserver/data/mcp-catalogue.json"
 IDENTITY = "aa_cloud-superapp/data/fleet-identity.json"
 ADB_OWNER = "1_cicd/src/data/adb-owner.json"
-DEVICE_NODE = "infra/personal/control"
+DEVICE_NODE = "infra/personal/gadgets"   # #1972 Control was merged into Gadgets (peers.*)
 
 
 def load(root, rel):
