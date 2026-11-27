@@ -3213,10 +3213,14 @@ private fun SyncErrorBanner(message: String, lastSync: String, onRetry: () -> Un
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(lastSync, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                // The last sync and Retry share a line; the log actions keep the full width below (beside them, Retry squeezed
+                // "Copy all" into a one-letter column).
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(lastSync, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    TextButton(onClick = onRetry) { Text(stringResource(R.string.inbox_retry)) }
+                }
                 ErrorActionsWithLog()
             }
-            TextButton(onClick = onRetry) { Text(stringResource(R.string.inbox_retry)) }
         }
     }
 }
