@@ -247,6 +247,11 @@ walk() {
     esac
     # a destructive control opens its confirm: it is CANCELLED, never confirmed
     if dump | grep -q 'text="Confirm"'; then tap_text '^Cancel$' || adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 1; fi
+    # #1934 a bulk control may open a window over the sheet (Last report, Logs, the conflict solver): BACK closes it; if the sheet went with it, reopen it on the same tab
+    if [ "$phase" = bulk ] && ! has_rid git_bulk_scope_bar; then
+      for b in 1 2 3; do adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 2; has_rid git_bulk_scope_bar && break; done
+      has_rid git_bulk_scope_bar || { open_bulk; tap_rid "git_sheet_tab_$curtab" >/dev/null; sleep 1; }
+    fi
     ok=$((ok+1)); printf '%s:%s\t%s\t%s\ttapped\twalk/%s-%s-%s.png\n' "$phase" "$cloned" "$id" "$label" "$phase" "$cloned" "$id" >> "$OUT/walk.tsv"
   done
   exec 3<&-
@@ -297,14 +302,6 @@ if want notcloned; then
   header_checks per no "$NOTCLONED"
   tap_rid git_sheet_hd.clone_now >/dev/null || { miss=$((miss+1)); printf 'per:no\thd.clone_now\tClone Now\tNOT FOUND\t-\n' >> "$OUT/walk.tsv"; }
   walk per no "$NOTCLONED"; closers per no "$NOTCLONED"; close_sheet notcloned
-fi
-# 3. the all-repos sheet over the 3 fixture repositories: More is pinned in the toolbar (tag sync_git_top_group_more)
-if want all-repos; then
-  tap_rid sync_git_top_group_more >/dev/null || { snap no-more; fail "no More menu"; }; sleep 1
-  # the More menu is a long scrolling dropdown: the item sits below the fold
-  for i in 1 2 3 4 5; do tap_text '^All repos sheet$' && break; adb shell input swipe $((W*2/3)) $((H*70/100)) $((W*2/3)) $((H*30/100)) 300 < /dev/null; sleep 1; done
-  sleep 3; sheet_open || { snap no-bulk; fail "the all-repos sheet did not open"; }
-  walk bulk yes "$NAME"
 fi
 
 # 4. #1934 THE BULK PHASES: the top-nav menu's bulk sheet, one phase per scope (All Repos | Selected Ones | Cloned Ones) over the 3 cloned fixtures + the not-cloned listing.
@@ -408,6 +405,14 @@ bulk_phase() {
   tap_text '^Cancel$' || adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 1
   close_bulk
 }
+# 3. the all-repos sheet over the 3 fixture repositories: More is pinned in the toolbar (tag sync_git_top_group_more)
+if want all-repos; then
+  tap_rid sync_git_top_group_more >/dev/null || { snap no-more; fail "no More menu"; }; sleep 1
+  # the More menu is a long scrolling dropdown: the item sits below the fold
+  for i in 1 2 3 4 5; do tap_text '^All repos sheet$' && break; adb shell input swipe $((W*2/3)) $((H*70/100)) $((W*2/3)) $((H*30/100)) 300 < /dev/null; sleep 1; done
+  sleep 3; sheet_open || { snap no-bulk; fail "the all-repos sheet did not open"; }
+  walk bulk yes "$NAME"
+fi
 for sc in all selected cloned; do want bulk-$sc && bulk_phase $sc; done
 
 echo "control sheet walk: $ok controls verified, $miss failed" | tee "$OUT/summary.txt"
