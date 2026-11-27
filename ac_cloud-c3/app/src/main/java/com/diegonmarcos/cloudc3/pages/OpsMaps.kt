@@ -40,23 +40,24 @@ object OpsMaps {
     fun rows(decl: JsonObject, id: String): List<Section> =
         decl.obj("maps")?.obj(id)?.arr("sections").orEmpty().map { Section(it.str("title"), it.arr("rows").map(::row)) }.filter { it.rows.isNotEmpty() }
 
-    fun build(id: String, s: Sources): List<Section> =
+    /** [cap] overrides the declared `edge_cap` (#1955 A: the Graph builds from uncapped sections and passes Int.MAX_VALUE). */
+    fun build(id: String, s: Sources, cap: Int? = null): List<Section> =
         s.decl.obj("maps")?.obj(id)?.arr("sections").orEmpty().flatMap { sec ->
             val title = sec.str("title")
             val from = sec.str("from")
-            if (from.isNotBlank()) derived(from, title, sec, s) else listOf(Section(title, sec.arr("rows").map(::row)))
+            if (from.isNotBlank()) derived(from, title, sec, s, cap) else listOf(Section(title, sec.arr("rows").map(::row)))
         }.filter { it.rows.isNotEmpty() }
 
     private fun row(o: JsonObject) = Row(o.str("name"), o.str("note"), o.str("state"),
         o.arr("edges").map { Edge(it.str("to"), it.str("label"), it.str("state")) })
 
     /** At most the declared `edge_cap` edges, then one "+n more" edge, so a tier with sixty members stays a row. */
-    private fun capped(s: Sources, edges: List<Edge>): List<Edge> {
-        val cap = (s.decl["edge_cap"] as? JsonPrimitive)?.intOrNull ?: edges.size
+    private fun capped(s: Sources, edges: List<Edge>, over: Int? = null): List<Edge> {
+        val cap = over ?: (s.decl["edge_cap"] as? JsonPrimitive)?.intOrNull ?: edges.size
         return if (edges.size <= cap) edges else edges.take(cap) + Edge("+${edges.size - cap} more")
     }
 
-    private fun derived(from: String, title: String, sec: JsonObject, s: Sources): List<Section> = when (from) {
+    private fun derived(from: String, title: String, sec: JsonObject, s: Sources, cap: Int? = null): List<Section> = when (from) {
         "infra_wireguard" -> s.infra.subnets.map { n ->
             Section("$title: ${n.name} ${n.cidr}", n.peers.map { p ->
                 Row(p.name, listOf(p.ip, p.role).filter { it.isNotBlank() }.joinToString(" "), "",
@@ -70,11 +71,11 @@ object OpsMaps {
                 listOf(Edge(s.mesh.arr("nodes").firstOrNull { it.str("role") == "hub" }?.str("alias").orEmpty(), "$peers active peers")))
         }))
         "auth_routes" -> listOf(Section(title, s.infra.routes.groupBy { it.auth }.map { (tier, rs) ->
-            Row(tier, s.decl.obj("auth_kinds")?.str(tier).orEmpty(), "", capped(s, rs.map { Edge(it.host, it.service) }))
+            Row(tier, s.decl.obj("auth_kinds")?.str(tier).orEmpty(), "", capped(s, rs.map { Edge(it.host, it.service) }, cap))
         }))
         "auth_containers" -> listOf(Section(title, s.catalog.entries.groupBy { it.authType }.map { (kind, es) ->
             Row(kind.ifBlank { "-" }, "${es.size} containers - ${s.decl.obj("auth_kinds")?.str(kind).orEmpty()}", "",
-                capped(s, es.map { Edge(it.name, it.host) }))
+                capped(s, es.map { Edge(it.name, it.host) }, cap))
         }))
         "caddy_routes" -> s.infra.routes.groupBy { it.vm }.map { (vm, rs) ->
             Section("$title: $vm", rs.map { r ->

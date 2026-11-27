@@ -503,5 +503,362 @@
         }
       ]
     }
+  },
+  "viewers": {
+    "_doc": "#1955 A Table|Graph on every Ops > Network subpage. pages.<id>.graph is the ONLY source of what the graph may draw: rows of the bound map/tree/mesh, their edges, and the roots/depends declared here. NetGraph builds, NetGraphLayout places (no x/y is typed), NetLive colours from existing API answers and device probes only; a node with no live binding is grey 'declared'.",
+    "modes": [
+      "table",
+      "graph"
+    ],
+    "default": "table",
+    "node_w": 168,
+    "node_h": 56,
+    "gap_x": 72,
+    "gap_y": 12,
+    "lane_header": 28,
+    "collapse_over": 12,
+    "bundle_min": 3,
+    "pulse_max_edges": 40,
+    "live_ttl_s": 60,
+    "status": {
+      "handshake_ok_s": 180,
+      "handshake_warn_s": 900,
+      "stale_is": {
+        "hub": "down",
+        "spoke": "down",
+        "client": "unknown"
+      }
+    },
+    "pages": {
+      "net_wg": {
+        "graph": {
+          "from": "map",
+          "map": "wg",
+          "columns": [
+            "Clients",
+            "Hubs",
+            "Fleet VMs"
+          ],
+          "lanes": [
+            {
+              "id": "mesh",
+              "label": "Mesh"
+            },
+            {
+              "id": "transport",
+              "label": "Transports and planned"
+            }
+          ],
+          "resolve": [
+            "vm_id_to_alias"
+          ],
+          "sections": [
+            {
+              "match": "Subnets: hub and peers",
+              "ns": "host",
+              "lane": "mesh",
+              "column_by": {
+                "note_has": {
+                  "client": 0,
+                  "hub": 1,
+                  "spoke": 2
+                }
+              },
+              "targets": [
+                "host"
+              ],
+              "target_ns": "host",
+              "edge_kind": "wg_tunnel",
+              "dep": "from_needs_to",
+              "bind": [
+                "vm",
+                "tunnel"
+              ],
+              "layer_by": "edge_label"
+            },
+            {
+              "match": "Transports",
+              "ns": "transport",
+              "lane": "transport",
+              "column": 1,
+              "targets": [
+                "host"
+              ],
+              "edge_kind": "transport",
+              "dep": "none"
+            },
+            {
+              "match": "Planned",
+              "ns": "planned",
+              "lane": "transport",
+              "column": 0,
+              "targets": [
+                "transport",
+                "host"
+              ],
+              "edge_kind": "planned",
+              "dep": "none"
+            }
+          ]
+        }
+      },
+      "net_auth": {
+        "graph": {
+          "from": "map",
+          "map": "auth",
+          "columns": [
+            "Gates",
+            "Tiers and kinds",
+            "Protected"
+          ],
+          "lanes": [
+            {
+              "id": "edge",
+              "label": "Edge"
+            },
+            {
+              "id": "containers",
+              "label": "Containers"
+            }
+          ],
+          "sections": [
+            {
+              "match": "Edge tier of each route",
+              "ns": "tier",
+              "lane": "edge",
+              "column": 1,
+              "target_ns": "host",
+              "target_column": 2,
+              "cluster_targets": true,
+              "edge_kind": "tier_member",
+              "dep": "to_needs_from",
+              "target_bind": [
+                "host"
+              ]
+            },
+            {
+              "match": "Auth kind of each container",
+              "ns": "authkind",
+              "lane": "containers",
+              "column": 1,
+              "target_ns": "container",
+              "target_column": 2,
+              "cluster_targets": true,
+              "edge_kind": "kind_member",
+              "dep": "to_needs_from",
+              "target_bind": [
+                "container"
+              ]
+            },
+            {
+              "match": "Gates",
+              "ns": "gate",
+              "lane_by_target": true,
+              "column": 0,
+              "targets": [
+                "tier",
+                "authkind",
+                "container"
+              ],
+              "edge_kind": "auth_forward",
+              "dep": "to_needs_from",
+              "bind_rows": {
+                "Authelia": "container:authelia"
+              }
+            }
+          ]
+        }
+      },
+      "net_dns": {
+        "graph": {
+          "from": "map",
+          "map": "dns",
+          "columns": [
+            "Public hosts",
+            "Service",
+            "Mesh names",
+            "Address"
+          ],
+          "lanes": {
+            "by": "vm"
+          },
+          "resolve": [
+            "vm_id_to_alias",
+            "wg_ip_to_alias"
+          ],
+          "cluster_by": "lane_column",
+          "sections": [
+            {
+              "match": "Caddy routes by VM",
+              "ns": "host",
+              "column": 0,
+              "lane_from": "edge_label",
+              "target_ns": "service",
+              "target_column": 1,
+              "edge_kind": "reverse_proxy",
+              "dep": "from_needs_to",
+              "bind": [
+                "host"
+              ],
+              "target_bind": [
+                "container"
+              ]
+            },
+            {
+              "match": "Mesh DNS",
+              "ns": "meshname",
+              "column": 2,
+              "lane_from": "edge_to",
+              "target_ns": "address",
+              "target_column": 3,
+              "edge_kind": "dns_a",
+              "dep": "from_needs_to",
+              "bind": [
+                "host"
+              ],
+              "target_bind": [
+                "vm"
+              ]
+            }
+          ],
+          "depends": [
+            {
+              "id": "dep:mesh-dns-primary",
+              "from_section": "Mesh DNS",
+              "on": "address:{infra.dns.primary}",
+              "label": "resolved by"
+            }
+          ]
+        }
+      },
+      "net_network": {
+        "graph": {
+          "from": "topology",
+          "view": "network",
+          "columns": [
+            "Subnet",
+            "Peer",
+            "Group",
+            "Route or rule",
+            "Container"
+          ],
+          "lanes": {
+            "by": "root"
+          },
+          "open_depth": 2,
+          "cluster_kind": "group",
+          "edge_label": {
+            "peer": "peer",
+            "group": "",
+            "route": "route",
+            "container": "upstream",
+            "rule": "rule"
+          },
+          "dep": "to_needs_from",
+          "bind_keys": {
+            "vm": "vm",
+            "container": "container"
+          },
+          "bind_kind": {
+            "route": "host"
+          }
+        }
+      },
+      "net_security": {
+        "graph": {
+          "from": "map",
+          "map": "hier_net_security",
+          "columns": [
+            "Page",
+            "Server",
+            "Route or tool"
+          ],
+          "root": {
+            "id": "root:security",
+            "label": "Security",
+            "bind": [
+              "api:self"
+            ]
+          },
+          "sections": [
+            {
+              "match": "cloudy-c3-api routes",
+              "ns": "route",
+              "root": {
+                "id": "server:cloudy-c3-api",
+                "label": "cloudy-c3-api",
+                "bind": [
+                  "container:c3-infra-api",
+                  "api:self"
+                ]
+              },
+              "root_edge": "calls",
+              "row_edge": "serves",
+              "column": 2,
+              "dep": "to_needs_from"
+            },
+            {
+              "match": "cloudy-c3-mcp tools",
+              "ns": "tool",
+              "root": {
+                "id": "server:cloudy-c3-mcp",
+                "label": "cloudy-c3-mcp",
+                "bind": [
+                  "container:cloud-infra-mcp"
+                ]
+              },
+              "root_edge": "calls",
+              "row_edge": "serves",
+              "column": 2,
+              "dep": "to_needs_from"
+            }
+          ]
+        }
+      },
+      "net_mesh": {
+        "graph": {
+          "from": "mesh",
+          "columns": [
+            "Hub",
+            "Spokes",
+            "Clients"
+          ],
+          "lanes": {
+            "by": "transport"
+          },
+          "column_by": {
+            "role": {
+              "hub": 0,
+              "spoke": 1,
+              "client": 2
+            }
+          },
+          "edges": {
+            "peers": {
+              "kind": "wg_peering",
+              "label": "allowed_ips",
+              "duplex_offset": 6,
+              "dep": "none"
+            },
+            "routes": {
+              "kind": "mesh_route",
+              "label": "{dst_subnet} via {via_transport}"
+            }
+          },
+          "depends": [
+            {
+              "id": "dep:spoke-hub",
+              "from_role": "spoke",
+              "on_role": "hub",
+              "label": "reaches the mesh through"
+            }
+          ],
+          "bind": [
+            "vm",
+            "tunnel"
+          ]
+        }
+      }
+    }
   }
 }
