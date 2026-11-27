@@ -108,7 +108,7 @@ class NetGraphTest {
     @Test fun `Routes - every tree node is a node and every parent-child line an edge`() {
         val roots = TopologyModel.build(TopologyModel.NETWORK, inputs.topology)
         val (_, g) = page("net_network")
-        assertEquals(TopologyModel.flatten(roots).size, g.nodes.size)
+        assertEquals(TopologyModel.walk(roots).size, g.nodes.size)
         assertEquals(g.nodes.size - roots.size, g.edges.size)
         assertEquals(roots.map { it.id }, g.lanes.map { it.id })
     }

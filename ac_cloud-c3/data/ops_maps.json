@@ -683,8 +683,7 @@
             "by": "vm"
           },
           "resolve": [
-            "vm_id_to_alias",
-            "wg_ip_to_alias"
+            "vm_id_to_alias"
           ],
           "cluster_by": "lane_column",
           "sections": [
