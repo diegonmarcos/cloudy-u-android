@@ -185,4 +185,32 @@ class BackgroundAppsTest {
         BackgroundApps.reconcile(ctx, setOf(store.pkg to store.id))
         assertEquals(listOf(BackgroundApps.tagOf(store.pkg)), children().map { it.tag })
     }
+
+    // ── #1965 the summary's "N running" is exactly the number of live child cards ──
+
+    @Test fun `the summary counts exactly the live child cards, a pending cancel and post folded in`() {
+        val a = BackgroundApps.Child("bg:a", 1, "A"); val m = BackgroundApps.Child("bg:mail", 1, "Mail")
+        val n = BackgroundApps.Child("bg:nav", 2, "Nav"); val w = BackgroundApps.Child("bg:web", 3, "Web")
+        // the system still lists Mail's card although its cancel was just sent (notify/cancel are asynchronous)
+        assertEquals(listOf("A", "Nav", "Web"), BackgroundApps.liveChildren(listOf(a, m, n, w), removed = setOf("bg:mail" to 1)).map { it.line })
+        // a card just posted is counted even before the system lists it, and a refresh of a listed one is not counted twice
+        assertEquals(4, BackgroundApps.liveChildren(listOf(a, n, w), posted = m).size)
+        assertEquals(3, BackgroundApps.liveChildren(listOf(a, n, w), posted = n.copy(line = "Nav 2")).size)
+    }
+
+    @Test fun `the summary's count equals the posted child cards after every post and retraction`() {
+        fun check() {
+            val s = summary()
+            val kids = children()
+            if (kids.isEmpty()) { assertNull(s); return }
+            val ex = s!!.notification.extras
+            assertEquals("${kids.size} running", ex.getCharSequence(Notification.EXTRA_SUMMARY_TEXT).toString())
+            assertEquals(kids.size, ex.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)!!.size)
+        }
+        listOf(mail, store, nav, web, term).forEach { BackgroundApps.hubPost(ctx, it); check() }
+        BackgroundApps.hubPost(ctx, mail.copy(title = "8 unread")); check()
+        BackgroundApps.hubRetract(ctx, mail.pkg, mail.id); check()
+        BackgroundApps.reconcile(ctx, setOf(store.pkg to store.id, nav.pkg to nav.id)); check()
+        listOf(store, nav).forEach { BackgroundApps.hubRetract(ctx, it.pkg, null); check() }
+    }
 }

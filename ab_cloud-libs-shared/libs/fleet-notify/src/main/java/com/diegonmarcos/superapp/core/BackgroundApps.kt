@@ -233,34 +233,58 @@ object BackgroundApps {
 
     private fun nm(ctx: Context) = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+    /** One hub child as the summary sees it: its (tag, id) key and its summary line. */
+    data class Child(val tag: String, val id: Int, val line: String)
+
+    /**
+     * The children the summary counts. NotificationManager.notify and cancel are ASYNCHRONOUS (the system service applies them
+     * on its own handler), so activeNotifications read right after them can still hold a card just cancelled or lack one just
+     * posted. On the #1965 emulator walk Cloud Mail (no account) posted its card and retracted it within a second, and the
+     * summary said "4 running" over 3 cards. So the change being applied is folded in here: [posted] replaces or adds its key,
+     * [removed] keys are dropped. The count shown is exactly the size of this list.
+     */
+    fun liveChildren(active: List<Child>, posted: Child? = null, removed: Set<Pair<String, Int>> = emptySet()): List<Child> {
+        val m = LinkedHashMap<Pair<String, Int>, Child>()
+        active.forEach { m[it.tag to it.id] = it }
+        removed.forEach { m.remove(it) }
+        posted?.let { m[it.tag to it.id] = it }
+        return m.values.sortedBy { it.line }
+    }
+
+    private fun activeChildren(ctx: Context): List<Child> =
+        nm(ctx).activeNotifications.filter { it.tag != null && it.tag != SUMMARY_TAG && it.notification.group == GROUP }
+            .map { Child(it.tag, it.id, it.notification.extras.getString(X_SUMMARY_LINE).orEmpty()) }
+
     fun hubPost(ctx: Context, card: Card) {
         nm(ctx).notify(tagOf(card.pkg), card.id, childNotification(ctx, card))
-        refreshSummary(ctx)
+        refreshSummary(ctx, posted = Child(tagOf(card.pkg), card.id, summaryLine(card)))
     }
 
     fun hubRetract(ctx: Context, pkg: String, id: Int?) {
         val m = nm(ctx)
-        m.activeNotifications.filter { it.tag == tagOf(pkg) && (id == null || it.id == id) }.forEach { m.cancel(it.tag, it.id) }
-        refreshSummary(ctx)
+        val gone = m.activeNotifications.filter { it.tag == tagOf(pkg) && (id == null || it.id == id) }.map { it.tag to it.id }.toSet() +
+            listOfNotNull(id?.let { tagOf(pkg) to it })
+        gone.forEach { (t, i) -> m.cancel(t, i) }
+        refreshSummary(ctx, removed = gone)
     }
 
     /** Drop every child whose source (package, id) is not in [live]; the hub's own cards are judged by the hub's own posts. */
     fun reconcile(ctx: Context, live: Set<Pair<String, Int>>) {
         val m = nm(ctx)
+        val gone = mutableSetOf<Pair<String, Int>>()
         m.activeNotifications.filter { it.tag != SUMMARY_TAG && it.notification.group == GROUP }.forEach {
             val pkg = it.notification.extras.getString(X_SOURCE_PKG) ?: return@forEach
-            if (pkg != ctx.packageName && (pkg to it.notification.extras.getInt(X_SOURCE_ID)) !in live) m.cancel(it.tag, it.id)
+            if (pkg != ctx.packageName && (pkg to it.notification.extras.getInt(X_SOURCE_ID)) !in live) { m.cancel(it.tag, it.id); gone += it.tag to it.id }
         }
-        refreshSummary(ctx)
+        refreshSummary(ctx, removed = gone)
     }
 
-    /** The summary follows the children: rebuilt from the hub's own live cards, removed with the last one. */
-    fun refreshSummary(ctx: Context) {
+    /** The summary follows the children: one line per live child card, "N running" = their number, removed with the last one. */
+    fun refreshSummary(ctx: Context, posted: Child? = null, removed: Set<Pair<String, Int>> = emptySet()) {
         val m = nm(ctx)
-        val children = m.activeNotifications.filter { it.tag != SUMMARY_TAG && it.notification.group == GROUP }
+        val children = liveChildren(activeChildren(ctx), posted, removed)
         if (children.isEmpty()) { m.cancel(SUMMARY_TAG, SUMMARY_ID); return }
-        val lines = children.mapNotNull { it.notification.extras.getString(X_SUMMARY_LINE) }.sorted()
-        m.notify(SUMMARY_TAG, SUMMARY_ID, summaryNotification(ctx, lines))
+        m.notify(SUMMARY_TAG, SUMMARY_ID, summaryNotification(ctx, children.map { it.line }))
     }
 
     /**

@@ -45,7 +45,7 @@ jobs:
           import json, os, re
           ALL = ["baseline-lib-nav", "baseline-mail", "baseline-store",
                  "hub-grouping", "hub-publish", "fgs-channel", "webserver-fields",
-                 "mail-fields", "mail-channel", "store-fields", "nav-fields", "nav-channel"]
+                 "mail-fields", "mail-channel", "store-fields", "nav-fields", "nav-channel", "summary-count"]
           raw = os.environ.get("LEGS", "").strip()
           want = [x.strip() for x in raw.split(",") if x.strip()] if raw else ALL
           bad = [x for x in want if x not in ALL or not re.fullmatch(r"[a-z0-9-]+", x)]
@@ -77,6 +77,7 @@ jobs:
           m = {
               "hub-grouping": [(FN + "BackgroundApps.kt", ".setGroup(GROUP)\n            .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)\n            .setSortKey",
                                 ".setGroup(card.pkg)\n            .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)\n            .setSortKey")],
+              "summary-count": [(FN + "BackgroundApps.kt", "removed.forEach { m.remove(it) }", "Unit")],
               "hub-publish": [(FN + "FleetNotify.kt", "BackgroundApps.fromNotification(notification, id)?.let { BackgroundApps.publish(ctx, it) }   // #1965 a keep-alive refresh", "Unit")],
               "fgs-channel": [(FN + "FleetNotify.kt", "CHANNEL_BACKGROUND_SERVICE_NAME, NotificationManager.IMPORTANCE_MIN)", "CHANNEL_BACKGROUND_SERVICE_NAME, NotificationManager.IMPORTANCE_LOW)")],
               "webserver-fields": [(FN + "BackgroundCards.kt", "BackgroundApps.Field(Webserver.UPTIME,", "BackgroundApps.Field(Webserver.MESH,")],
@@ -139,10 +140,11 @@ jobs:
           STORE=com.diegonmarcos.cloudstore.StoreBackgroundCardTest
           NAV=com.diegonmarcos.cloudnav.maps.NavBackgroundCardTest
           case "$M" in
-            baseline-lib-nav) APP=ac_cloud-nav; MODE=baseline; WANT="$LIB|every background app lands in the one Background Apps group;$LIB|the FGS card moves to the silent MIN Background service channel;$LIB|the webserver card says state, URL, ports, mesh, clients and uptime;$LIB|a keep-alive carries its card and posting it sends the card to the hub;$NAV|the Background Apps card carries every declared Nav field and button;$NAV|the nav FGS card is on the silent MIN Background service channel;$NAV|rule 16 every nav line of the app card is in the Background Apps card" ;;
+            baseline-lib-nav) APP=ac_cloud-nav; MODE=baseline; WANT="$LIB|every background app lands in the one Background Apps group;$LIB|the summary counts exactly the live child cards, a pending cancel and post folded in;$LIB|the summary's count equals the posted child cards after every post and retraction;$LIB|the FGS card moves to the silent MIN Background service channel;$LIB|the webserver card says state, URL, ports, mesh, clients and uptime;$LIB|a keep-alive carries its card and posting it sends the card to the hub;$NAV|the Background Apps card carries every declared Nav field and button;$NAV|the nav FGS card is on the silent MIN Background service channel;$NAV|rule 16 every nav line of the app card is in the Background Apps card" ;;
             baseline-mail) APP=ac_cloud-mail; MODE=baseline; WANT="$MAIL|the Background Apps card carries every declared Mail field and button;$MAIL|the mail FGS card is on the silent MIN Background service channel;$MAIL|rule 16 every line of the app card is in the Background Apps card" ;;
             baseline-store) APP=ac_cloud-store; MODE=baseline; WANT="$STORE|the Background Apps card carries every declared Store field and button;$STORE|each downloading app shows its speed from two refreshes;$STORE|the store FGS card is on the silent MIN Background service channel;$STORE|rule 16 every line of the Store app card is in the Background Apps card" ;;
             hub-grouping) APP=ac_cloud-nav; MODE=kill; WANT="$LIB|every background app lands in the one Background Apps group" ;;
+            summary-count) APP=ac_cloud-nav; MODE=kill; WANT="$LIB|the summary counts exactly the live child cards, a pending cancel and post folded in" ;;
             hub-publish) APP=ac_cloud-nav; MODE=kill; WANT="$LIB|a keep-alive carries its card and posting it sends the card to the hub" ;;
             fgs-channel) APP=ac_cloud-nav; MODE=kill; WANT="$LIB|the FGS card moves to the silent MIN Background service channel" ;;
             webserver-fields) APP=ac_cloud-nav; MODE=kill; WANT="$LIB|the webserver card says state, URL, ports, mesh, clients and uptime" ;;
