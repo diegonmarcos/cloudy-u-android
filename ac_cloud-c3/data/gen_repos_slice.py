@@ -10,7 +10,7 @@ registry code, else to the declared default (Others). The Archived area is skipp
 Output: {_meta, projects: {<id>: {families: [registry top-level family names]}}, repos: [{name, project, group, category, code,
 visibility pub|pvt, default_branch, pages_url, github_url, lfs, role repo|hub, github, attached: [{project, path, via}]}]}.
 #1953: a registry `hub` node (and the root _git-repos-master) is emitted too, role "hub", group "Hub", category its node label; a hub
-at code X.0 is attached (via "hub") to every declared project whose code is X or starts with X.; the root goes to `lib`.
+at code X.0 is attached (via "hub") to every declared project whose code is X or starts with X.; the root goes to cp["root_project"] (#1968: Lib became Wiki).
 container_projects.json `project_repos` attaches a repo (with a path) to a project the registry cannot place (via "declared").
 `lfs` is the registry flag (the declaration of a git-lfs repo); `github` is the registry `github` name (else `name`) and
 github_url is built from it. group = the repo's top-level registry family, except a project that
@@ -84,7 +84,7 @@ def derive(reg, pages, cp):
         walk(a, a["name"], [])
     for h, label in hubs:
         x = h["code"][:-2] if h["code"].endswith(".0") else h["code"]
-        under = [p["id"] for p in projects if p.get("code") and (p["code"] == x or p["code"].startswith(x + "."))]
+        under = [p["id"] for p in sorted((p for p in projects if p.get("code")), key=lambda p: p["code"]) if p["code"] == x or p["code"].startswith(x + ".")]  # by code: the primary stays the lowest code
         by_code = project_of(h["code"], projects, default)
         primary = by_code if by_code != default or not under else under[0]
         e = entry(h, primary, "Hub", label, "hub")
@@ -94,7 +94,7 @@ def derive(reg, pages, cp):
         repos.append(e)
     root = reg.get("root") or {}
     if root.get("name"):
-        repos.append(entry(dict(root, code=root.get("code", "0")), "lib", "Hub", root.get("label") or root["name"], "hub"))
+        repos.append(entry(dict(root, code=root.get("code", "0")), cp.get("root_project", "pj-wiki-projects"), "Hub", root.get("label") or root["name"], "hub"))
         repos[-1]["attached"][0]["via"] = "hub"
     byname = {r["name"]: r for r in repos}
     for pid, items in (cp.get("project_repos") or {}).items():

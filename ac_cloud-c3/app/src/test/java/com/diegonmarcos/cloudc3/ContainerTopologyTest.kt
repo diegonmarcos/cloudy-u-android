@@ -81,6 +81,12 @@ class ContainerTopologyTest {
     }
 
     @Test
+    fun `#1968 the Wiki topology draws the former Lib repos`() {
+        assertTrue("Wiki_ModernSc draws the Projects hub", "Projects-___" in plan("pj-wiki-modernsc").names())
+        assertTrue("Wiki_Projects draws the root repo", "_git-repos-master" in plan("pj-wiki-projects").names())
+    }
+
+    @Test
     fun `each Wiki project carries lib-chronos with its path`() {
         mapOf("pj-wiki-modernsc" to "1.Modern-science", "pj-wiki-arcanum" to "2.Arcanum-science", "pj-wiki-projects" to "3.Projects").forEach { (id, path) ->
             val p = plan(id)

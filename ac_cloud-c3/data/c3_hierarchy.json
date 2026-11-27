@@ -639,22 +639,6 @@
        "same_as": "containers/all/table"
       }
      ]
-    },
-    {
-     "id": "lib",
-     "label": "Lib",
-     "children": [
-      {
-       "id": "topology",
-       "label": "Topology",
-       "same_as": "containers/all/topology"
-      },
-      {
-       "id": "table",
-       "label": "Table",
-       "same_as": "containers/all/table"
-      }
-     ]
     }
    ]
   },
@@ -1194,12 +1178,6 @@
    {
     "id": "pj-lecole42-dev",
     "label": "42_Dev",
-    "folder_prefix": [],
-    "name_prefix": []
-   },
-   {
-    "id": "lib",
-    "label": "Lib",
     "folder_prefix": [],
     "name_prefix": []
    }

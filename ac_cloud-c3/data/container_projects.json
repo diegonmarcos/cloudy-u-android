@@ -110,7 +110,7 @@
    "id": "pj-wiki-modernsc",
    "label": "Wiki_ModernSc",
    "category": "Wiki",
-   "code": "",
+   "code": "6.3",
    "folder_prefix": [],
    "name_prefix": []
   },
@@ -223,14 +223,6 @@
    "label": "42_Dev",
    "category": "42",
    "code": "5.10",
-   "folder_prefix": [],
-   "name_prefix": []
-  },
-  {
-   "id": "lib",
-   "label": "Lib",
-   "category": "Lib",
-   "code": "6.3",
    "folder_prefix": [],
    "name_prefix": []
   }
@@ -554,5 +546,12 @@
     "repo": "DuckPeng-___"
    }
   ]
+ },
+ "root_project": "pj-wiki-projects",
+ "aliases": {
+  "_doc": "#1968 Lib is renamed Wiki: its old project/category ids resolve to the Wiki project that now holds its repos (lib-chronos primary on Wiki_ModernSc, the hubs over it and the root _git-repos-master on Wiki_Projects). ui.aliases.pages in build.json carries the same ids for the app routes.",
+  "lib": "pj-wiki-modernsc",
+  "pj-lib": "pj-wiki-modernsc",
+  "Lib": "Wiki"
  }
 }

@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost'
+        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost'
         required: true
 permissions:
   contents: read
@@ -22,7 +22,7 @@ jobs:
       - name: Validate the mutation name against the allowed list
         run: |
           case "$MUT" in
-            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost) echo "leg: $MUT" ;;
+            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost) echo "leg: $MUT" ;;
             *) echo "::error::unknown mutation name"; exit 1 ;;
           esac
       - uses: actions/checkout@v4
@@ -61,6 +61,8 @@ jobs:
             map-edge-dropped)  sed -i 's/else r.edges.map { e -> base/else r.edges.drop(1).map { e -> base/' $K/pages/MailStack.kt ;;
             # #1955-B the mail_map alias is dropped (a deep link to the old Mail subpage opens nothing)
             mail-alias-lost)   pyj ac_cloud-c3/build.json 'del d["ui"]["aliases"]["pages"]["mail_map"]' ;;
+            # #1968 a former Lib entity (the root _git-repos-master) loses its Wiki attachment (the parity test must catch it)
+            wiki-lost)         pyj $D/repos_declared.json 'r = next(x for x in d["repos"] if x["name"] == "_git-repos-master"); r["attached"] = []' ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
           git diff --stat
@@ -114,6 +116,7 @@ jobs:
             drop-wiki-path)    C=ContainerTopologyTest; N="each Wiki project carries lib-chronos with its path" ;;
             split-ignored)     C=ContainersPageComposeTest; N="the Topology body has a services band and a Repos band, with Public and Private under Apps, DB and Repos on Cloud-me" ;;
             map-edge-dropped)  C=MailStackTest; N="parity - every section, row and edge of the old Mail map is in a Tables table" ;;
+            wiki-lost)         C=ContainerProjectsTest; N="#1968 parity every entity under Lib before is under Wiki now, the All total is unchanged and the old ids resolve to Wiki" ;;
             mail-alias-lost)   C=OrchOpsReorgTest; N="every old page id still resolves through the aliases to its new place" ;;
           esac
           X="$(find ac_cloud-c3/app/build -path '*test-results*' -name "TEST-*.$C.xml" | head -1)"

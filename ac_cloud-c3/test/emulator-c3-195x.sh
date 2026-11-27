@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # #1953 #1954 #1955 Cloud C3 on an emulator: the screenshots the design lists per ticket, each page opened through the launcher's
 # `shortcut_action` extra (page:<id>), a ui dump beside each shot, scrolled shots taken with a swipe up on the body.
-# Usage: emulator-c3-195x.sh <apk> <out-dir> <ticket: 1953|1954|1955|all>. Run by .github/workflows/c3-195x-emulator.yml.
+# Usage: emulator-c3-195x.sh <apk> <out-dir> <ticket: 1953|1954|1955|1968|all>. Run by .github/workflows/c3-195x-emulator.yml.
 # Exit 1 when the app does not start, a declared label is missing, or it crashes.
 set -u
 APK="$1"; OUT="$2"; T="${3:-all}"
@@ -56,10 +56,18 @@ done 3<<'SHOTS'
 1953 wiki-modernsc pj-wiki-modernsc_topology 8 0 Repos,lib-chronos
 1953 42-algo pj-lecole42-algo_topology 8 0 Repos,lecole-42-___
 1953 lib lib_topology 8 0 Repos
+1968 category-row all_topology 8 0 Unix,CG,Capital,Hardtech,Wiki,Projects
+1968 wiki-modernsc pj-wiki-modernsc_topology 8 0 Repos,lib-chronos
+1968 wiki-projects pj-wiki-projects_topology 8 0 Repos,lib-chronos
 1955 mail-strip mail_tables 8 0 Tables,Topology-Inbound,Topology-Outbound,Map:,Path:_Inbound
 1955 mail-tables-map mail_tables 6 2 Path:_Outbound
 1955 mail-map-alias mail_map 8 0 Tables,Path:_Inbound
 SHOTS
+
+# #1968 the category row has no Lib chip (Lib is Wiki); the old lib_topology id above opens through the alias
+if [ "$T" = all ] || [ "$T" = 1968 ]; then
+  [ -f "$OUT/c3-1968-category-row.xml" ] && has c3-1968-category-row 'text="Lib"' && bad "c3-1968-category-row: a Lib chip is still there"
+fi
 
 # the Cloudy Table filtered to Type=Db shows the LFS repo
 if [ "$T" = all ] || [ "$T" = 1953 ]; then

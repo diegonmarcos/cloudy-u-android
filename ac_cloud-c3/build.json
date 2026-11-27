@@ -239,7 +239,11 @@
         "observability": "ops/obs_stack",
         "health": "ops/ops_health_health",
         "dagu": "orch/orch_dagu",
-        "mesh": "ops/net_mesh"
+        "mesh": "ops/net_mesh",
+        "lib": "containers/pj-wiki-modernsc_topology",
+        "pj-lib": "containers/pj-wiki-modernsc_topology",
+        "lib_topology": "containers/pj-wiki-modernsc_topology",
+        "lib_table": "containers/pj-wiki-modernsc_table"
       }
     },
     "sections": [
@@ -391,7 +395,7 @@
         "id": "containers",
         "label": "Containers",
         "icon": "ic_p_c3_stack",
-        "_doc": "Renamed from Topology (owner request, 2026-10-16). #1941 four rows: 1) the project category (the Cloud Me > Proj groups, plus All and Lib; `category` of data/container_projects.json), 2) the project names of that category (one page per project here; the labels are the Cloud Me names without the category prefix), 3) Topology | Table (nested pages `<project>_topology`, `<project>_table`), 4) the page's own Filters (Table: Status, Auth, VM, Project, Type; Topology: Status, VM, Type). Topology = the container dashboards (C3StackFragment over ui.carried_c3.stack_topology) and Table = the sortable, filterable table (RoutesTableFragment), both scoped to the project. Which project a container belongs to is data/container_projects.json (explicit name_overrides, then folder / name prefixes; no match = the declared default) and its Type is derived there too. The old page-wide kind Filters row (All | MCPs | APIs | Apps | DBs | Repos) is gone: its kinds are the Type filter. Agents moved to Ops.",
+        "_doc": "Renamed from Topology (owner request, 2026-10-16). #1941 four rows: 1) the project category (the Cloud Me > Proj groups, plus All; #1968 Lib is now Wiki, its old ids are ui.aliases.pages; `category` of data/container_projects.json), 2) the project names of that category (one page per project here; the labels are the Cloud Me names without the category prefix), 3) Topology | Table (nested pages `<project>_topology`, `<project>_table`), 4) the page's own Filters (Table: Status, Auth, VM, Project, Type; Topology: Status, VM, Type). Topology = the container dashboards (C3StackFragment over ui.carried_c3.stack_topology) and Table = the sortable, filterable table (RoutesTableFragment), both scoped to the project. Which project a container belongs to is data/container_projects.json (explicit name_overrides, then folder / name prefixes; no match = the declared default) and its Type is derived there too. The old page-wide kind Filters row (All | MCPs | APIs | Apps | DBs | Repos) is gone: its kinds are the Type filter. Agents moved to Ops.",
         "pages": [
           {
             "id": "all",
@@ -634,15 +638,6 @@
             "pages": [
               {"id": "pj-lecole42-dev_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
               {"id": "pj-lecole42-dev_table", "label": "Table", "icon": "ic_link_tile"}
-            ]
-          },
-          {
-            "id": "lib",
-            "label": "Lib",
-            "icon": "ic_p_c3_stack",
-            "pages": [
-              {"id": "lib_topology", "label": "Topology", "icon": "ic_p_c3_stack"},
-              {"id": "lib_table", "label": "Table", "icon": "ic_link_tile"}
             ]
           }
         ]

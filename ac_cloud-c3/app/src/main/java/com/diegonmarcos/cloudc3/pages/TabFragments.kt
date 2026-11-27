@@ -61,7 +61,7 @@ class InfraFragment : PagedFragment() {
 }
 
 /**
- * CONTAINERS (was Topology) - #1941 four rows: the project category (the Cloud Me Proj groups, plus All and Lib), the project names of that
+ * CONTAINERS (was Topology) - #1941 four rows: the project category (the Cloud Me Proj groups, plus All), the project names of that
  * category, Topology | Table, and the page's own Filters row (see [ContainersChrome]). Every project is a declared page (build.json) with a
  * nested Topology | Table switch (#1454). `topology` is the SuperApp's Topology page minus its address cards: [C3StackFragment] over
  * ui.carried_c3.stack_topology, scoped to the project; `table` is [RoutesTableFragment]: the sortable, filterable table over the

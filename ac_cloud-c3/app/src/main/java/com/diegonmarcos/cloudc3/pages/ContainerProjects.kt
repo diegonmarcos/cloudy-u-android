@@ -46,7 +46,7 @@ object ContainerProjects {
         /** #1953 the Topology layout (bands, sections, the Public / Private split), declared under `topology_layout`; the raw object, read by [ContainerTopology]. */
         val layout: JsonObject? = null,
     ) {
-        /** The first-row categories (the Cloud Me > Proj groups, then Lib), in the declared order. */
+        /** The first-row categories (the Cloud Me > Proj groups; Lib is Wiki since #1968), in the declared order. */
         fun categories(): List<String> = projects.map { it.category }.filter { it.isNotBlank() }.distinct()
 
         /** The projects of the first-row category [category], in the declared order. */

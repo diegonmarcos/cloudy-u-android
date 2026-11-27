@@ -83,8 +83,8 @@ for p in cont:
 cpj = json.load(open(app + "/data/container_projects.json", encoding="utf-8"))["projects"]
 if [p["id"] for p in cont] != ["all"] + [p["id"] for p in cpj]:
     bad.append("the Containers strip reads %s, not All + the container_projects.json projects" % [p["id"] for p in cont])
-if [p["label"] for p in cont][0] != "All" or "Lib" not in [p["label"] for p in cont]:
-    bad.append("the Containers strip lacks All or Lib: %s" % [p["label"] for p in cont])
+if [p["label"] for p in cont][0] != "All" or "Lib" in [p["label"] for p in cont] or "Wiki_ModernSc" not in [p["label"] for p in cpj]:
+    bad.append("the Containers strip lacks All, still has Lib or lacks Wiki (#1968): %s" % [p["label"] for p in cont])
 def ids(pages): return [p["id"] for p in pages] + [i for p in pages for i in ids(p.get("pages") or [])]
 orch = ids(secs["orch"]["pages"])
 if "orch_agents" not in orch: bad.append("Agents is not an Orch page (#1942)")
@@ -277,7 +277,7 @@ sys.exit(1 if bad else 0)
 PY
 }
 
-# d9 <app dir> : #4 every repo is in a declared project, Lib shows its library repo; the Topology draws one card per scoped group (no static group-id filter)
+# d9 <app dir> : #4 every repo is in a declared project, Wiki shows the former Lib repos (#1968); the Topology draws one card per scoped group (no static group-id filter)
 d9() { python3 - "$1" <<'PY'
 import json, sys
 app = sys.argv[1]
@@ -288,7 +288,8 @@ count = {p["id"]: 0 for p in cp["projects"]}
 for r in rd["repos"]:
     if r["project"] not in count: bad.append("repo %r is in the undeclared project %r" % (r["name"], r["project"]))
     else: count[r["project"]] += 1
-if count.get("lib", 0) == 0: bad.append("project 'lib' shows nothing: no library repo")
+if "lib" in count: bad.append("project 'lib' is still declared: Lib is Wiki (#1968)")
+if count.get("pj-wiki-modernsc", 0) + count.get("pj-wiki-projects", 0) == 0: bad.append("Wiki shows nothing: the former Lib repos are lost")
 kt = open(app + "/app/src/main/java/com/diegonmarcos/cloudc3/cloud/C3StackFragment.kt", encoding="utf-8").read()
 if "shownPanels(panels)" not in kt or "dashGroupIds = listOf(g.id)" not in kt: bad.append("the Topology does not draw one card per scoped group: a group id outside the panels' static list would be dropped (the root cause of the empty tabs)")
 for b in bad: print("    " + b)
@@ -343,6 +344,27 @@ sys.exit(1 if bad else 0)
 PY
 }
 
+# d12 <app dir> : #1968 parity (rule 16): every entity under Lib before is under Wiki now, the All total is unchanged, the old ids alias to Wiki
+d12() { python3 - "$1" <<'PY'
+import json, sys
+app = sys.argv[1]
+cp = json.load(open(app + "/data/container_projects.json", encoding="utf-8"))
+rd = json.load(open(app + "/data/repos_declared.json", encoding="utf-8"))
+base = json.load(open(app + "/data/lib_members_1968.json", encoding="utf-8"))
+bad = []
+wiki = {p["id"] for p in cp["projects"] if p["category"] == "Wiki"}
+if "Lib" in {p["category"] for p in cp["projects"]} or any(p["id"] == base["former_project"] for p in cp["projects"]): bad.append("Lib is still a category or project")
+by = {r["name"]: r for r in rd["repos"]}
+for n in base["members"]:
+    if n not in by or not ({a["project"] for a in by[n]["attached"]} & wiki): bad.append("former Lib entity %r is not under Wiki" % n)
+if len(rd["repos"]) != base["repos_total"]: bad.append("the All total is %d, was %d" % (len(rd["repos"]), base["repos_total"]))
+for k in ("lib", "pj-lib"):
+    if cp.get("aliases", {}).get(k) not in wiki: bad.append("alias %r does not resolve to a Wiki project" % k)
+for b in bad: print("    " + b)
+sys.exit(1 if bad else 0)
+PY
+}
+
 d1 "$APP" && pass "D1 no platform or project name is a string literal in Kotlin" || fail "D1 a page hard-codes a declared platform or project"
 d2 "$APP" && pass "D2 every project nests Topology | Table; Agents is under Ops" || fail "D2 the nav declaration is wrong"
 d3 "$APP" && pass "D3 the project strip and the container -> project mapping agree" || fail "D3 the strip and the mapping disagree"
@@ -351,8 +373,9 @@ d5 "$APP" && pass "D5 no personal email address and no secret-shaped value in th
 d6 "$APP" && pass "D6 the APIs row and its groups are declared; a secret is a name only" || fail "D6 the APIs row is not declarative or a secret is not a name"
 d7 "$APP" && pass "D7 no tab has a Project Apps table or macro group" || fail "D7 Project Apps is back on a tab"
 d8 "$APP" && pass "D8 no page-wide Filters row; each page draws its own Filters under Topology | Table" || fail "D8 the page-wide Filters row is back or a page lacks its own"
-d9 "$APP" && pass "D9 every repo is in a declared project, Lib shows its repo, and the Topology draws one card per scoped group" || fail "D9 a repo has no project, Lib is empty or the Topology drops a group"
+d9 "$APP" && pass "D9 every repo is in a declared project, Wiki shows the former Lib repos, and the Topology draws one card per scoped group" || fail "D9 a repo has no project, Wiki is empty or the Topology drops a group"
 d10 "$APP" && pass "D10 Infra Apps and Cloud Apps are Cloudy's only; every other project has its own families" || fail "D10 a project repeats Cloudy's groups or lacks families"
+d12 "$APP" && pass "D12 every entity under Lib is under Wiki, the All total is unchanged, the old ids alias to Wiki" || fail "D12 a former Lib entity left Wiki or the All total changed"
 d11 "$APP" && pass "D11 both Google Apps Script environments are declared Containers-Node-Python platforms and reach the slice" || fail "D11 a Google Apps Script platform is missing"
 
 # ── M: every check able to go RED ───────────────────────────────────────────
@@ -420,7 +443,12 @@ m_kindbar_back() { append "$1/$KT/pages/RoutesTable.kt" 'fun KindBar() {}'; }
 m_rows_swap()    { sed -i 's/ContainersTags.ROW_FILTERS)/ContainersTags.ROW_ZZZ)/; s/ContainersTags.ROW_CATEGORY)/ContainersTags.ROW_FILTERS)/' "$1/$KT/pages/ContainersPage.kt"; }
 m_empty_tab()    { python3 - "$1/data/repos_declared.json" <<'PY'
 import json, sys
-p = sys.argv[1]; d = json.load(open(p)); d["repos"] = [r for r in d["repos"] if r["project"] != "lib"]; json.dump(d, open(p, "w"))
+p = sys.argv[1]; d = json.load(open(p)); d["repos"] = [r for r in d["repos"] if r["project"] not in ("pj-wiki-modernsc", "pj-wiki-projects")]; json.dump(d, open(p, "w"))
+PY
+}
+m_wiki_lost()    { python3 - "$1/data/repos_declared.json" <<'PY'
+import json, sys
+p = sys.argv[1]; d = json.load(open(p)); r = next(x for x in d["repos"] if x["name"] == "_git-repos-master"); r["attached"] = []; json.dump(d, open(p, "w"))
 PY
 }
 m_fam_repeat()   { python3 - "$1/data/repos_declared.json" <<'PY'
@@ -448,7 +476,8 @@ mutate "Project Apps is no longer remapped"              d7 m_ps_card
 mutate "the Status filter is renamed back to Light"      d8 m_filters_row
 mutate "the page-wide KindBar row comes back"            d8 m_kindbar_back
 mutate "the Filters row is no longer under the view row" d8 m_rows_swap
-mutate "Lib has no repo"                                 d9 m_empty_tab
+mutate "Wiki has none of the former Lib repos"           d9 m_empty_tab
+mutate "a former Lib entity is not under Wiki"        d12 m_wiki_lost
 mutate "a project repeats Infra Apps"                    d10 m_fam_repeat
 mutate "a provider name is typed into Kotlin"            d1 m_kt_provider
 mutate "an API group page id is typed into Kotlin"       d1 m_kt_group

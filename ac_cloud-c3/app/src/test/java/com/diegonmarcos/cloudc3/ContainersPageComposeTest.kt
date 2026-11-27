@@ -126,10 +126,11 @@ class ContainersPageComposeTest {
     }
 
     @Test
-    fun `row 1 lists All, the Cloud Me categories and Lib, row 2 lists the projects of the category, row 3 is Topology and Table`() {
+    fun `row 1 lists All, the Cloud Me categories (no Lib), row 2 lists the projects of the category, row 3 is Topology and Table`() {
         show()
         val cats = ContainersNav.categories(decl, declared)
-        assertEquals(listOf("All") + listOf("Unix", "CG", "Capital", "Hardtech", "Wiki", "Projects", "42", "Lib"), cats)
+        assertEquals(listOf("All") + listOf("Unix", "CG", "Capital", "Hardtech", "Wiki", "Projects", "42"), cats)
+        assertFalse("Lib is gone from row 1", "Lib" in cats)
         cats.forEach { assertTrue("$it is not a first-row chip", compose.onAllNodesWithText(it).fetchSemanticsNodes().isNotEmpty()) }
         compose.onNodeWithText("Topology").assertExists(); compose.onNodeWithText("Table").assertExists()
         // pick Unix: its three projects are row 2
@@ -139,15 +140,15 @@ class ContainersPageComposeTest {
     }
 
     @Test
-    fun `Lib is a category with its own page and Topology and Table`() {
+    fun `Wiki, the former Lib, is a category with its own page and Topology and Table`() {
         show()
-        compose.onNodeWithText("Lib").performClick(); compose.waitForIdle()
-        assertEquals("lib", top)
-        assertEquals("lib_topology", view)
+        compose.onNodeWithText("Wiki").performClick(); compose.waitForIdle()
+        assertEquals("pj-wiki-modernsc", top)
+        assertEquals("pj-wiki-modernsc_topology", view)
         compose.onNodeWithTag(ContainersTags.ROW_PROJECT).assertIsDisplayed()
         compose.onNodeWithText("Table").performClick(); compose.waitForIdle()
-        assertEquals("lib_table", view)
-        compose.onNodeWithText("body-of-lib_table").assertExists()
+        assertEquals("pj-wiki-modernsc_table", view)
+        compose.onNodeWithText("body-of-pj-wiki-modernsc_table").assertExists()
     }
 
     @Test

@@ -57,7 +57,7 @@ class Slice(unittest.TestCase):
                   "HardTech-___", "lecole-42-___", "Projects-___", "DuckPeng-___", "_git-repos-master"):
             self.assertIn(n, hubs)
         self.assertNotIn("z-archived-___", hubs, "the Archived area stays skipped")
-        self.assertEqual(hubs["_git-repos-master"]["project"], "lib")
+        self.assertEqual(hubs["_git-repos-master"]["project"], "pj-wiki-projects")
 
     def test_a_hub_is_attached_to_every_project_under_its_code(self):
         for r in SL["repos"]:

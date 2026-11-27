@@ -74,7 +74,9 @@
    ]
   },
   "pj-wiki-modernsc": {
-   "families": []
+   "families": [
+    "Library-KG"
+   ]
   },
   "pj-wiki-arcanum": {
    "families": []
@@ -138,11 +140,6 @@
   "pj-lecole42-dev": {
    "families": [
     "Dev"
-   ]
-  },
-  "lib": {
-   "families": [
-    "Library-KG"
    ]
   }
  },
@@ -1120,7 +1117,7 @@
   },
   {
    "name": "lib-chronos",
-   "project": "lib",
+   "project": "pj-wiki-modernsc",
    "group": "Library-KG",
    "category": "Library-KG",
    "code": "6.3.1.1",
@@ -1133,14 +1130,9 @@
    "github": "lib-chronos",
    "attached": [
     {
-     "project": "lib",
-     "path": "",
-     "via": "code"
-    },
-    {
      "project": "pj-wiki-modernsc",
      "path": "1.Modern-science",
-     "via": "declared"
+     "via": "code"
     },
     {
      "project": "pj-wiki-arcanum",
@@ -1402,7 +1394,7 @@
   },
   {
    "name": "HardTech-___",
-   "project": "pj-hardtech-cad",
+   "project": "pj-hardtech-deepxtech",
    "group": "Hub",
    "category": "HardTech",
    "code": "4.0",
@@ -1415,12 +1407,12 @@
    "github": "HardTech-___",
    "attached": [
     {
-     "project": "pj-hardtech-cad",
+     "project": "pj-hardtech-deepxtech",
      "path": "",
      "via": "hub"
     },
     {
-     "project": "pj-hardtech-deepxtech",
+     "project": "pj-hardtech-cad",
      "path": "",
      "via": "hub"
     },
@@ -1447,6 +1439,11 @@
    "attached": [
     {
      "project": "pj-lecole42-algo",
+     "path": "",
+     "via": "hub"
+    },
+    {
+     "project": "pj-lecole42-dev",
      "path": "",
      "via": "hub"
     },
@@ -1489,11 +1486,6 @@
      "project": "pj-lecole42-cyberwarfare",
      "path": "",
      "via": "hub"
-    },
-    {
-     "project": "pj-lecole42-dev",
-     "path": "",
-     "via": "hub"
     }
    ]
   },
@@ -1522,7 +1514,7 @@
      "via": "hub"
     },
     {
-     "project": "lib",
+     "project": "pj-wiki-modernsc",
      "path": "",
      "via": "hub"
     }
@@ -1551,7 +1543,7 @@
   },
   {
    "name": "_git-repos-master",
-   "project": "lib",
+   "project": "pj-wiki-projects",
    "group": "Hub",
    "category": "repo_master",
    "code": "0",
@@ -1564,7 +1556,7 @@
    "github": "_git-repos-master",
    "attached": [
     {
-     "project": "lib",
+     "project": "pj-wiki-projects",
      "path": "",
      "via": "hub"
     }

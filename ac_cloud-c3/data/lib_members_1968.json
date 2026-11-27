@@ -1,0 +1,8 @@
+{
+ "_doc": "#1968 baseline: the entities the Containers page showed under the Lib category before Lib was renamed Wiki (project id `lib`, all repos or hubs: lib-chronos, the Projects-___ hub, the root _git-repos-master) and the All total of repos_declared.json at that time. Parity tests (ContainerProjectsTest, test-c3-declarative d11) require every member to stay under a Wiki project and the repo total to be unchanged. Rule 16: no repo or entity may be lost.",
+ "former_project": "lib",
+ "former_category": "Lib",
+ "now_category": "Wiki",
+ "members": ["_git-repos-master", "Projects-___", "lib-chronos"],
+ "repos_total": 63
+}

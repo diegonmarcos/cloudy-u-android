@@ -12,6 +12,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -48,25 +49,25 @@ class ContainerProjectsTest {
     }
 
     @Test
-    fun `the projects are exactly the Cloud Me Proj entries plus Lib, named as that data names them`() {
-        val want = cloudMeProj().flatMap { (cat, ps) -> ps.map { (id, label) -> Triple(id, cat, "${cat}_$label") } } + Triple("lib", "Lib", "Lib")
+    fun `the projects are exactly the Cloud Me Proj entries, named as that data names them`() {
+        val want = cloudMeProj().flatMap { (cat, ps) -> ps.map { (id, label) -> Triple(id, cat, "${cat}_$label") } }
         assertEquals(want, decl.projects.map { Triple(it.id, it.category, it.label) })
         // the page labels of build.json are the Cloud Me names without the category prefix
         val pageLabels = containersPages().drop(1).map { it["label"]!!.jsonPrimitive.content }
         assertEquals(decl.projects.map { it.label.removePrefix("${it.category}_") }, pageLabels)
         // the owner's names, as the Cloud Me data spells them (DeepXTech, FinTerm, ModernSc: the data wins over a typed list)
         listOf("Unix_SuperApp", "Unix_Cloud-me", "Unix_Cloudy", "CG_Omniverse", "CG_Zirkusverse", "Capital_CB", "Capital_PM", "Capital_FinTerm",
-            "Hardtech_BioMed", "Hardtech_CAD", "Hardtech_DeepXTech", "Wiki_ModernSc", "Wiki_Arcanum", "Wiki_Projects", "Lib").forEach { n ->
+            "Hardtech_BioMed", "Hardtech_CAD", "Hardtech_DeepXTech", "Wiki_ModernSc", "Wiki_Arcanum", "Wiki_Projects").forEach { n ->
             assertTrue("project $n is missing", decl.projects.any { it.label == n })
         }
         assertTrue("the 42 projects are there", decl.projects.count { it.category == "42" } >= 10)
     }
 
     @Test
-    fun `the first row is the Cloud Me categories then Lib and the second row lists the projects of the category`() {
-        assertEquals(cloudMeProj().map { it.first } + "Lib", decl.categories())
+    fun `the first row is the Cloud Me categories (no Lib, it is Wiki) and the second row lists the projects of the category`() {
+        assertEquals(cloudMeProj().map { it.first }, decl.categories())
+        assertFalse("Lib is gone from the row", "Lib" in decl.categories())
         assertEquals(listOf("Unix_SuperApp", "Unix_Cloud-me", "Unix_Cloudy"), decl.projectsOf("Unix").map { it.label })
-        assertEquals(listOf("Lib"), decl.projectsOf("Lib").map { it.label })
     }
 
     @Test
@@ -123,11 +124,11 @@ class ContainerProjectsTest {
     }
 
     @Test
-    fun `Lib holds the library repo and the empty projects say so, none is invented`() {
-        // #1953 Lib holds the library repo plus the hubs over it (Projects-___, the root _git-repos-master); Wiki Arcanum holds only its declared lib-chronos path
-        val lib = ContainerProjects.scope(decl, catalog, "lib").entries
-        assertTrue(lib.all { it.role == "repo" } && lib.any { it.name == "lib-chronos" })
-        assertEquals(listOf("lib-chronos"), lib.filter { decl.repoOf(it)?.role == "repo" }.map { it.name })
+    fun `Wiki holds the former Lib repos and the empty projects say so, none is invented`() {
+        // #1968 Lib is Wiki: lib-chronos (primary Wiki_ModernSc), the hub Projects-___ (Wiki_ModernSc) and the root _git-repos-master (Wiki_Projects); Wiki Arcanum holds only its declared lib-chronos path
+        val wiki = decl.projects.filter { it.category == "Wiki" }.flatMap { ContainerProjects.scope(decl, catalog, it.id).entries }
+        assertTrue(wiki.all { it.role == "repo" } && wiki.any { it.name == "lib-chronos" })
+        assertEquals(listOf("lib-chronos"), wiki.filter { decl.repoOf(it)?.role == "repo" }.map { it.name }.distinct())
         assertEquals(listOf("lib-chronos"), ContainerProjects.scope(decl, catalog, "pj-wiki-arcanum").entries.map { it.name })
         assertTrue("none is invented", decl.projects.all { p -> ContainerProjects.scope(decl, catalog, p.id).entries.all { e -> e.role != "repo" || decl.repoOf(e)!!.attached.any { it.project == p.id } } })
     }
@@ -239,7 +240,7 @@ class ContainerProjectsTest {
         listOf("pj-unix-superapp" to "cloudy-u-android", "pj-hardtech-biomed" to "HardTech-___", "pj-projects-duckpeng" to "DuckPeng-___").forEach { (id, n) ->
             assertTrue("$id draws $n", ContainerProjects.scope(decl, catalog, id).entries.any { it.name == n })
         }
-        assertEquals("the primary project stays the registry one", "lib", decl.projectOf(ContainerProjects.entryOf(decl, chronos))?.id)
+        assertEquals("the primary project is the registry one, Wiki_ModernSc (code 6.3)", "pj-wiki-modernsc", decl.projectOf(ContainerProjects.entryOf(decl, chronos))?.id)
     }
 
     @Test
@@ -314,5 +315,18 @@ class ContainerProjectsTest {
         val r = rows.first { it.container == "caddy" }
         assertEquals(e.group, r.group); assertEquals(e.category, r.category)
         assertEquals("Unix_Cloudy", r.project); assertEquals("Other", r.type)
+    }
+
+    @Test
+    fun `#1968 parity every entity under Lib before is under Wiki now, the All total is unchanged and the old ids resolve to Wiki`() {
+        val base = Json.parseToJsonElement(File(dir, "data/lib_members_1968.json").readText()).jsonObject
+        val wiki = decl.projects.filter { it.category == "Wiki" }.flatMap { ContainerProjects.scope(decl, catalog, it.id).entries }.map { it.name }.toSet()
+        val before = base["members"]!!.jsonArray.map { it.jsonPrimitive.content }
+        assertTrue("an entity left Lib and is not under Wiki: ${before - wiki}", wiki.containsAll(before))
+        assertEquals("the All total of repos is unchanged", base["repos_total"]!!.jsonPrimitive.content.toInt(), decl.repos.size)
+        assertNull("the lib project is gone", decl.project("lib"))
+        val al = Json.parseToJsonElement(File(dir, "data/container_projects.json").readText()).jsonObject["aliases"]!!.jsonObject
+        assertEquals("Wiki", decl.project(al["lib"]!!.jsonPrimitive.content)?.category)
+        assertEquals("Wiki", decl.project(al["pj-lib"]!!.jsonPrimitive.content)?.category)
     }
 }

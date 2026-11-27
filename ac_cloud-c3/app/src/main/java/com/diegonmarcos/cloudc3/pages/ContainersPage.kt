@@ -31,7 +31,7 @@ object ContainersTags {
 }
 
 /**
- * #1941 the Containers page's layout, top to bottom: 1) the project category (the Cloud Me Proj groups, plus All and Lib), 2) the project
+ * #1941 the Containers page's layout, top to bottom: 1) the project category (the Cloud Me Proj groups, plus All), 2) the project
  * names of that category, 3) Topology | Table, 4) the page's own Filters row ([filters]; the Table draws its own inside [content]), then the
  * [content]. The rows are the fleet's shared strip (libs:ui-nav-bars NavBarTopSecondRow), the one Cloud Me draws.
  */
@@ -83,7 +83,7 @@ fun TopologyFilters(vms: List<String>, types: List<String>) {
 object ContainersNav {
     private fun allPage(decl: ContainerProjects.Decl, declared: List<NavPage>) = declared.firstOrNull { decl.project(it.id) == null }
 
-    /** Row 1: All first, then the declared categories (the Cloud Me Proj groups, then Lib). */
+    /** Row 1: All first, then the declared categories (the Cloud Me Proj groups; Lib is Wiki since #1968). */
     fun categories(decl: ContainerProjects.Decl, declared: List<NavPage>): List<String> = listOfNotNull(allPage(decl, declared)?.label) + decl.categories()
 
     /** The category of the top page [top]. */
