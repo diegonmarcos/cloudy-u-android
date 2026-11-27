@@ -139,6 +139,16 @@ PY
 )"
   [ -n "$xy" ] && adb shell input tap $xy
 }
+tap_last() { # <shot> <text>: tap the LAST node whose text starts with <text> (a search hit chip, not the field that holds the query)
+  local xy; xy="$(python3 - "$OUT/$1.xml" "$2" <<'PY'
+import re, sys
+x = open(sys.argv[1], errors="ignore").read()
+ms = re.findall(r'text="%s[^"]*"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"' % re.escape(sys.argv[2]), x)
+if ms: m = ms[-1]; print((int(m[0]) + int(m[2])) // 2, (int(m[1]) + int(m[3])) // 2)
+PY
+)"
+  [ -n "$xy" ] && adb shell input tap $xy
+}
 if [ "$T" = all ] || [ "$T" = 1955 ]; then
   for pg in net_wg net_auth net_dns net_network net_security net_mesh; do
     n="${pg#net_}"
@@ -152,7 +162,7 @@ if [ "$T" = all ] || [ "$T" = 1955 ]; then
   # WireGuard: search the hub, open its sheet, then one of its edges
   open_page net_wg; sleep 2; shot c3-1955-net-wg-pre 5
   tap_edit c3-1955-net-wg-pre; sleep 1; adb shell input text gcp-proxy; shot c3-1955-net-wg-search 3
-  tap_text c3-1955-net-wg-search "gcp-proxy"; shot c3-1955-net-wg-node-sheet 3
+  tap_last c3-1955-net-wg-search "gcp-proxy"; shot c3-1955-net-wg-node-sheet 3
   has c3-1955-net-wg-node-sheet "Open in Table" || bad "c3-1955-net-wg-node-sheet: no node sheet"
   tap_text c3-1955-net-wg-node-sheet "  -"; shot c3-1955-net-wg-edge-sheet 3
   has c3-1955-net-wg-edge-sheet "Highlight path" || bad "c3-1955-net-wg-edge-sheet: no edge sheet"
@@ -166,7 +176,7 @@ if [ "$T" = all ] || [ "$T" = 1955 ]; then
   # Routes: one Caddy group opened from its search hit
   open_page net_network; sleep 2; shot c3-1955-net-network-pre 5
   tap_edit c3-1955-net-network-pre; sleep 1; adb shell input text Caddy; shot c3-1955-net-network-search 3
-  tap_text c3-1955-net-network-search "Caddy"; shot c3-1955-net-network-sheet 3
+  tap_last c3-1955-net-network-search "Caddy"; shot c3-1955-net-network-sheet 3
   tap_text c3-1955-net-network-sheet "Expand"; shot c3-1955-net-network-group-expanded 4
   # the legend
   open_page net_mesh; sleep 2; shot c3-1955-net-mesh-pre 5
