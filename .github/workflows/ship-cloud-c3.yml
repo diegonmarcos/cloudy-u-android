@@ -63,6 +63,7 @@ on:
       - "ab_cloud-libs-shared/libs/ops/**"
       - "ab_cloud-libs-shared/libs/perms/**"
       - "ab_cloud-libs-shared/libs/theme-background/**"
+      - "ab_cloud-libs-shared/libs/health-core-rs/**"
       - "ab_cloud-libs-shared/libs/ui-icons/**"
       - "ab_cloud-libs-shared/libs/ui-kit/**"
       - "ab_cloud-libs-shared/libs/ui-nav-bars/**"
@@ -190,6 +191,39 @@ jobs:
         with:
           packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
 
+      # ── #1955 C A1 THE ON-PHONE HEALTH ENGINE (libs:health-core-rs): toolchain read from build.json::native_core.toolchain ──
+      # The pattern of Cloud Mail's core: cargo + the pinned NDK clang as linker, one .so per ABI of the matrix leg, loaded by JNI. The
+      # crate's own suite (the JNI string API over health-core: attribution, phased probe on a local listener, panic guard) runs on every
+      # leg; the build below is REQUIRED to carry the library (a build without cargo or the NDK fails, it never ships without the engine).
+      - name: Resolve the native core toolchain (build.json::native_core.toolchain)
+        id: native
+        working-directory: ${{ env.WORK_DIR }}
+        run: |
+          set -eu
+          targets="$(jq -r '.native_core.toolchain.rust_targets | join(",")' build.json)"
+          ndk="$(jq -r '.native_core.toolchain.ndk' build.json)"
+          [ -n "$targets" ] && [ "$ndk" != "null" ] || { echo "::error::build.json::native_core.toolchain is incomplete"; exit 1; }
+          { echo "targets=$targets"; echo "ndk=$ndk"; } >> "$GITHUB_OUTPUT"
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ steps.native.outputs.targets }}
+
+      - name: "Test → the Rust health engine JNI layer (cargo test)"
+        working-directory: ab_cloud-libs-shared/libs/health-core-rs
+        run: cargo test -- --nocapture
+
+      - name: Point the build at the NDK (build.json::native_core.toolchain.ndk)
+        run: |
+          set -eu
+          ndk="${{ steps.native.outputs.ndk }}"
+          if [ ! -d "$ANDROID_HOME/ndk/$ndk" ]; then
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$ndk" >/dev/null
+          fi
+          [ -x "$ANDROID_HOME/ndk/$ndk/toolchains/llvm/prebuilt/linux-x86_64/bin/clang" ] || { echo "::error::NDK $ndk is not installed"; exit 1; }
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ndk" >> "$GITHUB_ENV"
+          case "${{ matrix.abi }}" in arm64) echo "HEALTH_CORE_ABIS=arm64-v8a" >> "$GITHUB_ENV" ;; *) echo "HEALTH_CORE_ABIS=x86_64" >> "$GITHUB_ENV" ;; esac
+
       - name: Set up Gradle 8.10.2 (cached)
         # v6, not v3: v3 bundles the old @actions/cache client, which talks to the
         # cache service GitHub retired. Every save AND restore 400s ("Our services
@@ -267,6 +301,7 @@ jobs:
           SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
           CLOUDC3_VARIANT: ${{ matrix.abi }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEALTH_CORE_RS_REQUIRED: "1"
         run: |
           chmod +x build.sh
           set -o pipefail

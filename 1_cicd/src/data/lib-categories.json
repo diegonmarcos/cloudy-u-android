@@ -74,6 +74,7 @@
     "drive-core-rs",
     "browser-core-rs",
     "mail-core-rs",
+    "health-core-rs",
     "mounts",
     "rclone",
     "usb-drive",

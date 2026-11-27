@@ -1,0 +1,23 @@
+[package]
+name = "health-core-jni"
+version = "0.1.0"
+edition = "2021"
+description = "#1955 C A1: the JNI layer that hands health-core (./rust, std only) to Cloud C3. Strings in, strings out: every answer is OK<newline>json or ERR<tab>reason, and a panic never crosses into the JVM."
+publish = false
+
+[lib]
+# libhealth_core_jni.so: System.loadLibrary("health_core_jni") from HealthNative.
+name = "health_core_jni"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+health-core = { path = "rust" }
+jni = "0.21"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+# NEVER "abort": a panic must unwind to the catch_unwind at the JNI boundary.
+panic = "unwind"
