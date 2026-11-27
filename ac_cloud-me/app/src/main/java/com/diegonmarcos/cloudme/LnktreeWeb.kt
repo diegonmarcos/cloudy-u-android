@@ -291,6 +291,8 @@ object RuntimeHarvest {
 
     private fun urlsOne(ctx: Context, p: LnktreePage, timeoutS: Int): Collection<String> {
         if (timeoutS <= 0) return emptyList()
+        // #1957 isolation switch for the emulator walk (root only: the walk writes this file into the app's private files dir)
+        if (java.io.File(ctx.filesDir, "walk-no-harvest").exists()) { android.util.Log.i("CloudMeWeb", "CACHE_HARVEST page=${p.id} urls=0 off=walk-switch"); return emptyList() }
         val seen = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
         val done = java.util.concurrent.CountDownLatch(1)
         val main = android.os.Handler(android.os.Looper.getMainLooper())

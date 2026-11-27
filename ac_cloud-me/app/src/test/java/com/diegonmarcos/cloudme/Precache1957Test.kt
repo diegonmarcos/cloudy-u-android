@@ -250,4 +250,19 @@ class Precache1957Test {
         assertEquals("replaced", TtlPrefetch.run(listOf(k), cfg, s, f).single().result)
         assertEquals("fetch-failed", s.reason("k", dead)); assertTrue(s.complete(k.id, k.url))
     }
+
+    @Test(timeout = 10_000) fun `the background job waits while a page loads on screen`() {
+        val s = store(); val firstSub = java.util.concurrent.atomic.AtomicLong(0)
+        val until = System.currentTimeMillis() + 400
+        PrefetchGate.hold(System.currentTimeMillis(), 400)
+        try {
+            LnktreePrefetch.fill(LnktreePage("g", "https://g.example/"), cfg, s, { u ->
+                if (u == "https://g.example/") Fetched("text/html", null, 200, "<img src=\"a.png\">".toByteArray())
+                else { firstSub.compareAndSet(0, System.currentTimeMillis()); Fetched("image/png", null, 200, byteArrayOf(1)) } }, null)
+        } finally { PrefetchGate.release() }
+        assertTrue("a subresource was fetched while the page was loading", firstSub.get() >= until - 5)
+        // the wait is bounded: a page that never finishes never stops the job for good
+        var t = 0L; PrefetchGate.hold(0, Long.MAX_VALUE / 2)
+        assertEquals(1_000L, PrefetchGate.waitIdle(1_000, { t }, { t += it })); PrefetchGate.release()
+    }
 }

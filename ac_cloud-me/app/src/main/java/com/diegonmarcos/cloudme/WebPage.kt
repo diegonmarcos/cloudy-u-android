@@ -174,7 +174,13 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
                         super.onPageCommitVisible(view, url)
                     }
 
+                    override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                        PrefetchGate.hold(System.currentTimeMillis(), 10_000)   // #1951 the background cache job yields while this page loads
+                        super.onPageStarted(view, url, favicon)
+                    }
+
                     override fun onPageFinished(view: WebView?, url: String?) {
+                        PrefetchGate.release()
                         android.util.Log.i("CloudMeWeb", "MAINFRAME_OK page=$pageId url=$url title=${view?.title}")
                         refreshing = false
                         offlineNote = if (cached) LnktreeCache.offlineSince[pageId]?.let { "Offline copy from ${LnktreeResolver.age(it, System.currentTimeMillis())}" } else null

@@ -41,11 +41,11 @@ echo "$PAGES" > "$OUT/pages.txt"; echo "pages: $(echo "$PAGES" | wc -l)"
 # 1. prefetch of all pages
 $T adb logcat -c
 open_route "page:configs/general"
-for i in $(seq 1 90); do wlog | grep -q "CACHE_TOTAL" && break; sleep 5; done
+for i in $(seq 1 "${TOTAL_POLLS:-540}"); do wlog | grep -q "CACHE_TOTAL" && break; sleep 5; done   # #1957 the startup job covers every file of every page: up to 45 min, warm opens are measured after it
 wlog | grep -E "CACHE_PAGE|CACHE_TOTAL" | sed 's/.*CloudMeWeb: //' | sort -u > "$OUT/cache-report.txt"
 cat "$OUT/cache-report.txt"
 $T adb shell "du -sk /data/data/$ME/cache/lnktree-cache; du -sk /data/data/$ME/cache/lnktree-cache/*" > "$OUT/cache-du.txt" 2>&1 || true
-grep -q CACHE_TOTAL "$OUT/cache-report.txt" && ok "1: the prefetch of all pages finished" || fail "1: no CACHE_TOTAL within 450 s"
+grep -q CACHE_TOTAL "$OUT/cache-report.txt" && ok "1: the prefetch of all pages finished" || fail "1: no CACHE_TOTAL within the wait"
 CACHE="/data/data/$ME/cache/lnktree-cache"
 
 measure() {  # SEC ID [TAG] -> sets MS SRC
@@ -69,7 +69,7 @@ while read -r sec id url <&3; do
     vals=""; for k in 1 2 3; do measure "$sec" "$id" "warm$k"; [ "$MS" -ge 0 ] || MS=99999; vals="$vals $MS"; sleep 2; done
     wms=$(echo $vals | tr ' ' '\n' | sort -n | sed -n 2p); wsrc=$SRC; echo "$wms $wsrc" > "$OUT/warm-$id.txt"; echo "warm opens of $id (ms):$vals" >> "$OUT/warm-all.txt"; sleep 1; { [ "$id" = personal ] || [ "$id" = prof-professional ]; } && shot "warm-$id"
     # source none = the page's own service worker answered the main frame before the app's cache (the mySocials pages are PWAs): reported, judged against a looser bound
-    if [ "$wsrc" = cache-live ]; then
+    if [ "$wsrc" = cache-live ] || [ "$wsrc" = cache ]; then   # #1957 cache_ttl serves source=cache
         if [ "$wms" -ge 0 ] && [ "$wms" -lt "$WARM_MAX_MS" ]; then ok "2: $id warm first paint ${wms} ms from the app cache"; else fail "2: $id warm ${wms} ms source=$wsrc (want < ${WARM_MAX_MS} ms)"; fi
     else
         if [ "$wms" -ge 0 ] && [ "$wms" -lt 6000 ]; then ok "2s: $id warm first paint ${wms} ms, source=$wsrc (service worker or WebView, not the app cache)"; else fail "2s: $id warm ${wms} ms source=$wsrc"; fi
@@ -86,7 +86,9 @@ while read -r sec id url <&3; do
 done 3<<<"$PAGES" >> "$OUT/walk.log" 2>&1
 cat "$OUT/walk.log"; grep -q '^FAIL' "$OUT/walk.log" && rc=1
 
-# 4. a changed live page swaps in
+# 4. a changed live page swaps in (cache_then_live only: under cache_ttl, the owner policy of #1957, a fresh copy is never compared live; the walk of #1957 proves the ttl refetch)
+STRAT=$(wlog | grep -o "strategy=[a-z_]*" | tail -1 | cut -d= -f2)
+if [ "$STRAT" != cache_ttl ]; then
 id=prof-professional; url=$(echo "$PAGES" | awk '$2=="prof-professional"{print $3}'); lit="url=$(printf '%s' "$url" | sed 's/:/\\:/')"
 $T adb shell "m=\$(grep -lxF '$lit' $CACHE/$id/*.meta | head -1); echo \"\${m%.meta}.body\" > /data/local/tmp/body1951; echo '<!--cache1951-tamper-->' >> \"\${m%.meta}.body\""
 BODY=$($T adb shell cat /data/local/tmp/body1951 | tr -d '\r'); echo "tampered $BODY"
@@ -98,6 +100,7 @@ sleep 3; shot "swap-after"
 grep -qE "LIVE_CHECK page=prof-professional changed=[1-9]" "$OUT/swap.log" && ok "4a: the live check found the changed page" || fail "4a: no LIVE_CHECK changed>=1"
 grep -q "LIVE_SWAPPED page=prof-professional" "$OUT/swap.log" && ok "4b: the shown page swapped to the live version" || fail "4b: no LIVE_SWAPPED"
 [ "$($T adb shell grep -c cache1951-tamper "$BODY" | tr -d '\r')" = 0 ] && ok "4c: the cache holds the live body again" || fail "4c: the tampered cache body was not replaced"
+else ok "4: no live swap under cache_ttl (owner policy #1957; the ttl refetch is proven by the #1957 walk)"; fi
 
 # 5. airplane mode
 $T adb shell cmd connectivity airplane-mode enable; $T adb shell svc wifi disable; $T adb shell svc data disable; sleep 5

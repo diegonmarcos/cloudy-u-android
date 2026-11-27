@@ -510,6 +510,23 @@ object BoundedRead {
     }
 }
 
+/**
+ * #1951/#1957 the page on screen comes first: while a page is loading, the background job pauses between batches (at most [maxWaitMs] per
+ * pause, so it never stops for good), and its threads run at the lowest priority. Warm opens measured 3.8-6.9 s while the job ran.
+ */
+object PrefetchGate {
+    @Volatile var busyUntil: Long = 0L
+    fun hold(now: Long, forMs: Long) { busyUntil = maxOf(busyUntil, now + forMs) }
+    fun release() { busyUntil = 0L }
+    fun busy(now: Long): Boolean = now < busyUntil
+    /** Waits while a page is loading; returns how long it waited. */
+    fun waitIdle(maxWaitMs: Long, now: () -> Long = System::currentTimeMillis, sleep: (Long) -> Unit = { Thread.sleep(it) }): Long {
+        val t0 = now(); while (busy(now()) && now() - t0 < maxWaitMs) sleep(50); return now() - t0
+    }
+    /** Background threads at the lowest priority (Android maps it to the lowest nice level). */
+    val lowPriority = java.util.concurrent.ThreadFactory { r -> Thread(r).apply { priority = Thread.MIN_PRIORITY; isDaemon = true } }
+}
+
 /** What one network fetch returned; null from the fetcher = the network said no. */
 class Fetched(val mime: String, val encoding: String?, val status: Int, val body: ByteArray)
 
@@ -553,9 +570,10 @@ object LnktreePrefetch {
         // #1957 the manifest: every URL planned for the page (what completeness is judged against)
         val planned = LinkedHashSet<String>()
         val queue = ArrayDeque(RefScan.html(String(m.body, Charsets.UTF_8), p.url, cfg.crossOrigin) + extra)
-        val pool = if (cfg.subresourceConcurrency > 1) Executors.newFixedThreadPool(cfg.subresourceConcurrency) else null
+        val pool = if (cfg.subresourceConcurrency > 1) Executors.newFixedThreadPool(cfg.subresourceConcurrency, PrefetchGate.lowPriority) else null
         try {
             while (queue.isNotEmpty() && budget > 0) {
+                PrefetchGate.waitIdle(15_000)   // #1951 a page loading on screen goes first
                 // #1957 one batch of up to subresource_concurrency files is fetched in parallel; the results are stored in order
                 val batch = ArrayList<String>()
                 while (queue.isNotEmpty() && batch.size < cfg.subresourceConcurrency.coerceAtMost(budget)) {
@@ -648,7 +666,7 @@ object TtlPrefetch {
             // the copy is fresh: its stored files stay as they are (no network for them); only the files it lacks are fetched
             store.registerPage(p.id, p.url)
             val want = (store.missing(p.id, p.url) + extra.filter { store.get(p.id, it) == null }).distinctBy { CacheKey.normalize(it) }
-            val pool = Executors.newFixedThreadPool(cfg.subresourceConcurrency)
+            val pool = Executors.newFixedThreadPool(cfg.subresourceConcurrency, PrefetchGate.lowPriority)
             try {
                 want.map { u -> u to pool.submit(Callable { LnktreePrefetch.fetchCapped(u, cfg, store, fetch) }) }.forEach { (u, f) ->
                     val r = runCatching { f.get() }.getOrNull() ?: Fetched("application/octet-stream", "fetch-failed", LnktreePrefetch.VIDEO_CAPPED, ByteArray(0))
@@ -669,7 +687,7 @@ object TtlPrefetch {
     fun run(pages: List<LnktreePage>, cfg: LnktreeCacheConfig, store: LnktreeCacheStore, fetch: (String) -> Fetched?, extra: (LnktreePage) -> Collection<String> = { emptyList() }, onPage: (Outcome) -> Unit = {}): List<Outcome> {
         if (!cfg.enabled || !cfg.prefetchEnabled) return emptyList()
         val todo = pages.filter { cfg.caches(it.id) }.let { if (cfg.prefetchMaxPages > 0) it.take(cfg.prefetchMaxPages) else it }
-        val pool = Executors.newFixedThreadPool(cfg.prefetchConcurrency)
+        val pool = Executors.newFixedThreadPool(cfg.prefetchConcurrency, PrefetchGate.lowPriority)
         try {
             val first = todo.map { p -> pool.submit(Callable {
                 val a = decide(p, cfg, store)

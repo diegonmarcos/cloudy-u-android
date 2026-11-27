@@ -57,9 +57,13 @@ fi
 $T adb uninstall "$ME" >/dev/null 2>&1 || true
 $T adb install -r -g "$ME_APK" || { echo "install failed"; exit 1; }
 perms; clear_log
+# isolation: HARVEST=off disables the app's offscreen URL pass (root writes the switch file before the first launch)
+if [ "${HARVEST:-on}" = off ]; then $T adb shell "mkdir -p /data/data/$ME/files && touch /data/data/$ME/files/walk-no-harvest && chmod 666 /data/data/$ME/files/walk-no-harvest; restorecon -R /data/data/$ME/files"; echo "offscreen pass OFF"; fi
+# the emulator's own state every poll, so a death is dated against the app's log
+emu_alive() { $T adb get-state 2>&1 | tr -d '\r'; }
 t0=$(date +%s); launch
 NP=$(echo "$PAGES" | grep -c .)
-for _ in $(seq 1 $((WAIT_S / 10))); do wlog | grep -q "^CACHE_TOTAL" && break; wlog | grep -E "^CACHE_(PROGRESS|FETCH)" | tail -1; liveall | grep -a -E "FATAL EXCEPTION|ANR in|Process com.diegonmarcos.cloudme .*died" | tail -2; liveall > "$LIVE"; sleep 10; done
+for _ in $(seq 1 $((WAIT_S / 10))); do wlog | grep -q "^CACHE_TOTAL" && break; wlog | grep -E "^CACHE_(PROGRESS|FETCH)" | tail -1; liveall | grep -a -E "FATAL EXCEPTION|ANR in|Process com.diegonmarcos.cloudme .*died" | tail -2; echo "emulator: $(emu_alive) at $(date +%T)"; liveall > "$LIVE"; sleep 10; done
 liveall | grep -a -E "FATAL EXCEPTION|ANR in|has died|OutOfMemory" -A12 | cut -c1-240 > "$OUT/crashes.txt"; [ -s "$OUT/crashes.txt" ] && { echo "app crashes:"; head -40 "$OUT/crashes.txt"; }
 el=$(( $(date +%s) - t0 ))
 wlog | grep -E "^CACHE_(PAGE|TOTAL|FETCH|HARVEST|VERSION|PROGRESS)" > "$OUT/cache-report.txt"
