@@ -48,7 +48,7 @@ walk() { # walk <section> <prefix> <steps>
 }
 CUR=phone; wake; adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "section:phone" >/dev/null; sleep 12; cap qm-00
 for i in $(seq 1 6); do swipe_up; cap "qm-$(printf %02d "$i")"; done
-for l in Lnktree Me-Pers Me-Prj "Media Center" AI Drive Code; do
+for l in Lnktree Me-Pers Me-Prj "Media Center" AI Drive Code "Jobs & Business"; do
   wake; adb shell am start -n "$PKG/.MainActivity" --es shortcut_action "section:phone" >/dev/null; sleep 8
   for k in 1 2 3 4 5 6 7 8; do dump; if has "$l"; then break; fi; swipe_up; done
   if has "$l"; then tap "$l"; cap "qm-folder-$(echo "$l" | tr -d ' ')"; adb shell input keyevent KEYCODE_BACK; sleep 2; else echo "::warning::no '$l' folder found"; fail=1; fi
