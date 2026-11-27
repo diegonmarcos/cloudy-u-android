@@ -36,8 +36,14 @@ object Exchange {
         )
     }
 
-    /** What the user picked: the source currency, the typed amount (canonical, "." decimal) and the target currencies in card order. */
-    data class State(val source: String, val amount: String, val targets: List<String>)
+    /**
+     * What the user picked: the source currency, the typed amount (canonical, "." decimal) and the target currencies in card order.
+     * #1963 every box is editable: [active] is the index of the box the amount was typed in (0 = the source box, i + 1 = targets[i]);
+     * every other box is an output computed from it.
+     */
+    data class State(val source: String, val amount: String, val targets: List<String>, val active: Int = 0) {
+        val boxes: List<String> get() = listOf(source) + targets
+    }
 
     fun defaults(mode: Declarations.Mode): State = State(
         mode.defaults["source"].orEmpty(),
@@ -68,7 +74,28 @@ object Exchange {
     fun addTarget(s: State, code: String, max: Int): State =
         if (code == s.source || code in s.targets || s.targets.size >= max) s else s.copy(targets = s.targets + code)
 
-    fun removeTarget(s: State, code: String): State = s.copy(targets = s.targets - code)
+    fun removeTarget(s: State, code: String): State {
+        val i = s.targets.indexOf(code)
+        if (i < 0) return s
+        val box = i + 1
+        return s.copy(targets = s.targets - code, active = if (s.active == box) 0 else if (s.active > box) s.active - 1 else s.active)
+    }
+
+    /** The amount typed in box [index] (canonical): that box becomes the input, the others are outputs of it. */
+    fun typed(s: State, index: Int, canonicalAmount: String): State = if (index in s.boxes.indices) s.copy(active = index, amount = canonicalAmount) else s
+
+    /** Box [index] becomes the input keeping the value it showed as an output (exact, not the rounded display), so no value drifts. */
+    fun activate(s: State, perBase: Map<String, Double>, index: Int): State {
+        if (index !in s.boxes.indices || index == s.active) return s
+        val v = values(s, perBase, parseDecimal(s.amount, Locale.ROOT))[index]
+        return s.copy(active = index, amount = v?.let { canonical(it) } ?: "")
+    }
+
+    /** Every box's value: the input box shows [typed], each other box is [typed] converted from the input currency (null = unknown). */
+    fun values(s: State, perBase: Map<String, Double>, typed: BigDecimal?): List<BigDecimal?> {
+        val from = s.boxes.getOrNull(s.active) ?: return s.boxes.map { null }
+        return s.boxes.mapIndexed { i, code -> if (i == s.active) typed else typed?.let { convertExact(it, perBase, from, code) } }
+    }
 
     // ── maths ─────────────────────────────────────────────────────────────────────────────────
 
@@ -77,6 +104,17 @@ object Exchange {
         if (from == to) return 1.0
         val a = perBase[from]; val b = perBase[to]
         return if (a == null || b == null || a == 0.0) null else b / a
+    }
+
+    /**
+     * A -> EUR -> B in decimal arithmetic (amount * perBase[to] / perBase[from], 34 digits), so A -> B -> A returns the amount
+     * to the last digit shown; null when a code is missing.
+     */
+    fun convertExact(amount: BigDecimal, perBase: Map<String, Double>, from: String, to: String): BigDecimal? {
+        if (from == to) return amount
+        val a = perBase[from]; val b = perBase[to]
+        if (a == null || b == null || a == 0.0 || !a.isFinite() || !b.isFinite()) return null
+        return amount.multiply(BigDecimal(b)).divide(BigDecimal(a), MathContext.DECIMAL128)
     }
 
     fun convert(amount: Double, perBase: Map<String, Double>, from: String, to: String): Double? = rate(perBase, from, to)?.let { it * amount }
@@ -108,6 +146,24 @@ object Exchange {
         val canon = if (i < 0) cleaned else cleaned.substring(0, i) + "." + cleaned.substring(i + 1).replace(dec.toString(), "")
         return canon.takeIf { it.isNotEmpty() && it != "." }?.toDoubleOrNull()?.takeIf { it.isFinite() }
     }
+
+    /** [parseAmount] without the double: the exact typed decimal. */
+    fun parseDecimal(text: String, locale: Locale): BigDecimal? {
+        val dec = DecimalFormatSymbols.getInstance(locale).decimalSeparator
+        val cleaned = text.filter { it.isDigit() || it == dec }
+        val i = cleaned.indexOf(dec)
+        val canon = if (i < 0) cleaned else cleaned.substring(0, i) + "." + cleaned.substring(i + 1).replace(dec.toString(), "")
+        return canon.takeIf { it.isNotEmpty() && it != "." }?.toBigDecimalOrNull()
+    }
+
+    /** A value in [locale] with [decimals] decimals, half-up. */
+    fun amountText(x: BigDecimal?, locale: Locale, decimals: Int = 2): String =
+        if (x == null) "—" else NumberFormat.getNumberInstance(locale).apply {
+            minimumFractionDigits = decimals; maximumFractionDigits = decimals; roundingMode = java.math.RoundingMode.HALF_UP
+        }.format(x)
+
+    /** The canonical form of an exact value (25 significant digits, no exponent). */
+    fun canonical(x: BigDecimal): String = x.round(MathContext(25)).stripTrailingZeros().toPlainString()
 
     /** The canonical ("." decimal) form a typed amount is stored in. */
     fun canonical(x: Double): String = BigDecimal.valueOf(x).stripTrailingZeros().toPlainString()
@@ -159,11 +215,13 @@ object Exchange {
         fun load(defaults: State): State {
             val p = prefs ?: return defaults
             val targets = runCatching { JSONArray(p.getString("exchange_targets", null)).let { a -> (0 until a.length()).map { a.getString(it) } } }.getOrNull()
-            return State(p.getString("exchange_source", null) ?: defaults.source, p.getString("exchange_amount", null) ?: defaults.amount, targets ?: defaults.targets)
+            val t = targets ?: defaults.targets
+            val active = p.getInt("exchange_active", 0).takeIf { it in 0..t.size } ?: 0
+            return State(p.getString("exchange_source", null) ?: defaults.source, p.getString("exchange_amount", null) ?: defaults.amount, t, active)
         }
 
         fun save(s: State) {
-            prefs?.edit()?.putString("exchange_source", s.source)?.putString("exchange_amount", s.amount)?.putString("exchange_targets", JSONArray(s.targets).toString())?.apply()
+            prefs?.edit()?.putString("exchange_source", s.source)?.putString("exchange_amount", s.amount)?.putString("exchange_targets", JSONArray(s.targets).toString())?.putInt("exchange_active", s.active)?.apply()
         }
     }
 

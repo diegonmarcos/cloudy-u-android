@@ -1,5 +1,6 @@
 package com.diegonmarcos.cloudcalc.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -50,6 +51,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -113,6 +118,7 @@ fun ExchangeMode(mode: Declarations.Mode) {
     val scope = rememberCoroutineScope()
 
     var state by remember { mutableStateOf(store.load(Exchange.defaults(mode))) }
+    /** What the input box (state.active) shows while it is typed in. */
     var text by remember { mutableStateOf(Exchange.editText(state.amount, locale)) }
     var table by remember { mutableStateOf(Exchange.RateCache(prefs).load()?.let { Exchange.Table(it.perBase, it.updatedMs, false) } ?: Exchange.Table(emptyMap(), 0L, false)) }
     var refreshing by remember { mutableStateOf(false) }
@@ -123,6 +129,21 @@ fun ExchangeMode(mode: Declarations.Mode) {
     val currencies = remember(mode.id) { Exchange.currencies(api, spec.base, listOf(state.source) + state.targets) }
 
     fun edit(next: Exchange.State) { state = next; store.save(next) }
+
+    /** Box [i] becomes the input (it keeps the value it showed); a box already the input is left alone. */
+    fun activate(i: Int) {
+        if (i == state.active) return
+        val next = Exchange.activate(state, table.perBase, i)
+        text = Exchange.editText(Exchange.parseDecimal(next.amount, java.util.Locale.ROOT)?.setScale(spec.amountDecimals, java.math.RoundingMode.HALF_UP)?.toPlainString() ?: "", locale)
+        edit(next)
+    }
+
+    /** The user typed [v] in box [i]: that box is the input, every other box is recomputed from it. */
+    fun type(i: Int, v: String) {
+        if (i != state.active) activate(i)
+        text = v
+        Exchange.parseDecimal(v, locale)?.let { edit(Exchange.typed(state, i, Exchange.canonical(it))) }
+    }
 
     /** A read and a refresh may finish in either order: the newer time and the union of the rates win. */
     fun apply(t: Exchange.Table) { table = Exchange.Table(table.perBase + t.perBase, maxOf(table.updatedMs, t.updatedMs), t.offline) }
@@ -137,36 +158,36 @@ fun ExchangeMode(mode: Declarations.Mode) {
         refreshing = false
     }
 
-    val amount = Exchange.parseAmount(text, locale)
+    val values = Exchange.values(state, table.perBase, Exchange.parseDecimal(text, locale))
+    fun boxText(i: Int) = if (i == state.active) text else Exchange.amountText(values[i], locale, spec.amountDecimals)
     Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(CalcMetrics.gutter)) {
-        ExchangeCard(Modifier.testTag(ExchangeTags.SOURCE_CARD)) {
+        ExchangeCard(Modifier.testTag(ExchangeTags.SOURCE_CARD), active = state.active == 0) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column {
                     Text(stringResource(R.string.ex_you_convert), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     CurrencyChip(state.source, Modifier.testTag(ExchangeTags.SOURCE_CODE)) { pick = Pick.Source }
                 }
-                BasicTextField(
-                    value = text,
-                    onValueChange = { v ->
-                        text = v
-                        Exchange.parseAmount(v, locale)?.let { edit(state.copy(amount = Exchange.canonical(it))) }
-                    },
-                    modifier = Modifier.weight(1f).padding(start = CalcMetrics.gutter).testTag(ExchangeTags.AMOUNT),
-                    textStyle = MaterialTheme.typography.headlineMedium.copy(color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.End, fontWeight = FontWeight.Medium),
-                    singleLine = true,
-                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                AmountField(
+                    boxText(0), { type(0, it) }, { activate(0) }, state.active == 0,
+                    MaterialTheme.typography.headlineMedium, Modifier.weight(1f).padding(start = CalcMetrics.gutter).testTag(ExchangeTags.AMOUNT),
                 )
             }
         }
         HorizontalDivider(Modifier.padding(vertical = CalcMetrics.gutter), color = MaterialTheme.colorScheme.outline)
         state.targets.forEachIndexed { i, code ->
             androidx.compose.runtime.key(code) {
+                // The rate line reads from the input currency; the input card itself reads against the first box.
+                val isIn = state.active == i + 1
+                val from = if (isIn) code else state.boxes[state.active]
+                val to = if (isIn) state.source else code
                 TargetCard(
                     code = code,
-                    amountText = amount?.let { a -> Exchange.convert(a, table.perBase, state.source, code) }?.let { Exchange.amountText(it, locale, spec.amountDecimals) } ?: "—",
-                    rateLine = Exchange.rateLine(state.source, code, Exchange.rate(table.perBase, state.source, code), locale, spec.rateSignificant),
+                    amountText = boxText(i + 1),
+                    onAmount = { type(i + 1, it) },
+                    onFocus = { activate(i + 1) },
+                    active = state.active == i + 1,
+                    rateLine = Exchange.rateLine(from, to, Exchange.rate(table.perBase, from, to), locale, spec.rateSignificant),
                     onPick = { pick = Pick.Target(i) },
                     onRemove = { edit(Exchange.removeTarget(state, code)) },
                 )
@@ -237,23 +258,28 @@ fun ExchangeMode(mode: Declarations.Mode) {
 
 /** A rounded dark card. */
 @Composable
-private fun ExchangeCard(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    Surface(modifier.fillMaxWidth(), shape = RoundedCornerShape(CalcMetrics.exchangeCorner), color = MaterialTheme.colorScheme.surfaceVariant) {
+private fun ExchangeCard(modifier: Modifier = Modifier, active: Boolean = false, content: @Composable () -> Unit) {
+    Surface(
+        modifier.fillMaxWidth(), shape = RoundedCornerShape(CalcMetrics.exchangeCorner), color = MaterialTheme.colorScheme.surfaceVariant,
+        border = if (active) BorderStroke(CalcMetrics.stroke, MaterialTheme.colorScheme.primary) else null,
+    ) {
         Box(Modifier.padding(horizontal = CalcMetrics.gutter + CalcMetrics.gap, vertical = CalcMetrics.gutter)) { content() }
     }
 }
 
 /** A target card: swipe it away or long-press for Remove. */
 @Composable
-private fun TargetCard(code: String, amountText: String, rateLine: String, onPick: () -> Unit, onRemove: () -> Unit) {
+private fun TargetCard(
+    code: String, amountText: String, onAmount: (String) -> Unit, onFocus: () -> Unit, active: Boolean, rateLine: String, onPick: () -> Unit, onRemove: () -> Unit,
+) {
     var menu by remember { mutableStateOf(false) }
     val swipe = rememberSwipeToDismissBoxState(confirmValueChange = { v -> if (v != SwipeToDismissBoxValue.Settled) { onRemove(); true } else false })
     SwipeToDismissBox(swipe, backgroundContent = {}, modifier = Modifier.testTag(ExchangeTags.target(code))) {
-        ExchangeCard(Modifier.combinedClickable(onClick = {}, onLongClick = { menu = true })) {
+        ExchangeCard(Modifier.combinedClickable(onClick = {}, onLongClick = { menu = true }), active = active) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 CurrencyChip(code, Modifier.testTag(ExchangeTags.targetCode(code)), onPick)
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-                    Text(amountText, Modifier.testTag(ExchangeTags.targetAmount(code)), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Medium, maxLines = 1)
+                    AmountField(amountText, onAmount, onFocus, active, MaterialTheme.typography.titleLarge, Modifier.fillMaxWidth().testTag(ExchangeTags.targetAmount(code)))
                     Text(rateLine, Modifier.testTag(ExchangeTags.targetRate(code)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                 }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
@@ -262,6 +288,23 @@ private fun TargetCard(code: String, amountText: String, rateLine: String, onPic
             }
         }
     }
+}
+
+/** An editable amount: the input box is drawn in the accent colour with a caret, an output box in the plain colour; selected semantics = the input. */
+@Composable
+private fun AmountField(value: String, onChange: (String) -> Unit, onFocus: () -> Unit, active: Boolean, style: TextStyle, modifier: Modifier) {
+    BasicTextField(
+        value = value,
+        onValueChange = onChange,
+        modifier = modifier.onFocusChanged { if (it.isFocused) onFocus() }.semantics { selected = active },
+        textStyle = style.copy(
+            color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.End, fontWeight = FontWeight.Medium,
+        ),
+        singleLine = true,
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+    )
 }
 
 /** Round flag, code and a chevron: opens the picker. */

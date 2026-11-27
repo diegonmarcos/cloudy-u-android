@@ -1,0 +1,126 @@
+# #1963 Cloud Calc Finance > Exchange: every box is editable (the typed box is the input, the others are outputs of it).
+# The real tree runs GREEN once, then each planted mutant must turn ExchangeInputTest / ExchangeScreenTest RED. The verdict is read from
+# the JUnit XML (failures + errors per class), never from gradle's exit text. The dispatch input reaches the shell through env only and
+# is checked against the allow-list below. Manual only.
+name: calc-exchange-1963-mutation
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "all | only-first-box | only-first-box-ui | outputs-from-first | values-from-first | switch-drops-value | drift | no-highlight"
+        required: false
+        default: "all"
+permissions:
+  contents: read
+env:
+  WORK_DIR: ac_cloud-calc
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the dispatch input (allow-list)
+        env:
+          NAME: ${{ inputs.name }}
+        run: |
+          case "$NAME" in
+            all|only-first-box|only-first-box-ui|outputs-from-first|values-from-first|switch-drops-value|drift|no-highlight) ;;
+            *) echo "::error::name not in the allow-list"; exit 2 ;;
+          esac
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
+      - name: Set up Gradle 8.10.2 (cached)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.10.2"
+      # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
+      # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
+      - name: Checkout vault (shared Android signing key, read by app/build.gradle at configuration)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+      - name: Install ORAS + sops (pinned)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: oras sops
+      - name: Real tree GREEN, every mutant RED (verdict from the JUnit XML)
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+          ONLY: ${{ inputs.name }}
+        run: |
+          set -u
+          jq '.tests.unit.task = ":app:testDebugUnitTest"' "$WORK_DIR/build.json" > /tmp/b.json && mv /tmp/b.json "$WORK_DIR/build.json"
+          T=ac_cloud-calc/app/src/test
+          # Only the Exchange suites run: another ticket's test must not decide whether these mutants are caught.
+          find "$T" -name '*.kt' ! -name 'ExchangeInputTest.kt' ! -name 'ExchangeScreenTest.kt' -delete
+          M=ac_cloud-calc/app/src/main/java/com/diegonmarcos/cloudcalc
+          # prints "<class> <tests> <failed>" per Exchange class from the XML; exit 1 when a class has no XML
+          verdict() {
+            python3 -I - <<'PY'
+          import glob, sys, xml.etree.ElementTree as ET
+          bad = 0
+          for cls in ("ExchangeInputTest", "ExchangeScreenTest"):
+              fs = glob.glob("ac_cloud-calc/app/build/test-results/**/TEST-*." + cls + ".xml", recursive=True)
+              if not fs:
+                  print(cls, "NO-XML"); bad = 1; continue
+              r = ET.parse(fs[0]).getroot()
+              n, f = int(r.get("tests", 0)), int(r.get("failures", 0)) + int(r.get("errors", 0))
+              print(cls, n, f)
+              if n == 0: bad = 1
+          sys.exit(bad)
+          PY
+          }
+          failed_count() { verdict 2>/dev/null | awk '$2 ~ /^[0-9]+$/ {s += $3} END {print s + 0}'; }
+          suite() { rm -rf ac_cloud-calc/app/build/test-results; sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR" > /tmp/suite.log 2>&1 || true; }
+          sub() { python3 -I -c 'import sys; p, a, b = sys.argv[1:]; s = open(p).read(); assert a in s, "anchor missing: " + a; open(p, "w").write(s.replace(a, b, 1))' "$1" "$2" "$3"; }
+          suite
+          verdict || { tail -80 /tmp/suite.log; echo "::error::an Exchange suite produced no XML or ran no test"; exit 1; }
+          [ "$(failed_count)" = 0 ] || { tail -80 /tmp/suite.log; echo "::error::the real tree is RED"; exit 1; }
+          echo "real tree: GREEN"
+          stayed=0
+          while IFS='@' read -r f name a b; do
+            [ -z "$name" ] && continue
+            [ "$ONLY" != "all" ] && [ "$ONLY" != "$name" ] && continue
+            case "$f" in E) V=$M/Exchange.kt ;; *) V=$M/ui/ExchangeScreens.kt ;; esac
+            git checkout -- "$M/Exchange.kt" "$M/ui/ExchangeScreens.kt"
+            sub "$V" "$a" "$b" || { echo "::error::$name: mutation anchor missing"; stayed=$((stayed + 1)); continue; }
+            suite
+            if ! verdict >/tmp/v.txt; then cat /tmp/v.txt; tail -40 /tmp/suite.log; echo "::error::$name: no verdict (compile error?)"; stayed=$((stayed + 1)); continue; fi
+            cat /tmp/v.txt
+            if [ "$(failed_count)" -gt 0 ]; then echo "RED (caught): $name"; else echo "::error::mutant stayed GREEN: $name"; stayed=$((stayed + 1)); fi
+          done <<'MUTANTS'
+          E@only-first-box@if (index in s.boxes.indices) s.copy(active = index, amount = canonicalAmount) else s@if (index == 0) s.copy(active = index, amount = canonicalAmount) else s
+          U@only-first-box-ui@onAmount = { type(i + 1, it) },@onAmount = { },
+          E@outputs-from-first@val from = s.boxes.getOrNull(s.active) ?: return@val from = s.boxes.getOrNull(0) ?: return
+          U@values-from-first@val values = Exchange.values(state, table.perBase@val values = Exchange.values(state.copy(active = 0), table.perBase
+          E@switch-drops-value@amount = v?.let { canonical(it) } ?: "")@amount = s.amount)
+          E@drift@MathContext.DECIMAL128)@MathContext(4))
+          U@no-highlight@selected = active@selected = false
+          MUTANTS
+          git checkout -- "$M/Exchange.kt" "$M/ui/ExchangeScreens.kt"
+          [ "$stayed" -eq 0 ] || { echo "::error::$stayed mutant(s) stayed green or gave no verdict"; exit 1; }
+          echo "every mutant RED"
+      - name: Upload the JUnit XML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: exchange-1963-junit
+          path: ac_cloud-calc/app/build/test-results/
+          if-no-files-found: warn

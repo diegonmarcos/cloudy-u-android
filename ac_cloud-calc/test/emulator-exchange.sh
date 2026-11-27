@@ -4,6 +4,9 @@
 # Rates come from the engine (Cloud-Lib-Calc), which may be absent on the emulator: the page then shows its cached/offline state, still asserted.
 # Two cases on one emulator: OFFLINE (Cloud-Lib-Calc not installed: no engine, cached/never state) then ONLINE (Cloud-Lib-Calc installed, the page
 # loads the ECB rates through the engine: a numeric amount, a "1 INR -> 0.0xxx" line and a real Last-updated date are asserted).
+# #1963 every box is editable: after the ONLINE case the walk types 100 into the USD box (not the first) and asserts the other boxes
+# recompute from it (EUR against the "1 USD -> r EUR" line, INR against the earlier INR->USD rate), that USD is the selected input, and that
+# switching the input to INR reads 100.00 back in USD (no round-trip drift). Shots: online-02-usd-input, online-03-inr-input.
 # Usage: emulator-exchange.sh <calc.apk> <outdir> [<lib-calc.apk>]  (no lib apk = the offline case only)
 set -u
 APK=${1:?calc apk}; OUT=${2:-out}; LIB=${3:-}
@@ -90,3 +93,52 @@ bottom online
 [ "$fresh" = 1 ] && grep -q "Last updated: $today" "$OUT/footer-online.txt" || { logcat_tail; grep -iE "calc|qalc|rates|fetch|UnknownHost|SSL" "$OUT/logcat.txt" | tail -60 > "$OUT/engine-log.txt"; fail "online: the footer never showed today ($today): $(cat "$OUT/footer-online.txt")"; }
 logcat_tail
 echo "ONLINE case: rates loaded through Cloud-Lib-Calc, numeric amounts, unit-rate lines and a real Last-updated date"
+
+# ── #1963 type into a NON-first box: every other box is recomputed from it ──
+# edits: the amount boxes (android.widget.EditText) top to bottom -> "<text>|<selected>" one per line
+edits() { dump | python3 -I -c '
+import re,sys
+x=sys.stdin.read(); rows=[]
+for m in re.finditer(r"<node [^>]*>",x):
+    n=m.group(0)
+    if "android.widget.EditText" not in n: continue
+    t=re.search(r"\btext=\"([^\"]*)\"",n); b=re.search(r"bounds=\"\[(\d+),(\d+)\]",n); sel=re.search(r"\bselected=\"(\w+)\"",n)
+    rows.append((int(b.group(2)),t.group(1) if t else "",sel.group(1) if sel else "?"))
+for y,t,sel in sorted(rows): print(t+"|"+sel)'; }
+num() { printf '%s' "$1" | tr -d ','; }
+swipe 30 80; sleep 2
+n=$(edits | wc -l); [ "$n" -ge 5 ] || fail "usd-input: expected 5 editable amount boxes, found $n: $(edits | tr '\n' ' ')"
+inr0=$(edits | sed -n 1p | cut -d'|' -f1); [ "$(edits | sed -n 1p | cut -d'|' -f2)" = true ] || echo "note: first box not reported selected before the switch: $(edits | tr '\n' ' ')"
+tap_edit() { dump | python3 -I -c '
+import re,sys
+x=sys.stdin.read(); rows=[]
+for m in re.finditer(r"<node [^>]*>",x):
+    n=m.group(0)
+    if "android.widget.EditText" not in n: continue
+    b=re.search(r"bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"",n); rows.append(tuple(map(int,b.groups())))
+a,b,c,d=sorted(rows,key=lambda r:r[1])[int(sys.argv[1])]; print((a+c)//2,(b+d)//2)' "$1" | { read -r X Y; adb shell input tap "$X" "$Y"; }; }
+tap_edit 1; sleep 1
+adb shell input keyevent KEYCODE_MOVE_END; for i in $(seq 1 14); do adb shell input keyevent KEYCODE_DEL; done
+adb shell input text 100; sleep 3
+shot online-02-usd-input
+rows=$(edits); echo "$rows" | tr '\n' ' '
+[ "$(echo "$rows" | sed -n 2p | cut -d'|' -f1)" = 100 ] || fail "usd-input: the USD box does not show 100: $(echo "$rows" | tr '\n' ' ')"
+[ "$(echo "$rows" | sed -n 2p | cut -d'|' -f2)" = true ] || fail "usd-input: the USD box is not the selected input: $(echo "$rows" | tr '\n' ' ')"
+[ "$(echo "$rows" | sed -n 1p | cut -d'|' -f2)" = true ] && fail "usd-input: the first box is still the selected input"
+inr=$(num "$(echo "$rows" | sed -n 1p | cut -d'|' -f1)"); eur=$(num "$(echo "$rows" | sed -n 3p | cut -d'|' -f1)")
+reur=$(grep -oE 'text="1 USD . [0-9.]+ EUR"' "$OUT/ui.xml" | grep -oE ' [0-9.]+ EUR' | grep -oE '[0-9.]+' | head -1)
+[ -n "$reur" ] || fail "usd-input: no '1 USD -> r EUR' unit-rate line: $(texts)"
+python3 -I -c '
+import sys
+inr,eur,reur,inr0=map(float,sys.argv[1:5])
+assert abs(eur-100*reur)<=0.02,("EUR box vs 100 x the USD->EUR line",eur,reur)
+assert inr>1000 and abs(inr-858.02)>1,("INR box was not recomputed from 100 USD",inr)
+' "$inr" "$eur" "$reur" "$(num "$inr0")" || fail "usd-input: the other boxes were not recomputed from USD: INR=$inr EUR=$eur rate=$reur"
+echo "USD input: INR=$inr EUR=$eur (1 USD = $reur EUR)"
+# switch the input to INR: USD must read 100.00 again (exact round trip, no drift)
+tap_edit 0; sleep 2; shot online-03-inr-input
+rows=$(edits); echo "$rows" | tr '\n' ' '
+[ "$(echo "$rows" | sed -n 2p | cut -d'|' -f1)" = "100.00" ] || fail "round trip: USD did not read back 100.00 after switching the input to INR: $(echo "$rows" | tr '\n' ' ')"
+[ "$(echo "$rows" | sed -n 1p | cut -d'|' -f2)" = true ] || fail "round trip: the INR box is not the selected input: $(echo "$rows" | tr '\n' ' ')"
+logcat_tail
+echo "NON-FIRST INPUT: USD typed, INR/EUR recomputed, input switch keeps 100.00"

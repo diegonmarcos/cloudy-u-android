@@ -1,5 +1,5 @@
 # ╔═══════════════════════════════════════════════════════════════════════╗
-# ║ Test -> Calc Exchange page (emulator) (#1945)              ║
+# ║ Test -> Calc Exchange page (emulator) (#1945, #1963)              ║
 # ║ Script: ac_cloud-calc/test/emulator-exchange.sh; shot in the    ║
 # ║ `exchange-evidence` artifact (Finance > Exchange).    ║
 # ╚═══════════════════════════════════════════════════════════════════════╝
@@ -28,6 +28,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Check the dispatch inputs (allow-list)
+        env:
+          B_RUN: ${{ inputs.calc_run_id }}
+          TAG: ${{ inputs.release_tag }}
+        run: |
+          case "$B_RUN" in ''|*[!0-9]*) [ -z "$B_RUN" ] || { echo "::error::calc_run_id must be digits"; exit 2; } ;; esac
+          case "$TAG" in ''|*[!A-Za-z0-9._-]*) [ -z "$TAG" ] || { echo "::error::release_tag has characters outside [A-Za-z0-9._-]"; exit 2; } ;; esac
 
       - name: Fetch the Cloud Calc APK
         env:

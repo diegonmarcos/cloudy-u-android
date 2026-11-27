@@ -4,6 +4,8 @@ import android.content.ComponentName
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
@@ -114,6 +116,41 @@ class ExchangeScreenTest {
         compose.waitUntil(5_000) { runCatching { compose.onNodeWithTag(ExchangeTags.targetAmount("USD"), useUnmergedTree = true).assertTextContains("1.08") }.isSuccess }
         compose.onNodeWithTag(ExchangeTags.targetAmount("GBP"), useUnmergedTree = true).assertTextContains("0.84")
         assertEquals("100", prefs.getString("exchange_amount", null))
+    }
+
+    private fun waitText(tag: String, text: String) =
+        compose.waitUntil(5_000) { runCatching { compose.onNodeWithTag(tag, useUnmergedTree = true).assertTextContains(text) }.isSuccess }
+
+    @Test fun `typing into the second box makes it the input and recomputes the others`() {
+        launch()
+        compose.onNodeWithTag(ExchangeTags.AMOUNT).assertIsSelected()
+        compose.onNodeWithTag(ExchangeTags.targetAmount("USD"), useUnmergedTree = true).performTextReplacement("100")
+        // 100 USD -> INR 10,000.00 / EUR 92.59 / GBP 77.78 / BRL 574.07 through the EUR base
+        waitText(ExchangeTags.AMOUNT, "9,259.26")
+        waitText(ExchangeTags.targetAmount("EUR"), "92.59")
+        waitText(ExchangeTags.targetAmount("GBP"), "77.78")
+        waitText(ExchangeTags.targetAmount("BRL"), "574.07")
+        compose.onNodeWithTag(ExchangeTags.targetAmount("USD"), useUnmergedTree = true).assertTextContains("100")
+        compose.onNodeWithTag(ExchangeTags.targetAmount("USD"), useUnmergedTree = true).assertIsSelected()
+        compose.onNodeWithTag(ExchangeTags.AMOUNT).assertIsNotSelected()
+        // the unit-rate lines now read from USD
+        waitText(ExchangeTags.targetRate("EUR"), "1 USD → 0.9259 EUR")
+        waitText(ExchangeTags.targetRate("USD"), "1 USD → ")
+        assertEquals(Exchange.State("INR", "100", listOf("USD", "EUR", "GBP", "BRL"), 1), Exchange.Store(prefs).load(Exchange.defaults(mode)))
+    }
+
+    @Test fun `typing into the third box then back in the first keeps the values consistent`() {
+        launch()
+        compose.onNodeWithTag(ExchangeTags.targetAmount("EUR"), useUnmergedTree = true).performTextReplacement("50")
+        waitText(ExchangeTags.AMOUNT, "5,000.00")
+        waitText(ExchangeTags.targetAmount("USD"), "54.00")
+        waitText(ExchangeTags.targetAmount("GBP"), "42.00")
+        compose.onNodeWithTag(ExchangeTags.targetAmount("EUR"), useUnmergedTree = true).assertIsSelected()
+        // the first box is the input again: typing 5000 INR gives back 50.00 EUR and the same others
+        compose.onNodeWithTag(ExchangeTags.AMOUNT).performTextReplacement("5000")
+        waitText(ExchangeTags.targetAmount("EUR"), "50.00")
+        compose.onNodeWithTag(ExchangeTags.targetAmount("USD"), useUnmergedTree = true).assertTextContains("54.00")
+        compose.onNodeWithTag(ExchangeTags.AMOUNT).assertIsSelected()
     }
 
     @Test fun `a currency is added through the searchable picker and persists`() {
