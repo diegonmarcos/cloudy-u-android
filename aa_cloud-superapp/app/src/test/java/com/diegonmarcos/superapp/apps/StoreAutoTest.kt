@@ -547,7 +547,11 @@ class StoreAutoTest {
         val plan = com.diegonmarcos.superapp.updater.install.SilentUpdate.plan(34, silentOn = true, fleetSigned = true)
         assertTrue(plan.layer1 && plan.requestOwnership)
         val states = ArrayList<String>()
-        val watcher: (UpdateProgress.State) -> Unit = { states += it.javaClass.simpleName }
+        // A Waiting is recorded with its reason: the download engine also publishes Waiting("queued") when its sampler catches the
+        // job before it starts (StoreEngine: DlState.QUEUED), a timing race, not a confirmation. Every other Waiting is one.
+        val watcher: (UpdateProgress.State) -> Unit = {
+            states += if (it is UpdateProgress.State.Waiting && it.reason != "queued") "Waiting(${it.reason})" else it.javaClass.simpleName
+        }
         UpdateProgress.addObserver(watcher)
         StoreStages.installer = { c, app, v ->
             events += "install:${app.id}"
@@ -558,7 +562,7 @@ class StoreAutoTest {
         UpdateProgress.removeObserver(watcher)
         assertEquals(done.summary, StoreAuto.INSTALLED, statusOf(done, "appa"))
         assertEquals("nothing waited on a confirmation", 0, done.count(StoreAuto.PENDING))
-        assertFalse("no 'needs your confirmation' state was ever shown: $states", states.contains("Waiting"))
+        assertFalse("no 'needs your confirmation' state was ever shown: $states", states.any { it.startsWith("Waiting(") })
         assertEquals(1, events.count { it == "install:appa" })
     }
 
