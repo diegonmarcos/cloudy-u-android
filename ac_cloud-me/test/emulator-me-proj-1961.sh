@@ -21,19 +21,23 @@ shot() { sleep "${2:-6}"; $T adb exec-out screencap -p > "$OUT/$1.png"; rm -f "$
 for op in GET_USAGE_STATS SYSTEM_ALERT_WINDOW MANAGE_EXTERNAL_STORAGE REQUEST_INSTALL_PACKAGES; do $T adb shell appops set "$ME" "$op" allow; done
 open_page "page:configs/general"; sleep 12
 for i in 1 2 3 4 5 6; do case "$($T adb shell dumpsys window 2>/dev/null | grep -m1 mCurrentFocus || true)" in *"$ME"*) break ;; esac; $T adb shell input keyevent KEYCODE_BACK; sleep 2; done
-tabs() {  # SHOT WANT...: the chip labels of the selector, left to right, must equal WANT
+tabs() {  # SHOT WANT...: the chip labels of the selector, left to right, must equal WANT; the row scrolls, so it is dumped again scrolled to its end and merged
     local s="$1"; shift
-    python3 -I - "$OUT/$s.xml" "$@" <<'PY' | tee -a "$OUT/verdict.txt"
+    $T adb shell input swipe 1000 590 80 590 300; shot "$s-tabs-end" 2; $T adb shell input swipe 80 590 1000 590 300; sleep 1
+    python3 -I - "$OUT/$s.xml" "$OUT/$s-tabs-end.xml" "$@" <<'PY' | tee -a "$OUT/verdict.txt"
 import re, sys, xml.etree.ElementTree as ET
-want = sys.argv[2:]; known = {"README.html", "GH Repo Page", "README.canvas", "README.md", "Site"}
-try: nodes = list(ET.parse(sys.argv[1]).getroot().iter("node"))
-except Exception as e: print("FAIL tabs %s: no ui dump (%s)" % (sys.argv[1], e)); sys.exit(1)
-got = []
-for n in nodes:
+want = sys.argv[3:]; known = {"README.html", "GH Repo Page", "README.canvas", "README.md", "Site"}
+def row(f):
+  try: nodes = list(ET.parse(f).getroot().iter("node"))
+  except Exception as e: print("FAIL tabs %s: no ui dump (%s)" % (f, e)); sys.exit(1)
+  got = []
+  for n in nodes:
     t = n.get("text") or ""
     if t in known and not (n.get("bounds") or "").startswith("[0,0][0,0]"):
         m = re.match(r"\[(\d+),(\d+)\]", n.get("bounds") or ""); got.append((int(m.group(2)) if m else 0, int(m.group(1)) if m else 0, t))
-row = min((g[0] for g in got), default=0); labels = [t for y, x, t in sorted(got, key=lambda g: (g[0], g[1])) if abs(y - row) < 40]
+  top = min((g[0] for g in got), default=0); return [t for y, x, t in sorted(got, key=lambda g: (g[0], g[1])) if abs(y - top) < 40]
+a, b = row(sys.argv[1]), row(sys.argv[2])
+k = next((i for i in range(len(a)) if a[i:] == b[:len(a) - i]), len(a)); labels = a[:k] + b   # a's prefix, then the scrolled row (overlap merged)
 ok = labels == want
 print("%s tabs %s: %s (want %s)" % ("PASS" if ok else "FAIL", sys.argv[1].rsplit("/", 1)[-1], labels, want)); sys.exit(0 if ok else 1)
 PY
