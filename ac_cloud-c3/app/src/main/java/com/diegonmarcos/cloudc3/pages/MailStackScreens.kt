@@ -154,7 +154,7 @@ fun MailTablesScreen(decl: MailStack.Decl, answer: MailStack.Answer?, banner: St
 fun MailTopologyCanvas(topology: MailStack.Topology, decl: MailStack.Decl, answer: MailStack.Answer?, modifier: Modifier = Modifier, onOpen: (String) -> Unit) {
     val p = LocalKitPalette.current
     val plan = remember(topology, answer, p) { MailStack.plan(topology, answer, decl, p) }
-    PlanCanvas(plan, MailTags.canvas(topology.id), modifier, onOpen)
+    PlanCanvas(plan, MailTags.canvas(topology.id), modifier, onOpen = onOpen)
 }
 
 /** #1955 A The node-edge canvas of any [MailStack.Plan] (Mail's topologies, the Network Graph views): grid, bezier wires with arrows, pulses, labels, pan, pinch zoom, tap a node. */
