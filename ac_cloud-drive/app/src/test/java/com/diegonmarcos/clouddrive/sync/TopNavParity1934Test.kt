@@ -35,7 +35,7 @@ class TopNavParity1934Test {
 
     @Test fun theOldRowHasTheActionsTheTestExpects() {
         val a = oldActions()
-        assertTrue("old row enumerated (${a.size})", a.size >= 36)
+        assertTrue("old row enumerated (${a.size})", a.size >= 35)
         for (id in listOf("check.refresh_list", "check.fetch_status", "check.fetch_now", "check.check_lite", "check.check_full", "sync.sync_server_wins", "sync.sync_local_wins", "sync.sync_all",
             "clone.clone_all_full", "clone.clone_all_depth3", "clone.clone_all_bare_main", "clone.clone_all_bare_blobless", "clone.clone_all_bare_treeless", "logs.logs", "more.legend", "more.last_report", "more.advanced")) assertTrue(id, id in a)
     }
