@@ -118,8 +118,8 @@ fun HealthDebugBody(onOpenUrl: (String) -> Unit) {
         val st = fleet["cloud_health_layers"]
         val fleetChecks = (st as? XrayModel.State.Got)?.report?.checks.orEmpty()
         val why = if (st == null) "route not served yet (#1977): not asked yet" else XrayModel.say(st)
-        val placeholders = HealthModel.LAYERS.map { it.id }.filter { it !in HealthModel.PHONE_LAYERS && fleetChecks.none { c -> c.layer == it } }.map { HealthModel.fleetPlaceholder(it, why) }
-        base + fleetChecks + placeholders
+        val notServed = HealthModel.LAYERS.map { it.id }.filter { it !in HealthModel.PHONE_LAYERS && fleetChecks.none { c -> c.layer == it } }.map { HealthModel.fleetNotServed(it, why) }
+        base + fleetChecks + notServed
     }
     val analysis = remember(checks) {
         HealthCore.analyze(HealthModel.reportJson(checks), HealthModel.layersJson()).okJson?.let { HealthModel.parseAnalysis(it) }

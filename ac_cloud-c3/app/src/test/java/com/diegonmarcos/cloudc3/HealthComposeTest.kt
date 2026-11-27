@@ -57,7 +57,7 @@ class HealthComposeTest {
     private fun ui(): HealthUi {
         val v = HealthModel.Vantage(false, true, null, false)
         val checks = HealthModel.vantageChecks(v) + HealthModel.lightsChecks(pub, priv, emptyMap(), v, null, false) +
-            HealthModel.LAYERS.map { it.id }.filter { it !in HealthModel.PHONE_LAYERS }.map { HealthModel.fleetPlaceholder(it, HealthModel.NOT_SERVED_ROUTE) }
+            HealthModel.LAYERS.map { it.id }.filter { it !in HealthModel.PHONE_LAYERS }.map { HealthModel.fleetNotServed(it, HealthModel.NOT_SERVED_ROUTE) }
         return HealthUi(checks, null, listOf("the engine could not attribute the checks: no root cause is shown."))
     }
 

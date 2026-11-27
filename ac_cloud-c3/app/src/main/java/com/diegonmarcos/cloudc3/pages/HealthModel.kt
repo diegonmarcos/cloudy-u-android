@@ -228,7 +228,7 @@ object HealthModel {
     }
 
     /** A layer read from a fleet engine report: the explicit not-served state when no report arrived. */
-    fun fleetPlaceholder(layer: String, why: String): Check =
+    fun fleetNotServed(layer: String, why: String): Check =
         Check("$layer.fleet_report", layer, "${LAYERS.first { it.id == layer }.label}: fleet report", St.NOT_SERVED, why, kind = "report", vantage = "fleet")
 
     // ── views ───────────────────────────────────────────────────────────────

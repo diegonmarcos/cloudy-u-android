@@ -103,8 +103,12 @@ class Hierarchy(unittest.TestCase):
             leaf = path.split("/")[-1]
             self.assertIn(path, self.leaves)
             self.assertTrue(any(k.startswith("hier_") and k.endswith(leaf) for k in ops), path)
-            m = re.search(r'"%s" -> (OpsMapFragment\.newInstance\("hier_|InfraSectionFragment\.newInstance\(InfraSections\.|NetViewerFragment\.newInstance\(leafId\))' % re.escape(leaf), tabs)
+            m = re.search(r'"%s" -> (OpsMapFragment\.newInstance\("hier_|InfraSectionFragment\.newInstance\(InfraSections\.|NetViewerFragment\.newInstance\(leafId\)|XrayFragment\.newInstance\(\))' % re.escape(leaf), tabs)
             self.assertIsNotNone(m, path)
+            if m.group(1).startswith("XrayFragment"):
+                # #1955 C Tests is X-ray C3: its Suites tab must still be this hier_ catalog map
+                with open(os.path.join(APP, "app/src/main/java/com/diegonmarcos/cloudc3/pages/XrayModel.kt"), encoding="utf-8") as f:
+                    self.assertRegex(f.read(), r'SUITES_MAP = "hier_[a-z_]*%s"' % re.escape(leaf), path)
             if m.group(1).startswith("NetViewerFragment"):
                 # #1955 A a Network page behind the Table|Graph switch: its Table mode must still be the hier_ catalog map
                 with open(os.path.join(APP, "app/src/main/java/com/diegonmarcos/cloudc3/pages/NetViewerFragment.kt"), encoding="utf-8") as f:
