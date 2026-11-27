@@ -575,7 +575,7 @@ object LnktreePrefetch {
                     if (r == null) { store.liveCopy(p.id, u)?.takeIf { it.status != 200 }?.let { store.put(p.id, u, it.mime, null, it.status, ByteArray(0), store.parentReason(p.id, u) ?: "fetch-failed") }; continue }
                     budget--
                     if (r.status == VIDEO_CAPPED) { store.put(p.id, u, r.mime, r.encoding, r.status, ByteArray(0), r.encoding ?: "video-file-cap"); continue }   // #1957 a video over the declared cap: a known skip, not a missing file
-                    if (r.status != 200) { if (r.status in 400..499 && r.status != 408 && r.status != 429) store.put(p.id, u, r.mime, r.encoding, r.status, r.body); continue }   // #1947 a definite 404 is stored as a tombstone, so one dead reference does not make the page incomplete for ever
+                    if (r.status != 200) { if (Tombstone1980.definite(r.status)) store.put(p.id, u, r.mime, r.encoding, r.status, r.body); continue }   // #1947 a definite 404 is stored as a tombstone, so one dead reference does not make the page incomplete for ever
                     if (RefScan.isVideo(u, r.mime)) {
                         // #1957 the total video cap is judged here, in order (the batch was fetched in parallel)
                         if (cfg.videoMaxTotalBytes > 0 && store.videoBytes.get() + r.body.size > cfg.videoMaxTotalBytes) { store.put(p.id, u, r.mime, null, VIDEO_CAPPED, ByteArray(0), "video-total-cap"); continue }
@@ -652,7 +652,7 @@ object TtlPrefetch {
             try {
                 want.map { u -> u to pool.submit(Callable { LnktreePrefetch.fetchCapped(u, cfg, store, fetch) }) }.forEach { (u, f) ->
                     val r = runCatching { f.get() }.getOrNull() ?: Fetched("application/octet-stream", "fetch-failed", LnktreePrefetch.VIDEO_CAPPED, ByteArray(0))
-                    if (r.status == 200 || (r.status in 400..499 && r.status != 408 && r.status != 429)) store.put(p.id, u, r.mime, if (r.status == 200) r.encoding else null, r.status, if (r.status == 200) r.body else ByteArray(0), if (r.status == LnktreePrefetch.VIDEO_CAPPED) r.encoding else null)
+                    if (r.status == 200 || (Tombstone1980.definite(r.status))) store.put(p.id, u, r.mime, if (r.status == 200) r.encoding else null, r.status, if (r.status == 200) r.body else ByteArray(0), if (r.status == LnktreePrefetch.VIDEO_CAPPED) r.encoding else null)
                 }
             } finally { pool.shutdown() }
             store.writeRefs(p.id, store.refs(p.id) + want)

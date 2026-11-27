@@ -126,7 +126,7 @@ fun WebPage(block: JSONObject, modifier: Modifier = Modifier, pageId: String = b
                 fresh = true
                 // a fleet page (APP_PAGE, #1371); bundled pages come from the https asset origin, so they fetch their own
                 // stylesheets and data same-origin with no file:// access at all
-                CloudWeb.create(ctx, WebProfile.APP_PAGE).apply { setBackgroundColor(0xFF0B0414.toInt()); WebDarkMode.apply(settings); if (cached) LnktreeSw.block(this, url) }   // #1957 the site's service worker is off: the app cache answers   // #1938 readable in the dark theme: the site's own scheme, else algorithmic darkening
+                CloudWeb.create(ctx, WebProfile.APP_PAGE).apply { WebDebug1980.armIfRequested(ctx); setBackgroundColor(0xFF0B0414.toInt()); WebDarkMode.apply(settings); if (cached) LnktreeSw.block(this, url) }   // #1957 the site's service worker is off: the app cache answers   // #1938 readable in the dark theme: the site's own scheme, else algorithmic darkening
             }
             // A kept WebView comes back as it was left (page, scroll, history): no reload, so switching is instant.
             val view = if (cached) holder!!.web(url, make) else make()

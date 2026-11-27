@@ -80,7 +80,7 @@ object LnktreeCache {
             if (r is BoundedRead.Result.Timeout) { android.util.Log.w("CloudMeWeb", "FETCH_DEADLINE url=$url"); return@runCatching null }
             val body = (r as? BoundedRead.Result.Ok)?.bytes
             if (body != null) Fetched(mime, enc, 200, body)
-            else if (code in 400..499 && code != 408 && code != 429) Fetched(mime, enc, code, ByteArray(0))   // #1947 a definite "not there" (a tombstone); #1957 any definite 4xx (jsDelivr answers 403 for a file over its size limit); every other failure stays null
+            else if (Tombstone1980.definite(code)) Fetched(mime, enc, code, ByteArray(0))   // #1947 a definite "not there" (a tombstone); #1957 any definite 4xx (jsDelivr answers 403 for a file over its size limit); every other failure stays null
             else null
         } finally { c.disconnect() }
     }.getOrNull()
