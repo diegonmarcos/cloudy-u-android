@@ -158,6 +158,6 @@ class NavReorgTest {
             LnktreePages.fromStack(p, JSONArray(BuroLlcTestData.text("data/ui/$s/${chain.joinToString("/")}.json")), cfg)
         }
         assertEquals(setOf("leafy", "nexus", "stark", "personal", "ig0", "astro", "lt-lnktree-site"), cached.map { it.id }.toSet())
-        assertEquals(listOf("pers", "prof", "proj"), cfg.cachedSections())
+        assertTrue(cfg.cachedSections().containsAll(listOf("pers", "prof", "proj")))   // #1951 every section with https pages is cached
     }
 }

@@ -89,7 +89,7 @@ if ui.get("repo_tree", {}).get("group") not in {g["id"] for g in secs.get("lnktr
 if ui.get("vault_rows", {}).get("projects", {}).get("section") != "lnktree":
     bad("tree", "Tasks > Projects does not take the Lnktree bottom-nav section's Proj group")
 lc = ui.get("lnktree_cache", {})
-if set(lc.get("sections", [])) != {"pers", "prof", "proj"}:
+if not {"pers", "prof", "proj"} <= set(lc.get("sections", [])):
     bad("tree", "the page cache does not cover Pers, Prof and Proj")
 
 # ---- N2 parity against the baseline

@@ -48,10 +48,16 @@ data class LnktreeCacheConfig(
     val queueMaxRetained: Int = 0,
     /** #1947 "network_first" (the live page is shown; the cache is the offline fallback) or "stale_while_revalidate" (the cache is shown at once and refreshed in the background). */
     val strategy: String = STALE_WHILE_REVALIDATE,
+    /** #1951 the longest a request is held on the app's own network fetch (network_first); 0 = the fetch's default. cache_then_live never holds a request on the network. */
+    val interceptTimeoutMs: Int = 0,
+    /** #1951 the periodic prefetch (WorkManager); 0 = at app start only. */
+    val prefetchRefreshHours: Int = 0,
 ) {
     val networkFirst: Boolean get() = strategy == NETWORK_FIRST
+    /** #1951 a complete cached copy paints at once and the live page is fetched in parallel (swapped in when its hash differs); a page with no complete copy loads straight through the WebView's own network. */
+    val cacheThenLive: Boolean get() = strategy == CACHE_THEN_LIVE
     /** #1947 the pager's release of a page past max_retained_pages drops its cached copy only when the cache is the PRIMARY source; under network_first the copy is the offline fallback and stays (max_cache_mb bounds it). */
-    val releaseDropsCache: Boolean get() = !networkFirst
+    val releaseDropsCache: Boolean get() = !networkFirst && !cacheThenLive
 
     fun caches(pageId: String): Boolean = enabled && pageId !in excludePages
 
@@ -61,6 +67,7 @@ data class LnktreeCacheConfig(
     companion object {
         const val DAY_MS = 24L * 60 * 60 * 1000
         const val NETWORK_FIRST = "network_first"
+        const val CACHE_THEN_LIVE = "cache_then_live"
         const val STALE_WHILE_REVALIDATE = "stale_while_revalidate"
         private const val MB = 1024L * 1024
 
@@ -83,6 +90,8 @@ data class LnktreeCacheConfig(
                 maxBytes = (o.optDouble("max_cache_mb", 0.0) * MB).toLong(),
                 holderMaxWebViews = o.optInt("holder_max_webviews", 1).coerceAtLeast(1),
                 hardRefreshScope = o.optString("hard_refresh_scope", "page"),
+                interceptTimeoutMs = o.optInt("intercept_timeout_ms", 0).coerceAtLeast(0),
+                prefetchRefreshHours = p.optInt("refresh_hours", 0).coerceAtLeast(0),
                 strategy = o.optString("strategy", STALE_WHILE_REVALIDATE).ifEmpty { STALE_WHILE_REVALIDATE },
                 queueEnabled = o.optJSONObject("queue")?.optBoolean("enabled", false) ?: false,
                 queueMaxRetained = o.optJSONObject("queue")?.optInt("max_retained_pages", 0)?.coerceAtLeast(1) ?: 0,
@@ -164,6 +173,16 @@ class LnktreeCacheStore(val root: File, private val clock: () -> Long = System::
         return RefScan.critical(runCatching { String(e.body.readBytes(), Charsets.UTF_8) }.getOrDefault(""), url).all { get(pageId, it) != null }
     }
 
+    /** #1951 what the page holds: entries, bytes and whether it is complete (the line the walk and the owner read). */
+    data class PageReport(val pageId: String, val entries: Int, val bytes: Long, val complete: Boolean) {
+        fun line() = "CACHE_PAGE page=$pageId entries=$entries bytes=$bytes complete=${if (complete) "yes" else "no"}"
+    }
+    fun report(pageId: String, url: String): PageReport {
+        val metas = (pageDir(pageId).listFiles() ?: emptyArray()).filter { it.name.endsWith(".meta") }
+        val bytes = metas.sumOf { it.length() + File(it.parentFile, it.nameWithoutExtension + ".body").length() }
+        return PageReport(pageId, metas.size, bytes, complete(pageId, url))
+    }
+
     fun state(pageId: String, url: String, ttlMs: Long): CacheState =
         CacheTtl.decide(get(pageId, url)?.fetchedAt, clock(), ttlMs)
 
@@ -243,14 +262,17 @@ object LnktreePages {
 
 object PrefetchPlanner {
     /** Pages with no valid entry: missing first, then stale (refresh), at most [LnktreeCacheConfig.prefetchMaxPages]. Fresh pages are left alone. */
-    fun plan(pages: List<LnktreePage>, cfg: LnktreeCacheConfig, store: LnktreeCacheStore): List<LnktreePage> {
+    fun plan(pages: List<LnktreePage>, cfg: LnktreeCacheConfig, store: LnktreeCacheStore, refreshAll: Boolean = false): List<LnktreePage> {
         if (!cfg.enabled || !cfg.prefetchEnabled) return emptyList()
         val byState = pages.filter { cfg.caches(it.id) }.associateWith { store.state(it.id, it.url, cfg.ttlMs) }
         // #1947 a fresh page whose CSS/JS never arrived is not valid: it is planned again
         val incomplete = byState.filter { (p, st) -> st == CacheState.FRESH && !store.complete(p.id, p.url) }.keys
         val missing = byState.filterValues { it == CacheState.MISSING }.keys + incomplete
         val stale = byState.filterValues { it == CacheState.STALE }.keys
-        return (missing + stale).take(cfg.prefetchMaxPages)
+        // #1951 every page is covered: max_pages 0 = all; refreshAll (app start, the periodic run) re-checks the fresh pages too (their changed files are replaced)
+        val rest = if (refreshAll) byState.filterValues { it == CacheState.FRESH }.keys - incomplete else emptySet()
+        val all = (missing + stale + rest).toList()
+        return if (cfg.prefetchMaxPages > 0) all.take(cfg.prefetchMaxPages) else all
     }
 }
 
@@ -315,23 +337,47 @@ object LnktreePrefetch {
         }
     }
 
-    private fun page(p: LnktreePage, cfg: LnktreeCacheConfig, store: LnktreeCacheStore, fetch: (String) -> Fetched?): Boolean {
-        val main = fetch(p.url)?.takeIf { it.status == 200 } ?: return false
-        store.put(p.id, p.url, main.mime, main.encoding, main.status, main.body)
-        var budget = cfg.maxSubresourcesPerPage
+    private fun page(p: LnktreePage, cfg: LnktreeCacheConfig, store: LnktreeCacheStore, fetch: (String) -> Fetched?): Boolean = fill(p, cfg, store, fetch, null) != null
+
+    private fun sha(b: ByteArray) = MessageDigest.getInstance("SHA-256").digest(b).toList()
+    private fun criticalMime(m: String) = m.contains("html", true) || m.contains("css", true) || m.contains("javascript", true) || m.contains("ecmascript", true)
+
+    /**
+     * Stores the page and its subresources (all of them when max_subresources_per_page is 0). Cached images that are still fresh are not downloaded again; the HTML, CSS and JS always are.
+     * Returns null when the page itself could not be fetched, else how many ALREADY stored HTML/CSS/JS files came back different (a live change). [main] = the page body when the caller fetched it.
+     */
+    fun fill(p: LnktreePage, cfg: LnktreeCacheConfig, store: LnktreeCacheStore, fetch: (String) -> Fetched?, main: Fetched?): Int? {
+        val m = (main ?: fetch(p.url))?.takeIf { it.status == 200 && it.body.isNotEmpty() } ?: return null
+        var changed = 0
+        fun save(u: String, r: Fetched) {
+            val old = store.get(p.id, u)
+            if (old != null && old.status == 200 && r.status == 200 && criticalMime(r.mime) && !sha(old.body.readBytes()).equals(sha(r.body))) changed++
+            store.put(p.id, u, r.mime, r.encoding, r.status, r.body)
+        }
+        save(p.url, m)
+        var budget = if (cfg.maxSubresourcesPerPage > 0) cfg.maxSubresourcesPerPage else Int.MAX_VALUE
         val seen = HashSet<String>().apply { add(CacheKey.normalize(p.url)) }
-        val queue = ArrayDeque(RefScan.html(String(main.body, Charsets.UTF_8), p.url))
+        val queue = ArrayDeque(RefScan.html(String(m.body, Charsets.UTF_8), p.url))
         while (queue.isNotEmpty() && budget > 0) {
             val u = queue.removeFirst()
             if (!seen.add(CacheKey.normalize(u))) continue
+            val have = store.get(p.id, u)
+            if (have != null && have.status == 200 && !criticalMime(have.mime) && store.state(p.id, u, cfg.ttlMs) == CacheState.FRESH) continue
             val r = fetch(u) ?: continue
             budget--
             if (r.status != 200) { if (r.status == 404 || r.status == 410) store.put(p.id, u, r.mime, r.encoding, r.status, r.body); continue }   // #1947 a definite 404 is stored as a tombstone, so one dead reference does not make the page incomplete for ever
-            store.put(p.id, u, r.mime, r.encoding, r.status, r.body)
+            save(u, r)
             if (r.mime.contains("css")) queue.addAll(RefScan.css(String(r.body, Charsets.UTF_8), u))
         }
-        return true
+        return changed
     }
+}
+
+/** #1951 the live check of a page served from its cache: the live body is fetched, compared by hash, and the cache is updated when it differs. */
+object LiveSwap {
+    /** Number of stored HTML/CSS/JS files whose live content differs (> 0 = swap the shown page); 0 = same, or the live fetch failed (the cached copy stays). The first fill of a page is not a swap. */
+    fun refresh(p: LnktreePage, cfg: LnktreeCacheConfig, store: LnktreeCacheStore, fetch: (String) -> Fetched?): Int =
+        (LnktreePrefetch.fill(p, cfg, store, fetch, null) ?: 0).also { store.trim(cfg.maxBytes) }
 }
 
 /** A cached body ready to hand to the WebView. */
@@ -355,6 +401,17 @@ object LnktreeResolver {
     ): Served? {
         // #1947 network_first: the live page (and its same-origin CSS/JS) comes from the network; a good answer refreshes the entry; the stored copy
         // is served ONLY when the network failed (offline, DNS, timeout, 5xx) and never an empty body
+        // #1951 cache_then_live: a COMPLETE copy paints from the cache at once, the live page is compared in the background (revalidate); no complete copy = the WebView's own network, filled afterwards. Nothing here waits on the network.
+        if (cfg.cacheThenLive) {
+            val e = store.get(pageId, url)
+            val isMain = pageUrl != null && CacheKey.normalize(url) == CacheKey.normalize(pageUrl)
+            if (e != null && store.complete(pageId, url)) {
+                if (isMain || store.state(pageId, url, cfg.ttlMs) == CacheState.STALE) revalidate(url)
+                return Served(e.mime, e.encoding, e.status, e.body, "cache-live", e.fetchedAt)
+            }
+            revalidate(url)
+            return null
+        }
         if (cfg.networkFirst && networkFirstTarget(url, pageUrl)) {
             val r = fetch(url)?.takeIf { it.status == 200 && it.body.isNotEmpty() }
             if (r != null) {

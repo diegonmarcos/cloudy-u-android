@@ -1,0 +1,109 @@
+# #1951 cache_then_live mutation runs: each applies ONE deliberate break to the page cache (LnktreeCache.kt) and runs Cloud Me's JVM suite,
+# whose named test must catch it. The JVM suite itself is RED (expected); the JOB is green only when the verdict step finds the named test failed
+# (KILLED); a mutation whose named test stayed green, or never ran, fails the job. Manual only.
+name: me-cache-1951-mutation
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'ctl-off | ctl-serve-incomplete | no-swap | planner-cap | no-refresh-all | sub-cap | complete-no-css | probe-early'
+        required: true
+permissions:
+  contents: read
+env:
+  WORK_DIR: ac_cloud-me
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply mutation ${{ inputs.name }}
+        run: |
+          F=ac_cloud-me/app/src/main/java/com/diegonmarcos/cloudme/LnktreeCache.kt
+          case "${{ inputs.name }}" in
+            # cache_then_live switched off: a page with no copy blocks on its own fetch again
+            ctl-off)              sed -i 's/if (cfg.cacheThenLive) {/if (false) {/' $F ;;
+            # an incomplete copy (HTML without its css/js) is painted
+            ctl-serve-incomplete) sed -i 's/if (e != null \&\& store.complete(pageId, url)) {/if (e != null) {/' $F ;;
+            # a changed live page is never detected: no swap
+            no-swap)              sed -i 's/!sha(old.body.readBytes()).equals(sha(r.body))/false/' $F ;;
+            # the prefetch is capped by max_pages again even when it is 0 (= all)
+            planner-cap)          sed -i 's/return if (cfg.prefetchMaxPages > 0) all.take(cfg.prefetchMaxPages) else all/return all.take(cfg.prefetchMaxPages)/' $F ;;
+            # the app-start / periodic run does not re-check stored pages
+            no-refresh-all)       sed -i 's/if (refreshAll) byState/if (false) byState/' $F ;;
+            # the subresource cap 0 means none instead of all
+            sub-cap)              sed -i 's/if (cfg.maxSubresourcesPerPage > 0) cfg.maxSubresourcesPerPage else Int.MAX_VALUE/cfg.maxSubresourcesPerPage/' $F ;;
+            # completeness ignores the css/js
+            complete-no-css)      sed -i 's/.all { get(pageId, it) != null }/.all { true }/' $F ;;
+            # the blank probe fires while the page is still loading or swapping
+            probe-early)          sed -i 's/progress >= 100 \&\& !swapPending -> Probe.PROBE/progress >= 0 -> Probe.PROBE/' $(dirname $F)/WebPage.kt ;;
+            *) echo "unknown mutation"; exit 2 ;;
+          esac
+          git diff --stat
+          test -n "$(git diff --name-only)" || { echo "mutation target missing"; exit 3; }
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
+      - name: Set up Gradle 8.10.2 (cached)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.10.2"
+      # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
+      # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
+      - name: Checkout vault (shared Android signing key, read by app/build.gradle at configuration)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+      - name: Install ORAS + sops (pinned)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: oras sops
+      - name: JVM unit tests (RED expected; the verdict step reads the XML)
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+        run: sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR" || true
+      - name: Verdict (KILLED = the named test failed)
+        env:
+          M: ${{ inputs.name }}
+        run: |
+          case "$M" in
+            ctl-off)              C=CacheThenLive1951Test; N="a page with no complete copy is never held on the network and is filled afterwards" ;;
+            ctl-serve-incomplete) C=CacheThenLive1951Test; N="a page with no complete copy is never held on the network and is filled afterwards" ;;
+            no-swap)              C=CacheThenLive1951Test; N="the live swap detects a changed page or stylesheet by content and updates the cache" ;;
+            planner-cap)          C=CacheThenLive1951Test; N="the prefetch plan covers every page, and a refresh run re-checks the stored ones" ;;
+            no-refresh-all)       C=CacheThenLive1951Test; N="the prefetch plan covers every page, and a refresh run re-checks the stored ones" ;;
+            sub-cap)              C=CacheThenLive1951Test; N="no subresource cap leaves no page incomplete, and the per-page report says so" ;;
+            complete-no-css)      C=CacheThenLive1951Test; N="a page is complete only when its css and js are stored too" ;;
+            probe-early)          C=CacheThenLive1951Test; N="the blank probe waits for a page that is still loading or swapping and never errors for it" ;;
+          esac
+          X="$(find ac_cloud-me/app/build -path '*test-results*' -name "TEST-*.$C.xml" | head -1)"
+          [ -n "$X" ] || { echo "::error::LEG ERROR $M: no result for $C (did not compile or run); not a kill"; exit 1; }
+          python3 -I - "$X" "$N" "$M" <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          path, want, leg = sys.argv[1:]
+          cases = {c.get("name"): c for c in ET.parse(path).getroot().iter("testcase")}
+          failed = sorted(n for n, c in cases.items() if c.find("failure") is not None or c.find("error") is not None)
+          print("failed tests:", failed)
+          if want not in cases: print("::error::LEG ERROR %s: the named test did not run: %s" % (leg, want)); sys.exit(1)
+          if want not in failed: print("::error::LEG SURVIVED %s: the named test stayed green: %s" % (leg, want)); sys.exit(1)
+          print("KILLED %s by: %s" % (leg, want))
+          PY
+      - name: Failed tests
+        if: always()
+        run: grep -rl "<failure" --include="TEST-*.xml" ac_cloud-me/app/build 2>/dev/null | xargs -r grep -h -o 'testcase name="[^"]*"' | head -40 || true
