@@ -7,7 +7,7 @@
 #   2. pull to refresh (= Light check all): within 15 s the three icons of the row must be terminal
 #      (local clean, server in_sync, sync never) and "last check: ... / 1 of 1 done" must show;
 #   3. none of the three icons may say "reading" or "not_checked" after that.
-# Usage: emulator-git-control-sheet.sh <drive.apk> <outdir> [cloned|notcloned|all-repos|all]   (one phase per CI job, each with its own emulator;
+# Usage: emulator-git-control-sheet.sh <drive.apk> <outdir> [cloned|notcloned|all-repos|bulk-all|bulk-selected|bulk-cloned|all]   (one phase per CI job, each with its own emulator;
 # WALK_BUDGET = seconds the phase may spend on controls, default 2400: a control reached after that is recorded NOT RUN (time budget) and fails the phase)
 set -u
 APK=${1:?drive apk}; OUT=${2:-out}; PHASE=${3:-all}; BUDGET=${WALK_BUDGET:-2400}; T0=$(date +%s)
@@ -25,6 +25,8 @@ git init -q -b main "$FIX"
   && git remote add origin https://example.invalid/diegonmarcos/$NAME.git && git config branch.main.remote origin && git config branch.main.merge refs/heads/main \
   && git update-ref refs/remotes/origin/main HEAD && echo x > .git/FETCH_HEAD )
 cp -r "$FIX" "$(dirname "$FIX")/$NAME-2"; cp -r "$FIX" "$(dirname "$FIX")/$NAME-3"   # #1934 three repositories for the all-repos sheet
+# the bulk phases run Stash on a dirty working copy: -2 and -3 carry a tracked change (-1 stays clean, it is the per-repo walk's fixture)
+echo dirty > "$(dirname "$FIX")/$NAME-2/a.txt"; echo dirty > "$(dirname "$FIX")/$NAME-3/a.txt"
 tar -C "$(dirname "$FIX")" -cf "$OUT/fixture.tar" "$NAME" "$NAME-2" "$NAME-3"
 
 adb uninstall "$PKG" >/dev/null 2>&1 || true   # a retry starts from a clean app, as the first attempt did
@@ -304,6 +306,102 @@ if want all-repos; then
   sleep 3; sheet_open || { snap no-bulk; fail "the all-repos sheet did not open"; }
   walk bulk yes "$NAME"
 fi
+
+# 4. #1934 THE BULK PHASES: the top-nav menu's bulk sheet, one phase per scope (All Repos | Selected Ones | Cloned Ones) over the 3 cloned fixtures + the not-cloned listing.
+# Each phase checks the scope's count, the greyed controls and their reason lines, then RUNS Stash (a destructive-class command: its confirm must name the scope and the count)
+# and Test Auth, reads the per-repository rows and the summary from the sheet and verifies the FIXTURE FILES (a.txt of -2 / -3) with values. Hosting commands are never confirmed.
+nodetext() { dump | python3 -I -c '
+import re,sys
+x=sys.stdin.read()
+for m in re.finditer(r"<node [^>]*>",x):
+    n=m.group(0)
+    if re.search(r"resource-id=\"%s\"" % re.escape(sys.argv[1]), n):
+        t=re.search(r"\btext=\"([^\"]*)\"",n); print(t.group(1) if t else ""); sys.exit(0)
+sys.exit(1)' "$1"; }
+brec() { # <scope> <id> <label> <0=ok> <value>
+  if [ "$4" = 0 ]; then ok=$((ok+1)); printf 'bulk-%s\t%s\t%s\tverified (value ok)\t%s\n' "$1" "$2" "$3" "$5" >> "$OUT/walk.tsv"
+  else miss=$((miss+1)); printf 'bulk-%s\t%s\t%s\tVALUE MISMATCH (got "%s")\t-\n' "$1" "$2" "$3" "$5" >> "$OUT/walk.tsv"; fi; }
+bshot() { adb exec-out screencap -p > "$OUT/walk/drive-bulk-1934-$1-$2.png" 2>/dev/null; }
+fixfile() { adb shell "run-as $PKG cat files/fixtures/$1/a.txt" < /dev/null 2>/dev/null | tr -d '\r\n'; }
+find_ctl() { # <rid>: scroll the body until the control is on screen; prints "x y state"
+  local n pos; for n in 0 1 2 3 4 5 6 7; do dump >/dev/null; pos=$(probe "$1") && { echo "$pos"; return 0; }; scroll_body || return 1; sleep 1; done; return 1; }
+tap_ctl() { local pos; pos=$(find_ctl "$1") || return 1; set -- $pos; [ "$3" = enabled ] && adb shell input tap "$1" "$2" < /dev/null; echo "$3"; }
+open_bulk() {
+  tap_rid sync_git_top_group_more >/dev/null || { snap no-more; fail "no More menu"; }; sleep 1
+  for i in 1 2 3 4 5; do tap_text '^All repos sheet$' && break; adb shell input swipe $((W*2/3)) $((H*70/100)) $((W*2/3)) $((H*30/100)) 300 < /dev/null; sleep 1; done
+  sleep 3; has_rid git_bulk_scope_bar || { snap no-bulk; fail "the bulk sheet did not open"; }; }
+close_bulk() { for b in 1 2 3; do has_rid git_bulk_scope_bar || return 0; adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 2; done; }
+wait_summary() { local n t; for n in $(seq 1 45); do t=$(nodetext git_bulk_summary) && printf '%s' "$t" | grep -q '^Summary ' && { echo "$t"; return 0; }; sleep 2; done; echo "${t:-no summary}"; return 1; }
+bulk_phase() {
+  local S=$1 label cnt wantcnt t st sum rows
+  case $S in all) label="All Repos";; selected) label="Selected Ones";; cloned) label="Cloned Ones";; esac
+  adb shell "run-as $PKG sh -c 'echo dirty > files/fixtures/$NAME-2/a.txt; echo dirty > files/fixtures/$NAME-3/a.txt'" < /dev/null
+  open_bulk; bshot "$S" open
+  tap_ctl git_bulk_scope_$S >/dev/null; sleep 1
+  # the Overview's aggregated counts are the oracle for the scope's repository count
+  tap_ctl git_sheet_tab_overview >/dev/null; sleep 1
+  total=$(nodetext git_sheet_ctl_bo.count.total | head -1); clonedn=$(nodetext git_sheet_ctl_bo.count.cloned | head -1)
+  cnt=$(nodetext git_bulk_scope_count)
+  case $S in all) wantcnt="$total repos";; cloned) wantcnt="$clonedn repos";; selected) wantcnt="0 repos";; esac
+  [ "$cnt" = "$wantcnt" ]; brec "$S" "scope.count" "$label count" $? "$cnt (want $wantcnt)"
+  [ "$clonedn" = 3 ]; brec "$S" "scope.fixtures" "cloned fixtures" $? "cloned=$clonedn total=$total"
+  if [ $S = selected ]; then
+    # nothing picked: every run control is greyed and says why
+    tap_ctl git_sheet_tab_sync >/dev/null; sleep 1
+    st=$(find_ctl git_sheet_ctl_bo.sync.run | awk '{print $3}'); [ "$st" = disabled ]; brec "$S" "bo.sync.run" "Sync selected greyed" $? "$st"
+    dump | grep -q 'No repository is selected'; brec "$S" "reason.no_selection" "reason line (no selection)" $? "on screen"
+    bshot "$S" nopick
+    # the multi-select: pick fixture -2 (a pick box), the count follows
+    tap_ctl git_sheet_tab_overview >/dev/null; sleep 1
+    tap_ctl git_bulk_pick_$NAME-2 >/dev/null; sleep 1
+    cnt=$(nodetext git_bulk_scope_count); [ "$cnt" = "1 repos" ]; brec "$S" "scope.pick" "pick one repo" $? "$cnt"
+    bshot "$S" picked
+  fi
+  if [ $S = cloned ]; then
+    tap_ctl git_sheet_tab_clone >/dev/null; sleep 1
+    st=$(find_ctl git_sheet_ctl_bo.clone.run | awk '{print $3}'); [ "$st" = disabled ]; brec "$S" "bo.clone.run" "Clone selected greyed" $? "$st"
+    dump | grep -q 'already cloned'; brec "$S" "reason.all_cloned" "reason line (all cloned)" $? "on screen"
+    bshot "$S" clone-greyed
+  fi
+  # Stash over the scope: the confirm names the scope and the count
+  tap_ctl git_sheet_tab_sync >/dev/null; sleep 1
+  case $S in all) wantn=$total;; cloned) wantn=3;; selected) wantn=1;; esac
+  tap_ctl git_sheet_ctl_sy.rec.stash >/dev/null; sleep 2
+  d=$(dump); printf '%s' "$d" | grep -q "text=\"Scope: $label · $wantn repositories\""; brec "$S" "confirm.scope" "confirm names scope and count" $? "Scope: $label · $wantn repositories"
+  bshot "$S" stash-confirm
+  tap_text '^Confirm$' || fail "no confirm button"
+  sum=$(wait_summary); echo "$sum" | grep -q "^Summary $wantn repos: "; brec "$S" "run.summary" "summary line" $? "$sum"
+  bshot "$S" stash-summary
+  tap_ctl git_sheet_tab_workflow >/dev/null; sleep 1
+  for n in $NAME $NAME-2 $NAME-3 $NOTCLONED; do
+    t=$(find_ctl git_bulk_row_$n >/dev/null && nodetext git_bulk_row_$n) || t=""
+    inscope=0
+    case $S in all) inscope=1;; cloned) [ $n != $NOTCLONED ] && inscope=1;; selected) [ $n = $NAME-2 ] && inscope=1;; esac
+    if [ $inscope = 0 ]; then [ -z "$t" ]; brec "$S" "row.$n" "$n outside the scope has no row" $? "${t:-none}"
+    elif [ $n = $NOTCLONED ]; then printf '%s' "$t" | grep -q 'failed: needs a local clone'; brec "$S" "row.$n" "not-cloned row failed with its reason" $? "$t"
+    elif [ $n = $NAME-2 ]; then printf '%s' "$t" | grep -q "^$n  ok"; brec "$S" "row.$n" "dirty fixture stashed: ok" $? "$t"
+    else printf '%s' "$t" | grep -Eq "^$n  (ok|failed|skipped)"; brec "$S" "row.$n" "$n reached a terminal state" $? "$t"; fi
+  done
+  bshot "$S" rows
+  # the fixture files, with values: Stash put the tracked change away in every repo of the scope, and only there
+  v2=$(fixfile $NAME-2); [ "$v2" = one ]; brec "$S" "fixture.$NAME-2" "$NAME-2 a.txt after Stash" $? "$v2 (want one)"
+  v3=$(fixfile $NAME-3); if [ $S = selected ]; then [ "$v3" = dirty ]; brec "$S" "fixture.$NAME-3" "$NAME-3 untouched outside the scope" $? "$v3 (want dirty)"; else [ "$v3" = one ]; brec "$S" "fixture.$NAME-3" "$NAME-3 a.txt after Stash" $? "$v3 (want one)"; fi
+  # Test Auth over the scope: a fetch dry-run against the unreachable fixture remote; every cloned repo of the scope answers failed with the error text, not-cloned ones never run
+  tap_ctl git_sheet_tab_manage >/dev/null; sleep 1
+  tap_ctl git_sheet_ctl_mg.auth.test >/dev/null; sleep 2
+  sum=$(wait_summary); echo "$sum" | grep -q "^Summary $wantn repos: "; brec "$S" "auth.summary" "Test Auth summary" $? "$sum"
+  tap_ctl git_sheet_tab_workflow >/dev/null; sleep 1
+  t=$(find_ctl git_bulk_row_$NAME-2 >/dev/null && nodetext git_bulk_row_$NAME-2); printf '%s' "$t" | grep -Eq "^$NAME-2  failed: .+"; brec "$S" "auth.row.$NAME-2" "unreachable remote: failed with the error" $? "$t"
+  bshot "$S" auth-rows
+  # a hosting command is only ever confirmed against the mock (HostingApiTest): here its confirm names the scope and count, and is CANCELLED
+  tap_ctl git_sheet_tab_manage >/dev/null; sleep 1
+  tap_ctl git_sheet_ctl_mg.life.delete_remote >/dev/null; sleep 2
+  d=$(dump); printf '%s' "$d" | grep -q "text=\"Scope: $label · $wantn repositories\""; brec "$S" "confirm.delete_remote" "Delete Remote confirm names scope and count" $? "cancelled, never confirmed"
+  bshot "$S" delete-confirm
+  tap_text '^Cancel$' || adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 1
+  close_bulk
+}
+for sc in all selected cloned; do want bulk-$sc && bulk_phase $sc; done
 
 echo "control sheet walk: $ok controls verified, $miss failed" | tee "$OUT/summary.txt"
 adb logcat -d -v threadtime > "$OUT/logcat.txt"

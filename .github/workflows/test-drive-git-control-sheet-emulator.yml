@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        phase: [cloned, notcloned, all-repos]
+        phase: [cloned, notcloned, all-repos, bulk-all, bulk-selected, bulk-cloned]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -128,7 +128,7 @@ jobs:
           python3 -I -c "import zipfile; zipfile.ZipFile('combined/obs.zip').extractall('combined/obs')"
           TSVS=$(ls walks/*/walk.tsv | paste -sd, -)
           python3 -I ac_cloud-drive/test/merge-walk-into-results.py combined/obs/git-control-sheet-results-observed.md "$TSVS" combined/git-control-sheet-results-combined.md "$RUN" "$SHA" | tee combined/totals.txt
-          for p in cloned notcloned all-repos; do
+          for p in cloned notcloned all-repos bulk-all bulk-selected bulk-cloned; do
             f=walks/drive-git-control-sheet-evidence-$p/summary.txt
             echo "phase $p: $( [ -f "$f" ] && cat "$f" || echo 'no summary (the walk did not finish)')" | tee -a combined/totals.txt
           done

@@ -250,6 +250,13 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
     var depthConfirm by remember { mutableStateOf<Declarations.GitDepthActionDecl?>(null) }
     var showDepthReport by remember { mutableStateOf(false) }
     var showBulkSheet by remember { mutableStateOf(false) }
+    // #1934 the bulk sheet's scope (All Repos | Selected Ones | Cloned Ones), the picked repositories (Selected Ones) and the run in flight (its names, notes, start)
+    val bulkSheetDecl = remember { GitSheet.parse(Declarations.controlSheet, java.util.Locale.getDefault().language) }
+    var bulkScope by remember { mutableStateOf(BulkScopes.ALL) }
+    var bulkPicked by remember { mutableStateOf(setOf<String>()) }
+    var bulkStartMs by remember { mutableStateOf(0L) }
+    var bulkNames by remember { mutableStateOf(emptyList<String>()) }
+    var bulkNotes by remember { mutableStateOf(emptyMap<String, String>()) }
     val tableScroll = rememberScrollState()
     // #1356 the repo id whose settings sheet is open ("" = none), resolved against the live list when drawn.
     var settingsFor by remember { mutableStateOf(memory.settingsFor) }
@@ -803,7 +810,13 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
 
     // #1315 THE TOP BAR's dispatch: every declared item on its `kind` alone (test-drive-git-top-bar.sh diffs the kinds both ways);
     // a scoped verb works on the clones the filters and the search leave; confirm / danger ask first with that count.
-    val scopeTargets: List<ManagedRepo> = sortedEntries.mapNotNull { it.cloned }
+    val bulkEntries = sortedEntries.map { BulkScopes.Entry(it.name, it.cloned != null) }
+    val bulkScoped = BulkScopes.targets(bulkScope, bulkEntries, bulkPicked)
+    val bulkScopedNames = bulkScoped.map { it.name }.toSet()
+    val listTargets: List<ManagedRepo> = sortedEntries.mapNotNull { it.cloned }
+    // #1934 while the bulk sheet is open every bulk command runs over ITS scope; the top-nav items keep the filtered list
+    val scopeTargets: List<ManagedRepo> = if (showBulkSheet) sortedEntries.filter { it.name in bulkScopedNames }.mapNotNull { it.cloned } else listTargets
+    coordinator.bulkWorkers = if (showBulkSheet) bulkSheetDecl.concurrency else null
     val writingJob: String? = jobsState.firstOrNull { !it.finished && it.kind !in CHECK_KINDS }?.label
     val jobLine: com.diegonmarcos.clouddrive.sync.jobs.GitJobs.State? = jobsState.firstOrNull { !it.finished } ?: jobsState.lastOrNull()
     val checkProgress = RepoStatus.progress(repos.map { GitSyncCoordinator.statusKey(it) }.distinct(), glances)
@@ -812,6 +825,39 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
         entries.count { (it.row.ahead ?: 0) > 0 }, entries.count { (it.row.behind ?: 0) > 0 },
         if (checkProgress.lastCheckMs > 0) RepoStatus.ageWord(System.currentTimeMillis() - checkProgress.lastCheckMs) + " (${checkProgress.done}/${checkProgress.total})" else "", page.topBar::label,
     )
+    // #1934 a control of the bulk sheet that is not a top-bar item: its declared runner (ui.git_control_sheet.bulk.actions) over the scoped set.
+    fun beginBulk(needsClone: Boolean, withRows: Boolean = true) {
+        val why = bulkSheetDecl.reasons["skipped_not_cloned"].orEmpty().ifBlank { "needs a local clone" }
+        bulkStartMs = System.currentTimeMillis()
+        bulkNames = if (withRows) bulkScoped.map { it.name } else emptyList()
+        bulkNotes = if (needsClone) bulkScoped.filter { !it.cloned }.associate { it.name to why } else emptyMap()
+    }
+    fun runBulk(c: SheetControl) {
+        val sheet = bulkSheetDecl
+        val runner = sheet.bulkActions[c.action] ?: ("top:" + c.action)
+        val conc = sheet.concurrency
+        val kind = runner.substringBefore(':'); val arg = runner.substringAfter(':', "")
+        when (kind) {
+            "compound" -> { beginBulk(true); coordinator.runCompoundAll(arg, if (arg == RepoActions.AUTO_COMMIT) AutoCommit.targets(scopeTargets) { r ->
+                GitSyncCoordinator.glanceFor(r, glances)?.takeIf { it.read && it.level == "full" && !it.large }?.let { it.changed + it.conflicts }
+            } else scopeTargets, conc) }
+            "plan" -> { beginBulk(true); coordinator.runPlanAll(arg, listOf(com.diegonmarcos.cloudlib.gitcore.GitStep(listOf("git", "fetch", "--dry-run"))), scopeTargets, conc) }
+            "depth" -> page.depthAction(arg.substringBefore(':'))?.let { a -> beginBulk(true); coordinator.keepDepth(a.copy(depth = arg.substringAfter(':').toIntOrNull() ?: a.depth, workers = conc.coerceAtMost(4)), scopeTargets) }
+            "remote_mode" -> page.remoteMode(c.action.removePrefix("remote_mode:"))?.let { m -> scopeTargets.forEach { coordinator.setRemote(it, m, page.owner, it.name) } }
+            "hosting" -> { beginBulk(false); coordinator.hostingCallAll(arg, sortedEntries.filter { it.name in bulkScopedNames }.map { Triple(it.cloned, it.owner, it.name) }, conc) }
+            "global" -> coordinator.setCloneViaSsh(arg == "clone_ssh")
+            "top" -> when (arg) {
+                "fetch_status" -> { beginBulk(true); coordinator.fetchStatusAll(scopeTargets) }
+                "check_light" -> coordinator.checkRepos(scopeTargets, false)
+                "check_full" -> coordinator.checkRepos(scopeTargets, true)
+                "check_remote" -> coordinator.refreshRemoteStats(refreshTargets(), login.token)
+                "check_sizes" -> coordinator.refreshSizes(force = true)
+                "open_conflicts" -> showConflicts = true
+                "open_logs" -> { logsTab = page.topBar.logs.tabs.firstOrNull()?.first.orEmpty(); showActivity = true }
+                "open_report" -> showDepthReport = true
+            }
+        }
+    }
     fun runTopItem(item: Declarations.GitTopItemDecl) {
         expanded = ""
         when (item.kind) {
@@ -902,6 +948,8 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
                 // A second tap on the same repo closes its menu; a tap on another repo moves it.
                 onToggle = { expanded = RepoTable.toggle(expanded, e.key) },
                 onOpenStatus = { statusFor = e.key },
+                // #1934 multi-select for the bulk sheet's Selected Ones: a long press picks / unpicks the row
+                picked = e.name in bulkPicked, onPick = { bulkPicked = if (e.name in bulkPicked) bulkPicked - e.name else bulkPicked + e.name },
             )
             Hairline()
         }
@@ -1161,19 +1209,30 @@ fun GitReposScreen(coordinator: GitSyncCoordinator, actions: DriveActions, nextR
         val bLang = java.util.Locale.getDefault().language
         val bState = rememberGitSheetState(remember(bLang) { GitSheet.parse(Declarations.controlSheet, bLang) }, "bulk")
         val bulk: @Composable (GitSheetPart) -> Unit = { part ->
+            val bulkJob = jobsState.lastOrNull { bulkStartMs > 0 && it.startedMs >= bulkStartMs }
+            val runningNames = entries.filter { e -> (e.cloned?.let { running.containsKey(it.id) } == true) || e.name in cloning }.map { it.name }.toSet()
+            val bulkRows = BulkProgress.rows(bulkNames, runningNames, bulkJob?.ok.orEmpty(), bulkJob?.failed.orEmpty(), bulkJob?.skipped.orEmpty(), bulkNotes,
+                ended = bulkJob?.finished == true || (bulkJob == null && bulkNotes.size == bulkNames.size), cancelled = bulkJob?.cancelled == true)
             BulkControlSheet(
-                page = page, targets = scopeTargets.map { it.name },
+                page = page, entries = bulkEntries, picked = bulkPicked, scope = bulkScope,
                 counts = mapOf(
                     "total" to entries.size, "cloned" to entries.count { it.cloned != null }, "not_cloned" to entries.count { it.cloned == null },
                     "needs_you" to entries.count { it.row.status?.light == StatusLight.State.OFF }, "ahead" to entries.count { (it.row.ahead ?: 0) > 0 },
                     "behind" to entries.count { (it.row.behind ?: 0) > 0 }, "dirty" to entries.count { (it.row.dirtyFiles ?: 0) > 0 },
                     "conflicts" to scopeTargets.count { (GitSyncCoordinator.glanceFor(it, glances)?.conflicts ?: 0) > 0 }, "checked" to checkProgress.done,
                 ),
-                results = scopeTargets.mapNotNull { r -> opResults[r.id]?.let { r.name to it.summary } },
+                progress = bulkRows, runActive = bulkJob?.finished == false, autoSyncOn = scopeTargets.isNotEmpty() && scopeTargets.all { it.autoSync },
                 output = jobLine?.let { it.label + ": " + it.done + "/" + it.total },
-                onTop = { runTopItem(it) },
-                onSync = { o -> coordinator.runPlanAll("sync", o.steps(), scopeTargets) },
-                onClone = { o -> entries.filter { it.cloned == null }.forEach { e -> coordinator.cloneOptions(GitSyncCoordinator.CloneTarget(e.name, e.cloneUrl.ifBlank { page.cloneUrl(e.name, Declarations.REMOTE_HTTPS) }, GitSyncCoordinator.AUTH_HTTPS, "", ""), o, null) } },
+                onScope = { bulkScope = it }, onPick = { n -> bulkPicked = if (n in bulkPicked) bulkPicked - n else bulkPicked + n },
+                onCancel = { jobsState.filter { !it.finished }.forEach { coordinator.jobs.cancel(it.id) } },
+                onTop = { runTopItem(it) }, onRun = { runBulk(it) },
+                onAutoSync = { on, m -> scopeTargets.forEach { coordinator.setAutoSync(it, on, m.toLong()) } },
+                onSync = { o -> beginBulk(true); coordinator.runPlanAll("sync", o.steps(), scopeTargets, bulkSheetDecl.concurrency) },
+                onClone = { o ->
+                    beginBulk(false)
+                    val into = when (o.dest) { "workspace" -> File(SharedStore.root(), "workspace"); "mirror" -> File(SharedStore.gitRoot(), page.bareRoot); else -> null }
+                    coordinator.cloneAll(sortedEntries.filter { it.name in bulkScopedNames && it.cloned == null }.map { e -> GitSyncCoordinator.CloneTarget(e.name, e.cloneUrl.ifBlank { page.cloneUrl(e.name, Declarations.REMOTE_HTTPS) }, GitSyncCoordinator.AUTH_HTTPS, "", "") }, o, into, bulkSheetDecl.concurrency)
+                },
                 part = part, sheetState = bState,
             )
         }
@@ -1452,8 +1511,10 @@ private fun GitRepoRow(
     expanded: Boolean,
     onToggle: () -> Unit,
     onOpenStatus: () -> Unit,
+    picked: Boolean = false,
+    onPick: (() -> Unit)? = null,
 ) {
-    RepoTableLine(scroll, Modifier.testTag(DriveTags.SYNC_GIT_ROW), onClick = onToggle) {
+    RepoTableLine(scroll, Modifier.testTag(DriveTags.SYNC_GIT_ROW).let { if (picked) it.background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)) else it }, onClick = onToggle, onLongClick = onPick) {
         // #1238 the leftmost column is the status icon on its own: a tap opens the full-screen status window.
         // #1670 the FIVE lights (Cloned, Divergence, Dirty/Stashed, Detached HEAD, Unpushed) from the SAME row model the stat columns
         // print, before / during / after any sync: only the values change. The old LOCAL | SERVER | SYNC words ([icons]) are fields of

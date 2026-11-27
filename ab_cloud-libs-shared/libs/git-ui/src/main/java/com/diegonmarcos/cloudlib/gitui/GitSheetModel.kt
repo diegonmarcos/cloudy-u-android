@@ -34,6 +34,52 @@ data class SheetGroup(
 
 data class SheetTab(val id: String, val label: String, val groups: List<SheetGroup>)
 
+/** #1934 one bulk scope: All Repos | Selected Ones | Cloned Ones. */
+data class BulkScope(val id: String, val label: String)
+
+/**
+ * #1934 THE BULK SHEET FROM THE PER-REPO DECLARATION. The declared bulk tabs stay as they are (nothing is lost); every per-repo group of the same tab
+ * whose controls are not already in the bulk sheet (by id, by a declared twin, or through a `same_as` option group) is appended with those controls, minus
+ * the ones declared per-repo-only. The Overview tab keeps its aggregated counts.
+ */
+object BulkDerive {
+    private val WRITES = setOf("compound", "depth", "hosting", "remote_mode")
+
+    fun covered(perRepo: List<SheetTab>, declared: List<SheetTab>, twins: Map<String, String>): Set<String> {
+        val c = HashSet<String>()
+        declared.forEach { t -> t.groups.forEach { g ->
+            g.controls.forEach { c += it.id }
+            if (g.sameAs.isNotBlank()) perRepo.firstOrNull { it.id == g.sameAs }?.groups?.filter { it.layout == "segmented" || it.layout == "flags" }?.forEach { sg -> sg.controls.forEach { c += it.id } }
+        } }
+        return c + twins.keys
+    }
+
+    fun derive(perRepo: List<SheetTab>, declared: List<SheetTab>, twins: Map<String, String>, perRepoOnly: Map<String, String>, actions: Map<String, String> = emptyMap()): List<SheetTab> {
+        val covered = covered(perRepo, declared, twins)
+        return declared.map { t ->
+            val mine = perRepo.firstOrNull { it.id == t.id }
+            if (mine == null || t.id == "overview") t
+            else t.copy(groups = t.groups + mine.groups.mapNotNull { g ->
+                // a control that writes over a whole scope (stash, depth, remote, hosting) confirms first, naming scope and count
+                val cs = g.controls.filter { it.id !in covered && it.id !in perRepoOnly }.map { c -> if (!c.confirm && actions[c.action]?.substringBefore(':') in WRITES) c.copy(confirm = true) else c }
+                if (cs.isEmpty()) null else g.copy(id = "b_" + g.id, controls = cs)
+            })
+        }
+    }
+
+    /** The per-repo controls (header and every tab) that are neither in the bulk sheet, nor a declared twin of one, nor declared per-repo-only. Empty = parity. */
+    fun missing(sheet: GitSheet): List<String> {
+        val bulkIds = sheet.controls(true).map { it.id }.toSet()
+        return sheet.controls(false).map { it.id }.filter { it !in bulkIds && sheet.twins[it]?.let { t -> t in bulkIds } != true && it !in sheet.perRepoOnly }
+    }
+
+    /** A declared per-repo-only entry without a reason, or naming a control that does not exist: the declaration is wrong. */
+    fun badPerRepoOnly(sheet: GitSheet): List<String> {
+        val ids = sheet.controls(false).map { it.id }.toSet()
+        return sheet.perRepoOnly.filter { (id, why) -> id !in ids || sheet.reasons[why].isNullOrBlank() }.keys.toList()
+    }
+}
+
 data class SheetHeader(
     val actions: List<SheetControl>, val refresh: SheetControl?, val close: SheetControl?, val fields: List<SheetControl>,
     val banner: SheetControl?, val cloneNow: SheetControl?,
@@ -45,16 +91,19 @@ data class GitSheet(
     val header: SheetHeader, val tabs: List<SheetTab>, val bulkTabs: List<SheetTab>,
     val syncPresets: List<SheetPreset>, val clonePresets: List<SheetPreset>, val reasons: Map<String, String>,
     val syncDefaults: SyncOptions, val cloneDefaults: CloneOptions,
+    /** #1934 the bulk sheet is the SAME declaration: [bulkTabs] = the declared bulk tabs plus every per-repo group not already there ([BulkDerive]). */
+    val bulkDeclared: List<SheetTab> = emptyList(), val scopes: List<BulkScope> = emptyList(), val concurrency: Int = 2,
+    val twins: Map<String, String> = emptyMap(), val perRepoOnly: Map<String, String> = emptyMap(), val bulkActions: Map<String, String> = emptyMap(),
 ) {
     fun tabsFor(bulk: Boolean): List<SheetTab> = if (bulk) bulkTabs else tabs
 
     /** Every control of one sheet (header included), in display order. */
     fun controls(bulk: Boolean): List<SheetControl> =
         (if (bulk) emptyList() else header.actions + listOfNotNull(header.refresh, header.close) + header.fields + listOfNotNull(header.banner, header.cloneNow)) +
-            tabsFor(bulk).flatMap { t -> t.groups.flatMap { it.controls } }
+            tabsFor(bulk).flatMap { t -> t.groups.flatMap { g -> if (bulk && g.sameAs.isNotBlank()) tabs.firstOrNull { it.id == g.sameAs }?.groups?.filter { it.layout == "segmented" || it.layout == "flags" }?.flatMap { it.controls }.orEmpty() else g.controls } }
 
     /** The `legacy` ids of every control of both sheets: the parity tester's view. */
-    fun legacyIds(): List<String> = (controls(false) + controls(true)).flatMap { it.legacy }
+    fun legacyIds(): List<String> = (controls(false) + bulkDeclared.flatMap { t -> t.groups.flatMap { it.controls } }).flatMap { it.legacy }
 
     companion object {
         private fun JsonObject.s(k: String, d: String = ""): String = (this[k] as? JsonPrimitive)?.contentOrNull ?: d
@@ -101,9 +150,17 @@ data class GitSheet(
             fun one(k: String) = (h[k] as? JsonObject)?.let { control(it, lang, reasons) }
             val d = o["defaults"] as? JsonObject
             val sd = d?.get("sync") as? JsonObject; val cd = d?.get("clone") as? JsonObject
+            val bulkO = o["bulk"] as? JsonObject
+            val perTabs = tabs(o["tabs"], lang, reasons); val declared = tabs(bulkO?.get("tabs"), lang, reasons)
+            val twins = (bulkO?.get("twins") as? JsonObject)?.mapValues { (it.value as? JsonPrimitive)?.contentOrNull.orEmpty() }.orEmpty()
+            val only = (bulkO?.get("per_repo_only") as? JsonObject)?.mapValues { (it.value as? JsonPrimitive)?.contentOrNull.orEmpty() }.orEmpty()
+            val acts = (bulkO?.get("actions") as? JsonObject)?.mapValues { (it.value as? JsonPrimitive)?.contentOrNull.orEmpty() }.orEmpty()
             return GitSheet(
                 header = SheetHeader(objs(h["actions"]).map { control(it, lang, reasons) }, one("refresh"), one("close"), objs(h["fields"]).map { control(it, lang, reasons) }, one("banner"), one("clone_now")),
-                tabs = tabs(o["tabs"], lang, reasons), bulkTabs = tabs((o["bulk"] as? JsonObject)?.get("tabs"), lang, reasons),
+                tabs = perTabs, bulkTabs = BulkDerive.derive(perTabs, declared, twins, only, acts),
+                bulkDeclared = declared, twins = twins, perRepoOnly = only, concurrency = ((bulkO?.get("concurrency") as? JsonPrimitive)?.intOrNull ?: 2).coerceIn(1, 8),
+                scopes = objs(bulkO?.get("scopes")).map { BulkScope(it.s("id"), tr(it, "label", lang)) },
+                bulkActions = acts,
                 syncPresets = objs(o["sync_presets"]).map { preset(it, lang) }, clonePresets = objs(o["clone_presets"]).map { preset(it, lang) }, reasons = reasons,
                 syncDefaults = SyncOptions(sd?.s("direction", "both") ?: "both", sd?.s("strategy", "ff") ?: "ff", sd?.s("winner", "none") ?: "none", sd?.s("dirty", "none") ?: "none",
                     sd?.s("commit_message", "chore: auto-sync") ?: "chore: auto-sync", sd?.s("scope", "current") ?: "current"),

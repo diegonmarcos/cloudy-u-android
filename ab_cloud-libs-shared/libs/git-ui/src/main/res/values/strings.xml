@@ -94,4 +94,11 @@
     <string name="git_sheet_clone_profile">Clone (%1$s)</string>
     <string name="git_sheet_confirm">Confirm</string>
     <string name="git_sheet_confirm_body">This changes data and cannot be undone. Repositories affected: %1$d</string>
+    <string name="git_bulk_scope_title">Scope</string>
+    <string name="git_bulk_scope_count">%1$d repos</string>
+    <string name="git_bulk_pick_title">Pick repositories (%1$d selected)</string>
+    <string name="git_bulk_confirm_scope">Scope: %1$s · %2$d repositories</string>
+    <string name="git_bulk_cancel">Cancel run</string>
+    <string name="git_bulk_summary_done">Summary</string>
+    <string name="git_bulk_summary_running">Running</string>
 </resources>

@@ -133,32 +133,46 @@ internal fun ControlSheetBody(
 }
 
 /**
- * #1934 THE ALL-REPOS SHEET: the same five tabs applied to the selection ([targets]: the filtered clones). Overview aggregates the status [counts]; Sync and Clone
- * run the option model on every target (per-repo progress and result under Workflow, [results]); a bulk control that existed on the top bar is dispatched to that
- * item through its `legacy` id; every destructive control confirms first, with the repositories listed.
+ * #1934 THE BULK SHEET = THE SAME DECLARATION as the per-repo sheet (GitSheet derives the bulk tabs from it), applied to the repositories of the chosen scope
+ * (All Repos | Selected Ones | Cloned Ones). A control that existed on the top bar goes to that item through its `legacy` id; every other control is handed to
+ * [onRun], which runs it over the scoped set. Controls that cannot run for the scope are drawn greyed with their own reason ([BulkScopes.unavailableText]);
+ * destructive controls confirm with the scope, the count and the repositories listed; the run's per-repository rows, summary and Cancel come from [progress].
  */
 @Composable
 internal fun BulkControlSheet(
-    page: Declarations.GitPageDecl, targets: List<String>, counts: Map<String, Int>, results: List<Pair<String, String>>, output: String?,
+    page: Declarations.GitPageDecl, entries: List<BulkScopes.Entry>, picked: Set<String>, scope: String, counts: Map<String, Int>,
+    progress: List<BulkProgress.Row>, runActive: Boolean, output: String?, autoSyncOn: Boolean,
+    onScope: (String) -> Unit, onPick: (String) -> Unit, onCancel: () -> Unit,
     onTop: (Declarations.GitTopItemDecl) -> Unit, onSync: (SyncOptions) -> Unit, onClone: (CloneOptions) -> Unit,
+    onRun: (SheetControl) -> Unit, onAutoSync: (Boolean, Int) -> Unit,
     part: GitSheetPart = GitSheetPart.ALL, sheetState: GitSheetState? = null,
 ) {
+    val ctx = LocalContext.current
     val lang = java.util.Locale.getDefault().language
     val sheet = remember(lang) { GitSheet.parse(Declarations.controlSheet, lang) }
     if (sheet.bulkTabs.isEmpty()) return
     val state = sheetState ?: rememberGitSheetState(sheet, "bulk")
     val values = counts.mapKeys { "count:" + it.key }.mapValues { it.value.toString() }
-    val host = GitSheetHost(cloned = true, values = values, output = output, targets = targets, bulk = true, results = results)
+    val scoped = BulkScopes.targets(scope, entries, picked)
+    val host = GitSheetHost(
+        cloned = true, values = values, output = output, targets = scoped.map { it.name }, bulk = true, autoSyncOn = autoSyncOn,
+        unavailable = BulkScopes.unavailableText(sheet, scope, scoped, runActive), scope = scope, scopeLabel = sheet.scopes.firstOrNull { it.id == scope }?.label.orEmpty(),
+        picks = entries.map { it.name }, picked = picked, progress = progress, runActive = runActive,
+    )
     val actions = object : GitSheetActions {
         override fun action(c: SheetControl) {
-            val ref = c.legacy.firstOrNull { it.startsWith("bulk_top:") }?.removePrefix("bulk_top:") ?: return
+            val ref = c.legacy.firstOrNull { it.startsWith("bulk_top:") }?.removePrefix("bulk_top:")
+            if (ref == null) { onRun(c); return }
             val (g, i) = ref.split('.', limit = 2).let { it[0] to it.getOrElse(1) { "" } }
             page.topBar.groups.firstOrNull { it.id == g }?.items?.firstOrNull { it.id == i }?.let(onTop)
         }
         override fun runSync(o: SyncOptions) = onSync(o)
         override fun runClone(o: CloneOptions) = onClone(o)
-        override fun copy(text: String) {}
-        override fun setAutoSync(on: Boolean, minutes: Int) {}
+        override fun copy(text: String) = SheetEffects.copy(ctx, "git", text)
+        override fun setAutoSync(on: Boolean, minutes: Int) = onAutoSync(on, minutes)
+        override fun setScope(id: String) = onScope(id)
+        override fun togglePick(name: String) = onPick(name)
+        override fun cancelRun() = onCancel()
     }
     GitControlSheetView(sheet, state, host, actions, Modifier, part = part)
 }

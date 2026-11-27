@@ -1,0 +1,120 @@
+# #1934 BULK SHEET tests (the top-nav menu driven by the per-repo declaration): BulkSheetParityTest (parity of every per-repo control with a mutation
+# on a damaged sheet, scopes, unavailable reasons, progress rows and summary) and BulkSheetRenderTest (Compose: scope selector, same controls in every scope,
+# greyed controls with reasons, confirm naming scope and count, progress, summary, Cancel). The verdict is READ FROM THE JUnit XML (tests > 0, failures + errors
+# = 0), never from the exit code alone. Then every planted source mutant must turn the XML RED. Runs on push to the files it guards and by hand.
+# The dispatch input goes through env: only, with an allow-list; it is never expanded inside run:.
+name: drive-bulk-sheet-tests
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ab_cloud-libs-shared/libs/git-ui/src/main/java/**"
+      - "ac_cloud-drive/build.json"
+      - "ac_cloud-drive/app/src/test/java/com/diegonmarcos/clouddrive/sync/Bulk*"
+      - ".github/workflows/drive-bulk-sheet-tests.yml"
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "all | none (real tree only) | one mutant name"
+        required: false
+        default: "all"
+permissions:
+  contents: read
+env:
+  WORK_DIR: ac_cloud-drive
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout private fleet data
+        uses: ./.github/actions/fleet-private
+        with:
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 platforms;android-35 platforms;android-26 build-tools;35.0.0 build-tools;34.0.0 platform-tools"
+      - name: Set up Gradle 8.10.2 (cached)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.10.2"
+      # ── MANAGED-GRADLE-CACHE-HYGIENE: injected by cloud-android-gradle-cache-hygiene.py ──
+      # Edit 1_cicd/src/actions/gradle-cache-hygiene, never this block.
+      - name: Gradle cache hygiene (retry failed resolution, never cache a failed lookup)
+        uses: ./.github/actions/gradle-cache-hygiene
+      # ── end MANAGED-GRADLE-CACHE-HYGIENE ──
+      - name: Checkout vault (shared Android signing key, read by app/build.gradle at configuration)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pvt-vault
+          token: ${{ secrets.ANDROID_SIGNING_VAULT_TOKEN }}
+          path: .vault
+      - name: Install jq
+        run: sudo apt-get update -y && sudo apt-get install -y jq
+      - name: Install ORAS + sops (pinned)
+        uses: ./.github/actions/install-pinned-tools
+        with:
+          tools: oras sops
+      - name: Real tree GREEN (verdict from the XML), every mutant RED
+        env:
+          BYPASS_NIX: "1"
+          VAULT_DIR: ${{ github.workspace }}/.vault
+          SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
+          NAME_IN: ${{ inputs.name }}
+        run: |
+          set -u
+          case "${NAME_IN:-all}" in
+            all|none|derive-drops-uncovered|twins-ignored|scope-reasons-dropped|confirm-not-forced|progress-never-running|confirm-scope-dropped|cancel-disabled|concurrency-ignored) ONLY="${NAME_IN:-all}" ;;
+            *) echo "::error::input not in the allow-list"; exit 1 ;;
+          esac
+          jq '.tests.unit.task = ":app:testDebugUnitTest"' "$WORK_DIR/build.json" > /tmp/b.json && mv /tmp/b.json "$WORK_DIR/build.json"
+          L=ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui
+          # only the suites under proof run: an unrelated test must not decide whether these mutants are caught
+          find ac_cloud-drive/app/src/test -name '*.kt' ! -name 'Bulk*Test.kt' -delete
+          R=ac_cloud-drive/app/build/test-results/testDebugUnitTest
+          suite() { rm -rf "$R"; sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR" > /tmp/suite.log 2>&1; true; }
+          # verdict: "tests failures" read from the Bulk*Test XML files; prints "N F" (F = failures + errors), "0 -1" when no XML exists (compile failure, not a verdict)
+          verdict() { python3 - "$R" <<'PY'
+          import glob, sys, xml.etree.ElementTree as ET
+          t = f = 0; files = glob.glob(sys.argv[1] + "/TEST-*Bulk*Test.xml")
+          for p in files:
+              r = ET.parse(p).getroot(); t += int(r.get("tests", 0)); f += int(r.get("failures", 0)) + int(r.get("errors", 0))
+          print(t, f if files else -1)
+          PY
+          }
+          sub() { python3 -c 'import sys; p, a, b = sys.argv[1:]; s = open(p).read(); assert a in s, "anchor missing: " + a; open(p, "w").write(s.replace(a, b, 1))' "$1" "$2" "$3"; }
+          suite; set -- $(verdict)
+          echo "real tree: $1 tests, $2 failed/errored"
+          [ "$1" -ge 18 ] && [ "$2" -eq 0 ] || { tail -80 /tmp/suite.log; echo "::error::the real tree is not GREEN in the XML (tests=$1 failed=$2)"; exit 1; }
+          echo "real tree: GREEN ($1 tests)"
+          [ "$ONLY" = none ] && exit 0
+          stayed=0
+          while IFS='@' read -r name file a b; do
+            [ -z "$name" ] && continue
+            [ "$ONLY" != "all" ] && [ "$ONLY" != "$name" ] && continue
+            git checkout -- "$L"
+            sub "$file" "$a" "$b" || { echo "::error::$name: mutation anchor missing"; stayed=$((stayed + 1)); continue; }
+            suite; set -- $(verdict)
+            if [ "$2" -gt 0 ]; then echo "RED (caught): $name ($2 of $1 failed)"
+            elif [ "$2" -lt 0 ]; then echo "::error::mutant $name did not compile (no XML): not a verdict"; stayed=$((stayed + 1))
+            else echo "::error::mutant stayed GREEN: $name"; stayed=$((stayed + 1)); fi
+          done <<'MUTANTS'
+          derive-drops-uncovered@ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitSheetModel.kt@val cs = g.controls.filter { it.id !in covered && it.id !in perRepoOnly }@val cs = g.controls.filter { false }
+          twins-ignored@ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitSheetModel.kt@sheet.twins[it]?.let { t -> t in bulkIds } != true@false
+          scope-reasons-dropped@ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitBulkRun.kt@if (why != null) out[c.id] = why@if (false) out[c.id] = why
+          confirm-not-forced@ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitSheetModel.kt@private val WRITES = setOf("compound", "depth", "hosting", "remote_mode")@private val WRITES = setOf("none")
+          progress-never-running@ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitBulkRun.kt@n in running -> Row(n, State.RUNNING, "")@n in running -> Row(n, State.QUEUED, "")
+          confirm-scope-dropped@ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitControlSheet.kt@if (scopeLabel.isNotBlank()) Text(@if (false) Text(
+          cancel-disabled@ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitControlSheet.kt@Modifier.testTag("git_bulk_cancel"), enabled = host.runActive))@Modifier.testTag("git_bulk_cancel"), enabled = false))
+          concurrency-ignored@ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitSheetModel.kt@?: 2).coerceIn(1, 8)@?: 2).coerceIn(2, 2)
+          MUTANTS
+          git checkout -- "$L"
+          [ "$stayed" -eq 0 ] || { echo "::error::$stayed mutant(s) stayed green or did not compile"; exit 1; }
+          echo "every mutant RED (verdict from the XML)"

@@ -3,6 +3,7 @@ package com.diegonmarcos.cloudlib.gitui
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -130,11 +131,12 @@ fun repoLfsWord(lfs: Boolean?): String = GitTable.lfs(lfs, stringResource(R.stri
  * their rows through this, so the two cannot drift apart.
  */
 @Composable
-fun RepoTableLine(scroll: ScrollState, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, content: @Composable RowScope.() -> Unit) {
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+fun RepoTableLine(scroll: ScrollState, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, onLongClick: (() -> Unit)? = null, content: @Composable RowScope.() -> Unit) {
     val k = LocalGitUiKit.current
     // The Cloud Store list row's own padding (KitStoreRow: 12 x 8 Store steps at the Store's scale); no height floor: the text sets the height.
     Row(
-        modifier.fillMaxWidth().let { if (onClick != null) it.clickable(interactionSource = null, indication = null, onClick = onClick) else it }.padding(start = KitStoreRow.padH),
+        modifier.fillMaxWidth().let { if (onLongClick != null && onClick != null) it.combinedClickable(interactionSource = null, indication = null, onClick = onClick, onLongClick = onLongClick) else if (onClick != null) it.clickable(interactionSource = null, indication = null, onClick = onClick) else it }.padding(start = KitStoreRow.padH),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(

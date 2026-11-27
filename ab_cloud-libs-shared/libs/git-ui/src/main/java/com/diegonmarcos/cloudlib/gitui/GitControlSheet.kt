@@ -1,5 +1,6 @@
 package com.diegonmarcos.cloudlib.gitui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -61,6 +62,9 @@ data class GitSheetHost(
     val results: List<Pair<String, String>> = emptyList(),
     /** The remote refuses pushes (a read-only clone): every control that writes to the remote is drawn disabled with the reason. */
     val readOnly: Boolean = false,
+    /** #1934 bulk: the scope in force (BulkScopes id), its label, the repositories one can pick (Selected Ones) and the picked ones, and the run's per-repository rows. */
+    val scope: String = "", val scopeLabel: String = "", val picks: List<String> = emptyList(), val picked: Set<String> = emptySet(),
+    val progress: List<BulkProgress.Row> = emptyList(), val runActive: Boolean = false,
 )
 
 /** What a tap on a control asks of the host. */
@@ -70,6 +74,10 @@ interface GitSheetActions {
     fun runClone(o: CloneOptions)
     fun copy(text: String)
     fun setAutoSync(on: Boolean, minutes: Int)
+    /** #1934 bulk only: the scope chip, one repository's pick box, and the run's Cancel. */
+    fun setScope(id: String) {}
+    fun togglePick(name: String) {}
+    fun cancelRun() {}
 }
 
 private fun SyncOptions.value(key: String): String = when (key) { "direction" -> direction; "strategy" -> strategy; "winner" -> winner; "dirty" -> dirty; "scope" -> scope; else -> "" }
@@ -108,16 +116,18 @@ fun GitControlSheetView(
     }
     Column(modifier.fillMaxWidth().semantics { testTagsAsResourceId = true }.testTag("git_control_sheet_" + part.name.lowercase()), verticalArrangement = Arrangement.spacedBy(k.gapWide)) {
         if (part != GitSheetPart.BODY && !host.bulk) Header(sheet, host, actions, ::blocked)
+        if (part != GitSheetPart.BODY && host.bulk) BulkScopeBar(sheet, host, actions)
         if (part != GitSheetPart.BODY) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag("git_sheet_tabs"), horizontalArrangement = Arrangement.spacedBy(k.gapWide)) {
             tabs.forEach { t -> k.pill(GitPill(t.label, { state.tab = t.id; onTabSelected(t.id) }, Modifier.testTag("git_sheet_tab_" + t.id), filled = t.id == open?.id)) }
         }
+        if (part != GitSheetPart.TOP && host.bulk && host.scope == BulkScopes.SELECTED) BulkPicks(host, actions)
         if (part != GitSheetPart.TOP) open?.groups?.forEach { g -> GroupView(sheet, g, tabs, state, host, actions, ::blocked) }
     }
     if (part != GitSheetPart.TOP) state.confirm?.let { c ->
-        ConfirmDialog(c.label, host.targets, { state.confirm = null }) { state.confirm = null; actions.action(c) }
+        ConfirmDialog(c.label, host.targets, host.scopeLabel, { state.confirm = null }) { state.confirm = null; actions.action(c) }
     }
     if (part != GitSheetPart.TOP) state.confirmRun?.let { which ->
-        ConfirmDialog(which.substringAfter('|'), host.targets, { state.confirmRun = null }) { state.confirmRun = null; if (which.startsWith("sync")) actions.runSync(state.sync) else actions.runClone(state.clone) }
+        ConfirmDialog(which.substringAfter('|'), host.targets, host.scopeLabel, { state.confirmRun = null }) { state.confirmRun = null; if (which.startsWith("sync")) actions.runSync(state.sync) else actions.runClone(state.clone) }
     }
 }
 
@@ -192,6 +202,7 @@ private fun GroupView(
             "output" -> Column(Modifier.testTag("git_sheet_output")) {
                 Text(host.output ?: "", style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace)
                 host.results.forEach { (n, r) -> Text("$n  $r", style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace) }
+                host.progress.forEach { r -> Text(r.name + "  " + r.line(), Modifier.testTag("git_bulk_row_" + r.name), style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace) }
             }
             "autosync" -> AutoSyncGroup(g, host, actions)
             else -> {
@@ -311,12 +322,13 @@ private fun badgeRes(b: String): Int = when (b) {
 
 /** The explicit confirm of a destructive control: in the bulk sheet it lists every repository it will touch. */
 @Composable
-private fun ConfirmDialog(what: String, targets: List<String>, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+private fun ConfirmDialog(what: String, targets: List<String>, scopeLabel: String, onDismiss: () -> Unit, onConfirm: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss, modifier = Modifier.testTag("git_sheet_confirm"),
         title = { Text(what) },
         text = {
             Column {
+                if (scopeLabel.isNotBlank()) Text(stringResource(R.string.git_bulk_confirm_scope, scopeLabel, targets.size), Modifier.testTag("git_sheet_confirm_scope"), fontWeight = FontWeight.SemiBold)
                 Text(stringResource(R.string.git_sheet_confirm_body, targets.size.coerceAtLeast(1)))
                 targets.forEach { Text("• $it", style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace) }
             }
@@ -324,4 +336,42 @@ private fun ConfirmDialog(what: String, targets: List<String>, onDismiss: () -> 
         confirmButton = { TextButton(onClick = onConfirm, modifier = Modifier.testTag("git_sheet_confirm_yes")) { Text(stringResource(R.string.git_sheet_confirm)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.git_wf_cancel)) } },
     )
+}
+
+/** #1934 the bulk sheet's pinned scope bar: the three scopes, the count they hold, and the run's summary with Cancel (the progress rows are under Workflow > Output). */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun BulkScopeBar(sheet: GitSheet, host: GitSheetHost, actions: GitSheetActions) {
+    val k = LocalGitUiKit.current
+    Column(Modifier.testTag("git_bulk_scope_bar"), verticalArrangement = Arrangement.spacedBy(k.gap)) {
+        Text(stringResource(R.string.git_bulk_scope_title), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(k.gapWide), verticalAlignment = Alignment.CenterVertically) {
+            sheet.scopes.forEach { sc -> k.pill(GitPill(sc.label, { actions.setScope(sc.id) }, Modifier.testTag("git_bulk_scope_" + sc.id), filled = sc.id == host.scope)) }
+            Text(stringResource(R.string.git_bulk_scope_count, host.targets.size), Modifier.testTag("git_bulk_scope_count"), style = MaterialTheme.typography.labelMedium, fontFamily = FontFamily.Monospace)
+        }
+        if (host.progress.isNotEmpty()) {
+            val sum = BulkProgress.summary(host.progress)
+            Row(horizontalArrangement = Arrangement.spacedBy(k.gapWide), verticalAlignment = Alignment.CenterVertically) {
+                Text((if (sum.done) stringResource(R.string.git_bulk_summary_done) else stringResource(R.string.git_bulk_summary_running)) + " " + BulkProgress.summaryLine(sum),
+                    Modifier.testTag("git_bulk_summary"), style = MaterialTheme.typography.labelMedium, fontFamily = FontFamily.Monospace)
+                if (!sum.done || host.runActive) k.pill(GitPill(stringResource(R.string.git_bulk_cancel), { actions.cancelRun() }, Modifier.testTag("git_bulk_cancel"), enabled = host.runActive))
+            }
+        }
+    }
+}
+
+/** #1934 Selected Ones: a pick box per repository of the list (the multi-select), each with its own tag. */
+@Composable
+private fun BulkPicks(host: GitSheetHost, actions: GitSheetActions) {
+    val k = LocalGitUiKit.current
+    Column(Modifier.testTag("git_bulk_picks"), verticalArrangement = Arrangement.spacedBy(k.gap)) {
+        Text(stringResource(R.string.git_bulk_pick_title, host.picked.size), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        host.picks.forEach { n ->
+            val on = n in host.picked
+            Row(Modifier.fillMaxWidth().clickable { actions.togglePick(n) }.testTag("git_bulk_pick_" + n), verticalAlignment = Alignment.CenterVertically) {
+                androidx.compose.material3.Checkbox(checked = on, onCheckedChange = { actions.togglePick(n) })
+                Text(n, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)
+            }
+        }
+    }
 }

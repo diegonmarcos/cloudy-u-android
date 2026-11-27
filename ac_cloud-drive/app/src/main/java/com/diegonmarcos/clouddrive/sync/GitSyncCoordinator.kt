@@ -669,19 +669,22 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
 
     /** The bulk bar: [id] on every registered clone ([runCompound] per repository; each answers in its own row). */
     /** The bulk bar: [id] on every clone of [only] (default: every registered clone) through ONE bounded job; each answers in its own row. */
-    fun runCompoundAll(id: String, only: List<ManagedRepo>? = null) {
+    fun runCompoundAll(id: String, only: List<ManagedRepo>? = null, workers: Int = Declarations.sync.git.jobs.workers) {
         if (!RepoActions.isCompound(id)) return
-        bulkOps(id, only ?: repos.value) { repo -> record(repo, id, runCatching { RepoCompound.run(ctx, repo, id, authFor(repo)) }.getOrElse { GitOpResult(false, it.message ?: it.toString()) }, SyncHistory.TRIGGER_MANUAL) }
+        bulkOps(id, only ?: repos.value, workers) { repo -> record(repo, id, runCatching { RepoCompound.run(ctx, repo, id, authFor(repo)) }.getOrElse { GitOpResult(false, it.message ?: it.toString()) }, SyncHistory.TRIGGER_MANUAL) }
     }
 
     /**
      * #1315 ONE job for a verb over many clones: at most ui.sync.git.jobs.workers at once, one job per path, exclusive with
      * the other writing jobs; the per-row step and result are published as for a single op. Returns null when refused.
      */
-    private fun bulkOps(id: String, targets: List<ManagedRepo>, op: (ManagedRepo) -> GitOpResult): kotlinx.coroutines.Job? {
+    /** #1934 the bulk sheet's declared concurrency (ui.git_control_sheet.bulk.concurrency) while it is open; null = ui.sync.git.jobs.workers. */
+    @Volatile var bulkWorkers: Int? = null
+
+    private fun bulkOps(id: String, targets: List<ManagedRepo>, workers: Int = Declarations.sync.git.jobs.workers, op: (ManagedRepo) -> GitOpResult): kotlinx.coroutines.Job? {
         val byPath = targets.associateBy { File(it.path).absolutePath }
         val step = if (id == RepoActions.SYNC_LOCAL_WINS || id == OP_PUSH) Step.PUSHING else Step.PULLING
-        return jobs.submit(GitJobs.Spec(id, id, id, targets.map { GitJobs.Target(File(it.path).absolutePath, it.name) }, workers = Declarations.sync.git.jobs.workers, exclusive = true,
+        return jobs.submit(GitJobs.Spec(id, id, id, targets.map { GitJobs.Target(File(it.path).absolutePath, it.name) }, workers = bulkWorkers ?: workers, exclusive = true,
             onEnd = { refresh().join() }) { t ->
             val repo = byPath.getValue(t.path)
             if (running.value.containsKey(repo.id)) return@Spec GitJobs.Outcome(GitJobs.Status.SKIP, GitJobs.LOCKED)
@@ -933,8 +936,8 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
         single(repo, id, Step.PULLING) { record(repo, id, runCatching { runSteps(repo, steps) }.getOrElse { GitOpResult(false, it.message ?: it.toString()) }, SyncHistory.TRIGGER_MANUAL) }
 
     /** The same plan on every repository of [only] through ONE bounded job; each answers in its own row (per-repo progress and result). */
-    fun runPlanAll(id: String, steps: List<com.diegonmarcos.cloudlib.gitcore.GitStep>, only: List<ManagedRepo>) {
-        bulkOps(id, only) { repo -> record(repo, id, runCatching { runSteps(repo, steps) }.getOrElse { GitOpResult(false, it.message ?: it.toString()) }, SyncHistory.TRIGGER_MANUAL) }
+    fun runPlanAll(id: String, steps: List<com.diegonmarcos.cloudlib.gitcore.GitStep>, only: List<ManagedRepo>, workers: Int = Declarations.sync.git.jobs.workers) {
+        bulkOps(id, only, workers) { repo -> record(repo, id, runCatching { runSteps(repo, steps) }.getOrElse { GitOpResult(false, it.message ?: it.toString()) }, SyncHistory.TRIGGER_MANUAL) }
     }
 
     /** #1934 a hosting-platform command (archive / delete the remote repository): the exact REST request of [HostingApi], with the declared token; the answer lands in the repo's result line. */
@@ -946,6 +949,34 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
             repo?.let { rp -> opResults.update { it + (rp.id to result) } }
             DriveDebugLog.i(ctx, TAG, result.summary)
         }
+    }
+
+    /** #1934 a hosting-platform command on every repository of [items] (owner, name) through ONE bounded job: each answers in its own row; the requests are HostingApi's. */
+    fun hostingCallAll(kind: String, items: List<Triple<ManagedRepo?, String, String>>, workers: Int) {
+        jobs.submit(GitJobs.Spec("hosting_$kind", "hosting_$kind", "hosting_$kind", items.map { (_, o, n) -> GitJobs.Target("remote:$o/$n", n) }, workers = bulkWorkers ?: workers, exclusive = false) { t ->
+            val (repo, owner, name) = items.first { it.third == t.name }
+            val req = when (kind) { "archive" -> HostingApi.archive(owner, name); "delete_remote" -> HostingApi.deleteRepo(owner, name); else -> return@Spec GitJobs.Outcome(GitJobs.Status.FAIL, "unknown command $kind") }
+            val r = withContext(Dispatchers.IO) { HostingApi.send(Declarations.sync.git.api.baseUrl, declaredToken(), req) }
+            val out = r.fold({ GitJobs.Outcome(if (it.status in 200..299) GitJobs.Status.OK else GitJobs.Status.FAIL, "HTTP ${it.status}", it.body.take(300)) }, { GitJobs.Outcome(GitJobs.Status.FAIL, it.message ?: "request failed") })
+            repo?.let { rp -> opResults.update { it + (rp.id to GitOpResult(out.status == GitJobs.Status.OK, "$kind $owner/$name: ${out.message}")) } }
+            out
+        })
+    }
+
+    /** #1934 the Clone tab's Clone over every target through ONE bounded job (per-repository row each); the same mode and destination as [cloneOptions]. */
+    fun cloneAll(ts: List<CloneTarget>, o: com.diegonmarcos.cloudlib.gitcore.CloneOptions, into: File?, workers: Int) {
+        val mode = com.diegonmarcos.cloudlib.gitcore.CloneMode(
+            id = o.profileName(), label = o.profileName(), depth = if (o.history == "shallow") o.depth.coerceIn(1, 9999) else 0,
+            bare = o.workspace == "bare", singleBranch = o.branches == "main", filter = o.filter,
+        )
+        jobs.submit(GitJobs.Spec("clone_all", "clone_all", "clone_all", ts.map { GitJobs.Target((into?.let { d -> File(d, it.name) } ?: cloneDir(it.name, mode)).absolutePath, it.name) }, workers = bulkWorkers ?: workers, exclusive = false,
+            onEnd = { refresh().join() }) { t ->
+            val c = ts.first { it.name == t.name }
+            cloning.update { it + c.name }
+            val r = try { withContext(Dispatchers.IO) { cloneBlocking(c.name, c.url, c.authKind, c.username, c.token, "", null, into, mode) } } finally { cloning.update { it - c.name } }
+            withContext(Dispatchers.IO) { history.append(SyncEvent(System.currentTimeMillis() / 1000, RepoRegistry.idFor(t.path), c.name, SyncHistory.TRIGGER_MANUAL, r.ok, "clone ${mode.id}: ${r.summary}", r.details)) }
+            GitJobs.Outcome(if (r.ok) GitJobs.Status.OK else GitJobs.Status.FAIL, r.summary, r.details)
+        })
     }
 
     /** The Clone tab's Clone: the chosen options as ONE clone mode (depth, bare, single branch, partial-clone filter), into [into] (null = the store). */
@@ -973,8 +1004,9 @@ class GitSyncCoordinator(private val ctx: Context, private val scope: CoroutineS
      * clone itself first — dirty, conflicted, mid-merge, no upstream or ahead is SKIPPED and reported; the rest are shrunk by the
      * terminal-root wire's `keep_depth` (which checks the gate again). Same single clone, nothing re-cloned.
      */
-    fun keepDepth(action: Declarations.GitDepthActionDecl, only: ManagedRepo? = null) = depth(action, plan = {
-        (only?.let { listOf(it) } ?: registry.load()).map { DepthItem(File(it.path).absolutePath, it.name) to it }
+    fun keepDepth(action: Declarations.GitDepthActionDecl, only: ManagedRepo) = keepDepth(action, listOf(only))
+    fun keepDepth(action: Declarations.GitDepthActionDecl, only: List<ManagedRepo>? = null) = depth(action, plan = {
+        (only ?: registry.load()).map { DepthItem(File(it.path).absolutePath, it.name) to it }
     }) { (_, repo) ->
         val token = lazy { declaredToken() }
         if (running.value.containsKey(repo.id)) return@depth repo.name to Outcome.SKIP to "an operation is already running"
