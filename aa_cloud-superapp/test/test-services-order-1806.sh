@@ -118,7 +118,7 @@ def run(bj, ds, fav):
     nowq['Services'] = [p for t_ in (CITY, LEIS, 'AGI') for p in [p_['pkg'] for f in pg[t_] for p_ in f['packages']]]  # #1902 the old Services group is City + Leisure + the AGI tail
     for gt, fl in PREV['phone_app_groups'].items():
         was = [p for f in fl for p in f['packages']]
-        gone = [p for p in was if p not in nowq.get(gt, [])]
+        gone = [p for p in was if p not in nowq.get(gt, []) and p != 'com.amazon.avod.thirdpartyclient']   # #1956 the one owner-named removal: Prime Video leaves the Media Center folder
         check(not gone, 'every Phone %s quickmark app is still a %s quickmark (%d)%s' % (gt, gt, len(was), ' GONE %s' % gone if gone else ''))
     nowkw = {}
     for f in folders:

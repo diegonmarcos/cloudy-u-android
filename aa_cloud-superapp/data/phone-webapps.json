@@ -120,6 +120,11 @@
           "url": null
         },
         {
+          "pkg": "com.github.android",
+          "label": "GitHub",
+          "url": null
+        },
+        {
           "pkg": "com.brave.browser",
           "label": "Brave",
           "url": null
@@ -220,16 +225,6 @@
           "url": null
         },
         {
-          "pkg": "com.memrise.android.memrisecompanion",
-          "label": "Memrise",
-          "url": "https://www.memrise.com"
-        },
-        {
-          "pkg": "mobi.eup.easygerman",
-          "label": "Todaii German",
-          "url": null
-        },
-        {
           "pkg": "com.instagram.android",
           "label": "Instagram",
           "url": "https://www.instagram.com"
@@ -272,6 +267,16 @@
         {
           "pkg": "co.hinge.app",
           "label": "Hinge",
+          "url": null
+        },
+        {
+          "pkg": "com.memrise.android.memrisecompanion",
+          "label": "Memrise",
+          "url": "https://www.memrise.com"
+        },
+        {
+          "pkg": "mobi.eup.easygerman",
+          "label": "Todaii German",
           "url": null
         },
         {
@@ -450,14 +455,14 @@
           "url": null
         },
         {
-          "pkg": "com.amazon.avod.thirdpartyclient",
-          "label": "Prime Video",
-          "url": null
-        },
-        {
           "pkg": "com.shazam.android",
           "label": "Shazam",
           "url": null
+        },
+        {
+          "pkg": "com.aspiro.tidal",
+          "label": "Tidal",
+          "url": "https://listen.tidal.com"
         },
         {
           "pkg": "com.werewolfapps.online",
@@ -480,13 +485,13 @@
           "url": null
         },
         {
-          "pkg": "com.foxdebug.acode",
-          "label": "Acode",
-          "url": null
+          "pkg": "com.google.android.apps.bard",
+          "label": "Gemini",
+          "url": "https://gemini.google.com"
         },
         {
-          "pkg": "com.github.android",
-          "label": "GitHub",
+          "pkg": "com.foxdebug.acode",
+          "label": "Acode",
           "url": null
         },
         {
