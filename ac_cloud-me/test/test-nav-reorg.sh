@@ -59,8 +59,8 @@ if labels(secs.get("pers", {}).get("pages", [])) != [("pers-profiles", "Media"),
     bad("tree", "Pers is not Media, Health, Astro, DD, Geo, Endurance, Personal Growth, Community, By 30, By 40, By 50 (#1976)")
 if secs.get("pers", {}).get("nav_mode") != "horizontal_two_rows" or [(g["label"], g["pages"]) for g in secs.get("pers", {}).get("groups", [])] != [("Profiles", ["pers-profiles", "health", "astro", "dd"]), ("Achieves", ["geo", "endurance", "growth", "community", "by30", "by40", "by50"])]:
     bad("tree", "Pers is not two rows: Profiles | Media Health Astro DD over Achieves | Geo Endurance Personal Growth Community By 30 By 40 By 50 (#1976)")
-if [p["id"] for p in sub("pers", "pers-profiles").get("pages", [])] != ["personal", "ig0", "ig1", "ig2", "face0", "pinterest", "youtube", "tidal", "linkedin", "orkut"] or any(p.get("pages") for p in sub("pers", "pers-profiles").get("pages", [])):
-    bad("tree", "Pers > Media is not ONE flat strip Personal | ig0 | ig1 | ig2 | face0 | Pinterest | YouTube | Tidal | LinkedIn | Orkut (#1976)")
+if [p["id"] for p in sub("pers", "pers-profiles").get("pages", [])] != ["personal", "shelf", "vinyl", "bar", "menu", "theater", "story", "ig0", "ig1", "ig2", "face0", "pinterest", "youtube", "tidal", "linkedin", "orkut", "icq", "dms"] or any(p.get("pages") for p in sub("pers", "pers-profiles").get("pages", [])):
+    bad("tree", "Pers > Media is not ONE flat strip every mySocials page in the site order (#1976) (#1976)")
 if labels(sub("pers", "health").get("pages", [])) != [("trackers", "Trackers"), ("plan", "Plan"), ("health-profile", "Record")]:
     bad("tree", "Pers > Health is not Trackers, Plan, Record")
 if [p["id"] for p in sub("pers", "health", "trackers").get("pages", [])] != ["tracked", "activities", "bodycomp", "hr", "sleep"] or \

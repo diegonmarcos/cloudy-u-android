@@ -17,6 +17,96 @@
       "sot_url": "https://diegonmarcos.github.io/mySocials/"
     },
     {
+      "id": "pers-shelf",
+      "section": "pers",
+      "kind": "page",
+      "label": "Shelf",
+      "source": {
+        "literal": "https://diegonmarcos.github.io/mySocials/shelf.html"
+      },
+      "path": [
+        "pers-profiles",
+        "shelf"
+      ],
+      "url": "https://diegonmarcos.github.io/mySocials/shelf.html",
+      "sot_url": "https://diegonmarcos.github.io/mySocials/shelf.html"
+    },
+    {
+      "id": "pers-vinyl",
+      "section": "pers",
+      "kind": "page",
+      "label": "Vinyl",
+      "source": {
+        "literal": "https://diegonmarcos.github.io/mySocials/vinyl.html"
+      },
+      "path": [
+        "pers-profiles",
+        "vinyl"
+      ],
+      "url": "https://diegonmarcos.github.io/mySocials/vinyl.html",
+      "sot_url": "https://diegonmarcos.github.io/mySocials/vinyl.html"
+    },
+    {
+      "id": "pers-bar",
+      "section": "pers",
+      "kind": "page",
+      "label": "Bar",
+      "source": {
+        "literal": "https://diegonmarcos.github.io/mySocials/bar-cellar.html"
+      },
+      "path": [
+        "pers-profiles",
+        "bar"
+      ],
+      "url": "https://diegonmarcos.github.io/mySocials/bar-cellar.html",
+      "sot_url": "https://diegonmarcos.github.io/mySocials/bar-cellar.html"
+    },
+    {
+      "id": "pers-menu",
+      "section": "pers",
+      "kind": "page",
+      "label": "Menu",
+      "source": {
+        "literal": "https://diegonmarcos.github.io/mySocials/menu.html"
+      },
+      "path": [
+        "pers-profiles",
+        "menu"
+      ],
+      "url": "https://diegonmarcos.github.io/mySocials/menu.html",
+      "sot_url": "https://diegonmarcos.github.io/mySocials/menu.html"
+    },
+    {
+      "id": "pers-theater",
+      "section": "pers",
+      "kind": "page",
+      "label": "Theater",
+      "source": {
+        "literal": "https://diegonmarcos.github.io/mySocials/theater.html"
+      },
+      "path": [
+        "pers-profiles",
+        "theater"
+      ],
+      "url": "https://diegonmarcos.github.io/mySocials/theater.html",
+      "sot_url": "https://diegonmarcos.github.io/mySocials/theater.html"
+    },
+    {
+      "id": "pers-story",
+      "section": "pers",
+      "kind": "page",
+      "label": "Story",
+      "source": {
+        "literal": "https://diegonmarcos.github.io/mySocials/social.html"
+      },
+      "path": [
+        "pers-profiles",
+        "story"
+      ],
+      "url": "https://diegonmarcos.github.io/mySocials/social.html",
+      "sot_url": "https://diegonmarcos.github.io/mySocials/social.html"
+    },
+    {
       "id": "pers-ig0",
       "section": "pers",
       "kind": "page",
@@ -150,6 +240,36 @@
       ],
       "url": "https://diegonmarcos.github.io/mySocials/orkut.html",
       "sot_url": "https://diegonmarcos.github.io/mySocials/orkut.html"
+    },
+    {
+      "id": "pers-icq",
+      "section": "pers",
+      "kind": "page",
+      "label": "ICQ",
+      "source": {
+        "literal": "https://diegonmarcos.github.io/mySocials/icq.html"
+      },
+      "path": [
+        "pers-profiles",
+        "icq"
+      ],
+      "url": "https://diegonmarcos.github.io/mySocials/icq.html",
+      "sot_url": "https://diegonmarcos.github.io/mySocials/icq.html"
+    },
+    {
+      "id": "pers-dms",
+      "section": "pers",
+      "kind": "page",
+      "label": "DMs",
+      "source": {
+        "literal": "https://diegonmarcos.github.io/mySocials/dms.html"
+      },
+      "path": [
+        "pers-profiles",
+        "dms"
+      ],
+      "url": "https://diegonmarcos.github.io/mySocials/dms.html",
+      "sot_url": "https://diegonmarcos.github.io/mySocials/dms.html"
     },
     {
       "id": "pers-astro",

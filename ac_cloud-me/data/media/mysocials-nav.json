@@ -1,0 +1,176 @@
+{
+  "_doc": "#1976 the mySocials site's own nav, snapshotted by data/regen-media-1976.py --sync from b_Profiles/mySocials (src/typescript/main.ts THEME_SWITCH_ROW_SOCIALS + THEME_SWITCH_ROW_ACCOUNTS, then the icq and dms pages that the rows do not list). `ids` / `labels` / `page_files` are the only Cloud Me decisions: the page id of a tab (ig0 ... keep their ids), a label the site spells differently (TIDAL), and the file a nav theme ships as (bar-cellar.html; the site's `story` view ships as social.html, story.html does not exist). `not_media` are site pages that are not Media tabs (the shared instagram source, and the health and DD record pages, which are Pers' own native pages); every other src/*.html is a Media tab (test/test-media-1976.sh). The home tab (Personal) embeds the site root, which serves index.html.",
+  "base": "https://diegonmarcos.github.io/mySocials/",
+  "home": {
+    "id": "personal",
+    "label": "Personal",
+    "theme": "mysocials",
+    "page": ""
+  },
+  "ids": {
+    "shelf": "shelf",
+    "vinyl": "vinyl",
+    "bar-cellar": "bar",
+    "menu": "menu",
+    "theater": "theater",
+    "story": "story",
+    "instagram-diegocnmarcos_": "ig0",
+    "instagram-diegocmarcos_": "ig1",
+    "instagram-diegonmarcos": "ig2",
+    "facebook-diegonmarcos": "face0",
+    "pinterest": "pinterest",
+    "youtube": "youtube",
+    "tidal": "tidal",
+    "linkedin": "linkedin",
+    "orkut": "orkut"
+  },
+  "labels": {
+    "TIDAL": "Tidal"
+  },
+  "page_files": {
+    "story": "social.html"
+  },
+  "extra_tabs": [
+    {
+      "id": "icq",
+      "label": "ICQ",
+      "theme": "icq",
+      "page": "icq.html"
+    },
+    {
+      "id": "dms",
+      "label": "DMs",
+      "theme": "dms",
+      "page": "dms.html"
+    }
+  ],
+  "not_media": [
+    "_instagram-profile.html",
+    "dd.html",
+    "health.html",
+    "index.html"
+  ],
+  "tabs": [
+    {
+      "id": "shelf",
+      "label": "Shelf",
+      "theme": "shelf",
+      "page": "shelf.html"
+    },
+    {
+      "id": "vinyl",
+      "label": "Vinyl",
+      "theme": "vinyl",
+      "page": "vinyl.html"
+    },
+    {
+      "id": "bar",
+      "label": "Bar",
+      "theme": "bar-cellar",
+      "page": "bar-cellar.html"
+    },
+    {
+      "id": "menu",
+      "label": "Menu",
+      "theme": "menu",
+      "page": "menu.html"
+    },
+    {
+      "id": "theater",
+      "label": "Theater",
+      "theme": "theater",
+      "page": "theater.html"
+    },
+    {
+      "id": "story",
+      "label": "Story",
+      "theme": "story",
+      "page": "social.html"
+    },
+    {
+      "id": "ig0",
+      "label": "ig0",
+      "theme": "instagram-diegocnmarcos_",
+      "page": "instagram-diegocnmarcos_.html"
+    },
+    {
+      "id": "ig1",
+      "label": "ig1",
+      "theme": "instagram-diegocmarcos_",
+      "page": "instagram-diegocmarcos_.html"
+    },
+    {
+      "id": "ig2",
+      "label": "ig2",
+      "theme": "instagram-diegonmarcos",
+      "page": "instagram-diegonmarcos.html"
+    },
+    {
+      "id": "face0",
+      "label": "face0",
+      "theme": "facebook-diegonmarcos",
+      "page": "facebook-diegonmarcos.html"
+    },
+    {
+      "id": "pinterest",
+      "label": "Pinterest",
+      "theme": "pinterest",
+      "page": "pinterest.html"
+    },
+    {
+      "id": "youtube",
+      "label": "YouTube",
+      "theme": "youtube",
+      "page": "youtube.html"
+    },
+    {
+      "id": "tidal",
+      "label": "Tidal",
+      "theme": "tidal",
+      "page": "tidal.html"
+    },
+    {
+      "id": "linkedin",
+      "label": "LinkedIn",
+      "theme": "linkedin",
+      "page": "linkedin.html"
+    },
+    {
+      "id": "orkut",
+      "label": "Orkut",
+      "theme": "orkut",
+      "page": "orkut.html"
+    },
+    {
+      "id": "icq",
+      "label": "ICQ",
+      "theme": "icq",
+      "page": "icq.html"
+    },
+    {
+      "id": "dms",
+      "label": "DMs",
+      "theme": "dms",
+      "page": "dms.html"
+    }
+  ],
+  "site_pages": [
+    "bar-cellar.html",
+    "dms.html",
+    "facebook-diegonmarcos.html",
+    "icq.html",
+    "instagram-diegocmarcos_.html",
+    "instagram-diegocnmarcos_.html",
+    "instagram-diegonmarcos.html",
+    "linkedin.html",
+    "menu.html",
+    "orkut.html",
+    "pinterest.html",
+    "shelf.html",
+    "social.html",
+    "theater.html",
+    "tidal.html",
+    "vinyl.html",
+    "youtube.html"
+  ]
+}

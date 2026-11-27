@@ -55,7 +55,7 @@ row1 = [pos.get(k) for k in ("Media", "Health", "Astro", "DD")]; row2 = [pos.get
 ok = all(row1) and all(row2) and max(r[0] for r in row1) < min(r[0] for r in row2) and row1[0][1] < row1[1][1] < row1[2][1]
 print("%s two rows: Media Health Astro DD above Geo Endurance (y,x: %s %s)" % ("PASS" if ok else "FAIL", row1, row2)); sys.exit(0 if ok else 1)
 PY
-for t in Personal ig0 ig1 ig2 face0 Pinterest; do want "$t" pers-1976-nav "media tab (one flat strip)"; done; unwant Instagram pers-1976-nav "media: no Instagram grouping"
+for t in Personal Shelf Vinyl Bar Menu Theater; do want "$t" pers-1976-nav "media tab (one flat strip)"; done; unwant Instagram pers-1976-nav "media: no Instagram grouping"
 cp "$OUT/pers-1976-nav.png" "$OUT/pers-1976-media.png"
 $T adb shell input swipe 950 380 150 380 500; sleep 2; shot pers-1976-nav-row2-scrolled 3
 for t in "By 30" "By 40" "By 50"; do want "$t" pers-1976-nav-row2-scrolled "nav row 2 end"; done

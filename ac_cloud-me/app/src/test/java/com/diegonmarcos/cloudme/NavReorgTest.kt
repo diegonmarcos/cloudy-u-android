@@ -48,7 +48,7 @@ class NavReorgTest {
         assertEquals(listOf(listOf("Profiles", "pers-profiles", "health", "astro", "dd"), listOf("Achieves", "geo", "endurance", "growth", "community", "by30", "by40", "by50")),
             pers.nav.rowGroups().map { g -> listOf(g.label) + g.pages.map { it.id } })
         // Media is ONE flat strip, Personal (the mySocials home of the others) first, no Instagram / Social grouping level
-        assertEquals(listOf("personal", "ig0", "ig1", "ig2", "face0", "pinterest", "youtube", "tidal", "linkedin", "orkut"), ids(pers.page("pers-profiles")!!.pages))
+        assertEquals(listOf("personal", "shelf", "vinyl", "bar", "menu", "theater", "story", "ig0", "ig1", "ig2", "face0", "pinterest", "youtube", "tidal", "linkedin", "orkut", "icq", "dms"), ids(pers.page("pers-profiles")!!.pages))
         assertTrue(pers.page("pers-profiles")!!.pages.all { it.pages.isEmpty() })
         val health = pers.page("health")!!
         assertEquals(listOf("trackers", "plan", "health-profile"), ids(health.pages))

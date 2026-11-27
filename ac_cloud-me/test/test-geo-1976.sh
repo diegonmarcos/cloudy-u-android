@@ -38,9 +38,9 @@ for old, to in ren.items():
     if s not in live or (p and p not in live[s]): E("R2", "ui.renamed.pages[%s] names %s, which is not a live page" % (old, to))
 # M: Media holds the three social pages, every old profile page kept with its file
 media = byid.get("pers-profiles", {}); mp = [p["id"] for p in media.get("pages", [])]
-if mp != ["personal", "ig0", "ig1", "ig2", "face0", "pinterest", "youtube", "tidal", "linkedin", "orkut"]: E("M1", "Media tabs are %r, want ONE flat strip Personal | ig0 | ig1 | ig2 | face0 | Pinterest | YouTube | Tidal | LinkedIn | Orkut" % mp)
+if mp != ["personal", "shelf", "vinyl", "bar", "menu", "theater", "story", "ig0", "ig1", "ig2", "face0", "pinterest", "youtube", "tidal", "linkedin", "orkut", "icq", "dms"]: E("M1", "Media tabs are %r, want ONE flat strip every mySocials page (test-media-1976.sh pins the order)" % mp)
 if any(p.get("pages") for p in media.get("pages", [])): E("M2", "a Media page is nested again (Instagram / Social grouping)")
-for pid in ("personal", "ig0", "ig1", "ig2", "face0", "pinterest", "youtube", "tidal", "linkedin", "orkut"):
+for pid in ("personal", "shelf", "vinyl", "bar", "menu", "theater", "story", "ig0", "ig1", "ig2", "face0", "pinterest", "youtube", "tidal", "linkedin", "orkut", "icq", "dms"):
     f = "data/ui/pers/pers-profiles/%s.json" % pid
     try: b = J(f)
     except Exception: E("M4", "page %s has no file %s" % (pid, f)); continue

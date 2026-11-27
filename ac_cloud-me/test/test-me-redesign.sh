@@ -228,8 +228,8 @@ if [p["id"] for p in _pj.get("pages", [])] != ["pj-home", "pj-repos", "pj-unix",
 if ui.get("default_section") != "lnktree" or (_lt.get("pages") or [{}])[0].get("id") != "lt-lnktree-site" or (_pj.get("pages") or [{}])[0].get("id") != "pj-home":
     bad("pages", "the app does not open on Lnktree, the Lnktree entry on its Lnktree site, or Proj on its Home (#1914)")
 _pr = {p["id"]: p for p in _sub.get("pers-profiles", {}).get("pages", [])}
-if list(_pr) != ["personal", "ig0", "ig1", "ig2", "face0", "pinterest", "youtube", "tidal", "linkedin", "orkut"] or any(p.get("pages") for p in _pr.values()):
-    bad("pages", "Pers > Media is not ONE flat strip Personal | ig0 | ig1 | ig2 | face0 | Pinterest | YouTube | Tidal | LinkedIn | Orkut (#1913, #1976)")
+if list(_pr) != ["personal", "shelf", "vinyl", "bar", "menu", "theater", "story", "ig0", "ig1", "ig2", "face0", "pinterest", "youtube", "tidal", "linkedin", "orkut", "icq", "dms"] or any(p.get("pages") for p in _pr.values()):
+    bad("pages", "Pers > Media is not ONE flat strip every mySocials page in the site order (#1913, #1976)")
 if [p["id"] for p in _sub.get("health", {}).get("pages", [])] != ["trackers", "plan", "health-profile"]:
     bad("pages", "Pers > Health is not Trackers, Plan, Record")
 for _pid, _u, _rel in (("leafy", "https://diegonmarcos.github.io/leafy/", "prof/leafy"), ("nexus", "https://diegonmarcos.github.io/nexus/", "prof/nexus"), ("stark", "https://diegonmarcos.github.io/stark/", "prof/stark"), ("astro", "https://diegonmarcos.github.io/myAstro/", "pers/astro"), ("personal", "https://diegonmarcos.github.io/mySocials/", "pers/pers-profiles/personal"), ("lt-lnktree-site", "https://linktree.diegonmarcos.com/", "lnktree/lt-lnktree-site")):

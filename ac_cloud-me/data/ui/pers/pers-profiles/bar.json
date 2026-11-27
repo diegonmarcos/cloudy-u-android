@@ -1,0 +1,9 @@
+[
+  {
+    "kind": "fragment",
+    "id": "web",
+    "_doc": "#1976 Pers > Media > Bar: the mySocials page bar-cellar.html, embedded by its https URL from the declared strip (data/media/mysocials-nav.json, data/regen-media-1976.py); the inner mySocials tab bar is not a second navigation, this tab is the page.",
+    "url": "https://diegonmarcos.github.io/mySocials/bar-cellar.html",
+    "link": "https://diegonmarcos.github.io/mySocials/bar-cellar.html"
+  }
+]

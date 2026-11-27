@@ -592,6 +592,36 @@
                 "icon": "ic_p_identities"
               },
               {
+                "id": "shelf",
+                "label": "Shelf",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "vinyl",
+                "label": "Vinyl",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "bar",
+                "label": "Bar",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "menu",
+                "label": "Menu",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "theater",
+                "label": "Theater",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "story",
+                "label": "Story",
+                "icon": "ic_p_identities"
+              },
+              {
                 "id": "ig0",
                 "label": "ig0",
                 "icon": "ic_p_identities"
@@ -634,6 +664,16 @@
               {
                 "id": "orkut",
                 "label": "Orkut",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "icq",
+                "label": "ICQ",
+                "icon": "ic_p_identities"
+              },
+              {
+                "id": "dms",
+                "label": "DMs",
                 "icon": "ic_p_identities"
               }
             ]
