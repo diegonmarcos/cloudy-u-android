@@ -23,6 +23,10 @@ jobs:
         with:
           sparse-checkout: ac_cloud-me/test
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Fetch the APK
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -59,7 +63,7 @@ jobs:
           target: google_apis
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
-          script: bash ac_cloud-me/test/emulator-me-geo-1981.sh me.apk out
+          script: bash ac_cloud-me/test/emulator-me-geo-1981.sh me.apk out ac_cloud-me/test/webview-eval-1980.js
 
       - name: Upload evidence (screenshots, ui dumps, logcat, verdict)
         if: always()

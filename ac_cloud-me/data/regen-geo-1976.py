@@ -9,7 +9,7 @@ Inputs (data/geo/):
 Outputs:
   data/web/geo-atlas.html     (#1981) per continent with a switcher (no global view): visited countries, visited cities, visited NomadMania regions, cultural regions; offline SVG
   data/web/geo-globe.html, geo-stats.html, geo-timeline.html   the MyTrips Home, Stats and Timeline views, offline, same data
-  data/web/geo-collections.html   the MyTrips Collections cards with images (loremflickr, as MyTrips) and the theme overlay
+  data/web/geo-collections.html   the MyTrips Collections cards with their photos (same-origin WebP, data/web/geo-img, #1981) and the theme overlay with the photo credit
   data/ui/pers/geo/geo-summary.json   the blocks with id geo-long-stay-cities (time as a bucket) and geo-places (NM and Days); geo-<page>.json the five web subpages
 
   regen-geo-1976.py             rewrite the outputs from the inputs
@@ -18,7 +18,7 @@ Outputs:
   regen-geo-1976.py --sync      copy travel-data.json and parse themes.ts from the MyTrips clone, then rewrite the outputs
   regen-geo-1976.py --from-ne F rebuild ne110-countries.min.json from the Natural Earth ne_110m_admin_0_countries.geojson F
 """
-import json, math, os, re, sys, unicodedata
+import importlib.util, json, math, os, re, sys, unicodedata
 from datetime import date
 
 HERE = os.path.dirname(os.path.abspath(__file__)); W = os.path.join(HERE, "web"); G = os.path.join(HERE, "geo")
@@ -28,6 +28,9 @@ IND = "\u2003"  # em space: the indent of a region under its continent
 
 
 def rd(p): return json.load(open(p, encoding="utf-8"))
+
+
+_sp = importlib.util.spec_from_file_location("regen_geo_images_1981", os.path.join(HERE, "regen-geo-images-1981.py")); IMAGES = importlib.util.module_from_spec(_sp); _sp.loader.exec_module(IMAGES)
 def wr_json(p, o): open(p, "w", encoding="utf-8").write(json.dumps(o, ensure_ascii=False, separators=(",", ":")))
 def norm(s): return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn").lower().strip()
 def days(t): return (date.fromisoformat(t["dateOut"]) - date.fromisoformat(t["dateIn"])).days
@@ -158,7 +161,7 @@ COLL_CSS = """:root{color-scheme:dark}*{box-sizing:border-box}html,body{margin:0
 .theme-overlay__title{font-size:30px;font-weight:300;margin:0 0 12px;line-height:1}.theme-overlay__desc{font-size:16px;color:#cbd5e1;font-weight:300;margin:0 0 16px;padding-left:14px;border-left:2px solid #06b6d4}
 .theme-overlay__count{padding:14px;border-radius:12px;width:fit-content;background:rgba(255,255,255,.06)}.theme-overlay__count-label{font-size:12px;color:#94a3b8;text-transform:uppercase;font-weight:700}.theme-overlay__count-value{font-size:26px;font-weight:300;margin-top:2px}
 .theme-overlay__right{position:relative;z-index:20;padding:12px 20px 28px}.theme-overlay__map-container{border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.1);box-shadow:0 25px 50px -12px rgba(0,0,0,.5);background:#0f172a;position:relative}
-canvas{display:block;width:100%}.theme-overlay__map-label{position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,.8);padding:4px 12px;border-radius:4px;font-size:12px;color:#94a3b8}
+canvas{display:block;width:100%}.theme-overlay__credit{margin:14px 0 0;font-size:11px;color:#94a3b8}.theme-overlay__credit a{color:#cbd5e1}.theme-overlay__map-label{position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,.8);padding:4px 12px;border-radius:4px;font-size:12px;color:#94a3b8}
 """
 
 COLL_HTML = r"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Collections</title>
@@ -166,18 +169,18 @@ COLL_HTML = r"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta
 <div class="page" id="grid"></div>
 <div class="theme-overlay" id="ov"><div class="theme-overlay__slideshow" id="ss"><div class="theme-overlay__gradient"></div></div>
 <div class="theme-overlay__left"><button class="theme-overlay__back" id="bk"><i class="ph-bold ph-arrow-left"></i> Back</button><div class="theme-overlay__icon"><i id="oi"></i></div><h1 class="theme-overlay__title" id="ot"></h1><p class="theme-overlay__desc" id="od"></p>
-<div class="theme-overlay__count"><div class="theme-overlay__count-label">Cities Included</div><div class="theme-overlay__count-value" id="oc"></div></div></div>
+<div class="theme-overlay__count"><div class="theme-overlay__count-label">Cities Included</div><div class="theme-overlay__count-value" id="oc"></div></div><p class="theme-overlay__credit" id="cr"></p></div>
 <div class="theme-overlay__right"><div class="theme-overlay__map-container"><canvas id="tm"></canvas><div class="theme-overlay__map-label">Filtered View</div></div></div></div>
 <script id="d" type="application/json">__DATA__</script>
 <script>
 var D=JSON.parse(document.getElementById('d').textContent),$=function(i){return document.getElementById(i)},tmr=null;
-var img=function(t,w,h){return 'https://loremflickr.com/'+w+'/'+h+'/'+t.img.split(',')[0]+'/all'};
-function alt(e,t,w,h){if(e.dataset.f){e.style.display='none';return}e.dataset.f=1;e.src='https://picsum.photos/seed/'+t.img.split(',')[0]+'/'+w+'/'+h}   /* the same keyword, when the image service of MyTrips does not answer */
-$('grid').innerHTML='<div class="collections-header"><h3 class="collections-header__title">Curated Collections</h3><p class="collections-header__subtitle">Explore the world through '+D.themes.length+' unique lenses.</p></div><div class="themes-grid">'+D.themes.map(function(t,i){return '<div class="theme-card" data-t="'+t.id+'" style="background:linear-gradient(135deg,hsl('+(i*47%360)+',45%,24%),#020617)"><img class="theme-card__img" loading="lazy" alt="" src="'+img(t,600,400)+'" data-k="'+t.id+'" onerror="alt(this,D.themes.filter(function(x){return x.id===this.dataset.k},this)[0],600,400)"><div class="theme-card__overlay"></div><div class="theme-card__content"><div class="theme-card__header"><i class="ph-fill ph-'+t.icon+' theme-card__icon"></i><h4 class="theme-card__title">'+t.title+'</h4></div><p class="theme-card__desc">'+t.desc+'</p></div></div>'}).join('')+'</div>';
+var P='geo-img/',thumb=function(k){return P+k+'-t.webp'},hero=function(k){return P+k+'.webp'};   /* #1981 the photos are bundled WebP (data/geo/collections-images.json): no image service, works offline */
+function credit(k){var c=D.credits[k],e=$('cr');e.textContent='';var a=document.createElement('a');a.href=c.source_url;a.target='_blank';a.rel='noopener';a.textContent='Wikimedia Commons';e.appendChild(document.createTextNode('Photo: '+c.author+' \u00b7 '));var l=document.createElement('a');l.href=c.license_url||c.source_url;l.target='_blank';l.rel='noopener';l.textContent=c.license;e.appendChild(l);e.appendChild(document.createTextNode(' \u00b7 '));e.appendChild(a)}
+$('grid').innerHTML='<div class="collections-header"><h3 class="collections-header__title">Curated Collections</h3><p class="collections-header__subtitle">Explore the world through '+D.themes.length+' unique lenses.</p></div><div class="themes-grid">'+D.themes.map(function(t,i){return '<div class="theme-card" data-t="'+t.id+'" style="background:linear-gradient(135deg,hsl('+(i*47%360)+',45%,24%),#020617)"><img class="theme-card__img" alt="'+t.title+'" src="'+thumb(t.id)+'"><div class="theme-card__overlay"></div><div class="theme-card__content"><div class="theme-card__header"><i class="ph-fill ph-'+t.icon+' theme-card__icon"></i><h4 class="theme-card__title">'+t.title+'</h4></div><p class="theme-card__desc">'+t.desc+'</p></div></div>'}).join('')+'</div>';
 function ring(g,r,X){g.beginPath();r.forEach(function(p,i){var q=X(p[0],p[1]);i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1])});g.closePath()}
 function open(t){var ss=$('ss');[].slice.call(ss.querySelectorAll('img')).forEach(function(i){i.remove()});
-[img(t,1920,1080),'https://loremflickr.com/1920/1080/travel/all','https://loremflickr.com/1920/1080/landscape/all'].forEach(function(u,i){var m=document.createElement('img');m.className='slide-img'+(i?'':' active');m.src=u;m.onerror=function(){if(m.dataset.f){m.style.display='none';return}m.dataset.f=1;m.src='https://picsum.photos/seed/'+(i?(i==1?'travel':'landscape'):t.img.split(',')[0])+'/1920/1080'};ss.appendChild(m)});
-var k=0;clearInterval(tmr);tmr=setInterval(function(){var l=ss.querySelectorAll('img');if(!l.length)return;l[k%l.length].className='slide-img';k++;l[k%l.length].className='slide-img active'},4000);
+var KS=[t.id,'travel','landscape'];KS.forEach(function(q,i){var m=document.createElement('img');m.className='slide-img'+(i?'':' active');m.alt=i?'':t.title;m.src=hero(q);ss.appendChild(m)});credit(t.id);
+var k=0;clearInterval(tmr);tmr=setInterval(function(){var l=ss.querySelectorAll('img');if(!l.length)return;l[k%l.length].className='slide-img';k++;l[k%l.length].className='slide-img active';credit(KS[k%KS.length])},4000);
 $('oi').className='ph-fill ph-'+t.icon;$('ot').textContent=t.title;$('od').textContent=t.desc;$('oc').textContent=t.query.length;$('ov').className='theme-overlay theme-overlay--visible';
 var c=$('tm'),w=c.clientWidth||340,h=Math.round(w*.55);c.width=w*2;c.height=h*2;c.style.height=h+'px';var g=c.getContext('2d');g.scale(2,2);g.fillStyle='#0f172a';g.fillRect(0,0,w,h);var s=w/360;function X(lo,la){return [(lo+180)*s,(90-la)*s]}
 g.fillStyle='#1e293b';D.world.forEach(function(k){k.rings.forEach(function(r){ring(g,r,X);g.fill()})});
@@ -251,7 +254,7 @@ show('__VIEW__');
 """
 
 
-def build_pages(cfg, trips, world, themes):
+def build_pages(cfg, trips, world, themes, credits):
     vis = {}
     for t in trips:
         v = vis.setdefault(t["countryISO"], {"name": t["country"], "flag": t["countryFlag"], "continent": t["continent"], "days": 0,
@@ -274,7 +277,7 @@ def build_pages(cfg, trips, world, themes):
     th = {"cols": cols, "trips": [[t[k] for k in cols] for t in trips], "home": cfg["home"], "themes": themes,
           "world_countries": cfg["world_countries_un"], "world_regions": cfg["world_nomad_regions"],
           "world": [{"iso": c["iso"], "rings": c["rings"]} for c in world["countries"]]}
-    co = {"themes": themes, "cities": list(cit.values()), "world": th["world"]}
+    co = {"themes": themes, "cities": list(cit.values()), "world": th["world"], "credits": credits}
     mk = lambda view: TRIPS_HTML.replace("__CSS__", CSS).replace("__DATA__", esc(th)).replace("__VIEW__", view)
     return {"geo-atlas.html": ATLAS_HTML.replace("__CSS__", CSS).replace("__DATA__", esc(at)), "geo-globe.html": mk("home"), "geo-stats.html": mk("stats"), "geo-timeline.html": mk("timeline"),
             "geo-collections.html": COLL_HTML.replace("__CSS__", COLL_CSS).replace("__DATA__", esc(co))}
@@ -297,7 +300,10 @@ def outputs():
     cfg = rd(os.path.join(G, "geo-config.json")); trips = rd(os.path.join(G, "travel-data.json"))["trips"]
     world = rd(os.path.join(G, "ne110-countries.min.json")); themes = rd(os.path.join(G, "mytrips-themes.json"))
     geo = rewrite_geo(rd(GEO_JSON), cfg, trips)
-    out = {os.path.join(W, k): v for k, v in build_pages(cfg, trips, world, themes).items()}
+    bad = IMAGES.validate()   # #1981 a missing, tiny, duplicated or unattributed Collections image fails the generator
+    if bad: sys.exit("Collections images invalid (data/regen-geo-images-1981.py --fetch):\n  " + "\n  ".join(bad))
+    credits = {k: {f: e[f] for f in ("title", "author", "license", "license_url", "source_url")} for k, e in rd(os.path.join(G, "collections-images.json"))["images"].items()}
+    out = {os.path.join(W, k): v for k, v in build_pages(cfg, trips, world, themes, credits).items()}
     out[GEO_JSON] = json.dumps(geo, ensure_ascii=False, indent=2) + "\n"
     for pid, url, doc in SUBPAGES:
         out[os.path.join(GEO_DIR, pid + ".json")] = json.dumps([{"kind": "fragment", "id": "web", "_doc": "#1981 Geo > " + doc + " (data/regen-geo-1976.py).", "url": url}], ensure_ascii=False, indent=2) + "\n"

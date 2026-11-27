@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* #1980 evaluate inside a Cloud Me page WebView over Chrome DevTools (adb forward tcp:PORT localabstract:webview_devtools_remote_<pid>).
- * Usage: webview-eval-1980.js PORT URL_MATCH (count | fullscroll | scrollto FRACTION | pageinfo)
+ * Usage: webview-eval-1980.js PORT URL_MATCH (count | fullscroll | scrollto FRACTION | pageinfo | collections)
  *   URL_MATCH: a regular expression the page URL must match (the WebView of the page under test).
  *   count     -> JSON {url, total, broken, pending, placeholders, videoAsImg, scrollHeight}
  *                broken = [...document.images].filter(i=>i.complete&&i.naturalWidth===0).length   (the done-criterion)
@@ -33,6 +33,7 @@ const SCROLL = `(async () => { const sc = () => [...document.querySelectorAll('*
   if (cmd === 'count') out = (await ev(COUNT)).result.result.value;
   else if (cmd === 'fullscroll') { await ev(SCROLL, true); out = (await ev(COUNT)).result.result.value; }
   else if (cmd === 'scrollto') out = (await ev(`(() => { const sc = [...document.querySelectorAll('*')].filter(e => e.scrollHeight > e.clientHeight + 50 && /(auto|scroll)/.test(getComputedStyle(e).overflowY)); const h = Math.max(document.body.scrollHeight, ...sc.map(e => e.scrollHeight)); const y = Math.round(h * ${Number(arg) || 0}); window.scrollTo(0, y); sc.forEach(e => { e.scrollTop = y; }); return String(y); })()`)).result.result.value;
+  else if (cmd === 'collections') out = (await ev(require('fs').readFileSync(__dirname + '/collections-probe-1981.expr.js', 'utf8'), true)).result.result.value;   /* #1981: the Collections guard, the same expression Playwright runs on the site */
   else if (cmd === 'pageinfo') out = (await ev('location.href + " " + document.readyState')).result.result.value;
   console.log(out);
   ws.close(); process.exit(0);

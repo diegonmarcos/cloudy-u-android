@@ -1,0 +1,83 @@
+name: "Test -> MyTrips site Collections: zero broken images, cards and overlays, with a mutation (#1981, Playwright)"
+
+# #1981: Playwright opens the MyTrips Collections view and runs ac_cloud-me/test/collections-probe-1981.expr.js (the expression the Cloud Me emulator run uses too):
+# 16 cards, every card and overlay image loaded, same-origin, no placeholder, the photo credit in every overlay.
+#   1. the committed dist of cloud-me-pub-shared served locally under /mymaps-mytrips/ must pass;
+#   2. three mutations of that copy must FAIL the guard (a photo deleted; the card images pointing at an image service again; a photo replaced by a 1-px placeholder);
+#   3. live=true: the deployed site https://diegonmarcos.github.io/mymaps-mytrips/ must pass (run it after the Pages deploy), screenshots are kept.
+
+on:
+  workflow_dispatch:
+    inputs:
+      live:
+        description: "also test the deployed site (true after its Pages deploy)"
+        required: false
+        default: "false"
+
+permissions:
+  contents: read
+
+jobs:
+  site:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout the guard
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: ac_cloud-me/test
+
+      - name: Checkout the MyTrips site repo (public)
+        uses: actions/checkout@v4
+        with:
+          repository: diegonmarcos/cloud-me-pub-shared
+          path: shared
+          sparse-checkout: b_MyData/mymaps-mytrips/dist
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright
+        run: |
+          mkdir -p pw && cd pw && npm init -y >/dev/null && npm i playwright >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+          cp ../ac_cloud-me/test/collections-site-1981.mjs ../ac_cloud-me/test/collections-probe-1981.expr.js .
+
+      - name: Serve the dist copies
+        run: |
+          D=shared/b_MyData/mymaps-mytrips/dist
+          mkdir -p www/ok www/m1 www/m2 www/m3
+          cp -r $D www/ok/mymaps-mytrips; cp -r $D www/m1/mymaps-mytrips; cp -r $D www/m2/mymaps-mytrips; cp -r $D www/m3/mymaps-mytrips
+          # mutation 1: two photos deleted
+          rm www/m1/mymaps-mytrips/collections/coffee-t.webp www/m1/mymaps-mytrips/collections/finance.webp
+          # mutation 2: the card images point at an image service again
+          sed -i 's#collections/${at.id}-t.webp#https://loremflickr.com/600/400/city/all#' www/m2/mymaps-mytrips/assets/main-*.js
+          grep -q 'loremflickr' www/m2/mymaps-mytrips/assets/main-*.js
+          # mutation 3: a photo replaced by a 1-px placeholder
+          printf 'RIFF\x1a\x00\x00\x00WEBPVP8L\x0d\x00\x00\x00\x2f\x00\x00\x00\x10\x07\x10\x11\x11\x88\x88\xfe\x07\x00' > www/m3/mymaps-mytrips/collections/art-t.webp
+          for m in ok:8101 m1:8102 m2:8103 m3:8104; do (cd www/${m%%:*} && python3 -m http.server ${m##*:} >/dev/null 2>&1 &); done
+          sleep 2
+
+      - name: The served dist passes the guard
+        run: cd pw && node collections-site-1981.mjs http://127.0.0.1:8101/mymaps-mytrips/ ../out/local
+
+      - name: Mutations are caught (each must exit 1)
+        run: |
+          cd pw; rc=0
+          for m in m1:8102 m2:8103 m3:8104; do
+            if node collections-site-1981.mjs http://127.0.0.1:${m##*:}/mymaps-mytrips/ ../out/${m%%:*} > ../out/${m%%:*}.txt 2>&1; then echo "::error::mutation ${m%%:*} was NOT caught"; rc=1; else echo "mutation ${m%%:*} caught"; head -12 ../out/${m%%:*}.txt; fi
+          done
+          exit $rc
+
+      - name: The deployed site passes the guard
+        if: ${{ inputs.live == 'true' }}
+        run: cd pw && node collections-site-1981.mjs https://diegonmarcos.github.io/mymaps-mytrips/ ../out/live
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: geo-1981-collections-site
+          path: out/
+          if-no-files-found: warn

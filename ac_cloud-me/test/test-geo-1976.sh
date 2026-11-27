@@ -144,10 +144,15 @@ for need in ("Cultural", "Geographic Extremes", "Hemisphere Distribution", "Exte
     if need not in mt["stats"] + H: E("Y1", "MyTrips content %r is gone" % need)
 if "Date In" not in mt["timeline"]: E("Y1", "the Timeline table is gone")
 col = mt["collections"]
-for need in ("theme-card", "theme-card__img", "loremflickr.com", "Curated Collections", "unique lenses", "theme-overlay", "Cities Included", "Filtered View", "slide-img", "ph-fill ph-"):
+for need in ("theme-card", "theme-card__img", "geo-img/", "theme-overlay__credit", "Wikimedia Commons", "Curated Collections", "unique lenses", "theme-overlay", "Cities Included", "Filtered View", "slide-img", "ph-fill ph-"):
     if need not in col: E("Y3", "the Collections page lacks %s (the MyTrips web UI)" % need)
+if re.search(r"loremflickr|picsum|unsplash|https?://(?!commons\.wikimedia\.org/wiki/)[^'\" ]+\.(jpe?g|png|webp)", col): E("Y4", "the Collections page loads a picture from the web (every photo is a bundled same-origin WebP, geo-img/)")
+# I (#1981): the Collections photos: 16 + the 2 generic slides, real attributed free-licence WebP (hero 800 px, thumbnail 400 px), none missing, none a placeholder, none duplicated
+ri = subprocess.run([sys.executable, os.path.join(app, "data/regen-geo-images-1981.py"), "--check"], capture_output=True, text=True, env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"))
+if ri.returncode != 0: E("I1", (ri.stderr or ri.stdout).strip().replace("\n", " | ")[:300])
 try:
     cd = json.loads(re.search(r'<script id="d" type="application/json">(.*?)</script>', col, re.S).group(1).replace("\\u003c", "<"))
+    if set(cd["credits"]) != {t["id"] for t in cd["themes"]} | {"travel", "landscape"}: E("I2", "the page credits are not the 18 photos")
     th = J("data/geo/mytrips-themes.json")
     if len(cd["themes"]) != 16 or cd["themes"] != th or any(not t.get("img") for t in cd["themes"]): E("Y3", "the Collections cards are not the 16 MyTrips themes with their image keywords")
 except Exception as e: E("Y3", "geo-collections.html data unreadable (%s)" % e)
@@ -175,7 +180,7 @@ PY
 if [ "${1:-}" = --check ]; then o=$(MUTANT=1 check "${2:-$APP}"); [ -z "$o" ] && exit 0; echo "$o"; exit 1; fi   # CI mutation job: exit 1 = the tree is red
 out=$(check "$APP"); if [ -z "$out" ]; then ok "N/R/M/F/S/P/C/Y/W/G: nav rows, rename, Media, Geo parity, Long/Short split, Places columns, per-continent map, MyTrips, generated pages"; else bad "$out"; fi
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
-mut() { rm -rf "$T/app"; mkdir -p "$T/app/data" "$T/app/test"; cp "$APP/build.json" "$T/app/"; cp -r "$APP/data/web" "$APP/data/ui" "$APP/data/geo" "$T/app/data/"; cp "$APP/data/regen-geo-1976.py" "$T/app/data/"
+mut() { rm -rf "$T/app"; mkdir -p "$T/app/data" "$T/app/test"; cp "$APP/build.json" "$T/app/"; cp -r "$APP/data/web" "$APP/data/ui" "$APP/data/geo" "$T/app/data/"; cp "$APP/data/regen-geo-1976.py" "$APP/data/regen-geo-images-1981.py" "$T/app/data/"
   cp -r "$APP/test/fixtures" "$T/app/test/"
   MUTANT=1 python3 -c "$2" "$T/app"; r=$(MUTANT=1 check "$T/app"); if [ -n "$r" ]; then ok "mutation red: $1"; else bad "mutation stayed green: $1"; fi; }
 BJ='import json,sys;p=sys.argv[1]+"/build.json";d=json.load(open(p,encoding="utf-8"));U=d["ui"];P=[s for s in U["sections"] if s["id"]=="pers"][0];'
@@ -222,6 +227,18 @@ mut "the Globe page does not open the Home view" "$(SUB data/web/geo-globe.html 
 mut "the Timeline page loses its table" "$(SUB data/web/geo-timeline.html 'Date In' 'Date')"
 mut "the Stats page loses its extremes" "$(SUB data/web/geo-stats.html 'Geographic Extremes' 'Extremes')"
 mut "the Collections cards lose their images" "$(SUB data/web/geo-collections.html 'theme-card__img' 'theme-card__pic')"
+mut "a Collections card photo is missing" 'import os,sys;os.remove(sys.argv[1]+"/data/web/geo-img/coffee-t.webp")'
+mut "a Collections hero photo is missing" 'import os,sys;os.remove(sys.argv[1]+"/data/web/geo-img/finance.webp")'
+mut "a Collections photo is a placeholder (tiny WebP)" 'import sys;open(sys.argv[1]+"/data/web/geo-img/art-t.webp","wb").write(b"RIFF\x1a\x00\x00\x00WEBPVP8L\x0d\x00\x00\x00\x2f\x00\x00\x00\x10\x07\x10\x11\x11\x88\x88\xfe\x07\x00")'
+mut "one photo serves two collections (identical bytes)" 'import shutil,sys;d=sys.argv[1]+"/data/web/geo-img/";shutil.copyfile(d+"finance.webp",d+"ancient.webp")'
+mut "a photo is not a WebP" 'import sys;open(sys.argv[1]+"/data/web/geo-img/music.webp","wb").write(b"\xff\xd8\xff\xe0"+b"0"*20000)'
+mut "a photo has the wrong width (hero at thumbnail size)" 'import shutil,sys;d=sys.argv[1]+"/data/web/geo-img/";shutil.copyfile(d+"port-t.webp",d+"port.webp")'
+mut "a photo has a non-free licence" "import json,sys;p=sys.argv[1]+'/data/geo/collections-images.json';d=json.load(open(p));d['images']['nature']['license']='CC BY-NC 4.0';json.dump(d,open(p,'w'))"
+mut "a photo has no author" "import json,sys;p=sys.argv[1]+'/data/geo/collections-images.json';d=json.load(open(p));d['images']['wine']['author']='';json.dump(d,open(p,'w'))"
+mut "a photo has no Commons source page" "import json,sys;p=sys.argv[1]+'/data/geo/collections-images.json';d=json.load(open(p));d['images']['med']['source_url']='https://example.com/x.jpg';json.dump(d,open(p,'w'))"
+mut "a collection has no photo entry" "import json,sys;p=sys.argv[1]+'/data/geo/collections-images.json';d=json.load(open(p));d['images'].pop('spiritual');json.dump(d,open(p,'w'))"
+mut "the Collections page loads its photos from an image service again" "$(SUB data/web/geo-collections.html "geo-img/',thumb" "https://loremflickr.com/600/400/',thumb")"
+mut "the overlay no longer shows the photo credit" "$(SUB data/web/geo-collections.html 'Wikimedia Commons' 'Wikimedia')"
 mut "the Collections overlay is gone" "$(SUB data/web/geo-collections.html 'Cities Included' 'Cities')"
 mut "a Collections theme is dropped" 'import json,sys;p=sys.argv[1]+"/data/geo/mytrips-themes.json";d=json.load(open(p));d.pop();json.dump(d,open(p,"w"))'
 mut "the atlas page is out of sync with the data" "$(SUB data/web/geo-atlas.html 'Nothing recorded in' 'Nothing in')"

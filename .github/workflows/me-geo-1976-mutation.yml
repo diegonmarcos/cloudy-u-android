@@ -9,6 +9,9 @@ on:
       - 'ac_cloud-me/data/web/geo-*.html'
       - 'ac_cloud-me/data/geo/**'
       - 'ac_cloud-me/data/regen-geo-1976.py'
+      - 'ac_cloud-me/data/regen-geo-images-1981.py'
+      - 'ac_cloud-me/data/regen-mytrips-collections-1981.py'
+      - 'ac_cloud-me/data/web/geo-img/**'
       - 'ac_cloud-me/build.json'
       - 'ac_cloud-me/test/test-geo-1976.sh'
       - 'ac_cloud-me/test/test-media-1976.sh'
@@ -37,6 +40,8 @@ jobs:
         run: |
           bash ac_cloud-me/test/test-geo-1976.sh
           bash ac_cloud-me/test/test-media-1976.sh
+          python3 -I ac_cloud-me/data/regen-geo-images-1981.py --check     # #1981 every Collections photo real, attributed, free licence, right width
+          python3 -I ac_cloud-me/data/regen-geo-1976.py --check
       - name: Mutation must be KILLED
         if: ${{ inputs.name != '' }}
         env:

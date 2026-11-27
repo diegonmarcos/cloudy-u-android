@@ -1,0 +1,23 @@
+{
+  "_doc": "#1981 the declared Commons file for each Collections image (regen-geo-images-1981.py --fetch reads this; free licences only). travel and landscape are the two generic slides of the MyTrips theme overlay.",
+  "images": {
+    "finance": "File:Lower Manhattan from Jersey City November 2016 002.jpg",
+    "ancient": "File:Templo de Karnak, Luxor, Egipto, 2022-04-03, DD 144.jpg",
+    "tech": "File:San Jose and Silicon Valley Skyline Oct 2017.jpg",
+    "coffee": "File:Espresso Coffee 01.jpg",
+    "art": "File:North facade of the Denon Wing & Louvre Pyramid, 1 May 2018.jpg",
+    "nature": "File:Banff National Park (AB, Canada), Lake Louise -- 2022 -- 2200.jpg",
+    "island": "File:Reethi Beach Maldives.jpg",
+    "coldwar": "File:East side gallery, Berlin Wall (Ank Kumar, Infosys Limited ) 07.jpg",
+    "food": "File:Barra de pintxos Donosti 02.JPG",
+    "nordic": "File:Winter fjord and mountain pass landscape near Tromsøvik and Brosmetinden Kvaløya Tromsø by Alshemal Norway.jpg",
+    "med": "File:Dubrovnik in 2014.jpg",
+    "wine": "File:Vineyard in Bordeaux.jpg",
+    "mega": "File:Tokyo Shibuya Scramble Crossing 2018-10-09.jpg",
+    "spiritual": "File:Varanasi, India, Ghats on Ganges River.jpg",
+    "port": "File:Shipping container stacks - Port of Rotterdam - 2014 - 4.jpg",
+    "music": "File:Night on Bourbon Street,New Orleans, , 17 July 2016 - 10.jpg",
+    "travel": "File:Morgensonne In Den Wolken (237397481).jpeg",
+    "landscape": "File:Sunrise near Rifugio Mulaz - Dolomites, Italy - 2025.jpg"
+  }
+}
