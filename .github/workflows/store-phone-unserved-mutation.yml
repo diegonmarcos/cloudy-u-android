@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: [throwing-sources, pill-all-up-to-date, reason-dropped]
+        name: [throwing-sources, pill-all-up-to-date, reason-dropped, map-ignored]
     steps:
       - uses: actions/checkout@v4
       - name: Apply mutation ${{ matrix.name }}
@@ -30,6 +30,7 @@ jobs:
           m = {
               "throwing-sources": [(D + "StorePhoneFragment.kt", "PhoneAppActions.sourcesOrNull(ctx)   // null = not served", "PhoneAppActions.sources(ctx)   // null = not served")],
               "pill-all-up-to-date": [(D + "StoreActivity.kt", ' else if (notChecked != null) "Not checked: $notChecked" else "All up to date"', ' else "All up to date"')],
+              "map-ignored": [(D + "StorePhoneFragment.kt", "PhoneAppActions.sourcesOrNull(ctx)   // null = not served", "(null as org.json.JSONObject?)   // null = not served")],
               "reason-dropped": [(D + "PhoneAppActions.kt", "s(R.string.store_phone_install), null, notServedReason(ctx))", "s(R.string.store_phone_install), null, null)")],
           }[os.environ["M"]]
           for p, a, b in m:
@@ -86,6 +87,7 @@ jobs:
           case "$M" in
             throwing-sources) T="the phone rows still list the installed launchable apps when the dataset is not served" ;;
             pill-all-up-to-date) T="the status never says all up to date while nothing was checked" ;;
+            map-ignored) T="with the dataset served the rows are full - the origin store is live and the declared external app is listed" ;;
             reason-dropped) T="controls that need the map are greyed with a reason naming the dataset" ;;
             *) echo "::error::unknown leg $M"; exit 2 ;;
           esac

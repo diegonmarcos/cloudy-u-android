@@ -98,4 +98,24 @@ class StorePhoneUnservedTest {
         // With the dataset served and a check behind it, the old wording is unchanged.
         assertEquals("All up to date", StoreActivity.overall(emptyList(), 0, null).text())
     }
+
+    /** The smallest map the resolver accepts: Google Play as the one store, one declared external app that is not on the phone. */
+    private val served = """{"resolver":{"order":["play"],"kinds":{"play":{"label":"Google Play","installer":"com.android.vending","fetches":false}},
+        "fdroid":{},"play":{"installer":"com.android.vending"},
+        "apps":{"org.example.gone":{"label":"Gone","integrity":"none","sources":[{"kind":"play"}]}}},
+        "sources":{"com.android.vending":{"label":"Google Play","deeplink":"market://details?id={pkg}"}},"ours":{"label":"Cloud Store"}}"""
+
+    @Test fun `with the dataset served the rows are full - the origin store is live and the declared external app is listed`() {
+        PhoneAppActions.testSources = served
+        val probe = StorePhoneFragment().probe(ctx)
+        assertFalse("the map is served: the page must not report it missing", probe.sourcesMissing)
+        for ((pkg, _) in apps) assertTrue("$pkg must still be listed installed", probe.rows.any { it.pkg == pkg && it.installed })
+        val alpha = probe.rows.first { it.pkg == apps[0].first }
+        val origin = alpha.controls.single { it.first == "Google Play" }
+        assertNull("the origin store control is live when the map is served: ${origin.second}", origin.second)
+        val gone = probe.rows.firstOrNull { it.pkg == "org.example.gone" }
+        assertNotNull("a declared external app is a Declared row when the map is served", gone)
+        assertFalse(gone!!.installed)
+        assertEquals("All up to date", StoreActivity.overall(emptyList(), 0, StoreTally.notChecked(listFailed = false, sourcesMissing = probe.sourcesMissing)).text())
+    }
 }
