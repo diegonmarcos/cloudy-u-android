@@ -25,9 +25,22 @@ object NetGraphLayout {
         val edgeMembers: Map<String, List<String>>,
         /** aggregate id to the graph edge ids drawn inside it */
         val absorbed: Map<String, List<String>>,
+        /** #1955 A rev2 the frames (lanes, VM frames, nested clusters) with their reserved header band, outermost first */
+        val frames: List<Frame> = emptyList(),
+        /** drawn node id to the innermost frame that holds it */
+        val frameOf: Map<String, String> = emptyMap(),
+        /** column captions: label and world x span (empty = no caption strip) */
+        val columns: List<Pair<String, Pair<Float, Float>>> = emptyList(),
+        /** plan edge id to the bundle label it carried on the canvas before rev2 (the edge sheet prints it) */
+        val bundleOf: Map<String, String> = emptyMap(),
+        /** frame node id to the graph edge ids drawn as containment (no wire): counted once by [parity] */
+        val contained: Map<String, List<String>> = emptyMap(),
     )
 
-    data class Layout(val plan: MailStack.Plan, val extras: Extras)
+    /** One frame: world rect, header band height (world), header text, the node it stands for ("" = a lane), nesting depth. */
+    data class Frame(val id: String, val rect: MailStack.Rect, val header: Float, val label: String, val sub: String, val owner: String, val depth: Int)
+
+    data class Layout(val plan: MailStack.Plan, val extras: Extras, val unit: Float = 1f)
 
     fun aggId(clusterId: String) = "agg:$clusterId"
 
@@ -35,8 +48,10 @@ object NetGraphLayout {
     const val READABLE_SCALE = 0.6f
 
     /** The clusters collapsed when the page opens: a tree cluster from the declared open depth, any other one over `collapse_over` members. */
-    fun defaultCollapsed(g: NetGraph.Graph, v: NetGraph.Viewers): Set<String> =
-        g.clusters.filter { c -> if (c.head != null) !c.openByDefault else c.members.size > v.collapseOver }.map { it.id }.toSet()
+    fun defaultCollapsed(g: NetGraph.Graph, v: NetGraph.Viewers): Set<String> {
+        val over = v.num(g.page, "collapse_over", v.collapseOver.toFloat()).toInt()
+        return g.clusters.filter { c -> if (c.head != null) !c.openByDefault else c.members.size > over }.map { it.id }.toSet()
+    }
 
     private fun rank(h: MailStack.Health) = when (h) { MailStack.Health.BAD -> 0; MailStack.Health.WARN -> 1; MailStack.Health.UNKNOWN -> 2; MailStack.Health.OK -> 3 }
 
@@ -50,6 +65,7 @@ object NetGraphLayout {
         unit: Float = 1f,
     ): Layout {
         val nodeW = v.nodeW * unit; val nodeH = v.nodeH * unit; val gapX = v.gapX * unit; val gapY = v.gapY * unit; val laneHeader = v.laneHeader * unit
+        val framePad = v.num(g.page, "frame_pad", 8f) * unit; val frameGap = v.num(g.page, "frame_gap", 12f) * unit
         val closed = g.clusters.filter { it.id in collapsed }
         fun repr(c: NetGraph.GCluster) = c.head ?: aggId(c.id)
         val hiddenBy = mutableMapOf<String, MutableList<NetGraph.GCluster>>()
@@ -91,18 +107,23 @@ object NetGraphLayout {
         val rects = mutableMapOf<String, MailStack.Rect>()
         val laneRects = LinkedHashMap<String, MailStack.Rect>()
         val maxCol = (items.values.maxOfOrNull { it.column } ?: 0).coerceAtLeast(g.columns.size - 1)
+        val frames = mutableListOf<Frame>()
+        val frameOf = mutableMapOf<String, String>()
         var y = 0f
         laneOrder.forEach { lane ->
             val inLane = items.values.filter { it.lane == lane }
             if (inLane.isEmpty() && g.lanes.none { it.id == lane }) return@forEach
             val byCol = inLane.groupBy { it.column }
             val tallest = byCol.values.maxOfOrNull { it.size } ?: 0
-            val top = y + laneHeader
-            byCol.forEach { (col, list) -> list.forEachIndexed { i, it -> rects[it.id] = MailStack.Rect(col * colW, top + i * rowH, col * colW + nodeW, top + i * rowH + nodeH) } }
-            val h = laneHeader + tallest.coerceAtLeast(1) * rowH + gapY
-            laneRects[lane] = MailStack.Rect(-gapX / 4, y, maxCol * colW + nodeW + gapX / 4, y + h)
-            y += h
+            val top = y + laneHeader + framePad / 2
+            byCol.forEach { (col, list) -> list.forEachIndexed { i, it -> rects[it.id] = MailStack.Rect(col * colW, top + i * rowH, col * colW + nodeW, top + i * rowH + nodeH); frameOf[it.id] = "lane:$lane" } }
+            val h = laneHeader + framePad / 2 + tallest.coerceAtLeast(1) * rowH - gapY + framePad
+            laneRects[lane] = MailStack.Rect(-framePad, y, maxCol * colW + nodeW + framePad, y + h)
+            val gl = g.lanes.firstOrNull { it.id == lane }
+            frames += Frame("lane:$lane", laneRects.getValue(lane), laneHeader, (gl?.label ?: lane).ifBlank { g.page }, gl?.sub.orEmpty(), "", 0)
+            y += h + frameGap
         }
+        val columns = g.columns.mapIndexed { c, label -> label to (c * colW to c * colW + colW) }
         val nodes = items.values.map { it ->
             MailStack.NodePrim(it.id, it.label, it.sub, rects.getValue(it.id), it.health, MailStack.healthColor(it.health, p), it.kind)
         }
@@ -136,11 +157,13 @@ object NetGraphLayout {
         }
         // bundling (expanded clusters): >= bundle_min plain edges from one cluster to one target share their last control points
         val bundleLabels = mutableListOf<Pair<Offset, String>>()
+        val bundleOf = mutableMapOf<String, String>()
         val clusterOfNode = g.nodes.associate { it.id to it.cluster }
         val bundled = prims.groupBy { (clusterOfNode[it.from].orEmpty()) to it.to }.filter { (k, es) -> k.first.isNotBlank() && es.size >= v.bundleMin }
         val shared = bundled.flatMap { (_, es) ->
             val p2 = Offset(es.map { it.p2.x }.average().toFloat(), es.map { it.p2.y }.average().toFloat())
             bundleLabels += p2 to "${es.size} ${es[0].label.ifBlank { "edges" }}"
+            es.forEach { bundleOf[it.id] = "${es.size} ${es[0].label.ifBlank { "edges" }}" }
             es.map { it.id to p2 }
         }.toMap()
         val finalEdges = prims.map { e -> shared[e.id]?.let { e.copy(p2 = it, label = "") } ?: e }
@@ -148,7 +171,7 @@ object NetGraphLayout {
         val bounds = if (all.isEmpty()) MailStack.Rect(0f, 0f, 1f, 1f) else MailStack.Rect(all.minOf { it.l }, all.minOf { it.t }, all.maxOf { it.r }, all.maxOf { it.b })
         return Layout(MailStack.Plan(nodes, finalEdges, bounds),
             Extras(laneRects, clusterRects, bundleLabels, memberOf, aggregates + items.keys.filter { it.startsWith("agg:") }.associateWith { it.removePrefix("agg:") },
-                edgeMembers, absorbed))
+                edgeMembers, absorbed, frames, frameOf, columns, bundleOf), unit)
     }
 
     private fun counts(ids: List<String>, status: Map<String, MailStack.Health>): String {
@@ -200,6 +223,46 @@ object NetGraphLayout {
         return MailStack.View(s, pad - b.l * s, pad - b.t * s)
     }
 
+    /**
+     * #1955 A rev2 The opening view of a [w] x [h] px canvas: fit-all when that is at least [minScale] (whole graph, names readable),
+     * else fit-width top-aligned with vertical pan; never above [maxScale] (the graph opens at MID). [top] px are reserved (caption
+     * strip). When [root] (world rect) is outside the viewport, the view shifts so it is inside.
+     */
+    fun openView(b: MailStack.Rect, w: Float, h: Float, density: Float, minScale: Float = READABLE_SCALE, maxScale: Float = 1f,
+                 top: Float = 0f, root: MailStack.Rect? = null, padDp: Float = 12f): MailStack.View {
+        val pad = padDp * density
+        val bw = (b.r - b.l).coerceAtLeast(1f); val bh = (b.b - b.t).coerceAtLeast(1f)
+        val all = minOf((w - 2 * pad) / bw, (h - top - 2 * pad) / bh)
+        var v = if (all >= minScale) {
+            val s = all.coerceAtMost(maxScale)
+            MailStack.View(s, (w - bw * s) / 2 - b.l * s, top + pad - b.t * s)
+        } else {
+            val s = ((w - 2 * pad) / bw).coerceIn(minScale, maxScale)
+            val ox = if (bw * s <= w - 2 * pad) (w - bw * s) / 2 - b.l * s else pad - b.l * s
+            MailStack.View(s, ox, top + pad - b.t * s)
+        }
+        if (root != null) {
+            val a = v.toScreen(Offset(root.l, root.t)); val c = v.toScreen(Offset(root.r, root.b))
+            val m = 8f * density
+            val dx = when { a.x < m -> m - a.x; c.x > w - m -> (w - m) - c.x; else -> 0f }
+            val dy = when { a.y < top + m -> top + m - a.y; c.y > h - m -> (h - m) - c.y; else -> 0f }
+            v = MailStack.View(v.scale, v.ox + dx, v.oy + dy)
+        }
+        return v
+    }
+
+    /** #1955 A rev2 The opening view of [l] as the phone opens it (tests call the same): caption strip reserved, root brought in. */
+    fun openFor(l: Layout, v: NetGraph.Viewers, w: Float, h: Float, density: Float, root: String? = null): MailStack.View {
+        val sp = NetScene.Spec.of(v)
+        val top = if (l.extras.columns.isNotEmpty()) sp.captionH * density else 0f
+        val rr = root?.let { r -> l.plan.nodes.firstOrNull { it.id == (l.extras.memberOf[r] ?: r) }?.rect }
+        return openView(l.plan.bounds, w, h, density, sp.farBelow, 1f, top, rr)
+    }
+
+    /** #1955 A rev2 [v] panned so [r] (world) is centred in the part of a [w] x [h] canvas above a [peek] px sheet. */
+    fun centreAbove(v: MailStack.View, r: MailStack.Rect, w: Float, h: Float, peek: Float): MailStack.View =
+        v.centerOn(r, w, (h - peek).coerceAtLeast(h * 0.4f))
+
     /** Graph against plan: every node drawn once (itself, or inside exactly one drawn aggregate), every edge once (itself, a bundle of the right weight, or absorbed). Empty = parity. */
     fun parity(g: NetGraph.Graph, l: Layout): List<String> = buildList {
         val drawn = l.plan.nodes.groupingBy { it.id }.eachCount()
@@ -224,6 +287,10 @@ object NetGraphLayout {
             ms.forEach { count[it] = (count[it] ?: 0) + 1 }
         }
         l.extras.absorbed.values.flatten().forEach { count[it] = (count[it] ?: 0) + 1 }
+        l.extras.contained.forEach { (f, es) ->
+            if (l.plan.nodes.none { it.id == f } && l.extras.frames.none { it.owner == f }) add("containment frame $f drawn by no node")
+            es.forEach { count[it] = (count[it] ?: 0) + 1 }
+        }
         (g.edges + g.depends).forEach { e -> if ((count[e.id] ?: 0) != 1) add("edge ${e.id} drawn ${count[e.id] ?: 0} times") }
         (inPlan.keys - l.extras.edgeMembers.keys).forEach { add("edge $it drawn but not declared") }
     }

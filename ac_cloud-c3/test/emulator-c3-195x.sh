@@ -190,8 +190,21 @@ if [ "$T" = all ] || [ "$T" = 1955 ]; then
     for l in Table Graph; do has "c3-1955-net-$n-table" "text=\"$l\"" || bad "c3-1955-net-$n-table: switch '$l' missing"; done
     tap_text "c3-1955-net-$n-table" "Graph"; shot "c3-1955-net-$n-graph" 6
     has "c3-1955-net-$n-graph" 'content-desc="nodes:' || bad "c3-1955-net-$n-graph: no canvas drawn"
-    for l in Fit +all Legend Re-read; do has "c3-1955-net-$n-graph" "text=\"$l\"" || bad "c3-1955-net-$n-graph: toolbar '$l' missing"; done
+    for l in Fit +all Legend; do has "c3-1955-net-$n-graph" "text=\"$l\"" || bad "c3-1955-net-$n-graph: toolbar '$l' missing"; done
+    has "c3-1955-net-$n-graph" 'content-desc="Re-read' || bad "c3-1955-net-$n-graph: toolbar Re-read missing"
     has "c3-1955-net-$n-graph" "ROOT CAUSE" && cp "$OUT/c3-1955-net-$n-graph.png" "$OUT/c3-1955-net-$n-root-banner.png"
+    # #1955 A rev2: the opening view, then 2x on one node (search it, Zoom 2x in its sheet, close the sheet)
+    cp "$OUT/c3-1955-net-$n-graph.png" "$OUT/c3-1955-graph-rev2-$n-fit.png"; cp "$OUT/c3-1955-net-$n-graph.xml" "$OUT/c3-1955-graph-rev2-$n-fit.xml"
+    case "$n" in wg|mesh) q=gcp-proxy ;; auth) q=Authelia ;; dns) q=auth ;; network) q=Caddy ;; security) q=cloudy-c3-api ;; esac
+    tap_edit "c3-1955-net-$n-graph"; sleep 1; adb shell input text "$q"; shot "c3-1955-graph-rev2-$n-hits" 3
+    tap_last "c3-1955-graph-rev2-$n-hits" "$q"; shot "c3-1955-graph-rev2-$n-sheet" 3
+    tap_text "c3-1955-graph-rev2-$n-sheet" "Zoom 2x"; shot "c3-1955-graph-rev2-$n-zoomed" 2
+    tap_text "c3-1955-graph-rev2-$n-zoomed" " close"; shot "c3-1955-graph-rev2-$n-zoom" 3
+    has "c3-1955-graph-rev2-$n-zoom" 'content-desc="nodes:' || bad "c3-1955-graph-rev2-$n-zoom: no canvas drawn"
+    rm -f "$OUT/c3-1955-graph-rev2-$n-hits.png" "$OUT/c3-1955-graph-rev2-$n-zoomed.png"
+    # clear the query (the later flows type into the same field) and drop the keyboard
+    tap_edit "c3-1955-graph-rev2-$n-zoom"; sleep 1; adb shell input keyevent 123; adb shell input keyevent $(printf '67 %.0s' $(seq 1 24))
+    adb shell dumpsys input_method 2>/dev/null | grep -q "mInputShown=true" && { adb shell input keyevent 4; sleep 1; }
   done
   # WireGuard: search the hub, open its sheet, then one of its edges
   hide_kb() { # the soft keyboard covers the sheet's edge rows: BACK closes it, but only when it is up (BACK on a page would leave it)
@@ -202,7 +215,9 @@ if [ "$T" = all ] || [ "$T" = 1955 ]; then
   tap_last c3-1955-net-wg-search "gcp-proxy"; shot c3-1955-net-wg-node-sheet 3
   has c3-1955-net-wg-node-sheet "Open in Table" || bad "c3-1955-net-wg-node-sheet: no node sheet"
   hide_kb; shot c3-1955-net-wg-node-sheet-kbdown 2
-  tap_text c3-1955-net-wg-node-sheet-kbdown "  -"; shot c3-1955-net-wg-edge-sheet 3
+  # rev2: the sheet opens in its 132 dp peek; "more" expands it to the edge rows
+  tap_text c3-1955-net-wg-node-sheet-kbdown "  more"; shot c3-1955-net-wg-node-sheet-more 2
+  tap_text c3-1955-net-wg-node-sheet-more "  -"; shot c3-1955-net-wg-edge-sheet 3
   has c3-1955-net-wg-edge-sheet "Highlight path" || bad "c3-1955-net-wg-edge-sheet: no edge sheet"
   # DNS: expand every cluster, then Fit all (the minimap shows on a tall world)
   open_page net_dns; sleep 2; shot c3-1955-net-dns-pre 5

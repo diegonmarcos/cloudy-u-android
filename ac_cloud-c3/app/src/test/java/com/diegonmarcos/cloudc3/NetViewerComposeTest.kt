@@ -7,6 +7,17 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.click
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
+import androidx.compose.ui.text.TextLayoutResult
+import com.diegonmarcos.cloudc3.pages.MailStack
+import com.diegonmarcos.cloudc3.pages.NetGraphLayout
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -35,6 +46,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -175,5 +187,109 @@ class NetViewerComposeTest {
         compose.onNodeWithTag(NetTags.view("net_dns", "graph")).performClick()
         compose.runOnIdle { gen += 1 }
         compose.onNodeWithTag(NetTags.graph("net_dns")).assertExists()
+    }
+
+    // ── #1955 A rev2 ──────────────────────────────────────────────────────
+
+    /** The hub-down state with a 300-character why holding an IPv6 literal and a long root name (the chip must stay one line). */
+    private fun longRoot(page: String): GraphState {
+        val st = state(page, hubDown = true)
+        val root = st.roots.first()
+        val why = "unreachable: java.net.ConnectException: Failed to connect to /2600:1900:4000:9b3f:0:1:0:0 (port 443) after 10000 ms; " +
+            "the c3 API answered nothing for this VM, docker ps timed out, the WireGuard handshake is older than the declared stale limit; ".repeat(2)
+        val g = st.graph.copy(nodes = st.graph.nodes.map { if (it.id == root.id) it.copy(label = it.label + "-with-a-deliberately-long-declared-name-for-the-chip") else it })
+        return st.copy(graph = g, roots = st.roots.map { it.copy(why = why.take(300)) })
+    }
+
+    private fun dp(px: Float) = px / compose.density.density
+
+    private fun chromeChecks(minShare: Float) {
+        val store = MapStore().apply { set("net_wg", "graph") }
+        val st = longRoot("net_wg")
+        compose.setContent {
+            CloudKitTheme(palette) {
+                NetViewerScreen("net_wg", v, store, table = { f -> table("wg", f) }, graph = { open -> NetGraphScreen("net_wg", st, v, open, {}, {}, {}) })
+            }
+        }
+        compose.waitForIdle()
+        val banner = compose.onNodeWithTag(NetTags.BANNER).fetchSemanticsNode()
+        assertTrue("the root chip is ${dp(banner.boundsInRoot.height)} dp tall", dp(banner.boundsInRoot.height) <= 32f)
+        val layouts = mutableListOf<TextLayoutResult>()
+        banner.config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
+        assertEquals("the root chip is one line", 1, layouts.first().lineCount)
+        val root = compose.onNodeWithTag(NetTags.ROOT).fetchSemanticsNode().boundsInRoot
+        fun canvas() = compose.onNodeWithTag(NetTags.CANVAS_BOX).fetchSemanticsNode().boundsInRoot
+        val c0 = canvas()
+        assertTrue("chrome above the canvas is ${dp(c0.top - root.top)} dp", dp(c0.top - root.top) <= 104f)
+        assertTrue("the canvas is ${c0.height / root.height} of the screen", c0.height >= minShare * root.height)
+        compose.onNodeWithTag(NetTags.LEGEND).performClick()
+        compose.onNodeWithTag(NetTags.LEGEND_BODY).assertExists()
+        assertEquals("the legend does not move the canvas", c0, canvas())
+        compose.onNodeWithTag(NetTags.SEARCH).performTextInput("o")
+        compose.onNodeWithTag(NetTags.HITS).assertExists()
+        assertEquals("the hit list does not move the canvas", c0, canvas())
+    }
+
+    @Test @Config(qualifiers = "w412dp-h915dp-mdpi")
+    fun `T6 the root cause is a one-line chip at most 32 dp, chrome at most 104 dp, the canvas at least 68 percent at 412 dp`() = chromeChecks(0.68f)
+
+    @Test @Config(qualifiers = "w320dp-h640dp-mdpi")
+    fun `T6 the root cause is a one-line chip at most 32 dp, chrome at most 104 dp, the canvas at least 60 percent at 320 dp`() = chromeChecks(0.60f)
+
+    /** The opening view and layout exactly as the screen computes them for the canvas box. */
+    private fun opened(page: String, st: GraphState): Triple<NetGraphLayout.Layout, MailStack.View, androidx.compose.ui.geometry.Rect> {
+        val box = compose.onNodeWithTag(NetTags.CANVAS_BOX).fetchSemanticsNode().boundsInRoot
+        val d = compose.density.density
+        val l = NetGraphLayout.layout(st.graph, v, NetGraphLayout.defaultCollapsed(st.graph, v), palette, st.readings.mapValues { it.value.health }, d)
+        return Triple(l, NetGraphLayout.openFor(l, v, box.width, box.height, d, st.roots.firstOrNull()?.id), box)
+    }
+
+    @Test @Config(qualifiers = "w412dp-h915dp-mdpi")
+    fun `T9 tapping a node opens its peek sheet, at most 132 dp`() {
+        val st = state("net_mesh")
+        compose.setContent { CloudKitTheme(palette) { NetGraphScreen("net_mesh", st, v, {}, {}, {}, {}) } }
+        compose.waitForIdle()
+        val (l, view, _) = opened("net_mesh", st)
+        val n = l.plan.nodes.first()
+        val c = view.toScreen(Offset(n.rect.cx, n.rect.cy))
+        compose.onNodeWithTag(NetTags.graph("net_mesh")).performTouchInput { click(c) }
+        val sheet = compose.onNodeWithTag(NetTags.sheet(n.id)).fetchSemanticsNode().boundsInRoot
+        assertTrue("the peek sheet is ${dp(sheet.height)} dp", dp(sheet.height) <= 132.5f)
+    }
+
+    @Test @Config(qualifiers = "w412dp-h915dp-mdpi")
+    fun `T9 tapping a wire opens its edge sheet`() {
+        val st = state("net_wg")
+        compose.setContent { CloudKitTheme(palette) { NetGraphScreen("net_wg", st, v, {}, {}, {}, {}) } }
+        compose.waitForIdle()
+        val (l, view, box) = opened("net_wg", st)
+        val tol = 12f * compose.density.density
+        val pick = l.plan.edges.firstNotNullOfOrNull { e ->
+            val m = view.toScreen(MailStack.bezier(e, 0.5f))
+            val clear = MailStack.hit(l.plan, view, m) == null && m.x in 0f..box.width && m.y in 0f..box.height &&
+                MailStack.hitEdge(l.plan, view, m, tol) == e.id
+            if (clear) e to m else null
+        }!!
+        compose.onNodeWithTag(NetTags.graph("net_wg")).performTouchInput { click(pick.second) }
+        val members = l.extras.edgeMembers.getValue(pick.first.id)
+        val eid = if (st.graph.edges.any { it.id == pick.first.id } || st.graph.depends.any { it.id == pick.first.id }) pick.first.id else members.first()
+        compose.onNodeWithTag(NetTags.edgeSheet(eid)).assertExists()
+    }
+
+    @Test @Config(qualifiers = "w412dp-h915dp-mdpi")
+    fun `T9 the canvas is clipped - a graph dragged above the canvas leaves the toolbar pixels unchanged`() {
+        val st = state("net_dns")
+        compose.setContent { CloudKitTheme(palette) { NetGraphScreen("net_dns", st, v, {}, {}, {}, {}) } }
+        compose.waitForIdle()
+        val box = compose.onNodeWithTag(NetTags.CANVAS_BOX).fetchSemanticsNode().boundsInRoot
+        fun toolbar(): List<Int> {
+            val img = compose.onRoot().captureToImage().asAndroidBitmap()
+            val rows = (box.top.toInt() - 1).coerceAtLeast(1)
+            return (0 until rows step 2).flatMap { y -> (0 until img.width step 3).map { x -> img.getPixel(x, y) } }
+        }
+        val before = toolbar()
+        compose.onNodeWithTag(NetTags.graph("net_dns")).performTouchInput { swipeUp(startY = centerY, endY = top + 2f) }
+        compose.waitForIdle()
+        assertEquals("nothing is drawn over the toolbar", before, toolbar())
     }
 }

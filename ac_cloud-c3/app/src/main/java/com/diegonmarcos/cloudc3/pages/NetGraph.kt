@@ -79,8 +79,22 @@ object NetGraph {
         val collapseOver: Int, val bundleMin: Int, val pulseMaxEdges: Int, val liveTtlS: Int,
         val handshakeOkS: Int, val handshakeWarnS: Int, val staleIs: Map<String, String>,
         val pages: Map<String, JsonObject>,
+        /** #1955 A rev2 the whole `viewers` block, for the declared layout and scene numbers ([num], [layoutOf]). */
+        val raw: JsonObject = JsonObject(emptyMap()),
     ) {
         fun graph(page: String): JsonObject? = pages[page]?.get("graph") as? JsonObject
+        /** A declared number by dotted key: `pages.<page>.<key>` first, then `viewers.<key>`, else [d]. */
+        fun num(page: String?, key: String, d: Float): Float {
+            fun at(o: JsonObject?, k: List<String>): Float? {
+                var cur: JsonObject = o ?: return null
+                k.dropLast(1).forEach { cur = cur[it] as? JsonObject ?: return null }
+                return (cur[k.last()] as? JsonPrimitive)?.contentOrNull?.toFloatOrNull()
+            }
+            val k = key.split('.')
+            return (page?.let { at(pages[it], k) }) ?: at(raw, k) ?: d
+        }
+        /** The declared layout of a page: radial | star | layered | dns_bands | clusters | lanes (the swimlane fallback). */
+        fun layoutOf(page: String): String = (pages[page]?.get("layout") as? JsonPrimitive)?.contentOrNull ?: "lanes"
     }
 
     private fun JsonObject.str(k: String): String = (this[k] as? JsonPrimitive)?.contentOrNull.orEmpty()
@@ -102,6 +116,7 @@ object NetGraph {
             v.int("collapse_over") ?: 12, v.int("bundle_min") ?: 3, v.int("pulse_max_edges") ?: 40, v.int("live_ttl_s") ?: 60,
             st.int("handshake_ok_s") ?: 180, st.int("handshake_warn_s") ?: 900, st.smap("stale_is"),
             v.obj("pages")?.mapNotNull { (k, o) -> (o as? JsonObject)?.let { k to it } }?.toMap().orEmpty(),
+            v,
         )
     }
 

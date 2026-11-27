@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,6 +16,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import com.diegonmarcos.cloudc3.Declarations
 import com.diegonmarcos.cloudc3.cloud.C3HealthFragment
 import com.diegonmarcos.cloudc3.cloud.ContainerSheet
@@ -56,12 +58,16 @@ fun NetViewerScreen(
 ) {
     var mode by remember(page) { mutableStateOf(store.get(page, viewers.default)) }
     var focus by remember(page) { mutableStateOf<String?>(null) }
-    Column(Modifier.fillMaxSize()) {
-        ViewerSwitch(page, viewers.modes, mode) { m -> mode = m; store.set(page, m) }
+    Column(Modifier.fillMaxSize().testTag(NetTags.ROOT)) {
+        val switch: @Composable () -> Unit = { ViewerSwitch(page, viewers.modes, mode, inRow = mode == NetGraph.GRAPH) { m -> mode = m; store.set(page, m) } }
+        // #1955 A rev2 in Graph mode the switch is the first item of the Graph's toolbar row (one chrome row less above the canvas)
+        if (mode != NetGraph.GRAPH) switch()
         Box(Modifier.weight(1f).fillMaxWidth()) {
-            if (mode == NetGraph.GRAPH) graph { n ->
-                focus = n.rows.firstOrNull()?.name ?: n.label
-                mode = NetGraph.TABLE; store.set(page, mode)
+            if (mode == NetGraph.GRAPH) CompositionLocalProvider(LocalViewerSwitch provides switch) {
+                graph { n ->
+                    focus = n.rows.firstOrNull()?.name ?: n.label
+                    mode = NetGraph.TABLE; store.set(page, mode)
+                }
             } else table(focus)
         }
     }
