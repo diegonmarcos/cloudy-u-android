@@ -29,7 +29,18 @@ internal class AnchoredRefreshPagingSource<Value : Any>(
         registerInvalidatedCallback(delegate::invalidate)
     }
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Value> = delegate.load(params)
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Value> {
+        // #1952: the list's own stopwatch for the store query (logcat tag MailList, sizes only), read by the emulator walk.
+        val t0 = System.nanoTime()
+        val result = delegate.load(params)
+        runCatching {
+            android.util.Log.i(
+                "MailList",
+                "page-load kind=${params.javaClass.simpleName} ms=${(System.nanoTime() - t0) / 1_000_000} rows=${(result as? LoadResult.Page)?.data?.size ?: -1}",
+            )
+        }
+        return result
+    }
 
     override fun getRefreshKey(state: PagingState<Int, Value>): Int? = refreshOffsetForAnchor(
         anchorPosition = state.anchorPosition,

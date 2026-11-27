@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'none | evict-newest-first | window-ignored | shrink-no-evict | default-drift | setting-not-stored | resume-from-zero | metered-no-chain | network-before-rows'
+        description: 'none | evict-newest-first | window-ignored | shrink-no-evict | default-drift | setting-not-stored | resume-from-zero | metered-no-chain | network-before-rows | index-not-covering | first-page-unbounded'
         required: true
 permissions:
   contents: read
@@ -42,6 +42,10 @@ jobs:
             metered-no-chain)   sed -i 's/if (port.missingBodies(folder, 1).isNotEmpty()) pending = true/if (c0.unmetered \&\& port.missingBodies(folder, 1).isNotEmpty()) pending = true/' $D/mail/FullSync.kt ;;
             # the first server call no longer waits for the painted rows
             network-before-rows) sed -i 's/withTimeoutOrNull(timeoutMs) { painted.await() }/withTimeoutOrNull(0L) { }/' $D/mail/ColdStart.kt ;;
+            # the list index loses the column that makes it covering
+            index-not-covering) sed -i 's/(`accountId`, `mailboxId`, `fromDomain`, `sortKey`, `seen`, `id`)"/(`accountId`, `mailboxId`, `fromDomain`, `sortKey`, `seen`)"/' $D/db/Migrations.kt ;;
+            # the first load asks for the whole folder
+            first-page-unbounded) sed -i 's/initialLoadSize = PAGE_SIZE \* 3,/initialLoadSize = Int.MAX_VALUE,/' $D/mail/MailRepository.kt ;;
             *) echo "::error::unknown mutation (not in the allow-list)"; exit 2 ;;
           esac
           git diff --stat
@@ -84,7 +88,7 @@ jobs:
         run: |
           cd ac_cloud-mail
           chmod +x gradlew
-          ./gradlew --no-daemon :core:data:testDebugUnitTest -PtestApp --tests "app.sterna.core.data.mail.MailCache1952bTest" || true
+          ./gradlew --no-daemon :core:data:testDebugUnitTest -PtestApp --tests "app.sterna.core.data.mail.MailCache1952bTest" --tests "app.sterna.core.data.db.ListQueryPlan1952bTest" || true
       - name: Verdict (KILLED = the named test failed; none = every test green)
         env:
           M: ${{ inputs.name }}
@@ -99,18 +103,24 @@ jobs:
             resume-from-zero)    N="the header backfill resumes after the oldest header held, never from zero" ;;
             metered-no-chain)    N="the background fill continues on any connection" ;;
             network-before-rows) N="on a cold start the first network call waits for the painted rows" ;;
+            index-not-covering)  N="the domain list's aggregates read the covering index, not the message rows" ;;
+            first-page-unbounded) N="the first page is a bounded read of the store" ;;
             *) echo "::error::unknown mutation (not in the allow-list)"; exit 2 ;;
           esac
-          X="$(find ac_cloud-mail/core/data/build -path '*test-results*' -name "TEST-*.MailCache1952bTest.xml" | head -1)"
-          [ -n "$X" ] || { echo "::error::LEG ERROR: no result for MailCache1952bTest (did not compile or run); not a kill"; exit 1; }
+          ls ac_cloud-mail/core/data/build/test-results/*/TEST-*MailCache1952bTest.xml ac_cloud-mail/core/data/build/test-results/*/TEST-*ListQueryPlan1952bTest.xml >/dev/null 2>&1 \
+            || { echo "::error::LEG ERROR: a result file of the two classes is missing (did not compile or run); not a kill"; exit 1; }
+          X=ac_cloud-mail/core/data/build
           python3 -I - "$X" "$N" "$M" <<'PY'
           import sys, xml.etree.ElementTree as ET
           path, want, leg = sys.argv[1:]
-          cases = {c.get("name"): c for c in ET.parse(path).getroot().iter("testcase")}
+          import glob
+          cases = {}
+          for f in glob.glob(path + "/test-results/*/TEST-*MailCache1952bTest.xml") + glob.glob(path + "/test-results/*/TEST-*ListQueryPlan1952bTest.xml"):
+              cases.update({c.get("name"): c for c in ET.parse(f).getroot().iter("testcase")})
           failed = sorted(n for n, c in cases.items() if c.find("failure") is not None or c.find("error") is not None)
           print("tests:", len(cases), "failed:", failed)
           if leg == "none":
-              if failed or len(cases) < 9: print("::error::the unbroken tree is not green (or tests are missing)"); sys.exit(1)
+              if failed or len(cases) < 12: print("::error::the unbroken tree is not green (or tests are missing)"); sys.exit(1)
               print("GREEN: %d tests" % len(cases)); sys.exit(0)
           if want not in cases: print("::error::LEG ERROR %s: the named test did not run: %s" % (leg, want)); sys.exit(1)
           if want not in failed: print("::error::LEG SURVIVED %s: the named test stayed green: %s" % (leg, want)); sys.exit(1)

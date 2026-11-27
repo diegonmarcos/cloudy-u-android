@@ -116,7 +116,7 @@ jobs:
           arch: x86_64
           target: google_apis
           profile: pixel_5
-          ram-size: 4096M
+          ram-size: 6144M
           disk-size: 6000M
           cores: 4
           emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim

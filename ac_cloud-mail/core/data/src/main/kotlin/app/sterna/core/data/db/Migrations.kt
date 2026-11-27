@@ -463,3 +463,19 @@ val MIGRATION_33_34 = object : Migration(33, 34) {
         db.execSQL(EMAIL_PARTS_INDEX_SQL)
     }
 }
+
+/** #1952 the index that covers the domain-grouped list's aggregates ([EmailEntity]); the name and columns are Room's. */
+const val EMAILS_DOMAIN_LIST_INDEX_SQL: String =
+    "CREATE INDEX IF NOT EXISTS `index_emails_accountId_mailboxId_fromDomain_sortKey_seen_id` " +
+        "ON `emails` (`accountId`, `mailboxId`, `fromDomain`, `sortKey`, `seen`, `id`)"
+
+/**
+ * v34 -> v35 (#1952): one more index on `emails`. At 40 000 messages the default list (grouped by sender domain) spent
+ * its time reading every wide message row three times; with this index the aggregates are index-only.
+ * ADDITIVE, NEVER DESTRUCTIVE (see [MIGRATION_33_34]): no row is touched.
+ */
+val MIGRATION_34_35 = object : Migration(34, 35) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(EMAILS_DOMAIN_LIST_INDEX_SQL)
+    }
+}

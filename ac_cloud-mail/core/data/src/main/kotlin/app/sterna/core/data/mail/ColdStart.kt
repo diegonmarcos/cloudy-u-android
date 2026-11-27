@@ -6,7 +6,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.atomic.AtomicBoolean
 
 /** Longest the first network refresh of a cold start waits for the list's first rows (an empty store paints none). */
-const val COLD_START_PAINT_WAIT_MS = 800L
+const val COLD_START_PAINT_WAIT_MS = 2_500L
 
 /**
  * #1952 cold start: the list's first rows are painted from the store BEFORE any network call. The activity [arm]s the

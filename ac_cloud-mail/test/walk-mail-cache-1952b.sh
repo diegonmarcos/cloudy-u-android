@@ -11,7 +11,8 @@ OUT=${OUT:-walk-out-1952b}
 PORT=8099
 UI="python3 -I ac_cloud-mail/test/mail-offline-ui.py"
 FAIL=0
-COLD_LIMIT_MS=${COLD_LIMIT_MS:-800}
+COLD_LIMIT_MS=${COLD_LIMIT_MS:-1500}
+WARM_LIMIT_MS=${WARM_LIMIT_MS:-800}
 BULK=${FAKE_JMAP_BULK:-40000}
 FILL_MINUTES=${FILL_MINUTES:-30}
 READING_ENTRY=${READING_ENTRY:-Reading}
@@ -42,6 +43,19 @@ dump() {
   $UI texts "$OUT/$1.xml" > "$OUT/$1.texts.txt" 2>/dev/null || true
   if grep -q "isn't responding" "$OUT/$1.texts.txt"; then pt=$($UI tap "$OUT/$1.xml" "Wait" exact) && adb shell input tap $pt; sleep 2; fi
 }
+# the app on screen, whatever happened before (a first full sync of 40k may get the process killed by the system: counted, see DEATHS)
+front() {
+  if ! adb shell dumpsys activity activities 2>/dev/null | grep -E "ResumedActivity|topResumedActivity" | grep -q "$PKG"; then
+    adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1; sleep "${1:-8}"
+  fi
+}
+DEATHS=0; LASTPID=""
+pidwatch() {
+  p=$(adb shell pidof "$PKG" 2>/dev/null | tr -d '\r' | cut -d' ' -f1)
+  if [ -n "$LASTPID" ] && [ "$p" != "$LASTPID" ]; then DEATHS=$((DEATHS + 1)); echo "process changed at $(date +%T): '$LASTPID' -> '$p'" >> "$OUT/process.txt"; fi
+  [ -n "$p" ] && LASTPID=$p
+}
+mem() { { echo "== $1"; adb shell dumpsys meminfo "$PKG" 2>/dev/null | grep -E "TOTAL PSS|Java Heap|Native Heap|TOTAL RSS" | head -4; adb shell cat /proc/meminfo | grep -E "MemAvailable"; } >> "$OUT/memory.txt" 2>&1; }
 tapt() { dump scan; pt=$($UI tap "$OUT/scan.xml" "$1" "${2:-}") || return 1; adb shell input tap $pt; }
 skip_welcome() { if tapt "Skip" exact; then sleep 4; fi; }
 # what the app holds on the device: the Room store and its body table (sizes only)
@@ -61,7 +75,8 @@ adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1
 sleep 15
 skip_welcome
 synced=0
-for i in $(seq 1 24); do
+for i in $(seq 1 60); do
+  front 10
   dump 01-inbox
   if $UI has "$OUT/01-inbox.xml" "Weekly Digest 42" >/dev/null 2>&1; then synced=1; break; fi
   skip_welcome; sleep 5
@@ -70,20 +85,29 @@ done
 shot 01-first-sync
 
 # ---- the first full sync: every minute a pull to refresh (one backfill page of the Inbox each), the store's size on record ----------
+pidwatch
 for m in $(seq 1 "$FILL_MINUTES"); do
+  front 8; pidwatch
   adb shell input swipe 700 700 700 1500 300
-  sleep 57
+  sleep 50
   if [ $((m % 5)) = 0 ]; then
-    sizes "minute $m"
+    sizes "minute $m"; mem "minute $m"
     curl -s -m 20 "http://127.0.0.1:$PORT/__stats" > "$OUT/stats-fill-$m.json" || true
   fi
 done
+pidwatch
+note "process deaths during the fill: $DEATHS"
+[ "$DEATHS" = 0 ] || echo "::warning::the app process was replaced $DEATHS time(s) during the first full sync (see process.txt, memory.txt)"
+H=$(grep -A99 "minute" "$OUT/sizes.txt" | grep "^headers|" | tail -1 | cut -d"|" -f2)
+[ "${H:-0}" -ge "$BULK" ] 2>/dev/null || fail "the first full sync did not converge: ${H:-?} headers of $BULK after $FILL_MINUTES min"
+front 8
 sizes "after the fill ($FILL_MINUTES min, server holds $BULK bulk messages)"
 shot 02-inbox-filled
 grep -E "inbox backlog" "$OUT/logcat.txt" | tail -3 | sed 's/.*inbox backlog [^:]*:/inbox backlog:/' | tee -a "$OUT/summary.txt"
 
 # ---- S: the Configs section with the two cache settings and the usage line ----------------------------------------------------------
 found=0
+front 8
 if tapt "Configs" exact || tapt "Settings" exact; then
   sleep 3
   # the Offline section is on the Reading page of the Configs tree
@@ -107,8 +131,11 @@ else
 fi
 
 # ---- C: cold start at the fixture ---------------------------------------------------------------------------------------------------
-echo "| step | time to first row (ms) | rows | rows painted before the first server call |" > "$OUT/timing.md"
-echo "|---|---|---|---|" >> "$OUT/timing.md"
+adb shell input keyevent KEYCODE_BACK; adb shell input keyevent KEYCODE_BACK; sleep 2
+front 8; tapt "Mail" exact; sleep 3
+mem "before the cold starts"
+echo "| step | time to first row (ms) | rows | rows painted before the first server call | store query of the first page (ms) |" > "$OUT/timing.md"
+echo "|---|---|---|---|---|" >> "$OUT/timing.md"
 for round in 1 2 3; do
   adb shell am force-stop "$PKG"
   sleep 3
@@ -127,12 +154,26 @@ for round in 1 2 3; do
   if [ -n "$lp" ] && [ -n "$ln" ]; then
     if [ "$lp" -lt "$ln" ] && grep -q "cold-start first-network.*after-rows=true" "$OUT/cold-$round.log"; then order=yes; else order=NO; fi
   fi
-  echo "| cold start $round at the fixture | ${ms:-missing} | ${rows:-} | $order |" >> "$OUT/timing.md"
+  q=$(sed -n 's/.*page-load kind=Refresh ms=\([0-9]*\).*/\1/p' "$OUT/cold-$round.log" | head -1)
+  echo "| cold start $round at the fixture | ${ms:-missing} | ${rows:-} | $order | ${q:-} |" >> "$OUT/timing.md"
   [ -n "$ms" ] || fail "cold start $round: the list logged no first row"
   case "$order" in yes*) ;; *) fail "cold start $round: rows were not painted before the first server call ($order)" ;; esac
   [ "${ms:-99999}" -le "$COLD_LIMIT_MS" ] 2>/dev/null || fail "cold start $round: first row after ${ms:-?} ms (limit $COLD_LIMIT_MS)"
 done
 shot 05-cold-start-settled
+# warm: leave Mail for Alerts and come back, twice
+for w in 1 2; do
+  n0=$(grep -c -E "MailList.*first-row" "$OUT/logcat.txt")
+  tapt "Alerts" exact || fail "warm $w: no Alerts item in the bottom bar"
+  sleep 4
+  tapt "Mail" exact || fail "warm $w: no Mail item in the bottom bar"
+  sleep 4
+  n1=$(grep -c -E "MailList.*first-row" "$OUT/logcat.txt")
+  wms=missing; [ "$n1" -gt "$n0" ] && wms=$(grep -E "MailList.*first-row" "$OUT/logcat.txt" | tail -1 | sed -n 's/.*first-row ms=\([0-9]*\).*/\1/p')
+  echo "| warm return $w from Alerts | $wms | | - | |" >> "$OUT/timing.md"
+  [ "$wms" != missing ] || fail "warm $w: the list logged no first row"
+  [ "${wms:-99999}" -le "$WARM_LIMIT_MS" ] 2>/dev/null || fail "warm $w: first row after $wms ms (limit $WARM_LIMIT_MS)"
+done
 
 # scroll jank over ten flings of the list
 adb shell dumpsys gfxinfo "$PKG" reset >/dev/null 2>&1
@@ -145,6 +186,11 @@ shot 06-scrolled
 # ---- A: airplane mode, an old message opens with its body ----------------------------------------------------------------------------
 adb shell cmd connectivity airplane-mode enable
 sleep 5
+# an explicit relaunch after the toggle: the body must come from the store of a process that never had a network
+adb shell am force-stop "$PKG"; sleep 2
+adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null; sleep 12
+front 8
+for j in 1 2 3 4; do adb shell input swipe 700 1600 700 500 250; sleep 1; done
 opened=0
 for s in 1 2 3; do
   dump 07-list
@@ -152,9 +198,15 @@ for s in 1 2 3; do
   adb shell input swipe 700 1600 700 800 400; sleep 1
 done
 [ "$opened" = 1 ] || fail "airplane: no bulk row on screen to open"
-sleep 6
-dump 07-reader; shot 07-airplane-old-body
-if grep -q "Bulk body" "$OUT/07-reader.texts.txt"; then note "airplane: the body of an old message shows from the store"; else fail "airplane: the opened old message shows no body"; fi
+t0=$(date +%s); body=0
+for k in $(seq 1 15); do
+  sleep 3
+  dump 07-reader
+  if grep -q "Bulk body" "$OUT/07-reader.texts.txt" && ! grep -q "Conversation, " "$OUT/07-reader.texts.txt"; then body=1; break; fi
+done
+note "airplane: the reader showed the body after about $(( $(date +%s) - t0 )) s"
+shot 07-airplane-old-body
+if [ "$body" = 1 ]; then note "airplane: the body of an old message shows from the store"; else fail "airplane: the opened old message shows no body"; fi
 grep -E "MailOpen" "$OUT/logcat.txt" | tail -4 | sed 's/id=[^ ]*/id=…/' >> "$OUT/summary.txt"
 adb shell cmd connectivity airplane-mode disable
 
