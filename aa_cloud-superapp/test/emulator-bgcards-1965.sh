@@ -10,6 +10,7 @@ D="$1"; OUT="$2"; mkdir -p "$OUT"
 H=com.diegonmarcos.superapp; M=com.diegonmarcos.comms.mail; S=com.diegonmarcos.cloudstore; N=com.diegonmarcos.cloudnav; W=com.diegonmarcos.cloudwebserver
 rc=0; fail() { echo "::error::$*"; rc=1; }
 shoot() { adb exec-out screencap -p > "$OUT/$1.png" 2>/dev/null || true; }
+[ -f "$D/runs.txt" ] && cp "$D/runs.txt" "$OUT/ship-runs.txt"   # which Ship run each APK came from
 adb root >/dev/null 2>&1; sleep 3; adb wait-for-device
 for a in superapp mail store nav webserver; do
   [ -f "$D/$a.apk" ] || { fail "missing $a.apk"; continue; }
