@@ -97,7 +97,7 @@ fun WikiShell(start: WikiStart = WikiStart()) {
     var page by rememberSaveable { mutableStateOf(start.page ?: start.tab?.substringBefore('.')) }
     val nav = remember { WikiNav().also { n -> start.tab?.let { t -> n.tabs[t.substringBefore('.')] = t }; n.tags.addAll(start.tags) } }
     // #1831 a simulator page is a tab of the Chronos topic: the side menu marks Chronos, the title names the simulator
-    val pageId = page?.takeIf { p -> wiki.allPages().any { it.id == p } || Decl.chronos.page(p) != null } ?: wiki.pages.first().id
+    val pageId = page?.takeIf { p -> wiki.allPages().any { it.id == p } || Decl.chronos.page(p) != null } ?: HomeIndex.startPage(Decl.homeStart, wiki.pages.map { it.id })
     val menuId = if (Decl.chronos.page(pageId) != null) Chronos.PARENT else pageId
 
     Box(

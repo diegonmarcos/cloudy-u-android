@@ -1,0 +1,26 @@
+# #1984 Cloud Wiki Home: view tabs 3D | List | Table | Graph, cold start on Home with 3D selected. Push runs the tester with its own mutation proofs
+# (every mutant red). The mutation name, when given, comes through env and an allow-list inside the tester.
+name: wiki-1984-mutation
+on:
+  push:
+    paths:
+      - 'ac_cloud-wiki/build.json'
+      - 'ac_cloud-wiki/app/build.gradle'
+      - 'ac_cloud-wiki/app/src/main/java/com/diegonmarcos/cloudwiki/Decl.kt'
+      - 'ac_cloud-wiki/app/src/main/java/com/diegonmarcos/cloudwiki/HomeIndex.kt'
+      - 'ac_cloud-wiki/app/src/main/java/com/diegonmarcos/cloudwiki/ui/HomePage.kt'
+      - 'ac_cloud-wiki/app/src/main/java/com/diegonmarcos/cloudwiki/ui/WikiShell.kt'
+      - 'ac_cloud-wiki/test/test-wiki-1984.sh'
+      - '.github/workflows/wiki-1984-mutation.yml'
+permissions:
+  contents: read
+jobs:
+  home-order:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ac_cloud-wiki
+      - name: Tester (real tree green, every mutation red)
+        run: bash ac_cloud-wiki/test/test-wiki-1984.sh

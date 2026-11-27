@@ -16,6 +16,21 @@ import kotlin.math.sin
 object HomeIndex {
     enum class Mode(val id: String, val icon: String) { Outline("list", "checklist"), Table("table", "table_chart"), Graph("graph", "hub"), Planet("planet", "public") }
 
+    /**
+     * #1984 the view tabs in the declared order ([csv] = build.json::ui.home.view_modes): an unknown or repeated id is dropped and a view the
+     * declaration forgot is appended, so every view always stays.
+     */
+    fun order(csv: String): List<Mode> {
+        val named = csv.split(',').mapNotNull { id -> Mode.entries.firstOrNull { it.id == id.trim() } }.distinct()
+        return named + Mode.entries.filter { it !in named }
+    }
+
+    /** #1984 the view selected at a cold start: the declared [id] when it is one of [modes], else the first tab. */
+    fun default(id: String, modes: List<Mode>): Mode = modes.firstOrNull { it.id == id } ?: modes.first()
+
+    /** #1984 the page a cold start opens: the declared [start] when [pages] holds it, else the first page. */
+    fun startPage(start: String, pages: List<String>): String = pages.firstOrNull { it == start } ?: pages.first()
+
     /** One Table row: every column the dataset can fill for the node. */
     data class Row(
         val id: String,

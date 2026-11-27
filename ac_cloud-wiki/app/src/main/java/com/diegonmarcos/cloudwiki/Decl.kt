@@ -25,6 +25,11 @@ object Decl {
         Chronos.parse(runCatching { String(Base64.decode(BuildConfig.UI_SECTIONS_B64, Base64.DEFAULT), Charsets.UTF_8) }.getOrDefault("[]"))
     }
 
+    /** #1984 build.json::ui.home, baked: the cold-start page, Home's view tab order and the view selected at a cold start. */
+    val homeStart: String get() = BuildConfig.UI_HOME_START
+    val homeModes: List<HomeIndex.Mode> get() = HomeIndex.order(BuildConfig.UI_HOME_MODES)
+    val homeDefault: HomeIndex.Mode get() = HomeIndex.default(BuildConfig.UI_HOME_DEFAULT, homeModes)
+
     /** The one section holding every page (the collapsed side menu). */
     const val SECTION_WIKI = "wiki"
 

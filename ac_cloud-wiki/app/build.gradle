@@ -58,6 +58,11 @@ def uiSectionsB64    = b64(buildJson.ui.sections)
 def uiBottomNav      = buildJson.ui.bottom_nav.join(',')
 def uiDefaultSection = (buildJson.ui.default_section ?: buildJson.ui.bottom_nav[0]).toString()
 
+// #1984 ui.home: the page a cold start opens, the order of Home's view tabs and the one selected at a cold start (declared, never typed in Kotlin).
+def uiHomeStart   = (buildJson.ui?.home?.start_page ?: 'home').toString()
+def uiHomeModes   = (buildJson.ui?.home?.view_modes ?: ['planet', 'list', 'table', 'graph']).join(',')
+def uiHomeDefault = (buildJson.ui?.home?.default_view ?: 'planet').toString()
+
 android {
     namespace 'com.diegonmarcos.cloudwiki'
     compileSdk 36
@@ -86,6 +91,9 @@ android {
         buildConfigField "String", "UI_SECTIONS_B64",    "\"${uiSectionsB64}\""
         buildConfigField "String", "UI_BOTTOM_NAV",      "\"${uiBottomNav}\""
         buildConfigField "String", "UI_DEFAULT_SECTION", "\"${uiDefaultSection}\""
+        buildConfigField "String", "UI_HOME_START",      "\"${uiHomeStart}\""
+        buildConfigField "String", "UI_HOME_MODES",      "\"${uiHomeModes}\""
+        buildConfigField "String", "UI_HOME_DEFAULT",    "\"${uiHomeDefault}\""
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 

@@ -83,7 +83,7 @@ object HomeTags {
 
 /**
  * #1891 Home: the index visualiser of the whole library ([LibraryTree.build] over the side menu's declaration, the dataset and the Chronos
- * simulators): a summary, then the view mode tabs List | Table | Graph | 3D. Every view draws every node of the one tree; a tap opens the
+ * simulators): a summary, then the view mode tabs 3D | List | Table | Graph (build.json::ui.home, #1984). Every view draws every node of the one tree; a tap opens the
  * node's page (a dataset page opens its topic on that tab). Drawn from the declaration alone until the dataset arrives.
  */
 @Composable
@@ -91,7 +91,7 @@ fun HomePage(data: WikiData?, wiki: NavSection, nav: WikiNav, onTopic: (String) 
     val p = LocalKitPalette.current
     val chronos = Decl.chronos
     val tree = remember(wiki, data, chronos) { LibraryTree.build(wiki, data, chronos, home = false) }
-    var mode by rememberSaveable { mutableStateOf(HomeIndex.Mode.Outline.id) }
+    var mode by rememberSaveable { mutableStateOf(Decl.homeDefault.id) }
     val open: (TreeNode) -> Unit = { n -> val pg = n.page; if (pg != null) { n.tab?.let { nav.tabs[pg] = it }; onTopic(pg) } }
     val labels = mapOf(
         HomeIndex.Mode.Outline to stringResource(R.string.home_list), HomeIndex.Mode.Table to stringResource(R.string.home_table),
@@ -99,7 +99,7 @@ fun HomePage(data: WikiData?, wiki: NavSection, nav: WikiNav, onTopic: (String) 
     )
     Column(Modifier.fillMaxSize().testTag(HomeTags.HOME)) {
         NavBarTopSecondRow(
-            pages = HomeIndex.Mode.entries.map { NavPage(it.id, labels.getValue(it), it.icon) },
+            pages = Decl.homeModes.map { NavPage(it.id, labels.getValue(it), it.icon) },
             selectedId = mode,
             onSelect = { mode = it.id },
             modifier = Modifier.testTag(HomeTags.MODES),
@@ -110,7 +110,7 @@ fun HomePage(data: WikiData?, wiki: NavSection, nav: WikiNav, onTopic: (String) 
             stringResource(R.string.home_summary, tree.nodes.size, tree.roots.size, pages, tree.maxLevel + 1, tree.nodes.sumOf { it.words }),
             Modifier.fillMaxWidth().padding(KitStoreRow.padH, KitStoreRow.tight), color = p.textSecondary,
         )
-        when (HomeIndex.Mode.entries.firstOrNull { it.id == mode } ?: HomeIndex.Mode.Outline) {
+        when (Decl.homeModes.firstOrNull { it.id == mode } ?: Decl.homeDefault) {
             HomeIndex.Mode.Outline -> IndexList(tree, open)
             HomeIndex.Mode.Table -> IndexTable(tree, open)
             HomeIndex.Mode.Graph -> IndexGraph(tree, open)

@@ -3,6 +3,7 @@
 # Installs the SuperApp and Cloud Wiki (x86_64), seeds Cloud Wiki's own last-known-good copy of its runtime dataset (the client's fallback when Cloud
 # Store has served nothing, libs:fleet-data-client FleetDataReader) from data/fleet, and photographs:
 #   projects-row        Cloud > Apps with the Projects row (Wiki | SuperApp, Omniverse | FinTerm, BioMed, CAD | Circusverse)
+#   wiki-coldstart      #1984 a cold start: Home, tabs 3D | List | Table | Graph, 3D selected
 #   wiki-topic-page     Engineering > Civil engineering: the Markdown explanation with its tag chips
 #   wiki-tag-filter     Math Overview filtered by two tag chips
 #   wiki-graph          the force-directed graph of every page
@@ -42,6 +43,9 @@ adb shell "run-as $WPKG mkdir -p files/fleetdata-lkg; cat /data/local/tmp/wiki-s
 adb shell "run-as $WPKG ls -l files/fleetdata-lkg" 2>&1 | tee -a "$OUT/seed.txt"
 wiki() { adb shell am force-stop "$WPKG"; adb shell am start -n "$WACT" "$@" >/dev/null; }
 
+# #1984 a COLD start (force-stop, plain launch, no extras): Home with the view tabs 3D | List | Table | Graph and 3D selected
+wiki;                                                 shot wiki-coldstart 12
+dump > "$OUT/wiki-coldstart.xml"
 wiki --es page eng --es tab eng.civil;                shot wiki-topic-page 9
 dump > "$OUT/wiki-topic-page.xml"
 wiki --es page math --es tags history,society;        shot wiki-tag-filter 9
