@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # emulator-me-proj-1961 — #1961 on a booted emulator: Proj > CG > Omniverse (a site entry, README tabs from CG-galaxy) and Proj > Unix > Cloud Me (a GitHub entry)
-# are opened from the Ship APK. The tab row must read README.html, GH Repo Page, README.canvas, README.md (then Site for CG), README.html must be the open tab
+# and Proj > Wiki > ModernSc (a lib-chronos folder: its trio is lib-chronos/1.Modern-science/README.*) are opened from the Ship APK. The tab row must read README.html, GH Repo Page, README.canvas, README.md (then Site for CG), README.html must be the open tab
 # on a fresh install, and the README.html page is screenshotted top to bottom (its sections: metadata, URLs, graphics, workflows, hooks, tree, explorer, ...).
 # Usage: emulator-me-proj-1961.sh ME_APK OUT_DIR. Exit 1 on any failed assertion.
 set -uo pipefail
@@ -43,7 +43,7 @@ print("%s tabs %s: %s (want %s)" % ("PASS" if ok else "FAIL", sys.argv[1].rsplit
 PY
 }
 open_page "page:proj/pj-cg-omniverse"; sleep 20   # warm-up: the first WebView of a cold start paints late
-for p in "cg-omniverse:pj-cg-omniverse:site" "unix-cloudme:pj-unix-cloudme:"; do
+for p in "cg-omniverse:pj-cg-omniverse:site" "unix-cloudme:pj-unix-cloudme:" "wiki-modernsc:pj-wiki-modernsc:"; do
     id="${p%%:*}"; rest="${p#*:}"; page="${rest%%:*}"; site="${rest#*:}"
     open_page "page:proj/$page"; shot "proj-1961-$id-readme-html" 20
     if [ -n "$site" ]; then tabs "proj-1961-$id-readme-html" "README.html" "GH Repo Page" "README.canvas" "README.md" "Site" || rc=1
@@ -52,6 +52,6 @@ for p in "cg-omniverse:pj-cg-omniverse:site" "unix-cloudme:pj-unix-cloudme:"; do
 done
 $T adb logcat -d > "$OUT/logcat.txt"
 pip install --quiet pillow >/dev/null 2>&1 || true
-for id in cg-omniverse unix-cloudme; do python3 "$HERE/render_check.py" pixels "$OUT/proj-1961-$id-readme-html.png" | tee -a "$OUT/verdict.txt" || rc=1; done
+for id in cg-omniverse unix-cloudme wiki-modernsc; do python3 "$HERE/render_check.py" pixels "$OUT/proj-1961-$id-readme-html.png" | tee -a "$OUT/verdict.txt" || rc=1; done
 echo "rc=$rc" | tee -a "$OUT/verdict.txt"
 exit $rc
