@@ -84,4 +84,21 @@ class WebPullRefresh1947Test {
         assertFalse(s.get("pers", page)!!.body.length() == 0L)
     }
 
+
+    @Test fun `trim evicts images before a page's html, css and js, so an opened page keeps its offline copy`() {
+        val s = store()
+        s.put("pers", page, "text/html", "utf-8", 200, ByteArray(100))
+        s.put("pers", "https://p.example/a.css", "text/css", null, 200, ByteArray(100))
+        s.put("pers", "https://p.example/a.js", "application/javascript", null, 200, ByteArray(100))
+        // the page's entries are the OLDEST; a section's worth of newer images follows
+        s.root.walkTopDown().filter { it.name.endsWith(".meta") }.forEach { it.setLastModified(1_000_000L) }
+        for (i in 1..5) {
+            s.put("other$i", "https://o.example/$i.png", "image/png", null, 200, ByteArray(1000))
+            s.metaFile("other$i", "https://o.example/$i.png").setLastModified(2_000_000L + i)
+        }
+        s.trim(1_000)
+        assertTrue(s.get("pers", page)!!.body.length() == 100L)
+        assertTrue(s.get("pers", "https://p.example/a.css")!!.body.length() == 100L)
+        assertTrue(s.get("pers", "https://p.example/a.js")!!.body.length() == 100L)
+    }
 }

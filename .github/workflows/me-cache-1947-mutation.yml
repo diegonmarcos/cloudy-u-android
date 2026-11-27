@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'serve-incomplete | blocking-subresource | no-replan | no-tombstone | cache-first | not-armed-uncached | no-hard-refresh'
+        description: 'serve-incomplete | blocking-subresource | no-replan | no-tombstone | cache-first | not-armed-uncached | no-hard-refresh | trim-by-age'
         required: true
 permissions:
   contents: read
@@ -36,6 +36,8 @@ jobs:
             not-armed-uncached)    sed -i 's/fun armed(cached: Boolean): Boolean = true/fun armed(cached: Boolean): Boolean = cached/' $(dirname $F)/WebPullRefresh.kt ;;
             # the pull-down no longer deletes the cached page's files
             no-hard-refresh)       sed -i 's/if (cached) hardRefresh()/if (false) hardRefresh()/' $(dirname $F)/WebPullRefresh.kt ;;
+            # trim evicts the oldest entry whatever it is again: a section's images evict the opened page's html/css/js (the empty offline copy)
+            trim-by-age)           sed -i 's/compareBy({ it.second }, { it.third })/compareBy({ 0 }, { it.third })/' $F ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
           git diff --stat
@@ -86,6 +88,7 @@ jobs:
             no-replan|no-tombstone) C=LnktreeCacheTest; N="a prefetch whose css failed leaves the page planned again, and a 404 tombstone does not" ;;
             cache-first)          C=WebPullRefresh1947Test; N="online the network wins even when a fresh cache entry exists, and the entry is refreshed" ;;
             not-armed-uncached)   C=WebPullRefresh1947Test; N="the refresh is armed for cached and non-cached pages" ;;
+            trim-by-age)          C=WebPullRefresh1947Test; N="trim evicts images before a page's html, css and js, so an opened page keeps its offline copy" ;;
             no-hard-refresh)      C=WebPullRefresh1947Test; N="a cached page runs the hard refresh, empties the cache and reloads, in that order" ;;
           esac
           X="$(find ac_cloud-me/app/build -path '*test-results*' -name "TEST-*.$C.xml" | head -1)"

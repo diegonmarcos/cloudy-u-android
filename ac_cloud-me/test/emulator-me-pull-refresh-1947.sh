@@ -38,6 +38,14 @@ python3 "$HERE/render_check.py" pixels "$OUT/pull-refresh-before.png" | tee -a "
 [ "$(srcc)" -ge 1 ] && ok "a2: the Personal main frame came from the network" || fail "a2: no MAINFRAME_SOURCE source=network for personal"
 $T adb logcat -d -s CloudMeWeb:V | grep MAINFRAME_SOURCE | tail -3 | tee -a "$OUT/verdict.txt"
 $T adb shell "ls -la /data/data/$ME/cache/lnktree-cache/personal 2>&1 | head -20" | tee -a "$OUT/cachedir.txt"
+# a3: a page opened once online leaves a NON-EMPTY offline copy (html + css/js) with no pull-down at all
+sleep 20
+$T adb shell "du -sk /data/data/$ME/cache/lnktree-cache 2>&1; ls /data/data/$ME/cache/lnktree-cache 2>&1" | tr -d '\r' >> "$OUT/cachedir.txt"
+offline_copy() {  # prints "html_bytes css_js_count" of the Personal entries
+    $T adb shell "cd /data/data/$ME/cache/lnktree-cache/personal 2>/dev/null && for f in *.meta; do m=\$(grep '^mime=' \$f | cut -d= -f2); b=\$(wc -c < \${f%.meta}.body); echo \"\$m \$b\"; done" | tr -d '\r' | \
+        awk '/html/ && $2>0 {h=$2} /css|javascript/ && $2>0 {c++} END {print h+0, c+0}'; }
+read -r H C <<< "$(offline_copy)"
+[ "${H:-0}" -gt 0 ] && [ "${C:-0}" -ge 1 ] && ok "a3: offline copy after one online open: html ${H} bytes, ${C} css/js entries" || fail "a3: no non-empty offline copy after the first open (html=${H:-0} css/js=${C:-0})"
 ok0=$(okc); src0=$(srcc); f0=$(fetched); echo "before: ok=$ok0 network-sources=$src0 fetchedAt=$f0" | tee -a "$OUT/verdict.txt"
 dump() { $T adb shell "cd /data/data/$ME/cache/lnktree-cache/personal 2>/dev/null && for f in *.meta; do echo \$f; cat \$f; wc -c \${f%.meta}.body; done" | tr -d '\r' >> "$OUT/cachedir.txt"; }
 echo "== before the pull" >> "$OUT/cachedir.txt"; dump
@@ -64,6 +72,19 @@ $T adb shell input swipe 540 1000 540 1600 400; sleep 1
 shot pull-refresh-midpage
 sleep 10
 [ "$(okc)" -eq "$ok1" ] && ok "c: no reload while scrolling mid-page ($ok1 MAINFRAME_OK)" || fail "c: a mid-page swipe reloaded the page ($ok1 -> $(okc))"
+$T adb logcat -d > "$OUT/logcat-online.txt"
+# (d) airplane mode: the page opened before is shown from its offline copy, with the note
+$T adb shell cmd connectivity airplane-mode enable; $T adb shell svc wifi disable; $T adb shell svc data disable; sleep 5
+$T adb shell am force-stop "$ME"; $T adb logcat -c
+$T adb shell am start -W -n "$(launcher "$ME")" -f 0x14000000 --es shortcut_action "section:pers" >/dev/null
+t=0; while [ $t -lt 45 ] && [ "$(n "MAINFRAME_(OK|ERROR) page=personal ")" -lt 1 ]; do sleep 3; t=$((t+3)); done; sleep 5
+shot pull-refresh-offline
+$T adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; $T adb pull /sdcard/ui.xml "$OUT/pull-refresh-offline.xml" >/dev/null 2>&1
+$T adb logcat -d -s CloudMeWeb:V | grep -E "MAINFRAME" | tee -a "$OUT/verdict.txt"
+[ "$(n "MAINFRAME_SOURCE page=personal source=offline-cache")" -ge 1 ] && ok "d1: the main frame came from the offline copy" || fail "d1: no MAINFRAME_SOURCE source=offline-cache in airplane mode"
+grep -q "Offline copy from" "$OUT/pull-refresh-offline.xml" 2>/dev/null && ok "d2: the offline-copy note is on screen" || fail "d2: no 'Offline copy from' note on screen"
+python3 "$HERE/render_check.py" pixels "$OUT/pull-refresh-offline.png" | tee -a "$OUT/verdict.txt" || rc=1
+$T adb shell cmd connectivity airplane-mode disable; $T adb shell svc wifi enable; $T adb shell svc data enable
 $T adb logcat -d > "$OUT/logcat.txt"; $T adb logcat -d -s CloudMeWeb:V > "$OUT/cloudmeweb.log"
 echo "rc=$rc" | tee -a "$OUT/verdict.txt"
 exit $rc

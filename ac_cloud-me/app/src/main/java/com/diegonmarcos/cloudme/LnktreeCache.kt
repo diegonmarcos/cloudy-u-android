@@ -191,13 +191,20 @@ class LnktreeCacheStore(val root: File, private val clock: () -> Long = System::
     /** Hard refresh of the whole Lnktree cache. */
     fun clearAll(): Int = (root.listFiles() ?: emptyArray()).sumOf { deleteTree(it) }
 
-    /** Keeps the cache under [maxBytes] by deleting the oldest entries first. */
+    /**
+     * Keeps the cache under [maxBytes] by deleting the oldest entries first. #1947 images, fonts and data go BEFORE any page HTML, stylesheet or script:
+     * the offline copy of a page is its HTML + CSS/JS, so a section's worth of images must never evict the page that was opened (the Personal copy was empty after the pager fetched its siblings).
+     */
     fun trim(maxBytes: Long) {
         val files = (root.walkTopDown().filter { it.isFile && it.name.endsWith(".meta") }.toList())
         fun size(m: File) = m.length() + File(m.parentFile, m.nameWithoutExtension + ".body").length()
+        fun critical(m: File): Boolean = runCatching {
+            val mime = Properties().apply { m.inputStream().use { load(it) } }.getProperty("mime", "").lowercase()
+            mime.contains("html") || mime.contains("css") || mime.contains("javascript") || mime.contains("ecmascript")
+        }.getOrDefault(false)
         var total = files.sumOf(::size)
         // #1911 the mtimes are read ONCE: concurrent page loads touch the files while they sort, and a comparator reading lastModified() live broke TimSort's contract (crashed Proj > Cloudy)
-        for (m in files.map { it to it.lastModified() }.sortedBy { it.second }.map { it.first }) {
+        for (m in files.map { Triple(it, if (critical(it)) 1 else 0, it.lastModified()) }.sortedWith(compareBy({ it.second }, { it.third })).map { it.first }) {
             if (total <= maxBytes) break
             total -= size(m)
             File(m.parentFile, m.nameWithoutExtension + ".body").delete(); m.delete()
