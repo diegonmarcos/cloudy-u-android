@@ -1,0 +1,8 @@
+{
+ "_doc": "#1477 Cloud Me's project/area tabs that read like an application name (the Proj section, ui.sections[proj]). test-app-names-pattern.sh T5 exempts a page whose id AND label are one project declared here (same id, same label, same app): 'Cloud-me', 'Capital' and 'Hardtech' name the owner's projects, not the apps cloud-me, capital-* and hardtech-*. Read only by that tester; nothing in the APK reads this file (it is not an assets dir).",
+ "projects": [
+  {"id": "pj-unix-cloudme", "label": "🙋 Cloud-me"},
+  {"id": "pj-capital", "label": "💹 Capital"},
+  {"id": "pj-hardtech", "label": "🔬 Hardtech"}
+ ]
+}
