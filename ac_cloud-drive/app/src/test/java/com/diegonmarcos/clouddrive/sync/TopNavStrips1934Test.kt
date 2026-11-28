@@ -97,16 +97,22 @@ class TopNavStrips1934Test {
         }
     }
 
+    // boundsInRoot is CLIPPED by the strip, so a cut chip would look fully inside: the chip's real extent is its unclipped position plus its size
+    private fun extent(tag: String): Pair<Float, Float> {
+        val n = compose.onNodeWithTag(tag).fetchSemanticsNode()
+        return n.positionInRoot.x to n.positionInRoot.x + n.size.width
+    }
+
     private fun assertReachable(strip: String, chips: List<String>) {
         val sb = compose.onNodeWithTag(strip + "_viewport").fetchSemanticsNode().boundsInRoot
         for (c in chips) {
-            val b = compose.onNodeWithTag(c).fetchSemanticsNode().boundsInRoot
-            val inside = b.left >= sb.left - 1f && b.right <= sb.right + 1f
+            val (l, r) = extent(c)
+            val inside = l >= sb.left - 1f && r <= sb.right + 1f
             if (!inside) {
                 assertTrue("$c is cut off in $strip with no scroll hint", compose.onAllNodesWithTag(strip + "_more_end").fetchSemanticsNodes().isNotEmpty())
                 compose.onNodeWithTag(c).performScrollTo()   // reachable by scrolling the strip
-                val a = compose.onNodeWithTag(c).fetchSemanticsNode().boundsInRoot
-                assertTrue("$c still cut off after scrolling $strip", a.left >= sb.left - 1f && a.right <= sb.right + 1f)
+                val (al, ar) = extent(c)
+                assertTrue("$c still cut off after scrolling $strip", al >= sb.left - 1f && ar <= sb.right + 1f)
             }
         }
     }
