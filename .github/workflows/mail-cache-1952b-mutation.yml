@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'none | evict-newest-first | window-ignored | shrink-no-evict | default-drift | setting-not-stored | resume-from-zero | metered-no-chain | network-before-rows | index-not-covering | first-page-unbounded | return-requeries | placeholder-view | core-ungated | query-per-write | first-rows-any-view | fill-ignores-screen | inbox-pruned | folders-after-messages | aggregates-per-write | inbox-id-not-remembered'
+        description: 'none | evict-newest-first | window-ignored | shrink-no-evict | default-drift | setting-not-stored | resume-from-zero | metered-no-chain | network-before-rows | index-not-covering | first-page-unbounded | return-requeries | placeholder-view | core-ungated | query-per-write | first-rows-any-view | fill-ignores-screen | inbox-pruned | folders-after-messages | aggregates-per-write | inbox-id-not-remembered | email-gains-var'
         required: true
 permissions:
   contents: read
@@ -66,6 +66,8 @@ jobs:
             aggregates-per-write) sed -i 's/const val AGGREGATE_MIN_GAP_MS = 1_000L/const val AGGREGATE_MIN_GAP_MS = 0L/' $D/mail/ListReturn.kt ;;
             # a first sync no longer remembers the Inbox id with its early folder write (a restart mid-sync paints late)
             inbox-id-not-remembered) sed -i '/if (target.role == "inbox") accountStore.saveInboxMetaFor(credentials.id, target.id, target.name/d' $D/mail/MailRepository.kt ;;
+            # the mail model gains a var (the stability declaration for Compose would be a lie)
+            email-gains-var) sed -i 's/^    val id: String,$/    var id: String,/' ac_cloud-mail/core/jmap/src/main/kotlin/app/sterna/core/jmap/model/Email.kt ;;
             *) echo "::error::unknown mutation (not in the allow-list)"; exit 2 ;;
           esac
           git diff --stat
@@ -108,7 +110,7 @@ jobs:
         run: |
           cd ac_cloud-mail
           chmod +x gradlew
-          ./gradlew --no-daemon :core:data:testDebugUnitTest -PtestApp --tests "app.sterna.core.data.mail.MailCache1952bTest" --tests "app.sterna.core.data.db.ListQueryPlan1952bTest" --tests "app.sterna.core.data.mail.ListReturn1952cTest" || true
+          ./gradlew --no-daemon :core:data:testDebugUnitTest -PtestApp --tests "app.sterna.core.data.mail.MailCache1952bTest" --tests "app.sterna.core.data.db.ListQueryPlan1952bTest" --tests "app.sterna.core.data.mail.ListReturn1952cTest" --tests "app.sterna.core.data.mail.MailModelImmutability1952Test" || true
       - name: Verdict (KILLED = the named test failed; none = every test green)
         env:
           M: ${{ inputs.name }}
@@ -133,6 +135,7 @@ jobs:
             fill-ignores-screen) N="the background fill pauses between batches only while the app is on screen" ;;
             inbox-pruned)        N="the Inbox is never pruned by age, whoever asks" ;;
             folders-after-messages) N="a first sync stores the folder list before its messages" ;;
+            email-gains-var)     N="the mail model has no var and no mutable collection field" ;;
             inbox-id-not-remembered) N="a first sync stores the folder list before its messages" ;;
             aggregates-per-write) N="a sync's writes reach the drawer aggregates in steps and the last write is never lost" ;;
             *) echo "::error::unknown mutation (not in the allow-list)"; exit 2 ;;
@@ -145,7 +148,7 @@ jobs:
           path, want, leg = sys.argv[1:]
           import glob
           cases = {}
-          for f in glob.glob(path + "/test-results/*/TEST-*MailCache1952bTest.xml") + glob.glob(path + "/test-results/*/TEST-*ListQueryPlan1952bTest.xml") + glob.glob(path + "/test-results/*/TEST-*ListReturn1952cTest.xml"):
+          for f in glob.glob(path + "/test-results/*/TEST-*MailCache1952bTest.xml") + glob.glob(path + "/test-results/*/TEST-*ListQueryPlan1952bTest.xml") + glob.glob(path + "/test-results/*/TEST-*ListReturn1952cTest.xml") + glob.glob(path + "/test-results/*/TEST-*MailModelImmutability1952Test.xml"):
               cases.update({c.get("name"): c for c in ET.parse(f).getroot().iter("testcase")})
           failed = sorted(n for n, c in cases.items() if c.find("failure") is not None or c.find("error") is not None)
           print("tests:", len(cases), "failed:", failed)
