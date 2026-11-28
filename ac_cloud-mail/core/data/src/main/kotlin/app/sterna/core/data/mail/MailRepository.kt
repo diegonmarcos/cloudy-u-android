@@ -1669,8 +1669,8 @@ class MailRepository(
     fun observeUnifiedInboxUnreadByAccount(scopes: List<Pair<String, String>>): Flow<Map<String, Int>> {
         val conversationView = settings?.conversationView ?: flowOf(true)
         return combine(
-            emailDao.observeThreadUnreadCounts().stepped(),
-            emailDao.observeMessageUnreadCounts().stepped(),
+            emailDao.observeThreadUnreadCounts(),
+            emailDao.observeMessageUnreadCounts(),
             conversationView,
         ) { threads, messages, conversation ->
             unreadByAccountFrom(
@@ -2498,7 +2498,8 @@ class MailRepository(
         // #1952 a FIRST sync stores the folder list before its messages: the list needs the Inbox id to page what lands, and a
         // first sync of 40 000 messages outlived the refresh that would have stored it (an empty Inbox for the whole sync).
         // Only while the store does not know the folder yet, so the counters rule below is untouched.
-        if (firstSyncNeedsFolders(mailboxDao.roleForId(credentials.id, target.id), mailboxDao.idsForAccount(credentials.id).size)) {
+        // A signed-out account is never given a folder list (#121): the account must still be known.
+        if (accountStore.account(credentials.id) != null && firstSyncNeedsFolders(mailboxDao.roleForId(credentials.id, target.id), mailboxDao.idsForAccount(credentials.id).size)) {
             mailboxDao.replaceAll(credentials.id, mailboxes.map { it.toEntity(credentials.id) })
         }
         // The folder rows must land even when the message sync throws: otherwise the drawer keeps

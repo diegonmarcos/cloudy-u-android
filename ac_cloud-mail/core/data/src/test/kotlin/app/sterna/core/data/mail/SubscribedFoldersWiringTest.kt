@@ -133,6 +133,8 @@ class SubscribedFoldersWiringTest {
             listOf(
                 "mailboxDao.replaceAll(credentials.id, load.mailboxes)",
                 "mailboxDao.replaceAll(credentials.id, resolved.mailboxes.map { it.toEntity(credentials.id) })",
+                // #1952 the first sync's early write of the same unfiltered list, before its messages
+                "mailboxDao.replaceAll(credentials.id, mailboxes.map { it.toEntity(credentials.id) })",
                 "mailboxDao.replaceAll(credentials.id, mailboxes.map { it.toEntity(credentials.id) })",
                 "mailboxDao.replaceAll(credentials.id, load.mailboxes)",
                 // THE one the switch drives: `refreshFolderList` → `refreshMailboxes(credentials, onlySubscribed)`.

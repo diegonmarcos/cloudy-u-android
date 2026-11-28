@@ -344,10 +344,9 @@ class SignedOutAccountWiringTest {
             "val sync = runCatching { syncMailbox(session, accountId, auth, target.id, sizing, credentials.id) }",
         )
         val rethrow = indexOf("refresh", "if (syncError is AccountGoneException) throw syncError")
-        val folders = indexOf(
-            "refresh",
-            "mailboxDao.replaceAll(credentials.id, mailboxes.map { it.toEntity(credentials.id) })",
-        )
+        // the LAST such write is the one that follows the rethrow (#1952 added an early one, guarded by the account still being known)
+        val folders = lines("refresh").lastIndexOf("mailboxDao.replaceAll(credentials.id, mailboxes.map { it.toEntity(credentials.id) })")
+        assertTrue("the folder-list write after the rethrow is gone", folders >= 0)
         assertTrue("the rethrow no longer follows the runCatching it exists to undo", swallow < rethrow)
         assertTrue(
             "the folder list is now written BEFORE the refusal is rethrown: a sign-out mid-refresh " +
