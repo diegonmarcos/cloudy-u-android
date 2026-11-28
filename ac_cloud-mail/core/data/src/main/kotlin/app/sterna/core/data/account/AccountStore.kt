@@ -1039,6 +1039,14 @@ class AccountStore(context: Context) {
      *  migrate is the [live] seeding read in the constructor. */
     @Synchronized
     private fun migrateIfNeeded() {
+        // The fast path takes no lock (accounts() is read from every screen); #1952 reads it from IO at startup too, so the one
+        // check-then-act below (a second thread must not migrate the legacy account again under a new id) is taken under the lock.
+        if (prefs.contains(KEY_ACCOUNTS)) return
+        migrateLegacyAccount()
+    }
+
+    @Synchronized
+    private fun migrateLegacyAccount() {
         if (prefs.contains(KEY_ACCOUNTS)) return
         val server = prefs.getString(LEGACY_SERVER, null) ?: return
         val username = prefs.getString(LEGACY_USERNAME, null) ?: return
