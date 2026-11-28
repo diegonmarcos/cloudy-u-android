@@ -55,11 +55,14 @@ sleep 20; dismiss; dismiss
 shot start 2
 # the X-Ray Device page (Configs > Watchtower - Obsv > X-Ray) holds Export All: reached by the launcher's own page route
 ACT="$($T adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)"
+open_page() {
 for _ in 1 2 3; do
-    $T adb shell am start -n "$ACT" --es shortcut_action "page:config/xray" >/dev/null 2>&1
-    sleep 8; dismiss; dump cur
-    grep -q 'text="Unlock"' "$OUT/cur.xml" || break
-done
+        $T adb shell am start -n "$ACT" --es shortcut_action "page:config/xray" >/dev/null 2>&1
+        sleep 8; dismiss; dump cur
+        grep -q 'text="Unlock"' "$OUT/cur.xml" || break
+    done
+}
+open_page
 shot xray-open 4
 W="$($T adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1 | cut -dx -f1)"; H="$($T adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1 | cut -dx -f2)"
 W="${W:-1080}"; H="${H:-2400}"
@@ -77,19 +80,21 @@ scroll_to() {
     done
     return 1
 }
+nfiles() { $T adb shell "ls /sdcard/Download/xray/ 2>/dev/null | grep -c ."| tr -d '\r'; }
 export_one() { # label-regex, scroll-text, tag
+    open_page; dump cur; tap_node "$OUT/cur.xml" 'EXPORT ALL' || echo "note: no EXPORT ALL index tile"; sleep 3
     scroll_to "$2" || { echo "FAIL $NAME: no '$2' button"; rc=1; return; }
+    shot "$3-section" 1
+    before="$(nfiles)"
     tap_node "$OUT/cur.xml" "$1" || { echo "FAIL $NAME: '$1' not tappable"; rc=1; return; }
     sleep 3; dump cur
     if grep -q 'Export partial' "$OUT/cur.xml"; then shot "$3-prompt" 1; tap_node "$OUT/cur.xml" '^Export partial$'; fi
     ok=0
-    for i in $(seq 1 40); do sleep 4; dump cur; if grep -qE 'text="Saved ' "$OUT/cur.xml"; then ok=1; break; fi; done
-    shot "$3-done" 1
-    [ $ok = 1 ] || { echo "FAIL $NAME: $3 never reported Saved"; rc=1; }
-    grep -oE 'Saved [^"]*' "$OUT/cur.xml" | head -1 | tee -a "$OUT/$NAME-status.txt"
+    for i in $(seq 1 45); do sleep 4; if [ "$(nfiles)" -gt "${before:-0}" ]; then ok=1; break; fi; done
+    open_page; dump cur; tap_node "$OUT/cur.xml" 'EXPORT ALL'; sleep 2; shot "$3-done" 1
+    [ $ok = 1 ] || { echo "FAIL $NAME: $3 never wrote a file"; rc=1; }
+    echo "$3: files before ${before:-0} now $(nfiles)" | tee -a "$OUT/$NAME-status.txt"
 }
-dump cur; tap_node "$OUT/cur.xml" 'EXPORT ALL' || echo "note: no EXPORT ALL index tile"
-sleep 3; shot export-section 1
 export_one '^Export Markdown for AI' 'Export Markdown for AI' ai
 export_one '^Export Markdown file' 'Export Markdown file' verbose
 mkdir -p "$OUT/files"

@@ -67,7 +67,7 @@ object XrayAppMeasure {
     private fun f1(v: Double) = String.format(Locale.US, "%.1f", v)
     private fun mb(b: Long) = f1(b / 1048576.0) + "MB"
     private fun txt(p: String): String? = runCatching { File(p).readText() }.getOrNull()?.takeIf { it.isNotBlank() }
-    private fun num(v: Double) = v.toString() to v as Double?
+    private fun num(v: Double): Pair<String, Double?> = f1(v) to v
     private fun fleetPkgs(ctx: Context): List<String> = runCatching {
         ctx.packageManager.getInstalledPackages(0).map { it.packageName }.filter { it.startsWith("com.diegonmarcos.") }.sorted()
     }.getOrDefault(emptyList())
@@ -112,7 +112,7 @@ object XrayAppMeasure {
                 d("Runtime.availableProcessors") { "$cores" to null }),
             fld("cpu_freq", "/sys cpufreq via shell", "cpufreq files are not readable by an app on this device (SELinux)",
                 fb("/sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq", "current MHz per core, only where the kernel exposes it to apps") {
-                    (0 until cores).mapNotNull { i -> txt("/sys/devices/system/cpu/cpu$i/cpufreq/scaling_cur_freq")?.trim()?.toLongOrNull()?.let { "cpu$i=${it / 1000}" } }.takeIf { it.isNotEmpty() }?.let { it.joinToString(" ") + " MHz" to null } }),
+                    (0 until cores).mapNotNull { i -> txt("/sys/devices/system/cpu/cpu$i/cpufreq/scaling_cur_freq")?.trim()?.toLongOrNull()?.takeIf { it > 0 }?.let { "cpu$i=${it / 1000}" } }.takeIf { it.isNotEmpty() }?.let { it.joinToString(" ") + " MHz" to null } }),
             fld("load_per_core", "uptime / dumpsys cpuinfo", "/proc/loadavg is denied to apps on this Android (SELinux)",
                 fb("/proc/loadavg", "1-minute load of the whole device where readable") { txt("/proc/loadavg")?.trim()?.split(' ')?.firstOrNull()?.toDoubleOrNull()?.let { f1(it / cores) to it / cores } }),
             fld("running_processes", "top process list", "no process list",
@@ -275,7 +275,7 @@ object XrayAppMeasure {
             fld("own_active_notifications", "dumpsys notification (active records)", "none", fb("NotificationManager.getActiveNotifications", "own notifications only") { nm.activeNotifications.size.let { "$it" to it.toDouble() } }),
             fld("notifications_enabled", "dumpsys notification", "none", d("NotificationManager.areNotificationsEnabled / currentInterruptionFilter / channels") { "enabled ${nm.areNotificationsEnabled()} dnd-filter ${nm.currentInterruptionFilter} channels ${nm.notificationChannels.size}" to null }),
             fld("listeners", "settings get secure enabled_notification_listeners", "none", d("Settings.Secure enabled_notification_listeners") { "${listeners.size} bound" to null }),
-            fld("binder_sent_tx", "dumpsys binder_calls_stats", "none", fb("Debug.getBinderSentTransactions", "own process total since start") { Debug.getBinderSentTransactions().let { "$it (received ${Debug.getBinderReceivedTransactions()}, proxies ${Debug.getBinderProxyObjectCount()})" to it.toDouble() } }),
+            fld("binder_sent_tx", "dumpsys binder_calls_stats", "none", fb("Debug.getBinderSentTransactions", "own process total since start") { Debug.getBinderSentTransactions().takeIf { it >= 0 }?.let { "$it (received ${Debug.getBinderReceivedTransactions()}, proxies ${Debug.getBinderProxyObjectCount()})" to it.toDouble() } }),
             fld("posts_per_app", "dumpsys notification (numPostedByApp)", "per-app post counts of other apps are system_server data with no app API"),
         )
     }
@@ -310,12 +310,12 @@ object XrayAppMeasure {
         val f = listOf(
             fld("crash_30d", "dumpsys dropbox (system_app_crash)", "ApplicationExitInfo needs Android 11",
                 fb("ApplicationExitInfo CRASH/CRASH_NATIVE, last 30 days", "readable for $readable of ${exits.size} fleet packages (other uids refuse; no fleet app exports a provider for it yet)") { if (cr.isEmpty()) null else "$total" to total.toDouble() }),
-            fld("last_crash", "dumpsys dropbox", "no crash recorded in the readable packages",
-                fb("ApplicationExitInfo newest crash", "readable packages only") { cr.flatMap { e -> (e.value ?: emptyList()).map { e.key to it } }.maxByOrNull { it.second.timestamp }?.let { (p, i) -> "${p.removePrefix("com.diegonmarcos.")} ${(System.currentTimeMillis() - i.timestamp) / 3600000}h ago ${i.description.orEmpty().take(60)}" to null } }),
+            fld("last_crash", "dumpsys dropbox", "ApplicationExitInfo is unreadable for every fleet package",
+                fb("ApplicationExitInfo newest crash", "readable packages only") { if (cr.isEmpty()) null else cr.flatMap { e -> (e.value ?: emptyList()).map { e.key to it } }.maxByOrNull { it.second.timestamp }?.let { (p, i) -> "${p.removePrefix("com.diegonmarcos.")} ${(System.currentTimeMillis() - i.timestamp) / 3600000}h ago ${i.description.orEmpty().take(60)}" to null } ?: ("no crash in 30 d" to null) }),
             fld("log_errors", "logcat -d -t 300 *:W", "logcat could not be started",
                 fb("own process logcat (logcat -d -t 300 *:W)", "own process lines only (no READ_LOGS grant), last 300") { err?.let { "$it E/F of ${logs?.size} W+ lines" to it.toDouble() } }),
             fld("exit_reasons_all", "dumpsys dropbox", "none", fb("ApplicationExitInfo all reasons", "readable packages only") {
-                exits.values.filterNotNull().flatten().groupingBy { it.reason }.eachCount().entries.sortedByDescending { it.value }.take(6).joinToString(" ") { "r${it.key}=${it.value}" }.takeIf { it.isNotEmpty() }?.let { it to null } }),
+                exits.values.filterNotNull().flatten().groupingBy { it.reason }.eachCount().entries.sortedByDescending { it.value }.take(6).joinToString(" ") { "r${it.key}=${it.value}" }.ifEmpty { "no exits in 30 d" }.let { it to null } }),
         )
         return f to cr.filter { (it.value?.size ?: 0) > 0 }.map { AFinding(it.key, "crash", "${it.value?.size} crash/native crash in 30 d (ApplicationExitInfo)", 45.0 + Math.min(20, it.value?.size ?: 0)) }
     }
@@ -339,7 +339,7 @@ object XrayAppMeasure {
             fld("transport", "dumpsys connectivity (default network)", "no active network", d("NetworkCapabilities.hasTransport") { nc?.let { n -> transports.filter { n.hasTransport(it.first) }.joinToString("+") { it.second }.ifEmpty { "other" } to null } }),
             fld("net_unvalidated", "dumpsys connectivity (validation)", "no active network", d("NetworkCapabilities NET_CAPABILITY_VALIDATED") { nc?.let { n -> val v = n.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED); "validated $v internet ${n.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)} metered ${!n.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED)} vpn ${n.hasTransport(NetworkCapabilities.TRANSPORT_VPN)}" to (if (v) 0.0 else 1.0) } }),
             fld("bandwidth", "dumpsys connectivity", "no active network", d("NetworkCapabilities link down/up kbps (estimate)") { nc?.let { "down ${it.linkDownstreamBandwidthKbps}kbps up ${it.linkUpstreamBandwidthKbps}kbps" + (if (Build.VERSION.SDK_INT >= 29 && it.signalStrength != Int.MIN_VALUE) " signal ${it.signalStrength}" else "") to null } }),
-            fld("link", "dumpsys connectivity (LinkProperties)", "no link", d("LinkProperties dns/private dns/mtu/routes (addresses omitted)") { lp?.let { "dns ${it.dnsServers.size} private-dns ${it.isPrivateDnsActive}${it.privateDnsServerName?.let { n -> " ($n)" } ?: ""} mtu ${if (Build.VERSION.SDK_INT >= 29) it.mtu else 0} routes ${it.routes.size}" to null } }),
+            fld("link", "dumpsys connectivity (LinkProperties)", "no link", d("LinkProperties dns/private dns/mtu/routes (addresses omitted)") { lp?.let { "dns ${it.dnsServers.size} private-dns ${it.isPrivateDnsActive}${it.privateDnsServerName?.let { n -> " ($n)" } ?: ""} mtu ${if (Build.VERSION.SDK_INT >= 29 && it.mtu > 0) it.mtu.toString() else "unset"} routes ${it.routes.size}" to null } }),
             fld("dns_ms", "dumpsys connectivity / netstats", "no declared fleet endpoint or lookup failed", fb("InetAddress.getByName(fleet ops host)", "own timed probe to ${host ?: "n/a"}, one sample") { dns?.let { f1(it) + "ms" to it } }),
             fld("tcp_ms", "dumpsys connectivity", "TCP connect to the fleet endpoint failed", fb("Socket.connect(:443)", "own timed probe, one sample") { tcp?.let { f1(it) + "ms" to it } }),
             fld("tls_ms", "dumpsys connectivity", "TLS handshake to the fleet endpoint failed", fb("SSLSocket.startHandshake", "own timed probe, one sample") { tls?.let { f1(it) + "ms" to it } }),
