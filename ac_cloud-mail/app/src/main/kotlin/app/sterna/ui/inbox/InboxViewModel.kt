@@ -1225,8 +1225,9 @@ class InboxViewModel(
      * generation (a second consumer of every later one would only cost a diff per write).
      */
     private fun startFirstPageLoad() {
-        // Posted to the main queue (not run in place): this is called from the constructor, and the pager's lambdas read properties declared below it.
-        viewModelScope.launch(Dispatchers.Main) {
+        // Started from the last member of the class (below): every property the pager reads exists. On the Default dispatcher, because a
+        // coroutine posted to the main queue ran only after the first frame (the load began 1 s after it was drawn).
+        viewModelScope.launch(Dispatchers.Default) {
             val differ = androidx.paging.AsyncPagingDataDiffer(
                 diffCallback = object : androidx.recyclerview.widget.DiffUtil.ItemCallback<InboxRow>() {
                     override fun areItemsTheSame(oldItem: InboxRow, newItem: InboxRow) = oldItem.email.id == newItem.email.id
@@ -1247,7 +1248,6 @@ class InboxViewModel(
         }
     }
 
-    init { startFirstPageLoad() }
 
     /**
      * #1952 the rows the list screen showed last, reported by the screen itself ([rememberShownRows]). A returning screen is
@@ -3374,6 +3374,9 @@ class InboxViewModel(
             .sortedByDescending { it.receivedAt ?: "" }
 
     private data class Status(val refreshing: Boolean, val error: String?)
+
+    // The LAST member before the companion: every property the pager's lambdas read is initialised when this starts (#1952 first page load).
+    init { startFirstPageLoad() }
 
     private companion object {
         const val MILLIS_PER_DAY = 24L * 60 * 60 * 1000

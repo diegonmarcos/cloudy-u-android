@@ -472,7 +472,8 @@ const val EMAILS_DOMAIN_LIST_INDEX_SQL: String =
 /**
  * #1952 statistics for the planner. Without a `sqlite_stat1` row SQLite does NOT choose the covering index for the domain list's three
  * aggregates (the plan test failed on a database holding the index and no statistics), so the first list of an updated store scanned the
- * wide message rows (0.8 to 1.9 s at 40 000 messages). Approximate on purpose (1 000 rows per index): fast, and enough to choose.
+ * wide message rows (0.8 to 1.9 s at 40 000 messages). The migration runs a plain ANALYZE (a PRAGMA answers a row, which execSQL refuses);
+ * the database open ([SternaDatabase.build]) runs the approximate form (the limit below) through PRAGMA optimize.
  */
 const val EMAILS_ANALYSIS_LIMIT_SQL: String = "PRAGMA analysis_limit=1000"
 const val EMAILS_ANALYZE_SQL: String = "ANALYZE emails"
@@ -489,7 +490,6 @@ val MIGRATION_34_35 = object : Migration(34, 35) {
         val started = System.nanoTime()
         try { android.util.Log.i("MailMigration", "v35 covering index build start") } catch (_: RuntimeException) {}
         db.execSQL(EMAILS_DOMAIN_LIST_INDEX_SQL)
-        db.query(EMAILS_ANALYSIS_LIMIT_SQL).close() // a PRAGMA answers a row: query, not execSQL
         db.execSQL(EMAILS_ANALYZE_SQL)
         try { android.util.Log.i("MailMigration", "v35 covering index build end ms=${(System.nanoTime() - started) / 1_000_000}") } catch (_: RuntimeException) {}
     }
