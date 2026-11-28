@@ -117,6 +117,21 @@ class ListReturn1952cTest {
         assertTrue("suspend fun storedInboxId(accountId: String): String? = mailboxDao.idForRole(accountId, \"inbox\")" in repo)
     }
 
+    @Test fun `the first page does not wait for the folders that list extra messages`() {
+        val repo = code("core/data/src/main/kotlin/app/sterna/core/data/mail/MailRepository.kt")
+        val at = repo.indexOf("emailDao.observeExtraScopes().map { rows -> rows.map { it.accountId to it.mailboxId }.toSet() }")
+        assertTrue("extraScopes() reads the store's set", at >= 0)
+        assertEquals("the set starts empty, at once", ".onStart { emit(emptySet()) }", repo[at + 1])
+        assertEquals("an equal answer rebuilds nothing", ".distinctUntilChanged()", repo[at + 2])
+    }
+
+    @Test fun `the settings file, the account store and the database are opened in parallel when the application starts`() {
+        val app = code("app/src/main/kotlin/app/sterna/SternaApplication.kt")
+        assertTrue("container.appScope.launch(kotlinx.coroutines.Dispatchers.IO) { runCatching { container.settingsRepository.sortOrder.first() } }" in app)
+        assertTrue("container.appScope.launch(kotlinx.coroutines.Dispatchers.IO) { runCatching { container.accountStore.currentId() } }" in app)
+        assertTrue("container.appScope.launch(kotlinx.coroutines.Dispatchers.IO) { runCatching { container.mailRepository.storedInboxId(\"\") } }" in app)
+    }
+
     // -- cold start: one key ----------------------------------------------------------------------------------------
 
     @Test fun `the pager's first key carries the stored view, never a placeholder`() {

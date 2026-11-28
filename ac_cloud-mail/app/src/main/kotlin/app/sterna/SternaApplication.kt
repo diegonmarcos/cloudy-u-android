@@ -38,6 +38,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class PendingReplySuggestion(val emailId: String, val text: String)
@@ -325,6 +326,11 @@ class SternaApplication : Application() {
         // That process shows the report and nothing else, so it builds nothing.
         if (com.diegonmarcos.superapp.crash.CrashReports.isCrashProcess()) return
         container = AppContainer(this)
+        // #1952 cold start: what the list's first page reads is opened in parallel off the main thread, so the view model finds the settings
+        // file, the account store and the Room database warm instead of opening them one after the other (the gap before the first list key).
+        container.appScope.launch(kotlinx.coroutines.Dispatchers.IO) { runCatching { container.settingsRepository.sortOrder.first() } }
+        container.appScope.launch(kotlinx.coroutines.Dispatchers.IO) { runCatching { container.accountStore.currentId() } }
+        container.appScope.launch(kotlinx.coroutines.Dispatchers.IO) { runCatching { container.mailRepository.storedInboxId("") } }
         // #1803 the compose recipient check answers from the fleet delivery API; its endpoints come from Cloud Account.
         app.sterna.fleet.FleetRecipientChecker.bind(this)
         // #1802 the Sent delivery status asks Cloud Account for the same fleet mail API pair.

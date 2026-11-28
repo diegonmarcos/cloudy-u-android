@@ -132,6 +132,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -1751,7 +1752,12 @@ class MailRepository(
     fun observeExtraFolders(): Flow<Set<Pair<String, String>>> = extraScopes()
 
     private fun extraScopes(): Flow<Set<Pair<String, String>>> =
-        emailDao.observeExtraScopes().map { rows -> rows.mapTo(HashSet()) { it.accountId to it.mailboxId } }.distinctUntilChanged()
+        // #1952 cold start: the first page does not wait for this query (0.67 s over 40 000 messages on a cold store): the list starts on
+        // "no extra members" and widens when the real set arrives. An equal answer (the usual empty one) changes nothing, so the pager is
+        // not rebuilt and no visible row moves.
+        emailDao.observeExtraScopes().map { rows -> rows.map { it.accountId to it.mailboxId }.toSet() }
+            .onStart { emit(emptySet()) }
+            .distinctUntilChanged()
 
     /** The live All / Alerts / no-Alerts counts of [scopes], each from the list's own WHERE ([listCountSql]). */
     fun observeAlertCounts(scopes: List<Pair<String, String>>, rules: InboxSplitRules): Flow<AlertCounts> {

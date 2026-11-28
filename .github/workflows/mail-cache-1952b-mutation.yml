@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'none | evict-newest-first | window-ignored | shrink-no-evict | default-drift | setting-not-stored | resume-from-zero | metered-no-chain | network-before-rows | index-not-covering | first-page-unbounded | return-requeries | placeholder-view | core-ungated | query-per-write | first-rows-any-view | fill-ignores-screen | inbox-pruned | folders-after-messages | aggregates-per-write | inbox-id-not-remembered | email-gains-var | inbox-id-not-from-store'
+        description: 'none | evict-newest-first | window-ignored | shrink-no-evict | default-drift | setting-not-stored | resume-from-zero | metered-no-chain | network-before-rows | index-not-covering | first-page-unbounded | return-requeries | placeholder-view | core-ungated | query-per-write | first-rows-any-view | fill-ignores-screen | inbox-pruned | folders-after-messages | aggregates-per-write | inbox-id-not-remembered | email-gains-var | inbox-id-not-from-store | extra-scopes-wait | warmup-dropped'
         required: true
 permissions:
   contents: read
@@ -70,6 +70,10 @@ jobs:
             email-gains-var) sed -i 's/^    val id: String,$/    var id: String,/' ac_cloud-mail/core/jmap/src/main/kotlin/app/sterna/core/jmap/model/Email.kt ;;
             # the start no longer reads its Inbox id from the store: an unknown folder and a second list key
             inbox-id-not-from-store) sed -i 's/store.inboxMailboxId() ?: inboxIdFromTheStore()/store.inboxMailboxId()/' ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/inbox/InboxViewModel.kt ;;
+            # the first page waits for the extra-scopes query again
+            extra-scopes-wait) sed -i '/^            \.onStart { emit(emptySet()) }$/d' $D/mail/MailRepository.kt ;;
+            # nothing is opened in parallel when the application starts
+            warmup-dropped) sed -i '/container.settingsRepository.sortOrder.first()/d' ac_cloud-mail/app/src/main/kotlin/app/sterna/SternaApplication.kt ;;
             *) echo "::error::unknown mutation (not in the allow-list)"; exit 2 ;;
           esac
           git diff --stat
@@ -138,6 +142,8 @@ jobs:
             inbox-pruned)        N="the Inbox is never pruned by age, whoever asks" ;;
             folders-after-messages) N="a first sync stores the folder list before its messages" ;;
             inbox-id-not-from-store) N="a start that does not know its Inbox id reads it from the store before the list key" ;;
+            extra-scopes-wait)   N="the first page does not wait for the folders that list extra messages" ;;
+            warmup-dropped)      N="the settings file, the account store and the database are opened in parallel when the application starts" ;;
             email-gains-var)     N="the mail model has no var and no mutable collection field" ;;
             inbox-id-not-remembered) N="a first sync stores the folder list before its messages" ;;
             aggregates-per-write) N="a sync's writes reach the drawer aggregates in steps and the last write is never lost" ;;
