@@ -247,7 +247,10 @@ object XrayAppMeasure {
         val availPct = mi.availMem * 100.0 / mi.totalMem.coerceAtLeast(1)
         val pssKb = am.getProcessMemoryInfo(intArrayOf(Process.myPid())).firstOrNull()
         val rt = Runtime.getRuntime(); val heapPct = (rt.totalMemory() - rt.freeMemory()) * 100.0 / rt.maxMemory()
-        val swap = txt("/proc/meminfo")?.let { m -> fun k(n: String) = Regex("$n:\\s+(\\d+) kB").find(m)?.groupValues?.get(1)?.toLongOrNull(); k("SwapTotal")?.let { t -> k("SwapFree")?.let { f -> t to (t - f) } } }
+        val mem = txt("/proc/meminfo").orEmpty()
+        fun kb(n: String): Long? = Regex("$n:\\s+(\\d+) kB").find(mem)?.groupValues?.get(1)?.toLongOrNull()
+        val swapT = kb("SwapTotal"); val swapF = kb("SwapFree")
+        val swap: Pair<Long, Long>? = if (swapT != null && swapF != null) swapT to (swapT - swapF) else null
         val others = am.runningAppProcesses?.filter { it.pid != Process.myPid() }?.take(6)?.mapNotNull { p ->
             runCatching { am.getProcessMemoryInfo(intArrayOf(p.pid)).firstOrNull()?.totalPss?.let { p.processName.removePrefix("com.diegonmarcos.") to it } }.getOrNull() }.orEmpty()
         return listOf(
