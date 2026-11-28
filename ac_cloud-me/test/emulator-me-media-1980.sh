@@ -31,7 +31,7 @@ forward() {  # the WebView DevTools socket of the app process
 }
 evalweb() {  # URL_REGEX CMD [ARG] -> stdout of webview-eval-1980.js
     forward || { echo "no-devtools-socket"; return 1; }
-    node "$EVAL" "$PORT" "$@"
+    timeout 240 node "$EVAL" "$PORT" "$@"; local rc=$?; [ $rc -eq 0 ] || echo "evalweb rc=$rc args=$*" >&2; return $rc
 }
 CACHE="/data/data/$ME/cache/lnktree-cache"
 echo "# Cloud Me WebView, rendered images (#1980)" > "$OUT/media-1980.md"
@@ -40,8 +40,8 @@ echo "|---|---|---|---|---|---|---|---|" >> "$OUT/media-1980.md"
 
 walk_tab() {  # ID URLREGEX STATE ; the app is (re)started by the caller
     local id="$1" re="$2" state="$3" res="" tries=0
-    open_route "page:pers/$id"; sleep 20
-    while [ $tries -lt 8 ]; do res=$(evalweb "$re" fullscroll 2>>"$OUT/eval.err") && break; tries=$((tries+1)); sleep 8; done
+    open_route "page:pers/$id"; sleep 25
+    while [ $tries -lt 14 ]; do res=$(evalweb "$re" fullscroll 2>>"$OUT/eval.err") && break; tries=$((tries+1)); sleep 8; done
     echo "$id $state: $res" >> "$OUT/results.txt"
     if [ -z "$res" ] || ! echo "$res" | grep -q '"total"'; then fail "$id $state: no answer from the page WebView ($res)"; return; fi
     local total broken pending ph vid url
@@ -53,7 +53,7 @@ walk_tab() {  # ID URLREGEX STATE ; the app is (re)started by the caller
     # not loaded: only images the page marks lazy and that sit in hidden views legitimately stay pending; report, fail on visible ones via the broken count
 }
 
-TABS="personal:/mySocials/?($|#|\\?) ig0:instagram-diegocnmarcos_ ig1:instagram-diegocmarcos_ ig2:instagram-diegonmarcos face0:facebook-diegonmarcos pinterest:pinterest youtube:youtube tidal:tidal linkedin:linkedin orkut:orkut"
+TABS="personal:mySocials/$ ig0:instagram-diegocnmarcos_ ig1:instagram-diegocmarcos_ ig2:instagram-diegonmarcos face0:facebook-diegonmarcos pinterest:pinterest youtube:youtube tidal:tidal linkedin:linkedin orkut:orkut"
 : > "$OUT/results.txt"
 for tab in $TABS; do
     id="${tab%%:*}"; re="${tab#*:}"
