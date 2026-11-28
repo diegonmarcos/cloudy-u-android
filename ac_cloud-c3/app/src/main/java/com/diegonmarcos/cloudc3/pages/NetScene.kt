@@ -110,6 +110,20 @@ object NetScene {
         return MailStack.Rect(w - inset - mw, h - inset - mh, w - inset, h - inset)
     }
 
+    /** #1955 A rev2.2 The [minimap] of [l] in the canvas corner that hides the fewest node boxes (bottom-right first on a tie), under the
+     *  caption strip and clear of the [busy] overlays (legend, hit list): a minimap over a node leaves it no room for its name. */
+    fun minimapFor(l: NetGraphLayout.Layout, v: MailStack.View, w: Float, h: Float, density: Float, sp: Spec, sheetOpen: Boolean,
+                   busy: List<MailStack.Rect> = emptyList()): MailStack.Rect? {
+        val r = minimap(l.plan.bounds, v, w, h, density, sp, sheetOpen) ?: return null
+        val inset = sp.minimapInset * density
+        val top = if (l.extras.columns.isNotEmpty()) sp.captionH * density else 0f
+        val mw = r.r - r.l; val mh = r.b - r.t
+        val boxes = l.plan.nodes.filter { it.kind != "frame" }.map { screen(v, it.rect) }
+        val corners = listOf(r, r.copy(l = inset, r = inset + mw),
+            MailStack.Rect(w - inset - mw, top + inset, w - inset, top + inset + mh), MailStack.Rect(inset, top + inset, inset + mw, top + inset + mh))
+        return corners.filter { c -> busy.none { hit(c, it) } }.minByOrNull { c -> boxes.count { hit(c, it) } } ?: r
+    }
+
     /** The metric line of a node at NEAR (first non-blank; capped): aggregates count their non-OK members, hubs their peers. */
     fun metric(n: MailStack.NodePrim, l: NetGraphLayout.Layout, g: NetGraph.Graph, members: List<String>, status: Map<String, MailStack.Health>): String {
         if (n.id in l.extras.aggregates) {

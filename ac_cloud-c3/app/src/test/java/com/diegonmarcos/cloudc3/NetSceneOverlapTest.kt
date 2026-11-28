@@ -109,8 +109,8 @@ class NetSceneOverlapTest {
 
     private fun scene(c: Case, cv: Canvas, l: NetGraphLayout.Layout, view: MailStack.View, tier: NetScene.Tier? = null): NetScene.Scene {
         // the HUD the phone has in this state: the minimap when the graph is not wholly shown, the hit list with a query
-        val mini = NetScene.minimap(l.plan.bounds, view, cv.w, cv.h, cv.density, sp, c.st.selected != null)
         val hits = if (c.state.startsWith("search")) MailStack.Rect(0f, 0f, cv.w, (28f + 3 * 36f) * cv.density) else null
+        val mini = NetScene.minimapFor(l, view, cv.w, cv.h, cv.density, sp, c.st.selected != null, listOfNotNull(hits))
         return NetScene.build(l, c.g, v, view, cv.w, cv.h, cv.density, c.st.copy(hud = listOfNotNull(mini, hits), tier = tier), measure(cv.density), c.status)
     }
 
@@ -255,6 +255,11 @@ class NetSceneOverlapTest {
                     // a frame head under the caption strip: the band on screen is the frame's, its name is in the sheet
                     if (n.kind == "frame" && n.cut) return@forEach
                     val nm = s.l.extras.names[n.id] ?: return@forEach
+                    // the opening view: a node wholly on the canvas draws its name, whatever overlay is up (the minimap takes a free corner)
+                    if (c.state == "default" && n.kind != "frame" && NetScene.inside(n.box, u) && n.id !in ids && ids.size < sp.maxNames) {
+                        bad += "${s.label}: ${n.id} ('$nm') is wholly on screen at the opening view and draws no name"
+                        return@forEach
+                    }
                     // the part of its content on the canvas, and the widest span of it no HUD rect covers (2 dp clear)
                     val vis = MailStack.Rect(maxOf(n.content.l, u.l), maxOf(n.content.t, u.t), minOf(n.content.r, u.r), minOf(n.content.b, u.b))
                     val nsp = if (n.kind == "frame") sp.headerSp else sp.nameSp

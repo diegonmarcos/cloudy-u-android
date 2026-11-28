@@ -380,7 +380,7 @@ fun NetGraphScreen(
                 pulses = false,
                 description = MailStack.drawnSummary(layout.plan),
                 drawScene = { view ->
-                    val mini = NetScene.minimap(layout.plan.bounds, view, size.width, size.height, density, sp, sheetOpen)
+                    val mini = NetScene.minimapFor(layout, view, size.width, size.height, density, sp, sheetOpen, listOfNotNull(legendRect, hitRect))
                     val sc = NetScene.build(layout, g, v, view, size.width, size.height, density,
                         NetScene.State(open, hits.map { it.id }.toSet(), root?.id, impacted, focus, listOfNotNull(mini, legendRect, hitRect)), measure, status)
                     drawNetScene(sc, p, measurer, density, st.readings)
@@ -393,7 +393,7 @@ fun NetGraphScreen(
                         es.size >= 2 -> { choose = es; openEdge = null; openFrame = null }
                         es.size == 1 -> { openEdge = es[0]; choose = emptyList(); openFrame = null }
                         else -> {
-                            val mini = NetScene.minimap(layout.plan.bounds, view, box.width.toFloat(), box.height.toFloat(), density, sp, sheetOpen)
+                            val mini = NetScene.minimapFor(layout, view, box.width.toFloat(), box.height.toFloat(), density, sp, sheetOpen, listOfNotNull(legendRect, hitRect))
                             val sc = NetScene.build(layout, g, v, view, box.width.toFloat(), box.height.toFloat(), density, NetScene.State(hud = listOfNotNull(mini)), measure, status)
                             openEdge = null; choose = emptyList(); openFrame = NetScene.hitHeader(sc, at)
                         }
@@ -416,7 +416,7 @@ fun NetGraphScreen(
                 }
             }
             val view = current()
-            if (!sheetOpen) NetScene.minimap(layout.plan.bounds, view, box.width.toFloat(), box.height.toFloat(), density, sp, false)?.let { r ->
+            if (!sheetOpen) NetScene.minimapFor(layout, view, box.width.toFloat(), box.height.toFloat(), density, sp, false, listOfNotNull(legendRect, hitRect))?.let { r ->
                 MiniMap(layout, view, box, r, miniAlpha) { at -> viewState.value = current().centerOn(MailStack.Rect(at.x, at.y, at.x, at.y), box.width.toFloat(), box.height.toFloat()) }
             }
             if (hitRows > 0) HitList(hits, hitAt, layout, st.readings, Modifier.align(Alignment.TopStart),
