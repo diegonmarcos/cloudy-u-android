@@ -686,6 +686,8 @@
       },
       "net_auth": {
         "layout": "layered",
+        "_doc_collapse": "#1955 A rev2.1 each tier's and kind's members open as one aggregate (the design's Auth wireframe), so the whole graph opens at scale 1.0 on a 412 dp phone and every gate and tier name reads in full; Expand or a double tap lists them",
+        "collapse_over": 4,
         "gap_x": 32,
         "frame_pad": 6,
         "graph": {
