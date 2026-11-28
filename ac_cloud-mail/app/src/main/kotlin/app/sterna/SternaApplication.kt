@@ -377,6 +377,26 @@ class SternaApplication : Application() {
         // #1952 not before the first rows are painted: the idle handler ran its 159 ms main-thread WebView creation between Application.onCreate
         // and the activity's launch, in front of the first frame (process-start log of run 46141602907).
         container.appScope.launch { app.sterna.core.data.mail.ColdStart.awaitRows(); app.sterna.mail.WebViewWarmUp.once(this@SternaApplication) }
+        // #1952 the baseline profile in the APK (assets/dexopt/baseline.prof) is written for ART once the first rows are painted, not after
+        // androidx.startup's own delay, and the answer is logged (tag MailList, `profile-install result=N`, ProfileInstaller.RESULT_*: 1 written,
+        // 2 already installed, 6 no baseline profile found in the APK).
+        // The platform compiles it at its next background dexopt; an app cannot ask for that compile itself (the installer passing a dex
+        // metadata file is what gets it compiled at install time).
+        container.appScope.launch {
+            app.sterna.core.data.mail.ColdStart.awaitRows()
+            runCatching {
+                androidx.profileinstaller.ProfileInstaller.writeProfile(
+                    this@SternaApplication,
+                    java.util.concurrent.Executor { it.run() },
+                    object : androidx.profileinstaller.ProfileInstaller.DiagnosticsCallback {
+                        override fun onDiagnosticReceived(code: Int, data: Any?) {}
+                        override fun onResultReceived(code: Int, data: Any?) {
+                            runCatching { android.util.Log.i("MailList", "profile-install result=$code") }
+                        }
+                    },
+                )
+            }
+        }
         app.sterna.core.data.mail.ColdStart.early("webview-warmup")
     }
 }

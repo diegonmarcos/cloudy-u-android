@@ -31,6 +31,8 @@ case "$BULK$FILL_MINUTES" in *[!0-9]*) echo "::error::FAKE_JMAP_BULK and FILL_MI
 mkdir -p "$OUT"
 fail() { echo "::error::$1"; echo "FAIL: $1" >> "$OUT/summary.txt"; FAIL=1; }
 note() { echo "$1" | tee -a "$OUT/summary.txt"; }
+# the compiler filter ART holds for the package (dumpsys package dexopt): verify / quicken = nothing profile-guided yet, speed-profile = the profile is compiled
+dexopt_state() { adb shell dumpsys package dexopt 2>/dev/null | tr -d '\r' | awk -v p="[$PKG]" '$0 == p {f=1; next} /^\[/ {f=0} f' | grep -E "status=|reason=|compiler-filter|filter=" | sed 's/^ *//' | head -4 | tr '\n' ';'; }
 # ten flings of the list with the evidence of WHAT is slow: JankProbe lines (stages per slow frame, named sections), framestats, a best-effort Perfetto trace
 # $1 label, $2 p90 limit (ms), $3 file for the gfxinfo summary lines
 scroll_measure() {
@@ -180,9 +182,13 @@ if [ -n "${OLD_APK:-}" ]; then
   sizes "before-update"
   l0=$(grep -c "" "$OUT/logcat.txt")
   adb install -r -g app-under-test.apk || { fail "update: adb install over the v34 build failed"; }
+  DEXOPT_INSTALL=$(dexopt_state)
+  note "dexopt after the update install, before its first launch: ${DEXOPT_INSTALL:-no entry}"
   adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
   sleep 25
   sleep 5
+  DEXOPT_LAUNCH=$(dexopt_state)
+  note "dexopt after the first launch of the updated app (30 s): ${DEXOPT_LAUNCH:-no entry}"
   upid=$(adb shell pidof "$PKG" 2>/dev/null | tr -d '\r' | awk '{print $1}')
   [ -n "$upid" ] || upid=$(tail -n +$((l0 + 1)) "$OUT/logcat.txt" | grep -m1 "first-row ms=" | awk '{print $3}')
   grep -E "MailList|MailMigration|MailCore: sync|JankProbe" "$OUT/logcat.txt" | awk -v p="$upid" '$3 == p' > "$OUT/update-first-launch.log" || true
@@ -371,7 +377,9 @@ prof_file=$(adb shell "ls /data/misc/profman/*.prof 2>/dev/null | head -1" | tr 
 PROFMAN=$(adb shell "ls /apex/com.android.art/bin/profman 2>/dev/null" | tr -d '\r')
 adb shell "${PROFMAN:-profman} --dump-classes-and-methods --profile-file=$prof_file --apk=$base_apk --dex-location=$base_apk" > "$OUT/baseline-prof.generated.txt" 2>"$OUT/profman.err" || true
 note "baseline profile: $(grep -c . "$OUT/baseline-prof.generated.txt" 2>/dev/null || echo 0) lines generated from this run (profman: $(head -c 160 "$OUT/profman.err" | tr '\n' ' '))"
+note "dexopt before the forced speed-profile compile: $(dexopt_state)"
 adb shell cmd package compile -m speed-profile -f "$PKG" > "$OUT/compile-speed-profile.txt" 2>&1 || true
+note "dexopt after the forced speed-profile compile: $(dexopt_state)"
 note "cmd package compile -m speed-profile: $(head -c 120 "$OUT/compile-speed-profile.txt" | tr '\n' ' ')"
 echo "" >> "$OUT/timing.md"; echo "cold start after AOT compiling the profiled methods (speed-profile), airplane mode off:" >> "$OUT/timing.md"
 adb shell cmd connectivity airplane-mode disable
