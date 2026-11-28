@@ -352,16 +352,18 @@ private fun BulkScopeBar(sheet: GitSheet, host: GitSheetHost, actions: GitSheetA
             Row(Modifier.weight(1f, fill = trailing == null).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(k.gapWide), verticalAlignment = Alignment.CenterVertically) {
                 sheet.scopes.forEach { sc -> k.pill(GitPill(sc.label, { actions.setScope(sc.id) }, Modifier.testTag("git_bulk_scope_" + sc.id), filled = sc.id == host.scope)) }
             }
-            if (trailing != null) count()
             trailing?.invoke()
         }
         if (trailing == null) count()
-        if (host.progress.isNotEmpty()) {
-            val sum = BulkProgress.summary(host.progress)
+        if (trailing != null || host.progress.isNotEmpty()) {
+            val sum = if (host.progress.isNotEmpty()) BulkProgress.summary(host.progress) else null
             Row(horizontalArrangement = Arrangement.spacedBy(k.gapWide), verticalAlignment = Alignment.CenterVertically) {
-                Text((if (sum.done) stringResource(R.string.git_bulk_summary_done) else stringResource(R.string.git_bulk_summary_running)) + " " + BulkProgress.summaryLine(sum),
-                    Modifier.testTag("git_bulk_summary"), style = MaterialTheme.typography.labelMedium, fontFamily = FontFamily.Monospace)
-                if (!sum.done || host.runActive) k.pill(GitPill(stringResource(R.string.git_bulk_cancel), { actions.cancelRun() }, Modifier.testTag("git_bulk_cancel"), enabled = host.runActive))
+                if (trailing != null) count()
+                if (sum != null) {
+                    Text((if (sum.done) stringResource(R.string.git_bulk_summary_done) else stringResource(R.string.git_bulk_summary_running)) + " " + BulkProgress.summaryLine(sum),
+                        Modifier.testTag("git_bulk_summary"), style = MaterialTheme.typography.labelMedium, fontFamily = FontFamily.Monospace)
+                    if (!sum.done || host.runActive) k.pill(GitPill(stringResource(R.string.git_bulk_cancel), { actions.cancelRun() }, Modifier.testTag("git_bulk_cancel"), enabled = host.runActive))
+                }
             }
         }
     }
