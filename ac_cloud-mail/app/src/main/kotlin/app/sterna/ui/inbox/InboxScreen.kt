@@ -1336,8 +1336,8 @@ fun InboxScreen(
                     contentColor = if (gmail) MaterialTheme.colorScheme.onSecondaryContainer else contentColorFor(FloatingActionButtonDefaults.containerColor),
                 )
             },
-            val contentStart = app.sterna.ui.JankProbe.begin("inbox.content") // #1952 first-frame probe: Scaffold composes this in its layout pass
         ) { padding ->
+            val contentStart = app.sterna.ui.JankProbe.begin("inbox.content") // #1952 first-frame probe: Scaffold composes this in its layout pass
             // Grouped by domain, each group's row carries a heading naming the domain ([DomainGroupHeader]).
             val domainGrouped = viewModel.listViewUi.collectAsStateWithLifecycle().value.group == GroupMode.DOMAIN
             // One row renderer, shared by the search list and the paged browse list. Takes the row
