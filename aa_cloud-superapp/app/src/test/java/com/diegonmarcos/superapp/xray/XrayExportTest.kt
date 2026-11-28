@@ -250,7 +250,7 @@ class XrayExportTest {
         assertTrue(c.startsWith("xray/2 Pixel Test"))
         val sections = c.lines().filter { it.startsWith("## ") }
         assertEquals(listOf("## VERDICT", "## STATUS", "## P device"), sections.take(3).map { it.substringBefore(" st:") })
-        val trackers = sections.drop(3)
+        val trackers = sections.drop(3).filter { it.startsWith("## T") } // the walked X-Ray groups follow the trackers (#1985)
         assertEquals((1..13).map { "%02d".format(it) }, trackers.map { it.substring(4, 6) })
         assertEquals(XrayProbes.trackers.map { it.label }, trackers.map { it.substring(7).substringBefore(" st:") })
         assertTrue("verdict before the trackers", c.indexOf("## VERDICT") < c.indexOf("## T01"))
