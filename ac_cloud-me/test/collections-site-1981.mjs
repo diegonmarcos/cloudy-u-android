@@ -15,7 +15,7 @@ const b = await chromium.launch();
 const p = await b.newPage({ viewport: { width: 412, height: 915 }, deviceScaleFactor: 2 });
 await p.goto(url, { waitUntil: 'load', timeout: 60000 });
 await p.waitForTimeout(3000);
-await p.getByText('Collections', { exact: true }).first().click();
+await p.locator('#nav-themes').click();   /* the sidebar button of the Collections view (its label is hidden at phone width) */
 await p.waitForSelector('.theme-card', { timeout: 30000 }).catch(() => {});
 await p.waitForTimeout(4000);
 await p.screenshot({ path: path.join(out, 'collections.png') });
