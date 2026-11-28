@@ -72,8 +72,13 @@ $T adb shell "du -sk $CACHE; du -sk $CACHE/*" > "$OUT/cache-du.txt" 2>&1 || true
 TOT=$(grep "^CACHE_TOTAL" "$OUT/cache-report.txt" | tail -1); echo "after ${el}s: $TOT" | tee "$OUT/total.txt"; cat "$OUT/cache-du.txt"
 P=$(echo "$TOT" | sed -n 's/.*pages=\([0-9]*\).*/\1/p'); C=$(echo "$TOT" | sed -n 's/.* complete=\([0-9]*\).*/\1/p')
 B=$(echo "$TOT" | sed -n 's/.* bytes=\([0-9]*\) .*/\1/p'); MAXB=$((512 * 1024 * 1024)); [ -n "$B" ] && [ "$B" -lt "$MAXB" ] && ok "1d: the cache is under max_cache_mb: $B bytes" || fail "1d: cache bytes ${B:-?} not under $MAXB"
-[ -n "$P" ] && [ "$P" -gt 0 ] && [ "$P" = "$C" ] && ok "1: zero taps, every page complete on disk after ${el}s: $TOT" || fail "1: not every page complete: ${TOT:-no CACHE_TOTAL in ${WAIT_S}s}; incomplete: $(grep '^CACHE_PAGE.*complete=no' "$OUT/cache-report.txt" | tr '\n' ';')"
-grep -q "^CACHE_FETCH page=personal action=fill result=complete" "$OUT/cache-report.txt" && ok "1b: Personal filled by the startup job, never opened" || fail "1b: no complete startup fill of Personal"
+# owner decision 2026-11-27: the two lecole-42 pages point at PRIVATE repos (404 for everyone); they count as known-missing until the owner makes them public
+KNOWN_MISSING="${KNOWN_MISSING:-pj-lecole42-curriculum pj-lecole42-dev}"
+INC=$(grep '^CACHE_PAGE.*complete=no' "$OUT/cache-report.txt" | sed -n 's/^CACHE_PAGE page=\([^ ]*\) .*/\1/p' | sort -u)
+UNEXPECTED=$(for i in $INC; do case " $KNOWN_MISSING " in *" $i "*) ;; *) echo "$i" ;; esac; done)
+KM=$(for i in $INC; do case " $KNOWN_MISSING " in *" $i "*) echo "$i" ;; esac; done | grep -c .)
+[ -n "$P" ] && [ "$P" -gt 0 ] && [ -z "$UNEXPECTED" ] && [ $((C + KM)) -ge "$P" ] && ok "1: zero taps, every page complete or known-missing on disk after ${el}s: $TOT (known-missing: $KM)" || fail "1: not every page complete or known-missing: ${TOT:-no CACHE_TOTAL in ${WAIT_S}s}; unexpected incomplete: $UNEXPECTED"
+grep -qE "^CACHE_FETCH page=personal action=(fill|complete) result=complete" "$OUT/cache-report.txt" && ok "1b: Personal filled by the startup job (first pass, then its second pass), never opened" || fail "1b: no complete startup fill of Personal"
 $T adb shell "for m in $CACHE/personal/*.meta; do sed -n 's/^url=//p' \$m; done" | tr -d '\r' | sed 's/\\:/:/g' > "$OUT/personal-urls.txt"
 X=$(grep -vc '^https://diegonmarcos.github.io' "$OUT/personal-urls.txt"); echo "personal: $(wc -l < "$OUT/personal-urls.txt") files, $X cross-origin"
 [ "$X" -gt 0 ] && ok "1c: Personal's copy holds $X cross-origin files" || fail "1c: no cross-origin file in Personal's copy"
@@ -87,7 +92,8 @@ $T adb shell am force-stop "$ME"; clear_log; launch
 for _ in $(seq 1 60); do wlog | grep -q "^CACHE_TOTAL" && break; sleep 5; done
 wlog | grep -E "^CACHE_FETCH|^CACHE_TOTAL" | tee "$OUT/restart-fetch.txt"
 grep -q "^CACHE_FETCH page=$AGED action=refetch result=replaced" "$OUT/restart-fetch.txt" && ok "2a: the aged page $AGED was refetched and replaced" || fail "2a: $AGED not refetched+replaced"
-NS=$(grep -c "^CACHE_FETCH .*action=skip" "$OUT/restart-fetch.txt"); NO=$(grep "^CACHE_FETCH" "$OUT/restart-fetch.txt" | grep -v "page=$AGED " | grep -vc "action=skip")
+NS=$(grep -c "^CACHE_FETCH .*action=skip" "$OUT/restart-fetch.txt"); NO=$(grep "^CACHE_FETCH" "$OUT/restart-fetch.txt" | grep -v "page=$AGED " | grep -vc "action=skip" ; true)
+for k in $KNOWN_MISSING; do grep -q "^CACHE_FETCH page=$k action=fill result=failed" "$OUT/restart-fetch.txt" && NO=$((NO - 1)); done   # a known-missing page is tried again, it stays missing
 [ "$NO" = 0 ] && [ "$NS" -gt 0 ] && ok "2b: every other page ($NS) was skipped (fresh, complete)" || fail "2b: $NO other page(s) were fetched again"
 
 # 3. airplane mode: Personal with every image, then three other pages
@@ -98,13 +104,13 @@ grep -E "IMG_BROKEN|SUBRES_" "$OUT/airplane-personal.txt" | head -40
 echo "$L" | grep -qE 'images_broken="[0-9]+ 0 ' && ok "3a: Personal offline, 0 broken images: $L" || fail "3a: Personal offline has broken images: $L"
 echo "$L" | grep -q "webgl=true" && echo "$L" | grep -qE "hero=[1-9][0-9]*x[1-9]" && ok "3b: the WebGL banner canvas is drawn ($L)" || fail "3b: WebGL banner missing: $L"
 grep -q "MAINFRAME_SOURCE page=personal source=cache" "$OUT/airplane-personal.txt" && ok "3c: Personal's main frame came from the app cache" || fail "3c: Personal's main frame not from the cache"
-python3 -I "$HERE/render_check.py" pixels "$OUT/precache-1957-airplane-personal.png" | tee -a "$OUT/verdict.txt" | grep -q '^PASS' || rc=1
+python3 "$HERE/render_check.py" pixels "$OUT/precache-1957-airplane-personal.png" | tee -a "$OUT/verdict.txt" | grep -q '^PASS' || rc=1
 for id in $(echo "$PAGES" | awk '$2!="personal"{print $2}' | head -3); do
     sec=$(echo "$PAGES" | awk -v a="$id" '$2==a{print $1}')
     clear_log; open_route "page:$sec/$id"; img_wait "$id"; sleep 2; shot "airplane-$id"
     wlog | grep "page=$id " > "$OUT/airplane-$id.txt"
     if grep -q "MAINFRAME_ERROR page=$id " "$OUT/airplane-$id.txt"; then fail "3d: $id shows an error offline"; else ok "3d: $id opened offline: $(grep IMG_CHECK "$OUT/airplane-$id.txt" | tail -1)"; fi
-    python3 -I "$HERE/render_check.py" pixels "$OUT/precache-1957-airplane-$id.png" | tee -a "$OUT/verdict.txt" | grep -q '^PASS' || rc=1
+    python3 "$HERE/render_check.py" pixels "$OUT/precache-1957-airplane-$id.png" | tee -a "$OUT/verdict.txt" | grep -q '^PASS' || rc=1
 done
 $T adb shell cmd connectivity airplane-mode disable; $T adb shell svc wifi enable; $T adb shell svc data enable
 liveall > "$LIVE"

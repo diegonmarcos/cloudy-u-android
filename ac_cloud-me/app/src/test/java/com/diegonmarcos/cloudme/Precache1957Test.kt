@@ -65,6 +65,23 @@ class Precache1957Test {
         assertEquals(listOf(cdnImg), RefScan.html("""<img src="$cdnImg"><img src="https://x.example/a.png">""", site, true).take(1))
     }
 
+    @Test fun `a meta refresh redirect page stores the page it lands on with that page's own files`() {
+        val dms = LnktreePage("dms", "https://diegonmarcos.github.io/mySocials/dms.html")
+        val target = "https://diegonmarcos.github.io/DMs"
+        val font = "https://fonts.googleapis.com/css2?family=Inter"
+        val live: (String) -> Fetched? = { u -> when (u) {
+            dms.url -> Fetched("text/html", "utf-8", 200, """<html><head><meta http-equiv="refresh" content="0; url=/DMs"></head></html>""".toByteArray())
+            target -> Fetched("text/html", "utf-8", 200, """<html><link href="$font" rel="stylesheet"><img src="/DMs/a.png"></html>""".toByteArray())
+            font -> Fetched("text/css", null, 200, "body{}".toByteArray())
+            "$target/a.png" -> Fetched("image/png", null, 200, byteArrayOf(1))
+            else -> Fetched("text/plain", null, 404, ByteArray(0)) } }
+        val s = store()
+        assertNotNull(LnktreePrefetch.fill(dms, cfg, s, live, null))
+        for (u in listOf(target, font, "$target/a.png")) assertNotNull("stored $u", s.get("dms", u))
+        assertTrue("complete offline: the redirect lands on a stored page", s.complete("dms", dms.url))
+        assertEquals(listOf(target), RefScan.metaRefresh("""<meta charset="UTF-8"><meta http-equiv="refresh" content="0; url=/DMs">""", dms.url))
+    }
+
     @Test fun `a page counts as complete only when every referenced file is stored`() {
         val s = store()
         LnktreePrefetch.fill(page, cfg, s, net(down = setOf(rawImg)), null)

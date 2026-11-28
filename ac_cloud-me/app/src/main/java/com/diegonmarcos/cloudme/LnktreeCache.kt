@@ -457,6 +457,14 @@ object RefScan {
         return resolve(raw, base, crossOrigin)
     }
 
+    private val metaTag = Regex("<meta\\b[^>]*>", RegexOption.IGNORE_CASE)
+    private val refreshUrl = Regex("content\\s*=\\s*[\"'][^\"']*?url\\s*=\\s*['\"]?([^\"';\\s>]+)", RegexOption.IGNORE_CASE)
+
+    /** #1957 the target of a `<meta http-equiv="refresh" content="0; url=X">` page (Pers > Media > DMs is one): the page the WebView lands on is part of the page's copy. */
+    fun metaRefresh(html: String, base: String, crossOrigin: Boolean = false): List<String> =
+        resolve(metaTag.findAll(html).map { it.value }.filter { Regex("http-equiv\\s*=\\s*[\"']?refresh", RegexOption.IGNORE_CASE).containsMatchIn(it) }
+            .mapNotNull { refreshUrl.find(it)?.groupValues?.get(1) }.toList(), base, crossOrigin)
+
     /** #1947 the render-critical subset of [html]: stylesheets and scripts (what the page cannot be drawn or run without). */
     fun critical(html: String, base: String): List<String> = html(html, base).filter {
         val path = runCatching { URI(it).path.orEmpty().lowercase() }.getOrDefault("")
@@ -569,7 +577,7 @@ object LnktreePrefetch {
         val seen = HashSet<String>().apply { add(CacheKey.normalize(p.url)) }
         // #1957 the manifest: every URL planned for the page (what completeness is judged against)
         val planned = LinkedHashSet<String>()
-        val queue = ArrayDeque(RefScan.html(String(m.body, Charsets.UTF_8), p.url, cfg.crossOrigin) + extra)
+        val queue = ArrayDeque(RefScan.html(String(m.body, Charsets.UTF_8), p.url, cfg.crossOrigin) + RefScan.metaRefresh(String(m.body, Charsets.UTF_8), p.url, cfg.crossOrigin) + extra)
         val pool = if (cfg.subresourceConcurrency > 1) Executors.newFixedThreadPool(cfg.subresourceConcurrency, PrefetchGate.lowPriority) else null
         try {
             while (queue.isNotEmpty() && budget > 0) {
@@ -602,6 +610,7 @@ object LnktreePrefetch {
                         store.videoBytes.addAndGet(r.body.size.toLong())
                     }
                     save(u, r)
+                    if (r.mime.contains("html", true)) queue.addAll(RefScan.html(String(r.body, Charsets.UTF_8), u, cfg.crossOrigin))   // #1957 a redirect target's own CSS, JS and images
                     if (r.mime.contains("css")) queue.addAll(RefScan.css(String(r.body, Charsets.UTF_8), u, cfg.crossOrigin))
                     // #1957 the URLs a script or data file names (data-*.json.js media, a CDN library) are what the page loads at run time
                     if (cfg.scriptUrls && (r.mime.contains("javascript", true) || r.mime.contains("ecmascript", true) || r.mime.contains("json", true)))

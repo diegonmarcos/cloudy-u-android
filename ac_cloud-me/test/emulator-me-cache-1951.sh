@@ -109,7 +109,7 @@ pip install --quiet pillow >/dev/null 2>&1 || true
 for p in "pers personal" "prof prof-professional" "prof leafy"; do
     set -- $p; measure "$1" "$2" airplane; sleep 4; shot "airplane-$2"
     if wlog | grep -q "MAINFRAME_ERROR page=$2 "; then fail "5: $2 shows an error in airplane mode"; else ok "5: $2 opened in airplane mode, first paint ${MS} ms, source=$SRC"; fi
-    python3 -I "$HERE/render_check.py" pixels "$OUT/cache-1951-airplane-$2.png" | tee -a "$OUT/verdict.txt" | grep -q '^PASS' || rc=1
+    python3 "$HERE/render_check.py" pixels "$OUT/cache-1951-airplane-$2.png" | tee -a "$OUT/verdict.txt" | grep -q '^PASS' || rc=1
 done
 $T adb shell cmd connectivity airplane-mode disable; $T adb shell svc wifi enable; $T adb shell svc data enable
 

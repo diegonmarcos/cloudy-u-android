@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'all | xo-off | sw-miss | complete-static | no-startup-fill | fresh-refetch | stale-skip | non-atomic | open-fetch | pull-noop | video-cap | version-keep dedupe-off | dedupe-off | job-cap-off | plan-cap-off | no-deadline | no-second-pass | no-gate'
+        description: 'all | xo-off | sw-miss | complete-static | no-startup-fill | fresh-refetch | stale-skip | non-atomic | open-fetch | pull-noop | video-cap | version-keep dedupe-off | dedupe-off | job-cap-off | plan-cap-off | no-deadline | no-second-pass | no-gate | no-redirect'
         required: true
         default: all
 permissions:
@@ -24,7 +24,7 @@ jobs:
         env:
           LEG: ${{ inputs.name }}
         run: |
-          ALL='xo-off sw-miss complete-static no-startup-fill fresh-refetch stale-skip non-atomic open-fetch pull-noop video-cap version-keep dedupe-off job-cap-off plan-cap-off no-deadline no-second-pass no-gate'
+          ALL='xo-off sw-miss complete-static no-startup-fill fresh-refetch stale-skip non-atomic open-fetch pull-noop video-cap version-keep dedupe-off job-cap-off plan-cap-off no-deadline no-second-pass no-gate no-redirect'
           if [ "$LEG" = all ]; then L="$ALL"; else case " $ALL " in *" $LEG "*) L="$LEG" ;; *) echo "::error::unknown leg"; exit 2 ;; esac; fi
           echo "legs=$(printf '%s\n' $L | python3 -c 'import json,sys;print(json.dumps(sys.stdin.read().split()))')" >> "$GITHUB_OUTPUT"
   mutate:
@@ -60,6 +60,7 @@ jobs:
             no-deadline) sed -i 's/if (now() > end) return Result.Timeout/if (false) return Result.Timeout/; s/if (maxBytes > 0 \&\& out.size() > maxBytes) return Result.TooLarge/if (false) return Result.TooLarge/' "$D/LnktreeCache.kt" ;;
             no-second-pass) sed -i 's/val again = todo.filter { decide(it, cfg, store) == Action.COMPLETE }/val again = emptyList<LnktreePage>()/' "$D/LnktreeCache.kt" ;;
             no-gate) sed -i 's/PrefetchGate.waitIdle(15_000)   \/\/ #1951 a page loading on screen goes first//' "$D/LnktreeCache.kt" ;;
+            no-redirect) sed -i 's/ + RefScan.metaRefresh(String(m.body, Charsets.UTF_8), p.url, cfg.crossOrigin)//' "$D/LnktreeCache.kt" ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
           git diff --stat
@@ -122,6 +123,7 @@ jobs:
             no-deadline) N="a download that trickles for ever or never ends is cut off and never stalls the job" ;;
             no-second-pass) N="a file that fails twice is known-missing so the page completes, and a refetch keeps it known-missing" ;;
             no-gate) N="the background job waits while a page loads on screen" ;;
+            no-redirect) N="a meta refresh redirect page stores the page it lands on with that page's own files" ;;
           esac
           X="$(find ac_cloud-me/app/build -path '*test-results*' -name "TEST-*.Precache1957Test.xml" | head -1)"
           [ -n "$X" ] || { echo "::error::LEG ERROR $M: no result for Precache1957Test (did not compile or run); not a kill"; exit 1; }
