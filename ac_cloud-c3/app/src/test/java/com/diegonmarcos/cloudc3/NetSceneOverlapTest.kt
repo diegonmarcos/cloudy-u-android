@@ -60,6 +60,8 @@ class NetSceneOverlapTest {
 
     data class Canvas(val name: String, val wDp: Float, val hDp: Float, val density: Float) { val w get() = wDp * density; val h get() = hDp * density }
     private val canvases = listOf(Canvas("412x739", 412f, 739f, 2.625f), Canvas("320x514", 320f, 514f, 1f))
+    /** #1955 A rev2.2 the 412 dp phones: the 739 dp canvas and the graph canvas a 412 x 915 phone really has under the C3 chrome (541 dp, the walk's dump) */
+    private val phones = listOf(canvases[0], Canvas("412x541", 412f, 541f, 2.625f))
 
     private val measurers = HashMap<Float, NetScene.Measure>()
     /** The real text measure at [density]: the same function the canvas uses (netMeasure over a TextMeasurer). */
@@ -185,61 +187,92 @@ class NetSceneOverlapTest {
         assertEquals(bad.take(40).joinToString("\n"), 0, bad.size)
     }
 
-    /** The opening view of [c] on the 412 x 739 phone, as the phone draws it. */
-    private fun at412(c: Case): Shot {
-        val cv = canvases[0]
+    /** The opening view of [c] on the 412 dp phone canvas [cv], as the phone draws it. */
+    private fun at412(c: Case, cv: Canvas = canvases[0]): Shot {
         val l = NetGraphLayout.layout(c.g, v, c.collapsed, pal, c.status, cv.density)
         val open = NetGraphLayout.openFor(l, v, cv.w, cv.h, cv.density, c.st.root)
         return Shot("${c.page} / ${c.state} / ${cv.name} / opening", c, cv, l, open, scene(c, cv, l, open))
     }
 
-    @Test fun `T1g names at fit view on 412 x 739 - a name is shortened only where its node is at the room its layout has, VM names read in full`() {
+    private fun usable(sc: NetScene.Scene) = MailStack.Rect(0f, sc.caption?.b ?: 0f, sc.canvas.r, sc.canvas.b)
+
+    @Test fun `T1g names at fit view on 412 x 739 and on the phone canvas 412 x 541 - a name is shortened only where its node is at the room its layout has, VM names read in full`() {
         val bad = mutableListOf<String>()
         var checked = 0
-        pages.forEach { page ->
-            val s = at412(cases(page).first { it.state == "default" })
+        phones.forEach { cv -> pages.forEach { page ->
+            val s = at412(cases(page).first { it.state == "default" }, cv)
+            val u = s.l.unit
             s.scene.texts.filter { it.cls == NetScene.Cls.NAME }.forEach { t ->
                 val base = s.l.extras.names.getValue(t.owner)
                 checked++
                 if (t.text == base) return@forEach
+                // a name the view cut (its node under the minimap or past the canvas edge) is the view's shortening, not the layout's
+                val nb = s.scene.nodes.first { it.id == t.owner }
+                if (!NetScene.inside(nb.content, usable(s.scene)) || s.scene.hud.any { hit(nb.content, it) }) return@forEach
                 if (t.owner !in s.l.extras.capped) bad += "${s.label}: ${t.owner} reads '${t.text}' for '$base' though the layout has room for the whole name"
                 if (!t.text.contains(NetLabel.ELLIPSIS)) bad += "${s.label}: ${t.owner} reads '${t.text}' for '$base' with no ellipsis"
             }
-        }
+            // a frame's leaves: one held under its name's width while every row of the frame leaves room to spare could have had more
+            s.l.extras.frames.filter { it.owner.isNotEmpty() }.forEach { f ->
+                val leaves = s.l.plan.nodes.filter { it.id != f.owner && s.l.extras.frameOf[it.id] == f.id && it.kind != "frame" }
+                if (leaves.isEmpty()) return@forEach
+                val spare = (f.rect.r - leaves.maxOf { it.rect.r }) - (leaves.minOf { it.rect.l } - f.rect.l)
+                leaves.forEach { n ->
+                    val nm = s.l.extras.names.getValue(n.id)
+                    if (nm.length <= sp.capNameWide && sp.needDp(nm.length) * u > n.rect.r - n.rect.l + 0.5f && spare > u)
+                        bad += "${s.label}: ${n.id} ('$nm') is ${(n.rect.r - n.rect.l) / u} dp for a ${sp.needDp(nm.length)} dp name while ${f.id} has ${spare / u} dp to spare"
+                }
+            }
+        } }
         // every VM name on WG Mesh and WireGuard reads in full (the owner's target: nothing cut while the world has room)
         val vms = slice.vms.map { it.alias }.toSet()
-        listOf("net_mesh", "net_wg").forEach { page ->
-            val s = at412(cases(page).first { it.state == "default" })
+        phones.forEach { cv -> listOf("net_mesh", "net_wg").forEach { page ->
+            val s = at412(cases(page).first { it.state == "default" }, cv)
             val vmNodes = s.l.plan.nodes.filter { it.label in vms && it.kind != "frame" }
             assertTrue("$page draws VM nodes", vmNodes.isNotEmpty())
             vmNodes.forEach { n ->
                 val t = s.scene.texts.firstOrNull { it.cls == NetScene.Cls.NAME && it.owner == n.id }
                 if (t?.text != n.label) bad += "${s.label}: the VM ${n.label} reads '${t?.text}'"
             }
-        }
+        } }
         assertTrue("names were checked", checked > 0)
         assertEquals(bad.take(40).joinToString("\n"), 0, bad.size)
     }
 
-    @Test fun `T1h names at fit view on 412 x 739 - every node on screen shows a name, none is blank`() {
+    @Test fun `T1h names at fit view on 412 x 739 and on the phone canvas 412 x 541 - every node on screen shows a name, none is blank`() {
         val bad = mutableListOf<String>()
-        pages.forEach { page ->
+        phones.forEach { cv -> pages.forEach { page ->
             cases(page).filter { it.state == "default" || it.state == "all expanded" }.forEach { c ->
-                val s = at412(c)
+                val s = at412(c, cv)
+                val m = measure(cv.density)
+                val dp = cv.density
                 s.l.extras.names.forEach { (id, nm) -> if (nm.isBlank()) bad += "${s.label}: $id has a blank name" }
                 val named = s.scene.texts.filter { it.cls == NetScene.Cls.NAME }
                 named.forEach { t -> if (t.text.isBlank()) bad += "${s.label}: ${t.owner} draws a blank name" }
                 val ids = named.map { it.owner }.toSet()
-                val usable = MailStack.Rect(0f, s.scene.caption?.b ?: 0f, s.scene.canvas.r, s.scene.canvas.b)
+                val u = usable(s.scene)
                 s.scene.nodes.forEach { n ->
-                    val shown = NetScene.inside(n.box, usable) && s.scene.hud.none { hit(n.box, it) } && !n.cut
-                    if (shown && n.id !in ids && ids.size < sp.maxNames) {
+                    // a frame head under the caption strip: the band on screen is the frame's, its name is in the sheet
+                    if (n.kind == "frame" && n.cut) return@forEach
+                    val nm = s.l.extras.names[n.id] ?: return@forEach
+                    // the part of its content on the canvas, and the widest span of it no HUD rect covers (2 dp clear)
+                    val vis = MailStack.Rect(maxOf(n.content.l, u.l), maxOf(n.content.t, u.t), minOf(n.content.r, u.r), minOf(n.content.b, u.b))
+                    val nsp = if (n.kind == "frame") sp.headerSp else sp.nameSp
+                    val shortest = listOf(nm, nm.take(NetLabel.MIN_CHARS) + NetLabel.ELLIPSIS).minOf { m.size(it, nsp, true).first }
+                    val th = m.size(nm, nsp, true).second
+                    if (vis.r <= vis.l || vis.b - vis.t < th) return@forEach
+                    var spans = listOf(vis.l to vis.r)
+                    s.scene.hud.filter { it.t < vis.b && vis.t < it.b }.forEach { h ->
+                        spans = spans.flatMap { (a, b) -> listOf(a to minOf(b, h.l - 2f * dp), maxOf(a, h.r + 2f * dp) to b) }.filter { it.second > it.first }
+                    }
+                    val room = spans.maxOfOrNull { it.second - it.first } ?: 0f
+                    if (room >= shortest && n.id !in ids && ids.size < sp.maxNames) {
                         val label = s.l.plan.nodes.first { it.id == n.id }.label
-                        bad += "${s.label}: ${n.id} ('$label') is on screen with no name"
+                        bad += "${s.label}: ${n.id} ('$label') is on screen with ${room / dp} dp free for its name and draws none"
                     }
                 }
             }
-        }
+        } }
         assertEquals(bad.take(40).joinToString("\n"), 0, bad.size)
     }
 

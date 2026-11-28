@@ -759,6 +759,9 @@
       "net_dns": {
         "layout": "dns_bands",
         "wide_w": 158,
+        "wide_w_max": 260,
+        "open_w": 412,
+        "open_h": 541,
         "wide_gap": 40,
         "collapse_over": 4,
         "graph": {

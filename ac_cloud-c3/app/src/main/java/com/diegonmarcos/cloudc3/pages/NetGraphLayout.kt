@@ -195,10 +195,10 @@ object NetGraphLayout {
         }
 
         /** layered / star / dns_bands: one frame per lane; columns row-aligned; declared grid lanes three across; dns_bands folds 4 columns to two bands of 2. */
-        fun placeLayered(fold: Boolean) {
+        fun placeLayered(fold: Boolean, wideAt: Float? = null) {
             val grid = v.strs(g.page, "grid_lanes").toSet()
             val across = v.num(g.page, "grid_across", 3f).toInt().coerceAtLeast(1)
-            val wideW = v.num(g.page, "wide_w", 158f) * unit; val wideGap = v.num(g.page, "wide_gap", 40f) * unit
+            val wideW = wideAt ?: (v.num(g.page, "wide_w", 158f) * unit); val wideGap = v.num(g.page, "wide_gap", 40f) * unit
             val contentW = if (fold) 2 * wideW + wideGap + 2 * framePad else maxCol * colW + nodeW
             // #1955 A rev2.1 column widths: each column as wide as its longest name needs; when they do not all fit, the declared yield
             // columns give way first (WireGuard's roaming clients), then the widest share one level; room left over widens the gaps
@@ -316,6 +316,20 @@ object NetGraphLayout {
             val kids = items.keys.groupBy { parent[it] }
             val hubs = items.values.filter { it.kind in hubKinds && parent[it.id] == null }
             fun kidsOf(id: String) = kids[id].orEmpty()
+            /** #1955 A rev2.2 [leaves] in rows of up to as many columns as [iw] holds at leaf_w: each column as wide as its longest name
+             *  wants (a lone leaf is not held to a third of the row), never under the even share when the row has room. Returns the bottom. */
+            fun leafGrid(leaves: List<String>, x0: Float, iw: Float, top: Float, fid: String?): Float {
+                val nMax = maxOf(1, ((iw + gapY) / (leafW + gapY)).toInt())
+                val n = minOf(nMax, leaves.size)
+                val share = minOf(maxOf(leafW, (iw - (nMax - 1) * gapY) / nMax), iw)
+                val cw = allocate((0 until n).associateWith { k -> leaves.filterIndexed { i, _ -> i % n == k }.maxOf { minOf(need(it), sp.needDp(sp.capNameWide) * unit) } },
+                    iw - (n - 1) * gapY, emptyList(), minOf(leafW, share), share)
+                val ws = (0 until n).map { k -> cw.getValue(k) }
+                val xs = ws.runningFold(x0) { x, cwk -> x + cwk + gapY }
+                leaves.forEachIndexed { i, c -> val r = i / n; val k = i % n
+                    rects[c] = MailStack.Rect(xs[k], top + r * rowH, xs[k] + ws[k], top + r * rowH + nodeH); if (fid != null) frameOf[c] = fid }
+                return top + ((leaves.size + n - 1) / n) * rowH - gapY
+            }
             fun place(id: String, x: Float, top: Float, w: Float, depth: Int): Float {
                 val fid = "frame:$id"
                 val at = frames.size
@@ -325,14 +339,7 @@ object NetGraphLayout {
                 val inner = x + framePad; val iw = w - 2 * framePad
                 val (framed, leaves) = kidsOf(id).partition { kidsOf(it).isNotEmpty() }
                 framed.forEach { c -> cy = place(c, inner, cy, iw, depth + 1) + frameGap }
-                if (leaves.isNotEmpty()) {
-                    val n = maxOf(1, ((iw + gapY) / (leafW + gapY)).toInt())
-                    // #1955 A rev2.1 the leaves share the whole row (a name gets the room the grid has, not the declared minimum)
-                    val lw = minOf(maxOf(leafW, (iw - (n - 1) * gapY) / n), iw)
-                    leaves.forEachIndexed { i, c -> val r = i / n; val k = i % n
-                        rects[c] = MailStack.Rect(inner + k * (lw + gapY), cy + r * rowH, inner + k * (lw + gapY) + lw, cy + r * rowH + nodeH); frameOf[c] = fid }
-                    cy += ((leaves.size + n - 1) / n) * rowH - gapY
-                } else cy -= frameGap
+                if (leaves.isNotEmpty()) cy = leafGrid(leaves, inner, iw, cy, fid) else cy -= frameGap
                 val bottom = cy + framePad
                 val it0 = items.getValue(id)
                 frames.add(at, Frame(fid, MailStack.Rect(x, top, x + w, bottom), laneHeader, it0.label, it0.sub, id, depth))
@@ -351,12 +358,7 @@ object NetGraphLayout {
             val tops = items.keys.filter { id -> id !in hubs.map { it.id } && (parent[id] == null || parent[id] in hubs.map { it.id }) }
             val (framed, leaves) = tops.partition { kidsOf(it).isNotEmpty() }
             framed.forEach { id -> y = place(id, 0f, y, contentW, 0) + frameGap }
-            if (leaves.isNotEmpty()) {
-                val n = maxOf(1, ((contentW + gapY) / (leafW + gapY)).toInt())
-                val lw = maxOf(leafW, (contentW - (n - 1) * gapY) / n)
-                leaves.forEachIndexed { i, c -> val r = i / n; val k = i % n
-                    rects[c] = MailStack.Rect(k * (lw + gapY), y + r * rowH, k * (lw + gapY) + lw, y + r * rowH + nodeH) }
-            }
+            if (leaves.isNotEmpty()) leafGrid(leaves, 0f, contentW, y, null)
             // a lane per tree root keeps its frame as the lane (the sheets name it)
             frames.filter { it.depth == 0 && it.owner.isNotEmpty() }.forEach { f -> laneRects[items.getValue(f.owner).lane] = f.rect }
         }
@@ -364,7 +366,27 @@ object NetGraphLayout {
         when (v.layoutOf(g.page)) {
             "radial" -> if (!placeRadial()) placeLayered(false)
             "layered", "star" -> placeLayered(false)
-            "dns_bands" -> placeLayered(true)
+            "dns_bands" -> {
+                placeLayered(true)
+                // #1955 A rev2.2 the phone opens this page whole, scaled to its height: the wide nodes grow (up to wide_w_max) so the
+                // longest name still reads in full at the scale the declared phone canvas (open_w x open_h dp) opens it at
+                val ow = v.num(g.page, "open_w", 0f) * unit; val oh = v.num(g.page, "open_h", 0f) * unit
+                val all = rects.values + frames.map { it.rect }
+                if (ow > 0f && oh > 0f && all.isNotEmpty()) {
+                    val wide0 = v.num(g.page, "wide_w", 158f) * unit; val wideMax = v.num(g.page, "wide_w_max", 158f) * unit
+                    val wideGap = v.num(g.page, "wide_gap", 40f) * unit; val pad = 12f * unit
+                    val bh = all.maxOf { it.b } - all.minOf { it.t }
+                    val want = items.keys.maxOf { minOf(need(it), sp.needDp(sp.capNameWide) * unit) }
+                    // the scale openView picks for a world [ww] wide nodes make (fit-all at farBelow or more, else fit-width)
+                    fun openScale(ww: Float): Float {
+                        val sw = (ow - 2 * pad) / (2 * ww + wideGap + 4 * framePad); val fit = minOf(sw, (oh - 2 * pad) / bh)
+                        return if (fit >= sp.farBelow) fit.coerceAtMost(1f) else sw.coerceIn(sp.farBelow, 1f)
+                    }
+                    var ww = wide0
+                    repeat(4) { if (ww * openScale(ww) < want) ww = minOf(wideMax, want / openScale(ww)) }
+                    if (ww > wide0) { rects.clear(); frames.clear(); frameOf.clear(); laneRects.clear(); room.clear(); placeLayered(true, ww) }
+                }
+            }
             "clusters" -> placeClusters()
             else -> placeLanes()
         }

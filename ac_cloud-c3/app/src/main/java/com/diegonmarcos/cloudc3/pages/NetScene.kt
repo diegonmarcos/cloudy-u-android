@@ -134,11 +134,21 @@ object NetScene {
         val hasCaptions = l.extras.columns.isNotEmpty() && tier != Tier.FAR
         val caption = if (hasCaptions) MailStack.Rect(0f, 0f, w, sp.captionH * dp) else null
         val top = caption?.b ?: 0f
-        val usable = MailStack.Rect(0f, top, w, h)
         val hud = st.hud
         val texts = mutableListOf<TextBox>()
-        fun free(r: MailStack.Rect) = inside(r, usable) && hud.none { hit(r, it) }
         fun clipTop(r: MailStack.Rect): MailStack.Rect? = if (r.b <= top) null else if (r.t >= top) r else r.copy(t = top)
+        /** #1955 A rev2.2 the side of [r] clear of the HUD rect [o] (2 dp off it) that keeps more width */
+        fun clearOf(r: MailStack.Rect, o: MailStack.Rect): MailStack.Rect {
+            val a = r.copy(r = minOf(r.r, o.l - 2f * dp)); val b = r.copy(l = maxOf(r.l, o.r + 2f * dp))
+            return if (a.r - a.l >= b.r - b.l) a else b
+        }
+        /** #1955 A rev2.2 the part of a node's content a name may use: on the usable canvas and clear of the HUD (a minimap over a node's
+         *  tail leaves its head; a node cut by the canvas edge keeps its name in the part on screen); null when nothing is left */
+        fun nameArea(c: MailStack.Rect): MailStack.Rect? {
+            var r = MailStack.Rect(maxOf(c.l, 0f), maxOf(c.t, top), minOf(c.r, w), minOf(c.b, h))
+            hud.forEach { o -> if (hit(r, o)) r = clearOf(r, o) }
+            return r.takeIf { it.r > it.l && it.b > it.t }
+        }
 
         // members: drawn id to every graph id it stands for
         val members = HashMap<String, MutableList<String>>()
@@ -202,8 +212,8 @@ object NetScene {
             prio.forEach { n ->
                 if (names >= sp.maxNames) return@forEach
                 val nb = nodeBy[n.id] ?: return@forEach
-                val c = nb.content
-                if (c.r - c.l <= 0f || (n.kind != "frame" && !free(nb.box)) || !free(c) || (n.kind == "frame" && nb.cut)) return@forEach
+                if (n.kind == "frame" && nb.cut) return@forEach
+                val c = nameArea(nb.content) ?: return@forEach
                 val nsp = if (n.kind == "frame") sp.headerSp else sp.nameSp
                 val base = shorts.getValue(n.id)
                 val full = n.label.ifBlank { base }
