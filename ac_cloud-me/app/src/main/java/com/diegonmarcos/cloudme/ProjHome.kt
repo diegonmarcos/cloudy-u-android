@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -141,7 +142,7 @@ private fun BannerImage(entry: ProjBanners.Entry, title: String, tag: String) {
             .semantics { contentDescription = "banner:$title" },
     ) {
         tick.intValue
-        androidx.compose.ui.graphics.drawscope.drawIntoCanvas { drawBannerCropped(it.nativeCanvas, drawable, size.width.toInt(), size.height.toInt()) }
+        drawBannerCropped(drawContext.canvas.nativeCanvas, drawable, size.width.toInt(), size.height.toInt())
     }
 }
 
