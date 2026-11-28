@@ -145,6 +145,17 @@ class ListReturn1952cTest {
         assertTrue("var ready by remember { mutableStateOf(app.sterna.core.data.mail.ColdStart.rowsWerePainted) }" in screen)
     }
 
+    @Test fun `the first page load starts before the screen composes`() {
+        val vm = code("app/src/main/kotlin/app/sterna/ui/inbox/InboxViewModel.kt")
+        assertTrue("init { startFirstPageLoad() }" in vm)
+        val at = vm.indexOf("private fun startFirstPageLoad() {")
+        assertTrue("the starter exists", at >= 0)
+        val body = vm.drop(at).take(30)
+        assertTrue("it takes the pages the screen shows (keptListRows), through a presenter", body.any { "keptListRows.collectLatest { differ.submitData(it) }" in it })
+        assertTrue("posted after the constructor, collecting off the main thread", "viewModelScope.launch(Dispatchers.Main) {" in body && body.any { "launch(Dispatchers.Default) { keptListRows.collectLatest" in it })
+        assertTrue("and only for the first generation", body.any { "differ.onPagesUpdatedFlow.first()" in it } && body.any { it == "feed.cancel()" })
+    }
+
     // -- cold start: one key ----------------------------------------------------------------------------------------
 
     @Test fun `the pager's first key carries the stored view, never a placeholder`() {

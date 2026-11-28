@@ -66,6 +66,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flatMapLatest
@@ -1209,6 +1210,37 @@ class InboxViewModel(
      * ViewModel's scope, the returning screen is handed the loaded pages in its FIRST composition. Still downstream of the drafts merge.
      */
     val keptListRows: Flow<PagingData<InboxRow>> = pagedListRows.cachedIn(viewModelScope)
+
+    /**
+     * #1952 cold start: paging loads a generation only once something collects its pages for display, and that was the list screen's first
+     * composition (680 ms after the first frame was drawn). A headless presenter takes the FIRST generation of [keptListRows] now, off the main
+     * thread, so the store query runs beside the first frame; the screen then finds the loaded pages in the cache. It stops after that
+     * generation (a second consumer of every later one would only cost a diff per write).
+     */
+    private fun startFirstPageLoad() {
+        // Posted to the main queue (not run in place): this is called from the constructor, and the pager's lambdas read properties declared below it.
+        viewModelScope.launch(Dispatchers.Main) {
+            val differ = androidx.paging.AsyncPagingDataDiffer(
+                diffCallback = object : androidx.recyclerview.widget.DiffUtil.ItemCallback<InboxRow>() {
+                    override fun areItemsTheSame(oldItem: InboxRow, newItem: InboxRow) = oldItem.email.id == newItem.email.id
+                    override fun areContentsTheSame(oldItem: InboxRow, newItem: InboxRow) = oldItem == newItem
+                },
+                updateCallback = object : androidx.recyclerview.widget.ListUpdateCallback {
+                    override fun onInserted(position: Int, count: Int) {}
+                    override fun onRemoved(position: Int, count: Int) {}
+                    override fun onMoved(fromPosition: Int, toPosition: Int) {}
+                    override fun onChanged(position: Int, count: Int, payload: Any?) {}
+                },
+                mainDispatcher = Dispatchers.Default,
+                workerDispatcher = Dispatchers.Default,
+            )
+            val feed = launch(Dispatchers.Default) { keptListRows.collectLatest { differ.submitData(it) } }
+            kotlinx.coroutines.withTimeoutOrNull(10_000L) { differ.onPagesUpdatedFlow.first() }
+            feed.cancel()
+        }
+    }
+
+    init { startFirstPageLoad() }
 
     /**
      * #1952 the rows the list screen showed last, reported by the screen itself ([rememberShownRows]). A returning screen is

@@ -72,6 +72,14 @@ class ListQueryPlan1952bTest {
         assertEquals("the index changes the cost, never the rows", before, rows())
     }
 
+    @Test fun `a migrated database (the index added, no ANALYZE) answers the aggregates from the covering index too`() {
+        // what an update from v34 holds the first time the list is read: MIGRATION_34_35 runs the index SQL and nothing else
+        exec(EMAILS_DOMAIN_LIST_INDEX_SQL)
+        val plan = plan()
+        assertEquals("index-only without statistics too: $plan", 3, plan.count { "emails USING COVERING INDEX $index" in it })
+        assertFalse("no aggregate scans the table itself: $plan", plan.any { it == "SCAN emails" })
+    }
+
     @Test fun `the entity, the migration and the schema version declare that index`() {
         val entity = code("core/data/src/main/kotlin/app/sterna/core/data/db/EmailEntity.kt")
         assertTrue(entity.any { "Index(value = [\"accountId\", \"mailboxId\", \"fromDomain\", \"sortKey\", \"seen\", \"id\"])" in it })
