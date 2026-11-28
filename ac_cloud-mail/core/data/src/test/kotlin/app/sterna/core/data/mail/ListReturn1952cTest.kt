@@ -102,7 +102,7 @@ class ListReturn1952cTest {
         assertFalse("a known account keeps the counters-after-rows order", firstSyncNeedsFolders("inbox", 7))
         assertFalse(firstSyncNeedsFolders(null, 7))
         val repo = code("core/data/src/main/kotlin/app/sterna/core/data/mail/MailRepository.kt")
-        val early = repo.indexOfFirst { it.startsWith("if (firstSyncNeedsFolders(mailboxDao.roleForId(credentials.id, target.id)") }
+        val early = repo.indexOfFirst { it.startsWith("if (accountStore.account(credentials.id) != null && firstSyncNeedsFolders(mailboxDao.roleForId(credentials.id, target.id)") } // a signed-out account is never given a folder list (#121)
         val sync = repo.indexOfFirst { it.startsWith("val sync = runCatching { syncMailbox(session, accountId, auth, target.id, sizing, credentials.id) }") }
         assertTrue("before the message sync starts", early in 0 until sync)
     }
