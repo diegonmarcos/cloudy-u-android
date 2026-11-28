@@ -315,9 +315,9 @@ if [ "$T" = all ] || [ "$T" = 1983 ]; then
   chk c3-1983-cards-all "leak-scan.yml,lint-secrets-coverage.yml,audit-credentials-coverage.sh,cloud-cgc-verify-surfaces.sh,vm-pilotd-test.yml,infra-sec+crowdsec,lint-agent-credential.yml,lint-pipeline.yml,licence-inventory-guard.yml,readme-check.yml,cloud-run-guard.yml,cloud-run-verify.yml"
   chk c3-1983-cards-all "replaces_1+cicd/src/ops/cloud-health-all-vms.sh,replaces_1+cicd/src/ops/cloud-health-check-vm.sh,replaces_1+cicd/src/ops/cloud-health-full.sh,replaces_1+cicd/src/ops/cloud-health-http-public.sh,replaces_1+cicd/src/ops/cloud-health-http-private.sh,replaces_1+cicd/src/ops/cloud-health-mail-full.sh"
   # the no-token reason is a tap target: it opens Cloud Account at Config import (or says why it could not)
-  eng_open c3-1983-nt; for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14; do adb shell input swipe $((sw / 2)) $((shh * 3 / 10)) $((sw / 2)) $((shh * 8 / 10)) 300; done   # the page keeps its scroll: back to the top
-  shot c3-1983-cards-notoken-before 2
-  tap_text c3-1983-cards-notoken-before "no verdict: device"; shot c3-1983-cards-notoken-tap 2
+  open_page ops_health_tests; sleep 2; shot c3-1983-cards-notoken-pre 2
+  tap_text c3-1983-cards-notoken-pre "C3 full"; shot c3-1983-cards-notoken-before 2
+  tap_text c3-1983-cards-notoken-before "device: this device has no C3 token"; shot c3-1983-cards-notoken-tap 3
   # the VMs tab lists the three devices after the VMs
   open_page ops_health_tests; sleep 2; shot c3-1983-cards-vms-pre 3
   tap_text c3-1983-cards-vms-pre "VMs"; shot c3-1983-cards-vms 3
