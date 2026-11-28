@@ -60,6 +60,14 @@ class MainActivity : AppCompatActivity() {
         app.sterna.core.data.mail.ColdStart.arm() // #1952: rows from the store before the first server call
         super.onCreate(savedInstanceState)
         app.sterna.ui.JankProbe.attach(this) // #1952: per-frame stage times and named sections, logged once a second
+        // #1952 cold start: when the first frame is about to be drawn, in the same clock as the list's marks
+        window.decorView.viewTreeObserver.addOnPreDrawListener(object : android.view.ViewTreeObserver.OnPreDrawListener {
+            override fun onPreDraw(): Boolean {
+                window.decorView.viewTreeObserver.removeOnPreDrawListener(this)
+                app.sterna.core.data.mail.ColdStart.mark("first-predraw")
+                return true
+            }
+        })
         FleetChrome.apply(this)
         // Only on a real launch. The activity is singleTask, so the intent that opened a
         // notification stays the activity's intent for good, and re-parsing it on every recreation

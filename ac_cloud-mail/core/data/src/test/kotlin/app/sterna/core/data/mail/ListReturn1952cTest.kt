@@ -114,7 +114,7 @@ class ListReturn1952cTest {
         assertTrue("the selection starts on the stored Inbox id", "restoredSelection(store) ?: Sel.Folder(store.inboxMailboxId() ?: inboxIdFromTheStore())," in vm)
         assertTrue("the read is the store's folder list by role, bounded", "kotlinx.coroutines.runBlocking(Dispatchers.IO) { kotlinx.coroutines.withTimeoutOrNull(1_500L) { repo.storedInboxId(account) } }" in vm)
         val repo = code("core/data/src/main/kotlin/app/sterna/core/data/mail/MailRepository.kt")
-        assertTrue("suspend fun storedInboxId(accountId: String): String? = mailboxDao.idForRole(accountId, \"inbox\")" in repo)
+        assertTrue("suspend fun storedInboxId(account: String): String? = mailboxDao.idForRole(account, \"inbox\")" in repo)
     }
 
     @Test fun `the first page does not wait for the folders that list extra messages`() {
@@ -136,6 +136,13 @@ class ListReturn1952cTest {
     @Test fun `the key and the pager are built off the main thread`() {
         val vm = code("app/src/main/kotlin/app/sterna/ui/inbox/InboxViewModel.kt")
         assertTrue("}.flowOn(Dispatchers.Default).cachedIn(viewModelScope)" in vm)
+    }
+
+    @Test fun `the drawer's content is composed after the first rows are painted`() {
+        val screen = code("app/src/main/kotlin/app/sterna/ui/inbox/InboxScreen.kt")
+        assertEquals("both drawer envelopes wait for the first rows", 2, screen.count { it == "if (drawerContentReady) DrawerContent(" })
+        assertTrue("the readiness is the painted rows, or an opening drawer", "return ready || drawerState.targetValue != DrawerValue.Closed" in screen)
+        assertTrue("var ready by remember { mutableStateOf(app.sterna.core.data.mail.ColdStart.rowsWerePainted) }" in screen)
     }
 
     // -- cold start: one key ----------------------------------------------------------------------------------------

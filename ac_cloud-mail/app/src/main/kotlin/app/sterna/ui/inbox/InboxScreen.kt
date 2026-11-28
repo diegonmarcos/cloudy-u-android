@@ -159,6 +159,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -1853,11 +1854,14 @@ fun InboxScreen(
     // ONE drawer content, two envelopes. `drawerState` is closed from the content in BOTH branches,
     // deliberately: close() on an already-Closed state does nothing, so the six
     // `drawerState.close()` inside [DrawerContent] need no branch of their own (#103).
+    // #1952 cold start: the drawer's content (accounts carousel, every folder row with its badge) is composed after the list's first rows
+    // are painted, or at once when the drawer is opened sooner. Composed before, it was most of the first frame's work.
+    val drawerContentReady = rememberDrawerContentReady(drawerState)
     if (permanentDrawer) {
         PermanentNavigationDrawer(
             drawerContent = {
                 PermanentDrawerSheet(Modifier.width(DRAWER_SHEET_WIDTH_DP.dp)) {
-                    DrawerContent(
+                    if (drawerContentReady) DrawerContent(
                         accounts = accounts,
                         currentAccountId = currentAccountId,
                         ui = ui,
@@ -1887,7 +1891,7 @@ fun InboxScreen(
             drawerState = drawerState,
             drawerContent = {
                 ModalDrawerSheet(modifier = Modifier.width(DRAWER_SHEET_WIDTH_DP.dp)) {
-                    DrawerContent(
+                    if (drawerContentReady) DrawerContent(
                         accounts = accounts,
                         currentAccountId = currentAccountId,
                         ui = ui,
@@ -1913,6 +1917,21 @@ fun InboxScreen(
             content = content,
         )
     }
+}
+
+/** #1952: false until the list's first rows are painted (the first frame is the top bar and the list); true at once for a returning screen
+ *  and as soon as the drawer starts to open. */
+@Composable
+private fun rememberDrawerContentReady(drawerState: DrawerState): Boolean {
+    var ready by remember { mutableStateOf(app.sterna.core.data.mail.ColdStart.rowsWerePainted) }
+    LaunchedEffect(Unit) {
+        if (!ready) {
+            app.sterna.core.data.mail.ColdStart.awaitRows()
+            withFrameNanos { }
+            ready = true
+        }
+    }
+    return ready || drawerState.targetValue != DrawerValue.Closed
 }
 
 /**
