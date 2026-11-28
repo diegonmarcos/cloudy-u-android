@@ -269,8 +269,13 @@ for round in 1 2 3; do
   echo "| cold start $round at the fixture | ${ms:-missing} | ${rows:-} | $order | ${q:-} |" >> "$OUT/timing.md"
   pa=$(sed -n 's/.*cold-start rows-painted.*process-age=\([0-9-]*\).*/\1/p' "$OUT/cold-$round.log" | head -1)
   echo "  - cold start $round: first rows painted ${pa:-?} ms after the process started" >> "$OUT/timing.md"
-  oms=$(sed -n 's/.*open optimize ms=\([0-9]*\).*/\1/p' "$OUT/cold-$round.log" | head -1)
-  echo "  - cold start $round: the open-time PRAGMA optimize took ${oms:-no line} ms" >> "$OUT/timing.md"
+  # The per-round slice of logcat.txt can start a few seconds into the new process (run 46129508730: it began at vm-selection, 2.6 s after the
+  # process started, so the open-time line was cut off in every round although logcat.txt held it), so the line is taken from the WHOLE log by
+  # the pid of this round's first-row line.
+  rpid=$(grep -m1 "first-row ms=" "$OUT/cold-$round.log" | awk '{print $3}')
+  oms=$(grep "MailMigration: open optimize ms=" "$OUT/logcat.txt" | awk -v p="$rpid" '$3 == p' | sed -n 's/.*open optimize ms=\([0-9]*\).*/\1/p' | head -1)
+  echo "  - cold start $round (pid ${rpid:-?}): the open-time PRAGMA optimize took ${oms:-no line} ms" >> "$OUT/timing.md"
+  [ -n "$oms" ] || fail "cold start $round: no open-time PRAGMA optimize line for pid ${rpid:-?} (the timing is not being captured)"
   [ "${oms:-0}" -le "${OPEN_OPTIMIZE_MAX_MS:-25}" ] 2>/dev/null || fail "cold start $round: the open-time PRAGMA optimize took ${oms} ms (limit ${OPEN_OPTIMIZE_MAX_MS:-25})"
   [ -n "$ms" ] || fail "cold start $round: the list logged no first row"
   case "$order" in yes*) ;; *) fail "cold start $round: rows were not painted before the first server call ($order)" ;; esac
