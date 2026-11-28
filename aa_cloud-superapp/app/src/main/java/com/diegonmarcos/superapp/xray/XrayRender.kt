@@ -99,7 +99,9 @@ object XrayDigest {
             }
             val extra = extraSecs.map { s -> DdLine(s.title.take(40), s.text.lineSequence().firstOrNull { it.isNotBlank() }?.trim()?.take(100).orEmpty()) }
             val read = t.num == 13 || probeIds.any { c.tried[it] == true }
-            out += if (!read) XDigest(t.label, t.num, XStatus.NA, if (r.partial) "needs adb" else "not read", extra, emptyList())
+            val appText = c.t(XrayNoAdb.id(t.num))
+            out += if (!read && appText != null) XrayNoAdb.digest(t, appText).let { it.copy(lines = it.lines + extra) }
+            else if (!read) XDigest(t.label, t.num, XStatus.NA, if (r.partial) "needs adb" else "not read", extra, emptyList())
             else d.copy(lines = d.lines + extra)
         }
         return out
@@ -293,7 +295,10 @@ object XrayDigest {
 
     private fun suspects(c: Ctx, t: XrayProbes.Tracker): XDigest {
         val s = c.r.suspects
-        if (s.isEmpty()) return d(t, if (c.r.partial) XStatus.NA else XStatus.OK, if (c.r.partial) "needs adb" else "none ranked", emptyList())
+        if (s.isEmpty()) {
+            val appRead = c.r.partial && (1..12).any { c.t(XrayNoAdb.id(it)) != null }
+            return d(t, if (c.r.partial && !appRead) XStatus.NA else XStatus.OK, if (c.r.partial && !appRead) "needs adb" else "none ranked: every measured tracker is within its declared thresholds", emptyList())
+        }
         return d(t, sevHigh(s.first().score, 30.0, 60.0), "#1 ${short(s.first().pkg)} ${n(s.first().score)}pts ${s.first().cause}",
             s.take(8).map { DdLine("#${it.rank} ${short(it.pkg)}${if (it.fleet) "*" else ""}", "${n(it.score)} ${it.cause}") }, s.take(6).map { XBar(short(it.pkg).take(30), it.score, 100.0, n(it.score)) })
     }
@@ -303,6 +308,8 @@ object XrayDigest {
 object XrayRender {
 
     private val PREFIX = listOf("com.diegonmarcos." to "dm.", "com.google.android." to "g.", "com.android." to "a.", "com.samsung.android." to "sx.")
+    private const val WALK_LINES = 40
+    private const val WALK_CHARS = 200
     private fun cell(s: String) = s.replace("|", "/").replace("\n", " ").trim()
 
     /**
@@ -316,7 +323,9 @@ object XrayRender {
             .append("|adb ").append(r.adbChannel).append(if (r.partial) "|PARTIAL " + r.partialReason else "").append('\n')
         sb.append("legend: ").append(PREFIX.joinToString(" ") { "${it.second}=${it.first}" }).append(" *=fleet st=ok|warn|bad|na order=P,T01-T12,T13\n")
         sb.append("## VERDICT\n")
-        if (r.suspects.isEmpty()) sb.append("none\n") else {
+        val vl = XrayNoAdb.verdict(dg, r.suspects)
+        if (vl != null) sb.append(vl).append('\n')
+        if (r.suspects.isEmpty()) { if (vl == null) sb.append("none\n") } else {
             sb.append("#|app|pts|cause|why\n")
             for (s in r.suspects.take(8)) sb.append("${s.rank}|${s.pkg}${if (s.fleet) "*" else ""}|${XrayRender.num(s.score)}|${cell(s.cause)}|${cell(s.detail.removePrefix("why: "))}\n")
             if (r.suspects.size > 8) sb.append("+${r.suspects.size - 8} more <1pt\n")
@@ -334,7 +343,15 @@ object XrayRender {
             if (x.bars.isNotEmpty()) { sb.append("top:"); sb.append(x.bars.joinToString(";") { "${cell(it.label)}=${cell(it.text)}" }).append('\n') }
         }
         val walked = r.sections.map { it.group }.distinct().filter { it.startsWith("X-Ray") }
-        if (walked.isNotEmpty()) sb.append("omitted(raw; use verbose md): ").append(walked.joinToString(",")).append('\n')
+        for (g in walked) {
+            sb.append("## ").append(g).append('\n')
+            for (sec in r.sections.filter { it.group == g }) {
+                sb.append("### ").append(cell(sec.title).take(60)).append(if (sec.ok) "" else " st:na").append('\n')
+                val ls = sec.text.lines().map { it.trim() }.filter { it.isNotEmpty() && !it.startsWith("## ") }
+                for (l in ls.take(WALK_LINES)) sb.append(cell(l).take(WALK_CHARS)).append('\n')
+                if (ls.size > WALK_LINES) sb.append("+").append(ls.size - WALK_LINES).append(" more lines (verbose md)\n")
+            }
+        }
         if (r.fleet.isNotEmpty()) sb.append("fleet:").append(r.fleet.joinToString(";") { cell(it.replace(": woken by ", ":")).replace(" · ", ",") }).append('\n')
         var s = XrayRedact.scrub(sb.toString())
         for ((a, b) in PREFIX) s = s.replace(a, b)

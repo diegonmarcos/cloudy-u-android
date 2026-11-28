@@ -365,4 +365,77 @@ class XrayExportTest {
         assertTrue(b.length <= XrayPoster.MAX_BODY)
         assertFalse(XrayPoster.body(build()).contains("Authorization"))
     }
+
+    // ── #1985 no-adb report: every tracker measured with the app's own APIs, the omitted sections in the .ai.md, a computed VERDICT ──
+
+    private val XRAY_GROUPS = listOf("ENGINE PROFILES", "APP & BUILD", "REPO & RELEASES", "DEVICE", "SECURITY", "RESOURCES", "NETWORK", "API", "MESH", "DEV TOOLS", "WEBSERVER", "DIAGNOSTICS", "AGENTS")
+
+    /** What the app-side reader yields on a stressed device: direct, fallback and adb-only fields per tracker; T04 temp 43C warn, a fleet crash finding. */
+    private fun appSections(blank: Int? = null): List<XSection> = (1..12).map { n ->
+        val g = XrayProbes.trackers[n - 1].group
+        if (n == blank) XSection(g, "App-side measurements, no adb (T%02d)".format(n), SRC_APP, "needs adb", id = XrayNoAdb.id(n))
+        else {
+            val f = ArrayList<AField>()
+            f += AField("direct_$n", "7", AField.DIRECT, "SomeApi.read", num = 7.0)
+            f += AField("fb_$n", "1.8 GHz", AField.FALLBACK, "/sys/devices/system/cpu/cpu0/cpufreq", "own-process view", "dumpsys cpuinfo")
+            f += AField("only_$n", "no app API for it", AField.ADB_ONLY, adb = "dumpsys x")
+            if (n == 4) f += AField("battery_temp_c", "43.0C", AField.DIRECT, "EXTRA_TEMPERATURE", num = 43.0)
+            XrayNoAdb.section(n, g, f, if (n == 9) listOf(AFinding("com.diegonmarcos.fleet", "crash", "2 crash in 30 d", 50.0)) else emptyList())
+        }
+    }
+
+    private fun noAdbReport(blank: Int? = null): XReport = XrayExporter.build(XrayInputs("Pixel", "1", 1L,
+        XRAY_GROUPS.map { XSection("X-Ray · $it", "Block $it", SRC_APP, "  Field: value\n  Other: 2\n") }, null, "user exported without adb", extra = appSections(blank)))
+
+    /** The acceptance check of the no-adb export: every problem found, empty = pass. */
+    private fun noAdbProblems(r: XReport): List<String> {
+        val bad = ArrayList<String>()
+        val c = XrayFormat.markdownCompact(r)
+        val verbose = XrayFormat.markdown(r)
+        for (n in 1..12) {
+            val head = c.lines().firstOrNull { it.startsWith("## T%02d ".format(n)) }
+            if (head == null) { bad += "T$n missing"; continue }
+            if (head.contains("needs adb") || head.contains("st:na")) bad += "T$n is na: $head"
+            val sec = r.sections.firstOrNull { it.id == XrayNoAdb.id(n) }
+            if (sec == null) bad += "T$n has no app-side section"
+            else {
+                val lines = sec.text.lines().filter { it.isNotBlank() && !it.startsWith("#") && !it.startsWith("thresholds:") }
+                if (lines.none { it.contains("(direct:") || it.contains("(fallback:") }) bad += "T$n measures nothing"
+                lines.filterNot { XrayNoAdb.validLine(it) }.forEach { bad += "T$n field without value or fallback: $it" }
+                if (!verbose.contains(sec.text.lines().first())) bad += "T$n missing in verbose md"
+            }
+        }
+        val verdict = c.substringAfter("## VERDICT\n").substringBefore("\n## STATUS").trim()
+        if (verdict.isEmpty() || verdict == "none") bad += "VERDICT empty"
+        for (g in XRAY_GROUPS) if (!c.contains("## X-Ray · $g")) bad += "X-Ray group $g omitted"
+        if (c.contains("omitted(")) bad += "omitted marker present"
+        return bad
+    }
+
+    @Test fun `a no-adb export has every tracker measured, every X-Ray section, and a computed verdict`() {
+        val r = noAdbReport()
+        assertEquals(emptyList<String>(), noAdbProblems(r))
+        val c = XrayFormat.markdownCompact(r)
+        assertTrue(c.contains("worst:warn") && c.contains("T04:warn"))
+        assertTrue("fleet crash is a named suspect", c.contains("fleet*") || c.contains("dm.fleet*"))
+        assertTrue("legend style kept", c.lines()[1].startsWith("legend: dm.=com.diegonmarcos."))
+        assertTrue("thresholds declared in the section", r.sections.first { it.id == XrayNoAdb.id(4) }.text.contains("thresholds: battery_pct warn<=20"))
+        assertTrue("adb-only keeps its field names", c.contains("only_4:adb-only: no app API for it"))
+    }
+
+    @Test fun `mutation - blanking one tracker section or the verdict turns the no-adb check red`() {
+        assertTrue("T05 re-blanked", noAdbProblems(noAdbReport(blank = 5)).isNotEmpty())
+        val noApp = XrayExporter.build(XrayInputs("Pixel", "1", 1L, emptyList(), null, "no adb"))
+        assertTrue("no measurements at all", noAdbProblems(noApp).any { it.contains("no app-side section") } && noAdbProblems(noApp).any { it.contains("VERDICT") })
+    }
+
+    @Test fun `thresholds decide the status and a field line is valid only with a value or a fallback`() {
+        val warn = XrayNoAdb.digest(XrayProbes.trackers[3], XrayNoAdb.section(4, XrayProbes.G_BATTERY, listOf(AField("battery_temp_c", "43C", AField.DIRECT, "x", num = 43.0))).text)
+        val bad = XrayNoAdb.digest(XrayProbes.trackers[3], XrayNoAdb.section(4, XrayProbes.G_BATTERY, listOf(AField("battery_temp_c", "47C", AField.DIRECT, "x", num = 47.0))).text)
+        val ok = XrayNoAdb.digest(XrayProbes.trackers[3], XrayNoAdb.section(4, XrayProbes.G_BATTERY, listOf(AField("battery_temp_c", "30C", AField.DIRECT, "x", num = 30.0))).text)
+        val low = XrayNoAdb.digest(XrayProbes.trackers[3], XrayNoAdb.section(4, XrayProbes.G_BATTERY, listOf(AField("battery_pct", "8%", AField.DIRECT, "x", num = 8.0))).text)
+        assertEquals(listOf(XStatus.WARN, XStatus.BAD, XStatus.OK, XStatus.BAD), listOf(warn, bad, ok, low).map { it.status })
+        assertTrue(XrayNoAdb.validLine("k: v (fallback: /proc/x; own view; adb: top)") && XrayNoAdb.validLine("k: adb-only: no app API (adb: x)"))
+        assertFalse(XrayNoAdb.validLine("k: needs adb") || XrayNoAdb.validLine("k: adb-only: "))
+    }
 }

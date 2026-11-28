@@ -87,13 +87,15 @@ internal object XrayExport {
             // #1666 the app's own location-use ledger, read in the sandbox (no adb needed).
             XSection(XrayProbes.G_SECURITY, "Location use · this app's ledger (last access per call site)", SRC_APP,
                 LocationUseView.ledgerText(LocationUse.all(ctx)), id = "locledger")
+        // #1985 no adb: every tracker T01..T12 measured with the app's own Android APIs (fallbacks labelled), so no section is blank.
+        val appSide = if (shell == null) runCatching { com.diegonmarcos.superapp.xray.XrayAppMeasure.collect(ctx) }.getOrDefault(emptyList()) else emptyList()
         val report = XrayExporter.build(XrayInputs(
             device = "${Build.MANUFACTURER} ${Build.MODEL} (Android ${Build.VERSION.RELEASE})",
             appVersion = "${BuildConfig.VERSION_NAME} ${BuildConfig.GIT_SHORT_SHA}",
             now = System.currentTimeMillis(), walk = walk, shell = shell,
             partialReason = (gate as? XrayAdbGate.Result.Partial)?.reason.orEmpty(),
             app = { key -> if (key.startsWith("secure:")) runCatching { Settings.Secure.getString(ctx.contentResolver, key.removePrefix("secure:")) }.getOrNull() else null },
-            extra = extra,
+            extra = extra + appSide,
         ))
         val tag = if (report.partial) " [$PARTIAL_LABEL]" else ""
         return when (out) {

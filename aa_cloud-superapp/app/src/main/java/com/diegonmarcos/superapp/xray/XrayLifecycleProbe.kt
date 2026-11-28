@@ -41,6 +41,7 @@ object XrayLifecycleProbe : Application.ActivityLifecycleCallbacks {
     /** One frame's metrics: its total duration, unless it is the window's first draw. Returns the recorded ns, or -1. */
     internal fun onFrame(firstDraw: Boolean, totalNs: Long): Long {
         if (firstDraw || totalNs <= 0L) return -1L
+        XrayFrameTally.add(totalNs)
         EngineProfiler.record("ui", "frame", totalNs, 0L, ledgerTag = "")
         return totalNs
     }
@@ -87,4 +88,19 @@ object XrayLifecycleProbe : Application.ActivityLifecycleCallbacks {
 
     override fun onActivitySaveInstanceState(a: Activity, b: Bundle) {}
     override fun onActivityDestroyed(a: Activity) {}
+}
+
+/** #1985 The frames this process drew since start (total, over 16.7 ms, a ring of the last 600 durations), read by the no-adb X-Ray. */
+object XrayFrameTally {
+    private val ring = LongArray(600)
+    @Volatile private var total = 0L
+    @Volatile private var janky = 0L
+    @Synchronized fun add(ns: Long) { ring[(total % ring.size).toInt()] = ns; total++; if (ns > 16_700_000L) janky++ }
+    /** (frames, janky, p90 ms of the ring), or null before any frame. */
+    @Synchronized fun snapshot(): Triple<Long, Long, Double>? {
+        if (total == 0L) return null
+        val n = Math.min(total, ring.size.toLong()).toInt()
+        val a = ring.copyOf(n).sorted()
+        return Triple(total, janky, a[Math.min(n - 1, (n * 0.9).toInt())] / 1e6)
+    }
 }

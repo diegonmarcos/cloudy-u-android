@@ -43,7 +43,6 @@ object XrayExporter {
             probed += p to sec
         }
         val partial = i.shell == null
-        val suspects = XrayAnalyze.suspects(raw)
         val fleet = XrayAnalyze.fleetLines(raw)
         val ordered = ArrayList<XSection>()
         ordered += XrayTree.manifest(i.pages, i.walk.isNotEmpty())
@@ -54,6 +53,7 @@ object XrayExporter {
         }
         ordered += i.walk
         val clean = ordered.map { it.copy(text = XrayRedact.scrub(it.text)) }
+        val suspects = if (partial && clean.any { it.id.startsWith(XrayNoAdb.id(0).dropLast(2)) }) XrayNoAdb.suspects(clean) else XrayAnalyze.suspects(raw)
         return XReport(
             device = i.device, appVersion = i.appVersion, generatedAt = i.now, partial = partial,
             partialReason = if (partial) i.partialReason.ifEmpty { "no adb shell channel" } else "",
