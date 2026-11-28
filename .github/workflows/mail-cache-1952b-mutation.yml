@@ -77,7 +77,7 @@ jobs:
             # the key and the pager wait behind the main thread's first frame again
             pager-on-main) sed -i 's/}.flowOn(Dispatchers.Default).cachedIn(viewModelScope)/}.cachedIn(viewModelScope)/' ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/inbox/InboxViewModel.kt ;;
             # the drawer's content is composed in the first frame again
-            drawer-eager) sed -i 's/if (drawerContentReady) DrawerContent(/DrawerContent(/' ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/inbox/InboxScreen.kt ;;
+            drawer-eager) sed -i 's/^\( *\)if (drawerContentReady) {$/\1if (true) {/' ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/inbox/InboxScreen.kt ;;
             *) echo "::error::unknown mutation (not in the allow-list)"; exit 2 ;;
           esac
           git diff --stat

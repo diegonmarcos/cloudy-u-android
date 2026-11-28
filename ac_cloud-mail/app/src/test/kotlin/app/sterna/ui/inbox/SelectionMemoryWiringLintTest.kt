@@ -278,7 +278,7 @@ class SelectionMemoryWiringLintTest {
 
         /** The whole selection declaration, whitespace collapsed — memory first, inbox as fallback. */
         private const val EXPECTED_SELECTION_DECLARATION =
-            "MutableStateFlow<Sel>( restoredSelection(store) ?: Sel.Folder(store.inboxMailboxId()), )"
+            "MutableStateFlow<Sel>( restoredSelection(store) ?: Sel.Folder(store.inboxMailboxId() ?: inboxIdFromTheStore()), )"
 
         /** The two collectors of the selection, whole, in source order. */
         private val EXPECTED_SELECTION_COLLECTORS = listOf(

@@ -140,7 +140,7 @@ class ListReturn1952cTest {
 
     @Test fun `the drawer's content is composed after the first rows are painted`() {
         val screen = code("app/src/main/kotlin/app/sterna/ui/inbox/InboxScreen.kt")
-        assertEquals("both drawer envelopes wait for the first rows", 2, screen.count { it == "if (drawerContentReady) DrawerContent(" })
+        assertEquals("both drawer envelopes wait for the first rows", 2, screen.count { it == "if (drawerContentReady) {" })
         assertTrue("the readiness is the painted rows, or an opening drawer", "return ready || drawerState.targetValue != DrawerValue.Closed" in screen)
         assertTrue("var ready by remember { mutableStateOf(app.sterna.core.data.mail.ColdStart.rowsWerePainted) }" in screen)
     }

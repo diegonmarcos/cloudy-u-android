@@ -1861,27 +1861,29 @@ fun InboxScreen(
         PermanentNavigationDrawer(
             drawerContent = {
                 PermanentDrawerSheet(Modifier.width(DRAWER_SHEET_WIDTH_DP.dp)) {
-                    if (drawerContentReady) DrawerContent(
-                        accounts = accounts,
-                        currentAccountId = currentAccountId,
-                        ui = ui,
-                        watchedFolders = watchedFolders,
-                        collapsedFolders = collapsedFolders,
-                        folderRowsBadgeUnread = folderRowsBadgeUnread,
-                        viewModel = viewModel,
-                        scope = scope,
-                        drawerState = drawerState,
-                        onSwitchAccount = onSwitchAccount,
-                        onOpenAccountSettings = onOpenAccountSettings,
-                        onOpenSettings = onOpenSettings,
-                        onOpenHome = onOpenHome,
-                        onOpenStarred = onOpenStarred,
-                        onOpenAssigned = onOpenAssigned,
-                        onCreateFolder = { showCreateFolder = true },
-                        onAddSubfolder = { folderToAddChild = it },
-                        onRenameFolder = { folderToRename = it },
-                        onDeleteFolder = { folderToDelete = it },
-                    )
+                    if (drawerContentReady) {
+                        DrawerContent(
+                            accounts = accounts,
+                            currentAccountId = currentAccountId,
+                            ui = ui,
+                            watchedFolders = watchedFolders,
+                            collapsedFolders = collapsedFolders,
+                            folderRowsBadgeUnread = folderRowsBadgeUnread,
+                            viewModel = viewModel,
+                            scope = scope,
+                            drawerState = drawerState,
+                            onSwitchAccount = onSwitchAccount,
+                            onOpenAccountSettings = onOpenAccountSettings,
+                            onOpenSettings = onOpenSettings,
+                            onOpenHome = onOpenHome,
+                            onOpenStarred = onOpenStarred,
+                            onOpenAssigned = onOpenAssigned,
+                            onCreateFolder = { showCreateFolder = true },
+                            onAddSubfolder = { folderToAddChild = it },
+                            onRenameFolder = { folderToRename = it },
+                            onDeleteFolder = { folderToDelete = it },
+                        )
+                    }
                 }
             },
             content = content,
@@ -1891,27 +1893,29 @@ fun InboxScreen(
             drawerState = drawerState,
             drawerContent = {
                 ModalDrawerSheet(modifier = Modifier.width(DRAWER_SHEET_WIDTH_DP.dp)) {
-                    if (drawerContentReady) DrawerContent(
-                        accounts = accounts,
-                        currentAccountId = currentAccountId,
-                        ui = ui,
-                        watchedFolders = watchedFolders,
-                        collapsedFolders = collapsedFolders,
-                        folderRowsBadgeUnread = folderRowsBadgeUnread,
-                        viewModel = viewModel,
-                        scope = scope,
-                        drawerState = drawerState,
-                        onSwitchAccount = onSwitchAccount,
-                        onOpenAccountSettings = onOpenAccountSettings,
-                        onOpenSettings = onOpenSettings,
-                        onOpenHome = onOpenHome,
-                        onOpenStarred = onOpenStarred,
-                        onOpenAssigned = onOpenAssigned,
-                        onCreateFolder = { showCreateFolder = true },
-                        onAddSubfolder = { folderToAddChild = it },
-                        onRenameFolder = { folderToRename = it },
-                        onDeleteFolder = { folderToDelete = it },
-                    )
+                    if (drawerContentReady) {
+                        DrawerContent(
+                            accounts = accounts,
+                            currentAccountId = currentAccountId,
+                            ui = ui,
+                            watchedFolders = watchedFolders,
+                            collapsedFolders = collapsedFolders,
+                            folderRowsBadgeUnread = folderRowsBadgeUnread,
+                            viewModel = viewModel,
+                            scope = scope,
+                            drawerState = drawerState,
+                            onSwitchAccount = onSwitchAccount,
+                            onOpenAccountSettings = onOpenAccountSettings,
+                            onOpenSettings = onOpenSettings,
+                            onOpenHome = onOpenHome,
+                            onOpenStarred = onOpenStarred,
+                            onOpenAssigned = onOpenAssigned,
+                            onCreateFolder = { showCreateFolder = true },
+                            onAddSubfolder = { folderToAddChild = it },
+                            onRenameFolder = { folderToRename = it },
+                            onDeleteFolder = { folderToDelete = it },
+                        )
+                    }
                 }
             },
             content = content,
