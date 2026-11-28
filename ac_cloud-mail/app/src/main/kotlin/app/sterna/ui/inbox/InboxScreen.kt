@@ -1338,7 +1338,10 @@ fun InboxScreen(
             // modifier so the caller can pass `animateItem()` from its own LazyItemScope.
             val emailRow: @Composable (InboxRow, Modifier, Boolean, Int, Boolean) -> Unit = { row, rowModifier, animateEntry, entryIndex, fromSearch ->
                 val email = row.email
+                val headerStart = app.sterna.ui.JankProbe.begin("row.header")
                 if (domainGrouped && !fromSearch) DomainGroupHeader(DomainGroupHeading.of(row))
+                app.sterna.ui.JankProbe.end("row.header", headerStart)
+                app.sterna.ui.JankProbe.mark("row.args") // closed in SwipeableEmailRow's first line: what the row's arguments cost
                 val ownerAccount = if (ui.unified) accounts.firstOrNull { it.id == email.accountId } else null
                 // A conversation in the browse list can unfold inline; search results stay flat.
                 val expandable = !fromSearch && row.threadExpandable
@@ -2445,6 +2448,8 @@ private fun SwipeableEmailRow(
     drawerCanOpen: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    app.sterna.ui.JankProbe.markEnd("row.args")
+    val swipeStart = app.sterna.ui.JankProbe.begin("row.swipe.setup")
     val motionOn = rememberMotionEnabled()
     val offsetX = remember { Animatable(0f) }
     var rowWidth by remember { mutableIntStateOf(0) }
@@ -2622,6 +2627,7 @@ private fun SwipeableEmailRow(
                 }
             },
     ) {
+        app.sterna.ui.JankProbe.end("row.swipe.setup", swipeStart)
         val draggingRight = offsetX.value > 0f
         val action = if (draggingRight) rightAction else leftAction
         if (offsetX.value != 0f && action != SwipeAction.NONE) {

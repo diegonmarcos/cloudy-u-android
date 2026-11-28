@@ -40,6 +40,13 @@ object JankProbe {
     /** For code that cannot sit in a try block (composable calls): [begin] then [end] with what it returned. */
     fun begin(name: String): Long { Trace.beginSection(name); return System.nanoTime() }
 
+    private val marks = HashMap<String, Long>()
+
+    /** Two points in different functions: [mark] where the span starts, [markEnd] where it ends (main thread only). */
+    fun mark(name: String) { marks[name] = System.nanoTime() }
+
+    fun markEnd(name: String) { marks.remove(name)?.let { add(name, System.nanoTime() - it) } }
+
     fun end(name: String, started: Long) { Trace.endSection(); add(name, System.nanoTime() - started) }
 
     @PublishedApi @Synchronized internal fun add(name: String, ns: Long) {
