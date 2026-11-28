@@ -32,7 +32,10 @@ mkdir -p "$OUT"
 fail() { echo "::error::$1"; echo "FAIL: $1" >> "$OUT/summary.txt"; FAIL=1; }
 note() { echo "$1" | tee -a "$OUT/summary.txt"; }
 # the compiler filter ART holds for the package (dumpsys package dexopt): verify / quicken = nothing profile-guided yet, speed-profile = the profile is compiled
-dexopt_state() { adb shell dumpsys package dexopt 2>/dev/null | tr -d '\r' | awk -v p="[$PKG]" '$0 == p {f=1; next} /^\[/ {f=0} f' | grep -E "status=|reason=|compiler-filter|filter=" | sed 's/^ *//' | head -4 | tr '\n' ';'; }
+dexopt_state() { # $1 label for the raw dump kept in the artifact
+  adb shell dumpsys package dexopt 2>/dev/null | tr -d '\r' > "$OUT/dexopt-${1:-x}.txt"
+  grep -A6 -F "[$PKG]" "$OUT/dexopt-${1:-x}.txt" | grep -E "status=|reason=" | sed 's/^ *//' | head -3 | tr '\n' ';'
+}
 # ten flings of the list with the evidence of WHAT is slow: JankProbe lines (stages per slow frame, named sections), framestats, a best-effort Perfetto trace
 # $1 label, $2 p90 limit (ms), $3 file for the gfxinfo summary lines
 scroll_measure() {
@@ -182,12 +185,12 @@ if [ -n "${OLD_APK:-}" ]; then
   sizes "before-update"
   l0=$(grep -c "" "$OUT/logcat.txt")
   adb install -r -g app-under-test.apk || { fail "update: adb install over the v34 build failed"; }
-  DEXOPT_INSTALL=$(dexopt_state)
+  DEXOPT_INSTALL=$(dexopt_state after-install)
   note "dexopt after the update install, before its first launch: ${DEXOPT_INSTALL:-no entry}"
   adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
   sleep 25
   sleep 5
-  DEXOPT_LAUNCH=$(dexopt_state)
+  DEXOPT_LAUNCH=$(dexopt_state after-first-launch)
   note "dexopt after the first launch of the updated app (30 s): ${DEXOPT_LAUNCH:-no entry}"
   upid=$(adb shell pidof "$PKG" 2>/dev/null | tr -d '\r' | awk '{print $1}')
   [ -n "$upid" ] || upid=$(tail -n +$((l0 + 1)) "$OUT/logcat.txt" | grep -m1 "first-row ms=" | awk '{print $3}')
@@ -369,17 +372,9 @@ ppid=$(adb shell pidof "$PKG" 2>/dev/null | tr -d '\r' | awk '{print $1}')
 [ -n "$ppid" ] && adb shell "kill -s SIGUSR1 $ppid" >/dev/null 2>&1; sleep 3
 base_apk=$(adb shell pm path "$PKG" | head -1 | sed 's/^package://' | tr -d '\r')
 adb shell cmd package snapshot-profile "$PKG" > "$OUT/snapshot-profile.txt" 2>&1 || true
-# the emulator image allows root; profman lives in the ART apex and is not on the shell user's path (run 46141678620: "profman: inaccessible or not found")
-adb root >/dev/null 2>&1; sleep 3; adb wait-for-device
-adb shell "ls -la /data/misc/profman/ /data/misc/profiles/cur/0/$PKG/ 2>&1" > "$OUT/profile-files.txt" 2>&1 || true
-prof_file=$(adb shell "ls /data/misc/profman/*.prof 2>/dev/null | head -1" | tr -d '\r')
-[ -n "$prof_file" ] || prof_file="/data/misc/profiles/cur/0/$PKG/primary.prof"
-PROFMAN=$(adb shell "ls /apex/com.android.art/bin/profman 2>/dev/null" | tr -d '\r')
-adb shell "${PROFMAN:-profman} --dump-classes-and-methods --profile-file=$prof_file --apk=$base_apk --dex-location=$base_apk" > "$OUT/baseline-prof.generated.txt" 2>"$OUT/profman.err" || true
-note "baseline profile: $(grep -c . "$OUT/baseline-prof.generated.txt" 2>/dev/null || echo 0) lines generated from this run (profman: $(head -c 160 "$OUT/profman.err" | tr '\n' ' '))"
-note "dexopt before the forced speed-profile compile: $(dexopt_state)"
+note "dexopt before the forced speed-profile compile: $(dexopt_state before-compile)"
 adb shell cmd package compile -m speed-profile -f "$PKG" > "$OUT/compile-speed-profile.txt" 2>&1 || true
-note "dexopt after the forced speed-profile compile: $(dexopt_state)"
+note "dexopt after the forced speed-profile compile: $(dexopt_state after-compile)"
 note "cmd package compile -m speed-profile: $(head -c 120 "$OUT/compile-speed-profile.txt" | tr '\n' ' ')"
 echo "" >> "$OUT/timing.md"; echo "cold start after AOT compiling the profiled methods (speed-profile), airplane mode off:" >> "$OUT/timing.md"
 adb shell cmd connectivity airplane-mode disable
@@ -393,6 +388,60 @@ for pround in 1 2 3; do
   ppaint=$(sed -n 's/.*cold-start rows-painted.*process-age=\([0-9-]*\).*/\1/p' "$OUT/compiled-$pround.log" | head -1)
   echo "- compiled cold start $pround (pid ${qpid:-?}): first row ${pfr:-?} ms, the activity armed ${parm:-?} ms and the first rows were painted ${ppaint:-?} ms after the process started" >> "$OUT/timing.md"
 done
+# the emulator image allows root; profman lives in the ART apex and is not on the shell user's path (run 46141678620: "profman: inaccessible or not found")
+# adb root restarts adbd and ends the background logcat capture, so it runs LAST (run 46144833584: the compiled cold starts below it logged nothing)
+adb root >/dev/null 2>&1; sleep 3; adb wait-for-device
+adb shell "ls -la /data/misc/profman/ /data/misc/profiles/cur/0/$PKG/ 2>&1" > "$OUT/profile-files.txt" 2>&1 || true
+prof_file=$(adb shell "ls /data/misc/profman/*.prof 2>/dev/null | head -1" | tr -d '\r')
+[ -n "$prof_file" ] || prof_file="/data/misc/profiles/cur/0/$PKG/primary.prof"
+PROFMAN=$(adb shell "ls /apex/com.android.art/bin/profman 2>/dev/null" | tr -d '\r')
+adb shell "${PROFMAN:-profman} --dump-classes-and-methods --profile-file=$prof_file --apk=$base_apk --dex-location=$base_apk" > "$OUT/baseline-prof.generated.txt" 2>"$OUT/profman.err" || true
+note "baseline profile: $(grep -c . "$OUT/baseline-prof.generated.txt" 2>/dev/null || echo 0) lines generated from this run (profman: $(head -c 160 "$OUT/profman.err" | tr '\n' ' '))"
+# ---- D: the dex metadata proof (does an installer that hands ART a .dm alongside the APK get the profile compiled at install time?) ---------------
+# The profile ART collected in this run is in its runtime format (what a .dm carries as primary.prof). Pull it (root), build base.dm, then install the
+# SAME APK over the installed app twice, the way an update does: once plain (`adb install -r`) and once through a package-installer session that
+# also writes base.dm (pm install-write). After each: the compiler filter ART holds, then three cold starts (process age at the activity armed
+# and at the first rows). The updater app's installer (UpdateInstaller.kt) would need the same extra write; it is NOT changed here.
+adb pull "$prof_file" "$OUT/runtime-primary.prof" >/dev/null 2>&1 || true
+adb unroot >/dev/null 2>&1; sleep 3; adb wait-for-device
+kill "$LP" 2>/dev/null || true
+adb logcat -T 1 -v threadtime "*:W" MailList:I MailCore:I MailSync:I MailOpen:I NavWalkSeed:I JankProbe:I MailMigration:I >> "$OUT/logcat.txt" 2>&1 &
+LP=$!
+echo "" >> "$OUT/timing.md"; echo "dex metadata proof (the same APK installed over the app, runtime profile of this run as base.dm):" >> "$OUT/timing.md"
+if [ -s "$OUT/runtime-primary.prof" ]; then
+  python3 -I - "$OUT/runtime-primary.prof" "$OUT/base.dm" <<'PY'
+import sys, zipfile
+with zipfile.ZipFile(sys.argv[2], "w", zipfile.ZIP_STORED) as z:
+    z.write(sys.argv[1], "primary.prof")
+PY
+  dm_cold() { # $1 label: three cold starts, process ages at armed / first rows
+    for dr in 1 2 3; do
+      adb shell am force-stop "$PKG"; sleep 3
+      adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null; sleep 12
+      dpid=$(adb shell pidof "$PKG" 2>/dev/null | tr -d '\r' | awk '{print $1}')
+      grep -E "MailList" "$OUT/logcat.txt" | awk -v p="$dpid" '$3 == p' > "$OUT/dm-$1-$dr.log" || true
+      echo "- $1 install, cold start $dr (pid ${dpid:-?}): the activity armed $(sed -n 's/.*cold-start armed.*process-age=\([0-9-]*\).*/\1/p' "$OUT/dm-$1-$dr.log" | head -1) ms, first frame at $(sed -n 's/.*first-predraw.*process-age=\([0-9-]*\).*/\1/p' "$OUT/dm-$1-$dr.log" | head -1) ms, first rows at $(sed -n 's/.*cold-start rows-painted.*process-age=\([0-9-]*\).*/\1/p' "$OUT/dm-$1-$dr.log" | head -1) ms after the process started" >> "$OUT/timing.md"
+    done
+  }
+  # plain update install
+  adb install -r -g app-under-test.apk >/dev/null 2>&1 || true
+  echo "- plain install: compiler filter $(dexopt_state plain-install)" >> "$OUT/timing.md"
+  note "dexopt after a plain re-install: $(dexopt_state plain-install2)"
+  dm_cold plain
+  # install with the dex metadata through a session
+  apk_size=$(wc -c < app-under-test.apk); dm_size=$(wc -c < "$OUT/base.dm")
+  adb push app-under-test.apk /data/local/tmp/app-under-test.apk >/dev/null 2>&1; adb push "$OUT/base.dm" /data/local/tmp/base.dm >/dev/null 2>&1
+  sid=$(adb shell pm install-create -r -g 2>&1 | grep -o '\[[0-9]*\]' | tr -d '[]' | head -1)
+  adb shell pm install-write -S "$apk_size" "$sid" base.apk /data/local/tmp/app-under-test.apk > "$OUT/dm-install.txt" 2>&1
+  adb shell pm install-write -S "$dm_size" "$sid" base.dm /data/local/tmp/base.dm >> "$OUT/dm-install.txt" 2>&1
+  adb shell pm install-commit "$sid" >> "$OUT/dm-install.txt" 2>&1 || true
+  note "dm install: $(tr '\n' ' ' < "$OUT/dm-install.txt" | head -c 200)"
+  echo "- install with base.dm: compiler filter $(dexopt_state dm-install)" >> "$OUT/timing.md"
+  note "dexopt after the install with base.dm: $(dexopt_state dm-install2)"
+  dm_cold dm
+else
+  echo "- no runtime profile could be pulled; the dex metadata proof did not run" >> "$OUT/timing.md"
+fi
 # control: the same flings on the system Settings list, same emulator, same renderer (what the emulator itself costs, not the app)
 adb shell am start -a android.settings.SETTINGS >/dev/null 2>&1; sleep 4
 adb shell dumpsys gfxinfo com.android.settings reset >/dev/null 2>&1
