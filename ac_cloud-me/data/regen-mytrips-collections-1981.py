@@ -21,8 +21,11 @@ PROPS_OLD, PROPS_NEW = 'nV=["src"]', 'nV=["src","alt"]'
 SLIDE_OLD = 'yt.value=[`https://loremflickr.com/1920/1080/${Mt.img.split(",")[0]}/all`,"https://loremflickr.com/1920/1080/travel/all","https://loremflickr.com/1920/1080/landscape/all"]'
 SLIDE_NEW = 'yt.value=[`collections/${Mt.id}.webp`,"collections/travel.webp","collections/landscape.webp"]'
 CR_ANCHOR = 'te(Z.value.query.length),1)])])]),K("div",gV,'
-CR_NEW = ('te(Z.value.query.length),1)]),K("p",{class:"theme-overlay__credit"},["Photo: "+__cr(Z.value.id,pt.value).author+" \\u00b7 ",K("a",{href:__cr(Z.value.id,pt.value).license_url||__cr(Z.value.id,pt.value).source_url,target:"_blank",rel:"noopener"},__cr(Z.value.id,pt.value).license)," \\u00b7 ",'
-          'K("a",{href:__cr(Z.value.id,pt.value).source_url,target:"_blank",rel:"noopener"},"Wikimedia Commons")])])]),K("div",gV,')
+CR_PARTS = ('K("p",{class:"theme-overlay__credit"},[K("span",null,"Photo: "+__cr(Z.value.id,pt.value).author+" \\u00b7 "),'
+            'K("a",{href:__cr(Z.value.id,pt.value).license_url||__cr(Z.value.id,pt.value).source_url,target:"_blank",rel:"noopener"},__cr(Z.value.id,pt.value).license),K("span",null," \\u00b7 "),'
+            'K("a",{href:__cr(Z.value.id,pt.value).source_url,target:"_blank",rel:"noopener"},"Wikimedia Commons")])')   # every child a vnode: the block-tree patch does not normalise bare strings
+CR_NEW = 'te(Z.value.query.length),1)]),' + CR_PARTS + '])]),K("div",gV,'
+CR_RE = re.compile(r'K\("p",\{class:"theme-overlay__credit"\},\[.*?\]\)(?=\]\)\]\),K\("div",gV,)', re.S)
 CSS_ADD = ".theme-overlay__credit{margin:14px 0 0;font-size:11px;color:#94a3b8}.theme-overlay__credit a{color:#cbd5e1}"
 
 
@@ -47,6 +50,7 @@ def apply(d):
     s = open(jp, encoding="utf-8").read(); c = open(cp, encoding="utf-8").read(); want = head(credits())
     if s.startswith(MARK):   # already patched: only the embedded credit table can have changed
         s = want + s[s.index(";function __cr(i,n)") + len(";function __cr(i,n){return __CR[[i,\"travel\",\"landscape\"][n]]||{}}"):]
+        assert len(CR_RE.findall(s)) == 1, "dist credit vnode not found once"; s = CR_RE.sub(lambda m: CR_PARTS, s)
     else:
         for a in (CARD_OLD, PROPS_OLD, SLIDE_OLD, CR_ANCHOR): assert s.count(a) == 1, "dist anchor not found once: " + a[:50]
         s = want + s.replace(CARD_OLD, CARD_NEW).replace(PROPS_OLD, PROPS_NEW).replace(SLIDE_OLD, SLIDE_NEW).replace(CR_ANCHOR, CR_NEW)
