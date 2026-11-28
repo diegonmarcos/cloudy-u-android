@@ -337,6 +337,8 @@ bulk_phase() {
   case $S in all) label="All Repos";; selected) label="Selected Ones";; cloned) label="Cloned Ones";; esac
   adb shell "run-as $PKG sh -c 'echo dirty > files/fixtures/$NAME-2/a.txt; echo dirty > files/fixtures/$NAME-3/a.txt'" < /dev/null
   open_bulk; bshot "$S" open
+  # the scope chips scroll sideways on a 320 dp emulator (a phone shows all three): bring the chip fully into view first
+  if [ $S != all ]; then set -- $(find_ctl git_bulk_scope_all); [ -n "${2:-}" ] && adb shell input swipe $((W*3/4)) "$2" $((W/6)) "$2" 300 < /dev/null; sleep 1; fi
   tap_ctl git_bulk_scope_$S >/dev/null; sleep 1
   if [ $S = selected ]; then
     # the multi-select FIRST, before anything scrolls the body (the pick boxes sit at its top; a drag down would close the sheet, so the walk never scrolls up)
