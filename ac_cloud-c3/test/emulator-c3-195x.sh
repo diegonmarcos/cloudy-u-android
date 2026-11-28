@@ -221,7 +221,8 @@ if [ "$T" = all ] || [ "$T" = 1955 ]; then
   hide_kb; shot c3-1955-net-wg-node-sheet-kbdown 2
   # rev2: the sheet opens in its 132 dp peek; "more" expands it to the edge rows
   tap_text c3-1955-net-wg-node-sheet-kbdown "  more"; shot c3-1955-net-wg-node-sheet-more 2
-  tap_text c3-1955-net-wg-node-sheet-more "  -"; shot c3-1955-net-wg-edge-sheet 3
+  # an in-edge row ("  <-", escaped in the dump): the rows the expanded sheet shows first
+  tap_text c3-1955-net-wg-node-sheet-more "  &lt;-"; shot c3-1955-net-wg-edge-sheet 3
   has c3-1955-net-wg-edge-sheet "Highlight path" || bad "c3-1955-net-wg-edge-sheet: no edge sheet"
   # DNS: expand every cluster, then Fit all (the minimap shows on a tall world)
   open_page net_dns; sleep 2; shot c3-1955-net-dns-pre 5
@@ -278,7 +279,8 @@ if [ "$T" = all ] || [ "$T" = 1983 ]; then
   chk c3-1983-mail-card "HISTORY,no_verdict"
   open_page ops_health_tests; sleep 2; scroll 3; shot c3-1983-tests-list-bottom 4
   chk c3-1983-tests-list-bottom "cloud-sec-network-report,cloud-sec-data-report,cloud-analytics-daily,no_trigger"
-  open_page ops_health_tests; sleep 2; tap_text c3-1983-tests-list "C3 full"; shot c3-1983-xray-c3-full 4
+  open_page ops_health_tests; sleep 2; shot c3-1983-tests-open 6
+  tap_text c3-1983-tests-open "C3 full"; shot c3-1983-xray-c3-full 4
   chk c3-1983-xray-c3-full "fed_by,X-ray"
 fi
 

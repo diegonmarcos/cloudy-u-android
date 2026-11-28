@@ -73,6 +73,9 @@ object NetScene {
         }
     }
 
+    /** An IP literal or a host:port endpoint: never drawn on the canvas (it is in the sheet). */
+    val ENDPOINT = Regex("\\b\\d{1,3}(\\.\\d{1,3}){3}(:\\d+)?\\b(?!/)|[0-9a-fA-F]{1,4}(:[0-9a-fA-F]{0,4}){3,}|\\S+\\.\\S+:\\d+")
+
     fun tierOf(s: Float, sp: Spec): Tier = when { s < sp.farBelow -> Tier.FAR; s >= sp.nearFrom -> Tier.NEAR; else -> Tier.MID }
 
     fun hit(a: MailStack.Rect, b: MailStack.Rect) = a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b
@@ -150,7 +153,9 @@ object NetScene {
             val box = clipTop(full) ?: return@mapNotNull null
             val ms = members[n.id].orEmpty()
             val pv = (if (n.kind == "frame") 1f else sp.padV) * dp
-            val content = MailStack.Rect(full.l + (sp.pad * 2 + sp.shape) * dp, full.t + pv, full.r - sp.padR * dp, full.b - pv)
+            val c0 = MailStack.Rect(full.l + (sp.pad * 2 + sp.shape) * dp, full.t + pv, full.r - sp.padR * dp, full.b - pv)
+            // a frame's head node is as wide as the frame: its name stays in the part of the band that is on screen
+            val content = if (n.kind == "frame") c0.copy(l = maxOf(c0.l, (sp.pad * 2 + sp.shape) * dp), r = minOf(c0.r, w - sp.padR * dp)) else c0
             NodeBox(n.id, box, content, n.health, n.kind, n.id in l.extras.aggregates, n.id == rootDrawn,
                 ms.any { it in st.impacted }, n.id in matchDrawn, n.id == selDrawn,
                 focusDrawn != null && n.id !in focusDrawn && ms.none { it in st.focus!! }, cut = box.t > full.t)
@@ -186,12 +191,12 @@ object NetScene {
                 if (names >= sp.maxNames) return@forEach
                 val nb = nodeBy[n.id] ?: return@forEach
                 val c = nb.content
-                if (c.r - c.l <= 0f || !free(nb.box) || !free(c)) return@forEach
+                if (c.r - c.l <= 0f || (n.kind != "frame" && !free(nb.box)) || !free(c) || (n.kind == "frame" && nb.cut)) return@forEach
                 val nsp = if (n.kind == "frame") sp.headerSp else sp.nameSp
                 var nameTxt = NetLabel.fit(shorts[n.id].orEmpty(), c.r - c.l) { measure.size(it, nsp, true).first }
                 // two different names that the measured fit made equal: the later one keeps its last 3 characters, else it is not drawn
                 if (drawnNames[nameTxt]?.let { it != n.label } == true)
-                    nameTxt = NetLabel.fit(NetLabel.middle(n.label, cap(n.id)), c.r - c.l) { measure.size(it, nsp, true).first }
+                    nameTxt = NetLabel.fit(NetLabel.middle(n.label, minOf(cap(n.id), n.label.length - 1)), c.r - c.l) { measure.size(it, nsp, true).first }
                 if (nameTxt.isEmpty() || drawnNames[nameTxt]?.let { it != n.label } == true) return@forEach
                 drawnNames[nameTxt] = n.label
                 val (nw, nh) = measure.size(nameTxt, nsp, true)
@@ -220,7 +225,9 @@ object NetScene {
         frames.forEach { f ->
             val band = f.header ?: return@forEach
             val ff = l.extras.frames.first { it.id == f.id }
-            val label = ff.label + if (ff.sub.isBlank()) "" else " · " + ff.sub
+            // endpoint addresses (IPs, host:port) are sheet-only (R5): the header keeps the other segments of the sub line
+            val segs = ff.sub.split("  ").map { it.trim() }.filter { it.isNotEmpty() && !ENDPOINT.containsMatchIn(it) }
+            val label = ff.label + if (segs.isEmpty()) "" else " · " + segs.joinToString(" · ")
             val x0 = maxOf(band.l, 0f) + sp.headerInset * dp
             val x1 = minOf(band.r, w) - sp.headerInset * dp
             if (x1 - x0 <= 0f) return@forEach

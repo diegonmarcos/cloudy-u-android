@@ -42,8 +42,8 @@ object EnginesModel {
     /** The request body for a run, or null when [kind] is not allow-listed (the app never sends it). */
     fun runBody(kind: String?): String? = if (kind != null && kind in RUN_KINDS) "{\"report\":\"$kind\",\"runner\":\"gha\"}" else null
 
-    /** What a Run button says: the engine's trigger, or why there is none. */
-    fun runLabel(e: Engine): String = if (runBody(e.kind) != null) "Run" else "Run: no trigger (${e.note.ifBlank { "no /reports/run kind" }})"
+    /** What a Run button says: Run, or that there is no trigger (the card's note line gives the reason). */
+    fun runLabel(e: Engine): String = if (runBody(e.kind) != null) "Run" else "no trigger"
 
     /** The engines an X-ray (VM, service, full) is built from: shown under the X-ray tabs. */
     val FEEDS = mapOf(

@@ -98,7 +98,9 @@ fun XrayScreen(full: XrayItem, vms: List<XrayItem>, services: List<XrayItem>, ru
             }
         }
         if (runNote.isNotBlank()) XLine(runNote, color = KitStoreRow.UPDATE)
-        Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())) {
+        // the Suites body (the old Tests map page) scrolls itself: it sits outside the tab scroll (a scroll inside a scroll crashes)
+        if (tab == "suites") Column(Modifier.fillMaxWidth().weight(1f).testTag(XrayTags.SUITES)) { suites() }
+        else Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())) {
             when (tab) {
                 "engines" -> Column(Modifier.testTag(EngineTags.ROOT)) { engines() }
                 "full" -> {
@@ -108,7 +110,6 @@ fun XrayScreen(full: XrayItem, vms: List<XrayItem>, services: List<XrayItem>, ru
                 }
                 "vms" -> { fedBy("vms").forEach { XLine("fed by: $it", mono = true) }; vms.forEach { ItemRow(it, "xray-vm", { onRun("xray-vm", it.id) }, true) } }
                 "services" -> { fedBy("services").forEach { XLine("fed by: $it", mono = true) }; services.forEach { ItemRow(it, "xray-service", { onRun("xray-service", it.id) }, true) } }
-                "suites" -> Column(Modifier.testTag(XrayTags.SUITES)) { suites() }
             }
         }
     }
