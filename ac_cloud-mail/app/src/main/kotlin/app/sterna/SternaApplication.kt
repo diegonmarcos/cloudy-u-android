@@ -331,6 +331,7 @@ class SternaApplication : Application() {
         container.appScope.launch(kotlinx.coroutines.Dispatchers.IO) { runCatching { container.settingsRepository.sortOrder.first() } }
         container.appScope.launch(kotlinx.coroutines.Dispatchers.IO) { runCatching { container.accountStore.currentId() } }
         container.appScope.launch(kotlinx.coroutines.Dispatchers.IO) { runCatching { container.mailRepository.storedInboxId("") } }
+        container.mailRepository.warmUpExtraScopes()
         // #1803 the compose recipient check answers from the fleet delivery API; its endpoints come from Cloud Account.
         app.sterna.fleet.FleetRecipientChecker.bind(this)
         // #1802 the Sent delivery status asks Cloud Account for the same fleet mail API pair.

@@ -1751,12 +1751,19 @@ class MailRepository(
     /** The (account, mailbox) folders that hold messages filed under ANOTHER mailbox, as `email_mailboxes` says (#1837); usually empty. */
     fun observeExtraFolders(): Flow<Set<Pair<String, String>>> = extraScopes()
 
+    /** #1952 cold start: the answer of the extra-scopes query, asked when the application starts ([warmUpExtraScopes]) so it runs beside the first frame. */
+    private val warmExtraScopes: kotlinx.coroutines.Deferred<Set<Pair<String, String>>?> by lazy {
+        bgScope.async { runCatching { emailDao.observeExtraScopes().first().map { it.accountId to it.mailboxId }.toSet() }.getOrNull() }
+    }
+
+    /** Starts the query now (idempotent); [extraScopes] starts it itself when nobody did, so its wait always ends. */
+    fun warmUpExtraScopes() { warmExtraScopes.isActive }
+
     private fun extraScopes(): Flow<Set<Pair<String, String>>> =
-        // #1952 cold start: the first page does not wait for this query (0.67 s over 40 000 messages on a cold store): the list starts on
-        // "no extra members" and widens when the real set arrives. An equal answer (the usual empty one) changes nothing, so the pager is
-        // not rebuilt and no visible row moves.
+        // #1952 cold start: this query (0.7 to 0.9 s over 40 000 messages on a cold store) is asked when the application starts, beside the
+        // first frame; the first page takes that answer (so no visible row is added or moved later) and the live answer, equal, changes nothing.
         emailDao.observeExtraScopes().map { rows -> rows.map { it.accountId to it.mailboxId }.toSet() }
-            .onStart { emit(emptySet()) }
+            .onStart { warmExtraScopes.await()?.let { emit(it) } }
             .distinctUntilChanged()
 
     /** The live All / Alerts / no-Alerts counts of [scopes], each from the list's own WHERE ([listCountSql]). */

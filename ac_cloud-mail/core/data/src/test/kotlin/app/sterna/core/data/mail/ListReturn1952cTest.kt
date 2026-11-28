@@ -121,7 +121,7 @@ class ListReturn1952cTest {
         val repo = code("core/data/src/main/kotlin/app/sterna/core/data/mail/MailRepository.kt")
         val at = repo.indexOf("emailDao.observeExtraScopes().map { rows -> rows.map { it.accountId to it.mailboxId }.toSet() }")
         assertTrue("extraScopes() reads the store's set", at >= 0)
-        assertEquals("the set starts empty, at once", ".onStart { emit(emptySet()) }", repo[at + 1])
+        assertEquals("the set starts from the answer asked at application start", ".onStart { warmExtraScopes.await()?.let { emit(it) } }", repo[at + 1])
         assertEquals("an equal answer rebuilds nothing", ".distinctUntilChanged()", repo[at + 2])
     }
 
@@ -130,6 +130,12 @@ class ListReturn1952cTest {
         assertTrue("container.appScope.launch(kotlinx.coroutines.Dispatchers.IO) { runCatching { container.settingsRepository.sortOrder.first() } }" in app)
         assertTrue("container.appScope.launch(kotlinx.coroutines.Dispatchers.IO) { runCatching { container.accountStore.currentId() } }" in app)
         assertTrue("container.appScope.launch(kotlinx.coroutines.Dispatchers.IO) { runCatching { container.mailRepository.storedInboxId(\"\") } }" in app)
+        assertTrue("the extra-scopes query is asked at application start", "container.mailRepository.warmUpExtraScopes()" in app)
+    }
+
+    @Test fun `the key and the pager are built off the main thread`() {
+        val vm = code("app/src/main/kotlin/app/sterna/ui/inbox/InboxViewModel.kt")
+        assertTrue("}.flowOn(Dispatchers.Default).cachedIn(viewModelScope)" in vm)
     }
 
     // -- cold start: one key ----------------------------------------------------------------------------------------

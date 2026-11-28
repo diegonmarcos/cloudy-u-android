@@ -69,6 +69,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -1171,7 +1172,9 @@ class InboxViewModel(
                     }
                 }
             }
-        }.cachedIn(viewModelScope)
+        // #1952 cold start: the key and the pager are built off the main thread. The main thread spends the first seconds of a cold start on the
+        // first frame, and a key built there waited behind it (the settings read was warm at 313 ms, its collector ran at 2580 ms).
+        }.flowOn(Dispatchers.Default).cachedIn(viewModelScope)
 
     /**
      * What `local_drafts` contributes to the list on screen — empty everywhere but this account's

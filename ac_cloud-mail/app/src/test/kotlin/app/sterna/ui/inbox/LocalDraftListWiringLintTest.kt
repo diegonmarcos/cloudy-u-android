@@ -31,7 +31,7 @@ class LocalDraftListWiringLintTest {
         assertTrue(
             "InboxViewModel.pagedEmails must still end on .cachedIn(viewModelScope). Body was:\n" +
                 body.joinToString("\n"),
-            body.last() == "}.cachedIn(viewModelScope)",
+            body.last() == "}.flowOn(Dispatchers.Default).cachedIn(viewModelScope)",
         )
         assertEquals(
             "⛔ InboxViewModel.pagedEmails is what MessageScreen pages: it must not name the local " +
