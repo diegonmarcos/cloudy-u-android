@@ -404,7 +404,8 @@ bulk_phase() {
   bshot "$S" auth-rows
   # a hosting command is only ever confirmed against the mock (HostingApiTest): here its confirm names the scope and count, and is CANCELLED
   tap_ctl git_sheet_tab_manage >/dev/null; sleep 1
-  tap_ctl git_sheet_ctl_mg.life.delete_remote >/dev/null; sleep 2
+  # the Danger Zone sits at the bottom edge of the nav's body: a tap on a half-visible pill can miss, so scroll once more and tap again until its confirm opens
+  for tryn in 1 2 3; do tap_ctl git_sheet_ctl_mg.life.delete_remote >/dev/null; sleep 2; dump | grep -q 'text="Confirm"' && break; scroll_body; sleep 1; done
   d=$(dump); printf '%s' "$d" | grep -q "text=\"Scope: $label · $wantn repositories\""; brec "$S" "confirm.delete_remote" "Delete Remote confirm names scope and count" $? "cancelled, never confirmed"
   bshot "$S" delete-confirm
   tap_text '^Cancel$' || adb shell input keyevent KEYCODE_BACK < /dev/null; sleep 1
