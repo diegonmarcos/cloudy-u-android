@@ -79,14 +79,14 @@ class ListQueryPlan1952bTest {
         assertFalse("the premise: no statistics, no covering plan (if SQLite now chooses it anyway the migration's ANALYZE is spare): $bare",
             bare.count { "emails USING COVERING INDEX $index" in it } == 3)
         // and what MIGRATION_34_35 runs after the index SQL, on the same database
-        exec(EMAILS_ANALYZE_SQL)
+        EMAILS_STATISTICS_SQL.forEach { db.createStatement().use { st -> st.execute(it) } }
         val plan = plan()
         assertEquals("index-only after the migration's statistics: $plan", 3, plan.count { "emails USING COVERING INDEX $index" in it })
         assertFalse("no aggregate scans the table itself: $plan", plan.any { it == "SCAN emails" })
         val migration = code("core/data/src/main/kotlin/app/sterna/core/data/db/Migrations.kt")
         val at = migration.indexOf("db.execSQL(EMAILS_DOMAIN_LIST_INDEX_SQL)")
         assertTrue("the migration runs the index SQL", at >= 0)
-        assertEquals("then the statistics", "db.execSQL(EMAILS_ANALYZE_SQL)", migration[at + 1])
+        assertEquals("then the statistics", "EMAILS_STATISTICS_SQL.forEach { db.execSQL(it) }", migration[at + 1])
     }
 
     @Test fun `the entity, the migration and the schema version declare that index`() {

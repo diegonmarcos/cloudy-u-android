@@ -79,9 +79,9 @@ jobs:
             # the drawer's content is composed in the first frame again
             drawer-eager) sed -i 's/^\( *\)if (drawerContentReady) {$/\1if (true) {/' ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/inbox/InboxScreen.kt ;;
             # the first page load waits for the screen's first composition again
-            first-load-late) sed -i '/^    init { startFirstPageLoad() }$/d' ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/inbox/InboxViewModel.kt ;;
+            first-load-late) sed -i '/^    private val firstPageLoad: Unit = startFirstPageLoad()$/d' ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/inbox/InboxViewModel.kt ;;
             # the migration no longer analyses after building the index
-            migration-no-stats) sed -i '/^        db.execSQL(EMAILS_ANALYZE_SQL)$/d' $D/db/Migrations.kt ;;
+            migration-no-stats) sed -i '/^        EMAILS_STATISTICS_SQL.forEach { db.execSQL(it) }$/d' $D/db/Migrations.kt ;;
             *) echo "::error::unknown mutation (not in the allow-list)"; exit 2 ;;
           esac
           git diff --stat

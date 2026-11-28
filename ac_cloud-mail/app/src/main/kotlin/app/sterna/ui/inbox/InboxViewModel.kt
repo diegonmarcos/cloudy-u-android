@@ -3376,7 +3376,7 @@ class InboxViewModel(
     private data class Status(val refreshing: Boolean, val error: String?)
 
     // The LAST member before the companion: every property the pager's lambdas read is initialised when this starts (#1952 first page load).
-    init { startFirstPageLoad() }
+    private val firstPageLoad: Unit = startFirstPageLoad()
 
     private companion object {
         const val MILLIS_PER_DAY = 24L * 60 * 60 * 1000

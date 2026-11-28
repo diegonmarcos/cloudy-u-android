@@ -472,11 +472,26 @@ const val EMAILS_DOMAIN_LIST_INDEX_SQL: String =
 /**
  * #1952 statistics for the planner. Without a `sqlite_stat1` row SQLite does NOT choose the covering index for the domain list's three
  * aggregates (the plan test failed on a database holding the index and no statistics), so the first list of an updated store scanned the
- * wide message rows (0.8 to 1.9 s at 40 000 messages). The migration runs a plain ANALYZE (a PRAGMA answers a row, which execSQL refuses);
- * the database open ([SternaDatabase.build]) runs the approximate form (the limit below) through PRAGMA optimize.
+ * wide message rows (0.8 to 1.9 s at 40 000 messages). The migration seeds them ([EMAILS_STATISTICS_SQL]);
+ * the database open ([SternaDatabase.build]) runs the approximate ANALYZE (the limit below) through PRAGMA optimize.
  */
 const val EMAILS_ANALYSIS_LIMIT_SQL: String = "PRAGMA analysis_limit=1000"
-const val EMAILS_ANALYZE_SQL: String = "ANALYZE emails"
+
+/**
+ * The statistics a store of about 40 000 messages would have, written straight into `sqlite_stat1` (the documented way to seed them): a plain
+ * ANALYZE of the table scanned every index inside the migration (about 200 ms more at 40 000 messages, measured), this costs next to nothing.
+ * `ANALYZE sqlite_master` first creates the table (it analyses only the schema), the last one loads what was written. The figures are
+ * approximate on purpose; the open-time PRAGMA optimize ([SternaDatabase.build]) refreshes them when the real size has moved.
+ * Index names are the ones Room gives the three indices of [EmailEntity].
+ */
+val EMAILS_STATISTICS_SQL: List<String> = listOf(
+    "ANALYZE sqlite_master",
+    "DELETE FROM sqlite_stat1 WHERE tbl = 'emails'",
+    "INSERT INTO sqlite_stat1(tbl, idx, stat) VALUES ('emails', 'index_emails_accountId_mailboxId_fromDomain_sortKey_seen_id', '40000 40000 20000 200 4 2 1')",
+    "INSERT INTO sqlite_stat1(tbl, idx, stat) VALUES ('emails', 'index_emails_accountId_mailboxId_sortKey', '40000 40000 20000 2')",
+    "INSERT INTO sqlite_stat1(tbl, idx, stat) VALUES ('emails', 'index_emails_mailboxId', '40000 20000')",
+    "ANALYZE sqlite_master",
+)
 
 /**
  * v34 -> v35 (#1952): one more index on `emails`. At 40 000 messages the default list (grouped by sender domain) spent
@@ -490,7 +505,7 @@ val MIGRATION_34_35 = object : Migration(34, 35) {
         val started = System.nanoTime()
         try { android.util.Log.i("MailMigration", "v35 covering index build start") } catch (_: RuntimeException) {}
         db.execSQL(EMAILS_DOMAIN_LIST_INDEX_SQL)
-        db.execSQL(EMAILS_ANALYZE_SQL)
+        EMAILS_STATISTICS_SQL.forEach { db.execSQL(it) }
         try { android.util.Log.i("MailMigration", "v35 covering index build end ms=${(System.nanoTime() - started) / 1_000_000}") } catch (_: RuntimeException) {}
     }
 }

@@ -147,7 +147,7 @@ class ListReturn1952cTest {
 
     @Test fun `the first page load starts before the screen composes`() {
         val vm = code("app/src/main/kotlin/app/sterna/ui/inbox/InboxViewModel.kt")
-        assertTrue("init { startFirstPageLoad() }" in vm)
+        assertTrue("private val firstPageLoad: Unit = startFirstPageLoad()" in vm)
         val at = vm.indexOf("private fun startFirstPageLoad() {")
         assertTrue("the starter exists", at >= 0)
         val body = vm.drop(at).take(30)
