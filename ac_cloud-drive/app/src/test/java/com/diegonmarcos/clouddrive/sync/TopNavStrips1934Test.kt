@@ -30,6 +30,7 @@ import com.diegonmarcos.cloudlib.gitui.BulkProgress
 import com.diegonmarcos.cloudlib.gitui.BulkScopes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.onAllNodesWithTag
 import java.io.File
@@ -88,9 +89,11 @@ class TopNavStrips1934Test {
         val repos = listOf(BulkScopes.Entry("alpha", true), BulkScopes.Entry("beta", false))
         compose.setContent {
             val state = rememberGitSheetState(sheet, "bulk")
+            Box(Modifier.width(240.dp)) {   // narrower than the chips' total width, so a cut is certain whatever the font metrics
             GitControlSheetView(sheet, state, GitSheetHost(cloned = true, bulk = true, targets = repos.map { it.name }, scope = "all", scopeLabel = "All Repos",
                 picks = repos.map { it.name }), actions, part = GitSheetPart.TOP,
                 scopeTrailing = { Box(Modifier.size(56.dp)); Box(Modifier.size(56.dp)) })
+            }
         }
     }
 
