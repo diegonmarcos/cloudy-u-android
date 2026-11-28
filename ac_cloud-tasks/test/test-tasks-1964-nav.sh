@@ -70,7 +70,14 @@ def t_clock_matches_calc(f):
     m = re.search(r"IDS[^=]*=\s*listOf\(([^)]*)\)", code(f["subpages"]))
     lib = re.findall(r'"([\w-]+)"', m.group(1)) if m else []
     if not lib: bad.append("ClockSubpages.IDS not found in the lib")
-    if calc != lib: bad.append("Calc's Tools > Clock %s != the lib's ClockSubpages.IDS %s" % (calc, lib))
+    # #1987 Calc's Tools > Clock keeps only the World clock (owner-named removal) = the lib's ClockSubpages.CALC; Cloud Tasks keeps
+    # every page, unchanged: IDS is the seven pages, and the moved declarations (build.json ui.clock_modes) are the six Calc lost.
+    mc = re.search(r"CALC[^=]*=\s*listOf\(([^)]*)\)", code(f["subpages"]))
+    calc_lib = re.findall(r'"([\w-]+)"', mc.group(1)) if mc else []
+    if calc != ["world"] or calc_lib != ["world"]: bad.append("Calc's Tools > Clock %s / ClockSubpages.CALC %s must be [world]" % (calc, calc_lib))
+    if lib != ["world", "alarms", "timers", "stopwatch", "interval", "bedtime", "pomodoro"]: bad.append("Tasks' Clock pages changed: %s" % lib)
+    moved = [m.get("id") for m in json.loads(f["tasks"])["ui"].get("clock_modes", [])]
+    if ["world"] + moved != lib: bad.append("Tasks' ui.clock_modes %s are not the pages Calc handed over" % moved)
     full = code(f["full"]); body = full[full.index("fun FullClock"):] if "fun FullClock" in full else ""
     if "ClockSubpages.IDS" not in body: bad.append("FullClock does not read ClockSubpages.IDS")
     if re.search(r'listOf\(\s*"world"', body): bad.append("FullClock declares its own subpage list")
@@ -97,7 +104,7 @@ MUTATIONS = [
             "icon": "folder_open"
           }'''),
     ("m4-old-library-route-dead", "library_still_reachable", "nav", '"library" to (FILES to PAGE_ASSETS),', ''),
-    ("m5-calc-clock-drifts", "clock_subpages_match_calc", "calc", '"id": "bedtime",\n        "label": "Bedtime",\n        "tab": "clock"', '"id": "bedtime",\n        "label": "Bedtime",\n        "tab": "clockx"'),
+    ("m5-calc-clock-drifts", "clock_subpages_match_calc", "calc", '"id": "world",\n        "label": "World clock",\n        "tab": "clock"', '"id": "world",\n        "label": "World clock",\n        "tab": "clockx"'),
     ("m6-lib-list-drifts", "clock_subpages_match_calc", "subpages", ', "pomodoro")', ')'),
     ("m7-fullclock-own-list", "clock_subpages_match_calc", "full", 'com.diegonmarcos.clocktools.ClockSubpages.IDS.map { it to labels.getValue(it) }', 'listOf("world", "alarms").map { it to labels.getValue(it) }'),
 ]

@@ -21,6 +21,8 @@ class MainActivity : ComponentActivity(), PermsHost {
         FleetChrome.apply(this)
         val api = CalcClient(applicationContext)
         state = CalcState(getSharedPreferences(PREFS, Context.MODE_PRIVATE))
+        // #1987 the Clock pages Calc no longer shows open in Cloud Tasks
+        state.handOff = { id -> com.diegonmarcos.clocktools.ClockLink.handOff(this, id) }
         state.show(intent?.getStringExtra(ClockEngine.EXTRA_MODE))
         // Opening the app is a foreground moment: re-plan, so a wakeup the system dropped (a
         // force-stop clears every alarm and sends no broadcast) is set again.

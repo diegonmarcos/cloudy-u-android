@@ -20,7 +20,7 @@ FILES = {
     "engine": K + "ClockEngine.kt", "service": K + "ClockService.kt", "ring": K + "RingActivity.kt", "manifest": LIB + "src/main/AndroidManifest.xml",
     "model": C + "ClockModel.kt", "logic": C + "ClockLogic.kt", "subpages": C + "ClockSubpages.kt", "pit": LIB + "core/build.gradle",
     "t_wheel": T + "WheelPresetsTest.kt", "t_pomo": T + "PomodoroTest.kt", "t_cal": T + "ClockCalendarTest.kt",
-    "calc": "ac_cloud-calc/build.json", "calc_modes": "ac_cloud-calc/app/src/main/java/com/diegonmarcos/cloudcalc/ui/ModeScreens.kt",
+    "calc": "ac_cloud-calc/build.json", "tasks": "ac_cloud-tasks/build.json", "look": C + "ClockLook.kt", "calc_modes": "ac_cloud-calc/app/src/main/java/com/diegonmarcos/cloudcalc/ui/ModeScreens.kt",
 }
 
 def load(root):
@@ -103,7 +103,8 @@ def p5_subpages(f):
     return bad
 
 def p6_service(f):
-    s = code(f["service"]); e = code(f["engine"])
+    # #1986 the ring card's buttons are declared in core RingCard (ClockLook.kt) and built by ClockService
+    s = code(f["service"]) + code(f["look"]); e = code(f["engine"])
     return need("ClockService", s, ["\"interval_stop\"", "\"stopwatch_lap\"", "\"stopwatch_toggle\"", "\"sleep_cancel\"", "\"dismiss_all\"", "\"snooze\"", "\"timer_add\"",
                                     "setFullScreenIntent("], "a notification action") + \
            need("ClockEngine.control", body(e, "control"), ["\"timer_start\"", "\"timer_pause\"", "\"timer_reset\"", "\"interval_stop\"", "\"sleep_cancel\""], "an op")
@@ -137,9 +138,11 @@ def n4_pomodoro(f):
     m = re.search(r"IDS[^=]*=\s*listOf\(([^)]*)\)", code(f["subpages"]))
     if not m or '"pomodoro"' not in m.group(1): bad.append("pomodoro is not in ClockSubpages.IDS")
     if not re.search(r'"pomodoro"\s*->\s*PomodoroScreen\(\)', body(code(f["world"]), "FullClock")): bad.append("FullClock does not draw Pomodoro")
-    if not re.search(r'"pomodoro"\s*->\s*PomodoroScreen\(\)', code(f["calc_modes"])): bad.append("Cloud Calc has no Pomodoro renderer")
-    calc = [x for x in json.loads(f["calc"])["ui"]["modes"] if x.get("kind") == "pomodoro"]
-    if not calc or calc[0].get("clock", {}).get("work") != 25: bad.append("Cloud Calc does not declare the Pomodoro mode with its lengths")
+    # #1987 Cloud Calc no longer draws the Pomodoro (owner-named removal from Calc; Cloud Tasks' FullClock draws it, checked above)
+    if re.search(r'"pomodoro"\s*->\s*PomodoroScreen\(\)', code(f["calc_modes"])): bad.append("Cloud Calc still draws a Pomodoro it no longer declares")
+    # #1987 the Pomodoro declaration moved with the page from Cloud Calc to Cloud Tasks (ui.clock_modes)
+    decl = [x for x in json.loads(f["tasks"])["ui"].get("clock_modes", []) if x.get("kind") == "pomodoro"]
+    if not decl or decl[0].get("clock", {}).get("work") != 25: bad.append("Cloud Tasks does not declare the Pomodoro mode with its lengths")
     if "Wakeup(POMODORO" not in code(f["logic"]): bad.append("the Pomodoro is not on the timer engine's wakeups")
     if "d.pomodoro.running" not in code(f["service"]): bad.append("the service does not keep a Pomodoro alive")
     bad += need("PomodoroScreen", body(code(f["screens"]), "PomodoroScreen"), ["ProgressRing(PomodoroLogic.progress", "R.string.clock_pomodoro_counts",

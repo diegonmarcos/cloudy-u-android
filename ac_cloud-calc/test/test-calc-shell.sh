@@ -269,6 +269,11 @@ if not bj["ui"].get("debug_api", {}).get("clock_group"):
     bad.append("C10 build.json::ui.debug_api.clock_group is missing")
 
 # C11
+_sp = open(os.path.join(clib, "core", "src", "main", "kotlin", "com", "diegonmarcos", "clocktools", "ClockSubpages.kt"), encoding="utf-8").read() \
+    if os.path.isfile(os.path.join(clib, "core", "src", "main", "kotlin", "com", "diegonmarcos", "clocktools", "ClockSubpages.kt")) else ""
+_ids = re.findall(r'"(\w+)"', (re.search(r"IDS[^=]*=\s*listOf\(([^)]*)\)", _sp) or re.search("()", "")).group(1))
+_calc = re.findall(r'"(\w+)"', (re.search(r"CALC[^=]*=\s*listOf\(([^)]*)\)", _sp) or re.search("()", "")).group(1))
+handed_over = [i for i in _ids if i not in _calc]
 jev = bj.get("jev") or {}
 modes_by_id = {m["id"]: m for m in modes}
 route = jev.get("route") or {}
@@ -276,6 +281,9 @@ for tid, t in (route.get("tools") or {}).items():
     if tid.startswith("_") or t.get("action") == "timer":
         continue
     m = modes_by_id.get(t.get("mode"))
+    # #1987 a Clock page Calc handed to Cloud Tasks (libs:clock-tools ClockSubpages.IDS minus CALC): CalcState.show opens it there
+    if m is None and t.get("action") == "open" and t.get("mode") in handed_over:
+        continue
     if m is None:
         bad.append("C11 jev tool %s names mode %s, which is not declared" % (tid, t.get("mode")))
     elif t.get("action") == "form" and t.get("form") not in [f["id"] for f in m.get("forms", [])]:

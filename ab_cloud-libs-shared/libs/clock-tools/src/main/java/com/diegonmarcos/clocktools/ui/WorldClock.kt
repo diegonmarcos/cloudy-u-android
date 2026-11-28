@@ -315,8 +315,10 @@ internal fun ZonePicker(cat: ClockPlaces.Catalogue?, title: String, onDismiss: (
 const val CITY_LIST_TAG = "clock_city_list"
 
 /**
- * #1668 the whole clock as ONE page with its own tab strip (Cloud Tasks > Tasks > Clock): World clock, Alarms, Timers,
- * Stopwatch, Interval, Bedtime, the same screens Cloud Calc shows as its Clock modes.
+ * #1668 the whole clock as ONE page (Cloud Tasks > Clock): World clock, Alarms, Timers, Stopwatch, Interval, Bedtime,
+ * Pomodoro. #1986 the pages are picked on the Clock's own icon island at the bottom (the reference's alarm, world, stopwatch,
+ * timer order, then the rest), over the reference's black and glow; the World clock is drawn as it was, in the host's theme.
+ * #1987 a link to a page (ClockLink.pending: a notification tap, or Cloud Calc handing a page over) turns to it.
  */
 @Composable
 fun FullClock(modifier: Modifier = Modifier, initialTab: Int = 0) {
@@ -328,23 +330,32 @@ fun FullClock(modifier: Modifier = Modifier, initialTab: Int = 0) {
     // #1964 the subpage list is ClockSubpages.IDS, declared once for Cloud Calc and Cloud Tasks
     val tabs = com.diegonmarcos.clocktools.ClockSubpages.IDS.map { it to labels.getValue(it) }
     var tab by rememberSaveable { mutableIntStateOf(initialTab.coerceIn(0, tabs.size - 1)) }
-    Column(modifier.fillMaxSize().testTag(ClockTags.FULL)) {
-        // A chip row, not a second tab bar: the host app's own nav (its top strip) stays the only navigation.
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = ClockMetrics.gutter, vertical = ClockMetrics.small),
-            horizontalArrangement = Arrangement.spacedBy(ClockMetrics.small)) {
-            tabs.forEachIndexed { i, (id, label) ->
-                FilterChip(selected = i == tab, onClick = { tab = i }, label = { Text(stringResource(label)) }, modifier = Modifier.testTag(ClockTags.tab(id)))
-            }
-        }
-        Box(Modifier.weight(1f).fillMaxWidth()) {
-            when (tabs[tab].first) {
-                "world" -> WorldClockScreen()
-                "alarms" -> AlarmsScreen()
-                "timers" -> TimersScreen()
-                "stopwatch" -> StopwatchScreen()
-                "interval" -> IntervalScreen()
-                "bedtime" -> BedtimeScreen()
-                "pomodoro" -> PomodoroScreen()
+    val link = rememberClockLink()
+    LaunchedEffect(link) {
+        val i = tabs.indexOfFirst { it.first == link }
+        if (i >= 0) { tab = i; com.diegonmarcos.clocktools.ClockLink.pending.value = null }
+    }
+    val names = tabs.associate { (id, label) -> id to stringResource(label) }
+    val world = tabs[tab].first == "world"
+    Box(modifier.fillMaxSize().testTag(ClockTags.FULL).let { if (world) it else it.clockBackdrop() }) {
+        androidx.compose.runtime.CompositionLocalProvider(LocalClockBackdrop provides !world) {
+            Column(Modifier.fillMaxSize()) {
+                Box(Modifier.weight(1f).fillMaxWidth()) {
+                    when (tabs[tab].first) {
+                        "world" -> WorldClockScreen()
+                        "alarms" -> AlarmsScreen()
+                        "timers" -> TimersScreen()
+                        "stopwatch" -> StopwatchScreen()
+                        "interval" -> IntervalScreen()
+                        "bedtime" -> BedtimeScreen()
+                        "pomodoro" -> PomodoroScreen()
+                    }
+                }
+                androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().padding(bottom = 6.dp), contentAlignment = Alignment.Center) {
+                    val ids = com.diegonmarcos.clocktools.ClockLook.islandOrder(tabs.map { it.first })
+                    val item = minOf(44.5.dp, (maxWidth - 24.dp - 11.5.dp) / ids.size)
+                    ClockIsland(ids, names, tabs[tab].first, { id -> tab = tabs.indexOfFirst { it.first == id } }, itemWidth = item)
+                }
             }
         }
     }

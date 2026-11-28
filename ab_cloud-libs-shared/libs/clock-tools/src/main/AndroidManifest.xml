@@ -22,6 +22,11 @@
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
 
+    <!-- #1987 Cloud Calc hands the Clock pages it no longer shows to Cloud Tasks (ClockLink.handOff): it must see that package. -->
+    <queries>
+        <package android:name="com.diegonmarcos.cloudagenda" />
+    </queries>
+
     <application>
         <!-- A ring, over the lock screen (the ring notification's full-screen intent). -->
         <activity

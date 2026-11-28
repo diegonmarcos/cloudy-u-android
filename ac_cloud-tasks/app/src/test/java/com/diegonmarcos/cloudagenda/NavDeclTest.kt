@@ -40,7 +40,19 @@ class NavDeclTest {
         assertTrue("Cloud Calc's build.json must be readable from the checkout: " + calc.absolutePath, calc.isFile)
         val modes = org.json.JSONObject(calc.readText()).getJSONObject("ui").getJSONArray("modes")
         val calcClock = (0 until modes.length()).map { modes.getJSONObject(it) }.filter { it.optString("tab") == "clock" }.map { it.getString("id") }
-        assertEquals(calcClock, com.diegonmarcos.clocktools.ClockSubpages.IDS)
+        // #1987 Calc keeps only the World clock (owner-named removal); Cloud Tasks keeps every page, unchanged
+        assertEquals(listOf("world"), calcClock)
+        assertEquals(com.diegonmarcos.clocktools.ClockSubpages.CALC, calcClock)
+        assertEquals(listOf("world", "alarms", "timers", "stopwatch", "interval", "bedtime", "pomodoro"), com.diegonmarcos.clocktools.ClockSubpages.IDS)
+    }
+
+    // #1987 the Clock pages Calc handed over are declared here (ui.clock_modes) with Calc's numbers, which are the lib's DEFAULT this app runs on
+    @Test fun `the Clock pages Calc handed over are declared in Cloud Tasks with the numbers the lib uses`() {
+        val ui = org.json.JSONObject(java.io.File("../build.json").readText()).getJSONObject("ui")
+        val modes = ui.getJSONArray("clock_modes").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
+        assertEquals(com.diegonmarcos.clocktools.ClockSubpages.MOVED_TO_TASKS, modes.map { it.getString("id") })
+        val parsed = com.diegonmarcos.clocktools.ClockConfig.parse(modes.associate { it.getString("kind") to it.getJSONObject("clock").toString() })
+        assertEquals(com.diegonmarcos.clocktools.ClockConfig.DEFAULT, parsed.copy(zones = com.diegonmarcos.clocktools.ClockConfig.DEFAULT.zones))
     }
 
     @Test fun `every id Kotlin dispatches on is declared and every declared section is dispatched`() {

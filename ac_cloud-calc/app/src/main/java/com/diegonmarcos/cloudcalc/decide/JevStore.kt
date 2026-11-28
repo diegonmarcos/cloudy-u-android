@@ -110,6 +110,8 @@ object JevStore {
         val out = mutableListOf<String>()
         for (t in cfg.route.tools) {
             if (t.action == "timer") continue
+            // #1987 a Clock page Calc handed to Cloud Tasks (CalcState.show opens it there)
+            if (t.action == "open" && t.mode in com.diegonmarcos.clocktools.ClockSubpages.MOVED_TO_TASKS) continue
             val m = Declarations.mode(t.mode)
             if (m == null) { out += "tool ${t.id}: no mode ${t.mode} in this app"; continue }
             if (t.action == "form" && m.forms.none { it.id == t.form }) out += "tool ${t.id}: mode ${t.mode} has no form ${t.form}"

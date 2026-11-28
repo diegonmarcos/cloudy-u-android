@@ -34,6 +34,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FleetChrome.apply(this)
+        // #1987 a link to a Clock page (a clock notification, or Cloud Calc handing over a page it no longer shows)
+        com.diegonmarcos.clocktools.ClockLink.offer(intent)
         openProject(intent)
         env = AppEnv(this) { kind ->
             documentPicker.launch(if (kind == AttachmentKind.IMAGE) arrayOf("image/*") else arrayOf("*/*"))
@@ -47,6 +49,7 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         // A project deep link while the app is open: select it, then rebuild so the page reads the new selection.
         setIntent(intent)
+        com.diegonmarcos.clocktools.ClockLink.offer(intent)
         val offered = ::env.isInitialized && offerImport(intent)
         if (openProject(intent) && !offered) recreate()
     }

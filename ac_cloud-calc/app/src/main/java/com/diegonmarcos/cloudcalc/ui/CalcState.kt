@@ -120,7 +120,15 @@ class CalcState(private val prefs: SharedPreferences?, private val now: () -> Lo
     }
 
     /** Open mode [modeId] on its tab (a Clock notification tap); an unknown id changes nothing. */
+    /** #1987 opens a Clock page Calc no longer has in Cloud Tasks (MainActivity sets it: ClockLink.handOff); false when it cannot. */
+    var handOff: ((String) -> Boolean)? = null
+
     fun show(modeId: String?) {
+        // #1987 Tools > Clock keeps only the World clock: a link to another Clock page opens it in Cloud Tasks, else the World clock
+        if (modeId != null && Declarations.mode(modeId) == null && modeId in com.diegonmarcos.clocktools.ClockSubpages.MOVED_TO_TASKS) {
+            if (handOff?.invoke(modeId) != true) show(com.diegonmarcos.clocktools.ClockSubpages.CALC.first())
+            return
+        }
         val m = Declarations.mode(modeId ?: return) ?: return
         modeByTab[m.tab] = m.id
         tab = m.tab

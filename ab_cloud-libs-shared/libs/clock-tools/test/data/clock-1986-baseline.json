@@ -1,0 +1,379 @@
+{
+ "AlarmEditor": {
+  "engine": [
+   "deleteAlarm",
+   "saveAlarm"
+  ],
+  "ops": [
+   "date",
+   "vibration"
+  ],
+  "strings": [
+   "clock_add_to_calendar",
+   "clock_add_to_calendar_doc",
+   "clock_alarm_background",
+   "clock_alarm_groups",
+   "clock_alarm_name",
+   "clock_calendar_needs_grant",
+   "clock_cancel",
+   "clock_clear_date",
+   "clock_delete",
+   "clock_interval_min",
+   "clock_new_group",
+   "clock_off",
+   "clock_ok",
+   "clock_save",
+   "clock_snooze_minutes",
+   "clock_sound_row",
+   "clock_times",
+   "clock_unassigned",
+   "clock_unlimited",
+   "clock_vibration"
+  ],
+  "tags": [
+   "ALARM_DATE",
+   "ALARM_EDITOR",
+   "ALARM_HOUR",
+   "ALARM_MINUTE",
+   "ALARM_NAME",
+   "CANCEL",
+   "DELETE_ALARM",
+   "ROW_CALENDAR",
+   "ROW_GROUP",
+   "ROW_SNOOZE",
+   "ROW_SOUND",
+   "ROW_VIBRATION",
+   "SAVE",
+   "background",
+   "day"
+  ]
+ },
+ "AlarmsScreen": {
+  "engine": [
+   "saveAlarm",
+   "zone"
+  ],
+  "ops": [],
+  "strings": [
+   "clock_add_alarm",
+   "clock_add_to_calendar",
+   "clock_next_alarm",
+   "clock_no_alarm",
+   "clock_snoozed_until",
+   "clock_unassigned"
+  ],
+  "tags": [
+   "ADD_ALARM",
+   "ALARMS",
+   "group"
+  ]
+ },
+ "BackgroundPreview": {
+  "engine": [
+   "now",
+   "zone"
+  ],
+  "ops": [],
+  "strings": [
+   "clock_alarm"
+  ],
+  "tags": [
+   "BACKGROUND_PREVIEW"
+  ]
+ },
+ "BedtimeScreen": {
+  "engine": [
+   "cancelSleep",
+   "saveAlarm",
+   "startSleep",
+   "zone"
+  ],
+  "ops": [],
+  "strings": [
+   "clock_bedtime",
+   "clock_bedtime_time",
+   "clock_cancel",
+   "clock_sleep_timer",
+   "clock_sleep_timer_doc",
+   "clock_sleep_window"
+  ],
+  "tags": [
+   "BEDTIME",
+   "BEDTIME_HOUR",
+   "BEDTIME_MINUTE",
+   "BEDTIME_SWITCH",
+   "SLEEP_RING"
+  ]
+ },
+ "ClockTags": [
+  "ADD_ALARM",
+  "ADD_CITY",
+  "ALARMS",
+  "ALARM_DATE",
+  "ALARM_EDITOR",
+  "ALARM_HOUR",
+  "ALARM_MINUTE",
+  "ALARM_NAME",
+  "BACKGROUND_PREVIEW",
+  "BEDTIME",
+  "BEDTIME_HOUR",
+  "BEDTIME_MINUTE",
+  "BEDTIME_SWITCH",
+  "CANCEL",
+  "DELETE_ALARM",
+  "EDIT_DEFAULT",
+  "FULL",
+  "INTERVAL",
+  "INTERVAL_REST",
+  "INTERVAL_RING",
+  "INTERVAL_ROUNDS",
+  "INTERVAL_START",
+  "INTERVAL_WORK",
+  "LAP",
+  "LAPS",
+  "POMODORO",
+  "POMODORO_AUTO",
+  "POMODORO_COUNTS",
+  "POMODORO_LONG",
+  "POMODORO_RESET",
+  "POMODORO_RING",
+  "POMODORO_SHORT",
+  "POMODORO_SKIP",
+  "POMODORO_TOGGLE",
+  "POMODORO_WORK",
+  "PRESET_EDIT",
+  "REF_DATE",
+  "REF_NOW",
+  "REF_TIME",
+  "RESET",
+  "ROW_CALENDAR",
+  "ROW_GROUP",
+  "ROW_SNOOZE",
+  "ROW_SOUND",
+  "ROW_VIBRATION",
+  "SAVE",
+  "SHARE_LAPS",
+  "SLEEP_RING",
+  "START_TIMER",
+  "STOPWATCH",
+  "STOPWATCH_DIAL",
+  "TABLE",
+  "TIMERS",
+  "TOGGLE",
+  "WHEEL_H",
+  "WHEEL_M",
+  "WHEEL_S",
+  "WORLD",
+  "WORLD_DIAL",
+  "background",
+  "bar",
+  "day",
+  "group",
+  "preset",
+  "rememberStopwatch",
+  "row",
+  "setDefault",
+  "tab"
+ ],
+ "FullClock": {
+  "engine": [],
+  "ops": [],
+  "strings": [
+   "clock_tab_alarms",
+   "clock_tab_bedtime",
+   "clock_tab_interval",
+   "clock_tab_pomodoro",
+   "clock_tab_stopwatch",
+   "clock_tab_timers",
+   "clock_tab_world"
+  ],
+  "tags": [
+   "FULL",
+   "tab"
+  ]
+ },
+ "IntervalScreen": {
+  "engine": [
+   "startInterval",
+   "stopInterval"
+  ],
+  "ops": [],
+  "strings": [
+   "clock_custom",
+   "clock_rest_min",
+   "clock_round",
+   "clock_rounds",
+   "clock_session_left",
+   "clock_start",
+   "clock_stop",
+   "clock_work_min"
+  ],
+  "tags": [
+   "INTERVAL",
+   "INTERVAL_REST",
+   "INTERVAL_RING",
+   "INTERVAL_ROUNDS",
+   "INTERVAL_START",
+   "INTERVAL_WORK"
+  ]
+ },
+ "PermissionBanners": {
+  "engine": [],
+  "ops": [],
+  "strings": [
+   "clock_full_screen_off"
+  ],
+  "tags": []
+ },
+ "PomodoroScreen": {
+  "engine": [
+   "configurePomodoro",
+   "pomodoro",
+   "zone"
+  ],
+  "ops": [
+   "notifications",
+   "pause",
+   "reset",
+   "skip"
+  ],
+  "strings": [
+   "clock_auto_advance",
+   "clock_long_every",
+   "clock_long_len",
+   "clock_pause",
+   "clock_pomodoro_counts",
+   "clock_reset",
+   "clock_resume",
+   "clock_short_len",
+   "clock_skip",
+   "clock_start",
+   "clock_work_len"
+  ],
+  "tags": [
+   "POMODORO",
+   "POMODORO_AUTO",
+   "POMODORO_COUNTS",
+   "POMODORO_LONG",
+   "POMODORO_RESET",
+   "POMODORO_RING",
+   "POMODORO_SHORT",
+   "POMODORO_SKIP",
+   "POMODORO_TOGGLE",
+   "POMODORO_WORK"
+  ]
+ },
+ "RingScreen": {
+  "engine": [
+   "control",
+   "dismiss",
+   "load",
+   "now",
+   "snooze",
+   "zone"
+  ],
+  "ops": [
+   "timer_add"
+  ],
+  "strings": [
+   "clock_alarm",
+   "clock_dismiss",
+   "clock_plus_minute",
+   "clock_snooze",
+   "clock_times_up"
+  ],
+  "tags": []
+ },
+ "RingingBar": {
+  "engine": [
+   "dismiss",
+   "snooze"
+  ],
+  "ops": [],
+  "strings": [
+   "clock_alarm",
+   "clock_dismiss",
+   "clock_snooze",
+   "clock_times_up"
+  ],
+  "tags": []
+ },
+ "SheetRow": {
+  "engine": [],
+  "ops": [],
+  "strings": [],
+  "tags": []
+ },
+ "StopwatchScreen": {
+  "engine": [
+   "stopwatch"
+  ],
+  "ops": [
+   "lap",
+   "reset",
+   "toggle"
+  ],
+  "strings": [
+   "clock_copy_laps",
+   "clock_lap",
+   "clock_lap_n",
+   "clock_laps",
+   "clock_pause",
+   "clock_reset",
+   "clock_share_laps",
+   "clock_start"
+  ],
+  "tags": [
+   "LAP",
+   "LAPS",
+   "RESET",
+   "SHARE_LAPS",
+   "STOPWATCH",
+   "STOPWATCH_DIAL",
+   "TOGGLE"
+  ]
+ },
+ "TimersScreen": {
+  "engine": [
+   "addTimer",
+   "dismiss",
+   "editWheelPreset",
+   "timer"
+  ],
+  "ops": [
+   "add",
+   "delete",
+   "pause",
+   "reset",
+   "start"
+  ],
+  "strings": [
+   "clock_cancel",
+   "clock_delete",
+   "clock_dismiss",
+   "clock_edit_preset",
+   "clock_hours",
+   "clock_label",
+   "clock_minutes",
+   "clock_pause",
+   "clock_plus_minute",
+   "clock_quick_start",
+   "clock_reset",
+   "clock_save",
+   "clock_seconds",
+   "clock_start",
+   "clock_timer",
+   "clock_times_up"
+  ],
+  "tags": [
+   "PRESET_EDIT",
+   "START_TIMER",
+   "TIMERS",
+   "WHEEL_H",
+   "WHEEL_M",
+   "WHEEL_S",
+   "preset"
+  ]
+ },
+ "_doc": "#1986 rule-16 baseline: what each Clock screen used before the #1986 look (git HEAD 130d6eb5d): its strings, tags, ClockEngine calls and ops. clock-1986.sh holds every one present."
+}

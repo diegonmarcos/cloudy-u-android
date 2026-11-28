@@ -21,6 +21,7 @@ import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
+import java.time.Instant
 
 
 /**
@@ -187,19 +188,33 @@ object ClockNotifications {
     fun ongoing(ctx: Context, d: ClockData, now: Long): Notification {
         if (d.ringing.isNotEmpty()) {
             val top = d.ringing.last()
+            // #1986 the card: its buttons are RingCard's (core, pinned by ClockLookTest): Stop / Snooze (with the time it rings
+            // again) / Dismiss for an alarm, Stop / +1 min for a timer; full screen to the ring screen, ongoing until answered.
+            val alarm = d.alarms.firstOrNull { ClockLogic.alarmKey(it.id) == top.key }
+            val at = Instant.ofEpochMilli(now).atZone(ClockEngine.zone())
+            val snoozeAt = RingCard.snoozeAt(at.hour * 60 + at.minute, alarm?.snoozeMinutes ?: 0)
+            val card = RingCard.of(top.key, alarm?.let(ClockLogic::canSnooze) != false, snoozeAt)
             val b = base(ctx, CH_RING, if (top.key.startsWith("timer:")) "timers" else "alarms")
-                .setContentTitle(top.label.ifBlank { ctx.getString(if (top.key.startsWith("alarm:")) R.string.clock_alarm else R.string.clock_times_up) })
-                .setContentText(ctx.getString(R.string.clock_ringing))
+                .setContentTitle(top.label.ifBlank { ctx.getString(if (card.alarm) R.string.clock_alarm else R.string.clock_times_up) })
+                .setContentText(if (card.alarm && alarm != null && ClockLogic.canSnooze(alarm)) ctx.getString(R.string.clock_ring_snoozes, alarm.snoozeMinutes, snoozeAt)
+                    else ctx.getString(R.string.clock_ringing))
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
-                .setOngoing(true)
-                .setFullScreenIntent(ringScreen(ctx), true)
-                .addAction(0, ctx.getString(R.string.clock_dismiss), control(ctx, "dismiss_all", ""))
-            if (top.key.startsWith("alarm:") && d.alarms.firstOrNull { ClockLogic.alarmKey(it.id) == top.key }?.let(ClockLogic::canSnooze) != false) {
-                b.addAction(0, ctx.getString(R.string.clock_snooze), control(ctx, "snooze", top.key))
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setOngoing(card.ongoing)
+                .setAutoCancel(false)
+                .setWhen(top.since.takeIf { it > 0 } ?: now).setShowWhen(true)
+            if (card.fullScreen) b.setFullScreenIntent(ringScreen(ctx), true)
+            card.actions.forEach { a ->
+                val label = when {
+                    a.label == RingCard.STOP -> ctx.getString(R.string.clock_stop)
+                    a.label.startsWith(RingCard.SNOOZE + ":") -> ctx.getString(R.string.clock_snooze_until, a.label.substringAfter(':'))
+                    a.label == RingCard.DISMISS -> ctx.getString(R.string.clock_dismiss)
+                    a.label == RingCard.PLUS_MINUTE -> ctx.getString(R.string.clock_plus_minute)
+                    else -> ctx.getString(R.string.clock_start)
+                }
+                b.addAction(0, label, control(ctx, a.op, a.key))
             }
-            if (top.key == ClockLogic.POMODORO) b.addAction(0, ctx.getString(R.string.clock_start), control(ctx, "pomodoro_start", ""))
-            if (top.key.startsWith("timer:")) b.addAction(0, ctx.getString(R.string.clock_plus_minute), control(ctx, "timer_add", top.key))
             return b.build()
         }
         val sw = d.stopwatch

@@ -10,7 +10,7 @@
     <string name="clock_ringing">Ringing</string>
     <string name="clock_dismiss">Dismiss</string>
     <string name="clock_snooze">Snooze</string>
-    <string name="clock_plus_minute">+1:00</string>
+    <string name="clock_plus_minute">+1 min</string>
     <string name="clock_pause">Pause</string>
     <string name="clock_resume">Resume</string>
     <string name="clock_start">Start</string>
@@ -121,4 +121,7 @@
     <string name="clock_auto_advance">Start the next phase by itself</string>
     <string name="clock_today_count">Today</string>
     <string name="clock_bedtime_time">Bedtime reminder</string>
+    <!-- #1986 the ring's notification card and ring screen -->
+    <string name="clock_snooze_until">Snooze · %1$s</string>
+    <string name="clock_ring_snoozes">Snooze %1$d min, rings again at %2$s</string>
 </resources>

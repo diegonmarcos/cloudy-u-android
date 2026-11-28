@@ -184,20 +184,22 @@ class CalcShellTest {
         assertTrue(synchronized(engine.evals) { "2+2" in engine.evals })
     }
 
-    @Test fun `the Alarms screen shows the stored alarm and its switch cancels the wakeup`() {
-        val app = RuntimeEnvironment.getApplication()
-        val id = com.diegonmarcos.clocktools.ClockEngine.saveAlarm(app, com.diegonmarcos.clocktools.Alarm(0, 6 * 60 + 45))
-        assertTrue(com.diegonmarcos.clocktools.ClockEngine.isScheduled(app, "alarm:$id"))
+    // #1987 Tools > Clock keeps only the World clock (owner-named removal); the Alarms page (and its switch test) lives in Cloud
+    // Tasks now. A link to it is handed over, and lands on the World clock when Cloud Tasks cannot open it.
+    @Test fun `a link to a Clock page Calc no longer has is handed to Cloud Tasks, else the World clock opens`() {
         launch()
-        val alarms = Declarations.modes.first { it.kind == "alarms" }
-        compose.runOnIdle { state.tab = alarms.tab; state.modeByTab[alarms.tab] = alarms.id }
+        val asked = mutableListOf<String>()
+        compose.runOnIdle { state.handOff = { asked += it; false }; state.show("alarms") }
         compose.waitForIdle()
-        compose.onNodeWithText("06:45").assertExists()
-        // Switching it off is the screen's own write: store, then AlarmManager.
-        compose.onNode(isToggleable()).performClick()
-        compose.waitForIdle()
-        assertFalse(com.diegonmarcos.clocktools.ClockEngine.load(app).alarms.single().enabled)
-        assertFalse(com.diegonmarcos.clocktools.ClockEngine.isScheduled(app, "alarm:$id"))
+        assertEquals(listOf("alarms"), asked)
+        val world = Declarations.mode("world")!!
+        assertEquals(world.tab, state.tab)
+        assertEquals("world", state.modeByTab[world.tab])
+        assertEquals(null, Declarations.mode("alarms"))
+        // handed over: Calc stays where it was
+        compose.runOnIdle { state.handOff = { asked += it; true }; state.show("pomodoro") }
+        assertEquals(listOf("alarms", "pomodoro"), asked)
+        assertEquals(listOf("world"), Declarations.modesOf("clock").map { it.id })
     }
 
     private fun typeKeys(vararg keys: String) = keys.forEach { compose.onNodeWithTag(CalcTags.key(it)).performClick(); compose.waitForIdle() }

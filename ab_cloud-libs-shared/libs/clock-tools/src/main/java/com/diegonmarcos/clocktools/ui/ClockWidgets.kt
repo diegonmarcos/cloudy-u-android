@@ -49,7 +49,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.diegonmarcos.clocktools.ClockLook
 import com.diegonmarcos.clocktools.Wheel
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
@@ -81,6 +83,8 @@ fun WheelPicker(
     style: TextStyle = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.SemiBold),
     format: (Int) -> String = { "%02d".format(it) },
     tag: String? = null,
+    color: Color = MaterialTheme.colorScheme.onBackground,
+    dim: Float? = null,
 ) {
     val state = rememberLazyListState(Wheel.firstFor(Wheel.indexOf(value, min, max), visible))
     val fling = rememberSnapFlingBehavior(state, SnapPosition.Start)
@@ -103,8 +107,9 @@ fun WheelPicker(
                 Modifier.height(rowHeight).fillMaxWidth().clickable { scope.launch { state.animateScrollToItem(Wheel.firstFor(i, visible)) } },
                 contentAlignment = Alignment.Center,
             ) {
-                Text(format(Wheel.valueAt(i, min, max)), style = style, modifier = Modifier.alpha(Wheel.alpha(i - centre)),
-                    color = MaterialTheme.colorScheme.onBackground)
+                // #1986 the reference's neighbours: one dim level ([dim]) instead of Wheel.alpha's steps
+                val a = if (dim != null && i != centre) dim else Wheel.alpha(i - centre)
+                Text(format(Wheel.valueAt(i, min, max)), style = style, modifier = Modifier.alpha(a), color = color)
             }
         }
     }
@@ -113,59 +118,43 @@ fun WheelPicker(
 /** A wheel with its label above (Hours / Minutes / Seconds). */
 @Composable
 fun LabelledWheel(label: String, value: Int, min: Int, max: Int, onValue: (Int) -> Unit, modifier: Modifier = Modifier, tag: String? = null,
-                  rowHeight: Dp = 72.dp, style: TextStyle = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.SemiBold)) {
+                  rowHeight: Dp = 72.dp, style: TextStyle = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.SemiBold),
+                  width: Dp = 96.dp, labelGap: Dp = 0.dp, color: Color = look(ClockLook.DIGITS), dim: Float? = ClockLook.WHEEL_DIM) {
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        WheelPicker(value, min, max, onValue, Modifier.width(96.dp), rowHeight = rowHeight, style = style, tag = tag)
+        Text(label, style = MaterialTheme.typography.labelLarge.copy(fontSize = ClockLook.TIMER_LABEL_SP.sp, fontWeight = FontWeight.Normal),
+            color = look(ClockLook.LABEL), modifier = Modifier.padding(bottom = labelGap))
+        WheelPicker(value, min, max, onValue, Modifier.width(width), rowHeight = rowHeight, style = style, tag = tag, color = color, dim = dim)
     }
 }
 
 /** The colon between wheels. */
 @Composable
-fun WheelColon(style: TextStyle = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.SemiBold)) {
-    Text(":", style = style, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(horizontal = 4.dp))
+fun WheelColon(style: TextStyle = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.SemiBold), color: Color = MaterialTheme.colorScheme.onBackground,
+               modifier: Modifier = Modifier.padding(horizontal = 4.dp)) {
+    Text(":", style = style, color = color, modifier = modifier)
 }
 
-/** A large round button (Start, Lap, Reset); [primary] fills it with the theme's primary container. Disabled it is dim. */
+/**
+ * A large round button (Start, Lap, Reset) as the reference's: [primary] is the lilac accent (a dim lilac while it cannot act),
+ * the other a dark disc with grey text.
+ */
 @Composable
-fun RoundButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, primary: Boolean = true, size: Dp = 112.dp) {
-    val scheme = MaterialTheme.colorScheme
+fun RoundButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, primary: Boolean = true, size: Dp = ClockLook.ROUND.dp) {
     Surface(
         onClick = onClick, enabled = enabled, shape = CircleShape,
-        color = (if (primary) scheme.primaryContainer else scheme.surfaceVariant).copy(alpha = if (enabled) 1f else 0.45f),
-        contentColor = (if (primary) scheme.onPrimaryContainer else scheme.onSurfaceVariant).copy(alpha = if (enabled) 1f else 0.5f),
+        color = look(if (primary) (if (enabled) ClockLook.ACCENT else ClockLook.ACCENT_DISABLED) else ClockLook.LAP),
+        contentColor = look(if (primary) (if (enabled) ClockLook.ON_ACCENT else ClockLook.ON_ACCENT_DISABLED) else ClockLook.LAP_TEXT),
         modifier = modifier.size(size),
     ) {
-        Box(contentAlignment = Alignment.Center) { Text(text, style = MaterialTheme.typography.titleLarge) }
+        Box(contentAlignment = Alignment.Center) { Text(text, style = MaterialTheme.typography.titleMedium.copy(fontSize = ClockLook.BUTTON_SP.sp, fontWeight = FontWeight.SemiBold)) }
     }
 }
 
-/** The stopwatch dial: 60 ticks (every 5th long) round a disc, a hand sweeping once a minute, [content] in the middle. */
+/** #1986 the reference's stopwatch dial (drawStopwatchDial: ticks, dark disc, indigo hand and dot), [content] in the middle. */
 @Composable
 fun StopwatchDial(elapsedMs: Long, modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
-    val scheme = MaterialTheme.colorScheme
     Box(modifier.aspectRatio(1f), contentAlignment = Alignment.Center) {
-        Canvas(Modifier.fillMaxSize()) {
-            val r = min(size.width, size.height) / 2f
-            val c = Offset(size.width / 2f, size.height / 2f)
-            drawCircle(scheme.surfaceVariant, r * 0.78f, c)
-            drawCircle(scheme.outlineVariant, r * 0.78f, c, style = Stroke(1.5f))
-            for (i in 0 until 60) {
-                val a = i / 60.0 * 2 * PI - PI / 2
-                val major = i % 5 == 0
-                val inner = r * (if (major) 0.86f else 0.89f)
-                drawLine(
-                    scheme.onSurfaceVariant.copy(alpha = if (major) 0.9f else 0.45f),
-                    Offset(c.x + (inner * cos(a)).toFloat(), c.y + (inner * sin(a)).toFloat()),
-                    Offset(c.x + (r * 0.96f * cos(a)).toFloat(), c.y + (r * 0.96f * sin(a)).toFloat()),
-                    strokeWidth = if (major) 5f else 3f, cap = StrokeCap.Round,
-                )
-            }
-            val a = (elapsedMs % 60_000L) / 60_000.0 * 2 * PI - PI / 2
-            drawLine(scheme.primary, Offset(c.x - (r * 0.1f * cos(a)).toFloat(), c.y - (r * 0.1f * sin(a)).toFloat()),
-                Offset(c.x + (r * 0.98f * cos(a)).toFloat(), c.y + (r * 0.98f * sin(a)).toFloat()), strokeWidth = 6f, cap = StrokeCap.Round)
-            drawCircle(scheme.primary, 12f, c)
-        }
+        Canvas(Modifier.fillMaxSize()) { drawStopwatchDial(elapsedMs) }
         content()
     }
 }
@@ -214,9 +203,9 @@ fun AnalogDial(now: Long, zone: ZoneId, modifier: Modifier = Modifier) {
 /** Pager dots: [count] dots, [current] lit. */
 @Composable
 fun PagerDots(count: Int, current: Int, modifier: Modifier = Modifier) {
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(9.5.dp)) {
         repeat(count) { i ->
-            Box(Modifier.size(8.dp).background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (i == current) 0.9f else 0.3f), CircleShape))
+            Box(Modifier.size(5.5.dp).background(look(if (i == current) ClockLook.DOT_ON else ClockLook.DOT_OFF), CircleShape))
         }
     }
 }
@@ -241,5 +230,6 @@ fun ringBackground(id: String, s: ColorScheme): Brush = when (id) {
     "ocean" -> Brush.verticalGradient(listOf(s.background, s.secondaryContainer))
     "forest" -> Brush.verticalGradient(listOf(s.tertiaryContainer, s.secondaryContainer))
     "plain" -> Brush.verticalGradient(listOf(s.background, s.background))
-    else -> Brush.verticalGradient(listOf(s.background, s.primaryContainer))
+    // #1986 the default is the reference's purple (the sheet's Alarm background preview)
+    else -> Brush.verticalGradient(listOf(look(ClockLook.PREVIEW_TOP), look(ClockLook.PREVIEW_BOTTOM)))
 }

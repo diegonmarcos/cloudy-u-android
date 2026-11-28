@@ -149,7 +149,8 @@ class DeclarationsTest {
         assertEquals(listOf("sensors", "phone", "camera", "wifi", "bluetooth", "nfc", "lfrfid"), Declarations.tabsOf("measure").map { it.id })
         assertEquals(listOf("light", "recorder", "tracker", "clock"), Declarations.tabsOf("toolkit").map { it.id })
         assertEquals(listOf("home"), Declarations.tabsOf("home").map { it.id })
-        assertEquals("the clock modes did not move or duplicate", com.diegonmarcos.clocktools.ClockSubpages.IDS, Declarations.modesOf("clock").map { it.id })
+        // #1987 Tools > Clock keeps only the World clock (an owner-named removal; the other pages are Cloud Tasks')
+        assertEquals("Calc's clock modes are ClockSubpages.CALC", com.diegonmarcos.clocktools.ClockSubpages.CALC, Declarations.modesOf("clock").map { it.id })
         fun spec(id: String) = JSONObject(Declarations.mode(id)!!.spec)
         // the Sensors page: every sensor group has its mode, and every tool mode names real sensors
         val catalog = com.diegonmarcos.cloudcalc.sensors.SensorDecl.catalog

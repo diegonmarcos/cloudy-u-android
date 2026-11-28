@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -165,6 +166,9 @@ fun TasksShell(env: TasksEnv, nav: NavDecl, themeMode: ThemeMode, onThemeMode: (
         section = sec; if (p != null) pageOf[sec] = p
     }
     BackHandler(enabled = section == Ids.SETTINGS) { go(returnTo) }
+    // #1987 a link to a Clock page opens the Clock (FullClock then turns to the page and clears the link)
+    val clockLink by com.diegonmarcos.clocktools.ClockLink.pending.collectAsState()
+    LaunchedEffect(clockLink) { if (clockLink != null) go(Ids.CLOCK) }
 
     val content: @Composable () -> Unit = {
         Column(Modifier.fillMaxSize()) {

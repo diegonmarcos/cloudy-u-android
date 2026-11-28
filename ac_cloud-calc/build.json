@@ -5073,6 +5073,7 @@
         "label": "World clock",
         "tab": "clock",
         "kind": "worldclock",
+        "_doc": "#1987 Cloud Calc's Tools > Clock keeps only the World clock (libs:clock-tools ClockSubpages.CALC). Alarms, Timers, Stopwatch, Interval, Bedtime and Pomodoro are owner-named removals from Calc: their declarations moved to Cloud Tasks' build.json ui.clock_modes, and a Calc link to one of them (a notification, a JEV tool, an old intent) opens the same page in Cloud Tasks' Clock (ClockLink.handOff), or this World clock when Cloud Tasks is not installed.",
         "clock": {
           "zones": [
             "Europe/Madrid",
@@ -5081,113 +5082,6 @@
             "Asia/Tokyo"
           ]
         }
-      },
-      {
-        "id": "alarms",
-        "label": "Alarms",
-        "tab": "clock",
-        "kind": "alarms",
-        "clock": {
-          "snooze_choices": [
-            5,
-            10,
-            15,
-            20,
-            30
-          ],
-          "snooze_default": 10,
-          "ring_minutes": 10,
-          "vibrate_default": true
-        }
-      },
-      {
-        "id": "timers",
-        "label": "Timers",
-        "tab": "clock",
-        "kind": "timers",
-        "clock": {
-          "presets": [
-            60,
-            180,
-            300,
-            600,
-            900,
-            1800,
-            3600
-          ],
-          "wheel_presets": [
-            600,
-            900,
-            1800
-          ]
-        }
-      },
-      {
-        "id": "stopwatch",
-        "label": "Stopwatch",
-        "tab": "clock",
-        "kind": "stopwatch",
-        "clock": {}
-      },
-      {
-        "id": "interval",
-        "label": "Interval",
-        "tab": "clock",
-        "kind": "interval",
-        "clock": {
-          "presets": [
-            {
-              "label": "Pomodoro",
-              "work": 1500,
-              "rest": 300,
-              "long_rest": 900,
-              "long_every": 4,
-              "rounds": 4
-            },
-            {
-              "label": "HIIT 30/30",
-              "work": 30,
-              "rest": 30,
-              "rounds": 10
-            },
-            {
-              "label": "Tabata",
-              "work": 20,
-              "rest": 10,
-              "rounds": 8
-            }
-          ]
-        }
-      },
-      {
-        "id": "bedtime",
-        "label": "Bedtime",
-        "tab": "clock",
-        "kind": "bedtime",
-        "clock": {
-          "sleep_choices": [
-            15,
-            30,
-            45,
-            60,
-            90
-          ],
-          "bedtime_default": "23:00"
-        }
-      },
-      {
-        "id": "pomodoro",
-        "label": "Pomodoro",
-        "tab": "clock",
-        "kind": "pomodoro",
-        "clock": {
-          "work": 25,
-          "short_break": 5,
-          "long_break": 15,
-          "long_every": 4,
-          "auto_advance": true
-        },
-        "_doc": "#1970 libs:clock-tools' Pomodoro subpage (ClockSubpages.IDS): work, short and long breaks on the clock's timer engine (wakeups, notifications, foreground service); these are the declared lengths in minutes, each editable on the page."
       },
       {
         "id": "sheet",
