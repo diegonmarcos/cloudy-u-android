@@ -33,14 +33,19 @@ red "an app watching another app's dir"                           ship-cloud-new
 red "predicted rebuild of an app that owns no changed path (another app's dir edit fans to ship-cloud-myterminal.yml)" ship-cloud-myterminal.yml "ab_cloud-terminal-store/**" --files ab_cloud-terminal-store/x.kt
 
 # #1783: the manifest rule is enforced where the manifest lies inside a watched lib dir
+# #1566 made fleet-config.json a served private dataset, so no manifest is tracked inside libs/ any more; the rule is
+# proven against a scratch index that tracks one (info-only, empty blob), never against a file in the real tree.
+FCJ=ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json
+IDX="$(mktemp)"; cp "$(git rev-parse --git-path index)" "$IDX"
+GIT_INDEX_FILE="$IDX" git update-index --add --info-only --cacheinfo 100644,e69de29bb2d1d6434b8b29ae775ad8c2e48c5391,"$FCJ"
 d="$(mktemp -d)"; cp -r 1_cicd/src/cicd/. "$d/"
 grep -q 'fleet-config.json"' "$d/ship-cloud-news.yml" || fail "ship-cloud-news.yml carries no fleet-config.json exclusion to mutate"
 sed -i '/"!ab_cloud-libs-shared\/libs\/fleetconfig-model\/src\/main\/assets\/fleet-config.json"/d' "$d/ship-cloud-news.yml"
-if grep -q "shared manifest .*fleet-config.json starts this app" <<<"$(python3 "$G" --wf "$d" static 2>&1 || true)"; then ok "an app whose push filter lost the fleet-config.json exclusion goes red"; else fail "dropping the fleet-config.json exclusion stayed green (the manifest rule is not enforced)"; fi
+if grep -q "shared manifest .*fleet-config.json starts this app" <<<"$(GIT_INDEX_FILE="$IDX" python3 "$G" --wf "$d" static 2>&1 || true)"; then ok "an app whose push filter lost the fleet-config.json exclusion goes red"; else fail "dropping the fleet-config.json exclusion stayed green (the manifest rule is not enforced)"; fi
 rm -rf "$d"
 d="$(mktemp -d)"; mut "$d" ship-cloud-superapp.yml "ab_cloud-libs-shared/libs/fleetconfig-model/src/main/assets/fleet-config.json"
-if grep -q "starts this app" <<<"$(python3 "$G" --wf "$d" static 2>&1 || true)"; then fail "a planner (SuperApp) watching the manifest was flagged"; else ok "the planners named in manifest_watchers may watch the manifest"; fi
-rm -rf "$d"
+if grep -q "starts this app" <<<"$(GIT_INDEX_FILE="$IDX" python3 "$G" --wf "$d" static 2>&1 || true)"; then fail "a planner (SuperApp) watching the manifest was flagged"; else ok "the planners named in manifest_watchers may watch the manifest"; fi
+rm -rf "$d"; rm -f "$IDX"
 
 # a static lib must never be predicted as a lib APK, nor a lib change rebuild another lib
 d="$(mktemp -d)"; cp -r 1_cicd/src/cicd/. "$d/"
