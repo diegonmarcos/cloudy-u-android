@@ -153,7 +153,9 @@ fi
 
 # 4. destructive and hosting commands are opened and CANCELLED, never confirmed
 tap_rid git_sheet_tab_manage >/dev/null; sleep 2
-st=$(tap_ctl git_sheet_ctl_mg.life.delete_remote); sleep 2
+# the Danger Zone sits at the bottom edge of the nav body: a tap on a half-visible pill can miss, so scroll once more and tap again until its confirm opens
+st=missing
+for tryn in 1 2 3; do st=$(tap_ctl git_sheet_ctl_mg.life.delete_remote); sleep 2; [ "$st" = enabled ] || break; dump | grep -q 'text="Confirm"' && break; scroll_body; sleep 1; done
 if [ "$st" = enabled ]; then
   dump | grep -q 'text="Confirm"'; rec $? "confirm.delete_remote" "Delete Remote asks first"
   dump | grep -q 'Scope: All Repos'; rec $? "confirm.names_scope" "the confirm names scope and count"
