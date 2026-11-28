@@ -75,7 +75,7 @@ jobs:
           api-level: 34
           arch: x86_64
           target: google_apis
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          emulator-options: -no-window -gpu swangle_indirect -no-snapshot -noaudio -no-boot-anim   # #1957 swiftshader_indirect crashed the emulator process on WebGL pages (Lnktree site, mySocials hub)
           disable-animations: true
           script: HARVEST=$( [ "$HARVEST_IN" = off ] && echo off || echo on ) bash ac_cloud-me/test/emulator-me-precache-1957.sh me.apk out old.apk
 
