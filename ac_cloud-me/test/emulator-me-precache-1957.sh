@@ -56,6 +56,7 @@ fi
 # 1. fresh install, launch, touch nothing
 $T adb uninstall "$ME" >/dev/null 2>&1 || true
 $T adb install -r -g "$ME_APK" || { echo "install failed"; exit 1; }
+. "$HERE/walk-no-autoupdate.sh"; no_autoupdate   # #1957 the in-app updater must not replace the CI APK
 perms; clear_log
 # isolation: HARVEST=off disables the app's offscreen URL pass (root writes the switch file before the first launch)
 if [ "${HARVEST:-on}" = off ]; then $T adb shell "mkdir -p /data/data/$ME/files && touch /data/data/$ME/files/walk-no-harvest && chmod 666 /data/data/$ME/files/walk-no-harvest; restorecon -R /data/data/$ME/files"; echo "offscreen pass OFF"; fi

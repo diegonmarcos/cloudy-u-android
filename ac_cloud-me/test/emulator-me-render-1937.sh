@@ -9,6 +9,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 
 $T adb wait-for-device
 $T adb install -r -g "$ME_APK" || { echo "install failed"; exit 1; }
+. "$HERE/walk-no-autoupdate.sh"; no_autoupdate   # #1957 the in-app updater must not replace the CI APK
 $T adb shell settings put global window_animation_scale 0
 $T adb shell locksettings set-disabled true; $T adb shell settings put system screen_off_timeout 1800000
 $T adb shell cmd uimode night yes
