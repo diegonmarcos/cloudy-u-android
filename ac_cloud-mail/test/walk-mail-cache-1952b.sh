@@ -200,6 +200,8 @@ if [ -n "${OLD_APK:-}" ]; then
     echo "- from the activity arming the cold start (the first line of the launch): index build starts at ${wall_ix0:-?} ms and ends at ${wall_ix:-?} ms, the first row is at ${wall_row:-?} ms"
     grep -E "MailMigration|cold-start (armed|mark=list-key|rows-painted)|first-row" "$OUT/update-first-launch.log" | sed 's/^/  /'
     echo "- from the PROCESS start (Process.getStartElapsedRealtime), what the owner feels: activity armed at $(sed -n 's/.*cold-start armed.*process-age=\([0-9-]*\).*/\1/p' "$OUT/update-first-launch.log" | head -1) ms, first rows painted at $(sed -n 's/.*cold-start rows-painted.*process-age=\([0-9-]*\).*/\1/p' "$OUT/update-first-launch.log" | head -1) ms"
+    echo "- the process's own start, step by step (process age in ms):"
+    grep "app-init step=" "$OUT/update-first-launch.log" | sed 's/^.*app-init step=/  /' | cut -c1-120
     echo "- first-frame shell sections (JankProbe, the first windows):"
     grep "JankProbe" "$OUT/update-first-launch.log" | head -3 | sed 's/^.*JankProbe: /  /' | cut -c1-400
   } >> "$OUT/timing.md"
@@ -277,6 +279,7 @@ for round in 1 2 3; do
   q=$(sed -n 's/.*page-load kind=Refresh ms=\([0-9]*\).*/\1/p' "$OUT/cold-$round.log" | head -1)
   echo "| cold start $round at the fixture | ${ms:-missing} | ${rows:-} | $order | ${q:-} |" >> "$OUT/timing.md"
   pa=$(sed -n 's/.*cold-start rows-painted.*process-age=\([0-9-]*\).*/\1/p' "$OUT/cold-$round.log" | head -1)
+  if [ "$round" = 1 ]; then { echo "  - cold start 1, the process's own start (process age ms):"; grep "app-init step=" "$OUT/cold-1.log" | sed 's/^.*app-init step=/      /' | cut -c1-110; } >> "$OUT/timing.md"; fi
   echo "  - cold start $round (pid ${rpid:-?}): the activity armed ${apa:-?} ms and the first rows were painted ${pa:-?} ms after the process started" >> "$OUT/timing.md"
   oms=$(grep "MailMigration: open optimize ms=" "$OUT/cold-$round.log" | sed -n 's/.*open optimize ms=\([0-9]*\).*/\1/p' | head -1)
   echo "  - cold start $round (pid ${rpid:-?}): the open-time PRAGMA optimize took ${oms:-no line} ms" >> "$OUT/timing.md"

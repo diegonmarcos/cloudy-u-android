@@ -67,6 +67,11 @@ class ColdStartGate(
         if (armed.get() && !painted.isCompleted) log("cold-start mark=$step ms=${now() - armedAt} process-age=${processAge()}")
     }
 
+    /** #1952 a step of the process's own start, from the Application on (logcat tag MailList): armed or not, with the process age. */
+    fun early(step: String) {
+        log("app-init step=$step ms=${if (armed.get()) now() - armedAt else -1} process-age=${processAge()}")
+    }
+
     fun network(what: String) {
         if (networkSeen.compareAndSet(false, true)) {
             log("cold-start first-network what=$what after-rows=${painted.isCompleted} ms=${if (armed.get()) now() - armedAt else -1}")

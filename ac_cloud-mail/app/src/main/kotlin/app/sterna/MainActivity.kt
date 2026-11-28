@@ -57,6 +57,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        app.sterna.core.data.mail.ColdStart.early("activity-oncreate")
         app.sterna.core.data.mail.ColdStart.arm() // #1952: rows from the store before the first server call
         super.onCreate(savedInstanceState)
         app.sterna.ui.JankProbe.attach(this) // #1952: per-frame stage times and named sections, logged once a second

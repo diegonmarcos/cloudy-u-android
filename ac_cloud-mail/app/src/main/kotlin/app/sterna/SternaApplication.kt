@@ -53,8 +53,10 @@ class AppContainer(context: Context) {
      *  text is never sent from here, it only becomes the first lines of an editable draft. */
     @Volatile var pendingReplySuggestion: PendingReplySuggestion? = null
 
+    private val markContainerStart: Unit = app.sterna.core.data.mail.ColdStart.early("container-start")
     val accountStore: AccountStore = AccountStore(context.applicationContext)
     val settingsRepository: SettingsRepository = SettingsRepository(context.applicationContext)
+    private val markStores: Unit = app.sterna.core.data.mail.ColdStart.early("stores")
     /** Per-account Authelia sign-in (the edge gate in front of the public JMAP URLs); its cookies go
      *  back on the wire here, before any sync can run. */
     val gatewayAuth: GatewayAuthStore = GatewayAuthStore.of(context.applicationContext)
@@ -111,6 +113,7 @@ class AppContainer(context: Context) {
             // come from here: core/imap and core/data have no BuildConfig.
             clientVersion = BuildConfig.VERSION_NAME,
         )
+    private val markDataLayer: Unit = app.sterna.core.data.mail.ColdStart.early("data-layer")
     val mailRepository: MailRepository = dataLayer.mailRepository
     val storageRepository: StorageRepository = dataLayer.storageRepository
     val messageTextCache = dataLayer.messageTextCache
@@ -320,12 +323,14 @@ class SternaApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        app.sterna.core.data.mail.ColdStart.early("app-oncreate")
         // #1828 the crash screen's own process (:crash, libs:crash) runs this Application too, but androidx.startup's
         // InitializationProvider only runs in the main process, so WorkManager is not initialised there and AppContainer
         // threw "WorkManager is not initialized properly" (2026-11-20): the crash screen crashed and the report was lost.
         // That process shows the report and nothing else, so it builds nothing.
         if (com.diegonmarcos.superapp.crash.CrashReports.isCrashProcess()) return
         container = AppContainer(this)
+        app.sterna.core.data.mail.ColdStart.early("container-built")
         // #1952 cold start: what the list's first page reads is opened in parallel off the main thread, so the view model finds the settings
         // file, the account store and the Room database warm instead of opening them one after the other (the gap before the first list key).
         container.appScope.launch(kotlinx.coroutines.Dispatchers.IO) { runCatching { container.settingsRepository.sortOrder.first() } }
@@ -336,18 +341,22 @@ class SternaApplication : Application() {
         app.sterna.fleet.FleetRecipientChecker.bind(this)
         // #1802 the Sent delivery status asks Cloud Account for the same fleet mail API pair.
         app.sterna.fleet.MailFleetServices.bind(this)
+        app.sterna.core.data.mail.ColdStart.early("fleet-bind")
         app.sterna.ui.compose.RecipientChecks.checker = app.sterna.fleet.FleetRecipientChecker
         // The vault's mail section, when the fleet config contract left it in the account prefs
         // (the migration / Fleet Setup restarted us for it): accounts in, keys out, once.
         VaultMailImport.run(this, container.accountStore)
+        app.sterna.core.data.mail.ColdStart.early("vault-import")
         // #1090 the fleet accounts' mesh + public endpoints and bearer, from Cloud Account (the source of truth),
         // once per start and off the main thread; and the mesh is re-probed whenever the network changes.
         app.sterna.net.EndpointNetworkWatch.start(this)
+        app.sterna.core.data.mail.ColdStart.early("network-watch")
         container.appScope.launch(kotlinx.coroutines.Dispatchers.IO) { runCatching { container.syncFleetEndpoints() } }
         // The fleet setup contract serves the signatures out of the accounts blob (store mail_signatures).
         app.sterna.fleet.SignaturesSetupHandler.register(container.accountStore)
         // and the settings DataStore (store datastore:settings), through the app's own instance.
         app.sterna.fleet.SettingsSetupHandler.register()
+        app.sterna.core.data.mail.ColdStart.early("setup-handlers")
         // Arm the periodic self-update check. Idempotent, and it CANCELS itself when
         // the Auto-update toggle is off, so this one call is both the arm and the
         // disarm - there is no second place that has to remember to stop it.
@@ -357,12 +366,16 @@ class SternaApplication : Application() {
         // is downloaded here; the worker decides that, and on mobile data it asks
         // first. See ui/settings/UpdateScreen.kt for what the owner sees.
         Updater.start(this)
+        app.sterna.core.data.mail.ColdStart.early("updater")
         // Offline window sync (unmetered + charging); idempotent.
         app.sterna.mail.OfflineSyncWorker.ensureScheduled(this, hasPush = app.sterna.push.PushService.isRunning)
+        app.sterna.core.data.mail.ColdStart.early("offline-sync-worker")
         // #1837 the Rust mail core's background sync of every JMAP account (periodic; MainActivity.onStart runs it on open).
         app.sterna.mail.MailCoreSyncWorker.ensureScheduled(this)
+        app.sterna.core.data.mail.ColdStart.early("core-sync-worker")
         // Start the WebView provider once, when the main thread is idle, so the first mail opens without it.
         app.sterna.mail.WebViewWarmUp.once(this)
+        app.sterna.core.data.mail.ColdStart.early("webview-warmup")
     }
 }
 
