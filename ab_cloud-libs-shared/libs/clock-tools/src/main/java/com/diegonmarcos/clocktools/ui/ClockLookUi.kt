@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -110,8 +111,9 @@ internal fun DrawScope.drawGlow() {
 fun ClockFrame(modifier: Modifier = Modifier, glow: Boolean = true, content: @Composable BoxScope.() -> Unit) {
     val drawn = LocalClockBackdrop.current
     MaterialTheme(colorScheme = ClockScheme, typography = MaterialTheme.typography) {
-        CompositionLocalProvider(LocalClockBackdrop provides true) {
-            Box(if (drawn) modifier else if (glow) modifier.clockBackdrop() else modifier.background(look(ClockLook.BACKGROUND)), content = content)
+        // text drawn straight on the page (no Surface) is light; a window of its own (the alarm editor) is always black
+        CompositionLocalProvider(LocalClockBackdrop provides true, LocalContentColor provides look(ClockLook.TITLE)) {
+            Box(if (!glow) modifier.background(look(ClockLook.BACKGROUND)) else if (drawn) modifier else modifier.clockBackdrop(), content = content)
         }
     }
 }

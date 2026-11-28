@@ -239,7 +239,8 @@ fun AlarmsScreen(modifier: Modifier = Modifier) {
         }
         Button(onClick = {
             val cfg = ClockTools.config(ctx)
-            editing = Alarm(0, 7 * 60, vibrate = cfg.vibrateDefault, snoozeMinutes = cfg.snoozeDefault)
+            // #1986 a new alarm snoozes 3 times, as the reference's sheet ("5 minutes, 3 times"); every count stays a choice
+            editing = Alarm(0, 7 * 60, vibrate = cfg.vibrateDefault, snoozeMinutes = cfg.snoozeDefault, snoozeTimes = 3)
         }, Modifier.padding(top = ClockMetrics.gutter).align(Alignment.CenterHorizontally).testTag(ClockTags.ADD_ALARM),
             colors = ButtonDefaults.buttonColors(containerColor = look(ClockLook.ACCENT), contentColor = look(ClockLook.ON_DAY))) { Text(stringResource(R.string.clock_add_alarm)) }
     }

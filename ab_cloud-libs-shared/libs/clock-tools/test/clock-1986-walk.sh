@@ -86,7 +86,6 @@ PY
   tap Pomodoro; shot tasks-12-pomodoro; tap Start; sleep 4; shot tasks-13-pomodoro-running; tap Pause; tap Reset
   # the alarm rings: the clock set to 07:04:40, the screen off -> the full-screen ring screen, then the card in the shade
   tap Alarms
-  adb shell am force-stop $PKG; sleep 1
   ts=$(date -u -d "$(date -u +%Y-%m-%d) 07:04:40" +%s 2>/dev/null)
   adb shell setprop persist.sys.timezone UTC || true
   adb shell cmd alarm set-timezone UTC >/dev/null 2>&1 || true
@@ -107,6 +106,7 @@ PY
   shot tasks-17-ringing-card-expanded; keep_ui ringing-card-expanded
   tap Stop; sleep 3
   adb shell cmd statusbar collapse; sleep 2
+  adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true; sleep 2
   # a finished timer's card: the 1 min quick start, wait, the shade
   adb shell monkey -p $PKG -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1; sleep 5
   tap Timers
