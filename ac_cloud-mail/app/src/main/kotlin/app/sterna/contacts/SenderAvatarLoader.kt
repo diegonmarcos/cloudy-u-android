@@ -111,6 +111,11 @@ object SenderAvatarLoader {
 
     private fun decode(bytes: ByteArray): ImageBitmap? {
         if (bytes.isEmpty()) return null
+        val onMain = android.os.Looper.myLooper() == android.os.Looper.getMainLooper()
+        return app.sterna.ui.JankProbe.section(if (onMain) "avatar.decode.main" else "avatar.decode.bg") { decodeBytes(bytes) }
+    }
+
+    private fun decodeBytes(bytes: ByteArray): ImageBitmap? {
         return runCatching {
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
             BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)

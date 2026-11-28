@@ -245,7 +245,7 @@ fun EmailListItem(
     // Today → the time, this year → day and month, any other year → a short numeric date, so a
     // 2019 row and a 2026 one cannot read the same. Numeric on that last step to keep the stamp
     // narrow: it shares this line with the sender's name.
-    val receivedLabel = remember(email.receivedAt) { MailDates.formatListDate(email.receivedAt) }
+    val receivedLabel = remember(email.receivedAt) { app.sterna.ui.JankProbe.section("row.date") { MailDates.formatListDate(email.receivedAt) } }
     val motionOn = rememberMotionEnabled()
     // Return-from-message emphasis: a soft accent tint that rises then fades, so the eye lands on
     // the row just left. Skipped, and consumed at once, under reduced motion.
@@ -280,7 +280,7 @@ fun EmailListItem(
     // `fileAttachmentParts()` is the SAME classifier the reader uses on the same parts, so a message
     // cannot show two chips here and three rows when opened.
     val attachmentParts = remember(email.id, email.attachments) {
-        if (onOpenAttachment == null) emptyList() else email.fileAttachmentParts()
+        app.sterna.ui.JankProbe.section("row.attach") { if (onOpenAttachment == null) emptyList() else email.fileAttachmentParts() }
     }
     val chipBackground = chipFill(MaterialTheme.colorScheme)
     // E-paper has no fill to tell a card from the page: a thick black rule draws the rectangle.

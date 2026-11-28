@@ -13,6 +13,9 @@ UI="python3 -I ac_cloud-mail/test/mail-offline-ui.py"
 FAIL=0
 COLD_LIMIT_MS=${COLD_LIMIT_MS:-1500}
 WARM_LIMIT_MS=${WARM_LIMIT_MS:-300}
+# scroll: p90 frame time over ten flings (dumpsys gfxinfo), with a sync running and in airplane mode (no sync)
+JANK_P90_SYNC_MS=${JANK_P90_SYNC_MS:-100}
+JANK_P90_QUIET_MS=${JANK_P90_QUIET_MS:-50}
 BULK=${FAKE_JMAP_BULK:-40000}
 FILL_MINUTES=${FILL_MINUTES:-30}
 READING_ENTRY=${READING_ENTRY:-Reading}
@@ -20,6 +23,50 @@ case "$BULK$FILL_MINUTES" in *[!0-9]*) echo "::error::FAKE_JMAP_BULK and FILL_MI
 mkdir -p "$OUT"
 fail() { echo "::error::$1"; echo "FAIL: $1" >> "$OUT/summary.txt"; FAIL=1; }
 note() { echo "$1" | tee -a "$OUT/summary.txt"; }
+# ten flings of the list with the evidence of WHAT is slow: JankProbe lines (stages per slow frame, named sections), framestats, a best-effort Perfetto trace
+# $1 label, $2 p90 limit (ms), $3 file for the gfxinfo summary lines
+scroll_measure() {
+  local label=$1 limit=$2 sumfile=$3 l0 p90
+  l0=$(grep -c "" "$OUT/logcat.txt")
+  adb shell "rm -f /data/misc/perfetto-traces/scroll-$label.pb" >/dev/null 2>&1 || true
+  adb shell "perfetto -o /data/misc/perfetto-traces/scroll-$label.pb -t 14s -b 32mb sched freq gfx view wm am input -a $PKG" >/dev/null 2>&1 &
+  local PF=$!
+  sleep 1
+  adb shell dumpsys gfxinfo "$PKG" reset >/dev/null 2>&1
+  for j in $(seq 1 10); do adb shell input swipe 700 1600 700 500 250; sleep 1; done
+  adb shell dumpsys gfxinfo "$PKG" | grep -E "Total frames rendered|Janky frames|50th percentile|90th percentile|95th percentile|99th percentile" | head -6 > "$sumfile"
+  adb shell dumpsys gfxinfo "$PKG" framestats > "$OUT/framestats-$label.txt" 2>&1 || true
+  wait $PF 2>/dev/null || true
+  adb pull "/data/misc/perfetto-traces/scroll-$label.pb" "$OUT/scroll-$label.pb" >/dev/null 2>&1 || note "perfetto: no trace for $label (best effort)"
+  sleep 1
+  tail -n +$((l0 + 1)) "$OUT/logcat.txt" | grep "JankProbe" > "$OUT/jankprobe-$label.txt" || true
+  {
+    echo ""; echo "what is slow while scrolling ($label), from the app's own JankProbe lines:"
+    python3 -I - "$OUT/jankprobe-$label.txt" <<'PY'
+import re, sys
+secs, slow_total, stages = {}, 0, {k: [] for k in ("input", "anim", "layout", "draw", "sync", "cmd", "swap")}
+frames = 0
+for line in open(sys.argv[1], errors="replace"):
+    m = re.search(r"frames=(\d+) slow=(\d+)", line)
+    if not m: continue
+    frames += int(m.group(1)); n = int(m.group(2)); slow_total += n
+    if n:
+        for k in stages:
+            v = re.search(k + r"=(\d+)", line.split("slow-mean(")[1] if "slow-mean(" in line else "")
+            if v: stages[k].append((int(v.group(1)), n))
+    for name, cnt, ssum, smax in re.findall(r"\| ([\w.]+) n=(\d+) sum=(\d+) max=(\d+)", line):
+        a = secs.setdefault(name, [0, 0, 0]); a[0] += int(cnt); a[1] += int(ssum); a[2] = max(a[2], int(smax))
+print("- frames seen: %d, slower than 48 ms: %d" % (frames, slow_total))
+if slow_total:
+    print("- mean stage time over the slow frames (ms): " + ", ".join("%s=%d" % (k, sum(v * n for v, n in vs) // max(1, sum(n for _, n in vs))) for k, vs in stages.items() if vs))
+for name, (cnt, ssum, smax) in sorted(secs.items(), key=lambda kv: -kv[1][1]):
+    print("- section %s: %d calls, %d ms in all, %d ms the longest" % (name, cnt, ssum, smax))
+PY
+  } >> "$OUT/timing.md"
+  p90=$(sed -n 's/.*90th percentile: \([0-9]*\)ms.*/\1/p' "$sumfile" | head -1)
+  [ -n "$p90" ] || { fail "scroll ($label): no 90th percentile in gfxinfo"; return; }
+  [ "$p90" -le "$limit" ] || fail "scroll ($label): p90 frame time $p90 ms is above $limit ms"
+}
 
 FAKE_JMAP_BULK=$BULK python3 -I ac_cloud-mail/test/fake-jmap-server.py --port $PORT > "$OUT/fake-jmap.log" 2>&1 &
 SRV=$!
@@ -32,7 +79,7 @@ adb install -r -g app-under-test.apk || { echo "::error::adb install failed"; ex
 adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS 2>/dev/null || true
 adb shell settings put global hide_error_dialogs 1
 adb logcat -c
-adb logcat -v threadtime "*:W" MailList:I MailCore:I MailSync:I MailOpen:I NavWalkSeed:I > "$OUT/logcat.txt" 2>&1 &
+adb logcat -v threadtime "*:W" MailList:I MailCore:I MailSync:I MailOpen:I NavWalkSeed:I JankProbe:I > "$OUT/logcat.txt" 2>&1 &
 LP=$!
 
 shot() { adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; adb exec-out screencap -p > "$OUT/mail-1952b-$1.png"; }
@@ -181,11 +228,10 @@ done
 
 adb shell top -b -n 1 -m 8 2>/dev/null | tail -9 > "$OUT/top-online.txt"
 # scroll jank over ten flings of the list
-adb shell dumpsys gfxinfo "$PKG" reset >/dev/null 2>&1
-for j in $(seq 1 10); do adb shell input swipe 700 1600 700 500 250; sleep 1; done
-adb shell dumpsys gfxinfo "$PKG" | grep -E "Total frames rendered|Janky frames|50th percentile|90th percentile|95th percentile|99th percentile" | head -6 > "$OUT/jank.txt"
+echo "" >> "$OUT/timing.md"; echo "scroll (10 flings):" >> "$OUT/timing.md"
+scroll_measure sync "$JANK_P90_SYNC_MS" "$OUT/jank.txt"
 cat "$OUT/jank.txt" | tee -a "$OUT/summary.txt"
-echo "" >> "$OUT/timing.md"; echo "scroll (10 flings):" >> "$OUT/timing.md"; sed 's/^ */- /' "$OUT/jank.txt" >> "$OUT/timing.md"
+sed 's/^ */- /' "$OUT/jank.txt" >> "$OUT/timing.md.tmp"; cat "$OUT/timing.md.tmp" >> "$OUT/timing.md"; rm -f "$OUT/timing.md.tmp"
 shot 06-scrolled
 
 # ---- A: airplane mode, an old message opens with its body ----------------------------------------------------------------------------
@@ -222,12 +268,17 @@ for w in 1 2; do
   wms=missing; [ "$n1" -gt "$n0" ] && wms=$(grep -E "MailList.*first-row" "$OUT/logcat.txt" | tail -1 | sed -n 's/.*first-row ms=\([0-9]*\).*/\1/p')
   echo "| warm return $w, airplane mode (no sync running) | $wms | | - | |" >> "$OUT/timing.md"
 done
-adb shell dumpsys gfxinfo "$PKG" reset >/dev/null 2>&1
-for j in $(seq 1 10); do adb shell input swipe 700 1600 700 500 250; sleep 1; done
-adb shell dumpsys gfxinfo "$PKG" | grep -E "Total frames rendered|Janky frames|50th percentile|90th percentile|95th percentile" | head -5 > "$OUT/jank-quiet.txt"
-echo "" >> "$OUT/timing.md"; echo "scroll (10 flings), airplane mode (no sync running):" >> "$OUT/timing.md"; sed 's/^ */- /' "$OUT/jank-quiet.txt" >> "$OUT/timing.md"
+echo "" >> "$OUT/timing.md"; echo "scroll (10 flings), airplane mode (no sync running):" >> "$OUT/timing.md"
+scroll_measure quiet "$JANK_P90_QUIET_MS" "$OUT/jank-quiet.txt"
+sed 's/^ */- /' "$OUT/jank-quiet.txt" >> "$OUT/timing.md"
 adb shell top -b -n 1 -m 8 2>/dev/null | tail -9 > "$OUT/top-quiet.txt"
 adb shell cmd connectivity airplane-mode disable
+# control: the same flings on the system Settings list, same emulator, same renderer (what the emulator itself costs, not the app)
+adb shell am start -a android.settings.SETTINGS >/dev/null 2>&1; sleep 4
+adb shell dumpsys gfxinfo com.android.settings reset >/dev/null 2>&1
+for j in $(seq 1 10); do adb shell input swipe 700 1600 700 500 250; sleep 1; done
+{ echo ""; echo "control, system Settings list, same flings:"; adb shell dumpsys gfxinfo com.android.settings | grep -E "Total frames rendered|Janky frames|50th percentile|90th percentile|95th percentile" | head -5 | sed 's/^ */- /'; } >> "$OUT/timing.md"
+adb shell input keyevent KEYCODE_BACK; sleep 1
 
 sleep 20
 sizes "end"

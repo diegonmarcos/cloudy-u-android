@@ -1725,6 +1725,8 @@ fun InboxScreen(
                                 // so a read/unread toggle re-binds in place instead of blinking.
                                 // Placement-only (no fade), so a new page doesn't stutter the scroll.
                                 listRows[index]?.let { row ->
+                                    // no try/finally here: Compose rejects a try around composable calls
+                                    val composeStart = app.sterna.ui.JankProbe.begin("row.compose")
                                     emailRow(
                                         row,
                                         Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null),
@@ -1732,6 +1734,7 @@ fun InboxScreen(
                                         index,
                                         false,
                                     )
+                                    app.sterna.ui.JankProbe.end("row.compose", composeStart)
                                 }
                             }
                             // Footer: server fetch-on-scroll (RemoteMediator) progress/errors.
