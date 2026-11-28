@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.SideEffect
@@ -120,10 +121,13 @@ fun TasksApp(env: TasksEnv, nav: NavDecl = Declarations.nav) {
     TasksTheme(mode) {
         val dark = LocalDarkTheme.current
         val view = LocalView.current
+        // #1986 a dark Clock page (every one but the World clock) keeps the system bars' icons light like the rest of its chrome
+        val clockShown by com.diegonmarcos.clocktools.ClockLink.shown.collectAsState()
+        val barsDark = dark || com.diegonmarcos.clocktools.ClockLook.darkChrome(clockShown)
         SideEffect {
             view.context.activity()?.window?.let { WindowCompat.getInsetsController(it, view).apply {
-                isAppearanceLightStatusBars = !dark
-                isAppearanceLightNavigationBars = !dark
+                isAppearanceLightStatusBars = !barsDark
+                isAppearanceLightNavigationBars = !barsDark
             } }
         }
         TasksShell(env, nav, mode, onThemeMode = { mode = it; env.saveThemeMode(it) })
@@ -247,13 +251,22 @@ fun TasksShell(env: TasksEnv, nav: NavDecl, themeMode: ThemeMode, onThemeMode: (
         }
     }
 
+    // #1986 on a dark Clock page (every one but the World clock) the app's own top bar and bottom nav take the dark palette over
+    // the Clock's black (ClockLook.BACKGROUND, painted under the status band, the bars and the nav's slot); every item stays.
+    val clockShown by com.diegonmarcos.clocktools.ClockLink.shown.collectAsState()
+    val clockDark = section == Ids.CLOCK && com.diegonmarcos.clocktools.ClockLook.darkChrome(clockShown)
+    val chromeDark = dark || clockDark
     NavBarBottomHost(
         entries = nav.islandEntries(),
         selectedId = if (onIsland) section else null,
         onSelect = { entry -> go(entry.id) },
-        dark = dark,
+        dark = chromeDark,
     ) {
-        Box(Modifier.fillMaxSize().statusBarsPadding()) {
+        Box(Modifier.fillMaxSize().then(if (clockDark) Modifier.drawBehind {
+            // beyond these bounds on purpose: up under the status band, down under the bottom nav's slot (drawn later, on top)
+            drawRect(androidx.compose.ui.graphics.Color(com.diegonmarcos.clocktools.ClockLook.BACKGROUND), androidx.compose.ui.geometry.Offset(0f, -size.height),
+                androidx.compose.ui.geometry.Size(size.width, size.height * 3))
+        } else Modifier).statusBarsPadding()) {
             // #1157 the first row is libs:ui-nav-bars's (Profile top-right launches Cloud Account, the title island lists the section and its pages).
             if (topBar == null) content() else NavBarTopFirstRowScaffold(
                 title = stringResource(R.string.app_name),

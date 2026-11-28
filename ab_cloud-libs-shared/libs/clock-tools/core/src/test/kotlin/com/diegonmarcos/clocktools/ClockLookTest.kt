@@ -46,6 +46,12 @@ class ClockLookTest {
         assertFalse(ClockLook.majorTick(1))
     }
 
+    @Test fun `the host's chrome is dark on every Clock page but the World clock`() {
+        for (id in ClockSubpages.IDS - "world") assertTrue(id, ClockLook.darkChrome(id))
+        assertFalse(ClockLook.darkChrome("world"))
+        assertFalse(ClockLook.darkChrome(null))
+    }
+
     @Test fun `the island keeps every page, in the reference's order first`() {
         assertEquals(listOf("alarms", "world", "stopwatch", "timers", "interval", "bedtime", "pomodoro"), ClockLook.islandOrder(ClockSubpages.IDS))
         assertEquals(ClockSubpages.IDS.toSet(), ClockLook.islandOrder(ClockSubpages.IDS).toSet())

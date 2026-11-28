@@ -12,6 +12,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 object ClockLink {
     val pending = MutableStateFlow<String?>(null)
 
+    /** #1986 the Clock page FullClock shows now (null when none is on screen): the host darkens its chrome by ClockLook.darkChrome. */
+    val shown = MutableStateFlow<String?>(null)
+
     /** True when [intent] named a Clock subpage (it is now [pending]). */
     fun offer(intent: Intent?): Boolean {
         val id = ClockSubpages.idOf(intent?.getStringExtra(ClockEngine.EXTRA_MODE)) ?: return false

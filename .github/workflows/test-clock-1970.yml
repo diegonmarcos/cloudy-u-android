@@ -20,7 +20,7 @@ on:
   workflow_dispatch:
     inputs:
       mutant:
-        description: "all | wheel-wrap | wheel-centre | wheel-hms | preset-seconds | preset-edits-ignored | preset-text | pomodoro-long-late | pomodoro-skip-counts | pomodoro-no-auto | pomodoro-today-sticky | pomodoro-long-keeps-cycle | calendar-always-insert | calendar-no-delete | calendar-rrule | calendar-disabled-kept | look-bg | look-accent | ring-no-dismiss | ring-no-snooze | timer-no-plus | calc-keeps-alarms"
+        description: "all | wheel-wrap | wheel-centre | wheel-hms | preset-seconds | preset-edits-ignored | preset-text | pomodoro-long-late | pomodoro-skip-counts | pomodoro-no-auto | pomodoro-today-sticky | pomodoro-long-keeps-cycle | calendar-always-insert | calendar-no-delete | calendar-rrule | calendar-disabled-kept | look-bg | look-accent | ring-no-dismiss | ring-no-snooze | timer-no-plus | calc-keeps-alarms | chrome-light"
         required: false
         type: string
         default: "all"
@@ -84,7 +84,7 @@ jobs:
           muts = [c for c in cases if c.get("classname") == "mutations"]
           red = [c.get("name") + ": " + c.find("failure").get("message") for c in cases if c.find("failure") is not None]
           for c in cases: print(("FAIL " if c.find("failure") is not None else "ok   ") + c.get("classname") + "/" + c.get("name"))
-          if len(tests) != 6 or len(muts) != 20: red.append("expected 6 tests and 20 mutations, got %d and %d" % (len(tests), len(muts)))
+          if len(tests) != 7 or len(muts) != 22: red.append("expected 7 tests and 22 mutations, got %d and %d" % (len(tests), len(muts)))
           if red: print("\n".join(red)); sys.exit(1)
           PY
       - uses: actions/upload-artifact@v4
@@ -105,7 +105,7 @@ jobs:
       - name: Check the dispatch input (allow-list)
         run: |
           case "$MUTANT" in
-            all|wheel-wrap|wheel-centre|wheel-hms|preset-seconds|preset-edits-ignored|preset-text|pomodoro-long-late|pomodoro-skip-counts|pomodoro-no-auto|pomodoro-today-sticky|pomodoro-long-keeps-cycle|calendar-always-insert|calendar-no-delete|calendar-rrule|calendar-disabled-kept|look-bg|look-accent|ring-no-dismiss|ring-no-snooze|timer-no-plus|calc-keeps-alarms) ;;
+            all|wheel-wrap|wheel-centre|wheel-hms|preset-seconds|preset-edits-ignored|preset-text|pomodoro-long-late|pomodoro-skip-counts|pomodoro-no-auto|pomodoro-today-sticky|pomodoro-long-keeps-cycle|calendar-always-insert|calendar-no-delete|calendar-rrule|calendar-disabled-kept|look-bg|look-accent|ring-no-dismiss|ring-no-snooze|timer-no-plus|calc-keeps-alarms|chrome-light) ;;
             *) echo "::error::mutant not in the allow-list"; exit 2 ;;
           esac
       - uses: actions/setup-java@v4
@@ -197,6 +197,7 @@ jobs:
           ring-no-snooze@ClockLookTest@ClockLook.kt@if (snoozable) acts += Action("snooze", key, "$SNOOZE:$snoozeAt")@Unit
           timer-no-plus@ClockLookTest@ClockLook.kt@key.startsWith("timer:") -> acts += Action("timer_add", key, PLUS_MINUTE)@key.startsWith("timer:") -> Unit
           calc-keeps-alarms@ClockLookTest@ClockSubpages.kt@val CALC: List<String> = listOf("world")@val CALC: List<String> = listOf("world", "alarms")
+          chrome-light@ClockLookTest@ClockLook.kt@shown != null && shown != "world"@shown == "world"
           MUTANTS
           git checkout -- "$C"
           printf '%s' "$cases" > "$RUNNER_TEMP/cases.txt"
@@ -218,7 +219,7 @@ jobs:
           tests = [c for c in cases if c.get("classname") == "tests"]; muts = [c for c in cases if c.get("classname") == "mutations"]
           red = [c.get("classname") + "/" + c.get("name") + ": " + c.find("failure").get("message") for c in cases if c.find("failure") is not None]
           for c in cases: print(("FAIL " if c.find("failure") is not None else "ok   ") + c.get("classname") + "/" + c.get("name"))
-          want = 21 if sys.argv[2] == "all" else 1
+          want = 22 if sys.argv[2] == "all" else 1
           if len(tests) != 6 or len(muts) != want: red.append("expected 6 suites and %d mutants, got %d and %d" % (want, len(tests), len(muts)))
           if red: print("\n".join(red)); sys.exit(1)
           PY

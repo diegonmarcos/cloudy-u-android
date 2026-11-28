@@ -10,6 +10,7 @@
 #                         drawn without the dark frame
 #   t4_parity_1970        rule 16: every string, tag, ClockEngine call and op each screen used before #1986 is still used
 #   t5_visual_tokens      black background, the indigo / purple glow, the lilac accent, dark sheets, the icon island, wired
+#   t7_clock_chrome_dark  Cloud Tasks' top bar and bottom nav dark over black on every Clock page but the World clock
 #   t6_calc_world_only    #1987 Calc's Tools > Clock = [world]; Tasks' pages unchanged; the moved declarations; the hand-over
 # Usage: clock-1986.sh   JUNIT_OUT=<file> also writes a JUnit XML (the CI verdict reads it, never this script's exit code)
 set -uo pipefail
@@ -173,8 +174,19 @@ def t6_calc(f):
     if "go(Ids.CLOCK)" not in code(f["tasks_app"]): bad.append("Cloud Tasks does not open its Clock for a link")
     return bad
 
+def t7_chrome(f):
+    """#1986 follow-up: on a dark Clock page Cloud Tasks' own top bar and bottom nav are dark over the Clock's black, other pages keep theirs."""
+    app, look, full = code(f["tasks_app"]), code(f["look"]), body(code(f["world"]), "FullClock")
+    bad = []
+    if 'fun darkChrome(shown: String?): Boolean = shown != null && shown != "world"' not in look: bad.append("ClockLook.darkChrome is not every page but the World clock")
+    if "ClockLink.shown.value = shownId" not in full: bad.append("FullClock does not publish the page on screen")
+    bad += need("TasksShell", app, ["val clockDark = section == Ids.CLOCK && com.diegonmarcos.clocktools.ClockLook.darkChrome(clockShown)",
+                                    "val chromeDark = dark || clockDark", "dark = chromeDark,", "if (clockDark) Modifier.drawBehind",
+                                    "Color(com.diegonmarcos.clocktools.ClockLook.BACKGROUND)", "isAppearanceLightStatusBars = !barsDark"], "a dark-chrome part")
+    return bad
+
 TESTS = [("t1_alarm_card", t1_alarm_card), ("t2_timer_card", t2_timer_card), ("t3_world_unchanged", t3_world), ("t4_parity_1970", t4_parity),
-         ("t5_visual_tokens", t5_tokens), ("t6_calc_world_only", t6_calc)]
+         ("t5_visual_tokens", t5_tokens), ("t6_calc_world_only", t6_calc), ("t7_clock_chrome_dark", t7_chrome)]
 
 MUTATIONS = [  # name, the test it must turn red, file key, old text, new text
     ("m1-alarm-card-no-dismiss", "t1_alarm_card", "look", '                acts += Action("dismiss_all", "", DISMISS)\n', ""),
@@ -197,6 +209,8 @@ MUTATIONS = [  # name, the test it must turn red, file key, old text, new text
     ("m18-calc-no-hand-over", "t6_calc_world_only", "calc_main", "state.handOff = { id -> com.diegonmarcos.clocktools.ClockLink.handOff(this, id) }", ""),
     ("m19-tasks-loses-pomodoro", "t6_calc_world_only", "subpages", ', "pomodoro")', ")"),
     ("m20-pomodoro-decl-not-moved", "t6_calc_world_only", "tasks", '"id": "pomodoro"', '"id": "pomodorox"'),
+    ("m21-tasks-nav-stays-light", "t7_clock_chrome_dark", "tasks_app", "        dark = chromeDark,\n", "        dark = dark,\n"),
+    ("m22-no-black-under-chrome", "t7_clock_chrome_dark", "tasks_app", "Color(com.diegonmarcos.clocktools.ClockLook.BACKGROUND)", "Color(0xFFE0EAFC)"),
 ]
 
 def run(f): return {n: fn(f) for n, fn in TESTS}

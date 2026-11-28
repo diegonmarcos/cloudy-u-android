@@ -105,6 +105,12 @@ object ClockLook {
     /** The island's order, as the reference's (alarm, world, stopwatch, timer), then the fleet's extra pages. */
     val ISLAND_ORDER: List<String> = listOf("alarms", "world", "stopwatch", "timers", "interval", "bedtime", "pomodoro")
 
+    /**
+     * #1986 whether the host app draws its own chrome (top bar, bottom nav) dark while Clock page [shown] is on screen: every
+     * page but the World clock (drawn as it was, in the host's theme); null is no Clock page on screen.
+     */
+    fun darkChrome(shown: String?): Boolean = shown != null && shown != "world"
+
     /** The order the island draws [ids] in: [ISLAND_ORDER] first, anything else after, none lost or doubled. */
     fun islandOrder(ids: List<String>): List<String> = ISLAND_ORDER.filter { it in ids } + ids.filter { it !in ISLAND_ORDER }
 

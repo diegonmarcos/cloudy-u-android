@@ -337,6 +337,12 @@ fun FullClock(modifier: Modifier = Modifier, initialTab: Int = 0) {
     }
     val names = tabs.associate { (id, label) -> id to stringResource(label) }
     val world = tabs[tab].first == "world"
+    // #1986 the page on screen, for the host's chrome (Cloud Tasks draws its bars dark on every page but the World clock)
+    val shownId = tabs[tab].first
+    androidx.compose.runtime.DisposableEffect(shownId) {
+        com.diegonmarcos.clocktools.ClockLink.shown.value = shownId
+        onDispose { if (com.diegonmarcos.clocktools.ClockLink.shown.value == shownId) com.diegonmarcos.clocktools.ClockLink.shown.value = null }
+    }
     Box(modifier.fillMaxSize().testTag(ClockTags.FULL).let { if (world) it else it.clockBackdrop() }) {
         androidx.compose.runtime.CompositionLocalProvider(LocalClockBackdrop provides !world) {
             Column(Modifier.fillMaxSize()) {
