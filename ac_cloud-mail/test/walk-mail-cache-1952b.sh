@@ -354,6 +354,31 @@ scroll_measure quiet "$JANK_P90_QUIET_MS" "$OUT/jank-quiet.txt"
 sed 's/^ */- /' "$OUT/jank-quiet.txt" >> "$OUT/timing.md"
 adb shell top -b -n 1 -m 8 2>/dev/null | tail -9 > "$OUT/top-quiet.txt"
 adb shell cmd connectivity airplane-mode disable
+# ---- P: baseline profile (a) generated from this run's usage, (b) what AOT compiling it does to a cold start ----------------------------------
+# (a) the JIT profile this process collected (cold start, the list, flings), written out as the profile's text form: the same method as the
+#     S7 profile in app/src/main/baseline-prof.txt (snapshot-profile + profman). The artifact baseline-prof.generated.txt is merged into that file.
+# (b) `cmd package compile -m speed-profile` compiles the profiled methods ahead of time, as an install with a baseline profile does; three
+#     cold starts after it are the "after" of the JIT-only cold starts above (the emulator CPU differs from a phone, the direction is the point).
+ppid=$(adb shell pidof "$PKG" 2>/dev/null | tr -d '\r' | awk '{print $1}')
+[ -n "$ppid" ] && adb shell "kill -s SIGUSR1 $ppid" >/dev/null 2>&1; sleep 3
+base_apk=$(adb shell pm path "$PKG" | head -1 | sed 's/^package://' | tr -d '\r')
+adb shell cmd package snapshot-profile "$PKG" >/dev/null 2>&1 || true
+adb shell "profman --dump-classes-and-methods --profile-file=/data/misc/profman/$PKG-primary.prof --apk=$base_apk --dex-location=$base_apk" > "$OUT/baseline-prof.generated.txt" 2>"$OUT/profman.err" || true
+note "baseline profile: $(grep -c . "$OUT/baseline-prof.generated.txt" 2>/dev/null || echo 0) lines generated from this run (profman: $(head -c 160 "$OUT/profman.err" | tr '\n' ' '))"
+adb shell cmd package compile -m speed-profile -f "$PKG" > "$OUT/compile-speed-profile.txt" 2>&1 || true
+note "cmd package compile -m speed-profile: $(head -c 120 "$OUT/compile-speed-profile.txt" | tr '\n' ' ')"
+echo "" >> "$OUT/timing.md"; echo "cold start after AOT compiling the profiled methods (speed-profile), airplane mode off:" >> "$OUT/timing.md"
+adb shell cmd connectivity airplane-mode disable
+for pround in 1 2 3; do
+  adb shell am force-stop "$PKG"; sleep 3
+  adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null; sleep 12
+  qpid=$(adb shell pidof "$PKG" 2>/dev/null | tr -d '\r' | awk '{print $1}')
+  grep -E "MailList" "$OUT/logcat.txt" | awk -v p="$qpid" '$3 == p' > "$OUT/compiled-$pround.log" || true
+  pfr=$(sed -n 's/.*first-row ms=\([0-9]*\) rows=.*/\1/p' "$OUT/compiled-$pround.log" | head -1)
+  parm=$(sed -n 's/.*cold-start armed.*process-age=\([0-9-]*\).*/\1/p' "$OUT/compiled-$pround.log" | head -1)
+  ppaint=$(sed -n 's/.*cold-start rows-painted.*process-age=\([0-9-]*\).*/\1/p' "$OUT/compiled-$pround.log" | head -1)
+  echo "- compiled cold start $pround (pid ${qpid:-?}): first row ${pfr:-?} ms, the activity armed ${parm:-?} ms and the first rows were painted ${ppaint:-?} ms after the process started" >> "$OUT/timing.md"
+done
 # control: the same flings on the system Settings list, same emulator, same renderer (what the emulator itself costs, not the app)
 adb shell am start -a android.settings.SETTINGS >/dev/null 2>&1; sleep 4
 adb shell dumpsys gfxinfo com.android.settings reset >/dev/null 2>&1
