@@ -17,7 +17,12 @@ const val COLD_START_ACTIVITY_WAIT_MS = 4_000L
  * [COLD_START_PAINT_WAIT_MS], so an empty store still syncs). [network] logs the first server connection with its place
  * in that order (logcat tag MailList, no message data), which is what the emulator walk reads.
  */
-class ColdStartGate(private val log: (String) -> Unit = {}, private val now: () -> Long = System::currentTimeMillis) {
+class ColdStartGate(
+    private val log: (String) -> Unit = {},
+    private val now: () -> Long = System::currentTimeMillis,
+    /** Milliseconds since the PROCESS started (what the owner feels), or -1 where unknown. */
+    private val processAge: () -> Long = { -1L },
+) {
     private val painted = CompletableDeferred<Unit>()
     private val armed = AtomicBoolean(false)
     private val networkSeen = AtomicBoolean(false)
@@ -27,19 +32,19 @@ class ColdStartGate(private val log: (String) -> Unit = {}, private val now: () 
 
     /** The activity exists: rows will be painted. */
     fun arm() {
-        if (armed.compareAndSet(false, true)) { armedAt = now(); log("cold-start armed") }
+        if (armed.compareAndSet(false, true)) { armedAt = now(); log("cold-start armed ms=0 process-age=${processAge()}") }
         activity.complete(Unit)
     }
 
     /** Process start, before any activity: a sync started this early waits [COLD_START_ACTIVITY_WAIT_MS] to learn whether
      *  an activity follows (then it waits for its rows) or this is a worker's process (then it goes on). */
     fun armProcess() {
-        if (armed.compareAndSet(false, true)) { armedAt = now(); log("cold-start armed") }
+        if (armed.compareAndSet(false, true)) { armedAt = now(); log("cold-start armed ms=0 process-age=${processAge()}") }
     }
 
     fun rowsPainted() {
         // Logged BEFORE the waiters are released, so the log's order is the real order.
-        if (!painted.isCompleted) log("cold-start rows-painted ms=${if (armed.get()) now() - armedAt else -1}")
+        if (!painted.isCompleted) log("cold-start rows-painted ms=${if (armed.get()) now() - armedAt else -1} process-age=${processAge()}")
         painted.complete(Unit)
     }
 
@@ -59,7 +64,7 @@ class ColdStartGate(private val log: (String) -> Unit = {}, private val now: () 
 
     /** A step of the list's own start (logcat tag MailList, no message data): where the time before the first row goes. */
     fun mark(step: String) {
-        if (armed.get() && !painted.isCompleted) log("cold-start mark=$step ms=${now() - armedAt}")
+        if (armed.get() && !painted.isCompleted) log("cold-start mark=$step ms=${now() - armedAt} process-age=${processAge()}")
     }
 
     fun network(what: String) {
@@ -70,4 +75,7 @@ class ColdStartGate(private val log: (String) -> Unit = {}, private val now: () 
 }
 
 /** The process's one gate. */
-val ColdStart = ColdStartGate(log = { runCatching { Log.i("MailList", it) } })
+val ColdStart = ColdStartGate(
+    log = { runCatching { Log.i("MailList", it) } },
+    processAge = { runCatching { android.os.SystemClock.elapsedRealtime() - android.os.Process.getStartElapsedRealtime() }.getOrDefault(-1L) },
+)

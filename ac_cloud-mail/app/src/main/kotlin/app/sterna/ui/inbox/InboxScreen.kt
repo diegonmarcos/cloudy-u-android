@@ -294,6 +294,8 @@ fun InboxScreen(
     /** What the right pane shows when there is a split; null = no pane at all. */
     detail: (@Composable () -> Unit)? = null,
 ) {
+    app.sterna.ui.JankProbe.markEnd("app.shell")
+    val screenStart = app.sterna.ui.JankProbe.begin("inbox.screen") // #1952 first-frame probe (the composition pass; the Scaffold's lambdas are timed apart)
     val ui by viewModel.state.collectAsStateWithLifecycle()
     val listRows = viewModel.returningListRows.collectAsLazyPagingItems()
     // #1952: what is on screen is what a return to this screen shows first.
@@ -941,6 +943,7 @@ fun InboxScreen(
             // otherwise cover the Undo snackbar for its whole window (zero inset when closed).
             snackbarHost = { SnackbarHost(snackbarHostState, Modifier.imePadding()) },
             topBar = {
+                val topBarStart = app.sterna.ui.JankProbe.begin("inbox.topbar")
                 if (selectionActive) {
                     TopAppBar(
                         navigationIcon = {
@@ -1310,6 +1313,7 @@ fun InboxScreen(
                         scrollBehavior = scrollBehavior,
                     )
                 }
+                app.sterna.ui.JankProbe.end("inbox.topbar", topBarStart)
             },
             floatingActionButton = {
                 // Gmail Dark wears Gmail's Compose button: the outlined pen on the (wallpaper's)
@@ -1332,6 +1336,7 @@ fun InboxScreen(
                     contentColor = if (gmail) MaterialTheme.colorScheme.onSecondaryContainer else contentColorFor(FloatingActionButtonDefaults.containerColor),
                 )
             },
+            val contentStart = app.sterna.ui.JankProbe.begin("inbox.content") // #1952 first-frame probe: Scaffold composes this in its layout pass
         ) { padding ->
             // Grouped by domain, each group's row carries a heading naming the domain ([DomainGroupHeader]).
             val domainGrouped = viewModel.listViewUi.collectAsStateWithLifecycle().value.group == GroupMode.DOMAIN
@@ -1847,9 +1852,11 @@ fun InboxScreen(
                 }
             }
             }
+            app.sterna.ui.JankProbe.end("inbox.content", contentStart)
         }
         }
             }
+    app.sterna.ui.JankProbe.end("inbox.screen", screenStart)
 }
     // ONE drawer content, two envelopes. `drawerState` is closed from the content in BOTH branches,
     // deliberately: close() on an already-Closed state does nothing, so the six

@@ -183,7 +183,7 @@ if [ -n "${OLD_APK:-}" ]; then
   adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
   sleep 25
   sleep 5
-  tail -n +$((l0 + 1)) "$OUT/logcat.txt" | grep -E "MailList|MailMigration|MailCore: sync" > "$OUT/update-first-launch.log" || true
+  tail -n +$((l0 + 1)) "$OUT/logcat.txt" | grep -E "MailList|MailMigration|MailCore: sync|JankProbe" > "$OUT/update-first-launch.log" || true
   ums=$(sed -n 's/.*first-row ms=\([0-9]*\) rows=\([0-9]*\).*/\1/p' "$OUT/update-first-launch.log" | head -1)
   urows=$(sed -n 's/.*first-row ms=\([0-9]*\) rows=\([0-9]*\).*/\2/p' "$OUT/update-first-launch.log" | head -1)
   ixms=$(sed -n 's/.*covering index build end ms=\([0-9]*\).*/\1/p' "$OUT/update-first-launch.log" | head -1)
@@ -196,6 +196,9 @@ if [ -n "${OLD_APK:-}" ]; then
     echo "- covering index build: ${ixms:-no migration line} ms"
     echo "- from the activity arming the cold start (the first line of the launch): index build starts at ${wall_ix0:-?} ms and ends at ${wall_ix:-?} ms, the first row is at ${wall_row:-?} ms"
     grep -E "MailMigration|cold-start (armed|mark=list-key|rows-painted)|first-row" "$OUT/update-first-launch.log" | sed 's/^/  /'
+    echo "- from the PROCESS start (Process.getStartElapsedRealtime), what the owner feels: activity armed at $(sed -n 's/.*cold-start armed.*process-age=\([0-9-]*\).*/\1/p' "$OUT/update-first-launch.log" | head -1) ms, first rows painted at $(sed -n 's/.*cold-start rows-painted.*process-age=\([0-9-]*\).*/\1/p' "$OUT/update-first-launch.log" | head -1) ms"
+    echo "- first-frame shell sections (JankProbe, the first windows):"
+    grep "JankProbe" "$OUT/update-first-launch.log" | head -3 | sed 's/^.*JankProbe: /  /' | cut -c1-400
   } >> "$OUT/timing.md"
   [ -n "$ums" ] || fail "update: the first launch after updating logged no first row"
   [ -n "$ixms" ] || fail "update: no covering index build line (was the old build really schema v34?)"
@@ -264,6 +267,8 @@ for round in 1 2 3; do
   fi
   q=$(sed -n 's/.*page-load kind=Refresh ms=\([0-9]*\).*/\1/p' "$OUT/cold-$round.log" | head -1)
   echo "| cold start $round at the fixture | ${ms:-missing} | ${rows:-} | $order | ${q:-} |" >> "$OUT/timing.md"
+  pa=$(sed -n 's/.*cold-start rows-painted.*process-age=\([0-9-]*\).*/\1/p' "$OUT/cold-$round.log" | head -1)
+  echo "  - cold start $round: first rows painted ${pa:-?} ms after the process started" >> "$OUT/timing.md"
   oms=$(sed -n 's/.*open optimize ms=\([0-9]*\).*/\1/p' "$OUT/cold-$round.log" | head -1)
   echo "  - cold start $round: the open-time PRAGMA optimize took ${oms:-no line} ms" >> "$OUT/timing.md"
   [ "${oms:-0}" -le "${OPEN_OPTIMIZE_MAX_MS:-25}" ] 2>/dev/null || fail "cold start $round: the open-time PRAGMA optimize took ${oms} ms (limit ${OPEN_OPTIMIZE_MAX_MS:-25})"

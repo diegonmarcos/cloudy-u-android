@@ -99,6 +99,7 @@ class MainActivity : AppCompatActivity() {
                     LocalPreviewLines provides previewLines,
                     LocalListMonogram provides listMonogram,
                 ) {
+                    app.sterna.ui.JankProbe.mark("app.shell") // closed when the Mail screen's composition starts: theme, nav host, everything before it
                     SternaApp(
                         pendingMailto = pendingMailto.value,
                         onMailtoConsumed = {

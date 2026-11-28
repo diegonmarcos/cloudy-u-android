@@ -1155,6 +1155,10 @@ class InboxViewModel(
                     val credentials = store.load()
                     app.sterna.core.data.mail.ColdStart.mark("credentials")
                     if (id == null || credentials == null) {
+                        // #1952 a store holding messages but no folder list (the schema v34 build stored the list only when its first sync ended):
+                        // there is nothing to paint until the network answers, so the first sync is not held back waiting for rows (it was,
+                        // for 2.8 s, in the partial-store update run 46133172679).
+                        app.sterna.core.data.mail.ColdStart.nothingToPaint()
                         flowOf(PagingData.empty())
                     } else {
                         // Conversation chips also count the thread's Sent replies, resolved
@@ -1286,6 +1290,7 @@ class InboxViewModel(
                 repo.observeMailboxes(account).first { folders -> folders.any { it.role?.trim()?.lowercase() == "inbox" } }
                     .first { it.role?.trim()?.lowercase() == "inbox" }
             }.getOrNull() ?: return@launch
+            app.sterna.core.data.mail.ColdStart.mark("inbox-id-from-folder-list")
             if ((selection.value as? Sel.Folder)?.id == null && selection.value is Sel.Folder && store.currentId() == account) selection.value = Sel.Folder(inbox.id)
         }
     }
