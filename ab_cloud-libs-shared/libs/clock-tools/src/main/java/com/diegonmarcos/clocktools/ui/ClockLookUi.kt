@@ -4,6 +4,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -119,7 +121,9 @@ fun ClockFrame(modifier: Modifier = Modifier, glow: Boolean = true, content: @Co
 fun ClockIsland(ids: List<String>, labels: Map<String, String>, selected: String, onSelect: (String) -> Unit, modifier: Modifier = Modifier,
                 itemWidth: androidx.compose.ui.unit.Dp = 44.5.dp) {
     Row(
-        modifier.height(ClockLook.ISLAND_H.dp).clip(CircleShape).background(look(ClockLook.ISLAND)).padding(horizontal = 5.75.dp),
+        // scrollable when a narrow screen cannot hold every page (FullClock sizes the items to fit first)
+        modifier.height(ClockLook.ISLAND_H.dp).clip(CircleShape).background(look(ClockLook.ISLAND))
+            .horizontalScroll(rememberScrollState()).padding(horizontal = 5.75.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ids.forEach { id ->
