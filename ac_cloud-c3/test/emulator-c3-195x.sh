@@ -221,8 +221,23 @@ if [ "$T" = all ] || [ "$T" = 1955 ]; then
   hide_kb; shot c3-1955-net-wg-node-sheet-kbdown 2
   # rev2: the sheet opens in its 132 dp peek; "more" expands it to the edge rows
   tap_text c3-1955-net-wg-node-sheet-kbdown "  more"; shot c3-1955-net-wg-node-sheet-more 2
-  # an in-edge row ("  <-", escaped in the dump): the rows the expanded sheet shows first
-  tap_text c3-1955-net-wg-node-sheet-more "  &lt;-"; shot c3-1955-net-wg-edge-sheet 3
+  # the first in-edge row: the clickable rows merge their texts, so the dump names the row by its value (the first text after the column line)
+  xy="$(python3 - "$OUT/c3-1955-net-wg-node-sheet-more.xml" <<'PY'
+import re, sys
+x = open(sys.argv[1], errors="ignore").read()
+ns = re.findall(r'text="([^"]*)"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', x)
+ns = [n for n in ns if n[0]]
+# the rows after the "column" line: [column value, in-edges + count (merged, may be absent), first in-edge row]
+i = next((k for k, n in enumerate(ns) if n[0] == "column"), None)
+rows = [n for n in ns[(i or 0) + 2:] if n[0] not in ("in-edges",) and not n[0].isdigit()] if i is not None else []
+if rows:
+    n = rows[0]; print((int(n[1]) + int(n[3])) // 2, (int(n[2]) + int(n[4])) // 2)
+if False:
+    n = ns[i + 2]; print((int(n[1]) + int(n[3])) // 2, (int(n[2]) + int(n[4])) // 2)
+PY
+)"
+  [ -n "$xy" ] && adb shell input tap $xy
+  shot c3-1955-net-wg-edge-sheet 3
   has c3-1955-net-wg-edge-sheet "Highlight path" || bad "c3-1955-net-wg-edge-sheet: no edge sheet"
   # DNS: expand every cluster, then Fit all (the minimap shows on a tall world)
   open_page net_dns; sleep 2; shot c3-1955-net-dns-pre 5
@@ -249,8 +264,8 @@ if [ "$T" = all ] || [ "$T" = 1955 ]; then
     n="$(printf '%s' "$t" | tr 'A-Z /' 'a-z--' | tr -s -)"
     tap_text c3-1955-health-overview "$t"; shot "c3-1955-health-$n" 4
   done
-  chk c3-1955-health-more-layers "route_not_served_yet"
-  chk c3-1955-health-lights "public,private"
+  chk c3-1955-health-more-layers "not_served"
+  chk c3-1955-health-lights "Public,Private"
   open_page ops_health_tests; sleep 2; shot c3-1955-health-tests-open 8
   chk c3-1955-health-tests-open "Engines,C3_full,VMs,Services,Suites"
   tap_text c3-1955-health-tests-open "C3 full"; shot c3-1955-health-xray-full 4
