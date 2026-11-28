@@ -59,7 +59,10 @@ abstract class SternaDatabase : RoomDatabase() {
                 // approximately and only where SQLite finds it worth it: the planner needs statistics to use the list's covering index.
                 .addCallback(object : RoomDatabase.Callback() {
                     override fun onOpen(db: SupportSQLiteDatabase) {
+                        val started = System.nanoTime()
                         runCatching { db.query(EMAILS_ANALYSIS_LIMIT_SQL).close(); db.query("PRAGMA optimize").close() }
+                        // timed: this runs on every open, before the first query (the walk reads it per cold start, tag MailMigration)
+                        runCatching { android.util.Log.i("MailMigration", "open optimize ms=${(System.nanoTime() - started) / 1_000_000}") }
                     }
                 })
                 // Disposable mirror of the server: a missing migration rebuilds the cache.

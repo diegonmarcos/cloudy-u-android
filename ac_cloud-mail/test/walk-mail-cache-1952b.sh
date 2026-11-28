@@ -252,7 +252,7 @@ for round in 1 2 3; do
   sleep 2
   [ "$round" = 1 ] && shot 04-cold-start-after-2s
   sleep 10
-  tail -n +$((n0 + 1)) "$OUT/logcat.txt" | grep -E "MailList|MailCore: sync|ForegroundPush: foreground" > "$OUT/cold-$round.log" || true
+  tail -n +$((n0 + 1)) "$OUT/logcat.txt" | grep -E "MailList|MailMigration|MailCore: sync|ForegroundPush: foreground" > "$OUT/cold-$round.log" || true
   ms=$(sed -n 's/.*first-row ms=\([0-9]*\) rows=\([0-9]*\).*/\1/p' "$OUT/cold-$round.log" | head -1)
   rows=$(sed -n 's/.*first-row ms=\([0-9]*\) rows=\([0-9]*\).*/\2/p' "$OUT/cold-$round.log" | head -1)
   lp=$(grep -n "cold-start rows-painted" "$OUT/cold-$round.log" | head -1 | cut -d: -f1)
@@ -264,6 +264,9 @@ for round in 1 2 3; do
   fi
   q=$(sed -n 's/.*page-load kind=Refresh ms=\([0-9]*\).*/\1/p' "$OUT/cold-$round.log" | head -1)
   echo "| cold start $round at the fixture | ${ms:-missing} | ${rows:-} | $order | ${q:-} |" >> "$OUT/timing.md"
+  oms=$(sed -n 's/.*open optimize ms=\([0-9]*\).*/\1/p' "$OUT/cold-$round.log" | head -1)
+  echo "  - cold start $round: the open-time PRAGMA optimize took ${oms:-no line} ms" >> "$OUT/timing.md"
+  [ "${oms:-0}" -le "${OPEN_OPTIMIZE_MAX_MS:-25}" ] 2>/dev/null || fail "cold start $round: the open-time PRAGMA optimize took ${oms} ms (limit ${OPEN_OPTIMIZE_MAX_MS:-25})"
   [ -n "$ms" ] || fail "cold start $round: the list logged no first row"
   case "$order" in yes*) ;; *) fail "cold start $round: rows were not painted before the first server call ($order)" ;; esac
   [ "${ms:-99999}" -le "$COLD_LIMIT_MS" ] 2>/dev/null || fail "cold start $round: first row after ${ms:-?} ms (limit $COLD_LIMIT_MS)"
