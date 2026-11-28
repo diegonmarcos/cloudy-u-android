@@ -1495,6 +1495,10 @@ class MailRepository(
         freshIds: Set<String>?,
         keepNewest: Int,
     ) {
+        // #1952: the Inbox is never pruned by age, WHOEVER asks. The caller's own test is "is this the remembered Inbox id",
+        // and that id is only remembered once a first refresh has ended: until then a refresh of the Inbox passed for an
+        // ordinary folder and its headers older than the list window were deleted (seen on the 40 000 message walk).
+        if (isInboxRole(mailboxDao.roleForId(accountId, mailboxId))) return
         val gone = retentionEvictions(
             cached = emailDao.retentionRows(accountId, mailboxId),
             cutoffMillis = cutoffMillis,

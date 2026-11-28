@@ -85,6 +85,17 @@ class ListReturn1952cTest {
         assertTrue(activity.any { it.startsWith("app.sterna.core.data.mail.UiLoad.uiResumed = true") } && "app.sterna.core.data.mail.UiLoad.uiResumed = false" in activity)
     }
 
+    // -- headers are never evicted --------------------------------------------------------------------------------------
+
+    @Test fun `the Inbox is never pruned by age, whoever asks`() {
+        assertTrue(isInboxRole("inbox")); assertTrue(isInboxRole(" Inbox "))
+        assertFalse(isInboxRole("archive")); assertFalse(isInboxRole(null))
+        val repo = code("core/data/src/main/kotlin/app/sterna/core/data/mail/MailRepository.kt")
+        val prune = repo.dropWhile { !it.startsWith("private suspend fun pruneRetention(") }.take(10)
+        assertTrue("the prune itself refuses the Inbox, before it reads a row: $prune", "if (isInboxRole(mailboxDao.roleForId(accountId, mailboxId))) return" in prune)
+        assertTrue(prune.indexOf("if (isInboxRole(mailboxDao.roleForId(accountId, mailboxId))) return") < prune.indexOfFirst { it.startsWith("val gone = retentionEvictions(") })
+    }
+
     // -- cold start: one key ----------------------------------------------------------------------------------------
 
     @Test fun `the pager's first key carries the stored view, never a placeholder`() {

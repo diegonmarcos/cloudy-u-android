@@ -122,3 +122,6 @@ object UiLoad {
         if (ms > 0) kotlinx.coroutines.delay(ms)
     }
 }
+
+/** #1952 the role that marks the folder whose headers are never pruned by age. */
+fun isInboxRole(role: String?): Boolean = role?.trim()?.lowercase() == "inbox"

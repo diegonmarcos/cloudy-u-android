@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'none | evict-newest-first | window-ignored | shrink-no-evict | default-drift | setting-not-stored | resume-from-zero | metered-no-chain | network-before-rows | index-not-covering | first-page-unbounded | return-requeries | placeholder-view | core-ungated | query-per-write | first-rows-any-view | fill-ignores-screen'
+        description: 'none | evict-newest-first | window-ignored | shrink-no-evict | default-drift | setting-not-stored | resume-from-zero | metered-no-chain | network-before-rows | index-not-covering | first-page-unbounded | return-requeries | placeholder-view | core-ungated | query-per-write | first-rows-any-view | fill-ignores-screen | inbox-pruned'
         required: true
 permissions:
   contents: read
@@ -58,6 +58,8 @@ jobs:
             first-rows-any-view) sed -i 's/        if (kept.view != view) return null/        if (kept.view.isEmpty()) return null/' $D/mail/ListReturn.kt ;;
             # the background fill no longer gives way to the screen
             fill-ignores-screen) sed -i 's/if (resumed) UI_RESUMED_BATCH_PAUSE_MS else 0L/0L/' $D/mail/ListReturn.kt ;;
+            # the Inbox's old headers are deleted by the age prune again
+            inbox-pruned)       sed -i '/if (isInboxRole(mailboxDao.roleForId(accountId, mailboxId))) return/d' $D/mail/MailRepository.kt ;;
             *) echo "::error::unknown mutation (not in the allow-list)"; exit 2 ;;
           esac
           git diff --stat
@@ -123,6 +125,7 @@ jobs:
             query-per-write)     N="a slow list coalesces invalidations into one query and a fast list follows every write" ;;
             first-rows-any-view) N="the top of the list is kept for the next cold start, for its own view only" ;;
             fill-ignores-screen) N="the background fill pauses between batches only while the app is on screen" ;;
+            inbox-pruned)        N="the Inbox is never pruned by age, whoever asks" ;;
             *) echo "::error::unknown mutation (not in the allow-list)"; exit 2 ;;
           esac
           ls ac_cloud-mail/core/data/build/test-results/*/TEST-*MailCache1952bTest.xml ac_cloud-mail/core/data/build/test-results/*/TEST-*ListQueryPlan1952bTest.xml >/dev/null 2>&1 \
@@ -138,7 +141,7 @@ jobs:
           failed = sorted(n for n, c in cases.items() if c.find("failure") is not None or c.find("error") is not None)
           print("tests:", len(cases), "failed:", failed)
           if leg == "none":
-              if failed or len(cases) < 20: print("::error::the unbroken tree is not green (or tests are missing)"); sys.exit(1)
+              if failed or len(cases) < 21: print("::error::the unbroken tree is not green (or tests are missing)"); sys.exit(1)
               print("GREEN: %d tests" % len(cases)); sys.exit(0)
           if want not in cases: print("::error::LEG ERROR %s: the named test did not run: %s" % (leg, want)); sys.exit(1)
           if want not in failed: print("::error::LEG SURVIVED %s: the named test stayed green: %s" % (leg, want)); sys.exit(1)

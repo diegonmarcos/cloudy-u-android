@@ -229,7 +229,10 @@ echo "" >> "$OUT/timing.md"; echo "scroll (10 flings), airplane mode (no sync ru
 adb shell top -b -n 1 -m 8 2>/dev/null | tail -9 > "$OUT/top-quiet.txt"
 adb shell cmd connectivity airplane-mode disable
 
+sleep 20
 sizes "end"
+HE=$(grep "^headers|" "$OUT/sizes.txt" | tail -1 | cut -d"|" -f2)
+[ "${HE:-0}" -ge "${H:-0}" ] 2>/dev/null || fail "headers were evicted: $HE at the end, ${H:-?} after the fill"
 cat "$OUT/timing.md" | tee -a "$OUT/summary.txt"
 cat "$OUT/sizes.txt"
 grep -E "MailList" "$OUT/logcat.txt" > "$OUT/maillist-log.txt" || true
