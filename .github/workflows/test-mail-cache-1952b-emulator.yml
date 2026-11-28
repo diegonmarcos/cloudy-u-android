@@ -117,7 +117,8 @@ jobs:
           git fetch --no-tags --depth=1 origin 078e167ab934fb00d0f342ce992b45f764e42395
           SHA=$(git rev-parse --verify 078e167ab934fb00d0f342ce992b45f764e42395^{commit} 2>/dev/null || true)
           [ -n "$SHA" ] || { echo "::error::commit 078e167ab (schema v34) is not reachable"; exit 1; }
-          git worktree add "$GITHUB_WORKSPACE/old-v34" "$SHA"
+          # LFS pointers only: the build needs no LFS image, and the runner has no LFS quota for an old tree
+          GIT_LFS_SKIP_SMUDGE=1 git worktree add "$GITHUB_WORKSPACE/old-v34" "$SHA"
           [ -d .vault ] && cp -r .vault old-v34/.vault
           [ -d fleet-private-data ] && cp -r fleet-private-data old-v34/ || true
           cd old-v34/ac_cloud-mail
