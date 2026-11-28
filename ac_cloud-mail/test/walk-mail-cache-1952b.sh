@@ -403,6 +403,12 @@ note "baseline profile: $(grep -c . "$OUT/baseline-prof.generated.txt" 2>/dev/nu
 # also writes base.dm (pm install-write). After each: the compiler filter ART holds, then three cold starts (process age at the activity armed
 # and at the first rows). The updater app's installer (UpdateInstaller.kt) would need the same extra write; it is NOT changed here.
 adb pull "$prof_file" "$OUT/runtime-primary.prof" >/dev/null 2>&1 || true
+# Run 46147990645: after `adb install -r` the app was `run-from-apk` (nothing compiled, not even verified) with or without base.dm, so the image did
+# not dexopt at install. The property that decides it is recorded, then set to speed-profile (what a phone runs) for the two installs below.
+adb shell "getprop | grep -iE 'dexopt|dex2oat|usejit'" > "$OUT/props-dexopt.txt" 2>&1 || true
+note "install-time dexopt property before: $(adb shell getprop pm.dexopt.install | tr -d '\r')"
+adb shell setprop pm.dexopt.install speed-profile >/dev/null 2>&1 || true
+note "install-time dexopt property now: $(adb shell getprop pm.dexopt.install | tr -d '\r')"
 adb unroot >/dev/null 2>&1; sleep 3; adb wait-for-device
 kill "$LP" 2>/dev/null || true
 adb logcat -T 1 -v threadtime "*:W" MailList:I MailCore:I MailSync:I MailOpen:I NavWalkSeed:I JankProbe:I MailMigration:I >> "$OUT/logcat.txt" 2>&1 &
