@@ -72,12 +72,23 @@ class ListQueryPlan1952bTest {
         assertEquals("the index changes the cost, never the rows", before, rows())
     }
 
-    @Test fun `a migrated database (the index added, no ANALYZE) answers the aggregates from the covering index too`() {
-        // what an update from v34 holds the first time the list is read: MIGRATION_34_35 runs the index SQL and nothing else
+    @Test fun `without statistics the planner does not use the covering index, and the migration's statistics SQL makes it`() {
+        // what an update from v34 held the first time the list was read before the migration analysed: the index SQL and nothing else
         exec(EMAILS_DOMAIN_LIST_INDEX_SQL)
+        val bare = plan()
+        assertFalse("the premise: no statistics, no covering plan (if SQLite now chooses it anyway the migration's ANALYZE is spare): $bare",
+            bare.count { "emails USING COVERING INDEX $index" in it } == 3)
+        // and what MIGRATION_34_35 runs after the index SQL, on the same database
+        db.createStatement().use { it.execute(EMAILS_ANALYSIS_LIMIT_SQL) }
+        exec(EMAILS_ANALYZE_SQL)
         val plan = plan()
-        assertEquals("index-only without statistics too: $plan", 3, plan.count { "emails USING COVERING INDEX $index" in it })
+        assertEquals("index-only after the migration's statistics: $plan", 3, plan.count { "emails USING COVERING INDEX $index" in it })
         assertFalse("no aggregate scans the table itself: $plan", plan.any { it == "SCAN emails" })
+        val migration = code("core/data/src/main/kotlin/app/sterna/core/data/db/Migrations.kt")
+        val at = migration.indexOf("db.execSQL(EMAILS_DOMAIN_LIST_INDEX_SQL)")
+        assertTrue("the migration runs the index SQL", at >= 0)
+        assertEquals("then the analysis limit", "db.query(EMAILS_ANALYSIS_LIMIT_SQL).close() // a PRAGMA answers a row: query, not execSQL".substringBefore(" //"), migration[at + 1].substringBefore(" //"))
+        assertEquals("then the statistics", "db.execSQL(EMAILS_ANALYZE_SQL)", migration[at + 2])
     }
 
     @Test fun `the entity, the migration and the schema version declare that index`() {

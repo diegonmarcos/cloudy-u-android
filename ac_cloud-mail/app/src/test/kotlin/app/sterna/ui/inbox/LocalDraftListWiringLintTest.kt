@@ -29,9 +29,9 @@ class LocalDraftListWiringLintTest {
     fun `nothing local reaches the pager the reader shares`() {
         val body = member(INBOX_VIEW_MODEL, "pagedEmails")
         assertTrue(
-            "InboxViewModel.pagedEmails must still end on .cachedIn(viewModelScope). Body was:\n" +
+            "InboxViewModel.pagedEmails must still end on .cachedIn(pagingScope). Body was:\n" +
                 body.joinToString("\n"),
-            body.last() == "}.flowOn(Dispatchers.Default).cachedIn(viewModelScope)",
+            body.last() == "}.flowOn(Dispatchers.Default).cachedIn(pagingScope)",
         )
         assertEquals(
             "⛔ InboxViewModel.pagedEmails is what MessageScreen pages: it must not name the local " +
@@ -98,9 +98,11 @@ class LocalDraftListWiringLintTest {
         )
         // #1952: the screen pages the merged property THROUGH its cache, and that cache is the merged property and nothing else.
         assertEquals(
-            "keptListRows must be exactly pagedListRows cached in the ViewModel's scope:",
+            "keptListRows must be exactly pagedListRows cached in the paging scope (the ViewModel's job on the Default dispatcher):",
             listOf(
-                "val keptListRows: Flow<PagingData<InboxRow>> = pagedListRows.cachedIn(viewModelScope)",
+                "val keptListRows: Flow<PagingData<InboxRow>> = pagedListRows.cachedIn(pagingScope)",
+                // #1952 cold start: a headless presenter takes the first generation of the same cache so the store query starts beside the first frame.
+                "val feed = launch(Dispatchers.Default) { keptListRows.collectLatest { differ.submitData(it) } }",
                 // #1952: the screen collects that same cache and nothing else, through the holder that outlives the screen.
                 "viewModelScope.launch { keptListRows.collect { returning.live(it) } }",
             ),

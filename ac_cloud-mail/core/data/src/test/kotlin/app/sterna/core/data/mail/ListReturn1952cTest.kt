@@ -135,7 +135,7 @@ class ListReturn1952cTest {
 
     @Test fun `the key and the pager are built off the main thread`() {
         val vm = code("app/src/main/kotlin/app/sterna/ui/inbox/InboxViewModel.kt")
-        assertTrue("}.flowOn(Dispatchers.Default).cachedIn(viewModelScope)" in vm)
+        assertTrue("}.flowOn(Dispatchers.Default).cachedIn(pagingScope)" in vm && "private val pagingScope = kotlinx.coroutines.CoroutineScope(viewModelScope.coroutineContext + Dispatchers.Default)" in vm)
     }
 
     @Test fun `the drawer's content is composed after the first rows are painted`() {

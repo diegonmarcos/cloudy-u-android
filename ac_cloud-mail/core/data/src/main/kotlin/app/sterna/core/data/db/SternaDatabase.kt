@@ -3,6 +3,7 @@ package app.sterna.core.data.db
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
+import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 
@@ -54,6 +55,13 @@ abstract class SternaDatabase : RoomDatabase() {
                 "sterna.db",
             )
                 .addMigrations(*ALL_MIGRATIONS)
+                // #1952 a store that grew since its last statistics (a fresh install's first sync) is analysed when the database opens,
+                // approximately and only where SQLite finds it worth it: the planner needs statistics to use the list's covering index.
+                .addCallback(object : RoomDatabase.Callback() {
+                    override fun onOpen(db: SupportSQLiteDatabase) {
+                        runCatching { db.query(EMAILS_ANALYSIS_LIMIT_SQL).close(); db.query("PRAGMA optimize").close() }
+                    }
+                })
                 // Disposable mirror of the server: a missing migration rebuilds the cache.
                 .fallbackToDestructiveMigration()
                 .build()

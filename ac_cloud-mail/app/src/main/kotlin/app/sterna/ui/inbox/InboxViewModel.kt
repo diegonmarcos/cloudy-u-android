@@ -1124,6 +1124,13 @@ class InboxViewModel(
      * every emission cancels the running pager and restarts at the first page, so an equal key must
      * not reach `flatMapLatest`. [cachedIn] caches the pages; it does not stop a rebuild.
      */
+    /**
+     * #1952 cold start: where the pages are fetched. cachedIn collects the pager in the scope it is given, and with the view model's own scope
+     * (the MAIN dispatcher) the first store query was started on the main thread, behind the first frame: `page-load-start` came 0.7 to 1.5 s
+     * after the first frame was drawn. In this scope (same job, so it ends with the view model) the load starts at once, beside the frame.
+     */
+    private val pagingScope = kotlinx.coroutines.CoroutineScope(viewModelScope.coroutineContext + Dispatchers.Default)
+
     private val markBeforePager = app.sterna.core.data.mail.ColdStart.mark("vm-fields-up-to-the-pager")
 
     val pagedEmails: Flow<PagingData<InboxRow>> =
@@ -1175,7 +1182,7 @@ class InboxViewModel(
             }
         // #1952 cold start: the key and the pager are built off the main thread. The main thread spends the first seconds of a cold start on the
         // first frame, and a key built there waited behind it (the settings read was warm at 313 ms, its collector ran at 2580 ms).
-        }.flowOn(Dispatchers.Default).cachedIn(viewModelScope)
+        }.flowOn(Dispatchers.Default).cachedIn(pagingScope)
 
     /**
      * What `local_drafts` contributes to the list on screen — empty everywhere but this account's
@@ -1209,7 +1216,7 @@ class InboxViewModel(
      * through the combine a few frames after the screen did (an empty list first, and the scroll position with it). Cached in this
      * ViewModel's scope, the returning screen is handed the loaded pages in its FIRST composition. Still downstream of the drafts merge.
      */
-    val keptListRows: Flow<PagingData<InboxRow>> = pagedListRows.cachedIn(viewModelScope)
+    val keptListRows: Flow<PagingData<InboxRow>> = pagedListRows.cachedIn(pagingScope)
 
     /**
      * #1952 cold start: paging loads a generation only once something collects its pages for display, and that was the list screen's first
