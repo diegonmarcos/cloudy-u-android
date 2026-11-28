@@ -112,7 +112,7 @@ object XrayAppMeasure {
                 d("Runtime.availableProcessors") { "$cores" to null }),
             fld("cpu_freq", "/sys cpufreq via shell", "cpufreq files are not readable by an app on this device (SELinux)",
                 fb("/sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq", "current MHz per core, only where the kernel exposes it to apps") {
-                    (0 until cores).mapNotNull { i -> txt("/sys/devices/system/cpu/cpu$i/cpufreq/scaling_cur_freq")?.trim()?.toLongOrNull()?.takeIf { it > 0 }?.let { "cpu$i=${it / 1000}" } }.takeIf { it.isNotEmpty() }?.let { it.joinToString(" ") + " MHz" to null } }),
+                    (0 until cores).mapNotNull { i -> txt("/sys/devices/system/cpu/cpu$i/cpufreq/scaling_cur_freq")?.trim()?.toLongOrNull()?.takeIf { it > 0 }?.let { "cpu$i=${f1(it / 1000.0)}" } }.takeIf { it.isNotEmpty() }?.let { it.joinToString(" ") + " MHz" to null } }),
             fld("load_per_core", "uptime / dumpsys cpuinfo", "/proc/loadavg is denied to apps on this Android (SELinux)",
                 fb("/proc/loadavg", "1-minute load of the whole device where readable") { txt("/proc/loadavg")?.trim()?.split(' ')?.firstOrNull()?.toDoubleOrNull()?.let { f1(it / cores) to it / cores } }),
             fld("running_processes", "top process list", "no process list",
@@ -275,7 +275,7 @@ object XrayAppMeasure {
             fld("own_active_notifications", "dumpsys notification (active records)", "none", fb("NotificationManager.getActiveNotifications", "own notifications only") { nm.activeNotifications.size.let { "$it" to it.toDouble() } }),
             fld("notifications_enabled", "dumpsys notification", "none", d("NotificationManager.areNotificationsEnabled / currentInterruptionFilter / channels") { "enabled ${nm.areNotificationsEnabled()} dnd-filter ${nm.currentInterruptionFilter} channels ${nm.notificationChannels.size}" to null }),
             fld("listeners", "settings get secure enabled_notification_listeners", "none", d("Settings.Secure enabled_notification_listeners") { "${listeners.size} bound" to null }),
-            fld("binder_sent_tx", "dumpsys binder_calls_stats", "none", fb("Debug.getBinderSentTransactions", "own process total since start") { Debug.getBinderSentTransactions().takeIf { it >= 0 }?.let { "$it (received ${Debug.getBinderReceivedTransactions()}, proxies ${Debug.getBinderProxyObjectCount()})" to it.toDouble() } }),
+            fld("binder_sent_tx", "dumpsys binder_calls_stats", "Debug.getBinderSentTransactions reports -1: binder transaction counting is off for apps on this build", fb("Debug.getBinderSentTransactions", "own process total since start") { Debug.getBinderSentTransactions().takeIf { it >= 0 }?.let { "$it (received ${Debug.getBinderReceivedTransactions()}, proxies ${Debug.getBinderProxyObjectCount()})" to it.toDouble() } }),
             fld("posts_per_app", "dumpsys notification (numPostedByApp)", "per-app post counts of other apps are system_server data with no app API"),
         )
     }
