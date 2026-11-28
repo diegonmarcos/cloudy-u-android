@@ -21,7 +21,7 @@ $T adb shell cmd uimode night yes; $T adb shell wm size 1080x2400; $T adb shell 
 wake() { $T adb shell svc power stayon true; $T adb shell input keyevent KEYCODE_WAKEUP; $T adb shell wm dismiss-keyguard; }
 launcher() { $T adb shell cmd package resolve-activity --brief -c android.intent.category.LAUNCHER "$1" | tail -1 | tr -d '\r'; }
 open_route() { wake; $T adb shell am start -W -n "$(launcher "$ME")" -f 0x14000000 --es shortcut_action "$1" >/dev/null; }
-for op in GET_USAGE_STATS SYSTEM_ALERT_WINDOW MANAGE_EXTERNAL_STORAGE REQUEST_INSTALL_PACKAGES; do $T adb shell appops set "$ME" "$op" allow; done
+for op in GET_USAGE_STATS SYSTEM_ALERT_WINDOW MANAGE_EXTERNAL_STORAGE; do $T adb shell appops set "$ME" "$op" allow; done   # #1957 no REQUEST_INSTALL_PACKAGES: the in-app updater replaced the CI APK with the published release mid-walk
 wlog() { $T adb logcat -d -v threadtime -v epoch -s CloudMeWeb:V; }
 shot() { $T adb exec-out screencap -p > "$OUT/cache-1951-$1.png"; echo "shot $1"; }
 

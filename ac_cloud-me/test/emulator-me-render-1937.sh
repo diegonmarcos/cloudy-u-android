@@ -20,7 +20,7 @@ open_page() { wake; $T adb shell am start -W -n "$(launcher "$ME")" -f 0x1400000
 shot() { sleep "${2:-6}"; $T adb exec-out screencap -p > "$OUT/$1.png"; rm -f "$OUT/$1.xml"; $T adb shell rm -f /sdcard/ui.xml
     for _ in 1 2 3; do $T adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; $T adb pull /sdcard/ui.xml "$OUT/$1.xml" >/dev/null 2>&1 && break; sleep 2; done; echo "shot $1"; case "$($T adb shell dumpsys window 2>/dev/null | grep -m1 mCurrentFocus || true)" in *"$ME"*) ;; *) echo "FAIL focus $1: Cloud Me is not the focused app" | tee -a "$OUT/verdict.txt"; rc=1 ;; esac; }
 
-for op in GET_USAGE_STATS SYSTEM_ALERT_WINDOW MANAGE_EXTERNAL_STORAGE REQUEST_INSTALL_PACKAGES; do $T adb shell appops set "$ME" "$op" allow; done
+for op in GET_USAGE_STATS SYSTEM_ALERT_WINDOW MANAGE_EXTERNAL_STORAGE; do $T adb shell appops set "$ME" "$op" allow; done   # #1957 no REQUEST_INSTALL_PACKAGES: the in-app updater replaced the CI APK with the published release mid-walk
 open_page "page:configs/general"; sleep 12
 for i in 1 2 3 4 5 6; do
     case "$($T adb shell dumpsys window 2>/dev/null | grep -m1 mCurrentFocus || true)" in *"$ME"*) break ;; esac

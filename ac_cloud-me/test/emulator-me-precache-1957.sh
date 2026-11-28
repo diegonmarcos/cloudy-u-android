@@ -20,7 +20,7 @@ wake() { $T adb shell svc power stayon true; $T adb shell input keyevent KEYCODE
 launcher() { $T adb shell cmd package resolve-activity --brief -c android.intent.category.LAUNCHER "$1" | tail -1 | tr -d '\r'; }
 launch() { wake; $T adb shell am start -W -n "$(launcher "$ME")" >/dev/null; }
 open_route() { wake; $T adb shell am start -W -n "$(launcher "$ME")" -f 0x14000000 --es shortcut_action "$1" >/dev/null; }
-perms() { for op in GET_USAGE_STATS SYSTEM_ALERT_WINDOW MANAGE_EXTERNAL_STORAGE REQUEST_INSTALL_PACKAGES; do $T adb shell appops set "$ME" "$op" allow; done; }
+perms() { for op in GET_USAGE_STATS SYSTEM_ALERT_WINDOW MANAGE_EXTERNAL_STORAGE; do $T adb shell appops set "$ME" "$op" allow; done; }   # #1957 no REQUEST_INSTALL_PACKAGES: the in-app updater replaced the CI APK with the published release mid-walk
 # a FILTERED logcat written ON THE DEVICE (a host-side background `adb logcat` reader plus buffer resizing and clearing segfaulted the adb
 # client, exit 139); wlog reads it (small: the app's tag, crashes, process deaths) and starts after the last WALK_MARK
 LIVE_DEV=/data/local/tmp/cm-live.txt; LIVE="$OUT/logcat-live.txt"
