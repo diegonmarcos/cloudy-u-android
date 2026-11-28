@@ -42,6 +42,7 @@ dismiss() {
         if grep -q 'text="Unlock"' "$OUT/cur.xml" && tap_node "$OUT/cur.xml" '^Unlock$'; then sleep 4; continue; fi
         if grep -q 'text="Get Started"' "$OUT/cur.xml" && tap_node "$OUT/cur.xml" '^Get Started$'; then sleep 5; continue; fi
         if grep -qiE 'access all device logs' "$OUT/cur.xml" && tap_node "$OUT/cur.xml" '^don.t allow$'; then sleep 2; continue; fi
+        if grep -q 'Default home app' "$OUT/cur.xml" && tap_node "$OUT/cur.xml" '^Skip$'; then sleep 3; continue; fi
         if grep -q 'text="Install unknown apps"' "$OUT/cur.xml" && tap_node "$OUT/cur.xml" '^Skip$'; then sleep 3; continue; fi
         if grep -qiE 'allowed to install unknown apps' "$OUT/cur.xml"; then tap_node "$OUT/cur.xml" '^cancel$' || $T adb shell input keyevent KEYCODE_BACK; sleep 2; continue; fi
         if grep -qiE 'wireless debugging|Allow .* on this network' "$OUT/cur.xml"; then tap_node "$OUT/cur.xml" '^cancel$|^don.t allow$' || $T adb shell input keyevent KEYCODE_BACK; sleep 2; else break; fi
