@@ -157,7 +157,7 @@
         "catalog_url": "https://openrouter.ai/api/v1/models",
         "needs_token": true,
         "default_model": "z-ai/glm-5.3-flash",
-        "pricing_as_of": "2026-11-27",
+        "pricing_as_of": "2026-11-28",
         "models": [
           {
             "id": "meta-llama/llama-3.1-8b-instruct",
@@ -203,8 +203,8 @@
               "roleplay",
               "translation"
             ],
-            "prompt": 0.09,
-            "completion": 0.3,
+            "prompt": 0.0675,
+            "completion": 0.225,
             "note": "Sparse 26B (4B active): translation, academia and legal at a small-model price."
           },
           {
@@ -304,7 +304,7 @@
               "trivia"
             ],
             "prompt": 0.0456,
-            "completion": 0.3,
+            "completion": 0.27,
             "note": "Ranked in all twelve categories at the second-lowest price here."
           },
           {
@@ -321,8 +321,8 @@
               "programming",
               "roleplay"
             ],
-            "prompt": 0.62,
-            "completion": 2.42,
+            "prompt": 0.007,
+            "completion": 6.8,
             "note": "Ranked in ten categories including translation; the formal-register GLM."
           },
           {
