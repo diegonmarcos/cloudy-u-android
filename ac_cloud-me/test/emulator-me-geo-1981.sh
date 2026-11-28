@@ -76,7 +76,7 @@ swipe_up; shot geo-1981-collections-fixed-2 4; swipe_up; shot geo-1981-collectio
 # the done criterion: zero broken images on the cards and in every overlay, asked of the page itself
 res=""; tries=0
 if [ -n "$EVAL" ]; then
-    while [ $tries -lt 8 ]; do forward && res=$(timeout 200 node "$EVAL" "$PORT" "geo-collections" collections 2>>"$OUT/eval.err") && echo "$res" | grep -q '"cards"' && break; res=""; tries=$((tries+1)); sleep 8; done
+    while [ $tries -lt 8 ]; do forward && res=$(timeout 200 node "$EVAL" "$PORT" "geo-collections" collections 2>>"$OUT/eval.err") && grep -q '"cards"' <<<"$res" && break; res=""; tries=$((tries+1)); sleep 8; done
 fi
 echo "$res" > "$OUT/collections-probe.json"
 if [ -z "$res" ]; then echo "FAIL collections: no answer from the page WebView" | tee -a "$OUT/verdict.txt"; rc=1

@@ -5,13 +5,11 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.widget.ImageView
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
@@ -24,19 +22,15 @@ import org.robolectric.annotation.GraphicsMode
 @Config(sdk = [34], application = Application::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class RenderBounds1937Test {
-    private fun draw(v: ImageView, w: Int, h: Int): Bitmap {
-        v.measure(android.view.View.MeasureSpec.makeMeasureSpec(w, android.view.View.MeasureSpec.EXACTLY), android.view.View.MeasureSpec.makeMeasureSpec(h, android.view.View.MeasureSpec.EXACTLY))
-        v.layout(0, 0, w, h)
-        val bmp = Bitmap.createBitmap(w, 300, Bitmap.Config.ARGB_8888)   // a canvas much taller than the view, like the page the banner sits in
-        v.draw(Canvas(bmp))
+    private fun draw(d: android.graphics.drawable.Drawable, w: Int, h: Int): Bitmap {
+        val bmp = Bitmap.createBitmap(w, 300, Bitmap.Config.ARGB_8888)   // a canvas much taller than the banner, like the page it sits in
+        drawBannerCropped(Canvas(bmp), d, w, h)
         return bmp
     }
 
     @Test fun `a banner paints inside its bounds only`() {
-        val ctx = RuntimeEnvironment.getApplication()
         val big = object : ColorDrawable(Color.RED) { override fun getIntrinsicWidth() = 200; override fun getIntrinsicHeight() = 200 }
-        val banner = BannerImageView(ctx).apply { scaleType = ImageView.ScaleType.CENTER_CROP; setImageDrawable(big) }
-        val b = draw(banner, 200, 60)
+        val b = draw(big, 200, 60)
         assertEquals("inside the bounds the banner is drawn", Color.RED, b.getPixel(100, 30))
         assertEquals("below the bounds nothing is drawn (it covered the tiles)", Color.TRANSPARENT, b.getPixel(100, 61 + 20))
         assertEquals(Color.TRANSPARENT, b.getPixel(100, 250))

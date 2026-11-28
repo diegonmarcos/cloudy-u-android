@@ -29,7 +29,7 @@ liveall() { $T adb shell cat "$LIVE_DEV" | tr -d '\r'; }
 wlog() { liveall | awk '/CloudMeWeb: WALK_MARK/{buf=""; next} {buf=buf $0 "\n"} END{printf "%s", buf}' | grep -a ' CloudMeWeb: ' | sed 's/.*CloudMeWeb: //'; }
 clear_log() { $T adb shell log -t CloudMeWeb WALK_MARK; sleep 1; }
 shot() { $T adb exec-out screencap -p > "$OUT/precache-1957-$1.png"; echo "shot $1"; }
-img_wait() { for _ in $(seq 1 40); do wlog | grep -q "IMG_CHECK page=$1 " && return 0; sleep 2; done; return 1; }
+img_wait() { for _ in $(seq 1 40); do grep -q "IMG_CHECK page=$1 " <<<"$(wlog)" && return 0; sleep 2; done; return 1; }
 pip install --quiet pillow >/dev/null 2>&1 || true
 
 # the pages: every https web page of Pers and Prof, from the page declarations
@@ -64,7 +64,7 @@ if [ "${HARVEST:-on}" = off ]; then $T adb shell "mkdir -p /data/data/$ME/files 
 emu_alive() { $T adb get-state 2>&1 | tr -d '\r'; }
 t0=$(date +%s); launch
 NP=$(echo "$PAGES" | grep -c .)
-for _ in $(seq 1 $((WAIT_S / 10))); do wlog | grep -q "^CACHE_TOTAL" && break; wlog | grep -E "^CACHE_(PROGRESS|FETCH)" | tail -1; liveall | grep -a -E "FATAL EXCEPTION|ANR in|Process com.diegonmarcos.cloudme .*died" | tail -2; echo "emulator: $(emu_alive) at $(date +%T)"; liveall > "$LIVE"; sleep 10; done
+for _ in $(seq 1 $((WAIT_S / 10))); do grep -q "^CACHE_TOTAL" <<<"$(wlog)" && break; wlog | grep -E "^CACHE_(PROGRESS|FETCH)" | tail -1; liveall | grep -a -E "FATAL EXCEPTION|ANR in|Process com.diegonmarcos.cloudme .*died" | tail -2; echo "emulator: $(emu_alive) at $(date +%T)"; liveall > "$LIVE"; sleep 10; done
 liveall | grep -a -E "FATAL EXCEPTION|ANR in|has died|OutOfMemory" -A12 | cut -c1-240 > "$OUT/crashes.txt"; [ -s "$OUT/crashes.txt" ] && { echo "app crashes:"; head -40 "$OUT/crashes.txt"; }
 el=$(( $(date +%s) - t0 ))
 wlog | grep -E "^CACHE_(PAGE|TOTAL|FETCH|HARVEST|VERSION|PROGRESS)" > "$OUT/cache-report.txt"
@@ -89,7 +89,7 @@ lit="url=$(printf '%s' "$AURL" | sed 's/:/\\:/')"
 old=$(( ($(date +%s) - 8 * 86400) * 1000 ))
 $T adb shell "m=\$(grep -lxF '$lit' $CACHE/$AGED/*.meta | head -1); sed -i 's/^fetchedAt=.*/fetchedAt=$old/' \"\$m\"; grep fetchedAt \"\$m\"" | tee "$OUT/aged.txt"
 $T adb shell am force-stop "$ME"; clear_log; launch
-for _ in $(seq 1 60); do wlog | grep -q "^CACHE_TOTAL" && break; sleep 5; done
+for _ in $(seq 1 60); do grep -q "^CACHE_TOTAL" <<<"$(wlog)" && break; sleep 5; done
 wlog | grep -E "^CACHE_FETCH|^CACHE_TOTAL" | tee "$OUT/restart-fetch.txt"
 grep -q "^CACHE_FETCH page=$AGED action=refetch result=replaced" "$OUT/restart-fetch.txt" && ok "2a: the aged page $AGED was refetched and replaced" || fail "2a: $AGED not refetched+replaced"
 NS=$(grep -c "^CACHE_FETCH .*action=skip" "$OUT/restart-fetch.txt"); NO=$(grep "^CACHE_FETCH" "$OUT/restart-fetch.txt" | grep -v "page=$AGED " | grep -vc "action=skip" ; true)
@@ -101,16 +101,16 @@ $T adb shell cmd connectivity airplane-mode enable; $T adb shell svc wifi disabl
 clear_log; open_route "page:pers/personal"; img_wait personal; sleep 3; shot airplane-personal
 wlog | grep -E "page=personal |SW_REQUEST" > "$OUT/airplane-personal.txt"; L=$(grep "IMG_CHECK page=personal " "$OUT/airplane-personal.txt" | tail -1); echo "$L"
 grep -E "IMG_BROKEN|SUBRES_" "$OUT/airplane-personal.txt" | head -40
-echo "$L" | grep -qE 'images_broken="[0-9]+ 0 ' && ok "3a: Personal offline, 0 broken images: $L" || fail "3a: Personal offline has broken images: $L"
-echo "$L" | grep -q "webgl=true" && echo "$L" | grep -qE "hero=[1-9][0-9]*x[1-9]" && ok "3b: the WebGL banner canvas is drawn ($L)" || fail "3b: WebGL banner missing: $L"
+grep -qE 'images_broken="[0-9]+ 0 ' <<<"$L" && ok "3a: Personal offline, 0 broken images: $L" || fail "3a: Personal offline has broken images: $L"
+grep -q "webgl=true" <<<"$L" && grep -qE "hero=[1-9][0-9]*x[1-9]" <<<"$L" && ok "3b: the WebGL banner canvas is drawn ($L)" || fail "3b: WebGL banner missing: $L"
 grep -q "MAINFRAME_SOURCE page=personal source=cache" "$OUT/airplane-personal.txt" && ok "3c: Personal's main frame came from the app cache" || fail "3c: Personal's main frame not from the cache"
-python3 "$HERE/render_check.py" pixels "$OUT/precache-1957-airplane-personal.png" | tee -a "$OUT/verdict.txt" | grep -q '^PASS' || rc=1
+grep -q '^PASS' <<<"$(python3 "$HERE/render_check.py" pixels "$OUT/precache-1957-airplane-personal.png" | tee -a "$OUT/verdict.txt")" || rc=1
 for id in $(echo "$PAGES" | awk '$2!="personal"{print $2}' | head -3); do
     sec=$(echo "$PAGES" | awk -v a="$id" '$2==a{print $1}')
     clear_log; open_route "page:$sec/$id"; img_wait "$id"; sleep 2; shot "airplane-$id"
     wlog | grep "page=$id " > "$OUT/airplane-$id.txt"
     if grep -q "MAINFRAME_ERROR page=$id " "$OUT/airplane-$id.txt"; then fail "3d: $id shows an error offline"; else ok "3d: $id opened offline: $(grep IMG_CHECK "$OUT/airplane-$id.txt" | tail -1)"; fi
-    python3 "$HERE/render_check.py" pixels "$OUT/precache-1957-airplane-$id.png" | tee -a "$OUT/verdict.txt" | grep -q '^PASS' || rc=1
+    grep -q '^PASS' <<<"$(python3 "$HERE/render_check.py" pixels "$OUT/precache-1957-airplane-$id.png" | tee -a "$OUT/verdict.txt")" || rc=1
 done
 $T adb shell cmd connectivity airplane-mode disable; $T adb shell svc wifi enable; $T adb shell svc data enable
 liveall > "$LIVE"

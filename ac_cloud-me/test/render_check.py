@@ -34,16 +34,16 @@ def projhome(png, xml):
     for n in re.findall(r"<node [^>]*>", x):
         b = bounds(n)
         if not b: continue
-        if 'class="android.widget.ImageView"' in n: biggest = max(biggest, b[3] - b[1])
+        if 'class="android.widget.ImageView"' in n or 'content-desc="banner:' in n: biggest = max(biggest, b[3] - b[1])
         t = re.search(r'text="([^"]+)"', n)
         if t and b[1] > h * 0.20 and b[3] <= h and b[3] - b[1] < h * 0.2: texts += 1
     frac = biggest / h
     # the pixels under a banner: the strip just below the first banner's layout bounds, at the left edge of the grid (no tile is there), must be the page background,
-    # not the banner's image (an ImageView with CENTER_CROP paints past its bounds unless it clips; the layout bounds alone cannot show it)
+    # not the banner's image (a center-cropped banner (a Compose canvas, formerly an ImageView) paints past its bounds unless it clips; the layout bounds alone cannot show it)
     im = Image.open(png).convert("RGB"); overdraw = 0.0; strips = 0
     for n in re.findall(r"<node [^>]*>", x):
         b = bounds(n)
-        if b and 'class="android.widget.ImageView"' in n and b[3] + 70 < im.size[1] * 0.9:
+        if b and ('class="android.widget.ImageView"' in n or 'content-desc="banner:' in n) and b[3] + 70 < im.size[1] * 0.9:
             ls = [luma(im.getpixel((px, py))) for px in range(b[0] + 8, b[0] + 28, 2) for py in range(b[3] + 8, b[3] + 60, 4)]
             bg = [luma(im.getpixel((6, py))) for py in range(b[3] + 8, b[3] + 60, 4)]
             ref = sum(bg) / len(bg); strips += 1

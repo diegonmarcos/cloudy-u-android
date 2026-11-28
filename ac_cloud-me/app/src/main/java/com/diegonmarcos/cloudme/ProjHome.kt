@@ -24,6 +24,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -88,15 +90,18 @@ object ProjTileIcons {
 }
 
 /**
- * #1937 ROOT CAUSE of the Home banners covering the page: the banner is an ImageView with CENTER_CROP, which scales the image to COVER the 140dp box and so draws past it;
- * the Compose AndroidView host does not clip its child, so the overflow was painted over the group headers and the project tiles (the layout said 140dp, the pixels 600dp+).
- * The view clips its own drawing to its bounds.
+ * #1937 ROOT CAUSE of the Home banners covering the page: a CENTER_CROP image covers its 140dp box and so draws past it, over the group headers and the project tiles.
+ * The banner is drawn in Compose (no View): the canvas clips to its own bounds, then the drawable is scaled to cover the box and centred (center-crop).
  */
-class BannerImageView(c: android.content.Context) : android.widget.ImageView(c) {
-    override fun onDraw(canvas: android.graphics.Canvas) {
-        canvas.save(); canvas.clipRect(0, 0, width, height)
-        try { super.onDraw(canvas) } finally { canvas.restore() }
-    }
+fun drawBannerCropped(canvas: android.graphics.Canvas, d: android.graphics.drawable.Drawable, width: Int, height: Int) {
+    val iw = d.intrinsicWidth.coerceAtLeast(1); val ih = d.intrinsicHeight.coerceAtLeast(1)
+    val scale = maxOf(width.toFloat() / iw, height.toFloat() / ih)
+    val dw = iw * scale; val dh = ih * scale
+    canvas.save(); canvas.clipRect(0, 0, width, height)
+    try {
+        canvas.translate((width - dw) / 2f, (height - dh) / 2f)
+        d.setBounds(0, 0, dw.toInt(), dh.toInt()); d.draw(canvas)
+    } finally { canvas.restore() }
 }
 
 /** Where a banner is read and decoded: IO in the app; a render test provides the composition's own context, so no state is produced off its thread (#1937 a Robolectric run hit 'recordModificationsOf and applyChanges concurrently'). */
@@ -119,11 +124,25 @@ private fun BannerImage(entry: ProjBanners.Entry, title: String, tag: String) {
         ) { Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold) }
         return
     }
-    androidx.compose.ui.viewinterop.AndroidView(
-        modifier = Modifier.fillMaxWidth().height(ProjBanners.HEIGHT_DP.dp).clip(RoundedCornerShape(12.dp)).testTag(tag),
-        factory = { c -> BannerImageView(c).apply { scaleType = android.widget.ImageView.ScaleType.CENTER_CROP } },
-        update = { v -> v.setImageDrawable(drawable); (drawable as? android.graphics.drawable.AnimatedImageDrawable)?.start() },
-    )
+    // a drawable that animates (AnimatedImageDrawable) asks its callback to redraw and to schedule its next frame: a state tick redraws the canvas
+    val tick = androidx.compose.runtime.remember(drawable) { androidx.compose.runtime.mutableIntStateOf(0) }
+    androidx.compose.runtime.DisposableEffect(drawable) {
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        drawable.callback = object : android.graphics.drawable.Drawable.Callback {
+            override fun invalidateDrawable(who: android.graphics.drawable.Drawable) { tick.intValue++ }
+            override fun scheduleDrawable(who: android.graphics.drawable.Drawable, what: Runnable, whenMs: Long) { handler.postAtTime(what, who, whenMs) }
+            override fun unscheduleDrawable(who: android.graphics.drawable.Drawable, what: Runnable) { handler.removeCallbacks(what, who) }
+        }
+        (drawable as? android.graphics.drawable.AnimatedImageDrawable)?.start()
+        onDispose { (drawable as? android.graphics.drawable.AnimatedImageDrawable)?.stop(); drawable.callback = null; handler.removeCallbacksAndMessages(drawable) }
+    }
+    androidx.compose.foundation.Canvas(
+        modifier = Modifier.fillMaxWidth().height(ProjBanners.HEIGHT_DP.dp).clip(RoundedCornerShape(12.dp)).testTag(tag)
+            .semantics { contentDescription = "banner:$title" },
+    ) {
+        tick.intValue
+        androidx.compose.ui.graphics.drawscope.drawIntoCanvas { drawBannerCropped(it.nativeCanvas, drawable, size.width.toInt(), size.height.toInt()) }
+    }
 }
 
 object ProjHomeTags {

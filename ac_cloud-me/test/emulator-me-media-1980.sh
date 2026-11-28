@@ -43,7 +43,7 @@ walk_tab() {  # ID URLREGEX STATE ; the app is (re)started by the caller
     open_route "page:pers/$id"; sleep 25
     while [ $tries -lt 14 ]; do res=$(evalweb "$re" fullscroll 2>>"$OUT/eval.err") && break; tries=$((tries+1)); sleep 8; done
     echo "$id $state: $res" >> "$OUT/results.txt"
-    if [ -z "$res" ] || ! echo "$res" | grep -q '"total"'; then fail "$id $state: no answer from the page WebView ($res)"; return; fi
+    if [ -z "$res" ] || ! grep -q '"total"' <<<"$res"; then fail "$id $state: no answer from the page WebView ($res)"; return; fi
     local total broken pending ph vid url
     total=$(echo "$res" | node -e 'const d=JSON.parse(require("fs").readFileSync(0,"utf8"));console.log([d.total,d.broken,d.pending,d.placeholders,d.videoAsImg,d.url].join("|"))')
     IFS='|' read -r total broken pending ph vid url <<<"$total"

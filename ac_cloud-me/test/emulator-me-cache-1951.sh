@@ -42,7 +42,7 @@ echo "$PAGES" > "$OUT/pages.txt"; echo "pages: $(echo "$PAGES" | wc -l)"
 # 1. prefetch of all pages
 $T adb logcat -c
 open_route "page:configs/general"
-for i in $(seq 1 "${TOTAL_POLLS:-540}"); do wlog | grep -q "CACHE_TOTAL" && break; sleep 5; done   # #1957 the startup job covers every file of every page: up to 45 min, warm opens are measured after it
+for i in $(seq 1 "${TOTAL_POLLS:-540}"); do grep -q "CACHE_TOTAL" <<<"$(wlog)" && break; sleep 5; done   # #1957 the startup job covers every file of every page: up to 45 min, warm opens are measured after it
 wlog | grep -E "CACHE_PAGE|CACHE_TOTAL" | sed 's/.*CloudMeWeb: //' | sort -u > "$OUT/cache-report.txt"
 cat "$OUT/cache-report.txt"
 $T adb shell "du -sk /data/data/$ME/cache/lnktree-cache; du -sk /data/data/$ME/cache/lnktree-cache/*" > "$OUT/cache-du.txt" 2>&1 || true
@@ -81,7 +81,7 @@ while read -r sec id url <&3; do
     [ -n "$id" ] || continue
     $T adb shell am force-stop "$ME"; $T adb shell "rm -rf $CACHE/$id /data/data/$ME/app_webview"
     measure "$sec" "$id" cold; cms=$MS; csrc=$SRC; sleep 2; { [ "$id" = personal ] || [ "$id" = prof-professional ]; } && shot "cold-$id"
-    for _ in $(seq 1 30); do wlog | grep -q "LIVE_CHECK page=$id " && break; sleep 2; done
+    for _ in $(seq 1 30); do grep -q "LIVE_CHECK page=$id " <<<"$(wlog)" && break; sleep 2; done
     read -r wms wsrc < "$OUT/warm-$id.txt"
     echo "| $sec | $id | $wms | $wsrc | $cms | $csrc |" | tee -a "$OUT/timings.md"
 done 3<<<"$PAGES" >> "$OUT/walk.log" 2>&1
@@ -95,7 +95,7 @@ $T adb shell "m=\$(grep -lxF '$lit' $CACHE/$id/*.meta | head -1); echo \"\${m%.m
 BODY=$($T adb shell cat /data/local/tmp/body1951 | tr -d '\r'); echo "tampered $BODY"
 $T adb shell grep -c cache1951-tamper "$BODY" | tee "$OUT/tamper-before.txt"
 measure prof prof-professional swap; shot "swap-first-paint"
-for _ in $(seq 1 30); do wlog | grep -q "LIVE_SWAPPED page=prof-professional" && break; sleep 2; done
+for _ in $(seq 1 30); do grep -q "LIVE_SWAPPED page=prof-professional" <<<"$(wlog)" && break; sleep 2; done
 wlog | grep -E "LIVE_CHECK page=prof-professional|LIVE_SWAPPED page=prof-professional" | sed 's/.*CloudMeWeb: //' | tee "$OUT/swap.log"
 sleep 3; shot "swap-after"
 grep -qE "LIVE_CHECK page=prof-professional changed=[1-9]" "$OUT/swap.log" && ok "4a: the live check found the changed page" || fail "4a: no LIVE_CHECK changed>=1"
@@ -108,8 +108,8 @@ $T adb shell cmd connectivity airplane-mode enable; $T adb shell svc wifi disabl
 pip install --quiet pillow >/dev/null 2>&1 || true
 for p in "pers personal" "prof prof-professional" "prof leafy"; do
     set -- $p; measure "$1" "$2" airplane; sleep 4; shot "airplane-$2"
-    if wlog | grep -q "MAINFRAME_ERROR page=$2 "; then fail "5: $2 shows an error in airplane mode"; else ok "5: $2 opened in airplane mode, first paint ${MS} ms, source=$SRC"; fi
-    python3 "$HERE/render_check.py" pixels "$OUT/cache-1951-airplane-$2.png" | tee -a "$OUT/verdict.txt" | grep -q '^PASS' || rc=1
+    if grep -q "MAINFRAME_ERROR page=$2 " <<<"$(wlog)"; then fail "5: $2 shows an error in airplane mode"; else ok "5: $2 opened in airplane mode, first paint ${MS} ms, source=$SRC"; fi
+    grep -q '^PASS' <<<"$(python3 "$HERE/render_check.py" pixels "$OUT/cache-1951-airplane-$2.png" | tee -a "$OUT/verdict.txt")" || rc=1
 done
 $T adb shell cmd connectivity airplane-mode disable; $T adb shell svc wifi enable; $T adb shell svc data enable
 

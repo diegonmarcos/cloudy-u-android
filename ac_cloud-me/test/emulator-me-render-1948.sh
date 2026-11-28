@@ -31,7 +31,7 @@ done
 { $T adb shell ping -c 2 -W 3 diegonmarcos.github.io; $T adb shell ping -c 2 -W 3 linktree.diegonmarcos.com; } > "$OUT/ping.txt" 2>&1 || true
 waitweb() {  # PAGE_ID: seconds until the page's main frame reports OK or an error (max 30)
     local t=0; while [ $t -lt 30 ]; do
-        $T adb logcat -d -s CloudMeWeb:V | grep -qE "MAINFRAME_(OK|ERROR|HTTP) page=$1 " && break; sleep 6; t=$((t+6)); done
+        grep -qE "MAINFRAME_(OK|ERROR|HTTP) page=$1 " <<<"$($T adb logcat -d -s CloudMeWeb:V)" && break; sleep 6; t=$((t+6)); done
     echo "web $1 main-frame verdict after ${t}s: $($T adb logcat -d -s CloudMeWeb:V | grep -E "MAINFRAME_.* page=$1 " | tail -1 | cut -c1-200)" | tee -a "$OUT/web.txt"
 }
 $T adb logcat -c
