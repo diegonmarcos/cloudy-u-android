@@ -2710,6 +2710,11 @@ private fun SwipeableEmailRow(
                 }
             },
         ) {
+            // #1952 jank probe: where a row's composition goes (no try/finally around composable calls)
+            val timelineStart = app.sterna.ui.JankProbe.begin("row.timeline")
+            val timeline = rememberSentDeliveryTimeline(email, sentDelivery)
+            app.sterna.ui.JankProbe.end("row.timeline", timelineStart)
+            val itemStart = app.sterna.ui.JankProbe.begin("row.item")
             EmailListItem(
                 email = email,
                 onClick = onClick,
@@ -2732,8 +2737,9 @@ private fun SwipeableEmailRow(
                 onOpenAttachment = onOpenAttachment,
                 openingAttachmentKey = openingAttachmentKey,
                 onLoadMessage = onLoadMessage,
-                deliveryTimeline = rememberSentDeliveryTimeline(email, sentDelivery),
+                deliveryTimeline = timeline,
             )
+            app.sterna.ui.JankProbe.end("row.item", itemStart)
         }
     }
 }

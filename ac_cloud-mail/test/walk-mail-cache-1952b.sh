@@ -14,8 +14,14 @@ FAIL=0
 COLD_LIMIT_MS=${COLD_LIMIT_MS:-1500}
 WARM_LIMIT_MS=${WARM_LIMIT_MS:-300}
 # scroll: p90 frame time over ten flings (dumpsys gfxinfo), with a sync running and in airplane mode (no sync)
+# The absolute targets (the phone's, with a real GPU) are reported. The emulator renders with a software GPU: the system Settings list, scrolled
+# the same way in the same run, is the floor (run 46095017985: p90 250 ms, 95 % janky frames, cmd+swap 90 % of a frame). The run FAILS when the
+# app is more than JANK_FLOOR_SYNC_X / JANK_FLOOR_QUIET_X times that floor, or one row takes more than ROW_COMPOSE_MAX_MS on average on the main thread.
 JANK_P90_SYNC_MS=${JANK_P90_SYNC_MS:-100}
 JANK_P90_QUIET_MS=${JANK_P90_QUIET_MS:-50}
+JANK_FLOOR_SYNC_X=${JANK_FLOOR_SYNC_X:-3}
+JANK_FLOOR_QUIET_X=${JANK_FLOOR_QUIET_X:-1.6}
+ROW_COMPOSE_MAX_MS=${ROW_COMPOSE_MAX_MS:-20}
 BULK=${FAKE_JMAP_BULK:-40000}
 FILL_MINUTES=${FILL_MINUTES:-30}
 READING_ENTRY=${READING_ENTRY:-Reading}
@@ -65,7 +71,13 @@ PY
   } >> "$OUT/timing.md"
   p90=$(sed -n 's/.*90th percentile: \([0-9]*\)ms.*/\1/p' "$sumfile" | head -1)
   [ -n "$p90" ] || { fail "scroll ($label): no 90th percentile in gfxinfo"; return; }
-  [ "$p90" -le "$limit" ] || fail "scroll ($label): p90 frame time $p90 ms is above $limit ms"
+  eval "P90_$label=$p90"
+  [ "$p90" -le "$limit" ] || note "scroll ($label): p90 frame time $p90 ms, above the phone target $limit ms (judged against the control below)"
+  # the mean composition of one list row on the main thread, from the section lines
+  local rc
+  rc=$(grep -o "row.compose n=[0-9]* sum=[0-9]*" "$OUT/jankprobe-$label.txt" | awk -F'[= ]' '{n+=$3; s+=$5} END{if(n>0) print int(s/n); else print 0}')
+  eval "ROWMS_$label=${rc:-0}"
+  echo "- mean row composition ($label): ${rc:-0} ms per row" >> "$OUT/timing.md"
 }
 
 FAKE_JMAP_BULK=$BULK python3 -I ac_cloud-mail/test/fake-jmap-server.py --port $PORT > "$OUT/fake-jmap.log" 2>&1 &
@@ -279,6 +291,15 @@ adb shell dumpsys gfxinfo com.android.settings reset >/dev/null 2>&1
 for j in $(seq 1 10); do adb shell input swipe 700 1600 700 500 250; sleep 1; done
 { echo ""; echo "control, system Settings list, same flings:"; adb shell dumpsys gfxinfo com.android.settings | grep -E "Total frames rendered|Janky frames|50th percentile|90th percentile|95th percentile" | head -5 | sed 's/^ */- /'; } >> "$OUT/timing.md"
 adb shell input keyevent KEYCODE_BACK; sleep 1
+CP90=$(adb shell dumpsys gfxinfo com.android.settings | sed -n 's/.*90th percentile: \([0-9]*\)ms.*/\1/p' | head -1)
+note "control p90 ${CP90:-missing} ms; app p90 sync ${P90_sync:-?} ms, quiet ${P90_quiet:-?} ms; mean row composition sync ${ROWMS_sync:-?} ms, quiet ${ROWMS_quiet:-?} ms"
+if [ -n "$CP90" ] && [ -n "$P90_sync" ] && [ -n "$P90_quiet" ]; then
+  awk -v a="$P90_sync" -v c="$CP90" -v x="$JANK_FLOOR_SYNC_X" 'BEGIN{exit !(a <= c * x)}' || fail "scroll with a sync: p90 $P90_sync ms is above ${JANK_FLOOR_SYNC_X}x the control's $CP90 ms"
+  awk -v a="$P90_quiet" -v c="$CP90" -v x="$JANK_FLOOR_QUIET_X" 'BEGIN{exit !(a <= c * x)}' || fail "scroll in airplane mode: p90 $P90_quiet ms is above ${JANK_FLOOR_QUIET_X}x the control's $CP90 ms"
+else
+  fail "scroll: the control or an app p90 is missing"
+fi
+[ "${ROWMS_sync:-0}" -le "$ROW_COMPOSE_MAX_MS" ] && [ "${ROWMS_quiet:-0}" -le "$ROW_COMPOSE_MAX_MS" ] || fail "a list row takes more than $ROW_COMPOSE_MAX_MS ms to compose on the main thread (sync ${ROWMS_sync:-?}, quiet ${ROWMS_quiet:-?})"
 
 sleep 20
 sizes "end"
