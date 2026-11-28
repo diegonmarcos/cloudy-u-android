@@ -306,8 +306,11 @@ if [ "$T" = all ] || [ "$T" = 1983 ]; then
   open_page ops_health_tests; sleep 2; shot c3-1983-tests-open 6
   tap_text c3-1983-tests-open "C3 full"; shot c3-1983-xray-c3-full 4
   chk c3-1983-xray-c3-full "fed_by,X-ray"
-  # the cards added by the owner check (security audits, cgc surfaces, vm-pilotd, CrowdSec, the lint workflows, the shell scripts' engines): the whole list, two swipes per screen
-  for n in 2 4 6 8 10 12 14 16 18 20; do eng_open c3-1983-e$n; scroll $n; shot c3-1983-cards-scroll-$n 3; done
+  # the cards added by the owner check (security audits, cgc surfaces, vm-pilotd, CrowdSec, the lint workflows, the shell scripts' engines): the whole list, one swipe per half screen
+  for n in 1 2 3 4 5; do eng_open c3-1983-e$n; scroll $n; shot c3-1983-cards-scroll-$n 3; done
+  chk c3-1983-cards-scroll-2 "leak-scan.yml,lint-secrets-coverage.yml,audit-credentials-coverage.sh,cloud-cgc-verify-surfaces.sh,[gha],[shell]"
+  chk c3-1983-cards-scroll-3 "vm-pilotd-test.yml,infra-sec_crowdsec"
+  chk c3-1983-cards-scroll-4 "lint-agent-credential.yml,lint-pipeline.yml,cloud-run-verify.yml"
   # the no-token reason is a tap target: it opens Cloud Account at Config import (or says why it could not)
   eng_open c3-1983-nt; shot c3-1983-cards-notoken-before 2
   tap_text c3-1983-cards-notoken-before "no verdict: device"; shot c3-1983-cards-notoken-tap 2
