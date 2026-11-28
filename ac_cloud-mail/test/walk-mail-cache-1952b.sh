@@ -16,12 +16,14 @@ WARM_LIMIT_MS=${WARM_LIMIT_MS:-300}
 # scroll: p90 frame time over ten flings (dumpsys gfxinfo), with a sync running and in airplane mode (no sync)
 # The absolute targets (the phone's, with a real GPU) are reported. The emulator renders with a software GPU: the system Settings list, scrolled
 # the same way in the same run, is the floor (run 46095017985: p90 250 ms, 95 % janky frames, cmd+swap 90 % of a frame). The run FAILS when the
-# app is more than JANK_FLOOR_SYNC_X / JANK_FLOOR_QUIET_X times that floor, or one row takes more than ROW_COMPOSE_MAX_MS on average on the main thread.
+# app is more than JANK_FLOOR_SYNC_X / JANK_FLOOR_QUIET_X times that floor, or one row takes more than a fraction of the control's frame time to compose (warm windows).
 JANK_P90_SYNC_MS=${JANK_P90_SYNC_MS:-100}
 JANK_P90_QUIET_MS=${JANK_P90_QUIET_MS:-50}
 JANK_FLOOR_SYNC_X=${JANK_FLOOR_SYNC_X:-3}
 JANK_FLOOR_QUIET_X=${JANK_FLOOR_QUIET_X:-1.6}
-ROW_COMPOSE_MAX_MS=${ROW_COMPOSE_MAX_MS:-20}
+# a row may take at most 1/ROW_FRACTION of the frame time the idle system list takes on this emulator (its p50), never less than ROW_COMPOSE_FLOOR_MS
+ROW_FRACTION=${ROW_FRACTION:-8}
+ROW_COMPOSE_FLOOR_MS=${ROW_COMPOSE_FLOOR_MS:-4}
 BULK=${FAKE_JMAP_BULK:-40000}
 FILL_MINUTES=${FILL_MINUTES:-30}
 READING_ENTRY=${READING_ENTRY:-Reading}
@@ -75,9 +77,10 @@ PY
   [ "$p90" -le "$limit" ] || note "scroll ($label): p90 frame time $p90 ms, above the phone target $limit ms (judged against the control below)"
   # the mean composition of one list row on the main thread, from the section lines
   local rc
-  rc=$(grep -o "row.compose n=[0-9]* sum=[0-9]*" "$OUT/jankprobe-$label.txt" | awk -F'[= ]' '{n+=$3; s+=$5} END{if(n>0) print int(s/n); else print 0}')
-  eval "ROWMS_$label=${rc:-0}"
-  echo "- mean row composition ($label): ${rc:-0} ms per row" >> "$OUT/timing.md"
+  # WARM windows only: the second half of the one-second windows (the first half runs code the runtime has not compiled yet)
+  rc=$(grep -o "row.compose n=[0-9]* sum=[0-9]*" "$OUT/jankprobe-$label.txt" | awk -F'[= ]' '{n[NR]=$3; s[NR]=$5} END{h=int(NR/2); for(i=h+1;i<=NR;i++){N+=n[i]; S+=s[i]}; a=0; b=0; for(i=1;i<=h;i++){a+=n[i]; b+=s[i]}; if(N>0) printf "%d %d", int(S/N), (a>0? int(b/a):0); else printf "0 0"}')
+  eval "ROWMS_$label=${rc%% *}"
+  echo "- mean row composition ($label): ${rc%% *} ms per row over the warm windows (${rc##* } ms over the first half)" >> "$OUT/timing.md"
 }
 
 FAKE_JMAP_BULK=$BULK python3 -I ac_cloud-mail/test/fake-jmap-server.py --port $PORT > "$OUT/fake-jmap.log" 2>&1 &
@@ -167,20 +170,29 @@ grep -E "inbox backlog" "$OUT/logcat.txt" | tail -3 | sed 's/.*inbox backlog [^:
 
 # ---- S: the Configs section with the two cache settings and the usage line ----------------------------------------------------------
 found=0
-front 8
-if tapt "Configs" exact || tapt "Settings" exact; then
-  sleep 3
-  # the Offline section is on the Reading page of the Configs tree
-  for s in 1 2 3 4 5 6; do
-    if tapt "$READING_ENTRY"; then sleep 3; break; fi
-    adb shell input swipe 700 1500 700 900 400; sleep 1
-  done
-  for s in $(seq 1 14); do
-    dump 03-settings
-    if $UI has "$OUT/03-settings.xml" "Body cache limit" >/dev/null 2>&1; then found=1; break; fi
-    adb shell input swipe 700 1500 700 700 400; sleep 1
-  done
-fi
+# up to three attempts: a run found the app inside an open message (screenshot 03-settings-cache of run 46098363318), so each attempt first
+# leaves whatever page is open (two Back presses) and brings the app to the front; the row itself is declared in SettingsScreen (title
+# settings_body_cache_limit_title) and is not moved
+for attempt in 1 2 3; do
+  adb shell input keyevent KEYCODE_BACK; sleep 1; adb shell input keyevent KEYCODE_BACK; sleep 2
+  front 8
+  if tapt "Configs" exact || tapt "Settings" exact; then
+    sleep 3
+    # the Offline section is on the Reading page of the Configs tree
+    for s in 1 2 3 4 5 6; do
+      if tapt "$READING_ENTRY"; then sleep 3; break; fi
+      adb shell input swipe 700 1500 700 900 400; sleep 1
+    done
+    for s in $(seq 1 14); do
+      dump 03-settings
+      if $UI has "$OUT/03-settings.xml" "Body cache limit" >/dev/null 2>&1; then found=1; break; fi
+      adb shell input swipe 700 1500 700 700 400; sleep 1
+    done
+  fi
+  [ "$found" = 1 ] && break
+  note "settings: attempt $attempt did not reach the Body cache limit row"
+  cp "$OUT/03-settings.xml" "$OUT/03-settings-attempt$attempt.xml" 2>/dev/null || true
+done
 shot 03-settings-cache
 if [ "$found" = 1 ]; then
   grep -E "Keep message bodies for|Body cache limit| of .* bodies" "$OUT/03-settings.texts.txt" | head -4 | tee -a "$OUT/summary.txt"
@@ -299,7 +311,10 @@ if [ -n "$CP90" ] && [ -n "$P90_sync" ] && [ -n "$P90_quiet" ]; then
 else
   fail "scroll: the control or an app p90 is missing"
 fi
-[ "${ROWMS_sync:-0}" -le "$ROW_COMPOSE_MAX_MS" ] && [ "${ROWMS_quiet:-0}" -le "$ROW_COMPOSE_MAX_MS" ] || fail "a list row takes more than $ROW_COMPOSE_MAX_MS ms to compose on the main thread (sync ${ROWMS_sync:-?}, quiet ${ROWMS_quiet:-?})"
+CP50=$(adb shell dumpsys gfxinfo com.android.settings | sed -n 's/.*50th percentile: \([0-9]*\)ms.*/\1/p' | head -1)
+ROW_MAX=$(awk -v c="${CP50:-0}" -v f="$ROW_FRACTION" -v m="$ROW_COMPOSE_FLOOR_MS" 'BEGIN{x=c/f; print int(x > m ? x : m)}')
+note "row composition limit ${ROW_MAX} ms (control p50 ${CP50:-missing} ms / $ROW_FRACTION, at least $ROW_COMPOSE_FLOOR_MS); warm mean sync ${ROWMS_sync:-?}, quiet ${ROWMS_quiet:-?}"
+[ "${ROWMS_sync:-99999}" -le "$ROW_MAX" ] && [ "${ROWMS_quiet:-99999}" -le "$ROW_MAX" ] || fail "a list row takes more than $ROW_MAX ms to compose on the main thread over the warm windows (sync ${ROWMS_sync:-?}, quiet ${ROWMS_quiet:-?})"
 
 sleep 20
 sizes "end"

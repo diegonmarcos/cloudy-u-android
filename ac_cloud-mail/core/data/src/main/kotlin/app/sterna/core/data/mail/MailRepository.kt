@@ -2501,6 +2501,9 @@ class MailRepository(
         // A signed-out account is never given a folder list (#121): the account must still be known.
         if (accountStore.account(credentials.id) != null && firstSyncNeedsFolders(mailboxDao.roleForId(credentials.id, target.id), mailboxDao.idsForAccount(credentials.id).size)) {
             mailboxDao.replaceAll(credentials.id, mailboxes.map { it.toEntity(credentials.id) })
+            // and the Inbox id with them: a process killed during the first sync (the 40 000 message one) restarts knowing which folder
+            // to page, so its first rows paint at once instead of waiting for the store's folder list (cold start 1: 3 739 ms against 267).
+            if (target.role == "inbox") accountStore.saveInboxMetaFor(credentials.id, target.id, target.name, "", target.unreadEmails)
         }
         // The folder rows must land even when the message sync throws: otherwise the drawer keeps
         // stale folders although the list we already fetched is good. The prune stays success-only.

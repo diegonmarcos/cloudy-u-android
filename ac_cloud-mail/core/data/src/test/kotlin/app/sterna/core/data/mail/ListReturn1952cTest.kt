@@ -105,6 +105,8 @@ class ListReturn1952cTest {
         val early = repo.indexOfFirst { it.startsWith("if (accountStore.account(credentials.id) != null && firstSyncNeedsFolders(mailboxDao.roleForId(credentials.id, target.id)") } // a signed-out account is never given a folder list (#121)
         val sync = repo.indexOfFirst { it.startsWith("val sync = runCatching { syncMailbox(session, accountId, auth, target.id, sizing, credentials.id) }") }
         assertTrue("before the message sync starts", early in 0 until sync)
+        val remembered = repo.indexOfFirst { it.startsWith("if (target.role == \"inbox\") accountStore.saveInboxMetaFor(credentials.id, target.id, target.name") }
+        assertTrue("the Inbox id is remembered with the early folder write, so a restart mid-sync knows its folder", remembered in early + 1 until sync)
     }
 
     // -- cold start: one key ----------------------------------------------------------------------------------------
