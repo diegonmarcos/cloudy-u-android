@@ -66,10 +66,14 @@ W="${W:-1080}"; H="${H:-2400}"
 
 # #1985: Configs > X-Ray > Export All with NO adb: answer the ADB prompt with "Export partial", then pull the files.
 scroll_to() {
-    for i in $(seq 1 70); do
-        dump cur
-        if grep -qE "text=\"$1" "$OUT/cur.xml"; then return 0; fi
-        $T adb shell input swipe $((W / 2)) $((H * 8 / 10)) $((W / 2)) $((H * 2 / 10)) 250; sleep 0.6
+    for dir in down up; do
+        for i in $(seq 1 45); do
+            dump cur
+            if grep -qE "text=\"$1" "$OUT/cur.xml"; then return 0; fi
+            if [ $dir = down ]; then $T adb shell input swipe $((W / 2)) $((H * 7 / 10)) $((W / 2)) $((H * 3 / 10)) 300
+            else $T adb shell input swipe $((W / 2)) $((H * 3 / 10)) $((W / 2)) $((H * 7 / 10)) 300; fi
+            sleep 0.6
+        done
     done
     return 1
 }
@@ -84,6 +88,8 @@ export_one() { # label-regex, scroll-text, tag
     [ $ok = 1 ] || { echo "FAIL $NAME: $3 never reported Saved"; rc=1; }
     grep -oE 'Saved [^"]*' "$OUT/cur.xml" | head -1 | tee -a "$OUT/$NAME-status.txt"
 }
+dump cur; tap_node "$OUT/cur.xml" 'EXPORT ALL' || echo "note: no EXPORT ALL index tile"
+sleep 3; shot export-section 1
 export_one '^Export Markdown for AI' 'Export Markdown for AI' ai
 export_one '^Export Markdown file' 'Export Markdown file' verbose
 mkdir -p "$OUT/files"
