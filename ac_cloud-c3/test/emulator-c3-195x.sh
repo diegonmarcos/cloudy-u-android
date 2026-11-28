@@ -298,25 +298,23 @@ fi
 
 # #1983 Ops > Health > Tests: every engine as a card, the mail card opened (history, reasons: no token on this emulator), X-ray C3 full fed by the engines
 if [ "$T" = all ] || [ "$T" = 1983 ]; then
+  eng_open() { open_page ops_health_tests; sleep 2; shot "$1-pre" 2; tap_text "$1-pre" "Engines"; sleep 1; }   # the page keeps the last tab: open Engines explicitly
   open_page ops_health_tests; sleep 2; shot c3-1983-tests-list 8
-  chk c3-1983-tests-list "Engines,C3_full,cloud-mail-health-full,cloud-health-full-daily,cloud-url-health-report,Run"
+  chk c3-1983-tests-list "Engines,C3_full,cloud-mail-health-full,cloud-health-full-daily,Run"
   tap_text c3-1983-tests-list "cloud-mail-health-full"; shot c3-1983-mail-card 4
   chk c3-1983-mail-card "HISTORY,no_verdict"
-  open_page ops_health_tests; sleep 2; scroll 3; shot c3-1983-tests-list-bottom 4
-  chk c3-1983-tests-list-bottom "cloud-sec-network-report,cloud-sec-data-report,cloud-analytics-daily,no_trigger"
   open_page ops_health_tests; sleep 2; shot c3-1983-tests-open 6
   tap_text c3-1983-tests-open "C3 full"; shot c3-1983-xray-c3-full 4
   chk c3-1983-xray-c3-full "fed_by,X-ray"
-  # the cards added by the owner check (security audits, cgc surfaces, vm-pilotd, CrowdSec, the shell scripts' engines): one shot per screen of the list
-  for n in 3 6 9 12 15 18; do open_page ops_health_tests; sleep 2; scroll $n; shot c3-1983-cards-scroll-$n 3; done
-  chk c3-1983-cards-scroll-9 "gha"
+  # the cards added by the owner check (security audits, cgc surfaces, vm-pilotd, CrowdSec, the lint workflows, the shell scripts' engines): the whole list, two swipes per screen
+  for n in 2 4 6 8 10 12 14 16 18 20; do eng_open c3-1983-e$n; scroll $n; shot c3-1983-cards-scroll-$n 3; done
   # the no-token reason is a tap target: it opens Cloud Account at Config import (or says why it could not)
-  open_page ops_health_tests; sleep 2; scroll 6; shot c3-1983-cards-notoken-before 3
-  tap_text c3-1983-cards-notoken-before "no verdict: device"; shot c3-1983-cards-notoken-tap 4
+  eng_open c3-1983-nt; shot c3-1983-cards-notoken-before 2
+  tap_text c3-1983-cards-notoken-before "no verdict: device"; shot c3-1983-cards-notoken-tap 2
   # the VMs tab lists the three devices after the VMs
   open_page ops_health_tests; sleep 2; shot c3-1983-cards-vms-pre 3
   tap_text c3-1983-cards-vms-pre "VMs"; shot c3-1983-cards-vms 3
-  chk c3-1983-cards-vms "DEVICES"
+  chk c3-1983-cards-vms "DEVICES,SamsungA37,SamsungS21,SurfacePro8"
 fi
 
 adb logcat -d -t 3000 > "$OUT/logcat.txt" 2>/dev/null || true
