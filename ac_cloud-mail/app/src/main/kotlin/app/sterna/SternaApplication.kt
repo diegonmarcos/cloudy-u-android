@@ -384,6 +384,7 @@ class SternaApplication : Application() {
         // metadata file is what gets it compiled at install time).
         container.appScope.launch {
             app.sterna.core.data.mail.ColdStart.awaitRows()
+            runCatching { android.util.Log.i("MailList", "profile-install start") }
             runCatching {
                 androidx.profileinstaller.ProfileInstaller.writeProfile(
                     this@SternaApplication,
@@ -395,7 +396,7 @@ class SternaApplication : Application() {
                         }
                     },
                 )
-            }
+            }.onFailure { runCatching { android.util.Log.w("MailList", "profile-install failed: ${it.javaClass.simpleName}: ${it.message}") } }
         }
         app.sterna.core.data.mail.ColdStart.early("webview-warmup")
     }
