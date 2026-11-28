@@ -261,4 +261,15 @@ jobs:
           PY
       - name: Failed tests
         if: always()
-        run: grep -rl "<failure" --include="TEST-*.xml" ac_cloud-c3/app/build 2>/dev/null | xargs -r grep -h -o 'testcase name="[^"]*"' | head -40 || true
+        run: |
+          grep -rl "<failure" --include="TEST-*.xml" ac_cloud-c3/app/build 2>/dev/null | xargs -r grep -h -o 'testcase name="[^"]*"' | head -40 || true
+          # each failure's message (an assertion's text says which node, page or view broke the guarantee)
+          python3 -I - <<'PY' || true
+          import glob, xml.etree.ElementTree as ET
+          for p in sorted(glob.glob("ac_cloud-c3/app/build/**/TEST-*.xml", recursive=True)):
+              for c in ET.parse(p).getroot().iter("testcase"):
+                  f = c.find("failure")
+                  if f is None: continue
+                  print("== %s > %s" % (c.get("classname", ""), c.get("name", "")))
+                  print((f.get("message") or f.text or "")[:4000])
+          PY
