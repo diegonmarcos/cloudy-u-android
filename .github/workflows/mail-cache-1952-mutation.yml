@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'tab-push | rows-wait-refresh | error-hides-rows | initial-refresh | banner-drops-reason | stamp-on-failure'
+        description: 'tab-push | rows-wait-refresh | error-hides-rows | initial-refresh | banner-drops-reason | stamp-on-failure | row-recomposes-on-sync'
         required: true
 permissions:
   contents: read
@@ -35,6 +35,8 @@ jobs:
             banner-drops-reason) sed -i 's/RefreshNotice.ERROR -> CacheBanner(notice, error, lastSyncAt)/RefreshNotice.ERROR -> CacheBanner(notice, null, lastSyncAt)/' $K/inbox/CacheBanner.kt ;;
             # a failed refresh moves the last sync time too
             stamp-on-failure)    sed -i 's/wasRefreshing \&\& !refreshing \&\& error == null/wasRefreshing \&\& !refreshing/' $K/inbox/CacheBanner.kt ;;
+            # the row takes a parameter that is a new object on every call: it recomposes on every write the item scope reads
+            row-recomposes-on-sync) sed -i 's/^    deliveryTimeline: DeliveryTimeline? = null,$/    deliveryTimeline: DeliveryTimeline? = null,\n    stamp: Any = Any(),/' $K/components/EmailListItem.kt ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
           git diff --stat
@@ -79,7 +81,7 @@ jobs:
         run: |
           cd ac_cloud-mail
           chmod +x gradlew
-          ./gradlew --no-daemon :app:testDebugUnitTest -PtestApp --tests "app.sterna.ui.TabMove1952Test" --tests "app.sterna.ui.inbox.CacheFirst1952Test" || true
+          ./gradlew --no-daemon :app:testDebugUnitTest -PtestApp --tests "app.sterna.ui.TabMove1952Test" --tests "app.sterna.ui.inbox.CacheFirst1952Test" --tests "app.sterna.ui.components.RowRecomposition1952Test" || true
       - name: Verdict (KILLED = the named test failed)
         env:
           M: ${{ inputs.name }}
@@ -89,6 +91,7 @@ jobs:
             rows-wait-refresh|error-hides-rows) C=CacheFirst1952Test; N="a session failure never empties the list" ;;
             initial-refresh)     C=CacheFirst1952Test; N="the list paints from the store with the network failing" ;;
             banner-drops-reason) C=CacheFirst1952Test; N="a failed session keeps the cached rows under a banner with the reason and the last sync" ;;
+            row-recomposes-on-sync) C=RowRecomposition1952Test; N="a sync write composes no row on screen again and scrolling composes each new row once" ;;
             stamp-on-failure)    C=CacheFirst1952Test; N="only a refresh that landed moves the last sync time" ;;
           esac
           X="$(find ac_cloud-mail/app/build -path '*test-results*' -name "TEST-*.$C.xml" | head -1)"

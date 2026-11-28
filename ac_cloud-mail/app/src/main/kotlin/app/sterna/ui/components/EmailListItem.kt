@@ -195,6 +195,7 @@ fun EmailListItem(
 ) {
     // Gmail Dark draws Gmail's own conversation row (GmailEmailRow.kt), handed every parameter as it
     // came; Cloud Dark and Cloud E-ink go on below, unchanged.
+    androidx.compose.runtime.SideEffect { app.sterna.ui.JankProbe.rowComposed(email.id) } // #1952: RowRecomposition1952Test counts these
     if (LocalAppStyle.current == AppStyle.GMAIL_DARK) {
         GmailEmailRow(
             email = email,

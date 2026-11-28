@@ -20,6 +20,12 @@ object JankProbe {
     const val TAG = "JankProbe"
     const val SLOW_MS = 48L
 
+    /** Test hook (#1952): how many times each row's composition ran; on only while a test counts. */
+    @Volatile var countRows = false
+    val rowCounts = java.util.concurrent.ConcurrentHashMap<String, Int>()
+
+    fun rowComposed(id: String) { if (countRows) rowCounts.merge(id, 1, Int::plus) }
+
     private class Acc { var n = 0; var sum = 0L; var max = 0L }
     private val sections = HashMap<String, Acc>()
     private val frames = ArrayList<LongArray>() // total, input, anim, layout, draw, sync, cmd, swap (ns)
