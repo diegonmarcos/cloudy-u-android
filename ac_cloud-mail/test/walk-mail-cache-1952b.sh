@@ -183,7 +183,10 @@ if [ -n "${OLD_APK:-}" ]; then
   adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
   sleep 25
   sleep 5
-  tail -n +$((l0 + 1)) "$OUT/logcat.txt" | grep -E "MailList|MailMigration|MailCore: sync|JankProbe" > "$OUT/update-first-launch.log" || true
+  upid=$(adb shell pidof "$PKG" 2>/dev/null | tr -d '\r' | awk '{print $1}')
+  [ -n "$upid" ] || upid=$(tail -n +$((l0 + 1)) "$OUT/logcat.txt" | grep -m1 "first-row ms=" | awk '{print $3}')
+  grep -E "MailList|MailMigration|MailCore: sync|JankProbe" "$OUT/logcat.txt" | awk -v p="$upid" '$3 == p' > "$OUT/update-first-launch.log" || true
+  grep -q "cold-start armed" "$OUT/update-first-launch.log" || fail "update: no 'cold-start armed' line for pid ${upid:-?} (the process-start marks are not being captured)"
   ums=$(sed -n 's/.*first-row ms=\([0-9]*\) rows=\([0-9]*\).*/\1/p' "$OUT/update-first-launch.log" | head -1)
   urows=$(sed -n 's/.*first-row ms=\([0-9]*\) rows=\([0-9]*\).*/\2/p' "$OUT/update-first-launch.log" | head -1)
   ixms=$(sed -n 's/.*covering index build end ms=\([0-9]*\).*/\1/p' "$OUT/update-first-launch.log" | head -1)
@@ -255,7 +258,13 @@ for round in 1 2 3; do
   sleep 2
   [ "$round" = 1 ] && shot 04-cold-start-after-2s
   sleep 10
-  tail -n +$((n0 + 1)) "$OUT/logcat.txt" | grep -E "MailList|MailMigration|MailCore: sync|ForegroundPush: foreground" > "$OUT/cold-$round.log" || true
+  # PID-based, not a line-count slice: a round's log is every line of the app process started for it. The count-based slice began 2.6 to 3.5 s
+  # into the process (run 46129508730), which cut off the process-start marks (`armed`, the first process-age lines, the open-time optimize line).
+  rpid=$(adb shell pidof "$PKG" 2>/dev/null | tr -d '\r' | awk '{print $1}')
+  [ -n "$rpid" ] || rpid=$(tail -n +$((n0 + 1)) "$OUT/logcat.txt" | grep -m1 "first-row ms=" | awk '{print $3}')
+  grep -E "MailList|MailMigration|MailCore: sync|ForegroundPush: foreground" "$OUT/logcat.txt" | awk -v p="$rpid" '$3 == p' > "$OUT/cold-$round.log" || true
+  grep -q "cold-start armed" "$OUT/cold-$round.log" || fail "cold start $round: no 'cold-start armed' line for pid ${rpid:-?} (the process-start marks are not being captured)"
+  apa=$(sed -n 's/.*cold-start armed.*process-age=\([0-9-]*\).*/\1/p' "$OUT/cold-$round.log" | head -1)
   ms=$(sed -n 's/.*first-row ms=\([0-9]*\) rows=\([0-9]*\).*/\1/p' "$OUT/cold-$round.log" | head -1)
   rows=$(sed -n 's/.*first-row ms=\([0-9]*\) rows=\([0-9]*\).*/\2/p' "$OUT/cold-$round.log" | head -1)
   lp=$(grep -n "cold-start rows-painted" "$OUT/cold-$round.log" | head -1 | cut -d: -f1)
@@ -268,12 +277,8 @@ for round in 1 2 3; do
   q=$(sed -n 's/.*page-load kind=Refresh ms=\([0-9]*\).*/\1/p' "$OUT/cold-$round.log" | head -1)
   echo "| cold start $round at the fixture | ${ms:-missing} | ${rows:-} | $order | ${q:-} |" >> "$OUT/timing.md"
   pa=$(sed -n 's/.*cold-start rows-painted.*process-age=\([0-9-]*\).*/\1/p' "$OUT/cold-$round.log" | head -1)
-  echo "  - cold start $round: first rows painted ${pa:-?} ms after the process started" >> "$OUT/timing.md"
-  # The per-round slice of logcat.txt can start a few seconds into the new process (run 46129508730: it began at vm-selection, 2.6 s after the
-  # process started, so the open-time line was cut off in every round although logcat.txt held it), so the line is taken from the WHOLE log by
-  # the pid of this round's first-row line.
-  rpid=$(grep -m1 "first-row ms=" "$OUT/cold-$round.log" | awk '{print $3}')
-  oms=$(grep "MailMigration: open optimize ms=" "$OUT/logcat.txt" | awk -v p="$rpid" '$3 == p' | sed -n 's/.*open optimize ms=\([0-9]*\).*/\1/p' | head -1)
+  echo "  - cold start $round (pid ${rpid:-?}): the activity armed ${apa:-?} ms and the first rows were painted ${pa:-?} ms after the process started" >> "$OUT/timing.md"
+  oms=$(grep "MailMigration: open optimize ms=" "$OUT/cold-$round.log" | sed -n 's/.*open optimize ms=\([0-9]*\).*/\1/p' | head -1)
   echo "  - cold start $round (pid ${rpid:-?}): the open-time PRAGMA optimize took ${oms:-no line} ms" >> "$OUT/timing.md"
   [ -n "$oms" ] || fail "cold start $round: no open-time PRAGMA optimize line for pid ${rpid:-?} (the timing is not being captured)"
   [ "${oms:-0}" -le "${OPEN_OPTIMIZE_MAX_MS:-25}" ] 2>/dev/null || fail "cold start $round: the open-time PRAGMA optimize took ${oms} ms (limit ${OPEN_OPTIMIZE_MAX_MS:-25})"
