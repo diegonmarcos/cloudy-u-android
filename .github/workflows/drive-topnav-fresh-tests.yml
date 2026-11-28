@@ -12,6 +12,8 @@ on:
       - "ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/sync/ListingRefresh.kt"
       - "ac_cloud-drive/app/src/test/java/com/diegonmarcos/clouddrive/sync/TopNavParity1934Test.kt"
       - "ac_cloud-drive/app/src/test/java/com/diegonmarcos/clouddrive/sync/ListingRefresh1934Test.kt"
+      - "ac_cloud-drive/app/src/test/java/com/diegonmarcos/clouddrive/sync/TopNavStrips1934Test.kt"
+      - "ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitControlSheet.kt"
       - ".github/workflows/drive-topnav-fresh-tests.yml"
   workflow_dispatch:
     inputs:
@@ -74,12 +76,12 @@ jobs:
           R=ac_cloud-drive/app/build/test-results/testDebugUnitTest
           trap 'echo "::error::step died at line $LINENO"; tail -60 /tmp/suite.log 2>/dev/null; ls -la "$R" 2>&1 | head -20' ERR
           case "${NAME_IN:-all}" in
-            all|none|stamp-frozen|stale-never|cache-not-written|old-row-back|logs-lost|clone-mode-lost) ONLY="${NAME_IN:-all}" ;;
+            all|none|stamp-frozen|stale-never|cache-not-written|old-row-back|logs-lost|clone-mode-lost|strip-hint-lost) ONLY="${NAME_IN:-all}" ;;
             *) echo "::error::input not in the allow-list"; exit 1 ;;
           esac
           jq '.tests.unit.task = ":app:testDebugUnitTest"' "$WORK_DIR/build.json" > /tmp/b.json && mv /tmp/b.json "$WORK_DIR/build.json"
           # only the suites under proof run: an unrelated test must not decide whether these mutants are caught
-          find ac_cloud-drive/app/src/test -name '*.kt' ! -name 'TopNavParity1934Test.kt' ! -name 'ListingRefresh1934Test.kt' -delete
+          find ac_cloud-drive/app/src/test -name '*.kt' ! -name 'TopNavParity1934Test.kt' ! -name 'ListingRefresh1934Test.kt' ! -name 'TopNavStrips1934Test.kt' -delete
           suite() { rm -rf "$R"; sh 1_cicd/dist/scripts/cloud-android-test-engine.sh unit "$WORK_DIR" > /tmp/suite.log 2>&1 || true; }
           # verdict: "tests failures" read from the two 1934 test XML files; prints "N F" (F = failures + errors), "0 -1" when no XML exists (compile failure, not a verdict)
           verdict() { python3 - "$R" <<'PY'
@@ -93,7 +95,7 @@ jobs:
           sub() { python3 -c 'import sys; p, a, b = sys.argv[1:]; s = open(p).read(); assert a in s, "anchor missing: " + a; open(p, "w").write(s.replace(a, b, 1))' "$1" "$2" "$3"; }
           suite; set -- $(verdict)
           echo "real tree: $1 tests, $2 failed/errored"
-          [ "$1" -ge 13 ] && [ "$2" -eq 0 ] || { tail -80 /tmp/suite.log; echo "::error::the real tree is not GREEN in the XML (tests=$1 failed=$2)"; exit 1; }
+          [ "$1" -ge 15 ] && [ "$2" -eq 0 ] || { tail -80 /tmp/suite.log; echo "::error::the real tree is not GREEN in the XML (tests=$1 failed=$2)"; exit 1; }
           echo "real tree: GREEN ($1 tests)"
           [ "$ONLY" = none ] && exit 0
           stayed=0
@@ -113,6 +115,7 @@ jobs:
           old-row-back@ac_cloud-drive/app/src/main/java/com/diegonmarcos/clouddrive/sync/GitReposScreen.kt@GitTopNav(navOpen,@GitTopBar(page.topBar, prefs, enabledReason = { null }, onItem = ::onTopItem, storage = storageMenu); GitTopNav(navOpen,
           logs-lost@ac_cloud-drive/build.json@bulk_top:logs.logs@bulk_top:logs.logs_gone
           clone-mode-lost@ac_cloud-drive/build.json@bulk_top:clone.clone_all_bare_treeless"@bulk_top:clone.clone_all_bare_treeless_x"
+          strip-hint-lost@ab_cloud-libs-shared/libs/git-ui/src/main/java/com/diegonmarcos/cloudlib/gitui/GitControlSheet.kt@if (st.canScrollForward) Text(@if (false) Text(
           MUTANTS
           [ "$stayed" -eq 0 ] || { echo "::error::$stayed mutant(s) stayed green or did not compile"; exit 1; }
           echo "every mutant RED (verdict from the XML)"

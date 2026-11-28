@@ -1,6 +1,11 @@
 package com.diegonmarcos.cloudlib.gitui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,6 +33,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import com.diegonmarcos.cloudlib.gitcore.CloneOptions
 import com.diegonmarcos.cloudlib.gitcore.GitStep
@@ -119,7 +125,7 @@ fun GitControlSheetView(
     Column(modifier.fillMaxWidth().semantics { testTagsAsResourceId = true }.testTag("git_control_sheet_" + part.name.lowercase()), verticalArrangement = Arrangement.spacedBy(k.gapWide)) {
         if (part != GitSheetPart.BODY && !host.bulk) Header(sheet, host, actions, ::blocked)
         if (part != GitSheetPart.BODY && host.bulk) BulkScopeBar(sheet, host, actions, scopeTrailing)
-        if (part != GitSheetPart.BODY) Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag("git_sheet_tabs"), horizontalArrangement = Arrangement.spacedBy(k.gapWide)) {
+        if (part != GitSheetPart.BODY) ScrollStrip(Modifier.fillMaxWidth(), "git_sheet_tabs") {
             tabs.forEach { t -> k.pill(GitPill(t.label, { state.tab = t.id; onTabSelected(t.id) }, Modifier.testTag("git_sheet_tab_" + t.id), filled = t.id == open?.id)) }
         }
         if (part != GitSheetPart.TOP && host.bulk && host.scope == BulkScopes.SELECTED) BulkPicks(host, actions)
@@ -349,7 +355,7 @@ private fun BulkScopeBar(sheet: GitSheet, host: GitSheetHost, actions: GitSheetA
     Column(Modifier.testTag("git_bulk_scope_bar"), verticalArrangement = Arrangement.spacedBy(k.gap)) {
         if (trailing == null) Text(stringResource(R.string.git_bulk_scope_title), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(k.gapWide), verticalAlignment = Alignment.CenterVertically) {
-            Row(Modifier.weight(1f, fill = trailing == null).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(k.gapWide), verticalAlignment = Alignment.CenterVertically) {
+            ScrollStrip(Modifier.weight(1f, fill = trailing == null), "git_bulk_scopes") {
                 sheet.scopes.forEach { sc -> k.pill(GitPill(sc.label, { actions.setScope(sc.id) }, Modifier.testTag("git_bulk_scope_" + sc.id), filled = sc.id == host.scope)) }
             }
             trailing?.invoke()
@@ -382,5 +388,21 @@ private fun BulkPicks(host: GitSheetHost, actions: GitSheetActions) {
                 Text(n, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)
             }
         }
+    }
+}
+
+/**
+ * #1934 a chip strip that scrolls sideways and SAYS so: while more chips wait past an edge, that edge fades into a chevron (tag `<tag>_more_end` / `<tag>_more_start`),
+ * so a chip cut off by a narrow screen never looks missing. The strip's own Row keeps the tag.
+ */
+@Composable
+private fun ScrollStrip(modifier: Modifier, tag: String, content: @Composable RowScope.() -> Unit) {
+    val k = LocalGitUiKit.current
+    val st = rememberScrollState()
+    val bg = MaterialTheme.colorScheme.surface
+    Box(modifier) {
+        Row(Modifier.horizontalScroll(st).testTag(tag), horizontalArrangement = Arrangement.spacedBy(k.gapWide), verticalAlignment = Alignment.CenterVertically, content = content)
+        if (st.canScrollBackward) Text("\u2039", Modifier.align(Alignment.CenterStart).background(Brush.horizontalGradient(listOf(bg, Color.Transparent))).padding(end = 8.dp).testTag(tag + "_more_start"), fontWeight = FontWeight.Bold)
+        if (st.canScrollForward) Text("\u203A", Modifier.align(Alignment.CenterEnd).background(Brush.horizontalGradient(listOf(Color.Transparent, bg))).padding(start = 8.dp).testTag(tag + "_more_end"), fontWeight = FontWeight.Bold)
     }
 }
