@@ -54,8 +54,11 @@ sleep 20; dismiss; dismiss
 shot start 2
 # the X-Ray Device page (Configs > Watchtower - Obsv > X-Ray) holds Export All: reached by the launcher's own page route
 ACT="$($T adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER "$PKG" | tr -d '\r' | tail -1)"
-$T adb shell am start -n "$ACT" --es shortcut_action "page:config/xray" >/dev/null 2>&1
-sleep 8; dismiss
+for _ in 1 2 3; do
+    $T adb shell am start -n "$ACT" --es shortcut_action "page:config/xray" >/dev/null 2>&1
+    sleep 8; dismiss; dump cur
+    grep -q 'text="Unlock"' "$OUT/cur.xml" || break
+done
 shot xray-open 4
 W="$($T adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1 | cut -dx -f1)"; H="$($T adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1 | cut -dx -f2)"
 W="${W:-1080}"; H="${H:-2400}"
