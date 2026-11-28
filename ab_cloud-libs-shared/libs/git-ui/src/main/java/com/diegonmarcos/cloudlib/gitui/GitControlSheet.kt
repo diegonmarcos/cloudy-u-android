@@ -400,7 +400,7 @@ private fun ScrollStrip(modifier: Modifier, tag: String, content: @Composable Ro
     val k = LocalGitUiKit.current
     val st = rememberScrollState()
     val bg = MaterialTheme.colorScheme.surface
-    Box(modifier) {
+    Box(modifier.testTag(tag + "_viewport")) {
         Row(Modifier.horizontalScroll(st).testTag(tag), horizontalArrangement = Arrangement.spacedBy(k.gapWide), verticalAlignment = Alignment.CenterVertically, content = content)
         if (st.canScrollBackward) Text("\u2039", Modifier.align(Alignment.CenterStart).background(Brush.horizontalGradient(listOf(bg, Color.Transparent))).padding(end = 8.dp).testTag(tag + "_more_start"), fontWeight = FontWeight.Bold)
         if (st.canScrollForward) Text("\u203A", Modifier.align(Alignment.CenterEnd).background(Brush.horizontalGradient(listOf(Color.Transparent, bg))).padding(start = 8.dp).testTag(tag + "_more_end"), fontWeight = FontWeight.Bold)

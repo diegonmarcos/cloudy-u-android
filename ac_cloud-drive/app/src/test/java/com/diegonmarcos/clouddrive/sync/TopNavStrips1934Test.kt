@@ -98,7 +98,7 @@ class TopNavStrips1934Test {
     }
 
     private fun assertReachable(strip: String, chips: List<String>) {
-        val sb = compose.onNodeWithTag(strip).fetchSemanticsNode().boundsInRoot
+        val sb = compose.onNodeWithTag(strip + "_viewport").fetchSemanticsNode().boundsInRoot
         for (c in chips) {
             val b = compose.onNodeWithTag(c).fetchSemanticsNode().boundsInRoot
             val inside = b.left >= sb.left - 1f && b.right <= sb.right + 1f
