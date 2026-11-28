@@ -88,9 +88,12 @@ AGED=$(echo "$PAGES" | awk '$2!="personal"{print $2; exit}'); AURL=$(echo "$PAGE
 lit="url=$(printf '%s' "$AURL" | sed 's/:/\\:/')"
 old=$(( ($(date +%s) - 8 * 86400) * 1000 ))
 $T adb shell "m=\$(grep -lxF '$lit' $CACHE/$AGED/*.meta | head -1); sed -i 's/^fetchedAt=.*/fetchedAt=$old/' \"\$m\"; grep fetchedAt \"\$m\"" | tee "$OUT/aged.txt"
+# the first run's logcat lines can still arrive after the restart (a delayed reader): only lines of a NEW process count (run 46101594609 ended this wait at once on the first run's CACHE_TOTAL)
+OLDPID=$(liveall | grep -a "CloudMeWeb: CACHE_TOTAL" | tail -1 | awk '{print $3}')
+newlines() { liveall | grep -a "CloudMeWeb: CACHE_" | awk -v o="${OLDPID:-0}" '$3!=o' | sed 's/.*CloudMeWeb: //'; }
 $T adb shell am force-stop "$ME"; clear_log; launch
-for _ in $(seq 1 60); do grep -q "^CACHE_TOTAL" <<<"$(wlog)" && break; sleep 5; done
-wlog | grep -E "^CACHE_FETCH|^CACHE_TOTAL" | tee "$OUT/restart-fetch.txt"
+for _ in $(seq 1 60); do grep -q "^CACHE_TOTAL" <<<"$(newlines)" && break; sleep 5; done
+newlines | grep -E "^CACHE_FETCH|^CACHE_TOTAL" | tee "$OUT/restart-fetch.txt"
 grep -q "^CACHE_FETCH page=$AGED action=refetch result=replaced" "$OUT/restart-fetch.txt" && ok "2a: the aged page $AGED was refetched and replaced" || fail "2a: $AGED not refetched+replaced"
 NS=$(grep -c "^CACHE_FETCH .*action=skip" "$OUT/restart-fetch.txt"); NO=$(grep "^CACHE_FETCH" "$OUT/restart-fetch.txt" | grep -v "page=$AGED " | grep -vc "action=skip" ; true)
 for k in $KNOWN_MISSING; do grep -q "^CACHE_FETCH page=$k action=fill result=failed" "$OUT/restart-fetch.txt" && NO=$((NO - 1)); done   # a known-missing page is tried again, it stays missing
