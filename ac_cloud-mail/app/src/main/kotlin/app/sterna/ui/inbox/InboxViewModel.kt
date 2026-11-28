@@ -783,8 +783,21 @@ class InboxViewModel(
      * view this install does not offer. Through [restoredSelection], never a store read written
      * out here: `RootViewModel` needs the same answer before this ViewModel exists at all.
      */
+    /**
+     * #1952 the first launch after an update (or an install that never saved its Inbox id): the store already holds the folder list, so the
+     * Inbox id is read from it HERE, before the list key is built, instead of the list starting on an unknown folder and a second key
+     * 200 ms later. Bounded: a store that does not answer in 1.5 s leaves the id unknown, as before.
+     */
+    private fun inboxIdFromTheStore(): String? {
+        val account = store.currentId() ?: return null
+        return runCatching {
+            kotlinx.coroutines.runBlocking(Dispatchers.IO) { kotlinx.coroutines.withTimeoutOrNull(1_500L) { repo.storedInboxId(account) } }
+        }.getOrNull()
+    }
+
+    private val markConstruct = app.sterna.core.data.mail.ColdStart.mark("vm-selection")
     private val selection = MutableStateFlow<Sel>(
-        restoredSelection(store) ?: Sel.Folder(store.inboxMailboxId()),
+        restoredSelection(store) ?: Sel.Folder(store.inboxMailboxId() ?: inboxIdFromTheStore()),
     )
     private val currentAccountId = MutableStateFlow(store.currentId())
     private val unifiedInboxScopes = MutableStateFlow(store.allInboxScopes())
@@ -1109,6 +1122,8 @@ class InboxViewModel(
      * every emission cancels the running pager and restarts at the first page, so an equal key must
      * not reach `flatMapLatest`. [cachedIn] caches the pages; it does not stop a rebuild.
      */
+    private val markBeforePager = app.sterna.core.data.mail.ColdStart.mark("vm-fields-up-to-the-pager")
+
     val pagedEmails: Flow<PagingData<InboxRow>> =
         pageKeyFlow(
             selection = selection,

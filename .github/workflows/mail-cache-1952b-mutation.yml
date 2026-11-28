@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'none | evict-newest-first | window-ignored | shrink-no-evict | default-drift | setting-not-stored | resume-from-zero | metered-no-chain | network-before-rows | index-not-covering | first-page-unbounded | return-requeries | placeholder-view | core-ungated | query-per-write | first-rows-any-view | fill-ignores-screen | inbox-pruned | folders-after-messages | aggregates-per-write | inbox-id-not-remembered | email-gains-var'
+        description: 'none | evict-newest-first | window-ignored | shrink-no-evict | default-drift | setting-not-stored | resume-from-zero | metered-no-chain | network-before-rows | index-not-covering | first-page-unbounded | return-requeries | placeholder-view | core-ungated | query-per-write | first-rows-any-view | fill-ignores-screen | inbox-pruned | folders-after-messages | aggregates-per-write | inbox-id-not-remembered | email-gains-var | inbox-id-not-from-store'
         required: true
 permissions:
   contents: read
@@ -68,6 +68,8 @@ jobs:
             inbox-id-not-remembered) sed -i '/if (target.role == "inbox") accountStore.saveInboxMetaFor(credentials.id, target.id, target.name/d' $D/mail/MailRepository.kt ;;
             # the mail model gains a var (the stability declaration for Compose would be a lie)
             email-gains-var) sed -i 's/^    val id: String,$/    var id: String,/' ac_cloud-mail/core/jmap/src/main/kotlin/app/sterna/core/jmap/model/Email.kt ;;
+            # the start no longer reads its Inbox id from the store: an unknown folder and a second list key
+            inbox-id-not-from-store) sed -i 's/store.inboxMailboxId() ?: inboxIdFromTheStore()/store.inboxMailboxId()/' ac_cloud-mail/app/src/main/kotlin/app/sterna/ui/inbox/InboxViewModel.kt ;;
             *) echo "::error::unknown mutation (not in the allow-list)"; exit 2 ;;
           esac
           git diff --stat
@@ -135,6 +137,7 @@ jobs:
             fill-ignores-screen) N="the background fill pauses between batches only while the app is on screen" ;;
             inbox-pruned)        N="the Inbox is never pruned by age, whoever asks" ;;
             folders-after-messages) N="a first sync stores the folder list before its messages" ;;
+            inbox-id-not-from-store) N="a start that does not know its Inbox id reads it from the store before the list key" ;;
             email-gains-var)     N="the mail model has no var and no mutable collection field" ;;
             inbox-id-not-remembered) N="a first sync stores the folder list before its messages" ;;
             aggregates-per-write) N="a sync's writes reach the drawer aggregates in steps and the last write is never lost" ;;

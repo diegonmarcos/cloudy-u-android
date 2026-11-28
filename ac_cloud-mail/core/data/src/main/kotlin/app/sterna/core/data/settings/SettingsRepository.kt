@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 
 private val KEY_BODY_CACHE_LIMIT = stringPreferencesKey("body_cache_limit")
 
@@ -161,7 +162,7 @@ class SettingsRepository(context: Context) {
     /** Deduped: DataStore republishes the WHOLE `Preferences` on every write, whatever key was
      *  touched, and the browse list is built off this flow — so an unrelated setting's write threw
      *  away the running pager and started it at the first page again. */
-    val sortOrder: Flow<SortOrder> = dataStore.data.map { prefs ->
+    val sortOrder: Flow<SortOrder> = dataStore.data.onEach { app.sterna.core.data.mail.ColdStart.mark("settings-datastore") }.map { prefs ->
         prefs[KEY_SORT_ORDER]?.let { runCatching { SortOrder.valueOf(it) }.getOrNull() } ?: SortOrder.DATE_DESC
     }.distinctUntilChanged()
 

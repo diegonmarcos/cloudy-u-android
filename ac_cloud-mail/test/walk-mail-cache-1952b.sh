@@ -199,7 +199,7 @@ if [ -n "${OLD_APK:-}" ]; then
   } >> "$OUT/timing.md"
   [ -n "$ums" ] || fail "update: the first launch after updating logged no first row"
   [ -n "$ixms" ] || fail "update: no covering index build line (was the old build really schema v34?)"
-  [ "${ums:-99999}" -le "${UPDATE_LIMIT_MS:-4000}" ] 2>/dev/null || fail "update: first row after ${ums:-?} ms on the first launch after updating (limit ${UPDATE_LIMIT_MS:-4000}); the index build took ${ixms:-?} ms"
+  [ "${ums:-99999}" -le "${UPDATE_LIMIT_MS:-1500}" ] 2>/dev/null || fail "update: first row after ${ums:-?} ms on the first launch after updating (limit ${UPDATE_LIMIT_MS:-1500}); the index build took ${ixms:-?} ms"
   [ "${ixms:-99999}" -le "${UPDATE_INDEX_LIMIT_MS:-500}" ] 2>/dev/null || fail "update: the covering index build took ${ixms:-?} ms (limit ${UPDATE_INDEX_LIMIT_MS:-500}); it must not hold the first paint"
   sleep 5
 fi

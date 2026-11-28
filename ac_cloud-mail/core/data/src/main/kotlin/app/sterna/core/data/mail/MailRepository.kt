@@ -3376,6 +3376,9 @@ class MailRepository(
     @Volatile
     var offlineWindow: OfflineWindow = OfflineWindow.DEFAULT
 
+    /** #1952 cold start: the account's Inbox folder id as the STORE holds it (a first sync writes the folder list before its messages). */
+    suspend fun storedInboxId(accountId: String): String? = mailboxDao.idForRole(accountId, "inbox")
+
     /** #1952 the "Body cache limit" setting, pushed in by the app layer; the declared default until it says otherwise. */
     @Volatile
     var bodyCacheLimit: BodyCacheLimit = BodyCacheLimit.DEFAULT

@@ -109,6 +109,14 @@ class ListReturn1952cTest {
         assertTrue("the Inbox id is remembered with the early folder write, so a restart mid-sync knows its folder", remembered in early + 1 until sync)
     }
 
+    @Test fun `a start that does not know its Inbox id reads it from the store before the list key`() {
+        val vm = code("app/src/main/kotlin/app/sterna/ui/inbox/InboxViewModel.kt")
+        assertTrue("the selection starts on the stored Inbox id", "restoredSelection(store) ?: Sel.Folder(store.inboxMailboxId() ?: inboxIdFromTheStore())," in vm)
+        assertTrue("the read is the store's folder list by role, bounded", "kotlinx.coroutines.runBlocking(Dispatchers.IO) { kotlinx.coroutines.withTimeoutOrNull(1_500L) { repo.storedInboxId(account) } }" in vm)
+        val repo = code("core/data/src/main/kotlin/app/sterna/core/data/mail/MailRepository.kt")
+        assertTrue("suspend fun storedInboxId(accountId: String): String? = mailboxDao.idForRole(accountId, \"inbox\")" in repo)
+    }
+
     // -- cold start: one key ----------------------------------------------------------------------------------------
 
     @Test fun `the pager's first key carries the stored view, never a placeholder`() {
