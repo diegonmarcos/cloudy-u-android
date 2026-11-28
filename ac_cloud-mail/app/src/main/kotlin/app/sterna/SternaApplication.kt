@@ -374,7 +374,9 @@ class SternaApplication : Application() {
         app.sterna.mail.MailCoreSyncWorker.ensureScheduled(this)
         app.sterna.core.data.mail.ColdStart.early("core-sync-worker")
         // Start the WebView provider once, when the main thread is idle, so the first mail opens without it.
-        app.sterna.mail.WebViewWarmUp.once(this)
+        // #1952 not before the first rows are painted: the idle handler ran its 159 ms main-thread WebView creation between Application.onCreate
+        // and the activity's launch, in front of the first frame (process-start log of run 46141602907).
+        container.appScope.launch { app.sterna.core.data.mail.ColdStart.awaitRows(); app.sterna.mail.WebViewWarmUp.once(this@SternaApplication) }
         app.sterna.core.data.mail.ColdStart.early("webview-warmup")
     }
 }

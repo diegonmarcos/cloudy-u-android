@@ -362,8 +362,14 @@ adb shell cmd connectivity airplane-mode disable
 ppid=$(adb shell pidof "$PKG" 2>/dev/null | tr -d '\r' | awk '{print $1}')
 [ -n "$ppid" ] && adb shell "kill -s SIGUSR1 $ppid" >/dev/null 2>&1; sleep 3
 base_apk=$(adb shell pm path "$PKG" | head -1 | sed 's/^package://' | tr -d '\r')
-adb shell cmd package snapshot-profile "$PKG" >/dev/null 2>&1 || true
-adb shell "profman --dump-classes-and-methods --profile-file=/data/misc/profman/$PKG-primary.prof --apk=$base_apk --dex-location=$base_apk" > "$OUT/baseline-prof.generated.txt" 2>"$OUT/profman.err" || true
+adb shell cmd package snapshot-profile "$PKG" > "$OUT/snapshot-profile.txt" 2>&1 || true
+# the emulator image allows root; profman lives in the ART apex and is not on the shell user's path (run 46141678620: "profman: inaccessible or not found")
+adb root >/dev/null 2>&1; sleep 3; adb wait-for-device
+adb shell "ls -la /data/misc/profman/ /data/misc/profiles/cur/0/$PKG/ 2>&1" > "$OUT/profile-files.txt" 2>&1 || true
+prof_file=$(adb shell "ls /data/misc/profman/*.prof 2>/dev/null | head -1" | tr -d '\r')
+[ -n "$prof_file" ] || prof_file="/data/misc/profiles/cur/0/$PKG/primary.prof"
+PROFMAN=$(adb shell "ls /apex/com.android.art/bin/profman 2>/dev/null" | tr -d '\r')
+adb shell "${PROFMAN:-profman} --dump-classes-and-methods --profile-file=$prof_file --apk=$base_apk --dex-location=$base_apk" > "$OUT/baseline-prof.generated.txt" 2>"$OUT/profman.err" || true
 note "baseline profile: $(grep -c . "$OUT/baseline-prof.generated.txt" 2>/dev/null || echo 0) lines generated from this run (profman: $(head -c 160 "$OUT/profman.err" | tr '\n' ' '))"
 adb shell cmd package compile -m speed-profile -f "$PKG" > "$OUT/compile-speed-profile.txt" 2>&1 || true
 note "cmd package compile -m speed-profile: $(head -c 120 "$OUT/compile-speed-profile.txt" | tr '\n' ' ')"
