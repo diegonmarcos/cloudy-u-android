@@ -256,6 +256,16 @@ PY
   tap_text c3-1955-net-mesh-pre "Legend"; shot c3-1955-net-legend 3
   has c3-1955-net-legend "ROOT = root cause" || bad "c3-1955-net-legend: legend not open"
   rm -f "$OUT"/c3-1955-net-*-pre.png
+  # #1955 A rev2.1 the six opening views at the phone's width (412 x 915 dp): names read in full where the layout has room
+  adb shell wm size 824x1830; adb shell wm density 320; sleep 4
+  for pg in net_wg net_auth net_dns net_network net_security net_mesh; do
+    n="${pg#net_}"
+    open_page "$pg"; sleep 2; shot "c3-1955-graph-rev2-$n-412-table" 6
+    tap_text "c3-1955-graph-rev2-$n-412-table" "Graph"; shot "c3-1955-graph-rev2-$n-fit412" 6
+    has "c3-1955-graph-rev2-$n-fit412" 'content-desc="nodes:' || bad "c3-1955-graph-rev2-$n-fit412: no canvas drawn"
+    rm -f "$OUT/c3-1955-graph-rev2-$n-412-table.png"
+  done
+  adb shell wm size reset; adb shell wm density reset; sleep 4
   # #1955 C the Health debugger: every tab, then X-ray C3. The emulator has no token: the device-side state and the not-served routes must be said, not hidden.
   open_page ops_health_health; sleep 2; shot c3-1955-health-overview 8
   chk c3-1955-health-overview "Probe_now,Overview,Lights,Containers,VMs,Network_/_Mesh,This_phone,C3_token"

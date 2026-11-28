@@ -537,10 +537,10 @@
       "pill_sp": 10,
       "caption_h": 18,
       "shape": 10,
-      "pad": 6,
-      "pad_r": 10,
+      "pad": 5,
+      "pad_r": 5,
       "pad_v": 2,
-      "cap_name": 12,
+      "cap_name": 16,
       "cap_name_wide": 18,
       "cap_name_near": 24,
       "cap_metric": 28,
@@ -548,7 +548,7 @@
       "cap_anchor": 10,
       "cap_header": 40,
       "cap_caption": 12,
-      "wide_from": 140,
+      "wide_from": 150,
       "max_names": 40,
       "max_pills": 12,
       "max_pills_selected": 8,
@@ -563,7 +563,25 @@
       "minimap_h_min": 48,
       "minimap_h_max": 96,
       "minimap_inset": 8,
-      "header_inset": 6
+      "header_inset": 6,
+      "_doc_names": "#1955 A rev2.1 a node grows to the width its full name needs at name_sp (name_em x name_sp per character + name_slack + the paddings), up to the room its layout has for it; only a name that cannot fit there is shortened, with a middle ellipsis that keeps its tail. shapes: the box of each node kind (hub, stadium, rounded, square, chamfer; rounded when absent); a page's column_shapes override it by column.",
+      "name_em": 0.6,
+      "name_slack": 2,
+      "shapes": {
+        "hub": "hub",
+        "root": "hub",
+        "server": "hub",
+        "client": "stadium",
+        "service": "square",
+        "container": "square",
+        "route": "square",
+        "tool": "square",
+        "rule": "square",
+        "group": "square",
+        "tier": "chamfer",
+        "authkind": "chamfer",
+        "gate": "chamfer"
+      }
     },
     "bundle_min": 3,
     "pulse_max_edges": 40,
@@ -580,6 +598,15 @@
     "pages": {
       "net_wg": {
         "layout": "star",
+        "_doc_yield": "#1955 A rev2.1 when the three columns' full names do not fit the 412 dp world, the roaming clients (column 0, devices, not VMs) give way first",
+        "yield_columns": [
+          0
+        ],
+        "column_shapes": [
+          "stadium",
+          "hub",
+          "rounded"
+        ],
         "gap_x": 32,
         "frame_pad": 6,
         "grid_lanes": [

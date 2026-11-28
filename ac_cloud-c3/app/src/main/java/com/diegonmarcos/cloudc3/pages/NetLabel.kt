@@ -56,13 +56,49 @@ object NetLabel {
         return if (suf.isNotEmpty() && label.endsWith(suf) && label.length > suf.length) label.dropLast(suf.length) else label
     }
 
+    /** Characters that end a name's distinguishing part ("oci-apps" ends in "apps", "a.b.com" in "com"). */
+    private const val SEPS = "-_. /:"
+
+    /** The distinguishing tail of a name: the part after its last separator when 2 to 6 characters long, else its last 3 characters. */
+    fun tail(s: String): String {
+        val i = s.indexOfLast { it in SEPS }
+        val t = if (i > 0) s.substring(i + 1) else ""
+        return if (t.length in 2..6) t else s.takeLast(3)
+    }
+
+    /**
+     * #1955 A rev2 Rule 1 over a page, as the layout sizes the boxes: each id's label with the dot-suffix its [peersOf] share stripped,
+     * capped at [maxChars]. Two different full labels that would read the same keep a shorter suffix, one dot level at a time
+     * ("stalwart.mesh.example.com" next to a service "stalwart" reads "stalwart.mesh"), so no name is blanked by a clash.
+     */
+    fun bases(labels: Map<String, String>, peersOf: (String) -> List<String>, maxChars: Int): Map<String, String> {
+        val suf = labels.mapValues { (id, l) -> sharedSuffix(peersOf(id)).takeIf { it.isNotEmpty() && l.endsWith(it) && l.length > it.length }.orEmpty() }.toMutableMap()
+        fun read(id: String) = end(labels.getValue(id).dropLast(suf.getValue(id).length), maxChars)
+        repeat(labels.size + 1) {
+            val clash = labels.keys.groupBy(::read).values.filter { ids -> ids.map { labels.getValue(it) }.distinct().size > 1 }.flatten().filter { suf.getValue(it).isNotEmpty() }
+            if (clash.isEmpty()) return labels.keys.associateWith(::read)
+            clash.forEach { id -> suf[id] = suf.getValue(id).let { x -> x.indexOf('.', 1).let { i -> if (i < 0) "" else x.substring(i) } } }
+        }
+        return labels.keys.associateWith(::read)
+    }
+
     /**
      * The measured fit: the longest form of [s] whose measured width is at most [avail] (same ellipsis style as [s]: a middle
-     * ellipsis stays a middle one), or "" when fewer than [MIN_CHARS] characters would remain.
+     * ellipsis stays a middle one), or "" when fewer than [MIN_CHARS] characters would remain. [middle]: a name that does not fit keeps
+     * its distinguishing [tail] after the ellipsis ("oci-…apps"), falling back to the last 3 characters, then to the end ellipsis.
      */
-    fun fit(s: String, avail: Float, width: (String) -> Float): String {
+    fun fit(s: String, avail: Float, width: (String) -> Float, middle: Boolean = false): String {
         if (s.isEmpty()) return ""
         if (width(s) <= avail) return s
+        if (middle && !s.contains(ELLIPSIS)) {
+            for (t in listOf(tail(s), s.takeLast(3)).distinct()) {
+                val head = s.dropLast(t.length)
+                fun at(k: Int) = head.take(k) + ELLIPSIS + t
+                var lo = 1; var hi = head.length - 1; var best = -1
+                while (lo <= hi) { val k = (lo + hi) / 2; if (width(at(k)) <= avail) { best = k; lo = k + 1 } else hi = k - 1 }
+                if (best >= 1 && best + t.length >= MIN_CHARS) return at(best)
+            }
+        }
         val mid = s.contains(ELLIPSIS) && !s.endsWith(ELLIPSIS)
         val head = if (mid) s.substringBefore(ELLIPSIS) else s.removeSuffix(ELLIPSIS)
         val tail = if (mid) s.substringAfter(ELLIPSIS) else ""
@@ -74,6 +110,29 @@ object NetLabel {
         val c = at(best)
         return if (c.length - 1 < MIN_CHARS) "" else c
     }
+
+    /** #1955 A rev2.1 A name at most [max] characters long: the middle ellipsis that keeps its distinguishing [tail] ("desktop-nixos" at 10 reads "desk…nixos"). */
+    fun cap(s: String, max: Int): String = if (s.length <= max) s else fit(s, max.toFloat(), { it.length.toFloat() }, middle = true)
+
+    /**
+     * #1955 A rev2.1 The root-cause chip's text, one line of at most [max] characters: "■ ROOT <name> · N impacted ›" where the name is the
+     * root's label without the dot-suffix its [peers] share ("analytics.diegonmarcos.com" reads "analytics"); a name still too long keeps
+     * its tail after a middle ellipsis, the arrow goes before the name is cut.
+     */
+    fun rootChip(label: String, peers: List<String>, impacted: Int, max: Int = 30): String {
+        val name = stripped(label, peers)
+        val head = "■ ROOT "
+        listOf(" · $impacted impacted ›", " · $impacted impacted").forEach { tail -> if ((head + name + tail).length <= max) return head + name + tail }
+        val tail = " · $impacted impacted"
+        return head + cap(name, (max - head.length - tail.length).coerceAtLeast(MIN_CHARS)) + tail
+    }
+
+    /** The forms a name may take in [avail] when its first fit reads like another drawn name: other tails, then the end ellipsis. */
+    fun variants(s: String, avail: Float, width: (String) -> Float): List<String> =
+        ((3..6).map { k -> s.takeLast(k) }.mapNotNull { t ->
+            val head = s.dropLast(t.length)
+            (head.length - 1 downTo 1).asSequence().map { head.take(it) + ELLIPSIS + t }.firstOrNull { width(it) <= avail && it.length - 1 >= MIN_CHARS }
+        } + fit(s, avail, width)).filter { it.isNotEmpty() }.distinct()
 
     /** "First segment" of a sub line: the text before the first of "  ", " · ", ",", "(". */
     fun firstSegment(s: String): String {

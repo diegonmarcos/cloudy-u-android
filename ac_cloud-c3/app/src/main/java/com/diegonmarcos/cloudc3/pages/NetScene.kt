@@ -3,6 +3,9 @@ package com.diegonmarcos.cloudc3.pages
 import androidx.compose.ui.geometry.Offset
 import kotlin.math.ln
 import kotlin.math.sqrt
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 
 /**
  * #1955 A rev2 The display list of one Network Graph view: computed, then drawn. [build] is pure; the canvas only loops over the
@@ -20,10 +23,14 @@ object NetScene {
         val aggregate: Boolean, val root: Boolean, val impacted: Boolean, val match: Boolean, val selected: Boolean, val dim: Boolean,
         /** the box is cut by the caption strip (only its lower part is drawn) */
         val cut: Boolean = false,
+        /** #1955 A rev2.1 the box of its kind (hub, stadium, rounded, square, chamfer: `viewers.scene.shapes`) and the screen x of its status shape */
+        val shape: String = "rounded", val dotX: Float = box.l,
     )
     data class FrameBox(val id: String, val rect: MailStack.Rect, val header: MailStack.Rect?, val depth: Int, val owner: String, val dim: Boolean)
     data class Wire(val id: String, val p0: Offset, val p1: Offset, val p2: Offset, val p3: Offset, val health: MailStack.Health, val dashed: Boolean,
-                    val width: Float, val arrow: Float, val dim: Boolean)
+                    val width: Float, val arrow: Float, val dim: Boolean,
+                    /** #1955 A rev2.1 a bus-routed wire: its polyline (screen), drawn with rounded corners instead of the curve */
+                    val pts: List<Offset> = emptyList())
     data class Scene(
         val tier: Tier, val canvas: MailStack.Rect, val caption: MailStack.Rect?, val hud: List<MailStack.Rect>,
         val frames: List<FrameBox>, val nodes: List<NodeBox>, val wires: List<Wire>, val texts: List<TextBox>,
@@ -56,7 +63,11 @@ object NetScene {
         val pillPad: Float = 6f, val pillH: Float = 18f, val obstaclePad: Float = 4f, val rootPad: Float = 6f, val wireClear: Float = 10f, val wireSample: Float = 12f,
         val minimapW: Float = 72f, val minimapHMin: Float = 48f, val minimapHMax: Float = 96f, val minimapInset: Float = 8f,
         val headerInset: Float = 6f,
+        /** #1955 A rev2.1 the width model a node is sized by (em per character at nameSp, plus slack) and the box of each node kind */
+        val nameEm: Float = 0.6f, val nameSlack: Float = 2f, val shapes: Map<String, String> = emptyMap(),
     ) {
+        /** The world width (dp) a node needs to show [chars] characters of its name in full. */
+        fun needDp(chars: Int): Float = chars * nameSp * nameEm + nameSlack + 2 * pad + shape + padR
         companion object {
             fun of(v: NetGraph.Viewers): Spec {
                 val d = Spec()
@@ -68,7 +79,9 @@ object NetScene {
                     i("cap_anchor", d.capAnchor), i("cap_header", d.capHeader), i("cap_caption", d.capCaption), f("wide_from", d.wideFrom),
                     i("max_names", d.maxNames), i("max_pills", d.maxPills), i("max_pills_selected", d.maxPillsSelected), i("max_anchors", d.maxAnchors),
                     f("pill_pad", d.pillPad), f("pill_h", d.pillH), f("obstacle_pad", d.obstaclePad), f("root_pad", d.rootPad), f("wire_clear", d.wireClear), f("wire_sample", d.wireSample),
-                    f("minimap_w", d.minimapW), f("minimap_h_min", d.minimapHMin), f("minimap_h_max", d.minimapHMax), f("minimap_inset", d.minimapInset), f("header_inset", d.headerInset))
+                    f("minimap_w", d.minimapW), f("minimap_h_min", d.minimapHMin), f("minimap_h_max", d.minimapHMax), f("minimap_inset", d.minimapInset), f("header_inset", d.headerInset),
+                    f("name_em", d.nameEm), f("name_slack", d.nameSlack),
+                    ((v.raw["scene"] as? JsonObject)?.get("shapes") as? JsonObject).orEmpty().mapNotNull { (k, x) -> (x as? JsonPrimitive)?.contentOrNull?.let { k to it } }.toMap())
             }
         }
     }
@@ -158,7 +171,8 @@ object NetScene {
             val content = if (n.kind == "frame") c0.copy(l = maxOf(c0.l, (sp.pad * 2 + sp.shape) * dp), r = minOf(c0.r, w - sp.padR * dp)) else c0
             NodeBox(n.id, box, content, n.health, n.kind, n.id in l.extras.aggregates, n.id == rootDrawn,
                 ms.any { it in st.impacted }, n.id in matchDrawn, n.id == selDrawn,
-                focusDrawn != null && n.id !in focusDrawn && ms.none { it in st.focus!! }, cut = box.t > full.t)
+                focusDrawn != null && n.id !in focusDrawn && ms.none { it in st.focus!! }, cut = box.t > full.t,
+                shape = shapeOf(n, g, v, sp), dotX = full.l + (sp.pad + sp.shape / 2) * dp)
         }
         val nodeBy = nodes.associateBy { it.id }
 
@@ -168,7 +182,7 @@ object NetScene {
             val width = (if (e.weight > 1f) (1.25f + ln(e.weight)).coerceAtMost(4f) else wBase) * dp
             val dim = focusDrawn != null && (e.from !in focusDrawn || e.to !in focusDrawn)
             Wire(e.id, view.toScreen(e.p0), view.toScreen(e.p1), view.toScreen(e.p2), view.toScreen(e.p3), e.health, e.dashed, width,
-                if (tier == Tier.FAR) 0f else 6f * dp, dim)
+                if (tier == Tier.FAR) 0f else 6f * dp, dim, l.extras.routes[e.id].orEmpty().map(view::toScreen))
         }
 
         // node text (class a): inside the content rect, measured and ellipsised, or not drawn
@@ -178,10 +192,8 @@ object NetScene {
                 val n = l.plan.nodes.first { it.id == id }
                 if (tier == Tier.NEAR) sp.capNameNear else if (wide(n)) sp.capNameWide else sp.capName
             }
-            val peers = l.plan.nodes.groupBy { it.rect.l to (l.extras.frameOf[it.id] ?: "") }
-            val peersOf = HashMap<String, List<String>>()
-            peers.values.forEach { ns -> val names = ns.map { it.label }; ns.forEach { peersOf[it.id] = names } }
-            val shorts = NetLabel.shortAll(l.plan.nodes.associate { it.id to it.label }, { peersOf[it].orEmpty() }, cap)
+            // #1955 A rev2.1 the layout's names: suffix stripped, never blank, never equal to another node's (the box was sized for them)
+            val shorts = l.plan.nodes.associate { it.id to (l.extras.names[it.id] ?: it.label.ifBlank { "${it.kind} ${it.id}" }) }
             val prio = l.plan.nodes.sortedWith(compareBy<MailStack.NodePrim>(
                 { if (it.id == rootDrawn) 0 else if (it.id == selDrawn) 1 else if (it.id in matchDrawn) 2 else if (it.id in l.extras.aggregates || it.kind == "hub" || it.kind == "root") 3 else 4 },
                 { it.rect.t }, { it.rect.l }))
@@ -193,12 +205,16 @@ object NetScene {
                 val c = nb.content
                 if (c.r - c.l <= 0f || (n.kind != "frame" && !free(nb.box)) || !free(c) || (n.kind == "frame" && nb.cut)) return@forEach
                 val nsp = if (n.kind == "frame") sp.headerSp else sp.nameSp
-                var nameTxt = NetLabel.fit(shorts[n.id].orEmpty(), c.r - c.l) { measure.size(it, nsp, true).first }
-                // two different names that the measured fit made equal: the later one keeps its last 3 characters, else it is not drawn
-                if (drawnNames[nameTxt]?.let { it != n.label } == true)
-                    nameTxt = NetLabel.fit(NetLabel.middle(n.label, minOf(cap(n.id), n.label.length - 1)), c.r - c.l) { measure.size(it, nsp, true).first }
-                if (nameTxt.isEmpty() || drawnNames[nameTxt]?.let { it != n.label } == true) return@forEach
-                drawnNames[nameTxt] = n.label
+                val base = shorts.getValue(n.id)
+                val full = n.label.ifBlank { base }
+                val wOf = { t: String -> measure.size(t, nsp, true).first }
+                // the name in full when its box holds it; else the middle ellipsis that keeps its tail (the cap first, then the measured width)
+                var nameTxt = NetLabel.fit(NetLabel.cap(base, cap(n.id)), c.r - c.l, wOf, middle = true)
+                // two different names that the fit made equal: the later one takes another tail, else it is not drawn
+                if (drawnNames[nameTxt]?.let { it != full } == true)
+                    nameTxt = NetLabel.variants(base, c.r - c.l, wOf).firstOrNull { it.length <= cap(n.id) && drawnNames[it]?.let { o -> o != full } != true }.orEmpty()
+                if (nameTxt.isEmpty()) return@forEach
+                drawnNames[nameTxt] = full
                 val (nw, nh) = measure.size(nameTxt, nsp, true)
                 if (nh > c.b - c.t) return@forEach
                 var metricBox: TextBox? = null
@@ -215,7 +231,7 @@ object NetScene {
                         }
                     }
                 }
-                texts += TextBox("name:${n.id}", Cls.NAME, MailStack.Rect(c.l, nameTop, c.l + nw, nameTop + nh), nameTxt, nsp, true, n.id, n.label)
+                texts += TextBox("name:${n.id}", Cls.NAME, MailStack.Rect(c.l, nameTop, c.l + nw, nameTop + nh), nameTxt, nsp, true, n.id, full)
                 metricBox?.let { texts += it }
                 names++
             }
@@ -306,7 +322,7 @@ object NetScene {
                 val a = view.toScreen(e.p0); val d = view.toScreen(e.p3)
                 val len = sqrt((a.x - d.x) * (a.x - d.x) + (a.y - d.y) * (a.y - d.y))
                 val k = (len / (sp.wireSample * dp)).toInt().coerceIn(4, 400)
-                e.id to (0..k).map { view.toScreen(MailStack.bezier(e, it / k.toFloat())) }
+                e.id to (0..k).map { view.toScreen(pointAt(l, e, it / k.toFloat())) }
             }
             val shown = mutableListOf<Pair<String, Set<String>>>()
             var placed = 0
@@ -318,7 +334,7 @@ object NetScene {
                 val (tw, th) = measure.size(t0, sp.pillSp, false)
                 val pw = tw + 2 * sp.pillPad * dp; val ph = maxOf(sp.pillH * dp, th + 2f * dp)
                 val spot = listOf(0.5f, 0.38f, 0.62f, 0.26f, 0.74f).firstNotNullOfOrNull { t ->
-                    val m = view.toScreen(MailStack.bezier(e, t))
+                    val m = view.toScreen(pointAt(l, e, t))
                     val plate = MailStack.Rect(m.x - pw / 2, m.y - ph / 2, m.x + pw / 2, m.y + ph / 2)
                     val clear = samples.filterKeys { it != e.id }.values.all { pts -> pts.all { q -> (q.x - m.x) * (q.x - m.x) + (q.y - m.y) * (q.y - m.y) >= (sp.wireClear * dp) * (sp.wireClear * dp) } }
                     plate.takeIf { placeable(it, null) && clear }
@@ -337,6 +353,43 @@ object NetScene {
     /** The frame whose header band is under the screen point (the lane or transport sheet), or null. */
     fun hitHeader(sc: Scene, at: Offset): String? = sc.frames.lastOrNull { f -> f.header?.contains(at) == true }?.id
 
-    /** The wire nearest the screen point within [tolPx], sampled along its curve; null when none. */
-    fun hitEdge(l: NetGraphLayout.Layout, view: MailStack.View, at: Offset, tolPx: Float): String? = MailStack.hitEdge(l.plan, view, at, tolPx)
+    /** The wire nearest the screen point within [tolPx], along its curve or its bus route; null when none. */
+    fun hitEdge(l: NetGraphLayout.Layout, view: MailStack.View, at: Offset, tolPx: Float): String? = hitEdges(l, view, at, tolPx, 0f).firstOrNull()
+
+    /** #1955 A rev2.1 The box of a node's kind: the page's column shape first, then the declared kind shape, else rounded. */
+    fun shapeOf(n: MailStack.NodePrim, g: NetGraph.Graph, v: NetGraph.Viewers, sp: Spec): String {
+        if (n.kind == "frame" || n.kind == "cluster") return "rounded"
+        val gn = g.node(n.id)
+        return gn?.let { v.strs(g.page, "column_shapes").getOrNull(it.column) } ?: sp.shapes[n.kind] ?: "rounded"
+    }
+
+    /** #1955 A rev2.1 The world point at [t] (0..1) along a wire: its bus route by length when it has one, else its curve. */
+    fun pointAt(l: NetGraphLayout.Layout, e: MailStack.EdgePrim, t: Float): Offset {
+        val r = l.extras.routes[e.id]
+        if (r.isNullOrEmpty() || r.size < 2) return MailStack.bezier(e, t)
+        val seg = r.zipWithNext { a, b -> sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y)) }
+        var d = seg.sum() * t.coerceIn(0f, 1f)
+        seg.forEachIndexed { i, s -> if (d <= s || i == seg.size - 1) { val k = if (s <= 0f) 0f else (d / s).coerceIn(0f, 1f); return Offset(r[i].x + (r[i + 1].x - r[i].x) * k, r[i].y + (r[i + 1].y - r[i].y) * k) }; d -= s }
+        return r.last()
+    }
+
+    /**
+     * #1955 A rev2.1 The wires under a tap: every drawn wire within [nearPx] of the screen point when there are two or more (the edge
+     * chooser lists them, nearest first), else the one nearest within [tolPx], else none. Distances are to the drawn polyline or curve.
+     */
+    fun hitEdges(l: NetGraphLayout.Layout, view: MailStack.View, at: Offset, tolPx: Float, nearPx: Float): List<String> {
+        fun dSeg(p: Offset, a: Offset, b: Offset): Float {
+            val dx = b.x - a.x; val dy = b.y - a.y; val len = dx * dx + dy * dy
+            val k = if (len <= 0f) 0f else (((p.x - a.x) * dx + (p.y - a.y) * dy) / len).coerceIn(0f, 1f)
+            val qx = a.x + dx * k - p.x; val qy = a.y + dy * k - p.y
+            return sqrt(qx * qx + qy * qy)
+        }
+        val ds = l.plan.edges.map { e ->
+            val pts = l.extras.routes[e.id]?.takeIf { it.size >= 2 }?.map(view::toScreen) ?: (0..32).map { view.toScreen(MailStack.bezier(e, it / 32f)) }
+            e.id to pts.zipWithNext { a, b -> dSeg(at, a, b) }.minOrNull()!!
+        }.sortedBy { it.second }
+        val near = ds.filter { it.second <= nearPx }
+        if (near.size >= 2) return near.map { it.first }
+        return ds.firstOrNull()?.takeIf { it.second <= tolPx }?.let { listOf(it.first) } ?: emptyList()
+    }
 }

@@ -185,6 +185,93 @@ class NetSceneOverlapTest {
         assertEquals(bad.take(40).joinToString("\n"), 0, bad.size)
     }
 
+    /** The opening view of [c] on the 412 x 739 phone, as the phone draws it. */
+    private fun at412(c: Case): Shot {
+        val cv = canvases[0]
+        val l = NetGraphLayout.layout(c.g, v, c.collapsed, pal, c.status, cv.density)
+        val open = NetGraphLayout.openFor(l, v, cv.w, cv.h, cv.density, c.st.root)
+        return Shot("${c.page} / ${c.state} / ${cv.name} / opening", c, cv, l, open, scene(c, cv, l, open))
+    }
+
+    @Test fun `T1g names at fit view on 412 x 739 - a name is shortened only where its node is at the room its layout has, VM names read in full`() {
+        val bad = mutableListOf<String>()
+        var checked = 0
+        pages.forEach { page ->
+            val s = at412(cases(page).first { it.state == "default" })
+            s.scene.texts.filter { it.cls == NetScene.Cls.NAME }.forEach { t ->
+                val base = s.l.extras.names.getValue(t.owner)
+                checked++
+                if (t.text == base) return@forEach
+                if (t.owner !in s.l.extras.capped) bad += "${s.label}: ${t.owner} reads '${t.text}' for '$base' though the layout has room for the whole name"
+                if (!t.text.contains(NetLabel.ELLIPSIS)) bad += "${s.label}: ${t.owner} reads '${t.text}' for '$base' with no ellipsis"
+            }
+        }
+        // every VM name on WG Mesh and WireGuard reads in full (the owner's target: nothing cut while the world has room)
+        val vms = slice.vms.map { it.alias }.toSet()
+        listOf("net_mesh", "net_wg").forEach { page ->
+            val s = at412(cases(page).first { it.state == "default" })
+            val vmNodes = s.l.plan.nodes.filter { it.label in vms && it.kind != "frame" }
+            assertTrue("$page draws VM nodes", vmNodes.isNotEmpty())
+            vmNodes.forEach { n ->
+                val t = s.scene.texts.firstOrNull { it.cls == NetScene.Cls.NAME && it.owner == n.id }
+                if (t?.text != n.label) bad += "${s.label}: the VM ${n.label} reads '${t?.text}'"
+            }
+        }
+        assertTrue("names were checked", checked > 0)
+        assertEquals(bad.take(40).joinToString("\n"), 0, bad.size)
+    }
+
+    @Test fun `T1h names at fit view on 412 x 739 - every node on screen shows a name, none is blank`() {
+        val bad = mutableListOf<String>()
+        pages.forEach { page ->
+            cases(page).filter { it.state == "default" || it.state == "all expanded" }.forEach { c ->
+                val s = at412(c)
+                s.l.extras.names.forEach { (id, nm) -> if (nm.isBlank()) bad += "${s.label}: $id has a blank name" }
+                val named = s.scene.texts.filter { it.cls == NetScene.Cls.NAME }
+                named.forEach { t -> if (t.text.isBlank()) bad += "${s.label}: ${t.owner} draws a blank name" }
+                val ids = named.map { it.owner }.toSet()
+                val usable = MailStack.Rect(0f, s.scene.caption?.b ?: 0f, s.scene.canvas.r, s.scene.canvas.b)
+                s.scene.nodes.forEach { n ->
+                    val shown = NetScene.inside(n.box, usable) && s.scene.hud.none { hit(n.box, it) } && !n.cut
+                    if (shown && n.id !in ids && ids.size < sp.maxNames) {
+                        val label = s.l.plan.nodes.first { it.id == n.id }.label
+                        bad += "${s.label}: ${n.id} ('$label') is on screen with no name"
+                    }
+                }
+            }
+        }
+        assertEquals(bad.take(40).joinToString("\n"), 0, bad.size)
+    }
+
+    @Test fun `the root chip is one line of at most 30 characters - the short name and the impacted count`() {
+        pages.forEach { page ->
+            val g = graph(page)
+            val (_, roots, _) = hubDown(g)
+            roots.forEach { r ->
+                val chip = NetSheets.rootChip(g, r)
+                assertTrue("$page: '$chip' is ${chip.length} > 30", chip.length <= 30)
+                assertTrue("$page: '$chip' names the impacted count", chip.contains("${r.impacted.size} impacted"))
+                assertTrue("$page: '$chip' is one line", '\n' !in chip)
+            }
+        }
+        assertEquals("■ ROOT analytics · 16 impacted", NetLabel.rootChip("analytics.diegonmarcos.com", listOf("analytics.diegonmarcos.com", "auth.diegonmarcos.com", "vpn.diegonmarcos.com"), 16))
+        assertEquals("desk…nixos", NetLabel.cap("desktop-nixos", 10))
+    }
+
+    @Test fun `bus routes - a fan of three or more wires into one node runs on an orthogonal bus that starts and ends on its two nodes`() {
+        val g = graph("net_wg")
+        val l = NetGraphLayout.layout(g, v, NetGraphLayout.defaultCollapsed(g, v), pal)
+        assertTrue("WireGuard routes its client fans on buses", l.extras.routes.isNotEmpty())
+        val rects = l.plan.nodes.associate { it.id to it.rect }
+        fun on(p: Offset, r: MailStack.Rect) = (kotlin.math.abs(p.x - r.l) < 0.5f || kotlin.math.abs(p.x - r.r) < 0.5f) && p.y in r.t..r.b
+        l.extras.routes.forEach { (id, pts) ->
+            val e = l.plan.edges.first { it.id == id }
+            assertTrue("$id starts on ${e.from}", on(pts.first(), rects.getValue(e.from)))
+            assertTrue("$id ends on ${e.to}", on(pts.last(), rects.getValue(e.to)))
+            pts.zipWithNext().forEach { (a, b) -> assertTrue("$id: segment $a -> $b is not orthogonal", a.x == b.x || a.y == b.y) }
+        }
+    }
+
     @Test fun `T2 label budget - no pill at the opening view, budgets with a selection, at 2x and at FAR`() {
         val cv = canvases[0]
         pages.forEach { page ->

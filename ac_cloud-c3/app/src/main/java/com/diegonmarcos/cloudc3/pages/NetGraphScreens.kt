@@ -25,7 +25,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -69,6 +72,7 @@ import com.diegonmarcos.superapp.uikit.KitStoreRow
 import com.diegonmarcos.superapp.uikit.LocalKitPalette
 import com.diegonmarcos.superapp.uikit.safeDrawText
 import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
 
 /** Test tags of the Network viewer switch and the Graph view. */
 object NetTags {
@@ -105,9 +109,15 @@ object NetTags {
     const val SHEET_MORE = "net_graph_sheet_more"
     const val CLOSE = "net_graph_close"
     const val MINIMAP = "net_graph_minimap"
+    /** #1955 A rev2.1 the edge chooser (several wires under one tap) and its rows */
+    const val CHOOSER = "net_graph_edge_chooser"
+    fun choose(edgeId: String) = "net_graph_choose_$edgeId"
 }
 
 private fun mono(size: Float, c: Color, w: FontWeight = FontWeight.Normal) = TextStyle(fontFamily = FontFamily.Monospace, fontSize = size.sp, color = c, fontWeight = w)
+
+/** #1955 A rev2.1 Two taps on one node within this many ms are a double tap (the platform's double-tap time). */
+private const val DOUBLE_TAP_MS = 300L
 
 /** #1955 A rev2 The style every canvas text is measured AND drawn with (so the measured box is the drawn box). */
 fun netTextStyle(sp: Float, bold: Boolean, c: Color = Color.Unspecified) = mono(sp, c, if (bold) FontWeight.Bold else FontWeight.Normal)
@@ -178,7 +188,10 @@ object NetSheets {
     fun deviceSentence(st: GraphState) = "Device: ${st.deviceNote}. Nodes show \"not read\"."
 
     /** The root-cause chip: one line ("■ ROOT name · N impacted ›"); the verdict and the full why are the root sheet's first lines. */
-    fun rootChip(g: NetGraph.Graph, r: NetLive.Root) = "■ ROOT ${g.node(r.id)?.label ?: r.id} · ${r.impacted.size} impacted ›"
+    fun rootChip(g: NetGraph.Graph, r: NetLive.Root): String {
+        val n = g.node(r.id)
+        return NetLabel.rootChip(n?.label ?: r.id, g.nodes.filter { it.ns == n?.ns }.map { it.label }, r.impacted.size)
+    }
     fun rootSentence(g: NetGraph.Graph, r: NetLive.Root) = "ROOT CAUSE ${g.node(r.id)?.label ?: r.id} (${NetLive.verdict(r)}): ${r.why}   ${r.impacted.size} impacted"
 
     fun laneText(g: NetGraph.Graph, laneId: String): Pair<String, String> {
@@ -267,6 +280,8 @@ fun NetGraphScreen(
     var openEdge by remember { mutableStateOf<String?>(null) }
     var openFrame by remember { mutableStateOf<String?>(null) }
     var openNote by remember { mutableStateOf<String?>(null) }
+    var choose by remember { mutableStateOf<List<String>>(emptyList()) }
+    var lastTap by remember { mutableStateOf(0L to "") }
     var expanded by remember { mutableStateOf(false) }
     var legend by remember { mutableStateOf(false) }
     var isolate by remember { mutableStateOf(false) }
@@ -281,7 +296,11 @@ fun NetGraphScreen(
     val sp = remember(v) { NetScene.Spec.of(v) }
     val layout = remember(g, collapsed, status, p, density) { NetGraphLayout.layout(g, v, collapsed, p, status, density) }
     val hits = remember(g, query) { graphSearch(g, query) }
-    val sheetOpen = open != null || openEdge != null || openFrame != null || openNote != null
+    val sheetOpen = open != null || openEdge != null || openFrame != null || openNote != null || choose.isNotEmpty()
+    // #1955 A rev2.1 the minimap fades to 35 % 1.5 s after the last gesture (every pan, zoom or jump sets a new view)
+    var faded by remember { mutableStateOf(false) }
+    LaunchedEffect(viewState.value) { faded = false; delay(1500); faded = true }
+    val miniAlpha by animateFloatAsState(if (faded) 0.35f else 1f, label = "minimap")
     val peekPx = 132f * density
     fun opening(w: Float, h: Float) = NetGraphLayout.openFor(layout, v, w, h, density, root?.id)
     fun current() = viewState.value ?: opening(box.width.toFloat().coerceAtLeast(1f), box.height.toFloat().coerceAtLeast(1f))
@@ -295,7 +314,7 @@ fun NetGraphScreen(
     fun openNode(id: String) {
         // a hidden member opens with its cluster expanded (search expands the cluster that holds a match)
         g.clusters.filter { id in it.members && it.id in collapsed }.forEach { c -> collapsed = collapsed - c.id }
-        open = id; openEdge = null; openFrame = null; openNote = null; expanded = false
+        open = id; openEdge = null; openFrame = null; openNote = null; choose = emptyList(); expanded = false
         kb?.hide()
     }
     fun pick(id: String) { openNode(id); hitsOpen = false; centre(id, 1f) }
@@ -356,7 +375,6 @@ fun NetGraphScreen(
             val hitRows = if (query.isNotBlank() && hits.isNotEmpty() && hitsOpen) minOf(hits.size, 4) else 0
             val hitRect = if (hitRows > 0) MailStack.Rect(0f, 0f, box.width.toFloat(), (28f + hitRows * 36f) * density) else null
             PlanCanvas(layout.plan, NetTags.graph(page), Modifier.fillMaxSize(),
-                onEdge = { id -> openEdge = id; open = null; openFrame = null; openNote = null; expanded = false },
                 viewState = viewState,
                 initialView = { w, h -> opening(w, h) },
                 pulses = false,
@@ -368,15 +386,38 @@ fun NetGraphScreen(
                     drawNetScene(sc, p, measurer, density, st.readings)
                 },
                 onBackground = { at, view ->
-                    val mini = NetScene.minimap(layout.plan.bounds, view, box.width.toFloat(), box.height.toFloat(), density, sp, sheetOpen)
-                    val sc = NetScene.build(layout, g, v, view, box.width.toFloat(), box.height.toFloat(), density, NetScene.State(hud = listOfNotNull(mini)), measure, status)
-                    val f = NetScene.hitHeader(sc, at)
-                    open = null; openEdge = null; openNote = null; openFrame = f; expanded = false
+                    // a wire (16 dp tolerance, stub or bus included); two or more within 6 dp open the chooser; else a frame header or nothing
+                    val es = NetScene.hitEdges(layout, view, at, 16f * density, 6f * density)
+                    open = null; openNote = null; expanded = false
+                    when {
+                        es.size >= 2 -> { choose = es; openEdge = null; openFrame = null }
+                        es.size == 1 -> { openEdge = es[0]; choose = emptyList(); openFrame = null }
+                        else -> {
+                            val mini = NetScene.minimap(layout.plan.bounds, view, box.width.toFloat(), box.height.toFloat(), density, sp, sheetOpen)
+                            val sc = NetScene.build(layout, g, v, view, box.width.toFloat(), box.height.toFloat(), density, NetScene.State(hud = listOfNotNull(mini)), measure, status)
+                            openEdge = null; choose = emptyList(); openFrame = NetScene.hitHeader(sc, at)
+                        }
+                    }
                 },
-            ) { id -> openNode(layout.extras.aggregates[id]?.let { _ -> id } ?: id); centre(id) }
+            ) { id ->
+                // #1955 A rev2.1 a second tap on the same node within the double-tap time: an aggregate expands in place, any other node
+                // is zoomed to 1.5x and centred above its sheet (the first tap opened it; single taps are never delayed)
+                val now = android.os.SystemClock.uptimeMillis()
+                val cid = layout.extras.aggregates[id]
+                if (lastTap.second == id && now - lastTap.first <= DOUBLE_TAP_MS) {
+                    lastTap = 0L to ""
+                    if (cid != null && cid in collapsed) { collapsed = collapsed - cid; open = null }
+                    else layout.plan.nodes.firstOrNull { it.id == id }?.let { n ->
+                        viewState.value = NetGraphLayout.centreAbove(MailStack.View(1.5f, 0f, 0f), n.rect, box.width.toFloat(), box.height.toFloat(), peekPx)
+                    }
+                } else {
+                    lastTap = now to id
+                    openNode(id); centre(id)
+                }
+            }
             val view = current()
             if (!sheetOpen) NetScene.minimap(layout.plan.bounds, view, box.width.toFloat(), box.height.toFloat(), density, sp, false)?.let { r ->
-                MiniMap(layout, view, box, r) { at -> viewState.value = current().centerOn(MailStack.Rect(at.x, at.y, at.x, at.y), box.width.toFloat(), box.height.toFloat()) }
+                MiniMap(layout, view, box, r, miniAlpha) { at -> viewState.value = current().centerOn(MailStack.Rect(at.x, at.y, at.x, at.y), box.width.toFloat(), box.height.toFloat()) }
             }
             if (hitRows > 0) HitList(hits, hitAt, layout, st.readings, Modifier.align(Alignment.TopStart),
                 onPrev = { hitAt = (hitAt - 1 + hits.size) % hits.size; pick(hits[hitAt].id) },
@@ -414,6 +455,14 @@ fun NetGraphScreen(
                         SheetFrame(NetTags.laneSheet(fid), p.hairline, f.label, "", p.textSecondary, ctl, { openFrame = null }) {
                             NetSheets.frame(f, g, layout).forEach { l -> Line(l.k, l.v, l.tag, l.pick?.let { id -> { openNode(id) } }) }
                         }
+                    }
+                }
+                if (choose.isNotEmpty()) SheetFrame(NetTags.CHOOSER, p.hairline, "${choose.size} wires here", "", p.textSecondary, ctl, { choose = emptyList() }) {
+                    choose.forEach { eid ->
+                        val pe = layout.plan.edges.firstOrNull { it.id == eid }
+                        val from = pe?.let { g.node(it.from)?.label ?: layout.plan.nodes.firstOrNull { n -> n.id == it.from }?.label ?: it.from }.orEmpty()
+                        val to = pe?.let { g.node(it.to)?.label ?: layout.plan.nodes.firstOrNull { n -> n.id == it.to }?.label ?: it.to }.orEmpty()
+                        Line("wire", "$from -> $to  ${pe?.label.orEmpty()}", NetTags.choose(eid)) { openEdge = eid; choose = emptyList() }
                     }
                 }
                 openNote?.let { k ->
@@ -510,36 +559,43 @@ fun DrawScope.drawNetScene(sc: NetScene.Scene, p: KitPalette, measurer: TextMeas
     sc.wires.forEach { w ->
         val bad = w.health == MailStack.Health.BAD || w.health == MailStack.Health.WARN
         val c = (if (bad) statusInk(w.health, p).copy(alpha = 0.9f) else p.textSecondary.copy(alpha = 0.55f)).let { if (w.dim) it.copy(alpha = it.alpha * 0.25f) else it }
-        val path = Path().apply { moveTo(w.p0.x, w.p0.y); cubicTo(w.p1.x, w.p1.y, w.p2.x, w.p2.y, w.p3.x, w.p3.y) }
+        // a bus-routed wire is its polyline with 6 dp rounded corners; any other wire its curve
+        val path = if (w.pts.size >= 2) roundedPolyline(w.pts, 6f * dp) else Path().apply { moveTo(w.p0.x, w.p0.y); cubicTo(w.p1.x, w.p1.y, w.p2.x, w.p2.y, w.p3.x, w.p3.y) }
         drawPath(path, c, style = Stroke(w.width, pathEffect = if (w.dashed) PathEffect.dashPathEffect(floatArrayOf(6f * dp, 4f * dp)) else null))
         if (w.arrow > 0f) {
-            val dx = w.p3.x - w.p2.x; val dy = w.p3.y - w.p2.y
+            val tip = if (w.pts.size >= 2) w.pts.last() else w.p3
+            val back = if (w.pts.size >= 2) w.pts[w.pts.size - 2] else w.p2
+            val dx = tip.x - back.x; val dy = tip.y - back.y
             val l = kotlin.math.sqrt(dx * dx + dy * dy).coerceAtLeast(0.001f)
             val ux = dx / l; val uy = dy / l; val k = w.arrow
-            drawPath(Path().apply { moveTo(w.p3.x, w.p3.y); lineTo(w.p3.x - ux * k + uy * k * 0.5f, w.p3.y - uy * k - ux * k * 0.5f); lineTo(w.p3.x - ux * k - uy * k * 0.5f, w.p3.y - uy * k + ux * k * 0.5f); close() }, c)
+            drawPath(Path().apply { moveTo(tip.x, tip.y); lineTo(tip.x - ux * k + uy * k * 0.5f, tip.y - uy * k - ux * k * 0.5f); lineTo(tip.x - ux * k - uy * k * 0.5f, tip.y - uy * k + ux * k * 0.5f); close() }, c)
         }
     }
     sc.nodes.forEach { n ->
         val a = if (n.dim) 0.25f else 1f
         val b = n.box
         val sz = Size(b.r - b.l, b.b - b.t)
-        val hub = n.kind == "hub" || n.kind == "root" || n.kind == "server"
-        val rad = CornerRadius((if (hub) 8f else if (n.kind == "client") 16f else 6f) * dp)
+        // the box of the node's kind (5): hub 8 dp and a heavy outline, stadium, rounded 6 dp, square 2 dp, chamfered 6 dp
+        val hub = n.shape == "hub"
+        val rad = CornerRadius(when (n.shape) { "hub" -> 8f * dp; "stadium" -> (b.b - b.t) / 2; "square" -> 2f * dp; "chamfer" -> 0f; else -> 6f * dp })
         if (n.kind == "frame") {
             // a frame's head node is its header band: tinted, no box outline (the frame draws the outline)
             drawRect(p.hairline.copy(alpha = 0.18f * a), Offset(b.l, b.t), sz)
-            if (sz.height >= 12f * dp && !n.cut) statusShape(n.health, false, Offset(b.l + 11f * dp, (b.t + b.b) / 2), 10f * dp, p, a)
+            if (sz.height >= 12f * dp && !n.cut) statusShape(n.health, false, Offset(n.dotX, (b.t + b.b) / 2), 10f * dp, p, a)
             if (n.root) drawRect(p.bad, Offset(b.l, b.t), sz, style = Stroke(2f * dp))
             if (n.match || n.selected) drawRect(p.accent, Offset(b.l, b.t), sz, style = Stroke(2f * dp))
             return@forEach
         }
-        if (n.aggregate) drawRoundRect(p.hairline.copy(alpha = a), Offset(b.l + 3f * dp, b.t + 3f * dp), sz, rad, style = Stroke(1.5f * dp))
-        drawRoundRect(p.surfaceSelected.copy(alpha = if (n.dim) 0.5f else 1f), Offset(b.l, b.t), sz, rad)
+        val chamfer = if (n.shape == "chamfer") 6f * dp else 0f
+        fun box(dx: Float, dy: Float, ink: Color, style: androidx.compose.ui.graphics.drawscope.DrawStyle) =
+            if (chamfer > 0f) drawPath(chamfered(b.l + dx, b.t + dy, b.r + dx, b.b + dy, chamfer), ink, style = style)
+            else drawRoundRect(ink, Offset(b.l + dx, b.t + dy), sz, rad, style = style)
+        if (n.aggregate) box(3f * dp, 3f * dp, p.hairline.copy(alpha = a), Stroke(1.5f * dp))
+        box(0f, 0f, p.surfaceSelected.copy(alpha = if (n.dim) 0.5f else 1f), androidx.compose.ui.graphics.drawscope.Fill)
         val declared = readings[n.id]?.source == NetLive.DECLARED.source && !n.aggregate
         val outline = if (n.health == MailStack.Health.UNKNOWN) p.hairline else statusInk(n.health, p)
-        drawRoundRect(outline.copy(alpha = a), Offset(b.l, b.t), sz, rad,
-            style = Stroke((if (hub) 2.5f else 1.5f) * dp, pathEffect = if (declared) PathEffect.dashPathEffect(floatArrayOf(5f * dp, 3f * dp)) else null))
-        if (sz.height >= 14f * dp && !n.cut) statusShape(n.health, declared, Offset(b.l + 11f * dp, (b.t + b.b) / 2), 10f * dp, p, a)
+        box(0f, 0f, outline.copy(alpha = a), Stroke((if (hub) 2.5f else 1.5f) * dp, pathEffect = if (declared) PathEffect.dashPathEffect(floatArrayOf(5f * dp, 3f * dp)) else null))
+        if (sz.height >= 14f * dp && !n.cut) statusShape(n.health, declared, Offset(n.dotX, (b.t + b.b) / 2), 10f * dp, p, a)
         if (n.root) {
             drawRoundRect(p.bad, Offset(b.l, b.t), sz, rad, style = Stroke(2f * dp))
             drawRoundRect(p.bad, Offset(b.l - 3f * dp, b.t - 3f * dp), Size(sz.width + 6f * dp, sz.height + 6f * dp), CornerRadius(rad.x + 3f * dp), style = Stroke(2f * dp))
@@ -575,6 +631,25 @@ fun DrawScope.drawNetScene(sc: NetScene.Scene, p: KitPalette, measurer: TextMeas
     }
 }
 
+/** #1955 A rev2.1 A polyline whose inner corners are rounded by [r] px (a bus route). */
+fun roundedPolyline(pts: List<Offset>, r: Float): Path = Path().apply {
+    moveTo(pts[0].x, pts[0].y)
+    for (i in 1 until pts.size - 1) {
+        val a = pts[i - 1]; val c = pts[i]; val d = pts[i + 1]
+        val l1 = kotlin.math.hypot(c.x - a.x, c.y - a.y); val l2 = kotlin.math.hypot(d.x - c.x, d.y - c.y)
+        val k = minOf(r, l1 / 2, l2 / 2)
+        if (k <= 0f) { lineTo(c.x, c.y); continue }
+        lineTo(c.x - (c.x - a.x) / l1 * k, c.y - (c.y - a.y) / l1 * k)
+        quadraticTo(c.x, c.y, c.x + (d.x - c.x) / l2 * k, c.y + (d.y - c.y) / l2 * k)
+    }
+    lineTo(pts.last().x, pts.last().y)
+}
+
+/** #1955 A rev2.1 A box with its four corners cut by [c] px (tiers, auth kinds and gates). */
+fun chamfered(l: Float, t: Float, r: Float, b: Float, c: Float): Path = Path().apply {
+    moveTo(l + c, t); lineTo(r - c, t); lineTo(r, t + c); lineTo(r, b - c); lineTo(r - c, b); lineTo(l + c, b); lineTo(l, b - c); lineTo(l, t + c); close()
+}
+
 /** The legend: an overlay card at the top-right of the canvas (it never moves the canvas). */
 @Composable
 private fun Legend(modifier: Modifier) {
@@ -597,12 +672,12 @@ private fun Legend(modifier: Modifier) {
 }
 
 @Composable
-private fun MiniMap(l: NetGraphLayout.Layout, view: MailStack.View, box: IntSize, at: MailStack.Rect, onJump: (Offset) -> Unit) {
+private fun MiniMap(l: NetGraphLayout.Layout, view: MailStack.View, box: IntSize, at: MailStack.Rect, alpha: Float, onJump: (Offset) -> Unit) {
     val b = l.plan.bounds
     val p = LocalKitPalette.current
     val d = LocalDensity.current
     Canvas(Modifier.offset { IntOffset(at.l.roundToInt(), at.t.roundToInt()) }.size(with(d) { (at.r - at.l).toDp() }, with(d) { (at.b - at.t).toDp() })
-        .background(p.surface.copy(alpha = 0.85f)).border(1.dp, p.hairline).testTag(NetTags.MINIMAP)
+        .alpha(alpha).background(p.surface.copy(alpha = 0.85f)).border(1.dp, p.hairline).testTag(NetTags.MINIMAP)
         .pointerInput(l) { detectTapGestures { q -> onJump(Offset(b.l + q.x / size.width * (b.r - b.l), b.t + q.y / size.height * (b.b - b.t))) } }) {
         val sx = size.width / (b.r - b.l).coerceAtLeast(1f); val sy = size.height / (b.b - b.t).coerceAtLeast(1f)
         l.plan.nodes.forEach { n -> drawRect(n.color, Offset((n.rect.l - b.l) * sx, (n.rect.t - b.t) * sy), Size(((n.rect.r - n.rect.l) * sx).coerceAtLeast(1f), ((n.rect.b - n.rect.t) * sy).coerceAtLeast(1f))) }

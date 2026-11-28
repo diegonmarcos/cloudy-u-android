@@ -28,6 +28,7 @@ import com.diegonmarcos.cloudc3.pages.NetGraph
 import com.diegonmarcos.cloudc3.pages.NetGraphScreen
 import com.diegonmarcos.cloudc3.pages.NetLive
 import com.diegonmarcos.cloudc3.pages.NetPages
+import com.diegonmarcos.cloudc3.pages.NetScene
 import com.diegonmarcos.cloudc3.pages.NetTags
 import com.diegonmarcos.cloudc3.pages.NetViewerScreen
 import com.diegonmarcos.cloudc3.pages.OpsMapScreen
@@ -260,17 +261,44 @@ class NetViewerComposeTest {
         compose.setContent { CloudKitTheme(palette) { NetGraphScreen("net_wg", st, v, {}, {}, {}, {}) } }
         compose.waitForIdle()
         val (l, view, box) = opened("net_wg", st)
-        val tol = 12f * compose.density.density
+        val d = compose.density.density
+        // a point on the drawn wire (its bus stub or its curve) where it is the only wire within 6 dp
         val pick = l.plan.edges.firstNotNullOfOrNull { e ->
-            val m = view.toScreen(MailStack.bezier(e, 0.5f))
-            val clear = MailStack.hit(l.plan, view, m) == null && m.x in 0f..box.width && m.y in 0f..box.height &&
-                MailStack.hitEdge(l.plan, view, m, tol) == e.id
-            if (clear) e to m else null
+            listOf(0.5f, 0.06f, 0.94f, 0.3f, 0.7f).firstNotNullOfOrNull { t ->
+                val m = view.toScreen(NetScene.pointAt(l, e, t))
+                val clear = MailStack.hit(l.plan, view, m) == null && m.x in 0f..box.width && m.y in 0f..box.height &&
+                    NetScene.hitEdges(l, view, m, 16f * d, 6f * d) == listOf(e.id)
+                if (clear) e to m else null
+            }
         }!!
         compose.onNodeWithTag(NetTags.graph("net_wg")).performTouchInput { click(pick.second) }
         val members = l.extras.edgeMembers.getValue(pick.first.id)
         val eid = if (st.graph.edges.any { it.id == pick.first.id } || st.graph.depends.any { it.id == pick.first.id }) pick.first.id else members.first()
         compose.onNodeWithTag(NetTags.edgeSheet(eid)).assertExists()
+    }
+
+    @Test @Config(qualifiers = "w412dp-h915dp-mdpi")
+    fun `T9 a tap where several wires run together opens the edge chooser, and a row opens that edge`() {
+        val st = state("net_wg")
+        compose.setContent { CloudKitTheme(palette) { NetGraphScreen("net_wg", st, v, {}, {}, {}, {}) } }
+        compose.waitForIdle()
+        val (l, view, box) = opened("net_wg", st)
+        val d = compose.density.density
+        // a shared bus segment: two or more routed wires within 6 dp of one point, clear of every node
+        val spot = l.extras.routes.values.flatMap { pts -> (1..19).map { i -> pts to i / 20f } }.firstNotNullOfOrNull { (pts, t) ->
+            val e = l.plan.edges.first { l.extras.routes[it.id] == pts }
+            val m = view.toScreen(NetScene.pointAt(l, e, t))
+            val es = NetScene.hitEdges(l, view, m, 16f * d, 6f * d)
+            if (es.size >= 2 && MailStack.hit(l.plan, view, m) == null && m.x in 0f..box.width && m.y in 0f..box.height) m to es else null
+        }!!
+        compose.onNodeWithTag(NetTags.graph("net_wg")).performTouchInput { click(spot.first) }
+        compose.onNodeWithTag(NetTags.CHOOSER).assertExists()
+        val eid = spot.second.first()
+        compose.onNodeWithTag(NetTags.choose(eid)).performClick()
+        compose.onNodeWithTag(NetTags.CHOOSER).assertDoesNotExist()
+        val members = l.extras.edgeMembers.getValue(eid)
+        val sheetId = if (st.graph.edges.any { it.id == eid } || st.graph.depends.any { it.id == eid }) eid else members.first()
+        compose.onNodeWithTag(NetTags.edgeSheet(sheetId)).assertExists()
     }
 
     @Test @Config(qualifiers = "w412dp-h915dp-mdpi")
