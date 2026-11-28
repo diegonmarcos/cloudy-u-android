@@ -96,6 +96,16 @@ class ListReturn1952cTest {
         assertTrue(prune.indexOf("if (isInboxRole(mailboxDao.roleForId(accountId, mailboxId))) return") < prune.indexOfFirst { it.startsWith("val gone = retentionEvictions(") })
     }
 
+    @Test fun `a first sync stores the folder list before its messages`() {
+        assertTrue("nothing stored yet: the folders go in first", firstSyncNeedsFolders(storedRoleOfTarget = null, storedFolders = 0))
+        assertFalse("a known account keeps the counters-after-rows order", firstSyncNeedsFolders("inbox", 7))
+        assertFalse(firstSyncNeedsFolders(null, 7))
+        val repo = code("core/data/src/main/kotlin/app/sterna/core/data/mail/MailRepository.kt")
+        val early = repo.indexOfFirst { it.startsWith("if (firstSyncNeedsFolders(mailboxDao.roleForId(credentials.id, target.id)") }
+        val sync = repo.indexOfFirst { it.startsWith("val sync = runCatching { syncMailbox(session, accountId, auth, target.id, sizing, credentials.id) }") }
+        assertTrue("before the message sync starts", early in 0 until sync)
+    }
+
     // -- cold start: one key ----------------------------------------------------------------------------------------
 
     @Test fun `the pager's first key carries the stored view, never a placeholder`() {

@@ -125,3 +125,6 @@ object UiLoad {
 
 /** #1952 the role that marks the folder whose headers are never pruned by age. */
 fun isInboxRole(role: String?): Boolean = role?.trim()?.lowercase() == "inbox"
+
+/** #1952 the store holds no folder of the account yet (its first sync): the folder list is stored before the messages. */
+fun firstSyncNeedsFolders(storedRoleOfTarget: String?, storedFolders: Int): Boolean = storedRoleOfTarget == null && storedFolders == 0

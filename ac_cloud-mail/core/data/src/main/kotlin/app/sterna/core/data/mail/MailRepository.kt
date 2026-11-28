@@ -2495,6 +2495,12 @@ class MailRepository(
         // The window's two halves, computed ONCE: the request is capped to what this server accepts
         // in one go, the retention floor is not (capping both is #110 reopened).
         val sizing = folderSyncSizing(limit, session.getBatchSize())
+        // #1952 a FIRST sync stores the folder list before its messages: the list needs the Inbox id to page what lands, and a
+        // first sync of 40 000 messages outlived the refresh that would have stored it (an empty Inbox for the whole sync).
+        // Only while the store does not know the folder yet, so the counters rule below is untouched.
+        if (firstSyncNeedsFolders(mailboxDao.roleForId(credentials.id, target.id), mailboxDao.idsForAccount(credentials.id).size)) {
+            mailboxDao.replaceAll(credentials.id, mailboxes.map { it.toEntity(credentials.id) })
+        }
         // The folder rows must land even when the message sync throws: otherwise the drawer keeps
         // stale folders although the list we already fetched is good. The prune stays success-only.
         val sync = runCatching { syncMailbox(session, accountId, auth, target.id, sizing, credentials.id) }
