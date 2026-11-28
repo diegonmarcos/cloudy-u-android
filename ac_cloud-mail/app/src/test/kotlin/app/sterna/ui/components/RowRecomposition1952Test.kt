@@ -41,7 +41,8 @@ import org.robolectric.annotation.GraphicsMode
  * #1952 jank, the part no emulator is needed for: the real [EmailListItem] in a lazy list whose item scope reads a state that a sync
  * writes (the real screen reads its UI state, the selection and the sync status there). Every row on screen is composed ONCE; a sync write
  * (the state ticks) composes none of them again, because the row's parameters are equal and it is skippable; scrolling composes each new row
- * once. A parameter that is a new object on every call (the mutation row-recomposes-on-sync adds one) makes every row recompose on every write.
+ * once. The Email handed over is an equal copy each time (a re-query); app/compose-stability.conf declares the mail model stable, so equal rows
+ * are skipped. Without that line (the mutation row-recomposes-on-sync) every row recomposes on every write.
  * Mutation: workflow mail-cache-1952-mutation, leg row-recomposes-on-sync.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -83,7 +84,8 @@ class RowRecomposition1952Test {
                             items(emails, key = { it.id }) { e ->
                                 val tick = syncTick // the item scope reads the sync state, as the real screen's does
                                 if (tick < 0) error("unreachable")
-                                EmailListItem(email = e, onClick = onClick)
+                                // an EQUAL but new Email on every pass: what each re-query of the list hands the rows on screen
+                                EmailListItem(email = e.copy(), onClick = onClick)
                             }
                         }
                     }

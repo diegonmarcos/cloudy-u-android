@@ -35,8 +35,8 @@ jobs:
             banner-drops-reason) sed -i 's/RefreshNotice.ERROR -> CacheBanner(notice, error, lastSyncAt)/RefreshNotice.ERROR -> CacheBanner(notice, null, lastSyncAt)/' $K/inbox/CacheBanner.kt ;;
             # a failed refresh moves the last sync time too
             stamp-on-failure)    sed -i 's/wasRefreshing \&\& !refreshing \&\& error == null/wasRefreshing \&\& !refreshing/' $K/inbox/CacheBanner.kt ;;
-            # the row takes a parameter that is a new object on every call: it recomposes on every write the item scope reads
-            row-recomposes-on-sync) sed -i 's/^    deliveryTimeline: DeliveryTimeline? = null,$/    deliveryTimeline: DeliveryTimeline? = null,\n    stamp: Any = Any(),/' $K/components/EmailListItem.kt ;;
+            # the mail model is no longer declared stable: every equal-but-new Email recomposes its row on every write
+            row-recomposes-on-sync) sed -i '/^app.sterna.core.jmap.model.Email$/d' ac_cloud-mail/app/compose-stability.conf ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
           git diff --stat

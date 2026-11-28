@@ -11,6 +11,11 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+// #1952 equal rows are skipped: see compose-stability.conf
+composeCompiler {
+    stabilityConfigurationFiles.add(layout.projectDirectory.file("compose-stability.conf"))
+}
+
 // Side-by-side test app: build any variant with -PtestApp to get `app.sterna.test`, a separate
 // package that installs NEXT TO the production app instead of overwriting it (own data, own
 // launcher entry). On-device checks go through it, so production stays the Obtainium-tracked
