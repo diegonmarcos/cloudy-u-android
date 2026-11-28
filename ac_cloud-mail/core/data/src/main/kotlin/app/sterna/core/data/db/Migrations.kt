@@ -476,6 +476,11 @@ const val EMAILS_DOMAIN_LIST_INDEX_SQL: String =
  */
 val MIGRATION_34_35 = object : Migration(34, 35) {
     override fun migrate(db: SupportSQLiteDatabase) {
+        // #1952 timed: an update from v34 builds this index over every stored message before the first query is answered; the
+        // upgrade walk reads both lines (tag MailMigration) next to the first row of the list.
+        val started = System.nanoTime()
+        try { android.util.Log.i("MailMigration", "v35 covering index build start") } catch (_: RuntimeException) {}
         db.execSQL(EMAILS_DOMAIN_LIST_INDEX_SQL)
+        try { android.util.Log.i("MailMigration", "v35 covering index build end ms=${(System.nanoTime() - started) / 1_000_000}") } catch (_: RuntimeException) {}
     }
 }

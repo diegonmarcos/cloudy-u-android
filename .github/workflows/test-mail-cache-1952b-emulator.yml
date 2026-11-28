@@ -19,6 +19,10 @@ on:
         description: 'minutes the walk lets the first full sync run before the cold start (digits only, at most 60)'
         required: false
         default: '30'
+      from_v34:
+        description: 'yes = the filled store is made by the schema v34 build (commit 078e167ab) and the new build is installed over it: times the first launch after updating, with the covering index build (yes or no)'
+        required: false
+        default: 'no'
 
 permissions:
   contents: read
@@ -50,6 +54,7 @@ jobs:
         env:
           IN_BULK: ${{ inputs.bulk }}
           IN_FILL: ${{ inputs.fill_minutes }}
+          IN_V34: ${{ inputs.from_v34 }}
         run: |
           set -eu
           case "$IN_BULK" in ''|*[!0-9]*) echo "::error::bulk is not a number"; exit 2 ;; esac
@@ -57,6 +62,8 @@ jobs:
           [ "${#IN_BULK}" -le 5 ] && [ "$IN_BULK" -le 60000 ] || { echo "::error::bulk out of range"; exit 2; }
           [ "${#IN_FILL}" -le 2 ] && [ "$IN_FILL" -le 60 ] || { echo "::error::fill_minutes out of range"; exit 2; }
           { echo "FAKE_JMAP_BULK=$IN_BULK"; echo "FILL_MINUTES=$IN_FILL"; } >> "$GITHUB_ENV"
+          case "$IN_V34" in yes|no) ;; *) echo "::error::from_v34 is yes or no"; exit 2 ;; esac
+          echo "FROM_V34=$IN_V34" >> "$GITHUB_ENV"
 
       - name: Resolve the native core toolchain (build.json::native_core.toolchain)
         id: native
@@ -100,6 +107,26 @@ jobs:
           unzip -l "$GITHUB_WORKSPACE/app-under-test.apk" | grep -E 'lib/x86_64/libmail_core\.so' || { echo "::error::the APK carries no libmail_core.so"; exit 1; }
           AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
           echo "PKG=$("$AAPT" dump packagename "$GITHUB_WORKSPACE/app-under-test.apk")" >> "$GITHUB_ENV"
+
+      # The update walk: the previous release's schema (v34) build, made from the commit just before the covering index (v35) landed, one Gradle
+      # build after the other. Its APK holds the filled store; the build above is installed over it by the walk.
+      - name: Build the schema v34 build (commit 078e167ab) for the update walk
+        if: env.FROM_V34 == 'yes'
+        run: |
+          set -eu
+          git fetch --no-tags --depth=1 origin 078e167ab934fb00d0f342ce992b45f764e42395
+          SHA=$(git rev-parse --verify 078e167ab934fb00d0f342ce992b45f764e42395^{commit} 2>/dev/null || true)
+          [ -n "$SHA" ] || { echo "::error::commit 078e167ab (schema v34) is not reachable"; exit 1; }
+          git worktree add "$GITHUB_WORKSPACE/old-v34" "$SHA"
+          [ -d .vault ] && cp -r .vault old-v34/.vault
+          [ -d fleet-private-data ] && cp -r fleet-private-data old-v34/ || true
+          cd old-v34/ac_cloud-mail
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:assembleDebug -PtestApp
+          apk=$(find app/build/outputs/apk/debug -name '*.apk' | sort | head -1)
+          [ -n "$apk" ] || { echo "::error::no v34 APK built"; exit 1; }
+          cp "$apk" "$GITHUB_WORKSPACE/app-v34.apk"
+          echo "OLD_APK=app-v34.apk" >> "$GITHUB_ENV"
 
       - name: Enable KVM
         run: |

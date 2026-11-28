@@ -90,11 +90,12 @@ curl -s -m 20 "http://127.0.0.1:$PORT/__stats" > "$OUT/stats-00-start.json" || {
 
 adb shell input keyevent KEYCODE_WAKEUP; adb shell wm dismiss-keyguard || true
 sleep 45
-adb install -r -g app-under-test.apk || { echo "::error::adb install failed"; exit 2; }
+# OLD_APK (the schema v34 build, set by the upgrade run) is installed first and updated in place after the fill: the update walk below
+adb install -r -g "${OLD_APK:-app-under-test.apk}" || { echo "::error::adb install failed"; exit 2; }
 adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS 2>/dev/null || true
 adb shell settings put global hide_error_dialogs 1
 adb logcat -c
-adb logcat -v threadtime "*:W" MailList:I MailCore:I MailSync:I MailOpen:I NavWalkSeed:I JankProbe:I > "$OUT/logcat.txt" 2>&1 &
+adb logcat -v threadtime "*:W" MailList:I MailCore:I MailSync:I MailOpen:I NavWalkSeed:I JankProbe:I MailMigration:I > "$OUT/logcat.txt" 2>&1 &
 LP=$!
 
 shot() { adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; adb exec-out screencap -p > "$OUT/mail-1952b-$1.png"; }
@@ -167,6 +168,37 @@ front 8
 sizes "after the fill ($FILL_MINUTES min, server holds $BULK bulk messages)"
 shot 02-inbox-filled
 grep -E "inbox backlog" "$OUT/logcat.txt" | tail -3 | sed 's/.*inbox backlog [^:]*:/inbox backlog:/' | tee -a "$OUT/summary.txt"
+
+# ---- U: the update from schema v34 (only when OLD_APK is set): the new build installed over the old one, which holds the filled store -----
+# What an owner sees after updating with about 40 000 messages on the phone: the time to the first row of the first launch, and the covering
+# index (schema v35) build, from the app's own MailMigration lines.
+if [ -n "${OLD_APK:-}" ]; then
+  adb shell am force-stop "$PKG"; sleep 3
+  sizes "before-update"
+  l0=$(grep -c "" "$OUT/logcat.txt")
+  adb install -r -g app-under-test.apk || { fail "update: adb install over the v34 build failed"; }
+  adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
+  sleep 25
+  sleep 5
+  tail -n +$((l0 + 1)) "$OUT/logcat.txt" | grep -E "MailList|MailMigration|MailCore: sync" > "$OUT/update-first-launch.log" || true
+  ums=$(sed -n 's/.*first-row ms=\([0-9]*\) rows=\([0-9]*\).*/\1/p' "$OUT/update-first-launch.log" | head -1)
+  urows=$(sed -n 's/.*first-row ms=\([0-9]*\) rows=\([0-9]*\).*/\2/p' "$OUT/update-first-launch.log" | head -1)
+  ixms=$(sed -n 's/.*covering index build end ms=\([0-9]*\).*/\1/p' "$OUT/update-first-launch.log" | head -1)
+  # wall clock from the activity arming the cold start (the first line of the launch) to each event, from the logcat timestamps
+  wall() { awk -v pat="$1" 'function t(s,  a){split(s,a,/[:.]/); return ((a[1]*60+a[2])*60+a[3])*1000+a[4]} /cold-start armed/ && !z {z=t($2)} $0 ~ pat && z && !e {e=t($2)} END{ if (z && e) print e - z }' "$OUT/update-first-launch.log"; }
+  wall_row=$(wall "first-row ms="); wall_ix=$(wall "covering index build end"); wall_ix0=$(wall "covering index build start")
+  {
+    echo ""; echo "first launch after updating from schema v34 (the filled store):"
+    echo "- time to the first row: ${ums:-missing} ms (${urows:-?} rows)"
+    echo "- covering index build: ${ixms:-no migration line} ms"
+    echo "- from the activity arming the cold start (the first line of the launch): index build starts at ${wall_ix0:-?} ms and ends at ${wall_ix:-?} ms, the first row is at ${wall_row:-?} ms"
+    grep -E "MailMigration|cold-start (armed|mark=list-key|rows-painted)|first-row" "$OUT/update-first-launch.log" | sed 's/^/  /'
+  } >> "$OUT/timing.md"
+  [ -n "$ums" ] || fail "update: the first launch after updating logged no first row"
+  [ -n "$ixms" ] || fail "update: no covering index build line (was the old build really schema v34?)"
+  [ "${ums:-99999}" -le "${UPDATE_LIMIT_MS:-1500}" ] 2>/dev/null || fail "update: first row after ${ums:-?} ms on the first launch after updating (limit ${UPDATE_LIMIT_MS:-1500}); the index build took ${ixms:-?} ms"
+  sleep 5
+fi
 
 # ---- S: the Configs section with the two cache settings and the usage line ----------------------------------------------------------
 found=0
