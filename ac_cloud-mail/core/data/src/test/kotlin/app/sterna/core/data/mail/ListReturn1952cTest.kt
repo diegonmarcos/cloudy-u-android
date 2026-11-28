@@ -2,6 +2,7 @@ package app.sterna.core.data.mail
 
 import java.io.File
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
@@ -156,6 +157,19 @@ class ListReturn1952cTest {
         launch { empty.awaitRows(); synced = true }
         runCurrent(); empty.nothingToPaint(); runCurrent()
         assertTrue("an empty store releases the first sync at once", synced)
+    }
+
+    // -- the drawer's aggregates ------------------------------------------------------------------------------------
+
+    @Test fun `a sync's writes reach the drawer aggregates in steps and the last write is never lost`() = runTest {
+        val seen = mutableListOf<Int>()
+        val src = kotlinx.coroutines.flow.flow { for (i in 1..50) { emit(i); delay(20) } } // 50 writes over one second
+        val job = launch { src.stepped().collect { seen.add(it) } }
+        advanceTimeBy(5_000); runCurrent()
+        job.cancel()
+        assertEquals("the first result at once", 1, seen.first())
+        assertEquals("the newest write lands", 50, seen.last())
+        assertTrue("a second of writes makes a few results, not fifty: $seen", seen.size <= 3)
     }
 
     // -- one query at a time ------------------------------------------------------------------------------------------

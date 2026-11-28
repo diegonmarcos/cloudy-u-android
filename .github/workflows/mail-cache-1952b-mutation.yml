@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'none | evict-newest-first | window-ignored | shrink-no-evict | default-drift | setting-not-stored | resume-from-zero | metered-no-chain | network-before-rows | index-not-covering | first-page-unbounded | return-requeries | placeholder-view | core-ungated | query-per-write | first-rows-any-view | fill-ignores-screen | inbox-pruned | folders-after-messages'
+        description: 'none | evict-newest-first | window-ignored | shrink-no-evict | default-drift | setting-not-stored | resume-from-zero | metered-no-chain | network-before-rows | index-not-covering | first-page-unbounded | return-requeries | placeholder-view | core-ungated | query-per-write | first-rows-any-view | fill-ignores-screen | inbox-pruned | folders-after-messages | aggregates-per-write'
         required: true
 permissions:
   contents: read
@@ -62,6 +62,8 @@ jobs:
             inbox-pruned)       sed -i '/if (isInboxRole(mailboxDao.roleForId(accountId, mailboxId))) return/d' $D/mail/MailRepository.kt ;;
             # a first sync stores its folder list only when the messages are in
             folders-after-messages) sed -i 's/storedRoleOfTarget == null \&\& storedFolders == 0/false/' $D/mail/ListReturn.kt ;;
+            # the drawer aggregates follow every write again
+            aggregates-per-write) sed -i 's/const val AGGREGATE_MIN_GAP_MS = 1_000L/const val AGGREGATE_MIN_GAP_MS = 0L/' $D/mail/ListReturn.kt ;;
             *) echo "::error::unknown mutation (not in the allow-list)"; exit 2 ;;
           esac
           git diff --stat
@@ -129,6 +131,7 @@ jobs:
             fill-ignores-screen) N="the background fill pauses between batches only while the app is on screen" ;;
             inbox-pruned)        N="the Inbox is never pruned by age, whoever asks" ;;
             folders-after-messages) N="a first sync stores the folder list before its messages" ;;
+            aggregates-per-write) N="a sync's writes reach the drawer aggregates in steps and the last write is never lost" ;;
             *) echo "::error::unknown mutation (not in the allow-list)"; exit 2 ;;
           esac
           ls ac_cloud-mail/core/data/build/test-results/*/TEST-*MailCache1952bTest.xml ac_cloud-mail/core/data/build/test-results/*/TEST-*ListQueryPlan1952bTest.xml >/dev/null 2>&1 \

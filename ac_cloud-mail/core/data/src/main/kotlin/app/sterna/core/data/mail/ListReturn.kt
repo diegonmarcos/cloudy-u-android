@@ -1,9 +1,13 @@
 package app.sterna.core.data.mail
 
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.transform
+import kotlinx.coroutines.delay
 
 /**
  * #1952 what the list screen collects, held ABOVE the screen (in the list's ViewModel, which outlives every page change).
@@ -128,3 +132,16 @@ fun isInboxRole(role: String?): Boolean = role?.trim()?.lowercase() == "inbox"
 
 /** #1952 the store holds no folder of the account yet (its first sync): the folder list is stored before the messages. */
 fun firstSyncNeedsFolders(storedRoleOfTarget: String?, storedFolders: Int): Boolean = storedRoleOfTarget == null && storedFolders == 0
+
+// ---- the drawer's aggregates follow a sync in steps -------------------------------------------------------------------
+
+/** Least gap between two results of an aggregate the screen reads while a sync writes (the drawer's unread badges). */
+const val AGGREGATE_MIN_GAP_MS = 1_000L
+
+/**
+ * #1952 scroll jank while a sync runs: the per-folder unread aggregates re-ran over the whole message table on every write
+ * and each result went through the screen's state on the main thread. The first result is passed at once, then at most one
+ * per [gapMs] (the newest of the span, so the last write is never lost).
+ */
+fun <T> Flow<T>.stepped(gapMs: Long = AGGREGATE_MIN_GAP_MS): Flow<T> =
+    conflate().transform { emit(it); delay(gapMs) }

@@ -1609,8 +1609,8 @@ class MailRepository(
     private fun observeUnreadByMailbox(accountId: String): Flow<Map<String, Int>> {
         val conversationView = settings?.conversationView ?: flowOf(true)
         return combine(
-            emailDao.observeThreadUnreadCounts(),
-            emailDao.observeMessageUnreadCounts(),
+            emailDao.observeThreadUnreadCounts().stepped(),
+            emailDao.observeMessageUnreadCounts().stepped(),
             conversationView,
         ) { threads, messages, conversation ->
             (if (conversation) threads else messages)
@@ -1669,8 +1669,8 @@ class MailRepository(
     fun observeUnifiedInboxUnreadByAccount(scopes: List<Pair<String, String>>): Flow<Map<String, Int>> {
         val conversationView = settings?.conversationView ?: flowOf(true)
         return combine(
-            emailDao.observeThreadUnreadCounts(),
-            emailDao.observeMessageUnreadCounts(),
+            emailDao.observeThreadUnreadCounts().stepped(),
+            emailDao.observeMessageUnreadCounts().stepped(),
             conversationView,
         ) { threads, messages, conversation ->
             unreadByAccountFrom(
