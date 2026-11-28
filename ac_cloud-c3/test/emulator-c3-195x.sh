@@ -307,10 +307,13 @@ if [ "$T" = all ] || [ "$T" = 1983 ]; then
   tap_text c3-1983-tests-open "C3 full"; shot c3-1983-xray-c3-full 4
   chk c3-1983-xray-c3-full "fed_by,X-ray"
   # the cards added by the owner check (security audits, cgc surfaces, vm-pilotd, CrowdSec, the lint workflows, the shell scripts' engines): the whole list, one swipe per half screen
-  for n in 1 2 3 4 5; do eng_open c3-1983-e$n; scroll $n; shot c3-1983-cards-scroll-$n 3; done
-  chk c3-1983-cards-scroll-2 "leak-scan.yml,lint-secrets-coverage.yml,audit-credentials-coverage.sh,cloud-cgc-verify-surfaces.sh,[gha],[shell]"
-  chk c3-1983-cards-scroll-3 "vm-pilotd-test.yml,infra-sec_crowdsec"
-  chk c3-1983-cards-scroll-4 "lint-agent-credential.yml,lint-pipeline.yml,cloud-run-verify.yml"
+  eng_open c3-1983-list; sz="$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1)"; sw="${sz%x*}"; shh="${sz#*x}"
+  for n in $(seq -w 1 14); do   # one slow swipe (about a third of the screen, no fling) per shot, so no card falls between two shots
+    shot c3-1983-cards-s$n 2; adb shell input swipe $((sw / 2)) $((shh * 7 / 10)) $((sw / 2)) $((shh * 4 / 10)) 1500; sleep 1
+  done
+  cat "$OUT"/c3-1983-cards-s*.xml > "$OUT/c3-1983-cards-all.xml"
+  chk c3-1983-cards-all "leak-scan.yml,lint-secrets-coverage.yml,audit-credentials-coverage.sh,cloud-cgc-verify-surfaces.sh,vm-pilotd-test.yml,infra-sec+crowdsec,lint-agent-credential.yml,lint-pipeline.yml,licence-inventory-guard.yml,readme-check.yml,cloud-run-guard.yml,cloud-run-verify.yml"
+  chk c3-1983-cards-all "replaces_1+cicd/src/ops/cloud-health-all-vms.sh,replaces_1+cicd/src/ops/cloud-health-check-vm.sh,replaces_1+cicd/src/ops/cloud-health-full.sh,replaces_1+cicd/src/ops/cloud-health-http-public.sh,replaces_1+cicd/src/ops/cloud-health-http-private.sh,replaces_1+cicd/src/ops/cloud-health-mail-full.sh"
   # the no-token reason is a tap target: it opens Cloud Account at Config import (or says why it could not)
   eng_open c3-1983-nt; shot c3-1983-cards-notoken-before 2
   tap_text c3-1983-cards-notoken-before "no verdict: device"; shot c3-1983-cards-notoken-tap 2
