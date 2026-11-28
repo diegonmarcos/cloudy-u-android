@@ -209,7 +209,7 @@ object NetScene {
                 val full = n.label.ifBlank { base }
                 val wOf = { t: String -> measure.size(t, nsp, true).first }
                 // the name in full when its box holds it; else the middle ellipsis that keeps its tail (the cap first, then the measured width)
-                var nameTxt = NetLabel.fit(NetLabel.cap(base, cap(n.id)), c.r - c.l, wOf, middle = true)
+                var nameTxt = NetLabel.fit(NetLabel.cap(base, cap(n.id)), c.r - c.l, middle = true, width = wOf)
                 // two different names that the fit made equal: the later one takes another tail, else it is not drawn
                 if (drawnNames[nameTxt]?.let { it != full } == true)
                     nameTxt = NetLabel.variants(base, c.r - c.l, wOf).firstOrNull { it.length <= cap(n.id) && drawnNames[it]?.let { o -> o != full } != true }.orEmpty()

@@ -87,7 +87,7 @@ object NetLabel {
      * ellipsis stays a middle one), or "" when fewer than [MIN_CHARS] characters would remain. [middle]: a name that does not fit keeps
      * its distinguishing [tail] after the ellipsis ("oci-…apps"), falling back to the last 3 characters, then to the end ellipsis.
      */
-    fun fit(s: String, avail: Float, width: (String) -> Float, middle: Boolean = false): String {
+    fun fit(s: String, avail: Float, middle: Boolean = false, width: (String) -> Float): String {
         if (s.isEmpty()) return ""
         if (width(s) <= avail) return s
         if (middle && !s.contains(ELLIPSIS)) {
@@ -112,7 +112,7 @@ object NetLabel {
     }
 
     /** #1955 A rev2.1 A name at most [max] characters long: the middle ellipsis that keeps its distinguishing [tail] ("desktop-nixos" at 10 reads "desk…nixos"). */
-    fun cap(s: String, max: Int): String = if (s.length <= max) s else fit(s, max.toFloat(), { it.length.toFloat() }, middle = true)
+    fun cap(s: String, max: Int): String = if (s.length <= max) s else fit(s, max.toFloat(), middle = true) { it.length.toFloat() }
 
     /**
      * #1955 A rev2.1 The root-cause chip's text, one line of at most [max] characters: "■ ROOT <name> · N impacted ›" where the name is the
@@ -132,7 +132,7 @@ object NetLabel {
         ((3..6).map { k -> s.takeLast(k) }.mapNotNull { t ->
             val head = s.dropLast(t.length)
             (head.length - 1 downTo 1).asSequence().map { head.take(it) + ELLIPSIS + t }.firstOrNull { width(it) <= avail && it.length - 1 >= MIN_CHARS }
-        } + fit(s, avail, width)).filter { it.isNotEmpty() }.distinct()
+        } + fit(s, avail, width = width)).filter { it.isNotEmpty() }.distinct()
 
     /** "First segment" of a sub line: the text before the first of "  ", " · ", ",", "(". */
     fun firstSegment(s: String): String {
