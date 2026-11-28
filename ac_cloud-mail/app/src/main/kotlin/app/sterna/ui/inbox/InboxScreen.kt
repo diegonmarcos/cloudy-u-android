@@ -1856,7 +1856,6 @@ fun InboxScreen(
         }
         }
             }
-    app.sterna.ui.JankProbe.end("inbox.screen", screenStart)
 }
     // ONE drawer content, two envelopes. `drawerState` is closed from the content in BOTH branches,
     // deliberately: close() on an already-Closed state does nothing, so the six
@@ -1928,6 +1927,7 @@ fun InboxScreen(
             content = content,
         )
     }
+    app.sterna.ui.JankProbe.end("inbox.screen", screenStart)
 }
 
 /** #1952: false until the list's first rows are painted (the first frame is the top bar and the list); true at once for a returning screen
