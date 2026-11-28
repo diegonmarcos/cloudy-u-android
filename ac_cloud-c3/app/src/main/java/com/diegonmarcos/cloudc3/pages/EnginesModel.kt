@@ -20,7 +20,33 @@ import kotlinx.serialization.json.longOrNull
 object EnginesModel {
 
     /** One engine: [dir] is its folder under infra-obs_reports/src/src, [family] the published `<family>.json`, [kind] the `/reports/run` kind (null = none). */
-    data class Engine(val id: String, val dir: String, val family: String?, val kind: String?, val rust: Boolean, val blurb: String, val note: String = "")
+    data class Engine(
+        val id: String, val dir: String, val family: String?, val kind: String?, val rust: Boolean, val blurb: String, val note: String = "",
+        /** Where the source lives: reports (infra-obs_reports), workflow (cloudy-t-infra .github/workflows), ops (1_cicd/src/ops), sec (a container). */
+        val origin: String = "reports",
+        /** The tag the card carries: rust, gha, shell, or container. Everything that is not Rust names its rewrite (#1978). */
+        val tag: String = if (rust) "rust" else "shell",
+        /** The cloudy-t-infra workflow whose runs give the card's last run and verdict (read without a token, the repo is public). */
+        val workflow: String? = null,
+        /** The workflow file the Run button dispatches; only a file in [DISPATCH] is ever sent. */
+        val dispatch: String? = null,
+    ) {
+        val needsRewrite get() = tag == "shell" || tag == "gha"
+    }
+
+    const val REWRITE = "not Rust: the Rust rewrite of this check belongs to #1978"
+    const val INFRA_REPO = "diegonmarcos/cloudy-t-infra"
+    const val INFRA_OWNER = "diegonmarcos"
+    const val INFRA_NAME = "cloudy-t-infra"
+
+    /** The workflows the app may dispatch (the same list the card Run buttons use); each is a test with no deploy path and no required input. */
+    val DISPATCH = listOf("leak-scan.yml", "lint-secrets-coverage.yml", "vm-pilotd-test.yml")
+
+    /** The (repo, file, ref) a dispatch sends, or null when [file] is not allow-listed (the app never sends it). */
+    fun dispatchArgs(file: String?): Triple<String, String, String>? = if (file != null && file in DISPATCH) Triple(INFRA_REPO, file, "main") else null
+
+    private fun gha(id: String, file: String, blurb: String, run: Boolean, note: String = "") =
+        Engine(id, ".github/workflows/$file", null, null, false, blurb, note, origin = "workflow", tag = "gha", workflow = file, dispatch = if (run) file else null)
 
     /** Folders under infra-obs_reports/src/src that are libraries, not engines (a new folder that is in neither list fails the guard). */
     val LIBS = listOf("reports-common")
@@ -34,7 +60,92 @@ object EnginesModel {
         Engine("sec-data", "cloud-sec-data-report", "cloud_sec_data", "sec-data", true, "data security: repo scan, YARA, SIEM, threat intel, journal"),
         Engine("analytics", "cloud-analytics-daily", null, null, false, "analytics daily (Matomo, Umami)",
             "shell scripts, not a Rust engine: it publishes .md/.html only and /reports/run has no analytics kind (rewrite in Rust is #1978)"),
+        // the sources that are not Rust engines (#1983 owner check): security audits, code-index surfaces, vm-pilotd, CrowdSec; each tagged, none dropped
+        gha("leak-scan", "leak-scan.yml", "secret leak scan (gitleaks) of every push to a public repo; a hit turns the run red; its mutation inputs plant and purged must go red", true),
+        gha("lint-secrets", "lint-secrets-coverage.yml", "every sops secrets.yaml carries a _credentials block and no uncovered key (wraps audit-credentials-coverage.sh)", true),
+        Engine("audit-credentials", "1_cicd/src/ops/audit-credentials-coverage.sh", null, null, false,
+            "walks every sops secrets.yaml: top-level keys, the _credentials block, which keys it references, a class per key (hash, token, password, url)",
+            "runs inside lint-secrets-coverage.yml (last run and Run are that workflow's)", origin = "ops", tag = "shell", workflow = "lint-secrets-coverage.yml", dispatch = "lint-secrets-coverage.yml"),
+        Engine("cgc-surfaces", "1_cicd/src/ops/cloud-cgc-verify-surfaces.sh", null, null, false,
+            "acceptance test of the two cloud-cgc MCP surfaces: the public and the private one must answer for their own repos only",
+            "no workflow runs it, so there is no GitHub Actions run to read: it is run by hand on a box that can ssh to oci-apps (mesh only surfaces)", origin = "ops", tag = "shell"),
+        gha("vm-pilotd", "vm-pilotd-test.yml", "Go host daemon vm-pilotd: vet, tests with parity harnesses against the real shell daemons (each mutation-checked), static cross-compile for both fleet architectures", true),
+        Engine("crowdsec", "infra-sec_crowdsec (decisions, alerts)", "cloud_crowdsec", null, false, "CrowdSec decisions and alerts, read only",
+            "container crowdsecurity/crowdsec: a DORMANT placeholder (empty acquisition, CAPI off, no bouncers), so it records no decisions or alerts today; no route reads them yet (#1977) and nothing here can change them",
+            origin = "sec", tag = "container"),
+        gha("lint-agent-credential", "lint-agent-credential.yml", "no agent container declares a GitHub token with more scope than the policy allows (read only probe, never printed)", false),
+        gha("lint-pipeline", "lint-pipeline.yml", "build-pipeline hygiene on every PR and push (symlinks and generated files)", false),
+        gha("licence-inventory", "licence-inventory-guard.yml", "licenses/inventory.json lists every directory, binary, dependency, flake input, base image and provider with its licence", false),
+        gha("readme-check", "readme-check.yml", "README.md equals a fresh render of its template and data", false),
+        gha("cloud-run-guard", "cloud-run-guard.yml", "the Cloud Run registry is complete and carries no secret value; main.tf validates (no plan, no apply)", false),
+        gha("cloud-run-verify", "cloud-run-verify.yml", "live requests to the Cloud Run services with a minted ID token; nothing secret is printed", false),
     )
+
+    /** One shell health script and the engine that replaces it: shown as a line on that engine's card. */
+    data class Replaced(val script: String, val engine: String, val why: String)
+
+    val REPLACED = listOf(
+        Replaced("cloud-health-all-vms.sh", "daily", "health of every permanent VM: the daily engine's vms phase (ssh, containers, resources)"),
+        Replaced("cloud-health-check-vm.sh", "daily", "one VM's containers and ports: the daily engine's per-VM check"),
+        Replaced("cloud-health-full.sh", "daily", "public URLs, DNS, TLS, ssh reachability and APIs in one run: the daily engine's endpoints, dns, certs and vms phases"),
+        Replaced("cloud-health-http-public.sh", "url", "every public endpoint from the Caddy catalogue: the url engine's public checks"),
+        Replaced("cloud-health-http-private.sh", "url", "every private .app and .db name: the url engine's private checks"),
+        Replaced("cloud-health-mail-full.sh", "mail", "PARTIAL: layer 1 (liveness) already is this engine; layers 2 and 3 (Gmail cross-store reconciliation, send and receive round-trip) are not ported yet (#1978)"),
+        Replaced("cloud-health-mail-failure-classifier.sh", "mail", "sourced by cloud-health-mail-full.sh: goes with it"),
+    )
+
+    /** Scripts of 1_cicd/src/ops that are neither a test nor a report (so need no card), each with its reason. */
+    val OPS_NOT_TEST = mapOf(
+        "cloud-cgc-db-chunk.sh" to "cgc-db build tooling", "cloud-cgc-db-package.sh" to "cgc-db build tooling", "cloud-cgc-db-pull.sh" to "cgc-db build tooling",
+        "cloud-cgc-db-restore-all.sh" to "cgc-db restore tooling", "cloud-cgc-db-restore.sh" to "cgc-db restore tooling", "cloud-cgc-db-seed.sh" to "cgc-db seed tooling",
+        "cloud-cgc-db-update.sh" to "cgc-db update tooling", "cloud-cgc-llm-proxy.py" to "LLM proxy, a service", "cloud-git-nuke.sh" to "git history tooling",
+        "cloud-git-sync.sh" to "git sync tooling", "overlay-private-secrets.sh" to "secrets overlay tooling",
+    )
+
+    /** Ops scripts that are a part of another card's check (a wrapper), each with the card id. */
+    val OPS_PART_OF = mapOf("lint-secrets-coverage.sh" to "lint-secrets")
+
+    /** Workflows that run an engine (the engine id), rather than being a test of their own. */
+    val WORKFLOW_RUNS_ENGINE = mapOf(
+        "health_mail_full.yml" to "mail", "cloud-health-reports.yml" to "daily", "cloud-health-reports-x86-gha.yml" to "daily", "ship-reports.yml" to "daily",
+    )
+
+    /** Workflows that are neither a test nor a report (deploys, secret operations, data copies), each with its reason. */
+    val WORKFLOW_NOT_TEST = mapOf(
+        "ship.yml" to "deploy", "ship-gen-configs.yml" to "deploy", "ship-home-manager.yml" to "deploy", "ship-reconcile.yml" to "deploy", "ship-terraform.yml" to "deploy",
+        "ship-wrangler.yml" to "deploy", "ship-cgc-db-seed.yml" to "deploy", "unjam-ship.yml" to "deploy tooling", "cf-zero-trust.yml" to "deploy",
+        "cgc-db-index.yml" to "cgc-db build", "cgc-db-propagate.yml" to "cgc-db build", "cgc-db-restore.yml" to "cgc-db restore", "cgc-db.yml" to "cgc-db build",
+        "fetch-github-repos.yml" to "data copy", "finterm-db-copy.yml" to "data copy", "gcp-vm-control.yml" to "VM control", "mirror-hermes-image.yml" to "image mirror",
+        "sops-copy.yml" to "secret operation", "sops-cover.yml" to "secret operation", "sops-create.yml" to "secret operation", "sops-gen-sshkey.yml" to "secret operation",
+        "sops-set.yml" to "secret operation", "sso-oidc-deliver.yml" to "secret operation", "sso-oidc-issue.yml" to "secret operation", "vault-mtls-issue.yml" to "secret operation",
+    )
+
+    /**
+     * The guard: every report or test source has a card or a declared mapping. [workflows] are the files of cloudy-t-infra/.github/workflows, [ops] the
+     * files of 1_cicd/src/ops, [reports] the folders of infra-obs_reports/src/src. Returns what has neither (empty = guarded), and what a card or
+     * mapping names that does not exist.
+     */
+    fun unguarded(workflows: Collection<String>, ops: Collection<String>, reports: Collection<String>): List<String> {
+        val wfCards = ENGINES.mapNotNull { if (it.origin == "workflow") it.workflow else null }.toSet()
+        val opsCards = ENGINES.filter { it.origin == "ops" }.map { it.dir.substringAfterLast('/') }.toSet()
+        val repCards = ENGINES.filter { it.origin == "reports" }.map { it.dir }.toSet()
+        val ids = ENGINES.map { it.id }.toSet()
+        val out = ArrayList<String>()
+        workflows.filter { it !in wfCards && it !in WORKFLOW_RUNS_ENGINE && it !in WORKFLOW_NOT_TEST }.forEach { out += "workflow $it has no card or mapping" }
+        ops.filter { it !in opsCards && REPLACED.none { r -> r.script == it } && it !in OPS_PART_OF && it !in OPS_NOT_TEST }.forEach { out += "ops script $it has no card or mapping" }
+        reports.filter { it !in repCards && it !in LIBS }.forEach { out += "report engine $it has no card" }
+        (wfCards + WORKFLOW_RUNS_ENGINE.keys + WORKFLOW_NOT_TEST.keys).filter { it !in workflows }.forEach { out += "workflow $it is declared but not in the repository" }
+        (opsCards + REPLACED.map { it.script } + OPS_PART_OF.keys + OPS_NOT_TEST.keys).filter { it !in ops }.forEach { out += "ops script $it is declared but not in the repository" }
+        repCards.filter { it !in reports }.forEach { out += "card $it is declared but not in infra-obs_reports" }
+        (REPLACED.map { it.engine } + WORKFLOW_RUNS_ENGINE.values + OPS_PART_OF.values).filter { it !in ids }.forEach { out += "mapping names the missing card $it" }
+        return out
+    }
+
+    /** The lines an engine's card prints for the shell scripts it replaced. */
+    fun replacedLines(id: String): List<String> = REPLACED.filter { it.engine == id }.map { "replaces 1_cicd/src/ops/${it.script}: ${it.why}" }
+
+    /** What the Run button of [e] sends: an allow-listed report kind, an allow-listed workflow, or nothing. */
+    fun canRun(e: Engine): Boolean = runBody(e.kind) != null || dispatchArgs(e.dispatch) != null
 
     /** The kinds the app may ask `/reports/run` for; the same enum the API validates (REPORT_KINDS in c3-infra-api reports.ts). */
     val RUN_KINDS = listOf("all", "daily", "daily-mail", "mail", "url", "sec-network", "sec-data")
@@ -43,7 +154,7 @@ object EnginesModel {
     fun runBody(kind: String?): String? = if (kind != null && kind in RUN_KINDS) "{\"report\":\"$kind\",\"runner\":\"gha\"}" else null
 
     /** What a Run button says: Run, or that there is no trigger (the card's note line gives the reason). */
-    fun runLabel(e: Engine): String = if (runBody(e.kind) != null) "Run" else "no trigger"
+    fun runLabel(e: Engine): String = if (canRun(e)) "Run" else "no trigger"
 
     /** The engines an X-ray (VM, service, full) is built from: shown under the X-ray tabs. */
     val FEEDS = mapOf(
@@ -78,6 +189,8 @@ object EnginesModel {
         object Idle : Body()
         data class Why(val why: String) : Body()
         data class Got(val report: Parsed) : Body()
+        /** A workflow card: the last run of its GitHub Actions workflow (its conclusion is the verdict, there is no per-check report). */
+        data class Last(val run: Run) : Body()
     }
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
@@ -154,6 +267,39 @@ object EnginesModel {
         return Parsed(generated, dur, p, w, f, phases, extra)
     }
 
+    /** `workflow_runs` of GitHub's `actions/workflows/<file>/runs`, newest first; null when [text] is not that. */
+    fun parseWorkflowRuns(text: String): List<Run>? {
+        val o = parseObj(text) ?: return null
+        val a = o["workflow_runs"] as? JsonArray ?: return null
+        return a.mapNotNull { it as? JsonObject }.map { Run("gha", it.s("id"), it.s("status"), it.s("conclusion"), it.s("created_at"), it.s("updated_at"), it.s("event")) }
+    }
+
+    /** What reading a workflow's runs gave: [state] is the feed's own (OK, RATE_LIMITED, UNREACHABLE). */
+    fun classifyWorkflow(file: String, state: String, text: String?): Body = when {
+        text == null && state == "RATE_LIMITED" -> Body.Why("last run unknown: GitHub's anonymous quota (60 per hour) is spent, try again later")
+        text == null -> Body.Why("last run unknown: GitHub could not be read from this device")
+        else -> parseWorkflowRuns(text)?.let { r -> r.firstOrNull()?.let { Body.Last(it) } ?: Body.Why("no run of $file is listed yet") } ?: Body.Why("the answer is not a runs list")
+    }
+
+    /** The verdict word of a workflow run: its conclusion, or its state while it runs. */
+    fun runVerdict(r: Run): String = when {
+        r.status != "completed" -> "RUNNING"
+        r.conclusion == "success" -> "PASS"
+        r.conclusion == "failure" || r.conclusion == "timed_out" -> "FAIL"
+        r.conclusion.isBlank() -> "UNKNOWN"
+        else -> r.conclusion.uppercase()
+    }
+
+    /** PASS / WARN / FAIL / RUNNING ... when the card has a verdict, null when it has only a reason. */
+    fun verdictWord(b: Body): String? = when (b) {
+        is Body.Got -> b.report.verdict
+        is Body.Last -> runVerdict(b.run)
+        else -> null
+    }
+
+    /** True when the card's reason is that this device has no C3 token: the line is then an action (Configs > Profile > Config import). */
+    fun isNoToken(b: Body): Boolean = b is Body.Why && b.why.contains(HealthModel.NO_TOKEN_NOTE)
+
     fun classify(e: Engine, r: FleetLive.Result): Body = when (r) {
         is FleetLive.Result.Failed -> when {
             r.why.startsWith("NOT_FOUND") -> Body.Why(BODY_GAP)
@@ -178,6 +324,7 @@ object EnginesModel {
         Body.Idle -> "not read yet"
         is Body.Why -> "no verdict: ${b.why}"
         is Body.Got -> b.report.verdict
+        is Body.Last -> "${runVerdict(b.run)} (workflow ${b.run.status}/${b.run.conclusion.ifBlank { "-" }})"
     }
 
     fun freshText(f: Fresh?): String = when {

@@ -79,6 +79,13 @@ object OpsClient {
         return post("/reports/run", bearer, "run $kind", body)
     }
 
+    /** #1983 Dispatch one test workflow of a card: [file] is checked against the allow-list (EnginesModel.DISPATCH) before it leaves the phone. */
+    fun dispatchCard(file: String, bearer: String): Outcome {
+        val a = com.diegonmarcos.cloudc3.pages.EnginesModel.dispatchArgs(file)
+            ?: return fail(Kind.NOT_FOUND, "refused: '$file' is not an allow-listed workflow")
+        return dispatchWorkflow(a.first, a.second, a.third, bearer)
+    }
+
     /**
      * Trigger a GitHub Actions `workflow_dispatch` run.
      *

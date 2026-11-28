@@ -159,6 +159,14 @@ object GitHubFeed {
         }.getOrDefault(emptyList()), res.status)
     }
 
+    /** #1983 one workflow's runs, newest first, as GitHub's own JSON text (null when unreadable; [Feed.status] says why). Same 15-minute cache, no token. */
+    class RawFeed(val body: String?, val status: Status)
+    suspend fun workflowRuns(ctx: Context, owner: String, repo: String, file: String, perPage: Int = 10): RawFeed {
+        val res = fetchCached(ctx, "$owner/$repo/wf/$file",
+            "https://api.github.com/repos/$owner/$repo/actions/workflows/$file/runs?per_page=$perPage")
+        return RawFeed(res.body, res.status)
+    }
+
     /** Read from SharedPreferences if fresh; otherwise fetch + store.
      *
      *  On a failed fetch the stale cached body is still served — a

@@ -307,6 +307,16 @@ if [ "$T" = all ] || [ "$T" = 1983 ]; then
   open_page ops_health_tests; sleep 2; shot c3-1983-tests-open 6
   tap_text c3-1983-tests-open "C3 full"; shot c3-1983-xray-c3-full 4
   chk c3-1983-xray-c3-full "fed_by,X-ray"
+  # the cards added by the owner check (security audits, cgc surfaces, vm-pilotd, CrowdSec, the shell scripts' engines): one shot per screen of the list
+  for n in 3 6 9 12 15 18; do open_page ops_health_tests; sleep 2; scroll $n; shot c3-1983-cards-scroll-$n 3; done
+  chk c3-1983-cards-scroll-9 "gha"
+  # the no-token reason is a tap target: it opens Cloud Account at Config import (or says why it could not)
+  open_page ops_health_tests; sleep 2; scroll 6; shot c3-1983-cards-notoken-before 3
+  tap_text c3-1983-cards-notoken-before "no verdict: device"; shot c3-1983-cards-notoken-tap 4
+  # the VMs tab lists the three devices after the VMs
+  open_page ops_health_tests; sleep 2; shot c3-1983-cards-vms-pre 3
+  tap_text c3-1983-cards-vms-pre "VMs"; shot c3-1983-cards-vms 3
+  chk c3-1983-cards-vms "DEVICES"
 fi
 
 adb logcat -d -t 3000 > "$OUT/logcat.txt" 2>/dev/null || true

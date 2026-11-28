@@ -26,8 +26,98 @@ class EnginesModelTest {
         val cards = EnginesModel.ENGINES.map { it.dir }.toSet()
         val unknown = snapshotDirs().filter { it !in cards && it !in EnginesModel.LIBS }
         assertTrue("engine folders with no card on Ops > Health > Tests: $unknown", unknown.isEmpty())
-        val ghost = cards.filter { it !in snapshotDirs() }
+        val ghost = EnginesModel.ENGINES.filter { it.origin == "reports" }.map { it.dir }.filter { it !in snapshotDirs() }
         assertTrue("cards for folders that do not exist: $ghost", ghost.isEmpty())
+    }
+
+    private fun lines(name: String) = File(dir, "test/fixtures/$name").readLines().map { it.trim() }.filter { it.isNotEmpty() }
+    private val workflows get() = lines("cloudy-t-infra-workflows.txt")
+    private val ops get() = lines("cloudy-t-infra-ops.txt")
+
+    @Test fun `every report or test source of the workflows, the ops scripts and infra-obs_reports has a card or a declared mapping`() {
+        val bad = EnginesModel.unguarded(workflows, ops, snapshotDirs())
+        assertTrue("sources with no card or mapping on Ops > Health > Tests: $bad", bad.isEmpty())
+        // a source added to any of the three has to be refused by the guard (the guard itself is alive)
+        assertTrue(EnginesModel.unguarded(workflows + "new-test.yml", ops, snapshotDirs()).isNotEmpty())
+        assertTrue(EnginesModel.unguarded(workflows, ops + "cloud-new-check.sh", snapshotDirs()).isNotEmpty())
+        assertTrue(EnginesModel.unguarded(workflows, ops, snapshotDirs() + "cloud-new-report").isNotEmpty())
+    }
+
+    @Test fun `the workflow and ops snapshots match the real checkout when the sibling repo is present`() {
+        val live = File(dir.parentFile.parentFile, "cloudy-t-infra")
+        if (!live.isDirectory) return
+        assertEquals(File(live, ".github/workflows").listFiles { f -> f.isFile && f.name.endsWith(".yml") }!!.map { it.name }.sorted(), workflows.sorted())
+        assertEquals(File(live, "1_cicd/src/ops").listFiles { f -> f.isFile }!!.map { it.name }.sorted(), ops.sorted())
+        // a Run button is only ever a workflow that can be dispatched
+        EnginesModel.DISPATCH.forEach { assertTrue("$it has no workflow_dispatch", File(live, ".github/workflows/$it").readText().contains("workflow_dispatch:")) }
+    }
+
+    @Test fun `every shell health script is mapped to the Rust engine that replaces it or has its own card`() {
+        val health = ops.filter { it.startsWith("cloud-health-") }
+        health.forEach { sc -> assertTrue("$sc: no engine and no card", EnginesModel.REPLACED.any { it.script == sc } || EnginesModel.ENGINES.any { it.dir.endsWith("/$sc") }) }
+        EnginesModel.REPLACED.forEach { r ->
+            val e = EnginesModel.ENGINES.first { it.id == r.engine }
+            assertTrue("${r.script} -> ${e.id} is not a Rust engine", e.rust)
+            assertTrue(EnginesModel.replacedLines(e.id).any { it.contains(r.script) })
+        }
+        assertEquals("daily", EnginesModel.REPLACED.first { it.script == "cloud-health-all-vms.sh" }.engine)
+        assertEquals("url", EnginesModel.REPLACED.first { it.script == "cloud-health-http-public.sh" }.engine)
+    }
+
+    @Test fun `a card that is not Rust carries its tag and names the Rust rewrite as 1978`() {
+        val tagged = EnginesModel.ENGINES.filter { !it.rust }
+        assertTrue(tagged.isNotEmpty())
+        tagged.forEach { assertTrue(it.id, it.tag in listOf("shell", "gha", "container")) }
+        tagged.filter { it.tag == "shell" || it.tag == "gha" }.forEach { assertTrue(it.id, it.needsRewrite) }
+        assertTrue(EnginesModel.REWRITE.contains("#1978"))
+        EnginesModel.ENGINES.filter { it.rust }.forEach { assertEquals(it.id, "rust", it.tag); assertTrue(!it.needsRewrite) }
+        assertEquals("gha", EnginesModel.ENGINES.first { it.id == "leak-scan" }.tag)
+        assertEquals("shell", EnginesModel.ENGINES.first { it.id == "cgc-surfaces" }.tag)
+    }
+
+    @Test fun `a Run button exists only where an allow-listed trigger exists`() {
+        val can = EnginesModel.ENGINES.filter { EnginesModel.canRun(it) }.map { it.id }.toSet()
+        assertEquals(setOf("mail", "daily", "url", "sec-network", "sec-data", "leak-scan", "lint-secrets", "audit-credentials", "vm-pilotd"), can)
+        EnginesModel.ENGINES.forEach { assertTrue(it.id, it.dispatch == null || it.dispatch in EnginesModel.DISPATCH) }
+        assertNull(EnginesModel.dispatchArgs("ship.yml"))
+        assertNull(EnginesModel.dispatchArgs("leak-scan.yml; id"))
+        assertNull(EnginesModel.dispatchArgs(null))
+        assertEquals(Triple("diegonmarcos/cloudy-t-infra", "leak-scan.yml", "main"), EnginesModel.dispatchArgs("leak-scan.yml"))
+        assertTrue(EnginesModel.DISPATCH.none { it.startsWith("ship") })
+        assertEquals("no trigger", EnginesModel.runLabel(EnginesModel.ENGINES.first { it.id == "cgc-surfaces" }))
+    }
+
+    @Test fun `a workflow card reads its last run and verdict from the runs, and says why when it cannot`() {
+        val text = """{"workflow_runs":[{"id":46066063430,"status":"completed","conclusion":"failure","created_at":"2026-11-28T10:00:00Z","updated_at":"2026-11-28T10:01:30Z","event":"push"},{"id":2,"status":"completed","conclusion":"success","created_at":"2026-11-27T10:00:00Z","updated_at":"2026-11-27T10:00:10Z","event":"push"}]}"""
+        val b = EnginesModel.classifyWorkflow("leak-scan.yml", "OK", text) as EnginesModel.Body.Last
+        assertEquals("FAIL", EnginesModel.runVerdict(b.run)); assertEquals("46066063430", b.run.id); assertEquals(90L, b.run.seconds)
+        assertEquals("FAIL", EnginesModel.verdictWord(b))
+        assertEquals("PASS", EnginesModel.runVerdict(EnginesModel.parseWorkflowRuns(text)!![1]))
+        assertEquals("RUNNING", EnginesModel.runVerdict(EnginesModel.Run("gha", "1", "in_progress", "", "", "", "push")))
+        assertEquals("CANCELLED", EnginesModel.runVerdict(EnginesModel.Run("gha", "1", "completed", "cancelled", "", "", "push")))
+        assertTrue(EnginesModel.verdictText(EnginesModel.classifyWorkflow("x.yml", "RATE_LIMITED", null)).contains("quota"))
+        assertTrue(EnginesModel.verdictText(EnginesModel.classifyWorkflow("x.yml", "UNREACHABLE", null)).startsWith("no verdict: last run unknown"))
+        assertTrue(EnginesModel.verdictText(EnginesModel.classifyWorkflow("x.yml", "OK", """{"workflow_runs":[]}""")).contains("no run of x.yml"))
+        assertNull(EnginesModel.verdictWord(EnginesModel.Body.Why("x")))
+    }
+
+    @Test fun `the no-token reason is an action and every other reason is plain text`() {
+        val tok = EnginesModel.classify(mail, FleetLive.Result.Failed("NO_TOKEN: none"))
+        assertTrue(EnginesModel.isNoToken(tok))
+        assertTrue(EnginesModel.verdictText(tok).contains("Configs → Profile → Config import"))
+        assertTrue(!EnginesModel.isNoToken(EnginesModel.Body.Why(EnginesModel.BODY_GAP)))
+        assertTrue(!EnginesModel.isNoToken(EnginesModel.Body.Idle))
+        assertTrue(com.diegonmarcos.cloudc3.pages.ConfigImport.ACTION.endsWith(".OPEN"))
+        assertEquals(mapOf("section" to "connect", "page" to "import-configs"), com.diegonmarcos.cloudc3.pages.ConfigImport.extras())
+    }
+
+    @Test fun `the devices are the fleet's declared devices with a short name and a missing report says why`() {
+        val ids = com.diegonmarcos.cloudc3.pages.XrayModel.deviceIds(FleetFixtures.slice().devices)
+        assertEquals(setOf("SamsungA37", "SamsungS21", "SurfacePro8"), ids.toSet())
+        assertEquals("cloud_xray_device_SamsungA37", com.diegonmarcos.cloudc3.pages.XrayModel.deviceFamily("SamsungA37"))
+        val gap = com.diegonmarcos.cloudc3.pages.XrayModel.classifyDevice(FleetLive.Result.Failed("NOT_FOUND: HTTP 404"))
+        assertEquals(com.diegonmarcos.cloudc3.pages.XrayModel.State.NotServed(com.diegonmarcos.cloudc3.pages.XrayModel.DEVICE_GAP), gap)
+        assertTrue(com.diegonmarcos.cloudc3.pages.XrayModel.classifyDevice(FleetLive.Result.Failed("NO_TOKEN: x")) is com.diegonmarcos.cloudc3.pages.XrayModel.State.Device)
     }
 
     @Test fun `the folder snapshot matches the real checkout when the sibling repo is present`() {

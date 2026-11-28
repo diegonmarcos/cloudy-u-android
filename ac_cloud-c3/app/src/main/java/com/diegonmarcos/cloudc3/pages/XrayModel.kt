@@ -21,6 +21,15 @@ object XrayModel {
     fun dataPath(family: String) = "/reports/data/$family"
     const val SUITES_MAP = "hier_ops_health_tests"
 
+    /** #1983 X-Ray Device: one report per declared device (a fleet device with a short name; the watch has none). The report is built by the SuperApp's X-Ray (#1985). */
+    fun deviceFamily(id: String) = "cloud_xray_device_$id"
+    const val DEVICE_GAP = "X-Ray Device is built and exported on the phone (SuperApp, #1985) and posts to POST /xray/report, which c3-infra-api does not serve; reading it back needs GET /reports/data/<family> (#1977). No trigger from here: the report is taken on the device itself."
+
+    /** The device cards: the fleet's declared devices that have a short name (SamsungA37, SamsungS21, SurfacePro8). */
+    fun deviceIds(devices: List<FleetModel.Device>): List<String> = devices.mapNotNull { it.short?.takeIf { s -> s.isNotBlank() } }
+
+    fun classifyDevice(r: FleetLive.Result): State = if (r is FleetLive.Result.Failed && r.why.startsWith("NOT_FOUND")) State.NotServed(DEVICE_GAP) else classify(r)
+
     /** The kind and subject of a run, validated; null when the app must not send it (an unknown kind, or a subject that is not a plain declared name). */
     fun runRequest(kind: String, subject: String, declared: Collection<String>): Pair<String, String>? {
         if (kind !in KINDS) return null

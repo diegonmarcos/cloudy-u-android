@@ -22,6 +22,11 @@ import com.diegonmarcos.cloudc3.pages.EngineItem
 import com.diegonmarcos.cloudc3.pages.EngineTags
 import com.diegonmarcos.cloudc3.pages.EnginesBody
 import com.diegonmarcos.cloudc3.pages.EnginesModel
+import com.diegonmarcos.cloudc3.pages.HealthModel
+import com.diegonmarcos.cloudc3.pages.XrayItem
+import com.diegonmarcos.cloudc3.pages.XrayModel
+import com.diegonmarcos.cloudc3.pages.XrayScreen
+import com.diegonmarcos.cloudc3.pages.XrayTags
 import com.diegonmarcos.superapp.uikit.CloudKitTheme
 import com.diegonmarcos.superapp.uikit.KitPalette
 import java.io.File
@@ -100,6 +105,56 @@ class EnginesComposeTest {
         compose.onNodeWithTag(EngineTags.verdict("url")).assertTextEquals("no verdict: ${EnginesModel.BODY_GAP}")
         compose.onNodeWithTag(EngineTags.run("analytics")).performClick()
         assertEquals(emptyList<String>(), ran)
+    }
+
+    private fun eng(id: String) = EnginesModel.ENGINES.first { it.id == id }
+
+    @Test fun `the no-token reason is a tappable action on every engine card`() {
+        var taps = 0
+        val noToken = EnginesModel.Body.Why("device: ${HealthModel.NO_TOKEN_NOTE}")
+        compose.setContent { CloudKitTheme(palette) { Column(Modifier.verticalScroll(rememberScrollState())) { EnginesBody(listOf(EngineItem(eng("url"), null, noToken, onNoToken = { taps++ })), emptyList(), "n/a") { } } } }
+        compose.onNodeWithTag(EngineTags.noToken("url")).assertTextEquals("no verdict: device: ${HealthModel.NO_TOKEN_NOTE}")
+        compose.onNodeWithTag(EngineTags.noToken("url")).performClick()
+        assertEquals(1, taps)
+    }
+
+    @Test fun `a workflow card shows its tag, the rewrite note, its last run and verdict, and a Run only when allow-listed`() {
+        val ran = mutableListOf<String>()
+        val run = EnginesModel.Run("gha", "46066063430", "completed", "failure", "2026-11-28T10:00:00Z", "2026-11-28T10:01:30Z", "push")
+        val items = listOf(
+            EngineItem(eng("leak-scan"), null, EnginesModel.Body.Last(run), listOf(run)),
+            EngineItem(eng("cgc-surfaces"), null, EnginesModel.Body.Why(eng("cgc-surfaces").note)),
+            EngineItem(eng("daily"), null, EnginesModel.Body.Why(EnginesModel.BODY_GAP)),
+        )
+        compose.setContent { CloudKitTheme(palette) { Column(Modifier.verticalScroll(rememberScrollState())) { EnginesBody(items, emptyList(), "n/a") { ran += it.id } } } }
+        compose.onNodeWithText(".github/workflows/leak-scan.yml  [gha]").assertExists()
+        compose.onNodeWithTag(EngineTags.verdict("leak-scan")).assertTextEquals("FAIL (workflow completed/failure)")
+        compose.onNodeWithText("last run 2026-11-28T10:00:00Z · 90s · push · #46066063430 · completed/failure").assertExists()
+        compose.onNodeWithText("[gha] ${EnginesModel.REWRITE}").assertExists()
+        compose.onNodeWithText("1_cicd/src/ops/cloud-cgc-verify-surfaces.sh  [shell]").assertExists()
+        compose.onNodeWithTag(EngineTags.run("leak-scan")).performClick()
+        compose.onNodeWithTag(EngineTags.run("cgc-surfaces")).performClick()
+        assertEquals(listOf("leak-scan"), ran)
+        compose.onNodeWithText("replaces 1_cicd/src/ops/cloud-health-all-vms.sh: ${EnginesModel.REPLACED.first { it.script == "cloud-health-all-vms.sh" }.why}").assertExists()
+        compose.onNodeWithText("replaces 1_cicd/src/ops/cloud-health-full.sh: ${EnginesModel.REPLACED.first { it.script == "cloud-health-full.sh" }.why}").assertExists()
+    }
+
+    @Test fun `the VMs tab lists the three devices after the VMs, with no X-ray run chip and a tappable no-token line`() {
+        val ns = XrayModel.State.NotServed("n")
+        val dev = XrayModel.State.Device(HealthModel.NO_TOKEN_NOTE)
+        compose.setContent {
+            CloudKitTheme(palette) {
+                XrayScreen(XrayItem("full", "X-ray C3 full", "", ns), listOf(XrayItem("oci-apps", "oci-apps", "per-VM X-ray", ns)), emptyList(), "", { _, _ -> }, { },
+                    devices = listOf("SamsungA37", "SamsungS21", "SurfacePro8").map { XrayItem(it, it, "[app] X-Ray Device", dev, runnable = false) })
+            }
+        }
+        compose.onNodeWithTag(XrayTags.tab("vms")).performClick()
+        compose.onNodeWithTag(XrayTags.run("oci-apps")).assertExists()
+        listOf("SamsungA37", "SamsungS21", "SurfacePro8").forEach {
+            compose.onNodeWithTag(XrayTags.state(it)).assertExists()
+            compose.onNodeWithTag(XrayTags.run(it)).assertDoesNotExist()
+            compose.onNodeWithTag("xray_notoken_$it").assertExists()
+        }
     }
 
     /** The real mail report drawn alone, two phases open: its pixels are written for the evidence (best effort, the asserts above are the proof). */

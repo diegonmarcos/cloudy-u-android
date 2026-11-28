@@ -35,7 +35,7 @@ object XrayTags {
 }
 
 /** One thing that can be X-rayed: its id (the validated subject), its title, and what reading its report gave. */
-data class XrayItem(val id: String, val title: String, val sub: String, val state: XrayModel.State)
+data class XrayItem(val id: String, val title: String, val sub: String, val state: XrayModel.State, val runnable: Boolean = true)
 
 @Composable
 internal fun XChip(tag: String, label: String, on: Boolean, click: () -> Unit) {
@@ -74,10 +74,11 @@ private fun ItemRow(i: XrayItem, kind: String, onRun: () -> Unit, runnable: Bool
     Column(Modifier.fillMaxWidth().padding(vertical = 3.dp).testTag(XrayTags.state(i.id))) {
         Row(Modifier.padding(horizontal = KitStoreRow.padH), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
             Text(i.title, color = p.textPrimary, fontSize = KitStoreRow.body, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            if (runnable) XChip(XrayTags.run(i.id), "X-ray", false, onRun)
+            if (runnable && i.runnable) XChip(XrayTags.run(i.id), "X-ray", false, onRun)
         }
         if (i.sub.isNotBlank()) XLine(i.sub)
-        XLine(XrayModel.say(i.state), color = when (i.state) { is XrayModel.State.Got -> KitStoreRow.UP; XrayModel.State.Idle -> p.textSecondary; else -> KitStoreRow.UPDATE })
+        if (i.state is XrayModel.State.Device) NoTokenLine(XrayModel.say(i.state), "xray_notoken_${i.id}")
+        else XLine(XrayModel.say(i.state), color = when (i.state) { is XrayModel.State.Got -> KitStoreRow.UP; XrayModel.State.Idle -> p.textSecondary; else -> KitStoreRow.UPDATE })
         (i.state as? XrayModel.State.Got)?.let { ReportBody(it.report) }
     }
 }
@@ -88,12 +89,12 @@ private fun ItemRow(i: XrayItem, kind: String, onRun: () -> Unit, runnable: Bool
  */
 @Composable
 fun XrayScreen(full: XrayItem, vms: List<XrayItem>, services: List<XrayItem>, runNote: String, onRun: (String, String) -> Unit, suites: @Composable () -> Unit, initialTab: String = "full",
-    engines: @Composable () -> Unit = {}, fedBy: (String) -> List<String> = { emptyList() }) {
+    engines: @Composable () -> Unit = {}, fedBy: (String) -> List<String> = { emptyList() }, devices: List<XrayItem> = emptyList()) {
     var tab by remember { mutableStateOf(initialTab) }
     Column(Modifier.fillMaxSize().testTag(XrayTags.ROOT)) {
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = KitStoreRow.padH, vertical = KitStoreRow.tight)) {
             XrayModel.TABS.forEach { (id, label) ->
-                val n = when (id) { "vms" -> " ${vms.size}"; "services" -> " ${services.size}"; else -> "" }
+                val n = when (id) { "vms" -> " ${vms.size + devices.size}"; "services" -> " ${services.size}"; else -> "" }
                 XChip(XrayTags.tab(id), label + n, tab == id) { tab = id }
             }
         }
@@ -108,7 +109,12 @@ fun XrayScreen(full: XrayItem, vms: List<XrayItem>, services: List<XrayItem>, ru
                     XLine("X-ray C3 full = the X-ray of each VM (hub last), then of each service, the layer report and the diff against the previous full run.")
                     ItemRow(full, "xray-full", { onRun("xray-full", "fleet") }, true)
                 }
-                "vms" -> { fedBy("vms").forEach { XLine("fed by: $it", mono = true) }; vms.forEach { ItemRow(it, "xray-vm", { onRun("xray-vm", it.id) }, true) } }
+                "vms" -> { fedBy("vms").forEach { XLine("fed by: $it", mono = true) }; vms.forEach { ItemRow(it, "xray-vm", { onRun("xray-vm", it.id) }, true) }
+                    if (devices.isNotEmpty()) {
+                        XLine("DEVICES (X-Ray Device, one report per phone or laptop)", color = LocalKitPalette.current.accent)
+                        devices.forEach { ItemRow(it, "xray-device", { }, false) }
+                    }
+                }
                 "services" -> { fedBy("services").forEach { XLine("fed by: $it", mono = true) }; services.forEach { ItemRow(it, "xray-service", { onRun("xray-service", it.id) }, true) } }
             }
         }

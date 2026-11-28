@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       name:
-        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost | home-row-lost | home-zero-on-fail | projects-row-lost | projects-column-lost | vm-unknown-lost | vm-repo-on-host | vm-devices-dropped | control-back | c3mcp-field-lost | infra-order | orch-infra-back | net-edge-dropped | net-node-twice | net-node-undeclared | net-viewer-page-lost | net-section-match-lost | net-resolve-lost | net-unbound-ok | net-dns-depends-lost | net-bundle-weight | net-sheet-field-lost | net-token-blames-vm | net-label-overlap | orch-dup-back | orch-home-lost | deployed-field-lost | orch-page-twice | health-field-lost | health-root-cause-on-vm-when-token-missing | health-layer-order | xray-scope-lost | health-number-on-blind | xray-run-unvalidated | engine-card-lost | engine-field-lost | engine-run-unlisted | net-placer-all | net-short-identity | net-chip-lines | net-reading-on-node | net-pills-at-mid | net-contained-dropped | net-names-overtruncated | net-names-blank | net-names-under-hud | net-dns-narrow | net-leaf-share | net-minimap-corner'
+        description: 'index-back | lfs-ignored | scope-primary | drop-project-repo | drop-section | hub-primary-only | drop-wiki-path | split-ignored | map-edge-dropped | mail-alias-lost | wiki-lost | home-row-lost | home-zero-on-fail | projects-row-lost | projects-column-lost | vm-unknown-lost | vm-repo-on-host | vm-devices-dropped | control-back | c3mcp-field-lost | infra-order | orch-infra-back | net-edge-dropped | net-node-twice | net-node-undeclared | net-viewer-page-lost | net-section-match-lost | net-resolve-lost | net-unbound-ok | net-dns-depends-lost | net-bundle-weight | net-sheet-field-lost | net-token-blames-vm | net-label-overlap | orch-dup-back | orch-home-lost | deployed-field-lost | orch-page-twice | health-field-lost | health-root-cause-on-vm-when-token-missing | health-layer-order | xray-scope-lost | health-number-on-blind | xray-run-unvalidated | engine-card-lost | engine-field-lost | engine-run-unlisted | net-placer-all | net-short-identity | net-chip-lines | net-reading-on-node | net-pills-at-mid | net-contained-dropped | net-names-overtruncated | net-names-blank | net-names-under-hud | net-dns-narrow | net-leaf-share | net-minimap-corner | source-card-lost | source-mapping-lost | dispatch-unlisted | no-token-plain | device-short-lost | rewrite-note-lost | workflow-verdict-flipped'
         required: true
 permissions:
   contents: read
@@ -22,7 +22,7 @@ jobs:
       - name: Validate the mutation name against the allowed list
         run: |
           case "$MUT" in
-            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost|vm-unknown-lost|vm-repo-on-host|vm-devices-dropped|control-back|c3mcp-field-lost|infra-order|orch-infra-back|net-edge-dropped|net-node-twice|net-node-undeclared|net-viewer-page-lost|net-section-match-lost|net-resolve-lost|net-unbound-ok|net-dns-depends-lost|net-bundle-weight|net-sheet-field-lost|net-token-blames-vm|net-label-overlap|orch-dup-back|orch-home-lost|deployed-field-lost|orch-page-twice|health-field-lost|health-root-cause-on-vm-when-token-missing|health-layer-order|xray-scope-lost|health-number-on-blind|xray-run-unvalidated|two-rows-label-lost|two-rows-or|two-rows-vm-order|two-rows-parity|engine-card-lost|engine-field-lost|engine-run-unlisted|net-placer-all|net-short-identity|net-chip-lines|net-reading-on-node|net-pills-at-mid|net-contained-dropped|net-names-overtruncated|net-names-blank|net-names-under-hud|net-dns-narrow|net-leaf-share|net-minimap-corner) echo "leg: $MUT" ;;
+            index-back|lfs-ignored|scope-primary|drop-project-repo|drop-section|hub-primary-only|drop-wiki-path|split-ignored|map-edge-dropped|mail-alias-lost|wiki-lost|home-row-lost|home-zero-on-fail|projects-row-lost|projects-column-lost|vm-unknown-lost|vm-repo-on-host|vm-devices-dropped|control-back|c3mcp-field-lost|infra-order|orch-infra-back|net-edge-dropped|net-node-twice|net-node-undeclared|net-viewer-page-lost|net-section-match-lost|net-resolve-lost|net-unbound-ok|net-dns-depends-lost|net-bundle-weight|net-sheet-field-lost|net-token-blames-vm|net-label-overlap|orch-dup-back|orch-home-lost|deployed-field-lost|orch-page-twice|health-field-lost|health-root-cause-on-vm-when-token-missing|health-layer-order|xray-scope-lost|health-number-on-blind|xray-run-unvalidated|two-rows-label-lost|two-rows-or|two-rows-vm-order|two-rows-parity|engine-card-lost|engine-field-lost|engine-run-unlisted|net-placer-all|net-short-identity|net-chip-lines|net-reading-on-node|net-pills-at-mid|net-contained-dropped|net-names-overtruncated|net-names-blank|net-names-under-hud|net-dns-narrow|net-leaf-share|net-minimap-corner|source-card-lost|source-mapping-lost|dispatch-unlisted|no-token-plain|device-short-lost|rewrite-note-lost|workflow-verdict-flipped) echo "leg: $MUT" ;;
             *) echo "::error::unknown mutation name"; exit 1 ;;
           esac
       - uses: actions/checkout@v4
@@ -146,6 +146,14 @@ jobs:
             engine-card-lost)  rep $K/pages/EnginesModel.kt '"cloud-url-health-report", "cloud_url_health"' '"cloud-url-health-reportX", "cloud_url_health"' ;;
             engine-field-lost) rep $K/pages/EnginesModel.kt 'return Chk(name, status, o.entries.map { it.key to prim(it.value) })' 'return Chk(name, status, o.entries.filter { it.key == "name" }.map { it.key to prim(it.value) })' ;;
             engine-run-unlisted) rep $K/pages/EnginesModel.kt 'if (kind != null && kind in RUN_KINDS)' 'if (kind != null)' ;;
+            # #1983 owner check: every report or test source has a card or a mapping, the Run allow-list, the no-token action, the tags and the devices
+            source-card-lost)  rep $K/pages/EnginesModel.kt 'gha("leak-scan", "leak-scan.yml",' 'gha("leak-scan", "leak-scanX.yml",' ;;
+            source-mapping-lost) rep $K/pages/EnginesModel.kt 'Replaced("cloud-health-http-public.sh", "url",' 'Replaced("cloud-health-http-publicX.sh", "url",' ;;
+            dispatch-unlisted) rep $K/pages/EnginesModel.kt 'if (file != null && file in DISPATCH)' 'if (file != null)' ;;
+            no-token-plain)    rep $K/pages/EnginesModel.kt 'fun isNoToken(b: Body): Boolean = b is Body.Why && b.why.contains(HealthModel.NO_TOKEN_NOTE)' 'fun isNoToken(b: Body): Boolean = false' ;;
+            device-short-lost) rep $K/pages/XrayModel.kt 'it.short?.takeIf { s -> s.isNotBlank() }' 'it.short?.takeIf { s -> s.isNotBlank() && it.kind != "phone" }' ;;
+            rewrite-note-lost) rep $K/pages/EnginesModel.kt 'val needsRewrite get() = tag == "shell" || tag == "gha"' 'val needsRewrite get() = false' ;;
+            workflow-verdict-flipped) rep $K/pages/EnginesModel.kt 'r.conclusion == "success" -> "PASS"' 'r.conclusion == "success" -> "FAIL"' ;;
             xray-run-unvalidated) rep $K/pages/XrayModel.kt 'if (!SUBJECT.matches(subject) || subject !in declared) return null' 'if (false) return null' ;;
             *) echo "unknown mutation"; exit 2 ;;
           esac
@@ -248,6 +256,13 @@ jobs:
             engine-card-lost)  C=EnginesModelTest; N="every engine folder of infra-obs_reports has a card or is a declared library" ;;
             engine-field-lost) C=EnginesModelTest; N="the mail report phases and checks come out of the real JSON with their own values" ;;
             engine-run-unlisted) C=EnginesModelTest; N="the run trigger is allow-listed" ;;
+            source-card-lost)  C=EnginesModelTest; N="every report or test source of the workflows, the ops scripts and infra-obs_reports has a card or a declared mapping" ;;
+            source-mapping-lost) C=EnginesModelTest; N="every report or test source of the workflows, the ops scripts and infra-obs_reports has a card or a declared mapping" ;;
+            dispatch-unlisted) C=EnginesModelTest; N="a Run button exists only where an allow-listed trigger exists" ;;
+            no-token-plain)    C=EnginesModelTest; N="the no-token reason is an action and every other reason is plain text" ;;
+            device-short-lost) C=EnginesModelTest; N="the devices are the fleet's declared devices with a short name and a missing report says why" ;;
+            rewrite-note-lost) C=EnginesModelTest; N="a card that is not Rust carries its tag and names the Rust rewrite as 1978" ;;
+            workflow-verdict-flipped) C=EnginesModelTest; N="a workflow card reads its last run and verdict from the runs, and says why when it cannot" ;;
             xray-run-unvalidated) C=HealthModelTest; N="X-ray - the tabs, the allow-list and the not-served states" ;;
             two-rows-label-lost) C=ContainersTwoRowsComposeTest; N="#1982 both rows render with their labels, Projects over VM, no toggle" ;;
             two-rows-or)       C=ContainersTwoRowsFilterTest; N="#1982 AND filtering - a project or category row and a VM row narrow together, All in a row is no filter" ;;

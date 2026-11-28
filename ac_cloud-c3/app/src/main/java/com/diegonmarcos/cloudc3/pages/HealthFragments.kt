@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.diegonmarcos.cloudc3.Declarations
 import com.diegonmarcos.cloudc3.cloud.C3HealthFragment
+import com.diegonmarcos.cloudc3.cloud.GitHubFeed
 import com.diegonmarcos.cloudc3.cloud.OpsClient
 import com.diegonmarcos.cloudc3.cloud.Services
 import com.diegonmarcos.cloudlib.healthcore.HealthCore
@@ -164,6 +165,9 @@ class XrayFragment : KitComposeFragment() {
         var fresh by remember { mutableStateOf<Map<String, EnginesModel.Fresh>>(emptyMap()) }
         var bodies by remember { mutableStateOf<Map<String, EnginesModel.Body>>(emptyMap()) }
         var runs by remember { mutableStateOf<List<EnginesModel.Run>?>(null) }
+        // #1983 the workflow cards: each workflow's own runs, read without a token (cloudy-t-infra is public; the app's GHA card reads GitHub the same way)
+        var wfRuns by remember { mutableStateOf<Map<String, Pair<EnginesModel.Body, List<EnginesModel.Run>?>>>(emptyMap()) }
+        val deviceIds = remember { XrayModel.deviceIds(slice.devices) }
         var runsWhy by remember { mutableStateOf("not read yet") }
         LaunchedEffect(Unit) {
             val src = ApiFleetLive(ctx.applicationContext)
@@ -175,20 +179,38 @@ class XrayFragment : KitComposeFragment() {
             }
             bodies = EnginesModel.ENGINES.filter { it.family != null }.associate { it.id to EnginesModel.classify(it, src.get(XrayModel.dataPath(it.family!!))) }
             val ids = listOf(XrayModel.FULL_FAMILY) + vmIds.map { XrayModel.vmFamily(it) }
-            states = ids.associateWith { XrayModel.classify(src.get(XrayModel.dataPath(it))) }
+            states = ids.associateWith { XrayModel.classify(src.get(XrayModel.dataPath(it))) } +
+                deviceIds.map { XrayModel.deviceFamily(it) }.associateWith { XrayModel.classifyDevice(src.get(XrayModel.dataPath(it))) }
+            EnginesModel.ENGINES.mapNotNull { it.workflow }.distinct().forEachIndexed { n, file ->
+                kotlinx.coroutines.delay(n * GitHubFeed.STAGGER_MS)
+                val f = GitHubFeed.workflowRuns(ctx.applicationContext, EnginesModel.INFRA_OWNER, EnginesModel.INFRA_NAME, file, 10)
+                wfRuns = wfRuns + (file to (EnginesModel.classifyWorkflow(file, f.status.name, f.body) to f.body?.let { EnginesModel.parseWorkflowRuns(it) }))
+            }
         }
         val full = XrayItem("full", "X-ray C3 full", "every VM (hub last), every service, the layer report, the diff", states[XrayModel.FULL_FAMILY] ?: XrayModel.State.Idle)
         val vms = vmIds.map { XrayItem(it, it, "per-VM X-ray", states[XrayModel.vmFamily(it)] ?: XrayModel.State.Idle) }
+        val devices = deviceIds.map { XrayItem(it, it, "[app] X-Ray Device: built by the SuperApp's X-Ray (Kotlin, not Rust: the Rust rewrite belongs to #1978)", states[XrayModel.deviceFamily(it)] ?: XrayModel.State.Idle, runnable = false) }
         val services = svcNames.map { XrayItem(it, it, "per-service X-ray: ${XrayModel.dataPath(XrayModel.serviceFamily(it))}", states[XrayModel.serviceFamily(it)] ?: XrayModel.State.NotServed(HealthModel.NOT_SERVED_ROUTE)) }
         val engineItems = EnginesModel.ENGINES.map { e ->
-            EngineItem(e, e.family?.let { fresh[it] }, bodies[e.id] ?: if (e.family == null) EnginesModel.Body.Why(e.note) else EnginesModel.Body.Idle)
+            val wf = e.workflow?.let { wfRuns[it] }
+            EngineItem(e, e.family?.let { fresh[it] }, wf?.first ?: bodies[e.id] ?: if (e.family == null && e.workflow == null) EnginesModel.Body.Why(e.note.ifBlank { "no report" }) else EnginesModel.Body.Idle, wf?.second)
         }
         val verdicts = engineItems.associate { it.engine.id to "${it.engine.dir} ${EnginesModel.verdictText(it.body)}" }
         XrayScreen(full, vms, services, runNote, initialTab = "engines",
             engines = {
                 EnginesBody(engineItems, runs, runsWhy) { e ->
                     val body = EnginesModel.runBody(e.kind)
-                    if (body == null) runNote = "refused here: ${e.id} has no allow-listed trigger"
+                    val wf = EnginesModel.dispatchArgs(e.dispatch)
+                    if (body == null && wf != null) scope.launch {
+                        val bearer = runCatching { DaguPrefs(ctx).bearerToken }.getOrDefault("")
+                        runNote = "asking the API to dispatch ${wf.second}..."
+                        val r = withContext(Dispatchers.IO) { OpsClient.dispatchCard(wf.second, bearer) }
+                        runNote = when (r) {
+                            is OpsClient.Outcome.Ok -> "the API dispatched ${wf.second}: ${r.message.take(160)}"
+                            is OpsClient.Outcome.Failed -> "the API did not dispatch ${wf.second}: ${r.kind}: ${r.message.lineSequence().first().take(160)}"
+                        }
+                    }
+                    else if (body == null) runNote = "refused here: ${e.id} has no allow-listed trigger"
                     else scope.launch {
                         val bearer = runCatching { DaguPrefs(ctx).bearerToken }.getOrDefault("")
                         runNote = "asking the API to run ${e.dir}..."
@@ -201,6 +223,7 @@ class XrayFragment : KitComposeFragment() {
                 }
             },
             fedBy = { tab -> (EnginesModel.FEEDS[tab] ?: emptyList()).mapNotNull { verdicts[it] } },
+            devices = devices,
             onRun = { kind, subject ->
             val req = XrayModel.runRequest(kind, subject, if (kind == "xray-vm") vmIds else svcNames)
             if (req == null) runNote = "refused here: $kind of '$subject' is not a declared subject"
