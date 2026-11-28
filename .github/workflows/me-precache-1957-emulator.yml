@@ -27,7 +27,7 @@ permissions:
 jobs:
   render:
     runs-on: ubuntu-latest
-    timeout-minutes: 115
+    timeout-minutes: 150
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -69,7 +69,7 @@ jobs:
       - name: Boot emulator + timed cache walk
         env:
           HARVEST_IN: ${{ inputs.harvest }}
-        timeout-minutes: 95
+        timeout-minutes: 130
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34

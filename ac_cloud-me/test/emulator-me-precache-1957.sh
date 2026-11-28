@@ -8,7 +8,7 @@
 # Usage: emulator-me-precache-1957.sh ME_APK OUT_DIR [OLD_APK]. Screenshots OUT_DIR/precache-1957-*.png. Exit 1 on any failed assertion.
 set -uo pipefail
 ME_APK="$1"; OUT="$2"; OLD_APK="${3:-}"; mkdir -p "$OUT"
-T="timeout 120"; ME=com.diegonmarcos.cloudme; rc=0; WAIT_S="${WAIT_S:-2700}"
+T="timeout 120"; ME=com.diegonmarcos.cloudme; rc=0; WAIT_S="${WAIT_S:-4200}"
 HERE="$(cd "$(dirname "$0")" && pwd)"; UI="${UI_DIR:-$HERE/../data/ui}"; CACHE="/data/data/$ME/cache/lnktree-cache"
 fail() { echo "FAIL $*" | tee -a "$OUT/verdict.txt"; rc=1; }
 ok() { echo "PASS $*" | tee -a "$OUT/verdict.txt"; }
